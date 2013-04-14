@@ -1,9 +1,9 @@
 What is a CadQuery?
 ========================================
 
-CadQuery is an intuitive, easy-to-use python based language for building parametric 3D CAD models.  
+CadQuery is an intuitive, easy-to-use python based language for building parametric 3D CAD models.  CadQuery is for 3D CAD what jQuery is for javascript.  Imagine selecting Faces of a 3d object the same way you select DOM objects with JQuery!
 
-It has several goals:
+CadQuery has several goals:
 
 * Build models with scripts that are as close as possible to how you'd describe the object to a human.
 * Create parametric models that can be very easily customized by end users
@@ -44,9 +44,10 @@ Where does the name CadQuery come from?
 CadQuery is inspired by ( `jQuery <http://www.jquery.com>`_ ), a popular framework that
 revolutionized web development involving javascript.
 
-CadQuery is for 3D CAD  what jQuery is for javascript.
 If you are familiar with how jQuery, you will probably recognize several jQuery features that CadQuery uses:
 
 * A fluent api to create clean, easy to read code
+* Language features that make selection and iteration incredibly easy
+* 
 * Ability to use the library along side other python libraries
 * Clear and complete documentation, with plenty of samples.
