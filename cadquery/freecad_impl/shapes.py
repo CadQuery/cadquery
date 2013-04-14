@@ -1,4 +1,21 @@
 """
+	Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
+
+	This file is part of CadQuery.
+	
+	CadQuery is free software; you can redistribute it and/or
+	modify it under the terms of the GNU Lesser General Public
+	License as published by the Free Software Foundation; either
+	version 2.1 of the License, or (at your option) any later version.
+
+	CadQuery is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	Lesser General Public License for more details.
+
+	You should have received a copy of the GNU Lesser General Public
+	License along with this library; If not, see <http://www.gnu.org/licenses/>
+
     Wrapper Classes for FreeCAD
     These classes provide a stable interface for 3d objects,
     independent of the FreeCAD interface.
@@ -29,7 +46,6 @@
            all factory methods are on the 'Part' object, but it is very useful to know what kind of 
            object each one returns, so these are better grouped by the type of object they return. 
            (who would know that Part.makeCircle() returns an Edge, but Part.makePolygon() returns a Wire ?
-
 """
 
 

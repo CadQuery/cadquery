@@ -12,12 +12,8 @@
 # serve to show the default.
 
 import sys, os
+import cadquery
 
-sys.path.append('../apps')
-sys.path.append('..')
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-
-from django.conf import settings
 settings._target = None
 
 
