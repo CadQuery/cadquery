@@ -1,30 +1,16 @@
-cadquery
-========
-
-CadQuery-- a parametric script framework for creating CAD files using OpenCascade
-
 What is a CadQuery?
 ========================================
 
-CadQuery is an intuitive, easy-to-use language for building parametric 3D CAD models.  It has several goals:
+CadQuery is an intuitive, easy-to-use python based language for building parametric 3D CAD models.  
+
+It has several goals:
 
 * Build models with scripts that are as close as possible to how you'd describe the object to a human.
 * Create parametric models that can be very easily customized by end users
 * Output high quality CAD formats like STEP and AMF in addition to traditional STL
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 
-Where does the name CadQuery come from?
-========================================
-
-CadQuery is inspired by ( `jQuery <http://www.jquery.com>`_ ), a popular framework that
-revolutionized web development involving javascript.
-
-CadQuery is for 3D CAD  what jQuery is for javascript.
-If you are familiar with how jQuery, you will probably recognize several jQuery features that CadQuery uses:
-
-* A fluent api to create clean, easy to read code
-* Ability to use the library along side other python libraries
-* Clear and complete documentation, with plenty of samples.
+Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
 
 
 Why CadQuery instead of OpenSCAD?
@@ -50,3 +36,17 @@ CadQuery scripts have several key advantages over OpenSCAD:
    features based on the position of other features, workplanes, vertices, etc.
 
 5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD. 
+
+
+Where does the name CadQuery come from?
+========================================
+
+CadQuery is inspired by ( `jQuery <http://www.jquery.com>`_ ), a popular framework that
+revolutionized web development involving javascript.
+
+CadQuery is for 3D CAD  what jQuery is for javascript.
+If you are familiar with how jQuery, you will probably recognize several jQuery features that CadQuery uses:
+
+* A fluent api to create clean, easy to read code
+* Ability to use the library along side other python libraries
+* Clear and complete documentation, with plenty of samples.
