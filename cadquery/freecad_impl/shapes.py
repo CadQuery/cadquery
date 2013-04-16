@@ -49,14 +49,6 @@
 """
 
 
-class ExportFormats:
-    STL = "STL"
-    BREP = "BREP"
-    STEP = "STEP"
-    AMF = "AMF"
-    IGES = "IGES"
-
-
 class Shape(object):
     """
         Represents a shape in the system.

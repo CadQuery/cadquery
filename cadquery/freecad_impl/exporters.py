@@ -21,8 +21,48 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+
+class ExportFormats:
+    STL = "STL"
+    BREP = "BREP"
+    STEP = "STEP"
+    AMF = "AMF"
+    IGES = "IGES"
 	
-class AMFWriter(object):
+class UNITS:
+    MM = "mm"
+    IN = "in"
+
+def guessUnitOfMeasure(shape):
+    """
+        Guess the unit of measure of a shape.
+    """
+    bb = shape.BoundBox
+
+    dimList = [ bb.XLength, bb.YLength,bb.ZLength ]
+    #no real part would likely be bigger than 10 inches on any side
+    if max(dimList) > 10:
+        return UNITS.MM
+
+    #no real part would likely be smaller than 0.1 mm on all dimensions
+    if min(dimList) < 0.1:
+        return UNITS.IN
+
+    #no real part would have the sum of its dimensions less than about 5mm
+    if sum(dimList) < 10:
+        return UNITS.IN
+
+    return UNITS.MM	
+
+class Exporter(object):
+
+	def export(self):
+	"""
+		return a string representing the model exported in the specified format
+	"""
+		raise NotImplementedError()
+	
+class AMFExporter(Exporter):
     def __init__(self,tessellation):
 
         self.units = "mm"
@@ -65,7 +105,7 @@ class AMFWriter(object):
     three.js JSON object notation
     https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3.0
 """
-class JsonMesh(object):
+class JsonExporter(Exporter):
     def __init__(self):
 
         self.vertices = [];
@@ -95,31 +135,8 @@ class JsonMesh(object):
             'nFaces' : self.nFaces
         };
 
+class SVGExporter(Exporter):
 
-class UNITS:
-    MM = "mm"
-    IN = "in"
-
-def guessUnitOfMeasure(shape):
-    """
-        Guess the unit of measure of a shape.
-    """
-    bb = shape.BoundBox
-
-    dimList = [ bb.XLength, bb.YLength,bb.ZLength ]
-    #no real part would likely be bigger than 10 inches on any side
-    if max(dimList) > 10:
-        return UNITS.MM
-
-    #no real part would likely be smaller than 0.1 mm on all dimensions
-    if min(dimList) < 0.1:
-        return UNITS.IN
-
-    #no real part would have the sum of its dimensions less than about 5mm
-    if sum(dimList) < 10:
-        return UNITS.IN
-
-    return UNITS.MM
 
 def getPaths(freeCadSVG):
     """
