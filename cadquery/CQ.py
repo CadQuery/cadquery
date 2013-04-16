@@ -30,7 +30,6 @@ class CQContext(object):
         self.firstPoint = None    #a reference to the first point for a set of edges. used to determine how to behave when close() is called
         self.tolerance = 0.0001  #user specified tolerance
 
-
 class CQ(object):
     """
     Provides enhanced functionality for a wrapped CAD primitive.

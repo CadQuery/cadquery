@@ -57,12 +57,12 @@ def guessUnitOfMeasure(shape):
 class Exporter(object):
 
 	def export(self):
-	"""
-		return a string representing the model exported in the specified format
-	"""
+		"""
+			return a string representing the model exported in the specified format
+		"""
 		raise NotImplementedError()
 	
-class AMFExporter(Exporter):
+class AmfExporter(Exporter):
     def __init__(self,tessellation):
 
         self.units = "mm"
@@ -135,8 +135,10 @@ class JsonExporter(Exporter):
             'nFaces' : self.nFaces
         };
 
-class SVGExporter(Exporter):
-
+class SvgExporter(Exporter):
+	
+	def export(self):
+		pass
 
 def getPaths(freeCadSVG):
     """

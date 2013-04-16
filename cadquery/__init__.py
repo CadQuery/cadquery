@@ -16,16 +16,18 @@
 	You should have received a copy of the GNU Lesser General Public
 	License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
-#these items are the common implementation
-from .CQ import CQ
-from .workplane import Workplane
-from . import plugins
-from . import selectors
+
 
 #these items point to the freecad implementation
 from .freecad_impl.geom import Plane,BoundBox,Vector
 from .freecad_impl.shapes import Shape,Vertex,Edge,Wire,Solid,Shell,Compound
 from .freecad_impl.exporters import SvgExporter, AmfExporter, JsonExporter
+
+#these items are the common implementation
+from .CQ import CQ
+from .workplane import Workplane
+from . import plugins
+from . import selectors
 
 __all__ = [
 	'CQ','Workplane','plugins','selectors','Plane','BoundBox',

@@ -18,6 +18,8 @@
 """
 
 import math,sys
+import FreeCAD
+import FreeCAD.Part
 
 def sortWiresByBuildOrder(wireList,plane,result=[]):
     """
@@ -95,11 +97,11 @@ class Vector(object):
     def __init__(self,*args):
 
         if len(args) == 3:
-            fV = FreeCADVector(args[0],args[1],args[2])
+            fV = FreeCAD.Base.Vector(args[0],args[1],args[2])
         elif len(args) == 1:
             if type(args[0]) is tuple:
-                fV = FreeCADVector(args[0][0],args[0][1],args[0][2])
-            elif type(args[0] is FreeCADVector):
+                fV = FreeCAD.Base.Vector(args[0][0],args[0][1],args[0][2])
+            elif type(args[0] is FreeCAD.Base.Vector):
                 fV = args[0]
             elif type(args[0] is Vector):
                 fV = args[0].wrapped
@@ -137,7 +139,7 @@ class Vector(object):
             Note: FreeCAD has a bug here, where the
             base is also modified
         """
-        tmp = FreeCADVector(self.wrapped)
+        tmp = FreeCAD.Base.Vector(self.wrapped)
         return Vector( tmp.multiply(scale))
 
     def normalize(self):
@@ -147,7 +149,7 @@ class Vector(object):
             Note: FreeCAD has a bug here, where the
             base is also modified
         """
-        tmp = FreeCADVector(self.wrapped)
+        tmp = FreeCAD.Base.Vector(self.wrapped)
         tmp.normalize()
         return Vector( tmp )
 

@@ -47,7 +47,9 @@
            object each one returns, so these are better grouped by the type of object they return. 
            (who would know that Part.makeCircle() returns an Edge, but Part.makePolygon() returns a Wire ?
 """
-
+from cadquery import Vector
+import FreeCAD
+import FreeCAD.Part
 
 class Shape(object):
     """
@@ -63,7 +65,7 @@ class Shape(object):
     def cast(cls,obj,forConstruction = False):
         "Returns the right type of wrapper, given a FreeCAD object"
         s = obj.ShapeType
-        if type(obj) == FreeCADVector:
+        if type(obj) == Base.Vector:
             return Vector(obj)
         tr = None
 
