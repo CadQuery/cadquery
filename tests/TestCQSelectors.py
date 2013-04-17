@@ -13,8 +13,9 @@ import unittest,sys
 import os.path
 
 #my modules
-from TestBase import *
+from tests import BaseTest,makeUnitCube,makeUnitSquareWire
 from cadquery import *
+from cadquery import selectors
 
 class TestCQSelectors(BaseTest):
 
@@ -122,8 +123,8 @@ class TestCQSelectors(BaseTest):
         #faces parallel to Z axis
         self.assertEqual(2, c.faces("|Z").size())
         #TODO: provide short names for ParallelDirSelector
-        self.assertEqual(2, c.faces(ParallelDirSelector(Vector((0,0,1)))).size()) #same thing as above
-        self.assertEqual(2, c.faces(ParallelDirSelector(Vector((0,0,-1)))).size()) #same thing as above
+        self.assertEqual(2, c.faces(selectors.ParallelDirSelector(Vector((0,0,1)))).size()) #same thing as above
+        self.assertEqual(2, c.faces(selectors.ParallelDirSelector(Vector((0,0,-1)))).size()) #same thing as above
 
         #just for fun, vertices on faces parallel to z
         self.assertEqual(8, c.faces("|Z").vertices().size())
@@ -164,17 +165,17 @@ class TestCQSelectors(BaseTest):
         #nearest vertex to origin is (0,0,0)
         t = Vector(0.1,0.1,0.1)
 
-        v = c.vertices(NearestToPointSelector(t)).vals()[0]
+        v = c.vertices(selectors.NearestToPointSelector(t)).vals()[0]
         self.assertTupleAlmostEquals((0.0,0.0,0.0),(v.X,v.Y,v.Z),3)
 
         t = Vector(0.1,0.1,0.2)
         #nearest edge is the vertical side edge, 0,0,0 -> 0,0,1
-        e = c.edges(NearestToPointSelector(t)).vals()[0]
-        v = c.edges(NearestToPointSelector(t)).vertices().vals()
+        e = c.edges(selectors.NearestToPointSelector(t)).vals()[0]
+        v = c.edges(selectors.NearestToPointSelector(t)).vertices().vals()
         self.assertEqual(2,len(v))
 
         #nearest solid is myself
-        s = c.solids(NearestToPointSelector(t)).vals()
+        s = c.solids(selectors.NearestToPointSelector(t)).vals()
         self.assertEqual(1,len(s))
 
     def testFaceCount(self):

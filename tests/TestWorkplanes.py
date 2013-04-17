@@ -5,9 +5,9 @@
 
 #my modules
 from cadquery import *
+from tests import BaseTest,toTuple
 
-class TestPlane(BaseTest):
-
+class TestWorkplanes(BaseTest):
 
     def testYZPlaneOrigins(self):
         #xy plane-- with origin at x=0.25

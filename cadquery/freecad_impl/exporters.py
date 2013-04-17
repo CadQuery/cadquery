@@ -17,6 +17,9 @@
 	License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
+import FreeCAD
+from FreeCAD import Drawing
+
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
@@ -54,15 +57,8 @@ def guessUnitOfMeasure(shape):
 
     return UNITS.MM	
 
-class Exporter(object):
-
-	def export(self):
-		"""
-			return a string representing the model exported in the specified format
-		"""
-		raise NotImplementedError()
 	
-class AmfExporter(Exporter):
+class AmfExporter(object):
     def __init__(self,tessellation):
 
         self.units = "mm"
@@ -105,7 +101,7 @@ class AmfExporter(Exporter):
     three.js JSON object notation
     https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3.0
 """
-class JsonExporter(Exporter):
+class JsonExporter(object):
     def __init__(self):
 
         self.vertices = [];
@@ -135,10 +131,6 @@ class JsonExporter(Exporter):
             'nFaces' : self.nFaces
         };
 
-class SvgExporter(Exporter):
-	
-	def export(self):
-		pass
 
 def getPaths(freeCadSVG):
     """
@@ -240,11 +232,15 @@ def getSVG(shape,opts=None):
     #)
     return svg
 
+
 def exportSVG(shape, fileName):
     """
+		accept a cadquery shape, and export it to the provided file
+		TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
         export a view of a part to svg
     """
-    svg = getSVG(shape)
+	
+    svg = getSVG(shape.val().wrapped)
     f = open(fileName,'w')
     f.write(svg)
     f.close()

@@ -7,6 +7,8 @@ import math,sys,os.path,time
 
 #my modules
 from cadquery import *
+from cadquery import exporters
+from tests import BaseTest,writeStringToFile,makeUnitCube,readFileAsString,makeUnitSquareWire,makeCube
 
 #where unit test output will be saved
 OUTDIR = "c:/temp"
@@ -737,16 +739,6 @@ class TestCadQuery(BaseTest):
         s2 = Workplane("XY").workplane(offset=t).circle(bd-(2.0*t)).workplane(offset=(h-t)).circle(td-(2.0*t)).loft()
         s3 = s1.cut(s2)
         self.saveModel(s3)
-
-
-    def testTwistedGear3(self):
-        pts = plugins.make_gear(14.5,10,2.5) #make involutes
-        s = Workplane("XY").polyline(pts).twistExtrude(4.0,8.0)
-        #s2 = s.faces(">Z").workplane().transformed(rotate=Vector(0,0,8)).polyline(pts).twistExtrude(4.0,-8.0,combine=False)
-        #s3 = s.union(s2)
-        #s.val().exportStl("c:\\temp\\pleasework3.stl")
-        #s3.val().exportStl("c:\\temp\\pleasework5.stl")
-        self.saveModel(s)
 
 
     def testEnclosure(self):

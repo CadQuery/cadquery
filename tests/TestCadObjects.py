@@ -1,11 +1,11 @@
 #system modules
 import sys
 
-#my modules
-
-import from cadquery import *
-
-
+import unittest
+from tests import BaseTest
+import FreeCAD
+from cadquery import *
+	
 class TestCadObjects(BaseTest):
 
     def testVectorConstructors(self):
@@ -57,3 +57,6 @@ class TestCadObjects(BaseTest):
     def testVertices(self):
         e = Shape.cast(FreeCAD.Part.makeLine((0,0,0),(1,1,0)))
         self.assertEquals(2,len(e.Vertices()))
+		
+if __name__ == '__main__':
+    unittest.main()		

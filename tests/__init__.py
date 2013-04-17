@@ -32,7 +32,7 @@ def makeCube(size):
 def toTuple(v):
     "convert a vector or a vertex to a 3-tuple: x,y,z"
     pnt = v
-    if type(v) == Base.Vector:
+    if type(v) == FreeCAD.Base.Vector:
         return (v.Point.x,v.Point.y,v.Point.z)
     elif type(v) == Vector:
         return v.toTuple()
@@ -45,3 +45,5 @@ class BaseTest(unittest.TestCase):
     def assertTupleAlmostEquals(self,expected,actual,places):
         for i,j in zip(actual,expected):
             self.assertAlmostEquals(i,j,places)
+
+__all__ = [ 'TestCadObjects','TestCadQuery','TestCQSelectors','TestWorkplanes']

@@ -19,20 +19,20 @@
 
 
 #these items point to the freecad implementation
-from .freecad_impl.geom import Plane,BoundBox,Vector
-from .freecad_impl.shapes import Shape,Vertex,Edge,Wire,Solid,Shell,Compound
-from .freecad_impl.exporters import SvgExporter, AmfExporter, JsonExporter
+from .freecad_impl.geom import Plane,BoundBox,Vector,Matrix,sortWiresByBuildOrder
+from .freecad_impl.shapes import Shape,Vertex,Edge,Face,Wire,Solid,Shell,Compound
+from .freecad_impl import exporters
 
 #these items are the common implementation
-from .CQ import CQ
-from .workplane import Workplane
-from . import plugins
+
+#the order of these matter
 from . import selectors
+from .CQ import CQ,CQContext,Workplane
+
 
 __all__ = [
-	'CQ','Workplane','plugins','selectors','Plane','BoundBox',
-	'Shape','Vertex','Edge','Wire','Solid','Shell','Compound',
-	'SvgExporter','AmfExporter','JsonExporter',
+	'CQ','Workplane','plugins','selectors','Plane','BoundBox','Matrix','Vector','sortWiresByBuildOrder',
+	'Shape','Vertex','Edge','Wire','Solid','Shell','Compound','exporters',
 	'plugins'
 ]
 

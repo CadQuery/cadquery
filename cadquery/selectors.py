@@ -19,6 +19,7 @@
 
 import re
 import math
+from cadquery import Vector,Edge,Vertex,Face,Solid,Shell,Compound
 
 class Selector(object):
     """

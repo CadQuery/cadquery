@@ -1,20 +1,20 @@
 """
-	Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
+    Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
 
-	This file is part of CadQuery.
-	
-	CadQuery is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    This file is part of CadQuery.
+    
+    CadQuery is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	CadQuery is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    CadQuery is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; If not, see <http://www.gnu.org/licenses/>
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
 import math,sys
@@ -46,33 +46,6 @@ def sortWiresByBuildOrder(wireList,plane,result=[]):
                 remainingWires.remove(w)
         result.append(group)
 
-    return result
-
-def sortWiresByBuildOrderOld(wireList,plane,result=[]):
-    """
-        Tries to determine how wires should be combined into faces.
-        Assume:
-            The wires make up one or more faces, which could have 'holes'
-            Outer wires are listed ahead of inner wires
-            there are no wires inside wires inside wires ( IE, islands -- we can deal with that later on )
-            none of the wires are construction wires
-        Compute:
-            one or more sets of wires, with the outer wire listed first, and inner ones
-        Returns, list of lists.
-    """
-    outerWire = wireList.pop(0)
-
-    remainingWires = list(wireList)
-    childWires = []
-    for w in wireList:
-        if plane.isWireInside(outerWire,w):
-            childWires.append(remainingWires.pop(0))
-        else:
-            #doesnt match, assume this wire is a new outer
-            result.append([outerWire] + childWires)
-            return sortWiresByBuildOrder(remainingWires,plane,result)
-
-    result.append([outerWire] + childWires)
     return result
 
 class Vector(object):
@@ -212,6 +185,25 @@ class Vector(object):
     def __eq__(self,other):
         return self.wrapped.__eq__(other)
 
+class Matrix:
+    """
+        A 3d , 4x4 transformation matrix.        
+        
+        Used to move geometry in space.
+    """
+    def __init__(self,matrix=None):
+        if matrix == None:
+            self.wrapped = FreeCAD.Base.Matrix()
+        else:
+            self.wrapped = matrix
+            
+    def rotateX(self,angle):
+        self.wrapped.rotateX(angle)
+        
+    def rotateY(self,angle):
+        self.wrapped.rotateY(angle)
+    
+    
 class Plane:
     """
         A 2d coordinate system in space, with the x-y axes on the a plane, and a particular point as the origin.
@@ -329,6 +321,7 @@ class Plane:
 
         self.setOrigin3d(origin)
 
+        
     def setOrigin3d(self,originVector):
         """
             Move the origin of the plane, leaving its orientation and xDirection unchanged.
@@ -417,6 +410,7 @@ class Plane:
         else:
             raise ValueError("Dont know how to convert type %s to local coordinates" % str(type(obj)))
 
+
     def toWorldCoords(self, tuplePoint):
         """
             Convert a point in local coordinates to global coordinates.
@@ -433,6 +427,7 @@ class Plane:
             v = Vector(tuplePoint[0],tuplePoint[1],tuplePoint[2])
         return Vector(self.rG.multiply(v.wrapped))
 
+        
     def rotated(self,rotate=Vector(0,0,0)):
         """
         returns a copy of this plane, rotated about the specified axes, as measured from horizontal
@@ -453,7 +448,7 @@ class Plane:
         rotate = rotate.multiply(math.pi / 180.0 )
 
         #compute rotation matrix
-        m = Base.Matrix()
+        m = FreeCAD.Base.Matrix()
         m.rotateX(rotate.x)
         m.rotateY(rotate.y)
         m.rotateZ(rotate.z)
@@ -473,7 +468,7 @@ class Plane:
         #ok i will be really honest-- i cannot understand exactly why this works
         #something bout the order of the transaltion and the rotation.
         # the double-inverting is strange, and i dont understand it.
-        r = Base.Matrix()
+        r = FreeCAD.Base.Matrix()
 
         #forward transform must rotate and adjust for origin
         (r.A11, r.A12, r.A13 ) = (self.xDir.x, self.xDir.y, self.xDir.z )
@@ -484,7 +479,14 @@ class Plane:
         (invR.A14,invR.A24,invR.A34) = (self.origin.x,self.origin.y,self.origin.z)
 
         ( self.rG,self.fG ) = ( invR,invR.inverse() )
-
+        
+    def computeTransform(self,tMatrix):
+        """
+            Computes the 2-d projection of the supplied matrix
+        """
+		
+        rm = self.fG.multiply(tMatrix.wrapped).multiply(self.rG)
+        return Matrix(rm)
 
 class BoundBox(object):
     "A BoundingBox for an object or set of objects. Wraps the FreeCAD one"

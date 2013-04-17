@@ -3,7 +3,7 @@ __author__ = 'dcowden'
 from cadquery import *
 
 import unittest,sys
-import MakeTestObjects
+from tests import MakeTestObjects
 import SVGexporter
 
 class TestCadQuery(unittest.TestCase):

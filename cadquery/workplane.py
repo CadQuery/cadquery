@@ -18,8 +18,8 @@
 """
 
 import math
-from . import CQ
-from cadquery import Vector
+
+from cadquery import Vector,CQ,CQContext,Plane,Wire
 
 class Workplane(CQ):
     """
