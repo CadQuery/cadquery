@@ -1,23 +1,27 @@
 """
-	Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
+    Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
 
-	This file is part of CadQuery.
-	
-	CadQuery is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    This file is part of CadQuery.
+    
+    CadQuery is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	CadQuery is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    CadQuery is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; If not, see <http://www.gnu.org/licenses/>
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; If not, see <http://www.gnu.org/licenses/>
+    
+    An exporter should provide functionality to accept a shape, and return
+    a string containing the model content.
 """
+import cadquery
 
-import FreeCAD
+import FreeCAD,tempfile,os
 from FreeCAD import Drawing
 
 try:
@@ -25,16 +29,81 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-class ExportFormats:
+class ExportTypes:
     STL = "STL"
-    BREP = "BREP"
     STEP = "STEP"
     AMF = "AMF"
-    IGES = "IGES"
-	
+    SVG = "SVG"
+    TJS = "TJS"
+    
 class UNITS:
     MM = "mm"
     IN = "in"
+
+
+def exportShape(shape,exportType,fileLike,tolerance=0.1):
+    """
+        :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
+        object, the first value is exported
+        :param exportFormat: the exportFormat to use
+        :param tolerance: the tolerance, in model units
+        :param fileLike: a file like object to which the content will be written.
+        The object should be already open and ready to write. The caller is responsible
+        for closing the object 
+    """
+    
+    if isinstance(shape,cadquery.CQ):
+        shape = shape.val()
+        
+    if exportType == ExportTypes.TJS:
+        #tessellate the model
+        tess = shape.tessellate(tolerance)
+
+        mesher = JsonMesh() #warning: needs to be changed to remove buildTime and exportTime!!!
+        #add vertices
+        for vec in tess[0]:
+            mesher.addVertex(vec.x, vec.y, vec.z)
+
+        #add faces
+        for f in tess[1]:
+            mesher.addTriangleFace(f[0],f[1], f[2])
+        fileLike.write( mesher.toJson())
+    elif exportType == ExportTypes.SVG:
+        fileLike.write(getSVG(shape.wrapped))
+    elif exportType == ExportTypes.AMF:
+        tess = shape.tessellate(tolerance)
+        aw = AmfWriter(tess).writeAmf(fileLike)        
+    else:
+        
+        #all these types required writing to a file and then
+        #re-reading. this is due to the fact that FreeCAD writes these
+        (h, outFileName) = tempfile.mkstemp()
+        #weird, but we need to close this file. the next step is going to write to
+        #it from c code, so it needs to be closed.
+        os.close(h)
+
+        if exportType == ExportTypes.STEP:
+            shape.exportStep(outFileName)
+        elif exportType == ExportTypes.STL:
+            shape.wrapped.exportStl(outFileName)
+        else:
+            raise ValueError("No idea how i got here")
+
+        res = readAndDeleteFile(outFileName)
+        fileLike.write(res)
+
+def readAndDeleteFile(fileName):
+    """
+        read data from file provided, and delete it when done
+        return the contents as a string
+    """
+    res = ""
+    with open(fileName,'r') as f:
+        res = f.read()
+
+    os.remove(fileName)
+    return res
+
 
 def guessUnitOfMeasure(shape):
     """
@@ -55,16 +124,16 @@ def guessUnitOfMeasure(shape):
     if sum(dimList) < 10:
         return UNITS.IN
 
-    return UNITS.MM	
+    return UNITS.MM    
+    
 
-	
-class AmfExporter(object):
+class AmfWriter(object):
     def __init__(self,tessellation):
 
         self.units = "mm"
         self.tessellation = tessellation
 
-    def writeAmf(self,outFileName):
+    def writeAmf(self,outFile):
         amf = ET.Element('amf',units=self.units)
         #TODO: if result is a compound, we need to loop through them
         object = ET.SubElement(amf,'object',id="0")
@@ -94,14 +163,14 @@ class AmfExporter(object):
             v3.text = str(t[2])
 
 
-        ET.ElementTree(amf).write(outFileName,encoding='ISO-8859-1')
+        ET.ElementTree(amf).write(outFile,encoding='ISO-8859-1')
 
 """
     Objects that represent 
     three.js JSON object notation
     https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3.0
 """
-class JsonExporter(object):
+class JsonMesh(object):
     def __init__(self):
 
         self.vertices = [];
@@ -174,7 +243,7 @@ def getSVG(shape,opts=None):
     """
 
     d = {'width':800,'height':240,'marginLeft':200,'marginTop':20}
-
+	
     if opts:
         d.update(opts)
 
@@ -235,11 +304,11 @@ def getSVG(shape,opts=None):
 
 def exportSVG(shape, fileName):
     """
-		accept a cadquery shape, and export it to the provided file
-		TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
+        accept a cadquery shape, and export it to the provided file
+        TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
         export a view of a part to svg
     """
-	
+    
     svg = getSVG(shape.val().wrapped)
     f = open(fileName,'w')
     f.write(svg)

@@ -428,7 +428,7 @@ class Plane:
         return Vector(self.rG.multiply(v.wrapped))
 
         
-    def rotated(self,rotate=Vector(0,0,0)):
+    def rotated(self,rotate=(0,0,0)):
         """
         returns a copy of this plane, rotated about the specified axes, as measured from horizontal
 
@@ -440,10 +440,12 @@ class Plane:
         rotations are done in order x,y,z. if you need a different order, manually chain together multiple .rotate()
         commands
 
-        :param roate: Vector [xDegrees,yDegrees,zDegrees]
+        :param rotate: Vector [xDegrees,yDegrees,zDegrees]
         :return: a copy of this plane rotated as requested
         """
 
+        if rotate.__class__.__name__ != 'Vector':
+            rotate = Vector(rotate)		
         #convert to radians
         rotate = rotate.multiply(math.pi / 180.0 )
 
@@ -460,6 +462,32 @@ class Plane:
         newP= Plane(self.origin,newXdir,newZdir)
         return newP
 
+    def rotateShapes(self,listOfShapes,rotationMatrix):
+        """
+            rotate the listOfShapes by the rotationMatrix supplied.
+            @param listOfShapes is a list of shape objects
+            @param rotationMatrix is a geom.Matrix object.
+            returns a list of shape objects rotated according to the rotationMatrix
+        """
+
+        #compute rotation matrix ( global --> local --> rotate  --> global )
+        #rm = self.plane.fG.multiply(matrix).multiply(self.plane.rG)
+        rm = self.computeTransform(rotationMatrix)
+        
+
+        #There might be a better way, but to do this rotation takes 3 steps
+        #transform geometry to local coordinates
+        #then rotate about x
+        #then transform back to global coordiante
+        
+        resultWires = []
+        for w in listOfShapes:
+            mirrored = w.transformGeometry(rotationMatrix.wrapped)
+            resultWires.append(mirrored)
+
+        return resultWires
+
+        
     def _calcTransforms(self):
         """
             Computes transformation martrices to convert betwene local and global coordinates
@@ -484,7 +512,7 @@ class Plane:
         """
             Computes the 2-d projection of the supplied matrix
         """
-		
+        
         rm = self.fG.multiply(tMatrix.wrapped).multiply(self.rG)
         return Matrix(rm)
 

@@ -12,5 +12,5 @@ suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestCadObjects.TestCa
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestWorkplanes.TestWorkplanes))
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestCQSelectors.TestCQSelectors))
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestCadQuery.TestCadQuery))
-
+suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestExporters.TestExporters))
 unittest.TextTestRunner().run(suite)

@@ -1,20 +1,20 @@
 """
-	Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
+    Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
 
-	This file is part of CadQuery.
-	
-	CadQuery is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    This file is part of CadQuery.
+    
+    CadQuery is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	CadQuery is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    CadQuery is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; If not, see <http://www.gnu.org/licenses/>
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
 import time,math
@@ -834,18 +834,26 @@ class Workplane(CQ):
         self.parent = None
         self.ctx = CQContext()
 
-    def transformed(self,rotate=Vector(0,0,0),offset=Vector(0,0,0)):
+    def transformed(self,rotate=(0,0,0),offset=(0,0,0)):
         """
         Create a new workplane based on the current one.
         The origin of the new plane is located at the existing origin+offset vector, where offset is given in
         coordinates local to the current plane
         The new plane is rotated through the angles specified by the components of the rotation vector
-        :param rotate: vector of angles to rotate, in degrees relative to work plane coordinates
-        :param offset: vector to offset the new plane, in local work plane coordinates
+        :param rotate: 3-tuple of angles to rotate, in degrees relative to work plane coordinates
+        :param offset: 3-tuple to offset the new plane, in local work plane coordinates
         :return: a new work plane, transformed as requested
         """
+
+        #old api accepted a vector, so we'll check for that.
+        if rotate.__class__.__name__ == 'Vector':
+            rotate = rotate.toTuple()
+            
+        if offset.__class__.__name__ == 'Vector':
+            offset = offset.toTuple()
+            
         p = self.plane.rotated(rotate)
-        p.setOrigin3d(self.plane.toWorldCoords(offset.toTuple() ))
+        p.setOrigin3d(self.plane.toWorldCoords(offset ))
         ns = self.newObject([p.origin])
         ns.plane = p
 
@@ -1215,39 +1223,24 @@ class Workplane(CQ):
 
             Future Enhancements:
                 faster implementation: this one transforms 3 times to accomplish the result
-				
-			
+                
+            
         """
-
-        #compute rotation matrix ( global --> local --> rotate  --> global )
-        #rm = self.plane.fG.multiply(matrix).multiply(self.plane.rG)
-        rm = self.plane.computeTransform(matrix)
-		
+        
         #convert edges to a wire, if there are pending edges
         n = self.wire(forConstruction=False)
 
         #attempt to consolidate wires together.
         consolidated = n.consolidateWires()
 
-        #ok, mirror all the wires.
-
-        #There might be a better way, but to do this rotation takes 3 steps
-        #transform geometry to local coordinates
-        #then rotate about x
-        #then transform back to global coordiante
-		
-		#!!!TODO: needs refactoring. rm.wrapped is a hack, w.transformGeometry is needing a FreeCAD matrix,
-		#so this code is dependent on a freecad matrix even when we dont explicitly import it.
-		#
-        originalWires = consolidated.wires().vals()
-        for w in originalWires:
-            mirrored = w.transformGeometry(rm.wrapped)
-            consolidated.objects.append(mirrored)
-            consolidated._addPendingWire(mirrored)
+        rotatedWires = self.plane.rotateShapes(consolidated.wires().vals(),matrix)
+        
+        for w in rotatedWires:
+            consolidated.objects.append(w)
+            consolidated._addPendingWire(w)
 
         #attempt again to consolidate all of the wires
         c = consolidated.consolidateWires()
-        #c = consolidated
         return c
 
     def mirrorY(self):
@@ -2174,4 +2167,4 @@ class Workplane(CQ):
         else:
             #combine everything
             return self.union(boxes)
-		
+        
