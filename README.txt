@@ -12,27 +12,6 @@ CadQuery has several goals:
 
 Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
 
-
-Installing
-============
-
-1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
-
-2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own, 
-   preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD
-   lib directory to your path. On  (*Nix)::
-   
-        import sys
-		sys.path.append('/usr/lib/freecad/lib')
-		
-   or on Windows::
-     
-	    import sys
-		sys.path.append('/c/apps/FreeCAD/bin')
-		
-   *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
-
-
 Why CadQuery instead of OpenSCAD?
 ========================================
 
@@ -57,6 +36,51 @@ CadQuery scripts have several key advantages over OpenSCAD:
 
 5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD. 
 
+License
+========
+
+CadQuery is licensed under the terms of the LGPLv3. http://www.gnu.org/copyleft/lesser.html
+
+Where is the GUI?
+==================
+
+CadQuery does not provide a stand-alone gui yet, though this is one of the projects we hope to tackle.
+
+CadQuery provides the backbone of http://parametricparts.com, so the easiest way to see it in action is to review the samples and objects there.
+
+Installing
+============
+
+1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
+
+2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own, 
+   preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD
+   lib directory to your path. On  (*Nix)::
+   
+        import sys
+		sys.path.append('/usr/lib/freecad/lib')
+		
+   or on Windows::
+     
+	    import sys
+		sys.path.append('/c/apps/FreeCAD/bin')
+		
+   *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
+   
+3. install cadquery::
+
+		pip install cadquery
+
+3. test your installation::
+
+		from cadquery import *
+		box = Workplane("XY").box(1,2,3)
+		exporters.toString(box,'STL')
+		
+You're up and running!
+		
+
+
 
 Where does the name CadQuery come from?
 ========================================
@@ -71,3 +95,4 @@ If you are familiar with how jQuery, you will probably recognize several jQuery 
 * 
 * Ability to use the library along side other python libraries
 * Clear and complete documentation, with plenty of samples.
+

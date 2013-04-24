@@ -12,6 +12,42 @@ CadQuery has several goals:
 
 Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
 
+Why CadQuery instead of OpenSCAD?
+========================================
+
+CadQuery is based on OpenCasCade.  CadQuery shares many features with OpenSCAD, another open source, script based, parametric model generator.
+
+The primary advantage of OpenSCAD is the large number of already existing model libaries  that exist already. So why not simply use OpenSCAD?
+
+CadQuery scripts have several key advantages over OpenSCAD:
+
+1. **The scripts use a standard programming language**, python, and thus can benefit from the associated infrastructure.
+   This includes many standard libraries and IDEs
+
+2. **More powerful CAD kernel** OpenCascade is much more powerful than CGAL. Features supported natively
+   by OCC include NURBS, splines, surface sewing, STL repair, STEP import/export,  and other complex operations,
+   in addition to the standard CSG operations supported by CGAL
+
+3. **Ability to import/export STEP** We think the ability to begin with a STEP model, created in a CAD package,
+   and then add parametric features is key.  This is possible in OpenSCAD using STL, but STL is a lossy format
+
+4. **Less Code and easier scripting**  CadQuery scripts require less code to create most objects, because it is possible to locate
+   features based on the position of other features, workplanes, vertices, etc.
+
+5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD. 
+
+License
+========
+
+CadQuery is licensed under the terms of the LGPLv3. http://www.gnu.org/copyleft/lesser.html
+
+Where is the GUI?
+==================
+
+CadQuery does not provide a stand-alone gui yet, though this is one of the projects we hope to tackle.
+
+CadQuery provides the backbone of http://parametricparts.com, so the easiest way to see it in action is to review the samples and objects there.
+
 Installing
 ============
 
@@ -44,29 +80,6 @@ Installing
 You're up and running!
 		
 
-Why CadQuery instead of OpenSCAD?
-========================================
-
-CadQuery is based on OpenCasCade.  CadQuery shares many features with OpenSCAD, another open source, script based, parametric model generator.
-
-The primary advantage of OpenSCAD is the large number of already existing model libaries  that exist already. So why not simply use OpenSCAD?
-
-CadQuery scripts have several key advantages over OpenSCAD:
-
-1. **The scripts use a standard programming language**, python, and thus can benefit from the associated infrastructure.
-   This includes many standard libraries and IDEs
-
-2. **More powerful CAD kernel** OpenCascade is much more powerful than CGAL. Features supported natively
-   by OCC include NURBS, splines, surface sewing, STL repair, STEP import/export,  and other complex operations,
-   in addition to the standard CSG operations supported by CGAL
-
-3. **Ability to import/export STEP** We think the ability to begin with a STEP model, created in a CAD package,
-   and then add parametric features is key.  This is possible in OpenSCAD using STL, but STL is a lossy format
-
-4. **Less Code and easier scripting**  CadQuery scripts require less code to create most objects, because it is possible to locate
-   features based on the position of other features, workplanes, vertices, etc.
-
-5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD. 
 
 
 Where does the name CadQuery come from?
