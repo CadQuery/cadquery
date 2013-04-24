@@ -21,7 +21,7 @@
 """
 import cadquery
 
-import FreeCAD,tempfile,os
+import FreeCAD,tempfile,os,StringIO
 from FreeCAD import Drawing
 
 try:
@@ -41,6 +41,11 @@ class UNITS:
     IN = "in"
 
 
+def toString(shape,exportType,tolerance=0.1):
+	s= StringIO.StringIO()
+	exportShape(shape,exportType,s,tolerance)
+	return s.getvalue()
+	
 def exportShape(shape,exportType,fileLike,tolerance=0.1):
     """
         :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery

@@ -12,6 +12,7 @@ CadQuery has several goals:
 
 Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
 
+
 Installing
 ============
 
@@ -28,7 +29,7 @@ Installing
 		exporters.toString(box,'STL')
 		
 You're up and running!
-		
+
 
 Why CadQuery instead of OpenSCAD?
 ========================================
@@ -68,4 +69,3 @@ If you are familiar with how jQuery, you will probably recognize several jQuery 
 * 
 * Ability to use the library along side other python libraries
 * Clear and complete documentation, with plenty of samples.
-

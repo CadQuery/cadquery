@@ -1,22 +1,19 @@
+from distutils.core import setup
+
 setup(
     name='cadquery',
-    version=get_version(),
+    version='0.1.2',
     url='https://github.com/dcowden/cadquery',
     license='LGPL',
     author='David Cowden',
     author_email='dave.cowden@gmail.com',
     description='CadQuery is a parametric  scripting language for creating and traversing CAD models',
-    long_description=__doc__,
-    packages=find_packages(),
+    long_description=open('README.txt').read(),
+    packages=['cadquery','cadquery.contrib','cadquery.freecad_impl','cadquery.plugins','tests'],
     include_package_data=True,
     zip_safe=False,
     platforms='any',
-    install_requires=['FreeCAD'], #how to list FreeCAD here?
-    #entry_points='''\
-    #[console_scripts]
-    ##rqworker = rq.scripts.rqworker:main
-    #rqinfo = rq.scripts.rqinfo:main
-    #''',
+
     classifiers=[
         # As from http://pypi.python.org/pypi?%3Aaction=list_classifiers
         #'Development Status :: 1 - Planning',
@@ -31,7 +28,7 @@ setup(
         'Intended Audience :: Information Technology',
         'Intended Audience :: Science/Research',
         'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: LGPL License',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
         'Operating System :: POSIX',
         'Operating System :: MacOS',
         'Operating System :: Unix',
