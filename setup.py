@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='cadquery',
-    version='0.1.2',
+    version='0.1.3',
     url='https://github.com/dcowden/cadquery',
     license='LGPL',
     author='David Cowden',
