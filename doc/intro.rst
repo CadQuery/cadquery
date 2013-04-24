@@ -4,14 +4,8 @@
 Introduction
 *********************
 
-What is a ParametricParts Model Script?
+What is CadQuery
 ========================================
-
-A Model Script is a python script that builds a 3d model in response to user inputs.
-
-Model Scripts are written in python. They can use two different APIs:
-     1. FreeCAD Scripts, or
-     2. a new, fluent-api called CadQuery.
 
 CadQuery is an intuitive, easy-to-use language for building parametric 3D CAD models.  It has several goals:
 
@@ -28,7 +22,7 @@ CadQuery is a Python module that provides a high-level wrapper around the
 (`FreeCAD <http://sourceforge.net/apps/mediawiki/free-cad/index.php?title=Main_Page>`_) python libraries.
 
 Where does the name CadQuery come from?
-===============================
+========================================
 
 CadQuery is inspired by ( `jQuery <http://www.jquery.com>`_ ), a popular framework that
 revolutionized web development involving javascript.
@@ -44,7 +38,7 @@ If you are familiar with how jQuery, you will probably recognize several jQuery 
 
 
 Why ParametricParts instead of OpenSCAD?
-==================================
+============================================
 
 CadQuery is based on FreeCAD,which is in turn based on the OpenCascade modelling kernel. CadQuery/FreeCAD scripts
 share many features with OpenSCAD, another open source, script based, parametric model generator.

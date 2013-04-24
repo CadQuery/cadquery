@@ -4,7 +4,7 @@
 CadQuery String Selectors
 *************************
 
-.. automodule:: cadfile.cadutils.cadquery
+.. automodule:: cadquery
 
 CadQuery selector strings allow filtering various types of object lists. Most commonly, Edges, Faces, and Vertices are
 used, but all objects types can be filtered.
@@ -68,6 +68,8 @@ Some filter types are not supported for edges.  The selector usually refers to t
     when these filters are applied.
 
 The axis used in the listing below are for illustration: any axis would work similarly in each case.
+
+
 
 =========   ====================================        =====================================   ==========================
 Selector    Selector Class                              Selects                                 # objects returned

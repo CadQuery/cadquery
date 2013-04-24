@@ -1,6 +1,6 @@
 .. _cadquerybasics:
 
-.. automodule:: cadfile.cadutils.cadquery
+.. automodule:: cadquery
 
 *************************
 Introduction to CadQuery
@@ -21,7 +21,7 @@ CadQuery strives to allow scripts to read roughly as a human would describe an o
 
 For example, consider this object:
 
-..  image:: quickstart.png
+..  image:: _static/quickstart.png
 
 A human would describe this as:
 

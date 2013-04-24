@@ -10,7 +10,7 @@ This page documents all of the methods and functions of the CadQuery classes, or
 
     For a listing organized by functional area, see the :ref:`apireference`
 
-.. automodule:: cadfile.cadutils.cadquery
+.. automodule:: cadquery
 
 Core Classes
 ---------------------
@@ -19,6 +19,20 @@ Core Classes
     CQ
     Plane
     Workplane
+
+Primitives
+-----------------
+
+.. autosummary::
+
+    Plane
+    Vector
+    Solid
+    Shell
+    Wire
+    Edge
+    Vertex
+	
 
 
 Selectors
@@ -33,7 +47,47 @@ Selectors
 	DirectionMinMaxSelector
 	StringSyntaxSelector
 
-Classes
+Geometry Classes
+------------------
+
+.. autoclass:: Vector
+    :members:
+
+.. autoclass:: Plane
+    :members:
+
+Shape Base Class
+-------------------
+
+All objects inherit from Shape, which as basic manipulation methods:
+
+.. autoclass:: Shape
+    :members:
+
+Primitive Classes
+--------------------
+
+.. autoclass:: Solid
+    :members:
+
+
+.. autoclass:: Shell
+    :members:
+
+
+.. autoclass:: Wire
+   :members:
+
+
+.. autoclass:: Edge
+    :members:
+
+
+.. autoclass:: Vertex
+    :members:	
+	
+	
+Core Classes
 ------------------------
 
 .. autoclass:: CQ
@@ -46,6 +100,10 @@ Classes
    :members:
    :inherited-members:
 
+   
+Selector Classes
+------------------------
+   
 .. autoclass:: Selector
    :members:
 

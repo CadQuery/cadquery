@@ -1,2 +1,2 @@
 *.pyc
-sphinxdoc/_build/*
+doc/_build/*

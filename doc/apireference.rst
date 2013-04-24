@@ -4,12 +4,11 @@
 CadQuery API Reference
 ***********************
 
-.. automodule:: cadfile.cadutils.cadquery
+
 
 .. seealso::
   This page lists api methods grouped by functional area.
   Use :ref:`classreference` to see methods alphabetically by class.
-  Don't see a method you want? see :ref:`extending`
 
 Primary Objects
 ----------------
@@ -24,6 +23,8 @@ The sections below list methods of these objects grouped by **functional area**
 
 Initialization
 ----------------
+
+.. automodule:: cadquery
 
 Creating new workplanes and object chains
 
@@ -69,7 +70,6 @@ Creating 2-d constructs that can be used to create 3 d features
 Methods that create 3d features
 
 .. autosummary::
-
 	Workplane.cboreHole
 	Workplane.cskHole
 	Workplane.hole
@@ -128,6 +128,7 @@ Selectors
 ------------------------
 
 Objects that filter and select CAD objects
+
 
 .. autosummary::
 	NearestToPointSelector

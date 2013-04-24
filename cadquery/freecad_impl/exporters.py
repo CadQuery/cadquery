@@ -51,6 +51,7 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         The object should be already open and ready to write. The caller is responsible
         for closing the object 
     """
+
     
     if isinstance(shape,cadquery.CQ):
         shape = shape.val()
@@ -243,7 +244,7 @@ def getSVG(shape,opts=None):
     """
 
     d = {'width':800,'height':240,'marginLeft':200,'marginTop':20}
-	
+    
     if opts:
         d.update(opts)
 

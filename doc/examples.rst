@@ -4,8 +4,8 @@
 CadQuery Examples
 *********************************
 
-.. automodule:: cadfile.cadutils.cadquery
-.. automodule:: cadfile.cadutils.cad
+.. automodule:: cadquery
+
 
 The examples on this page can help you learn how to build objects with CadQuery.
 
@@ -387,7 +387,7 @@ You can create a rotated work plane by specifying angles of rotation relative to
 .. cq_plot::
 
     result = Workplane("front").box(4.0,4.0,0.25).faces(">Z").workplane()  \
-         .transformed(offset=cad.Vector(0,-1.5,1.0),rotate=cad.Vector(60,0,0)) \
+         .transformed(offset=Vector(0,-1.5,1.0),rotate=Vector(60,0,0)) \
          .rect(1.5,1.5,forConstruction=True).vertices().hole(0.25)
 
 .. topic:: Api References

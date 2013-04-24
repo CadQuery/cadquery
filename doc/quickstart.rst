@@ -1,10 +1,10 @@
 
-.. module:: cadfile.cadutils.cadquery
+.. module:: cadquery
 
 .. _quickstart:
 
 ***********************
-ModelScript QuickStart
+CadQuery QuickStart
 ***********************
 
 Want a quick glimpse of Parametric Parts ModelScripts?  You're at the right place!
@@ -51,7 +51,7 @@ CadQuery comes with an online, interactive default model as a starting point.   
 
 You should see the dynamic model creator page, which will display a sample model:
 
-        ..  image:: quickstart-1.png
+        ..  image:: _static/quickstart-1.png
 
 Take a minute to play with this model. Here are a few things to try:
 
@@ -111,7 +111,7 @@ Now, modify the build script to use your width value to make the block  by chang
 The value property always returns the ``user-adjusted`` value of the parameter.  That's good enough for now.
 Click "Save Changes" and you should see your 80x60x10mm base plate, like this:
 
-        ..  image:: quickstart-2.png
+        ..  image:: _static/quickstart-2.png
 
 If you'd like to come back to this model later, the url bar links to the newly created part.
 
@@ -135,7 +135,7 @@ This modification will do the trick:
 
 Rebuild your model by clicking "Save Model" at the bottom. Your block should look like this:
 
-        ..  image:: quickstart-3.png
+        ..  image:: _static/quickstart-3.png
 
 
 The code is pretty compact, and works like this:
@@ -179,7 +179,7 @@ Good news!-- we can get the job done with just two lines of code. Here's the cod
 
 You should see something like this:
 
-        ..  image:: quickstart-4.png
+        ..  image:: _static/quickstart-4.png
 
 Lets Break that down a bit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -267,7 +267,7 @@ We can do that using the preset dictionaries in the parameter definition:
 Now save the model and have a look at the preset DDLB-- you'll see that you can easily switch between these
 configurations:
 
-        ..  image:: quickstart-5.png
+        ..  image:: _static/quickstart-5.png
 
 
 Done!
@@ -300,6 +300,5 @@ Want to learn more?
 ====================
 
    * The :ref:`examples` contains lots of examples demonstrating cadquery features
-   * The :ref:`cadquery_reference` describes the file format in detail
    * The :ref:`apireference` is a good overview of language features grouped by function
    * The :ref:`classreference` is the hard-core listing of all functions available.
