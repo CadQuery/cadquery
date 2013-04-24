@@ -16,19 +16,21 @@ Using CadQuery, you can write short, simple scripts that produce high quality CA
 Installing
 ============
 
-1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/
+1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
 
-2. install::
-
-		pip install cadquery
-
-3. test your installation::
-
-		from cadquery import *
-		box = Workplane("XY").box(1,2,3)
-		exporters.toString(box,'STL')
+2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own, 
+   preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD
+   lib directory to your path. On  (*Nix)::
+   
+        import sys
+		sys.path.append('/usr/lib/freecad/lib')
 		
-You're up and running!
+   or on Windows::
+     
+	    import sys
+		sys.path.append('/c/apps/FreeCAD/bin')
+		
+   *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
 
 
 Why CadQuery instead of OpenSCAD?

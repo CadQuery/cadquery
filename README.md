@@ -30,6 +30,7 @@ Installing
 		sys.path.append('/c/apps/FreeCAD/bin')
 		
    *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
+   
 3. install cadquery::
 
 		pip install cadquery
