@@ -2,7 +2,7 @@
     Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
 
     This file is part of CadQuery.
-    
+
     CadQuery is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -15,14 +15,25 @@
 
     You should have received a copy of the GNU Lesser General Public
     License along with this library; If not, see <http://www.gnu.org/licenses/>
-    
+
     An exporter should provide functionality to accept a shape, and return
     a string containing the model content.
 """
 import cadquery
 
-import FreeCAD,tempfile,os,StringIO
-from FreeCAD import Drawing
+from .verutil import fc_import
+FreeCAD = fc_import("FreeCAD")
+import tempfile,os,StringIO
+
+Drawing = fc_import("FreeCAD.Drawing")
+#_FCVER = freecad_version()
+#if _FCVER>=(0,13):
+    #import Drawing as FreeCADDrawing #It's in FreeCAD lib path
+#elif _FCVER>=(0,12):
+    #import FreeCAD.Drawing as FreeCADDrawing
+#else:
+    #raise RuntimeError, "Invalid freecad version: %s" % str(".".join(_FCVER))
+
 
 try:
     import xml.etree.cElementTree as ET
@@ -35,7 +46,7 @@ class ExportTypes:
     AMF = "AMF"
     SVG = "SVG"
     TJS = "TJS"
-    
+
 class UNITS:
     MM = "mm"
     IN = "in"
@@ -45,7 +56,7 @@ def toString(shape,exportType,tolerance=0.1):
 	s= StringIO.StringIO()
 	exportShape(shape,exportType,s,tolerance)
 	return s.getvalue()
-	
+
 def exportShape(shape,exportType,fileLike,tolerance=0.1):
     """
         :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
@@ -54,13 +65,13 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         :param tolerance: the tolerance, in model units
         :param fileLike: a file like object to which the content will be written.
         The object should be already open and ready to write. The caller is responsible
-        for closing the object 
+        for closing the object
     """
 
-    
+
     if isinstance(shape,cadquery.CQ):
         shape = shape.val()
-        
+
     if exportType == ExportTypes.TJS:
         #tessellate the model
         tess = shape.tessellate(tolerance)
@@ -78,9 +89,9 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         fileLike.write(getSVG(shape.wrapped))
     elif exportType == ExportTypes.AMF:
         tess = shape.tessellate(tolerance)
-        aw = AmfWriter(tess).writeAmf(fileLike)        
+        aw = AmfWriter(tess).writeAmf(fileLike)
     else:
-        
+
         #all these types required writing to a file and then
         #re-reading. this is due to the fact that FreeCAD writes these
         (h, outFileName) = tempfile.mkstemp()
@@ -130,8 +141,8 @@ def guessUnitOfMeasure(shape):
     if sum(dimList) < 10:
         return UNITS.IN
 
-    return UNITS.MM    
-    
+    return UNITS.MM
+
 
 class AmfWriter(object):
     def __init__(self,tessellation):
@@ -172,7 +183,7 @@ class AmfWriter(object):
         ET.ElementTree(amf).write(outFile,encoding='ISO-8859-1')
 
 """
-    Objects that represent 
+    Objects that represent
     three.js JSON object notation
     https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3.0
 """
@@ -183,21 +194,21 @@ class JsonMesh(object):
         self.faces = [];
         self.nVertices = 0;
         self.nFaces = 0;
-        
+
     def addVertex(self,x,y,z):
         self.nVertices += 1;
         self.vertices.extend([x,y,z]);
-        
+
     #add triangle composed of the three provided vertex indices
     def addTriangleFace(self, i,j,k):
         #first position means justa simple triangle
         self.nFaces += 1;
         self.faces.extend([0,int(i),int(j),int(k)]);
-    
+
     """
         Get a json model from this model.
         For now we'll forget about colors, vertex normals, and all that stuff
-    """    
+    """
     def toJson(self):
         return JSON_TEMPLATE % {
             'vertices' : str(self.vertices),
@@ -249,7 +260,7 @@ def getSVG(shape,opts=None):
     """
 
     d = {'width':800,'height':240,'marginLeft':200,'marginTop':20}
-    
+
     if opts:
         d.update(opts)
 
@@ -314,14 +325,14 @@ def exportSVG(shape, fileName):
         TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
         export a view of a part to svg
     """
-    
+
     svg = getSVG(shape.val().wrapped)
     f = open(fileName,'w')
     f.write(svg)
     f.close()
 
 
-        
+
 JSON_TEMPLATE= """\
 {
     "metadata" :
@@ -336,9 +347,9 @@ JSON_TEMPLATE= """\
         "materials"     : 1,
         "morphTargets"  : 0
     },
-    
+
     "scale" : 1.0,
-    
+
     "materials": [    {
     "DbgColor" : 15658734,
     "DbgIndex" : 0,

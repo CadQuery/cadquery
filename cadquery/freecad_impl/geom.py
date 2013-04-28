@@ -2,7 +2,7 @@
     Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
 
     This file is part of CadQuery.
-    
+
     CadQuery is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -18,8 +18,10 @@
 """
 
 import math,sys
-import FreeCAD
-import FreeCAD.Part
+#import FreeCAD
+from .verutil import fc_import
+FreeCAD = fc_import("FreeCAD")
+#Turns out we don't need the Part module here.
 
 def sortWiresByBuildOrder(wireList,plane,result=[]):
     """
@@ -187,8 +189,8 @@ class Vector(object):
 
 class Matrix:
     """
-        A 3d , 4x4 transformation matrix.        
-        
+        A 3d , 4x4 transformation matrix.
+
         Used to move geometry in space.
     """
     def __init__(self,matrix=None):
@@ -196,14 +198,14 @@ class Matrix:
             self.wrapped = FreeCAD.Base.Matrix()
         else:
             self.wrapped = matrix
-            
+
     def rotateX(self,angle):
         self.wrapped.rotateX(angle)
-        
+
     def rotateY(self,angle):
         self.wrapped.rotateY(angle)
-    
-    
+
+
 class Plane:
     """
         A 2d coordinate system in space, with the x-y axes on the a plane, and a particular point as the origin.
@@ -321,7 +323,7 @@ class Plane:
 
         self.setOrigin3d(origin)
 
-        
+
     def setOrigin3d(self,originVector):
         """
             Move the origin of the plane, leaving its orientation and xDirection unchanged.
@@ -427,7 +429,7 @@ class Plane:
             v = Vector(tuplePoint[0],tuplePoint[1],tuplePoint[2])
         return Vector(self.rG.multiply(v.wrapped))
 
-        
+
     def rotated(self,rotate=(0,0,0)):
         """
         returns a copy of this plane, rotated about the specified axes, as measured from horizontal
@@ -445,7 +447,7 @@ class Plane:
         """
 
         if rotate.__class__.__name__ != 'Vector':
-            rotate = Vector(rotate)		
+            rotate = Vector(rotate)
         #convert to radians
         rotate = rotate.multiply(math.pi / 180.0 )
 
@@ -473,13 +475,13 @@ class Plane:
         #compute rotation matrix ( global --> local --> rotate  --> global )
         #rm = self.plane.fG.multiply(matrix).multiply(self.plane.rG)
         rm = self.computeTransform(rotationMatrix)
-        
+
 
         #There might be a better way, but to do this rotation takes 3 steps
         #transform geometry to local coordinates
         #then rotate about x
         #then transform back to global coordiante
-        
+
         resultWires = []
         for w in listOfShapes:
             mirrored = w.transformGeometry(rotationMatrix.wrapped)
@@ -487,7 +489,7 @@ class Plane:
 
         return resultWires
 
-        
+
     def _calcTransforms(self):
         """
             Computes transformation martrices to convert betwene local and global coordinates
@@ -507,12 +509,12 @@ class Plane:
         (invR.A14,invR.A24,invR.A34) = (self.origin.x,self.origin.y,self.origin.z)
 
         ( self.rG,self.fG ) = ( invR,invR.inverse() )
-        
+
     def computeTransform(self,tMatrix):
         """
             Computes the 2-d projection of the supplied matrix
         """
-        
+
         rm = self.fG.multiply(tMatrix.wrapped).multiply(self.rG)
         return Matrix(rm)
 

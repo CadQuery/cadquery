@@ -2,7 +2,7 @@
 	Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
 
 	This file is part of CadQuery.
-	
+
 	CadQuery is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
 	License as published by the Free Software Foundation; either
@@ -43,13 +43,15 @@
 
         5. allow changing interfaces when we'd like.  there are  few cases where the freecad api is not
            very userfriendly: we like to change those when necesary. As an example, in the freecad api,
-           all factory methods are on the 'Part' object, but it is very useful to know what kind of 
-           object each one returns, so these are better grouped by the type of object they return. 
+           all factory methods are on the 'Part' object, but it is very useful to know what kind of
+           object each one returns, so these are better grouped by the type of object they return.
            (who would know that Part.makeCircle() returns an Edge, but Part.makePolygon() returns a Wire ?
 """
 from cadquery import Vector,BoundBox
 import FreeCAD
-import FreeCAD.Part
+
+from .verutil import fc_import
+FreeCADPart = fc_import("FreeCAD.Part")
 
 class Shape(object):
     """
@@ -269,7 +271,7 @@ class Shape(object):
     def transformGeometry(self,tMatrix):
         """
 			tMatrix is a matrix object.
-			
+
             returns a copy of the object, but with geometry transformed insetad of just
             rotated.
 
@@ -316,9 +318,9 @@ class Edge(Shape):
         #self.endPoint = None
 
         self.edgetypes= {
-            FreeCAD.Part.Line : 'LINE',
-            FreeCAD.Part.ArcOfCircle : 'ARC',
-            FreeCAD.Part.Circle : 'CIRCLE'
+            FreeCADPart.Line : 'LINE',
+            FreeCADPart.ArcOfCircle : 'ARC',
+            FreeCADPart.Circle : 'CIRCLE'
         }
 
     def geomType(self):
@@ -368,7 +370,7 @@ class Edge(Shape):
 
     @classmethod
     def makeCircle(cls,radius,pnt=(0,0,0),dir=(0,0,1),angle1=360.0,angle2=360):
-        return Edge(FreeCAD.Part.makeCircle(radius,toVector(pnt),toVector(dir),angle1,angle2))
+        return Edge(FreeCADPart.makeCircle(radius,toVector(pnt),toVector(dir),angle1,angle2))
 
     @classmethod
     def makeSpline(cls,listOfVector):
@@ -380,7 +382,7 @@ class Edge(Shape):
         """
         vecs = [v.wrapped for v in listOfVector]
 
-        spline = FreeCAD.Part.BSplineCurve()
+        spline = FreeCADPart.BSplineCurve()
         spline.interpolate(vecs,False)
         return Edge(spline.toShape())
 
@@ -394,7 +396,7 @@ class Edge(Shape):
         :param v3: end vector
         :return: an edge object through the three points
         """
-        arc = FreeCAD.Part.Arc(v1.wrapped,v2.wrapped,v3.wrapped)
+        arc = FreeCADPart.Arc(v1.wrapped,v2.wrapped,v3.wrapped)
         e = Edge(arc.toShape())
         return e #arcane and undocumented, this creates an Edge object
 
@@ -406,7 +408,7 @@ class Edge(Shape):
             :param v2: Vector that represents the second point
             :return: A linear edge between the two provided points
         """
-        return Edge(FreeCAD.Part.makeLine(v1.toTuple(),v2.toTuple() ))
+        return Edge(FreeCADPart.makeLine(v1.toTuple(),v2.toTuple() ))
 
 
 class Wire(Shape):
@@ -425,7 +427,7 @@ class Wire(Shape):
         :param listOfWires:
         :return:
         """
-        return Shape.cast(FreeCAD.Part.Wire([w.wrapped for w in listOfWires]))
+        return Shape.cast(FreeCADPart.Wire([w.wrapped for w in listOfWires]))
 
     @classmethod
     def assembleEdges(cls,listOfEdges):
@@ -437,7 +439,7 @@ class Wire(Shape):
         """
         fCEdges = [a.wrapped for a in listOfEdges]
 
-        wa = Wire( FreeCAD.Part.Wire(fCEdges) )
+        wa = Wire( FreeCADPart.Wire(fCEdges) )
         return wa
 
     @classmethod
@@ -449,13 +451,13 @@ class Wire(Shape):
             :param normal: vector representing the direction of the plane the circle should lie in
             :return:
         """
-        w = Wire(FreeCAD.Part.Wire([FreeCAD.Part.makeCircle(radius,center.wrapped,normal.wrapped)]))
+        w = Wire(FreeCADPart.Wire([FreeCADPart.makeCircle(radius,center.wrapped,normal.wrapped)]))
         return w
 
     @classmethod
     def makePolygon(cls,listOfVertices,forConstruction=False):
         #convert list of tuples into Vectors.
-        w = Wire(FreeCAD.Part.makePolygon([i.wrapped for i in listOfVertices]))
+        w = Wire(FreeCADPart.makePolygon([i.wrapped for i in listOfVertices]))
         w.forConstruction = forConstruction
         return w
 
@@ -466,7 +468,7 @@ class Wire(Shape):
         By default a cylindrical surface is used to create the helix. If
         the fourth parameter is set (the apex given in degree) a conical surface is used instead'
         """
-        return Wire(FreeCAD.Part.makeHelix(pitch,height,radius,angle))
+        return Wire(FreeCADPart.makeHelix(pitch,height,radius,angle))
 
 
 class Face(Shape):
@@ -478,9 +480,9 @@ class Face(Shape):
 
         self.facetypes = {
             #TODO: bezier,bspline etc
-            FreeCAD.Part.Plane : 'PLANE',
-            FreeCAD.Part.Sphere : 'SPHERE',
-            FreeCAD.Part.Cone : 'CONE'
+            FreeCADPart.Plane : 'PLANE',
+            FreeCADPart.Sphere : 'SPHERE',
+            FreeCADPart.Cone : 'CONE'
         }
 
     def geomType(self):
@@ -506,7 +508,7 @@ class Face(Shape):
 
     @classmethod
     def makePlane(cls,length,width,basePnt=None,dir=None):
-        return Face(FreeCAD.Part.makePlan(length,width,toVector(basePnt),toVector(dir)))
+        return Face(FreeCADPart.makePlan(length,width,toVector(basePnt),toVector(dir)))
 
     @classmethod
     def makeRuledSurface(cls,edgeOrWire1,edgeOrWire2,dist=None):
@@ -515,7 +517,7 @@ class Face(Shape):
         Create a ruled surface out of two edges or wires. If wires are used then
         these must have the same
         """
-        return Shape.cast(FreeCAD.Part.makeRuledSurface(edgeOrWire1.obj,edgeOrWire2.obj,dist))
+        return Shape.cast(FreeCADPart.makeRuledSurface(edgeOrWire1.obj,edgeOrWire2.obj,dist))
 
     def cut(self,faceToCut):
         "Remove a face from another one"
@@ -541,7 +543,7 @@ class Shell(Shape):
 
     @classmethod
     def makeShell(cls,listOfFaces):
-        return Shell(FreeCAD.Part.makeShell([i.obj for i in listOfFaces]))
+        return Shell(FreeCADPart.makeShell([i.obj for i in listOfFaces]))
 
 
 class Solid(Shape):
@@ -568,7 +570,7 @@ class Solid(Shape):
             makeBox(length,width,height,[pnt,dir]) -- Make a box located\nin pnt with the d
             imensions (length,width,height)\nBy default pnt=Vector(0,0,0) and dir=Vector(0,0,1)'
         """
-        return Shape.cast(FreeCAD.Part.makeBox(length,width,height,pnt.wrapped,dir.wrapped))
+        return Shape.cast(FreeCADPart.makeBox(length,width,height,pnt.wrapped,dir.wrapped))
 
     @classmethod
     def makeCone(cls,radius1,radius2,height,pnt=Vector(0,0,0),dir=Vector(0,0,1),angleDegrees=360):
@@ -577,7 +579,7 @@ class Solid(Shape):
             Make a cone with given radii and height\nBy default pnt=Vector(0,0,0),
             dir=Vector(0,0,1) and angle=360'
         """
-        return Shape.cast(FreeCAD.Part.makeCone(radius1,radius2,height,pnt.wrapped,dir.wrapped,angleDegrees))
+        return Shape.cast(FreeCADPart.makeCone(radius1,radius2,height,pnt.wrapped,dir.wrapped,angleDegrees))
 
     @classmethod
     def makeCylinder(cls,radius,height,pnt=Vector(0,0,0),dir=Vector(0,0,1),angleDegrees=360):
@@ -586,7 +588,7 @@ class Solid(Shape):
             Make a cylinder with a given radius and height
             By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360'
         """
-        return Shape.cast(FreeCAD.Part.makeCylinder(radius,height,pnt.wrapped,dir.wrapped,angleDegrees))
+        return Shape.cast(FreeCADPart.makeCylinder(radius,height,pnt.wrapped,dir.wrapped,angleDegrees))
 
     @classmethod
     def makeTorus(cls,radius1,radius2,pnt=None,dir=None,angleDegrees1=None,angleDegrees2=None):
@@ -596,7 +598,7 @@ class Solid(Shape):
             By default pnt=Vector(0,0,0),dir=Vector(0,0,1),angle1=0
             ,angle1=360 and angle=360'
         """
-        return Shape.cast(FreeCAD.Part.makeTorus(radius1,radius2,pnt,dir,angleDegrees1,angleDegrees2))
+        return Shape.cast(FreeCADPart.makeTorus(radius1,radius2,pnt,dir,angleDegrees1,angleDegrees2))
 
     @classmethod
     def sweep(cls,profileWire,pathWire):
@@ -615,11 +617,11 @@ class Solid(Shape):
         """
             makes a loft from a list of wires
             The wires will be converted into faces when possible-- it is presumed that nobody ever actually
-            wants to make an infinitely thin shell for a real FreeCAD.Part.
+            wants to make an infinitely thin shell for a real FreeCADPart.
         """
         #the True flag requests building a solid instead of a shell.
 
-        return Shape.cast(FreeCAD.Part.makeLoft([i.wrapped for i in listOfWire],True))
+        return Shape.cast(FreeCADPart.makeLoft([i.wrapped for i in listOfWire],True))
 
     @classmethod
     def makeWedge(cls,xmin,ymin,zmin,z2min,x2min,xmax,ymax,zmax,z2max,x2max,pnt=None,dir=None):
@@ -629,7 +631,7 @@ class Solid(Shape):
          Make a wedge located in pnt\nBy default pnt=Vector(0,0,0) and dir=Vec
         tor(0,0,1)'
         """
-        return Shape.cast(FreeCAD.Part.makeWedge(xmin,ymin,zmin,z2min,x2min,xmax,ymax,zmax,z2max,x2max,pnt,dir))
+        return Shape.cast(FreeCADPart.makeWedge(xmin,ymin,zmin,z2min,x2min,xmax,ymax,zmax,z2max,x2max,pnt,dir))
 
     @classmethod
     def makeSphere(cls,radius,pnt=None,angleDegrees1=None,angleDegrees2=None,angleDegrees3=None):
@@ -638,7 +640,7 @@ class Solid(Shape):
             Make a sphere with a giv
             en radius\nBy default pnt=Vector(0,0,0), dir=Vector(0,0,1), angle1=0, angle2=90 and angle3=360'
         """
-        return Solid(FreeCAD.Part.makeSphere(radius,pnt,angleDegrees1,angleDegrees2,angleDegrees3))
+        return Solid(FreeCADPart.makeSphere(radius,pnt,angleDegrees1,angleDegrees2,angleDegrees3))
 
     @classmethod
     def extrudeLinearWithRotation(cls,outerWire,innerWires,vecCenter, vecNormal,angleDegrees):
@@ -679,12 +681,12 @@ class Solid(Shape):
         #make a ruled surface for each set of wires
         sides = []
         for w1,w2 in zip(startWires,endWires):
-            rs = FreeCAD.Part.makeRuledSurface(w1,w2)
+            rs = FreeCADPart.makeRuledSurface(w1,w2)
             sides.append(rs)
 
         #make faces for the top and bottom
-        startFace = FreeCAD.Part.Face(startWires)
-        endFace = FreeCAD.Part.Face(endWires)
+        startFace = FreeCADPart.Face(startWires)
+        endFace = FreeCADPart.Face(endWires)
 
         #collect all the faces from the sides
         faceList = [ startFace]
@@ -692,8 +694,8 @@ class Solid(Shape):
             faceList.extend(s.Faces)
         faceList.append(endFace)
 
-        shell = FreeCAD.Part.makeShell(faceList)
-        solid = FreeCAD.Part.makeSolid(shell)
+        shell = FreeCADPart.makeShell(faceList)
+        solid = FreeCADPart.makeSolid(shell)
         return Shape.cast(solid)
 
     @classmethod
@@ -730,7 +732,7 @@ class Solid(Shape):
         for w in innerWires:
             freeCADWires.append(w.wrapped)
 
-        f = FreeCAD.Part.Face(freeCADWires)
+        f = FreeCADPart.Face(freeCADWires)
         result = f.extrude(vecNormal.wrapped)
 
         return Shape.cast(result)
@@ -794,7 +796,7 @@ class Compound(Shape):
         Create a compound out of a list of shapes
         """
         solids = [s.wrapped for s in listOfShapes]
-        c = FreeCAD.Part.Compound(solids)
+        c = FreeCADPart.Compound(solids)
         return Shape.cast( c)
 
     def fuse(self,toJoin):

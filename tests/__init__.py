@@ -1,12 +1,13 @@
 from cadquery import *
 import unittest
 import sys
-FREECAD_LIB = "c:/apps/FreeCAD0.12/bin";
-sys.path.append(FREECAD_LIB);
-import FreeCAD
+import os
 
-P = FreeCAD.Part
-V = FreeCAD.Base.Vector
+from cadquery.freecad_impl.verutil import fc_import
+FreeCAD = fc_import("FreeCAD")
+
+P = fc_import("FreeCAD.Part")
+V = fc_import("FreeCAD").Base.Vector
 
 def readFileAsString(fileName):
     f= open(fileName,'r')
@@ -18,7 +19,7 @@ def writeStringToFile(strToWrite,fileName):
     f = open(fileName,'w')
     f.write(strToWrite)
     f.close()
-	
+
 
 def makeUnitSquareWire():
     return Solid.cast(P.makePolygon([V(0,0,0),V(1,0,0),V(1,1,0),V(0,1,0),V(0,0,0)]))

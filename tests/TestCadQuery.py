@@ -11,7 +11,11 @@ from cadquery import exporters
 from tests import BaseTest,writeStringToFile,makeUnitCube,readFileAsString,makeUnitSquareWire,makeCube
 
 #where unit test output will be saved
-OUTDIR = "c:/temp"
+import sys
+if sys.platform.startswith("win"):
+    OUTDIR = "c:/temp"
+else:
+    OUTDIR = "/tmp"
 SUMMARY_FILE = os.path.join(OUTDIR,"testSummary.html")
 
 SUMMARY_TEMPLATE="""<html>
@@ -422,13 +426,14 @@ class TestCadQuery(BaseTest):
 
     def testBasicLines(self):
         "Make a triangluar boss"
+        global OUTDIR
         s = Workplane(Plane.XY())
 
         #TODO:  extrude() should imply wire() if not done already
         #most users dont understand what a wire is, they are just drawing
 
         r = s.lineTo(1.0,0).lineTo(0,1.0).close().wire().extrude(0.25)
-        r.val().exportStep('c:/temp/testBasicLinesStep1.STEP')
+        r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesStep1.STEP'))
 
         self.assertEqual(0,s.faces().size()) #no faces on the original workplane
         self.assertEqual(5,r.faces().size() ) # 5 faces on newly created object
@@ -436,12 +441,12 @@ class TestCadQuery(BaseTest):
         #now add a circle through a side face
         r.faces("+XY").workplane().circle(0.08).cutThruAll()
         self.assertEqual(6,r.faces().size())
-        r.val().exportStep('c:/temp/testBasicLinesXY.STEP')
+        r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesXY.STEP'))
 
         #now add a circle through a top
         r.faces("+Z").workplane().circle(0.08).cutThruAll()
         self.assertEqual(9,r.faces().size())
-        r.val().exportStep('c:/temp/testBasicLinesZ.STEP')
+        r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesZ.STEP'))
 
         self.saveModel(r)
 
