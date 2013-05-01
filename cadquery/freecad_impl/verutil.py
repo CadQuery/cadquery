@@ -39,6 +39,13 @@ def _fc_path():
     global _PATH
     if _PATH:
         return _PATH
+		
+	#look for FREECAD_LIB env variable
+	if os.environ.has_key('FREECAD_LIB'):
+		_PATH = os.environ.get('FREECAD_LIB')
+		if os.path.exists( _PATH):
+		    return _PATH
+			
     if sys.platform.startswith('linux'):
         #Make some dangerous assumptions...
         for _PATH in [
@@ -50,7 +57,12 @@ def _fc_path():
                 return _PATH
 
     elif sys.platform.startswith('win'):
+		#try all the usual suspects
         for _PATH in [
+				"c:/Program Files/FreeCAD0.12/bin",
+				"c:/Program Files/FreeCAD0.13/bin",
+				"c:/Program Files (x86)/FreeCAD0.12/bin",
+				"c:/Program Files (x86)/FreeCAD0.13/bin",
                 "c:/apps/FreeCAD0.12/bin",
                 "c:/apps/FreeCAD0.13/bin",
                 ]:
