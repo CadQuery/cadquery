@@ -41,10 +41,10 @@ def _fc_path():
         return _PATH
 		
 	#look for FREECAD_LIB env variable
-	if os.environ.has_key('FREECAD_LIB'):
-		_PATH = os.environ.get('FREECAD_LIB')
-		if os.path.exists( _PATH):
-		    return _PATH
+    if os.environ.has_key('FREECAD_LIB'):
+        _PATH = os.environ.get('FREECAD_LIB')
+        if os.path.exists( _PATH):
+            return _PATH
 			
     if sys.platform.startswith('linux'):
         #Make some dangerous assumptions...
