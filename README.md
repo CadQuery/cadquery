@@ -44,12 +44,16 @@ CadQuery is licensed under the terms of the LGPLv3. http://www.gnu.org/copyleft/
 Where is the GUI?
 ==================
 
-CadQuery does not provide a stand-alone gui yet, though this is one of the projects we hope to tackle.
+CadQuery does not provide a stand-alone gui yet, though this is one of the projects we hope to tackle. 
+
+If you would like IDE support, you can use CadQuery inside of FreeCAD.
 
 CadQuery provides the backbone of http://parametricparts.com, so the easiest way to see it in action is to review the samples and objects there.
 
-Installing
-============
+Installing -- FreeStanding Installation
+========================================
+
+Use these steps if you would like to write CadQuery scripts as a python API.  In this case, FreeCAD is used only as a CAD kernel.
 
 1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
 
@@ -79,7 +83,28 @@ Installing
 		
 You're up and running!
 		
+Installing -- Using CadQuery from Inside FreeCAD
+=================================================
 
+Use these steps if you would like to write CadQuery scripts from inside of the FreeCAD IDE.   These steps have only been tested on windows <Thanks Tim Henderson!>
+
+1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
+
+2. Copy the entire CadQuery distribution into the FreeCAD/bin dir
+
+3. use the Python version embedded with Freecad to set up cadquery, eg:
+	cd "C:\Program Files\FreeCAD0.13\bin"
+	python "C:\Program Files\FreeCAD0.13\bin\cadquery-0.1.4/setup.py
+	
+4. copy generated binaries from FreeCAD0.13/bin/cadquery/cadquery into FreeCAD/Mod/Scripts
+
+Thats it. Now when you start FreeCAD, you can do for example:
+	import cadquery
+	bb = cadquery.Workplan("XY").box(1.0,2.0,3.0) //bb is a cadquery object
+	solid = bb.val() //solid is a cadquery solid object
+	Part.show(solid.wrapped) //use the wrapped property of a cadquery primitive to get the FreeCAD version
+	
+	
 
 
 Where does the name CadQuery come from?
