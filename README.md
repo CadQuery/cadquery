@@ -94,7 +94,7 @@ Use these steps if you would like to write CadQuery scripts from inside of the F
 
 3. use the Python version embedded with Freecad to set up cadquery, eg:
 	cd "C:\Program Files\FreeCAD0.13\bin"
-	python "C:\Program Files\FreeCAD0.13\bin\cadquery-0.1.4/setup.py
+	python "C:\Program Files\FreeCAD0.13\bin\cadquery-0.1.4/setup.py install
 	
 4. copy generated binaries from FreeCAD0.13/bin/cadquery/cadquery into FreeCAD/Mod/Scripts
 
