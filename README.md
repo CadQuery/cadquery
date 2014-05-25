@@ -100,7 +100,7 @@ Use these steps if you would like to write CadQuery scripts from inside of the F
 
 Thats it. Now when you start FreeCAD, you can do for example:
 	import cadquery
-	bb = cadquery.Workplan("XY").box(1.0,2.0,3.0) //bb is a cadquery object
+	bb = cadquery.Workplane("XY").box(1.0,2.0,3.0) //bb is a cadquery object
 	solid = bb.val() //solid is a cadquery solid object
 	Part.show(solid.wrapped) //use the wrapped property of a cadquery primitive to get the FreeCAD version
 	
