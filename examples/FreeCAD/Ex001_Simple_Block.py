@@ -20,9 +20,9 @@ import cadquery
 import Part
 
 #The dimensions of the box. These can be modified rather than changing the box's code directly.
-length = 100.0
-height = 100.0
-thickness = 20.0
+length = 80.0
+height = 60.0
+thickness = 10.0
 
 #Create a 3D box based 
 bb = cadquery.Workplane("XY").box(length, height, thickness)
