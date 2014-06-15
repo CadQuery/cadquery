@@ -1,4 +1,4 @@
-#File: Ex003_Pillow_Block_With_Counterbored_Holes.py
+#File: Ex004_Extruded_Cylindrical_Plate.py
 #To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
 #instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
 
@@ -6,30 +6,27 @@
 #the path to this example, and the name of the example appropriately.
 #import sys
 #sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex003_Pillow_Block_With_Counterbored_Holes
+#import Ex004_Extruded_Cylindrical_Plate
 
 #If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex003_Pillow_Block_With_Counterbored_Holes)
+#reload(Ex004_Extruded_Cylindrical_Plate)
 
 #You'll need to delete the original shape that was created, and the new shape should be named sequentially (Shape001, etc).
 
 #You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more in-depth explantion of this example at http://parametricparts.com/docs/quickstart.html
+#You can get a more information on this example at http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
 
 import cadquery
 import Part
 
 #The dimensions of the box. These can be modified rather than changing the box's code directly.
-length = 80.0
-height = 60.0
-thickness = 10.0
+circle_radius = 50.0
+rectangle_width = 13.0
+rectange_length = 19.0
+thickness = 13.0
 
-#Create a 3D box based on the dimension variables above and add 3 counterbored holes
-bb = cadquery.Workplane("XY").box(length, height, thickness) \
-		.faces(">Z").workplane().hole(22.0) \
-		.faces(">Z").workplane() \
-        .rect(length - 8.0, height - 8.0, forConstruction = True) \
-        .vertices().cboreHole(2.4, 4.4, 2.1)
+#Extrude a cylindrical plate with a rectangular hole in the middle of it
+bb = cadquery.Workplane("front").circle(circle_radius).rect(rectangle_width, rectange_length).extrude(thickness)
 
 #Get a cadquery solid object
 solid = bb.val()
