@@ -25,10 +25,10 @@ height = 60.0
 thickness = 10.0
 
 #Create a 3D box based on the dimension variables above
-bb = cadquery.Workplane("XY").box(length, height, thickness)
+result = cadquery.Workplane("XY").box(length, height, thickness)
 
 #Get a cadquery solid object
-solid = bb.val()
+solid = result.val()
 
 #Use the wrapped property of a cadquery primitive to get a FreeCAD solid
 Part.show(solid.wrapped)

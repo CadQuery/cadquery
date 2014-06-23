@@ -25,14 +25,14 @@ height = 60.0
 thickness = 10.0
 
 #Create a 3D box based on the dimension variables above and add 3 counterbored holes
-bb = cadquery.Workplane("XY").box(length, height, thickness) \
+result = cadquery.Workplane("XY").box(length, height, thickness) \
 		.faces(">Z").workplane().hole(22.0) \
 		.faces(">Z").workplane() \
         .rect(length - 8.0, height - 8.0, forConstruction = True) \
         .vertices().cboreHole(2.4, 4.4, 2.1)
 
 #Get a cadquery solid object
-solid = bb.val()
+solid = result.val()
 
 #Use the wrapped property of a cadquery primitive to get a FreeCAD solid
 Part.show(solid.wrapped)
