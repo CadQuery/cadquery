@@ -19,14 +19,12 @@
 import cadquery
 import Part
 
-#The dimensions of the box. These can be modified rather than changing the box's code directly.
-circle_radius = 50.0
-rectangle_width = 13.0
-rectange_length = 19.0
-thickness = 13.0
+#The dimensions of the model. These can be modified rather than changing the box's code directly.
+width = 2.0
+thickness = 0.25
 
 #Extrude a plate outline made of lines and an arc
-result = cadquery.Workplane("front").lineTo(2.0,0).lineTo(2.0,1.0).threePointArc((1.0,1.5),(0.0,1.0)).close().extrude(0.25)
+result = cadquery.Workplane("front").lineTo(width, 0).lineTo(width, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0)).close().extrude(thickness)
 
 #Get a cadquery solid object
 solid = result.val()

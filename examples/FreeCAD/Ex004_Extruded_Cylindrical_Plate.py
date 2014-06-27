@@ -19,7 +19,7 @@
 import cadquery
 import Part
 
-#The dimensions of the box. These can be modified rather than changing the box's code directly.
+#The dimensions of the model. These can be modified rather than changing the box's code directly.
 circle_radius = 50.0
 rectangle_width = 13.0
 rectange_length = 19.0
