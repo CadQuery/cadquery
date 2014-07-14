@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+  <head>
+    <title>CadQuery Cheatsheet</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <style type="text/css">
+    .section {
+      margin: 0.5em;
+      padding: 0px 0.5em 0.5em;
+      background-color: #EBEBEB;
+    }
+    .column {
+      float: left;
+      width: 375px;
+    }
+    tr {
+      background-color: #FFFFFF;
+    }
+    td {
+      text-align: center;
+      width: 5em;
+    }
+    h2 {
+      display: inline;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="column">
+      <div class="section">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="http://parametricparts.com/docs/#">ParametricParts Documentation</a></li>
+          <li><a href="https://github.com/dcowden/cadquery/blob/master/README.md">CadQuery Readme</a></li>
+          <li><a href="http://parametricparts.com/docs/examples.html#examples">CadQuery Examples</a></li>
+          <li><a href="http://parametricparts.com/docs/classreference.html">CadQuery Class Reference</a></li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>Named Planes</h2><br />
+        Available named planes are as follows.<br />
+        Direction references refer to the global<br />
+        directions.
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>xDir</th>
+            <th>yDir</th>
+            <th>zDir</th>
+          </tr>
+          <tr>
+            <td>XY</td>
+            <td>+x</td>
+            <td>+y</td>
+            <td>+z</td>
+          </tr>
+          <tr>
+            <td>YZ</td>
+            <td>+y</td>
+            <td>+z</td>
+            <td>+x</td>
+          </tr>
+          <tr>
+            <td>XZ</td>
+            <td>+x</td>
+            <td>+z</td>
+            <td>-y</td>
+          </tr>
+          <tr>
+            <td>front</td>
+            <td>+x</td>
+            <td>+y</td>
+            <td>+z</td>
+          </tr>
+          <tr>
+            <td>back</td>
+            <td>-x</td>
+            <td>+y</td>
+            <td>-z</td>
+          </tr>
+          <tr>
+            <td>left</td>
+            <td>+z</td>
+            <td>+y</td>
+            <td>-x</td>
+          </tr>
+          <tr>
+            <td>right</td>
+            <td>-z</td>
+            <td>+y</td>
+            <td>+x</td>
+          </tr>
+          <tr>
+            <td>top</td>
+            <td>+x</td>
+            <td>-z</td>
+            <td>+y</td>
+          </tr>
+          <tr>
+            <td>bottom</td>
+            <td>+x</td>
+            <td>+z</td>
+            <td>-y</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="column" style="width:475px;">
+      <div class="section">
+        <h2>Selector String Modifiers</h2><br />
+        Selectors are a complex topic: see <a href="http://parametricparts.com/docs/selectors.html">CadQuery String Selectors</a> for more information.<br />
+        Axis Strings are: X, Y, Z, XY, YZ, XZ
+        <table>
+          <tr>
+            <th>Modifier</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td style="width:20px;">&#124;</td>
+            <td style="width:455px;">Parallel to (same as <a href="http://parametricparts.com/docs/classreference.html?highlight=paralleldirselector#cadfile.cadutils.cadquery.ParallelDirSelector">ParallelDirSelector</a>). Can return multiple objects.</td>
+          </tr>
+          <tr>
+            <td style="width:20px;">&#35;</td>
+            <td style="width:455px;">Perpendicular to (same as <a href="http://parametricparts.com/docs/classreference.html?highlight=perpendiculardirselector#cadfile.cadutils.cadquery.PerpendicularDirSelector">PerpendicularDirSelector</a>)</td>
+          </tr>
+          <tr>
+            <td style="width:20px;">&#43;</td>
+            <td style="width:455px;">Positive direction (same as <a href="http://parametricparts.com/docs/classreference.html?highlight=directionselector#cadfile.cadutils.cadquery.DirectionSelector">DirectionSelector</a>)</td>
+          </tr>
+          <tr>
+            <td style="width:20px;">&#45;</td>
+            <td style="width:455px;">Negative direction (same as <a href="http://parametricparts.com/docs/classreference.html?highlight=directionselector#cadfile.cadutils.cadquery.DirectionSelector">DirectionSelector</a>)</td>
+          </tr>
+          <tr>
+            <td style="width:20px;">&gt;</td>
+            <td style="width:455px;">Maximize (same as <a href="http://parametricparts.com/docs/classreference.html?highlight=directionminmaxselector#cadfile.cadutils.cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a> with directionMax=True)</td>
+          </tr>
+          <tr>
+            <td style="width:20px;">&lt;</td>
+            <td style="width:455px;">Minimize (same as <a href="http://parametricparts.com/docs/classreference.html?highlight=directionminmaxselector#cadfile.cadutils.cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a> with directionMax=False)</td>
+          </tr>
+          <tr>
+            <td style="width:20px;">&#37;</td>
+            <td style="width:455px;">Curve/surface type (same as <a href="http://parametricparts.com/docs/classreference.html?highlight=typeselector#cadfile.cadutils.cadquery.TypeSelector">TypeSelector</a>)</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
