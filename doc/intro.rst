@@ -28,7 +28,7 @@ CadQuery is inspired by ( `jQuery <http://www.jquery.com>`_ ), a popular framewo
 revolutionized web development involving javascript.
 
 CadQuery is for 3D CAD  what jQuery is for javascript.
-If you are familiar with how jQuery, you will probably recognize several jQuery features that CadQuery uses:
+If you are familiar with how jQuery works, you will probably recognize several jQuery features that CadQuery uses:
 
     * A fluent api to create clean, easy to read code
 
@@ -43,7 +43,7 @@ Why ParametricParts instead of OpenSCAD?
 CadQuery is based on FreeCAD,which is in turn based on the OpenCascade modelling kernel. CadQuery/FreeCAD scripts
 share many features with OpenSCAD, another open source, script based, parametric model generator.
 
-The primary advantage of OpenSCAD is the large number of already existing model libaries  that exist already. So why not simply use OpenSCAD?
+The primary advantage of OpenSCAD is the large number of model libaries  that exist already. So why not simply use OpenSCAD?
 
 CadQuery scripts run from ParametricParts.com have several key advantages over OpenSCAD ( including the various web-based SCAD solutions):
 

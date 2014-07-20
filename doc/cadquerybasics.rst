@@ -106,7 +106,7 @@ for a line.  CadQuery shields you from these constructs.
 CadQuery Concepts
 ======================
 
-CadQuery provides functions several key areas. As you would expect, many are devoted to easy creation of
+CadQuery provides functions in several key areas. As you would expect, many are devoted to easy creation of
 2D and 3D features.  But just as many, if not more, are for navigating and selecting objects.
 
     * CQ, the CadQuery object

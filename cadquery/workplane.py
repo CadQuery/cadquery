@@ -278,8 +278,7 @@ class Workplane(CQ):
     #line a specified incremental amount from current point
     def line(self, xDist, yDist ,forConstruction=False):
         """
-            Make a line from the current point to the provided point, using
-            dimensions relative to the current point
+            Make a line from the current point to the provided point, using dimensions relative to the current point
 
             :param float xDist: x distance from current point
             :param float yDist: y distance from current point
