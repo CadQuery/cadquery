@@ -316,7 +316,7 @@ class Workplane(CQ):
 
     def hLineTo(self,xCoord,forConstruction=False):
         """
-            Make a horizontal line from the curren tpoint to the provided x coordinate.
+            Make a horizontal line from the current point to the provided x coordinate.
 
             Useful if it is more convienient to specify the end location rather than distance,
             as in :py:meth:`hLine`
@@ -762,6 +762,7 @@ class Workplane(CQ):
                 p2 = pnt.add(Vector(xLen,0,0))
                 p3 = pnt.add(Vector( xLen,yLen,0 ))
                 p4 = pnt.add(Vector(0,yLen,0))
+                p4 = pnt.add(Vector(0,yLen,0))
 
             w = Wire.makePolygon([p1,p2,p3,p4,p1],forConstruction)
             return w
@@ -806,7 +807,7 @@ class Workplane(CQ):
 
     def polygon(self,nSides,diameter):
         """
-        Creates a polygon incribed in a circle of the specified diamter for each point on the stack
+        Creates a polygon incsribed in a circle of the specified diamter for each point on the stack
 
         The first vertex is always oriented in the x direction.
 
