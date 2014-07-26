@@ -78,7 +78,7 @@ Selector    Selector Class                              Selects                 
 \|Z         :py:class:`ParallelDirSelector`             Edges parallel to z direction           0..many
 -X          :py:class:`DirectionSelector`               Edges aligned in neg x direction        0..many
 #Z          :py:class:`PerpendicularDirSelector`        Edges perpendicular to z direction      0..many
-%Line       :py:class:`TypeSelector`                    Edges type line                         0..many
+%Line       :py:class:`TypeSelector`                    Edges of type line                         0..many
 >Y          :py:class:`DirectionMinMaxSelector`         Edges farthest in the positive y dir    0 or 1
 <Y          :py:class:`DirectionMinMaxSelector`         Edges farthest in the negative y dir    0 or 1
 =========   ====================================        =====================================   ==========================
@@ -94,8 +94,8 @@ Only a few of the filter types apply to vertices. The location of the vertex is 
 =========   ====================================        =====================================   ==========================
 Selector    Selector Class                              Selects                                 # objects returned
 =========   ====================================        =====================================   ==========================
->Y          :py:class:`DirectionMinMaxSelector`         Edges farthest in the positive y dir    0 or 1
-<Y          :py:class:`DirectionMinMaxSelector`         Edges farthest in the negative y dir    0 or 1
+>Y          :py:class:`DirectionMinMaxSelector`         Vertices farthest in the positive y dir    0 or 1
+<Y          :py:class:`DirectionMinMaxSelector`         Vertices farthest in the negative y dir    0 or 1
 =========   ====================================        =====================================   ==========================
 
 Future Enhancements
