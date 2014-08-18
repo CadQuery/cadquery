@@ -637,14 +637,6 @@ class CQ(object):
         """
         exporters.exportSVG(self,fileName)
 
-    def importStep(self,fileName):
-        """
-        Reads and imports a solid(s) from a STEP file
-
-        :param fileName: The location and name of the STEP file to load
-        """
-        importers.importStep(self, fileName)
-
     def rotateAboutCenter(self,axisEndPoint,angleDegrees):
         """
             Rotates all items on the stack by the specified angle, about the specified axis
