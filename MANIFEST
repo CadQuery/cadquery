@@ -9,6 +9,7 @@ cadquery\workplane.py
 cadquery\contrib\__init__.py
 cadquery\freecad_impl\__init__.py
 cadquery\freecad_impl\exporters.py
+cadquery\freecad_impl\importers.py
 cadquery\freecad_impl\geom.py
 cadquery\freecad_impl\shapes.py
 cadquery\plugins\__init__.py
@@ -16,5 +17,6 @@ tests\TestCQSelectors.py
 tests\TestCadObjects.py
 tests\TestCadQuery.py
 tests\TestExporters.py
+tests\TestImporters.py
 tests\TestWorkplanes.py
 tests\__init__.py

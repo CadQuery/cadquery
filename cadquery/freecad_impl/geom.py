@@ -1,5 +1,5 @@
 """
-    Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
+    Copyright (C) 2011-2014  Parametric Products Intellectual Holdings, LLC
 
     This file is part of CadQuery.
 

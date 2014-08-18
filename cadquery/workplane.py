@@ -1,8 +1,8 @@
 """
-	Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
+	Copyright (C) 2011-2014  Parametric Products Intellectual Holdings, LLC
 
 	This file is part of CadQuery.
-	
+
 	CadQuery is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
 	License as published by the Free Software Foundation; either

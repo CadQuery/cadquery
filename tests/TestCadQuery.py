@@ -831,5 +831,3 @@ class TestCadQuery(BaseTest):
         result =topOfLid.union(bottom)
 
         self.saveModel(result)
-
-

@@ -1,8 +1,8 @@
 """
-    Copyright (C) 2011-2013  Parametric Products Intellectual Holdings, LLC
+    Copyright (C) 2011-2014  Parametric Products Intellectual Holdings, LLC
 
     This file is part of CadQuery.
-    
+
     CadQuery is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
@@ -848,10 +848,10 @@ class Workplane(CQ):
         #old api accepted a vector, so we'll check for that.
         if rotate.__class__.__name__ == 'Vector':
             rotate = rotate.toTuple()
-            
+
         if offset.__class__.__name__ == 'Vector':
             offset = offset.toTuple()
-            
+
         p = self.plane.rotated(rotate)
         p.setOrigin3d(self.plane.toWorldCoords(offset ))
         ns = self.newObject([p.origin])
@@ -1223,10 +1223,10 @@ class Workplane(CQ):
 
             Future Enhancements:
                 faster implementation: this one transforms 3 times to accomplish the result
-                
-            
+
+
         """
-        
+
         #convert edges to a wire, if there are pending edges
         n = self.wire(forConstruction=False)
 
@@ -1234,7 +1234,7 @@ class Workplane(CQ):
         consolidated = n.consolidateWires()
 
         rotatedWires = self.plane.rotateShapes(consolidated.wires().vals(),matrix)
-        
+
         for w in rotatedWires:
             consolidated.objects.append(w)
             consolidated._addPendingWire(w)
@@ -2167,4 +2167,4 @@ class Workplane(CQ):
         else:
             #combine everything
             return self.union(boxes)
-        
+
