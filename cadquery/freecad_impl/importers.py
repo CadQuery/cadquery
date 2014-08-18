@@ -41,7 +41,7 @@ def importShape(importType,fileName):
 
 	#Check to see what type of file we're working with
 	if importType == ImportTypes.STEP:
-		importStep(fileName)
+		return importStep(fileName)
 
 #Loads a STEP file into a CQ object
 def importStep(fileName):
@@ -51,16 +51,12 @@ def importStep(fileName):
     """
 
     #Now read and return the shape
-	# try:
-	rshape = Part.read(fileName)
+	try:
+		rshape = Part.read(fileName)
 
-	r = Shape.cast(rshape)
-	#print "loadStep: " + str(r)
-	#print "Faces=%d" % cadquery.CQ(r).solids().size()
-	return cadquery.CQ(r)
-	# except:
-	# 	raise ValueError("STEP File Could not be loaded")
-
-if __name__ == '__main__':
-	import unittest
-	unittest.main()
+		r = Shape.cast(rshape)
+		#print "loadStep: " + str(r)
+		#print "Faces=%d" % cadquery.CQ(r).solids().size()
+		return cadquery.CQ(r)
+	except:
+		raise ValueError("STEP File Could not be loaded")

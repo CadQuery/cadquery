@@ -35,6 +35,9 @@ class TestImporters(BaseTest):
 			# Reimport the shape from the new STEP file
 			importedShape = importers.importShape(importType,fileName)
 
+			#Check to make sure we got a shape back
+			if not importedShape.ShapeType:
+				raise TypeError("Wrong type imported from STEP file.")
 	def testSTEP(self):
 		"""
 		Tests STEP file import
