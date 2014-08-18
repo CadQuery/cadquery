@@ -35,9 +35,19 @@ class TestImporters(BaseTest):
 			# Reimport the shape from the new STEP file
 			importedShape = importers.importShape(importType,fileName)
 
-			#Check to make sure we got a shape back
-			if not importedShape.ShapeType:
-				raise TypeError("Wrong type imported from STEP file.")
+			#Check to make sure we got a solid back
+			self.assertTrue(importedShape.val().ShapeType() == "Solid")
+
+			#Check the number of vertices per face to make sure we have a box shape
+			self.assertTrue(importedShape.faces("+X").vertices().size() == 4)
+			self.assertTrue(importedShape.faces("+Y").vertices().size() == 4)
+			self.assertTrue(importedShape.faces("+Z").vertices().size() == 4)
+
+			#Check the faces per selection on an axis to make sure we have a box shape
+			self.assertTrue(importedShape.faces("+X").size() == 1)
+			self.assertTrue(importedShape.faces("+Y").size() == 1)
+			self.assertTrue(importedShape.faces("+Z").size() == 1)
+
 	def testSTEP(self):
 		"""
 		Tests STEP file import
