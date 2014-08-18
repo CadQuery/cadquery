@@ -40,10 +40,10 @@ def importShape(importType,fileName):
 
 	#Check to see what type of file we're working with
 	if importType == ImportTypes.STEP:
-		self.importStep(fileName)
+		importStep(fileName)
 
 #Loads a STEP file into a CQ object
-def importStep(self,fileName):
+def importStep(fileName):
 	"""
         Accepts a file name and loads the STEP file into a cadquery shape
         :param fileName: The path and name of the STEP file to be imported
