@@ -20,8 +20,8 @@
     a string containing the model content.
 """
 import cadquery
-from .verutil import fc_import
 from .shapes import Shape
+from .verutil import fc_import
 FreeCAD = fc_import("FreeCAD")
 Part = fc_import("FreeCAD.Part")
 
@@ -60,3 +60,7 @@ def importStep(fileName):
 	return cadquery.CQ(r)
 	# except:
 	# 	raise ValueError("STEP File Could not be loaded")
+
+if __name__ == '__main__':
+	import unittest
+	unittest.main()
