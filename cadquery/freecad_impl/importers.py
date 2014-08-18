@@ -40,7 +40,7 @@ def importShape(importType,fileName):
 
 	#Check to see what type of file we're working with
 	if importType == ImportTypes.STEP:
-		importStep(fileName)
+		importStep(self,fileName)
 
 #Loads a STEP file into a CQ object
 def importStep(self,fileName):
