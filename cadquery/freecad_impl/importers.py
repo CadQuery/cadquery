@@ -50,12 +50,12 @@ def importStep(fileName):
     """
 
     #Now read and return the shape
-	try:
-		rshape = Part.read(fileName)
+	# try:
+	rshape = Part.read(fileName)
 
-		r = Shape.cast(rshape)
-		#print "loadStep: " + str(r)
-		#print "Faces=%d" % cadquery.CQ(r).solids().size()
-		return cadquery.CQ(r)
-	except:
-		raise ValueError("STEP File Could not be loaded")
+	r = Shape.cast(rshape)
+	#print "loadStep: " + str(r)
+	#print "Faces=%d" % cadquery.CQ(r).solids().size()
+	return cadquery.CQ(r)
+	# except:
+	# 	raise ValueError("STEP File Could not be loaded")
