@@ -21,6 +21,7 @@
 """
 import cadquery
 from .verutil import fc_import
+from .freecad_impl.shapes import Shape
 FreeCAD = fc_import("FreeCAD")
 Part = fc_import("FreeCAD.Part")
 
