@@ -38,15 +38,10 @@ class TestImporters(BaseTest):
 			#Check to make sure we got a solid back
 			self.assertTrue(importedShape.val().ShapeType() == "Solid")
 
-			#Check the number of vertices per face to make sure we have a box shape
-			self.assertTrue(importedShape.faces("+X").vertices().size() == 4)
-			self.assertTrue(importedShape.faces("+Y").vertices().size() == 4)
-			self.assertTrue(importedShape.faces("+Z").vertices().size() == 4)
-
-			#Check the faces per selection on an axis to make sure we have a box shape
-			self.assertTrue(importedShape.faces("+X").size() == 1)
-			self.assertTrue(importedShape.faces("+Y").size() == 1)
-			self.assertTrue(importedShape.faces("+Z").size() == 1)
+			#Check the number of faces and vertices per face to make sure we have a box shape
+			self.assertTrue(importedShape.faces("+X").size() == 1 and importedShape.faces("+X").vertices().size() == 4)
+			self.assertTrue(importedShape.faces("+Y").size() == 1 and importedShape.faces("+Y").vertices().size() == 4)
+			self.assertTrue(importedShape.faces("+Z").size() == 1 and importedShape.faces("+Z").vertices().size() == 4)
 
 	def testSTEP(self):
 		"""

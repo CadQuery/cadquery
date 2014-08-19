@@ -239,7 +239,7 @@ def getPaths(freeCadSVG):
         #yuk, freecad returns svg fragments. stupid stupid
         fullDoc = "<root>%s</root>" % freeCadSVG
         e = ET.ElementTree(ET.fromstring(fullDoc))
-        segments = e.findall("//g")
+        segments = e.findall(".//g")
         for s in segments:
             paths = s.findall("path")
 
