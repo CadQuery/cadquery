@@ -1868,6 +1868,24 @@ class Workplane(CQ):
         else:
             return self.newObject([r])
 
+    def revolve(self,angleDegrees,combine=True):
+        """
+        Use all un-revolved wires in the parent chain to create a solid.
+
+        :param angleDegrees: the angle to revolve through.
+        :type angleDegrees: float, anything less than 360 degrees will leave the shape open
+        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :return: a CQ object with the resulting solid selected.
+
+        The returned object is always a CQ object, and depends on wither combine is True, and
+        whether a context solid is already defined:
+
+        *  if combine is False, the new value is pushed onto the stack.
+        *  if combine is true, the value is combined with the context solid if it exists,
+           and the resulting solid becomes the new context solid.
+        """
+
+
     def _combineWithBase2(self,obj):
         """
             Combines the provided object with the base solid, if one can be found.
@@ -2105,6 +2123,30 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
+    def _revolve(self,angleDegrees):
+        """
+            Make a solid from the existing set of pending wires.
+
+            :param angleDegrees: the angle to revolve throug
+            :return: a FreeCAD solid, suitable for boolean operations.
+
+            This method is a utility method, primarily for plugin and internal use.
+        """
+        #We have to gather the wires to be revolved
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires),self.plane,[])
+
+        #Mark that all of the wires have been used to create a revolution
+        self.ctx.pendingWires = []
+
+        #Revolve the wires, make a compound out of them and then fuse them
+        toFuse = []
+        for ws in wireSets:
+            #TODO: Replace the line below with the equivalent revolve function
+            #thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
+            thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees)
+            toFuse.append(thisObj)
+
+        return Compound.makeCompound(toFuse)
 
     def box(self,length,width,height,centered=(True,True,True),combine=True):
         """
