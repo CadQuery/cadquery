@@ -1861,7 +1861,7 @@ class Workplane(CQ):
             FutureEnhancement:
                 Support for non-prismatic extrusion ( IE, sweeping along a profile, not just perpendicular to the plane
                 extrude to surface. this is quite tricky since the surface selected may not be planar
-            """
+        """
         r = self._extrude(distance) #returns a Solid ( or a compound if there were multiple )
         if combine:
             return self._combineWithBase(r)
@@ -1870,21 +1870,25 @@ class Workplane(CQ):
 
     def revolve(self,angleDegrees,combine=True):
         """
-        Use all un-revolved wires in the parent chain to create a solid.
+            Use all un-revolved wires in the parent chain to create a solid.
 
-        :param angleDegrees: the angle to revolve through.
-        :type angleDegrees: float, anything less than 360 degrees will leave the shape open
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
-        :return: a CQ object with the resulting solid selected.
+            :param angleDegrees: the angle to revolve through.
+            :type angleDegrees: float, anything less than 360 degrees will leave the shape open
+            :param boolean combine: True to combine the resulting solid with parent solids if found.
+            :return: a CQ object with the resulting solid selected.
 
-        The returned object is always a CQ object, and depends on wither combine is True, and
-        whether a context solid is already defined:
+            The returned object is always a CQ object, and depends on wither combine is True, and
+            whether a context solid is already defined:
 
-        *  if combine is False, the new value is pushed onto the stack.
-        *  if combine is true, the value is combined with the context solid if it exists,
-           and the resulting solid becomes the new context solid.
+            *  if combine is False, the new value is pushed onto the stack.
+            *  if combine is true, the value is combined with the context solid if it exists,
+               and the resulting solid becomes the new context solid.
         """
-
+        r = self._extrude(angleDegrees) #returns a Solid ( or a compound if there were multiple )
+        if combine:
+            return self._combineWithBase(r)
+        else:
+            return self.newObject([r])
 
     def _combineWithBase2(self,obj):
         """
@@ -2141,8 +2145,6 @@ class Workplane(CQ):
         #Revolve the wires, make a compound out of them and then fuse them
         toFuse = []
         for ws in wireSets:
-            #TODO: Replace the line below with the equivalent revolve function
-            #thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
             thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees)
             toFuse.append(thisObj)
 
