@@ -20,9 +20,9 @@ import cadquery
 import Part
 
 #The dimensions of the model. These can be modified rather than changing the shape's code directly.
-rectangle_width = 13.0
-rectange_length = 19.0
-angleDegrees = 180.0
+rectangle_width = 15.0
+rectange_length = 15.0
+angleDegrees = 360.0
 
 #Extrude a cylindrical plate with a rectangular hole in the middle of it
 result = cadquery.Workplane("front").rect(rectangle_width, rectange_length).revolve(angleDegrees)

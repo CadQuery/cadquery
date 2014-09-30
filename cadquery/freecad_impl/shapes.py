@@ -737,32 +737,32 @@ class Solid(Shape):
 
         return Shape.cast(result)
 
-        @classmethod
-        def revolve(cls,outerWire,innerWires, angleDegrees):
-            """
-            Attempt to revolve the list of wires into a solid in the provided direction
+    @classmethod
+    def revolve(cls,outerWire,innerWires, angleDegrees):
+        """
+        Attempt to revolve the list of wires into a solid in the provided direction
 
-            :param outerWire: the outermost wire
-            :param innerWires: a list of inner wires
-            :param angleDegrees: the angle through which to revolve the wires
-            :return: a Solid object
+        :param outerWire: the outermost wire
+        :param innerWires: a list of inner wires
+        :param angleDegrees: the angle through which to revolve the wires
+        :return: a Solid object
 
-            The wires must not intersect
+        The wires must not intersect
 
-            * all wires must be closed
-            * there cannot be any intersecting or self-intersecting wires
-            * wires must be listed from outside in
-            * more than one levels of nesting is not supported reliably
+        * all wires must be closed
+        * there cannot be any intersecting or self-intersecting wires
+        * wires must be listed from outside in
+        * more than one levels of nesting is not supported reliably
 
-            This method will attempt to sort the wires, but there is much work remaining to make this method
-            reliable.
+        This method will attempt to sort the wires, but there is much work remaining to make this method
+        reliable.
         """
         freeCADWires = [outerWire.wrapped]
         for w in innerWires:
             freeCADWires.append(w.wrapped)
 
         f = FreeCADPart.Face(freeCADWires)
-        result = f.revolve(Base.Vector(60,0,0), Vector(0,0,1), angleDegrees)
+        result = f.revolve(FreeCAD.Base.Vector(5,0,0), FreeCAD.Base.Vector(0,1,0), angleDegrees)
 
         return Shape.cast(result)
 

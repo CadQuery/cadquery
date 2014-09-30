@@ -1884,7 +1884,7 @@ class Workplane(CQ):
             *  if combine is true, the value is combined with the context solid if it exists,
                and the resulting solid becomes the new context solid.
         """
-        r = self._extrude(angleDegrees) #returns a Solid ( or a compound if there were multiple )
+        r = self._revolve(angleDegrees) #returns a Solid ( or a compound if there were multiple )
         if combine:
             return self._combineWithBase(r)
         else:
