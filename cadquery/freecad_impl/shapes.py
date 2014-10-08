@@ -753,16 +753,15 @@ class Solid(Shape):
         * there cannot be any intersecting or self-intersecting wires
         * wires must be listed from outside in
         * more than one levels of nesting is not supported reliably
+        * the wire(s) that you're revolving cannot be centered
 
         This method will attempt to sort the wires, but there is much work remaining to make this method
         reliable.
         """
         freeCADWires = [outerWire.wrapped]
-        #my_shape = FreeCADPart.Shape([FreeCADPart.Line(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,15,0)),FreeCADPart.Line(FreeCAD.Vector(0,15,0),FreeCAD.Vector(15,15,0)),FreeCADPart.Line(FreeCAD.Vector(15,15,0),FreeCAD.Vector(15,0,0)),FreeCADPart.Line(FreeCAD.Vector(15,0,0),FreeCAD.Vector(0,0,0))])
-        #freeCADWires = FreeCADPart.Wire(my_shape.Edges)
 
-        # for w in innerWires:
-        #     freeCADWires.append(w.wrapped)
+        for w in innerWires:
+            freeCADWires.append(w.wrapped)
 
         f = FreeCADPart.Face(freeCADWires)
         result = f.revolve(FreeCAD.Base.Vector(0,0,0), FreeCAD.Base.Vector(0,1,0), angleDegrees)

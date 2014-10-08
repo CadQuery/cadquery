@@ -25,7 +25,7 @@ rectange_length = 15.0
 angleDegrees = 360.0
 
 #Extrude a cylindrical plate with a rectangular hole in the middle of it
-result = cadquery.Workplane("front").rect(rectangle_width, rectange_length).revolve(angleDegrees)
+result = cadquery.Workplane("front").rect(rectangle_width, rectange_length, False).revolve(angleDegrees)
 
 #Get a cadquery solid object
 solid = result.val()
