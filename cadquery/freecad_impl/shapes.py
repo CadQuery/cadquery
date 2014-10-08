@@ -758,6 +758,8 @@ class Solid(Shape):
         reliable.
         """
         freeCADWires = [outerWire.wrapped]
+        #my_shape = FreeCADPart.Shape([FreeCADPart.Line(FreeCAD.Vector(0,0,0),FreeCAD.Vector(0,15,0)),FreeCADPart.Line(FreeCAD.Vector(0,15,0),FreeCAD.Vector(15,15,0)),FreeCADPart.Line(FreeCAD.Vector(15,15,0),FreeCAD.Vector(15,0,0)),FreeCADPart.Line(FreeCAD.Vector(15,0,0),FreeCAD.Vector(0,0,0))])
+        #freeCADWires = FreeCADPart.Wire(my_shape.Edges)
 
         # for w in innerWires:
         #     freeCADWires.append(w.wrapped)
