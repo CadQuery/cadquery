@@ -758,11 +758,12 @@ class Solid(Shape):
         reliable.
         """
         freeCADWires = [outerWire.wrapped]
-        for w in innerWires:
-            freeCADWires.append(w.wrapped)
+
+        # for w in innerWires:
+        #     freeCADWires.append(w.wrapped)
 
         f = FreeCADPart.Face(freeCADWires)
-        result = f.revolve(FreeCAD.Base.Vector(5,0,0), FreeCAD.Base.Vector(0,1,0), angleDegrees)
+        result = f.revolve(FreeCAD.Base.Vector(0,0,0), FreeCAD.Base.Vector(0,1,0), angleDegrees)
 
         return Shape.cast(result)
 
