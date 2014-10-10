@@ -738,7 +738,7 @@ class Solid(Shape):
         return Shape.cast(result)
 
     @classmethod
-    def revolve(cls,outerWire,innerWires, angleDegrees):
+    def revolve(cls,outerWire,innerWires,angleDegrees):
         """
         Attempt to revolve the list of wires into a solid in the provided direction
 
@@ -764,7 +764,7 @@ class Solid(Shape):
             freeCADWires.append(w.wrapped)
 
         f = FreeCADPart.Face(freeCADWires)
-        result = f.revolve(FreeCAD.Base.Vector(0,0,0), FreeCAD.Base.Vector(0,1,0), angleDegrees)
+        result = f.revolve(FreeCAD.Base.Vector(-5,-5,0), FreeCAD.Base.Vector(0,1,0), angleDegrees)
 
         return Shape.cast(result)
 

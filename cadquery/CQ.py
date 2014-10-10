@@ -1868,12 +1868,14 @@ class Workplane(CQ):
         else:
             return self.newObject([r])
 
-    def revolve(self,angleDegrees,combine=True):
+    def revolve(self,angleDegrees=360,axisStart=None,axisEnd=None,combine=True):
         """
             Use all un-revolved wires in the parent chain to create a solid.
 
             :param angleDegrees: the angle to revolve through.
             :type angleDegrees: float, anything less than 360 degrees will leave the shape open
+            :param axisStart: the origin of the center of rotation
+            :param axisEnd: a vector aligned with the the axis of rotation
             :param boolean combine: True to combine the resulting solid with parent solids if found.
             :return: a CQ object with the resulting solid selected.
 
@@ -2127,11 +2129,13 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def _revolve(self,angleDegrees):
+    def _revolve(self,angleDegrees=360,axisStart=None,axisEnd=None):
         """
             Make a solid from the existing set of pending wires.
 
-            :param angleDegrees: the angle to revolve throug
+            :param angleDegrees: the angle to revolve through
+            :param axisStart: the origin of the center of rotation
+            :param axisEnd: a vector aligned with the the axis of rotation
             :return: a FreeCAD solid, suitable for boolean operations.
 
             This method is a utility method, primarily for plugin and internal use.
