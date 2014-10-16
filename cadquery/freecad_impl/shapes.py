@@ -771,7 +771,6 @@ class Solid(Shape):
             freeCADWires.append(w.wrapped)
 
         f = FreeCADPart.Face(freeCADWires)
-        result = f.revolve(FreeCAD.Base.Vector(-5,-5,0), FreeCAD.Base.Vector(0,1,0), angleDegrees)
 
         result = f.revolve(FreeCAD.Base.Vector(axisStart),
                            FreeCAD.Base.Vector(axisEnd), angleDegrees)
