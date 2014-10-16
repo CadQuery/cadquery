@@ -1886,7 +1886,21 @@ class Workplane(CQ):
             *  if combine is true, the value is combined with the context solid if it exists,
                and the resulting solid becomes the new context solid.
         """
-        r = self._revolve(angleDegrees) #returns a Solid ( or a compound if there were multiple )
+        #Make sure we account for users specifying angles larger than 360 degrees
+        angleDegrees = angleDegrees % 360
+
+        #Compensate for FreeCAD not assuming that a 0 degree revolve means a 360 degree revolve
+        angleDegrees = 360 if angleDegrees == 0 else angleDegrees
+
+        #The default start point of the vector defining the axis of rotation will be the origin of the workplane
+        if axisStart is None:
+            axisStart = self.plane.origin.toTuple()
+
+        #The default end point of the vector defining the axis of rotation should be along the normal from the plane
+        if axisEnd is None:
+            axisEnd = (0, 1, 0)
+
+        r = self._revolve(angleDegrees, axisStart, axisEnd) #returns a Solid ( or a compound if there were multiple )
         if combine:
             return self._combineWithBase(r)
         else:
@@ -2129,7 +2143,7 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def _revolve(self,angleDegrees=360,axisStart=None,axisEnd=None):
+    def _revolve(self,angleDegrees,axisStart,axisEnd):
         """
             Make a solid from the existing set of pending wires.
 
@@ -2149,7 +2163,7 @@ class Workplane(CQ):
         #Revolve the wires, make a compound out of them and then fuse them
         toFuse = []
         for ws in wireSets:
-            thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees)
+            thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees, axisStart, axisEnd)
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)

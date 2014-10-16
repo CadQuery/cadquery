@@ -1,20 +1,20 @@
 """
-	Copyright (C) 2011-2014  Parametric Products Intellectual Holdings, LLC
+    Copyright (C) 2011-2014  Parametric Products Intellectual Holdings, LLC
 
-	This file is part of CadQuery.
+    This file is part of CadQuery.
 
-	CadQuery is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+    CadQuery is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-	CadQuery is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
+    CadQuery is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; If not, see <http://www.gnu.org/licenses/>
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; If not, see <http://www.gnu.org/licenses/>
 
     Wrapper Classes for FreeCAD
     These classes provide a stable interface for 3d objects,
@@ -47,11 +47,13 @@
            object each one returns, so these are better grouped by the type of object they return.
            (who would know that Part.makeCircle() returns an Edge, but Part.makePolygon() returns a Wire ?
 """
-from cadquery import Vector,BoundBox
+from cadquery import Vector, BoundBox
 import FreeCAD
 
 from .verutil import fc_import
+
 FreeCADPart = fc_import("FreeCAD.Part")
+
 
 class Shape(object):
     """
@@ -59,33 +61,33 @@ class Shape(object):
         Wrappers the FreeCAD api
     """
 
-    def __init__(self,obj):
+    def __init__(self, obj):
         self.wrapped = obj
         self.forConstruction = False
 
     @classmethod
-    def cast(cls,obj,forConstruction = False):
+    def cast(cls, obj, forConstruction=False):
         "Returns the right type of wrapper, given a FreeCAD object"
         s = obj.ShapeType
         if type(obj) == FreeCAD.Base.Vector:
             return Vector(obj)
         tr = None
 
-        #TODO: there is a clever way to do this i'm sure with a lookup
-        #but it is not a perfect mapping, because we are trying to hide
-        #a bit of the complexity of Compounds in FreeCAD.
+        # TODO: there is a clever way to do this i'm sure with a lookup
+        # but it is not a perfect mapping, because we are trying to hide
+        # a bit of the complexity of Compounds in FreeCAD.
         if s == 'Vertex':
-            tr=  Vertex(obj)
+            tr = Vertex(obj)
         elif s == 'Edge':
-            tr= Edge(obj)
+            tr = Edge(obj)
         elif s == 'Wire':
             tr = Wire(obj)
         elif s == 'Face':
-            tr= Face(obj)
+            tr = Face(obj)
         elif s == 'Shell':
-            tr= Shell(obj)
+            tr = Shell(obj)
         elif s == 'Solid':
-            tr= Solid(obj)
+            tr = Solid(obj)
         elif s == 'Compound':
             #compound of solids, lets return a solid instead
             if len(obj.Solids) > 1:
@@ -95,22 +97,23 @@ class Shape(object):
             elif len(obj.Wires) > 0:
                 tr = Wire(obj)
             else:
-                tr= Compound(obj)
+                tr = Compound(obj)
         else:
             raise ValueError("cast:unknown shape type %s" % s)
 
         tr.forConstruction = forConstruction
         return tr
-	#TODO: all these should move into the exporters folder.
-	#we dont need a bunch of exporting code stored in here!
-	#
-    def exportStl(self,fileName):
+
+    # TODO: all these should move into the exporters folder.
+    # we dont need a bunch of exporting code stored in here!
+    #
+    def exportStl(self, fileName):
         self.wrapped.exportStl(fileName)
 
-    def exportStep(self,fileName):
+    def exportStep(self, fileName):
         self.wrapped.exportStep(fileName)
 
-    def exportShape(self,fileName, fileFormat):
+    def exportShape(self, fileName, fileFormat):
         if fileFormat == ExportFormats.STL:
             self.wrapped.exportStl(fileName)
         elif fileFormat == ExportFormats.BREP:
@@ -118,7 +121,7 @@ class Shape(object):
         elif fileFormat == ExportFormats.STEP:
             self.wrapped.exportStep(fileName)
         elif fileFormat == ExportFormats.AMF:
-            #not built into FreeCAD
+            # not built into FreeCAD
             #TODO: user selected tolerance
             tess = self.wrapped.tessellate(0.1)
             aw = amfUtils.AMFWriter(tess)
@@ -154,14 +157,14 @@ class Shape(object):
         """
         return self.wrapped.ShapeType
 
-    def isType(self,obj,strType):
+    def isType(self, obj, strType):
         """
             Returns True if the shape is the specified type, false otherwise
 
             contrast with ShapeType, which will raise an exception
             if the provide object is not a shape at all
         """
-        if hasattr(obj,'ShapeType'):
+        if hasattr(obj, 'ShapeType'):
             return obj.ShapeType == strType
         else:
             return False
@@ -172,10 +175,10 @@ class Shape(object):
     def isNull(self):
         return self.wrapped.isNull()
 
-    def isSame(self,other):
+    def isSame(self, other):
         return self.wrapped.isSame(other.wrapped)
 
-    def isEqual(self,other):
+    def isEqual(self, other):
         return self.wrapped.isEqual(other.wrapped)
 
     def isValid(self):
@@ -189,6 +192,7 @@ class Shape(object):
             return Vector(self.wrapped.CenterOfMass)
         except:
             pass
+
     def Closed(self):
         return self.wrapped.Closed
 
@@ -222,7 +226,7 @@ class Shape(object):
     def Length(self):
         return self.wrapped.Length
 
-    def rotate(self,startVector,endVector,angleDegrees):
+    def rotate(self, startVector, endVector, angleDegrees):
         """
         Rotates a shape around an axis
         :param startVector: start point of rotation axis  either a 3-tuple or a Vector
@@ -237,10 +241,10 @@ class Shape(object):
             endVector = Vector(endVector)
 
         tmp = self.wrapped.copy()
-        tmp.rotate(startVector.wrapped,endVector.wrapped,angleDegrees)
+        tmp.rotate(startVector.wrapped, endVector.wrapped, angleDegrees)
         return Shape.cast(tmp)
 
-    def translate(self,vector):
+    def translate(self, vector):
 
         if type(vector) == tuple:
             vector = Vector(vector)
@@ -248,7 +252,7 @@ class Shape(object):
         tmp.translate(vector.wrapped)
         return Shape.cast(tmp)
 
-    def scale(self,factor):
+    def scale(self, factor):
         tmp = self.wrapped.copy()
         tmp.scale(factor)
         return Shape.cast(tmp)
@@ -256,9 +260,9 @@ class Shape(object):
     def copy(self):
         return Shape.cast(self.wrapped.copy())
 
-    def transformShape(self,tMatrix):
+    def transformShape(self, tMatrix):
         """
-			tMatrix is a matrix object.
+            tMatrix is a matrix object.
             returns a copy of the ojbect, transformed by the provided matrix,
             with all objects keeping their type
         """
@@ -268,9 +272,9 @@ class Shape(object):
         r.forConstruction = self.forConstruction
         return r
 
-    def transformGeometry(self,tMatrix):
+    def transformGeometry(self, tMatrix):
         """
-			tMatrix is a matrix object.
+            tMatrix is a matrix object.
 
             returns a copy of the object, but with geometry transformed insetad of just
             rotated.
@@ -288,8 +292,9 @@ class Shape(object):
     def __hash__(self):
         return self.wrapped.hashCode()
 
+
 class Vertex(Shape):
-    def __init__(self,obj,forConstruction=False):
+    def __init__(self, obj, forConstruction=False):
         """
             Create a vertex from a FreeCAD Vertex
         """
@@ -300,7 +305,7 @@ class Vertex(Shape):
         self.Z = obj.Z
 
     def toTuple(self):
-        return (self.X,self.Y,self.Z)
+        return (self.X, self.Y, self.Z)
 
     def Center(self):
         """
@@ -308,19 +313,20 @@ class Vertex(Shape):
         """
         return Vector(self.wrapped.Point)
 
+
 class Edge(Shape):
-    def __init__(self,obj):
+    def __init__(self, obj):
         """
             An Edge
         """
         self.wrapped = obj
-        #self.startPoint = None
-        #self.endPoint = None
+        # self.startPoint = None
+        # self.endPoint = None
 
-        self.edgetypes= {
-            FreeCADPart.Line : 'LINE',
-            FreeCADPart.ArcOfCircle : 'ARC',
-            FreeCADPart.Circle : 'CIRCLE'
+        self.edgetypes = {
+            FreeCADPart.Line: 'LINE',
+            FreeCADPart.ArcOfCircle: 'ARC',
+            FreeCADPart.Circle: 'CIRCLE'
         }
 
     def geomType(self):
@@ -337,9 +343,9 @@ class Edge(Shape):
 
             Note, circles may have the start and end points the same
         """
-        #work around freecad bug where valueAt is unreliable
+        # work around freecad bug where valueAt is unreliable
         curve = self.wrapped.Curve
-        return Vector( curve.value(self.wrapped.ParameterRange[0]))
+        return Vector(curve.value(self.wrapped.ParameterRange[0]))
 
     def endPoint(self):
         """
@@ -349,14 +355,14 @@ class Edge(Shape):
             Note, circles may have the start and end points the same
 
         """
-        #warning: easier syntax in freecad of <Edge>.valueAt(<Edge>.ParameterRange[1]) has
-        #a bug with curves other than arcs, but using the underlying curve directly seems to work
-        #that's the solution i'm using below
+        # warning: easier syntax in freecad of <Edge>.valueAt(<Edge>.ParameterRange[1]) has
+        # a bug with curves other than arcs, but using the underlying curve directly seems to work
+        # that's the solution i'm using below
         curve = self.wrapped.Curve
-        v = Vector( curve.value(self.wrapped.ParameterRange[1]))
+        v = Vector(curve.value(self.wrapped.ParameterRange[1]))
         return v
 
-    def tangentAt(self,locationVector=None):
+    def tangentAt(self, locationVector=None):
         """
             Compute tangent vector at the specified location.
         :param locationVector: location to use. Use the center point if None
@@ -369,11 +375,11 @@ class Edge(Shape):
         return Vector(self.wrapped.tangentAt(p))
 
     @classmethod
-    def makeCircle(cls,radius,pnt=(0,0,0),dir=(0,0,1),angle1=360.0,angle2=360):
-        return Edge(FreeCADPart.makeCircle(radius,toVector(pnt),toVector(dir),angle1,angle2))
+    def makeCircle(cls, radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=360.0, angle2=360):
+        return Edge(FreeCADPart.makeCircle(radius, toVector(pnt), toVector(dir), angle1, angle2))
 
     @classmethod
-    def makeSpline(cls,listOfVector):
+    def makeSpline(cls, listOfVector):
         """
         Interpolate a spline through the provided points.
         :param cls:
@@ -383,11 +389,11 @@ class Edge(Shape):
         vecs = [v.wrapped for v in listOfVector]
 
         spline = FreeCADPart.BSplineCurve()
-        spline.interpolate(vecs,False)
+        spline.interpolate(vecs, False)
         return Edge(spline.toShape())
 
     @classmethod
-    def makeThreePointArc(cls,v1,v2,v3):
+    def makeThreePointArc(cls, v1, v2, v3):
         """
         Makes a three point arc through the provided points
         :param cls:
@@ -396,30 +402,30 @@ class Edge(Shape):
         :param v3: end vector
         :return: an edge object through the three points
         """
-        arc = FreeCADPart.Arc(v1.wrapped,v2.wrapped,v3.wrapped)
+        arc = FreeCADPart.Arc(v1.wrapped, v2.wrapped, v3.wrapped)
         e = Edge(arc.toShape())
-        return e #arcane and undocumented, this creates an Edge object
+        return e  # arcane and undocumented, this creates an Edge object
 
     @classmethod
-    def makeLine(cls,v1,v2):
+    def makeLine(cls, v1, v2):
         """
             Create a line between two points
             :param v1: Vector that represents the first point
             :param v2: Vector that represents the second point
             :return: A linear edge between the two provided points
         """
-        return Edge(FreeCADPart.makeLine(v1.toTuple(),v2.toTuple() ))
+        return Edge(FreeCADPart.makeLine(v1.toTuple(), v2.toTuple()))
 
 
 class Wire(Shape):
-    def __init__(self,obj):
+    def __init__(self, obj):
         """
             A Wire
         """
         self.wrapped = obj
 
     @classmethod
-    def combine(cls,listOfWires):
+    def combine(cls, listOfWires):
         """
         Attempt to combine a list of wires into a new wire.
         the wires are returned in a list.
@@ -430,7 +436,7 @@ class Wire(Shape):
         return Shape.cast(FreeCADPart.Wire([w.wrapped for w in listOfWires]))
 
     @classmethod
-    def assembleEdges(cls,listOfEdges):
+    def assembleEdges(cls, listOfEdges):
         """
             Attempts to build a wire that consists of the edges in the provided list
             :param cls:
@@ -439,11 +445,11 @@ class Wire(Shape):
         """
         fCEdges = [a.wrapped for a in listOfEdges]
 
-        wa = Wire( FreeCADPart.Wire(fCEdges) )
+        wa = Wire(FreeCADPart.Wire(fCEdges))
         return wa
 
     @classmethod
-    def makeCircle(cls,radius,center,normal):
+    def makeCircle(cls, radius, center, normal):
         """
             Makes a Circle centered at the provided point, having normal in the provided direction
             :param radius: floating point radius of the circle, must be > 0
@@ -451,38 +457,38 @@ class Wire(Shape):
             :param normal: vector representing the direction of the plane the circle should lie in
             :return:
         """
-        w = Wire(FreeCADPart.Wire([FreeCADPart.makeCircle(radius,center.wrapped,normal.wrapped)]))
+        w = Wire(FreeCADPart.Wire([FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped)]))
         return w
 
     @classmethod
-    def makePolygon(cls,listOfVertices,forConstruction=False):
-        #convert list of tuples into Vectors.
+    def makePolygon(cls, listOfVertices, forConstruction=False):
+        # convert list of tuples into Vectors.
         w = Wire(FreeCADPart.makePolygon([i.wrapped for i in listOfVertices]))
         w.forConstruction = forConstruction
         return w
 
     @classmethod
-    def makeHelix(cls,pitch,height,radius,angle=360.0):
+    def makeHelix(cls, pitch, height, radius, angle=360.0):
         """
         Make a helix with a given pitch, height and radius
         By default a cylindrical surface is used to create the helix. If
         the fourth parameter is set (the apex given in degree) a conical surface is used instead'
         """
-        return Wire(FreeCADPart.makeHelix(pitch,height,radius,angle))
+        return Wire(FreeCADPart.makeHelix(pitch, height, radius, angle))
 
 
 class Face(Shape):
-    def __init__(self,obj):
+    def __init__(self, obj):
         """
             A Face
         """
         self.wrapped = obj
 
         self.facetypes = {
-            #TODO: bezier,bspline etc
-            FreeCADPart.Plane : 'PLANE',
-            FreeCADPart.Sphere : 'SPHERE',
-            FreeCADPart.Cone : 'CONE'
+            # TODO: bezier,bspline etc
+            FreeCADPart.Plane: 'PLANE',
+            FreeCADPart.Sphere: 'SPHERE',
+            FreeCADPart.Cone: 'CONE'
         }
 
     def geomType(self):
@@ -492,7 +498,7 @@ class Face(Shape):
         else:
             return "Unknown Face Surface Type: %s" % str(t)
 
-    def normalAt(self,locationVector=None):
+    def normalAt(self, locationVector=None):
         """
             Computes the normal vector at the desired location on the face.
 
@@ -502,31 +508,31 @@ class Face(Shape):
         """
         if locationVector == None:
             locationVector = self.Center()
-        (u,v) = self.wrapped.Surface.parameter(locationVector.wrapped)
+        (u, v) = self.wrapped.Surface.parameter(locationVector.wrapped)
 
-        return Vector(self.wrapped.normalAt(u,v).normalize() )
-
-    @classmethod
-    def makePlane(cls,length,width,basePnt=None,dir=None):
-        return Face(FreeCADPart.makePlan(length,width,toVector(basePnt),toVector(dir)))
+        return Vector(self.wrapped.normalAt(u, v).normalize())
 
     @classmethod
-    def makeRuledSurface(cls,edgeOrWire1,edgeOrWire2,dist=None):
+    def makePlane(cls, length, width, basePnt=None, dir=None):
+        return Face(FreeCADPart.makePlan(length, width, toVector(basePnt), toVector(dir)))
+
+    @classmethod
+    def makeRuledSurface(cls, edgeOrWire1, edgeOrWire2, dist=None):
         """
         'makeRuledSurface(Edge|Wire,Edge|Wire) -- Make a ruled surface
         Create a ruled surface out of two edges or wires. If wires are used then
         these must have the same
         """
-        return Shape.cast(FreeCADPart.makeRuledSurface(edgeOrWire1.obj,edgeOrWire2.obj,dist))
+        return Shape.cast(FreeCADPart.makeRuledSurface(edgeOrWire1.obj, edgeOrWire2.obj, dist))
 
-    def cut(self,faceToCut):
+    def cut(self, faceToCut):
         "Remove a face from another one"
         return Shape.cast(self.obj.cut(faceToCut.obj))
 
-    def fuse(self,faceToJoin):
+    def fuse(self, faceToJoin):
         return Shape.cast(self.obj.fuse(faceToJoin.obj))
 
-    def intersect(self,faceToIntersect):
+    def intersect(self, faceToIntersect):
         """
         computes the intersection between the face and the supplied one.
         The result could be a face or a compound of faces
@@ -535,73 +541,73 @@ class Face(Shape):
 
 
 class Shell(Shape):
-    def __init__(self,wrapped):
+    def __init__(self, wrapped):
         """
             A Shell
         """
         self.wrapped = wrapped
 
     @classmethod
-    def makeShell(cls,listOfFaces):
+    def makeShell(cls, listOfFaces):
         return Shell(FreeCADPart.makeShell([i.obj for i in listOfFaces]))
 
 
 class Solid(Shape):
-    def __init__(self,obj):
+    def __init__(self, obj):
         """
             A Solid
         """
         self.wrapped = obj
 
     @classmethod
-    def isSolid(cls,obj):
+    def isSolid(cls, obj):
         """
             Returns true if the object is a FreeCAD solid, false otherwise
         """
         if hasattr(obj, 'ShapeType'):
-            if obj.ShapeType == 'Solid' or\
-               (obj.ShapeType == 'Compound' and len(obj.Solids) > 0):
+            if obj.ShapeType == 'Solid' or \
+                    (obj.ShapeType == 'Compound' and len(obj.Solids) > 0):
                 return True
         return False
 
     @classmethod
-    def makeBox(cls,length,width,height,pnt=Vector(0,0,0),dir=Vector(0,0,1)):
+    def makeBox(cls, length, width, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
         """
             makeBox(length,width,height,[pnt,dir]) -- Make a box located\nin pnt with the d
             imensions (length,width,height)\nBy default pnt=Vector(0,0,0) and dir=Vector(0,0,1)'
         """
-        return Shape.cast(FreeCADPart.makeBox(length,width,height,pnt.wrapped,dir.wrapped))
+        return Shape.cast(FreeCADPart.makeBox(length, width, height, pnt.wrapped, dir.wrapped))
 
     @classmethod
-    def makeCone(cls,radius1,radius2,height,pnt=Vector(0,0,0),dir=Vector(0,0,1),angleDegrees=360):
+    def makeCone(cls, radius1, radius2, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees=360):
         """
             'makeCone(radius1,radius2,height,[pnt,dir,angle]) --
             Make a cone with given radii and height\nBy default pnt=Vector(0,0,0),
             dir=Vector(0,0,1) and angle=360'
         """
-        return Shape.cast(FreeCADPart.makeCone(radius1,radius2,height,pnt.wrapped,dir.wrapped,angleDegrees))
+        return Shape.cast(FreeCADPart.makeCone(radius1, radius2, height, pnt.wrapped, dir.wrapped, angleDegrees))
 
     @classmethod
-    def makeCylinder(cls,radius,height,pnt=Vector(0,0,0),dir=Vector(0,0,1),angleDegrees=360):
+    def makeCylinder(cls, radius, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees=360):
         """
             makeCylinder(radius,height,[pnt,dir,angle]) --
             Make a cylinder with a given radius and height
             By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360'
         """
-        return Shape.cast(FreeCADPart.makeCylinder(radius,height,pnt.wrapped,dir.wrapped,angleDegrees))
+        return Shape.cast(FreeCADPart.makeCylinder(radius, height, pnt.wrapped, dir.wrapped, angleDegrees))
 
     @classmethod
-    def makeTorus(cls,radius1,radius2,pnt=None,dir=None,angleDegrees1=None,angleDegrees2=None):
+    def makeTorus(cls, radius1, radius2, pnt=None, dir=None, angleDegrees1=None, angleDegrees2=None):
         """
             makeTorus(radius1,radius2,[pnt,dir,angle1,angle2,angle]) --
             Make a torus with agiven radii and angles
             By default pnt=Vector(0,0,0),dir=Vector(0,0,1),angle1=0
             ,angle1=360 and angle=360'
         """
-        return Shape.cast(FreeCADPart.makeTorus(radius1,radius2,pnt,dir,angleDegrees1,angleDegrees2))
+        return Shape.cast(FreeCADPart.makeTorus(radius1, radius2, pnt, dir, angleDegrees1, angleDegrees2))
 
     @classmethod
-    def sweep(cls,profileWire,pathWire):
+    def sweep(cls, profileWire, pathWire):
         """
         make a solid by sweeping the profileWire along the specified path
         :param cls:
@@ -609,41 +615,42 @@ class Solid(Shape):
         :param pathWire:
         :return:
         """
-        #needs to use freecad wire.makePipe or makePipeShell
-        #needs to allow free-space wires ( those not made from a workplane )
+        # needs to use freecad wire.makePipe or makePipeShell
+        # needs to allow free-space wires ( those not made from a workplane )
 
     @classmethod
-    def makeLoft(cls,listOfWire):
+    def makeLoft(cls, listOfWire):
         """
             makes a loft from a list of wires
             The wires will be converted into faces when possible-- it is presumed that nobody ever actually
             wants to make an infinitely thin shell for a real FreeCADPart.
         """
-        #the True flag requests building a solid instead of a shell.
+        # the True flag requests building a solid instead of a shell.
 
-        return Shape.cast(FreeCADPart.makeLoft([i.wrapped for i in listOfWire],True))
+        return Shape.cast(FreeCADPart.makeLoft([i.wrapped for i in listOfWire], True))
 
     @classmethod
-    def makeWedge(cls,xmin,ymin,zmin,z2min,x2min,xmax,ymax,zmax,z2max,x2max,pnt=None,dir=None):
+    def makeWedge(cls, xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt=None, dir=None):
         """
         'makeWedge(xmin, ymin, zmin, z2min, x2min,
         xmax, ymax, zmax, z2max, x2max,[pnt, dir])
          Make a wedge located in pnt\nBy default pnt=Vector(0,0,0) and dir=Vec
         tor(0,0,1)'
         """
-        return Shape.cast(FreeCADPart.makeWedge(xmin,ymin,zmin,z2min,x2min,xmax,ymax,zmax,z2max,x2max,pnt,dir))
+        return Shape.cast(
+            FreeCADPart.makeWedge(xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt, dir))
 
     @classmethod
-    def makeSphere(cls,radius,pnt=None,angleDegrees1=None,angleDegrees2=None,angleDegrees3=None):
+    def makeSphere(cls, radius, pnt=None, angleDegrees1=None, angleDegrees2=None, angleDegrees3=None):
         """
             'makeSphere(radius,[pnt, dir, angle1,angle2,angle3]) --
             Make a sphere with a giv
             en radius\nBy default pnt=Vector(0,0,0), dir=Vector(0,0,1), angle1=0, angle2=90 and angle3=360'
         """
-        return Solid(FreeCADPart.makeSphere(radius,pnt,angleDegrees1,angleDegrees2,angleDegrees3))
+        return Solid(FreeCADPart.makeSphere(radius, pnt, angleDegrees1, angleDegrees2, angleDegrees3))
 
     @classmethod
-    def extrudeLinearWithRotation(cls,outerWire,innerWires,vecCenter, vecNormal,angleDegrees):
+    def extrudeLinearWithRotation(cls, outerWire, innerWires, vecCenter, vecNormal, angleDegrees):
         """
             Creates a 'twisted prism' by extruding, while simultaneously rotating around the extrusion vector.
 
@@ -665,23 +672,23 @@ class Solid(Shape):
             :return: a cad.Solid object
         """
 
-        #from this point down we are dealing with FreeCAD wires not cad.wires
-        startWires = [outerWire.wrapped] + [ i.wrapped for i in innerWires]
+        # from this point down we are dealing with FreeCAD wires not cad.wires
+        startWires = [outerWire.wrapped] + [i.wrapped for i in innerWires]
         endWires = []
         p1 = vecCenter.wrapped
         p2 = vecCenter.add(vecNormal).wrapped
 
-        #make translated and rotated copy of each wire
+        # make translated and rotated copy of each wire
         for w in startWires:
             w2 = w.copy()
             w2.translate(vecNormal.wrapped)
-            w2.rotate(p1,p2,angleDegrees)
+            w2.rotate(p1, p2, angleDegrees)
             endWires.append(w2)
 
-        #make a ruled surface for each set of wires
+        # make a ruled surface for each set of wires
         sides = []
-        for w1,w2 in zip(startWires,endWires):
-            rs = FreeCADPart.makeRuledSurface(w1,w2)
+        for w1, w2 in zip(startWires, endWires):
+            rs = FreeCADPart.makeRuledSurface(w1, w2)
             sides.append(rs)
 
         #make faces for the top and bottom
@@ -689,7 +696,7 @@ class Solid(Shape):
         endFace = FreeCADPart.Face(endWires)
 
         #collect all the faces from the sides
-        faceList = [ startFace]
+        faceList = [startFace]
         for s in sides:
             faceList.extend(s.Faces)
         faceList.append(endFace)
@@ -699,7 +706,7 @@ class Solid(Shape):
         return Shape.cast(solid)
 
     @classmethod
-    def extrudeLinear(cls,outerWire,innerWires,vecNormal):
+    def extrudeLinear(cls, outerWire, innerWires, vecNormal):
         """
             Attempt to extrude the list of wires  into a prismatic solid in the provided direction
 
@@ -722,9 +729,9 @@ class Solid(Shape):
             reliable.
         """
 
-        #one would think that fusing faces into a compound and then extruding would work,
-        #but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc),
-        #but then cutting it from the main solid fails with BRep_NotDone.
+        # one would think that fusing faces into a compound and then extruding would work,
+        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc),
+        # but then cutting it from the main solid fails with BRep_NotDone.
         #the work around is to extrude each and then join the resulting solids, which seems to work
 
         #FreeCAD allows this in one operation, but others might not
@@ -738,7 +745,7 @@ class Solid(Shape):
         return Shape.cast(result)
 
     @classmethod
-    def revolve(cls,outerWire,innerWires,angleDegrees):
+    def revolve(cls, outerWire, innerWires, angleDegrees, axisStart, axisEnd):
         """
         Attempt to revolve the list of wires into a solid in the provided direction
 
@@ -766,26 +773,29 @@ class Solid(Shape):
         f = FreeCADPart.Face(freeCADWires)
         result = f.revolve(FreeCAD.Base.Vector(-5,-5,0), FreeCAD.Base.Vector(0,1,0), angleDegrees)
 
+        result = f.revolve(FreeCAD.Base.Vector(axisStart),
+                           FreeCAD.Base.Vector(axisEnd), angleDegrees)
+
         return Shape.cast(result)
 
-    def tessellate(self,tolerance):
+    def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
 
-    def intersect(self,toIntersect):
+    def intersect(self, toIntersect):
         """
         computes the intersection between this solid and the supplied one
         The result could be a face or a compound of faces
         """
         return Shape.cast(self.wrapped.common(toIntersect.wrapped))
 
-    def cut(self,solidToCut):
+    def cut(self, solidToCut):
         "Remove a solid from another one"
         return Shape.cast(self.wrapped.cut(solidToCut.wrapped))
 
-    def fuse(self,solidToJoin):
+    def fuse(self, solidToJoin):
         return Shape.cast(self.wrapped.fuse(solidToJoin.wrapped))
 
-    def fillet(self,radius,edgeList):
+    def fillet(self, radius, edgeList):
         """
         Fillets the specified edges of this solid.
         :param radius: float > 0, the radius of the fillet
@@ -793,9 +803,9 @@ class Solid(Shape):
         :return: Filleted solid
         """
         nativeEdges = [e.wrapped for e in edgeList]
-        return Shape.cast(self.wrapped.makeFillet(radius,nativeEdges))
+        return Shape.cast(self.wrapped.makeFillet(radius, nativeEdges))
 
-    def shell(self,faceList,thickness,tolerance=0.0001):
+    def shell(self, faceList, thickness, tolerance=0.0001):
         """
             make a shelled solid of given  by removing the list of faces
 
@@ -807,31 +817,32 @@ class Solid(Shape):
             **WARNING**  The underlying FreeCAD implementation can very frequently have problems
             with shelling complex geometries!
         """
-        nativeFaces = [ f.wrapped for f in faceList]
-        return Shape.cast( self.wrapped.makeThickness(nativeFaces,thickness,tolerance))
+        nativeFaces = [f.wrapped for f in faceList]
+        return Shape.cast(self.wrapped.makeThickness(nativeFaces, thickness, tolerance))
+
 
 class Compound(Shape):
-    def __init__(self,obj):
+    def __init__(self, obj):
         """
             An Edge
         """
         self.wrapped = obj
 
     def Center(self):
-        #TODO: compute the weighted average instead of the first solid
+        # TODO: compute the weighted average instead of the first solid
         return self.Solids()[0].Center()
 
     @classmethod
-    def makeCompound(cls,listOfShapes):
+    def makeCompound(cls, listOfShapes):
         """
         Create a compound out of a list of shapes
         """
         solids = [s.wrapped for s in listOfShapes]
         c = FreeCADPart.Compound(solids)
-        return Shape.cast( c)
+        return Shape.cast(c)
 
-    def fuse(self,toJoin):
+    def fuse(self, toJoin):
         return Shape.cast(self.wrapped.fuse(toJoin.wrapped))
 
-    def tessellate(self,tolerance):
+    def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
