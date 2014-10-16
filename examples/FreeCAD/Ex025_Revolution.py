@@ -21,16 +21,16 @@ import Part
 
 #The dimensions of the model. These can be modified rather than changing the shape's code directly.
 rectangle_width = 10.0
-rectange_length = 10.0
+rectangle_length = 10.0
 angleDegrees = 360.0
 
 #Revolve a cylinder from a rectangle
 #Switch comments around in this section to try the revolve operation with different parameters
-result = cadquery.Workplane("XY").rect(rectangle_width, rectange_length).revolve()
-#result = cadquery.Workplane("XY").rect(rectangle_width, rectange_length).revolve(angleDegrees)
-#result = cadquery.Workplane("XY").rect(rectangle_width, rectange_length).revolve(angleDegrees,(-5,-5,0))
-#result = cadquery.Workplane("XY").rect(rectangle_width, rectange_length).revolve(angleDegrees,(-5,-5,0),(-5,5,0))
-#result = cadquery.Workplane("XY").rect(rectangle_width, rectange_length).revolve(angleDegrees,(-5,-5,0),(-5,5,0),False)
+result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length, False).revolve()
+#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees)
+#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5,0))
+#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5,0),(-5,5,0))
+#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5,0),(-5,5,0),False)
 
 #Get a cadquery solid object
 solid = result.val()
