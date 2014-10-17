@@ -1904,7 +1904,7 @@ class Workplane(CQ):
         else:
             axisEnd = self.plane.toWorldCoords(axisEnd).toTuple()
 
-        r = self._revolve(angleDegrees, axisStart, axisEnd) #returns a Solid ( or a compound if there were multiple )
+        r = self._revolve(angleDegrees, axisStart, axisEnd) # returns a Solid ( or a compound if there were multiple )
         if combine:
             return self._combineWithBase(r)
         else:

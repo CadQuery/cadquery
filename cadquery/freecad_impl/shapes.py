@@ -772,8 +772,16 @@ class Solid(Shape):
 
         f = FreeCADPart.Face(freeCADWires)
 
-        result = f.revolve(FreeCAD.Base.Vector(axisStart),
-                           FreeCAD.Base.Vector(axisEnd), angleDegrees)
+        rotateCenter = FreeCAD.Base.Vector(axisStart)
+        rotateAxis = FreeCAD.Base.Vector(axisEnd)
+
+        #Convert our axis end vector into to something FreeCAD will understand (an axis specification vector)
+        rotateAxis[0] = 0.0 if axisStart[0] == axisEnd[0] else axisEnd[0]
+        rotateAxis[1] = 0.0 if axisStart[1] == axisEnd[1] else axisEnd[1]
+        rotateAxis[2] = 0.0 if axisStart[2] == axisEnd[2] else axisEnd[2]
+
+        #FreeCAD wants a rotation center and then an axis to rotate around rather than an axis of rotation
+        result = f.revolve(rotateCenter, rotateAxis, angleDegrees)
 
         return Shape.cast(result)
 
