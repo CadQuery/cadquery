@@ -1894,11 +1894,15 @@ class Workplane(CQ):
 
         #The default start point of the vector defining the axis of rotation will be the origin of the workplane
         if axisStart is None:
-            axisStart = self.plane.origin.toTuple()
+            axisStart = self.plane.toWorldCoords((0,0)).toTuple()
+        else:
+            axisStart = self.plane.toWorldCoords(axisStart).toTuple()
 
         #The default end point of the vector defining the axis of rotation should be along the normal from the plane
         if axisEnd is None:
-            axisEnd = (0, 1, 0)
+            axisEnd = self.plane.toWorldCoords((0,1)).toTuple()
+        else:
+            axisEnd = self.plane.toWorldCoords(axisEnd).toTuple()
 
         r = self._revolve(angleDegrees, axisStart, axisEnd) #returns a Solid ( or a compound if there were multiple )
         if combine:

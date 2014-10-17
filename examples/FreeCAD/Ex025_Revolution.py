@@ -26,11 +26,16 @@ angleDegrees = 360.0
 
 #Revolve a cylinder from a rectangle
 #Switch comments around in this section to try the revolve operation with different parameters
-result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length, False).revolve()
-#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees)
-#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5,0))
-#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5,0),(-5,5,0))
-#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5,0),(-5,5,0),False)
+#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length, False).revolve()
+#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length, False).revolve(angleDegrees)
+#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5))
+
+#I think these two are ok, but I'm having a hard time determining if these are acting properly for sure
+result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5),(-5,5))
+#result = cadquery.Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angleDegrees,(-5,-5),(-5,5), False)
+
+#Was expecting this to create a square donut, but it didn't
+#result = cadquery.Workplane("XY").center(10,0).rect(rectangle_width, rectangle_length, False).revolve(angleDegrees)
 
 #Get a cadquery solid object
 solid = result.val()
