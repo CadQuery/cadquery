@@ -751,7 +751,12 @@ class Solid(Shape):
 
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
-        :param angleDegrees: the angle through which to revolve the wires
+        :param angleDegrees: the angle to revolve through.
+        :type angleDegrees: float, anything less than 360 degrees will leave the shape open
+        :param axisStart: the start point of the axis of rotation
+        :type axisStart: tuple, a two tuple
+        :param axisEnd: the end point of the axis of rotation
+        :type axisEnd: tuple, a two tuple
         :return: a Solid object
 
         The wires must not intersect
@@ -779,7 +784,7 @@ class Solid(Shape):
         rotateAxis[0] = 0.0 if axisStart[0] == axisEnd[0] else axisEnd[0]
         rotateAxis[1] = 0.0 if axisStart[1] == axisEnd[1] else axisEnd[1]
         rotateAxis[2] = 0.0 if axisStart[2] == axisEnd[2] else axisEnd[2]
-
+        print angleDegrees
         #FreeCAD wants a rotation center and then an axis to rotate around rather than an axis of rotation
         result = f.revolve(rotateCenter, rotateAxis, angleDegrees)
 

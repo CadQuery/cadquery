@@ -1868,15 +1868,18 @@ class Workplane(CQ):
         else:
             return self.newObject([r])
 
-    def revolve(self,angleDegrees=360,axisStart=None,axisEnd=None,combine=True):
+    def revolve(self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True):
         """
             Use all un-revolved wires in the parent chain to create a solid.
 
             :param angleDegrees: the angle to revolve through.
             :type angleDegrees: float, anything less than 360 degrees will leave the shape open
-            :param axisStart: the origin of the center of rotation
-            :param axisEnd: a vector aligned with the the axis of rotation
-            :param boolean combine: True to combine the resulting solid with parent solids if found.
+            :param axisStart: the start point of the axis of rotation
+            :type axisStart: tuple, a two tuple
+            :param axisEnd: the end point of the axis of rotation
+            :type axisEnd: tuple, a two tuple
+            :param combine: True to combine the resulting solid with parent solids if found.
+            :type combine: boolean, combine with parent solid
             :return: a CQ object with the resulting solid selected.
 
             The returned object is always a CQ object, and depends on wither combine is True, and
@@ -1887,10 +1890,10 @@ class Workplane(CQ):
                and the resulting solid becomes the new context solid.
         """
         #Make sure we account for users specifying angles larger than 360 degrees
-        angleDegrees = angleDegrees % 360
+        angleDegrees = angleDegrees % 360.0
 
         #Compensate for FreeCAD not assuming that a 0 degree revolve means a 360 degree revolve
-        angleDegrees = 360 if angleDegrees == 0 else angleDegrees
+        angleDegrees = 360.0 if angleDegrees == 0 else angleDegrees
 
         #The default start point of the vector defining the axis of rotation will be the origin of the workplane
         if axisStart is None:
@@ -2147,13 +2150,16 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def _revolve(self,angleDegrees,axisStart,axisEnd):
+    def _revolve(self, angleDegrees, axisStart, axisEnd):
         """
             Make a solid from the existing set of pending wires.
 
-            :param angleDegrees: the angle to revolve through
-            :param axisStart: the origin of the center of rotation
-            :param axisEnd: a vector aligned with the the axis of rotation
+            :param angleDegrees: the angle to revolve through.
+            :type angleDegrees: float, anything less than 360 degrees will leave the shape open
+            :param axisStart: the start point of the axis of rotation
+            :type axisStart: tuple, a two tuple
+            :param axisEnd: the end point of the axis of rotation
+            :type axisEnd: tuple, a two tuple
             :return: a FreeCAD solid, suitable for boolean operations.
 
             This method is a utility method, primarily for plugin and internal use.
