@@ -1903,7 +1903,11 @@ class Workplane(CQ):
 
         #The default end point of the vector defining the axis of rotation should be along the normal from the plane
         if axisEnd is None:
-            axisEnd = self.plane.toWorldCoords((0,1)).toTuple()
+            #Make sure we match the user's assumed axis of rotation if they specified an start but not an end
+            if axisStart[1] != 0:
+                axisEnd = self.plane.toWorldCoords((0,axisStart[1])).toTuple()
+            else:
+                axisEnd = self.plane.toWorldCoords((0,1)).toTuple()
         else:
             axisEnd = self.plane.toWorldCoords(axisEnd).toTuple()
 
