@@ -782,7 +782,7 @@ class Solid(Shape):
 
         #Convert our axis end vector into to something FreeCAD will understand (an axis specification vector)
         rotateAxis = rotateCenter.sub(rotateAxis)
-        
+
         #FreeCAD wants a rotation center and then an axis to rotate around rather than an axis of rotation
         result = f.revolve(rotateCenter, rotateAxis, angleDegrees)
 
