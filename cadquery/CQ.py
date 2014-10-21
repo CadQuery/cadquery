@@ -1861,8 +1861,57 @@ class Workplane(CQ):
             FutureEnhancement:
                 Support for non-prismatic extrusion ( IE, sweeping along a profile, not just perpendicular to the plane
                 extrude to surface. this is quite tricky since the surface selected may not be planar
-            """
+        """
         r = self._extrude(distance) #returns a Solid ( or a compound if there were multiple )
+        if combine:
+            return self._combineWithBase(r)
+        else:
+            return self.newObject([r])
+
+    def revolve(self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True):
+        """
+            Use all un-revolved wires in the parent chain to create a solid.
+
+            :param angleDegrees: the angle to revolve through.
+            :type angleDegrees: float, anything less than 360 degrees will leave the shape open
+            :param axisStart: the start point of the axis of rotation
+            :type axisStart: tuple, a two tuple
+            :param axisEnd: the end point of the axis of rotation
+            :type axisEnd: tuple, a two tuple
+            :param combine: True to combine the resulting solid with parent solids if found.
+            :type combine: boolean, combine with parent solid
+            :return: a CQ object with the resulting solid selected.
+
+            The returned object is always a CQ object, and depends on wither combine is True, and
+            whether a context solid is already defined:
+
+            *  if combine is False, the new value is pushed onto the stack.
+            *  if combine is true, the value is combined with the context solid if it exists,
+               and the resulting solid becomes the new context solid.
+        """
+        #Make sure we account for users specifying angles larger than 360 degrees
+        angleDegrees = angleDegrees % 360.0
+
+        #Compensate for FreeCAD not assuming that a 0 degree revolve means a 360 degree revolve
+        angleDegrees = 360.0 if angleDegrees == 0 else angleDegrees
+
+        #The default start point of the vector defining the axis of rotation will be the origin of the workplane
+        if axisStart is None:
+            axisStart = self.plane.toWorldCoords((0,0)).toTuple()
+        else:
+            axisStart = self.plane.toWorldCoords(axisStart).toTuple()
+
+        #The default end point of the vector defining the axis of rotation should be along the normal from the plane
+        if axisEnd is None:
+            #Make sure we match the user's assumed axis of rotation if they specified an start but not an end
+            if axisStart[1] != 0:
+                axisEnd = self.plane.toWorldCoords((0,axisStart[1])).toTuple()
+            else:
+                axisEnd = self.plane.toWorldCoords((0,1)).toTuple()
+        else:
+            axisEnd = self.plane.toWorldCoords(axisEnd).toTuple()
+
+        r = self._revolve(angleDegrees, axisStart, axisEnd) # returns a Solid ( or a compound if there were multiple )
         if combine:
             return self._combineWithBase(r)
         else:
@@ -2105,6 +2154,33 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
+    def _revolve(self, angleDegrees, axisStart, axisEnd):
+        """
+            Make a solid from the existing set of pending wires.
+
+            :param angleDegrees: the angle to revolve through.
+            :type angleDegrees: float, anything less than 360 degrees will leave the shape open
+            :param axisStart: the start point of the axis of rotation
+            :type axisStart: tuple, a two tuple
+            :param axisEnd: the end point of the axis of rotation
+            :type axisEnd: tuple, a two tuple
+            :return: a FreeCAD solid, suitable for boolean operations.
+
+            This method is a utility method, primarily for plugin and internal use.
+        """
+        #We have to gather the wires to be revolved
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires),self.plane,[])
+
+        #Mark that all of the wires have been used to create a revolution
+        self.ctx.pendingWires = []
+
+        #Revolve the wires, make a compound out of them and then fuse them
+        toFuse = []
+        for ws in wireSets:
+            thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees, axisStart, axisEnd)
+            toFuse.append(thisObj)
+
+        return Compound.makeCompound(toFuse)
 
     def box(self,length,width,height,centered=(True,True,True),combine=True):
         """

@@ -219,6 +219,87 @@ class TestCadQuery(BaseTest):
         #self.assertEqual(1,s.solids().size() )
         #self.assertEqual(8,s.faces().size() )
 
+    def testRevolveCylinder(self):
+        """
+        Test creating a solid using the revolve operation.
+        :return:
+        """
+        #The dimensions of the model. These can be modified rather than changing the shape's code directly.
+        rectangle_width = 10.0
+        rectangle_length = 10.0
+        angle_degrees = 360.0
+
+        #Test revolve without any options for making a cylinder
+        result = Workplane("XY").rect(rectangle_width, rectangle_length, False).revolve()
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(2, result.vertices().size())
+        self.assertEqual(3, result.edges().size())
+
+        #Test revolve when only setting the angle to revolve through
+        result = Workplane("XY").rect(rectangle_width, rectangle_length, False).revolve(angle_degrees)
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(2, result.vertices().size())
+        self.assertEqual(3, result.edges().size())
+        result = Workplane("XY").rect(rectangle_width, rectangle_length, False).revolve(270.0)
+        self.assertEqual(5, result.faces().size())
+        self.assertEqual(6, result.vertices().size())
+        self.assertEqual(9, result.edges().size())
+
+        #Test when passing revolve the angle and the axis of revolution's start point
+        result = Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angle_degrees,(-5,-5))
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(2, result.vertices().size())
+        self.assertEqual(3, result.edges().size())
+        result = Workplane("XY").rect(rectangle_width, rectangle_length).revolve(270.0,(-5,-5))
+        self.assertEqual(5, result.faces().size())
+        self.assertEqual(6, result.vertices().size())
+        self.assertEqual(9, result.edges().size())
+
+        #Test when passing revolve the angle and both the start and ends of the axis of revolution
+        result = Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angle_degrees,(-5, -5),(-5, 5))
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(2, result.vertices().size())
+        self.assertEqual(3, result.edges().size())
+        result = Workplane("XY").rect(rectangle_width, rectangle_length).revolve(270.0,(-5, -5),(-5, 5))
+        self.assertEqual(5, result.faces().size())
+        self.assertEqual(6, result.vertices().size())
+        self.assertEqual(9, result.edges().size())
+
+        #Testing all of the above without combine
+        result = Workplane("XY").rect(rectangle_width, rectangle_length).revolve(angle_degrees,(-5,-5),(-5,5), False)
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(2, result.vertices().size())
+        self.assertEqual(3, result.edges().size())
+        result = Workplane("XY").rect(rectangle_width, rectangle_length).revolve(270.0,(-5,-5),(-5,5), False)
+        self.assertEqual(5, result.faces().size())
+        self.assertEqual(6, result.vertices().size())
+        self.assertEqual(9, result.edges().size())
+
+    def testRevolveDonut(self):
+        """
+        Test creating a solid donut shape with square walls
+        :return:
+        """
+        #The dimensions of the model. These can be modified rather than changing the shape's code directly.
+        rectangle_width = 10.0
+        rectangle_length = 10.0
+        angle_degrees = 360.0
+
+        result = Workplane("XY").rect(rectangle_width, rectangle_length, True).revolve(angle_degrees, (20, 0), (20, 10))
+        self.assertEqual(4, result.faces().size())
+        self.assertEqual(4, result.vertices().size())
+        self.assertEqual(6, result.edges().size())
+
+    def testRevolveCone(self):
+        """
+        Test creating a solid from a revolved triangle
+        :return:
+        """
+        result = Workplane("XY").lineTo(0,10).lineTo(5,0).close().revolve()
+        self.assertEqual(2, result.faces().size())
+        self.assertEqual(2, result.vertices().size())
+        self.assertEqual(3, result.edges().size())
+
     def testRectArray(self):
         NUMX=3
         NUMY=3

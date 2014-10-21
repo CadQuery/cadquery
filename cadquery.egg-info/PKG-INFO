@@ -1,6 +1,6 @@
-Metadata-Version: 1.0
+Metadata-Version: 1.1
 Name: cadquery
-Version: 0.1.5
+Version: 0.1.6
 Summary: CadQuery is a parametric  scripting language for creating and traversing CAD models
 Home-page: https://github.com/dcowden/cadquery
 Author: David Cowden
