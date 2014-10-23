@@ -419,7 +419,7 @@ class Plane:
 
             :param tuplePoint: point in local coordinates to convert
             :type tuplePoint: a 2 or three tuple of float. the third value is taken to be zero if not supplied
-            :return: a 3-tuple in global coordinates
+            :return: a Vector in global coordinates
 
 
         """
