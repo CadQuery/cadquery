@@ -12,6 +12,12 @@ CadQuery has several goals:
 
 Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
 
+Recently Added Features
+========================================
+
+* 10/25/14 -- Added Revolution Feature ( thanks Jeremy ! )
+
+
 Why CadQuery instead of OpenSCAD?
 ========================================
 
