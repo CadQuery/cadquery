@@ -8,7 +8,7 @@ v0.1
 
 v0.1.6
 -----
-    * Added STEP import
+    * Added STEP import and supporting tests
 
 v0.1.7
 -----
