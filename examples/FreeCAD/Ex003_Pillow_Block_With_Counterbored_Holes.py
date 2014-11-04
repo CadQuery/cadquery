@@ -11,10 +11,11 @@
 #If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
 #reload(Ex003_Pillow_Block_With_Counterbored_Holes)
 
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially (Shape001, etc).
+#You'll need to delete the original shape that was created, and the new shape should be named sequentially
+# (Shape001, etc).
 
 #You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more in-depth explantion of this example at http://parametricparts.com/docs/quickstart.html
+#You can get a more in-depth explanation of this example at http://parametricparts.com/docs/quickstart.html
 
 import cadquery
 import Part
@@ -30,15 +31,10 @@ cbore_depth = 2.1
 
 #Create a 3D box based on the dimension variables above and add 4 counterbored holes
 result = cadquery.Workplane("XY").box(length, height, thickness) \
-		.faces(">Z").workplane().hole(center_hole_dia) \
-		.faces(">Z").workplane() \
-        .rect(length - 8.0, height - 8.0, forConstruction = True) \
-        .vertices().cboreHole(cbore_hole_diameter, cbore_diameter, cbore_depth)
+    .faces(">Z").workplane().hole(center_hole_dia) \
+    .faces(">Z").workplane() \
+    .rect(length - 8.0, height - 8.0, forConstruction = True) \
+    .vertices().cboreHole(cbore_hole_diameter, cbore_diameter, cbore_depth)
 
-#Get a cadquery solid object
-solid = result.val()
-
-#Use the wrapped property of a cadquery primitive to get a FreeCAD solid
-Part.show(solid.wrapped)
-
-#Would like to zoom to fit the part here, but FreeCAD doesn't seem to have that scripting functionality
+#Boiler plate code to render our solid in FreeCAD's GUI
+Part.show(result.toFreecad())

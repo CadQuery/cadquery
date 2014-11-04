@@ -256,6 +256,15 @@ class CQ(object):
         """
         return self.objects[0]
 
+    def toFreecad(self):
+        """
+        Directly returns the wrapped FreeCAD object to cut down on the amount of boiler plate code needed when
+        rendering a model in FreeCAD's 3D view.
+        :return: The wrapped FreeCAD object
+        :rtype A FreeCAD object or a SolidReference
+        """
+
+        return self.objects[0].wrapped
 
 
     def workplane(self,offset=0.0,invert=False):

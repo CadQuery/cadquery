@@ -11,10 +11,12 @@
 #If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
 #reload(Ex005_Extruded_Lines_and_Arcs)
 
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially (Shape001, etc).
+#You'll need to delete the original shape that was created, and the new shape should be named sequentially
+#(Shape001, etc).
 
 #You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
+#You can get a more information on this example at
+# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
 
 import cadquery
 import Part
@@ -24,12 +26,8 @@ width = 2.0
 thickness = 0.25
 
 #Extrude a plate outline made of lines and an arc
-result = cadquery.Workplane("front").lineTo(width, 0).lineTo(width, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0)).close().extrude(thickness)
+result = cadquery.Workplane("front").lineTo(width, 0).lineTo(width, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0)) \
+    .close().extrude(thickness)
 
-#Get a cadquery solid object
-solid = result.val()
-
-#Use the wrapped property of a cadquery primitive to get a FreeCAD solid
-Part.show(solid.wrapped)
-
-#Would like to zoom to fit the part here, but FreeCAD doesn't seem to have that scripting functionality
+#Boiler plate code to render our solid in FreeCAD's GUI
+Part.show(result.toFreecad())
