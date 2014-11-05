@@ -27,12 +27,7 @@ center_hole_dia = 22.0
 
 #Create a 3D box based on the dimension variables above and add a 22mm center hole
 result = cadquery.Workplane("XY").box(length, height, thickness) \
-		.faces(">Z").workplane().hole(center_hole_dia)
+    .faces(">Z").workplane().hole(center_hole_dia)
 
-#Get a cadquery solid object
-solid = result.val()
-
-#Use the wrapped property of a cadquery primitive to get a FreeCAD solid
-Part.show(solid.wrapped)
-
-#Would like to zoom to fit the part here, but FreeCAD doesn't seem to have that scripting functionality
+#Boiler plate code to render our solid in FreeCAD's GUI
+Part.show(result.toFreecad())

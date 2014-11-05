@@ -11,33 +11,35 @@
 #If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
 #reload(Ex023_Parametric_Enclosure)
 
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially (Shape001, etc).
+#You'll need to delete the original shape that was created, and the new shape should be named sequentially
+# (Shape001, etc).
 
 #You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
+#You can get a more information on this example at
+# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
 
 import cadquery
 import Part
 
 #Parameter definitions
-p_outerWidth = 100.0 #Outer width of box enclosure
-p_outerLength = 150.0 #Outer length of box enclosure
-p_outerHeight = 50.0 #Outer height of box enclosure
+p_outerWidth = 100.0  # Outer width of box enclosure
+p_outerLength = 150.0  # Outer length of box enclosure
+p_outerHeight = 50.0  # Outer height of box enclosure
 
-p_thickness =  3.0 #Thickness of the box walls
-p_sideRadius =  10.0 #Radius for the curves around the sides of the bo
-p_topAndBottomRadius =  2.0 #Radius for the curves on the top and bottom edges of the box
+p_thickness = 3.0  # Thickness of the box walls
+p_sideRadius = 10.0  # Radius for the curves around the sides of the bo
+p_topAndBottomRadius = 2.0  # Radius for the curves on the top and bottom edges of the box
 
-p_screwpostInset = 12.0 #How far in from the edges the screwposts should be placed
-p_screwpostID = 4.0 #Inner diameter of the screwpost holes, should be roughly screw diameter not including threads
-p_screwpostOD = 10.0 #Outer diameter of the screwposts. Determines overall thickness of the posts
+p_screwpostInset = 12.0  # How far in from the edges the screwposts should be placed
+p_screwpostID = 4.0  # Inner diameter of the screwpost holes, should be roughly screw diameter not including threads
+p_screwpostOD = 10.0  # Outer diameter of the screwposts. Determines overall thickness of the posts
 
-p_boreDiameter = 8.0 #Diameter of the counterbore hole, if any
-p_boreDepth = 1.0 #Depth of the counterbore hole, if
-p_countersinkDiameter = 0.0 #Outer diameter of countersink. Should roughly match the outer diameter of the screw head
-p_countersinkAngle = 90.0 #Countersink angle (complete angle between opposite sides, not from center to one side)
-p_flipLid = True #Whether to place the lid with the top facing down or not.
-p_lipHeight =  1.0 #Height of lip on the underside of the lid. Sits inside the box body for a snug fit.
+p_boreDiameter = 8.0  # Diameter of the counterbore hole, if any
+p_boreDepth = 1.0  # Depth of the counterbore hole, if
+p_countersinkDiameter = 0.0  # Outer diameter of countersink. Should roughly match the outer diameter of the screw head
+p_countersinkAngle = 90.0  # Countersink angle (complete angle between opposite sides, not from center to one side)
+p_flipLid = True  # Whether to place the lid with the top facing down or not.
+p_lipHeight = 1.0  # Height of lip on the underside of the lid. Sits inside the box body for a snug fit.
 
 #Outer shell
 oshell = cadquery.Workplane("XY").rect(p_outerWidth, p_outerLength).extrude(p_outerHeight + p_lipHeight)
@@ -53,7 +55,7 @@ else:
 #Inner shell
 ishell = oshell.faces("<Z").workplane(p_thickness, True)\
     .rect((p_outerWidth - 2.0 * p_thickness),(p_outerLength - 2.0 * p_thickness))\
-    .extrude((p_outerHeight - 2.0 * p_thickness), False) #Set combine false to produce just the new boss
+    .extrude((p_outerHeight - 2.0 * p_thickness), False) # Set combine false to produce just the new boss
 ishell.edges("|Z").fillet(p_sideRadius - p_thickness)
 
 #Make the box outer box
@@ -61,7 +63,7 @@ box = oshell.cut(ishell)
 
 #Make the screwposts
 POSTWIDTH = (p_outerWidth - 2.0 * p_screwpostInset)
-POSTLENGTH = (p_outerLength  - 2.0 * p_screwpostInset)
+POSTLENGTH = (p_outerLength - 2.0 * p_screwpostInset)
 
 postCenters = box.faces(">Z").workplane(-p_thickness)\
     .rect(POSTWIDTH, POSTLENGTH, forConstruction=True)\
@@ -72,11 +74,11 @@ for v in postCenters.all():
         .extrude((-1.0) * ((p_outerHeight + p_lipHeight) - (2.0 * p_thickness)), True)
 
 #Split lid into top and bottom parts
-(lid, bottom) = box.faces(">Z").workplane(-p_thickness - p_lipHeight ).split(keepTop=True, keepBottom=True).all()  #splits into two solids
+(lid, bottom) = box.faces(">Z").workplane(-p_thickness - p_lipHeight).split(keepTop=True, keepBottom=True).all()
 
 #Translate the lid, and subtract the bottom from it to produce the lid inset
-lowerLid = lid.translate((0,0, -p_lipHeight))
-cutlip = lowerLid.cut(bottom).translate((p_outerWidth + p_thickness , 0, p_thickness - p_outerHeight + p_lipHeight))
+lowerLid = lid.translate((0, 0, -p_lipHeight))
+cutlip = lowerLid.cut(bottom).translate((p_outerWidth + p_thickness, 0, p_thickness - p_outerHeight + p_lipHeight))
 
 #Compute centers for counterbore/countersink or counterbore
 topOfLidCenters = cutlip.faces(">Z").workplane().rect(POSTWIDTH, POSTLENGTH, forConstruction=True).vertices()
@@ -87,7 +89,7 @@ if p_boreDiameter > 0 and p_boreDepth > 0:
 elif p_countersinkDiameter > 0 and p_countersinkAngle > 0:
     topOfLid = topOfLidCenters.cskHole(p_screwpostID, p_countersinkDiameter, p_countersinkAngle, (2.0) * p_thickness)
 else:
-    topOfLid= topOfLidCenters.hole(p_screwpostID, (2.0) * p_thickness)
+    topOfLid= topOfLidCenters.hole(p_screwpostID, 2.0 * p_thickness)
 
 #Flip lid upside down if desired
 if p_flipLid:
@@ -96,10 +98,5 @@ if p_flipLid:
 #Return the combined result
 result = topOfLid.combineSolids(bottom)
 
-#Get a cadquery solid object
-solid = result.val()
-
-#Use the wrapped property of a cadquery primitive to get a FreeCAD solid
-Part.show(solid.wrapped)
-
-#Would like to zoom to fit the part here, but FreeCAD doesn't seem to have that scripting functionality
+#Boiler plate code to render our solid in FreeCAD's GUI
+Part.show(result.toFreecad())
