@@ -138,7 +138,7 @@ def fc_import(modulename):
 
     _fcver = freecad_version()
 
-    if _fcver >= (0, 13):
+    if _fcver[0:2] >= (0, 13):
         if modulename in _find_submodules():
             return import_module(modulename)
         elif re.sub("^FreeCAD\\.", "", modulename) in _find_submodules():
@@ -146,7 +146,7 @@ def fc_import(modulename):
         else:
             raise ImportError, "Module %s not found/allowed in %s" % (
                     modulename, _PATH)
-    elif _fcver >= (0, 12):
+    elif _fcver[0:2] == (0, 12):
         return import_module(modulename)
     else:
         raise RuntimeError, "Invalid freecad version: %s" % \
