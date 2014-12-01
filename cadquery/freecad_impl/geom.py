@@ -19,8 +19,9 @@
 
 import math,sys
 #import FreeCAD
-from .verutil import fc_import
-FreeCAD = fc_import("FreeCAD")
+#from .verutil import fc_import
+#FreeCAD = fc_import("FreeCAD")
+import FreeCAD
 #Turns out we don't need the Part module here.
 
 def sortWiresByBuildOrder(wireList,plane,result=[]):

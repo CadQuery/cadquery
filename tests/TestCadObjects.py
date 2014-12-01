@@ -4,10 +4,12 @@ import sys
 import unittest
 from tests import BaseTest
 
-from cadquery.freecad_impl.verutil import fc_import
-FreeCAD = fc_import("FreeCAD")
-if not hasattr(FreeCAD, 'Part'):
-    FreeCAD.Part = fc_import("FreeCAD.Part")
+#from cadquery.freecad_impl.verutil import fc_import
+# FreeCAD = fc_import("FreeCAD")
+# if not hasattr(FreeCAD, 'Part'):
+#     FreeCAD.Part = fc_import("FreeCAD.Part")
+import FreeCAD
+import Part
 
 
 from cadquery import *

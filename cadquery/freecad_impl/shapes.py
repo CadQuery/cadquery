@@ -50,9 +50,10 @@
 from cadquery import Vector, BoundBox
 import FreeCAD
 
-from .verutil import fc_import
+#from .verutil import fc_import
 
-FreeCADPart = fc_import("FreeCAD.Part")
+#FreeCADPart = fc_import("FreeCAD.Part")
+import Part as FreeCADPart
 
 
 class Shape(object):
