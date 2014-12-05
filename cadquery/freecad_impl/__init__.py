@@ -37,6 +37,7 @@ def _fc_path():
                 os.path.join(os.path.expanduser("~"), "lib/freecad/lib"),
                 "/usr/local/lib/freecad/lib",
                 "/usr/lib/freecad/lib",
+                "/usr/bin/freecad/lib",
                 ]:
             if os.path.exists(_PATH):
                 return _PATH
