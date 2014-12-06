@@ -20,7 +20,9 @@ The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 
 https://github.com/jmwright/cadquery-freecad-module
 
 
-It has super-easy installation on Mac, Windows, and Unix, and features code-autocompletion and a bunch of examples that will run right in FreeCAD.
+It includes the latest version of cadquery alreadby bundled, and has super-easy installation on Mac, Windows, and Unix.
+
+It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
 
 
 Recently Added Features
@@ -105,6 +107,7 @@ Installing -- Using CadQuery from Inside FreeCAD
 Use the Excellent CadQuery-FreeCAD plugin here:
    https://github.com/jmwright/cadquery-freecad-module
 
+It includes a distribution of the latest version of cadquery.
 
 Where does the name CadQuery come from?
 ========================================
