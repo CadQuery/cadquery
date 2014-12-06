@@ -37,6 +37,7 @@ def _fc_path():
                 os.path.join(os.path.expanduser("~"), "lib/freecad/lib"),
                 "/usr/local/lib/freecad/lib",
                 "/usr/lib/freecad/lib",
+                "/opt/freecad/lib/",
                 "/usr/bin/freecad/lib",
                 ]:
             if os.path.exists(_PATH):
@@ -81,6 +82,14 @@ def _fc_path():
                 "c:/apps/FreeCAD 0.15/bin",
                 "c:/apps/FreeCAD 0.16/bin",
                 "c:/apps/FreeCAD 0.17/bin",
+                ]:
+            if os.path.exists(_PATH):
+                return _PATH
+    else:
+        #Assume we're dealing with a Mac
+        for _PATH in [
+                os.path.join(os.path.expanduser("~"), "Library/Application Support/FreeCAD/lib"),
+                "/Applications/FreeCAD.app/lib",
                 ]:
             if os.path.exists(_PATH):
                 return _PATH
