@@ -18,7 +18,6 @@ cadquery/freecad_impl/exporters.py
 cadquery/freecad_impl/geom.py
 cadquery/freecad_impl/importers.py
 cadquery/freecad_impl/shapes.py
-cadquery/freecad_impl/verutil.py
 cadquery/plugins/__init__.py
 tests/TestCQSelectors.py
 tests/TestCadObjects.py

@@ -21,9 +21,11 @@
 """
 import cadquery
 from .shapes import Shape
-from .verutil import fc_import
-FreeCAD = fc_import("FreeCAD")
-Part = fc_import("FreeCAD.Part")
+#from .verutil import fc_import
+# FreeCAD = fc_import("FreeCAD")
+# Part = fc_import("FreeCAD.Part")
+import FreeCAD
+import Part
 
 class ImportTypes:
     STEP = "STEP"

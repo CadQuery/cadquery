@@ -3,11 +3,16 @@ import unittest
 import sys
 import os
 
-from cadquery.freecad_impl.verutil import fc_import
-FreeCAD = fc_import("FreeCAD")
+#from cadquery.freecad_impl.verutil import fc_import
+#FreeCAD = fc_import("FreeCAD")
+#import cadquery.freecad_impl
+import FreeCAD
 
-P = fc_import("FreeCAD.Part")
-V = fc_import("FreeCAD").Base.Vector
+# P = fc_import("FreeCAD.Part")
+# V = fc_import("FreeCAD").Base.Vector
+
+import Part as P
+from FreeCAD import Vector as V
 
 def readFileAsString(fileName):
     f= open(fileName,'r')

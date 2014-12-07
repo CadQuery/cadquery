@@ -21,11 +21,13 @@
 """
 import cadquery
 
-from .verutil import fc_import
-FreeCAD = fc_import("FreeCAD")
+#from .verutil import fc_import
+#FreeCAD = fc_import("FreeCAD")
+import FreeCAD
 import tempfile,os,StringIO
 
-Drawing = fc_import("FreeCAD.Drawing")
+import Drawing
+#Drawing = fc_import("FreeCAD.Drawing")
 #_FCVER = freecad_version()
 #if _FCVER>=(0,13):
     #import Drawing as FreeCADDrawing #It's in FreeCAD lib path
