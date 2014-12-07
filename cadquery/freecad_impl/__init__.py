@@ -85,11 +85,11 @@ def _fc_path():
                 ]:
             if os.path.exists(_PATH):
                 return _PATH
-    else:
+    elif sys.platform.startswith('darwin'):
         #Assume we're dealing with a Mac
         for _PATH in [
+                "/Applications/FreeCAD.app/Contents/lib",
                 os.path.join(os.path.expanduser("~"), "Library/Application Support/FreeCAD/lib"),
-                "/Applications/FreeCAD.app/lib",
                 ]:
             if os.path.exists(_PATH):
                 return _PATH
