@@ -49,10 +49,6 @@
 """
 from cadquery import Vector, BoundBox
 import FreeCAD
-
-#from .verutil import fc_import
-
-#FreeCADPart = fc_import("FreeCAD.Part")
 import Part as FreeCADPart
 
 
