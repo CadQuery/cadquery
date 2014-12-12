@@ -20,7 +20,7 @@
     a string containing the model content.
 """
 import cadquery
-from .shapes import Shape, Compound
+from .shapes import Shape
 
 import FreeCAD
 import Part
