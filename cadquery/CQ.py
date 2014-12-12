@@ -680,7 +680,7 @@ class CQ(object):
             endPt = startPt + endVec
             obj.rotate(startPt,endPt,angleDegrees)
 
-        return self.each(_rot,False)
+        return self.each(_rot, False)
 
     def translate(self,vec):
         """
