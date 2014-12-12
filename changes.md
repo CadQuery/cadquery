@@ -14,3 +14,13 @@ v0.1.7
 -----
     * Added revolve operation and supporting tests
     * Fixed minor documentation errors
+    
+v0.1.8 (Unreleased)
+-----
+    * Added toFreecad() function as a convenience for val().wrapped
+    * Converted all examples to use toFreecad()
+    * Updated all version numbers that were missed before
+    * Fixed import issues in Windows caused by fc_import
+    * Added/fixed Mac OS support
+    * Improved STEP import
+    * Fixed bug in rotateAboutCenter that negated its effect on solids
