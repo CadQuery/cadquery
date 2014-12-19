@@ -682,6 +682,25 @@ class CQ(object):
 
         return self.each(_rot, False)
 
+    def rotate(self, axisStartPoint, axisEndPoint, angleDegrees):
+        """Returns a copy of all of the items on the stack rotated through and angle around the axis of rotation.
+
+        :param axisStartPoint: The first point of the axis of rotation
+        :type axisStartPoint: a 3-tuple of floats
+        :type axisEndPoint: The second point of the axis of rotation
+        :type axisEndPoint: a 3-tuple of floats
+        :param angleDegrees: the rotation angle, in degrees
+        :type angleDegrees: float
+        :returns: a CQ object
+
+        WARNING: the underlying objects are modified, not copied.
+
+            Future Enhancements:
+                A version of this method that returns a transformed copy instead
+                of modifying the originals.
+        """
+        return self.newObject([o.rotate(axisStartPoint, axisEndPoint, angleDegrees) for o in self.objects])
+
     def translate(self,vec):
         """
             Returns a copy of  all of the items on the stack moved by the specified translation vector.
