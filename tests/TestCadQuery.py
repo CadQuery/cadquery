@@ -195,6 +195,21 @@ class TestCadQuery(BaseTest):
         self.assertEqual(type(r.val()), Solid)
         self.assertEqual(type(r.first().val()),Solid)
 
+    def testRotate(self):
+        """Test solid rotation at the CQ object level."""
+        box = Workplane("XY").box(1, 1, 5)
+        box.rotate((0, 0, 0), (1, 0, 0), 90)
+        startPoint = box.faces("<Y").edges("<X").first().val().startPoint().toTuple()
+        endPoint = box.faces("<Y").edges("<X").first().val().endPoint().toTuple()
+
+        self.assertEqual(-0.5, startPoint[0])
+        self.assertEqual(-0.5, startPoint[1])
+        self.assertEqual(-2.5, startPoint[2])
+        self.assertEqual(-0.5, endPoint[0])
+        self.assertEqual(-0.5, endPoint[1])
+        self.assertEqual(2.5, endPoint[2])
+
+
     def testLoft(self):
         """
             Test making a lofted solid
