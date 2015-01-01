@@ -1,6 +1,8 @@
 What is a CadQuery?
 ========================================
 
+[![Travis Build Status](https://travis-ci.org/dcowden/cadquery.svg)](https://travis-ci.org/dcowden/cadquery)
+
 CadQuery is an intuitive, easy-to-use python based language for building parametric 3D CAD models.  CadQuery is for 3D CAD what jQuery is for javascript.  Imagine selecting Faces of a 3d object the same way you select DOM objects with JQuery!
 
 CadQuery has several goals:
