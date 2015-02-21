@@ -1137,7 +1137,7 @@ class Workplane(CQ):
             See :py:meth:`move` to do the same thing but using relative dimensions
         """
         newCenter = Vector(x,y,0)
-        return self.newObject([self.plane.toWorldCoordinates(newCenter)])
+        return self.newObject([self.plane.toWorldCoords(newCenter)])
 
     #relative move in current plane, not drawing
     def move(self, xDist=0, yDist=0):
@@ -1157,7 +1157,7 @@ class Workplane(CQ):
         """
         p = self._findFromPoint(True)
         newCenter = p + Vector(xDist,yDist,0)
-        return self.newObject([self.plane.toWorldCoordinates(newCenter)])
+        return self.newObject([self.plane.toWorldCoords(newCenter)])
 
 
     def spline(self,listOfXYTuple,forConstruction=False):
