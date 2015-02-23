@@ -421,7 +421,9 @@ class Plane:
 
 
         """
-        if len(tuplePoint) == 2:
+        if isinstance(tuplePoint, Vector):
+            v = tuplePoint
+        elif len(tuplePoint) == 2:
             v = Vector(tuplePoint[0], tuplePoint[1], 0)
         else:
             v = Vector(tuplePoint[0],tuplePoint[1],tuplePoint[2])
