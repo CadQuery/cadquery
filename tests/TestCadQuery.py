@@ -546,6 +546,23 @@ class TestCadQuery(BaseTest):
 
         self.saveModel(r)
 
+    def test2DDrawing(self):
+        """Draw things like 2D lines and arcs, should be expanded later to include all 2D constructs"""
+        s = Workplane(Plane.XY())
+        r = s.lineTo(1.0, 0.0) \
+             .lineTo(1.0, 1.0) \
+             .threePointArc((1.0, 1.5), (0.0, 1.0)) \
+             .lineTo(0.0, 0.0) \
+             .moveTo(1.0, 0.0) \
+             .lineTo(2.0, 0.0) \
+             .lineTo(2.0, 2.0) \
+             .threePointArc((2.0, 2.5), (0.0, 2.0)) \
+             .lineTo(-2.0, 2.0) \
+             .lineTo(-2.0, 0.0) \
+             .close()
+
+        self.assertEqual(1, r.wires().size())
+
     def testOccBottle(self):
         """
         Make the OCC bottle example.
