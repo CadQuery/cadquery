@@ -56,7 +56,7 @@ CadQuery scripts have several key advantages over OpenSCAD:
 4. **Less Code and easier scripting**  CadQuery scripts require less code to create most objects, because it is possible to locate
    features based on the position of other features, workplanes, vertices, etc.
 
-5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD. 
+5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
 
 License
 ========
@@ -77,20 +77,20 @@ Use these steps if you would like to write CadQuery scripts as a python API.  In
 
 1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
 
-2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own, 
+2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own,
    preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD
    lib directory to your path. On  (*Nix)::
-   
+
         import sys
 		sys.path.append('/usr/lib/freecad/lib')
-		
+
    or on Windows::
-     
+
 	    import sys
 		sys.path.append('/c/apps/FreeCAD/bin')
-		
+
    *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
-   
+
 3. install cadquery::
 
 		pip install cadquery
@@ -100,9 +100,9 @@ Use these steps if you would like to write CadQuery scripts as a python API.  In
 		from cadquery import *
 		box = Workplane("XY").box(1,2,3)
 		exporters.toString(box,'STL')
-		
+
 You're up and running!
-		
+
 Installing -- Using CadQuery from Inside FreeCAD
 =================================================
 
@@ -121,7 +121,7 @@ If you are familiar with how jQuery, you will probably recognize several jQuery 
 
 * A fluent api to create clean, easy to read code
 * Language features that make selection and iteration incredibly easy
-* 
+*
 * Ability to use the library along side other python libraries
 * Clear and complete documentation, with plenty of samples.
 
