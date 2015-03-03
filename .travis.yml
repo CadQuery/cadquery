@@ -11,7 +11,7 @@ install:
   - python ./setup.py install
   - pip install coveralls
 
-script: coverage run --source=cadquery python ./runtests.py
+script: python ./runtests.py
 
 after_success:
   - coveralls
