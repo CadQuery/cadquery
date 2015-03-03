@@ -9,5 +9,9 @@ install:
   - gcc --version
   - g++ --version
   - python ./setup.py install
+  - pip install coveralls
 
 script: python ./runtests.py
+
+after_success:
+  - coveralls
