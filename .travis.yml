@@ -9,5 +9,11 @@ install:
   - gcc --version
   - g++ --version
   - python ./setup.py install
+  - pip install coverage
+  - pip install coveralls
 
-script: python ./runtests.py
+script:
+  - coverage run --source=cadquery ./runtests.py
+
+after_success:
+  - coveralls
