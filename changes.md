@@ -15,7 +15,7 @@ v0.1.7
     * Added revolve operation and supporting tests
     * Fixed minor documentation errors
 
-v0.1.8 (Unreleased)
+v0.1.8
 -----
     * Added toFreecad() function as a convenience for val().wrapped
     * Converted all examples to use toFreecad()

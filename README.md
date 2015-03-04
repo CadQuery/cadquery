@@ -19,7 +19,7 @@ Using CadQuery, you can write short, simple scripts that produce high quality CA
 Getting Started With CadQuery
 ========================================
 
-The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 recommended )  (http://www.freecadweb.org/) , and then to use Jeremy's Great CadQuery-FreeCAD plugin here:
+The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 recommended )  (http://www.freecadweb.org/), and then to use our great CadQuery-FreeCAD plugin here:
 
 https://github.com/jmwright/cadquery-freecad-module
 
@@ -32,8 +32,9 @@ It has tons of awesome features like integration with FreeCAD so you can see you
 Recently Added Features
 ========================================
 
-* 12/5/14 -- New FreeCAD/CadQuery Module!  https://github.com/jmwright/cadquery-freecad-module
-* 10/25/14 -- Added Revolution Feature ( thanks Jeremy ! )
+* 02/21/15 -- Multiple bug fixes and tests added, including a bugfix for moveTo (thanks @xix-xeaon)
+* 12/31/14 -- Added Travis CI config to automatically test our code (thanks @krasin)
+* 12/05/14 -- New FreeCAD/CadQuery Module!  https://github.com/jmwright/cadquery-freecad-module
 
 
 Why CadQuery instead of OpenSCAD?
