@@ -14,7 +14,7 @@ v0.1.7
 -----
     * Added revolve operation and supporting tests
     * Fixed minor documentation errors
-    
+
 v0.1.8 (Unreleased)
 -----
     * Added toFreecad() function as a convenience for val().wrapped
@@ -24,3 +24,9 @@ v0.1.8 (Unreleased)
     * Added/fixed Mac OS support
     * Improved STEP import
     * Fixed bug in rotateAboutCenter that negated its effect on solids
+    * Added Travis config (thanks @krasin)
+    * Removed redundant workplane.py file left over from the PParts.com migration
+    * Fixed toWorldCoordinates bug in moveTo (thanks @xix-xeaon)
+    * Added new tests for 2D drawing functions
+    * Integrated Coveralls.io, with a badge in README.md
+    * Integrated version badge in README.md
