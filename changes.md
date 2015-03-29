@@ -30,3 +30,7 @@ v0.1.8
     * Added new tests for 2D drawing functions
     * Integrated Coveralls.io, with a badge in README.md
     * Integrated version badge in README.md
+    
+v0.1.9 (Unreleased)
+-----
+   * Added license badge in changes.md
