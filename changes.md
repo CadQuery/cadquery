@@ -34,3 +34,5 @@ v0.1.8
 v0.1.9 (Unreleased)
 -----
    * Added license badge in changes.md
+   * Fixed Solid.makeSphere implementation
+   * Added CQ.sphere operation that mirrors CQ.box
