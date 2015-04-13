@@ -750,6 +750,30 @@ class TestCadQuery(BaseTest):
         self.assertEquals(1,s.solids().size()) # we should have one big solid
         self.assertEquals(26,s.faces().size()) # should have 26 faces. 6 for the box, and 4x5 for the smaller cubes
 
+    def testSphereDefaults(self):
+        s = Workplane("XY").sphere(10)
+        self.saveModel(s)
+        self.assertEquals(1, s.solids().size())
+        self.assertEquals(1, s.faces().size())
+
+    def testSphereCustom(self):
+        s = Workplane("XY").sphere(10, angle1=0, angle2=90, angle3=360, centered=(False, False, False))
+        self.saveModel(s)
+        self.assertEquals(1, s.solids().size())
+        self.assertEquals(2, s.faces().size())
+
+    def testSpherePointList(self):
+        s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().sphere(0.25, combine=False)
+        self.saveModel(s)
+        self.assertEquals(4, s.solids().size())
+        self.assertEquals(4, s.faces().size())
+
+    def testSphereCombine(self):
+        s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().sphere(0.25, combine=True)
+        self.saveModel(s)
+        self.assertEquals(1, s.solids().size())
+        self.assertEquals(4, s.faces().size())
+
     def testQuickStartXY(self):
         s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane().rect(1.5,3.5,forConstruction=True)\
         .vertices().cskHole(0.125, 0.25,82,depth=None)

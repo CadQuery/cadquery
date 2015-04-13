@@ -638,13 +638,13 @@ class Solid(Shape):
             FreeCADPart.makeWedge(xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt, dir))
 
     @classmethod
-    def makeSphere(cls, radius, pnt=None, angleDegrees1=None, angleDegrees2=None, angleDegrees3=None):
+    def makeSphere(cls, radius, pnt=None, dir=None, angleDegrees1=None, angleDegrees2=None, angleDegrees3=None):
         """
             'makeSphere(radius,[pnt, dir, angle1,angle2,angle3]) --
             Make a sphere with a giv
             en radius\nBy default pnt=Vector(0,0,0), dir=Vector(0,0,1), angle1=0, angle2=90 and angle3=360'
         """
-        return Solid(FreeCADPart.makeSphere(radius, pnt, angleDegrees1, angleDegrees2, angleDegrees3))
+        return Shape.cast(FreeCADPart.makeSphere(radius, pnt.wrapped, dir.wrapped, angleDegrees1, angleDegrees2, angleDegrees3))
 
     @classmethod
     def extrudeLinearWithRotation(cls, outerWire, innerWires, vecCenter, vecNormal, angleDegrees):
