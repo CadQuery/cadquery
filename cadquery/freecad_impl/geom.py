@@ -17,9 +17,10 @@
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
-import math,sys
+import math
+import cadquery
 import FreeCAD
-#Turns out we don't need the Part module here.
+import Part as FreeCADPart
 
 def sortWiresByBuildOrder(wireList,plane,result=[]):
     """
@@ -403,9 +404,9 @@ class Plane:
             correctly.
 
         """
-        if isinstance(obj,Vector):
+        if isinstance(obj, Vector):
             return Vector(self.fG.multiply(obj.wrapped))
-        elif isinstance(obj,Shape):
+        elif isinstance(obj, cadquery.Shape):
             return obj.transformShape(self.rG)
         else:
             raise ValueError("Dont know how to convert type %s to local coordinates" % str(type(obj)))
@@ -464,7 +465,7 @@ class Plane:
         newP= Plane(self.origin,newXdir,newZdir)
         return newP
 
-    def rotateShapes(self,listOfShapes,rotationMatrix):
+    def rotateShapes(self, listOfShapes, rotationMatrix):
         """
             rotate the listOfShapes by the rotationMatrix supplied.
             @param listOfShapes is a list of shape objects
@@ -480,12 +481,19 @@ class Plane:
         #There might be a better way, but to do this rotation takes 3 steps
         #transform geometry to local coordinates
         #then rotate about x
-        #then transform back to global coordiante
+        #then transform back to global coordinates
 
         resultWires = []
         for w in listOfShapes:
             mirrored = w.transformGeometry(rotationMatrix.wrapped)
-            resultWires.append(mirrored)
+
+            # Make sure that our mirrored edges meet up and are ordered properly
+            aEdges = w.wrapped.Edges
+            aEdges.extend(mirrored.wrapped.Edges)
+            comp = FreeCADPart.Compound(aEdges)
+            mirroredWire = comp.connectEdgesToWires(False).Wires[0]
+
+            resultWires.append(cadquery.Shape.cast(mirroredWire))
 
         return resultWires
 
