@@ -1261,7 +1261,7 @@ class Workplane(CQ):
         #attempt to consolidate wires together.
         consolidated = n.consolidateWires()
 
-        rotatedWires = self.plane.rotateShapes(consolidated.wires().vals(),matrix)
+        rotatedWires = self.plane.rotateShapes(consolidated.wires().vals(), matrix)
 
         for w in rotatedWires:
             consolidated.objects.append(w)
