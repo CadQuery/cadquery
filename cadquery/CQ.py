@@ -1269,6 +1269,7 @@ class Workplane(CQ):
 
         #attempt again to consolidate all of the wires
         c = consolidated.consolidateWires()
+
         return c
 
     def mirrorY(self):
@@ -1288,7 +1289,6 @@ class Workplane(CQ):
 
             Future Enhancements:
                 mirrorX().mirrorY() should work but doesnt, due to some FreeCAD weirdness
-
         """
         tm = Matrix()
         tm.rotateY(math.pi)
@@ -1307,7 +1307,6 @@ class Workplane(CQ):
 
             Future Enhancements:
                 mirrorX().mirrorY() should work but doesnt, due to some FreeCAD weirdness
-
         """
         tm = Matrix()
         tm.rotateX(math.pi)
@@ -1349,11 +1348,9 @@ class Workplane(CQ):
             If possible, a new object with the results are returned.
             if not possible, the wires remain separated
 
-            FreeCAD has a bug in Part.Wire([]) which does not create wires/edges properly somtimes
-            Additionally, it has a bug where a profile compose of two wires ( rathre than one )
-            also does not work properly
-
-            together these are a real problem.
+            FreeCAD has a bug in Part.Wire([]) which does not create wires/edges properly sometimes
+            Additionally, it has a bug where a profile compose of two wires ( rather than one )
+            also does not work properly. Together these are a real problem.
         """
         wires = self.wires().vals()
         if len(wires) < 2:

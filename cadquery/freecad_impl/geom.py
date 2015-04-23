@@ -489,8 +489,14 @@ class Plane:
 
             # If the first vertex of the second wire is not coincident with the first or last vertices of the first wire
             # we have to fix the wire so that it will mirror correctly
-            if (mirrored.wrapped.Vertexes[0].X == w.wrapped.Vertexes[0].X and mirrored.wrapped.Vertexes[0].Y == w.wrapped.Vertexes[0].Y and mirrored.wrapped.Vertexes[0].Z == w.wrapped.Vertexes[0].Z) or (mirrored.wrapped.Vertexes[0].X == w.wrapped.Vertexes[-1].X and mirrored.wrapped.Vertexes[0].Y == w.wrapped.Vertexes[-1].Y and mirrored.wrapped.Vertexes[0].Z == w.wrapped.Vertexes[-1].Z):
-                 resultWires.append(mirrored)
+            if (mirrored.wrapped.Vertexes[0].X == w.wrapped.Vertexes[0].X and
+                mirrored.wrapped.Vertexes[0].Y == w.wrapped.Vertexes[0].Y and
+                mirrored.wrapped.Vertexes[0].Z == w.wrapped.Vertexes[0].Z) or \
+                (mirrored.wrapped.Vertexes[0].X == w.wrapped.Vertexes[-1].X and
+                mirrored.wrapped.Vertexes[0].Y == w.wrapped.Vertexes[-1].Y and
+                mirrored.wrapped.Vertexes[0].Z == w.wrapped.Vertexes[-1].Z):
+
+                resultWires.append(mirrored)
             else:
                 # Make sure that our mirrored edges meet up and are ordered properly
                 aEdges = w.wrapped.Edges

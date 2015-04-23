@@ -607,10 +607,63 @@ class TestCadQuery(BaseTest):
         """
             Tests a simple mirroring operation
         """
-        s = Workplane("XY").lineTo(2,2).threePointArc((3,1),(2,0)) \
+        s = Workplane("XY").lineTo(2, 2).threePointArc((3, 1), (2, 0)) \
             .mirrorX().extrude(0.25)
-        self.assertEquals(6,s.faces().size())
+        self.assertEquals(6, s.faces().size())
         self.saveModel(s)
+
+    def testUnorderedMirror(self):
+        """
+        Tests whether or not a wire can be mirrored if its mirror won't connect to it
+        """
+        r = 20
+        s = 7
+        t = 1.5
+
+        points = [
+            (0, t/2),
+            (r/2-1.5*t, r/2-t),
+            (s/2, r/2-t),
+            (s/2, r/2),
+            (r/2, r/2),
+            (r/2, s/2),
+            (r/2-t, s/2),
+            (r/2-t, r/2-1.5*t),
+            (t/2, 0)
+        ]
+
+        r = Workplane("XY").polyline(points).mirrorX()
+
+        self.assertEquals(1, r.wires().size())
+        self.assertEquals(16, r.edges().size())
+
+    # def testChainedMirror(self):
+    #     """
+    #     Tests whether or not calling mirrorX().mirrorY() works correctly
+    #     """
+    #     r = 20
+    #     s = 7
+    #     t = 1.5
+    #
+    #     points = [
+    #         (0, t/2),
+    #         (r/2-1.5*t, r/2-t),
+    #         (s/2, r/2-t),
+    #         (s/2, r/2),
+    #         (r/2, r/2),
+    #         (r/2, s/2),
+    #         (r/2-t, s/2),
+    #         (r/2-t, r/2-1.5*t),
+    #         (t/2, 0)
+    #     ]
+    #
+    #     r = Workplane("XY").polyline(points).mirrorX().mirrorY()
+    #
+    #     self.assertEquals(1, r.wires().size())
+    #     self.assertEquals(32, r.edges().size())
+
+    #TODO: Re-work testIbeam test below now that chaining works
+    #TODO: Add toLocalCoords and toWorldCoords tests
 
     def testIbeam(self):
         """
@@ -623,44 +676,50 @@ class TestCadQuery(BaseTest):
 
         t = 1.0
         #TODO: for some reason doing 1/4 of the profile and mirroring twice ( .mirrorX().mirrorY() )
-        #did not work, due to a bug in freecad-- it was losing edges when createing a composite wire.
+        #did not work, due to a bug in freecad-- it was losing edges when creating a composite wire.
         #i just side-stepped it for now
 
         pts = [
-            (0,H/2.0),
-            (W/2.0,H/2.0),
-            (W/2.0,(H/2.0 - t)),
-            (t/2.0,(H/2.0-t)),
-            (t/2.0,(t - H/2.0)),
-            (W/2.0,(t -H/2.0)),
-            (W/2.0,H/-2.0),
-            (0,H/-2.0)
+            (0, H/2.0),
+            (W/2.0, H/2.0),
+            (W/2.0, (H/2.0 - t)),
+            (t/2.0, (H/2.0-t)),
+            (t/2.0, (t - H/2.0)),
+            (W/2.0, (t - H/2.0)),
+            (W/2.0, H / -2.0),
+            (0, H/-2.0)
         ]
         r = s.polyline(pts).mirrorY()  #these other forms also work
         res = r.extrude(L)
         self.saveModel(res)
 
     def testCone(self):
-        "test that a simple sphere works"
-        s = Solid.makeCone(0,1.0,2.0)
+        """
+        Tests that a simple cone works
+        """
+        s = Solid.makeCone(0, 1.0, 2.0)
         t = CQ(s)
         self.saveModel(t)
-        self.assertEqual(2,t.faces().size())
+        self.assertEqual(2, t.faces().size())
 
     def testFillet(self):
-        "Tests filleting edges on a solid"
+        """
+        Tests filleting edges on a solid
+        """
         c = CQ( makeUnitCube()).faces(">Z").workplane().circle(0.25).extrude(0.25,True).edges("|Z").fillet(0.2)
         self.saveModel(c)
         self.assertEqual(12,c.faces().size() )
 
     def testCounterBores(self):
-        """Tests making a set of counterbored holes in a face"""
+        """
+        Tests making a set of counterbored holes in a face
+        """
         c = CQ(makeCube(3.0))
-        pnts=[
-            (-1.0,-1.0),(0.0,0.0),(1.0,1.0)
+        pnts = [
+            (-1.0, -1.0), (0.0, 0.0), (1.0, 1.0)
         ]
-        c.faces(">Z").workplane().pushPoints(pnts).cboreHole(0.1,0.25,0.25,.75)
-        self.assertEquals(18,c.faces().size() )
+        c.faces(">Z").workplane().pushPoints(pnts).cboreHole(0.1, 0.25, 0.25, 0.75)
+        self.assertEquals(18, c.faces().size() )
         self.saveModel(c)
 
     def testCounterSinks(self):
@@ -668,63 +727,67 @@ class TestCadQuery(BaseTest):
             Tests countersinks
         """
         s = Workplane(Plane.XY())
-        result = s.rect(2.0,4.0).extrude(0.5).faces(">Z").workplane()\
-            .rect(1.5,3.5,forConstruction=True).vertices().cskHole(0.125, 0.25,82,depth=None)
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
         self.saveModel(result)
 
     def testSplitKeepingHalf(self):
-        "Tests splitting a solid"
+        """
+        Tests splitting a solid
+        """
 
         #drill a hole in the side
         c = CQ(makeUnitCube()).faces(">Z").workplane().circle(0.25).cutThruAll()
 
-        self.assertEqual(7,c.faces().size() )
+        self.assertEqual(7, c.faces().size())
 
         #now cut it in half sideways
         c.faces(">Y").workplane(-0.5).split(keepTop=True)
         self.saveModel(c)
-        self.assertEqual(8,c.faces().size())
+        self.assertEqual(8, c.faces().size())
 
     def testSplitKeepingBoth(self):
-        "Tests splitting a solid"
+        """
+        Tests splitting a solid
+        """
 
         #drill a hole in the side
         c = CQ(makeUnitCube()).faces(">Z").workplane().circle(0.25).cutThruAll()
-        self.assertEqual(7,c.faces().size() )
+        self.assertEqual(7, c.faces().size())
 
         #now cut it in half sideways
-        result = c.faces(">Y").workplane(-0.5).split(keepTop=True,keepBottom=True)
+        result = c.faces(">Y").workplane(-0.5).split(keepTop=True, keepBottom=True)
 
         #stack will have both halves, original will be unchanged
-        self.assertEqual(2, result.solids().size())  #two solids are on the stack, eac
-        self.assertEqual(8,result.solids().item(0).faces().size())
-        self.assertEqual(8,result.solids().item(1).faces().size())
+        self.assertEqual(2, result.solids().size())  # two solids are on the stack, eac
+        self.assertEqual(8, result.solids().item(0).faces().size())
+        self.assertEqual(8, result.solids().item(1).faces().size())
 
     def testBoxDefaults(self):
         """
         Tests creating a single box
         """
-        s = Workplane("XY").box(2,3,4)
-        self.assertEquals(1,s.solids().size() )
+        s = Workplane("XY").box(2, 3, 4)
+        self.assertEquals(1, s.solids().size())
         self.saveModel(s)
 
     def testSimpleShell(self):
         """
             Create s simple box
         """
-        s = Workplane("XY").box(2,2,2).faces("+Z").shell(0.05)
+        s = Workplane("XY").box(2, 2, 2).faces("+Z").shell(0.05)
         self.saveModel(s)
-        self.assertEquals(23,s.faces().size() )
+        self.assertEquals(23, s.faces().size())
 
 
     def testOpenCornerShell(self):
-        s = Workplane("XY").box(1,1,1)
+        s = Workplane("XY").box(1, 1, 1)
         s1 = s.faces("+Z")
         s1.add(s.faces("+Y")).add(s.faces("+X"))
         self.saveModel(s1.shell(0.2))
 
     def testTopFaceFillet(self):
-        s = Workplane("XY").box(1,1,1).faces("+Z").edges().fillet(0.1)
+        s = Workplane("XY").box(1, 1, 1).faces("+Z").edges().fillet(0.1)
         self.assertEquals(s.faces().size(), 10)
         self.saveModel(s)
 
@@ -732,23 +795,23 @@ class TestCadQuery(BaseTest):
         """
         Tests creating an array of boxes
         """
-        s = Workplane("XY").rect(4.0,4.0,forConstruction=True).vertices().box(0.25,0.25,0.25,combine=True)
-        #1 object, 4 solids beause the object is a compound
-        self.assertEquals(1,s.solids().size() )
-        self.assertEquals(1,s.size())
+        s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().box(0.25, 0.25, 0.25, combine=True)
+        #1 object, 4 solids because the object is a compound
+        self.assertEquals(1, s.solids().size())
+        self.assertEquals(1, s.size())
         self.saveModel(s)
 
-        s = Workplane("XY").rect(4.0,4.0,forConstruction=True).vertices().box(0.25,0.25,0.25,combine=False)
-        #4 objects, 4 solids, becaue each is a separate solid
-        self.assertEquals(4,s.size())
-        self.assertEquals(4,s.solids().size() )
+        s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().box(0.25, 0.25, 0.25, combine=False)
+        #4 objects, 4 solids, because each is a separate solid
+        self.assertEquals(4, s.size())
+        self.assertEquals(4, s.solids().size())
 
     def testBoxCombine(self):
-        s = Workplane("XY").box(4,4,0.5).faces(">Z").workplane().rect(3,3,forConstruction=True).vertices().box(0.25,0.25,0.25,combine=True)
+        s = Workplane("XY").box(4, 4, 0.5).faces(">Z").workplane().rect(3, 3, forConstruction=True).vertices().box(0.25, 0.25, 0.25, combine=True)
 
         self.saveModel(s)
-        self.assertEquals(1,s.solids().size()) # we should have one big solid
-        self.assertEquals(26,s.faces().size()) # should have 26 faces. 6 for the box, and 4x5 for the smaller cubes
+        self.assertEquals(1, s.solids().size())  # we should have one big solid
+        self.assertEquals(26, s.faces().size())  # should have 26 faces. 6 for the box, and 4x5 for the smaller cubes
 
     def testSphereDefaults(self):
         s = Workplane("XY").sphere(10)
@@ -775,29 +838,29 @@ class TestCadQuery(BaseTest):
         self.assertEquals(4, s.faces().size())
 
     def testQuickStartXY(self):
-        s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane().rect(1.5,3.5,forConstruction=True)\
-        .vertices().cskHole(0.125, 0.25,82,depth=None)
-        self.assertEquals(1,s.solids().size())
-        self.assertEquals(14,s.faces().size())
+        s = Workplane(Plane.XY()).box(2, 4, 0.5).faces(">Z").workplane().rect(1.5, 3.5, forConstruction=True)\
+        .vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.assertEquals(1, s.solids().size())
+        self.assertEquals(14, s.faces().size())
         self.saveModel(s)
 
     def testQuickStartYZ(self):
-        s = Workplane(Plane.YZ()).box(2,4,0.5).faces(">X").workplane().rect(1.5,3.5,forConstruction=True)\
-            .vertices().cskHole(0.125, 0.25,82,depth=None)
-        self.assertEquals(1,s.solids().size())
-        self.assertEquals(14,s.faces().size())
+        s = Workplane(Plane.YZ()).box(2, 4, 0.5).faces(">X").workplane().rect(1.5, 3.5, forConstruction=True)\
+            .vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.assertEquals(1, s.solids().size())
+        self.assertEquals(14, s.faces().size())
         self.saveModel(s)
 
     def testQuickStartXZ(self):
-        s = Workplane(Plane.XZ()).box(2,4,0.5).faces(">Y").workplane().rect(1.5,3.5,forConstruction=True)\
-        .vertices().cskHole(0.125, 0.25,82,depth=None)
-        self.assertEquals(1,s.solids().size())
-        self.assertEquals(14,s.faces().size())
+        s = Workplane(Plane.XZ()).box(2, 4, 0.5).faces(">Y").workplane().rect(1.5, 3.5, forConstruction=True)\
+                                 .vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.assertEquals(1, s.solids().size())
+        self.assertEquals(14, s.faces().size())
         self.saveModel(s)
 
     def testDoubleTwistedLoft(self):
-        s = Workplane("XY").polygon(8,20.0).workplane(offset=4.0).transformed(rotate=Vector(0,0,15.0)).polygon(8,20).loft()
-        s2 = Workplane("XY").polygon(8,20.0).workplane(offset=-4.0).transformed(rotate=Vector(0,0,15.0)).polygon(8,20).loft()
+        s = Workplane("XY").polygon(8, 20.0).workplane(offset=4.0).transformed(rotate=Vector(0, 0, 15.0)).polygon(8, 20).loft()
+        s2 = Workplane("XY").polygon(8, 20.0).workplane(offset=-4.0).transformed(rotate=Vector(0, 0, 15.0)).polygon(8, 20).loft()
         #self.assertEquals(10,s.faces().size())
         #self.assertEquals(1,s.solids().size())
         s3 = s.combineSolids(s2)
