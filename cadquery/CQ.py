@@ -1336,7 +1336,7 @@ class Workplane(CQ):
             CadQuery tracks edges as they are drawn, and automatically combines them into wires
             when the user does an operation that needs it.
 
-            Similarly, cadQuery tracks pending wires, and automaticlaly combines them into faces
+            Similarly, cadQuery tracks pending wires, and automatically combines them into faces
             when necessary to make a solid.
         """
         self.ctx.pendingWires.append(wire)
@@ -1349,7 +1349,7 @@ class Workplane(CQ):
             if not possible, the wires remain separated
 
             FreeCAD has a bug in Part.Wire([]) which does not create wires/edges properly sometimes
-            Additionally, it has a bug where a profile compose of two wires ( rather than one )
+            Additionally, it has a bug where a profile composed of two wires ( rather than one )
             also does not work properly. Together these are a real problem.
         """
         wires = self.wires().vals()
