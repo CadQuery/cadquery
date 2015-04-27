@@ -1,5 +1,5 @@
 """
-    Copyright (C) 2011-2014  Parametric Products Intellectual Holdings, LLC
+    Copyright (C) 2011-2015  Parametric Products Intellectual Holdings, LLC
 
     This file is part of CadQuery.
 
@@ -30,19 +30,19 @@
 
         1. It allows us to avoid changing key api points if we change underlying implementations.
            It would be a disaster if script and plugin authors had to change models because we
-           changed implmentations
+           changed implementations
 
         2. Allow better documentation.  One of the reasons FreeCAD is no more popular is because
-           its docs are terrible.  This allows us to provie good documentation via docstrings
+           its docs are terrible.  This allows us to provide good documentation via docstrings
            for each wrapper
 
         3. Work around bugs. there are a quite a feb bugs in free this layer allows fixing them
 
         4. allows for enhanced functionality.  Many objects are missing features we need. For example
-           we need a 'forConstruciton' flag on the Wire object.  this allows adding those kinds of things
+           we need a 'forConstruction' flag on the Wire object.  this allows adding those kinds of things
 
-        5. allow changing interfaces when we'd like.  there are  few cases where the freecad api is not
-           very userfriendly: we like to change those when necesary. As an example, in the freecad api,
+        5. allow changing interfaces when we'd like.  there are  few cases where the FreeCAD api is not
+           very user friendly: we like to change those when necessary. As an example, in the FreeCAD api,
            all factory methods are on the 'Part' object, but it is very useful to know what kind of
            object each one returns, so these are better grouped by the type of object they return.
            (who would know that Part.makeCircle() returns an Edge, but Part.makePolygon() returns a Wire ?

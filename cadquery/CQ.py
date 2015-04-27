@@ -1,5 +1,5 @@
 """
-    Copyright (C) 2011-2014  Parametric Products Intellectual Holdings, LLC
+    Copyright (C) 2011-2015  Parametric Products Intellectual Holdings, LLC
 
     This file is part of CadQuery.
 
@@ -1160,7 +1160,7 @@ class Workplane(CQ):
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
 
-    def spline(self,listOfXYTuple,forConstruction=False):
+    def spline(self, listOfXYTuple, forConstruction=False):
         """
             Create a spline interpolated through the provided points.
 
@@ -1196,7 +1196,7 @@ class Workplane(CQ):
         gstartPoint = self._findFromPoint(False)
         gEndPoint = self.plane.toWorldCoords(listOfXYTuple[-1])
 
-        vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple ]
+        vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
         allPoints = [gstartPoint] + vecs
 
         e = Edge.makeSpline(allPoints)
