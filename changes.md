@@ -36,3 +36,5 @@ v0.1.9 (Unreleased)
    * Added license badge in changes.md
    * Fixed Solid.makeSphere implementation
    * Added CQ.sphere operation that mirrors CQ.box
+   * Updated copyright dates
+   * Cleaned up spelling and misc errors in docstrings
