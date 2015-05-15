@@ -38,3 +38,5 @@ v0.1.9 (Unreleased)
    * Added CQ.sphere operation that mirrors CQ.box
    * Updated copyright dates
    * Cleaned up spelling and misc errors in docstrings
+   * Fixed FreeCAD import error on Arch Linux (thanks @moeb)
+   * Made FreeCAD import report import error instead of silently failing (thanks @moeb)
