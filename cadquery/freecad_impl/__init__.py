@@ -104,7 +104,7 @@ try:
 except ImportError:
     path = _fc_path()
     if path:
-        sys.path.insert(0, _fc_path())
+        sys.path.insert(0, path)
         try:
             import FreeCAD
         except ImportError:
