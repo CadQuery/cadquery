@@ -39,6 +39,7 @@ def _fc_path():
                 "/usr/lib/freecad/lib",
                 "/opt/freecad/lib/",
                 "/usr/bin/freecad/lib",
+                "/usr/lib/freecad",
                 ]:
             if os.path.exists(_PATH):
                 return _PATH
@@ -94,5 +95,18 @@ def _fc_path():
             if os.path.exists(_PATH):
                 return _PATH
 
+
+
 #Make sure that the correct FreeCAD path shows up in Python's system path
-sys.path.insert(0, _fc_path())
+no_library_path = ImportError('cadquery was unable to determine freecads library path')
+try:
+    import FreeCAD
+except ImportError:
+    path = _fc_path()
+    if path:
+        sys.path.insert(0, path)
+        try:
+            import FreeCAD
+        except ImportError:
+            raise no_library_path
+    else: raise no_library_path
