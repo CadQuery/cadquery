@@ -21,26 +21,17 @@
 """
 import cadquery
 
-#from .verutil import fc_import
-#FreeCAD = fc_import("FreeCAD")
 import FreeCAD
-import tempfile,os,StringIO
-
 import Drawing
-#Drawing = fc_import("FreeCAD.Drawing")
-#_FCVER = freecad_version()
-#if _FCVER>=(0,13):
-    #import Drawing as FreeCADDrawing #It's in FreeCAD lib path
-#elif _FCVER>=(0,12):
-    #import FreeCAD.Drawing as FreeCADDrawing
-#else:
-    #raise RuntimeError, "Invalid freecad version: %s" % str(".".join(_FCVER))
+
+import tempfile, os, StringIO
 
 
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+
 
 class ExportTypes:
     STL = "STL"
@@ -49,15 +40,17 @@ class ExportTypes:
     SVG = "SVG"
     TJS = "TJS"
 
+
 class UNITS:
     MM = "mm"
     IN = "in"
 
 
-def toString(shape,exportType,tolerance=0.1):
-	s= StringIO.StringIO()
-	exportShape(shape,exportType,s,tolerance)
-	return s.getvalue()
+def toString(shape, exportType, tolerance=0.1):
+    s = StringIO.StringIO()
+    exportShape(shape, exportType, s, tolerance)
+    return s.getvalue()
+
 
 def exportShape(shape,exportType,fileLike,tolerance=0.1):
     """
