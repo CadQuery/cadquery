@@ -2105,7 +2105,7 @@ class Workplane(CQ):
         return self.cutBlind(maxDim)
 
 
-    def loft(self,filled=True,combine=True):
+    def loft(self,filled=True,ruled=False,combine=True):
         """
             Make a lofted solid, through the set of wires.
         :return:
@@ -2113,7 +2113,7 @@ class Workplane(CQ):
         wiresToLoft = self.ctx.pendingWires
         self.ctx.pendingWires = []
 
-        r = Solid.makeLoft(wiresToLoft)
+        r = Solid.makeLoft(wiresToLoft, ruled)
 
         if combine:
             parentSolid = self.findSolid(searchStack=False,searchParents=True)

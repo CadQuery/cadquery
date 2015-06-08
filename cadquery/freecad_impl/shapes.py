@@ -616,7 +616,7 @@ class Solid(Shape):
         # needs to allow free-space wires ( those not made from a workplane )
 
     @classmethod
-    def makeLoft(cls, listOfWire):
+    def makeLoft(cls, listOfWire, ruled=False):
         """
             makes a loft from a list of wires
             The wires will be converted into faces when possible-- it is presumed that nobody ever actually
@@ -624,7 +624,7 @@ class Solid(Shape):
         """
         # the True flag requests building a solid instead of a shell.
 
-        return Shape.cast(FreeCADPart.makeLoft([i.wrapped for i in listOfWire], True))
+        return Shape.cast(FreeCADPart.makeLoft([i.wrapped for i in listOfWire], True, ruled))
 
     @classmethod
     def makeWedge(cls, xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt=None, dir=None):
