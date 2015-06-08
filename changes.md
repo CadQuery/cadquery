@@ -40,3 +40,4 @@ v0.1.9 (Unreleased)
    * Cleaned up spelling and misc errors in docstrings
    * Fixed FreeCAD import error on Arch Linux (thanks @moeb)
    * Made FreeCAD import report import error instead of silently failing (thanks @moeb)
+   * Added ruled option for the loft operation (thanks @hyOzd)
