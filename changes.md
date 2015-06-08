@@ -31,7 +31,7 @@ v0.1.8
     * Integrated Coveralls.io, with a badge in README.md
     * Integrated version badge in README.md
     
-v0.1.9 (Unreleased)
+v0.2.0 (Unreleased)
 -----
    * Added license badge in changes.md
    * Fixed Solid.makeSphere implementation
