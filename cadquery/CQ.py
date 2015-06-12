@@ -1322,7 +1322,7 @@ class Workplane(CQ):
         self.ctx.pendingEdges.append(edge)
 
         if self.ctx.firstPoint is None:
-            self.ctx.firstPoint = edge.startPoint()
+            self.ctx.firstPoint = self.plane.toLocalCoords(edge.startPoint())
 
     def _addPendingWire(self,wire):
         """
