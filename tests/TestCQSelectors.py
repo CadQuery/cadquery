@@ -163,12 +163,12 @@ class TestCQSelectors(BaseTest):
         c = CQ(makeUnitCube())
 
         #nearest vertex to origin is (0,0,0)
-        t = Vector(0.1,0.1,0.1)
+        t = (0.1,0.1,0.1)
 
         v = c.vertices(selectors.NearestToPointSelector(t)).vals()[0]
         self.assertTupleAlmostEquals((0.0,0.0,0.0),(v.X,v.Y,v.Z),3)
 
-        t = Vector(0.1,0.1,0.2)
+        t = (0.1,0.1,0.2)
         #nearest edge is the vertical side edge, 0,0,0 -> 0,0,1
         e = c.edges(selectors.NearestToPointSelector(t)).vals()[0]
         v = c.edges(selectors.NearestToPointSelector(t)).vertices().vals()
