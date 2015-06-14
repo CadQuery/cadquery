@@ -62,7 +62,7 @@ class NearestToPointSelector(Selector):
     def filter(self,objectList):
 
         def dist(tShape):
-            return tShape.Center().sub(self.pnt).Length
+            return tShape.Center().sub(Vector(*self.pnt)).Length
             #if tShape.ShapeType == 'Vertex':
             #    return tShape.Point.sub(toVector(self.pnt)).Length
             #else:
