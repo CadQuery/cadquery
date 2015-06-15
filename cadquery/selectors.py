@@ -70,6 +70,36 @@ class NearestToPointSelector(Selector):
 
         return [ min(objectList,key=dist) ]
 
+class BoxSelector(Selector):
+    """
+    Selects objects inside the 3D box defined by 2 points.
+
+    Applicability: all types of shapes
+
+    Example::
+
+        CQ(aCube).edges(BoxSelector((0,1,0), (1,2,1))
+    """
+    def __init__(self, point0, point1):
+        self.p0 = Vector(*point0)
+        self.p1 = Vector(*point1)
+
+    def filter(self, objectList):
+
+        result = []
+        x0, y0, z0 = self.p0.toTuple()
+        x1, y1, z1 = self.p1.toTuple()
+
+        for o in objectList:
+            c = o.Center()
+            # using XOR for checking if x/y/z is in between regardless
+            # of order of x/y/z0 and x/y/z1
+            if ((c.x < x0) ^ (c.x < x1)) and \
+               ((c.y < y0) ^ (c.y < y1)) and \
+               ((c.z < z0) ^ (c.z < z1)):
+                result.append(o)
+
+        return result
 
 class BaseDirSelector(Selector):
     """
