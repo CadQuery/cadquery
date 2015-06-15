@@ -88,6 +88,18 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(12, len(r.Edges))
 
+    def testToSVG(self):
+        """
+        Tests to make sure that a CadQuery object is converted correctly to SVG
+        """
+        r = Workplane('XY').rect(5, 5).extrude(5)
+
+        r_str = r.toSvg()
+
+        # Make sure that a couple of sections from the SVG output make sense
+        self.assertTrue(r_str.index('path d=" M 2.35965 -2.27987 L 4.0114 -3.23936 "') > 0)
+        self.assertTrue(r_str.index('line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3"') > 0)
+
     def testCubePlugin(self):
         """
         Tests a plugin that combines cubes together with a base
@@ -556,7 +568,9 @@ class TestCadQuery(BaseTest):
         self.saveModel(r)
 
     def test2DDrawing(self):
-        """Draw things like 2D lines and arcs, should be expanded later to include all 2D constructs"""
+        """
+        Draw things like 2D lines and arcs, should be expanded later to include all 2D constructs
+        """
         s = Workplane(Plane.XY())
         r = s.lineTo(1.0, 0.0) \
              .lineTo(1.0, 1.0) \
@@ -571,6 +585,32 @@ class TestCadQuery(BaseTest):
              .close()
 
         self.assertEqual(1, r.wires().size())
+
+        # Test the *LineTo functions
+        s = Workplane(Plane.XY())
+        r = s.hLineTo(1.0).vLineTo(1.0).hLineTo(0.0).close()
+
+        self.assertEqual(1, r.wire().size())
+        self.assertEqual(4, r.edges().size())
+
+        # Test the *Line functions
+        s = Workplane(Plane.XY())
+        r = s.hLine(1.0).vLine(1.0).hLine(-1.0).close()
+
+        self.assertEqual(1, r.wire().size())
+        self.assertEqual(4, r.edges().size())
+
+        # Test the move function
+        s = Workplane(Plane.XY())
+        r = s.move(1.0, 1.0).hLine(1.0).vLine(1.0).hLine(-1.0).close()
+
+        self.assertEqual(1, r.wire().size())
+        self.assertEqual(4, r.edges().size())
+        self.assertEqual((1.0, 1.0),
+                         (r.vertices(selectors.NearestToPointSelector((0.0, 0.0, 0.0)))\
+                          .first().val().X,
+                          r.vertices(selectors.NearestToPointSelector((0.0, 0.0, 0.0)))\
+                          .first().val().Y))
 
     def testOccBottle(self):
         """

@@ -249,6 +249,7 @@ def getPaths(freeCadSVG):
     else:
         return ([],[])
 
+
 def getSVG(shape,opts=None):
     """
         Export a shape to SVG
