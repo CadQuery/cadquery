@@ -70,14 +70,23 @@ class TestCadQuery(BaseTest):
 
             writeStringToFile(existingSummary,SUMMARY_FILE)
 
-
-    def saveModel(self,shape):
+    def saveModel(self, shape):
         """
             shape must be a CQ object
             Save models in SVG and STEP format
         """
         shape.exportSvg(os.path.join(OUTDIR,self._testMethodName + ".svg"))
         shape.val().exportStep(os.path.join(OUTDIR,self._testMethodName + ".step"))
+
+    def testToFreeCAD(self):
+        """
+        Tests to make sure that a CadQuery object is converted correctly to a FreeCAD object.
+        """
+        r = Workplane('XY').rect(5, 5).extrude(5)
+
+        r = r.toFreecad()
+
+        self.assertEqual(12, len(r.Edges))
 
     def testCubePlugin(self):
         """
@@ -763,6 +772,21 @@ class TestCadQuery(BaseTest):
         self.assertEqual(8, result.solids().item(0).faces().size())
         self.assertEqual(8, result.solids().item(1).faces().size())
 
+    def testSplitKeepingBottom(self):
+        """
+        Tests splitting a solid improperly
+        """
+        # Drill a hole in the side
+        c = CQ(makeUnitCube()).faces(">Z").workplane().circle(0.25).cutThruAll()
+        self.assertEqual(7, c.faces().size())
+
+        # Now cut it in half sideways
+        result = c.faces(">Y").workplane(-0.5).split(keepTop=False, keepBottom=True)
+
+        #stack will have both halves, original will be unchanged
+        self.assertEqual(1, result.solids().size())  # one solid is on the stack
+        self.assertEqual(8, result.solids().item(0).faces().size())
+
     def testBoxDefaults(self):
         """
         Tests creating a single box
@@ -785,6 +809,14 @@ class TestCadQuery(BaseTest):
         s1 = s.faces("+Z")
         s1.add(s.faces("+Y")).add(s.faces("+X"))
         self.saveModel(s1.shell(0.2))
+
+        # Tests the list option variation of add
+        s1 = s.faces("+Z")
+        s1.add(s.faces("+Y")).add([s.faces("+X")])
+
+        # Tests the raw object option variation of add
+        s1 = s.faces("+Z")
+        s1.add(s.faces("+Y")).add(s.faces("+X").val().wrapped)
 
     def testTopFaceFillet(self):
         s = Workplane("XY").box(1, 1, 1).faces("+Z").edges().fillet(0.1)
