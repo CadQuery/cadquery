@@ -88,6 +88,18 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(12, len(r.Edges))
 
+    def testToSVG(self):
+        """
+        Tests to make sure that a CadQuery object is converted correctly to SVG
+        """
+        r = Workplane('XY').rect(5, 5).extrude(5)
+
+        r_str = r.toSvg()
+
+        # Make sure that a couple of sections from the SVG output make sense
+        self.assertTrue(r_str.index('path d=" M 2.35965 -2.27987 L 4.0114 -3.23936 "') > 0)
+        self.assertTrue(r_str.index('line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3"') > 0)
+
     def testCubePlugin(self):
         """
         Tests a plugin that combines cubes together with a base
@@ -173,17 +185,27 @@ class TestCadQuery(BaseTest):
 
 
     def testPointList(self):
-        "Tests adding points and using them"
+        """
+        Tests adding points and using them
+        """
         c = CQ(makeUnitCube())
 
-        s = c.faces(">Z").workplane().pushPoints([(-0.3,0.3),(0.3,0.3),(0,0)])
-        self.assertEqual(3,s.size())
+        s = c.faces(">Z").workplane().pushPoints([(-0.3, 0.3), (0.3, 0.3), (0, 0)])
+        self.assertEqual(3, s.size())
         #TODO: is the ability to iterate over points with circle really worth it?
         #maybe we should just require using all() and a loop for this. the semantics and
         #possible combinations got too hard ( ie, .circle().circle() ) was really odd
         body = s.circle(0.05).cutThruAll()
         self.saveModel(body)
-        self.assertEqual(9,body.faces().size())
+        self.assertEqual(9, body.faces().size())
+
+        # Test the case when using eachpoint with only a blank workplane
+        def callback_fn(pnt):
+            self.assertEqual((0.0, 0.0), (pnt.x, pnt.y))
+
+        r = Workplane('XY')
+        r.objects = []
+        r.eachpoint(callback_fn)
 
 
     def testWorkplaneFromFace(self):
@@ -248,7 +270,8 @@ class TestCadQuery(BaseTest):
         Test creating a solid using the revolve operation.
         :return:
         """
-        #The dimensions of the model. These can be modified rather than changing the shape's code directly.
+        # The dimensions of the model. These can be modified rather than changing the
+        # shape's code directly.
         rectangle_width = 10.0
         rectangle_length = 10.0
         angle_degrees = 360.0
@@ -304,12 +327,14 @@ class TestCadQuery(BaseTest):
         Test creating a solid donut shape with square walls
         :return:
         """
-        #The dimensions of the model. These can be modified rather than changing the shape's code directly.
+        # The dimensions of the model. These can be modified rather than changing the
+        # shape's code directly.
         rectangle_width = 10.0
         rectangle_length = 10.0
         angle_degrees = 360.0
 
-        result = Workplane("XY").rect(rectangle_width, rectangle_length, True).revolve(angle_degrees, (20, 0), (20, 10))
+        result = Workplane("XY").rect(rectangle_width, rectangle_length, True)\
+            .revolve(angle_degrees, (20, 0), (20, 10))
         self.assertEqual(4, result.faces().size())
         self.assertEqual(4, result.vertices().size())
         self.assertEqual(6, result.edges().size())
@@ -323,6 +348,24 @@ class TestCadQuery(BaseTest):
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
         self.assertEqual(3, result.edges().size())
+
+    def testTwistExtrude(self):
+        """
+        Tests extrusion while twisting through an angle.
+        """
+        profile = Workplane('XY').rect(10, 10)
+        r = profile.twistExtrude(10, 45, False)
+
+        self.assertEqual(6, r.faces().size())
+
+    def testTwistExtrudeCombine(self):
+        """
+        Tests extrusion while twisting through an angle, combining with other solids.
+        """
+        profile = Workplane('XY').rect(10, 10)
+        r = profile.twistExtrude(10, 45)
+
+        self.assertEqual(6, r.faces().size())
 
     def testRectArray(self):
         NUMX=3
@@ -556,7 +599,9 @@ class TestCadQuery(BaseTest):
         self.saveModel(r)
 
     def test2DDrawing(self):
-        """Draw things like 2D lines and arcs, should be expanded later to include all 2D constructs"""
+        """
+        Draw things like 2D lines and arcs, should be expanded later to include all 2D constructs
+        """
         s = Workplane(Plane.XY())
         r = s.lineTo(1.0, 0.0) \
              .lineTo(1.0, 1.0) \
@@ -571,6 +616,46 @@ class TestCadQuery(BaseTest):
              .close()
 
         self.assertEqual(1, r.wires().size())
+
+        # Test the *LineTo functions
+        s = Workplane(Plane.XY())
+        r = s.hLineTo(1.0).vLineTo(1.0).hLineTo(0.0).close()
+
+        self.assertEqual(1, r.wire().size())
+        self.assertEqual(4, r.edges().size())
+
+        # Test the *Line functions
+        s = Workplane(Plane.XY())
+        r = s.hLine(1.0).vLine(1.0).hLine(-1.0).close()
+
+        self.assertEqual(1, r.wire().size())
+        self.assertEqual(4, r.edges().size())
+
+        # Test the move function
+        s = Workplane(Plane.XY())
+        r = s.move(1.0, 1.0).hLine(1.0).vLine(1.0).hLine(-1.0).close()
+
+        self.assertEqual(1, r.wire().size())
+        self.assertEqual(4, r.edges().size())
+        self.assertEqual((1.0, 1.0),
+                         (r.vertices(selectors.NearestToPointSelector((0.0, 0.0, 0.0)))\
+                          .first().val().X,
+                          r.vertices(selectors.NearestToPointSelector((0.0, 0.0, 0.0)))\
+                          .first().val().Y))
+
+    def testLargestDimension(self):
+        """
+        Tests the largestDimension function when no solids are on the stack and when there are
+        """
+        r = Workplane('XY').box(1, 1, 1)
+        dim = r.largestDimension()
+
+        self.assertAlmostEqual(8.66025403784, dim)
+
+        r = Workplane('XY')
+        dim = r.largestDimension()
+
+        self.assertEqual(-1, dim)
 
     def testOccBottle(self):
         """
@@ -728,8 +813,16 @@ class TestCadQuery(BaseTest):
             (-1.0, -1.0), (0.0, 0.0), (1.0, 1.0)
         ]
         c.faces(">Z").workplane().pushPoints(pnts).cboreHole(0.1, 0.25, 0.25, 0.75)
-        self.assertEquals(18, c.faces().size() )
+        self.assertEquals(18, c.faces().size())
         self.saveModel(c)
+
+        # Tests the case where the depth of the cboreHole is not specified
+        c2 = CQ(makeCube(3.0))
+        pnts = [
+            (-1.0, -1.0), (0.0, 0.0), (1.0, 1.0)
+        ]
+        c2.faces(">Z").workplane().pushPoints(pnts).cboreHole(0.1, 0.25, 0.25)
+        self.assertEquals(15, c2.faces().size())
 
     def testCounterSinks(self):
         """

@@ -20,6 +20,7 @@
 import time, math
 from cadquery import *
 from cadquery import selectors
+from cadquery import exporters
 
 
 class CQContext(object):
@@ -389,7 +390,6 @@ class CQ(object):
         will return the same as::
 
             CQ(obj).faces("+Z")
-
         """
         if self.parent:
             return self.parent
@@ -643,7 +643,7 @@ class CQ(object):
         :type opts: dictionary, width and height
         :return: a string that contains SVG that represents this item.
         """
-        return SVGexporter.getSVG(self.val().wrapped, opts)
+        return exporters.getSVG(self.val().wrapped, opts)
 
     def exportSvg(self, fileName):
         """
@@ -1093,6 +1093,15 @@ class Workplane(CQ):
         """
         return self.line(0, distance, forConstruction)
 
+    def hLine(self, distance, forConstruction=False):
+        """
+        Make a horizontal line from the current point the provided distance
+
+        :param float distance: (x) distance from current point
+        :return: the Workplane object with the current point at the end of the new line
+        """
+        return self.line(distance, 0, forConstruction)
+
     def vLineTo(self, yCoord, forConstruction=False):
         """
         Make a vertical line from the current point to the provided y coordinate.
@@ -1118,15 +1127,6 @@ class Workplane(CQ):
         """
         p = self._findFromPoint(True)
         return self.lineTo(xCoord, p.y, forConstruction)
-
-    def hLine(self, distance, forConstruction=False):
-        """
-        Make a horizontal line from the current point the provided distance
-
-        :param float distance: (x) distance from current point
-        :return: the Workplane object with the current point at the end of the new line
-        """
-        return self.line(distance, 0, forConstruction)
 
     #absolute move in current plane, not drawing
     def moveTo(self, x=0, y=0):
@@ -1652,11 +1652,11 @@ class Workplane(CQ):
         if s:
             return s.BoundingBox().DiagonalLength * 5.0
         else:
-            return 1000000
+            return -1
 
     def cutEach(self, fcn, useLocalCoords=False):
         """
-        Evaluates the provided function at each point on the stack ( ie, eachpoint )
+        Evaluates the provided function at each point on the stack (ie, eachpoint)
         and then cuts the result from the context solid.
         :param fcn: a function suitable for use in the eachpoint method: ie, that accepts
             a vector
@@ -1968,7 +1968,7 @@ class Workplane(CQ):
 
     def combine(self):
         """
-        Attempts to combine all of the items on the items on the stack into a single item.
+        Attempts to combine all of the items on the stack into a single item.
         WARNING: all of the items must be of the same type!
 
         :raises: ValueError if there are no items on the stack, or if they cannot be combined
