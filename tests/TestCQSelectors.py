@@ -266,6 +266,14 @@ class TestCQSelectors(BaseTest):
         fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (1.1, 1.1, 1.1))).vals()
         self.assertEqual(3, len(fl))
 
+        # test boundingbox option
+        el = c.edges(selectors.BoxSelector((-0.1, -0.1, -0.1), (1.1, 0.1, 0.6), True)).vals()
+        self.assertEqual(1, len(el))
+        fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (1.1, 1.1, 1.1), True)).vals()
+        self.assertEqual(0, len(fl))
+        fl = c.faces(selectors.BoxSelector((-0.1, 0.4, -0.1), (1.1, 1.1, 1.1), True)).vals()
+        self.assertEqual(1, len(fl))
+
     def testFaceCount(self):
         c = CQ(makeUnitCube())
         self.assertEqual( 6, c.faces().size() )
