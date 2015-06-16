@@ -227,6 +227,28 @@ class TestCQSelectors(BaseTest):
             ec = el[0].Center()
             self.assertTupleAlmostEquals(d[2], (ec.x, ec.y, ec.z), 3)
 
+        # test face selection
+        test_data_faces = [
+            # box point0,       box point1,       face center
+            ((0.4, -0.1, 0.4), (0.6, 0.1, 0.6), (0.5, 0.0, 0.5)),
+            ((0.9, 0.4, 0.4), (1.1, 0.6, 0.6), (1.0, 0.5, 0.5)),
+            ((0.4, 0.4, 0.9), (0.6, 0.6, 1.1), (0.5, 0.5, 1.0)),
+            ((0.4, 0.4, -0.1), (0.6, 0.6, 0.1), (0.5, 0.5, 0.0))
+        ]
+
+        for d in test_data_faces:
+            fl = c.faces(selectors.BoxSelector(d[0], d[1])).vals()
+            self.assertEqual(1, len(fl))
+            fc = fl[0].Center()
+            self.assertTupleAlmostEquals(d[2], (fc.x, fc.y, fc.z), 3)
+
+            # test again by swapping box points
+            fl = c.faces(selectors.BoxSelector(d[1], d[0])).vals()
+            self.assertEqual(1, len(fl))
+            fc = fl[0].Center()
+            self.assertTupleAlmostEquals(d[2], (fc.x, fc.y, fc.z), 3)
+
+
     def testFaceCount(self):
         c = CQ(makeUnitCube())
         self.assertEqual( 6, c.faces().size() )
