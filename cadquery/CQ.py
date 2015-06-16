@@ -1652,11 +1652,11 @@ class Workplane(CQ):
         if s:
             return s.BoundingBox().DiagonalLength * 5.0
         else:
-            return 1000000
+            return -1
 
     def cutEach(self, fcn, useLocalCoords=False):
         """
-        Evaluates the provided function at each point on the stack ( ie, eachpoint )
+        Evaluates the provided function at each point on the stack (ie, eachpoint)
         and then cuts the result from the context solid.
         :param fcn: a function suitable for use in the eachpoint method: ie, that accepts
             a vector
@@ -1968,7 +1968,7 @@ class Workplane(CQ):
 
     def combine(self):
         """
-        Attempts to combine all of the items on the items on the stack into a single item.
+        Attempts to combine all of the items on the stack into a single item.
         WARNING: all of the items must be of the same type!
 
         :raises: ValueError if there are no items on the stack, or if they cannot be combined
