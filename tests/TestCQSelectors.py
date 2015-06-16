@@ -260,6 +260,11 @@ class TestCQSelectors(BaseTest):
             fc = fl[0].Center()
             self.assertTupleAlmostEquals(d[2], (fc.x, fc.y, fc.z), 3)
 
+        # test multiple face selection
+        fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (0.6, 1.1, 1.1))).vals()
+        self.assertEqual(2, len(fl))
+        fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (1.1, 1.1, 1.1))).vals()
+        self.assertEqual(3, len(fl))
 
     def testFaceCount(self):
         c = CQ(makeUnitCube())
