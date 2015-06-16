@@ -206,6 +206,12 @@ class TestCQSelectors(BaseTest):
             v = vl[0]
             self.assertTupleAlmostEquals(d[2], (v.X, v.Y, v.Z), 3)
 
+        # test multiple vertices selection
+        vl = c.vertices(selectors.BoxSelector((-0.1, -0.1, 0.9),(0.1, 1.1, 1.1))).vals()
+        self.assertEqual(2, len(vl))
+        vl = c.vertices(selectors.BoxSelector((-0.1, -0.1, -0.1),(0.1, 1.1, 1.1))).vals()
+        self.assertEqual(4, len(vl))
+
         # test edge selection
         test_data_edges = [
             # box point0,       box point1,       edge center
