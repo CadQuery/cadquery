@@ -233,6 +233,12 @@ class TestCQSelectors(BaseTest):
             ec = el[0].Center()
             self.assertTupleAlmostEquals(d[2], (ec.x, ec.y, ec.z), 3)
 
+        # test multiple edge selection
+        el = c.edges(selectors.BoxSelector((-0.1, -0.1, -0.1), (0.6, 0.1, 0.6))).vals()
+        self.assertEqual(2, len(el))
+        el = c.edges(selectors.BoxSelector((-0.1, -0.1, -0.1), (1.1, 0.1, 0.6))).vals()
+        self.assertEqual(3, len(el))
+
         # test face selection
         test_data_faces = [
             # box point0,       box point1,       face center
