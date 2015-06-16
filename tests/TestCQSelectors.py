@@ -200,6 +200,12 @@ class TestCQSelectors(BaseTest):
             v = vl[0]
             self.assertTupleAlmostEquals(d[2], (v.X, v.Y, v.Z), 3)
 
+            # this time box points are swapped
+            vl = c.vertices(selectors.BoxSelector(d[1], d[0])).vals()
+            self.assertEqual(1, len(vl))
+            v = vl[0]
+            self.assertTupleAlmostEquals(d[2], (v.X, v.Y, v.Z), 3)
+
     def testFaceCount(self):
         c = CQ(makeUnitCube())
         self.assertEqual( 6, c.faces().size() )
