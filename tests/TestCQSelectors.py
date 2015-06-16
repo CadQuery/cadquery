@@ -178,6 +178,28 @@ class TestCQSelectors(BaseTest):
         s = c.solids(selectors.NearestToPointSelector(t)).vals()
         self.assertEqual(1,len(s))
 
+    def testBox(self):
+        c = CQ(makeUnitCube())
+
+        # test vertice selection
+        test_data_vertices = [
+            # box point0,       box point1,     selected vertice
+            ((0.9, 0.9, 0.9), (1.1, 1.1, 1.1), (1.0, 1.0, 1.0)),
+            ((-0.1, 0.9, 0.9), (0.9, 1.1, 1.1), (0.0, 1.0, 1.0)),
+            ((-0.1, -0.1, 0.9), (0.1, 0.1, 1.1), (0.0, 0.0, 1.0)),
+            ((-0.1, -0.1, -0.1), (0.1, 0.1, 0.1), (0.0, 0.0, 0.0)),
+            ((0.9, -0.1, -0.1), (1.1, 0.1, 0.1), (1.0, 0.0, 0.0)),
+            ((0.9, 0.9, -0.1), (1.1, 1.1, 0.1), (1.0, 1.0, 0.0)),
+            ((-0.1, 0.9, -0.1), (0.1, 1.1, 0.1), (0.0, 1.0, 0.0)),
+            ((0.9, -0.1, 0.9), (1.1, 0.1, 1.1), (1.0, 0.0, 1.0))
+        ]
+
+        for d in test_data_vertices:
+            vl = c.vertices(selectors.BoxSelector(d[0], d[1])).vals()
+            self.assertEqual(1, len(vl))
+            v = vl[0]
+            self.assertTupleAlmostEquals(d[2], (v.X, v.Y, v.Z), 3)
+
     def testFaceCount(self):
         c = CQ(makeUnitCube())
         self.assertEqual( 6, c.faces().size() )
