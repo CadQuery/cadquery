@@ -703,12 +703,6 @@ class CQ(object):
         :param angleDegrees: the rotation angle, in degrees
         :type angleDegrees: float
         :returns: a CQ object
-
-        WARNING: the underlying objects are modified, not copied.
-
-            Future Enhancements:
-                A version of this method that returns a transformed copy instead
-                of modifying the originals.
         """
         return self.newObject([o.rotate(axisStartPoint, axisEndPoint, angleDegrees)
                                for o in self.objects])
