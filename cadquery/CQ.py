@@ -715,17 +715,11 @@ class CQ(object):
 
     def translate(self, vec):
         """
-        Returns a copy of  all of the items on the stack moved by the specified translation vector.
+        Returns a copy of all of the items on the stack moved by the specified translation vector.
 
         :param tupleDistance: distance to move, in global coordinates
         :type  tupleDistance: a 3-tuple of float
         :returns: a CQ object
-
-        WARNING: the underlying objects are modified, not copied.
-
-        Future Enhancements:
-            A version of this method that returns a transformed copy instead
-            of modifying the originals.
         """
         return self.newObject([o.translate(vec) for o in self.objects])
 
