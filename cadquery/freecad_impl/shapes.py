@@ -812,6 +812,20 @@ class Solid(Shape):
         nativeEdges = [e.wrapped for e in edgeList]
         return Shape.cast(self.wrapped.makeFillet(radius, nativeEdges))
 
+    def chamfer(self, radius, radius2, edgeList):
+        """
+        Chamfers the specified edges of this solid.
+        :param radius: radius > 0, the radius (length) of the chamfer
+        :param radius2: radius2 > 0, optional parameter for asymmetrical chamfer. Should be `None` if not required.
+        :param edgeList:  a list of Edge objects, which must belong to this solid
+        :return: Chamfered solid
+        """
+        nativeEdges = [e.wrapped for e in edgeList]
+        if radius2:
+            return Shape.cast(self.wrapped.makeChamfer(radius, radius2, nativeEdges))
+        else:
+            return Shape.cast(self.wrapped.makeChamfer(radius, nativeEdges))
+
     def shell(self, faceList, thickness, tolerance=0.0001):
         """
             make a shelled solid of given  by removing the list of faces
