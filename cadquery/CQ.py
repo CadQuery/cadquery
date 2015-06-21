@@ -817,11 +817,11 @@ class CQ(object):
 
         This example will create a unit cube, with the top edges chamfered::
 
-            s = Workplane("XY").box(1,1,1).faces("+Z").edges().chamfer(0.1)
+            s = Workplane("XY").box(1,1,1).faces("+Z").chamfer(0.1)
 
         This example will create chamfers longer on the sides::
 
-            s = Workplane("XY").box(1,1,1).faces("+Z").edges().chamfer(0.2, 0.1)
+            s = Workplane("XY").box(1,1,1).faces("+Z").chamfer(0.2, 0.1)
         """
         solid = self.findSolid()
 
