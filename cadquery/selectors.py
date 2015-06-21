@@ -70,6 +70,49 @@ class NearestToPointSelector(Selector):
 
         return [ min(objectList,key=dist) ]
 
+class BoxSelector(Selector):
+    """
+    Selects objects inside the 3D box defined by 2 points.
+
+    If `boundingbox` is True only the objects that have their bounding
+    box inside the given box is selected. Otherwise only center point
+    of the object is tested.
+
+    Applicability: all types of shapes
+
+    Example::
+
+        CQ(aCube).edges(BoxSelector((0,1,0), (1,2,1))
+    """
+    def __init__(self, point0, point1, boundingbox=False):
+        self.p0 = Vector(*point0)
+        self.p1 = Vector(*point1)
+        self.test_boundingbox = boundingbox
+
+    def filter(self, objectList):
+
+        result = []
+        x0, y0, z0 = self.p0.toTuple()
+        x1, y1, z1 = self.p1.toTuple()
+
+        def isInsideBox(p):
+            # using XOR for checking if x/y/z is in between regardless
+            # of order of x/y/z0 and x/y/z1
+            return ((p.x < x0) ^ (p.x < x1)) and \
+                   ((p.y < y0) ^ (p.y < y1)) and \
+                   ((p.z < z0) ^ (p.z < z1))
+
+        for o in objectList:
+            if self.test_boundingbox:
+                bb = o.BoundingBox()
+                if isInsideBox(Vector(bb.xmin, bb.ymin, bb.zmin)) and \
+                   isInsideBox(Vector(bb.xmax, bb.ymax, bb.zmax)):
+                    result.append(o)
+            else:
+                if isInsideBox(o.Center()):
+                    result.append(o)
+
+        return result
 
 class BaseDirSelector(Selector):
     """

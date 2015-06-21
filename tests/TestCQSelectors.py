@@ -178,6 +178,102 @@ class TestCQSelectors(BaseTest):
         s = c.solids(selectors.NearestToPointSelector(t)).vals()
         self.assertEqual(1,len(s))
 
+    def testBox(self):
+        c = CQ(makeUnitCube())
+
+        # test vertice selection
+        test_data_vertices = [
+            # box point0,       box point1,     selected vertice
+            ((0.9, 0.9, 0.9), (1.1, 1.1, 1.1), (1.0, 1.0, 1.0)),
+            ((-0.1, 0.9, 0.9), (0.9, 1.1, 1.1), (0.0, 1.0, 1.0)),
+            ((-0.1, -0.1, 0.9), (0.1, 0.1, 1.1), (0.0, 0.0, 1.0)),
+            ((-0.1, -0.1, -0.1), (0.1, 0.1, 0.1), (0.0, 0.0, 0.0)),
+            ((0.9, -0.1, -0.1), (1.1, 0.1, 0.1), (1.0, 0.0, 0.0)),
+            ((0.9, 0.9, -0.1), (1.1, 1.1, 0.1), (1.0, 1.0, 0.0)),
+            ((-0.1, 0.9, -0.1), (0.1, 1.1, 0.1), (0.0, 1.0, 0.0)),
+            ((0.9, -0.1, 0.9), (1.1, 0.1, 1.1), (1.0, 0.0, 1.0))
+        ]
+
+        for d in test_data_vertices:
+            vl = c.vertices(selectors.BoxSelector(d[0], d[1])).vals()
+            self.assertEqual(1, len(vl))
+            v = vl[0]
+            self.assertTupleAlmostEquals(d[2], (v.X, v.Y, v.Z), 3)
+
+            # this time box points are swapped
+            vl = c.vertices(selectors.BoxSelector(d[1], d[0])).vals()
+            self.assertEqual(1, len(vl))
+            v = vl[0]
+            self.assertTupleAlmostEquals(d[2], (v.X, v.Y, v.Z), 3)
+
+        # test multiple vertices selection
+        vl = c.vertices(selectors.BoxSelector((-0.1, -0.1, 0.9),(0.1, 1.1, 1.1))).vals()
+        self.assertEqual(2, len(vl))
+        vl = c.vertices(selectors.BoxSelector((-0.1, -0.1, -0.1),(0.1, 1.1, 1.1))).vals()
+        self.assertEqual(4, len(vl))
+
+        # test edge selection
+        test_data_edges = [
+            # box point0,       box point1,       edge center
+            ((0.4, -0.1, -0.1), (0.6, 0.1, 0.1), (0.5, 0.0, 0.0)),
+            ((-0.1, -0.1, 0.4), (0.1, 0.1, 0.6), (0.0, 0.0, 0.5)),
+            ((0.9, 0.9, 0.4), (1.1, 1.1, 0.6), (1.0, 1.0, 0.5)),
+            ((0.4, 0.9, 0.9), (0.6, 1.1, 1.1,), (0.5, 1.0, 1.0))
+        ]
+
+        for d in test_data_edges:
+            el = c.edges(selectors.BoxSelector(d[0], d[1])).vals()
+            self.assertEqual(1, len(el))
+            ec = el[0].Center()
+            self.assertTupleAlmostEquals(d[2], (ec.x, ec.y, ec.z), 3)
+
+            # test again by swapping box points
+            el = c.edges(selectors.BoxSelector(d[1], d[0])).vals()
+            self.assertEqual(1, len(el))
+            ec = el[0].Center()
+            self.assertTupleAlmostEquals(d[2], (ec.x, ec.y, ec.z), 3)
+
+        # test multiple edge selection
+        el = c.edges(selectors.BoxSelector((-0.1, -0.1, -0.1), (0.6, 0.1, 0.6))).vals()
+        self.assertEqual(2, len(el))
+        el = c.edges(selectors.BoxSelector((-0.1, -0.1, -0.1), (1.1, 0.1, 0.6))).vals()
+        self.assertEqual(3, len(el))
+
+        # test face selection
+        test_data_faces = [
+            # box point0,       box point1,       face center
+            ((0.4, -0.1, 0.4), (0.6, 0.1, 0.6), (0.5, 0.0, 0.5)),
+            ((0.9, 0.4, 0.4), (1.1, 0.6, 0.6), (1.0, 0.5, 0.5)),
+            ((0.4, 0.4, 0.9), (0.6, 0.6, 1.1), (0.5, 0.5, 1.0)),
+            ((0.4, 0.4, -0.1), (0.6, 0.6, 0.1), (0.5, 0.5, 0.0))
+        ]
+
+        for d in test_data_faces:
+            fl = c.faces(selectors.BoxSelector(d[0], d[1])).vals()
+            self.assertEqual(1, len(fl))
+            fc = fl[0].Center()
+            self.assertTupleAlmostEquals(d[2], (fc.x, fc.y, fc.z), 3)
+
+            # test again by swapping box points
+            fl = c.faces(selectors.BoxSelector(d[1], d[0])).vals()
+            self.assertEqual(1, len(fl))
+            fc = fl[0].Center()
+            self.assertTupleAlmostEquals(d[2], (fc.x, fc.y, fc.z), 3)
+
+        # test multiple face selection
+        fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (0.6, 1.1, 1.1))).vals()
+        self.assertEqual(2, len(fl))
+        fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (1.1, 1.1, 1.1))).vals()
+        self.assertEqual(3, len(fl))
+
+        # test boundingbox option
+        el = c.edges(selectors.BoxSelector((-0.1, -0.1, -0.1), (1.1, 0.1, 0.6), True)).vals()
+        self.assertEqual(1, len(el))
+        fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (1.1, 1.1, 1.1), True)).vals()
+        self.assertEqual(0, len(fl))
+        fl = c.faces(selectors.BoxSelector((-0.1, 0.4, -0.1), (1.1, 1.1, 1.1), True)).vals()
+        self.assertEqual(1, len(fl))
+
     def testFaceCount(self):
         c = CQ(makeUnitCube())
         self.assertEqual( 6, c.faces().size() )
