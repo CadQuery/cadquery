@@ -795,6 +795,44 @@ class CQ(object):
         solid.wrapped = s.wrapped
         return self.newObject([s])
 
+    def chamfer(self, length, length2 = None):
+        """
+        Chamfers a solid on the selected edges.
+
+        The edges on the stack are chamfered. The solid to which the
+        edges belong must be in the parent chain of the selected
+        edges.
+
+        Optional parameter `length2` can be supplied with a different
+        value than `length` for a chamfer that is shorter on one side
+        longer on the other side.
+
+        :param length: the length of the fillet, must be greater than zero
+        :param length2: optional parameter for asymmetrical chamfer
+        :type length: positive float
+        :type length2: positive float
+        :raises: ValueError if at least one edge is not selected
+        :raises: ValueError if the solid containing the edge is not in the chain
+        :returns: cq object with the resulting solid selected.
+
+        This example will create a unit cube, with the top edges chamfered::
+
+            s = Workplane("XY").box(1,1,1).faces("+Z").chamfer(0.1)
+
+        This example will create chamfers longer on the sides::
+
+            s = Workplane("XY").box(1,1,1).faces("+Z").chamfer(0.2, 0.1)
+        """
+        solid = self.findSolid()
+
+        edgeList = self.edges().vals()
+        if len(edgeList) < 1:
+            raise ValueError("Chamfer requires that edges be selected")
+
+        s = solid.chamfer(length, length2, edgeList)
+
+        solid.wrapped = s.wrapped
+        return self.newObject([s])
 
 class Workplane(CQ):
     """

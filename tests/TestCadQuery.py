@@ -804,6 +804,36 @@ class TestCadQuery(BaseTest):
         self.saveModel(c)
         self.assertEqual(12,c.faces().size() )
 
+    def testChamfer(self):
+        """
+        Test chamfer API with a box shape
+        """
+        cube = CQ(makeUnitCube()).faces(">Z").chamfer(0.1)
+        self.saveModel(cube)
+        self.assertEqual(10, cube.faces().size())
+
+    def testChamferAsymmetrical(self):
+        """
+        Test chamfer API with a box shape for asymmetrical lengths
+        """
+        cube = CQ(makeUnitCube()).faces(">Z").chamfer(0.1, 0.2)
+        self.saveModel(cube)
+        self.assertEqual(10, cube.faces().size())
+
+        # test if edge lengths are different
+        edge = cube.edges(">Z").vals()[0]
+        self.assertAlmostEqual(0.6, edge.Length(), 3)
+        edge = cube.edges("|Z").vals()[0]
+        self.assertAlmostEqual(0.9, edge.Length(), 3)
+
+    def testChamferCylinder(self):
+        """
+        Test chamfer API with a cylinder shape
+        """
+        cylinder = Workplane("XY").circle(1).extrude(1).faces(">Z").chamfer(0.1)
+        self.saveModel(cylinder)
+        self.assertEqual(4, cylinder.faces().size())
+
     def testCounterBores(self):
         """
         Tests making a set of counterbored holes in a face
