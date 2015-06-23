@@ -812,6 +812,21 @@ class Solid(Shape):
         nativeEdges = [e.wrapped for e in edgeList]
         return Shape.cast(self.wrapped.makeFillet(radius, nativeEdges))
 
+    def chamfer(self, length, length2, edgeList):
+        """
+        Chamfers the specified edges of this solid.
+        :param length: length > 0, the length (length) of the chamfer
+        :param length2: length2 > 0, optional parameter for asymmetrical chamfer. Should be `None` if not required.
+        :param edgeList:  a list of Edge objects, which must belong to this solid
+        :return: Chamfered solid
+        """
+        nativeEdges = [e.wrapped for e in edgeList]
+        # note: we prefer 'length' word to 'radius' as opposed to FreeCAD's API
+        if length2:
+            return Shape.cast(self.wrapped.makeChamfer(length, length2, nativeEdges))
+        else:
+            return Shape.cast(self.wrapped.makeChamfer(length, nativeEdges))
+
     def shell(self, faceList, thickness, tolerance=0.0001):
         """
             make a shelled solid of given  by removing the list of faces
