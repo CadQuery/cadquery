@@ -44,3 +44,4 @@ v0.2.0 (Unreleased)
    * Fixed close() not working in planes other than XY (thanks @hyOzd)
    * Added box selector with bounding box option (thanks @hyOzd)
    * CQ.translate and CQ.rotate documentation fixes (thanks @hyOzd)
+   * Fixed centering of a sphere
