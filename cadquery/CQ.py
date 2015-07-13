@@ -2337,11 +2337,11 @@ class Workplane(CQ):
             (xp, yp, zp) = pnt.toTuple()
 
             if centered[0]:
-                xp -= radius
+                xp -= radius * direct.x
             if centered[1]:
-                yp -= radius
+                yp -= radius * direct.y
             if centered[2]:
-                zp -= radius
+                zp -= radius * direct.z
 
             return Solid.makeSphere(radius, Vector(xp, yp, zp), direct, angle1, angle2, angle3)
 
