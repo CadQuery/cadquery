@@ -38,6 +38,8 @@ class CQContext(object):
         self.firstPoint = None
         self.tolerance = 0.0001  # user specified tolerance
 
+        # call `simplify()` automatically for related operations
+        self.autoSimplifyEnabled = True
 
 class CQ(object):
     """
@@ -2037,11 +2039,14 @@ class Workplane(CQ):
         # look for parents to cut from
         solidRef = self.findSolid(searchStack=True, searchParents=True)
         if combine and solidRef is not None:
-            t = solidRef.fuse(newS)
+            r = solidRef.fuse(newS)
             solidRef.wrapped = newS.wrapped
-            return self.newObject([t])
         else:
-            return self.newObject([newS])
+            r = newS
+
+        if self.ctx.autoSimplifyEnabled: r = r.simplify()
+
+        return self.newObject([r])
 
     def cut(self, toCut, combine=True):
         """
@@ -2363,3 +2368,15 @@ class Workplane(CQ):
             return self.newObject([t])
         else:
             raise ValueError("There is no solid to simplify!")
+
+    def autoSimplify(self, enabled=True):
+        """
+        Enables/Disables calling of `simplify()` operation automatically.
+
+        Using `autoSimplify(False)` to disable this feature can
+        improve run time of some operations substantially but may also
+        break some other solid operations. See `simplify()` for more
+        info.
+        """
+        self.ctx.autoSimplifyEnabled = bool(enabled)
+        return self
