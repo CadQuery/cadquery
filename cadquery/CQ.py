@@ -1992,6 +1992,8 @@ class Workplane(CQ):
             r = baseSolid.fuse(obj)
             baseSolid.wrapped = r.wrapped
 
+        if self.ctx.autoSimplifyEnabled: r = r.simplify()
+
         return self.newObject([r])
 
     def combine(self):
