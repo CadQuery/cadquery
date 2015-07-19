@@ -2009,6 +2009,8 @@ class Workplane(CQ):
         for ss in items:
             s = s.fuse(ss)
 
+        if self.ctx.autoSimplifyEnabled: s = s.simplify()
+
         return self.newObject([s])
 
     def union(self, toUnion=None, combine=True):
