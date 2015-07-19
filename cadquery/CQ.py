@@ -2355,3 +2355,11 @@ class Workplane(CQ):
             return spheres
         else:
             return self.union(spheres)
+
+    def simplify(self):
+        solidRef = self.findSolid(searchStack=True, searchParents=True)
+        if solidRef:
+            t = solidRef.simplify()
+            return self.newObject([t])
+        else:
+            raise ValueError("There is no solid to simplify!")
