@@ -2077,8 +2077,12 @@ class Workplane(CQ):
             raise ValueError("Cannot cut Type '%s' " % str(type(toCut)))
 
         newS = solidRef.cut(solidToCut)
+
+        if self.ctx.autoSimplifyEnabled: newS = newS.simplify()
+
         if combine:
             solidRef.wrapped = newS.wrapped
+
         return self.newObject([newS])
 
     def cutBlind(self, distanceToCut):
@@ -2107,6 +2111,9 @@ class Workplane(CQ):
         solidRef = self.findSolid()
 
         s = solidRef.cut(toCut)
+
+        if self.ctx.autoSimplifyEnabled: s = s.simplify()
+
         solidRef.wrapped = s.wrapped
         return self.newObject([s])
 
