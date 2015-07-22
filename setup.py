@@ -13,6 +13,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms='any',
+    test_suite='tests',
 
     classifiers=[
         # As from http://pypi.python.org/pypi?%3Aaction=list_classifiers
