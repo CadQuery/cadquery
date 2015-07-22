@@ -2373,6 +2373,22 @@ class Workplane(CQ):
             return self.union(spheres)
 
     def simplify(self):
+        """
+        Simplifies the current solid by removing unwanted edges from the
+        faces.
+
+        Normally you don't have to call this function. It is
+        automatically called after each related operation. You can
+        disable this behavior with `autoSimplify(False)`. In some
+        cases this can improve performance drastically but is
+        generally dis-advised since it may break some operations such
+        as fillet.
+
+        Note that in some cases where lots of solid operations are
+        chained `simplify()` may actually improve performance since
+        the shape is 'simplified' at each step and thus next operation
+        is easier.
+        """
         solidRef = self.findSolid(searchStack=True, searchParents=True)
         if solidRef:
             t = solidRef.simplify()
