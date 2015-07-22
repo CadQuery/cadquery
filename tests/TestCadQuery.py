@@ -1059,6 +1059,55 @@ class TestCadQuery(BaseTest):
 
         self.saveModel(s)
 
+    def testAutoSimplify(self):
+        """
+        Tests the `simplify()` method which is called automatically.
+        """
+
+        # make a cube with a splitter edge on one of the faces
+        # autosimplify should remove the splitter
+        s = Workplane("XY").moveTo(0,0).line(5,0).line(5,0).line(0,10).\
+            line(-10,0).close().extrude(10)
+
+        self.assertEqual(6, s.faces().size())
+
+        # test removal of splitter caused by union operation
+        s = Workplane("XY").box(10,10,10).union(Workplane("XY").box(20,10,10))
+
+        self.assertEqual(6, s.faces().size())
+
+        # test removal of splitter caused by extrude+combine operation
+        s = Workplane("XY").box(10,10,10).faces(">Y").\
+            workplane().rect(5,10,5).extrude(20)
+
+        self.assertEqual(10, s.faces().size())
+
+    def testNoSimplify(self):
+        """
+        Test the case when simplify is disabled.
+        """
+        # test disabling autoSimplify
+        s = Workplane("XY").moveTo(0,0).line(5,0).line(5,0).line(0,10).\
+            line(-10,0).close().autoSimplify(False).extrude(10)
+        self.assertEqual(7, s.faces().size())
+
+        s = Workplane("XY").box(10,10,10).autoSimplify(False).\
+            union(Workplane("XY").box(20,10,10))
+        self.assertEqual(14, s.faces().size())
+
+        s = Workplane("XY").box(10,10,10).faces(">Y").\
+            workplane().rect(5,10,5).autoSimplify(False).extrude(20)
+
+        self.assertEqual(12, s.faces().size())
+
+    def testExplicitSimplify(self):
+        """
+        Test running of `simplify()` method explicitly.
+        """
+        s = Workplane("XY").moveTo(0,0).line(5,0).line(5,0).line(0,10).\
+            line(-10,0).close().autoSimplify(False).extrude(10).simplify()
+        self.assertEqual(6, s.faces().size())
+
     def testCup(self):
 
         """
