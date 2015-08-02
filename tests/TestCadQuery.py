@@ -1082,6 +1082,12 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(10, s.faces().size())
 
+        # test removal of splitter caused by double hole operation
+        s = Workplane("XY").box(10,10,10).faces(">Z").workplane().\
+            hole(3,5).faces(">Z").workplane().hole(3,10)
+
+        self.assertEqual(7, s.faces().size())
+
     def testNoClean(self):
         """
         Test the case when clean is disabled.

@@ -1679,7 +1679,7 @@ class Workplane(CQ):
         else:
             return -1
 
-    def cutEach(self, fcn, useLocalCoords=False):
+    def cutEach(self, fcn, useLocalCoords=False, clean=True):
         """
         Evaluates the provided function at each point on the stack (ie, eachpoint)
         and then cuts the result from the context solid.
@@ -1699,11 +1699,13 @@ class Workplane(CQ):
         for cb in results:
             s = s.cut(cb)
 
+        if clean: s = s.clean()
+
         ctxSolid.wrapped = s.wrapped
         return self.newObject([s])
 
     #but parameter list is different so a simple function pointer wont work
-    def cboreHole(self, diameter, cboreDiameter, cboreDepth, depth=None):
+    def cboreHole(self, diameter, cboreDiameter, cboreDepth, depth=None, clean=True):
         """
         Makes a counterbored hole for each item on the stack.
 
@@ -1750,7 +1752,7 @@ class Workplane(CQ):
             r = hole.fuse(cbore)
             return r
 
-        return self.cutEach(_makeCbore, True)
+        return self.cutEach(_makeCbore, True, clean)
 
     #TODO: almost all code duplicated!
     #but parameter list is different so a simple function pointer wont work
@@ -1804,7 +1806,7 @@ class Workplane(CQ):
 
     #TODO: almost all code duplicated!
     #but parameter list is different so a simple function pointer wont work
-    def hole(self, diameter, depth=None):
+    def hole(self, diameter, depth=None, clean=True):
         """
         Makes a hole for each item on the stack.
 
@@ -1843,7 +1845,7 @@ class Workplane(CQ):
             hole = Solid.makeCylinder(diameter / 2.0, depth, center, boreDir)  # local coordinates!
             return hole
 
-        return self.cutEach(_makeHole, True)
+        return self.cutEach(_makeHole, True, clean)
 
     #TODO: duplicated code with _extrude and extrude
     def twistExtrude(self, distance, angleDegrees, combine=True, clean=True):
