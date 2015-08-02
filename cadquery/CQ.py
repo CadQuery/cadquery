@@ -1890,9 +1890,11 @@ class Workplane(CQ):
                 r = r.fuse(thisObj)
 
         if combine:
-            return self._combineWithBase(r, clean)
+            newS = self._combineWithBase(r)
         else:
-            return self.newObject([r])
+            newS = self.newObject([r])
+        if clean: newS = newS.clean()
+        return newS
 
     def extrude(self, distance, combine=True, clean=True):
         """
@@ -1919,9 +1921,11 @@ class Workplane(CQ):
         """
         r = self._extrude(distance)  # returns a Solid (or a compound if there were multiple)
         if combine:
-            return self._combineWithBase(r, clean)
+            newS = self._combineWithBase(r)
         else:
-            return self.newObject([r])
+            newS = self.newObject([r])
+        if clean: newS = newS.clean()
+        return newS
 
     def revolve(self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True, clean=True):
         """
@@ -1972,11 +1976,13 @@ class Workplane(CQ):
         # returns a Solid (or a compound if there were multiple)
         r = self._revolve(angleDegrees, axisStart, axisEnd)
         if combine:
-            return self._combineWithBase(r, clean)
+            newS = self._combineWithBase(r)
         else:
-            return self.newObject([r])
+            news = self.newObject([r])
+        if clean: newS = newS.clean()
+        return newS
 
-    def _combineWithBase(self, obj, clean):
+    def _combineWithBase(self, obj):
         """
         Combines the provided object with the base solid, if one can be found.
         :param obj:
@@ -1988,8 +1994,6 @@ class Workplane(CQ):
         if baseSolid is not None:
             r = baseSolid.fuse(obj)
             baseSolid.wrapped = r.wrapped
-
-        if clean: r = r.clean()
 
         return self.newObject([r])
 
