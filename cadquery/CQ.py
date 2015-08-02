@@ -38,9 +38,6 @@ class CQContext(object):
         self.firstPoint = None
         self.tolerance = 0.0001  # user specified tolerance
 
-        # call `simplify()` automatically for related operations
-        self.autoSimplifyEnabled = True
-
 class CQ(object):
     """
     Provides enhanced functionality for a wrapped CAD primitive.
@@ -1849,7 +1846,7 @@ class Workplane(CQ):
         return self.cutEach(_makeHole, True)
 
     #TODO: duplicated code with _extrude and extrude
-    def twistExtrude(self, distance, angleDegrees, combine=True):
+    def twistExtrude(self, distance, angleDegrees, combine=True, clean=True):
         """
         Extrudes a wire in the direction normal to the plane, but also twists by the specified
         angle over the length of the extrusion
@@ -1893,11 +1890,11 @@ class Workplane(CQ):
                 r = r.fuse(thisObj)
 
         if combine:
-            return self._combineWithBase(r)
+            return self._combineWithBase(r, clean)
         else:
             return self.newObject([r])
 
-    def extrude(self, distance, combine=True):
+    def extrude(self, distance, combine=True, clean=True):
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
@@ -1922,11 +1919,11 @@ class Workplane(CQ):
         """
         r = self._extrude(distance)  # returns a Solid (or a compound if there were multiple)
         if combine:
-            return self._combineWithBase(r)
+            return self._combineWithBase(r, clean)
         else:
             return self.newObject([r])
 
-    def revolve(self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True):
+    def revolve(self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True, clean=True):
         """
         Use all un-revolved wires in the parent chain to create a solid.
 
@@ -1975,11 +1972,11 @@ class Workplane(CQ):
         # returns a Solid (or a compound if there were multiple)
         r = self._revolve(angleDegrees, axisStart, axisEnd)
         if combine:
-            return self._combineWithBase(r)
+            return self._combineWithBase(r, clean)
         else:
             return self.newObject([r])
 
-    def _combineWithBase(self, obj):
+    def _combineWithBase(self, obj, clean):
         """
         Combines the provided object with the base solid, if one can be found.
         :param obj:
@@ -1992,11 +1989,11 @@ class Workplane(CQ):
             r = baseSolid.fuse(obj)
             baseSolid.wrapped = r.wrapped
 
-        if self.ctx.autoSimplifyEnabled: r = r.simplify()
+        if clean: r = r.simplify()
 
         return self.newObject([r])
 
-    def combine(self):
+    def combine(self, clean=True):
         """
         Attempts to combine all of the items on the stack into a single item.
         WARNING: all of the items must be of the same type!
@@ -2009,11 +2006,11 @@ class Workplane(CQ):
         for ss in items:
             s = s.fuse(ss)
 
-        if self.ctx.autoSimplifyEnabled: s = s.simplify()
+        if clean: s = s.simplify()
 
         return self.newObject([s])
 
-    def union(self, toUnion=None, combine=True):
+    def union(self, toUnion=None, combine=True, clean=True):
         """
         Unions all of the items on the stack of toUnion with the current solid.
         If there is no current solid, the items in toUnion are unioned together.
@@ -2048,11 +2045,11 @@ class Workplane(CQ):
         else:
             r = newS
 
-        if self.ctx.autoSimplifyEnabled: r = r.simplify()
+        if clean: r = r.simplify()
 
         return self.newObject([r])
 
-    def cut(self, toCut, combine=True):
+    def cut(self, toCut, combine=True, clean=True):
         """
         Cuts the provided solid from the current solid, IE, perform a solid subtraction
 
@@ -2080,14 +2077,14 @@ class Workplane(CQ):
 
         newS = solidRef.cut(solidToCut)
 
-        if self.ctx.autoSimplifyEnabled: newS = newS.simplify()
+        if clean: newS = newS.simplify()
 
         if combine:
             solidRef.wrapped = newS.wrapped
 
         return self.newObject([newS])
 
-    def cutBlind(self, distanceToCut):
+    def cutBlind(self, distanceToCut, clean=True):
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
 
@@ -2114,7 +2111,7 @@ class Workplane(CQ):
 
         s = solidRef.cut(toCut)
 
-        if self.ctx.autoSimplifyEnabled: s = s.simplify()
+        if clean: s = s.simplify()
 
         solidRef.wrapped = s.wrapped
         return self.newObject([s])
@@ -2395,15 +2392,3 @@ class Workplane(CQ):
             return self.newObject([t])
         else:
             raise ValueError("There is no solid to simplify!")
-
-    def autoSimplify(self, enabled=True):
-        """
-        Enables/Disables calling of `simplify()` operation automatically.
-
-        Using `autoSimplify(False)` to disable this feature can
-        improve run time of some operations substantially but may also
-        break some other solid operations. See `simplify()` for more
-        info.
-        """
-        self.ctx.autoSimplifyEnabled = bool(enabled)
-        return self
