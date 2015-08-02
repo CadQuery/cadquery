@@ -1978,7 +1978,7 @@ class Workplane(CQ):
         if combine:
             newS = self._combineWithBase(r)
         else:
-            news = self.newObject([r])
+            newS = self.newObject([r])
         if clean: newS = newS.clean()
         return newS
 
