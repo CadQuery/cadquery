@@ -802,7 +802,7 @@ class Solid(Shape):
     def fuse(self, solidToJoin):
         return Shape.cast(self.wrapped.fuse(solidToJoin.wrapped))
 
-    def simplify(self):
+    def clean(self):
         return Shape.cast(self.wrapped.removeSplitter())
 
     def fillet(self, radius, edgeList):

@@ -1989,7 +1989,7 @@ class Workplane(CQ):
             r = baseSolid.fuse(obj)
             baseSolid.wrapped = r.wrapped
 
-        if clean: r = r.simplify()
+        if clean: r = r.clean()
 
         return self.newObject([r])
 
@@ -2006,7 +2006,7 @@ class Workplane(CQ):
         for ss in items:
             s = s.fuse(ss)
 
-        if clean: s = s.simplify()
+        if clean: s = s.clean()
 
         return self.newObject([s])
 
@@ -2045,7 +2045,7 @@ class Workplane(CQ):
         else:
             r = newS
 
-        if clean: r = r.simplify()
+        if clean: r = r.clean()
 
         return self.newObject([r])
 
@@ -2077,7 +2077,7 @@ class Workplane(CQ):
 
         newS = solidRef.cut(solidToCut)
 
-        if clean: newS = newS.simplify()
+        if clean: newS = newS.clean()
 
         if combine:
             solidRef.wrapped = newS.wrapped
@@ -2111,7 +2111,7 @@ class Workplane(CQ):
 
         s = solidRef.cut(toCut)
 
-        if clean: s = s.simplify()
+        if clean: s = s.clean()
 
         solidRef.wrapped = s.wrapped
         return self.newObject([s])
@@ -2369,26 +2369,26 @@ class Workplane(CQ):
         else:
             return self.union(spheres)
 
-    def simplify(self):
+    def clean(self):
         """
-        Simplifies the current solid by removing unwanted edges from the
+        Cleans the current solid by removing unwanted edges from the
         faces.
 
         Normally you don't have to call this function. It is
         automatically called after each related operation. You can
-        disable this behavior with `autoSimplify(False)`. In some
-        cases this can improve performance drastically but is
-        generally dis-advised since it may break some operations such
-        as fillet.
+        disable this behavior with `clean=False` parameter if method
+        has any. In some cases this can improve performance
+        drastically but is generally dis-advised since it may break
+        some operations such as fillet.
 
         Note that in some cases where lots of solid operations are
-        chained `simplify()` may actually improve performance since
+        chained `clean()` may actually improve performance since
         the shape is 'simplified' at each step and thus next operation
         is easier.
         """
         solidRef = self.findSolid(searchStack=True, searchParents=True)
         if solidRef:
-            t = solidRef.simplify()
+            t = solidRef.clean()
             return self.newObject([t])
         else:
-            raise ValueError("There is no solid to simplify!")
+            raise ValueError("There is no solid to clean!")
