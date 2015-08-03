@@ -2243,7 +2243,7 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def box(self, length, width, height, centered=(True, True, True), combine=True):
+    def box(self, length, width, height, centered=(True, True, True), combine=True, clean=True):
         """
         Return a 3d box with specified dimensions for each object on the stack.
 
@@ -2305,7 +2305,7 @@ class Workplane(CQ):
             return boxes
         else:
             #combine everything
-            return self.union(boxes)
+            return self.union(boxes, clean=clean)
 
     def sphere(self, radius, direct=(0, 0, 1), angle1=-90, angle2=90, angle3=360,
                centered=(True, True, True), combine=True):
