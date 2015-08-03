@@ -685,7 +685,8 @@ class CQ(object):
         endVec = Vector(axisEndPoint)
 
         def _rot(obj):
-            startPt = obj.Center()
+            # TODO: compute the weighted average instead of using the first solid
+            startPt = obj.Solids()[0].Center()
             endPt = startPt + endVec
             return obj.rotate(startPt, endPt, angleDegrees)
 
