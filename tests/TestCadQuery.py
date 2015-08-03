@@ -1088,6 +1088,13 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(7, s.faces().size())
 
+        # test removal of splitter caused by cutThruAll
+        s = Workplane("XY").box(10,10,10).faces(">Y").workplane().\
+            rect(10,5).cutBlind(-5).faces(">Z").workplane().\
+            center(0,2.5).rect(5,5).cutThruAll()
+
+        self.assertEqual(18, s.faces().size())
+
     def testNoClean(self):
         """
         Test the case when clean is disabled.
