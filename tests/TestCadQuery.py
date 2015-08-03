@@ -1067,18 +1067,18 @@ class TestCadQuery(BaseTest):
         # make a cube with a splitter edge on one of the faces
         # autosimplify should remove the splitter
         s = Workplane("XY").moveTo(0,0).line(5,0).line(5,0).line(0,10).\
-            line(-10,0).close().extrude(10, clean=True)
+            line(-10,0).close().extrude(10)
 
         self.assertEqual(6, s.faces().size())
 
         # test removal of splitter caused by union operation
-        s = Workplane("XY").box(10,10,10).union(Workplane("XY").box(20,10,10), clean=True)
+        s = Workplane("XY").box(10,10,10).union(Workplane("XY").box(20,10,10))
 
         self.assertEqual(6, s.faces().size())
 
         # test removal of splitter caused by extrude+combine operation
         s = Workplane("XY").box(10,10,10).faces(">Y").\
-            workplane().rect(5,10,5).extrude(20, clean=True)
+            workplane().rect(5,10,5).extrude(20)
 
         self.assertEqual(10, s.faces().size())
 
