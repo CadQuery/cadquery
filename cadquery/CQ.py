@@ -1757,7 +1757,7 @@ class Workplane(CQ):
 
     #TODO: almost all code duplicated!
     #but parameter list is different so a simple function pointer wont work
-    def cskHole(self, diameter, cskDiameter, cskAngle, depth=None):
+    def cskHole(self, diameter, cskDiameter, cskAngle, depth=None, clean=True):
         """
         Makes a countersunk hole for each item on the stack.
 
@@ -1803,7 +1803,7 @@ class Workplane(CQ):
             r = hole.fuse(csk)
             return r
 
-        return self.cutEach(_makeCsk, True)
+        return self.cutEach(_makeCsk, True, clean)
 
     #TODO: almost all code duplicated!
     #but parameter list is different so a simple function pointer wont work
@@ -2123,7 +2123,7 @@ class Workplane(CQ):
         solidRef.wrapped = s.wrapped
         return self.newObject([s])
 
-    def cutThruAll(self, positive=False):
+    def cutThruAll(self, positive=False, clean=True):
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
 
@@ -2141,7 +2141,7 @@ class Workplane(CQ):
         if not positive:
             maxDim *= (-1.0)
 
-        return self.cutBlind(maxDim)
+        return self.cutBlind(maxDim, clean)
 
     def loft(self, filled=True, ruled=False, combine=True):
         """
