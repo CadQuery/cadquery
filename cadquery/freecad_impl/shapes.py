@@ -185,10 +185,7 @@ class Shape(object):
         return BoundBox(self.wrapped.BoundBox)
 
     def Center(self):
-        try:
-            return Vector(self.wrapped.CenterOfMass)
-        except:
-            pass
+        return Vector(self.wrapped.CenterOfMass)
 
     def Closed(self):
         return self.wrapped.Closed
