@@ -2307,7 +2307,7 @@ class Workplane(CQ):
             return self.union(boxes, clean=clean)
 
     def sphere(self, radius, direct=(0, 0, 1), angle1=-90, angle2=90, angle3=360,
-               centered=(True, True, True), combine=True):
+               centered=(True, True, True), combine=True, clean=True):
         """
         Returns a 3D sphere with the specified radius for each point on the stack
 
@@ -2373,7 +2373,7 @@ class Workplane(CQ):
         if not combine:
             return spheres
         else:
-            return self.union(spheres)
+            return self.union(spheres, clean=clean)
 
     def clean(self):
         """
