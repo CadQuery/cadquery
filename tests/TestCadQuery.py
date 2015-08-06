@@ -1095,6 +1095,11 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(18, s.faces().size())
 
+        # test removal of splitter with box
+        s = Workplane("XY").box(5,5,5).box(10,5,2)
+
+        self.assertEqual(14, s.faces().size())
+
     def testNoClean(self):
         """
         Test the case when clean is disabled.
