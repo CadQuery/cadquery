@@ -185,7 +185,18 @@ class Shape(object):
         return BoundBox(self.wrapped.BoundBox)
 
     def Center(self):
-        return Vector(self.wrapped.CenterOfMass)
+        # A Part.Shape object doesn't have the CenterOfMass function, but it's wrapped Solid(s) does
+        if isinstance(self.wrapped, FreeCADPart.Shape):
+            # If there are no Solids, we're probably dealing with a Face or something similar
+            if len(self.Solids()) == 0:
+                return Vector(self.wrapped.CenterOfMass)
+            else:
+                # TODO: compute the weighted average instead of using the first solid
+                return Vector(self.Solids()[0].wrapped.CenterOfMass)
+        elif isinstance(self.wrapped, FreeCADPart.Solid):
+            return Vector(self.wrapped.CenterOfMass)
+        else:
+            raise ValueError("Cannot find the center of %s object type" % str(type(self.Solids()[0].wrapped)))
 
     def Closed(self):
         return self.wrapped.Closed
@@ -848,8 +859,7 @@ class Compound(Shape):
         self.wrapped = obj
 
     def Center(self):
-        # TODO: compute the weighted average instead of the first solid
-        return self.Solids()[0].Center()
+        return self.Center()
 
     @classmethod
     def makeCompound(cls, listOfShapes):
