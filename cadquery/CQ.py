@@ -1686,6 +1686,7 @@ class Workplane(CQ):
         :param fcn: a function suitable for use in the eachpoint method: ie, that accepts
             a vector
         :param useLocalCoords: same as for :py:meth:`eachpoint`
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object that contains the resulting solid
         :raises: an error if there is not a context solid to cut from
         """
@@ -1717,6 +1718,7 @@ class Workplane(CQ):
         :type cboreDepth: float > 0
         :param depth: the depth of the hole
         :type depth: float > 0 or None to drill thru the entire part.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane plane.
 
@@ -1768,6 +1770,7 @@ class Workplane(CQ):
         :type cskAngle: float > 0
         :param depth: the depth of the hole
         :type depth: float > 0 or None to drill thru the entire part.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane.
 
@@ -1814,6 +1817,7 @@ class Workplane(CQ):
         :type diameter: float > 0
         :param depth: the depth of the hole
         :type depth: float > 0 or None to drill thru the entire part.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane.
 
@@ -1864,6 +1868,7 @@ class Workplane(CQ):
         :param distance: the distance to extrude normal to the workplane
         :param angle: angline ( in degrees) to rotate through the extrusion
         :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
         """
         #group wires together into faces based on which ones are inside the others
@@ -1905,6 +1910,7 @@ class Workplane(CQ):
         :param distance: the distance to extrude, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
         :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
 
         extrude always *adds* material to a part.
@@ -1941,6 +1947,7 @@ class Workplane(CQ):
         :type axisEnd: tuple, a two tuple
         :param combine: True to combine the resulting solid with parent solids if found.
         :type combine: boolean, combine with parent solid
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
 
         The returned object is always a CQ object, and depends on wither combine is True, and
@@ -2004,6 +2011,7 @@ class Workplane(CQ):
         Attempts to combine all of the items on the stack into a single item.
         WARNING: all of the items must be of the same type!
 
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there are no items on the stack, or if they cannot be combined
         :return: a CQ object with the resulting object selected
         """
@@ -2025,6 +2033,7 @@ class Workplane(CQ):
 
         :param toUnion:
         :type toUnion: a solid object, or a CQ object having a solid,
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to add to in the chain
         :return: a CQ object with the resulting object selected
         """
@@ -2064,6 +2073,7 @@ class Workplane(CQ):
 
         :param toCut: object to cut
         :type toCut: a solid object, or a CQ object having a solid,
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
         """
@@ -2100,6 +2110,7 @@ class Workplane(CQ):
         :param distanceToCut: distance to extrude before cutting
         :type distanceToCut: float, >0 means in the positive direction of the workplane normal,
             <0 means in the negative direction
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
@@ -2131,6 +2142,7 @@ class Workplane(CQ):
 
         :param boolean positive: True to cut in the positive direction, false to cut in the
             negative direction
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
@@ -2257,6 +2269,7 @@ class Workplane(CQ):
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
         :type combine: true to combine shapes, false otherwise.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         Centered is a tuple that describes whether the box should be centered on the x,y, and
         z axes.  If true, the box is centered on the respective axis relative to the workplane
@@ -2388,9 +2401,13 @@ class Workplane(CQ):
         some operations such as fillet.
 
         Note that in some cases where lots of solid operations are
-        chained `clean()` may actually improve performance since
+        chained, `clean()` may actually improve performance since
         the shape is 'simplified' at each step and thus next operation
         is easier.
+
+        Also note that, due to limitation of the underlying engine,
+        `clean` may fail to produce a clean output in some cases such as
+        spherical faces.
         """
         solidRef = self.findSolid(searchStack=True, searchParents=True)
         if solidRef:
