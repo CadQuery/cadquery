@@ -45,3 +45,4 @@ v0.2.0 (Unreleased)
    * Added box selector with bounding box option (thanks @hyOzd)
    * CQ.translate and CQ.rotate documentation fixes (thanks @hyOzd)
    * Fixed centering of a sphere
+   * Increased test coverage
