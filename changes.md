@@ -46,3 +46,4 @@ v0.2.0 (Unreleased)
    * CQ.translate and CQ.rotate documentation fixes (thanks @hyOzd)
    * Fixed centering of a sphere
    * Increased test coverage
+   * Added a clean function to keep some operations from failing on solids that need simplified (thanks @hyOzd)
