@@ -810,6 +810,13 @@ class Solid(Shape):
     def fuse(self, solidToJoin):
         return Shape.cast(self.wrapped.fuse(solidToJoin.wrapped))
 
+    def clean(self):
+        """Clean faces by removing splitter edges."""
+        r = self.wrapped.removeSplitter()
+        # removeSplitter() returns a generic Shape type, cast to actual type of object
+        r = FreeCADPart.cast_to_shape(r)
+        return Shape.cast(r)
+
     def fillet(self, radius, edgeList):
         """
         Fillets the specified edges of this solid.

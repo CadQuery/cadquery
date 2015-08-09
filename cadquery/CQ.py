@@ -38,7 +38,6 @@ class CQContext(object):
         self.firstPoint = None
         self.tolerance = 0.0001  # user specified tolerance
 
-
 class CQ(object):
     """
     Provides enhanced functionality for a wrapped CAD primitive.
@@ -1680,13 +1679,14 @@ class Workplane(CQ):
         else:
             return -1
 
-    def cutEach(self, fcn, useLocalCoords=False):
+    def cutEach(self, fcn, useLocalCoords=False, clean=True):
         """
         Evaluates the provided function at each point on the stack (ie, eachpoint)
         and then cuts the result from the context solid.
         :param fcn: a function suitable for use in the eachpoint method: ie, that accepts
             a vector
         :param useLocalCoords: same as for :py:meth:`eachpoint`
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object that contains the resulting solid
         :raises: an error if there is not a context solid to cut from
         """
@@ -1700,11 +1700,13 @@ class Workplane(CQ):
         for cb in results:
             s = s.cut(cb)
 
+        if clean: s = s.clean()
+
         ctxSolid.wrapped = s.wrapped
         return self.newObject([s])
 
     #but parameter list is different so a simple function pointer wont work
-    def cboreHole(self, diameter, cboreDiameter, cboreDepth, depth=None):
+    def cboreHole(self, diameter, cboreDiameter, cboreDepth, depth=None, clean=True):
         """
         Makes a counterbored hole for each item on the stack.
 
@@ -1716,6 +1718,7 @@ class Workplane(CQ):
         :type cboreDepth: float > 0
         :param depth: the depth of the hole
         :type depth: float > 0 or None to drill thru the entire part.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane plane.
 
@@ -1751,11 +1754,11 @@ class Workplane(CQ):
             r = hole.fuse(cbore)
             return r
 
-        return self.cutEach(_makeCbore, True)
+        return self.cutEach(_makeCbore, True, clean)
 
     #TODO: almost all code duplicated!
     #but parameter list is different so a simple function pointer wont work
-    def cskHole(self, diameter, cskDiameter, cskAngle, depth=None):
+    def cskHole(self, diameter, cskDiameter, cskAngle, depth=None, clean=True):
         """
         Makes a countersunk hole for each item on the stack.
 
@@ -1767,6 +1770,7 @@ class Workplane(CQ):
         :type cskAngle: float > 0
         :param depth: the depth of the hole
         :type depth: float > 0 or None to drill thru the entire part.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane.
 
@@ -1801,11 +1805,11 @@ class Workplane(CQ):
             r = hole.fuse(csk)
             return r
 
-        return self.cutEach(_makeCsk, True)
+        return self.cutEach(_makeCsk, True, clean)
 
     #TODO: almost all code duplicated!
     #but parameter list is different so a simple function pointer wont work
-    def hole(self, diameter, depth=None):
+    def hole(self, diameter, depth=None, clean=True):
         """
         Makes a hole for each item on the stack.
 
@@ -1813,6 +1817,7 @@ class Workplane(CQ):
         :type diameter: float > 0
         :param depth: the depth of the hole
         :type depth: float > 0 or None to drill thru the entire part.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane.
 
@@ -1844,10 +1849,10 @@ class Workplane(CQ):
             hole = Solid.makeCylinder(diameter / 2.0, depth, center, boreDir)  # local coordinates!
             return hole
 
-        return self.cutEach(_makeHole, True)
+        return self.cutEach(_makeHole, True, clean)
 
     #TODO: duplicated code with _extrude and extrude
-    def twistExtrude(self, distance, angleDegrees, combine=True):
+    def twistExtrude(self, distance, angleDegrees, combine=True, clean=True):
         """
         Extrudes a wire in the direction normal to the plane, but also twists by the specified
         angle over the length of the extrusion
@@ -1863,6 +1868,7 @@ class Workplane(CQ):
         :param distance: the distance to extrude normal to the workplane
         :param angle: angline ( in degrees) to rotate through the extrusion
         :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
         """
         #group wires together into faces based on which ones are inside the others
@@ -1891,17 +1897,20 @@ class Workplane(CQ):
                 r = r.fuse(thisObj)
 
         if combine:
-            return self._combineWithBase(r)
+            newS = self._combineWithBase(r)
         else:
-            return self.newObject([r])
+            newS = self.newObject([r])
+        if clean: newS = newS.clean()
+        return newS
 
-    def extrude(self, distance, combine=True):
+    def extrude(self, distance, combine=True, clean=True):
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
         :param distance: the distance to extrude, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
         :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
 
         extrude always *adds* material to a part.
@@ -1920,11 +1929,13 @@ class Workplane(CQ):
         """
         r = self._extrude(distance)  # returns a Solid (or a compound if there were multiple)
         if combine:
-            return self._combineWithBase(r)
+            newS = self._combineWithBase(r)
         else:
-            return self.newObject([r])
+            newS = self.newObject([r])
+        if clean: newS = newS.clean()
+        return newS
 
-    def revolve(self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True):
+    def revolve(self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True, clean=True):
         """
         Use all un-revolved wires in the parent chain to create a solid.
 
@@ -1936,6 +1947,7 @@ class Workplane(CQ):
         :type axisEnd: tuple, a two tuple
         :param combine: True to combine the resulting solid with parent solids if found.
         :type combine: boolean, combine with parent solid
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
 
         The returned object is always a CQ object, and depends on wither combine is True, and
@@ -1973,9 +1985,11 @@ class Workplane(CQ):
         # returns a Solid (or a compound if there were multiple)
         r = self._revolve(angleDegrees, axisStart, axisEnd)
         if combine:
-            return self._combineWithBase(r)
+            newS = self._combineWithBase(r)
         else:
-            return self.newObject([r])
+            newS = self.newObject([r])
+        if clean: newS = newS.clean()
+        return newS
 
     def _combineWithBase(self, obj):
         """
@@ -1992,11 +2006,12 @@ class Workplane(CQ):
 
         return self.newObject([r])
 
-    def combine(self):
+    def combine(self, clean=True):
         """
         Attempts to combine all of the items on the stack into a single item.
         WARNING: all of the items must be of the same type!
 
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there are no items on the stack, or if they cannot be combined
         :return: a CQ object with the resulting object selected
         """
@@ -2005,9 +2020,11 @@ class Workplane(CQ):
         for ss in items:
             s = s.fuse(ss)
 
+        if clean: s = s.clean()
+
         return self.newObject([s])
 
-    def union(self, toUnion=None, combine=True):
+    def union(self, toUnion=None, combine=True, clean=True):
         """
         Unions all of the items on the stack of toUnion with the current solid.
         If there is no current solid, the items in toUnion are unioned together.
@@ -2016,6 +2033,7 @@ class Workplane(CQ):
 
         :param toUnion:
         :type toUnion: a solid object, or a CQ object having a solid,
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to add to in the chain
         :return: a CQ object with the resulting object selected
         """
@@ -2037,13 +2055,16 @@ class Workplane(CQ):
         # look for parents to cut from
         solidRef = self.findSolid(searchStack=True, searchParents=True)
         if combine and solidRef is not None:
-            t = solidRef.fuse(newS)
+            r = solidRef.fuse(newS)
             solidRef.wrapped = newS.wrapped
-            return self.newObject([t])
         else:
-            return self.newObject([newS])
+            r = newS
 
-    def cut(self, toCut, combine=True):
+        if clean: r = r.clean()
+
+        return self.newObject([r])
+
+    def cut(self, toCut, combine=True, clean=True):
         """
         Cuts the provided solid from the current solid, IE, perform a solid subtraction
 
@@ -2052,6 +2073,7 @@ class Workplane(CQ):
 
         :param toCut: object to cut
         :type toCut: a solid object, or a CQ object having a solid,
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
         """
@@ -2070,11 +2092,15 @@ class Workplane(CQ):
             raise ValueError("Cannot cut Type '%s' " % str(type(toCut)))
 
         newS = solidRef.cut(solidToCut)
+
+        if clean: newS = newS.clean()
+
         if combine:
             solidRef.wrapped = newS.wrapped
+
         return self.newObject([newS])
 
-    def cutBlind(self, distanceToCut):
+    def cutBlind(self, distanceToCut, clean=True):
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
 
@@ -2084,6 +2110,7 @@ class Workplane(CQ):
         :param distanceToCut: distance to extrude before cutting
         :type distanceToCut: float, >0 means in the positive direction of the workplane normal,
             <0 means in the negative direction
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
@@ -2100,10 +2127,13 @@ class Workplane(CQ):
         solidRef = self.findSolid()
 
         s = solidRef.cut(toCut)
+
+        if clean: s = s.clean()
+
         solidRef.wrapped = s.wrapped
         return self.newObject([s])
 
-    def cutThruAll(self, positive=False):
+    def cutThruAll(self, positive=False, clean=True):
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
 
@@ -2112,6 +2142,7 @@ class Workplane(CQ):
 
         :param boolean positive: True to cut in the positive direction, false to cut in the
             negative direction
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
@@ -2121,7 +2152,7 @@ class Workplane(CQ):
         if not positive:
             maxDim *= (-1.0)
 
-        return self.cutBlind(maxDim)
+        return self.cutBlind(maxDim, clean)
 
     def loft(self, filled=True, ruled=False, combine=True):
         """
@@ -2223,7 +2254,7 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def box(self, length, width, height, centered=(True, True, True), combine=True):
+    def box(self, length, width, height, centered=(True, True, True), combine=True, clean=True):
         """
         Return a 3d box with specified dimensions for each object on the stack.
 
@@ -2238,6 +2269,7 @@ class Workplane(CQ):
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
         :type combine: true to combine shapes, false otherwise.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         Centered is a tuple that describes whether the box should be centered on the x,y, and
         z axes.  If true, the box is centered on the respective axis relative to the workplane
@@ -2285,10 +2317,10 @@ class Workplane(CQ):
             return boxes
         else:
             #combine everything
-            return self.union(boxes)
+            return self.union(boxes, clean=clean)
 
     def sphere(self, radius, direct=(0, 0, 1), angle1=-90, angle2=90, angle3=360,
-               centered=(True, True, True), combine=True):
+               centered=(True, True, True), combine=True, clean=True):
         """
         Returns a 3D sphere with the specified radius for each point on the stack
 
@@ -2354,4 +2386,32 @@ class Workplane(CQ):
         if not combine:
             return spheres
         else:
-            return self.union(spheres)
+            return self.union(spheres, clean=clean)
+
+    def clean(self):
+        """
+        Cleans the current solid by removing unwanted edges from the
+        faces.
+
+        Normally you don't have to call this function. It is
+        automatically called after each related operation. You can
+        disable this behavior with `clean=False` parameter if method
+        has any. In some cases this can improve performance
+        drastically but is generally dis-advised since it may break
+        some operations such as fillet.
+
+        Note that in some cases where lots of solid operations are
+        chained, `clean()` may actually improve performance since
+        the shape is 'simplified' at each step and thus next operation
+        is easier.
+
+        Also note that, due to limitation of the underlying engine,
+        `clean` may fail to produce a clean output in some cases such as
+        spherical faces.
+        """
+        solidRef = self.findSolid(searchStack=True, searchParents=True)
+        if solidRef:
+            t = solidRef.clean()
+            return self.newObject([t])
+        else:
+            raise ValueError("There is no solid to clean!")

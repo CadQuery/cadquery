@@ -1059,6 +1059,73 @@ class TestCadQuery(BaseTest):
 
         self.saveModel(s)
 
+    def testClean(self):
+        """
+        Tests the `clean()` method which is called automatically.
+        """
+
+        # make a cube with a splitter edge on one of the faces
+        # autosimplify should remove the splitter
+        s = Workplane("XY").moveTo(0,0).line(5,0).line(5,0).line(0,10).\
+            line(-10,0).close().extrude(10)
+
+        self.assertEqual(6, s.faces().size())
+
+        # test removal of splitter caused by union operation
+        s = Workplane("XY").box(10,10,10).union(Workplane("XY").box(20,10,10))
+
+        self.assertEqual(6, s.faces().size())
+
+        # test removal of splitter caused by extrude+combine operation
+        s = Workplane("XY").box(10,10,10).faces(">Y").\
+            workplane().rect(5,10,5).extrude(20)
+
+        self.assertEqual(10, s.faces().size())
+
+        # test removal of splitter caused by double hole operation
+        s = Workplane("XY").box(10,10,10).faces(">Z").workplane().\
+            hole(3,5).faces(">Z").workplane().hole(3,10)
+
+        self.assertEqual(7, s.faces().size())
+
+        # test removal of splitter caused by cutThruAll
+        s = Workplane("XY").box(10,10,10).faces(">Y").workplane().\
+            rect(10,5).cutBlind(-5).faces(">Z").workplane().\
+            center(0,2.5).rect(5,5).cutThruAll()
+
+        self.assertEqual(18, s.faces().size())
+
+        # test removal of splitter with box
+        s = Workplane("XY").box(5,5,5).box(10,5,2)
+
+        self.assertEqual(14, s.faces().size())
+
+    def testNoClean(self):
+        """
+        Test the case when clean is disabled.
+        """
+        # test disabling autoSimplify
+        s = Workplane("XY").moveTo(0,0).line(5,0).line(5,0).line(0,10).\
+            line(-10,0).close().extrude(10, clean=False)
+        self.assertEqual(7, s.faces().size())
+
+        s = Workplane("XY").box(10,10,10).\
+            union(Workplane("XY").box(20,10,10), clean=False)
+        self.assertEqual(14, s.faces().size())
+
+        s = Workplane("XY").box(10,10,10).faces(">Y").\
+            workplane().rect(5,10,5).extrude(20, clean=False)
+
+        self.assertEqual(12, s.faces().size())
+
+    def testExplicitClean(self):
+        """
+        Test running of `clean()` method explicitly.
+        """
+        s = Workplane("XY").moveTo(0,0).line(5,0).line(5,0).line(0,10).\
+            line(-10,0).close().extrude(10,clean=False).clean()
+        self.assertEqual(6, s.faces().size())
+
     def testCup(self):
 
         """
