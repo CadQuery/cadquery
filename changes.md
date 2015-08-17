@@ -31,8 +31,9 @@ v0.1.8
     * Integrated Coveralls.io, with a badge in README.md
     * Integrated version badge in README.md
     
-v0.2.0 (Unreleased)
+v0.2.0
 -----
+   * Fixed versioning to match the semantic versioning scheme
    * Added license badge in changes.md
    * Fixed Solid.makeSphere implementation
    * Added CQ.sphere operation that mirrors CQ.box
@@ -47,3 +48,4 @@ v0.2.0 (Unreleased)
    * Fixed centering of a sphere
    * Increased test coverage
    * Added a clean function to keep some operations from failing on solids that need simplified (thanks @hyOzd)
+   * Added a mention of the new Google Group to the readme
