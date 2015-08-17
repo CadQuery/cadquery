@@ -20,14 +20,14 @@ Using CadQuery, you can write short, simple scripts that produce high quality CA
 Getting Started With CadQuery
 ========================================
 
-The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 recommended )  (http://www.freecadweb.org/), and then to use our great CadQuery-FreeCAD plugin here:
-
-https://github.com/jmwright/cadquery-freecad-module
+The easiest way to get started with CadQuery is to Install FreeCAD (version 14+)  (http://www.freecadweb.org/), and then to use our great CadQuery-FreeCAD plugin [here](https://github.com/jmwright/cadquery-freecad-module).
 
 
 It includes the latest version of cadquery alreadby bundled, and has super-easy installation on Mac, Windows, and Unix.
 
 It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
+
+We also have a Google Group to make it easy to get help from other CadQuery users. Please join the group and introduce yourself, and we would also love to hear what you are doing with CadQuery. https://groups.google.com/forum/#!forum/cadquery
 
 
 Recently Added Features
