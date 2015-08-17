@@ -525,6 +525,17 @@ class TestCadQuery(BaseTest):
         self.saveModel(t)
         self.assertEqual(12,t.faces().size() )
 
+    def testCut(self):
+        """
+        Tests the cut function by itself to catch the case where a Solid object is passed.
+        """
+        s = Workplane(Plane.XY())
+        currentS = s.rect(2.0,2.0).extrude(0.5)
+        toCut = s.rect(1.0,1.0).extrude(0.5)
+
+        currentS.cut(toCut.val())
+
+        self.assertEqual(10,currentS.faces().size())
 
     def testCutThroughAll(self):
         """
@@ -1040,6 +1051,25 @@ class TestCadQuery(BaseTest):
         for oo in o:
             s  = s.union(oo)
         print "Total time %0.3f" % (time.time() - beginTime)
+
+        #Test unioning a Solid object
+        s = Workplane(Plane.XY())
+        currentS = s.rect(2.0,2.0).extrude(0.5)
+        toUnion = s.rect(1.0,1.0).extrude(1.0)
+
+        currentS.union(toUnion.val(), combine=False)
+
+        #TODO: When unioning and combining is figured out, uncomment the following assert
+        #self.assertEqual(10,currentS.faces().size())
+
+    def testCombine(self):
+        s = Workplane(Plane.XY())
+        objects1 = s.rect(2.0,2.0).extrude(0.5).faces('>Z').rect(1.0,1.0).extrude(0.5)
+
+        objects1.combine()
+
+        self.assertEqual(11, objects1.faces().size())
+
 
     def testCombineSolidsInLoop(self):
         #duplicates a memory problem of some kind reported when combining lots of objects
