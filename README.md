@@ -30,14 +30,6 @@ It has tons of awesome features like integration with FreeCAD so you can see you
 We also have a Google Group to make it easy to get help from other CadQuery users. Please join the group and introduce yourself, and we would also love to hear what you are doing with CadQuery. https://groups.google.com/forum/#!forum/cadquery
 
 
-Recently Added Features
-========================================
-
-* 02/21/15 -- Multiple bug fixes and tests added, including a bugfix for moveTo (thanks @xix-xeaon)
-* 12/31/14 -- Added Travis CI config to automatically test our code (thanks @krasin)
-* 12/05/14 -- New FreeCAD/CadQuery Module!  https://github.com/jmwright/cadquery-freecad-module
-
-
 Why CadQuery instead of OpenSCAD?
 ========================================
 
