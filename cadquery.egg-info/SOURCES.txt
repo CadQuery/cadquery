@@ -6,11 +6,11 @@ cadquery/CQ.py
 cadquery/__init__.py
 cadquery/cq_directive.py
 cadquery/selectors.py
-cadquery/workplane.py
 cadquery.egg-info/PKG-INFO
 cadquery.egg-info/SOURCES.txt
 cadquery.egg-info/dependency_links.txt
 cadquery.egg-info/not-zip-safe
+cadquery.egg-info/pbr.json
 cadquery.egg-info/top_level.txt
 cadquery/contrib/__init__.py
 cadquery/freecad_impl/__init__.py
@@ -24,6 +24,5 @@ tests/TestCadObjects.py
 tests/TestCadQuery.py
 tests/TestExporters.py
 tests/TestImporters.py
-tests/TestImports.py
 tests/TestWorkplanes.py
 tests/__init__.py
