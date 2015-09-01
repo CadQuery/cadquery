@@ -2409,9 +2409,8 @@ class Workplane(CQ):
         `clean` may fail to produce a clean output in some cases such as
         spherical faces.
         """
-        solidRef = self.findSolid(searchStack=True, searchParents=True)
-        if solidRef:
-            t = solidRef.clean()
-            return self.newObject([t])
-        else:
-            raise ValueError("There is no solid to clean!")
+        try:
+            cleanObjects = [obj.clean() for obj in self.objects]
+        except AttributeError:
+            raise AttributeError("%s object doesn't support `clean()` method!" % obj.ShapeType())
+        return self.newObject(cleanObjects)
