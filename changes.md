@@ -49,3 +49,7 @@ v0.2.0
    * Increased test coverage
    * Added a clean function to keep some operations from failing on solids that need simplified (thanks @hyOzd)
    * Added a mention of the new Google Group to the readme
+   
+v0.3.0
+-----
+   * Fixed a bug where clean() could not be called on appropriate objects other than solids (thanks @hyOzd) #108
