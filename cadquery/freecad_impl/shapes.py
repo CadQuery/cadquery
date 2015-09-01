@@ -481,6 +481,9 @@ class Wire(Shape):
         """
         return Wire(FreeCADPart.makeHelix(pitch, height, radius, angle))
 
+    def clean(self):
+        """This method is not implemented yet."""
+        return self
 
 class Face(Shape):
     def __init__(self, obj):
@@ -882,3 +885,7 @@ class Compound(Shape):
 
     def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
+
+    def clean(self):
+        """This method is not implemented yet."""
+        return self
