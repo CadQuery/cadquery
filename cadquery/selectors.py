@@ -40,6 +40,18 @@ class Selector(object):
         """
         return objectList
 
+    def __and__(self, other):
+        return AndSelector(self, other)
+
+    def __add__(self, other):
+        return SumSelector(self, other)
+
+    def __sub__(self, other):
+        return SubtractSelector(self, other)
+
+    def __neg__(self):
+        return InverseSelector(self)
+
 class NearestToPointSelector(Selector):
     """
     Selects object nearest the provided point.
@@ -299,6 +311,57 @@ class DirectionMinMaxSelector(Selector):
         else:
             return [ min(objectList,key=distance) ]
 
+class BinarySelector(Selector):
+    """
+    Base class for selectors that operates with two other
+    selectors. Subclass must implement the :filterResults(): method.
+    """
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def filter(self, objectList):
+        return self.filterResults(self.left.filter(objectList),
+                                  self.right.filter(objectList))
+
+    def filterResults(self, r_left, r_right):
+        raise NotImplementedError
+
+class AndSelector(BinarySelector):
+    """
+    Intersection selector. Returns objects that is selected by both selectors.
+    """
+    def filterResults(self, r_left, r_right):
+        # return intersection of lists
+        return list(set(r_left) & set(r_right))
+
+class SumSelector(BinarySelector):
+    """
+    Union selector. Returns the sum of two selectors results.
+    """
+    def filterResults(self, r_left, r_right):
+        # return the union (no duplicates) of lists
+        return list(set(r_left + r_right))
+
+class SubtractSelector(BinarySelector):
+    """
+    Difference selector. Substract results of a selector from another
+    selectors results.
+    """
+    def filterResults(self, r_left, r_right):
+        return list(set(r_left) - set(r_right))
+
+class InverseSelector(Selector):
+    """
+    Inverts the selection of given selector. In other words, selects
+    all objects that is not selected by given selector.
+    """
+    def __init__(self, selector):
+        self.selector = selector
+
+    def filter(self, objectList):
+        # note that Selector() selects everything
+        return SubtractSelector(Selector(), self.selector).filter(objectList)
 
 class StringSyntaxSelector(Selector):
     """

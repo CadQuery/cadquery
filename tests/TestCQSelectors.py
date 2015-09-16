@@ -274,6 +274,63 @@ class TestCQSelectors(BaseTest):
         fl = c.faces(selectors.BoxSelector((-0.1, 0.4, -0.1), (1.1, 1.1, 1.1), True)).vals()
         self.assertEqual(1, len(fl))
 
+    def testAndSelector(self):
+        c = CQ(makeUnitCube())
+
+        S = selectors.StringSyntaxSelector
+        BS = selectors.BoxSelector
+
+        el = c.edges(selectors.AndSelector(S('|X'), BS((-2,-2,0.1), (2,2,2)))).vals()
+        self.assertEqual(2, len(el))
+
+        # test 'and' (intersection) operator
+        el = c.edges(S('|X') & BS((-2,-2,0.1), (2,2,2))).vals()
+        self.assertEqual(2, len(el))
+
+    def testSumSelector(self):
+        c = CQ(makeUnitCube())
+
+        S = selectors.StringSyntaxSelector
+
+        fl = c.faces(selectors.SumSelector(S(">Z"), S("<Z"))).vals()
+        self.assertEqual(2, len(fl))
+        el = c.edges(selectors.SumSelector(S("|X"), S("|Y"))).vals()
+        self.assertEqual(8, len(el))
+
+        # test the sum operator
+        fl = c.faces(S(">Z") + S("<Z")).vals()
+        self.assertEqual(2, len(fl))
+        el = c.edges(S("|X") + S("|Y")).vals()
+        self.assertEqual(8, len(el))
+
+    def testSubtractSelector(self):
+        c = CQ(makeUnitCube())
+
+        S = selectors.StringSyntaxSelector
+
+        fl = c.faces(selectors.SubtractSelector(S("#Z"), S(">X"))).vals()
+        self.assertEqual(3, len(fl))
+
+        # test the subtract operator
+        fl = c.faces(S("#Z") - S(">X")).vals()
+        self.assertEqual(3, len(fl))
+
+    def testInverseSelector(self):
+        c = CQ(makeUnitCube())
+
+        S = selectors.StringSyntaxSelector
+
+        fl = c.faces(selectors.InverseSelector(S('>Z'))).vals()
+        self.assertEqual(5, len(fl))
+        el = c.faces('>Z').edges(selectors.InverseSelector(S('>X'))).vals()
+        self.assertEqual(3, len(el))
+
+        # test invert operator
+        fl = c.faces(-S('>Z')).vals()
+        self.assertEqual(5, len(fl))
+        el = c.faces('>Z').edges(-S('>X')).vals()
+        self.assertEqual(3, len(el))
+
     def testFaceCount(self):
         c = CQ(makeUnitCube())
         self.assertEqual( 6, c.faces().size() )
