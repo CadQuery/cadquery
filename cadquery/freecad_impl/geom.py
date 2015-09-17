@@ -98,10 +98,10 @@ class Vector(object):
         return Vector( self.wrapped.cross(v.wrapped))
 
     def dot(self,v):
-        return  self.wrapped.dot(v.wrapped)
+        return self.wrapped.dot(v.wrapped)
 
     def sub(self,v):
-        return self.wrapped.sub(v.wrapped)
+        return Vector(self.wrapped.sub(v.wrapped))
 
     def add(self,v):
         return Vector( self.wrapped.add(v.wrapped))
