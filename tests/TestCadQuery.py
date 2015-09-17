@@ -442,7 +442,7 @@ class TestCadQuery(BaseTest):
         c = CQ( makeUnitCube())                                   #the cube is the context solid
         self.assertEqual(6,c.faces().size())        #cube has six faces
 
-        r = c.faces().workplane().circle(0.125).extrude(0.5,True)     #make a boss, not updating the original
+        r = c.faces('>Z').workplane().circle(0.125).extrude(0.5,True)     #make a boss, not updating the original
         self.assertEqual(8,r.faces().size())                  #just the boss faces
         self.assertEqual(8,c.faces().size())                  #original is modified too
 
