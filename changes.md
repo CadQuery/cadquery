@@ -54,3 +54,4 @@ v0.3.0 (Unreleased)
 -----
    * Fixed a bug where clean() could not be called on appropriate objects other than solids (thanks @hyOzd) #108
    * Implemented new selectors that allow existing selectors to be combined with arithmetic/boolean operations. (thanks @hyOzd) #110
+   * Fixed a bug where only 1 random edge was returned with multiple min/max selector matches (thanks @hyOzd) #111
