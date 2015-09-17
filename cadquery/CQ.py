@@ -299,10 +299,20 @@ class CQ(object):
             afterwards.
         """
         def _isCoPlanar(f0, f1):
+            """Test if two faces are on the same plane."""
             p0 = f0.Center()
             p1 = f1.Center()
-            n = f0.normalAt()
-            return abs(n.dot(p0.sub(p1)) < self.ctx.tolerance)
+            n0 = f0.normalAt()
+            n1 = f1.normalAt()
+
+            # test normals (direction of planes)
+            if not ((abs(n0.x-n1.x) < self.ctx.tolerance) or
+                    (abs(n0.y-n1.y) < self.ctx.tolerance) or
+                    (abs(n0.z-n1.z) < self.ctx.tolerance)):
+                return False
+
+            # test if p1 is on the plane of f0 (offset of planes)
+            return abs(n0.dot(p0.sub(p1)) < self.ctx.tolerance)
 
         def _computeXdir(normal):
             """
