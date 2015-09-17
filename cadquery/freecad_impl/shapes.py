@@ -192,7 +192,6 @@ class Shape(object):
                 return Vector(self.wrapped.CenterOfMass)
             elif len(self.Solids()) == 1:
                 return Vector(self.Solids()[0].wrapped.CenterOfMass)
-
             elif len(self.Solids()) > 1:
                 return self.CombinedCenter(self.Solids())
         elif isinstance(self.wrapped, FreeCADPart.Solid):
