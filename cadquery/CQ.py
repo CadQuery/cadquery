@@ -298,11 +298,11 @@ class CQ(object):
             For now you can work around by creating a workplane and then offsetting the center
             afterwards.
         """
-        if len(self.objects) > 1:
-            raise ValueError("Workplane cannot be created if more than"
-                             " 1 object is selected.")
-
-        obj = self.objects[0]
+        def _isCoPlanar(f0, f1):
+            p0 = f0.Center()
+            p1 = f1.Center()
+            n = f0.normalAt()
+            return abs(n.dot(p0.sub(p1)) < self.ctx.tolerance)
 
         def _computeXdir(normal):
             """
@@ -317,28 +317,33 @@ class CQ(object):
                 xd = Vector(1, 0, 0)
             return xd
 
-        faceToBuildOn = None
-        center = None
-        #if isinstance(obj,Vertex):
-        #    f = self.parent.objects[0]
-        #    if f != None and isinstance(f,Face):
-        #        center = obj.Center()
-        #        normal = f.normalAt(center)
-        #        xDir = _computeXdir(normal)
-        #    else:
-        #        raise ValueError("If a vertex is selected, a face must be the immediate parent")
-        if isinstance(obj, Face):
-            faceToBuildOn = obj
-            center = obj.Center()
-            normal = obj.normalAt(center)
+        if len(self.objects) > 1:
+            # are all objects 'PLANE'?
+            if not all(o.geomType() == 'PLANE' for o in self.objects):
+                raise ValueError("If multiple objects selected, they all must be planar faces.")
+
+            # are all faces co-planar with each other?
+            if not all(_isCoPlanar(self.objects[0], f) for f in self.objects[1:]):
+                raise ValueError("Selected faces must be co-planar.")
+
+            center = Shape.CombinedCenter(self.objects)
+            normal = self.objects[0].normalAt()
             xDir = _computeXdir(normal)
+
         else:
-            if hasattr(obj, 'Center'):
+            obj = self.objects[0]
+
+            if isinstance(obj, Face):
                 center = obj.Center()
-                normal = self.plane.zDir
-                xDir = self.plane.xDir
+                normal = obj.normalAt(center)
+                xDir = _computeXdir(normal)
             else:
-                raise ValueError("Needs a face or a vertex or point on a work plane")
+                if hasattr(obj, 'Center'):
+                    center = obj.Center()
+                    normal = self.plane.zDir
+                    xDir = self.plane.xDir
+                else:
+                    raise ValueError("Needs a face or a vertex or point on a work plane")
 
         #invert if requested
         if invert:

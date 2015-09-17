@@ -198,6 +198,22 @@ class Shape(object):
         else:
             raise ValueError("Cannot find the center of %s object type" % str(type(self.Solids()[0].wrapped)))
 
+    @staticmethod
+    def CombinedCenter(objects):
+        """
+        Calculates the center of mass of multiple objects.
+
+        :param objects: a list of objects with mass
+        """
+        total_mass = sum(o.wrapped.Mass for o in objects)
+        weighted_centers = [o.wrapped.CenterOfMass.multiply(o.wrapped.Mass) for o in objects]
+
+        sum_wc = weighted_centers[0]
+        for wc in weighted_centers[1:] :
+            sum_wc = sum_wc.add(wc)
+
+        return Vector(sum_wc.multiply(1./total_mass))
+
     def Closed(self):
         return self.wrapped.Closed
 
