@@ -480,6 +480,19 @@ class TestCadQuery(BaseTest):
         self.saveModel(r)
         self.assertEqual(7,r.faces().size() )
 
+    def testMultiFaceWorkplane(self):
+        """
+        Test Creation of workplane from multiple co-planar face
+        selection.
+        """
+        s = Workplane('XY').box(1,1,1).faces('>Z').rect(1,0.5).cutBlind(-0.2)
+
+        w = s.faces('>Z').workplane()
+        o = w.objects[0] # origin of the workplane
+        self.assertAlmostEqual(o.x, 0., 3)
+        self.assertAlmostEqual(o.y, 0., 3)
+        self.assertAlmostEqual(o.z, 0.5, 3)
+
     def testTriangularPrism(self):
         s = Workplane("XY").lineTo(1,0).lineTo(1,1).close().extrude(0.2)
         self.saveModel(s)
