@@ -262,7 +262,6 @@ class CQ(object):
 
     def workplane(self, offset=0.0, invert=False):
         """
-
         Creates a new 2-D workplane, located relative to the first face on the stack.
 
         :param offset:  offset for the work plane in the Z direction. Default
@@ -271,14 +270,18 @@ class CQ(object):
         :type invert: boolean or None=False
         :rtype: Workplane object ( which is a subclass of CQ )
 
-        The first element on the stack must be a face, or a vertex.  If a vertex, then the parent
-        item on the chain immediately before the vertex must be a face.
+        The first element on the stack must be a face, a set of
+        co-planar faces or a vertex.  If a vertex, then the parent
+        item on the chain immediately before the vertex must be a
+        face.
 
         The result will be a 2-d working plane
         with a new coordinate system set up as follows:
 
-           * The origin will be located in the *center* of the face, if a face was selected. If a
-             vertex was selected, the origin will be at the vertex, and located on the face.
+           * The origin will be located in the *center* of the
+             face/faces, if a face/faces was selected. If a vertex was
+             selected, the origin will be at the vertex, and located
+             on the face.
            * The Z direction will be normal to the plane of the face,computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
