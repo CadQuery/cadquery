@@ -147,6 +147,10 @@ class TestCQSelectors(BaseTest):
         for v in c.faces(">Z").vertices().vals():
             self.assertAlmostEqual(1.0,v.Z,3)
 
+        # test the case of multiple objects at the same distance
+        el = c.edges("<Z").vals()
+        self.assertEqual(4, len(el))
+
     def testMinDistance(self):
         c = CQ(makeUnitCube())
 
@@ -158,6 +162,10 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(4, len(c.faces("<Z").vertices().vals() ))
         for v in c.faces("<Z").vertices().vals():
             self.assertAlmostEqual(0.0,v.Z,3)
+
+        # test the case of multiple objects at the same distance
+        el = c.edges("<Z").vals()
+        self.assertEqual(4, len(el))
 
     def testNearestTo(self):
         c = CQ(makeUnitCube())

@@ -298,6 +298,10 @@ class CQ(object):
             For now you can work around by creating a workplane and then offsetting the center
             afterwards.
         """
+        if len(self.objects) > 1:
+            raise ValueError("Workplane cannot be created if more than"
+                             " 1 object is selected.")
+
         obj = self.objects[0]
 
         def _computeXdir(normal):

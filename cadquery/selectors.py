@@ -291,13 +291,13 @@ class DirectionMinMaxSelector(Selector):
             allow '>(0,0,1)' to work.
 
     """
-    def __init__(self,vector,directionMax=True):
+    def __init__(self, vector, directionMax=True, tolerance=0.0001):
         self.vector = vector
         self.max = max
         self.directionMax = directionMax
+        self.TOLERANCE = tolerance
     def filter(self,objectList):
 
-        #then sort by distance from origin, along direction specified
         def distance(tShape):
             return tShape.Center().dot(self.vector)
             #if tShape.ShapeType == 'Vertex':
@@ -306,10 +306,14 @@ class DirectionMinMaxSelector(Selector):
             #    pnt = tShape.Center()
             #return pnt.dot(self.vector)
 
+        # find out the max/min distance
         if self.directionMax:
-            return [ max(objectList,key=distance) ]
+            d = max(map(distance, objectList))
         else:
-            return [ min(objectList,key=distance) ]
+            d = min(map(distance, objectList))
+
+        # return all objects at the max/min distance (within a tolerance)
+        return filter(lambda o: abs(d - distance(o)) < self.TOLERANCE, objectList)
 
 class BinarySelector(Selector):
     """
