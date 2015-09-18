@@ -190,9 +190,10 @@ class Shape(object):
             # If there are no Solids, we're probably dealing with a Face or something similar
             if len(self.Solids()) == 0:
                 return Vector(self.wrapped.CenterOfMass)
-            else:
-                # TODO: compute the weighted average instead of using the first solid
+            elif len(self.Solids()) == 1:
                 return Vector(self.Solids()[0].wrapped.CenterOfMass)
+            elif len(self.Solids()) > 1:
+                return self.CombinedCenter(self.Solids())
         elif isinstance(self.wrapped, FreeCADPart.Solid):
             return Vector(self.wrapped.CenterOfMass)
         else:

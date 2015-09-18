@@ -41,6 +41,28 @@ class TestCadObjects(BaseTest):
 
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), e.Center().toTuple(), 3)
 
+    def testCompoundCenter(self):
+        """
+        Tests whether or not a proper weighted center can be found for a compound
+        """
+        def cylinders(self, radius, height):
+            def _cyl(pnt):
+                # Inner function to build a cylinder
+                return Solid.makeCylinder(radius, height, pnt)
+
+            # Combine all the cylinders into a single compound
+            r = self.eachpoint(_cyl, True).combineSolids()
+
+            return r
+
+        Workplane.cyl = cylinders
+
+        # Now test. here we want weird workplane to see if the objects are transformed right
+        s = Workplane("XY").rect(2.0, 3.0, forConstruction=True).vertices().cyl(0.25, 0.5)
+
+        self.assertEquals(4, len(s.val().Solids()))
+        self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().Center().toTuple(), 3)
+
     def testDot(self):
         v1 = Vector(2, 2, 2)
         v2 = Vector(1, -1, 1)
