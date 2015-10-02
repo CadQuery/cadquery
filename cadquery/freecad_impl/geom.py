@@ -221,7 +221,7 @@ class Plane:
         """
             Create a predefined Plane based on the conventional names.
 
-            :param stdName: one of (XY|YZ|XZ|front|back|left|right|top|bottom
+            :param stdName: one of (XY|YZ|ZX|XZ|YX|ZY|front|back|left|right|top|bottom
             :type stdName: string
             :param origin: the desired origin, specified in global coordinates
             :type origin: 3-tuple of the origin of the new plane, in global coorindates.
@@ -234,7 +234,10 @@ class Plane:
             =========== ======= ======= ======
             XY          +x      +y      +z
             YZ          +y      +z      +x
+            ZX          +z      +x      +y
             XZ          +x      +z      -y
+            YX          +y      +x      -z
+            ZY          +z      +y      -x
             front       +x      +y      +z
             back        -x      +y      -z
             left        +z      +y      -x
@@ -248,7 +251,10 @@ class Plane:
             #origin, xDir, normal
             'XY' : Plane(Vector(origin),Vector((1,0,0)),Vector((0,0,1))),
             'YZ' : Plane(Vector(origin),Vector((0,1,0)),Vector((1,0,0))),
+            'ZX': Plane(Vector(origin), Vector((0, 0, 1)), Vector((0, 1, 0))),
             'XZ' : Plane(Vector(origin),Vector((1,0,0)),Vector((0,-1,0))),
+            'YX': Plane(Vector(origin), Vector((0, 1, 0)), Vector((0, 0, -1))),
+            'ZY': Plane(Vector(origin), Vector((0, 0, 1)), Vector((-1, 0, 0))),
             'front': Plane(Vector(origin),Vector((1,0,0)),Vector((0,0,1))),
             'back': Plane(Vector(origin),Vector((-1,0,0)),Vector((0,0,-1))),
             'left': Plane(Vector(origin),Vector((0,0,1)),Vector((-1,0,0))),
