@@ -7,6 +7,13 @@
 from cadquery import *
 from tests import BaseTest,toTuple
 
+xAxis_ = Vector(1, 0, 0)
+yAxis_ = Vector(0, 1, 0)
+zAxis_ = Vector(0, 0, 1)
+xInvAxis_ = Vector(-1, 0, 0)
+yInvAxis_ = Vector(0, -1, 0)
+zInvAxis_ = Vector(0, 0, -1)
+
 class TestWorkplanes(BaseTest):
 
     def testYZPlaneOrigins(self):
@@ -39,8 +46,6 @@ class TestWorkplanes(BaseTest):
 
         #origin is always (0,0,0) in local coordinates
         self.assertTupleAlmostEquals((0,0,0), p.toLocalCoords(p.origin).toTuple() ,2 )
-
-
 
     def testPlaneBasics(self):
         p = Plane.XY()
@@ -82,3 +87,39 @@ class TestWorkplanes(BaseTest):
         r = p.toWorldCoords((1.0,1.0)).toTuple()
         self.assertTupleAlmostEquals((3.0,0.0,3.0),r  ,2 )
         self.assertTupleAlmostEquals((10.0,10.0), p.toLocalCoords(Vector(12.0,0.0,12.0)).toTuple() ,2 )
+
+    def testXYPlaneBasics(self):
+        p = Plane.named('XY')
+        self.assertTupleAlmostEquals(p.zDir.toTuple(), zAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.xDir.toTuple(), xAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.yDir.toTuple(), yAxis_.toTuple(), 4)
+
+    def testYZPlaneBasics(self):
+        p = Plane.named('YZ')
+        self.assertTupleAlmostEquals(p.zDir.toTuple(), xAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.xDir.toTuple(), yAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.yDir.toTuple(), zAxis_.toTuple(), 4)
+
+    def testZXPlaneBasics(self):
+        p = Plane.named('ZX')
+        self.assertTupleAlmostEquals(p.zDir.toTuple(), yAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.xDir.toTuple(), zAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.yDir.toTuple(), xAxis_.toTuple(), 4)
+
+    def testXZPlaneBasics(self):
+        p = Plane.named('XZ')
+        self.assertTupleAlmostEquals(p.zDir.toTuple(), yInvAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.xDir.toTuple(), xAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.yDir.toTuple(), zAxis_.toTuple(), 4)
+
+    def testYXPlaneBasics(self):
+        p = Plane.named('YX')
+        self.assertTupleAlmostEquals(p.zDir.toTuple(), zInvAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.xDir.toTuple(), yAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.yDir.toTuple(), xAxis_.toTuple(), 4)
+
+    def testZYPlaneBasics(self):
+        p = Plane.named('ZY')
+        self.assertTupleAlmostEquals(p.zDir.toTuple(), xInvAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.xDir.toTuple(), zAxis_.toTuple(), 4)
+        self.assertTupleAlmostEquals(p.yDir.toTuple(), yAxis_.toTuple(), 4)
