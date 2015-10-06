@@ -50,12 +50,12 @@ def sortWiresByBuildOrder(wireList,plane,result=[]):
     return result
 
 class Vector(object):
-    """
-        Create a 3-dimensional vector
+    """Create a 3-dimensional vector
 
         :param *args: a 3-d vector, with x-y-z parts.
 
         you can either provide:
+            * nothing (in which case the null vector is return)
             * a FreeCAD vector
             * a vector ( in which case it is copied )
             * a 3-tuple
@@ -66,7 +66,6 @@ class Vector(object):
         value and return a copy as well.
 
         This vector is immutable-- all mutations return a copy!
-
     """
     def __init__(self,*args):
 
@@ -81,6 +80,8 @@ class Vector(object):
                 fV = args[0]
             else:
                 fV = args[0]
+        elif len(args) == 0:
+            fV = FreeCAD.Base.Vector(0, 0, 0)
         else:
             raise ValueError("Expected three floats, FreeCAD Vector, or 3-tuple")
 
