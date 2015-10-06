@@ -57,3 +57,4 @@ v0.3.0 (Unreleased)
    * Fixed a bug where only 1 random edge was returned with multiple min/max selector matches (thanks @hyOzd) #111
    * Implemented the creation of a workplane from multiple co-planar faces (thanks @hyOzd) #113
    * Fixed the operation of Center() when called on a compound with multiple solids.
+   * Add the named planes ZX YX ZY to define different normals. (thanks @galou) #115
