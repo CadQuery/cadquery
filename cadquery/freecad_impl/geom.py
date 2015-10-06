@@ -73,12 +73,12 @@ class Vector(object):
         if len(args) == 3:
             fV = FreeCAD.Base.Vector(args[0],args[1],args[2])
         elif len(args) == 1:
-            if type(args[0]) is tuple:
-                fV = FreeCAD.Base.Vector(args[0][0],args[0][1],args[0][2])
-            elif type(args[0] is FreeCAD.Base.Vector):
-                fV = args[0]
-            elif type(args[0] is Vector):
+            if isinstance(args[0], Vector):
                 fV = args[0].wrapped
+            elif isinstance(args[0], tuple):
+                fV = FreeCAD.Base.Vector(args[0][0],args[0][1],args[0][2])
+            elif isinstance(args[0], FreeCAD.Base.Vector):
+                fV = args[0]
             else:
                 fV = args[0]
         else:
@@ -221,7 +221,7 @@ class Plane:
         """
             Create a predefined Plane based on the conventional names.
 
-            :param stdName: one of (XY|YZ|XZ|front|back|left|right|top|bottom
+            :param stdName: one of (XY|YZ|ZX|XZ|YX|ZY|front|back|left|right|top|bottom
             :type stdName: string
             :param origin: the desired origin, specified in global coordinates
             :type origin: 3-tuple of the origin of the new plane, in global coorindates.
@@ -234,7 +234,10 @@ class Plane:
             =========== ======= ======= ======
             XY          +x      +y      +z
             YZ          +y      +z      +x
+            ZX          +z      +x      +y
             XZ          +x      +z      -y
+            YX          +y      +x      -z
+            ZY          +z      +y      -x
             front       +x      +y      +z
             back        -x      +y      -z
             left        +z      +y      -x
@@ -248,7 +251,10 @@ class Plane:
             #origin, xDir, normal
             'XY' : Plane(Vector(origin),Vector((1,0,0)),Vector((0,0,1))),
             'YZ' : Plane(Vector(origin),Vector((0,1,0)),Vector((1,0,0))),
+            'ZX': Plane(origin, (0, 0, 1), (0, 1, 0)),
             'XZ' : Plane(Vector(origin),Vector((1,0,0)),Vector((0,-1,0))),
+            'YX': Plane(origin, (0, 1, 0), (0, 0, -1)),
+            'ZY': Plane(origin, (0, 0, 1), (-1, 0, 0)),
             'front': Plane(Vector(origin),Vector((1,0,0)),Vector((0,0,1))),
             'back': Plane(Vector(origin),Vector((-1,0,0)),Vector((0,0,-1))),
             'left': Plane(Vector(origin),Vector((0,0,1)),Vector((-1,0,0))),
@@ -271,8 +277,26 @@ class Plane:
         return Plane.named('YZ',origin)
 
     @classmethod
+    def ZX(cls, origin=(0, 0, 0), xDir=Vector(0, 0, 1)):
+        plane = Plane.named('ZX', origin)
+        plane._setPlaneDir(xDir)
+        return plane
+
+    @classmethod
     def XZ(cls,origin=(0,0,0),xDir=Vector(1,0,0)):
         return Plane.named('XZ',origin)
+
+    @classmethod
+    def YX(cls, origin=(0, 0, 0), xDir=Vector(0, 1, 0)):
+        plane = Plane.named('YX', origin)
+        plane._setPlaneDir(xDir)
+        return plane
+
+    @classmethod
+    def ZY(cls, origin=(0, 0, 0), xDir=Vector(0, 0, 1)):
+        plane = Plane.named('ZY', origin)
+        plane._setPlaneDir(xDir)
+        return plane
 
     @classmethod
     def front(cls,origin=(0,0,0),xDir=Vector(1,0,0)):
@@ -313,9 +337,14 @@ class Plane:
             :return: a plane in the global space, with the xDirection of the plane in the specified direction.
 
         """
-        self.xDir = xDir.normalize()
-        self.yDir = normal.cross(self.xDir).normalize()
+        normal = Vector(normal)
+        if (normal.Length == 0.0):
+            raise ValueError('normal should be non null')
         self.zDir = normal.normalize()
+        xDir = Vector(xDir)
+        if (xDir.Length == 0.0):
+            raise ValueError('xDir should be non null')
+        self._setPlaneDir(xDir)
 
         #stupid freeCAD!!!!! multiply has a bug that changes the original also!
         self.invZDir = self.zDir.multiply(-1.0)
@@ -331,7 +360,7 @@ class Plane:
             :return: void
 
         """
-        self.origin = originVector
+        self.origin = Vector(originVector)
         self._calcTransforms()
 
     def setOrigin2d(self,x,y):
@@ -352,7 +381,6 @@ class Plane:
 
         """
         self.setOrigin3d(self.toWorldCoords((x,y)))
-
 
     def isWireInside(self,baseWire,testWire):
         """
@@ -508,6 +536,12 @@ class Plane:
 
         return resultWires
 
+    def _setPlaneDir(self, xDir):
+        """Set the vectors parallel to the plane, i.e. xDir and yDir"""
+        if (self.zDir.dot(xDir) > 1e-5):
+            raise ValueError('xDir must be parralel to the plane')
+        self.xDir = xDir.normalize()
+        self.yDir = self.zDir.cross(self.xDir).normalize()
 
     def _calcTransforms(self):
         """
