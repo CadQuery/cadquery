@@ -943,7 +943,7 @@ class Workplane(CQ):
             offset = offset.toTuple()
 
         p = self.plane.rotated(rotate)
-        p.setOrigin3d(self.plane.toWorldCoords(offset))
+        p.origin = self.plane.toWorldCoords(offset)
         ns = self.newObject([p.origin])
         ns.plane = p
 
