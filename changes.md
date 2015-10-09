@@ -53,8 +53,9 @@ v0.2.0
 v0.3.0 (Unreleased)
 -----
    * Fixed a bug where clean() could not be called on appropriate objects other than solids (thanks @hyOzd) #108
-   * Implemented new selectors that allow existing selectors to be combined with arithmetic/boolean operations. (thanks @hyOzd) #110
+   * Implemented new selectors that allow existing selectors to be combined with arithmetic/boolean operations (thanks @hyOzd) #110
    * Fixed a bug where only 1 random edge was returned with multiple min/max selector matches (thanks @hyOzd) #111
    * Implemented the creation of a workplane from multiple co-planar faces (thanks @hyOzd) #113
-   * Fixed the operation of Center() when called on a compound with multiple solids.
-   * Add the named planes ZX YX ZY to define different normals. (thanks @galou) #115
+   * Fixed the operation of Center() when called on a compound with multiple solids
+   * Add the named planes ZX YX ZY to define different normals (thanks @galou) #115
+   * Code cleanup in accordance with PEP 8 (thanks @galou)
