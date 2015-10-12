@@ -1684,6 +1684,10 @@ class Workplane(CQ):
             s = Workplane().lineTo(1,0).lineTo(1,1).close().extrude(0.2)
         """
         self.lineTo(self.ctx.firstPoint.x, self.ctx.firstPoint.y)
+
+        # Need to reset the first point after closing a wire
+        self.ctx.firstPoint=None
+
         return self.wire()
 
     def largestDimension(self):
