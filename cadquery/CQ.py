@@ -2121,7 +2121,7 @@ class Workplane(CQ):
         elif type(toCut) == Solid:
             solidToCut = toCut
         else:
-            raise ValueError("Cannot cut type '{}'".formatr(type(toCut)))
+            raise ValueError("Cannot cut type '{}'".format(type(toCut)))
 
         newS = solidRef.cut(solidToCut)
 
