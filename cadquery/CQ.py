@@ -17,7 +17,8 @@
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
-import time, math
+import time
+import math
 from cadquery import *
 from cadquery import selectors
 from cadquery import exporters
@@ -37,6 +38,7 @@ class CQContext(object):
         # Used to determine how to behave when close() is called
         self.firstPoint = None
         self.tolerance = 0.0001  # user specified tolerance
+
 
 class CQ(object):
     """
@@ -94,9 +96,9 @@ class CQ(object):
         all = {}
         for o in self.objects:
 
-            #tricky-- if an object is a compound of solids,
-            #do not return all of the solids underneath-- typically
-            #then we'll keep joining to ourself
+            # tricky-- if an object is a compound of solids,
+            # do not return all of the solids underneath-- typically
+            # then we'll keep joining to ourself
             if propName == 'Solids' and isinstance(o, Solid) and o.ShapeType() == 'Compound':
                 for i in getattr(o, 'Compounds')():
                     all[i.hashCode()] = i
@@ -139,11 +141,11 @@ class CQ(object):
         bottom = solid.cut(topCutBox)
 
         if keepTop and keepBottom:
-            #put both on the stack, leave original unchanged
+            # Put both on the stack, leave original unchanged.
             return self.newObject([top, bottom])
         else:
-            # put the one we are keeping on the stack, and also update the context solid
-            #to the one we kept
+            # Put the one we are keeping on the stack, and also update the
+            # context solidto the one we kept.
             if keepTop:
                 solid.wrapped = top.wrapped
                 return self.newObject([top])
@@ -467,7 +469,7 @@ class CQ(object):
         toReturn = self._collectProperty(objType)
 
         if selector is not None:
-            if type(selector) == str:
+            if isinstance(selector, str) or isinstance(selector, unicode):
                 selectorObj = selectors.StringSyntaxSelector(selector)
             else:
                 selectorObj = selector
@@ -818,7 +820,7 @@ class CQ(object):
         solid.wrapped = s.wrapped
         return self.newObject([s])
 
-    def chamfer(self, length, length2 = None):
+    def chamfer(self, length, length2=None):
         """
         Chamfers a solid on the selected edges.
 
@@ -856,6 +858,7 @@ class CQ(object):
 
         solid.wrapped = s.wrapped
         return self.newObject([s])
+
 
 class Workplane(CQ):
     """
@@ -909,13 +912,14 @@ class Workplane(CQ):
 
         if inPlane.__class__.__name__ == 'Plane':
             tmpPlane = inPlane
-        elif type(inPlane) == str:
+        elif isinstance(inPlane, str) or isinstance(inPlane, unicode):
             tmpPlane = Plane.named(inPlane, origin)
         else:
             tmpPlane = None
 
         if tmpPlane is None:
-            raise ValueError(" Provided value %s is not a valid work plane." % str(inPlane))
+            raise ValueError(
+                'Provided value {} is not a valid work plane'.format(inPlane))
 
         self.obj = obj
         self.plane = tmpPlane
@@ -1118,7 +1122,7 @@ class Workplane(CQ):
 
         return self.newObject([p])
 
-    #line a specified incremental amount from current point
+    # line a specified incremental amount from current point
     def line(self, xDist, yDist, forConstruction=False):
         """
         Make a line from the current point to the provided point, using
@@ -2077,7 +2081,7 @@ class Workplane(CQ):
         elif type(toUnion) == Solid:
             newS = toUnion
         else:
-            raise ValueError("Cannot union Type '%s' " % str(type(toUnion)))
+            raise ValueError("Cannot union type '{}'".format(type(toUnion)))
 
         #now combine with existing solid, if there is one
         # look for parents to cut from
@@ -2110,14 +2114,14 @@ class Workplane(CQ):
         solidRef = self.findSolid(searchStack=True, searchParents=True)
 
         if solidRef is None:
-            raise ValueError("Cannot find solid to cut from!!!")
+            raise ValueError("Cannot find solid to cut from")
         solidToCut = None
         if type(toCut) == CQ or type(toCut) == Workplane:
             solidToCut = toCut.val()
         elif type(toCut) == Solid:
             solidToCut = toCut
         else:
-            raise ValueError("Cannot cut Type '%s' " % str(type(toCut)))
+            raise ValueError("Cannot cut type '{}'".formatr(type(toCut)))
 
         newS = solidRef.cut(solidToCut)
 
