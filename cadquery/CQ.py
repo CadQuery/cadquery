@@ -441,8 +441,10 @@ class CQ(object):
 
         if searchStack:
             for s in self.objects:
-                if type(s) == Solid:
+                if isinstance(s, Solid):
                     return s
+                elif isinstance(s, Compound):
+                    return s.Solids()
 
         if searchParents and self.parent is not None:
             return self.parent.findSolid(searchStack=True, searchParents=searchParents)
