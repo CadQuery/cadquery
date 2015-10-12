@@ -1623,7 +1623,7 @@ class Workplane(CQ):
 
         return self.eachpoint(makeCircleWire, useLocalCoordinates=True)
 
-    def polygon(self, nSides, diameter):
+    def polygon(self, nSides, diameter, forConstruction=False):
         """
         Creates a polygon inscribed in a circle of the specified diameter for each point on
         the stack
@@ -1641,7 +1641,7 @@ class Workplane(CQ):
             for i in range(nSides+1):
                 pnts.append(center + Vector((diameter / 2.0 * math.cos(angle*i)),
                                             (diameter / 2.0 * math.sin(angle*i)), 0))
-            return Wire.makePolygon(pnts)
+            return Wire.makePolygon(pnts, forConstruction)
 
         return self.eachpoint(_makePolygon, True)
 
