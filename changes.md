@@ -60,3 +60,4 @@ v0.3.0 (Unreleased)
    * Add the named planes ZX YX ZY to define different normals (thanks @galou) #115
    * Code cleanup in accordance with PEP 8 (thanks @galou)
    * Fixed a bug with the close function not resetting the first point of the context correctly (thanks @huskier)
+   * Fixed the findSolid function so that it handles compounds #107
