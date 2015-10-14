@@ -992,12 +992,12 @@ class Workplane(CQ):
             * If an Edge is on the stack, its end point is used.yp
             * if a vector is on the stack, it is used
 
-        WARNING: only the first object on the stack is used.
+        WARNING: only the last object on the stack is used.
 
         NOTE:
         """
         obj = self.objects[-1]
-        p = None
+
         if isinstance(obj, Edge):
             p = obj.endPoint()
         elif isinstance(obj, Vector):
@@ -1666,7 +1666,7 @@ class Workplane(CQ):
         """
 
         # Our list of new edges that will go into a new CQ object
-        p = []
+        edges = []
 
         # The very first startPoint comes from our original object, but not after that
         startPoint = self._findFromPoint(False)
@@ -1675,15 +1675,15 @@ class Workplane(CQ):
         for curTuple in listOfXYTuple:
             endPoint = self.plane.toWorldCoords(curTuple)
 
-            p.append(Edge.makeLine(startPoint, endPoint))
+            edges.append(Edge.makeLine(startPoint, endPoint))
 
             # We need to move the start point for the next line that we draw or we get stuck at the same startPoint
             startPoint = endPoint
 
             if not forConstruction:
-                self._addPendingEdge(p[-1])
+                self._addPendingEdge(edges[-1])
 
-        return self.newObject(p)
+        return self.newObject(edges)
 
     def close(self):
         """
