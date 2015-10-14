@@ -753,7 +753,7 @@ class TestCadQuery(BaseTest):
         r = Workplane("XY").polyline(points).mirrorX()
 
         self.assertEquals(1, r.wires().size())
-        self.assertEquals(16, r.edges().size())
+        self.assertEquals(18, r.edges().size())
 
     # def testChainedMirror(self):
     #     """

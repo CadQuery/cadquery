@@ -996,7 +996,7 @@ class Workplane(CQ):
 
         NOTE:
         """
-        obj = self.objects[0]
+        obj = self.objects[-1]
         p = None
         if isinstance(obj, Edge):
             p = obj.endPoint()
@@ -1657,23 +1657,33 @@ class Workplane(CQ):
 
         :param listOfXYTuple: a list of points in Workplane coordinates
         :type listOfXYTuple: list of 2-tuples
-        :param forConstruction: should the new wire be reference geometry only?
-        :type forConstruction: true if the wire is for reference, false if they are creating
+        :param forConstruction: whether or not the edges are used for reference
+        :type forConstruction: true if the edges are for reference, false if they are for creating geometry
             part geometry
-        :return: a new CQ object with the new wire on the stack
+        :return: a new CQ object with a list of edges on the stack
 
         *NOTE* most commonly, the resulting wire should be closed.
-
-        Future Enhancement:
-            This should probably yield a list of edges, not a wire, so that
-            it is possible to combine a polyline with other edges and arcs
         """
-        vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
-        w = Wire.makePolygon(vecs)
-        if not forConstruction:
-            self._addPendingWire(w)
 
-        return self.newObject([w])
+        # Our list of new edges that will go into a new CQ object
+        p = []
+
+        # The very first startPoint comes from our original object, but not after that
+        startPoint = self._findFromPoint(False)
+
+        # Draw a line for each set of points, starting from the from-point of the original CQ object
+        for curTuple in listOfXYTuple:
+            endPoint = self.plane.toWorldCoords(curTuple)
+
+            p.append(Edge.makeLine(startPoint, endPoint))
+
+            # We need to move the start point for the next line that we draw or we get stuck at the same startPoint
+            startPoint = endPoint
+
+            if not forConstruction:
+                self._addPendingEdge(p[-1])
+
+        return self.newObject(p)
 
     def close(self):
         """
