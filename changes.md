@@ -61,3 +61,4 @@ v0.3.0 (Unreleased)
    * Code cleanup in accordance with PEP 8 (thanks @galou)
    * Fixed a bug with the close function not resetting the first point of the context correctly (thanks @huskier)
    * Fixed the findSolid function so that it handles compounds #107
+   * Changed the polyline function so that it adds edges to the stack instead of a wire #102
