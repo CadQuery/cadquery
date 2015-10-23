@@ -156,9 +156,6 @@ class Vector(object):
     def projectToPlane(self):
         raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
 
-    def __hash__(self):
-        return self.wrapped.__hash__()
-
     def __add__(self, v):
         return self.add(v)
 

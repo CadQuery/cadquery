@@ -994,7 +994,7 @@ class TestCadQuery(BaseTest):
 
     def testSphereDefaults(self):
         s = Workplane("XY").sphere(10)
-        self.saveModel(s)
+        #self.saveModel(s) # Until FreeCAD fixes their sphere operation
         self.assertEquals(1, s.solids().size())
         self.assertEquals(1, s.faces().size())
 
@@ -1006,13 +1006,13 @@ class TestCadQuery(BaseTest):
 
     def testSpherePointList(self):
         s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().sphere(0.25, combine=False)
-        self.saveModel(s)
+        #self.saveModel(s) # Until FreeCAD fixes their sphere operation
         self.assertEquals(4, s.solids().size())
         self.assertEquals(4, s.faces().size())
 
     def testSphereCombine(self):
         s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().sphere(0.25, combine=True)
-        self.saveModel(s)
+        #self.saveModel(s) # Until FreeCAD fixes their sphere operation
         self.assertEquals(1, s.solids().size())
         self.assertEquals(4, s.faces().size())
 
