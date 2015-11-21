@@ -199,6 +199,20 @@ class Shape(object):
         else:
             raise ValueError("Cannot find the center of %s object type" % str(type(self.Solids()[0].wrapped)))
 
+    def CenterOfBoundBox(self):
+        if isinstance(self.wrapped, FreeCADPart.Shape):
+            # If there are no Solids, we're probably dealing with a Face or something similar
+            if len(self.Solids()) == 0:
+                return Vector(self.wrapped.BoundBox.Center)
+            elif len(self.Solids()) == 1:
+                return Vector(self.Solids()[0].wrapped.BoundBox.Center)
+            elif len(self.Solids()) > 1:
+                return self.CombinedCenterOfBoundBox(self.Solids())
+        elif isinstance(self.wrapped, FreeCADPart.Solid):
+            return Vector(self.wrapped.BoundBox.Center)
+        else:
+            raise ValueError("Cannot find the center(BoundBox's) of %s object type" % str(type(self.Solids()[0].wrapped)))
+
     @staticmethod
     def CombinedCenter(objects):
         """
@@ -208,6 +222,22 @@ class Shape(object):
         """
         total_mass = sum(o.wrapped.Mass for o in objects)
         weighted_centers = [o.wrapped.CenterOfMass.multiply(o.wrapped.Mass) for o in objects]
+
+        sum_wc = weighted_centers[0]
+        for wc in weighted_centers[1:] :
+            sum_wc = sum_wc.add(wc)
+
+        return Vector(sum_wc.multiply(1./total_mass))
+
+    @staticmethod
+    def CombinedCenterOfBoundBox(objects):
+        """
+        Calculates the center of BoundBox of multiple objects.
+
+        :param objects: a list of objects with mass 1
+        """
+        total_mass = len(objects)
+        weighted_centers = [o.wrapped.BoundBox.Center.multiply(1.0) for o in objects]
 
         sum_wc = weighted_centers[0]
         for wc in weighted_centers[1:] :
