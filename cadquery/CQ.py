@@ -262,7 +262,7 @@ class CQ(object):
 
         return self.objects[0].wrapped
 
-    def workplane(self, offset=0.0, invert=False):
+    def workplane(self, offset=0.0, invert=False, centerOption='CenterOfMass'):
         """
         Creates a new 2-D workplane, located relative to the first face on the stack.
 
@@ -341,7 +341,11 @@ class CQ(object):
             if not all(_isCoPlanar(self.objects[0], f) for f in self.objects[1:]):
                 raise ValueError("Selected faces must be co-planar.")
 
-            center = Shape.CombinedCenter(self.objects)
+	    if centerOption == 'CenterOfMass':            
+		center = Shape.CombinedCenter(self.objects)
+	    elif centerOption == 'CenterOfBoundBox':
+		center = Shape.CombinedCenterOfBoundBox(self.objects)
+
             normal = self.objects[0].normalAt()
             xDir = _computeXdir(normal)
 
@@ -349,12 +353,18 @@ class CQ(object):
             obj = self.objects[0]
 
             if isinstance(obj, Face):
-                center = obj.Center()
+		if centerOption == 'CenterOfMass':
+                    center = obj.Center()
+		elif centerOption == 'CenterOfBoundBox':
+                    center = obj.CenterOfBoundBox()
                 normal = obj.normalAt(center)
                 xDir = _computeXdir(normal)
             else:
                 if hasattr(obj, 'Center'):
-                    center = obj.Center()
+		    if centerOption == 'CenterOfMass':
+		        center = obj.Center()
+		    elif centerOption == 'CenterOfBoundBox':
+		        center = obj.CenterOfBoundBox()
                     normal = self.plane.zDir
                     xDir = self.plane.xDir
                 else:
