@@ -125,7 +125,7 @@ class Vector(object):
         tmp_fc_vector = FreeCAD.Base.Vector(self.wrapped)
         return Vector(tmp_fc_vector.multiply(scale))
 
-    def normalize(self):
+    def normalized(self):
         """Return a normalized version of this vector"""
         tmp_fc_vector = FreeCAD.Base.Vector(self.wrapped)
         tmp_fc_vector.normalize()
@@ -343,7 +343,7 @@ class Plane(object):
         normal = Vector(normal)
         if (normal.Length == 0.0):
             raise ValueError('normal should be non null')
-        self.zDir = normal.normalize()
+        self.zDir = normal.normalized()
         xDir = Vector(xDir)
         if (xDir.Length == 0.0):
             raise ValueError('xDir should be non null')
@@ -539,8 +539,8 @@ class Plane(object):
         if (self.zDir.dot(xDir) > 1e-5):
             raise ValueError('xDir must be parralel to the plane')
         xDir = Vector(xDir)
-        self.xDir = xDir.normalize()
-        self.yDir = self.zDir.cross(self.xDir).normalize()
+        self.xDir = xDir.normalized()
+        self.yDir = self.zDir.cross(self.xDir).normalized()
 
     def _calcTransforms(self):
         """Computes transformation matrices to convert between coordinates
