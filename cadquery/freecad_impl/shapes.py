@@ -62,6 +62,9 @@ class Shape(object):
         self.wrapped = obj
         self.forConstruction = False
 
+        # Helps identify this solid through the use of an ID
+        self.label = ""
+
     @classmethod
     def cast(cls, obj, forConstruction=False):
         "Returns the right type of wrapper, given a FreeCAD object"
@@ -356,6 +359,9 @@ class Vertex(Shape):
         self.Y = obj.Y
         self.Z = obj.Z
 
+         # Helps identify this solid through the use of an ID
+        self.label = ""
+
     def toTuple(self):
         return (self.X, self.Y, self.Z)
 
@@ -380,6 +386,9 @@ class Edge(Shape):
             FreeCADPart.ArcOfCircle: 'ARC',
             FreeCADPart.Circle: 'CIRCLE'
         }
+
+         # Helps identify this solid through the use of an ID
+        self.label = ""
 
     def geomType(self):
         t = type(self.wrapped.Curve)
@@ -476,6 +485,9 @@ class Wire(Shape):
         """
         self.wrapped = obj
 
+         # Helps identify this solid through the use of an ID
+        self.label = ""
+
     @classmethod
     def combine(cls, listOfWires):
         """
@@ -546,6 +558,9 @@ class Face(Shape):
             FreeCADPart.Cone: 'CONE'
         }
 
+         # Helps identify this solid through the use of an ID
+        self.label = ""
+
     def geomType(self):
         t = type(self.wrapped.Surface)
         if self.facetypes.has_key(t):
@@ -602,6 +617,9 @@ class Shell(Shape):
         """
         self.wrapped = wrapped
 
+         # Helps identify this solid through the use of an ID
+        self.label = ""
+
     @classmethod
     def makeShell(cls, listOfFaces):
         return Shell(FreeCADPart.makeShell([i.obj for i in listOfFaces]))
@@ -613,6 +631,9 @@ class Solid(Shape):
             A Solid
         """
         self.wrapped = obj
+
+         # Helps identify this solid through the use of an ID
+        self.label = ""
 
     @classmethod
     def isSolid(cls, obj):
@@ -914,6 +935,9 @@ class Compound(Shape):
             An Edge
         """
         self.wrapped = obj
+
+         # Helps identify this solid through the use of an ID
+        self.label = ""
 
     def Center(self):
         return self.Center()

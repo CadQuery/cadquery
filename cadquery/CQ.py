@@ -375,7 +375,7 @@ class CQ(object):
             normal = normal.multiply(-1.0)
 
         #offset origin if desired
-        offsetVector = normal.normalize().multiply(offset)
+        offsetVector = normal.normalized().multiply(offset)
         offsetCenter = center.add(offsetVector)
 
         #make the new workplane
