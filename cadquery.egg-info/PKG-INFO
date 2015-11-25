@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: cadquery
-Version: 0.2.0
+Version: 0.3.0
 Summary: CadQuery is a parametric  scripting language for creating and traversing CAD models
 Home-page: https://github.com/dcowden/cadquery
 Author: David Cowden
@@ -23,7 +23,7 @@ Description: What is a CadQuery?
         Getting Started With CadQuery
         ========================================
         
-        The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 recommended )  (http://www.freecadweb.org/) , and then to use Jeremy's Great CadQuery-FreeCAD plugin here:
+        The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 recommended )  (http://www.freecadweb.org/) , and then to use our CadQuery-FreeCAD plugin here:
         
         https://github.com/jmwright/cadquery-freecad-module
         
@@ -31,14 +31,6 @@ Description: What is a CadQuery?
         It includes the latest version of cadquery alreadby bundled, and has super-easy installation on Mac, Windows, and Unix.
         
         It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
-        
-        
-        Recently Added Features
-        ========================================
-        
-        * 12/5/14 -- New FreeCAD/CadQuery Module!  https://github.com/jmwright/cadquery-freecad-module
-        * 10/25/14 -- Added Revolution Feature ( thanks Jeremy ! )
-        
         
         Why CadQuery instead of OpenSCAD?
         ========================================
@@ -81,7 +73,7 @@ Description: What is a CadQuery?
         
         Use these steps if you would like to write CadQuery scripts as a python API.  In this case, FreeCAD is used only as a CAD kernel.
         
-        1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
+        1. install FreeCAD, version 0.14 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
         
         2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own, 
            preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD

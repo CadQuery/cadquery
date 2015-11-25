@@ -16,4 +16,4 @@ __all__ = [
     'Shape','Vertex','Edge','Wire','Solid','Shell','Compound','exporters', 'importers', 'NearestToPointSelector','ParallelDirSelector','DirectionSelector','PerpendicularDirSelector','TypeSelector','DirectionMinMaxSelector','StringSyntaxSelector','Selector','plugins'
 ]
 
-__version__ = "0.1.8"
+__version__ = "0.3.0"
