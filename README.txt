@@ -15,7 +15,7 @@ Using CadQuery, you can write short, simple scripts that produce high quality CA
 Getting Started With CadQuery
 ========================================
 
-The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 recommended )  (http://www.freecadweb.org/) , and then to use Jeremy's Great CadQuery-FreeCAD plugin here:
+The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 recommended )  (http://www.freecadweb.org/) , and then to use our CadQuery-FreeCAD plugin here:
 
 https://github.com/jmwright/cadquery-freecad-module
 
@@ -73,7 +73,7 @@ Installing -- FreeStanding Installation
 
 Use these steps if you would like to write CadQuery scripts as a python API.  In this case, FreeCAD is used only as a CAD kernel.
 
-1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
+1. install FreeCAD, version 0.14 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
 
 2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own, 
    preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD

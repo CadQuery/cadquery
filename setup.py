@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='cadquery',
-    version='0.2.0',
+    version='0.3.0',
     url='https://github.com/dcowden/cadquery',
     license='LGPL',
     author='David Cowden',

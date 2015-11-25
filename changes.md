@@ -50,7 +50,7 @@ v0.2.0
    * Added a clean function to keep some operations from failing on solids that need simplified (thanks @hyOzd)
    * Added a mention of the new Google Group to the readme
    
-v0.3.0 (Unreleased)
+v0.3.0
 -----
    * Fixed a bug where clean() could not be called on appropriate objects other than solids (thanks @hyOzd) #108
    * Implemented new selectors that allow existing selectors to be combined with arithmetic/boolean operations (thanks @hyOzd) #110
@@ -62,4 +62,6 @@ v0.3.0 (Unreleased)
    * Fixed a bug with the close function not resetting the first point of the context correctly (thanks @huskier)
    * Fixed the findSolid function so that it handles compounds #107
    * Changed the polyline function so that it adds edges to the stack instead of a wire #102
-   * Add the ability to find the center of the bounding box, rather than the center of mass (thanks @huskier)
+   * Add the ability to find the center of the bounding box, rather than the center of mass (thanks @huskier) #122
+   * Changed normalize function to normalized to match OCC/PythonOCC nomenclature #124
+   * Added a label attribute to all freecad_impl.shapes so that they can have IDs attached to them #124
