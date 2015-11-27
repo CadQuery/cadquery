@@ -25,6 +25,24 @@ from .shapes import Shape
 import FreeCAD
 import Part
 
+import sys
+
+if sys.version > '3':
+    PY3 = True
+    import urllib.request as urlreader
+    import urllib.parse as urlparse
+else:
+    PY3 = False
+    import urllib as urlreader
+    import urlparse
+    
+def isURL(filename):
+    schemeSpecifier = urlparse.urlparse(filename).scheme
+    if schemeSpecifier == 'http' or schemeSpecifier == 'https' or schemeSpecifier == 'ftp':
+        return True
+    else:
+        return False
+
 class ImportTypes:
     STEP = "STEP"
 
@@ -52,6 +70,19 @@ def importStep(fileName):
         :param fileName: The path and name of the STEP file to be imported
     """
 
+    if isURL(fileName):
+        url = fileName
+        webFile = urlreader.urlopen(url)
+        localFileName = url.split('/')[-1]
+        localFile = open(localFileName, 'w')
+        if PY3:
+            localFile.write(webFile.read().decode('utf-8'))
+        else:
+            localFile.write(webFile.read())    
+        webFile.close()
+        localFile.close()
+        fileName = localFileName
+        
     #Now read and return the shape
     try:
         rshape = Part.read(fileName)
