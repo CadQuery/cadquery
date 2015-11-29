@@ -11,12 +11,15 @@ install:
   - python ./setup.py install
   - pip install coverage
   - pip install coveralls
+  - pip install --user travis-sphinx
 
 script:
   - coverage run --source=cadquery ./runtests.py
+  - travis-sphinx --source=doc build
 
 after_success:
   - coveralls
+  - travis-sphinx deploy
   
 branches:
   except:
