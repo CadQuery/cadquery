@@ -1735,8 +1735,7 @@ class Workplane(CQ):
         """
         Evaluates the provided function at each point on the stack (ie, eachpoint)
         and then cuts the result from the context solid.
-        :param fcn: a function suitable for use in the eachpoint method: ie, that accepts
-            a vector
+        :param fcn: a function suitable for use in the eachpoint method: ie, that accepts a vector
         :param useLocalCoords: same as for :py:meth:`eachpoint`
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object that contains the resulting solid

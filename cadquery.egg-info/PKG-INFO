@@ -32,6 +32,14 @@ Description: What is a CadQuery?
         
         It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
         
+        
+        Recently Added Features
+        ========================================
+        
+        * 12/5/14 -- New FreeCAD/CadQuery Module!  https://github.com/jmwright/cadquery-freecad-module
+        * 10/25/14 -- Added Revolution Feature ( thanks Jeremy ! )
+        
+        
         Why CadQuery instead of OpenSCAD?
         ========================================
         

@@ -4,34 +4,30 @@
 CadQuery API Reference
 ***********************
 
+The CadQuery API is made up of 3 main objects:
 
+* **CQ** -  An object that wraps a topological entity.
+* **Workplane** -- A subclass of CQ, that applies in a 2-D modelling context.
+* **Selector** -- Filter and select things
+
+This page lists  methods of these objects grouped by **functional area**
 
 .. seealso::
   This page lists api methods grouped by functional area.
   Use :ref:`classreference` to see methods alphabetically by class.
 
-Primary Objects
-----------------
-
-The CadQuery API is made up of 3 main objects:
-
-* **CQ** -  Basic Selection, and 3d operations
-* **Workplane** -- Draw in 2-d to make 3d features
-* **Selector** -- Filter and select things
-
-The sections below list methods of these objects grouped by **functional area**
+.. module:: cadquery
 
 Initialization
 ----------------
 
-.. automodule:: cadquery
+.. currentmodule:: cadquery.CQ
 
 Creating new workplanes and object chains
 
 .. autosummary::
     CQ
     Workplane
-    CQ.workplane
 
 
 .. _2dOperations:
@@ -39,7 +35,9 @@ Creating new workplanes and object chains
 2-d Operations
 -----------------
 
-Creating 2-d constructs that can be used to create 3 d features
+Creating 2-d constructs that can be used to create 3 d features.
+
+All 2-d operations require a **Workplane** object to be created.
 
 .. autosummary::
 	Workplane.center
@@ -67,7 +65,9 @@ Creating 2-d constructs that can be used to create 3 d features
 3-d Operations
 -----------------
 
-Methods that create 3d features
+Some 3-d operations also require an active 2-d workplane, but some do not.
+
+3-d operations that require a 2-d workplane to be active:
 
 .. autosummary::
 	Workplane.cboreHole
@@ -80,11 +80,23 @@ Methods that create 3d features
 	Workplane.box
 	Workplane.union
 	Workplane.combine
+
+3-d operations that do NOT require a 2-d workplane to be active:
+
+.. autosummary::
 	CQ.shell
 	CQ.fillet
 	CQ.split
+	CQ.rotate
 	CQ.rotateAboutCenter
 	CQ.translate
+
+File Management and Export
+---------------------------------
+
+.. autosummary::
+    CQ.toSvg
+    CQ.exportSvg
 
 
 Iteration Methods
@@ -99,8 +111,8 @@ Methods that allow iteration over the stack or objects
 
 .. _stackMethods:
 
-Stack Methods
------------------
+Stack and Selector Methods
+------------------------------
 
 CadQuery methods that operate on the stack
 
@@ -127,14 +139,24 @@ CadQuery methods that operate on the stack
 Selectors
 ------------------------
 
-Objects that filter and select CAD objects
+Objects that filter and select CAD objects. Selectors are used to select existing geometry
+as a basis for futher operations.
 
+.. currentmodule:: cadquery.selectors
 
 .. autosummary::
-	NearestToPointSelector
-	ParallelDirSelector
-	DirectionSelector
-	PerpendicularDirSelector
-	TypeSelector
-	DirectionMinMaxSelector
-	StringSyntaxSelector
+
+        NearestToPointSelector
+        BoxSelector
+        BaseDirSelector
+        ParallelDirSelector
+        DirectionSelector
+        PerpendicularDirSelector
+        TypeSelector
+        DirectionMinMaxSelector
+        BinarySelector
+        AndSelector
+        SumSelector
+        SubtractSelector
+        InverseSelector
+        StringSyntaxSelector

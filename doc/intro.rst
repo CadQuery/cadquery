@@ -7,9 +7,10 @@ Introduction
 What is CadQuery
 ========================================
 
-CadQuery is an intuitive, easy-to-use language for building parametric 3D CAD models.  It has several goals:
+CadQuery is an intuitive, easy-to-use python library for building parametric 3D CAD models.  It has several goals:
 
-    * Build models with scripts that are as close as possible to how you'd describe the object to a human.
+    * Build models with scripts that are as close as possible to how you'd describe the object to a human,
+      using a standard, already established programming language
 
     * Create parametric models that can be very easily customized by end users
 
@@ -17,35 +18,49 @@ CadQuery is an intuitive, easy-to-use language for building parametric 3D CAD mo
 
     * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 
+CadQuery is based on
+`FreeCAD <http://sourceforge.net/apps/mediawiki/free-cad/index.php?title=Main_Page>`_,
+which is turn based on the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
 
-CadQuery is a Python module that provides a high-level wrapper around the
-(`FreeCAD <http://sourceforge.net/apps/mediawiki/free-cad/index.php?title=Main_Page>`_) python libraries.
+Using CadQuery, you can build fully parametric models with a very small amount of code. For example, this simple script
+produces a flat plate with a hole in the middle::
 
-Where does the name CadQuery come from?
-========================================
+    thickness = 0.5
+    width=2.0
+    result = Workplane("front").box(width,width,thickness).faces(">Z").hole(thickness)
 
-CadQuery is inspired by ( `jQuery <http://www.jquery.com>`_ ), a popular framework that
-revolutionized web development involving javascript.
+..  image:: _static/simpleblock.png
 
-CadQuery is for 3D CAD  what jQuery is for javascript.
-If you are familiar with how jQuery works, you will probably recognize several jQuery features that CadQuery uses:
+That's a bit of a dixie-cup example. But it is pretty similar to a more useful part: a parametric pillow block for a
+standard 608-size ball bearing::
 
-    * A fluent api to create clean, easy to read code
+    (length,height,diam, thickness,padding) = ( 30.0,40.0,22.0,10.0,8.0)
 
-    * Ability to use the library along side other python libraries
+    result = Workplane("XY").box(length,height,thickness).faces(">Z").workplane().hole(diam)\
+            .faces(">Z").workplane() \
+            .rect(length-padding,height-padding,forConstruction=True) \
+            .vertices().cboreHole(2.4,4.4,2.1)
 
-    * Clear and complete documentation, with plenty of samples.
+..  image:: _static/pillowblock.png
+
+Lots more examples are available in the :ref:`examples`
+
+CadQuery is a library,  GUIs are separate
+==============================================
+
+CadQuery is a library, that's intentionally designed to be usable as a GUI-less library. This enables
+its use in a variety of engineering and scientific applications that create 3d models programmatically.
+
+If you'd like a GUI, you have a couple of options:
+
+   * Install cadquery as a part of `The CadQuery Freecad Module <https://github.com/jmwright/cadquery-freecad-module>`_
+   * Use `ParametricParts.com <https://www.parametricparts.com>`_, a web-based platform that runs cadQuery scripts
 
 
-Why ParametricParts instead of OpenSCAD?
+Why CadQuery instead of OpenSCAD?
 ============================================
 
-CadQuery is based on FreeCAD,which is in turn based on the OpenCascade modelling kernel. CadQuery/FreeCAD scripts
-share many features with OpenSCAD, another open source, script based, parametric model generator.
-
-The primary advantage of OpenSCAD is the large number of model libaries  that exist already. So why not simply use OpenSCAD?
-
-CadQuery scripts run from ParametricParts.com have several key advantages over OpenSCAD ( including the various web-based SCAD solutions):
+Like OpenSCAD, CadQuery is an open-source, script based, parametric model generator. But CadQuery has several key advantages:
 
     1. **The scripts use a standard programming language**, python, and thus can benefit from the associated infrastructure.
        This includes many standard libraries and IDEs
@@ -61,4 +76,20 @@ CadQuery scripts run from ParametricParts.com have several key advantages over O
        features based on the position of other features, workplanes, vertices, etc.
 
     5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
+
+Where does the name CadQuery come from?
+========================================
+
+CadQuery is inspired by `jQuery <http://www.jquery.com>`_ , a popular framework that
+revolutionized web development involving javascript.
+
+CadQuery is for 3D CAD  what jQuery is for javascript.
+If you are familiar with how jQuery works, you will probably recognize several jQuery features that CadQuery uses:
+
+    * A fluent api to create clean, easy to read code
+
+    * Ability to use the library along side other python libraries
+
+    * Clear and complete documentation, with plenty of samples.
+
 

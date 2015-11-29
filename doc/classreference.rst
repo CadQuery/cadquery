@@ -1,7 +1,7 @@
 .. _classreference:
 
 *************************
-CadQuery Class Reference
+CadQuery Class Summary
 *************************
 
 This page documents all of the methods and functions of the CadQuery classes, organized alphabatically.
@@ -10,120 +10,80 @@ This page documents all of the methods and functions of the CadQuery classes, or
 
     For a listing organized by functional area, see the :ref:`apireference`
 
-.. automodule:: cadquery
+.. module:: cadquery
 
 Core Classes
 ---------------------
 
+.. currentmodule:: cadquery.CQ
 .. autosummary::
+
     CQ
-    Plane
     Workplane
 
-Primitives
------------------
+Topological Classes
+----------------------
 
+.. currentmodule:: cadquery.freecad_impl.shapes
 .. autosummary::
 
-    Plane
-    Vector
-    Solid
-    Shell
-    Wire
-    Edge
+    Shape
     Vertex
-	
-
-
-Selectors
----------------------
-
-.. autosummary::
-	NearestToPointSelector
-	ParallelDirSelector
-	DirectionSelector
-	PerpendicularDirSelector
-	TypeSelector
-	DirectionMinMaxSelector
-	StringSyntaxSelector
+    Edge
+    Wire
+    Face
+    Shell
+    Solid
+    Compound
 
 Geometry Classes
 ------------------
 
-.. autoclass:: Vector
-    :members:
+.. currentmodule:: cadquery.freecad_impl.geom
+.. autosummary::
 
-.. autoclass:: Plane
-    :members:
+    Vector
+    Matrix
+    Plane
 
-Shape Base Class
--------------------
-
-All objects inherit from Shape, which as basic manipulation methods:
-
-.. autoclass:: Shape
-    :members:
-
-Primitive Classes
---------------------
-
-.. autoclass:: Solid
-    :members:
-
-
-.. autoclass:: Shell
-    :members:
-
-
-.. autoclass:: Wire
-   :members:
-
-
-.. autoclass:: Edge
-    :members:
-
-
-.. autoclass:: Vertex
-    :members:	
-	
-	
-Core Classes
-------------------------
-
-.. autoclass:: CQ
-     :members:
-
-.. autoclass:: Plane
-     :members:
-
-.. autoclass:: Workplane
-   :members:
-   :inherited-members:
-
-   
 Selector Classes
-------------------------
-   
-.. autoclass:: Selector
+---------------------
+
+.. currentmodule:: cadquery.selectors
+.. autosummary::
+
+    Selector
+    NearestToPointSelector
+    BoxSelector
+    BaseDirSelector
+    ParallelDirSelector
+    DirectionSelector
+    PerpendicularDirSelector
+    TypeSelector
+    DirectionMinMaxSelector
+    BinarySelector
+    AndSelector
+    SumSelector
+    SubtractSelector
+    InverseSelector
+    StringSyntaxSelector
+
+.. currentmodule:: cadquery
+
+Class Details
+---------------
+
+.. autoclass:: cadquery.CQ.CQ
    :members:
 
-.. autoclass:: NearestToPointSelector
+.. autoclass:: cadquery.CQ.Workplane
    :members:
 
-.. autoclass:: ParallelDirSelector
+.. automodule:: cadquery.selectors
    :members:
 
-.. autoclass:: DirectionSelector
+.. automodule:: cadquery.freecad_impl.geom
    :members:
 
-.. autoclass:: PerpendicularDirSelector
-   :members:
-
-.. autoclass:: TypeSelector
-   :members:
-
-.. autoclass:: DirectionMinMaxSelector
-   :members:
-
-.. autoclass:: StringSyntaxSelector
+.. automodule:: cadquery.freecad_impl.shapes
    :members:

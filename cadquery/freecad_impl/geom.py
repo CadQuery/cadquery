@@ -363,7 +363,8 @@ class Plane(object):
         self._calcTransforms()
 
     def setOrigin2d(self, x, y):
-        """Set a new origin in the plane itself
+        """
+        Set a new origin in the plane itself
 
         Set a new origin in the plane itself. The plane's orientation and
         xDrection are unaffected.
@@ -377,6 +378,7 @@ class Plane(object):
             p = Plane.XY()
             p.setOrigin2d(2, 2)
             p.setOrigin2d(2, 2)
+
         results in a plane with its origin at (x, y) = (4, 4) in global
         coordinates. Both operations were relative to local coordinates of the
         plane.

@@ -10,7 +10,6 @@ cadquery.egg-info/PKG-INFO
 cadquery.egg-info/SOURCES.txt
 cadquery.egg-info/dependency_links.txt
 cadquery.egg-info/not-zip-safe
-cadquery.egg-info/pbr.json
 cadquery.egg-info/top_level.txt
 cadquery/contrib/__init__.py
 cadquery/freecad_impl/__init__.py

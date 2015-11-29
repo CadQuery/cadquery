@@ -1,8 +1,8 @@
 .. _roadmap:
 
-**************************
+
 RoadMap:  Planned Features
-**************************
+==============================
 
 **CadQuery is not even close to finished!!!**
 
