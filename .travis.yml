@@ -15,7 +15,7 @@ install:
 
 script:
   - coverage run --source=cadquery ./runtests.py
-  - travis-sphinx --source=doc build
+  - travis-sphinx --nowarn --source=doc build
 
 after_success:
   - coveralls
