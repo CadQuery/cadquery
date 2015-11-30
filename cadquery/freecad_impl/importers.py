@@ -31,19 +31,10 @@ import platform
 if sys.version > '3':
     PY3 = True
     import urllib.request as urlreader
-    import urllib.parse as urlparse
 else:
     PY3 = False
     import urllib as urlreader
-    import urlparse
     
-def isURL(filename):
-    schemeSpecifier = urlparse.urlparse(filename).scheme
-    if schemeSpecifier == 'http' or schemeSpecifier == 'https' or schemeSpecifier == 'ftp':
-        return True
-    else:
-        return False
-
 class ImportTypes:
     STEP = "STEP"
 
