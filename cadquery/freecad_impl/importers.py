@@ -24,8 +24,9 @@ from .shapes import Shape
 
 import FreeCAD
 import Part
-
 import sys
+import os
+import platform
 
 if sys.version > '3':
     PY3 = True
@@ -68,24 +69,11 @@ def importStep(fileName):
     """
         Accepts a file name and loads the STEP file into a cadquery shape
         :param fileName: The path and name of the STEP file to be imported
-    """
-
-    if isURL(fileName):
-        url = fileName
-        webFile = urlreader.urlopen(url)
-        localFileName = url.split('/')[-1]
-        localFile = open(localFileName, 'w')
-        if PY3:
-            localFile.write(webFile.read().decode('utf-8'))
-        else:
-            localFile.write(webFile.read())    
-        webFile.close()
-        localFile.close()
-        fileName = localFileName
-        
+    """      
     #Now read and return the shape
     try:
-        rshape = Part.read(fileName)
+	#print fileName        
+	rshape = Part.read(fileName)
 
         #Make sure that we extract all the solids
         solids = []
@@ -95,3 +83,33 @@ def importStep(fileName):
         return cadquery.Workplane("XY").newObject(solids)
     except:
         raise ValueError("STEP File Could not be loaded")
+
+#Loads a STEP file from an URL into a CQ.Workplane object
+def importStepFromURL(url):    
+    #Now read and return the shape
+    try:
+        webFile = urlreader.urlopen(url)
+	if webFile.getcode
+	if platform.system() == 'Windows':
+        	localFileName = os.environ['TEMP']+url.split('/')[-1]
+	else:
+		localFileName = "/tmp/"+url.split('/')[-1]
+        localFile = open(localFileName, 'w')
+        if PY3:
+            localFile.write(webFile.read().decode('utf-8'))
+        else:
+            localFile.write(webFile.read())    
+        webFile.close()
+        localFile.close()
+        fileName = localFileName
+      
+	rshape = Part.read(fileName)
+
+        #Make sure that we extract all the solids
+        solids = []
+        for solid in rshape.Solids:
+            solids.append(Shape.cast(solid))
+
+        return cadquery.Workplane("XY").newObject(solids)
+    except:
+        raise ValueError("STEP File from the URL: " + url + " Could not be loaded")
