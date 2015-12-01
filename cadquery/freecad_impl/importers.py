@@ -80,9 +80,8 @@ def importStepFromURL(url):
     #Now read and return the shape
     try:
         webFile = urlreader.urlopen(url)
-	if webFile.getcode
 	if platform.system() == 'Windows':
-        	localFileName = os.environ['TEMP']+url.split('/')[-1]
+        	localFileName = os.environ['TEMP']+'/'+url.split('/')[-1]
 	else:
 		localFileName = "/tmp/"+url.split('/')[-1]
         localFile = open(localFileName, 'w')
