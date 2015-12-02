@@ -15,18 +15,14 @@ This page documents all of the methods and functions of the CadQuery classes, or
 Core Classes
 ---------------------
 
-.. currentmodule:: cadquery.CQ
 .. autosummary::
-
-    CQ
-    Workplane
+     CQ
+     Workplane
 
 Topological Classes
 ----------------------
 
-.. currentmodule:: cadquery.freecad_impl.shapes
 .. autosummary::
-
     Shape
     Vertex
     Edge
@@ -39,9 +35,7 @@ Topological Classes
 Geometry Classes
 ------------------
 
-.. currentmodule:: cadquery.freecad_impl.geom
 .. autosummary::
-
     Vector
     Matrix
     Plane
@@ -49,7 +43,7 @@ Geometry Classes
 Selector Classes
 ---------------------
 
-.. currentmodule:: cadquery.selectors
+
 .. autosummary::
 
     Selector
@@ -68,22 +62,9 @@ Selector Classes
     InverseSelector
     StringSyntaxSelector
 
-.. currentmodule:: cadquery
 
 Class Details
 ---------------
 
-.. autoclass:: cadquery.CQ.CQ
-   :members:
-
-.. autoclass:: cadquery.CQ.Workplane
-   :members:
-
-.. automodule:: cadquery.selectors
-   :members:
-
-.. automodule:: cadquery.freecad_impl.geom
-   :members:
-
-.. automodule:: cadquery.freecad_impl.shapes
+.. automodule:: cadquery
    :members:

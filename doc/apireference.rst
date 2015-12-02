@@ -16,12 +16,11 @@ This page lists  methods of these objects grouped by **functional area**
   This page lists api methods grouped by functional area.
   Use :ref:`classreference` to see methods alphabetically by class.
 
-.. module:: cadquery
 
 Initialization
 ----------------
 
-.. currentmodule:: cadquery.CQ
+.. currentmodule:: cadquery
 
 Creating new workplanes and object chains
 
@@ -39,8 +38,10 @@ Creating 2-d constructs that can be used to create 3 d features.
 
 All 2-d operations require a **Workplane** object to be created.
 
+.. currentmodule:: cadquery
+
 .. autosummary::
-	Workplane.center
+    Workplane.center
 	Workplane.lineTo
 	Workplane.line
 	Workplane.vLine
@@ -99,6 +100,11 @@ File Management and Export
     CQ.exportSvg
 
 
+.. autosummary::
+    importers.importStep
+    exporters.exportShape
+
+
 Iteration Methods
 ------------------
 
@@ -142,7 +148,7 @@ Selectors
 Objects that filter and select CAD objects. Selectors are used to select existing geometry
 as a basis for futher operations.
 
-.. currentmodule:: cadquery.selectors
+.. currentmodule:: cadquery
 
 .. autosummary::
 

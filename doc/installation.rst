@@ -18,12 +18,16 @@ On Ubuntu, you can type::
         sudo apt-get install -y freecad freecad-doc
         pip install cadquery
 
+This `Unix Installation Video <http://youtu.be/InZu8jgaYCA>`_ will walk you through the installation
+
+
 Installation: Other Platforms
 ------------------------------------------
 
    1. Install FreeCAD using the appropriate installer for your platform, on `www.freecadweb.org <http://www.freecadweb.org/wiki/?title=Download>`_
    2. pip install cadquery
 
+This `Windows Installation video <https://www.youtube.com/watch?v=dWw4Y_ah-8k>`_ will walk you through the installation on Windows
 
 Test Your Installation
 ------------------------

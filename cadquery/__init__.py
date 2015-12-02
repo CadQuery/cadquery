@@ -7,8 +7,8 @@ from .freecad_impl import importers
 #these items are the common implementation
 
 #the order of these matter
-from .selectors import NearestToPointSelector,ParallelDirSelector,DirectionSelector,PerpendicularDirSelector,TypeSelector,DirectionMinMaxSelector,StringSyntaxSelector,Selector
-from .CQ import CQ,CQContext,Workplane
+from .selectors import *
+from .CQ import *
 
 
 __all__ = [
