@@ -26,15 +26,9 @@ import FreeCAD
 import Part
 import sys
 import os
-import platform
-
-if sys.version > '3':
-    PY3 = True
-    import urllib.request as urlreader
-else:
-    PY3 = False
-    import urllib as urlreader
-    
+import urllib as urlreader
+import tempfile
+  
 class ImportTypes:
     STEP = "STEP"
 
@@ -80,20 +74,12 @@ def importStepFromURL(url):
     #Now read and return the shape
     try:
         webFile = urlreader.urlopen(url)
-	if platform.system() == 'Windows':
-        	localFileName = os.environ['TEMP']+'/'+url.split('/')[-1]
-	else:
-		localFileName = "/tmp/"+url.split('/')[-1]
-        localFile = open(localFileName, 'w')
-        if PY3:
-            localFile.write(webFile.read().decode('utf-8'))
-        else:
-            localFile.write(webFile.read())    
+	tempFile = tempfile.NamedTemporaryFile(suffix='.step', delete=False)
+	tempFile.write(webFile.read())
         webFile.close()
-        localFile.close()
-        fileName = localFileName
-      
-	rshape = Part.read(fileName)
+	tempFile.close()  
+
+	rshape = Part.read(tempFile.name)
 
         #Make sure that we extract all the solids
         solids = []
