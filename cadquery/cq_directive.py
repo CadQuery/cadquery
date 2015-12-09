@@ -3,19 +3,18 @@ A special directive for including a cq object.
 
 """
 
-import sys, os, shutil, imp, warnings, cStringIO, re,traceback
-
+import traceback
 from cadquery import *
+from cadquery import cqgi
 import StringIO
 from docutils.parsers.rst import directives
-
 
 template = """
 
 .. raw:: html
 
-    <div class="cq" style="text-align:%(txtAlign)s;float:left;">
-        %(outSVG)s
+    <div class="cq" style="text-align:%(txt_align)s;float:left;">
+        %(out_svg)s
     </div>
     <div style="clear:both;">
     </div>
@@ -25,37 +24,39 @@ template_content_indent = '      '
 
 
 def cq_directive(name, arguments, options, content, lineno,
-                   content_offset, block_text, state, state_machine):
-
-    #only consider inline snippets
+                 content_offset, block_text, state, state_machine):
+    # only consider inline snippets
     plot_code = '\n'.join(content)
 
     # Since we don't have a filename, use a hash based on the content
-    #the script must define a variable called 'out', which is expected to
-    #be a CQ object
-    outSVG = "Your Script Did not assign the 'result' variable!"
-
+    # the script must define a variable called 'out', which is expected to
+    # be a CQ object
+    out_svg = "Your Script Did not assign call build_output() function!"
 
     try:
         _s = StringIO.StringIO()
-        exec(plot_code)
-        
-        exporters.exportShape(result,"SVG",_s)
-        outSVG = _s.getvalue()
-    except:
-        traceback.print_exc()
-        outSVG = traceback.format_exc()
+        result = cqgi.execute(plot_code)
 
-    #now out
+        if result.success:
+            exporters.exportShape(result.first_result, "SVG", _s)
+            out_svg = _s.getvalue()
+        else:
+            raise result.exception
+
+    except Exception:
+        traceback.print_exc()
+        out_svg = traceback.format_exc()
+
+    # now out
     # Now start generating the lines of output
     lines = []
 
-    #get rid of new lines
-    outSVG = outSVG.replace('\n','')
+    # get rid of new lines
+    out_svg = out_svg.replace('\n', '')
 
-    txtAlign = "left"
-    if options.has_key("align"):
-        txtAlign = options['align']
+    txt_align = "left"
+    if "align" in options:
+        txt_align = options['align']
 
     lines.extend((template % locals()).split('\n'))
 
@@ -70,6 +71,7 @@ def cq_directive(name, arguments, options, content, lineno,
 
     return []
 
+
 def setup(app):
     setup.app = app
     setup.config = app.config
@@ -78,8 +80,6 @@ def setup(app):
     options = {'height': directives.length_or_unitless,
                'width': directives.length_or_percentage_or_unitless,
                'align': directives.unchanged
-    }
+               }
 
     app.add_directive('cq_plot', cq_directive, True, (0, 2, 0), **options)
-
-

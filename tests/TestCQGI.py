@@ -92,7 +92,7 @@ class TestCQGI(BaseTest):
                 build_object(h)
             """
         )
-        result = self._executeScriptWithParams(script, {'h': 33.33})
+        result = cqgi.execute(script, {'h': 33.33})
         self.assertEquals(result.results[0], "33.33")
 
     def test_that_assigning_string_to_number_fails(self):
@@ -102,20 +102,37 @@ class TestCQGI(BaseTest):
                 build_object(h)
             """
         )
-        with self.assertRaises(Exception):
-            result = self._executeScriptWithParams(script, {'h': "a string"})
+        result = cqgi.execute(script, {'h': "a string"})
+        self.assertTrue(isinstance(result.exception, cqgi.InvalidParameterError))
 
     def test_that_assigning_unknown_var_fails(self):
-
         script = textwrap.dedent(
-           """
+            """
                 h = 20.0
                 build_object(h)
             """
         )
-        with self.assertRaises(cqgi.InvalidParameterError):
-            result = self._executeScriptWithParams(script, {'w': "var is not there"})
 
-    def _executeScriptWithParams(self, script, params):
-        model = cqgi.CQModel(script)
-        return model.build(params)
+        result = cqgi.execute(script, {'w': "var is not there"})
+        self.assertTrue(isinstance(result.exception, cqgi.InvalidParameterError))
+
+    def test_that_not_calling_build_object_raises_error(self):
+        script = textwrap.dedent(
+            """
+                h = 20.0
+            """
+        )
+        result = cqgi.execute(script)
+        self.assertTrue(isinstance(result.exception, cqgi.NoOutputError))
+
+    def test_that_cq_objects_are_visible(self):
+        script = textwrap.dedent(
+            """
+                r = cadquery.Workplane('XY').box(1,2,3)
+                build_object(r)
+            """
+        )
+
+        result = cqgi.execute(script)
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.first_result)

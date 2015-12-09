@@ -7,8 +7,28 @@ import ast
 import traceback
 import re
 import time
+import cadquery
 
 CQSCRIPT = "<cqscript>"
+
+
+def execute(script_source, build_parameters=None):
+    """
+    Executes the provided model, using the specified variables.
+
+    If you would prefer to access the underlying model without building it,
+    for example, to inspect its available parameters, construct a CQModel object.
+
+    :param script_source: the script to run. Must be a valid cadquery script
+    :param build_parameters: a dictionary of variables. The variables must be
+       assignable to the underlying variable type.
+    :raises: Nothing. If there is an exception, it will be on the exception property of the result.
+       This is the interface so that we can return other information onthe result, such as the build time
+    :return: a BuildResult object, which includes the status of the result, and either
+       a resulting shape or an exception
+    """
+    model = CQModel(script_source)
+    return model.build(build_parameters)
 
 
 class CQModel(object):
@@ -19,9 +39,9 @@ class CQModel(object):
 
     def __init__(self, script_source):
         self.metadata = ScriptMetadata()
-        self.astTree = ast.parse(script_source, CQSCRIPT)
+        self.ast_tree = ast.parse(script_source, CQSCRIPT)
 
-        ConstantAssignmentFinder(self.metadata).visit(self.astTree)
+        ConstantAssignmentFinder(self.metadata).visit(self.ast_tree)
 
         # TODO: pick up other scirpt metadata:
         # describe
@@ -39,21 +59,21 @@ class CQModel(object):
         if not params:
             params = {}
 
-        self.set_param_values(params)
-        collector = BuildObjectCollector()
-        env = EnvironmentBuilder().with_real_builtins() \
-            .add_entry("build_object", collector.build_object).build()
-
         start = time.clock()
         result = BuildResult()
 
         try:
-            c = compile(self.astTree, CQSCRIPT, 'exec')
+            self.set_param_values(params)
+            collector = BuildObjectCollector()
+            env = EnvironmentBuilder().with_real_builtins().with_cadquery_objects() \
+                .add_entry("build_object", collector.build_object).build()
+
+            c = compile(self.ast_tree, CQSCRIPT, 'exec')
             exec (c, env)
-            if collector.hasResults():
+            if collector.has_results():
                 result.set_success_result(collector.outputObjects)
             else:
-                raise ValueError("Script did not call build_object-- no output available.")
+                raise NoOutputError("Script did not call build_object-- no output available.")
         except Exception, ex:
             result.set_failure_result(ex)
 
@@ -76,6 +96,7 @@ class BuildResult(object):
     def __init__(self):
         self.buildTime = None
         self.results = []
+        self.first_result = None
         self.success = False
         self.exception = None
 
@@ -85,6 +106,7 @@ class BuildResult(object):
 
     def set_success_result(self, results):
         self.results = results
+        self.first_result = self.results[0]
         self.success = True
 
 
@@ -117,7 +139,7 @@ class InputParameter:
         self.name = None
         self.shortDesc = None
         self.varType = None
-        self.validValues = []
+        self.valid_values = []
         self.default_value = None
         self.ast_node = None
 
@@ -136,15 +158,15 @@ class InputParameter:
         else:
             p.shortDesc = short_desc
         p.varType = var_type
-        p.validValues = valid_values
+        p.valid_values = valid_values
         return p
 
     def set_value(self, new_value):
 
-        if len(self.validValues) > 0 and not new_value in self.validValues:
+        if len(self.valid_values) > 0 and new_value not in self.valid_values:
             raise InvalidParameterError(
                 "Cannot set value '{0:s}' for parameter '{1:s}': not a valid value. Valid values are {2:s} "
-                    .format( str(new_value), self.name, str(self.validValues)))
+                    .format(str(new_value), self.name, str(self.valid_values)))
 
         if self.varType == NumberParameterType:
             try:
@@ -181,7 +203,7 @@ class BuildObjectCollector(object):
     def build_object(self, shape):
         self.outputObjects.append(shape)
 
-    def hasResults(self):
+    def has_results(self):
         return len(self.outputObjects) > 0
 
 
@@ -190,10 +212,10 @@ class ScriptExecutor(object):
     executes a script in a given environment.
     """
 
-    def __init__(self, environment, astTree):
+    def __init__(self, environment, ast_tree):
 
         try:
-            exec (astTree) in environment
+            exec ast_tree in environment
         except Exception, ex:
 
             # an error here means there was a problem compiling the script
@@ -216,6 +238,10 @@ class ScriptExecutor(object):
 
 
 class InvalidParameterError(Exception):
+    pass
+
+
+class NoOutputError(Exception):
     pass
 
 
@@ -256,6 +282,10 @@ class EnvironmentBuilder(object):
 
     def with_builtins(self, env_dict):
         self.env['__builtins__'] = env_dict
+        return self
+
+    def with_cadquery_objects(self):
+        self.env['cadquery'] = cadquery
         return self
 
     def add_entry(self, name, value):

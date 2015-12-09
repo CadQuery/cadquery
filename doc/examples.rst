@@ -43,7 +43,8 @@ Just about the simplest possible example, a rectangular box
 
 .. cq_plot::
 
-    result = Workplane("front").box(2.0,2.0,0.5)
+    result = cadquery.Workplane("front").box(2.0,2.0,0.5)
+    build_object(result)
 
 .. topic:: Api References
 
@@ -64,7 +65,7 @@ of a working plane is at the center of the face.  The default hole depth is thro
 .. cq_plot::
 
     result = Workplane("front").box(2.0,2.0,0.5).faces(">Z").hole(0.5)
-
+    build_output(result)
 
 
 .. topic:: Api References
@@ -532,6 +533,8 @@ with just a few lines of code.
                 .faces(">Z").workplane() \
                 .rect(length-padding,height-padding,forConstruction=True) \
                 .vertices().cboreHole(2.4,4.4,2.1)
+
+        build_output(result)
 
 
 Splitting an Object
