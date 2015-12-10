@@ -43,6 +43,7 @@ Table Of Contents
     apireference.rst
     selectors.rst
     classreference.rst
+    cqgi.rst
     extending.rst
     roadmap.rst
 

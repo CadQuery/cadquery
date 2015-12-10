@@ -3,7 +3,6 @@
 String Selectors Reference
 =============================
 
-.. module:: cadquery
 
 CadQuery selector strings allow filtering various types of object lists. Most commonly, Edges, Faces, and Vertices are
 used, but all objects types can be filtered.
@@ -11,11 +10,11 @@ used, but all objects types can be filtered.
 String selectors are simply shortcuts for using the full object equivalents. If you pass one of the
 string patterns in, CadQuery will automatically use the associated selector object.
 
-    * :py:meth:`cadquery.CQ.CQ.faces`
-    * :py:meth:`cadquery.CQ.CQ.edges`
-    * :py:meth:`cadquery.CQ.CQ.vertices`
-    * :py:meth:`cadquery.CQ.CQ.solids`
-    * :py:meth:`cadquery.CQ.CQ.shells`
+    * :py:meth:`cadquery.CQ.faces`
+    * :py:meth:`cadquery.CQ.edges`
+    * :py:meth:`cadquery.CQ.vertices`
+    * :py:meth:`cadquery.CQ.solids`
+    * :py:meth:`cadquery.CQ.shells`
 
 .. note::
 
@@ -45,13 +44,13 @@ The axis used in the listing below are for illustration: any axis would work sim
 =========   ======================================  =======================================================  ==========================
 Selector    Selects                                 Selector Class                                           # objects returned
 =========   ======================================  =======================================================  ==========================
-+Z          Faces with normal in +z direction       :py:class:`cadquery.selectors.DirectionSelector`         0 or 1
-\|Z         Faces parallel to xy plane              :py:class:`cadquery.selectors.ParallelDirSelector`       0..many
--X          Faces with  normal in neg x direction   :py:class:`cadquery.selectors.DirectionSelector`         0..many
-#Z          Faces perpendicular to z direction      :py:class:`cadquery.selectors.PerpendicularDirSelector`  0..many
-%Plane      Faces of type plane                     :py:class:`cadquery.selectors.TypeSelector`              0..many
->Y          Face farthest in the positive y dir     :py:class:`cadquery.selectors.DirectionMinMaxSelector`   0 or 1
-<Y          Face farthest in the negative y dir     :py:class:`cadquery.selectors.DirectionMinMaxSelector`   0 or 1
++Z          Faces with normal in +z direction       :py:class:`cadquery.DirectionSelector`                   0 or 1
+\|Z         Faces parallel to xy plane              :py:class:`cadquery.ParallelDirSelector`                 0..many
+-X          Faces with  normal in neg x direction   :py:class:`cadquery.DirectionSelector`                   0..many
+#Z          Faces perpendicular to z direction      :py:class:`cadquery.PerpendicularDirSelector`            0..many
+%Plane      Faces of type plane                     :py:class:`cadquery.TypeSelector`                        0..many
+>Y          Face farthest in the positive y dir     :py:class:`cadquery.DirectionMinMaxSelector`             0 or 1
+<Y          Face farthest in the negative y dir     :py:class:`cadquery.DirectionMinMaxSelector`             0 or 1
 =========   ======================================  =======================================================  ==========================
 
 
@@ -73,13 +72,13 @@ The axis used in the listing below are for illustration: any axis would work sim
 =========   ====================================    =======================================================     ==========================
 Selector    Selects                                 Selector Class                                              # objects returned
 =========   ====================================    =======================================================     ==========================
-+Z          Edges aligned in the Z direction        :py:class:`cadquery.selectors.DirectionSelector`            0..many
-\|Z         Edges parallel to z direction           :py:class:`cadquery.selectors.ParallelDirSelector`          0..many
--X          Edges aligned in neg x direction        :py:class:`cadquery.selectors.DirectionSelector`            0..many
-#Z          Edges perpendicular to z direction      :py:class:`cadquery.selectors.PerpendicularDirSelector`     0..many
-%Line       Edges of type line                      :py:class:`cadquery.selectors.TypeSelector`                 0..many
->Y          Edges farthest in the positive y dir    :py:class:`cadquery.selectors.DirectionMinMaxSelector`      0 or 1
-<Y          Edges farthest in the negative y dir    :py:class:`cadquery.selectors.DirectionMinMaxSelector`      0 or 1
++Z          Edges aligned in the Z direction        :py:class:`cadquery.DirectionSelector`                      0..many
+\|Z         Edges parallel to z direction           :py:class:`cadquery.ParallelDirSelector`                    0..many
+-X          Edges aligned in neg x direction        :py:class:`cadquery.DirectionSelector`                      0..many
+#Z          Edges perpendicular to z direction      :py:class:`cadquery.PerpendicularDirSelector`               0..many
+%Line       Edges of type line                      :py:class:`cadquery.TypeSelector`                           0..many
+>Y          Edges farthest in the positive y dir    :py:class:`cadquery.DirectionMinMaxSelector`                0 or 1
+<Y          Edges farthest in the negative y dir    :py:class:`cadquery.DirectionMinMaxSelector`                0 or 1
 =========   ====================================    =======================================================     ==========================
 
 
@@ -93,8 +92,8 @@ Only a few of the filter types apply to vertices. The location of the vertex is 
 =========   =======================================    =======================================================     ==========================
 Selector    Selects                                    Selector Class                                              # objects returned
 =========   =======================================    =======================================================     ==========================
->Y          Vertices farthest in the positive y dir    :py:class:`cadquery.selectors.DirectionMinMaxSelector`      0 or 1
-<Y          Vertices farthest in the negative y dir    :py:class:`cadquery.selectors.DirectionMinMaxSelector`      0 or 1
+>Y          Vertices farthest in the positive y dir    :py:class:`cadquery.DirectionMinMaxSelector`                0 or 1
+<Y          Vertices farthest in the negative y dir    :py:class:`cadquery.DirectionMinMaxSelector`                0 or 1
 =========   =======================================    =======================================================     ==========================
 
 Future Enhancements

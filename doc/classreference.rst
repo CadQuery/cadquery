@@ -10,7 +10,7 @@ This page documents all of the methods and functions of the CadQuery classes, or
 
     For a listing organized by functional area, see the :ref:`apireference`
 
-.. module:: cadquery
+.. currentmodule:: cadquery
 
 Core Classes
 ---------------------

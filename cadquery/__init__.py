@@ -8,7 +8,7 @@ from .freecad_impl import importers
 
 #the order of these matter
 from .selectors import *
-from .CQ import *
+from .cq import *
 
 
 __all__ = [

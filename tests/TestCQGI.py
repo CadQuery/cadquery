@@ -92,7 +92,7 @@ class TestCQGI(BaseTest):
                 build_object(h)
             """
         )
-        result = cqgi.execute(script, {'h': 33.33})
+        result = cqgi.parse(script).build( {'h': 33.33})
         self.assertEquals(result.results[0], "33.33")
 
     def test_that_assigning_string_to_number_fails(self):
@@ -102,7 +102,7 @@ class TestCQGI(BaseTest):
                 build_object(h)
             """
         )
-        result = cqgi.execute(script, {'h': "a string"})
+        result = cqgi.parse(script).build( {'h': "a string"})
         self.assertTrue(isinstance(result.exception, cqgi.InvalidParameterError))
 
     def test_that_assigning_unknown_var_fails(self):
@@ -113,7 +113,7 @@ class TestCQGI(BaseTest):
             """
         )
 
-        result = cqgi.execute(script, {'w': "var is not there"})
+        result = cqgi.parse(script).build( {'w': "var is not there"})
         self.assertTrue(isinstance(result.exception, cqgi.InvalidParameterError))
 
     def test_that_not_calling_build_object_raises_error(self):
@@ -122,7 +122,7 @@ class TestCQGI(BaseTest):
                 h = 20.0
             """
         )
-        result = cqgi.execute(script)
+        result = cqgi.parse(script).build()
         self.assertTrue(isinstance(result.exception, cqgi.NoOutputError))
 
     def test_that_cq_objects_are_visible(self):
@@ -133,6 +133,38 @@ class TestCQGI(BaseTest):
             """
         )
 
-        result = cqgi.execute(script)
+        result = cqgi.parse(script).build()
         self.assertTrue(result.success)
         self.assertIsNotNone(result.first_result)
+
+    def test_setting_boolean_variable(self):
+        script = textwrap.dedent(
+            """
+                h = True
+                build_object( "*%s*" % str(h)  )
+            """
+        )
+
+        #result = cqgi.execute(script)
+        result = cqgi.parse(script).build({'h': False})
+
+        self.assertTrue(result.success)
+        self.assertEquals(result.first_result,'*False*')
+
+    def test_that_only_top_level_vars_are_detected(self):
+        script = textwrap.dedent(
+            """
+                h = 1.0
+                w = 2.0
+
+                def do_stuff():
+                   x = 1
+                   y = 2
+
+                build_object( "result"  )
+            """
+        )
+
+        model = cqgi.parse(script)
+
+        self.assertEquals(2, len(model.metadata.parameters))

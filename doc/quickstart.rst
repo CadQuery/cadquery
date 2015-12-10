@@ -1,11 +1,10 @@
-
-.. module:: cadquery
-
 .. _quickstart:
 
 ***********************
 CadQuery QuickStart
 ***********************
+
+.. module:: cadquery
 
 Want a quick glimpse of what CadQuery can do?  This quickstart will demonstrate the basics of cadQuery using a simple example
 
@@ -55,18 +54,15 @@ with place-holders for the dimensions. Paste this into the CodeWindow:
 .. code-block:: python
    :linenos:
 
-    import cadquery
-    from Helpers import show
-
     height = 60.0
     width = 80.0
     thickness = 10.0
 
     # make the base
-    result = cadquery.Workplane("XY").box(height, width, thickness)
+    result = cq.Workplane("XY").box(height, width, thickness)
 
     # Render the solid
-    show(result)
+    build_object(result)
 
 Press F2 to run the script. You should see Our basic base.
 
@@ -83,10 +79,7 @@ This modification will do the trick:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 7,11
-
-    import cadquery
-    from Helpers import show
+   :emphasize-lines: 4,8
 
     height = 60.0
     width = 80.0
@@ -94,11 +87,11 @@ This modification will do the trick:
     diameter = 22.0
 
     # make the base
-    result = cadquery.Workplane("XY").box(height, width, thickness)\
+    result = cq.Workplane("XY").box(height, width, thickness)\
         .faces(">Z").workplane().hole(diameter)
 
     # Render the solid
-    show(result)
+    build_object(result)
 
 Rebuild your model by pressing F2. Your block should look like this:
 
@@ -107,13 +100,13 @@ Rebuild your model by pressing F2. Your block should look like this:
 
 The code is pretty compact, lets step through it.
 
-**Line 7** adds a new parameter, diameter, for the diamter of the hole
+**Line 4** adds a new parameter, diameter, for the diamter of the hole
 
-**Line 11**, we're adding the hole.
-:py:meth:`cadquery.CQ.CQ.faces` selects the top-most face in the Z direction, and then
-:py:meth:`cadquery.CQ.CQ.workplane` begins a new workplane located on this face. The center of this workplane
+**Line 8**, we're adding the hole.
+:py:meth:`cadquery.CQ.faces` selects the top-most face in the Z direction, and then
+:py:meth:`cadquery.CQ.workplane` begins a new workplane located on this face. The center of this workplane
 is located at the geometric center of the shape, which in this case is the center of the plate.
-Finally, :py:meth:`cadquery.CQ.Workplane.hole` drills a hole through the part 22mm in diamter
+Finally, :py:meth:`cadquery.Workplane.hole` drills a hole through the part 22mm in diamter
 
 .. note::
 
@@ -139,10 +132,7 @@ Good news!-- we can get the job done with just two lines of code. Here's the cod
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 8,13-15
-
-    import cadquery
-    from Helpers import show
+   :emphasize-lines: 5,10-13
 
     height = 60.0
     width = 80.0
@@ -151,7 +141,7 @@ Good news!-- we can get the job done with just two lines of code. Here's the cod
     padding = 12.0
 
     # make the base
-    result = cadquery.Workplane("XY").box(height, width, thickness)\
+    result = cq.Workplane("XY").box(height, width, thickness)\
         .faces(">Z").workplane().hole(diameter)\
         .faces(">Z").workplane() \
         .rect(height - padding,width - padding,forConstruction=True)\
@@ -159,7 +149,7 @@ Good news!-- we can get the job done with just two lines of code. Here's the cod
         .cboreHole(2.4, 4.4, 2.1)
 
     # Render the solid
-    show(result)
+    build_object(result)
 
 
 After pressing F2 to re-execute the model, you should see something like this:
@@ -169,14 +159,14 @@ After pressing F2 to re-execute the model, you should see something like this:
 
 There is quite a bit going on here, so lets break it down a bit.
 
-**Line 8** creates a new padding parameter that decides how far the holes are from the edges of the plate.
+**Line 5** creates a new padding parameter that decides how far the holes are from the edges of the plate.
 
-**Line 13** selects the top-most face of the block, and creates a workplane on the top that face, which we'll use to
+**Line 10** selects the top-most face of the block, and creates a workplane on the top that face, which we'll use to
 define the centers of the holes in the corners.
 
 There are a couple of things to note about this line:
 
-    1. The :py:meth:`cadquery.CQ.Workplane.rect` function draws a rectangle.  **forConstruction=True**
+    1. The :py:meth:`cadquery.Workplane.rect` function draws a rectangle.  **forConstruction=True**
        tells CadQuery that this rectangle will not form a part of the solid,
        but we are just using it to help define some other geometry.
     2. The center point of a workplane on a face is always at the center of the face, which works well here
@@ -184,15 +174,15 @@ There are a couple of things to note about this line:
        this case, the center of the top face of the block. So this rectangle will be centered on the face
 
 
-**Line 14** draws a rectangle 8mm smaller than the overall length and width of the block,which we will use to
+**Line 11** draws a rectangle 8mm smaller than the overall length and width of the block,which we will use to
 locate the corner holes. We'll use the vertices ( corners ) of this rectangle to locate the holes. The rectangle's
 center is at the center of the workplane, which in this case co-incides with the center of the bearing hole.
 
-**Line 15** selects the vertices of the rectangle, which we will use for the centers of the holes.
-The :py:meth:`cadquery.CQ.CQ.vertices` function selects the corners of the rectangle
+**Line 12** selects the vertices of the rectangle, which we will use for the centers of the holes.
+The :py:meth:`cadquery.CQ.vertices` function selects the corners of the rectangle
 
-**Line 16** uses the cboreHole function to draw the holes.
-The :py:meth:`cadquery.CQ.Workplane.cboreHole` function is a handy CadQuery function that makes a counterbored hole,
+**Line 13** uses the cboreHole function to draw the holes.
+The :py:meth:`cadquery.Workplane.cboreHole` function is a handy CadQuery function that makes a counterbored hole,
 like most other CadQuery functions, operate on the values on the stack.  In this case, since we
 selected the four vertices before calling the function, the function operates on each of the four points--
 which results in a counterbore hole at the corners.
@@ -208,10 +198,7 @@ We can do that using the preset dictionaries in the parameter definition:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 16
-
-    import cadquery
-    from Helpers import show
+   :emphasize-lines: 13
 
     height = 60.0
     width = 80.0
@@ -220,7 +207,7 @@ We can do that using the preset dictionaries in the parameter definition:
     padding = 12.0
 
     # make the base
-    result = cadquery.Workplane("XY").box(height, width, thickness)\
+    result = cq.Workplane("XY").box(height, width, thickness)\
         .faces(">Z").workplane().hole(diameter)\
         .faces(">Z").workplane() \
         .rect(height - padding, width - padding, forConstruction=True)\
@@ -228,11 +215,12 @@ We can do that using the preset dictionaries in the parameter definition:
         .edges("|Z").fillet(2.0)
 
     # Render the solid
-    show(result)
+    build_object(result)
 
-On **Line 16**, we're filleting the edges using the :py:meth:`cadquery.CQ.CQ.fillet` method.
-To grab the right edges, the  :py:meth:`cadquery.CQ.CQ.edges`
-selects all of the edges that are parallel to the Z axis ("|Z"),
+**Line 13** fillets the edges using the   :py:meth:`cadquery.CQ.fillet` method.
+
+To grab the right edges, the :py:meth:`cadquery.CQ.edges` selects all of the
+edges that are parallel to the Z axis ("\|Z"),
 
 The finished product looks like this:
 

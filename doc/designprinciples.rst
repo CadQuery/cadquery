@@ -1,6 +1,5 @@
 .. _designprinciples:
 
-.. automodule:: cadquery
 
 ===========================
 CadQuery Design Principles

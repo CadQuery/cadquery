@@ -1,6 +1,5 @@
 .. _3d_cad_primer:
 
-.. module:: cadquery
 
 CadQuery Concepts
 ===================================
@@ -49,7 +48,7 @@ in space, or relative to other planes using offsets or rotations.
 The most powerful feature of workplanes is that they allow you to work in 2D space in the coordinate system of the
 workplane, and then build 3D features based on local coordinates.  This makes scripts much easier to create and maintain.
 
-See :py:class:`cadquery.CQ.Workplane` to learn more
+See :py:class:`cadquery.Workplane` to learn more
 
 
 2D Construction

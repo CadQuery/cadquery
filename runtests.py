@@ -14,4 +14,5 @@ suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestCQSelectors.TestC
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestCadQuery.TestCadQuery))
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestExporters.TestExporters))
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestImporters.TestImporters))
+suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestCQGI.TestCQGI))
 unittest.TextTestRunner().run(suite)

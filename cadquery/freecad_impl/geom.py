@@ -32,9 +32,11 @@ def sortWiresByBuildOrder(wireList, plane, result=[]):
         there are no wires inside wires inside wires
         ( IE, islands -- we can deal with that later on )
         none of the wires are construction wires
+
     Compute:
         one or more sets of wires, with the outer wire listed first, and inner
         ones
+
     Returns, list of lists.
     """
     result = []
@@ -56,7 +58,7 @@ def sortWiresByBuildOrder(wireList, plane, result=[]):
 class Vector(object):
     """Create a 3-dimensional vector
 
-        :param *args: a 3-d vector, with x-y-z parts.
+        :param args: a 3-d vector, with x-y-z parts.
 
         you can either provide:
             * nothing (in which case the null vector is return)
@@ -375,9 +377,10 @@ class Plane(object):
 
         The new coordinates are specified in terms of the current 2-d system.
         As an example:
-            p = Plane.XY()
-            p.setOrigin2d(2, 2)
-            p.setOrigin2d(2, 2)
+
+        p = Plane.XY()
+        p.setOrigin2d(2, 2)
+        p.setOrigin2d(2, 2)
 
         results in a plane with its origin at (x, y) = (4, 4) in global
         coordinates. Both operations were relative to local coordinates of the
