@@ -81,7 +81,7 @@ class CQModel(object):
         :param build_parameters: a dictionary of variables. The variables must be
         assignable to the underlying variable type.
         :raises: Nothing. If there is an exception, it will be on the exception property of the result.
-        This is the interface so that we can return other information onthe result, such as the build time
+        This is the interface so that we can return other information on the result, such as the build time
         :return: a BuildResult object, which includes the status of the result, and either
         a resulting shape or an exception
         """
@@ -309,7 +309,7 @@ class InvalidParameterError(Exception):
 
 class NoOutputError(Exception):
     """
-    Raised when the script does not execute the build_output() method to
+    Raised when the script does not execute the build_object() method to
     return a solid
     """
     pass

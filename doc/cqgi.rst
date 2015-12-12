@@ -61,7 +61,7 @@ If the script was successful, the results property will include a list of result
 
 If the script failed, the exception property contains the exception object.
 
-If your have a way to get inputs from a user, you can override any of the constants defined in the user script
+If you have a way to get inputs from a user, you can override any of the constants defined in the user script
 with new values::
 
     from cadquery import cqgi

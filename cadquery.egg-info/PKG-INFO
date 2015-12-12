@@ -5,7 +5,7 @@ Summary: CadQuery is a parametric  scripting language for creating and traversin
 Home-page: https://github.com/dcowden/cadquery
 Author: David Cowden
 Author-email: dave.cowden@gmail.com
-License: LGPL
+License: Apache Public License
 Description: What is a CadQuery?
         ========================================
         
@@ -31,13 +31,6 @@ Description: What is a CadQuery?
         It includes the latest version of cadquery alreadby bundled, and has super-easy installation on Mac, Windows, and Unix.
         
         It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
-        
-        
-        Recently Added Features
-        ========================================
-        
-        * 12/5/14 -- New FreeCAD/CadQuery Module!  https://github.com/jmwright/cadquery-freecad-module
-        * 10/25/14 -- Added Revolution Feature ( thanks Jeremy ! )
         
         
         Why CadQuery instead of OpenSCAD?
@@ -67,7 +60,7 @@ Description: What is a CadQuery?
         License
         ========
         
-        CadQuery is licensed under the terms of the LGPLv3. http://www.gnu.org/copyleft/lesser.html
+        CadQuery is licensed under the terms of the Apache Public License, v 2.0 http://www.apache.org/licenses/LICENSE-2.0
         
         Where is the GUI?
         ==================

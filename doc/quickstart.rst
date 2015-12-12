@@ -161,7 +161,7 @@ There is quite a bit going on here, so lets break it down a bit.
 
 **Line 5** creates a new padding parameter that decides how far the holes are from the edges of the plate.
 
-**Line 10** selects the top-most face of the block, and creates a workplane on the top that face, which we'll use to
+**Line 10** selects the top-most face of the block, and creates a workplane on the top of that face, which we'll use to
 define the centers of the holes in the corners.
 
 There are a couple of things to note about this line:

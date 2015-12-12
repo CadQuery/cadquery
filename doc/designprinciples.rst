@@ -38,7 +38,7 @@ If you have experience with 3D CAD systems, you also know that there is a key de
 After the base block is created, how the hole is located is key.  If it is located from one edge, changing the block
 size will have a different affect than if the hole is located from the center.
 
-Many scripting langauges to not provide a way to capture design intent-- because they require that you always work in
+Many scripting langauges do not provide a way to capture design intent-- because they require that you always work in
 global coordinates.  CadQuery is different-- you can locate features relative to others in a relative way-- preserving
 the design intent just like a human would when creating a drawing or building an object.
 

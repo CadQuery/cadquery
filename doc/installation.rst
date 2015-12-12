@@ -42,16 +42,21 @@ Adding a Nicer GUI via the cadquery-freecad-module
 --------------------------------------------------------
 
 If you prefer to have a GUI available, your best option is to use
-the `The CadQuery Freecad Module <https://github.com/jmwright/cadquery-freecad-module>`_.
+`The CadQuery Freecad Module <https://github.com/jmwright/cadquery-freecad-module>`_.
 
 Simply extract cadquery-freecad-module into your FreeCAD installation. You'll end up
 with a cadquery workbench that allows you to interactively run scripts, and then see the results in the FreeCAD GUI
+
+If you are using Ubuntu, you can also install it via this ppa:
+
+https://code.launchpad.net/~freecad-community/+archive/ubuntu/ppa/+packages
+
 
 Zero Step  Install
 -------------------------------------------------
 
 If you would like to use cadquery with no installation all, you can
-use `ParametricParts.com <https://www.parametricparts.com>`_, a web-based platform that runs cadQuery scripts
+use `ParametricParts.com <https://www.parametricparts.com>`_, a web-based platform that runs cadquery scripts
 
 It is free, and allows running and viewing cadquery scripts in your web browser or mobile phone
 

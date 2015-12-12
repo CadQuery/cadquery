@@ -25,6 +25,29 @@ string patterns in, CadQuery will automatically use the associated selector obje
     See :ref:`extending` to see how.
 
 
+Combining Selectors
+==========================
+
+Selectors can be combined arithmetically and logically, so that it is possible to do intersection, union, and other
+combinations.  For example::
+
+    box = cadquery.Workplane("XY").box(10,10,10)
+
+    s = selectors.StringSyntaxSelector
+
+    ### select all edges on right and left faces
+    #box = box.edges((s("|Z") + s("|Y"))).fillet(1)
+
+    ### select all edges on top and bottom
+    #box = box.edges(-s("|Z")).fillet(1)
+    #box = box.edges(s('|X')+s('Y')).fillet(1)
+    box = box.faces(s('>Z')+s('<Z')).fillet(1)
+
+
+or for another example::
+
+    # select diagonal edges
+    box = box.faces(s('>Z')+s('<Z')).edges(-s('|X')-s('Y')).fillet(1)
 
 .. _filteringfaces:
 

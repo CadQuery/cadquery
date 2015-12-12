@@ -57,7 +57,8 @@ CadQuery scripts have several key advantages over OpenSCAD:
 License
 ========
 
-CadQuery is licensed under the terms of the LGPLv3. http://www.gnu.org/copyleft/lesser.html
+CadQuery is licensed under the terms of the Apache Public License, version 2.0.
+A copy of the license can be found at http://www.apache.org/licenses/LICENSE-2.0
 
 Where is the GUI?
 ==================

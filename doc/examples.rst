@@ -42,7 +42,7 @@ Just about the simplest possible example, a rectangular box
 
 .. cq_plot::
 
-    result = cadquery.Workplane("front").box(2.0,2.0,0.5)
+    result = cadquery.Workplane("front").box(2.0, 2.0, 0.5)
     build_object(result)
 
 .. topic:: Api References
@@ -96,7 +96,7 @@ By default, rectangles and circles are centered around the previous working poin
 
 .. cq_plot::
 
-    result = cq.Workplane("front").circle(2.0).rect(0.5,0.75).extrude(0.5)
+    result = cq.Workplane("front").circle(2.0).rect(0.5, 0.75).extrude(0.5)
     build_object(result)
 
 .. topic:: Api References
@@ -121,7 +121,7 @@ closed curve.
 
 .. cq_plot::
 
-    result = cq.Workplane("front").lineTo(2.0,0).lineTo(2.0,1.0).threePointArc((1.0,1.5),(0.0,1.0))\
+    result = cq.Workplane("front").lineTo(2.0, 0).lineTo(2.0, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0))\
         .close().extrude(0.25)
     build_object(result)
 
@@ -149,9 +149,9 @@ A new work plane center can be established at any point.
 .. cq_plot::
 
     result = cq.Workplane("front").circle(3.0) #current point is the center of the circle, at (0,0)
-    result = result.center(1.5,0.0).rect(0.5,0.5) # new work center is  (1.5,0.0)
+    result = result.center(1.5, 0.0).rect(0.5, 0.5) # new work center is  (1.5, 0.0)
 
-    result = result.center(-1.5,1.5).circle(0.25) # new work center is ( 0.0,1.5).
+    result = result.center(-1.5, 1.5).circle(0.25) # new work center is ( 0.0, 1.5).
     #the new center is specified relative to the previous center, not global coordinates!
 
     result = result.extrude(0.25)
@@ -181,7 +181,7 @@ like :py:meth:`Workplane.circle` and :py:meth:`Workplane.rect`, will operate on 
 .. cq_plot::
 
    r = cq.Workplane("front").circle(2.0)                       # make base
-   r = r.pushPoints( [ (1.5,0),(0,1.5),(-1.5,0),(0,-1.5) ] )     # now four points are on the stack
+   r = r.pushPoints( [ (1.5, 0),(0, 1.5),(-1.5, 0),(0, -1.5) ] )     # now four points are on the stack
    r = r.circle( 0.25 )                                      # circle will operate on all four points
    result = r.extrude(0.125 )                               # make prism
    build_object(result)
@@ -204,8 +204,8 @@ correct for small hole sizes.
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(3.0,4.0,0.25).pushPoints ( [ ( 0,0.75 ),(0,-0.75) ]) \
-        .polygon(6,1.0).cutThruAll()
+    result = cq.Workplane("front").box(3.0, 4.0, 0.25).pushPoints ( [ ( 0,0.75 ),(0, -0.75) ]) \
+        .polygon(6, 1.0).cutThruAll()
     build_object(result)
 
 .. topic:: Api References
@@ -226,7 +226,7 @@ This example uses a polyline to create one half of an i-beam shape, which is mir
 
 .. cq_plot::
 
-        (L,H,W,t) = ( 100.0,20.0,20.0,1.0)
+        (L,H,W,t) = ( 100.0, 20.0, 20.0, 1.0)
         pts = [
             (0,H/2.0),
             (W/2.0,H/2.0),
@@ -262,15 +262,15 @@ needs a complex profile
 
     s = cq.Workplane("XY")
     sPnts = [
-        (2.75,1.5),
-        (2.5,1.75),
-        (2.0,1.5),
-        (1.5,1.0),
-        (1.0,1.25),
-        (0.5,1.0),
-        (0,1.0)
+        (2.75, 1.5),
+        (2.5, 1.75),
+        (2.0, 1.5),
+        (1.5, 1.0),
+        (1.0, 1.25),
+        (0.5, 1.0),
+        (0, 1.0)
     ]
-    r = s.lineTo(3.0,0).lineTo(3.0,1.0).spline(sPnts).close()
+    r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts).close()
     result = r.extrude(0.5)
     build_object(result)
 
@@ -331,7 +331,7 @@ Keep in mind that the origin of new workplanes are located at the center of a fa
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(2,3,0.5)            #make a basic prism
+    result = cq.Workplane("front").box(2,3, 0.5)            #make a basic prism
     result = result.faces(">Z").workplane().hole(0.5)   #find the top-most face and make a hole
     build_object(result)
 
@@ -359,7 +359,7 @@ how deep the part is
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(3,2,0.5)                 #make a basic prism
+    result = cq.Workplane("front").box(3,2, 0.5)                 #make a basic prism
     result = result.faces(">Z").vertices("<XY").workplane()  #select the lower left vertex and make a workplane
     result = result.circle(1.0).cutThruAll()                 #cut the corner out
     build_object(result)
@@ -387,7 +387,7 @@ This example uses an offset workplane to make a compound object, which is perfec
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(3,2,0.5)                 #make a basic prism
+    result = cq.Workplane("front").box(3, 2, 0.5)                 #make a basic prism
     result = result.faces("<X").workplane(offset=0.75)       #workplane is offset from the object surface
     result = result.circle(1.0).extrude(0.5)                 #disc
     build_object(result)
@@ -409,8 +409,8 @@ You can create a rotated work plane by specifying angles of rotation relative to
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(4.0,4.0,0.25).faces(">Z").workplane()  \
-         .transformed(offset=cq.Vector(0,-1.5,1.0),rotate=cq.Vector(60,0,0)) \
+    result = cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").workplane()  \
+         .transformed(offset=cq.Vector(0, -1.5, 1.0),rotate=cq.Vector(60, 0, 0)) \
          .rect(1.5,1.5,forConstruction=True).vertices().hole(0.25)
     build_object(result)
 
@@ -434,8 +434,8 @@ In the example below, a rectangle is drawn, and its vertices are used to locate 
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(2,2,0.5).faces(">Z").workplane() \
-        .rect(1.5,1.5,forConstruction=True).vertices().hole(0.125 )
+    result = cq.Workplane("front").box(2, 2, 0.5).faces(">Z").workplane() \
+        .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.125 )
     build_object(result)
 
 .. topic:: Api References
@@ -459,7 +459,7 @@ are removed, and then the inside of the solid is 'hollowed out' to make the shel
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(2,2,2).faces("+Z").shell(0.05)
+    result = cq.Workplane("front").box(2, 2, 2).faces("+Z").shell(0.05)
     build_object(result)
 
 .. topic:: Api References
@@ -480,8 +480,8 @@ and a circular section.
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(4.0,4.0,0.25).faces(">Z").circle(1.5) \
-        .workplane(offset=3.0).rect(0.75,0.5).loft(combine=True)
+    result = cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").circle(1.5) \
+        .workplane(offset=3.0).rect(0.75, 0.5).loft(combine=True)
 
     build_object(result)
 
@@ -505,8 +505,8 @@ Similar to :py:meth:`Workplane.hole` , these functions operate on a list of poin
 
 .. cq_plot::
 
-    result = cq.Workplane(cq.Plane.XY()).box(4,2,0.5).faces(">Z").workplane().rect(3.5,1.5,forConstruction=True)\
-    .vertices().cboreHole(0.125, 0.25,0.125,depth=None)
+    result = cq.Workplane(cq.Plane.XY()).box(4,2, 0.5).faces(">Z").workplane().rect(3.5, 1.5, forConstruction=True)\
+    .vertices().cboreHole(0.125, 0.25, 0.125, depth=None)
 
     build_object(result)
 
@@ -533,7 +533,7 @@ Here we fillet all of the edges of a simple plate.
 
 .. cq_plot::
 
-    result = cq.Workplane("XY" ).box(3,3,0.5).edges("|Z").fillet(0.125)
+    result = cq.Workplane("XY" ).box(3, 3, 0.5).edges("|Z").fillet(0.125)
     build_object(result)
 
 .. topic:: Api References
@@ -554,12 +554,12 @@ with just a few lines of code.
 
 .. cq_plot::
 
-        (length,height,bearing_diam, thickness,padding) = ( 30.0,40.0,22.0,10.0,8.0)
+        (length,height,bearing_diam, thickness,padding) = ( 30.0, 40.0, 22.0, 10.0, 8.0)
 
         result = cq.Workplane("XY").box(length,height,thickness).faces(">Z").workplane().hole(bearing_diam) \
                 .faces(">Z").workplane() \
                 .rect(length-padding,height-padding,forConstruction=True) \
-                .vertices().cboreHole(2.4,4.4,2.1)
+                .vertices().cboreHole(2.4, 4.4, 2.1)
 
         build_object(result)
 
@@ -604,12 +604,12 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
 
 .. cq_plot::
 
-    (L,w,t) = (20.0,6.0,3.0)
+    (L,w,t) = (20.0, 6.0, 3.0)
     s = cq.Workplane("XY")
 
     #draw half the profile of the bottle and extrude it
-    p = s.center(-L/2.0,0).vLine(w/2.0) \
-        .threePointArc((L/2.0, w/2.0 + t),(L,w/2.0)).vLine(-w/2.0) \
+    p = s.center(-L/2.0, 0).vLine(w/2.0) \
+        .threePointArc((L/2.0, w/2.0 + t),(L, w/2.0)).vLine(-w/2.0) \
         .mirrorX().extrude(30.0,True)
 
     #make the neck
