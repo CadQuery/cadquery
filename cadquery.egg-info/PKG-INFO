@@ -1,13 +1,18 @@
 Metadata-Version: 1.1
 Name: cadquery
-Version: 0.3.0
+Version: 0.4.0
 Summary: CadQuery is a parametric  scripting language for creating and traversing CAD models
 Home-page: https://github.com/dcowden/cadquery
 Author: David Cowden
 Author-email: dave.cowden@gmail.com
-License: Apache Public License
+License: Apache Public License 2.0
 Description: What is a CadQuery?
         ========================================
+        
+        [![Travis Build Status](https://travis-ci.org/dcowden/cadquery.svg)](https://travis-ci.org/dcowden/cadquery)
+        [![Coverage Status](https://coveralls.io/repos/dcowden/cadquery/badge.svg)](https://coveralls.io/r/dcowden/cadquery)
+        [![GitHub version](https://badge.fury.io/gh/dcowden%2Fcadquery.svg)](https://github.com/dcowden/cadquery/releases/tag/v0.3.0)
+        [![License](https://img.shields.io/badge/license-LGPL-lightgrey.svg)](https://github.com/dcowden/cadquery/blob/master/LICENSE)
         
         CadQuery is an intuitive, easy-to-use python based language for building parametric 3D CAD models.  CadQuery is for 3D CAD what jQuery is for javascript.  Imagine selecting Faces of a 3d object the same way you select DOM objects with JQuery!
         
@@ -20,17 +25,23 @@ Description: What is a CadQuery?
         
         Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
         
+        Full Documentation
+        ============================
+        You can find the full cadquery documentation at http://dcowden.github.io/cadquery
+        
+        
         Getting Started With CadQuery
         ========================================
         
-        The easiest way to get started with CadQuery is to Install FreeCAD ( version 14 recommended )  (http://www.freecadweb.org/) , and then to use our CadQuery-FreeCAD plugin here:
-        
-        https://github.com/jmwright/cadquery-freecad-module
+        The easiest way to get started with CadQuery is to Install FreeCAD (version 14+)  (http://www.freecadweb.org/), and then to use our great CadQuery-FreeCAD plugin here: https://github.com/jmwright/cadquery-freecad-module
         
         
         It includes the latest version of cadquery alreadby bundled, and has super-easy installation on Mac, Windows, and Unix.
         
         It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
+        
+        We also have a Google Group to make it easy to get help from other CadQuery users. Please join the group and introduce yourself, and we would also love to hear what you are doing with CadQuery. https://groups.google.com/forum/#!forum/cadquery
+        
         
         
         Why CadQuery instead of OpenSCAD?
@@ -55,12 +66,13 @@ Description: What is a CadQuery?
         4. **Less Code and easier scripting**  CadQuery scripts require less code to create most objects, because it is possible to locate
            features based on the position of other features, workplanes, vertices, etc.
         
-        5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD. 
+        5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
         
         License
         ========
         
-        CadQuery is licensed under the terms of the Apache Public License, v 2.0 http://www.apache.org/licenses/LICENSE-2.0
+        CadQuery is licensed under the terms of the Apache Public License, version 2.0.
+        A copy of the license can be found at http://www.apache.org/licenses/LICENSE-2.0
         
         Where is the GUI?
         ==================
@@ -74,22 +86,22 @@ Description: What is a CadQuery?
         
         Use these steps if you would like to write CadQuery scripts as a python API.  In this case, FreeCAD is used only as a CAD kernel.
         
-        1. install FreeCAD, version 0.14 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
+        1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
         
-        2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own, 
+        2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own,
            preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD
            lib directory to your path. On  (*Nix)::
-           
+        
                 import sys
         		sys.path.append('/usr/lib/freecad/lib')
-        		
+        
            or on Windows::
-             
+        
         	    import sys
         		sys.path.append('/c/apps/FreeCAD/bin')
-        		
+        
            *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
-           
+        
         3. install cadquery::
         
         		pip install cadquery
@@ -99,9 +111,9 @@ Description: What is a CadQuery?
         		from cadquery import *
         		box = Workplane("XY").box(1,2,3)
         		exporters.toString(box,'STL')
-        		
+        
         You're up and running!
-        		
+        
         Installing -- Using CadQuery from Inside FreeCAD
         =================================================
         
@@ -120,7 +132,7 @@ Description: What is a CadQuery?
         
         * A fluent api to create clean, easy to read code
         * Language features that make selection and iteration incredibly easy
-        * 
+        *
         * Ability to use the library along side other python libraries
         * Clear and complete documentation, with plenty of samples.
         
@@ -132,7 +144,7 @@ Classifier: Intended Audience :: End Users/Desktop
 Classifier: Intended Audience :: Information Technology
 Classifier: Intended Audience :: Science/Research
 Classifier: Intended Audience :: System Administrators
-Classifier: License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)
+Classifier: License :: OSI Approved :: Apache Software License
 Classifier: Operating System :: POSIX
 Classifier: Operating System :: MacOS
 Classifier: Operating System :: Unix
