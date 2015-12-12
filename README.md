@@ -17,6 +17,11 @@ CadQuery has several goals:
 
 Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
 
+Full Documentation
+============================
+You can find the full cadquery documentation at http://dcowden.github.io/cadquery
+
+
 Getting Started With CadQuery
 ========================================
 
@@ -28,6 +33,7 @@ It includes the latest version of cadquery alreadby bundled, and has super-easy 
 It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
 
 We also have a Google Group to make it easy to get help from other CadQuery users. Please join the group and introduce yourself, and we would also love to hear what you are doing with CadQuery. https://groups.google.com/forum/#!forum/cadquery
+
 
 
 Why CadQuery instead of OpenSCAD?

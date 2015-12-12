@@ -1,11 +1,11 @@
 README.txt
 setup.cfg
 setup.py
-cadquery\CQ.py
+cadquery\cq.py
 cadquery\__init__.py
 cadquery\cq_directive.py
 cadquery\selectors.py
-cadquery\workplane.py
+cadquery\cqgi.py
 cadquery\contrib\__init__.py
 cadquery\freecad_impl\__init__.py
 cadquery\freecad_impl\exporters.py
@@ -19,4 +19,5 @@ tests\TestCadQuery.py
 tests\TestExporters.py
 tests\TestImporters.py
 tests\TestWorkplanes.py
+tests\TestCQGI.py
 tests\__init__.py
