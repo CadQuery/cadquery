@@ -1,8 +1,8 @@
 .. _roadmap:
 
-**************************
+
 RoadMap:  Planned Features
-**************************
+==============================
 
 **CadQuery is not even close to finished!!!**
 
@@ -139,16 +139,10 @@ primitive creation
         * wedge
 
 extrude/cut up to surface
-    allow a cut or extrude to terminate at another surface ,rather than either through all or a fixed distance
+    allow a cut or extrude to terminate at another surface, rather than either through all or a fixed distance
 
 extrude along a path
     rather than just normal to the plane.  This would include
-
-loft
-    create a feature between two or more wire sections
-
-revolve
-    revolve a wire around an axis to create a solid
 
 STEP import
     allow embedding and importing step solids created in other tools, which

@@ -349,6 +349,10 @@ class Shape(object):
 
 
 class Vertex(Shape):
+    """
+    A Single Point in Space
+    """
+
     def __init__(self, obj, forConstruction=False):
         """
             Create a vertex from a FreeCAD Vertex
@@ -373,6 +377,10 @@ class Vertex(Shape):
 
 
 class Edge(Shape):
+    """
+    A trimmed curve that represents the border of a face
+    """
+
     def __init__(self, obj):
         """
             An Edge
@@ -425,7 +433,7 @@ class Edge(Shape):
 
     def tangentAt(self, locationVector=None):
         """
-            Compute tangent vector at the specified location.
+        Compute tangent vector at the specified location.
         :param locationVector: location to use. Use the center point if None
         :return: tangent vector
         """
@@ -479,6 +487,10 @@ class Edge(Shape):
 
 
 class Wire(Shape):
+    """
+    A series of connected, ordered Edges, that typically bounds a Face
+    """
+
     def __init__(self, obj):
         """
             A Wire
@@ -545,10 +557,11 @@ class Wire(Shape):
         return self
 
 class Face(Shape):
+    """
+    a bounded surface that represents part of the boundary of a solid
+    """
     def __init__(self, obj):
-        """
-            A Face
-        """
+
         self.wrapped = obj
 
         self.facetypes = {
@@ -611,6 +624,9 @@ class Face(Shape):
 
 
 class Shell(Shape):
+    """
+    the outer boundary of a surface
+    """
     def __init__(self, wrapped):
         """
             A Shell
@@ -626,6 +642,9 @@ class Shell(Shape):
 
 
 class Solid(Shape):
+    """
+    a single solid
+    """
     def __init__(self, obj):
         """
             A Solid
@@ -649,36 +668,36 @@ class Solid(Shape):
     @classmethod
     def makeBox(cls, length, width, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
         """
-            makeBox(length,width,height,[pnt,dir]) -- Make a box located\nin pnt with the d
-            imensions (length,width,height)\nBy default pnt=Vector(0,0,0) and dir=Vector(0,0,1)'
+        makeBox(length,width,height,[pnt,dir]) -- Make a box located in pnt with the dimensions (length,width,height)
+        By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)'
         """
         return Shape.cast(FreeCADPart.makeBox(length, width, height, pnt.wrapped, dir.wrapped))
 
     @classmethod
     def makeCone(cls, radius1, radius2, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees=360):
         """
-            'makeCone(radius1,radius2,height,[pnt,dir,angle]) --
-            Make a cone with given radii and height\nBy default pnt=Vector(0,0,0),
-            dir=Vector(0,0,1) and angle=360'
+        Make a cone with given radii and height
+        By default pnt=Vector(0,0,0),
+        dir=Vector(0,0,1) and angle=360'
         """
         return Shape.cast(FreeCADPart.makeCone(radius1, radius2, height, pnt.wrapped, dir.wrapped, angleDegrees))
 
     @classmethod
     def makeCylinder(cls, radius, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees=360):
         """
-            makeCylinder(radius,height,[pnt,dir,angle]) --
-            Make a cylinder with a given radius and height
-            By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360'
+        makeCylinder(radius,height,[pnt,dir,angle]) --
+        Make a cylinder with a given radius and height
+        By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360'
         """
         return Shape.cast(FreeCADPart.makeCylinder(radius, height, pnt.wrapped, dir.wrapped, angleDegrees))
 
     @classmethod
     def makeTorus(cls, radius1, radius2, pnt=None, dir=None, angleDegrees1=None, angleDegrees2=None):
         """
-            makeTorus(radius1,radius2,[pnt,dir,angle1,angle2,angle]) --
-            Make a torus with agiven radii and angles
-            By default pnt=Vector(0,0,0),dir=Vector(0,0,1),angle1=0
-            ,angle1=360 and angle=360'
+        makeTorus(radius1,radius2,[pnt,dir,angle1,angle2,angle]) --
+        Make a torus with agiven radii and angles
+        By default pnt=Vector(0,0,0),dir=Vector(0,0,1),angle1=0
+        ,angle1=360 and angle=360'
         """
         return Shape.cast(FreeCADPart.makeTorus(radius1, radius2, pnt, dir, angleDegrees1, angleDegrees2))
 
@@ -708,10 +727,8 @@ class Solid(Shape):
     @classmethod
     def makeWedge(cls, xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt=None, dir=None):
         """
-        'makeWedge(xmin, ymin, zmin, z2min, x2min,
-        xmax, ymax, zmax, z2max, x2max,[pnt, dir])
-         Make a wedge located in pnt\nBy default pnt=Vector(0,0,0) and dir=Vec
-        tor(0,0,1)'
+        Make a wedge located in pnt
+        By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
         """
         return Shape.cast(
             FreeCADPart.makeWedge(xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt, dir))
@@ -719,9 +736,8 @@ class Solid(Shape):
     @classmethod
     def makeSphere(cls, radius, pnt=None, dir=None, angleDegrees1=None, angleDegrees2=None, angleDegrees3=None):
         """
-            'makeSphere(radius,[pnt, dir, angle1,angle2,angle3]) --
-            Make a sphere with a giv
-            en radius\nBy default pnt=Vector(0,0,0), dir=Vector(0,0,1), angle1=0, angle2=90 and angle3=360'
+        Make a sphere with a given radius
+        By default pnt=Vector(0,0,0), dir=Vector(0,0,1), angle1=0, angle2=90 and angle3=360
         """
         return Shape.cast(FreeCADPart.makeSphere(radius, pnt.wrapped, dir.wrapped, angleDegrees1, angleDegrees2, angleDegrees3))
 
@@ -733,11 +749,11 @@ class Solid(Shape):
             Though the signature may appear to be similar enough to extrudeLinear to merit combining them, the
             construction methods used here are different enough that they should be separate.
 
-            At a high level, the steps followed ar:
-                (1) accept a set of wires
-                (2) create another set of wires like this one, but which are transformed and rotated
-                (3) create a ruledSurface between the sets of wires
-                (40 create a shell and compute the resulting object
+            At a high level, the steps followed are:
+            (1) accept a set of wires
+            (2) create another set of wires like this one, but which are transformed and rotated
+            (3) create a ruledSurface between the sets of wires
+            (4) create a shell and compute the resulting object
 
             :param outerWire: the outermost wire, a cad.Wire
             :param innerWires: a list of inner wires, a list of cad.Wire
@@ -930,6 +946,10 @@ class Solid(Shape):
 
 
 class Compound(Shape):
+    """
+    a collection of disconnected solids
+    """
+
     def __init__(self, obj):
         """
             An Edge

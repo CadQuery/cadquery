@@ -65,3 +65,9 @@ v0.3.0
    * Add the ability to find the center of the bounding box, rather than the center of mass (thanks @huskier) #122
    * Changed normalize function to normalized to match OCC/PythonOCC nomenclature #124
    * Added a label attribute to all freecad_impl.shapes so that they can have IDs attached to them #124
+
+v0.4.0
+------
+   * Added Documentation, which is available on dcowden.github.io/cadquery
+   * Added CQGI, an adapter API that standardizes use of cadquery from within structured execution environments
+   * Added ability to import STEP files from a web URL (thanks @huskier ) #128

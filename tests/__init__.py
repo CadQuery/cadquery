@@ -51,4 +51,4 @@ class BaseTest(unittest.TestCase):
         for i, j in zip(actual, expected):
             self.assertAlmostEquals(i, j, places)
 
-__all__ = ['TestCadObjects', 'TestCadQuery', 'TestCQSelectors', 'TestWorkplanes', 'TestExporters', 'TestCQSelectors', 'TestImporters']
+__all__ = ['TestCadObjects', 'TestCadQuery', 'TestCQSelectors', 'TestWorkplanes', 'TestExporters', 'TestCQSelectors', 'TestImporters','TestCQGI']
