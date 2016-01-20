@@ -185,7 +185,7 @@ class Shape(object):
         return self.wrapped.isValid()
 
     def BoundingBox(self, tolerance=0.1):
-	    self.wrapped.tessellate(tolerance)
+        self.wrapped.tessellate(tolerance)
         return BoundBox(self.wrapped.BoundBox)
 
     def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
