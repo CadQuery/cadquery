@@ -742,6 +742,19 @@ class CQ(object):
         return self.newObject([o.rotate(axisStartPoint, axisEndPoint, angleDegrees)
                                for o in self.objects])
 
+    def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
+	"""
+	Mirror a single CQ object. This operation is the same as in the FreeCAD PartWB's mirroring
+
+	:param mirrorPlane: the plane to mirror about
+	:type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
+	:param basePointVector: the base point to mirror about
+	:type basePointVector: tuple
+	"""
+	newS = self.newObject([self.objects[0].mirror(mirrorPlane, basePointVector)])
+	return newS.first()
+
+
     def translate(self, vec):
         """
         Returns a copy of all of the items on the stack moved by the specified translation vector.

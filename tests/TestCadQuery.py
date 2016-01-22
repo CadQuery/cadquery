@@ -550,6 +550,43 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(10,currentS.faces().size())
 
+    def testBoundingBox(self):
+	"""
+	Tests the boudingbox center of a model
+	"""
+	result0 = (Workplane("XY")
+           	   .moveTo(10,0)
+                   .lineTo(5,0)
+                   .threePointArc((3.9393,0.4393),(3.5,1.5))
+                   .threePointArc((3.0607,2.5607),(2,3))
+                   .lineTo(1.5,3)
+                   .threePointArc((0.4393,3.4393),(0,4.5))
+                   .lineTo(0,13.5)
+                   .threePointArc((0.4393,14.5607),(1.5,15))
+                   .lineTo(28,15)
+                   .lineTo(28,13.5)
+                   .lineTo(24,13.5)
+                   .lineTo(24,11.5)
+                   .lineTo(27,11.5)
+                   .lineTo(27,10)
+                   .lineTo(22,10)
+                   .lineTo(22,13.2)
+                   .lineTo(14.5,13.2)
+                   .lineTo(14.5,10)
+                   .lineTo(12.5,10 )
+                   .lineTo(12.5,13.2)
+                   .lineTo(5.5,13.2)
+                   .lineTo(5.5,2)
+                   .threePointArc((5.793,1.293),(6.5,1))
+                   .lineTo(10,1)
+                   .close())
+	result = result0.extrude(100)
+	bb_center = result.val().BoundingBox().center
+	self.saveModel(result)
+	self.assertAlmostEqual(14.0, bb_center.x, 3)
+	self.assertAlmostEqual(7.5, bb_center.y, 3)
+	self.assertAlmostEqual(50.0, bb_center.z, 3)
+
     def testCutThroughAll(self):
         """
             Tests a model that uses more than one workplane

@@ -184,8 +184,22 @@ class Shape(object):
     def isValid(self):
         return self.wrapped.isValid()
 
-    def BoundingBox(self):
+    def BoundingBox(self, tolerance=0.1):
+        self.wrapped.tessellate(tolerance)
         return BoundBox(self.wrapped.BoundBox)
+
+    def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
+        if mirrorPlane == "XY" or mirrorPlane== "YX":
+            mirrorPlaneNormalVector = FreeCAD.Base.Vector(0, 0, 1)
+        elif mirrorPlane == "XZ" or mirrorPlane == "ZX":
+            mirrorPlaneNormalVector = FreeCAD.Base.Vector(0, 1, 0)
+        elif mirrorPlane == "YZ" or mirrorPlane == "ZY":
+            mirrorPlaneNormalVector = FreeCAD.Base.Vector(1, 0, 0)
+
+        if type(basePointVector) == tuple:
+            basePointVector = Vector(basePointVector)
+
+        return Shape.cast(self.wrapped.mirror(basePointVector.wrapped, mirrorPlaneNormalVector))
 
     def Center(self):
         # A Part.Shape object doesn't have the CenterOfMass function, but it's wrapped Solid(s) does
