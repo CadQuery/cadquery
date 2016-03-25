@@ -25,3 +25,4 @@ after_success:
 branches:
   except:
     - pythonocc
+    - 2_0_branch
