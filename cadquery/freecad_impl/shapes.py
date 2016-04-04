@@ -237,14 +237,25 @@ class Shape(object):
 
         :param objects: a list of objects with mass
         """
-        total_mass = sum(o.wrapped.Mass for o in objects)
-        weighted_centers = [o.wrapped.CenterOfMass.multiply(o.wrapped.Mass) for o in objects]
+        total_mass = sum(Shape.computeMass(o) for o in objects)
+        weighted_centers = [o.wrapped.CenterOfMass.multiply(Shape.computeMass(o)) for o in objects]
 
         sum_wc = weighted_centers[0]
         for wc in weighted_centers[1:] :
             sum_wc = sum_wc.add(wc)
 
         return Vector(sum_wc.multiply(1./total_mass))
+
+    @staticmethod
+    def computeMass(object):
+        """
+        Calculates the 'mass' of an object. in FreeCAD < 15, all objects had a mass.
+        in FreeCAD >=15, faces no longer have mass, but instead have area.
+        """
+        if object.wrapped.ShapeType == 'Face':
+          return object.wrapped.Area
+        else:
+          return object.wrapped.Mass
 
     @staticmethod
     def CombinedCenterOfBoundBox(objects):
