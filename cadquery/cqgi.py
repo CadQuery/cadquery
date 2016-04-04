@@ -75,11 +75,13 @@ class CQModel(object):
         """
         raise NotImplementedError("not yet implemented")
 
-    def build(self, build_parameters=None):
+    def build(self, build_parameters=None, build_options=None):
         """
         Executes the script, using the optional parameters to override those in the model
         :param build_parameters: a dictionary of variables. The variables must be
-        assignable to the underlying variable type.
+        assignable to the underlying variable type. These variables override default values in the script
+        :param build_options: build options for how to build the model. Build options include things like
+        timeouts, tesselation tolerances, etc
         :raises: Nothing. If there is an exception, it will be on the exception property of the result.
         This is the interface so that we can return other information on the result, such as the build time
         :return: a BuildResult object, which includes the status of the result, and either
