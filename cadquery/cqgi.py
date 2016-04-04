@@ -95,10 +95,13 @@ class CQModel(object):
             self.set_param_values(build_parameters)
             collector = ScriptCallback()
             env = EnvironmentBuilder().with_real_builtins().with_cadquery_objects() \
-                .add_entry("build_object", collector.build_object).build()
+                .add_entry("build_object", collector.build_object) \
+                .add_entry("debug", collector.debug) \
+                .build()
 
             c = compile(self.ast_tree, CQSCRIPT, 'exec')
             exec (c, env)
+            result.set_debug(collector.debugObjects )
             if collector.has_results():
                 result.set_success_result(collector.outputObjects)
             else:
@@ -139,6 +142,7 @@ class BuildResult(object):
     def __init__(self):
         self.buildTime = None
         self.results = []
+        self.debugObjects = []
         self.first_result = None
         self.success = False
         self.exception = None
@@ -146,6 +150,9 @@ class BuildResult(object):
     def set_failure_result(self, ex):
         self.exception = ex
         self.success = False
+
+    def set_debug(self, debugObjects):
+        self.debugObjects = debugObjects
 
     def set_success_result(self, results):
         self.results = results
@@ -270,9 +277,9 @@ class ScriptCallback(object):
     the build_object() method is exposed to CQ scripts, to allow them
     to return objects to the execution environment
     """
-
     def __init__(self):
         self.outputObjects = []
+        self.debugObjects = []
 
     def build_object(self, shape):
         """
@@ -280,6 +287,12 @@ class ScriptCallback(object):
         :param shape: a cadquery object
         """
         self.outputObjects.append(shape)
+
+    def debug(self,obj,args={}):
+        """
+        Debug print/output an object, with optional arguments.
+        """
+        self.debugObjects.append(DebugObject(obj,args))
 
     def describe_parameter(self,var, valid_values, short_desc):
         """
@@ -297,7 +310,15 @@ class ScriptCallback(object):
     def has_results(self):
         return len(self.outputObjects) > 0
 
-
+class DebugObject(object):
+    """
+    Represents a request to debug an object
+    Object is the type of object we want to debug
+    args are parameters for use during debuging ( for example, color, tranparency )
+    """
+    def __init__(self,object,args):
+        self.args = args
+        self.object = object
 
 class InvalidParameterError(Exception):
     """
