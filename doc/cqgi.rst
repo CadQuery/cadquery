@@ -70,6 +70,24 @@ run code like this::
 
 The :py:meth:`cadquery.cqgi.parse()` method returns a :py:class:`cadquery.cqgi.CQModel` object.
 
+The `metadata`p property of the object contains a `cadquery.cqgi.ScriptMetaData` object, which can be used to discover the
+user parameters available. This is useful if the execution environment would like to present a GUI to allow the user to change the 
+model parameters.  Typically, after collecting new values, the environment will supply them in the build() method.
+
+This code will return a dictionary of parameter values in the model text SCRIPT::
+     
+     parameters = cqgi.parse(SCRIPT).metadata.parameters
+
+The dictionary you get back is a map where key is the parameter name, and value is an InputParameter object, 
+which has a name, type, and default value. 
+
+The type is an object which extends ParameterType-- you can use this to determine what kind of widget to render ( checkbox for boolean, for example ).
+
+The parameter object also has a description, valid values, minimum, and maximum values, if the user has provided them using the
+describe_parameter() method.
+
+
+
 Calling :py:meth:`cadquery.cqgi.CQModel.build()` returns a :py:class:`cadquery.cqgi.BuildResult` object,
 ,which includes the script execution time, and a success flag.
 

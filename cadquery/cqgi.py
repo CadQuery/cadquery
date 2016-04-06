@@ -44,9 +44,11 @@ class CQModel(object):
         self.ast_tree = ast.parse(script_source, CQSCRIPT)
         self.script_source = script_source
         self._find_vars()
+
         # TODO: pick up other scirpt metadata:
         # describe
         # pick up validation methods
+	self._find_descriptions()
 
     def _find_vars(self):
         """
@@ -65,6 +67,9 @@ class CQModel(object):
             if isinstance(node, ast.Assign):
                 assignment_finder.visit_Assign(node)
 
+    def _find_descriptions(self):
+        description_finder = ParameterDescriptionFinder(self.metadata)
+        description_finder.visit(self.ast_tree)
 
     def validate(self, params):
         """
@@ -99,6 +104,7 @@ class CQModel(object):
             env = EnvironmentBuilder().with_real_builtins().with_cadquery_objects() \
                 .add_entry("build_object", collector.build_object) \
                 .add_entry("debug", collector.debug) \
+                .add_entry("describe_parameter",collector.describe_parameter) \
                 .build()
 
             c = compile(self.ast_tree, CQSCRIPT, 'exec')
@@ -173,6 +179,11 @@ class ScriptMetadata(object):
     def add_script_parameter(self, p):
         self.parameters[p.name] = p
 
+    def add_parameter_description(self,name,description):
+        print 'Adding Parameter name=%s, desc=%s' % ( name, description )
+        p = self.parameters[name]
+        p.desc = description
+
 
 class ParameterType(object):
     pass
@@ -213,19 +224,15 @@ class InputParameter:
         self.varType = None
 
         #: help text describing the variable. Only available if the script used describe_parameter()
-        self.shortDesc = None
-
-
+        self.desc = None
 
         #: valid values for the variable. Only available if the script used describe_parameter()
         self.valid_values = []
 
-
-
         self.ast_node = None
 
     @staticmethod
-    def create(ast_node, var_name, var_type, default_value, valid_values=None, short_desc=None):
+    def create(ast_node, var_name, var_type, default_value, valid_values=None, desc=None):
 
         if valid_values is None:
             valid_values = []
@@ -234,10 +241,7 @@ class InputParameter:
         p.ast_node = ast_node
         p.default_value = default_value
         p.name = var_name
-        if short_desc is None:
-            p.shortDesc = var_name
-        else:
-            p.shortDesc = short_desc
+        p.desc = desc
         p.varType = var_type
         p.valid_values = valid_values
         return p
@@ -296,10 +300,9 @@ class ScriptCallback(object):
         """
         self.debugObjects.append(DebugObject(obj,args))
 
-    def describe_parameter(self,var, valid_values, short_desc):
+    def describe_parameter(self,var_data ):
         """
-        Not yet implemented: allows a script to document
-        extra metadata about the parameters
+        Do Nothing-- we parsed the ast ahead of exection to get what we need.
         """
         pass
 
@@ -394,6 +397,30 @@ class EnvironmentBuilder(object):
     def build(self):
         return self.env
 
+class ParameterDescriptionFinder(ast.NodeTransformer):
+    """
+    Visits a parse tree, looking for function calls to describe_parameter(var, description )
+    """
+    def __init__(self, cq_model):
+        self.cqModel = cq_model
+
+    def visit_Call(self,node):
+       """
+       Called when we see a function call. Is it describe_parameter?
+       """
+       try:
+            if node.func.id == 'describe_parameter':
+                #looks like we have a call to our function.
+                #first parameter is the variable,
+                #second is the description
+                varname = node.args[0].id
+		desc = node.args[1].s
+                self.cqModel.add_parameter_description(varname,desc)
+
+       except:
+            print "Unable to handle function call"
+            pass
+       return node
 
 class ConstantAssignmentFinder(ast.NodeTransformer):
     """
@@ -404,9 +431,6 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
         self.cqModel = cq_model
 
     def handle_assignment(self, var_name, value_node):
-
-
-
         try:
 
             if type(value_node) == ast.Num:

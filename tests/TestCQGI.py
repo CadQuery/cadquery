@@ -66,6 +66,30 @@ class TestCQGI(BaseTest):
         result = model.build({'height': 3.0})
         self.assertTrue(result.results[0] == "3.0|3.0|bar|1.0")
 
+    def test_describe_parameters(self):
+        script = textwrap.dedent(
+            """
+                a = 2.0
+                describe_parameter(a,'FirstLetter')
+            """
+        )
+        model = cqgi.CQModel(script)
+        a_param = model.metadata.parameters['a']
+        self.assertTrue(a_param.default_value == 2.0)
+        self.assertTrue(a_param.desc == 'FirstLetter')
+        self.assertTrue(a_param.varType == cqgi.NumberParameterType )
+
+    def test_describe_parameter_invalid_doesnt_fail_script(self):
+        script = textwrap.dedent(
+            """
+                a = 2.0
+                describe_parameter(a, 2 - 1 )
+            """
+        )
+        model = cqgi.CQModel(script)
+        a_param = model.metadata.parameters['a']
+        self.assertTrue(a_param.name == 'a' )
+     
     def test_build_with_exception(self):
         badscript = textwrap.dedent(
             """
