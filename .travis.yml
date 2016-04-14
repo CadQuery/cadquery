@@ -26,3 +26,5 @@ deploy:
   user: dcowden
   password:
     secure: aP02wBbry1j3hYG/w++siF1lk26teuRQlPAx1c+ec8fxUw+bECa2HbPQHcIvSXB5N6nc6P3L9LjHt9ktm+Dn6FLJu3qWYNGAZx9PTn24ug0iAmB+JyNrsET3nK6WUKR1XpBqvjKgdpukd1Hknh2FSzYoyUvFWH9/CovITCFN3jo=
+  on:
+    tags: true
