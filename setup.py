@@ -19,7 +19,7 @@ from setuptools import setup
 version = '0.5-SNAPSHOT'
 if 'TRAVIS_TAG' in os.environ.keys():
     version= os.environ['TRAVIS_TAG']
-
+ 
 
 setup(
     name='cadquery',
