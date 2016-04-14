@@ -16,10 +16,10 @@ from setuptools import setup
 
 
 #if we are building in travis, use the build number as the sub-minor version
-version_list = ['0','4','0']
-if 'TRAVIS_BUILD_NUMBER' in os.environ.keys():
-    version_list[-1] = os.environ['TRAVIS_BUILD_NUMBER']
-version = '.'.join(version_list)
+version = '0.5-SNAPSHOT'
+if 'TRAVIS_TAG' in os.environ.keys():
+    version= os.environ['TRAVIS_TAG']
+
 
 setup(
     name='cadquery',
