@@ -25,4 +25,4 @@ deploy:
   provider: pypi
   user: dcowden
   password:
-    secure: JwP4mOuypJPVW+WYgvVWLSY7rr1oEkxFhzMx3GCR53LfnpwGd9Qlm4aCDu0RbAuwbpEWmLD1S/m9/jtGr4LuTOMqqoLrRVxjNqz96hGo2he+/G/s5k1KyP8jSZK1zhJV5u69YcSnJq5/NI+ondALyYU3ZpEVFaFVcUA/PsDWzXA=
+    secure: aP02wBbry1j3hYG/w++siF1lk26teuRQlPAx1c+ec8fxUw+bECa2HbPQHcIvSXB5N6nc6P3L9LjHt9ktm+Dn6FLJu3qWYNGAZx9PTn24ug0iAmB+JyNrsET3nK6WUKR1XpBqvjKgdpukd1Hknh2FSzYoyUvFWH9/CovITCFN3jo=
