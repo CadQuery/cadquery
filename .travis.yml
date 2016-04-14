@@ -1,28 +1,28 @@
----
 language: python
-
 before_install:
-  - sudo add-apt-repository -y ppa:freecad-maintainers/freecad-daily
-  - sudo apt-get update -qq
+- sudo add-apt-repository -y ppa:freecad-maintainers/freecad-daily
+- sudo apt-get update -qq
 install:
-  - sudo apt-get install -y freecad freecad-doc
-  - gcc --version
-  - g++ --version
-  - python ./setup.py install
-  - pip install coverage
-  - pip install coveralls
-  - pip install Sphinx==1.3.2
-  - pip install travis-sphinx
-
+- sudo apt-get install -y freecad freecad-doc
+- gcc --version
+- g++ --version
+- python ./setup.py install
+- pip install coverage
+- pip install coveralls
+- pip install Sphinx==1.3.2
+- pip install travis-sphinx
 script:
-  - coverage run --source=cadquery ./runtests.py
-  - travis-sphinx --nowarn --source=doc build
-
+- coverage run --source=cadquery ./runtests.py
+- travis-sphinx --nowarn --source=doc build
 after_success:
-  - coveralls
-  - travis-sphinx deploy
-  
+- coveralls
+- travis-sphinx deploy
 branches:
   except:
-    - pythonocc
-    - 2_0_branch
+  - pythonocc
+  - 2_0_branch
+deploy:
+  provider: pypi
+  user: dcowden
+  password:
+    secure: JwP4mOuypJPVW+WYgvVWLSY7rr1oEkxFhzMx3GCR53LfnpwGd9Qlm4aCDu0RbAuwbpEWmLD1S/m9/jtGr4LuTOMqqoLrRVxjNqz96hGo2he+/G/s5k1KyP8jSZK1zhJV5u69YcSnJq5/NI+ondALyYU3ZpEVFaFVcUA/PsDWzXA=
