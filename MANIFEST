@@ -1,4 +1,5 @@
 README.txt
+README.md
 setup.cfg
 setup.py
 cadquery\cq.py
