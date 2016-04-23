@@ -71,3 +71,16 @@ v0.4.0
    * Added Documentation, which is available on dcowden.github.io/cadquery
    * Added CQGI, an adapter API that standardizes use of cadquery from within structured execution environments
    * Added ability to import STEP files from a web URL (thanks @huskier ) #128
+
+v0.4.1
+------
+   * Minor CQGI updates
+
+v0.5.0-stable
+------
+   * Configuring Travis to push to PyPI on version releases.
+
+v0.5.1
+------
+   * Mirroring fixes (thanks @huskier)
+   * Added a mirroring example (thanks @huskier)
