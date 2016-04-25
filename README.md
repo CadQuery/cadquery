@@ -44,7 +44,7 @@ This resin mold was modeled using cadquery and then created on a CNC machine:
    <img src="doc/_static/hyOzd-finished.jpg" width="350"/>
 </p>
 
-The cadquery script is surprisingly short, and allow easily customizing any of the variables::
+The cadquery script is surprisingly short, and allows easily customizing any of the variables::
 
 	import cadquery as cq
 	from Helpers import show
