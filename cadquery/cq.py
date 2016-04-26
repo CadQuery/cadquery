@@ -2055,6 +2055,24 @@ class Workplane(CQ):
         if clean: newS = newS.clean()
         return newS
 
+    def sweep(self, path, combine=True, clean=True):
+        """
+        Use all un-extruded wires in the parent chain to create a swept solid.
+
+        :param path: A wire along which the pending wires will be swept
+        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :return: a CQ object with the resulting solid selected.
+        """
+
+        r = self._sweep(path.wire())  # returns a Solid (or a compound if there were multiple)
+        if combine:
+            newS = self._combineWithBase(r)
+        else:
+            newS = self.newObject([r])
+        if clean: newS = newS.clean()
+        return newS
+
     def _combineWithBase(self, obj):
         """
         Combines the provided object with the base solid, if one can be found.
@@ -2314,6 +2332,28 @@ class Workplane(CQ):
         toFuse = []
         for ws in wireSets:
             thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees, axisStart, axisEnd)
+            toFuse.append(thisObj)
+
+        return Compound.makeCompound(toFuse)
+
+    def _sweep(self, path):
+        """
+        Makes a swept solid from an existing set of pending wires.
+
+        :param path: A wire along which the pending wires will be swept
+        :return:a FreeCAD solid, suitable for boolean operations
+        """
+
+        # group wires together into faces based on which ones are inside the others
+        # result is a list of lists
+        s = time.time()
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires), self.plane, [])
+        # print "sorted wires in %d sec" % ( time.time() - s )
+        self.ctx.pendingWires = []  # now all of the wires have been used to create an extrusion
+
+        toFuse = []
+        for ws in wireSets:
+            thisObj = Solid.sweep(ws[0], ws[1:], path)
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
