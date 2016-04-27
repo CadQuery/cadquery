@@ -905,6 +905,28 @@ class Solid(Shape):
 
         return Shape.cast(result)
 
+    @classmethod
+    def sweep(cls, outerWire, innerWires, path, makeSolid=True, isFrenet=False):
+        """
+        Attempt to sweep the list of wires  into a prismatic solid along the provided path
+
+        :param outerWire: the outermost wire
+        :param innerWires: a list of inner wires
+        :param path: The wire to sweep the face resulting from the wires over
+        :return: a Solid object
+        """
+
+        # FreeCAD allows this in one operation, but others might not
+        freeCADWires = [outerWire.wrapped]
+        for w in innerWires:
+            freeCADWires.append(w.wrapped)
+
+        # f = FreeCADPart.Face(freeCADWires)
+        wire = FreeCADPart.Wire([path.wrapped])
+        result = wire.makePipeShell(freeCADWires, makeSolid, isFrenet)
+
+        return Shape.cast(result)
+
     def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
 

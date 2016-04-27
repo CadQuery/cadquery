@@ -349,6 +349,60 @@ class TestCadQuery(BaseTest):
         self.assertEqual(2, result.vertices().size())
         self.assertEqual(3, result.edges().size())
 
+    def testSweep(self):
+        """
+        Tests the operation of sweeping a wire(s) along a path
+        """
+        pts = [
+            (0, 1),
+            (1, 2),
+            (2, 4)
+        ]
+
+        # Spline path
+        path = Workplane("XZ").spline(pts)
+
+        # Test defaults
+        result = Workplane("XY").circle(1.0).sweep(path)
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(3, result.edges().size())
+
+        # Test with makeSolid False
+        result = Workplane("XY").circle(1.0).sweep(path, makeSolid=False)
+        self.assertEqual(1, result.faces().size())
+        self.assertEqual(3, result.edges().size())
+
+        # Test with isFrenet True
+        result = Workplane("XY").circle(1.0).sweep(path, isFrenet=True)
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(3, result.edges().size())
+
+        # Test with makeSolid False and isFrenet True
+        result = Workplane("XY").circle(1.0).sweep(path, makeSolid=False, isFrenet=True)
+        self.assertEqual(1, result.faces().size())
+        self.assertEqual(3, result.edges().size())
+
+        # Test rectangle with defaults
+        result = Workplane("XY").rect(1.0, 1.0).sweep(path)
+        self.assertEqual(6, result.faces().size())
+        self.assertEqual(12, result.edges().size())
+
+        # Polyline path
+        path = Workplane("XZ").polyline(pts)
+
+        # Test defaults
+        result = Workplane("XY").circle(0.1).sweep(path)
+        self.assertEqual(5, result.faces().size())
+        self.assertEqual(7, result.edges().size())
+
+        # Arc path
+        path = Workplane("XZ").threePointArc((1.0, 1.5),(0.0, 1.0))
+
+        # Test defaults
+        result = Workplane("XY").circle(0.1).sweep(path)
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(3, result.edges().size())
+
     def testTwistExtrude(self):
         """
         Tests extrusion while twisting through an angle.
