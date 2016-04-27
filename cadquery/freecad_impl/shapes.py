@@ -922,7 +922,7 @@ class Solid(Shape):
             freeCADWires.append(w.wrapped)
 
         # f = FreeCADPart.Face(freeCADWires)
-        wire = FreeCADPart.Wire([path.val().wrapped])
+        wire = FreeCADPart.Wire([path.wrapped])
         result = wire.makePipeShell(freeCADWires, makeSolid, isFrenet)
 
         return Shape.cast(result)

@@ -2353,7 +2353,7 @@ class Workplane(CQ):
 
         toFuse = []
         for ws in wireSets:
-            thisObj = Solid.sweep(ws[0], ws[1:], path, makeSolid, isFrenet)
+            thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid, isFrenet)
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
