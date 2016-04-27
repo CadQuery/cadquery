@@ -84,3 +84,7 @@ v0.5.1
 ------
    * Mirroring fixes (thanks @huskier)
    * Added a mirroring example (thanks @huskier)
+
+v0.5.2
+------
+   * Added the sweep operation #33
