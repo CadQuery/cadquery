@@ -906,7 +906,7 @@ class Solid(Shape):
         return Shape.cast(result)
 
     @classmethod
-    def sweep(cls, outerWire, innerWires, path):
+    def sweep(cls, outerWire, innerWires, path, makeSolid=True, isFrenet=False):
         """
         Attempt to sweep the list of wires  into a prismatic solid along the provided path
 
@@ -923,7 +923,7 @@ class Solid(Shape):
 
         # f = FreeCADPart.Face(freeCADWires)
         wire = FreeCADPart.Wire([path.val().wrapped])
-        result = wire.makePipeShell(freeCADWires, True, True)
+        result = wire.makePipeShell(freeCADWires, makeSolid, isFrenet)
 
         return Shape.cast(result)
 
