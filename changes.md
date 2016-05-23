@@ -88,3 +88,7 @@ v0.5.1
 v0.5.2
 ------
    * Added the sweep operation #33
+
+v1.0.0 (unreleased)
+------
+   * Added an option to do symmetric extrusion about the workplane (thanks @adam-urbanczyk)
