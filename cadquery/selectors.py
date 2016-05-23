@@ -306,12 +306,20 @@ class DirectionMinMaxSelector(Selector):
             #    pnt = tShape.Center()
             #return pnt.dot(self.vector)
 
+        # import OrderedDict
+        from collections import OrderedDict
+        #make and distance to object dict
+        objectDict = {distance(el) : el for el in objectList}
+        #transform it into an ordered dict
+        objectDict = OrderedDict(sorted(objectDict.items(),
+                                        key=lambda x: x[0]))
+
         # find out the max/min distance
         if self.directionMax:
-            d = max(map(distance, objectList))
+            d = objectDict.keys()[-1]
         else:
-            d = min(map(distance, objectList))
-
+            d = objectDict.keys()[0]
+            
         # return all objects at the max/min distance (within a tolerance)
         return filter(lambda o: abs(d - distance(o)) < self.TOLERANCE, objectList)
 
