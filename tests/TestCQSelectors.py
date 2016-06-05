@@ -166,7 +166,25 @@ class TestCQSelectors(BaseTest):
         # test the case of multiple objects at the same distance
         el = c.edges("<Z").vals()
         self.assertEqual(4, len(el))
-
+        
+    def testNthDistance(self):
+        c = Workplane('XY').pushPoints([(-2,0),(2,0)]).box(1,1,1)
+        
+        #2nd face
+        val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),1)).val()
+        self.assertAlmostEqual(val.Center().x,-1.5)
+        
+        #2nd last face
+        val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),-2)).val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        
+        #Last face
+        val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),-1)).val()
+        self.assertAlmostEqual(val.Center().x,2.5)
+        
+        #check if the selected face if normal to given Vector
+        self.assertAlmostEqual(val.normalAt().cross(Vector(1,0,0)).Length,0.0)
+        
     def testNearestTo(self):
         c = CQ(makeUnitCube())
 
