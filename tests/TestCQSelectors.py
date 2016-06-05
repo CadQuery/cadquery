@@ -174,6 +174,10 @@ class TestCQSelectors(BaseTest):
         val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),1)).val()
         self.assertAlmostEqual(val.Center().x,-1.5)
         
+        #2nd face with inversed selection vector
+        val = c.faces(selectors.DirectionNthSelector(Vector(-1,0,0),1)).val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        
         #2nd last face
         val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),-2)).val()
         self.assertAlmostEqual(val.Center().x,1.5)
@@ -182,7 +186,7 @@ class TestCQSelectors(BaseTest):
         val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),-1)).val()
         self.assertAlmostEqual(val.Center().x,2.5)
         
-        #check if the selected face if normal to given Vector
+        #check if the selected face if normal to the specified Vector
         self.assertAlmostEqual(val.normalAt().cross(Vector(1,0,0)).Length,0.0)
         
     def testNearestTo(self):

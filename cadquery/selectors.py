@@ -325,29 +325,12 @@ class DirectionMinMaxSelector(Selector):
 
 class DirectionNthSelector(ParallelDirSelector):
     """
-        Selects objects closest or farthest in the specified direction
-        Used for faces, points, and edges
+        Selects nth object parallel (or normal) to the specified direction
+        Used for faces and edges
 
         Applicability:
-            All object types. for a vertex, its point is used. for all other kinds
-            of objects, the center of mass of the object is used.
-
-        You can use the string shortcuts >(X|Y|Z) or <(X|Y|Z) if you want to
-        select based on a cardinal direction.
-
-        For example this::
-
-            CQ(aCube).faces ( DirectionMinMaxSelector((0,0,1),True )
-
-        Means to select the face having the center of mass farthest in the positive z direction,
-        and is the same as:
-
-            CQ(aCube).faces( ">Z" )
-
-        Future Enhancements:
-            provide a nicer way to select in arbitrary directions. IE, a bit more code could
-            allow '>(0,0,1)' to work.
-
+            Linear Edges
+            Planar Faces
     """
     def __init__(self, vector, n, directionMax=True, tolerance=0.0001):
         self.direction = vector
