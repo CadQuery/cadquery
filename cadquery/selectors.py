@@ -323,7 +323,7 @@ class DirectionMinMaxSelector(Selector):
         # return all objects at the max/min distance (within a tolerance)
         return filter(lambda o: abs(d - distance(o)) < self.TOLERANCE, objectList)
 
-class DirectionNthSelector(Selector):
+class DirectionNthSelector(ParallelDirSelector):
     """
         Selects objects closest or farthest in the specified direction
         Used for faces, points, and edges
@@ -350,19 +350,21 @@ class DirectionNthSelector(Selector):
 
     """
     def __init__(self, vector, n, directionMax=True, tolerance=0.0001):
-        self.vector = vector
+        self.direction = vector
         self.max = max
         self.directionMax = directionMax
         self.TOLERANCE = tolerance
         if directionMax:
-            self.N = n
+            self.N = n #do we want indexing from 0 or from 1?
         else:
             self.N = -n
-    
+            
     def filter(self,objectList):
+        #select first the objects that are normal/parallel to a given dir
+        objectList = super(DirectionNthSelector,self).filter(objectList)
 
         def distance(tShape):
-            return tShape.Center().dot(self.vector)
+            return tShape.Center().dot(self.direction)
             #if tShape.ShapeType == 'Vertex':
             #    pnt = tShape.Point
             #else:
