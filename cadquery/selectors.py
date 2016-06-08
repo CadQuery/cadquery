@@ -306,14 +306,65 @@ class DirectionMinMaxSelector(Selector):
             #    pnt = tShape.Center()
             #return pnt.dot(self.vector)
 
+        # import OrderedDict
+        from collections import OrderedDict
+        #make and distance to object dict
+        objectDict = {distance(el) : el for el in objectList}
+        #transform it into an ordered dict
+        objectDict = OrderedDict(sorted(objectDict.items(),
+                                        key=lambda x: x[0]))
+
         # find out the max/min distance
         if self.directionMax:
-            d = max(map(distance, objectList))
+            d = objectDict.keys()[-1]
         else:
-            d = min(map(distance, objectList))
-
+            d = objectDict.keys()[0]
+            
         # return all objects at the max/min distance (within a tolerance)
         return filter(lambda o: abs(d - distance(o)) < self.TOLERANCE, objectList)
+
+class DirectionNthSelector(ParallelDirSelector):
+    """
+        Selects nth object parallel (or normal) to the specified direction
+        Used for faces and edges
+
+        Applicability:
+            Linear Edges
+            Planar Faces
+    """
+    def __init__(self, vector, n, directionMax=True, tolerance=0.0001):
+        self.direction = vector
+        self.max = max
+        self.directionMax = directionMax
+        self.TOLERANCE = tolerance
+        if directionMax:
+            self.N = n #do we want indexing from 0 or from 1?
+        else:
+            self.N = -n
+            
+    def filter(self,objectList):
+        #select first the objects that are normal/parallel to a given dir
+        objectList = super(DirectionNthSelector,self).filter(objectList)
+
+        def distance(tShape):
+            return tShape.Center().dot(self.direction)
+            #if tShape.ShapeType == 'Vertex':
+            #    pnt = tShape.Point
+            #else:
+            #    pnt = tShape.Center()
+            #return pnt.dot(self.vector)
+
+        #make and distance to object dict
+        objectDict = {distance(el) : el for el in objectList}
+        #calculate how many digits of precision do we need
+        digits = int(1/self.TOLERANCE)
+        # create a rounded distance to original distance mapping (implicitly perfroms unique operation)
+        dist_round_dist = {round(d,digits) : d for d in objectDict.keys()}
+        # choose the Nth unique rounded distance
+        nth_d = dist_round_dist[sorted(dist_round_dist.keys())[self.N]]
+            
+        # map back to original objects and return
+        return [objectDict[d] for d in objectDict.keys() if abs(d-nth_d) < self.TOLERANCE] 
 
 class BinarySelector(Selector):
     """
