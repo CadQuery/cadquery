@@ -20,6 +20,7 @@
 import re
 import math
 from cadquery import Vector,Edge,Vertex,Face,Solid,Shell,Compound
+from pyparsing import Literal,Word,nums,Optional,Combine,oneOf
 
 
 class Selector(object):
@@ -418,6 +419,7 @@ class InverseSelector(Selector):
         # note that Selector() selects everything
         return SubtractSelector(Selector(), self.selector).filter(objectList)
 
+
 class StringSyntaxSelector(Selector):
     """
         Filter lists objects using a simple string syntax. All of the filters available in the string syntax
@@ -455,6 +457,8 @@ class StringSyntaxSelector(Selector):
 
     """
     def __init__(self,selectorString):
+        
+        self._expr = self._makeGrammar()
 
         self.axes = {
             'X': Vector(1,0,0),
@@ -486,6 +490,49 @@ class StringSyntaxSelector(Selector):
         else:
             raise ValueError ("Selector String format must be [-+<>|#%] X|Y|Z ")
 
+    def _makeGrammar(self):
+        '''
+        Define the string selector grammar using PyParsing
+        '''
+        
+        #float definition
+        point = Literal('.')
+        plusmin = Literal('+') | Literal('-')
+        number = Word(nums)
+        integer = Combine(Optional(plusmin) + number)
+        floatn = Combine(integer + Optional(point + Optional(number)))
+        
+        #vector definition
+        lbracket = Literal('(')
+        rbracket = Literal(')')
+        comma = Literal(',')
+        vector = Combine(lbracket + floatn + comma + floatn + comma + floatn + rbracket)
+        
+        #direction definition
+        direction = oneOf(['X','Y','Z','XY','XZ','YZ']) | vector
+        direction = direction.setResultsName('dir')
+        
+        #CQ type definition
+        cqtype = oneOf(['Plane','Cylinder','Sphere','Line','Circle','Arc'])
+
+        #type operator        
+        type_op = Literal('%')
+        
+        #direction operator
+        direction_op = oneOf(['>','<'])
+        
+        #index definition
+        ix_number = Optional('-')+Word(nums)
+        lsqbracket = Literal('[').suppress()
+        rsqbracket = Literal(']').suppress()
+        
+        index = lsqbracket + ix_number + rsqbracket
+        index = index.setResultsName('index')
+        
+        #other operators
+        other_op = oneOf(['|','#','+','-'])
+        
+        return (type_op('op') + cqtype('cqtype')) | (direction_op('op') + direction + Optional(index)) | (other_op('op') + direction)
 
     def _chooseSelector(self,selType,selAxis):
         """Sets up the underlying filters accordingly"""
