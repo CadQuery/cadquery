@@ -378,3 +378,30 @@ class TestCQSelectors(BaseTest):
         #make sure the vertex is the right one
 
         self.assertTupleAlmostEquals((0.0,0.0,1.0),v2.val().toTuple() ,3)
+        
+    def testGrammar(self):
+        """
+        Test if reasonable string selector expressions parse without an error
+        """
+        
+        gram = selectors._makeGrammar()
+
+        expressions = ['+X ',
+                       '-Y',
+                       '|(1,0,0)',
+                       '#(1.,1.4114,-0.532)',
+                       '%Plane',
+                       '>XZ',
+                       '<Z[-2]',
+                       '>(1,4,55.)[20]',
+                       '|XY',
+                       '<YZ[0]',
+                       'front',
+                       'back',
+                       'left',
+                       'right',
+                       'top',
+                       'bottom']
+        
+        for e in expressions: gram.parseString(e)
+        
