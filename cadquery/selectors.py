@@ -20,7 +20,8 @@
 import re
 import math
 from cadquery import Vector,Edge,Vertex,Face,Solid,Shell,Compound
-from pyparsing import Literal,Word,nums,Optional,Combine,oneOf
+from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,\
+                      upcaseTokens,CaselessLiteral
 
 
 class Selector(object):
@@ -444,8 +445,10 @@ def _makeGrammar():
     direction = simple_dir('simple_dir') | vector('vector_dir')
     
     #CQ type definition
-    cqtype = oneOf(['Plane','Cylinder','Sphere','Line','Circle','Arc'])
-
+    cqtype = oneOf(['Plane','Cylinder','Sphere','Cone','Line','Circle','Arc'],
+                   caseless=True)
+    cqtype = cqtype.setParseAction(upcaseTokens)
+    
     #type operator        
     type_op = Literal('%')
     
@@ -465,7 +468,8 @@ def _makeGrammar():
     #named view
     named_view = oneOf(['front','back','left','right','top','bottom'])
     
-    return (type_op('type_op') + cqtype('cqtype')) | \
+    return direction('only_dir') | \
+           (type_op('type_op') + cqtype('cq_type')) | \
            (direction_op('dir_op') + direction('dir') + Optional(index('index'))) | \
            (other_op('other_op') + direction('dir')) | \
            named_view('named_view')
@@ -549,7 +553,11 @@ class StringSyntaxSelector(Selector):
         """
         Sets up the underlying filters accordingly
         """
-        if 'type_op' in pr:
+        if 'only_dir' in pr:
+            vec = self._getVector(pr)
+            return DirectionSelector(vec)
+        
+        elif 'type_op' in pr:
             return TypeSelector(pr.cq_type) 
         
         elif 'dir_op' in pr:
