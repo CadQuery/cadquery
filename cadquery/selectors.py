@@ -21,7 +21,7 @@ import re
 import math
 from cadquery import Vector,Edge,Vertex,Face,Solid,Shell,Compound
 from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,\
-                      upcaseTokens,CaselessLiteral
+                      upcaseTokens,CaselessLiteral,Group
 
 
 class Selector(object):
@@ -456,11 +456,11 @@ def _makeGrammar():
     direction_op = oneOf(['>','<'])
     
     #index definition
-    ix_number = Optional('-')+Word(nums)
+    ix_number = Group(Optional('-')+Word(nums))
     lsqbracket = Literal('[').suppress()
     rsqbracket = Literal(']').suppress()
     
-    index = lsqbracket + ix_number + rsqbracket
+    index = lsqbracket + ix_number('index') + rsqbracket
     
     #other operators
     other_op = oneOf(['|','#','+','-'])
@@ -470,7 +470,7 @@ def _makeGrammar():
     
     return direction('only_dir') | \
            (type_op('type_op') + cqtype('cq_type')) | \
-           (direction_op('dir_op') + direction('dir') + Optional(index('index'))) | \
+           (direction_op('dir_op') + direction('dir') + Optional(index)) | \
            (other_op('other_op') + direction('dir')) | \
            named_view('named_view')
 
@@ -565,7 +565,7 @@ class StringSyntaxSelector(Selector):
             minmax = self.operatorMinMax[pr.dir_op]
             
             if 'index' in pr:
-                return DirectionNthSelector(vec,int(pr.index),minmax)
+                return DirectionNthSelector(vec,int(''.join(pr.index.asList())),minmax)
             else:
                 return DirectionMinMaxSelector(vec,minmax)
         
@@ -582,7 +582,8 @@ class StringSyntaxSelector(Selector):
         Translate parsed vector string into a CQ Vector
         """
         if 'vector_dir' in pr:
-            return Vector(float(pr.x),float(pr.y),float(pr.z))
+            vec = pr.vector_dir
+            return Vector(float(vec.x),float(vec.y),float(vec.z))
         else:
             return self.axes[pr.simple_dir]
             
