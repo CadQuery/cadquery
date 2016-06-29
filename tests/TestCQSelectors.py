@@ -189,6 +189,28 @@ class TestCQSelectors(BaseTest):
         #check if the selected face if normal to the specified Vector
         self.assertAlmostEqual(val.normalAt().cross(Vector(1,0,0)).Length,0.0)
         
+        #repeat the test using string based selector
+        
+        #2nd face
+        val = c.faces('>(1,0,0)[1]').val()
+        self.assertAlmostEqual(val.Center().x,-1.5)
+        
+        #2nd face with inversed selection vector
+        val = c.faces('>(-1,0,0)[1]').val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        
+        #2nd last face
+        val = c.faces('>X[-2]').val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        
+        #Last face
+        val = c.faces('>X[-1]').val()
+        self.assertAlmostEqual(val.Center().x,2.5)
+        
+        #check if the selected face if normal to the specified Vector
+        self.assertAlmostEqual(val.normalAt().cross(Vector(1,0,0)).Length,0.0)
+        
+        
     def testNearestTo(self):
         c = CQ(makeUnitCube())
 
