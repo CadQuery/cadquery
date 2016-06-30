@@ -92,3 +92,4 @@ v0.5.2
 v1.0.0 (unreleased)
 ------
    * Added an option to do symmetric extrusion about the workplane (thanks @adam-urbanczyk)
+   * Extended selector syntax to include Nth selector and re-implemented selectors using pyparsing (thanks @adam-urbanczyk)
