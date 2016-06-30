@@ -20,6 +20,8 @@
 import re
 import math
 from cadquery import Vector,Edge,Vertex,Face,Solid,Shell,Compound
+from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,\
+                      upcaseTokens,CaselessLiteral,Group
 
 
 class Selector(object):
@@ -418,6 +420,62 @@ class InverseSelector(Selector):
         # note that Selector() selects everything
         return SubtractSelector(Selector(), self.selector).filter(objectList)
 
+
+def _makeGrammar():
+    """
+    Define the string selector grammar using PyParsing
+    """
+    
+    #float definition
+    point = Literal('.')
+    plusmin = Literal('+') | Literal('-')
+    number = Word(nums)
+    integer = Combine(Optional(plusmin) + number)
+    floatn = Combine(integer + Optional(point + Optional(number)))
+    
+    #vector definition
+    lbracket = Literal('(')
+    rbracket = Literal(')')
+    comma = Literal(',')
+    vector = Combine(lbracket + floatn('x') + comma + \
+                     floatn('y') + comma + floatn('z') + rbracket)
+    
+    #direction definition
+    simple_dir = oneOf(['X','Y','Z','XY','XZ','YZ'])
+    direction = simple_dir('simple_dir') | vector('vector_dir')
+    
+    #CQ type definition
+    cqtype = oneOf(['Plane','Cylinder','Sphere','Cone','Line','Circle','Arc'],
+                   caseless=True)
+    cqtype = cqtype.setParseAction(upcaseTokens)
+    
+    #type operator        
+    type_op = Literal('%')
+    
+    #direction operator
+    direction_op = oneOf(['>','<'])
+    
+    #index definition
+    ix_number = Group(Optional('-')+Word(nums))
+    lsqbracket = Literal('[').suppress()
+    rsqbracket = Literal(']').suppress()
+    
+    index = lsqbracket + ix_number('index') + rsqbracket
+    
+    #other operators
+    other_op = oneOf(['|','#','+','-'])
+    
+    #named view
+    named_view = oneOf(['front','back','left','right','top','bottom'])
+    
+    return direction('only_dir') | \
+           (type_op('type_op') + cqtype('cq_type')) | \
+           (direction_op('dir_op') + direction('dir') + Optional(index)) | \
+           (other_op('other_op') + direction('dir')) | \
+           named_view('named_view')
+
+_grammar = _makeGrammar() #make a grammar instance
+
 class StringSyntaxSelector(Selector):
     """
         Filter lists objects using a simple string syntax. All of the filters available in the string syntax
@@ -465,58 +523,70 @@ class StringSyntaxSelector(Selector):
             'XZ': Vector(1,0,1)
         }
 
-        namedViews = {
-            'front': ('>','Z' ),
-            'back': ('<','Z'),
-            'left':('<', 'X'),
-            'right': ('>', 'X'),
-            'top': ('>','Y'),
-            'bottom': ('<','Y')
+        self.namedViews = {
+            'front' : (Vector(0,0,1),True),
+            'back'  : (Vector(0,0,1),False),
+            'left'  : (Vector(1,0,0),False),
+            'right' : (Vector(1,0,0),True),
+            'top'   : (Vector(0,1,0),True),
+            'bottom': (Vector(0,1,0),False)
         }
+        
+        self.operatorMinMax = {
+            '>' : True,
+            '<' : False,
+            '+' : True,
+            '-' : False
+        }
+        
+        self.operator = {
+            '+' : DirectionSelector,
+            '-' : DirectionSelector,
+            '#' : PerpendicularDirSelector,
+            '|' : ParallelDirSelector}
+        
         self.selectorString = selectorString
-        r = re.compile("\s*([-\+<>\|\%#])*\s*(\w+)\s*",re.IGNORECASE)
-        m = r.match(selectorString)
-
-        if m != None:
-            if namedViews.has_key(selectorString):
-                (a,b) = namedViews[selectorString]
-                self.mySelector = self._chooseSelector(a,b )
-            else:
-                self.mySelector = self._chooseSelector(m.groups()[0],m.groups()[1])
-        else:
-            raise ValueError ("Selector String format must be [-+<>|#%] X|Y|Z ")
-
-
-    def _chooseSelector(self,selType,selAxis):
-        """Sets up the underlying filters accordingly"""
-
-        if selType == "%":
-            return TypeSelector(selAxis)
-
-        #all other types need to select axis as a vector
-        #get the axis vector first, will throw an except if an unknown axis is used
-        try:
-            vec = self.axes[selAxis]
-        except KeyError:
-            raise ValueError ("Axis value %s not allowed: must be one of %s" % (selAxis, str(self.axes)))
-
-        if selType in (None, "+"):
-            #use direction filter
+        parsing_result = _grammar.parseString(selectorString)
+        self.mySelector = self._chooseSelector(parsing_result)
+        
+    def _chooseSelector(self,pr):
+        """
+        Sets up the underlying filters accordingly
+        """
+        if 'only_dir' in pr:
+            vec = self._getVector(pr)
             return DirectionSelector(vec)
-        elif selType == '-':
-            #just use the reverse of the direction vector
-            return DirectionSelector(vec.multiply(-1.0))
-        elif selType == "|":
-            return ParallelDirSelector(vec)
-        elif selType == ">":
-            return DirectionMinMaxSelector(vec,True)
-        elif selType == "<":
-            return DirectionMinMaxSelector(vec,False)
-        elif selType == '#':
-            return PerpendicularDirSelector(vec)
+        
+        elif 'type_op' in pr:
+            return TypeSelector(pr.cq_type) 
+        
+        elif 'dir_op' in pr:
+            vec = self._getVector(pr)
+            minmax = self.operatorMinMax[pr.dir_op]
+            
+            if 'index' in pr:
+                return DirectionNthSelector(vec,int(''.join(pr.index.asList())),minmax)
+            else:
+                return DirectionMinMaxSelector(vec,minmax)
+        
+        elif 'other_op' in pr:
+            vec = self._getVector(pr)
+            return self.operator[pr.other_op](vec)
+        
         else:
-            raise ValueError ("Selector String format must be [-+<>|] X|Y|Z ")
-
+            args = self.namedViews[pr.named_view]
+            return DirectionMinMaxSelector(*args)
+            
+    def _getVector(self,pr):
+        """
+        Translate parsed vector string into a CQ Vector
+        """
+        if 'vector_dir' in pr:
+            vec = pr.vector_dir
+            return Vector(float(vec.x),float(vec.y),float(vec.z))
+        else:
+            return self.axes[pr.simple_dir]
+            
     def filter(self,objectList):
         """
             selects minimum, maximum, positive or negative values relative to a direction
