@@ -20,8 +20,9 @@
 import re
 import math
 from cadquery import Vector,Edge,Vertex,Face,Solid,Shell,Compound
-from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,\
-                      upcaseTokens,CaselessLiteral,Group
+from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,upcaseTokens,\
+                      CaselessLiteral,Group,infixNotation,opAssoc,Forward,\
+                      ZeroOrMore,Keyword
 
 
 class Selector(object):
@@ -546,7 +547,7 @@ class StringSyntaxSelector(Selector):
             '|' : ParallelDirSelector}
         
         self.selectorString = selectorString
-        parsing_result = _grammar.parseString(selectorString)
+        parsing_result = _grammar.parseString(selectorString,parseAll=True)
         self.mySelector = self._chooseSelector(parsing_result)
         
     def _chooseSelector(self,pr):
@@ -593,3 +594,28 @@ class StringSyntaxSelector(Selector):
             [+\|-\|<\|>\|] \<X\|Y\|Z>
         """
         return self.mySelector.filter(objectList)
+
+
+def makeExpressionGrammar(atom):
+    
+    #expr = Forward() 
+
+    and_op = Literal('&').setResultsName('AND')
+    or_op =  Literal('|').setResultsName('OR')
+    delta_op =  Literal('^').setResultsName('DELTA')
+    not_op = Literal('~').setResultsName('NOT')
+    
+    binary_op = and_op | or_op | delta_op    
+    
+    atom_ = atom | Group(not_op + atom)
+    expr = atom_ + ZeroOrMore(binary_op + atom_)
+       
+#    expr << infixNotation(atom,
+#                         [(and_op,2,opAssoc.LEFT),
+#                          (or_op,2,opAssoc.LEFT),
+#                          (delta_op,2,opAssoc.LEFT),
+#                          (not_op,1,opAssoc.RIGHT)])
+                          
+    return expr
+    
+_expression_grammar = makeExpressionGrammar(_grammar)
