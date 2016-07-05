@@ -546,8 +546,10 @@ class StringSyntaxSelector(Selector):
             '#' : PerpendicularDirSelector,
             '|' : ParallelDirSelector}
         
+        
         self.selectorString = selectorString
-        parsing_result = _grammar.parseString(selectorString,parseAll=True)
+        #this class is going to be refactored - it will accept ParseResults objects as input i.s.o. strings
+        parsing_result = selectorString#_grammar.parseString(selectorString,parseAll=True)
         self.mySelector = self._chooseSelector(parsing_result)
         
     def _chooseSelector(self,pr):
@@ -596,10 +598,22 @@ class StringSyntaxSelector(Selector):
         return self.mySelector.filter(objectList)
 
 
-def makeExpressionGrammar(atom):
+def _makeSelector(atom):
+    '''
     
-    #expr = Forward() 
+    '''
+    return StringSyntaxSelector(atom)
+    
+def _makeInverseSelector(atom):
+    '''
+    
+    '''
+    if 'NOT' in atom:
+        return InverseSelector(atom[1])
+    else:
+        return atom
 
+def makeExpressionGrammar(atom):
     and_op = Literal('&').setResultsName('AND')
     or_op =  Literal('|').setResultsName('OR')
     delta_op =  Literal('^').setResultsName('DELTA')
@@ -607,15 +621,37 @@ def makeExpressionGrammar(atom):
     
     binary_op = and_op | or_op | delta_op    
     
-    atom_ = atom | Group(not_op + atom)
+    atom.setParseAction(_makeSelector)
+    atom.setResultsName('atom')
+    
+    atom_ = atom | not_op + atom
+    atom_.setParseAction(_makeInverseSelector)    
+    
+    #this version does not support nesting    
     expr = atom_ + ZeroOrMore(binary_op + atom_)
-       
-#    expr << infixNotation(atom,
-#                         [(and_op,2,opAssoc.LEFT),
-#                          (or_op,2,opAssoc.LEFT),
-#                          (delta_op,2,opAssoc.LEFT),
-#                          (not_op,1,opAssoc.RIGHT)])
+    #this version does support nesting: i.e. A & (B | C)   
+    expr = infixNotation(atom_,
+                         [(and_op,2,opAssoc.LEFT),
+                          (or_op,2,opAssoc.LEFT),
+                          (delta_op,2,opAssoc.LEFT),
+                          (not_op,1,opAssoc.RIGHT)])
                           
     return expr
     
 _expression_grammar = makeExpressionGrammar(_grammar)
+
+class StringExpressionSelector(Selector):
+    """
+    Will implement the StringExpresionSelector
+    """
+    def __init__(self,selectorString):
+        pass
+    
+if __name__ == '__main__':
+    #this code is meant for testing - to be removed!
+    g = _expression_grammar
+    
+    #parse a simple expression    
+    rs = g.parseString('~|(1,1,0) & >(0,0,1) | XY & >(1,1,1)[-1] | <(2,2,1)')
+    #parse a nested expression
+    rn = g.parseString('(~|(1,1,0) & >(0,0,1)) | XY & (Z | X)')
