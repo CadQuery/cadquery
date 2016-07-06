@@ -477,7 +477,7 @@ def _makeGrammar():
 
 _grammar = _makeGrammar() #make a grammar instance
 
-class StringSyntaxSelector(Selector):
+class _SimpleStringSyntaxSelector(Selector):
     """
         Filter lists objects using a simple string syntax. All of the filters available in the string syntax
         are also available ( usually with more functionality ) through the creation of full-fledged
@@ -598,22 +598,25 @@ class StringSyntaxSelector(Selector):
         return self.mySelector.filter(objectList)
 
 
-def _makeSelector(atom):
-    '''
+def _makeSelector(expr):
+    """
     
-    '''
-    return StringSyntaxSelector(atom)
+    """
+    return _SimpleStringSyntaxSelector(expr)
     
-def _makeInverseSelector(atom):
-    '''
+def _makeInverseSelector(expr):
+    """
     
-    '''
-    if 'NOT' in atom:
-        return InverseSelector(atom[1])
+    """
+    if 'NOT' in expr:
+        return InverseSelector(expr[1])
     else:
-        return atom
+        return expr
 
-def makeExpressionGrammar(atom):
+def _makeExpressionGrammar(atom):
+    """
+    
+    """
     and_op = Literal('&').setResultsName('AND')
     or_op =  Literal('|').setResultsName('OR')
     delta_op =  Literal('^').setResultsName('DELTA')
@@ -625,33 +628,61 @@ def makeExpressionGrammar(atom):
     atom.setResultsName('atom')
     
     atom_ = atom | not_op + atom
-    atom_.setParseAction(_makeInverseSelector)    
+    atom_.setParseAction(_makeInverseSelector)
+    
+    #infix notation
+    def and_callback(res):
+        items = res.asList()[0][::2]
+        return reduce(AndSelector,items)
+    
+    def or_callback(res):
+        items = res.asList()[0][::2]
+        return reduce(SumSelector,items)
+    
+    def delta_callback(res):
+        items = res.asList()[0][::2]
+        reduce(SubtractSelector,items)
+        
+    def not_callback(res):
+        right = res.asList()[0][1]
+        return InverseSelector(right)
     
     #this version does not support nesting    
-    expr = atom_ + ZeroOrMore(binary_op + atom_)
+    #expr = atom_ + ZeroOrMore(binary_op + atom_)
     #this version does support nesting: i.e. A & (B | C)   
     expr = infixNotation(atom_,
-                         [(and_op,2,opAssoc.LEFT),
-                          (or_op,2,opAssoc.LEFT),
-                          (delta_op,2,opAssoc.LEFT),
-                          (not_op,1,opAssoc.RIGHT)])
+                         [(and_op,2,opAssoc.LEFT,and_callback),
+                          (or_op,2,opAssoc.LEFT,or_callback),
+                          (delta_op,2,opAssoc.LEFT,delta_callback),
+                          (not_op,1,opAssoc.RIGHT,not_callback)])
                           
     return expr
     
-_expression_grammar = makeExpressionGrammar(_grammar)
+_expression_grammar = _makeExpressionGrammar(_grammar)
 
-class StringExpressionSelector(Selector):
+class StringSyntaxSelector(Selector):
     """
-    Will implement the StringExpresionSelector
+    Implment StringExpresionSelector here
     """
     def __init__(self,selectorString):
-        pass
+        """
+        
+        """
+        self.selectorString = selectorString
+        parse_result = _expression_grammar.parseString(selectorString,
+                                                        parseAll=True)
+        self.mySelector = parse_result.asList()[0]
+        
+    def filter(self,objectList):
+        """
+            
+        """
+        return self.mySelector.filter(objectList)
     
 if __name__ == '__main__':
     #this code is meant for testing - to be removed!
-    g = _expression_grammar
     
     #parse a simple expression    
-    rs = g.parseString('~|(1,1,0) & >(0,0,1) | XY & >(1,1,1)[-1] | <(2,2,1)')
+    rs = StringSyntaxSelector('~|(1,1,0) & >(0,0,1) | XY & >(1,1,1)[-1]')
     #parse a nested expression
-    rn = g.parseString('(~|(1,1,0) & >(0,0,1)) | XY & (Z | X)')
+    rn = StringSyntaxSelector('(~|(1,1,0) & >(0,0,1)) | XY & (Z | X)')
