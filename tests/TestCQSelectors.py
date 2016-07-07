@@ -354,6 +354,16 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(2, len(fl))
         el = c.edges(S("|X") + S("|Y")).vals()
         self.assertEqual(8, len(el))
+        
+        # test using extended string syntax
+        fl = c.faces(">Z | <Z").vals()
+        self.assertEqual(2, len(fl))
+        el = c.edges("|X | |Y").vals()
+        self.assertEqual(8, len(el))
+        
+        # test using extended string syntax
+        v = c.vertices(">X & >Y").vals()
+        self.assertEqual(2, len(v))
 
     def testSubtractSelector(self):
         c = CQ(makeUnitCube())
@@ -365,6 +375,10 @@ class TestCQSelectors(BaseTest):
 
         # test the subtract operator
         fl = c.faces(S("#Z") - S(">X")).vals()
+        self.assertEqual(3, len(fl))
+        
+        # test using extended string syntax
+        fl = c.faces("#Z ^ >X").vals()
         self.assertEqual(3, len(fl))
 
     def testInverseSelector(self):
@@ -381,6 +395,12 @@ class TestCQSelectors(BaseTest):
         fl = c.faces(-S('>Z')).vals()
         self.assertEqual(5, len(fl))
         el = c.faces('>Z').edges(-S('>X')).vals()
+        self.assertEqual(3, len(el))
+        
+        # test using extended string syntax
+        fl = c.faces('~>Z').vals()
+        self.assertEqual(5, len(fl))
+        el = c.faces('>Z').edges('~>X').vals()
         self.assertEqual(3, len(el))
 
     def testFaceCount(self):

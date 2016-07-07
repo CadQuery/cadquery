@@ -641,7 +641,7 @@ def _makeExpressionGrammar(atom):
     
     def delta_callback(res):
         items = res.asList()[0][::2]
-        reduce(SubtractSelector,items)
+        return reduce(SubtractSelector,items)
         
     def not_callback(res):
         right = res.asList()[0][1]
