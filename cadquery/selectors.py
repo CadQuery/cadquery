@@ -569,7 +569,7 @@ def _makeExpressionGrammar(atom):
     #define operators
     and_op = Literal('and')
     or_op =  Literal('or')
-    delta_op =  Literal('exc') | Literal('except')
+    delta_op = oneOf(['exc','except'])
     not_op = Literal('not')
 
     def atom_callback(res):
