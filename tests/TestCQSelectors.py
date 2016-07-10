@@ -338,6 +338,10 @@ class TestCQSelectors(BaseTest):
         # test 'and' (intersection) operator
         el = c.edges(S('|X') & BS((-2,-2,0.1), (2,2,2))).vals()
         self.assertEqual(2, len(el))
+        
+        # test using extended string syntax
+        v = c.vertices(">X and >Y").vals()
+        self.assertEqual(2, len(v))
 
     def testSumSelector(self):
         c = CQ(makeUnitCube())
@@ -354,6 +358,12 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(2, len(fl))
         el = c.edges(S("|X") + S("|Y")).vals()
         self.assertEqual(8, len(el))
+        
+        # test using extended string syntax
+        fl = c.faces(">Z or <Z").vals()
+        self.assertEqual(2, len(fl))
+        el = c.edges("|X or |Y").vals()
+        self.assertEqual(8, len(el))
 
     def testSubtractSelector(self):
         c = CQ(makeUnitCube())
@@ -365,6 +375,10 @@ class TestCQSelectors(BaseTest):
 
         # test the subtract operator
         fl = c.faces(S("#Z") - S(">X")).vals()
+        self.assertEqual(3, len(fl))
+        
+        # test using extended string syntax
+        fl = c.faces("#Z exc >X").vals()
         self.assertEqual(3, len(fl))
 
     def testInverseSelector(self):
@@ -382,6 +396,19 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(5, len(fl))
         el = c.faces('>Z').edges(-S('>X')).vals()
         self.assertEqual(3, len(el))
+        
+        # test using extended string syntax
+        fl = c.faces('not >Z').vals()
+        self.assertEqual(5, len(fl))
+        el = c.faces('>Z').edges('not >X').vals()
+        self.assertEqual(3, len(el))
+        
+    def testComplexStringSelector(self):
+        c = CQ(makeUnitCube())
+        
+        v = c.vertices('(>X and >Y) or (<X and <Y)').vals()
+        self.assertEqual(4, len(v))
+        
 
     def testFaceCount(self):
         c = CQ(makeUnitCube())
@@ -406,7 +433,7 @@ class TestCQSelectors(BaseTest):
         Test if reasonable string selector expressions parse without an error
         """
         
-        gram = selectors._makeGrammar()
+        gram = selectors._expression_grammar
 
         expressions = ['+X ',
                        '-Y',
@@ -423,7 +450,9 @@ class TestCQSelectors(BaseTest):
                        'left',
                        'right',
                        'top',
-                       'bottom']
-        
-        for e in expressions: gram.parseString(e)
+                       'bottom',
+                       'not |(1,1,0) and >(0,0,1) or XY except >(1,1,1)[-1]',
+                       '(not |(1,1,0) and >(0,0,1)) exc XY and (Z or X)']
+
+        for e in expressions: gram.parseString(e,parseAll=True)
         

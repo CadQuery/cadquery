@@ -20,8 +20,9 @@
 import re
 import math
 from cadquery import Vector,Edge,Vertex,Face,Solid,Shell,Compound
-from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,\
-                      upcaseTokens,CaselessLiteral,Group
+from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,upcaseTokens,\
+                      CaselessLiteral,Group,infixNotation,opAssoc,Forward,\
+                      ZeroOrMore,Keyword
 
 
 class Selector(object):
@@ -288,10 +289,6 @@ class DirectionMinMaxSelector(Selector):
 
             CQ(aCube).faces( ">Z" )
 
-        Future Enhancements:
-            provide a nicer way to select in arbitrary directions. IE, a bit more code could
-            allow '>(0,0,1)' to work.
-
     """
     def __init__(self, vector, directionMax=True, tolerance=0.0001):
         self.vector = vector
@@ -423,7 +420,7 @@ class InverseSelector(Selector):
 
 def _makeGrammar():
     """
-    Define the string selector grammar using PyParsing
+    Define the simple string selector grammar using PyParsing
     """
     
     #float definition
@@ -476,44 +473,14 @@ def _makeGrammar():
 
 _grammar = _makeGrammar() #make a grammar instance
 
-class StringSyntaxSelector(Selector):
+class _SimpleStringSyntaxSelector(Selector):
     """
-        Filter lists objects using a simple string syntax. All of the filters available in the string syntax
-        are also available ( usually with more functionality ) through the creation of full-fledged
-        selector objects. see :py:class:`Selector` and its subclasses
-
-        Filtering works differently depending on the type of object list being filtered.
-
-        :param selectorString: A two-part selector string, [selector][axis]
-
-        :return: objects that match the specified selector
-
-        ***Modfiers*** are ``('|','+','-','<','>','%')``
-
-            :\|:
-                parallel to ( same as :py:class:`ParallelDirSelector` ). Can return multiple objects.
-            :#:
-                perpendicular to (same as :py:class:`PerpendicularDirSelector` )
-            :+:
-                positive direction (same as :py:class:`DirectionSelector` )
-            :-:
-                negative direction (same as :py:class:`DirectionSelector`  )
-            :>:
-                maximize (same as :py:class:`DirectionMinMaxSelector` with directionMax=True)
-            :<:
-                minimize (same as :py:class:`DirectionMinMaxSelector` with directionMax=False )
-            :%:
-                curve/surface type (same as :py:class:`TypeSelector`)
-
-        ***axisStrings*** are: ``X,Y,Z,XY,YZ,XZ``
-
-        Selectors are a complex topic: see :ref:`selector_reference` for more information
-
-
-
+    This is a private class that converts a parseResults object into a simple
+    selector object
     """
-    def __init__(self,selectorString):
-
+    def __init__(self,parseResults):
+        
+        #define all token to object mappings
         self.axes = {
             'X': Vector(1,0,0),
             'Y': Vector(0,1,0),
@@ -545,9 +512,8 @@ class StringSyntaxSelector(Selector):
             '#' : PerpendicularDirSelector,
             '|' : ParallelDirSelector}
         
-        self.selectorString = selectorString
-        parsing_result = _grammar.parseString(selectorString)
-        self.mySelector = self._chooseSelector(parsing_result)
+        self.parseResults = parseResults
+        self.mySelector = self._chooseSelector(parseResults)
         
     def _chooseSelector(self,pr):
         """
@@ -591,5 +557,115 @@ class StringSyntaxSelector(Selector):
         """
             selects minimum, maximum, positive or negative values relative to a direction
             [+\|-\|<\|>\|] \<X\|Y\|Z>
+        """
+        return self.mySelector.filter(objectList)
+
+def _makeExpressionGrammar(atom):
+    """
+    Define the complex string selector grammar using PyParsing (which supports
+    logical operations and nesting)
+    """
+    
+    #define operators
+    and_op = Literal('and')
+    or_op =  Literal('or')
+    delta_op = oneOf(['exc','except'])
+    not_op = Literal('not')
+
+    def atom_callback(res):
+        return _SimpleStringSyntaxSelector(res)
+    
+    atom.setParseAction(atom_callback) #construct a simple selector from every matched
+    
+    #define callback functions for all operations
+    def and_callback(res):
+        items = res.asList()[0][::2] #take every secend items, i.e. all operands
+        return reduce(AndSelector,items)
+    
+    def or_callback(res):
+        items = res.asList()[0][::2] #take every secend items, i.e. all operands
+        return reduce(SumSelector,items)
+    
+    def exc_callback(res):
+        items = res.asList()[0][::2] #take every secend items, i.e. all operands
+        return reduce(SubtractSelector,items)
+        
+    def not_callback(res):
+        right = res.asList()[0][1] #take second item, i.e. the operand
+        return InverseSelector(right)
+
+    #construct the final grammar and set all the callbacks
+    expr = infixNotation(atom,
+                         [(and_op,2,opAssoc.LEFT,and_callback),
+                          (or_op,2,opAssoc.LEFT,or_callback),
+                          (delta_op,2,opAssoc.LEFT,exc_callback),
+                          (not_op,1,opAssoc.RIGHT,not_callback)])
+                          
+    return expr
+    
+_expression_grammar = _makeExpressionGrammar(_grammar)
+
+class StringSyntaxSelector(Selector):
+    """
+    Filter lists objects using a simple string syntax. All of the filters available in the string syntax
+    are also available ( usually with more functionality ) through the creation of full-fledged
+    selector objects. see :py:class:`Selector` and its subclasses
+
+    Filtering works differently depending on the type of object list being filtered.
+
+    :param selectorString: A two-part selector string, [selector][axis]
+
+    :return: objects that match the specified selector
+
+    ***Modfiers*** are ``('|','+','-','<','>','%')``
+
+        :\|:
+            parallel to ( same as :py:class:`ParallelDirSelector` ). Can return multiple objects.
+        :#:
+            perpendicular to (same as :py:class:`PerpendicularDirSelector` )
+        :+:
+            positive direction (same as :py:class:`DirectionSelector` )
+        :-:
+            negative direction (same as :py:class:`DirectionSelector`  )
+        :>:
+            maximize (same as :py:class:`DirectionMinMaxSelector` with directionMax=True)
+        :<:
+            minimize (same as :py:class:`DirectionMinMaxSelector` with directionMax=False )
+        :%:
+            curve/surface type (same as :py:class:`TypeSelector`)
+
+    ***axisStrings*** are: ``X,Y,Z,XY,YZ,XZ`` or ``(x,y,z)`` which defines an arbitrary direction
+    
+    It is possible to combine simple selectors together using logical operations.
+    The following operations are suuported
+    
+        :and:
+            Logical AND, e.g. >X and >Y
+        :or:
+            Logical OR, e.g. |X or |Y
+        :not:
+            Logical NOT, e.g. not #XY
+        :exc(ept):
+            Set difference (equivalent to AND NOT): |X exc >Z
+
+    Finally, it is also possible to use even more complex expressions with nesting
+    and arbitrary number of terms, e.g.
+    
+        (not >X[0] and #XY) or >XY[0] 
+
+    Selectors are a complex topic: see :ref:`selector_reference` for more information
+    """
+    def __init__(self,selectorString):
+        """
+        Feed the input string through the parser and construct an relevant complex selector object
+        """
+        self.selectorString = selectorString
+        parse_result = _expression_grammar.parseString(selectorString,
+                                                        parseAll=True)
+        self.mySelector = parse_result.asList()[0]
+        
+    def filter(self,objectList):
+        """
+        Filter give object list through th already constructed complex selector object
         """
         return self.mySelector.filter(objectList)
