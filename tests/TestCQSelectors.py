@@ -453,6 +453,6 @@ class TestCQSelectors(BaseTest):
                        'bottom',
                        'not |(1,1,0) and >(0,0,1) or XY except >(1,1,1)[-1]',
                        '(not |(1,1,0) and >(0,0,1)) exc XY and (Z or X)']
-        #import pdb; pdb.set_trace()
+
         for e in expressions: gram.parseString(e,parseAll=True)
         
