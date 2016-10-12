@@ -46,6 +46,7 @@ This resin mold was modeled using cadquery and then created on a CNC machine:
 
 The cadquery script is surprisingly short, and allows easily customizing any of the variables::
 
+```python
 	import cadquery as cq
 	from Helpers import show
 	BS = cq.selectors.BoxSelector
@@ -108,7 +109,7 @@ The cadquery script is surprisingly short, and allows easily customizing any of 
 	    ]).hole(fhd, mw/2.)
 
 	show(r)
-
+```
 
 Thanks go to cadquery contributor hyOzd ( Altu Technology ) for the example!
 
@@ -171,26 +172,30 @@ Use these steps if you would like to write CadQuery scripts as a python API.  In
    preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD
    lib directory to your path. On  (*Nix)::
 
-        import sys
+```python
+		import sys
 		sys.path.append('/usr/lib/freecad/lib')
+```
 
    or on Windows::
 
-	    import sys
+```python
+		import sys
 		sys.path.append('/c/apps/FreeCAD/bin')
+```
 
    *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
 
 3. install cadquery::
-
+```bash
 		pip install cadquery
-
+```
 3. test your installation::
-
+```python
 		from cadquery import *
 		box = Workplane("XY").box(1,2,3)
 		exporters.toString(box,'STL')
-
+```
 You're up and running!
 
 Installing -- Using CadQuery from Inside FreeCAD
