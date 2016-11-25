@@ -166,7 +166,51 @@ class TestCQSelectors(BaseTest):
         # test the case of multiple objects at the same distance
         el = c.edges("<Z").vals()
         self.assertEqual(4, len(el))
-
+        
+    def testNthDistance(self):
+        c = Workplane('XY').pushPoints([(-2,0),(2,0)]).box(1,1,1)
+        
+        #2nd face
+        val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),1)).val()
+        self.assertAlmostEqual(val.Center().x,-1.5)
+        
+        #2nd face with inversed selection vector
+        val = c.faces(selectors.DirectionNthSelector(Vector(-1,0,0),1)).val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        
+        #2nd last face
+        val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),-2)).val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        
+        #Last face
+        val = c.faces(selectors.DirectionNthSelector(Vector(1,0,0),-1)).val()
+        self.assertAlmostEqual(val.Center().x,2.5)
+        
+        #check if the selected face if normal to the specified Vector
+        self.assertAlmostEqual(val.normalAt().cross(Vector(1,0,0)).Length,0.0)
+        
+        #repeat the test using string based selector
+        
+        #2nd face
+        val = c.faces('>(1,0,0)[1]').val()
+        self.assertAlmostEqual(val.Center().x,-1.5)
+        
+        #2nd face with inversed selection vector
+        val = c.faces('>(-1,0,0)[1]').val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        
+        #2nd last face
+        val = c.faces('>X[-2]').val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        
+        #Last face
+        val = c.faces('>X[-1]').val()
+        self.assertAlmostEqual(val.Center().x,2.5)
+        
+        #check if the selected face if normal to the specified Vector
+        self.assertAlmostEqual(val.normalAt().cross(Vector(1,0,0)).Length,0.0)
+        
+        
     def testNearestTo(self):
         c = CQ(makeUnitCube())
 
@@ -294,6 +338,10 @@ class TestCQSelectors(BaseTest):
         # test 'and' (intersection) operator
         el = c.edges(S('|X') & BS((-2,-2,0.1), (2,2,2))).vals()
         self.assertEqual(2, len(el))
+        
+        # test using extended string syntax
+        v = c.vertices(">X and >Y").vals()
+        self.assertEqual(2, len(v))
 
     def testSumSelector(self):
         c = CQ(makeUnitCube())
@@ -310,6 +358,12 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(2, len(fl))
         el = c.edges(S("|X") + S("|Y")).vals()
         self.assertEqual(8, len(el))
+        
+        # test using extended string syntax
+        fl = c.faces(">Z or <Z").vals()
+        self.assertEqual(2, len(fl))
+        el = c.edges("|X or |Y").vals()
+        self.assertEqual(8, len(el))
 
     def testSubtractSelector(self):
         c = CQ(makeUnitCube())
@@ -321,6 +375,10 @@ class TestCQSelectors(BaseTest):
 
         # test the subtract operator
         fl = c.faces(S("#Z") - S(">X")).vals()
+        self.assertEqual(3, len(fl))
+        
+        # test using extended string syntax
+        fl = c.faces("#Z exc >X").vals()
         self.assertEqual(3, len(fl))
 
     def testInverseSelector(self):
@@ -338,6 +396,19 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(5, len(fl))
         el = c.faces('>Z').edges(-S('>X')).vals()
         self.assertEqual(3, len(el))
+        
+        # test using extended string syntax
+        fl = c.faces('not >Z').vals()
+        self.assertEqual(5, len(fl))
+        el = c.faces('>Z').edges('not >X').vals()
+        self.assertEqual(3, len(el))
+        
+    def testComplexStringSelector(self):
+        c = CQ(makeUnitCube())
+        
+        v = c.vertices('(>X and >Y) or (<X and <Y)').vals()
+        self.assertEqual(4, len(v))
+        
 
     def testFaceCount(self):
         c = CQ(makeUnitCube())
@@ -356,3 +427,32 @@ class TestCQSelectors(BaseTest):
         #make sure the vertex is the right one
 
         self.assertTupleAlmostEquals((0.0,0.0,1.0),v2.val().toTuple() ,3)
+        
+    def testGrammar(self):
+        """
+        Test if reasonable string selector expressions parse without an error
+        """
+        
+        gram = selectors._expression_grammar
+
+        expressions = ['+X ',
+                       '-Y',
+                       '|(1,0,0)',
+                       '#(1.,1.4114,-0.532)',
+                       '%Plane',
+                       '>XZ',
+                       '<Z[-2]',
+                       '>(1,4,55.)[20]',
+                       '|XY',
+                       '<YZ[0]',
+                       'front',
+                       'back',
+                       'left',
+                       'right',
+                       'top',
+                       'bottom',
+                       'not |(1,1,0) and >(0,0,1) or XY except >(1,1,1)[-1]',
+                       '(not |(1,1,0) and >(0,0,1)) exc XY and (Z or X)']
+
+        for e in expressions: gram.parseString(e,parseAll=True)
+        

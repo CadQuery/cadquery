@@ -23,6 +23,18 @@ TESTSCRIPT = textwrap.dedent(
     """
 )
 
+TEST_DEBUG_SCRIPT = textwrap.dedent(
+    """
+        height=2.0
+        width=3.0
+        (a,b) = (1.0,1.0)
+        foo="bar"
+        debug(foo, { "color": 'yellow' } )
+        result =  "%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) )
+        build_object(result)
+        debug(height )
+    """
+)
 
 class TestCQGI(BaseTest):
     def test_parser(self):
@@ -30,6 +42,16 @@ class TestCQGI(BaseTest):
         metadata = model.metadata
 
         self.assertEquals(set(metadata.parameters.keys()), {'height', 'width', 'a', 'b', 'foo'})
+
+    def test_build_with_debug(self):
+        model = cqgi.CQModel(TEST_DEBUG_SCRIPT)
+        result = model.build()
+        debugItems = result.debugObjects
+        self.assertTrue(len(debugItems) == 2)
+        self.assertTrue( debugItems[0].object == "bar" )
+        self.assertTrue( debugItems[0].args == { "color":'yellow' } )
+        self.assertTrue( debugItems[1].object == 2.0 )
+        self.assertTrue( debugItems[1].args == {} )
 
     def test_build_with_empty_params(self):
         model = cqgi.CQModel(TESTSCRIPT)
@@ -44,6 +66,30 @@ class TestCQGI(BaseTest):
         result = model.build({'height': 3.0})
         self.assertTrue(result.results[0] == "3.0|3.0|bar|1.0")
 
+    def test_describe_parameters(self):
+        script = textwrap.dedent(
+            """
+                a = 2.0
+                describe_parameter(a,'FirstLetter')
+            """
+        )
+        model = cqgi.CQModel(script)
+        a_param = model.metadata.parameters['a']
+        self.assertTrue(a_param.default_value == 2.0)
+        self.assertTrue(a_param.desc == 'FirstLetter')
+        self.assertTrue(a_param.varType == cqgi.NumberParameterType )
+
+    def test_describe_parameter_invalid_doesnt_fail_script(self):
+        script = textwrap.dedent(
+            """
+                a = 2.0
+                describe_parameter(a, 2 - 1 )
+            """
+        )
+        model = cqgi.CQModel(script)
+        a_param = model.metadata.parameters['a']
+        self.assertTrue(a_param.name == 'a' )
+     
     def test_build_with_exception(self):
         badscript = textwrap.dedent(
             """

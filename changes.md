@@ -4,32 +4,32 @@ Changes
 
 v0.1
 -----
-    * Initial Version
+   * Initial Version
 
 v0.1.6
 -----
-    * Added STEP import and supporting tests
+   * Added STEP import and supporting tests
 
 v0.1.7
 -----
-    * Added revolve operation and supporting tests
-    * Fixed minor documentation errors
+   * Added revolve operation and supporting tests
+   * Fixed minor documentation errors
 
 v0.1.8
 -----
-    * Added toFreecad() function as a convenience for val().wrapped
-    * Converted all examples to use toFreecad()
-    * Updated all version numbers that were missed before
-    * Fixed import issues in Windows caused by fc_import
-    * Added/fixed Mac OS support
-    * Improved STEP import
-    * Fixed bug in rotateAboutCenter that negated its effect on solids
-    * Added Travis config (thanks @krasin)
-    * Removed redundant workplane.py file left over from the PParts.com migration
-    * Fixed toWorldCoordinates bug in moveTo (thanks @xix-xeaon)
-    * Added new tests for 2D drawing functions
-    * Integrated Coveralls.io, with a badge in README.md
-    * Integrated version badge in README.md
+   * Added toFreecad() function as a convenience for val().wrapped
+   * Converted all examples to use toFreecad()
+   * Updated all version numbers that were missed before
+   * Fixed import issues in Windows caused by fc_import
+   * Added/fixed Mac OS support
+   * Improved STEP import
+   * Fixed bug in rotateAboutCenter that negated its effect on solids
+   * Added Travis config (thanks @krasin)
+   * Removed redundant workplane.py file left over from the PParts.com migration
+   * Fixed toWorldCoordinates bug in moveTo (thanks @xix-xeaon)
+   * Added new tests for 2D drawing functions
+   * Integrated Coveralls.io, with a badge in README.md
+   * Integrated version badge in README.md
     
 v0.2.0
 -----
@@ -71,3 +71,25 @@ v0.4.0
    * Added Documentation, which is available on dcowden.github.io/cadquery
    * Added CQGI, an adapter API that standardizes use of cadquery from within structured execution environments
    * Added ability to import STEP files from a web URL (thanks @huskier ) #128
+
+v0.4.1
+------
+   * Minor CQGI updates
+
+v0.5.0-stable
+------
+   * Configuring Travis to push to PyPI on version releases.
+
+v0.5.1
+------
+   * Mirroring fixes (thanks @huskier)
+   * Added a mirroring example (thanks @huskier)
+
+v0.5.2
+------
+   * Added the sweep operation #33
+
+v1.0.0 (unreleased)
+------
+   * Added an option to do symmetric extrusion about the workplane (thanks @adam-urbanczyk)
+   * Extended selector syntax to include Nth selector and re-implemented selectors using pyparsing (thanks @adam-urbanczyk)

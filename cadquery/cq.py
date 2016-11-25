@@ -1967,7 +1967,7 @@ class Workplane(CQ):
         if clean: newS = newS.clean()
         return newS
 
-    def extrude(self, distance, combine=True, clean=True):
+    def extrude(self, distance, combine=True, clean=True, both=False):
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
@@ -1975,6 +1975,7 @@ class Workplane(CQ):
         :type distance: float, negative means opposite the normal direction
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param boolean both: extrude in both directions symmetrically
         :return: a CQ object with the resulting solid selected.
 
         extrude always *adds* material to a part.
@@ -1990,8 +1991,9 @@ class Workplane(CQ):
             Support for non-prismatic extrusion ( IE, sweeping along a profile, not just
             perpendicular to the plane extrude to surface. this is quite tricky since the surface
             selected may not be planar
-        """
-        r = self._extrude(distance)  # returns a Solid (or a compound if there were multiple)
+        """               
+        r = self._extrude(distance,both=both)  # returns a Solid (or a compound if there were multiple)
+            
         if combine:
             newS = self._combineWithBase(r)
         else:
@@ -2048,6 +2050,24 @@ class Workplane(CQ):
 
         # returns a Solid (or a compound if there were multiple)
         r = self._revolve(angleDegrees, axisStart, axisEnd)
+        if combine:
+            newS = self._combineWithBase(r)
+        else:
+            newS = self.newObject([r])
+        if clean: newS = newS.clean()
+        return newS
+
+    def sweep(self, path, makeSolid=True, isFrenet=False, combine=True, clean=True):
+        """
+        Use all un-extruded wires in the parent chain to create a swept solid.
+
+        :param path: A wire along which the pending wires will be swept
+        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :return: a CQ object with the resulting solid selected.
+        """
+
+        r = self._sweep(path.wire(), makeSolid, isFrenet)  # returns a Solid (or a compound if there were multiple)
         if combine:
             newS = self._combineWithBase(r)
         else:
@@ -2236,11 +2256,12 @@ class Workplane(CQ):
 
         return self.newObject([r])
 
-    def _extrude(self, distance):
+    def _extrude(self, distance, both=False):
         """
         Make a prismatic solid from the existing set of pending wires.
 
         :param distance: distance to extrude
+        :param boolean both: extrude in both directions symmetrically
         :return: a FreeCAD solid, suitable for boolean operations.
 
         This method is a utility method, primarily for plugin and internal use.
@@ -2287,6 +2308,10 @@ class Workplane(CQ):
         for ws in wireSets:
             thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
             toFuse.append(thisObj)
+            
+            if both:
+                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir.multiply(-1.))
+                toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
 
@@ -2314,6 +2339,28 @@ class Workplane(CQ):
         toFuse = []
         for ws in wireSets:
             thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees, axisStart, axisEnd)
+            toFuse.append(thisObj)
+
+        return Compound.makeCompound(toFuse)
+
+    def _sweep(self, path, makeSolid=True, isFrenet=False):
+        """
+        Makes a swept solid from an existing set of pending wires.
+
+        :param path: A wire along which the pending wires will be swept
+        :return:a FreeCAD solid, suitable for boolean operations
+        """
+
+        # group wires together into faces based on which ones are inside the others
+        # result is a list of lists
+        s = time.time()
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires), self.plane, [])
+        # print "sorted wires in %d sec" % ( time.time() - s )
+        self.ctx.pendingWires = []  # now all of the wires have been used to create an extrusion
+
+        toFuse = []
+        for ws in wireSets:
+            thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid, isFrenet)
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)

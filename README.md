@@ -34,6 +34,84 @@ It has tons of awesome features like integration with FreeCAD so you can see you
 
 We also have a Google Group to make it easy to get help from other CadQuery users. Please join the group and introduce yourself, and we would also love to hear what you are doing with CadQuery. https://groups.google.com/forum/#!forum/cadquery
 
+Examples
+======================
+
+This resin mold was modeled using cadquery and then created on a CNC machine:
+
+<p align="center">
+   <img src="doc/_static/hyOzd-cablefix.png" width="350"/>
+   <img src="doc/_static/hyOzd-finished.jpg" width="350"/>
+</p>
+
+The cadquery script is surprisingly short, and allows easily customizing any of the variables::
+
+```python
+	import cadquery as cq
+	from Helpers import show
+	BS = cq.selectors.BoxSelector
+
+	# PARAMETERS
+	mount_holes = True
+
+	# mold size
+	mw = 40
+	mh = 13
+	ml = 120
+
+	# wire and fix size
+	wd = 6  # wire diameter
+	rt = 7  # resin thickness
+	rl = 50  # resin length
+	rwpl = 10  # resin to wire pass length
+
+	# pocket fillet
+	pf = 18
+
+	# mount holes
+	mhd = 7  # hole diameter
+	mht = 3  # hole distance from edge
+
+	# filling hole
+	fhd = 6
+
+	# DRAWING
+
+	# draw base
+	base = cq.Workplane("XY").box(ml, mw, mh, (True, True, False))
+
+	# draw wire
+	pocket = cq.Workplane("XY", (0, 0, mh)).moveTo(-ml/2., 0).line(0, wd/2.)\
+	    .line((ml-rl)/2.-rwpl, 0).line(rwpl, rt).line(rl, 0)\
+	    .line(rwpl, -rt).line((ml-rl)/2.-rwpl, 0)\
+	    .line(0, -(wd/2.)).close().revolve(axisEnd=(1, 0))\
+	    .edges(BS((-rl/2.-rwpl-.1, -100, -100), (rl/2.+rwpl+.1, 100, 100)))\
+	    .fillet(pf)
+
+	r = base.cut(pocket)
+
+	# mount holes
+	if mount_holes:
+	    px = ml/2.-mht-mhd/2.
+	    py = mw/2.-mht-mhd/2
+	    r = r.faces("<Z").workplane().pushPoints([
+		(px, py),
+		(-px, py),
+		(-px, -py),
+		(px, -py)
+		]).hole(mhd)
+
+	# fill holes
+	r = r.faces("<Y").workplane().center(0, mh/2.).pushPoints([
+	    (-rl/2., 0),
+	    (0, 0),
+	    (rl/2., 0)
+	    ]).hole(fhd, mw/2.)
+
+	show(r)
+```
+
+Thanks go to cadquery contributor hyOzd ( Altu Technology ) for the example!
 
 
 Why CadQuery instead of OpenSCAD?
@@ -66,44 +144,58 @@ License
 CadQuery is licensed under the terms of the Apache Public License, version 2.0.
 A copy of the license can be found at http://www.apache.org/licenses/LICENSE-2.0
 
-Where is the GUI?
-==================
+CadQuery GUI Interfaces
+=======================
 
-If you would like IDE support, you can use CadQuery inside of FreeCAD. There's an excellent plugin module here https://github.com/jmwright/cadquery-freecad-module
+There are currently several known CadQuery GUIs:
 
-CadQuery also provides the backbone of http://parametricparts.com, so the easiest way to see it in action is to review the samples and objects there.
+### CadQuery FreeCAD Module
+You can use CadQuery inside of FreeCAD. There's an excellent plugin module here https://github.com/jmwright/cadquery-freecad-module
+
+### CadQuery GUI (under active development)
+Work is underway on a stand-alone gui here:  https://github.com/jmwright/cadquery-gui
+
+### ParametricParts.com
+If you are impatient and want to see a working example with no installation, have a look at this lego brick example http://parametricparts.com/parts/vqb5dy69/. 
+
+The script that generates the model is on the 'modelscript' tab.
+
 
 Installing -- FreeStanding Installation
 ========================================
 
 Use these steps if you would like to write CadQuery scripts as a python API.  In this case, FreeCAD is used only as a CAD kernel.
 
-1. install FreeCAD, version 0.12 or greater for your platform.  http://sourceforge.net/projects/free-cad/.
+1. install FreeCAD, version 0.15 or greater for your platform.  https://github.com/FreeCAD/FreeCAD/releases.
 
 2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own,
    preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD
    lib directory to your path. On  (*Nix)::
 
-        import sys
+```python
+		import sys
 		sys.path.append('/usr/lib/freecad/lib')
+```
 
    or on Windows::
 
-	    import sys
+```python
+		import sys
 		sys.path.append('/c/apps/FreeCAD/bin')
+```
 
    *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
 
 3. install cadquery::
-
+```bash
 		pip install cadquery
-
+```
 3. test your installation::
-
+```python
 		from cadquery import *
 		box = Workplane("XY").box(1,2,3)
 		exporters.toString(box,'STL')
-
+```
 You're up and running!
 
 Installing -- Using CadQuery from Inside FreeCAD
@@ -114,10 +206,24 @@ Use the Excellent CadQuery-FreeCAD plugin here:
 
 It includes a distribution of the latest version of cadquery.
 
+Roadmap/Future Work
+=======================
+
+Work is underway on two other installation methods for cadquery:
+
+   1. a conda package, which will install CQ and all of its depedencies, if you are using Anaconda
+   2. a Docker image, which comes ready-to-run after you have installed docker.
+
+Work has also begun on Cadquery 2.0, which will feature:
+ 
+   1. Feature trees, for more powerful selection
+   2. Direct use of OpenCascade Community Edition(OCE), so that it is no longer required to install FreeCAD
+   3. https://github.com/jmwright/cadquery-gui, which will allow visualization of workplanes  
+
 Where does the name CadQuery come from?
 ========================================
 
-CadQuery is inspired by ( `jQuery <http://www.jquery.com>`_ ), a popular framework that
+CadQuery is inspired by jQuery, a popular framework that
 revolutionized web development involving javascript.
 
 If you are familiar with how jQuery, you will probably recognize several jQuery features that CadQuery uses:

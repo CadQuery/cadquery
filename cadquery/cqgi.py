@@ -44,9 +44,11 @@ class CQModel(object):
         self.ast_tree = ast.parse(script_source, CQSCRIPT)
         self.script_source = script_source
         self._find_vars()
+
         # TODO: pick up other scirpt metadata:
         # describe
         # pick up validation methods
+	self._find_descriptions()
 
     def _find_vars(self):
         """
@@ -65,6 +67,9 @@ class CQModel(object):
             if isinstance(node, ast.Assign):
                 assignment_finder.visit_Assign(node)
 
+    def _find_descriptions(self):
+        description_finder = ParameterDescriptionFinder(self.metadata)
+        description_finder.visit(self.ast_tree)
 
     def validate(self, params):
         """
@@ -75,11 +80,13 @@ class CQModel(object):
         """
         raise NotImplementedError("not yet implemented")
 
-    def build(self, build_parameters=None):
+    def build(self, build_parameters=None, build_options=None):
         """
         Executes the script, using the optional parameters to override those in the model
         :param build_parameters: a dictionary of variables. The variables must be
-        assignable to the underlying variable type.
+        assignable to the underlying variable type. These variables override default values in the script
+        :param build_options: build options for how to build the model. Build options include things like
+        timeouts, tesselation tolerances, etc
         :raises: Nothing. If there is an exception, it will be on the exception property of the result.
         This is the interface so that we can return other information on the result, such as the build time
         :return: a BuildResult object, which includes the status of the result, and either
@@ -95,10 +102,14 @@ class CQModel(object):
             self.set_param_values(build_parameters)
             collector = ScriptCallback()
             env = EnvironmentBuilder().with_real_builtins().with_cadquery_objects() \
-                .add_entry("build_object", collector.build_object).build()
+                .add_entry("build_object", collector.build_object) \
+                .add_entry("debug", collector.debug) \
+                .add_entry("describe_parameter",collector.describe_parameter) \
+                .build()
 
             c = compile(self.ast_tree, CQSCRIPT, 'exec')
             exec (c, env)
+            result.set_debug(collector.debugObjects )
             if collector.has_results():
                 result.set_success_result(collector.outputObjects)
             else:
@@ -139,6 +150,7 @@ class BuildResult(object):
     def __init__(self):
         self.buildTime = None
         self.results = []
+        self.debugObjects = []
         self.first_result = None
         self.success = False
         self.exception = None
@@ -146,6 +158,9 @@ class BuildResult(object):
     def set_failure_result(self, ex):
         self.exception = ex
         self.success = False
+
+    def set_debug(self, debugObjects):
+        self.debugObjects = debugObjects
 
     def set_success_result(self, results):
         self.results = results
@@ -163,6 +178,11 @@ class ScriptMetadata(object):
 
     def add_script_parameter(self, p):
         self.parameters[p.name] = p
+
+    def add_parameter_description(self,name,description):
+        print 'Adding Parameter name=%s, desc=%s' % ( name, description )
+        p = self.parameters[name]
+        p.desc = description
 
 
 class ParameterType(object):
@@ -204,19 +224,15 @@ class InputParameter:
         self.varType = None
 
         #: help text describing the variable. Only available if the script used describe_parameter()
-        self.shortDesc = None
-
-
+        self.desc = None
 
         #: valid values for the variable. Only available if the script used describe_parameter()
         self.valid_values = []
 
-
-
         self.ast_node = None
 
     @staticmethod
-    def create(ast_node, var_name, var_type, default_value, valid_values=None, short_desc=None):
+    def create(ast_node, var_name, var_type, default_value, valid_values=None, desc=None):
 
         if valid_values is None:
             valid_values = []
@@ -225,10 +241,7 @@ class InputParameter:
         p.ast_node = ast_node
         p.default_value = default_value
         p.name = var_name
-        if short_desc is None:
-            p.shortDesc = var_name
-        else:
-            p.shortDesc = short_desc
+        p.desc = desc
         p.varType = var_type
         p.valid_values = valid_values
         return p
@@ -270,9 +283,9 @@ class ScriptCallback(object):
     the build_object() method is exposed to CQ scripts, to allow them
     to return objects to the execution environment
     """
-
     def __init__(self):
         self.outputObjects = []
+        self.debugObjects = []
 
     def build_object(self, shape):
         """
@@ -281,10 +294,15 @@ class ScriptCallback(object):
         """
         self.outputObjects.append(shape)
 
-    def describe_parameter(self,var, valid_values, short_desc):
+    def debug(self,obj,args={}):
         """
-        Not yet implemented: allows a script to document
-        extra metadata about the parameters
+        Debug print/output an object, with optional arguments.
+        """
+        self.debugObjects.append(DebugObject(obj,args))
+
+    def describe_parameter(self,var_data ):
+        """
+        Do Nothing-- we parsed the ast ahead of exection to get what we need.
         """
         pass
 
@@ -297,7 +315,15 @@ class ScriptCallback(object):
     def has_results(self):
         return len(self.outputObjects) > 0
 
-
+class DebugObject(object):
+    """
+    Represents a request to debug an object
+    Object is the type of object we want to debug
+    args are parameters for use during debuging ( for example, color, tranparency )
+    """
+    def __init__(self,object,args):
+        self.args = args
+        self.object = object
 
 class InvalidParameterError(Exception):
     """
@@ -371,6 +397,30 @@ class EnvironmentBuilder(object):
     def build(self):
         return self.env
 
+class ParameterDescriptionFinder(ast.NodeTransformer):
+    """
+    Visits a parse tree, looking for function calls to describe_parameter(var, description )
+    """
+    def __init__(self, cq_model):
+        self.cqModel = cq_model
+
+    def visit_Call(self,node):
+       """
+       Called when we see a function call. Is it describe_parameter?
+       """
+       try:
+            if node.func.id == 'describe_parameter':
+                #looks like we have a call to our function.
+                #first parameter is the variable,
+                #second is the description
+                varname = node.args[0].id
+		desc = node.args[1].s
+                self.cqModel.add_parameter_description(varname,desc)
+
+       except:
+            print "Unable to handle function call"
+            pass
+       return node
 
 class ConstantAssignmentFinder(ast.NodeTransformer):
     """
@@ -381,9 +431,6 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
         self.cqModel = cq_model
 
     def handle_assignment(self, var_name, value_node):
-
-
-
         try:
 
             if type(value_node) == ast.Num:
