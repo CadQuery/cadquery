@@ -41,7 +41,7 @@ def _fc_path():
             if os.path.exists(_PATH):
                 return _PATH
 
-    if sys.platform.startswith('win'):
+    elif sys.platform.startswith('win'):
         # Try all the usual suspects
         for _PATH in [
                 "c:/Program Files/FreeCAD0.12/bin",
@@ -84,7 +84,7 @@ def _fc_path():
             if os.path.exists(_PATH):
                 return _PATH
 
-    if sys.platform.startswith('darwin'):
+    elif sys.platform.startswith('darwin'):
         # Assume we're dealing with a Mac
         for _PATH in [
                 "/Applications/FreeCAD.app/Contents/lib",
