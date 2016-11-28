@@ -41,6 +41,24 @@ class TestCadObjects(BaseTest):
 
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), e.Center().toTuple(), 3)
 
+    def testEdgeWrapperMakeCircle(self):
+        halfCircleEdge = Edge.makeCircle(radius=10, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=0, angle2=180)
+
+        self.assertTupleAlmostEquals((0.0, 5.0, 0.0), halfCircleEdge.CenterOfBoundBox(0.001).toTuple())
+        self.assertTupleAlmostEquals((10.0, 0.0, 0.0), halfCircleEdge.startPoint().toTuple())
+        self.assertTupleAlmostEquals((-10.0, 0.0, 0.0), halfCircleEdge.endPoint().toTuple())
+
+    def testFaceWrapperMakePlane(self):
+        mplane = Face.makePlane(10,10)
+
+        self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple())
+
+    def testCenterOfBoundBox(self):
+        pass
+
+    def testCombinedCenterOfBoundBox(self):
+        pass
+
     def testCompoundCenter(self):
         """
         Tests whether or not a proper weighted center can be found for a compound
