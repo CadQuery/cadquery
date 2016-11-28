@@ -44,14 +44,14 @@ class TestCadObjects(BaseTest):
     def testEdgeWrapperMakeCircle(self):
         halfCircleEdge = Edge.makeCircle(radius=10, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=0, angle2=180)
 
-        self.assertTupleAlmostEquals((0.0, 5.0, 0.0), halfCircleEdge.CenterOfBoundBox(0.001).toTuple())
-        self.assertTupleAlmostEquals((10.0, 0.0, 0.0), halfCircleEdge.startPoint().toTuple())
-        self.assertTupleAlmostEquals((-10.0, 0.0, 0.0), halfCircleEdge.endPoint().toTuple())
+        self.assertTupleAlmostEquals((0.0, 5.0, 0.0), halfCircleEdge.CenterOfBoundBox(0.0001).toTuple(),3)
+        self.assertTupleAlmostEquals((10.0, 0.0, 0.0), halfCircleEdge.startPoint().toTuple(), 3)
+        self.assertTupleAlmostEquals((-10.0, 0.0, 0.0), halfCircleEdge.endPoint().toTuple(), 3)
 
     def testFaceWrapperMakePlane(self):
         mplane = Face.makePlane(10,10)
 
-        self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple())
+        self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
 
     def testCenterOfBoundBox(self):
         pass
