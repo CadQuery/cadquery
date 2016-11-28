@@ -216,7 +216,8 @@ class Shape(object):
         else:
             raise ValueError("Cannot find the center of %s object type" % str(type(self.Solids()[0].wrapped)))
 
-    def CenterOfBoundBox(self):
+    def CenterOfBoundBox(self, tolerance = 0.1):
+        self.wrapped.tessellate(tolerance)
         if isinstance(self.wrapped, FreeCADPart.Shape):
             # If there are no Solids, we're probably dealing with a Face or something similar
             if len(self.Solids()) == 0:
@@ -258,14 +259,18 @@ class Shape(object):
           return object.wrapped.Mass
 
     @staticmethod
-    def CombinedCenterOfBoundBox(objects):
+    def CombinedCenterOfBoundBox(objects, tolerance = 0.1):
         """
         Calculates the center of BoundBox of multiple objects.
 
         :param objects: a list of objects with mass 1
         """
         total_mass = len(objects)
-        weighted_centers = [o.wrapped.BoundBox.Center.multiply(1.0) for o in objects]
+
+        weighted_centers = []
+        for o in objects:
+            o.wrapped.tessellate(tolerance)
+            weighted_centers.append(o.wrapped.BoundBox.Center.multiply(1.0))
 
         sum_wc = weighted_centers[0]
         for wc in weighted_centers[1:] :
@@ -470,7 +475,9 @@ class Edge(Shape):
 
     @classmethod
     def makeCircle(cls, radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=360.0, angle2=360):
-        return Edge(FreeCADPart.makeCircle(radius, toVector(pnt), toVector(dir), angle1, angle2))
+        center = Vector(pnt)
+        normal = Vector(dir)        
+        return Edge(FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped, angle1, angle2))
 
     @classmethod
     def makeSpline(cls, listOfVector):
@@ -621,8 +628,10 @@ class Face(Shape):
         return Vector(self.wrapped.normalAt(u, v).normalize())
 
     @classmethod
-    def makePlane(cls, length, width, basePnt=None, dir=None):
-        return Face(FreeCADPart.makePlan(length, width, toVector(basePnt), toVector(dir)))
+    def makePlane(cls, length, width, basePnt=(0, 0, 0), dir=(0, 0, 1)):
+        basePnt = Vector(basePnt)
+        dir = Vector(dir)
+        return Face(FreeCADPart.makePlane(length, width, basePnt.wrapped, dir.wrapped))
 
     @classmethod
     def makeRuledSurface(cls, edgeOrWire1, edgeOrWire2, dist=None):
