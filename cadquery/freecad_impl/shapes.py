@@ -470,9 +470,9 @@ class Edge(Shape):
 
     @classmethod
     def makeCircle(cls, radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=360.0, angle2=360):
-        center = FreeCAD.Base.Vector(pnt.x, pnt.y, pnt.z)
+        center = Vector(pnt)
         normal = Vector(dir)        
-        return Edge(FreeCADPart.makeCircle(radius, center, normal.wrapped, angle1, angle2))
+        return Edge(FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped, angle1, angle2))
 
     @classmethod
     def makeSpline(cls, listOfVector):
