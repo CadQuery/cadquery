@@ -13,7 +13,7 @@ from .cq import *
 
 __all__ = [
     'CQ','Workplane','plugins','selectors','Plane','BoundBox','Matrix','Vector','sortWiresByBuildOrder',
-    'Shape','Vertex','Edge','Wire','Solid','Shell','Compound','exporters', 'importers',
+    'Shape','Vertex','Edge','Wire','Face','Solid','Shell','Compound','exporters', 'importers',
     'NearestToPointSelector','ParallelDirSelector','DirectionSelector','PerpendicularDirSelector',
     'TypeSelector','DirectionMinMaxSelector','StringSyntaxSelector','Selector','plugins'
 ]
