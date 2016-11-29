@@ -16,23 +16,19 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
-import os, sys
+import os
+import sys
 
 
 def _fc_path():
     """Find FreeCAD"""
-    _PATH = ""
-    if _PATH:
+    # Look for FREECAD_LIB env variable
+    _PATH = os.environ.get('FREECAD_LIB', '')
+    if _PATH and os.path.exists(_PATH):
         return _PATH
 
-    #look for FREECAD_LIB env variable
-    if os.environ.has_key('FREECAD_LIB'):
-        _PATH = os.environ.get('FREECAD_LIB')
-        if os.path.exists( _PATH):
-            return _PATH
-
     if sys.platform.startswith('linux'):
-        #Make some dangerous assumptions...
+        # Make some dangerous assumptions...
         for _PATH in [
                 os.path.join(os.path.expanduser("~"), "lib/freecad/lib"),
                 "/usr/local/lib/freecad/lib",
@@ -40,12 +36,13 @@ def _fc_path():
                 "/opt/freecad/lib/",
                 "/usr/bin/freecad/lib",
                 "/usr/lib/freecad",
+                "/usr/lib64/freecad/lib",
                 ]:
             if os.path.exists(_PATH):
                 return _PATH
 
     elif sys.platform.startswith('win'):
-        #try all the usual suspects
+        # Try all the usual suspects
         for _PATH in [
                 "c:/Program Files/FreeCAD0.12/bin",
                 "c:/Program Files/FreeCAD0.13/bin",
@@ -86,27 +83,24 @@ def _fc_path():
                 ]:
             if os.path.exists(_PATH):
                 return _PATH
+
     elif sys.platform.startswith('darwin'):
-        #Assume we're dealing with a Mac
+        # Assume we're dealing with a Mac
         for _PATH in [
                 "/Applications/FreeCAD.app/Contents/lib",
-                os.path.join(os.path.expanduser("~"), "Library/Application Support/FreeCAD/lib"),
+                os.path.join(os.path.expanduser("~"),
+                             "Library/Application Support/FreeCAD/lib"),
                 ]:
             if os.path.exists(_PATH):
                 return _PATH
 
+    raise ImportError('cadquery was unable to determine freecad library path')
 
 
-#Make sure that the correct FreeCAD path shows up in Python's system path
-no_library_path = ImportError('cadquery was unable to determine freecads library path')
+# Make sure that the correct FreeCAD path shows up in Python's system path
 try:
     import FreeCAD
 except ImportError:
     path = _fc_path()
-    if path:
-        sys.path.insert(0, path)
-        try:
-            import FreeCAD
-        except ImportError:
-            raise no_library_path
-    else: raise no_library_path
+    sys.path.insert(0, path)
+    import FreeCAD
