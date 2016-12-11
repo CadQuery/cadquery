@@ -209,16 +209,14 @@ It includes a distribution of the latest version of cadquery.
 Roadmap/Future Work
 =======================
 
-Work is underway on two other installation methods for cadquery:
-
-   1. a conda package, which will install CQ and all of its depedencies, if you are using Anaconda
-   2. a Docker image, which comes ready-to-run after you have installed docker.
-
-Work has also begun on Cadquery 2.0, which will feature:
+Work has begun on Cadquery 2.0, which will feature:
  
    1. Feature trees, for more powerful selection
    2. Direct use of OpenCascade Community Edition(OCE), so that it is no longer required to install FreeCAD
    3. https://github.com/jmwright/cadquery-gui, which will allow visualization of workplanes  
+
+The project page can be found here: https://github.com/dcowden/cadquery/projects/1
+A more detailed description of the plan for CQ 2.0 is here: https://docs.google.com/document/d/1cXuxBkVeYmGOo34MGRdG7E3ILypQqkrJ26oVf3CUSPQ
 
 Where does the name CadQuery come from?
 ========================================
