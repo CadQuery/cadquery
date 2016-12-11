@@ -216,6 +216,7 @@ Work has begun on Cadquery 2.0, which will feature:
    3. https://github.com/jmwright/cadquery-gui, which will allow visualization of workplanes  
 
 The project page can be found here: https://github.com/dcowden/cadquery/projects/1
+
 A more detailed description of the plan for CQ 2.0 is here: https://docs.google.com/document/d/1cXuxBkVeYmGOo34MGRdG7E3ILypQqkrJ26oVf3CUSPQ
 
 Where does the name CadQuery come from?
