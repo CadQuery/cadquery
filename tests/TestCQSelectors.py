@@ -452,7 +452,8 @@ class TestCQSelectors(BaseTest):
                        'top',
                        'bottom',
                        'not |(1,1,0) and >(0,0,1) or XY except >(1,1,1)[-1]',
-                       '(not |(1,1,0) and >(0,0,1)) exc XY and (Z or X)']
+                       '(not |(1,1,0) and >(0,0,1)) exc XY and (Z or X)',
+                       'not ( <X or >X or <Y or >Y )']
 
         for e in expressions: gram.parseString(e,parseAll=True)
         
