@@ -89,7 +89,12 @@ v0.5.2
 ------
    * Added the sweep operation #33
 
-v1.0.0 (unreleased)
+v1.0.0
 ------
    * Added an option to do symmetric extrusion about the workplane (thanks @adam-urbanczyk)
    * Extended selector syntax to include Nth selector and re-implemented selectors using pyparsing (thanks @adam-urbanczyk)
+   * Added logical operations to string selectors (thanks @adam-urbanczyk)
+   * Cleanup of README.md and changes.md (thanks @baoboa)
+   * Fixed bugs with toVector and Face 'Not Defined' errors (thanks @huskier)
+   * Refactor of the initialization code for PEP8 compliance and Python 3 compatibility (thanks @Peque)
+   * Making sure that the new pyparsing library dependency is handled properly (thanks @Peque)
