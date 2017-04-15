@@ -10,9 +10,9 @@ CadQuery is an intuitive, easy-to-use python based language for building paramet
 
 CadQuery has several goals:
 
-* Build models with scripts that are as close as possible to how you'd describe the object to a human.
+* Build lD models with scripts that are as close as possible to how you'd describe the object to a human.
 * Create parametric models that can be very easily customized by end users
-* Output high quality CAD formats like STEP and AMF in addition to traditional STL
+* Output high quality (loss-less) CAD formats like STEP and AMF in addition to traditional STL
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 
 Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
@@ -20,7 +20,6 @@ Using CadQuery, you can write short, simple scripts that produce high quality CA
 Full Documentation
 ============================
 You can find the full cadquery documentation at http://dcowden.github.io/cadquery
-
 
 Getting Started With CadQuery
 ========================================
@@ -112,6 +111,30 @@ The cadquery script is surprisingly short, and allows easily customizing any of 
 ```
 
 Thanks go to cadquery contributor hyOzd ( Altu Technology ) for the example!
+
+Projects Using CadQuery
+=========================
+
+KiCad uses cadquery to build high quality models of electrictronic components. ( https://github.com/KiCad/packages3D )
+
+<p align="center">
+   <img src="https://forum.freecadweb.org/download/file.php?id=33797&sid=b8584f80928497722e9ee9d582a3fa43" width="350"/>
+</p>
+
+This Prusa i3 extruder support uses cadquery to build the model (https://github.com/adam-urbanczyk/cadquery-models) :
+
+<p align="center">
+   <img src="https://github.com/adam-urbanczyk/cadquery-models/raw/master/extruder_support.png" width="350"/>
+</p>
+
+The mach30 project used cadquery to develop a tool that will create a rocket thruster directly from the appropriate equations (https://opendesignengine.net/projects/yavin-thruster/wiki):
+<p align="center">
+   <img src="http://opendesignengine.net/dmsf_files/480?download=" width="700"/>
+</p>
+
+We would love to link to your cadquery based project. Just let us know and we'll add it here.
+
+
 
 
 Why CadQuery instead of OpenSCAD?
