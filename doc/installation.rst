@@ -47,11 +47,6 @@ If you prefer to have a GUI available, your best option is to use
 Simply extract cadquery-freecad-module into your FreeCAD installation. You'll end up
 with a cadquery workbench that allows you to interactively run scripts, and then see the results in the FreeCAD GUI
 
-If you are using Ubuntu, you can also install it via this ppa:
-
-https://code.launchpad.net/~freecad-community/+archive/ubuntu/ppa/+packages
-
-
 Zero Step  Install
 -------------------------------------------------
 
