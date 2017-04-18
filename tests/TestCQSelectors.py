@@ -194,9 +194,13 @@ class TestCQSelectors(BaseTest):
         #2nd face
         val = c.faces('>(1,0,0)[1]').val()
         self.assertAlmostEqual(val.Center().x,-1.5)
+        val = c.faces('>X[1]').val()
+        self.assertAlmostEqual(val.Center().x,-1.5)
         
         #2nd face with inversed selection vector
         val = c.faces('>(-1,0,0)[1]').val()
+        self.assertAlmostEqual(val.Center().x,1.5)
+        val = c.faces('<X[1]').val()
         self.assertAlmostEqual(val.Center().x,1.5)
         
         #2nd last face
@@ -210,6 +214,46 @@ class TestCQSelectors(BaseTest):
         #check if the selected face if normal to the specified Vector
         self.assertAlmostEqual(val.normalAt().cross(Vector(1,0,0)).Length,0.0)
         
+        #test selection of multiple faces with the same distance
+        c = Workplane('XY')\
+            .box(1,4,1,centered=(False,True,False)).faces('<Z')\
+            .box(2,2,2,centered=(True,True,False)).faces('>Z')\
+            .box(1,1,1,centered=(True,True,False))
+        
+        #select 2nd from the bottom (NB python indexing is 0-based)
+        vals = c.faces('>Z[1]').vals()
+        self.assertEqual(len(vals),2)
+        
+        val = c.faces('>Z[1]').val()
+        self.assertAlmostEqual(val.Center().z,1)
+        
+        #do the same but by selecting 3rd from the top
+        vals = c.faces('<Z[2]').vals()
+        self.assertEqual(len(vals),2)
+        
+        val = c.faces('<Z[2]').val()
+        self.assertAlmostEqual(val.Center().z,1)
+        
+        #do the same but by selecting 2nd last from the bottom
+        vals = c.faces('<Z[-2]').vals()
+        self.assertEqual(len(vals),2)
+        
+        val = c.faces('<Z[-2]').val()
+        self.assertAlmostEqual(val.Center().z,1)
+        
+        #verify that <Z[-1] is equivalent to <Z
+        val1 = c.faces('<Z[-1]').val()
+        val2 = c.faces('<Z').val()
+        self.assertTupleAlmostEquals(val1.Center().toTuple(),
+                                     val2.Center().toTuple(),
+                                     3)
+        
+        #verify that >Z[-1] is equivalent to >Z
+        val1 = c.faces('>Z[-1]').val()
+        val2 = c.faces('>Z').val()
+        self.assertTupleAlmostEquals(val1.Center().toTuple(),
+                                     val2.Center().toTuple(),
+                                     3)
         
     def testNearestTo(self):
         c = CQ(makeUnitCube())
