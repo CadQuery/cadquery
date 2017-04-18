@@ -20,6 +20,7 @@
 import re
 import math
 from cadquery import Vector,Edge,Vertex,Face,Solid,Shell,Compound
+from collections import defaultdict
 from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,upcaseTokens,\
                       CaselessLiteral,Group,infixNotation,opAssoc,Forward,\
                       ZeroOrMore,Keyword
@@ -299,11 +300,6 @@ class DirectionMinMaxSelector(Selector):
 
         def distance(tShape):
             return tShape.Center().dot(self.vector)
-            #if tShape.ShapeType == 'Vertex':
-            #    pnt = tShape.Point
-            #else:
-            #    pnt = tShape.Center()
-            #return pnt.dot(self.vector)
 
         # import OrderedDict
         from collections import OrderedDict
@@ -336,34 +332,30 @@ class DirectionNthSelector(ParallelDirSelector):
         self.max = max
         self.directionMax = directionMax
         self.TOLERANCE = tolerance
-        if directionMax:
-            self.N = n #do we want indexing from 0 or from 1?
-        else:
-            self.N = -n
-            
+        self.N = n
+    
     def filter(self,objectList):
         #select first the objects that are normal/parallel to a given dir
         objectList = super(DirectionNthSelector,self).filter(objectList)
 
         def distance(tShape):
             return tShape.Center().dot(self.direction)
-            #if tShape.ShapeType == 'Vertex':
-            #    pnt = tShape.Point
-            #else:
-            #    pnt = tShape.Center()
-            #return pnt.dot(self.vector)
-
-        #make and distance to object dict
-        objectDict = {distance(el) : el for el in objectList}
+        
         #calculate how many digits of precision do we need
         digits = int(1/self.TOLERANCE)
-        # create a rounded distance to original distance mapping (implicitly perfroms unique operation)
-        dist_round_dist = {round(d,digits) : d for d in objectDict.keys()}
+
+        #make a distance to object dict
+        #this is one to many mapping so I am using a default dict with list
+        objectDict = defaultdict(list)
+        for el in objectList: 
+            objectDict[round(distance(el),digits)].append(el)
+        
         # choose the Nth unique rounded distance
-        nth_d = dist_round_dist[sorted(dist_round_dist.keys())[self.N]]
+        nth_distance = sorted(objectDict.keys(),
+                              reverse=not self.directionMax)[self.N]
             
         # map back to original objects and return
-        return [objectDict[d] for d in objectDict.keys() if abs(d-nth_d) < self.TOLERANCE] 
+        return objectDict[nth_distance]
 
 class BinarySelector(Selector):
     """
