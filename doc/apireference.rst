@@ -157,6 +157,7 @@ as a basis for futher operations.
         BaseDirSelector
         ParallelDirSelector
         DirectionSelector
+        DirectionNthSelector
         PerpendicularDirSelector
         TypeSelector
         DirectionMinMaxSelector
