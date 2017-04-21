@@ -28,21 +28,28 @@ string patterns in, CadQuery will automatically use the associated selector obje
 Combining Selectors
 ==========================
 
-Selectors can be combined logically, currently defined operators include AND, OR, NOT and EXC[EPT] (set difference).  For example::
+Selectors can be combined logically, currently defined operators include **and**, **or**, **not** and **exc[ept]** (set difference).  For example:
 
-    box = cadquery.Workplane("XY").box(10,10,10)
+.. cq_plot:: 
 
-    # fillet all edges on top and bottom
-    box = box.faces('>Z or <Z').edges().fillet(1)
+    result = cq.Workplane("XY").box(2, 2, 2) \
+        .edges("|Z and >Y") \
+        .chamfer(0.2)
+    
+    build_object(result)
 
+Much more complex expressions are possible as well:
 
-Much more complex expressions are possible as well::
+.. cq_plot:: 
 
-    # make a hollow cube and chamfer inner edges of the top face
-    result = cq.Workplane("XY").box(2, 2, 2)\
-        .faces(">Z").shell(-0.2)\
-        .faces(">Z").edges("not(<X or >X or <Y or >Y)")\
+    result = cq.Workplane("XY").box(2, 2, 2) \
+        .faces(">Z") \
+        .shell(-0.2) \
+        .faces(">Z") \
+        .edges("not(<X or >X or <Y or >Y)") \
         .chamfer(0.1)
+    
+    build_object(result)
 
 .. _filteringfaces:
 
@@ -121,9 +128,13 @@ Selector    Selects                                    Selector Class           
 User-defined Directions
 -----------------------
 
-It is possible to use user defined vectors as a basis for the selectors. For example::
+It is possible to use user defined vectors as a basis for the selectors. For example:
 
-    box = cadquery.Workplane("XY").box(10,10,10)
+.. cq_plot:: 
 
-    # fillet one edge
-    box = box.edges('>(1,1,0)').fillet(1)
+    result = cq.Workplane("XY").box(10,10,10)
+    
+    # chamfer only one edge
+    result = result.edges('>(-1,1,0)').chamfer(1)
+    
+    build_object(result)
