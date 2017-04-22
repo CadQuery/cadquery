@@ -140,10 +140,10 @@ class Vector(object):
         return self.add(v)
 
     def __repr__(self):
-        return self.wrapped.__repr__()
+        return 'Vector: ' + str((self.x,self.y,self.z))
 
     def __str__(self):
-        return self.wrapped.__str__()
+        return 'Vector: ' + str((self.x,self.y,self.z))
         
     def __eq__(self, other):
         return self.wrapped.__eq__(other)
@@ -155,7 +155,11 @@ class Vector(object):
 
     def transform(self,T):
         
-        return Vector(self.wrapped.Transformed(T.wrapped))
+        #to gp_Pnt (not clear why is that)        
+        pnt = gp_Pnt(self.wrapped.XYZ())
+        pnt_t = pnt.Transformed(T.wrapped)
+        
+        return Vector(gp_Vec(pnt_t.XYZ()))
 
 
 class Matrix:
