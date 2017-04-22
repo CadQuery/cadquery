@@ -58,8 +58,6 @@ class Vector(object):
                 fV = gp_Vec(*args[0])
             elif isinstance(args[0], gp_Vec):
                 fV = args[0]
-            elif isinstance(args[0], gp_Vec):
-                fV = gp_Vec(args[0])   
             else:
                 fV = args[0]
         elif len(args) == 0:
@@ -94,16 +92,16 @@ class Vector(object):
 
     # TODO: is it possible to create a dynamic proxy without all this code?
     def cross(self, v):
-        return Vector(self.wrapped.Crossed(v.wrapped.GetHandle()))
+        return Vector(self.wrapped.Crossed(v.wrapped))
 
     def dot(self, v):
-        return self.wrapped.Dot(v.wrapped.GetHandle())
+        return self.wrapped.Dot(v.wrapped)
 
     def sub(self, v):
-        return Vector(self.wrapped.Subtracted(v.wrapped.GetHandle()))
+        return Vector(self.wrapped.Subtracted(v.wrapped))
 
     def add(self, v):
-        return Vector(self.wrapped.Added(v.wrapped.GetHandle()))
+        return Vector(self.wrapped.Added(v.wrapped))
 
     def multiply(self, scale):
         """Return a copy multiplied by the provided scalar"""
@@ -124,7 +122,7 @@ class Vector(object):
         return self
 
     def getAngle(self, v):
-        return self.wrapped.Angle(v.wrapped.GetHandle())
+        return self.wrapped.Angle(v.wrapped)
 
     def distanceToLine(self):
         raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
@@ -568,10 +566,10 @@ class Plane(object):
                                     gp_Dir(*self.xDir.toTuple())
                                     )
         
-        forward.warpped.setTransformation(global_coord_system,
+        forward.wrapped.SetTransformation(global_coord_system,
                                           local_coord_system)
 
-        inverse.warpped.setTransformation(local_coord_system,
+        inverse.wrapped.SetTransformation(local_coord_system,
                                           global_coord_system)
 
         #TODO verify if this is OK
