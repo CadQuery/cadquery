@@ -29,18 +29,6 @@ face.outerWire
 Selectors
 --------------------
 
-Chained Selectors
-    Space delimited selectors should be unioned to allow multiple selections.  For example ">Z >X"
-
-Ad-hoc axes
-    for example, >(1,2,1) would select a face with normal in  the 1,2,1 direction
-
-logic inversion
-    ! or not to invert logic, such as "!(>Z)" to select faces _other_ than the most z facing
-
-closest to point
-    support faces, points, or edges closest to a provided point
-
 tagged entities
     support tagging entities when they are created, so they can be selected later on using that tag.
     ideally, tags are propagated to features that are created from these features ( ie, an edge tagged with 'foo'
