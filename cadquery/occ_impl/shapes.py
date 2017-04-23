@@ -1,56 +1,16 @@
-"""
-    Copyright (C) 2011-2015  Parametric Products Intellectual Holdings, LLC
-
-    This file is part of CadQuery.
-
-    CadQuery is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
-
-    CadQuery is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; If not, see <http://www.gnu.org/licenses/>
-
-    Wrapper Classes for FreeCAD
-    These classes provide a stable interface for 3d objects,
-    independent of the FreeCAD interface.
-
-    Future work might include use of pythonOCC, OCC, or even
-    another CAD kernel directly, so this interface layer is quite important.
-
-    Funny, in java this is one of those few areas where i'd actually spend the time
-    to make an interface and an implementation, but for new these are just rolled together
-
-    This interface layer provides three distinct values:
-
-        1. It allows us to avoid changing key api points if we change underlying implementations.
-           It would be a disaster if script and plugin authors had to change models because we
-           changed implementations
-
-        2. Allow better documentation.  One of the reasons FreeCAD is no more popular is because
-           its docs are terrible.  This allows us to provide good documentation via docstrings
-           for each wrapper
-
-        3. Work around bugs. there are a quite a feb bugs in free this layer allows fixing them
-
-        4. allows for enhanced functionality.  Many objects are missing features we need. For example
-           we need a 'forConstruction' flag on the Wire object.  this allows adding those kinds of things
-
-        5. allow changing interfaces when we'd like.  there are  few cases where the FreeCAD api is not
-           very user friendly: we like to change those when necessary. As an example, in the FreeCAD api,
-           all factory methods are on the 'Part' object, but it is very useful to know what kind of
-           object each one returns, so these are better grouped by the type of object they return.
-           (who would know that Part.makeCircle() returns an Edge, but Part.makePolygon() returns a Wire ?
-"""
 from cadquery import Vector, BoundBox
 import FreeCAD
 import Part as FreeCADPart
 
+import OCC.TopAbs as ta #Tolopolgy type enum
+import OCC.GeomAbs as ga #Geometry type enum
+from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
+from OCC.BRepBuilderAPI import BRepBuilderAPI_Transform #used for mirror op
+from OCC.BRepPrimAPI import * #TODO list functions/used for making primitives
+from OCC.TopExp import TopExp_Explorer #Toplogy explorer
+from OCC.BRepTools import BRepTools_WireExplorer #might be needed for iterating thorugh wires
+
+HASH_CODE_MAX = int(1e+6) #required by OCC HashCode
 
 class Shape(object):
     """
@@ -68,28 +28,25 @@ class Shape(object):
     @classmethod
     def cast(cls, obj, forConstruction=False):
         "Returns the right type of wrapper, given a FreeCAD object"
-        s = obj.ShapeType
         if type(obj) == FreeCAD.Base.Vector:
             return Vector(obj)
         tr = None
 
-        # TODO: there is a clever way to do this i'm sure with a lookup
-        # but it is not a perfect mapping, because we are trying to hide
-        # a bit of the complexity of Compounds in FreeCAD.
-        if s == 'Vertex':
-            tr = Vertex(obj)
-        elif s == 'Edge':
-            tr = Edge(obj)
-        elif s == 'Wire':
-            tr = Wire(obj)
-        elif s == 'Face':
-            tr = Face(obj)
-        elif s == 'Shell':
-            tr = Shell(obj)
-        elif s == 'Solid':
-            tr = Solid(obj)
-        elif s == 'Compound':
-            #compound of solids, lets return a solid instead
+        #define the shape lookup table for casting
+        shape_LUT = {ta.TopAbs_VERTEX    : Vertex,
+                     ta.TopAbs_EDGE      : Edge,
+                     ta.TopAbs_WIRE      : Wire,
+                     ta.TopAbs_FACE      : Face,
+                     ta.TopAbs_SHELL     : Shell,
+                     ta.TopAbs_SOLID     : Solid,
+                     ta.TopAbs_COMPOUND  : Compound}
+
+        t = obj.ShapeType()
+        tr = shape_LUT[t](obj)
+        tr.forConstruction = forConstruction
+        #TODO move this to Compound constructor?
+        '''
+           #compound of solids, lets return a solid instead
             if len(obj.Solids) > 1:
                 tr = Solid(obj)
             elif len(obj.Solids) == 1:
@@ -100,36 +57,21 @@ class Shape(object):
                 tr = Compound(obj)
         else:
             raise ValueError("cast:unknown shape type %s" % s)
-
-        tr.forConstruction = forConstruction
+        '''    
+        
         return tr
 
     # TODO: all these should move into the exporters folder.
     # we dont need a bunch of exporting code stored in here!
     #
     def exportStl(self, fileName):
-        self.wrapped.exportStl(fileName)
-
+        pass
+    
     def exportStep(self, fileName):
-        self.wrapped.exportStep(fileName)
+        pass
 
     def exportShape(self, fileName, fileFormat):
-        if fileFormat == ExportFormats.STL:
-            self.wrapped.exportStl(fileName)
-        elif fileFormat == ExportFormats.BREP:
-            self.wrapped.exportBrep(fileName)
-        elif fileFormat == ExportFormats.STEP:
-            self.wrapped.exportStep(fileName)
-        elif fileFormat == ExportFormats.AMF:
-            # not built into FreeCAD
-            #TODO: user selected tolerance
-            tess = self.wrapped.tessellate(0.1)
-            aw = amfUtils.AMFWriter(tess)
-            aw.writeAmf(fileName)
-        elif fileFormat == ExportFormats.IGES:
-            self.wrapped.exportIges(fileName)
-        else:
-            raise ValueError("Unknown export format: %s" % format)
+        pass
 
     def geomType(self):
         """
@@ -155,9 +97,35 @@ class Shape(object):
             Compound: 'Compound'
             Wire:   'Wire'
         """
-        return self.wrapped.ShapeType
+        
+        geom_LUT  = \
+            {ta.TopAbs_VERTEX    : 'Vertex',
+             ta.TopAbs_EDGE      : BRepAdaptor_Curve,
+             ta.TopAbs_WIRE      : 'Wire',
+             ta.TopAbs_FACE      : BRepAdaptor_Surface,
+             ta.TopAbs_SHELL     : 'Shell',
+             ta.TopAbs_SOLID     : 'Solid',
+             ta.TopAbs_COMPOUND  : 'Compound'}
+        #TODO there are many more geometry types, what to do with those?             
+        geom_LUT_EDGE_FACE = \
+            {ga.GeomAbs_Arc            : 'ARC',
+             ga.GeomAbs_Line           : 'CIRCLE',
+             ga.GeomAbs_Line           : 'LINE',
+             ga.GeomAbs_BSplineCurve   : 'SPLINE',  #BSpline or Bezier?
+             ga.GeomAbs_Plane          : 'PLANE',
+             ga.GeomAbs_Sphere         : 'SPHERE',
+             ga.GeomAbs_Cone           : 'CONE',
+             }
+        
+        tr = geom_LUT[self.wrapped]        
+        
+        if type(tr) is str: 
+            return tr
+        else:
+            return geom_LUT_EDGE_FACE[tr(self.wrapped).GetType()]
+        
 
-    def isType(self, obj, strType):
+    def isType(self, obj, strType): #TODO why here?
         """
             Returns True if the shape is the specified type, false otherwise
 
@@ -170,21 +138,21 @@ class Shape(object):
             return False
 
     def hashCode(self):
-        return self.wrapped.hashCode()
+        return self.wrapped.HashCode(HASH_CODE_MAX)
 
     def isNull(self):
-        return self.wrapped.isNull()
+        return self.wrapped.IsNull()
 
     def isSame(self, other):
-        return self.wrapped.isSame(other.wrapped)
+        return self.wrapped.IsSame(other.wrapped)
 
     def isEqual(self, other):
-        return self.wrapped.isEqual(other.wrapped)
+        return self.wrapped.IsEqual(other.wrapped)
 
-    def isValid(self):
-        return self.wrapped.isValid()
+    def isValid(self): #seems to be not used in the codebase -- remove?
+        raise NotImplemented
 
-    def BoundingBox(self, tolerance=0.1):
+    def BoundingBox(self, tolerance=0.1): #need to implement that in GEOM
         self.wrapped.tessellate(tolerance)
         return BoundBox(self.wrapped.BoundBox)
 
