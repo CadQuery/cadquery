@@ -35,6 +35,7 @@ def _fc_path():
                 "/usr/lib/freecad/lib",
                 "/opt/freecad/lib/",
                 "/usr/bin/freecad/lib",
+                "/usr/lib/freecad-daily/lib",
                 "/usr/lib/freecad",
                 "/usr/lib64/freecad/lib",
                 ]:

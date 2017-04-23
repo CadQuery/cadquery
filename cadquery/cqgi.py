@@ -115,11 +115,11 @@ class CQModel(object):
             else:
                 raise NoOutputError("Script did not call build_object-- no output available.")
         except Exception, ex:
-            print "Error Executing Script:"
+            #print "Error Executing Script:"
             result.set_failure_result(ex)
-            traceback.print_exc()
-            print "Full Text of Script:"
-            print self.script_source
+            #traceback.print_exc()
+            #print "Full Text of Script:"
+            #print self.script_source
 
         end = time.clock()
         result.buildTime = end - start
@@ -180,7 +180,7 @@ class ScriptMetadata(object):
         self.parameters[p.name] = p
 
     def add_parameter_description(self,name,description):
-        print 'Adding Parameter name=%s, desc=%s' % ( name, description )
+        #print 'Adding Parameter name=%s, desc=%s' % ( name, description )
         p = self.parameters[name]
         p.desc = description
 
@@ -418,7 +418,7 @@ class ParameterDescriptionFinder(ast.NodeTransformer):
                 self.cqModel.add_parameter_description(varname,desc)
 
        except:
-            print "Unable to handle function call"
+            #print "Unable to handle function call"
             pass
        return node
 
