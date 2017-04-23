@@ -1047,7 +1047,7 @@ class Workplane(CQ):
             false, the lower left corner will be at the center of the work plane
         """
 
-        if xSpacing < 1 or ySpacing < 1 or xCount < 1 or yCount < 1:
+        if xSpacing <= 0 or ySpacing <= 0 or xCount < 1 or yCount < 1:
             raise ValueError("Spacing and count must be > 0 ")
 
         lpoints = []  # coordinates relative to bottom left point
