@@ -7,22 +7,23 @@ install:
 - gcc --version
 - g++ --version
 - python ./setup.py install
-- pip install coverage
-- pip install coveralls
-- pip install Sphinx==1.3.2
+- pip install -r requirements-dev.txt
 - pip install travis-sphinx
-- pip install pyparsing
+
 script:
 - coverage run --source=cadquery ./runtests.py
 - travis-sphinx --nowarn --source=doc build
+
 after_success:
 - coveralls
 - travis-sphinx deploy
+
 branches:
   except:
   - pythonocc
   - 2_0_branch
-deploy:
+
+  deploy:
   provider: pypi
   user: dcowden
   password:

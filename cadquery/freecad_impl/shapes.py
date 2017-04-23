@@ -420,11 +420,17 @@ class Edge(Shape):
         # self.endPoint = None
 
         self.edgetypes = {
-            FreeCADPart.Line: 'LINE',
             FreeCADPart.ArcOfCircle: 'ARC',
             FreeCADPart.Circle: 'CIRCLE'
         }
 
+        if hasattr(FreeCADPart,"LineSegment"):
+            #FreeCAD <= 0.16
+            self.edgetypes[FreeCADPart.LineSegment] = 'LINE'
+        else:
+            #FreeCAD >= 0.17
+            self.edgetypes[FreeCADPart.Line] = 'LINE'
+            
          # Helps identify this solid through the use of an ID
         self.label = ""
 
