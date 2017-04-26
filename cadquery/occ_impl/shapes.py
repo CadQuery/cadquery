@@ -308,6 +308,7 @@ class Shape(object):
         return out.values()
 
     def Vertices(self):
+
         return [Vertex(i) for i in self._entities('Vertex')]
 
     def Edges(self):
@@ -347,23 +348,31 @@ class Shape(object):
 
         if type(endVector) == tuple:
             endVector = Vector(endVector)
-
-        tmp = self.wrapped.copy()
-        tmp.rotate(startVector.wrapped, endVector.wrapped, angleDegrees)
-        return Shape.cast(tmp)
+            
+        T = gp_Trsf()
+        T.SetRotation(gp_Ax1(startVector.toPnt(),
+                             (endVector - startVector).toAx()),
+                      angleDegrees)
+        
+        return Shape.cast(self.wrapped.Transformed(T))
 
     def translate(self, vector):
 
         if type(vector) == tuple:
             vector = Vector(vector)
-        tmp = self.wrapped.copy()
-        tmp.translate(vector.wrapped)
-        return Shape.cast(tmp)
+        
+        T = gp_Trsf()
+        T.SetTranslation(vector.wrapped)
+        
+        return Shape.cast(self.wrapped.Transformed(T))
 
     def scale(self, factor):
-        tmp = self.wrapped.copy()
-        tmp.scale(factor)
-        return Shape.cast(tmp)
+        
+        T = gp_Trsf()
+        T.SetScale(gp_Pnt(),
+                   factor)
+        
+        return Shape.cast(self.wrapped.Transformed(T))
 
     def copy(self):
         return Shape.cast(self.wrapped.copy())
@@ -398,7 +407,7 @@ class Shape(object):
         return Shape.cast(tmp)
 
     def __hash__(self):
-        return self.wrapped.hashCode()
+        return self.hashCode()
 
 
 class Vertex(Shape):
