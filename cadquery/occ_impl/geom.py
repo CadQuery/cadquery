@@ -2,6 +2,8 @@ import math
 import cadquery
 
 from OCC.gp import gp_Vec, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp
+from OCC.Bnd import Bnd_Box
+from OCC.BRepBndLib import brepbndlib_Add
 
 # TODO this is likely not needed if sing PythonOCC correclty but we will see
 def sortWiresByBuildOrder(wireList, plane, result=[]):
@@ -58,6 +60,8 @@ class Vector(object):
                 fV = gp_Vec(*args[0])
             elif isinstance(args[0], gp_Vec):
                 fV = args[0]
+            elif isinstance(args[0], gp_Pnt):
+                fV = args[0].wrapped.XYZ()
             else:
                 fV = args[0]
         elif len(args) == 0:
@@ -582,25 +586,28 @@ class Plane(object):
         self.fG = forward
 
 class BoundBox(object):
-    """A BoundingBox for an object or set of objects. Wraps the FreeCAD one"""
+    """A BoundingBox for an object or set of objects. Wraps the OCC one"""
     
-    
-    pass
 
-'''
     def __init__(self, bb):
         self.wrapped = bb
-        self.xmin = bb.XMin
-        self.xmax = bb.XMax
-        self.xlen = bb.XLength
-        self.ymin = bb.YMin
-        self.ymax = bb.YMax
-        self.ylen = bb.YLength
-        self.zmin = bb.ZMin
-        self.zmax = bb.ZMax
-        self.zlen = bb.ZLength
-        self.center = Vector(bb.Center)
-        self.DiagonalLength = bb.DiagonalLength
+        XMin, YMin, ZMin, XMax, YMax, ZMax = bb.Get()
+        
+        self.xmin = XMin
+        self.xmax = XMax
+        self.xlen = XMax - XMin
+        self.ymin = YMin
+        self.ymax = YMax
+        self.ylen = YMax - YMin
+        self.zmin = ZMin
+        self.zmax = ZMax
+        self.zlen = ZMax - ZMin
+        
+        self.center = Vector((XMax+XMin)/2,
+                             (YMax+YMin)/2,
+                             (ZMax+ZMin)/2)
+        
+        self.DiagonalLength = self.wrapped.SquareExtent()
 
     def add(self, obj):
         """Returns a modified (expanded) bounding box
@@ -613,18 +620,21 @@ class BoundBox(object):
 
         This bounding box is not changed.
         """
-        tmp = FreeCAD.Base.BoundBox(self.wrapped)
+        
+        tmp = Bnd_Box()
+        tmp.Add(self.wrapped)
+        
         if isinstance(obj, tuple):
-            tmp.add(obj[0], obj[1], obj[2])
+            tmp.Update(*obj)
         elif isinstance(obj, Vector):
-            tmp.add(obj.fV)
+            tmp.Update(*obj.toTuple())
         elif isinstance(obj, BoundBox):
-            tmp.add(obj.wrapped)
+            tmp.Add(obj.wrapped)
 
         return BoundBox(tmp)
 
-    @classmethod
-    def findOutsideBox2D(cls, b1, b2):
+    @staticmethod
+    def findOutsideBox2D(bb1, bb2):
         """Compares bounding boxes
 
         Compares bounding boxes. Returns none if neither is inside the other.
@@ -634,23 +644,31 @@ class BoundBox(object):
         doesn't work correctly plus, there was all kinds of rounding error in
         the built-in implementation i do not understand.
         """
-        fc_bb1 = b1.wrapped
-        fc_bb2 = b2.wrapped
-        if (fc_bb1.XMin < fc_bb2.XMin and
-            fc_bb1.XMax > fc_bb2.XMax and
-            fc_bb1.YMin < fc_bb2.YMin and
-            fc_bb1.YMax > fc_bb2.YMax):
-            return b1
+        
+        if (bb1.XMin < bb2.XMin and
+            bb1.XMax > bb2.XMax and
+            bb1.YMin < bb2.YMin and
+            bb1.YMax > bb2.YMax):
+            return bb1
 
-        if (fc_bb2.XMin < fc_bb1.XMin and
-            fc_bb2.XMax > fc_bb1.XMax and
-            fc_bb2.YMin < fc_bb1.YMin and
-            fc_bb2.YMax > fc_bb1.YMax):
-            return b2
+        if (bb2.XMin < bb1.XMin and
+            bb2.XMax > bb1.XMax and
+            bb2.YMin < bb1.YMin and
+            bb2.YMax > bb1.YMax):
+            return bb2
 
         return None
+        
+    @classmethod
+    def _fromTopoDS(cls,shape):
+        '''
+        Constructs a bounnding bov a TopoDS_Shape
+        '''
+        bbox = Bnd_Box()
+        brepbndlib_Add(shape, bbox)
+        
+        return cls(bbox)
 
     def isInside(self, anotherBox):
         """Is the provided bounding box inside this one?"""
-        return self.wrapped.isInside(anotherBox.wrapped)
-'''
+        return not anotherBox.wrapped.IsOut(self.wrapped)
