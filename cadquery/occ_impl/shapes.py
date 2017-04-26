@@ -334,6 +334,12 @@ class Shape(object):
 
     def Length(self):
         raise NotImplementedError
+        
+    def _apply_transform(self,T):
+        
+        return Shape.cast(BRepBuilderAPI_Transform(self.wrapped,
+                                                   T,
+                                                   True).Shape())
 
     def rotate(self, startVector, endVector, angleDegrees):
         """
@@ -354,7 +360,7 @@ class Shape(object):
                              (endVector - startVector).toAx()),
                       angleDegrees)
         
-        return Shape.cast(self.wrapped.Transformed(T))
+        return self._apply_transform(T)
 
     def translate(self, vector):
 
@@ -364,7 +370,7 @@ class Shape(object):
         T = gp_Trsf()
         T.SetTranslation(vector.wrapped)
         
-        return Shape.cast(self.wrapped.Transformed(T))
+        return self._apply_transform(T)
 
     def scale(self, factor):
         
@@ -372,7 +378,7 @@ class Shape(object):
         T.SetScale(gp_Pnt(),
                    factor)
         
-        return Shape.cast(self.wrapped.Transformed(T))
+        return self._apply_transform(T)
 
     def copy(self):
         return Shape.cast(self.wrapped.copy())
