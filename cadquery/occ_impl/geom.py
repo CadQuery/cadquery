@@ -4,7 +4,6 @@ import cadquery
 from OCC.gp import gp_Vec, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp
 from OCC.Bnd import Bnd_Box
 from OCC.BRepBndLib import brepbndlib_Add
-
 # TODO this is likely not needed if sing PythonOCC correclty but we will see
 def sortWiresByBuildOrder(wireList, plane, result=[]):
     """Tries to determine how wires should be combined into faces.
@@ -61,7 +60,7 @@ class Vector(object):
             elif isinstance(args[0], gp_Vec):
                 fV = args[0]
             elif isinstance(args[0], gp_Pnt):
-                fV = args[0].wrapped.XYZ()
+                fV = args[0].XYZ()
             else:
                 fV = args[0]
         elif len(args) == 0:
@@ -142,6 +141,9 @@ class Vector(object):
 
     def __add__(self, v):
         return self.add(v)
+        
+    def __sub__(self, v):
+        return self.sub(v)
 
     def __repr__(self):
         return 'Vector: ' + str((self.x,self.y,self.z))
@@ -156,11 +158,19 @@ class Vector(object):
     def __ne__(self, other):
         return self.wrapped.__ne__(other)
     '''
+    
+    def toPnt(self):
+        
+        return gp_Pnt(self.wrapped.XYZ())
+        
+    def toDir(self):
+        
+        return gp_Dir(self.wrapped.XYZ())
 
     def transform(self,T):
         
-        #to gp_Pnt (not clear why is that)        
-        pnt = gp_Pnt(self.wrapped.XYZ())
+        #to gp_Pnt to obey cq transformation convention (in OCC vectors do not translate)
+        pnt = self.toPnt()
         pnt_t = pnt.Transformed(T.wrapped)
         
         return Vector(gp_Vec(pnt_t.XYZ()))
@@ -609,7 +619,7 @@ class BoundBox(object):
         
         self.DiagonalLength = self.wrapped.SquareExtent()
 
-    def add(self, obj):
+    def add(self, obj, tol=1e-8):
         """Returns a modified (expanded) bounding box
 
         obj can be one of several things:
@@ -622,6 +632,7 @@ class BoundBox(object):
         """
         
         tmp = Bnd_Box()
+        tmp.SetGap(tol)
         tmp.Add(self.wrapped)
         
         if isinstance(obj, tuple):
@@ -660,11 +671,12 @@ class BoundBox(object):
         return None
         
     @classmethod
-    def _fromTopoDS(cls,shape):
+    def _fromTopoDS(cls,shape,tol=1e-9):
         '''
-        Constructs a bounnding bov a TopoDS_Shape
+        Constructs a bounnding box from a TopoDS_Shape
         '''
         bbox = Bnd_Box()
+        bbox.SetGap(tol)
         brepbndlib_Add(shape, bbox)
         
         return cls(bbox)
