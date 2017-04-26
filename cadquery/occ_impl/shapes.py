@@ -4,13 +4,80 @@ import Part as FreeCADPart
 
 import OCC.TopAbs as ta #Tolopolgy type enum
 import OCC.GeomAbs as ga #Geometry type enum
+
+from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Trsf
 from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.BRepBuilderAPI import BRepBuilderAPI_Transform #used for mirror op
+from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
+                                BRepBuilderAPI_MakeEdge,
+                                BRepBuilderAPI_MakeFace)
+from OCC.GProp import GProp_GProps #properties used to store mass calculation result
+from OCC.BRepGProp import  brepgprop_LinearProperties,  \
+                           brepgprop_SurfaceProperties, \
+                           brepgprop_VolumeProperties #used for mass calculation
 from OCC.BRepPrimAPI import * #TODO list functions/used for making primitives
 from OCC.TopExp import TopExp_Explorer #Toplogy explorer
 from OCC.BRepTools import BRepTools_WireExplorer #might be needed for iterating thorugh wires
 
+from OCC.BRep import BRep_Tool #used for getting underlying geoetry -- is this equvalent to brep adaptor?
+
+from OCC.TopoDS import (topods_Vertex, #downcasting functions
+                        topods_Edge,
+                        topods_Wire,
+                        topods_Face,
+                        topods_Shell,
+                        topods_Compound,
+                        topods_Solid)
+
 HASH_CODE_MAX = int(1e+6) #required by OCC HashCode
+
+shape_LUT  = \
+            {ta.TopAbs_VERTEX    : 'Vertex',
+             ta.TopAbs_EDGE      : 'Edge',
+             ta.TopAbs_WIRE      : 'Wire',
+             ta.TopAbs_FACE      : 'Face',
+             ta.TopAbs_SHELL     : 'Shell',
+             ta.TopAbs_SOLID     : 'Solid',
+             ta.TopAbs_COMPOUND  : 'Compound'}
+
+inverse_shape_LUT  = {v:k for k,v in shape_LUT.iteritems()}
+
+downcast_LUT = \
+            {ta.TopAbs_VERTEX    : topods_Vertex,
+             ta.TopAbs_EDGE      : topods_Edge,
+             ta.TopAbs_WIRE      : topods_Wire,
+             ta.TopAbs_FACE      : topods_Face,
+             ta.TopAbs_SHELL     : topods_Shell,
+             ta.TopAbs_SOLID     : topods_Solid,
+             ta.TopAbs_COMPOUND  : topods_Compound}
+
+geom_LUT  = \
+            {ta.TopAbs_VERTEX    : 'Vertex',
+             ta.TopAbs_EDGE      : BRepAdaptor_Curve,
+             ta.TopAbs_WIRE      : 'Wire',
+             ta.TopAbs_FACE      : BRepAdaptor_Surface,
+             ta.TopAbs_SHELL     : 'Shell',
+             ta.TopAbs_SOLID     : 'Solid',
+             ta.TopAbs_COMPOUND  : 'Compound'}
+
+#TODO there are many more geometry types, what to do with those?             
+geom_LUT_EDGE_FACE = \
+    {ga.GeomAbs_Arc            : 'ARC',
+     ga.GeomAbs_Line           : 'CIRCLE',
+     ga.GeomAbs_Line           : 'LINE',
+     ga.GeomAbs_BSplineCurve   : 'SPLINE',  #BSpline or Bezier?
+     ga.GeomAbs_Plane          : 'PLANE',
+     ga.GeomAbs_Sphere         : 'SPHERE',
+     ga.GeomAbs_Cone           : 'CONE',
+     }
+
+
+def downcast(topods_obj):
+    '''
+    Downcasts a TopoDS object to suitable specialized type
+    '''
+    
+    return downcast_LUT[topods_obj.ShapeType()](topods_obj)
 
 class Shape(object):
     """
@@ -19,7 +86,7 @@ class Shape(object):
     """
 
     def __init__(self, obj):
-        self.wrapped = obj
+        self.wrapped = downcast(obj)
         self.forConstruction = False
 
         # Helps identify this solid through the use of an ID
@@ -33,16 +100,16 @@ class Shape(object):
         tr = None
 
         #define the shape lookup table for casting
-        shape_LUT = {ta.TopAbs_VERTEX    : Vertex,
-                     ta.TopAbs_EDGE      : Edge,
-                     ta.TopAbs_WIRE      : Wire,
-                     ta.TopAbs_FACE      : Face,
-                     ta.TopAbs_SHELL     : Shell,
-                     ta.TopAbs_SOLID     : Solid,
-                     ta.TopAbs_COMPOUND  : Compound}
+        constructor_LUT = {ta.TopAbs_VERTEX    : Vertex,
+                           ta.TopAbs_EDGE      : Edge,
+                           ta.TopAbs_WIRE      : Wire,
+                           ta.TopAbs_FACE      : Face,
+                           ta.TopAbs_SHELL     : Shell,
+                           ta.TopAbs_SOLID     : Solid,
+                           ta.TopAbs_COMPOUND  : Compound}
 
         t = obj.ShapeType()
-        tr = shape_LUT[t](obj)
+        tr = constructor_LUT[t](downcast(obj)) #NB downcast is nedded to handly TopoDS_Shape types
         tr.forConstruction = forConstruction
         #TODO move this to Compound constructor?
         '''
@@ -72,7 +139,7 @@ class Shape(object):
 
     def exportShape(self, fileName, fileFormat):
         pass
-
+    
     def geomType(self):
         """
             Gets the underlying geometry type
@@ -98,26 +165,7 @@ class Shape(object):
             Wire:   'Wire'
         """
         
-        geom_LUT  = \
-            {ta.TopAbs_VERTEX    : 'Vertex',
-             ta.TopAbs_EDGE      : BRepAdaptor_Curve,
-             ta.TopAbs_WIRE      : 'Wire',
-             ta.TopAbs_FACE      : BRepAdaptor_Surface,
-             ta.TopAbs_SHELL     : 'Shell',
-             ta.TopAbs_SOLID     : 'Solid',
-             ta.TopAbs_COMPOUND  : 'Compound'}
-        #TODO there are many more geometry types, what to do with those?             
-        geom_LUT_EDGE_FACE = \
-            {ga.GeomAbs_Arc            : 'ARC',
-             ga.GeomAbs_Line           : 'CIRCLE',
-             ga.GeomAbs_Line           : 'LINE',
-             ga.GeomAbs_BSplineCurve   : 'SPLINE',  #BSpline or Bezier?
-             ga.GeomAbs_Plane          : 'PLANE',
-             ga.GeomAbs_Sphere         : 'SPHERE',
-             ga.GeomAbs_Cone           : 'CONE',
-             }
-        
-        tr = geom_LUT[self.wrapped]        
+        tr = geom_LUT[self.wrapped.ShapeType()]     
         
         if type(tr) is str: 
             return tr
@@ -153,54 +201,47 @@ class Shape(object):
         raise NotImplemented
 
     def BoundingBox(self, tolerance=0.1): #need to implement that in GEOM
-        self.wrapped.tessellate(tolerance)
-        return BoundBox(self.wrapped.BoundBox)
+        return BoundBox._fromTopoDS(self.wrapped)
 
     def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
+        
         if mirrorPlane == "XY" or mirrorPlane== "YX":
-            mirrorPlaneNormalVector = FreeCAD.Base.Vector(0, 0, 1)
+            mirrorPlaneNormalVector = gp_Vec(0, 0, 1)
         elif mirrorPlane == "XZ" or mirrorPlane == "ZX":
-            mirrorPlaneNormalVector = FreeCAD.Base.Vector(0, 1, 0)
+            mirrorPlaneNormalVector = gp_Vec(0, 1, 0)
         elif mirrorPlane == "YZ" or mirrorPlane == "ZY":
-            mirrorPlaneNormalVector = FreeCAD.Base.Vector(1, 0, 0)
+            mirrorPlaneNormalVector = gp_Vec(1, 0, 0)
 
         if type(basePointVector) == tuple:
             basePointVector = Vector(basePointVector)
-
-        return Shape.cast(self.wrapped.mirror(basePointVector.wrapped, mirrorPlaneNormalVector))
-
-    def Center(self):
-        # A Part.Shape object doesn't have the CenterOfMass function, but it's wrapped Solid(s) does
-        if isinstance(self.wrapped, FreeCADPart.Shape):
-            # If there are no Solids, we're probably dealing with a Face or something similar
-            if len(self.Solids()) == 0:
-                return Vector(self.wrapped.CenterOfMass)
-            elif len(self.Solids()) == 1:
-                return Vector(self.Solids()[0].wrapped.CenterOfMass)
-            elif len(self.Solids()) > 1:
-                return self.CombinedCenter(self.Solids())
-        elif isinstance(self.wrapped, FreeCADPart.Solid):
-            return Vector(self.wrapped.CenterOfMass)
-        else:
-            raise ValueError("Cannot find the center of %s object type" % str(type(self.Solids()[0].wrapped)))
-
-    def CenterOfBoundBox(self, tolerance = 0.1):
-        self.wrapped.tessellate(tolerance)
-        if isinstance(self.wrapped, FreeCADPart.Shape):
-            # If there are no Solids, we're probably dealing with a Face or something similar
-            if len(self.Solids()) == 0:
-                return Vector(self.wrapped.BoundBox.Center)
-            elif len(self.Solids()) == 1:
-                return Vector(self.Solids()[0].wrapped.BoundBox.Center)
-            elif len(self.Solids()) > 1:
-                return self.CombinedCenterOfBoundBox(self.Solids())
-        elif isinstance(self.wrapped, FreeCADPart.Solid):
-            return Vector(self.wrapped.BoundBox.Center)
-        else:
-            raise ValueError("Cannot find the center(BoundBox's) of %s object type" % str(type(self.Solids()[0].wrapped)))
+            
+        T = gp_Trsf()
+        T.SetMirror(gp_Ax2(gp_Pnt(*basePointVector.toTuple()),
+                          mirrorPlaneNormalVector))
+        
+        return Shape.cast(self.wrapped.Transformed(T))
 
     @staticmethod
-    def CombinedCenter(objects):
+    def _center_of_mass(shape):
+        
+        Properties = GProp_GProps()
+        brepgprop_VolumeProperties(shape,
+                                   Properties)
+                                   
+        return Vector(Properties.CentreOfMass())
+
+    def Center(self):
+        '''
+        Center of mass
+        '''
+    
+        return Shape._center_of_mass(self.wrapped)
+
+    def CenterOfBoundBox(self, tolerance = 0.1):
+        return self.BoundingBox(self.wrapped).center
+    
+    @staticmethod
+    def CombinedCenter(objects): #TODO
         """
         Calculates the center of mass of multiple objects.
 
@@ -216,7 +257,7 @@ class Shape(object):
         return Vector(sum_wc.multiply(1./total_mass))
 
     @staticmethod
-    def computeMass(object):
+    def computeMass(object): #TODO
         """
         Calculates the 'mass' of an object. in FreeCAD < 15, all objects had a mass.
         in FreeCAD >=15, faces no longer have mass, but instead have area.
@@ -227,7 +268,7 @@ class Shape(object):
           return object.wrapped.Mass
 
     @staticmethod
-    def CombinedCenterOfBoundBox(objects, tolerance = 0.1):
+    def CombinedCenterOfBoundBox(objects, tolerance = 0.1): #TODO
         """
         Calculates the center of BoundBox of multiple objects.
 
@@ -247,37 +288,51 @@ class Shape(object):
         return Vector(sum_wc.multiply(1./total_mass))
 
     def Closed(self):
-        return self.wrapped.Closed
+        return self.wrapped.Closed()
 
     def ShapeType(self):
-        return self.wrapped.ShapeType
+        return shape_LUT[self.wrapped.ShapeType()]
+        
+        
+    def _entities(self,topo_type):
+        
+        out = {} #using dict to prevent duplicates
+        
+        explorer = TopExp_Explorer(self.wrapped, inverse_shape_LUT[topo_type])
+        
+        while explorer.More():
+            item = explorer.Current()
+            out[item.__hash__()] = item # some implementations use __hash__
+            explorer.Next()
+            
+        return out.values()
 
     def Vertices(self):
-        return [Vertex(i) for i in self.wrapped.Vertexes]
+        return [Vertex(i) for i in self._entities('Vertex')]
 
     def Edges(self):
-        return [Edge(i) for i in self.wrapped.Edges]
+        return [Edge(i) for i in self._entities('Edge')]
 
     def Compounds(self):
-        return [Compound(i) for i in self.wrapped.Compounds]
+        return [Compound(i) for i in self._entities('Compound')]
 
     def Wires(self):
-        return [Wire(i) for i in self.wrapped.Wires]
+        return [Wire(i) for i in self._entities('Wire')]
 
     def Faces(self):
-        return [Face(i) for i in self.wrapped.Faces]
+        return [Face(i) for i in self._entities('Face')]
 
     def Shells(self):
-        return [Shell(i) for i in self.wrapped.Shells]
+        return [Shell(i) for i in self._entities('Shell')]
 
     def Solids(self):
-        return [Solid(i) for i in self.wrapped.Solids]
+        return [Solid(i) for i in self._entities('Solid')]
 
     def Area(self):
-        return self.wrapped.Area
+        raise NotImplementedError
 
     def Length(self):
-        return self.wrapped.Length
+        raise NotImplementedError
 
     def rotate(self, startVector, endVector, angleDegrees):
         """
@@ -355,23 +410,29 @@ class Vertex(Shape):
         """
             Create a vertex from a FreeCAD Vertex
         """
-        self.wrapped = obj
-        self.forConstruction = forConstruction
-        self.X = obj.X
-        self.Y = obj.Y
-        self.Z = obj.Z
+        super(Vertex,self).__init__(obj)
 
-         # Helps identify this solid through the use of an ID
-        self.label = ""
+        self.forConstruction = forConstruction
+        self.X, self.Y, self.Y = self.toTuple()
 
     def toTuple(self):
-        return (self.X, self.Y, self.Z)
+        #import pdb; pdb.set_trace()
+        geom_point = BRep_Tool.Pnt(self.wrapped)
+        return (geom_point.X(),
+                geom_point.Y(),
+                geom_point.Z())
 
     def Center(self):
         """
             The center of a vertex is itself!
         """
-        return Vector(self.wrapped.Point)
+        return Vector(self.toTuple())
+    
+    @classmethod
+    def makeVertex(cls,x,y,z):
+        
+        return cls(BRepBuilderAPI_MakeVertex(gp_Pnt(x,y,z)
+                                            ).Vertex())
 
 
 class Edge(Shape):
@@ -383,9 +444,8 @@ class Edge(Shape):
         """
             An Edge
         """
-        self.wrapped = obj
-        # self.startPoint = None
-        # self.endPoint = None
+        super(Edge,self).__init__(obj)
+        
 
         self.edgetypes = {
             FreeCADPart.Line: 'LINE',
@@ -393,15 +453,6 @@ class Edge(Shape):
             FreeCADPart.Circle: 'CIRCLE'
         }
 
-         # Helps identify this solid through the use of an ID
-        self.label = ""
-
-    def geomType(self):
-        t = type(self.wrapped.Curve)
-        if self.edgetypes.has_key(t):
-            return self.edgetypes[t]
-        else:
-            return "Unknown Edge Curve Type: %s" % str(t)
 
     def startPoint(self):
         """
@@ -491,15 +542,6 @@ class Wire(Shape):
     A series of connected, ordered Edges, that typically bounds a Face
     """
 
-    def __init__(self, obj):
-        """
-            A Wire
-        """
-        self.wrapped = obj
-
-         # Helps identify this solid through the use of an ID
-        self.label = ""
-
     @classmethod
     def combine(cls, listOfWires):
         """
@@ -562,7 +604,7 @@ class Face(Shape):
     """
     def __init__(self, obj):
 
-        self.wrapped = obj
+        super(Face,self).__init__(obj)
 
         self.facetypes = {
             # TODO: bezier,bspline etc
@@ -571,8 +613,6 @@ class Face(Shape):
             FreeCADPart.Cone: 'CONE'
         }
 
-         # Helps identify this solid through the use of an ID
-        self.label = ""
 
     def geomType(self):
         t = type(self.wrapped.Surface)
@@ -629,14 +669,6 @@ class Shell(Shape):
     """
     the outer boundary of a surface
     """
-    def __init__(self, wrapped):
-        """
-            A Shell
-        """
-        self.wrapped = wrapped
-
-         # Helps identify this solid through the use of an ID
-        self.label = ""
 
     @classmethod
     def makeShell(cls, listOfFaces):
@@ -647,14 +679,6 @@ class Solid(Shape):
     """
     a single solid
     """
-    def __init__(self, obj):
-        """
-            A Solid
-        """
-        self.wrapped = obj
-
-         # Helps identify this solid through the use of an ID
-        self.label = ""
 
     @classmethod
     def isSolid(cls, obj):
@@ -973,15 +997,6 @@ class Compound(Shape):
     """
     a collection of disconnected solids
     """
-
-    def __init__(self, obj):
-        """
-            An Edge
-        """
-        self.wrapped = obj
-
-         # Helps identify this solid through the use of an ID
-        self.label = ""
 
     def Center(self):
         return self.Center()
