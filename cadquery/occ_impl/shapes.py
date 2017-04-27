@@ -5,7 +5,8 @@ import Part as FreeCADPart
 import OCC.TopAbs as ta #Tolopolgy type enum
 import OCC.GeomAbs as ga #Geometry type enum
 
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Trsf
+from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Dir, gp_Circ, gp_Trsf
+from OCC.TColgp import TColgp_Array1OfPnt #collection of pints (used for spline construction)
 from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.BRepBuilderAPI import BRepBuilderAPI_Transform #used for mirror op
 from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
@@ -15,6 +16,7 @@ from OCC.GProp import GProp_GProps #properties used to store mass calculation re
 from OCC.BRepGProp import  brepgprop_LinearProperties,  \
                            brepgprop_SurfaceProperties, \
                            brepgprop_VolumeProperties #used for mass calculation
+from OCC.BRepLProp import BRepLProp_CLProps #local curve properties
 from OCC.BRepPrimAPI import * #TODO list functions/used for making primitives
 from OCC.TopExp import TopExp_Explorer #Toplogy explorer
 from OCC.BRepTools import BRepTools_WireExplorer #might be needed for iterating thorugh wires
@@ -28,7 +30,13 @@ from OCC.TopoDS import (topods_Vertex, #downcasting functions
                         topods_Shell,
                         topods_Compound,
                         topods_Solid)
+                        
+from OCC.GC import GC_MakeArcOfCircle #geometry construction
+from OCC.GeomAPI import GeomAPI_PointsToBSpline
 
+from math import pi
+
+DEG2RAD = 2*pi / 360.
 HASH_CODE_MAX = int(1e+6) #required by OCC HashCode
 
 shape_LUT  = \
@@ -431,7 +439,7 @@ class Vertex(Shape):
         self.X, self.Y, self.Y = self.toTuple()
 
     def toTuple(self):
-        #import pdb; pdb.set_trace()
+        
         geom_point = BRep_Tool.Pnt(self.wrapped)
         return (geom_point.X(),
                 geom_point.Y(),
@@ -468,6 +476,12 @@ class Edge(Shape):
             FreeCADPart.Circle: 'CIRCLE'
         }
 
+    def _geomAdaptor(self):
+        """
+        Return the underlying geometry
+        """
+        return BRepAdaptor_Curve(self.wrapped)
+
 
     def startPoint(self):
         """
@@ -476,9 +490,11 @@ class Edge(Shape):
 
             Note, circles may have the start and end points the same
         """
-        # work around freecad bug where valueAt is unreliable
-        curve = self.wrapped.Curve
-        return Vector(curve.value(self.wrapped.ParameterRange[0]))
+        
+        curve = self._geomAdaptor()
+        umin = curve.FirstParameter()
+        
+        return Vector(curve.Value(umin))
 
     def endPoint(self):
         """
@@ -488,12 +504,11 @@ class Edge(Shape):
             Note, circles may have the start and end points the same
 
         """
-        # warning: easier syntax in freecad of <Edge>.valueAt(<Edge>.ParameterRange[1]) has
-        # a bug with curves other than arcs, but using the underlying curve directly seems to work
-        # that's the solution i'm using below
-        curve = self.wrapped.Curve
-        v = Vector(curve.value(self.wrapped.ParameterRange[1]))
-        return v
+        
+        curve = self._geomAdaptor()
+        umax = curve.LastParameter()
+        
+        return Vector(curve.Value(umax))
 
     def tangentAt(self, locationVector=None):
         """
@@ -501,18 +516,42 @@ class Edge(Shape):
         :param locationVector: location to use. Use the center point if None
         :return: tangent vector
         """
-        if locationVector is None:
-            locationVector = self.Center()
-
-        p = self.wrapped.Curve.parameter(locationVector.wrapped)
-        return Vector(self.wrapped.tangentAt(p))
+        
+        curve = self._geomAdaptor()
+        
+        if locationVector:
+            raise NotImplementedError
+        else:
+            umin, umax = curve.FirstParameter(), curve.LastParameter()
+            umid = 0.5*(umin+umax)
+        
+        curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance) #TODO what are good parameters for those?
+        curve_props.SetParameter(umid)
+        
+        if curve_props.IsTangentDefined():
+            dir_handle = gp_Dir() #this is awkward due to C++ pass by ref in the API
+            curve_props.Tangent(dir_handle)
+            
+            return Vector(dir_handle)
 
     @classmethod
     def makeCircle(cls, radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=360.0, angle2=360):
-        center = Vector(pnt)
-        normal = Vector(dir)        
-        return Edge(FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped, angle1, angle2))
-
+        """
+        
+        """
+        circle_gp = gp_Circ(gp_Ax2(gp_Pnt(*pnt),
+                                   gp_Dir(*dir)),
+                            radius)
+                            
+        if angle1 == angle2: #full circle case
+            return cls(BRepBuilderAPI_MakeEdge(circle_gp).Edge())
+        else: #arc case
+            circle_geom = GC_MakeArcOfCircle(circle_gp,
+                                             angle1*DEG2RAD,
+                                             angle2*DEG2RAD,
+                                             True).Value()
+            return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
+            
     @classmethod
     def makeSpline(cls, listOfVector):
         """
@@ -521,11 +560,12 @@ class Edge(Shape):
         :param listOfVector: a list of Vectors that represent the points
         :return: an Edge
         """
-        vecs = [v.wrapped for v in listOfVector]
+        pnts = TColgp_Array1OfPnt(0,len(listOfVector)-1)
+        for ix,v in enumerate(listOfVector): pnts.SetValue(ix,v.toPnt())
 
-        spline = FreeCADPart.BSplineCurve()
-        spline.interpolate(vecs, False)
-        return Edge(spline.toShape())
+        spline_geom = GeomAPI_PointsToBSpline(pnts).Curve()
+        
+        return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
 
     @classmethod
     def makeThreePointArc(cls, v1, v2, v3):
@@ -537,9 +577,11 @@ class Edge(Shape):
         :param v3: end vector
         :return: an edge object through the three points
         """
-        arc = FreeCADPart.Arc(v1.wrapped, v2.wrapped, v3.wrapped)
-        e = Edge(arc.toShape())
-        return e  # arcane and undocumented, this creates an Edge object
+        circle_geom = GC_MakeArcOfCircle(v1.toPnt(),
+                                         v2.toPnt(),
+                                         v3.toPnt()).Value()
+        
+        return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
     def makeLine(cls, v1, v2):
@@ -549,7 +591,8 @@ class Edge(Shape):
             :param v2: Vector that represents the second point
             :return: A linear edge between the two provided points
         """
-        return Edge(FreeCADPart.makeLine(v1.toTuple(), v2.toTuple()))
+        return cls(BRepBuilderAPI_MakeEdge(v1.toPnt(),
+                                           v2.toPnt()).Edge())
 
 
 class Wire(Shape):
