@@ -3,7 +3,7 @@ import cadquery
 
 from OCC.gp import gp_Vec, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp
 from OCC.Bnd import Bnd_Box
-from OCC.BRepBndLib import brepbndlib_Add
+from OCC.BRepBndLib import brepbndlib_Add # brepbndlib_AddOptimal
 # TODO this is likely not needed if sing PythonOCC correclty but we will see
 def sortWiresByBuildOrder(wireList, plane, result=[]):
     """Tries to determine how wires should be combined into faces.
@@ -60,6 +60,8 @@ class Vector(object):
             elif isinstance(args[0], gp_Vec):
                 fV = args[0]
             elif isinstance(args[0], gp_Pnt):
+                fV = args[0].XYZ()
+            elif isinstance(args[0], gp_Dir):
                 fV = args[0].XYZ()
             else:
                 fV = args[0]
@@ -671,13 +673,17 @@ class BoundBox(object):
         return None
         
     @classmethod
-    def _fromTopoDS(cls,shape,tol=1e-9):
+    def _fromTopoDS(cls,shape,tol=1e-6,optimal=False):
         '''
         Constructs a bounnding box from a TopoDS_Shape
         '''
         bbox = Bnd_Box()
         bbox.SetGap(tol)
-        brepbndlib_Add(shape, bbox)
+        if optimal:
+            raise NotImplementedError
+            #brepbndlib_AddOptimal(shape, bbox) #this is 'exact' but expensive - not yet wrapped by PythonOCC
+        else:
+            brepbndlib_Add(shape, bbox) #this is adds +margin but is faster
         
         return cls(bbox)
 
