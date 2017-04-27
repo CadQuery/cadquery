@@ -11,13 +11,15 @@ from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.BRepBuilderAPI import BRepBuilderAPI_Transform #used for mirror op
 from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
-                                BRepBuilderAPI_MakeFace)
+                                BRepBuilderAPI_MakeFace,
+                                BRepBuilderAPI_MakePolygon,
+                                BRepBuilderAPI_Copy)
 from OCC.GProp import GProp_GProps #properties used to store mass calculation result
 from OCC.BRepGProp import  brepgprop_LinearProperties,  \
                            brepgprop_SurfaceProperties, \
                            brepgprop_VolumeProperties #used for mass calculation
 from OCC.BRepLProp import BRepLProp_CLProps #local curve properties
-from OCC.BRepPrimAPI import * #TODO list functions/used for making primitives
+from OCC.BRepPrimAPI import (BRepPrimAPI_MakeCylinder,) #TODO list functions/used for making primitives
 from OCC.TopExp import TopExp_Explorer #Toplogy explorer
 from OCC.BRepTools import (BRepTools_WireExplorer, #might be needed for iterating thorugh wires
                            breptools_UVBounds)
@@ -398,7 +400,8 @@ class Shape(object):
         return self._apply_transform(T)
 
     def copy(self):
-        return Shape.cast(self.wrapped.copy())
+        
+        return Shape.cast(BRepBuilderAPI_Copy(self.wrapped).Shape())
 
     def transformShape(self, tMatrix):
         """
@@ -406,10 +409,12 @@ class Shape(object):
             returns a copy of the ojbect, transformed by the provided matrix,
             with all objects keeping their type
         """
-        tmp = self.wrapped.copy()
-        tmp.transformShape(tMatrix)
-        r = Shape.cast(tmp)
+
+        r = Shape.cast(BRepBuilderAPI_Transform(self.wrapped,
+                                                tMatrix.wrapped,
+                                                True).Shape())
         r.forConstruction = self.forConstruction
+        
         return r
 
     def transformGeometry(self, tMatrix):
@@ -436,19 +441,22 @@ class Shape(object):
         """
         Remove a shape from another one
         """
-        return Shape.cast(BRepAlgoAPI_Cut(self.wrapped,toCut))
+        return Shape.cast(BRepAlgoAPI_Cut(self.wrapped,
+                                          toCut.wrapped).Shape())
 
     def fuse(self, toFuse):
         """
         Fuse shapes together
         """
-        return Shape.cast(BRepAlgoAPI_Fuse(self.wrapped,toFuse))
+        return Shape.cast(BRepAlgoAPI_Fuse(self.wrapped,
+                                           toFuse.wrapped).Shape())
 
     def intersect(self, toIntersect):
         """
         Construct shape intersection
         """
-        return Shape.cast(BRepAlgoAPI_Common(self.wrapped,toIntersect))
+        return Shape.cast(BRepAlgoAPI_Common(self.wrapped,
+                                             toIntersect.wrapped).Shape())
 
 
 class Vertex(Shape):
@@ -661,8 +669,13 @@ class Wire(Shape):
     @classmethod
     def makePolygon(cls, listOfVertices, forConstruction=False):
         # convert list of tuples into Vectors.
-        w = Wire(FreeCADPart.makePolygon([i.wrapped for i in listOfVertices]))
+        wire_builder = BRepBuilderAPI_MakePolygon()
+        
+        for v in listOfVertices: wire_builder.Add(v.toPnt())
+        
+        w = cls(wire_builder.Wire())        
         w.forConstruction = forConstruction
+        
         return w
 
     @classmethod
@@ -801,7 +814,10 @@ class Solid(Shape):
         Make a cylinder with a given radius and height
         By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360'
         """
-        return Shape.cast(FreeCADPart.makeCylinder(radius, height, pnt.wrapped, dir.wrapped, angleDegrees))
+        return Shape.cast(BRepPrimAPI_MakeCylinder(gp_Ax2(pnt.toPnt(),
+                                                          pnt.toDir()),
+                                                   radius,
+                                                   height).Shape())
 
     @classmethod
     def makeTorus(cls, radius1, radius2, pnt=None, dir=None, angleDegrees1=None, angleDegrees2=None):
@@ -1017,20 +1033,6 @@ class Solid(Shape):
     def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
 
-    def intersect(self, toIntersect):
-        """
-        computes the intersection between this solid and the supplied one
-        The result could be a face or a compound of faces
-        """
-        return Shape.cast(self.wrapped.common(toIntersect.wrapped))
-
-    def cut(self, solidToCut):
-        "Remove a solid from another one"
-        return Shape.cast(self.wrapped.cut(solidToCut.wrapped))
-
-    def fuse(self, solidToJoin):
-        return Shape.cast(self.wrapped.fuse(solidToJoin.wrapped))
-
     def clean(self):
         """Clean faces by removing splitter edges."""
         r = self.wrapped.removeSplitter()
@@ -1083,10 +1085,7 @@ class Compound(Shape):
     """
     a collection of disconnected solids
     """
-
-    def Center(self):
-        return self.Center()
-
+    
     @classmethod
     def makeCompound(cls, listOfShapes):
         """
@@ -1095,9 +1094,6 @@ class Compound(Shape):
         solids = [s.wrapped for s in listOfShapes]
         c = FreeCADPart.Compound(solids)
         return Shape.cast(c)
-
-    def fuse(self, toJoin):
-        return Shape.cast(self.wrapped.fuse(toJoin.wrapped))
 
     def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
