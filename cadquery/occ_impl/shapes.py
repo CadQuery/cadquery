@@ -548,6 +548,14 @@ class Edge(Shape):
             
             return Vector(dir_handle)
 
+    def Center(self):
+        
+        Properties = GProp_GProps()
+        brepgprop_LinearProperties(self.wrapped,
+                                   Properties)
+                                   
+        return Vector(Properties.CentreOfMass())
+
     @classmethod
     def makeCircle(cls, radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=360.0, angle2=360):
         """
@@ -707,6 +715,14 @@ class Face(Shape):
         surf_props.SetParameters(u,v)
         
         return Vector(surf_props.Normal())
+        
+    def Center(self):  
+        
+        Properties = GProp_GProps()
+        brepgprop_SurfaceProperties(self.wrapped,
+                                    Properties)
+                                   
+        return Vector(Properties.CentreOfMass())
 
     @classmethod
     def makePlane(cls, length, width, basePnt=(0, 0, 0), dir=(0, 0, 1)):
