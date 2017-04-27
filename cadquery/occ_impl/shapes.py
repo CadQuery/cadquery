@@ -5,7 +5,7 @@ import Part as FreeCADPart
 import OCC.TopAbs as ta #Tolopolgy type enum
 import OCC.GeomAbs as ga #Geometry type enum
 
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Dir, gp_Circ, gp_Trsf
+from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Dir, gp_Circ, gp_Trsf, gp_Pln
 from OCC.TColgp import TColgp_Array1OfPnt #collection of pints (used for spline construction)
 from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.BRepBuilderAPI import BRepBuilderAPI_Transform #used for mirror op
@@ -19,8 +19,8 @@ from OCC.BRepGProp import  brepgprop_LinearProperties,  \
 from OCC.BRepLProp import BRepLProp_CLProps #local curve properties
 from OCC.BRepPrimAPI import * #TODO list functions/used for making primitives
 from OCC.TopExp import TopExp_Explorer #Toplogy explorer
-from OCC.BRepTools import BRepTools_WireExplorer #might be needed for iterating thorugh wires
-
+from OCC.BRepTools import (BRepTools_WireExplorer, #might be needed for iterating thorugh wires
+                           breptools_UVBounds)
 from OCC.BRep import BRep_Tool #used for getting underlying geoetry -- is this equvalent to brep adaptor?
 
 from OCC.TopoDS import (topods_Vertex, #downcasting functions
@@ -34,8 +34,17 @@ from OCC.TopoDS import (topods_Vertex, #downcasting functions
 from OCC.GC import GC_MakeArcOfCircle #geometry construction
 from OCC.GeomAPI import GeomAPI_PointsToBSpline
 
+from OCC.BRepFill import brepfill_Shell, brepfill_Face
+
+from OCC.BRepAlgoAPI import (BRepAlgoAPI_Common,
+                             BRepAlgoAPI_Fuse,
+                             BRepAlgoAPI_Cut)
+
+from OCC.GeomLProp import GeomLProp_SLProps
+
 from math import pi
 
+TOLERANCE = 1e-6
 DEG2RAD = 2*pi / 360.
 HASH_CODE_MAX = int(1e+6) #required by OCC HashCode
 
@@ -422,6 +431,24 @@ class Shape(object):
 
     def __hash__(self):
         return self.hashCode()
+        
+    def cut(self, toCut):
+        """
+        Remove a shape from another one
+        """
+        return Shape.cast(BRepAlgoAPI_Cut(self.wrapped,toCut))
+
+    def fuse(self, toFuse):
+        """
+        Fuse shapes together
+        """
+        return Shape.cast(BRepAlgoAPI_Fuse(self.wrapped,toFuse))
+
+    def intersect(self, toIntersect):
+        """
+        Construct shape intersection
+        """
+        return Shape.cast(BRepAlgoAPI_Common(self.wrapped,toIntersect))
 
 
 class Vertex(Shape):
@@ -462,19 +489,6 @@ class Edge(Shape):
     """
     A trimmed curve that represents the border of a face
     """
-
-    def __init__(self, obj):
-        """
-            An Edge
-        """
-        super(Edge,self).__init__(obj)
-        
-
-        self.edgetypes = {
-            FreeCADPart.Line: 'LINE',
-            FreeCADPart.ArcOfCircle: 'ARC',
-            FreeCADPart.Circle: 'CIRCLE'
-        }
 
     def _geomAdaptor(self):
         """
@@ -525,7 +539,7 @@ class Edge(Shape):
             umin, umax = curve.FirstParameter(), curve.LastParameter()
             umid = 0.5*(umin+umax)
         
-        curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance) #TODO what are good parameters for those?
+        curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance()) #TODO what are good parameters for those?
         curve_props.SetParameter(umid)
         
         if curve_props.IsTangentDefined():
@@ -660,25 +674,17 @@ class Face(Shape):
     """
     a bounded surface that represents part of the boundary of a solid
     """
-    def __init__(self, obj):
 
-        super(Face,self).__init__(obj)
-
-        self.facetypes = {
-            # TODO: bezier,bspline etc
-            FreeCADPart.Plane: 'PLANE',
-            FreeCADPart.Sphere: 'SPHERE',
-            FreeCADPart.Cone: 'CONE'
-        }
-
-
-    def geomType(self):
-        t = type(self.wrapped.Surface)
-        if self.facetypes.has_key(t):
-            return self.facetypes[t]
-        else:
-            return "Unknown Face Surface Type: %s" % str(t)
-
+    def _geomAdaptor(self):
+        """
+        Return the underlying geometry
+        """
+        return BRep_Tool.Surface(self.wrapped) #BRepAdaptor_Surface(self.wrapped)
+        
+    def _uvBounds(self):
+        
+        return breptools_UVBounds(self.wrapped)
+        
     def normalAt(self, locationVector=None):
         """
             Computes the normal vector at the desired location on the face.
@@ -688,39 +694,45 @@ class Face(Shape):
             :type locationVector: a vector that lies on the surface.
         """
         if locationVector == None:
-            locationVector = self.Center()
-        (u, v) = self.wrapped.Surface.parameter(locationVector.wrapped)
+            u0, u1, v0, v1 = self._uvBounds()
+            u = 0.5*(u0 + u1)
+            v = 0.5*(v0 + v1)
+        else:
+            raise NotImplementedError #TODO implement projection of point on a surface
 
-        return Vector(self.wrapped.normalAt(u, v).normalize())
+        surface = self._geomAdaptor()
+        surf_props = GeomLProp_SLProps(surface,
+                                       1,
+                                       TOLERANCE)
+        surf_props.SetParameters(u,v)
+        
+        return Vector(surf_props.Normal())
 
     @classmethod
     def makePlane(cls, length, width, basePnt=(0, 0, 0), dir=(0, 0, 1)):
         basePnt = Vector(basePnt)
         dir = Vector(dir)
-        return Face(FreeCADPart.makePlane(length, width, basePnt.wrapped, dir.wrapped))
+        
+        pln_geom = gp_Pln(basePnt.toPnt(),dir.toDir())
+
+        return cls(BRepBuilderAPI_MakeFace(pln_geom,
+                                           -width*0.5,
+                                           width*0.5,
+                                           -length*0.5,
+                                           length*0.5).Face())
 
     @classmethod
     def makeRuledSurface(cls, edgeOrWire1, edgeOrWire2, dist=None):
         """
         'makeRuledSurface(Edge|Wire,Edge|Wire) -- Make a ruled surface
         Create a ruled surface out of two edges or wires. If wires are used then
-        these must have the same
+        these must have the same number of edges
         """
-        return Shape.cast(FreeCADPart.makeRuledSurface(edgeOrWire1.obj, edgeOrWire2.obj, dist))
-
-    def cut(self, faceToCut):
-        "Remove a face from another one"
-        return Shape.cast(self.obj.cut(faceToCut.obj))
-
-    def fuse(self, faceToJoin):
-        return Shape.cast(self.obj.fuse(faceToJoin.obj))
-
-    def intersect(self, faceToIntersect):
-        """
-        computes the intersection between the face and the supplied one.
-        The result could be a face or a compound of faces
-        """
-        return Shape.cast(self.obj.common(faceToIntersect.obj))
+        
+        if isinstance(edgeOrWire1,Wire):
+            return cls.cast(brepfill_Shell(edgeOrWire1, edgeOrWire1))
+        else:
+            return cls.cast(brepfill_Face(edgeOrWire1, edgeOrWire1))
 
 
 class Shell(Shape):
