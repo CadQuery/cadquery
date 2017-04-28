@@ -5,21 +5,33 @@ import Part as FreeCADPart
 import OCC.TopAbs as ta #Tolopolgy type enum
 import OCC.GeomAbs as ga #Geometry type enum
 
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Dir, gp_Circ, gp_Trsf, gp_Pln
+from OCC.gp import (gp_Vec, gp_Pnt,gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ,
+                    gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
+                    
 from OCC.TColgp import TColgp_Array1OfPnt #collection of pints (used for spline construction)
 from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
-from OCC.BRepBuilderAPI import BRepBuilderAPI_Transform #used for mirror op
 from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
                                 BRepBuilderAPI_MakeFace,
                                 BRepBuilderAPI_MakePolygon,
-                                BRepBuilderAPI_Copy)
+                                BRepBuilderAPI_MakeWire,
+                                BRepBuilderAPI_Copy,
+                                BRepBuilderAPI_GTransform,
+                                BRepBuilderAPI_Transform)
 from OCC.GProp import GProp_GProps #properties used to store mass calculation result
 from OCC.BRepGProp import  brepgprop_LinearProperties,  \
                            brepgprop_SurfaceProperties, \
                            brepgprop_VolumeProperties #used for mass calculation
 from OCC.BRepLProp import BRepLProp_CLProps #local curve properties
-from OCC.BRepPrimAPI import (BRepPrimAPI_MakeCylinder,) #TODO list functions/used for making primitives
+
+from OCC.BRepPrimAPI import (BRepPrimAPI_MakeBox,  #TODO list functions/used for making primitives
+                             BRepPrimAPI_MakeCone,
+                             BRepPrimAPI_MakeCylinder,
+                             BRepPrimAPI_MakeTorus,
+                             BRepPrimAPI_MakeWedge,
+                             BRepPrimAPI_MakePrism,
+                             BRepPrimAPI_MakeRevol)
+
 from OCC.TopExp import TopExp_Explorer #Toplogy explorer
 from OCC.BRepTools import (BRepTools_WireExplorer, #might be needed for iterating thorugh wires
                            breptools_UVBounds)
@@ -32,6 +44,9 @@ from OCC.TopoDS import (topods_Vertex, #downcasting functions
                         topods_Shell,
                         topods_Compound,
                         topods_Solid)
+
+from OCC.TopoDS import (TopoDS_Shell,
+                        TopoDS_Builder)
                         
 from OCC.GC import GC_MakeArcOfCircle #geometry construction
 from OCC.GeomAPI import GeomAPI_PointsToBSpline
@@ -44,7 +59,23 @@ from OCC.BRepAlgoAPI import (BRepAlgoAPI_Common,
 
 from OCC.GeomLProp import GeomLProp_SLProps
 
-from math import pi
+from OCC.Geom import Geom_ConicalSurface
+from OCC.Geom2d import Geom2d_Line
+
+from OCC.BRepLib import breplib_BuildCurves3d
+
+from OCC.BRepOffsetAPI import (BRepOffsetAPI_ThruSections,
+                               BRepOffsetAPI_MakePipe,
+                               BRepOffsetAPI_MakeThickSolid)
+
+from OCC.BRepFilletAPI import BRepFilletAPI_MakeChamfer
+
+from OCC.TopTools import (TopTools_IndexedDataMapOfShapeListOfShape,
+                          TopTools_ListOfShape)
+
+from OCC.TopExp import TopExp_MapShapesAndAncestors
+
+from math import pi, sqrt
 
 TOLERANCE = 1e-6
 DEG2RAD = 2*pi / 360.
@@ -430,9 +461,12 @@ class Shape(object):
             If your transformation is only translation and rotation, it is safer to use transformShape,
             which doesnt change the underlying type of the geometry, but cannot handle skew transformations
         """
-        tmp = self.wrapped.copy()
-        tmp = tmp.transformGeometry(tMatrix)
-        return Shape.cast(tmp)
+        r = Shape.cast(BRepBuilderAPI_GTransform(self.wrapped,
+                                                 gp_GTrsf(tMatrix.wrapped),
+                                                 True).Shape())
+        r.forConstruction = self.forConstruction
+        
+        return r
 
     def __hash__(self):
         return self.hashCode()
@@ -639,7 +673,12 @@ class Wire(Shape):
         :param listOfWires:
         :return:
         """
-        return Shape.cast(FreeCADPart.Wire([w.wrapped for w in listOfWires]))
+        
+        wire_builder = BRepBuilderAPI_MakeWire()
+        for wire in listOfWires:
+            wire_builder.Add(wire.wrapped)
+        
+        return cls(wire_builder.Wire())
 
     @classmethod
     def assembleEdges(cls, listOfEdges):
@@ -649,10 +688,11 @@ class Wire(Shape):
             :param listOfEdges: a list of Edge objects
             :return: a wire with the edges assembled
         """
-        fCEdges = [a.wrapped for a in listOfEdges]
-
-        wa = Wire(FreeCADPart.Wire(fCEdges))
-        return wa
+        wire_builder = BRepBuilderAPI_MakeWire()
+        for edge in listOfEdges:
+            wire_builder.Add(edge)
+        
+        return cls(wire_builder.Wire())
 
     @classmethod
     def makeCircle(cls, radius, center, normal):
@@ -663,7 +703,9 @@ class Wire(Shape):
             :param normal: vector representing the direction of the plane the circle should lie in
             :return:
         """
-        w = Wire(FreeCADPart.Wire([FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped)]))
+        
+        circle_edge = Edge.makeCircle(radius,center,normal)
+        w = cls.assembleEdges([circle_edge])
         return w
 
     @classmethod
@@ -685,7 +727,25 @@ class Wire(Shape):
         By default a cylindrical surface is used to create the helix. If
         the fourth parameter is set (the apex given in degree) a conical surface is used instead'
         """
-        return Wire(FreeCADPart.makeHelix(pitch, height, radius, angle))
+        #1. build underlying cylindrical/conical surface
+        geom_surf = Geom_ConicalSurface(gp_Ax3(),
+                                        angle,#TODO why no orientation?
+                                        radius)
+        
+        #2. construct an semgent in the u,v domain
+        geom_line = Geom2d_Line(gp_Pnt2d(0.0,0.0), gp_Dir2d(2*pi,pitch))
+        
+        #3. put it together into a wire
+        n_turns = height/pitch
+        u_start = geom_line.Value(0.)
+        u_stop = geom_line.Value(sqrt(n_turns*((2*pi)**2 + pitch**2)))
+        e = BRepBuilderAPI_MakeEdge(geom_line, geom_surf, u_start, u_stop)
+        
+        #4. Convert to wire and fix building 3d geom from 2d geom 
+        w = BRepBuilderAPI_MakeWire(e)
+        breplib_BuildCurves3d(w)
+        
+        return cls(w)
 
     def clean(self):
         """This method is not implemented yet."""
@@ -762,7 +822,19 @@ class Face(Shape):
             return cls.cast(brepfill_Shell(edgeOrWire1, edgeOrWire1))
         else:
             return cls.cast(brepfill_Face(edgeOrWire1, edgeOrWire1))
-
+            
+    @staticmethod
+    def makeFromWires(cls, outerWire, innerWires=[]):
+        '''
+        Makes a planar face from one or more wires
+        '''
+        face_builder = BRepBuilderAPI_MakeFace(outerWire,
+                                       True).Face() #True is for planar only
+                                       
+        for w in innerWires:
+            face_builder.Add(w)
+            
+        return cls(face_builder.Face())
 
 class Shell(Shape):
     """
@@ -771,7 +843,15 @@ class Shell(Shape):
 
     @classmethod
     def makeShell(cls, listOfFaces):
-        return Shell(FreeCADPart.makeShell([i.obj for i in listOfFaces]))
+        
+        shell_wrapped = TopoDS_Shell()
+        shell_builder = TopoDS_Builder()
+        shell_builder.MakeShell(shell_wrapped)
+        
+        for face in listOfFaces:
+            shell_builder.Add(face)
+        
+        return Shell(shell_wrapped)
 
 
 class Solid(Shape):
@@ -796,7 +876,11 @@ class Solid(Shape):
         makeBox(length,width,height,[pnt,dir]) -- Make a box located in pnt with the dimensions (length,width,height)
         By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)'
         """
-        return Shape.cast(FreeCADPart.makeBox(length, width, height, pnt.wrapped, dir.wrapped))
+        return cls(BRepPrimAPI_MakeBox(gp_Ax2(pnt.toPnt(),
+                                              dir.toDir()),
+                                       length,
+                                       width,
+                                       height).Shape())
 
     @classmethod
     def makeCone(cls, radius1, radius2, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees=360):
@@ -805,7 +889,12 @@ class Solid(Shape):
         By default pnt=Vector(0,0,0),
         dir=Vector(0,0,1) and angle=360'
         """
-        return Shape.cast(FreeCADPart.makeCone(radius1, radius2, height, pnt.wrapped, dir.wrapped, angleDegrees))
+        return cls(BRepPrimAPI_MakeCone(gp_Ax2(pnt.toPnt(),
+                                              dir.toDir()),
+                                        radius1,
+                                        radius2,
+                                        height,
+                                        angleDegrees*DEG2RAD).Shape())
 
     @classmethod
     def makeCylinder(cls, radius, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees=360):
@@ -814,10 +903,11 @@ class Solid(Shape):
         Make a cylinder with a given radius and height
         By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360'
         """
-        return Shape.cast(BRepPrimAPI_MakeCylinder(gp_Ax2(pnt.toPnt(),
-                                                          pnt.toDir()),
-                                                   radius,
-                                                   height).Shape())
+        return cls(BRepPrimAPI_MakeCylinder(gp_Ax2(pnt.toPnt(),
+                                                   dir.toDir()),
+                                            radius,
+                                            height,
+                                            angleDegrees*DEG2RAD).Shape())
 
     @classmethod
     def makeTorus(cls, radius1, radius2, pnt=None, dir=None, angleDegrees1=None, angleDegrees2=None):
@@ -827,19 +917,12 @@ class Solid(Shape):
         By default pnt=Vector(0,0,0),dir=Vector(0,0,1),angle1=0
         ,angle1=360 and angle=360'
         """
-        return Shape.cast(FreeCADPart.makeTorus(radius1, radius2, pnt, dir, angleDegrees1, angleDegrees2))
-
-    @classmethod
-    def sweep(cls, profileWire, pathWire):
-        """
-        make a solid by sweeping the profileWire along the specified path
-        :param cls:
-        :param profileWire:
-        :param pathWire:
-        :return:
-        """
-        # needs to use freecad wire.makePipe or makePipeShell
-        # needs to allow free-space wires ( those not made from a workplane )
+        return cls(BRepPrimAPI_MakeTorus(gp_Ax2(pnt.toPnt(),
+                                                dir.toDir()),
+                                         radius1,
+                                         radius2,
+                                         angleDegrees1*DEG2RAD,
+                                         angleDegrees2*DEG2RAD).Shape())
 
     @classmethod
     def makeLoft(cls, listOfWire, ruled=False):
@@ -849,25 +932,46 @@ class Solid(Shape):
             wants to make an infinitely thin shell for a real FreeCADPart.
         """
         # the True flag requests building a solid instead of a shell.
+        loft_builder = BRepOffsetAPI_ThruSections(True, ruled)
+        
+        for w in listOfWire:
+            loft_builder.AddWire(w)
+            
+        loft_builder.Build()
 
-        return Shape.cast(FreeCADPart.makeLoft([i.wrapped for i in listOfWire], True, ruled))
+        return cls(loft_builder.Shape())
 
     @classmethod
-    def makeWedge(cls, xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt=None, dir=None):
+    def makeWedge(cls, xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt=Vector(0,0,0), dir=Vector(0,0,1)):
         """
         Make a wedge located in pnt
         By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
         """
-        return Shape.cast(
-            FreeCADPart.makeWedge(xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt, dir))
+        return cls(BRepPrimAPI_MakeWedge(gp_Ax2(pnt.toPnt(),
+                                                dir.toDir()),
+                                         xmin,
+                                         ymin,
+                                         zmin,
+                                         z2min,
+                                         x2min,
+                                         xmax,
+                                         ymax,
+                                         zmax,
+                                         z2max,
+                                         x2max).Solid())
 
     @classmethod
-    def makeSphere(cls, radius, pnt=None, dir=None, angleDegrees1=None, angleDegrees2=None, angleDegrees3=None):
+    def makeSphere(cls, radius, pnt=Vector(0,0,0), dir=Vector(0,0,1), angleDegrees1=0, angleDegrees2=90, angleDegrees3=360):
         """
         Make a sphere with a given radius
         By default pnt=Vector(0,0,0), dir=Vector(0,0,1), angle1=0, angle2=90 and angle3=360
         """
-        return Shape.cast(FreeCADPart.makeSphere(radius, pnt.wrapped, dir.wrapped, angleDegrees1, angleDegrees2, angleDegrees3))
+        return cls(BRepPrimAPI_MakeTorus(gp_Ax2(pnt.toPnt(),
+                                                dir.toDir()),
+                                         radius,
+                                         angleDegrees1*DEG2RAD,
+                                         angleDegrees2*DEG2RAD,
+                                         angleDegrees3*DEG2RAD).Shape())
 
     @classmethod
     def extrudeLinearWithRotation(cls, outerWire, innerWires, vecCenter, vecNormal, angleDegrees):
@@ -955,14 +1059,11 @@ class Solid(Shape):
         #the work around is to extrude each and then join the resulting solids, which seems to work
 
         #FreeCAD allows this in one operation, but others might not
-        freeCADWires = [outerWire.wrapped]
-        for w in innerWires:
-            freeCADWires.append(w.wrapped)
+        
+        face = Face.makeFromWires(outerWire, innerWires)
+        prism_builder = BRepPrimAPI_MakePrism(face, vecNormal.wrapped, True)           
 
-        f = FreeCADPart.Face(freeCADWires)
-        result = f.extrude(vecNormal.wrapped)
-
-        return Shape.cast(result)
+        return cls(prism_builder.Shape())
 
     @classmethod
     def revolve(cls, outerWire, innerWires, angleDegrees, axisStart, axisEnd):
@@ -990,23 +1091,16 @@ class Solid(Shape):
         This method will attempt to sort the wires, but there is much work remaining to make this method
         reliable.
         """
-        freeCADWires = [outerWire.wrapped]
+        face = Face.makeFromWires(outerWire, innerWires)
+        
+        v1 = Vector(axisStart)
+        v2 = Vector(axisEnd)
+        revol_builder = BRepPrimAPI_MakeRevol(face, 
+                                              gp_Ax1(v1.toPnt(),v2.toDir()),
+                                              angleDegrees*DEG2RAD,
+                                              True)           
 
-        for w in innerWires:
-            freeCADWires.append(w.wrapped)
-
-        f = FreeCADPart.Face(freeCADWires)
-
-        rotateCenter = FreeCAD.Base.Vector(axisStart)
-        rotateAxis = FreeCAD.Base.Vector(axisEnd)
-
-        #Convert our axis end vector into to something FreeCAD will understand (an axis specification vector)
-        rotateAxis = rotateCenter.sub(rotateAxis)
-
-        #FreeCAD wants a rotation center and then an axis to rotate around rather than an axis of rotation
-        result = f.revolve(rotateCenter, rotateAxis, angleDegrees)
-
-        return Shape.cast(result)
+        return cls(revol_builder.Shape())
 
     @classmethod
     def sweep(cls, outerWire, innerWires, path, makeSolid=True, isFrenet=False):
@@ -1019,16 +1113,13 @@ class Solid(Shape):
         :return: a Solid object
         """
 
-        # FreeCAD allows this in one operation, but others might not
-        freeCADWires = [outerWire.wrapped]
-        for w in innerWires:
-            freeCADWires.append(w.wrapped)
-
-        # f = FreeCADPart.Face(freeCADWires)
-        wire = FreeCADPart.Wire([path.wrapped])
-        result = wire.makePipeShell(freeCADWires, makeSolid, isFrenet)
-
-        return Shape.cast(result)
+        face = Face.makeFromWires(outerWire, innerWires)
+        wire = path.wrapped
+        
+        builder = BRepOffsetAPI_MakePipe(wire,face)
+        builder.Build()
+        
+        return cls(builder.Shape())
 
     def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
@@ -1048,7 +1139,13 @@ class Solid(Shape):
         :return: Filleted solid
         """
         nativeEdges = [e.wrapped for e in edgeList]
-        return Shape.cast(self.wrapped.makeFillet(radius, nativeEdges))
+        
+        fillet_builder = BRepFilletAPI_MakeFillet(self.wrapped)
+        
+        for e in nativeEdges:
+            fillet_builder.Add(radius,e)
+        
+        return self(fillet_builder.Shape())
 
     def chamfer(self, length, length2, edgeList):
         """
@@ -1059,11 +1156,33 @@ class Solid(Shape):
         :return: Chamfered solid
         """
         nativeEdges = [e.wrapped for e in edgeList]
-        # note: we prefer 'length' word to 'radius' as opposed to FreeCAD's API
+
+        #make a edge --> faces mapping        
+        edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        
+        TopExp_MapShapesAndAncestors(self.shape,
+                                     ta.TopAbs_EDGE,
+                                     ta.TopAbs_FACE,
+                                     edge_face_map)
+        
+        # note: we prefer 'length' word to 'radius' as opposed to FreeCAD's API        
+        chamfer_builder = BRepFilletAPI_MakeChamfer(self.wrapped)      
+        
         if length2:
-            return Shape.cast(self.wrapped.makeChamfer(length, length2, nativeEdges))
+            d1 = length
+            d2 = length2
         else:
-            return Shape.cast(self.wrapped.makeChamfer(length, nativeEdges))
+            d1 = length
+            d2 = length
+            
+        for e in nativeEdges:
+            face = edge_face_map.FindFromKey(e).First()
+            chamfer_builder.Add(d1,
+                                d2,
+                                e,
+                                face)
+            
+        return self(chamfer_builder.Shape())
 
     def shell(self, faceList, thickness, tolerance=0.0001):
         """
@@ -1073,12 +1192,16 @@ class Solid(Shape):
         :param thickness: floating point thickness. positive shells outwards, negative shells inwards
         :param tolerance: modelling tolerance of the method, default=0.0001
         :return: a shelled solid
-
-            **WARNING**  The underlying FreeCAD implementation can very frequently have problems
-            with shelling complex geometries!
         """
-        nativeFaces = [f.wrapped for f in faceList]
-        return Shape.cast(self.wrapped.makeThickness(nativeFaces, thickness, tolerance))
+        
+        occ_faces_list = TopTools_ListOfShape()
+        for f in faceList:
+             occ_faces_list.Append(f.wrapped)
+             
+        return self(BRepOffsetAPI_MakeThickSolid(self.wrapped,
+                                                 occ_faces_list,
+                                                 thickness,
+                                                 tolerance)
 
 
 class Compound(Shape):
