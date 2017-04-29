@@ -1,6 +1,4 @@
 from cadquery import Vector, BoundBox
-import FreeCAD
-import Part as FreeCADPart
 
 import OCC.TopAbs as ta #Tolopolgy type enum
 import OCC.GeomAbs as ga #Geometry type enum
@@ -30,7 +28,8 @@ from OCC.BRepPrimAPI import (BRepPrimAPI_MakeBox,  #TODO list functions/used for
                              BRepPrimAPI_MakeTorus,
                              BRepPrimAPI_MakeWedge,
                              BRepPrimAPI_MakePrism,
-                             BRepPrimAPI_MakeRevol)
+                             BRepPrimAPI_MakeRevol,
+                             BRepPrimAPI_MakeSphere)
 
 from OCC.TopExp import TopExp_Explorer #Toplogy explorer
 from OCC.BRepTools import (BRepTools_WireExplorer, #might be needed for iterating thorugh wires
@@ -50,7 +49,8 @@ from OCC.TopoDS import (TopoDS_Shell,
                         TopoDS_Builder)
                         
 from OCC.GC import GC_MakeArcOfCircle #geometry construction
-from OCC.GeomAPI import GeomAPI_PointsToBSpline
+from OCC.GeomAPI import (GeomAPI_PointsToBSpline,
+                         GeomAPI_ProjectPointOnSurf)
 
 from OCC.BRepFill import brepfill_Shell, brepfill_Face
 
@@ -116,7 +116,7 @@ geom_LUT  = \
 #TODO there are many more geometry types, what to do with those?             
 geom_LUT_EDGE_FACE = \
     {ga.GeomAbs_Arc            : 'ARC',
-     ga.GeomAbs_Line           : 'CIRCLE',
+     ga.GeomAbs_Circle         : 'CIRCLE',
      ga.GeomAbs_Line           : 'LINE',
      ga.GeomAbs_BSplineCurve   : 'SPLINE',  #BSpline or Bezier?
      ga.GeomAbs_Plane          : 'PLANE',
@@ -148,8 +148,10 @@ class Shape(object):
     @classmethod
     def cast(cls, obj, forConstruction=False):
         "Returns the right type of wrapper, given a FreeCAD object"
+        '''        
         if type(obj) == FreeCAD.Base.Vector:
             return Vector(obj)
+        ''' #FIXME to be removed?
         tr = None
 
         #define the shape lookup table for casting
@@ -410,7 +412,7 @@ class Shape(object):
             
         T = gp_Trsf()
         T.SetRotation(gp_Ax1(startVector.toPnt(),
-                             (endVector - startVector).toAx()),
+                             (endVector - startVector).toDir()),
                       angleDegrees)
         
         return self._apply_transform(T)
@@ -508,7 +510,7 @@ class Vertex(Shape):
         super(Vertex,self).__init__(obj)
 
         self.forConstruction = forConstruction
-        self.X, self.Y, self.Y = self.toTuple()
+        self.X, self.Y, self.Z = self.toTuple()
 
     def toTuple(self):
         
@@ -602,12 +604,15 @@ class Edge(Shape):
         return Vector(Properties.CentreOfMass())
 
     @classmethod
-    def makeCircle(cls, radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=360.0, angle2=360):
+    def makeCircle(cls, radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angle1=360.0, angle2=360):
         """
         
         """
-        circle_gp = gp_Circ(gp_Ax2(gp_Pnt(*pnt),
-                                   gp_Dir(*dir)),
+        pnt = Vector(pnt)
+        dir = Vector(dir)
+        
+        circle_gp = gp_Circ(gp_Ax2(pnt.toPnt(),
+                                   dir.toDir()),
                             radius)
                             
         if angle1 == angle2: #full circle case
@@ -693,7 +698,7 @@ class Wire(Shape):
         """
         wire_builder = BRepBuilderAPI_MakeWire()
         for edge in listOfEdges:
-            wire_builder.Add(edge)
+            wire_builder.Add(edge.wrapped)
         
         return cls(wire_builder.Wire())
 
@@ -724,14 +729,14 @@ class Wire(Shape):
         return w
 
     @classmethod
-    def makeHelix(cls, pitch, height, radius, angle=360.0):
+    def makeHelix(cls, pitch, height, radius, center=Vector(0,0,0), dir=Vector(0,0,1), angle=360.0):
         """
         Make a helix with a given pitch, height and radius
         By default a cylindrical surface is used to create the helix. If
         the fourth parameter is set (the apex given in degree) a conical surface is used instead'
         """
         #1. build underlying cylindrical/conical surface
-        geom_surf = Geom_ConicalSurface(gp_Ax3(),
+        geom_surf = Geom_ConicalSurface(gp_Ax3(center.toPnt(),dir.toDir()),
                                         angle,#TODO why no orientation?
                                         radius)
         
@@ -777,14 +782,21 @@ class Face(Shape):
             :param locationVector: the location to compute the normal at. If none, the center of the face is used.
             :type locationVector: a vector that lies on the surface.
         """
-        if locationVector == None:
+        #get the geometry
+        surface = self._geomAdaptor()
+        
+        if locationVector is None:
             u0, u1, v0, v1 = self._uvBounds()
             u = 0.5*(u0 + u1)
             v = 0.5*(v0 + v1)
         else:
-            raise NotImplementedError #TODO implement projection of point on a surface
+            #project point on surface
+            projector = GeomAPI_ProjectPointOnSurf(locationVector.toPnt(),
+                                                   surface)
+                                                   
+            u,v = projector.LowerDistanceParameters()
 
-        surface = self._geomAdaptor()
+        
         surf_props = GeomLProp_SLProps(surface,
                                        1,
                                        TOLERANCE)
@@ -822,20 +834,23 @@ class Face(Shape):
         """
         
         if isinstance(edgeOrWire1,Wire):
-            return cls.cast(brepfill_Shell(edgeOrWire1, edgeOrWire1))
+            return cls.cast(brepfill_Shell(edgeOrWire1.wrapped,
+                                           edgeOrWire1.wrapped))
         else:
-            return cls.cast(brepfill_Face(edgeOrWire1, edgeOrWire1))
+            return cls.cast(brepfill_Face(edgeOrWire1.wrapped,
+                                          edgeOrWire1.wrapped))
             
-    @staticmethod
+    @classmethod
     def makeFromWires(cls, outerWire, innerWires=[]):
         '''
         Makes a planar face from one or more wires
         '''
-        face_builder = BRepBuilderAPI_MakeFace(outerWire,
-                                       True).Face() #True is for planar only
+        #import pdb; pdb.set_trace()
+        face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped,
+                                               True) #True is for planar only
                                        
         for w in innerWires:
-            face_builder.Add(w)
+            face_builder.Add(w.wrapped)
             
         return cls(face_builder.Face())
 
@@ -852,9 +867,9 @@ class Shell(Shape):
         shell_builder.MakeShell(shell_wrapped)
         
         for face in listOfFaces:
-            shell_builder.Add(face)
+            shell_builder.Add(face.wrapped)
         
-        return Shell(shell_wrapped)
+        return cls(shell_wrapped)
 
 
 class Solid(Shape):
@@ -938,7 +953,7 @@ class Solid(Shape):
         loft_builder = BRepOffsetAPI_ThruSections(True, ruled)
         
         for w in listOfWire:
-            loft_builder.AddWire(w)
+            loft_builder.AddWire(w.wrapped)
             
         loft_builder.Build()
 
@@ -969,12 +984,12 @@ class Solid(Shape):
         Make a sphere with a given radius
         By default pnt=Vector(0,0,0), dir=Vector(0,0,1), angle1=0, angle2=90 and angle3=360
         """
-        return cls(BRepPrimAPI_MakeTorus(gp_Ax2(pnt.toPnt(),
-                                                dir.toDir()),
-                                         radius,
-                                         angleDegrees1*DEG2RAD,
-                                         angleDegrees2*DEG2RAD,
-                                         angleDegrees3*DEG2RAD).Shape())
+        return cls(BRepPrimAPI_MakeSphere(gp_Ax2(pnt.toPnt(),
+                                                 dir.toDir()),
+                                          radius,
+                                          angleDegrees1*DEG2RAD,
+                                          angleDegrees2*DEG2RAD,
+                                          angleDegrees3*DEG2RAD).Shape())
                                          
     @classmethod                                  
     def _extrudeAuxSpine(cls,wire,spine,auxSpine):
@@ -1013,7 +1028,13 @@ class Solid(Shape):
         straight_spine_w = Wire.combine([straight_spine_e,]).wrapped
         
         # make an auxliliary spine
-        aux_spine_w = Wire.makeHelix().wrapped
+        pitch = 360./angleDegrees * vecNormal.Length
+        radius = 1
+        aux_spine_w = Wire.makeHelix(pitch,
+                                     vecNormal.Length,
+                                     radius,
+                                     center=vecCenter,
+                                     dir=vecNormal).wrapped
         
         # extrude the outer wire
         outer_solid = cls._extrudeAuxSpine(outerWire.wrapped,
@@ -1028,7 +1049,7 @@ class Solid(Shape):
         # combine dthe inner solids into compund
         inner_comp = TopoDS_Compound()
         comp_builder = TopoDS_Builder()
-        comp_builder.MakeCompound(inner_comp) #this could be not needed
+        comp_builder.MakeCompound(inner_comp) #TODO this could be not needed
         
         for i in inner_solids: comp_builder.Add(inner_comp,i)
             
@@ -1068,7 +1089,7 @@ class Solid(Shape):
         #FreeCAD allows this in one operation, but others might not
         
         face = Face.makeFromWires(outerWire, innerWires)
-        prism_builder = BRepPrimAPI_MakePrism(face, vecNormal.wrapped, True)           
+        prism_builder = BRepPrimAPI_MakePrism(face.wrapped, vecNormal.wrapped, True)           
 
         return cls(prism_builder.Shape())
 
@@ -1102,7 +1123,7 @@ class Solid(Shape):
         
         v1 = Vector(axisStart)
         v2 = Vector(axisEnd)
-        revol_builder = BRepPrimAPI_MakeRevol(face, 
+        revol_builder = BRepPrimAPI_MakeRevol(face.wrapped, 
                                               gp_Ax1(v1.toPnt(),v2.toDir()),
                                               angleDegrees*DEG2RAD,
                                               True)           
@@ -1121,9 +1142,11 @@ class Solid(Shape):
         """
 
         face = Face.makeFromWires(outerWire, innerWires)
-        wire = path.wrapped
         
-        builder = BRepOffsetAPI_MakePipe(wire,face)
+        if path.ShapeType() == 'Edge':
+            path = Wire.assembleEdges([path,])
+        
+        builder = BRepOffsetAPI_MakePipe(path.wrapped,face.wrapped)
         builder.Build()
         
         return cls(builder.Shape())
@@ -1152,7 +1175,7 @@ class Solid(Shape):
         for e in nativeEdges:
             fillet_builder.Add(radius,e)
         
-        return self(fillet_builder.Shape())
+        return self.__class__(fillet_builder.Shape())
 
     def chamfer(self, length, length2, edgeList):
         """
@@ -1167,7 +1190,7 @@ class Solid(Shape):
         #make a edge --> faces mapping        
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
         
-        topexp_MapShapesAndAncestors(self.shape,
+        topexp_MapShapesAndAncestors(self.wrapped,
                                      ta.TopAbs_EDGE,
                                      ta.TopAbs_FACE,
                                      edge_face_map)
@@ -1181,15 +1204,14 @@ class Solid(Shape):
         else:
             d1 = length
             d2 = length
-            
+        
         for e in nativeEdges:
             face = edge_face_map.FindFromKey(e).First()
             chamfer_builder.Add(d1,
                                 d2,
                                 e,
-                                face)
-            
-        return self(chamfer_builder.Shape())
+                                topods_Face(face)) #NB: edge_face_map return a generic TopoDS_Shape
+        return self.__class__(chamfer_builder.Shape())
 
     def shell(self, faceList, thickness, tolerance=0.0001):
         """
@@ -1204,11 +1226,15 @@ class Solid(Shape):
         occ_faces_list = TopTools_ListOfShape()
         for f in faceList:
              occ_faces_list.Append(f.wrapped)
-             
-        return self(BRepOffsetAPI_MakeThickSolid(self.wrapped,
-                                                 occ_faces_list,
-                                                 thickness,
-                                                 tolerance))
+        
+        shell_builder = BRepOffsetAPI_MakeThickSolid(self.wrapped,
+                                                     occ_faces_list,
+                                                     thickness,
+                                                     tolerance)        
+                                                     
+        shell_builder.Build()
+        
+        return self.__class__(shell_builder.Shape())
 
 class Compound(Shape):
     """
@@ -1220,9 +1246,13 @@ class Compound(Shape):
         """
         Create a compound out of a list of shapes
         """
-        solids = [s.wrapped for s in listOfShapes]
-        c = FreeCADPart.Compound(solids)
-        return Shape.cast(c)
+        comp = TopoDS_Compound()
+        comp_builder = TopoDS_Builder()
+        comp_builder.MakeCompound(comp) #TODO this could be not needed
+        
+        for s in listOfShapes: comp_builder.Add(comp,s.wrapped)
+        
+        return cls(comp)
 
     def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
