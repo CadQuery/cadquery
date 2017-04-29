@@ -46,6 +46,7 @@ from OCC.TopoDS import (topods_Vertex, #downcasting functions
                         topods_Solid)
 
 from OCC.TopoDS import (TopoDS_Shell,
+                        TopoDS_Compound,
                         TopoDS_Builder)
                         
 from OCC.GC import GC_MakeArcOfCircle #geometry construction
@@ -66,14 +67,16 @@ from OCC.BRepLib import breplib_BuildCurves3d
 
 from OCC.BRepOffsetAPI import (BRepOffsetAPI_ThruSections,
                                BRepOffsetAPI_MakePipe,
+                               BRepOffsetAPI_MakePipeShell,
                                BRepOffsetAPI_MakeThickSolid)
 
-from OCC.BRepFilletAPI import BRepFilletAPI_MakeChamfer
+from OCC.BRepFilletAPI import (BRepFilletAPI_MakeChamfer,
+                               BRepFilletAPI_MakeFillet)
 
 from OCC.TopTools import (TopTools_IndexedDataMapOfShapeListOfShape,
                           TopTools_ListOfShape)
 
-from OCC.TopExp import TopExp_MapShapesAndAncestors
+from OCC.TopExp import topexp_MapShapesAndAncestors
 
 from math import pi, sqrt
 
@@ -972,6 +975,16 @@ class Solid(Shape):
                                          angleDegrees1*DEG2RAD,
                                          angleDegrees2*DEG2RAD,
                                          angleDegrees3*DEG2RAD).Shape())
+                                         
+    @classmethod                                  
+    def _extrudeAuxSpine(cls,wire,spine,auxSpine):
+        """
+        Helper function for extrudeLinearWithRotation
+        """
+        extrude_builder = BRepOffsetAPI_MakePipeShell(spine)
+        extrude_builder.SetMode(auxSpine) #auxiliary spine
+        extrude_builder.Add(wire)
+        return extrude_builder.MakeSolid()
 
     @classmethod
     def extrudeLinearWithRotation(cls, outerWire, innerWires, vecCenter, vecNormal, angleDegrees):
@@ -995,40 +1008,34 @@ class Solid(Shape):
             :param angleDegrees: the angle to rotate through while extruding
             :return: a cad.Solid object
         """
+        # make straight spine
+        straight_spine_e = Edge.makeLine(vecCenter,vecCenter.add(vecNormal))
+        straight_spine_w = Wire.combine([straight_spine_e,]).wrapped
+        
+        # make an auxliliary spine
+        aux_spine_w = Wire.makeHelix().wrapped
+        
+        # extrude the outer wire
+        outer_solid = cls._extrudeAuxSpine(outerWire.wrapped,
+                                           straight_spine_w.
+                                           aux_spine_w)
+        
+        # extrude inner wires
+        inner_solids = [cls._extrudeAuxSpine(w.wrapped,
+                                             straight_spine_w.
+                                             aux_spine_w) for w in innerWires]
+                                             
+        # combine dthe inner solids into compund
+        inner_comp = TopoDS_Compound()
+        comp_builder = TopoDS_Builder()
+        comp_builder.MakeCompound(inner_comp) #this could be not needed
+        
+        for i in inner_solids: comp_builder.Add(inner_comp,i)
+            
+        # subtract from the outer solid
+        return cls(BRepAlgoAPI_Cut(outer_solid,inner_comp).Shape())
 
-        # from this point down we are dealing with FreeCAD wires not cad.wires
-        startWires = [outerWire.wrapped] + [i.wrapped for i in innerWires]
-        endWires = []
-        p1 = vecCenter.wrapped
-        p2 = vecCenter.add(vecNormal).wrapped
-
-        # make translated and rotated copy of each wire
-        for w in startWires:
-            w2 = w.copy()
-            w2.translate(vecNormal.wrapped)
-            w2.rotate(p1, p2, angleDegrees)
-            endWires.append(w2)
-
-        # make a ruled surface for each set of wires
-        sides = []
-        for w1, w2 in zip(startWires, endWires):
-            rs = FreeCADPart.makeRuledSurface(w1, w2)
-            sides.append(rs)
-
-        #make faces for the top and bottom
-        startFace = FreeCADPart.Face(startWires)
-        endFace = FreeCADPart.Face(endWires)
-
-        #collect all the faces from the sides
-        faceList = [startFace]
-        for s in sides:
-            faceList.extend(s.Faces)
-        faceList.append(endFace)
-
-        shell = FreeCADPart.makeShell(faceList)
-        solid = FreeCADPart.makeSolid(shell)
-        return Shape.cast(solid)
-
+        
     @classmethod
     def extrudeLinear(cls, outerWire, innerWires, vecNormal):
         """
@@ -1126,10 +1133,10 @@ class Solid(Shape):
 
     def clean(self):
         """Clean faces by removing splitter edges."""
-        r = self.wrapped.removeSplitter()
+        #r = self.wrapped.removeSplitter()
         # removeSplitter() returns a generic Shape type, cast to actual type of object
-        r = FreeCADPart.cast_to_shape(r)
-        return Shape.cast(r)
+        #r = FreeCADPart.cast_to_shape(r)
+        return self
 
     def fillet(self, radius, edgeList):
         """
@@ -1160,7 +1167,7 @@ class Solid(Shape):
         #make a edge --> faces mapping        
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
         
-        TopExp_MapShapesAndAncestors(self.shape,
+        topexp_MapShapesAndAncestors(self.shape,
                                      ta.TopAbs_EDGE,
                                      ta.TopAbs_FACE,
                                      edge_face_map)
@@ -1201,8 +1208,7 @@ class Solid(Shape):
         return self(BRepOffsetAPI_MakeThickSolid(self.wrapped,
                                                  occ_faces_list,
                                                  thickness,
-                                                 tolerance)
-
+                                                 tolerance))
 
 class Compound(Shape):
     """
