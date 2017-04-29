@@ -1,7 +1,7 @@
 import math
 import cadquery
 
-from OCC.gp import gp_Vec, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp
+from OCC.gp import gp_Vec, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
 from OCC.Bnd import Bnd_Box
 from OCC.BRepBndLib import brepbndlib_Add # brepbndlib_AddOptimal
 # TODO this is likely not needed if sing PythonOCC correclty but we will see
@@ -58,11 +58,13 @@ class Vector(object):
             elif isinstance(args[0], tuple):
                 fV = gp_Vec(*args[0])
             elif isinstance(args[0], gp_Vec):
-                fV = args[0]
+                fV = gp_Vec(args[0].XYZ())
             elif isinstance(args[0], gp_Pnt):
-                fV = args[0].XYZ()
+                fV = gp_Vec(args[0].XYZ())
             elif isinstance(args[0], gp_Dir):
-                fV = args[0].XYZ()
+                fV = gp_Vec(args[0].XYZ())
+            elif isinstance(args[0], gp_XYZ):
+                fV = gp_Vec(args[0])
             else:
                 fV = args[0]
         elif len(args) == 0:
@@ -154,7 +156,7 @@ class Vector(object):
         return 'Vector: ' + str((self.x,self.y,self.z))
         
     def __eq__(self, other):
-        return self.wrapped.__eq__(other)
+        return self.wrapped == other.wrapped
     '''  
     is not implemented in OCC
     def __ne__(self, other):
@@ -531,7 +533,7 @@ class Plane(object):
 
         #TODO why is it here?
 
-        pass
+        raise NotImplementedError
 
         '''
         resultWires = []
