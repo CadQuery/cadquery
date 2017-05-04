@@ -49,6 +49,7 @@ from OCC.TopoDS import (TopoDS_Shell,
                         TopoDS_Builder)
                         
 from OCC.GC import GC_MakeArcOfCircle #geometry construction
+from OCC.GCE2d import GCE2d_MakeSegment
 from OCC.GeomAPI import (GeomAPI_PointsToBSpline,
                          GeomAPI_ProjectPointOnSurf)
 
@@ -60,7 +61,7 @@ from OCC.BRepAlgoAPI import (BRepAlgoAPI_Common,
 
 from OCC.GeomLProp import GeomLProp_SLProps
 
-from OCC.Geom import Geom_ConicalSurface
+from OCC.Geom import Geom_ConicalSurface, Geom_CylindricalSurface
 from OCC.Geom2d import Geom2d_Line
 
 from OCC.BRepLib import breplib_BuildCurves3d
@@ -735,10 +736,15 @@ class Wire(Shape):
         By default a cylindrical surface is used to create the helix. If
         the fourth parameter is set (the apex given in degree) a conical surface is used instead'
         """
+        
         #1. build underlying cylindrical/conical surface
-        geom_surf = Geom_ConicalSurface(gp_Ax3(center.toPnt(),dir.toDir()),
-                                        angle,#TODO why no orientation?
-                                        radius)
+        if angle == 360.:
+            geom_surf = Geom_CylindricalSurface(gp_Ax3(center.toPnt(),dir.toDir()),
+                                                radius)
+        else:
+            geom_surf = Geom_ConicalSurface(gp_Ax3(center.toPnt(),dir.toDir()),
+                                            angle*DEG2RAD,#TODO why no orientation?
+                                            radius)
         
         #2. construct an semgent in the u,v domain
         geom_line = Geom2d_Line(gp_Pnt2d(0.0,0.0), gp_Dir2d(2*pi,pitch))
@@ -747,10 +753,12 @@ class Wire(Shape):
         n_turns = height/pitch
         u_start = geom_line.Value(0.)
         u_stop = geom_line.Value(sqrt(n_turns*((2*pi)**2 + pitch**2)))
-        e = BRepBuilderAPI_MakeEdge(geom_line, geom_surf, u_start, u_stop)
+        geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
+
+        e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf.GetHandle()).Edge()
         
         #4. Convert to wire and fix building 3d geom from 2d geom 
-        w = BRepBuilderAPI_MakeWire(e)
+        w = BRepBuilderAPI_MakeWire(e).Wire()
         breplib_BuildCurves3d(w)
         
         return cls(w)
@@ -997,9 +1005,11 @@ class Solid(Shape):
         Helper function for extrudeLinearWithRotation
         """
         extrude_builder = BRepOffsetAPI_MakePipeShell(spine)
-        extrude_builder.SetMode(auxSpine) #auxiliary spine
+        extrude_builder.SetMode(auxSpine,True) #auxiliary spine
         extrude_builder.Add(wire)
-        return extrude_builder.MakeSolid()
+        extrude_builder.Build()
+        extrude_builder.MakeSolid()
+        return extrude_builder.Shape()
 
     @classmethod
     def extrudeLinearWithRotation(cls, outerWire, innerWires, vecCenter, vecNormal, angleDegrees):
@@ -1038,7 +1048,7 @@ class Solid(Shape):
         
         # extrude the outer wire
         outer_solid = cls._extrudeAuxSpine(outerWire.wrapped,
-                                           straight_spine_w.
+                                           straight_spine_w,
                                            aux_spine_w)
         
         # extrude inner wires
