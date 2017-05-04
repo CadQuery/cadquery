@@ -17,7 +17,8 @@ from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_GTransform,
                                 BRepBuilderAPI_Transform)
 from OCC.GProp import GProp_GProps #properties used to store mass calculation result
-from OCC.BRepGProp import  brepgprop_LinearProperties,  \
+from OCC.BRepGProp import  BRepGProp_Face, \
+                           brepgprop_LinearProperties,  \
                            brepgprop_SurfaceProperties, \
                            brepgprop_VolumeProperties #used for mass calculation
 from OCC.BRepLProp import BRepLProp_CLProps #local curve properties
@@ -805,12 +806,11 @@ class Face(Shape):
             u,v = projector.LowerDistanceParameters()
 
         
-        surf_props = GeomLProp_SLProps(surface,
-                                       1,
-                                       TOLERANCE)
-        surf_props.SetParameters(u,v)
+        p = gp_Pnt()
+        vn = gp_Vec()
+        BRepGProp_Face(self.wrapped).Normal(u,v,p,vn)
         
-        return Vector(surf_props.Normal())
+        return Vector(vn)
         
     def Center(self):  
         
