@@ -880,7 +880,94 @@ class Shell(Shape):
         return cls(shell_wrapped)
 
 
-class Solid(Shape):
+class Mixin3D(object):
+    
+    def tessellate(self, tolerance):
+        return self.wrapped.tessellate(tolerance)
+
+    def clean(self):
+        """Clean faces by removing splitter edges."""
+        #r = self.wrapped.removeSplitter()
+        # removeSplitter() returns a generic Shape type, cast to actual type of object
+        #r = FreeCADPart.cast_to_shape(r)
+        return self
+
+    def fillet(self, radius, edgeList):
+        """
+        Fillets the specified edges of this solid.
+        :param radius: float > 0, the radius of the fillet
+        :param edgeList:  a list of Edge objects, which must belong to this solid
+        :return: Filleted solid
+        """
+        nativeEdges = [e.wrapped for e in edgeList]
+        
+        fillet_builder = BRepFilletAPI_MakeFillet(self.wrapped)
+        
+        for e in nativeEdges:
+            fillet_builder.Add(radius,e)
+        
+        return self.__class__(fillet_builder.Shape())
+
+    def chamfer(self, length, length2, edgeList):
+        """
+        Chamfers the specified edges of this solid.
+        :param length: length > 0, the length (length) of the chamfer
+        :param length2: length2 > 0, optional parameter for asymmetrical chamfer. Should be `None` if not required.
+        :param edgeList:  a list of Edge objects, which must belong to this solid
+        :return: Chamfered solid
+        """
+        nativeEdges = [e.wrapped for e in edgeList]
+
+        #make a edge --> faces mapping        
+        edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        
+        topexp_MapShapesAndAncestors(self.wrapped,
+                                     ta.TopAbs_EDGE,
+                                     ta.TopAbs_FACE,
+                                     edge_face_map)
+        
+        # note: we prefer 'length' word to 'radius' as opposed to FreeCAD's API        
+        chamfer_builder = BRepFilletAPI_MakeChamfer(self.wrapped)      
+        
+        if length2:
+            d1 = length
+            d2 = length2
+        else:
+            d1 = length
+            d2 = length
+        
+        for e in nativeEdges:
+            face = edge_face_map.FindFromKey(e).First()
+            chamfer_builder.Add(d1,
+                                d2,
+                                e,
+                                topods_Face(face)) #NB: edge_face_map return a generic TopoDS_Shape
+        return self.__class__(chamfer_builder.Shape())
+
+    def shell(self, faceList, thickness, tolerance=0.0001):
+        """
+            make a shelled solid of given  by removing the list of faces
+
+        :param faceList: list of face objects, which must be part of the solid.
+        :param thickness: floating point thickness. positive shells outwards, negative shells inwards
+        :param tolerance: modelling tolerance of the method, default=0.0001
+        :return: a shelled solid
+        """
+        
+        occ_faces_list = TopTools_ListOfShape()
+        for f in faceList:
+             occ_faces_list.Append(f.wrapped)
+        
+        shell_builder = BRepOffsetAPI_MakeThickSolid(self.wrapped,
+                                                     occ_faces_list,
+                                                     thickness,
+                                                     tolerance)        
+                                                     
+        shell_builder.Build()
+        
+        return self.__class__(shell_builder.Shape())
+
+class Solid(Shape,Mixin3D):
     """
     a single solid
     """
@@ -1161,92 +1248,8 @@ class Solid(Shape):
         
         return cls(builder.Shape())
 
-    def tessellate(self, tolerance):
-        return self.wrapped.tessellate(tolerance)
 
-    def clean(self):
-        """Clean faces by removing splitter edges."""
-        #r = self.wrapped.removeSplitter()
-        # removeSplitter() returns a generic Shape type, cast to actual type of object
-        #r = FreeCADPart.cast_to_shape(r)
-        return self
-
-    def fillet(self, radius, edgeList):
-        """
-        Fillets the specified edges of this solid.
-        :param radius: float > 0, the radius of the fillet
-        :param edgeList:  a list of Edge objects, which must belong to this solid
-        :return: Filleted solid
-        """
-        nativeEdges = [e.wrapped for e in edgeList]
-        
-        fillet_builder = BRepFilletAPI_MakeFillet(self.wrapped)
-        
-        for e in nativeEdges:
-            fillet_builder.Add(radius,e)
-        
-        return self.__class__(fillet_builder.Shape())
-
-    def chamfer(self, length, length2, edgeList):
-        """
-        Chamfers the specified edges of this solid.
-        :param length: length > 0, the length (length) of the chamfer
-        :param length2: length2 > 0, optional parameter for asymmetrical chamfer. Should be `None` if not required.
-        :param edgeList:  a list of Edge objects, which must belong to this solid
-        :return: Chamfered solid
-        """
-        nativeEdges = [e.wrapped for e in edgeList]
-
-        #make a edge --> faces mapping        
-        edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
-        
-        topexp_MapShapesAndAncestors(self.wrapped,
-                                     ta.TopAbs_EDGE,
-                                     ta.TopAbs_FACE,
-                                     edge_face_map)
-        
-        # note: we prefer 'length' word to 'radius' as opposed to FreeCAD's API        
-        chamfer_builder = BRepFilletAPI_MakeChamfer(self.wrapped)      
-        
-        if length2:
-            d1 = length
-            d2 = length2
-        else:
-            d1 = length
-            d2 = length
-        
-        for e in nativeEdges:
-            face = edge_face_map.FindFromKey(e).First()
-            chamfer_builder.Add(d1,
-                                d2,
-                                e,
-                                topods_Face(face)) #NB: edge_face_map return a generic TopoDS_Shape
-        return self.__class__(chamfer_builder.Shape())
-
-    def shell(self, faceList, thickness, tolerance=0.0001):
-        """
-            make a shelled solid of given  by removing the list of faces
-
-        :param faceList: list of face objects, which must be part of the solid.
-        :param thickness: floating point thickness. positive shells outwards, negative shells inwards
-        :param tolerance: modelling tolerance of the method, default=0.0001
-        :return: a shelled solid
-        """
-        
-        occ_faces_list = TopTools_ListOfShape()
-        for f in faceList:
-             occ_faces_list.Append(f.wrapped)
-        
-        shell_builder = BRepOffsetAPI_MakeThickSolid(self.wrapped,
-                                                     occ_faces_list,
-                                                     thickness,
-                                                     tolerance)        
-                                                     
-        shell_builder.Build()
-        
-        return self.__class__(shell_builder.Shape())
-
-class Compound(Shape):
+class Compound(Shape,Mixin3D):
     """
     a collection of disconnected solids
     """
@@ -1263,10 +1266,3 @@ class Compound(Shape):
         for s in listOfShapes: comp_builder.Add(comp,s.wrapped)
         
         return cls(comp)
-
-    def tessellate(self, tolerance):
-        return self.wrapped.tessellate(tolerance)
-
-    def clean(self):
-        """This method is not implemented yet."""
-        return self
