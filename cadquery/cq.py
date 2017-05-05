@@ -2130,7 +2130,7 @@ class Workplane(CQ):
             newS = solids.pop(0)
             for s in solids:
                 newS = newS.fuse(s)
-        elif type(toUnion) == Solid:
+        elif type(toUnion) in (Solid, Compound):
             newS = toUnion
         else:
             raise ValueError("Cannot union type '{}'".format(type(toUnion)))
@@ -2170,7 +2170,7 @@ class Workplane(CQ):
         solidToCut = None
         if type(toCut) == CQ or type(toCut) == Workplane:
             solidToCut = toCut.val()
-        elif type(toCut) == Solid:
+        elif type(toCut) in (Solid,Compound):
             solidToCut = toCut
         else:
             raise ValueError("Cannot cut type '{}'".format(type(toCut)))
