@@ -94,6 +94,15 @@ shape_LUT  = \
              ta.TopAbs_SHELL     : 'Shell',
              ta.TopAbs_SOLID     : 'Solid',
              ta.TopAbs_COMPOUND  : 'Compound'}
+             
+shape_properties_LUT  = \
+            {ta.TopAbs_VERTEX    : None,
+             ta.TopAbs_EDGE      : brepgprop_LinearProperties,
+             ta.TopAbs_WIRE      : brepgprop_LinearProperties,
+             ta.TopAbs_FACE      : brepgprop_SurfaceProperties,
+             ta.TopAbs_SHELL     : brepgprop_SurfaceProperties,
+             ta.TopAbs_SOLID     : brepgprop_VolumeProperties,
+             ta.TopAbs_COMPOUND  : brepgprop_VolumeProperties}
 
 inverse_shape_LUT  = {v:k for k,v in shape_LUT.iteritems()}
 
@@ -292,7 +301,7 @@ class Shape(object):
         Center of mass
         '''
     
-        return Shape._center_of_mass(self.wrapped)
+        return Shape.centerOfMass(self)
 
     def CenterOfBoundBox(self, tolerance = 0.1):
         return self.BoundingBox(self.wrapped).center
@@ -305,7 +314,7 @@ class Shape(object):
         :param objects: a list of objects with mass
         """
         total_mass = sum(Shape.computeMass(o) for o in objects)
-        weighted_centers = [o.wrapped.CenterOfMass.multiply(Shape.computeMass(o)) for o in objects]
+        weighted_centers = [Shape.centerOfMass(o).multiply(Shape.computeMass(o)) for o in objects]
 
         sum_wc = weighted_centers[0]
         for wc in weighted_centers[1:] :
@@ -314,15 +323,32 @@ class Shape(object):
         return Vector(sum_wc.multiply(1./total_mass))
 
     @staticmethod
-    def computeMass(object): #TODO
+    def computeMass(obj):
         """
-        Calculates the 'mass' of an object. in FreeCAD < 15, all objects had a mass.
-        in FreeCAD >=15, faces no longer have mass, but instead have area.
+        Calculates the 'mass' of an object.
         """
-        if object.wrapped.ShapeType == 'Face':
-          return object.wrapped.Area
+        Properties = GProp_GProps()
+        calc_function = shape_properties_LUT[obj.wrapped.ShapeType()]
+        
+        if calc_function:
+            calc_function(obj.wrapped,Properties)
+            return Properties.Mass()
         else:
-          return object.wrapped.Mass
+            raise NotImplemented
+            
+    @staticmethod
+    def centerOfMass(obj):
+        """
+        Calculates the 'mass' of an object.
+        """
+        Properties = GProp_GProps()
+        calc_function = shape_properties_LUT[obj.wrapped.ShapeType()]
+        
+        if calc_function:
+            calc_function(obj.wrapped,Properties)
+            return Vector(Properties.CentreOfMass())
+        else:
+            raise NotImplemented
 
     @staticmethod
     def CombinedCenterOfBoundBox(objects, tolerance = 0.1): #TODO
@@ -387,9 +413,6 @@ class Shape(object):
         return [Solid(i) for i in self._entities('Solid')]
 
     def Area(self):
-        raise NotImplementedError
-
-    def Length(self):
         raise NotImplementedError
         
     def _apply_transform(self,T):
@@ -534,7 +557,16 @@ class Vertex(Shape):
                                             ).Vertex())
 
 
-class Edge(Shape):
+class Mixin1D(object):
+    
+    def Length(self):
+        
+        Properties = GProp_GProps()
+        brepgprop_LinearProperties(self.wrapped,Properties)
+        
+        return Properties.Mass()
+
+class Edge(Shape, Mixin1D):
     """
     A trimmed curve that represents the border of a face
     """
@@ -669,7 +701,7 @@ class Edge(Shape):
                                            v2.toPnt()).Edge())
 
 
-class Wire(Shape):
+class Wire(Shape, Mixin1D):
     """
     A series of connected, ordered Edges, that typically bounds a Face
     """
