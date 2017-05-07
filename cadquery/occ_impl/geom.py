@@ -1,9 +1,13 @@
 import math
 import cadquery
 
-from OCC.gp import gp_Vec, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
+from OCC.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
 from OCC.Bnd import Bnd_Box
 from OCC.BRepBndLib import brepbndlib_Add # brepbndlib_AddOptimal
+
+
+TOL = 1e-3
+
 # TODO this is likely not needed if sing PythonOCC correclty but we will see
 def sortWiresByBuildOrder(wireList, plane, result=[]):
     """Tries to determine how wires should be combined into faces.
@@ -562,6 +566,31 @@ class Plane(object):
                 resultWires.append(cadquery.Shape.cast(mirroredWire))
 
         return resultWires'''
+        
+    def mirrorInPlane(self, listOfShapes, axis = 'X'):
+        
+        local_coord_system = gp_Ax3(self.origin.toPnt(),
+                                    self.zDir.toDir(),
+                                    self.xDir.toDir())
+        T = gp_Trsf()
+        
+        if axis == 'X':
+            T.SetMirror(gp_Ax1(self.origin.toPnt(),
+                               local_coord_system.XDirection()))
+        elif axis == 'Y':
+            T.SetMirror(gp_Ax1(self.origin.toPnt(),
+                               local_coord_system.YDirection()))
+        else:
+            raise NotImplementedError
+            
+        resultWires = []
+        for w in listOfShapes:
+            mirrored = w.transformShape(Matrix(T))
+            
+            #attemp stitching of the wires
+            resultWires.append(w.stitch(mirrored))
+                
+        return resultWires
     
     def _setPlaneDir(self, xDir):
         """Set the vectors parallel to the plane, i.e. xDir and yDir"""
@@ -675,7 +704,7 @@ class BoundBox(object):
         return None
         
     @classmethod
-    def _fromTopoDS(cls,shape,tol=1e-6,optimal=False):
+    def _fromTopoDS(cls,shape,tol=TOL,optimal=False):
         '''
         Constructs a bounnding box from a TopoDS_Shape
         '''

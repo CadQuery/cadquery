@@ -80,6 +80,12 @@ from OCC.TopTools import (TopTools_IndexedDataMapOfShapeListOfShape,
 
 from OCC.TopExp import topexp_MapShapesAndAncestors
 
+from OCC.TopTools import TopTools_HSequenceOfShape, Handle_TopTools_HSequenceOfShape
+
+from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
+
+from OCC.ShapeFix import ShapeFix_Wire
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -799,6 +805,40 @@ class Wire(Shape, Mixin1D):
     def clean(self):
         """This method is not implemented yet."""
         return self
+        
+    def stitch(self,other):
+        """Attempt to stich wires"""
+        
+        #attemp stitching of the wires
+        all_edges = self._entities('Edge') + other._entities('Edge')
+        edges_in = TopTools_HSequenceOfShape()
+        for e in all_edges: edges_in.Append(topods_Edge(e))
+            
+        wires_out = TopTools_HSequenceOfShape()
+        
+        edges_in_h = Handle_TopTools_HSequenceOfShape(edges_in)
+        wires_out_h = Handle_TopTools_HSequenceOfShape(wires_out)
+        
+        ShapeAnalysis_FreeBounds.ConnectEdgesToWires(edges_in_h,
+                                                     TOLERANCE,
+                                                     False,
+                                                     wires_out_h)
+        wires_out = wires_out_h.GetObject() #NB: otherwise it does not work at all
+        if wires_out.Length()==1: #did connect the two wires
+            wr  = wires_out.Value(1)            
+            
+            aux_face = Face.makeFromWires(Shape.cast(wr))
+            #try to cleanup and fix the wire
+            fw = ShapeFix_Wire(topods_Wire(wr),
+                               aux_face.wrapped,
+                               TOLERANCE) 
+            fw.FixReorder()
+            fw.FixConnected()
+            fw.FixClosed()
+            
+            return Shape.cast(fw.Wire())
+        else:
+            return other
 
 class Face(Shape):
     """
