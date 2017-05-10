@@ -334,7 +334,7 @@ class CQ(object):
 
         if len(self.objects) > 1:
             # are all objects 'PLANE'?
-            if not all(o.geomType() == 'PLANE' for o in self.objects):
+            if not all(o.geomType() in ('PLANE','CIRCLE') for o in self.objects):
                 raise ValueError("If multiple objects selected, they all must be planar faces.")
 
             # are all faces co-planar with each other?
@@ -1369,9 +1369,21 @@ class Workplane(CQ):
         Future Enhancements:
             mirrorX().mirrorY() should work but doesnt, due to some FreeCAD weirdness
         """
-        tm = Matrix()
-        tm.rotateY(math.pi)
-        return self.rotateAndCopy(tm)
+        #convert edges to a wire, if there are pending edges
+        n = self.wire(forConstruction=False)
+
+        #attempt to consolidate wires together.
+        consolidated = n.consolidateWires()
+
+        mirroredWires = self.plane.mirrorInPlane(consolidated.wires().vals(),
+                                                 'Y')
+
+        for w in mirroredWires:
+            consolidated.objects.append(w)
+            consolidated._addPendingWire(w)
+
+        #attempt again to consolidate all of the wires
+        return consolidated.consolidateWires()
 
     def mirrorX(self):
         """
@@ -1387,9 +1399,21 @@ class Workplane(CQ):
         Future Enhancements:
             mirrorX().mirrorY() should work but doesnt, due to some FreeCAD weirdness
         """
-        tm = Matrix()
-        tm.rotateX(math.pi)
-        return self.rotateAndCopy(tm)
+        #convert edges to a wire, if there are pending edges
+        n = self.wire(forConstruction=False)
+
+        #attempt to consolidate wires together.
+        consolidated = n.consolidateWires()
+
+        mirroredWires = self.plane.mirrorInPlane(consolidated.wires().vals(),
+                                                 'Y')
+
+        for w in mirroredWires:
+            consolidated.objects.append(w)
+            consolidated._addPendingWire(w)
+
+        #attempt again to consolidate all of the wires
+        return consolidated.consolidateWires()
 
     def _addPendingEdge(self, edge):
         """
