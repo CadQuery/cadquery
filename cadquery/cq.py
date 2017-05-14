@@ -1401,12 +1401,12 @@ class Workplane(CQ):
         """
         #convert edges to a wire, if there are pending edges
         n = self.wire(forConstruction=False)
-
+        
         #attempt to consolidate wires together.
         consolidated = n.consolidateWires()
 
         mirroredWires = self.plane.mirrorInPlane(consolidated.wires().vals(),
-                                                 'Y')
+                                                 'X')
 
         for w in mirroredWires:
             consolidated.objects.append(w)
