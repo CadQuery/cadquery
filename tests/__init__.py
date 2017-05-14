@@ -1,13 +1,8 @@
 from cadquery import *
+from OCC.gp import gp_Vec
 import unittest
 import sys
 import os
-
-import FreeCAD
-
-import Part as P
-from FreeCAD import Vector as V
-
 
 def readFileAsString(fileName):
     f= open(fileName, 'r')
@@ -23,7 +18,8 @@ def writeStringToFile(strToWrite, fileName):
 
 
 def makeUnitSquareWire():
-    return Solid.cast(P.makePolygon([V(0, 0, 0), V(1, 0, 0), V(1, 1, 0), V(0, 1, 0), V(0, 0, 0)]))
+    V = Vector
+    return Wire.makePolygon([V(0, 0, 0), V(1, 0, 0), V(1, 1, 0), V(0, 1, 0), V(0, 0, 0)])
 
 
 def makeUnitCube():
@@ -36,9 +32,8 @@ def makeCube(size):
 
 def toTuple(v):
     """convert a vector or a vertex to a 3-tuple: x,y,z"""
-    pnt = v
-    if type(v) == FreeCAD.Base.Vector:
-        return (v.Point.x, v.Point.y, v.Point.z)
+    if type(v) == gp_Vec:
+        return (v.X(), v.Y(), v.Z())
     elif type(v) == Vector:
         return v.toTuple()
     else:
