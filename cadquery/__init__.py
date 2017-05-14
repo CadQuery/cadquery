@@ -1,8 +1,8 @@
-#these items point to the freecad implementation
-from .freecad_impl.geom import Plane,BoundBox,Vector,Matrix,sortWiresByBuildOrder
-from .freecad_impl.shapes import Shape,Vertex,Edge,Face,Wire,Solid,Shell,Compound
-from .freecad_impl import exporters
-from .freecad_impl import importers
+#these items point to the OCC implementation
+from .occ_impl.geom import Plane,BoundBox,Vector,Matrix,sortWiresByBuildOrder
+from .occ_impl.shapes import Shape,Vertex,Edge,Face,Wire,Solid,Shell,Compound
+from .occ_impl import exporters
+from .occ_impl import importers
 
 #these items are the common implementation
 
