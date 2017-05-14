@@ -588,7 +588,7 @@ class Plane(object):
             mirrored = w.transformShape(Matrix(T))
             
             #attemp stitching of the wires
-            resultWires.append(w.stitch(mirrored))
+            resultWires.append(mirrored)
                 
         return resultWires
     
