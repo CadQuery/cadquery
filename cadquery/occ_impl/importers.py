@@ -2,8 +2,6 @@
 import cadquery
 from .shapes import Shape
 
-import FreeCAD
-import Part
 import sys
 import os
 import urllib as urlreader

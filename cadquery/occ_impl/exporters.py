@@ -1,8 +1,5 @@
 import cadquery
 
-import FreeCAD
-import Drawing
-
 import tempfile, os, StringIO
 
 
@@ -233,6 +230,8 @@ def getSVG(shape,opts=None):
     """
         Export a shape to SVG
     """
+    
+    return
 
     d = {'width':800,'height':240,'marginLeft':200,'marginTop':20}
 
@@ -301,10 +300,13 @@ def exportSVG(shape, fileName):
         export a view of a part to svg
     """
 
+    pass
+    '''
     svg = getSVG(shape.val().wrapped)
     f = open(fileName,'w')
     f.write(svg)
     f.close()
+    '''
 
 
 
