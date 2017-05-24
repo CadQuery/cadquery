@@ -6,6 +6,8 @@ import sys
 import os
 import urllib as urlreader
 import tempfile
+
+from OCC.STEPControl import STEPControl_Reader
   
 class ImportTypes:
     STEP = "STEP"
@@ -35,14 +37,19 @@ def importStep(fileName):
     """      
     #Now read and return the shape
     try:
-	#print fileName        
-	rshape = Part.read(fileName)
+        reader = STEPControl_Reader()
+        reader.ReadFile(fileName)
+        reader.TransferRoot()
 
+        occ_shapes = []
+        for i in range(reader.NbShapes()):
+            occ_shapes.append(reader.Shape(i+1))
+        
         #Make sure that we extract all the solids
         solids = []
-        for solid in rshape.Solids:
-            solids.append(Shape.cast(solid))
-
+        for shape in occ_shapes:
+            solids.append(Shape.cast(shape))
+        
         return cadquery.Workplane("XY").newObject(solids)
     except:
         raise ValueError("STEP File Could not be loaded")
@@ -52,18 +59,11 @@ def importStepFromURL(url):
     #Now read and return the shape
     try:
         webFile = urlreader.urlopen(url)
-	tempFile = tempfile.NamedTemporaryFile(suffix='.step', delete=False)
-	tempFile.write(webFile.read())
+        tempFile = tempfile.NamedTemporaryFile(suffix='.step', delete=False)
+        tempFile.write(webFile.read())
         webFile.close()
-	tempFile.close()  
+        tempFile.close()  
 
-	rshape = Part.read(tempFile.name)
-
-        #Make sure that we extract all the solids
-        solids = []
-        for solid in rshape.Solids:
-            solids.append(Shape.cast(solid))
-
-        return cadquery.Workplane("XY").newObject(solids)
+        return importStep(tempFile.name)
     except:
         raise ValueError("STEP File from the URL: " + url + " Could not be loaded")
