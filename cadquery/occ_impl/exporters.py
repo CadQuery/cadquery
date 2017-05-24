@@ -1,3 +1,6 @@
+from OCC.Visualization import Tesselator
+from uuid import uuid4
+
 import cadquery
 
 import tempfile, os, StringIO
@@ -39,27 +42,25 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         for closing the object
     """
 
+    
+    def tessellate(shape):
+        tess = Tesselator(shape.wrapped)
+        tess.Compute(compute_edges=True, mesh_quality=tolerance)
+        
+        return tess
+
 
     if isinstance(shape,cadquery.CQ):
         shape = shape.val()
 
     if exportType == ExportTypes.TJS:
-        #tessellate the model
-        tess = shape.tessellate(tolerance)
-
-        mesher = JsonMesh() #warning: needs to be changed to remove buildTime and exportTime!!!
-        #add vertices
-        for vec in tess[0]:
-            mesher.addVertex(vec.x, vec.y, vec.z)
-
-        #add faces
-        for f in tess[1]:
-            mesher.addTriangleFace(f[0],f[1], f[2])
-        fileLike.write( mesher.toJson())
+        tess = tessellate(shape)
+        fileLike.write(tess.ExportShapeToThreejsJSONString(uuid4().hex))
+        
     elif exportType == ExportTypes.SVG:
         fileLike.write(getSVG(shape.wrapped))
     elif exportType == ExportTypes.AMF:
-        tess = shape.tessellate(tolerance)
+        tess = tessellate(shape)
         aw = AmfWriter(tess).writeAmf(fileLike)
     else:
 
@@ -73,7 +74,7 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         if exportType == ExportTypes.STEP:
             shape.exportStep(outFileName)
         elif exportType == ExportTypes.STL:
-            shape.wrapped.exportStl(outFileName)
+            shape.exportStl(outFileName)
         else:
             raise ValueError("No idea how i got here")
 
@@ -128,20 +129,22 @@ class AmfWriter(object):
         mesh = ET.SubElement(object,'mesh')
         vertices = ET.SubElement(mesh,'vertices')
         volume = ET.SubElement(mesh,'volume')
-
+        
         #add vertices
-        for v in self.tessellation[0]:
+        for i_vert in range(self.tessellation.ObjGetVertexCount()):
+            v = self.tessellation.GetVertex(i_vert)
             vtx = ET.SubElement(vertices,'vertex')
             coord = ET.SubElement(vtx,'coordinates')
             x = ET.SubElement(coord,'x')
-            x.text = str(v.x)
+            x.text = str(v[0])
             y = ET.SubElement(coord,'y')
-            y.text = str(v.y)
+            y.text = str(v[1])
             z = ET.SubElement(coord,'z')
-            z.text = str(v.z)
+            z.text = str(v[2])
 
         #add triangles
-        for t in self.tessellation[1]:
+        for i_tr in range(self.tessellation.ObjGetTriangleCount()):
+            t = self.tessellation.GetTriangleIndex(i_tr)
             triangle = ET.SubElement(volume,'triangle')
             v1 = ET.SubElement(triangle,'v1')
             v1.text = str(t[0])
@@ -300,13 +303,11 @@ def exportSVG(shape, fileName):
         export a view of a part to svg
     """
 
-    pass
-    '''
+    raise NotImplementedError
     svg = getSVG(shape.val().wrapped)
     f = open(fileName,'w')
     f.write(svg)
     f.close()
-    '''
 
 
 
