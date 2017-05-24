@@ -86,6 +86,10 @@ from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
 from OCC.ShapeFix import ShapeFix_Wire
 
+from OCC.STEPControl import STEPControl_Writer, STEPControl_AsIs
+
+from OCC.StlAPI import StlAPI_Writer
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -203,11 +207,19 @@ class Shape(object):
     # TODO: all these should move into the exporters folder.
     # we dont need a bunch of exporting code stored in here!
     #
-    def exportStl(self, fileName):
-        pass
+    def exportStl(self, fileName, precision = 1e-5):
+        
+        writer = StlAPI_Writer()
+        writer.SetDeflection(precision)
+        
+        return writer.Write(self.wrapped,fileName)
     
     def exportStep(self, fileName):
-        pass
+        
+        writer = STEPControl_Writer()
+        writer.Transfer(self.wrapped, STEPControl_AsIs)
+         
+        return writer.Write(fileName)
 
     def exportShape(self, fileName, fileFormat):
         pass
@@ -478,8 +490,7 @@ class Shape(object):
         """
 
         r = Shape.cast(BRepBuilderAPI_Transform(self.wrapped,
-                                                tMatrix.wrapped,
-                                                True).Shape())
+                                                tMatrix.wrapped).Shape())
         r.forConstruction = self.forConstruction
         
         return r
@@ -518,8 +529,14 @@ class Shape(object):
         """
         Fuse shapes together
         """
-        return Shape.cast(BRepAlgoAPI_Fuse(self.wrapped,
-                                           toFuse.wrapped).Shape())
+        
+        fuse_op = BRepAlgoAPI_Fuse(self.wrapped,toFuse.wrapped)
+        fuse_op.RefineEdges()
+        fuse_op.FuseEdges()
+        #fuse_op.SetFuzzyValue(TOLERANCE)
+        fuse_op.Build()
+        
+        return Shape.cast(fuse_op.Shape())
 
     def intersect(self, toIntersect):
         """
@@ -527,6 +544,20 @@ class Shape(object):
         """
         return Shape.cast(BRepAlgoAPI_Common(self.wrapped,
                                              toIntersect.wrapped).Shape())
+                                             
+    def to_html(self):
+        """
+        Jupyter 3D representation support
+        """        
+        
+        from OCC.Display.WebGl import x3dom_renderer
+        renderer = x3dom_renderer.X3DomRenderer()
+        renderer.DisplayShape(self.wrapped,
+                              export_edges=True,
+                              color=(100,40,100),
+                              transparency=0.8)
+                              
+        return None
 
 
 class Vertex(Shape):
@@ -809,36 +840,12 @@ class Wire(Shape, Mixin1D):
     def stitch(self,other):
         """Attempt to stich wires"""
         
-        #attemp stitching of the wires
-        all_edges = self._entities('Edge') + other._entities('Edge')
-        edges_in = TopTools_HSequenceOfShape()
-        for e in all_edges: edges_in.Append(topods_Edge(e))
-            
-        wires_out = TopTools_HSequenceOfShape()
+        wire_builder = BRepBuilderAPI_MakeWire()
+        wire_builder.Add(topods_Wire(self.wrapped))
+        wire_builder.Add(topods_Wire(other.wrapped))
+        wire_builder.Build()
         
-        edges_in_h = Handle_TopTools_HSequenceOfShape(edges_in)
-        wires_out_h = Handle_TopTools_HSequenceOfShape(wires_out)
-        
-        ShapeAnalysis_FreeBounds.ConnectEdgesToWires(edges_in_h,
-                                                     TOLERANCE,
-                                                     False,
-                                                     wires_out_h)
-        wires_out = wires_out_h.GetObject() #NB: otherwise it does not work at all
-        if wires_out.Length()==1: #did connect the two wires
-            wr  = wires_out.Value(1)            
-            
-            aux_face = Face.makeFromWires(Shape.cast(wr))
-            #try to cleanup and fix the wire
-            fw = ShapeFix_Wire(topods_Wire(wr),
-                               aux_face.wrapped,
-                               TOLERANCE) 
-            fw.FixReorder()
-            fw.FixConnected()
-            fw.FixClosed()
-            
-            return Shape.cast(fw.Wire())
-        else:
-            return other
+        return self.__class__(wire_builder.Wire())
 
 class Face(Shape):
     """
@@ -931,7 +938,8 @@ class Face(Shape):
                                        
         for w in innerWires:
             face_builder.Add(w.wrapped)
-            
+        face_builder.Build()    
+        
         return cls(face_builder.Face())
 
 class Shell(Shape):
