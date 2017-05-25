@@ -1,10 +1,19 @@
 from OCC.Visualization import Tesselator
-from uuid import uuid4
 
 import cadquery
 
-import tempfile, os, StringIO
+import tempfile, os
+import cStringIO as StringIO
 
+from .shapes import Shape, TOLERANCE
+from .geom import BoundBox
+
+from OCC.gp import gp_Ax2, gp_Pnt, gp_Dir
+from OCC.BRep import BRep_Tool
+from OCC.BRepLib import breplib
+from OCC.TopLoc import TopLoc_Location
+from OCC.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
+from OCC.HLRAlgo import HLRAlgo_Projector
 
 try:
     import xml.etree.cElementTree as ET
@@ -55,13 +64,26 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
 
     if exportType == ExportTypes.TJS:
         tess = tessellate(shape)
-        fileLike.write(tess.ExportShapeToThreejsJSONString(uuid4().hex))
+        mesher = JsonMesh()
+        
+        #add vertices
+        for i_vert in range(tess.ObjGetVertexCount()):
+            v = tess.GetVertex(i_vert)
+            mesher.addVertex(*v)
+
+        #add triangles
+        for i_tr in range(tess.ObjGetTriangleCount()):
+            t = tess.GetTriangleIndex(i_tr)
+            mesher.addTriangleFace(*t)
+        
+        fileLike.write(mesher.toJson())
         
     elif exportType == ExportTypes.SVG:
-        fileLike.write(getSVG(shape.wrapped))
+        fileLike.write(getSVG(shape))
     elif exportType == ExportTypes.AMF:
         tess = tessellate(shape)
-        aw = AmfWriter(tess).writeAmf(fileLike)
+        aw = AmfWriter(tess)
+        aw.writeAmf(fileLike)
     else:
 
         #all these types required writing to a file and then
@@ -98,9 +120,9 @@ def guessUnitOfMeasure(shape):
     """
         Guess the unit of measure of a shape.
     """
-    bb = shape.BoundBox
+    bb = BoundBox._fromTopoDS(shape.wrapped)
 
-    dimList = [ bb.XLength, bb.YLength,bb.ZLength ]
+    dimList = [ bb.xlen, bb.ylen,bb.zlen ]
     #no real part would likely be bigger than 10 inches on any side
     if max(dimList) > 10:
         return UNITS.MM
@@ -192,49 +214,55 @@ class JsonMesh(object):
         };
 
 
-def getPaths(freeCadSVG):
+SVG_EDGE_TEMPLATE = "<path"
+SVG_TAG_END = '/>'
+
+def makeSVGedge(e):
     """
-        freeCad svg is worthless-- except for paths, which are fairly useful
-        this method accepts svg from fReeCAD and returns a list of strings suitable for inclusion in a path element
-        returns two lists-- one list of visible lines, and one list of hidden lines
+    
+    """
+    
+    cs = StringIO.StringIO()
+    cs.wrte(SVG_EDGE_TEMPLATE)
+    
+    hpoly3d = BRep_Tool.Polygon3D(e,TopLoc_Location()) #NB returns a handle
+    points = hpoly3d.GetObject().Nodes()
+    
+    point_it = (points.Value(i) for i in \
+                range(points.Lower(),points.Upper()+1))
+    
+    p = point_it.next()
+    cs.write('M{},{} '.format(p.X(),p.Y()))
+    
+    for p in point_it:
+        cs.write('L{},{} '.format(p.X(),p.Y()))
+        
+    cs.write(SVG_TAG_END)
 
-        HACK ALERT!!!!!
-        FreeCAD does not give a way to determine which lines are hidden and which are not
-        the only way to tell is that hidden lines are in a <g> with 0.15 stroke and visible are 0.35 stroke.
-        so we actually look for that as a way to parse.
+def getPaths(visibleShapes, hiddenShapes):
+    """
 
-        to make it worse, elementTree xpath attribute selectors do not work in python 2.6, and we
-        cannot use python 2.7 due to freecad. So its necessary to look for the pure strings! ick!
     """
 
     hiddenPaths = []
     visiblePaths = []
-    if len(freeCadSVG) > 0:
-        #yuk, freecad returns svg fragments. stupid stupid
-        fullDoc = "<root>%s</root>" % freeCadSVG
-        e = ET.ElementTree(ET.fromstring(fullDoc))
-        segments = e.findall(".//g")
-        for s in segments:
-            paths = s.findall("path")
 
-            if s.get("stroke-width") == "0.15": #hidden line HACK HACK HACK
-                mylist = hiddenPaths
-            else:
-                mylist = visiblePaths
+    for s in visibleShapes:
+        for e in s.Edges():
+            visiblePaths.sppend(makeSVGedge(e))
+            
+    for s in hiddenShapes:
+        for e in s.Edges():
+            visiblePaths.sppend(makeSVGedge(e))
+    
+    return (hiddenPaths,visiblePaths)
 
-            for p in paths:
-                mylist.append(p.get("d"))
-        return (hiddenPaths,visiblePaths)
-    else:
-        return ([],[])
 
 
 def getSVG(shape,opts=None):
     """
         Export a shape to SVG
     """
-    
-    return
 
     d = {'width':800,'height':240,'marginLeft':200,'marginTop':20}
 
@@ -249,11 +277,30 @@ def getSVG(shape,opts=None):
     marginLeft=float(d['marginLeft'])
     marginTop=float(d['marginTop'])
 
-    #TODO:  provide option to give 3 views
-    viewVector = FreeCAD.Base.Vector(-1.75,1.1,5)
-    (visibleG0,visibleG1,hiddenG0,hiddenG1) = Drawing.project(shape,viewVector)
+    hlr = HLRBRep_Algo()    
+    hlr.Add(shape.wrapped)
+    
+    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(),
+                                         gp_Dir(-1.75,1.1,5))
+                                 ) 
+    
+    hlr.Projector(projector)
+    hlr.Update()
+    hlr.Hide()
+    
+    hlr_shapes = HLRBRep_HLRToShape(hlr.GetHandle())
+    
+    visible_sharp_edges = hlr_shapes.VCompound()
+    visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
+    hidden_sharp_edges = hlr_shapes.HCompound()
+    
+    breplib.BuildCurves3d(visible_sharp_edges,TOLERANCE)
+    breplib.BuildCurves3d(visible_smooth_edges,TOLERANCE)
+    breplib.BuildCurves3d(hidden_sharp_edges,TOLERANCE)
 
-    (hiddenPaths,visiblePaths) = getPaths(Drawing.projectToSVG(shape,viewVector,"ShowHiddenLines")) #this param is totally undocumented!
+    (hiddenPaths,visiblePaths) = getPaths((Shape(visible_sharp_edges),
+                                           Shape(visible_smooth_edges)),
+                                          (Shape(hidden_sharp_edges),))
 
     #get bounding box -- these are all in 2-d space
     bb = visibleG0.BoundBox
