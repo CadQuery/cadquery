@@ -5,7 +5,7 @@ import cadquery
 import tempfile, os
 import cStringIO as StringIO
 
-from .shapes import Shape, TOLERANCE
+from .shapes import Shape, Compound, TOLERANCE
 from .geom import BoundBox
 
 from OCC.gp import gp_Ax2, gp_Pnt, gp_Dir
@@ -15,13 +15,15 @@ from OCC.BRepLib import breplib
 from OCC.TopLoc import TopLoc_Location
 from OCC.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
 from OCC.HLRAlgo import HLRAlgo_Projector
+from OCC.GCPnts import GCPnts_QuasiUniformDeflection
 
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
 
-MESH_TOLERANCE = 1e-5
+DISCRETIZATION_TOLERANCE = 1e-3
+DEFAULT_DIR = gp_Dir(-1.75,1.1,5)
 
 class ExportTypes:
     STL = "STL"
@@ -216,32 +218,33 @@ class JsonMesh(object):
         };
 
 
-SVG_EDGE_TEMPLATE = "<path"
-SVG_TAG_END = '/>'
-
 def makeSVGedge(e):
     """
     
     """
     
     cs = StringIO.StringIO()
-    cs.write(SVG_EDGE_TEMPLATE)
-    brep_tool = BRep_Tool()
-    hpoly3d = brep_tool.Polygon3D(e.wrapped,TopLoc_Location()) #NB returns a handle
+
+    curve = e._geomAdaptor() #adapt the edge into curve
+    start = curve.FirstParameter()
+    end = curve.LastParameter()
     
-    if not hpoly3d.IsNull(): #we might get an empty handle
-        points = hpoly3d.GetObject().Nodes()
+    points = GCPnts_QuasiUniformDeflection(curve,
+                                           DISCRETIZATION_TOLERANCE,
+                                           start,
+                                           end)
     
-        point_it = (points.Value(i) for i in \
-                range(points.Lower(),points.Upper()+1))
+    if points.IsDone():
+        point_it = (points.Value(i+1) for i in \
+                    range(points.NbPoints()))
     
         p = point_it.next()
         cs.write('M{},{} '.format(p.X(),p.Y()))
     
         for p in point_it:
             cs.write('L{},{} '.format(p.X(),p.Y()))
-        
-    cs.write(SVG_TAG_END)
+    
+    return cs.getvalue()
 
 def getPaths(visibleShapes, hiddenShapes):
     """
@@ -252,14 +255,12 @@ def getPaths(visibleShapes, hiddenShapes):
     visiblePaths = []
 
     for s in visibleShapes:
-        BRepMesh_IncrementalMesh(s.wrapped,MESH_TOLERANCE)
         for e in s.Edges():
             visiblePaths.append(makeSVGedge(e))
             
     for s in hiddenShapes:
-        BRepMesh_IncrementalMesh(s.wrapped,MESH_TOLERANCE)
         for e in s.Edges():
-            visiblePaths.append(makeSVGedge(e))
+            hiddenPaths.append(makeSVGedge(e))
     
     return (hiddenPaths,visiblePaths)
 
@@ -287,7 +288,7 @@ def getSVG(shape,opts=None):
     hlr.Add(shape.wrapped)
     
     projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(),
-                                         gp_Dir(-1.75,1.1,5))
+                                         DEFAULT_DIR)
                                  ) 
     
     hlr.Projector(projector)
@@ -295,25 +296,35 @@ def getSVG(shape,opts=None):
     hlr.Hide()
     
     hlr_shapes = HLRBRep_HLRToShape(hlr.GetHandle())   
+    
+    visible = []
+    
     visible_sharp_edges = hlr_shapes.VCompound()
-    #visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
-    hidden_sharp_edges = hlr_shapes.HCompound()
+    if not visible_sharp_edges.IsNull():
+        visible.append(visible_sharp_edges)
+        
+    visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
+    if not visible_smooth_edges.IsNull():
+        visible.append(visible_smooth_edges)
 
-    
-    
-    breplib.BuildCurves3d(visible_sharp_edges,TOLERANCE)
-    #breplib.BuildCurves3d(visible_smooth_edges,TOLERANCE) -- gettin SEGFAULT on this
-    breplib.BuildCurves3d(hidden_sharp_edges,TOLERANCE)
+    hidden = []
+
+    hidden_sharp_edges = hlr_shapes.HCompound()
+    if not hidden_sharp_edges.IsNull():
+        hidden.append(hidden_sharp_edges)
+
+    #Fix the underlying geometry - otherwise we will get segfaults
+    for el in visible: breplib.BuildCurves3d(el,TOLERANCE)
+    for el in hidden: breplib.BuildCurves3d(el,TOLERANCE)
 
     #convert to native CQ objects
-    visible_sharp_edges = Shape(visible_sharp_edges) 
-    hidden_sharp_edges = Shape(hidden_sharp_edges)
-    
-    (hiddenPaths,visiblePaths) = getPaths((visible_sharp_edges,),
-                                          (hidden_sharp_edges,))
+    visible = map(Shape,visible)
+    hidden = map(Shape,hidden)
+    (hiddenPaths,visiblePaths) = getPaths(visible,
+                                          hidden)
 
     #get bounding box -- these are all in 2-d space    
-    bb = visible_sharp_edges.fuse(hidden_sharp_edges).BoundingBox()
+    bb = Compound.makeCompound(hidden+visible).BoundingBox()
 
     #width pixels for x, height pixesl for y
     unitScale = min( width / bb.xlen * 0.75 , height / bb.ylen * 0.75 )
