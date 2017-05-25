@@ -10,6 +10,7 @@ from .geom import BoundBox
 
 from OCC.gp import gp_Ax2, gp_Pnt, gp_Dir
 from OCC.BRep import BRep_Tool
+from OCC.BRepMesh import BRepMesh_IncrementalMesh
 from OCC.BRepLib import breplib
 from OCC.TopLoc import TopLoc_Location
 from OCC.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
@@ -20,6 +21,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
+MESH_TOLERANCE = 1e-5
 
 class ExportTypes:
     STL = "STL"
@@ -223,19 +225,21 @@ def makeSVGedge(e):
     """
     
     cs = StringIO.StringIO()
-    cs.wrte(SVG_EDGE_TEMPLATE)
+    cs.write(SVG_EDGE_TEMPLATE)
+    brep_tool = BRep_Tool()
+    hpoly3d = brep_tool.Polygon3D(e.wrapped,TopLoc_Location()) #NB returns a handle
     
-    hpoly3d = BRep_Tool.Polygon3D(e,TopLoc_Location()) #NB returns a handle
-    points = hpoly3d.GetObject().Nodes()
+    if not hpoly3d.IsNull(): #we might get an empty handle
+        points = hpoly3d.GetObject().Nodes()
     
-    point_it = (points.Value(i) for i in \
+        point_it = (points.Value(i) for i in \
                 range(points.Lower(),points.Upper()+1))
     
-    p = point_it.next()
-    cs.write('M{},{} '.format(p.X(),p.Y()))
+        p = point_it.next()
+        cs.write('M{},{} '.format(p.X(),p.Y()))
     
-    for p in point_it:
-        cs.write('L{},{} '.format(p.X(),p.Y()))
+        for p in point_it:
+            cs.write('L{},{} '.format(p.X(),p.Y()))
         
     cs.write(SVG_TAG_END)
 
@@ -248,12 +252,14 @@ def getPaths(visibleShapes, hiddenShapes):
     visiblePaths = []
 
     for s in visibleShapes:
+        BRepMesh_IncrementalMesh(s.wrapped,MESH_TOLERANCE)
         for e in s.Edges():
-            visiblePaths.sppend(makeSVGedge(e))
+            visiblePaths.append(makeSVGedge(e))
             
     for s in hiddenShapes:
+        BRepMesh_IncrementalMesh(s.wrapped,MESH_TOLERANCE)
         for e in s.Edges():
-            visiblePaths.sppend(makeSVGedge(e))
+            visiblePaths.append(makeSVGedge(e))
     
     return (hiddenPaths,visiblePaths)
 
@@ -288,31 +294,32 @@ def getSVG(shape,opts=None):
     hlr.Update()
     hlr.Hide()
     
-    hlr_shapes = HLRBRep_HLRToShape(hlr.GetHandle())
-    
+    hlr_shapes = HLRBRep_HLRToShape(hlr.GetHandle())   
     visible_sharp_edges = hlr_shapes.VCompound()
-    visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
+    #visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
     hidden_sharp_edges = hlr_shapes.HCompound()
+
+    
     
     breplib.BuildCurves3d(visible_sharp_edges,TOLERANCE)
-    breplib.BuildCurves3d(visible_smooth_edges,TOLERANCE)
+    #breplib.BuildCurves3d(visible_smooth_edges,TOLERANCE) -- gettin SEGFAULT on this
     breplib.BuildCurves3d(hidden_sharp_edges,TOLERANCE)
 
-    (hiddenPaths,visiblePaths) = getPaths((Shape(visible_sharp_edges),
-                                           Shape(visible_smooth_edges)),
-                                          (Shape(hidden_sharp_edges),))
+    #convert to native CQ objects
+    visible_sharp_edges = Shape(visible_sharp_edges) 
+    hidden_sharp_edges = Shape(hidden_sharp_edges)
+    
+    (hiddenPaths,visiblePaths) = getPaths((visible_sharp_edges,),
+                                          (hidden_sharp_edges,))
 
-    #get bounding box -- these are all in 2-d space
-    bb = visibleG0.BoundBox
-    bb.add(visibleG1.BoundBox)
-    bb.add(hiddenG0.BoundBox)
-    bb.add(hiddenG1.BoundBox)
+    #get bounding box -- these are all in 2-d space    
+    bb = visible_sharp_edges.fuse(hidden_sharp_edges).BoundingBox()
 
     #width pixels for x, height pixesl for y
-    unitScale = min( width / bb.XLength * 0.75 , height / bb.YLength * 0.75 )
+    unitScale = min( width / bb.xlen * 0.75 , height / bb.ylen * 0.75 )
 
     #compute amount to translate-- move the top left into view
-    (xTranslate,yTranslate) = ( (0 - bb.XMin) + marginLeft/unitScale ,(0- bb.YMax) - marginTop/unitScale)
+    (xTranslate,yTranslate) = ( (0 - bb.xmin) + marginLeft/unitScale ,(0- bb.ymax) - marginTop/unitScale)
 
     #compute paths ( again -- had to strip out freecad crap )
     hiddenContent = ""
