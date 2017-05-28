@@ -678,7 +678,7 @@ class CQ(object):
         :type opts: dictionary, width and height
         :return: a string that contains SVG that represents this item.
         """
-        return exporters.getSVG(self.val().wrapped, opts)
+        return exporters.getSVG(self.val(), opts)
 
     def exportSvg(self, fileName):
         """

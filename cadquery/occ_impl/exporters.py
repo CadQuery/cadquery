@@ -306,12 +306,20 @@ def getSVG(shape,opts=None):
     visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
     if not visible_smooth_edges.IsNull():
         visible.append(visible_smooth_edges)
+    
+    visible_contour_edges = hlr_shapes.OutLineVCompound()
+    if not visible_contour_edges.IsNull():
+        visible.append(visible_contour_edges)
 
     hidden = []
 
     hidden_sharp_edges = hlr_shapes.HCompound()
     if not hidden_sharp_edges.IsNull():
         hidden.append(hidden_sharp_edges)
+        
+    hidden_contour_edges = hlr_shapes.OutLineHCompound()
+    if not hidden_contour_edges.IsNull():
+        hidden.append(hidden_contour_edges)
 
     #Fix the underlying geometry - otherwise we will get segfaults
     for el in visible: breplib.BuildCurves3d(el,TOLERANCE)
@@ -368,8 +376,7 @@ def exportSVG(shape, fileName):
         export a view of a part to svg
     """
 
-    raise NotImplementedError
-    svg = getSVG(shape.val().wrapped)
+    svg = getSVG(shape.val())
     f = open(fileName,'w')
     f.write(svg)
     f.close()
