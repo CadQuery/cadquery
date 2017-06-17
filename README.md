@@ -132,6 +132,16 @@ The mach30 project used cadquery to develop a tool that will create a rocket thr
    <img src="http://opendesignengine.net/dmsf_files/480?download=" width="700"/>
 </p>
 
+This example uses Jupyter notebook to produce a really cool web-based scripting environment ( https://github.com/RustyVermeer/avnb/blob/master/readme.md ) :
+
+<p align="center">
+   <img src="https://github.com/RustyVermeer/avnb/raw/master/example.gif" width="700"/>
+</p>
+
+
+
+
+
 We would love to link to your cadquery based project. Just let us know and we'll add it here.
 
 
