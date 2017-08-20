@@ -223,7 +223,11 @@ Use these steps if you would like to write CadQuery scripts as a python API.  In
 ```bash
 		pip install cadquery
 ```
-3. test your installation::
+4. installing cadquery should install pyparsing as well, but if not::
+```bash
+		pip install pyparsing
+```
+5. test your installation::
 ```python
 		from cadquery import *
 		box = Workplane("XY").box(1,2,3)
@@ -234,7 +238,7 @@ You're up and running!
 Installing -- Using CadQuery from Inside FreeCAD
 =================================================
 
-Use the Excellent CadQuery-FreeCAD plugin here:
+Use the CadQuery module for FreeCAD here:
    https://github.com/jmwright/cadquery-freecad-module
 
 It includes a distribution of the latest version of cadquery.
