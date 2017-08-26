@@ -196,16 +196,24 @@ class Matrix:
             self.wrapped = matrix
 
     def rotateX(self, angle):
-        self.wrapped.SetRotation(gp.OX(),
-                                 angle)
+        self._rotate(gp.OX(),
+                     angle)
 
     def rotateY(self, angle):
-        self.wrapped.SetRotation(gp.OY(),
-                                 angle)
+        self._rotate(gp.OY(),
+                     angle)
                                  
     def rotateZ(self, angle):
-        self.wrapped.SetRotation(gp.OZ(),
-                                 angle)
+        self._rotate(gp.OZ(),
+                     angle)
+        
+    def _rotate(self,direction,angle):
+        
+        new = gp_Trsf()
+        new.SetRotation(direction,
+                        angle)
+        
+        self.wrapped = self.wrapped * new
                                  
     def inverse(self):
         return Matrix(self.wrapped.Invert())
