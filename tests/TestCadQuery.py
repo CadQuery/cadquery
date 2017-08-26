@@ -1067,7 +1067,7 @@ class TestCadQuery(BaseTest):
         """
         s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().box(0.25, 0.25, 0.25, combine=True)
         #1 object, 4 solids because the object is a compound
-        self.assertEquals(1, s.solids().size())
+        self.assertEquals(4, s.solids().size())
         self.assertEquals(1, s.size())
         self.saveModel(s)
 
