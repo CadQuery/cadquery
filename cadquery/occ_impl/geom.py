@@ -25,6 +25,7 @@ def sortWiresByBuildOrder(wireList, plane, result=[]):
 
     Returns, list of lists.
     """
+    return [wireList,]
     result = []
 
     remainingWires = list(wireList)

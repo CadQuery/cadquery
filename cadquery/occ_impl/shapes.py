@@ -84,7 +84,7 @@ from OCC.TopTools import TopTools_HSequenceOfShape, Handle_TopTools_HSequenceOfS
 
 from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
-from OCC.ShapeFix import ShapeFix_Wire
+from OCC.ShapeFix import ShapeFix_Wire, ShapeFix_Face
 
 from OCC.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
@@ -938,9 +938,13 @@ class Face(Shape):
                                        
         for w in innerWires:
             face_builder.Add(w.wrapped)
-        face_builder.Build()    
+        face_builder.Build()
+        f = face_builder.Face()
         
-        return cls(face_builder.Face())
+        sf = ShapeFix_Face(f)  #fix wire orientation
+        sf.FixOrientation()
+        
+        return cls(sf.Face())
 
 class Shell(Shape):
     """
