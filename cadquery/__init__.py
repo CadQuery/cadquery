@@ -1,6 +1,6 @@
 #these items point to the OCC implementation
-from .occ_impl.geom import Plane,BoundBox,Vector,Matrix,sortWiresByBuildOrder
-from .occ_impl.shapes import Shape,Vertex,Edge,Face,Wire,Solid,Shell,Compound
+from .occ_impl.geom import Plane,BoundBox,Vector,Matrix
+from .occ_impl.shapes import Shape,Vertex,Edge,Face,Wire,Solid,Shell,Compound,sortWiresByBuildOrder
 from .occ_impl import exporters
 from .occ_impl import importers
 

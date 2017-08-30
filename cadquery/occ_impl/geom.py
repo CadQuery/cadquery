@@ -5,41 +5,7 @@ from OCC.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
 from OCC.Bnd import Bnd_Box
 from OCC.BRepBndLib import brepbndlib_Add # brepbndlib_AddOptimal
 
-
 TOL = 1e-3
-
-# TODO this is likely not needed if sing PythonOCC correclty but we will see
-def sortWiresByBuildOrder(wireList, plane, result=[]):
-    """Tries to determine how wires should be combined into faces.
-
-    Assume:
-        The wires make up one or more faces, which could have 'holes'
-        Outer wires are listed ahead of inner wires
-        there are no wires inside wires inside wires
-        ( IE, islands -- we can deal with that later on )
-        none of the wires are construction wires
-
-    Compute:
-        one or more sets of wires, with the outer wire listed first, and inner
-        ones
-
-    Returns, list of lists.
-    """
-    return [wireList,]
-    result = []
-
-    remainingWires = list(wireList)
-    while remainingWires:
-        outerWire = remainingWires.pop(0)
-        group = [outerWire]
-        otherWires = list(remainingWires)
-        for w in otherWires:
-            if plane.isWireInside(outerWire, w):
-                group.append(w)
-                remainingWires.remove(w)
-        result.append(group)
-
-    return result
 
 
 class Vector(object):

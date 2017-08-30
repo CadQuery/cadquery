@@ -90,6 +90,8 @@ from OCC.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
 from OCC.StlAPI import StlAPI_Writer
 
+from OCC.TopTools import TopTools_DataMapOfShapeListOfShape, TopTools_ListIteratorOfListOfShape
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -932,7 +934,6 @@ class Face(Shape):
         '''
         Makes a planar face from one or more wires
         '''
-        #import pdb; pdb.set_trace()
         face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped,
                                                True) #True is for planar only
                                        
@@ -1350,3 +1351,47 @@ class Compound(Shape,Mixin3D):
         for s in listOfShapes: comp_builder.Add(comp,s.wrapped)
         
         return cls(comp)
+    
+# TODO this is likely not needed if sing PythonOCC correclty but we will see
+def sortWiresByBuildOrder(wireList, plane, result=[]):
+    """Tries to determine how wires should be combined into faces.
+
+    Assume:
+        The wires make up one or more faces, which could have 'holes'
+        Outer wires are listed ahead of inner wires
+        there are no wires inside wires inside wires
+        ( IE, islands -- we can deal with that later on )
+        none of the wires are construction wires
+
+    Compute:
+        one or more sets of wires, with the outer wire listed first, and inner
+        ones
+
+    Returns, list of lists.
+    """
+
+    #make a Face
+    face = Face.makeFromWires(wireList[0],wireList[1:])
+    
+    #use FixOrientation
+    outer_inner_map = TopTools_DataMapOfShapeListOfShape()
+    sf = ShapeFix_Face(face.wrapped)  #fix wire orientation
+    sf.FixOrientation(outer_inner_map)
+    
+    #Iterate through the Inner:Outer Mapping
+    all_wires = face.Wires()
+    result = {w:outer_inner_map.Find(w.wrapped) for w in all_wires if outer_inner_map.IsBound(w.wrapped)}     
+    
+    #construct the result
+    rv = []
+    for k,v in result.iteritems():
+        tmp = [k,]
+        
+        iterator = TopTools_ListIteratorOfListOfShape(v)
+        while iterator.More():
+            tmp.append(Wire(iterator.Value()))
+            iterator.Next()
+        
+        rv.append(tmp)
+        
+    return rv
