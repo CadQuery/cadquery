@@ -1305,6 +1305,7 @@ class Solid(Shape,Mixin3D):
         
         v1 = Vector(axisStart)
         v2 = Vector(axisEnd)
+        v2 = v2 - v1
         revol_builder = BRepPrimAPI_MakeRevol(face.wrapped, 
                                               gp_Ax1(v1.toPnt(),v2.toDir()),
                                               angleDegrees*DEG2RAD,
@@ -1323,16 +1324,23 @@ class Solid(Shape,Mixin3D):
         :return: a Solid object
         """
 
-        face = Face.makeFromWires(outerWire, innerWires)
-        
         if path.ShapeType() == 'Edge':
             path = Wire.assembleEdges([path,])
-        
-        builder = BRepOffsetAPI_MakePipe(path.wrapped,face.wrapped)
+
+        if makeSolid:
+            face = Face.makeFromWires(outerWire, innerWires)
+            
+            builder = BRepOffsetAPI_MakePipe(path.wrapped,face.wrapped)
+
+        else:
+            builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
+            builder.Add(outerWire.wrapped)
+            for w in innerWires:
+                builder.Add(w.wrapped)
+
         builder.Build()
         
         return cls(builder.Shape())
-
 
 class Compound(Shape,Mixin3D):
     """
