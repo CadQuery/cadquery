@@ -1369,6 +1369,10 @@ def sortWiresByBuildOrder(wireList, plane, result=[]):
 
     Returns, list of lists.
     """
+    
+    #check if we have something to sort at all
+    if len(wireList)<2:
+        return [wireList,]
 
     #make a Face
     face = Face.makeFromWires(wireList[0],wireList[1:])
