@@ -625,7 +625,7 @@ class BoundBox(object):
                              (YMax+YMin)/2,
                              (ZMax+ZMin)/2)
         
-        self.DiagonalLength = self.wrapped.SquareExtent()
+        self.DiagonalLength = self.wrapped.SquareExtent()**0.5
 
     def add(self, obj, tol=1e-8):
         """Returns a modified (expanded) bounding box
