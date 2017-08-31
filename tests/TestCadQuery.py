@@ -1102,7 +1102,7 @@ class TestCadQuery(BaseTest):
         self.assertEquals(4, s.faces().size())
 
     def testSphereCombine(self):
-        s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().sphere(0.25, combine=True)
+        s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().sphere(2.25, combine=True)
         #self.saveModel(s) # Until FreeCAD fixes their sphere operation
         self.assertEquals(1, s.solids().size())
         self.assertEquals(4, s.faces().size())
