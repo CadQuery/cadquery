@@ -223,8 +223,8 @@ class TestCadQuery(BaseTest):
         self.saveModel(r)
         #the result should have 7 faces
         self.assertEqual(7,r.faces().size() )
-        self.assertEqual(type(r.val()), Solid)
-        self.assertEqual(type(r.first().val()),Solid)
+        self.assertEqual(type(r.val()), Compound)
+        self.assertEqual(type(r.first().val()),Compound)
 
     def testRotate(self):
         """Test solid rotation at the CQ object level."""
