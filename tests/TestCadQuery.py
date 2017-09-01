@@ -153,7 +153,7 @@ class TestCadQuery(BaseTest):
         #now test. here we want weird workplane to see if the objects are transformed right
         s = Workplane(Plane(Vector((0,0,0)),Vector((1,-1,0)),Vector((1,1,0)))).rect(2.0,3.0,forConstruction=True).vertices() \
             .cyl(0.25,0.5)
-        self.assertEquals(1,s.solids().size() )
+        self.assertEquals(4,s.solids().size() )
         self.saveModel(s)
 
     def testPolygonPlugin(self):
