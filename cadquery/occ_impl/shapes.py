@@ -88,6 +88,7 @@ from OCC.ShapeFix import ShapeFix_Wire, ShapeFix_Face
 
 from OCC.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
+from OCC.BRepMesh import BRepMesh_IncrementalMesh
 from OCC.StlAPI import StlAPI_Writer
 
 from OCC.TopTools import TopTools_DataMapOfShapeListOfShape, TopTools_ListIteratorOfListOfShape
@@ -211,8 +212,11 @@ class Shape(object):
     #
     def exportStl(self, fileName, precision = 1e-5):
         
+        
+        mesh = BRepMesh_IncrementalMesh(self.wrapped,precision,True)
+        mesh.Perform()
+        
         writer = StlAPI_Writer()
-        writer.SetDeflection(precision)
         
         return writer.Write(self.wrapped,fileName)
     

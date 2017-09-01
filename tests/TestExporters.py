@@ -22,7 +22,7 @@ class TestExporters(BaseTest):
         exporters.exportShape(p,eType,s,0.1)
 
         result = s.getvalue()
-        #print result
+        
         for q in stringsToFind:
             self.assertTrue(result.find(q) > -1 )
         return result
