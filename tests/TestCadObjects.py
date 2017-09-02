@@ -43,7 +43,7 @@ class TestCadObjects(BaseTest):
 
         bb1 = v.BoundingBox().add(v2.BoundingBox())
 
-        self.assertAlmostEquals(bb1.xlen, 1.0) #OCC uses some approximations
+        self.assertAlmostEquals(bb1.xlen, 1.0, 1) #OCC uses some approximations
 
     def testEdgeWrapperCenter(self):
         e = self._make_circle()

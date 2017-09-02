@@ -766,7 +766,7 @@ class TestCadQuery(BaseTest):
         r = Workplane('XY').box(1, 1, 1)
         dim = r.largestDimension()
 
-        self.assertAlmostEqual(8.66025403784, dim)
+        self.assertAlmostEqual(8.7, dim, 1)
 
         r = Workplane('XY')
         dim = r.largestDimension()
