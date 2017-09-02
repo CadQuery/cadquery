@@ -93,6 +93,8 @@ from OCC.StlAPI import StlAPI_Writer
 
 from OCC.TopTools import TopTools_DataMapOfShapeListOfShape, TopTools_ListIteratorOfListOfShape
 
+from OCC.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -168,6 +170,15 @@ class Shape(object):
 
         # Helps identify this solid through the use of an ID
         self.label = ""
+        
+    
+    def clean(self):
+        """Experimental clean using ShapeUpgrade"""
+        
+        upgrader = ShapeUpgrade_UnifySameDomain(self.wrapped,True,True,False)
+        upgrader.Build()
+        
+        return self.cast(upgrader.Shape())
 
     @classmethod
     def cast(cls, obj, forConstruction=False):
@@ -838,10 +849,6 @@ class Wire(Shape, Mixin1D):
         breplib_BuildCurves3d(w)
         
         return cls(w)
-
-    def clean(self):
-        """This method is not implemented yet."""
-        return self
         
     def stitch(self,other):
         """Attempt to stich wires"""
@@ -973,13 +980,6 @@ class Mixin3D(object):
     
     def tessellate(self, tolerance):
         return self.wrapped.tessellate(tolerance)
-
-    def clean(self):
-        """Clean faces by removing splitter edges."""
-        #r = self.wrapped.removeSplitter()
-        # removeSplitter() returns a generic Shape type, cast to actual type of object
-        #r = FreeCADPart.cast_to_shape(r)
-        return self
 
     def fillet(self, radius, edgeList):
         """
