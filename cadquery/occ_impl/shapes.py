@@ -1181,7 +1181,7 @@ class Solid(Shape,Mixin3D):
         Helper function for extrudeLinearWithRotation
         """
         extrude_builder = BRepOffsetAPI_MakePipeShell(spine)
-        extrude_builder.SetMode(auxSpine,True) #auxiliary spine
+        extrude_builder.SetMode(auxSpine,False) #auxiliary spine
         extrude_builder.Add(wire)
         extrude_builder.Build()
         extrude_builder.MakeSolid()
