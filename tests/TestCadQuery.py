@@ -78,15 +78,16 @@ class TestCadQuery(BaseTest):
         shape.exportSvg(os.path.join(OUTDIR,self._testMethodName + ".svg"))
         shape.val().exportStep(os.path.join(OUTDIR,self._testMethodName + ".step"))
 
-    def testToFreeCAD(self):
+    def testToOCC(self):
         """
-        Tests to make sure that a CadQuery object is converted correctly to a FreeCAD object.
+        Tests to make sure that a CadQuery object is converted correctly to a OCC object.
         """
         r = Workplane('XY').rect(5, 5).extrude(5)
 
-        r = r.toFreecad()
+        r = r.toOCC()
 
-        self.assertEqual(12, len(r.Edges))
+        import OCC
+        self.assertEqual(type(r),OCC.TopoDS.TopoDS_Compound)
 
     def testToSVG(self):
         """

@@ -252,7 +252,7 @@ class CQ(object):
         """
         return self.objects[0]
 
-    def toFreecad(self):
+    def toOCC(self):
         """
         Directly returns the wrapped FreeCAD object to cut down on the amount of boiler plate code
         needed when rendering a model in FreeCAD's 3D view.
