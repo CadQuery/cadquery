@@ -34,7 +34,6 @@ class CQModel(object):
 
     the build method can be used to generate a 3d model
     """
-
     def __init__(self, script_source):
         """
         Create an object by parsing the supplied python script.
@@ -136,6 +135,14 @@ class CQModel(object):
             p.set_value(v)
 
 
+class ShapeResult(object):
+    """
+    An object created by a build, including the user parameters provided
+    """
+    def __init__(self):
+        self.shape = None
+        self.options = None  
+      
 class BuildResult(object):
     """
     The result of executing a CadQuery script.
@@ -149,8 +156,8 @@ class BuildResult(object):
     """
     def __init__(self):
         self.buildTime = None
-        self.results = []
-        self.debugObjects = []
+        self.results = [] #list of ShapeResult
+        self.debugObjects = [] #list of ShapeResult
         self.first_result = None
         self.success = False
         self.exception = None
@@ -287,18 +294,25 @@ class ScriptCallback(object):
         self.outputObjects = []
         self.debugObjects = []
 
-    def build_object(self, shape):
+    def build_object(self, shape,options={}):
         """
-        return an object to the executing environment
+        return an object to the executing environment, with options
         :param shape: a cadquery object
+        :param options: a dictionary of options that will be made available to the executing envrionment
         """
-        self.outputObjects.append(shape)
+        o = ShapeResult()
+        o.options=options
+        o.shape = shape
+        self.outputObjects.append(o)
 
     def debug(self,obj,args={}):
         """
         Debug print/output an object, with optional arguments.
         """
-        self.debugObjects.append(DebugObject(obj,args))
+        s = ShapeResult()
+        s.shape = obj
+        s.options = args
+        self.debugObjects.append(s)
 
     def describe_parameter(self,var_data ):
         """
@@ -315,15 +329,7 @@ class ScriptCallback(object):
     def has_results(self):
         return len(self.outputObjects) > 0
 
-class DebugObject(object):
-    """
-    Represents a request to debug an object
-    Object is the type of object we want to debug
-    args are parameters for use during debuging ( for example, color, tranparency )
-    """
-    def __init__(self,object,args):
-        self.args = args
-        self.object = object
+
 
 class InvalidParameterError(Exception):
     """

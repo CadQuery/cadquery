@@ -48,10 +48,11 @@ class TestCQGI(BaseTest):
         result = model.build()
         debugItems = result.debugObjects
         self.assertTrue(len(debugItems) == 2)
-        self.assertTrue( debugItems[0].object == "bar" )
-        self.assertTrue( debugItems[0].args == { "color":'yellow' } )
-        self.assertTrue( debugItems[1].object == 2.0 )
-        self.assertTrue( debugItems[1].args == {} )
+        
+        self.assertTrue( debugItems[0].shape == "bar" )
+        self.assertTrue( debugItems[0].options == { "color":'yellow' } )
+        self.assertTrue( debugItems[1].shape == 2.0 )
+        self.assertTrue( debugItems[1].options == {} )
 
     def test_build_with_empty_params(self):
         model = cqgi.CQModel(TESTSCRIPT)
@@ -59,12 +60,12 @@ class TestCQGI(BaseTest):
 
         self.assertTrue(result.success)
         self.assertTrue(len(result.results) == 1)
-        self.assertTrue(result.results[0] == "2.0|3.0|bar|1.0")
+        self.assertTrue(result.results[0].shape == "2.0|3.0|bar|1.0")
 
     def test_build_with_different_params(self):
         model = cqgi.CQModel(TESTSCRIPT)
         result = model.build({'height': 3.0})
-        self.assertTrue(result.results[0] == "3.0|3.0|bar|1.0")
+        self.assertTrue(result.results[0].shape == "3.0|3.0|bar|1.0")
 
     def test_describe_parameters(self):
         script = textwrap.dedent(
@@ -128,8 +129,8 @@ class TestCQGI(BaseTest):
         model = cqgi.CQModel(script)
         result = model.build({})
         self.assertEquals(2, len(result.results))
-        self.assertEquals(1, result.results[0])
-        self.assertEquals(2, result.results[1])
+        self.assertEquals(1, result.results[0].shape)
+        self.assertEquals(2, result.results[1].shape)
 
     def test_that_assinging_number_to_string_works(self):
         script = textwrap.dedent(
@@ -139,7 +140,7 @@ class TestCQGI(BaseTest):
             """
         )
         result = cqgi.parse(script).build( {'h': 33.33})
-        self.assertEquals(result.results[0], "33.33")
+        self.assertEquals(result.results[0].shape, "33.33")
 
     def test_that_assigning_string_to_number_fails(self):
         script = textwrap.dedent(
@@ -181,7 +182,7 @@ class TestCQGI(BaseTest):
 
         result = cqgi.parse(script).build()
         self.assertTrue(result.success)
-        self.assertIsNotNone(result.first_result)
+        self.assertIsNotNone(result.first_result.shape)
 
     def test_setting_boolean_variable(self):
         script = textwrap.dedent(
@@ -195,7 +196,7 @@ class TestCQGI(BaseTest):
         result = cqgi.parse(script).build({'h': False})
 
         self.assertTrue(result.success)
-        self.assertEquals(result.first_result,'*False*')
+        self.assertEquals(result.first_result.shape,'*False*')
 
     def test_that_only_top_level_vars_are_detected(self):
         script = textwrap.dedent(

@@ -37,6 +37,9 @@ CQGI compliant containers provide an execution environment for scripts. The envi
 Scripts must call build_output at least once. Invoking build_object more than once will send multiple objects to
 the container.  An error will occur if the script does not return an object using the build_object() method.
 
+An optional options dictionary can be provided to the build_object method. If provided, it is passed onto the executing environment, and is used to render the object.  Typically, this will be colors, transparency, and other visual affects.
+
+
 This CQGI compliant script produces a cube with a circle on top, and displays a workplane as well as an intermediate circle as debug output::
 
     base_cube = cq.Workplane('XY').rect(1.0,1.0).extrude(1.0)
@@ -47,7 +50,7 @@ This CQGI compliant script produces a cube with a circle on top, and displays a 
     circle=top_of_cube_plane.circle(0.5)
     debug(circle, { 'color': 'red' } )
 
-    build_object( circle.extrude(1.0) )
+    build_object( circle.extrude(1.0),{"color": "#aaaaaa" )
 
 Note that importing cadquery is not required. 
 At the end of this script, one object will be displayed, in addition to a workplane, a point, and a circle
