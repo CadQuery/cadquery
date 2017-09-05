@@ -4,8 +4,9 @@ import cadquery
 from OCC.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
 from OCC.Bnd import Bnd_Box
 from OCC.BRepBndLib import brepbndlib_Add # brepbndlib_AddOptimal
+from OCC.BRepMesh import BRepMesh_IncrementalMesh
 
-TOL = 1e-3
+TOL = 1e-2
 
 
 class Vector(object):
@@ -689,7 +690,9 @@ class BoundBox(object):
             raise NotImplementedError
             #brepbndlib_AddOptimal(shape, bbox) #this is 'exact' but expensive - not yet wrapped by PythonOCC
         else:
-            brepbndlib_Add(shape, bbox) #this is adds +margin but is faster
+            mesh = BRepMesh_IncrementalMesh(shape,TOL,True)
+            mesh.Perform()
+            brepbndlib_Add(shape, bbox, True) #this is adds +margin but is faster
         
         return cls(bbox)
 
