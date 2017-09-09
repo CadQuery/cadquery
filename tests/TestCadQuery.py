@@ -604,6 +604,20 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(10,currentS.faces().size())
 
+    def testIntersect(self):
+        """
+        Tests the intersect function.
+        """
+        s = Workplane(Plane.XY())
+        currentS = s.rect(2.0, 2.0).extrude(0.5)
+        toIntersect = s.rect(1.0, 1.0).extrude(1)
+
+        currentS.intersect(toIntersect.val())
+
+        self.assertEqual(6, currentS.faces().size())
+        bb = currentS.val().BoundingBox()
+        self.assertListEqual([bb.xlen, bb.ylen, bb.zlen], [1, 1, 0.5])
+
     def testBoundingBox(self):
 	"""
 	Tests the boudingbox center of a model
@@ -1387,7 +1401,7 @@ class TestCadQuery(BaseTest):
         result =topOfLid.union(bottom)
 
         self.saveModel(result)
-        
+
     def testExtrude(self):
         """
         Test symmetric extrude
@@ -1395,19 +1409,16 @@ class TestCadQuery(BaseTest):
         r = 1.
         h = 1.
         decimal_places = 9.
-        
+
         #extrude symmetrically
         s = Workplane("XY").circle(r).extrude(h,both=True)
-        
+
         top_face = s.faces(">Z")
         bottom_face = s.faces("<Z")
-        
-        #calculate the distance between the top and the bottom face        
+
+        #calculate the distance between the top and the bottom face
         delta = top_face.val().Center().sub(bottom_face.val().Center())
 
         self.assertTupleAlmostEquals(delta.toTuple(),
                                      (0.,0.,2.*h),
                                      decimal_places)
-        
-        
-        
