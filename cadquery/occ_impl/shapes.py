@@ -95,6 +95,8 @@ from OCC.TopTools import TopTools_DataMapOfShapeListOfShape, TopTools_ListIterat
 
 from OCC.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
+from OCC.BRepTools import breptools_Write
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -237,6 +239,13 @@ class Shape(object):
         writer.Transfer(self.wrapped, STEPControl_AsIs)
          
         return writer.Write(fileName)
+    
+    def exportBrep(self, fileName):
+        """
+        Export given shape to a BREP file
+        """
+        
+        return breptools_Write(self.wrapped, fileName)
 
     def exportShape(self, fileName, fileFormat):
         pass
@@ -567,15 +576,7 @@ class Shape(object):
         Jupyter 3D representation support
         """        
         
-        from OCC.Display.WebGl import x3dom_renderer
-        renderer = x3dom_renderer.X3DomRenderer()
-        renderer.DisplayShape(self.wrapped,
-                              export_edges=True,
-                              color=(100,40,100),
-                              transparency=0.8)
-                              
-        return None
-
+        raise NotImplemented
 
 class Vertex(Shape):
     """
