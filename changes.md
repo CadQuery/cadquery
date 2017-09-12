@@ -101,4 +101,5 @@ v1.0.0
    
 v1.1.0 (Unreleased)
 ------
+   * Fixes and addition of graphical examples for selectors (thanks @adam-urbanczyk)
    * Added intersect operation (thanks @fragmuffin)
