@@ -109,10 +109,8 @@ class CQModel(object):
             c = compile(self.ast_tree, CQSCRIPT, 'exec')
             exec (c, env)
             result.set_debug(collector.debugObjects )
-            if collector.has_results():
-                result.set_success_result(collector.outputObjects)
-            else:
-                raise NoOutputError("Script did not call build_object-- no output available.")
+            result.set_success_result(collector.outputObjects)
+
         except Exception, ex:
             #print "Error Executing Script:"
             result.set_failure_result(ex)
