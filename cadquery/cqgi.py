@@ -169,7 +169,8 @@ class BuildResult(object):
 
     def set_success_result(self, results):
         self.results = results
-        self.first_result = self.results[0]
+        if len(self.results) > 0:
+            self.first_result = self.results[0]
         self.success = True
 
 
