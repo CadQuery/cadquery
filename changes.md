@@ -98,3 +98,7 @@ v1.0.0
    * Fixed bugs with toVector and Face 'Not Defined' errors (thanks @huskier)
    * Refactor of the initialization code for PEP8 compliance and Python 3 compatibility (thanks @Peque)
    * Making sure that the new pyparsing library dependency is handled properly (thanks @Peque)
+   
+v1.1.0 (Unreleased)
+------
+   * Added intersect operation (thanks @fragmuffin)
