@@ -43,7 +43,7 @@ Just about the simplest possible example, a rectangular box
 .. cq_plot::
 
     result = cadquery.Workplane("front").box(2.0, 2.0, 0.5)
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -74,7 +74,7 @@ of a working plane is at the center of the face.  The default hole depth is thro
         result = cq.Workplane("XY").box(length, height, thickness) \
             .faces(">Z").workplane().hole(center_hole_dia)
 
-        build_object(result)
+        show_object(result)
 
 .. topic:: Api References
 
@@ -97,7 +97,7 @@ By default, rectangles and circles are centered around the previous working poin
 .. cq_plot::
 
     result = cq.Workplane("front").circle(2.0).rect(0.5, 0.75).extrude(0.5)
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -123,7 +123,7 @@ closed curve.
 
     result = cq.Workplane("front").lineTo(2.0, 0).lineTo(2.0, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0))\
         .close().extrude(0.25)
-    build_object(result)
+    show_object(result)
 
 
 .. topic:: Api References
@@ -155,7 +155,7 @@ A new work plane center can be established at any point.
     #the new center is specified relative to the previous center, not global coordinates!
 
     result = result.extrude(0.25)
-    build_object(result)
+    show_object(result)
 
 
 .. topic:: Api References
@@ -184,7 +184,7 @@ like :py:meth:`Workplane.circle` and :py:meth:`Workplane.rect`, will operate on 
    r = r.pushPoints( [ (1.5, 0),(0, 1.5),(-1.5, 0),(0, -1.5) ] )     # now four points are on the stack
    r = r.circle( 0.25 )                                      # circle will operate on all four points
    result = r.extrude(0.125 )                               # make prism
-   build_object(result)
+   show_object(result)
 
 .. topic:: Api References
 
@@ -206,7 +206,7 @@ correct for small hole sizes.
 
     result = cq.Workplane("front").box(3.0, 4.0, 0.25).pushPoints ( [ ( 0,0.75 ),(0, -0.75) ]) \
         .polygon(6, 1.0).cutThruAll()
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -238,7 +238,7 @@ This example uses a polyline to create one half of an i-beam shape, which is mir
             (0,H/-2.0)
         ]
         result = cq.Workplane("front").polyline(pts).mirrorY().extrude(L)
-        build_object(result)
+        show_object(result)
 
 .. topic:: Api References
 
@@ -272,7 +272,7 @@ needs a complex profile
     ]
     r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts).close()
     result = r.extrude(0.5)
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -297,7 +297,7 @@ introduce horizontal and vertical lines, which make for slightly easier coding.
    r = cq.Workplane("front").hLine(1.0)                            # 1.0 is the distance, not coordinate
    r = r.vLine(0.5).hLine(-0.25).vLine(-0.25).hLineTo(0.0)      # hLineTo allows using xCoordinate not distance
    result =r.mirrorY().extrude(0.25 )                           # mirror the geometry and extrude
-   build_object(result)
+   show_object(result)
 
 .. topic:: Api References
 
@@ -356,7 +356,7 @@ Mirroring 3D Objects
 
     result = result.union(mirXY_neg).union(mirXY_pos).union(mirZY_neg).union(mirZY_pos) 
     
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -391,7 +391,7 @@ Keep in mind that the origin of new workplanes are located at the center of a fa
 
     result = cq.Workplane("front").box(2,3, 0.5)            #make a basic prism
     result = result.faces(">Z").workplane().hole(0.5)   #find the top-most face and make a hole
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -420,7 +420,7 @@ how deep the part is
     result = cq.Workplane("front").box(3,2, 0.5)                 #make a basic prism
     result = result.faces(">Z").vertices("<XY").workplane()  #select the lower left vertex and make a workplane
     result = result.circle(1.0).cutThruAll()                 #cut the corner out
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -448,7 +448,7 @@ This example uses an offset workplane to make a compound object, which is perfec
     result = cq.Workplane("front").box(3, 2, 0.5)                 #make a basic prism
     result = result.faces("<X").workplane(offset=0.75)       #workplane is offset from the object surface
     result = result.circle(1.0).extrude(0.5)                 #disc
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -470,7 +470,7 @@ You can create a rotated work plane by specifying angles of rotation relative to
     result = cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").workplane()  \
          .transformed(offset=cq.Vector(0, -1.5, 1.0),rotate=cq.Vector(60, 0, 0)) \
          .rect(1.5,1.5,forConstruction=True).vertices().hole(0.25)
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -494,7 +494,7 @@ In the example below, a rectangle is drawn, and its vertices are used to locate 
 
     result = cq.Workplane("front").box(2, 2, 0.5).faces(">Z").workplane() \
         .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.125 )
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -518,7 +518,7 @@ are removed, and then the inside of the solid is 'hollowed out' to make the shel
 .. cq_plot::
 
     result = cq.Workplane("front").box(2, 2, 2).faces("+Z").shell(0.05)
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -541,7 +541,7 @@ and a circular section.
     result = cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").circle(1.5) \
         .workplane(offset=3.0).rect(0.75, 0.5).loft(combine=True)
 
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -566,7 +566,7 @@ Similar to :py:meth:`Workplane.hole` , these functions operate on a list of poin
     result = cq.Workplane(cq.Plane.XY()).box(4,2, 0.5).faces(">Z").workplane().rect(3.5, 1.5, forConstruction=True)\
     .vertices().cboreHole(0.125, 0.25, 0.125, depth=None)
 
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -592,7 +592,7 @@ Here we fillet all of the edges of a simple plate.
 .. cq_plot::
 
     result = cq.Workplane("XY" ).box(3, 3, 0.5).edges("|Z").fillet(0.125)
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -619,7 +619,7 @@ with just a few lines of code.
                 .rect(length-padding,height-padding,forConstruction=True) \
                 .vertices().cboreHole(2.4, 4.4, 2.1)
 
-        build_object(result)
+        show_object(result)
 
 
 Splitting an Object
@@ -633,7 +633,7 @@ You can split an object using a workplane, and retain either or both halves
 
         #now cut it in half sideways
         result = c.faces(">Y").workplane(-0.5).split(keepTop=True)
-        build_object(result)
+        show_object(result)
 
 .. topic:: Api References
 
@@ -675,7 +675,7 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
 
     #make a shell
     result = p.faces(">Z").shell(0.3)
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -774,7 +774,7 @@ A Parametric Enclosure
     #return the combined result
     result =topOfLid.combineSolids(bottom)
 
-    build_object(result)
+    show_object(result)
 
 .. topic:: Api References
 
@@ -859,7 +859,7 @@ regarding the underside of the brick.
         tmp = s
 
     # Render the solid
-    build_object(tmp)
+    show_object(tmp)
 
 
 Braille Example
@@ -1043,7 +1043,7 @@ Braille Example
     if base_thickness < get_cylinder_radius(_cell_geometry):
         raise ValueError('Base thickness should be at least {}'.format(dot_height))
 
-    build_object(make_embossed_plate(text_lines, _cell_geometry))
+    show_object(make_embossed_plate(text_lines, _cell_geometry))
 
 Panel With Various Connector Holes
 -----------------------------------
@@ -1093,4 +1093,4 @@ Panel With Various Connector Holes
         result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(-173,-30-idx*h_sep).moveTo(-2.9176,-5.3).threePointArc((-6.05,0),(-2.9176,5.3)).lineTo(2.9176,5.3).threePointArc((6.05,0),(2.9176,-5.3)).close().cutThruAll()
 
     # Render the solid
-    build_object(result)
+    show_object(result)
