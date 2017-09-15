@@ -101,7 +101,7 @@ class CQModel(object):
             self.set_param_values(build_parameters)
             collector = ScriptCallback()
             env = EnvironmentBuilder().with_real_builtins().with_cadquery_objects() \
-                .add_entry("build_object", collector.build_object) \
+                .add_entry("show_object", collector.show_object) \
                 .add_entry("debug", collector.debug) \
                 .add_entry("describe_parameter",collector.describe_parameter) \
                 .build()
@@ -286,14 +286,14 @@ class InputParameter:
 class ScriptCallback(object):
     """
     Allows a script to communicate with the container
-    the build_object() method is exposed to CQ scripts, to allow them
+    the show_object() method is exposed to CQ scripts, to allow them
     to return objects to the execution environment
     """
     def __init__(self):
         self.outputObjects = []
         self.debugObjects = []
 
-    def build_object(self, shape,options={}):
+    def show_object(self, shape,options={}):
         """
         return an object to the executing environment, with options
         :param shape: a cadquery object
@@ -340,7 +340,7 @@ class InvalidParameterError(Exception):
 
 class NoOutputError(Exception):
     """
-    Raised when the script does not execute the build_object() method to
+    Raised when the script does not execute the show_object() method to
     return a solid
     """
     pass

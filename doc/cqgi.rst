@@ -31,13 +31,13 @@ The Script Side
 CQGI compliant containers provide an execution environment for scripts. The environment includes:
 
  * the cadquery library is automatically imported as 'cq'.
- * the :py:meth:`cadquery.cqgi.ScriptCallback.build_object()` method is defined that should be used to export a shape to the execution environment
+ * the :py:meth:`cadquery.cqgi.ScriptCallback.show_object()` method is defined that should be used to export a shape to the execution environment
  * the :py:meth:`cadquery.cqgi.ScriptCallBack.debug()` method is defined, which can be used by scripts to debug model output during execution.
 
-Scripts must call build_output at least once. Invoking build_object more than once will send multiple objects to
-the container.  An error will occur if the script does not return an object using the build_object() method.
+Scripts must call build_output at least once. Invoking show_object more than once will send multiple objects to
+the container.  An error will occur if the script does not return an object using the show_object() method.
 
-An optional options dictionary can be provided to the build_object method. If provided, it is passed onto the executing environment, and is used to render the object.  Typically, this will be colors, transparency, and other visual affects.
+An optional options dictionary can be provided to the show_object method. If provided, it is passed onto the executing environment, and is used to render the object.  Typically, this will be colors, transparency, and other visual affects.
 
 
 This CQGI compliant script produces a cube with a circle on top, and displays a workplane as well as an intermediate circle as debug output::
@@ -50,7 +50,7 @@ This CQGI compliant script produces a cube with a circle on top, and displays a 
     circle=top_of_cube_plane.circle(0.5)
     debug(circle, { 'color': 'red' } )
 
-    build_object( circle.extrude(1.0),{"color": "#aaaaaa" )
+    show_object( circle.extrude(1.0),{"color": "#aaaaaa" )
 
 Note that importing cadquery is not required. 
 At the end of this script, one object will be displayed, in addition to a workplane, a point, and a circle
@@ -157,7 +157,7 @@ These are the most important Methods and classes of the CQGI
     parse
     CQModel.build
     BuildResult
-    ScriptCallback.build_object
+    ScriptCallback.show_object
 
 Complete CQGI api
 -----------------

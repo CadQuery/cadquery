@@ -62,7 +62,7 @@ with place-holders for the dimensions. Paste this into the CodeWindow:
     result = cq.Workplane("XY").box(height, width, thickness)
 
     # Render the solid
-    build_object(result)
+    show_object(result)
 
 Press F2 to run the script. You should see Our basic base.
 
@@ -91,7 +91,7 @@ This modification will do the trick:
         .faces(">Z").workplane().hole(diameter)
 
     # Render the solid
-    build_object(result)
+    show_object(result)
 
 Rebuild your model by pressing F2. Your block should look like this:
 
@@ -149,7 +149,7 @@ Good news!-- we can get the job done with just two lines of code. Here's the cod
         .cboreHole(2.4, 4.4, 2.1)
 
     # Render the solid
-    build_object(result)
+    show_object(result)
 
 
 After pressing F2 to re-execute the model, you should see something like this:
@@ -215,7 +215,7 @@ We can do that using the preset dictionaries in the parameter definition:
         .edges("|Z").fillet(2.0)
 
     # Render the solid
-    build_object(result)
+    show_object(result)
 
 **Line 13** fillets the edges using the   :py:meth:`cadquery.CQ.fillet` method.
 

@@ -12,7 +12,7 @@ like `The CadQuery Freecad Module <https://github.com/jmwright/cadquery-freecad-
 `parametricParts.com <https://www.parametricparts.com>`_, there are a few conventions you need to be aware of:
 
   * cadquery is already imported as 'cq'
-  * to return an object to the container, you need to call the build_object() method.
+  * to return an object to the container, you need to call the show_object() method.
 
 Each script generally has three sections:
 

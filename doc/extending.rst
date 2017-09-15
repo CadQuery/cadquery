@@ -176,5 +176,5 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
         result = cq.Workplane("XY").box(6.0,8.0,0.5).faces(">Z")\
             .rect(4.0,4.0,forConstruction=True).vertices() \
             .makeCubes(1.0).combineSolids()
-        build_object(result)
+        show_object(result)
 
