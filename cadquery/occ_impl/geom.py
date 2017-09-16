@@ -3,7 +3,7 @@ import cadquery
 
 from OCC.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
 from OCC.Bnd import Bnd_Box
-from OCC.BRepBndLib import brepbndlib_Add # brepbndlib_AddOptimal
+from OCC.BRepBndLib import brepbndlib_Add  # brepbndlib_AddOptimal
 from OCC.BRepMesh import BRepMesh_IncrementalMesh
 
 TOL = 1e-2
@@ -21,6 +21,7 @@ class Vector(object):
             * a 3-tuple
             * three float values, x, y, and z
     """
+
     def __init__(self, *args):
         if len(args) == 3:
             fV = gp_Vec(*args)
@@ -40,7 +41,7 @@ class Vector(object):
             else:
                 fV = args[0]
         elif len(args) == 0:
-            fV = gp_Vec(0,0,0)
+            fV = gp_Vec(0, 0, 0)
         else:
             raise ValueError("Expected three floats, OCC Geom_, or 3-tuple")
 
@@ -104,29 +105,33 @@ class Vector(object):
         return self.wrapped.Angle(v.wrapped)
 
     def distanceToLine(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError(
+            "Have not needed this yet, but FreeCAD supports it!")
 
     def projectToLine(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError(
+            "Have not needed this yet, but FreeCAD supports it!")
 
     def distanceToPlane(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError(
+            "Have not needed this yet, but FreeCAD supports it!")
 
     def projectToPlane(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError(
+            "Have not needed this yet, but FreeCAD supports it!")
 
     def __add__(self, v):
         return self.add(v)
-        
+
     def __sub__(self, v):
         return self.sub(v)
 
     def __repr__(self):
-        return 'Vector: ' + str((self.x,self.y,self.z))
+        return 'Vector: ' + str((self.x, self.y, self.z))
 
     def __str__(self):
-        return 'Vector: ' + str((self.x,self.y,self.z))
-        
+        return 'Vector: ' + str((self.x, self.y, self.z))
+
     def __eq__(self, other):
         return self.wrapped == other.wrapped
     '''  
@@ -134,21 +139,21 @@ class Vector(object):
     def __ne__(self, other):
         return self.wrapped.__ne__(other)
     '''
-    
+
     def toPnt(self):
-        
+
         return gp_Pnt(self.wrapped.XYZ())
-        
+
     def toDir(self):
-        
+
         return gp_Dir(self.wrapped.XYZ())
 
-    def transform(self,T):
-        
-        #to gp_Pnt to obey cq transformation convention (in OCC vectors do not translate)
+    def transform(self, T):
+
+        # to gp_Pnt to obey cq transformation convention (in OCC vectors do not translate)
         pnt = self.toPnt()
         pnt_t = pnt.Transformed(T.wrapped)
-        
+
         return Vector(gp_Vec(pnt_t.XYZ()))
 
 
@@ -157,6 +162,7 @@ class Matrix:
 
     Used to move geometry in space.
     """
+
     def __init__(self, matrix=None):
         if matrix is None:
             self.wrapped = gp_Trsf()
@@ -170,19 +176,19 @@ class Matrix:
     def rotateY(self, angle):
         self._rotate(gp.OY(),
                      angle)
-                                 
+
     def rotateZ(self, angle):
         self._rotate(gp.OZ(),
                      angle)
-        
-    def _rotate(self,direction,angle):
-        
+
+    def _rotate(self, direction, angle):
+
         new = gp_Trsf()
         new.SetRotation(direction,
                         angle)
-        
+
         self.wrapped = self.wrapped * new
-                                 
+
     def inverse(self):
         return Matrix(self.wrapped.Invert())
 
@@ -199,7 +205,7 @@ class Plane(object):
     Frequently, it is not necessary to create work planes, as they can be
     created automatically from faces.
     """
-    
+
     @classmethod
     def named(cls, stdName, origin=(0, 0, 0)):
         """Create a predefined Plane based on the conventional names.
@@ -250,7 +256,7 @@ class Plane(object):
             return namedPlanes[stdName]
         except KeyError:
             raise ValueError('Supported names are {}'.format(
-                namedPlanes.keys()))
+                list(namedPlanes.keys())))
 
     @classmethod
     def XY(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
@@ -340,11 +346,11 @@ class Plane(object):
         zDir = Vector(normal)
         if (zDir.Length == 0.0):
             raise ValueError('normal should be non null')
-        
+
         xDir = Vector(xDir)
         if (xDir.Length == 0.0):
             raise ValueError('xDir should be non null')
-        
+
         self.zDir = zDir.normalized()
         self._setPlaneDir(xDir)
         self.origin = origin
@@ -353,6 +359,7 @@ class Plane(object):
     def origin(self):
         return self._origin
 # TODO is this property rly needed -- why not handle this in the constructor
+
     @origin.setter
     def origin(self, value):
         self._origin = Vector(value)
@@ -404,9 +411,9 @@ class Plane(object):
             * Discretizing points along each curve to provide a more reliable
               test.
         """
-        
+
         pass
-    
+
         '''
         # TODO: also use a set of points along the wire to test as well.
         # TODO: would it be more efficient to create objects in the local
@@ -425,7 +432,7 @@ class Plane(object):
         # know if one is inside the other
         return bb == BoundBox.findOutsideBox2D(bb, tb)
         '''
-        
+
     def toLocalCoords(self, obj):
         """Project the provided coordinates onto this plane
 
@@ -511,7 +518,7 @@ class Plane(object):
         # - then rotate about x
         # - then transform back to global coordinates.
 
-        #TODO why is it here?
+        # TODO why is it here?
 
         raise NotImplementedError
 
@@ -542,14 +549,14 @@ class Plane(object):
                 resultWires.append(cadquery.Shape.cast(mirroredWire))
 
         return resultWires'''
-        
-    def mirrorInPlane(self, listOfShapes, axis = 'X'):
-        
+
+    def mirrorInPlane(self, listOfShapes, axis='X'):
+
         local_coord_system = gp_Ax3(self.origin.toPnt(),
                                     self.zDir.toDir(),
                                     self.xDir.toDir())
         T = gp_Trsf()
-        
+
         if axis == 'X':
             T.SetMirror(gp_Ax1(self.origin.toPnt(),
                                local_coord_system.XDirection()))
@@ -558,16 +565,16 @@ class Plane(object):
                                local_coord_system.YDirection()))
         else:
             raise NotImplementedError
-            
+
         resultWires = []
         for w in listOfShapes:
             mirrored = w.transformShape(Matrix(T))
-            
-            #attemp stitching of the wires
+
+            # attemp stitching of the wires
             resultWires.append(mirrored)
-                
+
         return resultWires
-    
+
     def _setPlaneDir(self, xDir):
         """Set the vectors parallel to the plane, i.e. xDir and yDir"""
         xDir = Vector(xDir)
@@ -586,32 +593,32 @@ class Plane(object):
         # the double-inverting is strange, and I don't understand it.
         forward = Matrix()
         inverse = Matrix()
-        
+
         global_coord_system = gp_Ax3()
         local_coord_system = gp_Ax3(gp_Pnt(*self.origin.toTuple()),
                                     gp_Dir(*self.zDir.toTuple()),
                                     gp_Dir(*self.xDir.toTuple())
                                     )
-        
+
         forward.wrapped.SetTransformation(global_coord_system,
                                           local_coord_system)
 
         inverse.wrapped.SetTransformation(local_coord_system,
                                           global_coord_system)
 
-        #TODO verify if this is OK
+        # TODO verify if this is OK
         self.lcs = local_coord_system
         self.rG = inverse
         self.fG = forward
 
+
 class BoundBox(object):
     """A BoundingBox for an object or set of objects. Wraps the OCC one"""
-    
 
     def __init__(self, bb):
         self.wrapped = bb
         XMin, YMin, ZMin, XMax, YMax, ZMax = bb.Get()
-        
+
         self.xmin = XMin
         self.xmax = XMax
         self.xlen = XMax - XMin
@@ -621,11 +628,11 @@ class BoundBox(object):
         self.zmin = ZMin
         self.zmax = ZMax
         self.zlen = ZMax - ZMin
-        
-        self.center = Vector((XMax+XMin)/2,
-                             (YMax+YMin)/2,
-                             (ZMax+ZMin)/2)
-        
+
+        self.center = Vector((XMax + XMin) / 2,
+                             (YMax + YMin) / 2,
+                             (ZMax + ZMin) / 2)
+
         self.DiagonalLength = self.wrapped.SquareExtent()**0.5
 
     def add(self, obj, tol=1e-8):
@@ -639,11 +646,11 @@ class BoundBox(object):
 
         This bounding box is not changed.
         """
-        
+
         tmp = Bnd_Box()
         tmp.SetGap(tol)
         tmp.Add(self.wrapped)
-        
+
         if isinstance(obj, tuple):
             tmp.Update(*obj)
         elif isinstance(obj, Vector):
@@ -664,23 +671,23 @@ class BoundBox(object):
         doesn't work correctly plus, there was all kinds of rounding error in
         the built-in implementation i do not understand.
         """
-        
+
         if (bb1.XMin < bb2.XMin and
             bb1.XMax > bb2.XMax and
             bb1.YMin < bb2.YMin and
-            bb1.YMax > bb2.YMax):
+                bb1.YMax > bb2.YMax):
             return bb1
 
         if (bb2.XMin < bb1.XMin and
             bb2.XMax > bb1.XMax and
             bb2.YMin < bb1.YMin and
-            bb2.YMax > bb1.YMax):
+                bb2.YMax > bb1.YMax):
             return bb2
 
         return None
-        
+
     @classmethod
-    def _fromTopoDS(cls,shape,tol=TOL,optimal=False):
+    def _fromTopoDS(cls, shape, tol=TOL, optimal=False):
         '''
         Constructs a bounnding box from a TopoDS_Shape
         '''
@@ -688,12 +695,13 @@ class BoundBox(object):
         bbox.SetGap(tol)
         if optimal:
             raise NotImplementedError
-            #brepbndlib_AddOptimal(shape, bbox) #this is 'exact' but expensive - not yet wrapped by PythonOCC
+            # brepbndlib_AddOptimal(shape, bbox) #this is 'exact' but expensive - not yet wrapped by PythonOCC
         else:
-            mesh = BRepMesh_IncrementalMesh(shape,TOL,True)
+            mesh = BRepMesh_IncrementalMesh(shape, TOL, True)
             mesh.Perform()
-            brepbndlib_Add(shape, bbox, True) #this is adds +margin but is faster
-        
+            # this is adds +margin but is faster
+            brepbndlib_Add(shape, bbox, True)
+
         return cls(bbox)
 
     def isInside(self, anotherBox):

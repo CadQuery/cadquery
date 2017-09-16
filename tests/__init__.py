@@ -4,8 +4,9 @@ import unittest
 import sys
 import os
 
+
 def readFileAsString(fileName):
-    f= open(fileName, 'r')
+    f = open(fileName, 'r')
     s = f.read()
     f.close()
     return s
@@ -37,13 +38,16 @@ def toTuple(v):
     elif type(v) == Vector:
         return v.toTuple()
     else:
-        raise RuntimeError("dont know how to convert type %s to tuple" % str(type(v)) )
+        raise RuntimeError(
+            "dont know how to convert type %s to tuple" % str(type(v)))
 
 
 class BaseTest(unittest.TestCase):
 
     def assertTupleAlmostEquals(self, expected, actual, places):
         for i, j in zip(actual, expected):
-            self.assertAlmostEquals(i, j, places)
+            self.assertAlmostEqual(i, j, places)
 
-__all__ = ['TestCadObjects', 'TestCadQuery', 'TestCQSelectors', 'TestWorkplanes', 'TestExporters', 'TestCQSelectors', 'TestImporters','TestCQGI']
+
+__all__ = ['TestCadObjects', 'TestCadQuery', 'TestCQSelectors', 'TestWorkplanes',
+           'TestExporters', 'TestCQSelectors', 'TestImporters', 'TestCQGI']

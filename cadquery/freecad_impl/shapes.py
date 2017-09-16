@@ -89,7 +89,7 @@ class Shape(object):
         elif s == 'Solid':
             tr = Solid(obj)
         elif s == 'Compound':
-            #compound of solids, lets return a solid instead
+            # compound of solids, lets return a solid instead
             if len(obj.Solids) > 1:
                 tr = Solid(obj)
             elif len(obj.Solids) == 1:
@@ -122,7 +122,7 @@ class Shape(object):
             self.wrapped.exportStep(fileName)
         elif fileFormat == ExportFormats.AMF:
             # not built into FreeCAD
-            #TODO: user selected tolerance
+            # TODO: user selected tolerance
             tess = self.wrapped.tessellate(0.1)
             aw = amfUtils.AMFWriter(tess)
             aw.writeAmf(fileName)
@@ -189,7 +189,7 @@ class Shape(object):
         return BoundBox(self.wrapped.BoundBox)
 
     def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
-        if mirrorPlane == "XY" or mirrorPlane== "YX":
+        if mirrorPlane == "XY" or mirrorPlane == "YX":
             mirrorPlaneNormalVector = FreeCAD.Base.Vector(0, 0, 1)
         elif mirrorPlane == "XZ" or mirrorPlane == "ZX":
             mirrorPlaneNormalVector = FreeCAD.Base.Vector(0, 1, 0)
@@ -214,9 +214,10 @@ class Shape(object):
         elif isinstance(self.wrapped, FreeCADPart.Solid):
             return Vector(self.wrapped.CenterOfMass)
         else:
-            raise ValueError("Cannot find the center of %s object type" % str(type(self.Solids()[0].wrapped)))
+            raise ValueError("Cannot find the center of %s object type" % str(
+                type(self.Solids()[0].wrapped)))
 
-    def CenterOfBoundBox(self, tolerance = 0.1):
+    def CenterOfBoundBox(self, tolerance=0.1):
         self.wrapped.tessellate(tolerance)
         if isinstance(self.wrapped, FreeCADPart.Shape):
             # If there are no Solids, we're probably dealing with a Face or something similar
@@ -229,7 +230,8 @@ class Shape(object):
         elif isinstance(self.wrapped, FreeCADPart.Solid):
             return Vector(self.wrapped.BoundBox.Center)
         else:
-            raise ValueError("Cannot find the center(BoundBox's) of %s object type" % str(type(self.Solids()[0].wrapped)))
+            raise ValueError("Cannot find the center(BoundBox's) of %s object type" % str(
+                type(self.Solids()[0].wrapped)))
 
     @staticmethod
     def CombinedCenter(objects):
@@ -239,13 +241,14 @@ class Shape(object):
         :param objects: a list of objects with mass
         """
         total_mass = sum(Shape.computeMass(o) for o in objects)
-        weighted_centers = [o.wrapped.CenterOfMass.multiply(Shape.computeMass(o)) for o in objects]
+        weighted_centers = [o.wrapped.CenterOfMass.multiply(
+            Shape.computeMass(o)) for o in objects]
 
         sum_wc = weighted_centers[0]
-        for wc in weighted_centers[1:] :
+        for wc in weighted_centers[1:]:
             sum_wc = sum_wc.add(wc)
 
-        return Vector(sum_wc.multiply(1./total_mass))
+        return Vector(sum_wc.multiply(1. / total_mass))
 
     @staticmethod
     def computeMass(object):
@@ -254,12 +257,12 @@ class Shape(object):
         in FreeCAD >=15, faces no longer have mass, but instead have area.
         """
         if object.wrapped.ShapeType == 'Face':
-          return object.wrapped.Area
+            return object.wrapped.Area
         else:
-          return object.wrapped.Mass
+            return object.wrapped.Mass
 
     @staticmethod
-    def CombinedCenterOfBoundBox(objects, tolerance = 0.1):
+    def CombinedCenterOfBoundBox(objects, tolerance=0.1):
         """
         Calculates the center of BoundBox of multiple objects.
 
@@ -273,10 +276,10 @@ class Shape(object):
             weighted_centers.append(o.wrapped.BoundBox.Center.multiply(1.0))
 
         sum_wc = weighted_centers[0]
-        for wc in weighted_centers[1:] :
+        for wc in weighted_centers[1:]:
             sum_wc = sum_wc.add(wc)
 
-        return Vector(sum_wc.multiply(1./total_mass))
+        return Vector(sum_wc.multiply(1. / total_mass))
 
     def Closed(self):
         return self.wrapped.Closed
@@ -393,7 +396,7 @@ class Vertex(Shape):
         self.Y = obj.Y
         self.Z = obj.Z
 
-         # Helps identify this solid through the use of an ID
+        # Helps identify this solid through the use of an ID
         self.label = ""
 
     def toTuple(self):
@@ -425,12 +428,12 @@ class Edge(Shape):
             FreeCADPart.Circle: 'CIRCLE'
         }
 
-         # Helps identify this solid through the use of an ID
+        # Helps identify this solid through the use of an ID
         self.label = ""
 
     def geomType(self):
         t = type(self.wrapped.Curve)
-        if self.edgetypes.has_key(t):
+        if t in self.edgetypes:
             return self.edgetypes[t]
         else:
             return "Unknown Edge Curve Type: %s" % str(t)
@@ -476,7 +479,7 @@ class Edge(Shape):
     @classmethod
     def makeCircle(cls, radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=360.0, angle2=360):
         center = Vector(pnt)
-        normal = Vector(dir)        
+        normal = Vector(dir)
         return Edge(FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped, angle1, angle2))
 
     @classmethod
@@ -529,7 +532,7 @@ class Wire(Shape):
         """
         self.wrapped = obj
 
-         # Helps identify this solid through the use of an ID
+        # Helps identify this solid through the use of an ID
         self.label = ""
 
     @classmethod
@@ -565,7 +568,8 @@ class Wire(Shape):
             :param normal: vector representing the direction of the plane the circle should lie in
             :return:
         """
-        w = Wire(FreeCADPart.Wire([FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped)]))
+        w = Wire(FreeCADPart.Wire(
+            [FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped)]))
         return w
 
     @classmethod
@@ -588,10 +592,12 @@ class Wire(Shape):
         """This method is not implemented yet."""
         return self
 
+
 class Face(Shape):
     """
     a bounded surface that represents part of the boundary of a solid
     """
+
     def __init__(self, obj):
 
         self.wrapped = obj
@@ -603,12 +609,12 @@ class Face(Shape):
             FreeCADPart.Cone: 'CONE'
         }
 
-         # Helps identify this solid through the use of an ID
+        # Helps identify this solid through the use of an ID
         self.label = ""
 
     def geomType(self):
         t = type(self.wrapped.Surface)
-        if self.facetypes.has_key(t):
+        if t in self.facetypes:
             return self.facetypes[t]
         else:
             return "Unknown Face Surface Type: %s" % str(t)
@@ -661,13 +667,14 @@ class Shell(Shape):
     """
     the outer boundary of a surface
     """
+
     def __init__(self, wrapped):
         """
             A Shell
         """
         self.wrapped = wrapped
 
-         # Helps identify this solid through the use of an ID
+        # Helps identify this solid through the use of an ID
         self.label = ""
 
     @classmethod
@@ -679,13 +686,14 @@ class Solid(Shape):
     """
     a single solid
     """
+
     def __init__(self, obj):
         """
             A Solid
         """
         self.wrapped = obj
 
-         # Helps identify this solid through the use of an ID
+        # Helps identify this solid through the use of an ID
         self.label = ""
 
     @classmethod
@@ -817,11 +825,11 @@ class Solid(Shape):
             rs = FreeCADPart.makeRuledSurface(w1, w2)
             sides.append(rs)
 
-        #make faces for the top and bottom
+        # make faces for the top and bottom
         startFace = FreeCADPart.Face(startWires)
         endFace = FreeCADPart.Face(endWires)
 
-        #collect all the faces from the sides
+        # collect all the faces from the sides
         faceList = [startFace]
         for s in sides:
             faceList.extend(s.Faces)
@@ -858,9 +866,9 @@ class Solid(Shape):
         # one would think that fusing faces into a compound and then extruding would work,
         # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc),
         # but then cutting it from the main solid fails with BRep_NotDone.
-        #the work around is to extrude each and then join the resulting solids, which seems to work
+        # the work around is to extrude each and then join the resulting solids, which seems to work
 
-        #FreeCAD allows this in one operation, but others might not
+        # FreeCAD allows this in one operation, but others might not
         freeCADWires = [outerWire.wrapped]
         for w in innerWires:
             freeCADWires.append(w.wrapped)
@@ -906,10 +914,10 @@ class Solid(Shape):
         rotateCenter = FreeCAD.Base.Vector(axisStart)
         rotateAxis = FreeCAD.Base.Vector(axisEnd)
 
-        #Convert our axis end vector into to something FreeCAD will understand (an axis specification vector)
+        # Convert our axis end vector into to something FreeCAD will understand (an axis specification vector)
         rotateAxis = rotateCenter.sub(rotateAxis)
 
-        #FreeCAD wants a rotation center and then an axis to rotate around rather than an axis of rotation
+        # FreeCAD wants a rotation center and then an axis to rotate around rather than an axis of rotation
         result = f.revolve(rotateCenter, rotateAxis, angleDegrees)
 
         return Shape.cast(result)
@@ -1012,7 +1020,7 @@ class Compound(Shape):
         """
         self.wrapped = obj
 
-         # Helps identify this solid through the use of an ID
+        # Helps identify this solid through the use of an ID
         self.label = ""
 
     def Center(self):

@@ -6,7 +6,7 @@ A special directive for including a cq object.
 import traceback
 from cadquery import *
 from cadquery import cqgi
-import StringIO
+import io
 from docutils.parsers.rst import directives
 
 template = """
@@ -34,7 +34,7 @@ def cq_directive(name, arguments, options, content, lineno,
     out_svg = "Your Script Did not assign call build_output() function!"
 
     try:
-        _s = StringIO.StringIO()
+        _s = io.StringIO()
         result = cqgi.parse(plot_code).build()
 
         if result.success:

@@ -36,22 +36,24 @@ TEST_DEBUG_SCRIPT = textwrap.dedent(
     """
 )
 
+
 class TestCQGI(BaseTest):
     def test_parser(self):
         model = cqgi.CQModel(TESTSCRIPT)
         metadata = model.metadata
 
-        self.assertEquals(set(metadata.parameters.keys()), {'height', 'width', 'a', 'b', 'foo'})
+        self.assertEqual(set(metadata.parameters.keys()), {
+                         'height', 'width', 'a', 'b', 'foo'})
 
     def test_build_with_debug(self):
         model = cqgi.CQModel(TEST_DEBUG_SCRIPT)
         result = model.build()
         debugItems = result.debugObjects
         self.assertTrue(len(debugItems) == 2)
-        self.assertTrue( debugItems[0].object == "bar" )
-        self.assertTrue( debugItems[0].args == { "color":'yellow' } )
-        self.assertTrue( debugItems[1].object == 2.0 )
-        self.assertTrue( debugItems[1].args == {} )
+        self.assertTrue(debugItems[0].object == "bar")
+        self.assertTrue(debugItems[0].args == {"color": 'yellow'})
+        self.assertTrue(debugItems[1].object == 2.0)
+        self.assertTrue(debugItems[1].args == {})
 
     def test_build_with_empty_params(self):
         model = cqgi.CQModel(TESTSCRIPT)
@@ -77,7 +79,7 @@ class TestCQGI(BaseTest):
         a_param = model.metadata.parameters['a']
         self.assertTrue(a_param.default_value == 2.0)
         self.assertTrue(a_param.desc == 'FirstLetter')
-        self.assertTrue(a_param.varType == cqgi.NumberParameterType )
+        self.assertTrue(a_param.varType == cqgi.NumberParameterType)
 
     def test_describe_parameter_invalid_doesnt_fail_script(self):
         script = textwrap.dedent(
@@ -88,8 +90,8 @@ class TestCQGI(BaseTest):
         )
         model = cqgi.CQModel(script)
         a_param = model.metadata.parameters['a']
-        self.assertTrue(a_param.name == 'a' )
-     
+        self.assertTrue(a_param.name == 'a')
+
     def test_build_with_exception(self):
         badscript = textwrap.dedent(
             """
@@ -127,9 +129,9 @@ class TestCQGI(BaseTest):
 
         model = cqgi.CQModel(script)
         result = model.build({})
-        self.assertEquals(2, len(result.results))
-        self.assertEquals(1, result.results[0])
-        self.assertEquals(2, result.results[1])
+        self.assertEqual(2, len(result.results))
+        self.assertEqual(1, result.results[0])
+        self.assertEqual(2, result.results[1])
 
     def test_that_assinging_number_to_string_works(self):
         script = textwrap.dedent(
@@ -138,8 +140,8 @@ class TestCQGI(BaseTest):
                 build_object(h)
             """
         )
-        result = cqgi.parse(script).build( {'h': 33.33})
-        self.assertEquals(result.results[0], "33.33")
+        result = cqgi.parse(script).build({'h': 33.33})
+        self.assertEqual(result.results[0], "33.33")
 
     def test_that_assigning_string_to_number_fails(self):
         script = textwrap.dedent(
@@ -148,8 +150,9 @@ class TestCQGI(BaseTest):
                 build_object(h)
             """
         )
-        result = cqgi.parse(script).build( {'h': "a string"})
-        self.assertTrue(isinstance(result.exception, cqgi.InvalidParameterError))
+        result = cqgi.parse(script).build({'h': "a string"})
+        self.assertTrue(isinstance(result.exception,
+                                   cqgi.InvalidParameterError))
 
     def test_that_assigning_unknown_var_fails(self):
         script = textwrap.dedent(
@@ -159,8 +162,9 @@ class TestCQGI(BaseTest):
             """
         )
 
-        result = cqgi.parse(script).build( {'w': "var is not there"})
-        self.assertTrue(isinstance(result.exception, cqgi.InvalidParameterError))
+        result = cqgi.parse(script).build({'w': "var is not there"})
+        self.assertTrue(isinstance(result.exception,
+                                   cqgi.InvalidParameterError))
 
     def test_that_not_calling_build_object_raises_error(self):
         script = textwrap.dedent(
@@ -195,7 +199,7 @@ class TestCQGI(BaseTest):
         result = cqgi.parse(script).build({'h': False})
 
         self.assertTrue(result.success)
-        self.assertEquals(result.first_result,'*False*')
+        self.assertEqual(result.first_result, '*False*')
 
     def test_that_only_top_level_vars_are_detected(self):
         script = textwrap.dedent(
@@ -213,4 +217,4 @@ class TestCQGI(BaseTest):
 
         model = cqgi.parse(script)
 
-        self.assertEquals(2, len(model.metadata.parameters))
+        self.assertEqual(2, len(model.metadata.parameters))

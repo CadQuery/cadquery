@@ -67,6 +67,7 @@ class Vector(object):
             * a 3-tuple
             * three float values, x, y, and z
     """
+
     def __init__(self, *args):
         if len(args) == 3:
             fV = FreeCAD.Base.Vector(args[0], args[1], args[2])
@@ -82,7 +83,8 @@ class Vector(object):
         elif len(args) == 0:
             fV = FreeCAD.Base.Vector(0, 0, 0)
         else:
-            raise ValueError("Expected three floats, FreeCAD Vector, or 3-tuple")
+            raise ValueError(
+                "Expected three floats, FreeCAD Vector, or 3-tuple")
 
         self._wrapped = fV
 
@@ -147,16 +149,20 @@ class Vector(object):
         return self.wrapped.getAngle(v.wrapped)
 
     def distanceToLine(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError(
+            "Have not needed this yet, but FreeCAD supports it!")
 
     def projectToLine(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError(
+            "Have not needed this yet, but FreeCAD supports it!")
 
     def distanceToPlane(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError(
+            "Have not needed this yet, but FreeCAD supports it!")
 
     def projectToPlane(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError(
+            "Have not needed this yet, but FreeCAD supports it!")
 
     def __add__(self, v):
         return self.add(v)
@@ -179,6 +185,7 @@ class Matrix:
 
     Used to move geometry in space.
     """
+
     def __init__(self, matrix=None):
         if matrix is None:
             self.wrapped = FreeCAD.Base.Matrix()
@@ -255,7 +262,7 @@ class Plane(object):
             return namedPlanes[stdName]
         except KeyError:
             raise ValueError('Supported names are {}'.format(
-                namedPlanes.keys()))
+                list(namedPlanes.keys())))
 
     @classmethod
     def XY(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
@@ -580,6 +587,7 @@ class Plane(object):
 
 class BoundBox(object):
     """A BoundingBox for an object or set of objects. Wraps the FreeCAD one"""
+
     def __init__(self, bb):
         self.wrapped = bb
         self.xmin = bb.XMin
@@ -631,13 +639,13 @@ class BoundBox(object):
         if (fc_bb1.XMin < fc_bb2.XMin and
             fc_bb1.XMax > fc_bb2.XMax and
             fc_bb1.YMin < fc_bb2.YMin and
-            fc_bb1.YMax > fc_bb2.YMax):
+                fc_bb1.YMax > fc_bb2.YMax):
             return b1
 
         if (fc_bb2.XMin < fc_bb1.XMin and
             fc_bb2.XMax > fc_bb1.XMax and
             fc_bb2.YMin < fc_bb1.YMin and
-            fc_bb2.YMax > fc_bb1.YMax):
+                fc_bb2.YMax > fc_bb1.YMax):
             return b2
 
         return None

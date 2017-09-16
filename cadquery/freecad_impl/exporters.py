@@ -3,7 +3,9 @@ import cadquery
 import FreeCAD
 import Drawing
 
-import tempfile, os, StringIO
+import tempfile
+import os
+import io
 
 
 try:
@@ -26,12 +28,12 @@ class UNITS:
 
 
 def toString(shape, exportType, tolerance=0.1):
-    s = StringIO.StringIO()
+    s = io.StringIO()
     exportShape(shape, exportType, s, tolerance)
     return s.getvalue()
 
 
-def exportShape(shape,exportType,fileLike,tolerance=0.1):
+def exportShape(shape, exportType, fileLike, tolerance=0.1):
     """
         :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
         object, the first value is exported
@@ -42,23 +44,22 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         for closing the object
     """
 
-
-    if isinstance(shape,cadquery.CQ):
+    if isinstance(shape, cadquery.CQ):
         shape = shape.val()
 
     if exportType == ExportTypes.TJS:
-        #tessellate the model
+        # tessellate the model
         tess = shape.tessellate(tolerance)
 
-        mesher = JsonMesh() #warning: needs to be changed to remove buildTime and exportTime!!!
-        #add vertices
+        mesher = JsonMesh()  # warning: needs to be changed to remove buildTime and exportTime!!!
+        # add vertices
         for vec in tess[0]:
             mesher.addVertex(vec.x, vec.y, vec.z)
 
-        #add faces
+        # add faces
         for f in tess[1]:
-            mesher.addTriangleFace(f[0],f[1], f[2])
-        fileLike.write( mesher.toJson())
+            mesher.addTriangleFace(f[0], f[1], f[2])
+        fileLike.write(mesher.toJson())
     elif exportType == ExportTypes.SVG:
         fileLike.write(getSVG(shape.wrapped))
     elif exportType == ExportTypes.AMF:
@@ -66,11 +67,11 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         aw = AmfWriter(tess).writeAmf(fileLike)
     else:
 
-        #all these types required writing to a file and then
-        #re-reading. this is due to the fact that FreeCAD writes these
+        # all these types required writing to a file and then
+        # re-reading. this is due to the fact that FreeCAD writes these
         (h, outFileName) = tempfile.mkstemp()
-        #weird, but we need to close this file. the next step is going to write to
-        #it from c code, so it needs to be closed.
+        # weird, but we need to close this file. the next step is going to write to
+        # it from c code, so it needs to be closed.
         os.close(h)
 
         if exportType == ExportTypes.STEP:
@@ -83,13 +84,14 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         res = readAndDeleteFile(outFileName)
         fileLike.write(res)
 
+
 def readAndDeleteFile(fileName):
     """
         read data from file provided, and delete it when done
         return the contents as a string
     """
     res = ""
-    with open(fileName,'r') as f:
+    with open(fileName, 'r') as f:
         res = f.read()
 
     os.remove(fileName)
@@ -102,16 +104,16 @@ def guessUnitOfMeasure(shape):
     """
     bb = shape.BoundBox
 
-    dimList = [ bb.XLength, bb.YLength,bb.ZLength ]
-    #no real part would likely be bigger than 10 inches on any side
+    dimList = [bb.XLength, bb.YLength, bb.ZLength]
+    # no real part would likely be bigger than 10 inches on any side
     if max(dimList) > 10:
         return UNITS.MM
 
-    #no real part would likely be smaller than 0.1 mm on all dimensions
+    # no real part would likely be smaller than 0.1 mm on all dimensions
     if min(dimList) < 0.1:
         return UNITS.IN
 
-    #no real part would have the sum of its dimensions less than about 5mm
+    # no real part would have the sum of its dimensions less than about 5mm
     if sum(dimList) < 10:
         return UNITS.IN
 
@@ -119,76 +121,79 @@ def guessUnitOfMeasure(shape):
 
 
 class AmfWriter(object):
-    def __init__(self,tessellation):
+    def __init__(self, tessellation):
 
         self.units = "mm"
         self.tessellation = tessellation
 
-    def writeAmf(self,outFile):
-        amf = ET.Element('amf',units=self.units)
-        #TODO: if result is a compound, we need to loop through them
-        object = ET.SubElement(amf,'object',id="0")
-        mesh = ET.SubElement(object,'mesh')
-        vertices = ET.SubElement(mesh,'vertices')
-        volume = ET.SubElement(mesh,'volume')
+    def writeAmf(self, outFile):
+        amf = ET.Element('amf', units=self.units)
+        # TODO: if result is a compound, we need to loop through them
+        object = ET.SubElement(amf, 'object', id="0")
+        mesh = ET.SubElement(object, 'mesh')
+        vertices = ET.SubElement(mesh, 'vertices')
+        volume = ET.SubElement(mesh, 'volume')
 
-        #add vertices
+        # add vertices
         for v in self.tessellation[0]:
-            vtx = ET.SubElement(vertices,'vertex')
-            coord = ET.SubElement(vtx,'coordinates')
-            x = ET.SubElement(coord,'x')
+            vtx = ET.SubElement(vertices, 'vertex')
+            coord = ET.SubElement(vtx, 'coordinates')
+            x = ET.SubElement(coord, 'x')
             x.text = str(v.x)
-            y = ET.SubElement(coord,'y')
+            y = ET.SubElement(coord, 'y')
             y.text = str(v.y)
-            z = ET.SubElement(coord,'z')
+            z = ET.SubElement(coord, 'z')
             z.text = str(v.z)
 
-        #add triangles
+        # add triangles
         for t in self.tessellation[1]:
-            triangle = ET.SubElement(volume,'triangle')
-            v1 = ET.SubElement(triangle,'v1')
+            triangle = ET.SubElement(volume, 'triangle')
+            v1 = ET.SubElement(triangle, 'v1')
             v1.text = str(t[0])
-            v2 = ET.SubElement(triangle,'v2')
+            v2 = ET.SubElement(triangle, 'v2')
             v2.text = str(t[1])
-            v3 = ET.SubElement(triangle,'v3')
+            v3 = ET.SubElement(triangle, 'v3')
             v3.text = str(t[2])
 
+        ET.ElementTree(amf).write(outFile, encoding='ISO-8859-1')
 
-        ET.ElementTree(amf).write(outFile,encoding='ISO-8859-1')
 
 """
     Objects that represent
     three.js JSON object notation
     https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3.0
 """
+
+
 class JsonMesh(object):
     def __init__(self):
 
-        self.vertices = [];
-        self.faces = [];
-        self.nVertices = 0;
-        self.nFaces = 0;
+        self.vertices = []
+        self.faces = []
+        self.nVertices = 0
+        self.nFaces = 0
 
-    def addVertex(self,x,y,z):
-        self.nVertices += 1;
-        self.vertices.extend([x,y,z]);
+    def addVertex(self, x, y, z):
+        self.nVertices += 1
+        self.vertices.extend([x, y, z])
 
-    #add triangle composed of the three provided vertex indices
-    def addTriangleFace(self, i,j,k):
-        #first position means justa simple triangle
-        self.nFaces += 1;
-        self.faces.extend([0,int(i),int(j),int(k)]);
+    # add triangle composed of the three provided vertex indices
+    def addTriangleFace(self, i, j, k):
+        # first position means justa simple triangle
+        self.nFaces += 1
+        self.faces.extend([0, int(i), int(j), int(k)])
 
     """
         Get a json model from this model.
         For now we'll forget about colors, vertex normals, and all that stuff
     """
+
     def toJson(self):
         return JSON_TEMPLATE % {
-            'vertices' : str(self.vertices),
-            'faces' : str(self.faces),
+            'vertices': str(self.vertices),
+            'faces': str(self.faces),
             'nVertices': self.nVertices,
-            'nFaces' : self.nFaces
+            'nFaces': self.nFaces
         };
 
 
@@ -210,62 +215,64 @@ def getPaths(freeCadSVG):
     hiddenPaths = []
     visiblePaths = []
     if len(freeCadSVG) > 0:
-        #yuk, freecad returns svg fragments. stupid stupid
+        # yuk, freecad returns svg fragments. stupid stupid
         fullDoc = "<root>%s</root>" % freeCadSVG
         e = ET.ElementTree(ET.fromstring(fullDoc))
         segments = e.findall(".//g")
         for s in segments:
             paths = s.findall("path")
 
-            if s.get("stroke-width") == "0.15": #hidden line HACK HACK HACK
+            if s.get("stroke-width") == "0.15":  # hidden line HACK HACK HACK
                 mylist = hiddenPaths
             else:
                 mylist = visiblePaths
 
             for p in paths:
                 mylist.append(p.get("d"))
-        return (hiddenPaths,visiblePaths)
+        return (hiddenPaths, visiblePaths)
     else:
-        return ([],[])
+        return ([], [])
 
 
-def getSVG(shape,opts=None):
+def getSVG(shape, opts=None):
     """
         Export a shape to SVG
     """
 
-    d = {'width':800,'height':240,'marginLeft':200,'marginTop':20}
+    d = {'width': 800, 'height': 240, 'marginLeft': 200, 'marginTop': 20}
 
     if opts:
         d.update(opts)
 
-    #need to guess the scale and the coordinate center
+    # need to guess the scale and the coordinate center
     uom = guessUnitOfMeasure(shape)
 
-    width=float(d['width'])
-    height=float(d['height'])
-    marginLeft=float(d['marginLeft'])
-    marginTop=float(d['marginTop'])
+    width = float(d['width'])
+    height = float(d['height'])
+    marginLeft = float(d['marginLeft'])
+    marginTop = float(d['marginTop'])
 
-    #TODO:  provide option to give 3 views
-    viewVector = FreeCAD.Base.Vector(-1.75,1.1,5)
-    (visibleG0,visibleG1,hiddenG0,hiddenG1) = Drawing.project(shape,viewVector)
+    # TODO:  provide option to give 3 views
+    viewVector = FreeCAD.Base.Vector(-1.75, 1.1, 5)
+    (visibleG0, visibleG1, hiddenG0, hiddenG1) = Drawing.project(shape, viewVector)
 
-    (hiddenPaths,visiblePaths) = getPaths(Drawing.projectToSVG(shape,viewVector,"ShowHiddenLines")) #this param is totally undocumented!
+    (hiddenPaths, visiblePaths) = getPaths(Drawing.projectToSVG(
+        shape, viewVector, "ShowHiddenLines"))  # this param is totally undocumented!
 
-    #get bounding box -- these are all in 2-d space
+    # get bounding box -- these are all in 2-d space
     bb = visibleG0.BoundBox
     bb.add(visibleG1.BoundBox)
     bb.add(hiddenG0.BoundBox)
     bb.add(hiddenG1.BoundBox)
 
-    #width pixels for x, height pixesl for y
-    unitScale = min( width / bb.XLength * 0.75 , height / bb.YLength * 0.75 )
+    # width pixels for x, height pixesl for y
+    unitScale = min(width / bb.XLength * 0.75, height / bb.YLength * 0.75)
 
-    #compute amount to translate-- move the top left into view
-    (xTranslate,yTranslate) = ( (0 - bb.XMin) + marginLeft/unitScale ,(0- bb.YMax) - marginTop/unitScale)
+    # compute amount to translate-- move the top left into view
+    (xTranslate, yTranslate) = ((0 - bb.XMin) + marginLeft /
+                                unitScale, (0 - bb.YMax) - marginTop / unitScale)
 
-    #compute paths ( again -- had to strip out freecad crap )
+    # compute paths ( again -- had to strip out freecad crap )
     hiddenContent = ""
     for p in hiddenPaths:
         hiddenContent += PATHTEMPLATE % p
@@ -274,21 +281,21 @@ def getSVG(shape,opts=None):
     for p in visiblePaths:
         visibleContent += PATHTEMPLATE % p
 
-    svg =  SVG_TEMPLATE % (
+    svg = SVG_TEMPLATE % (
         {
-            "unitScale" : str(unitScale),
-            "strokeWidth" : str(1.0/unitScale),
-            "hiddenContent" :  hiddenContent ,
-            "visibleContent" :visibleContent,
-            "xTranslate" : str(xTranslate),
-            "yTranslate" : str(yTranslate),
-            "width" : str(width),
-            "height" : str(height),
-            "textboxY" :str(height - 30),
-            "uom" : str(uom)
+            "unitScale": str(unitScale),
+            "strokeWidth": str(1.0 / unitScale),
+            "hiddenContent":  hiddenContent,
+            "visibleContent": visibleContent,
+            "xTranslate": str(xTranslate),
+            "yTranslate": str(yTranslate),
+            "width": str(width),
+            "height": str(height),
+            "textboxY": str(height - 30),
+            "uom": str(uom)
         }
     )
-    #svg = SVG_TEMPLATE % (
+    # svg = SVG_TEMPLATE % (
     #    {"content": projectedContent}
     #)
     return svg
@@ -302,13 +309,12 @@ def exportSVG(shape, fileName):
     """
 
     svg = getSVG(shape.val().wrapped)
-    f = open(fileName,'w')
+    f = open(fileName, 'w')
     f.write(svg)
     f.close()
 
 
-
-JSON_TEMPLATE= """\
+JSON_TEMPLATE = """\
 {
     "metadata" :
     {
@@ -388,5 +394,4 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 </svg>
 """
 
-PATHTEMPLATE="\t\t\t<path d=\"%s\" />\n"
-
+PATHTEMPLATE = "\t\t\t<path d=\"%s\" />\n"
