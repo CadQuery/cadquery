@@ -47,7 +47,7 @@ def toTuple(v):
 
 class BaseTest(unittest.TestCase):
 
-    def assertTupleAlmostEquals(self, expected, actual, places):
+    def assertTupleAlmostEquals(self, expected, actual, places=7):
         for i, j in zip(actual, expected):
             self.assertAlmostEquals(i, j, places)
 

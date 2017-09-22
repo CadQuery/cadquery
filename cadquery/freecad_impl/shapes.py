@@ -430,7 +430,7 @@ class Edge(Shape):
         else:
             #FreeCAD >= 0.17
             self.edgetypes[FreeCADPart.Line] = 'LINE'
-            
+
          # Helps identify this solid through the use of an ID
         self.label = ""
 
@@ -482,7 +482,7 @@ class Edge(Shape):
     @classmethod
     def makeCircle(cls, radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=360.0, angle2=360):
         center = Vector(pnt)
-        normal = Vector(dir)        
+        normal = Vector(dir)
         return Edge(FreeCADPart.makeCircle(radius, center.wrapped, normal.wrapped, angle1, angle2))
 
     @classmethod
@@ -582,13 +582,18 @@ class Wire(Shape):
         return w
 
     @classmethod
-    def makeHelix(cls, pitch, height, radius, angle=360.0):
+    def makeHelix(cls, pitch, height, radius, angle=0, lefthand=False, heightstyle=False):
         """
-        Make a helix with a given pitch, height and radius
-        By default a cylindrical surface is used to create the helix. If
-        the fourth parameter is set (the apex given in degree) a conical surface is used instead'
+        Make a helix along +z axis
+        :param pitch: displacement of 1 turn measured along surface.
+        :param height: full length of helix surface (measured sraight along surface's face)
+        :param radius: starting radius of helix
+        :param angle: if > 0, conical surface is used instead of a cylindrical. (angle < 0 not supported)
+        :param lefthand: if True, helix direction is reversed
+        :param heightstyle: if True, pitch and height are measured parallel to z-axis
         """
-        return Wire(FreeCADPart.makeHelix(pitch, height, radius, angle))
+        # FreeCAD doc: https://www.freecadweb.org/wiki/Part_API (search for makeHelix)
+        return Wire(FreeCADPart.makeHelix(pitch, height, radius, angle, lefthand, heightstyle))
 
     def clean(self):
         """This method is not implemented yet."""
