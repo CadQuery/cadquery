@@ -48,7 +48,7 @@ class TestCQGI(BaseTest):
         result = model.build()
         debugItems = result.debugObjects
         self.assertTrue(len(debugItems) == 2)
-        
+
         self.assertTrue( debugItems[0].shape == "bar" )
         self.assertTrue( debugItems[0].options == { "color":'yellow' } )
         self.assertTrue( debugItems[1].shape == 2.0 )
@@ -90,7 +90,7 @@ class TestCQGI(BaseTest):
         model = cqgi.CQModel(script)
         a_param = model.metadata.parameters['a']
         self.assertTrue(a_param.name == 'a' )
-     
+
     def test_build_with_exception(self):
         badscript = textwrap.dedent(
             """
@@ -162,15 +162,6 @@ class TestCQGI(BaseTest):
 
         result = cqgi.parse(script).build( {'w': "var is not there"})
         self.assertTrue(isinstance(result.exception, cqgi.InvalidParameterError))
-
-    def test_that_not_calling_show_object_raises_error(self):
-        script = textwrap.dedent(
-            """
-                h = 20.0
-            """
-        )
-        result = cqgi.parse(script).build()
-        self.assertTrue(isinstance(result.exception, cqgi.NoOutputError))
 
     def test_that_cq_objects_are_visible(self):
         script = textwrap.dedent(
