@@ -1,34 +1,29 @@
-#File: Ex004_Extruded_Cylindrical_Plate.py
-#To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
-#instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
+import cadquery as cq
 
-#You run this example by typing the following in the FreeCAD python console, making sure to change
-#the path to this example, and the name of the example appropriately.
-#import sys
-#sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex004_Extruded_Cylindrical_Plate
+# These can be modified rather than hardcoding values for each dimension.
+circle_radius = 50.0        # Radius of the plate
+thickness = 13.0            # Thickness of the plate
+rectangle_width = 13.0      # Width of rectangular hole in cylindrical plate
+rectangle_length = 19.0     # Length of rectangular hole in cylindrical plate
 
-#If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex004_Extruded_Cylindrical_Plate)
+# Extrude a cylindrical plate with a rectangular hole in the middle of it.
+# 1.  Establishes a workplane that an object can be built on.
+# 1a. Uses the named plane orientation "front" to define the workplane, meaning
+#     that the positive Z direction is "up", and the negative Z direction
+#     is "down".
+# 2.  The 2D geometry for the outer circle is created at the same time as the
+#     rectangle that will create the hole in the center.
+# 2a. The circle and the rectangle will be automatically centered on the
+#     workplane.
+# 2b. Unlike some other functions like the hole(), circle() takes
+#     a radius and not a diameter.
+# 3.  The circle and rectangle are extruded together, creating a cylindrical
+#     plate with a rectangular hole in the center.
+# 3a. circle() and rect() could be changed to any other shape to completely
+#     change the resulting plate and/or the hole in it.
+result = cq.Workplane("front").circle(circle_radius) \
+                              .rect(rectangle_width, rectangle_length) \
+                              .extrude(thickness)
 
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially
-# (Shape001, etc).
-
-#You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at
-# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
-
-import cadquery
-import Part
-
-#The dimensions of the model. These can be modified rather than changing the box's code directly.
-circle_radius = 50.0
-rectangle_width = 13.0
-rectangle_length = 19.0
-thickness = 13.0
-
-#Extrude a cylindrical plate with a rectangular hole in the middle of it
-result = cadquery.Workplane("front").circle(circle_radius).rect(rectangle_width, rectangle_length).extrude(thickness)
-
-#Boiler plate code to render our solid in FreeCAD's GUI
-Part.show(result.toFreecad())
+# Displays the result of this script
+show_object(result)

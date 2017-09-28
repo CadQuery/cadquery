@@ -1,36 +1,39 @@
-#File: Ex008_Polygon_Creation.py
-#To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
-#instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
+import cadquery as cq
 
-#You run this example by typing the following in the FreeCAD python console, making sure to change
-#the path to this example, and the name of the example appropriately.
-#import sys
-#sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex008_Polygon_Creation
+# These can be modified rather than hardcoding values for each dimension.
+width = 3.0         # The width of the plate
+height = 4.0        # The height of the plate
+thickness = 0.25    # The thickness of the plate
+polygon_sides = 6   # The number of sides that the polygonal holes should have
+polygon_dia = 1.0   # The diameter of the circle enclosing the polygon points
 
-#If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex008_Polygon_Creation)
+# Create a plate with two polygons cut through it
+# 1.  Establishes a workplane that an object can be built on.
+# 1a. Uses the named plane orientation "front" to define the workplane, meaning
+#     that the positive Z direction is "up", and the negative Z direction
+#     is "down".
+# 2.  A 3D box is created in one box() operation to represent the plate.
+# 2a. The box is centered around the origin, which creates a result that may
+#     be unituitive when the polygon cuts are made.
+# 3.  2 points are pushed onto the stack and will be used as centers for the
+#     polygonal holes.
+# 4.  The two polygons are created, on for each point, with one call to
+#     polygon() using the number of sides and the circle that bounds the
+#     polygon.
+# 5.  The polygons are cut thru all objects that are in the line of extrusion.
+# 5a. A face was not selected, and so the polygons are created on the
+#     workplane. Since the box was centered around the origin, the polygons end
+#     up being in the center of the box. This makes them cut from the center to
+#     the outside along the normal (positive direction).
+# 6.  The polygons are cut through all objects, starting at the center of the
+#     box/plate and going "downward" (opposite of normal) direction. Functions
+#     like cutBlind() assume a positive cut direction, but cutThruAll() assumes
+#     instead that the cut is made from a max direction and cuts downward from
+#     that max through all objects.
+result = cq.Workplane("front").box(width, height, thickness) \
+                                    .pushPoints([(0, 0.75), (0, -0.75)]) \
+                                    .polygon(polygon_sides, polygon_dia) \
+                                    .cutThruAll()
 
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially
-# (Shape001, etc).
-
-#You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at
-# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
-
-import cadquery
-import Part
-
-#The dimensions of the model. These can be modified rather than changing the box's code directly.
-width = 3.0
-height = 4.0
-thickness = 0.25
-polygon_sides = 6
-polygon_dia = 1.0
-
-#Create a plate with two polygons cut through it
-result = cadquery.Workplane("front").box(width, height, thickness).pushPoints([(0, 0.75), (0, -0.75)]) \
-    .polygon(polygon_sides, polygon_dia).cutThruAll()
-
-#Boiler plate code to render our solid in FreeCAD's GUI
-Part.show(result.toFreecad())
+# Displays the result of this script
+show_object(result)

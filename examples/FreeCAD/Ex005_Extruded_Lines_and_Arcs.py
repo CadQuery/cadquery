@@ -1,33 +1,32 @@
-#File: Ex005_Extruded_Lines_and_Arcs.py
-#To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
-#instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
+import cadquery as cq
 
-#You run this example by typing the following in the FreeCAD python console, making sure to change
-#the path to this example, and the name of the example appropriately.
-#import sys
-#sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex005_Extruded_Lines_and_Arcs
+# These can be modified rather than hardcoding values for each dimension.
+width = 2.0         # Overall width of the plate
+thickness = 0.25    # Thickness of the plate
 
-#If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex005_Extruded_Lines_and_Arcs)
+# Extrude a plate outline made of lines and an arc
+# 1.  Establishes a workplane that an object can be built on.
+# 1a. Uses the named plane orientation "front" to define the workplane, meaning
+#     that the positive Z direction is "up", and the negative Z direction
+#     is "down".
+# 2.  Draws a line from the origin to an X position of the plate's width.
+# 2a. The starting point of a 2D drawing like this will be at the center of the
+#     workplane (0, 0) unless the moveTo() function moves the starting point.
+# 3.  A line is drawn from the last position straight up in the Y direction
+#     1.0 millimeters.
+# 4.  An arc is drawn from the last point, through point (1.0, 1.5) which is
+#     half-way back to the origin in the X direction and 0.5 mm above where
+#     the last line ended at. The arc then ends at (0.0, 1.0), which is 1.0 mm
+#     above (in the Y direction) where our first line started from.
+# 5.  close() is called to automatically draw the last line for us and close
+#     the sketch so that it can be extruded.
+# 5a. Without the close(), the 2D sketch will be left open and the extrude
+#     operation will provide unpredictable results.
+# 6.  The 2D sketch is extruded into a solid object of the specified thickness.
+result = cq.Workplane("front").lineTo(width, 0) \
+                              .lineTo(width, 1.0) \
+                              .threePointArc((1.0, 1.5), (0.0, 1.0)) \
+                              .close().extrude(thickness)
 
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially
-#(Shape001, etc).
-
-#You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at
-# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
-
-import cadquery
-import Part
-
-#The dimensions of the model. These can be modified rather than changing the box's code directly.
-width = 2.0
-thickness = 0.25
-
-#Extrude a plate outline made of lines and an arc
-result = cadquery.Workplane("front").lineTo(width, 0).lineTo(width, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0)) \
-    .close().extrude(thickness)
-
-#Boiler plate code to render our solid in FreeCAD's GUI
-Part.show(result.toFreecad())
+# Displays the result of this script
+show_object(result)
