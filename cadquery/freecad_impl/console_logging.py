@@ -1,7 +1,6 @@
 import sys
 import logging
 
-import freecad_impl  # appends FreeCAD path
 import FreeCAD
 
 # Logging Handler
@@ -32,7 +31,7 @@ class FreeCADConsoleHandler(logging.Handler):
             FreeCAD.Console.PrintMessage(log_text)
 
 
-def logging_enable(level=None, format="%(message)s"):
+def enable(level=None, format="%(message)s"):
     """
     Enable python builtin logging, and output it somewhere you can see.
      - FreeCAD Console, or
@@ -41,7 +40,7 @@ def logging_enable(level=None, format="%(message)s"):
     Any script can log to FreeCAD console with:
 
         >>> import cadquery
-        >>> cadquery.logging_enable()
+        >>> cadquery.freecad_impl.console_logging.enable()
         >>> import logging
         >>> log = logging.getLogger(__name__)
         >>> log.debug("detailed info, not normally displayed")
@@ -57,7 +56,7 @@ def logging_enable(level=None, format="%(message)s"):
 
         >>> import cadquery
         >>> import logging
-        >>> cadquery.logging_enable(logging.DEBUG)
+        >>> cadquery.freecad_impl.console_logging.enable(logging.DEBUG)
         >>> log = logging.getLogger(__name__)
         >>> log.debug("debug logs will now be displayed")
         debug logs will now be displayed
@@ -99,7 +98,7 @@ def logging_enable(level=None, format="%(message)s"):
     return _logging_handler
 
 
-def logging_disable():
+def disable():
     """
     Disables logging to FreeCAD console (or STDOUT).
     Note, logging may be enabled by another imported module, so this isn't a
