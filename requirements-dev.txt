@@ -4,3 +4,4 @@ Sphinx==1.3.2
 coverage
 coveralls
 pyparsing
+mock
