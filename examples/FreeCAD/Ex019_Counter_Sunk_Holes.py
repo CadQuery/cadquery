@@ -1,30 +1,19 @@
-#File: Ex019_Counter_Sunk_Holes.py
-#To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
-#instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
+import cadquery as cq
 
-#You run this example by typing the following in the FreeCAD python console, making sure to change
-#the path to this example, and the name of the example appropriately.
-#import sys
-#sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex019_Counter_Sunk_Holes
+# Create a plate with 4 counter-sunk holes in it.
+# 1.  Establishes a workplane using an XY object instead of a named plane.
+# 2.  Creates a plain box to base future geometry on with the box() function.
+# 3.  Selects the top-most face of the box and established a workplane on that.
+# 4.  Draws a for-construction rectangle on the workplane which only exists for
+#     placing other geometry.
+# 5.  Selects the corner vertices of the rectangle and places a counter-sink
+#     hole, using each vertex as the center of a hole using the cskHole()
+#     function.
+# 5a. When the depth of the counter-sink hole is set to None, the hole will be
+#     cut through.
+result = cq.Workplane(cq.Plane.XY()).box(4, 2, 0.5).faces(">Z") \
+                 .workplane().rect(3.5, 1.5, forConstruction=True) \
+                 .vertices().cskHole(0.125, 0.25, 82.0, depth=None)
 
-#If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex019_Counter_Sunk_Holes)
-
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially
-# (Shape001, etc).
-
-#You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at
-# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
-
-import cadquery
-import Part
-
-#Create a plate with 4 counter-sunk holes in it
-result = cadquery.Workplane(cadquery.Plane.XY()).box(4, 2, 0.5).faces(">Z").workplane() \
-    .rect(3.5, 1.5, forConstruction=True)\
-    .vertices().cskHole(0.125, 0.25, 82.0, depth=None)
-
-#Boiler plate code to render our solid in FreeCAD's GUI
-Part.show(result.toFreecad())
+# Displays the result of this script
+show_object(result)

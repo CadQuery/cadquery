@@ -1,36 +1,32 @@
-#File: Ex007_Using_Point_Lists.py
-#To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
-#instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
+import cadquery as cq
 
-#You run this example by typing the following in the FreeCAD python console, making sure to change
-#the path to this example, and the name of the example appropriately.
-#import sys
-#sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex007_Using_Point_Lists
+# These can be modified rather than hardcoding values for each dimension.
+plate_radius = 2.0          # The radius of the plate that will be extruded
+hole_pattern_radius = 0.25  # Radius of circle where the holes will be placed
+thickness = 0.125           # The thickness of the plate that will be extruded
 
-#If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex007_Using_Point_Lists)
+# Make a plate with 4 holes in it at various points in a polar arrangement from
+# the center of the workplane.
+# 1.  Establishes a workplane that an object can be built on.
+# 1a. Uses the named plane orientation "front" to define the workplane, meaning
+#     that the positive Z direction is "up", and the negative Z direction
+#     is "down".
+# 2.  A 2D circle is drawn that will become though outer profile of the plate.
+r = cq.Workplane("front").circle(plate_radius)
 
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially
-# (Shape001, etc).
+# 3. Push 4 points on the stack that will be used as the center points of the
+#    holes.
+r = r.pushPoints([(1.5, 0), (0, 1.5), (-1.5, 0), (0, -1.5)])
 
-#You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at
-# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
+# 4. This circle() call will operate on all four points, putting a circle at
+#    each one.
+r = r.circle(hole_pattern_radius)
 
-import cadquery
-import Part
-
-#The dimensions of the model. These can be modified rather than changing the box's code directly.
-plate_radius = 2.0
-hole_pattern_radius = 0.25
-thickness = 0.125
-
-#Make the plate with 4 holes in it at various points
-r = cadquery.Workplane("front").circle(plate_radius)        # Make the base
-r = r.pushPoints([(1.5, 0), (0, 1.5), (-1.5, 0), (0, -1.5)])   # Now four points are on the stack
-r = r.circle(hole_pattern_radius)                        	# Circle will operate on all four points
+# 5.  All 2D geometry is extruded to the specified thickness of the plate.
+# 5a. The small hole circles are enclosed in the outer circle of the plate and
+#     so it is assumed that we want them to be cut out of the plate.  A
+#     separate cut operation is not needed.
 result = r.extrude(thickness)
 
-#Boiler plate code to render our solid in FreeCAD's GUI
-Part.show(result.toFreecad())
+# Displays the result of this script
+show_object(result)

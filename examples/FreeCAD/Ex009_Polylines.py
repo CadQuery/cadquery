@@ -1,31 +1,10 @@
-#File: Ex009_Polylines.py
-#To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
-#instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
+import cadquery as cq
 
-#You run this example by typing the following in the FreeCAD python console, making sure to change
-#the path to this example, and the name of the example appropriately.
-#import sys
-#sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex009_Polylines
-
-#If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex009_Polylines)
-
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially
-# (Shape001, etc).
-
-#You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at
-# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
-
-import cadquery
-import Part
-
-#Set up our Length, Height, Width, and thickness that will be used to define the locations that the polyline
-#is drawn to/thru
+# These can be modified rather than hardcoding values for each dimension.
+# Define up our Length, Height, Width, and thickness of the beam
 (L, H, W, t) = (100.0, 20.0, 20.0, 1.0)
 
-#Define the locations that the polyline will be drawn to/thru
+# Define the points that the polyline will be drawn to/thru
 pts = [
     (0, H/2.0),
     (W/2.0, H/2.0),
@@ -37,8 +16,25 @@ pts = [
     (0, H/-2.0)
 ]
 
-#We generate half of the I-beam outline and then mirror it to create the full I-beam
-result = cadquery.Workplane("front").polyline(pts).mirrorY().extrude(L)
+# We generate half of the I-beam outline and then mirror it to create the full
+# I-beam.
+# 1.  Establishes a workplane that an object can be built on.
+# 1a. Uses the named plane orientation "front" to define the workplane, meaning
+#     that the positive Z direction is "up", and the negative Z direction
+#     is "down".
+# 2.  moveTo() is used to move the first point from the origin (0, 0) to
+#     (0, 10.0), with 10.0 being half the height (H/2.0). If this is not done
+#     the first line will start from the origin, creating an extra segment that
+#     will cause the extrude to have an invalid shape.
+# 3.  The polyline function takes a list of points and generates the lines
+#     through all the points at once.
+# 3.  Only half of the I-beam profile has been drawn so far. That half is
+#     mirrored around the Y-axis to create the complete I-beam profile.
+# 4.  The I-beam profile is extruded to the final length of the beam.
+result = cq.Workplane("front").moveTo(0, H/2.0) \
+                              .polyline(pts) \
+                              .mirrorY() \
+                              .extrude(L)
 
-#Boiler plate code to render our solid in FreeCAD's GUI
-Part.show(result.toFreecad())
+# Displays the result of this script
+show_object(result)

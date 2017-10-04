@@ -1,38 +1,35 @@
-#File: Ex006_Moving_the_Current_Working_Point.py
-#To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
-#instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
+import cadquery as cq
 
-#You run this example by typing the following in the FreeCAD python console, making sure to change
-#the path to this example, and the name of the example appropriately.
-#import sys
-#sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex006_Moving_the_Current_Working_Point
+# These can be modified rather than hardcoding values for each dimension.
+circle_radius = 3.0     # The outside radius of the plate
+thickness = 0.25        # The thickness of the plate
 
-#If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex006_Moving_the_Current_Working_Point)
+# Make a plate with two cutouts in it by moving the workplane center point
+# 1.  Establishes a workplane that an object can be built on.
+# 1a. Uses the named plane orientation "front" to define the workplane, meaning
+#     that the positive Z direction is "up", and the negative Z direction
+#     is "down".
+# 1b. The initial workplane center point is the center of the circle, at (0,0).
+# 2.  A circle is created at the center of the workplane
+# 2a. Notice that circle() takes a radius and not a diameter
+result = cq.Workplane("front").circle(circle_radius)
 
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially
-# (Shape001, etc).
+# 3.  The work center is movide to (1.5, 0.0) by calling center().
+# 3a. The new center is specified relative to the previous center,not
+#     relative to global coordinates.
+# 4.  A 0.5mm x 0.5mm 2D square is drawn inside the circle.
+# 4a. The plate has not been extruded yet, only 2D geometry is being created.
+result = result.center(1.5, 0.0).rect(0.5, 0.5)
 
-#You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at
-# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
+# 5.  The work center is moved again, this time to (-1.5, 1.5).
+# 6.  A 2D circle is created at that new center with a radius of 0.25mm.
+result = result.center(-1.5, 1.5).circle(0.25)
 
-import cadquery
-import Part
-
-#The dimensions of the model. These can be modified rather than changing the box's code directly.
-circle_radius = 3.0
-thickness = 0.25
-
-#Make the plate with two cutouts in it
-result = cadquery.Workplane("front").circle(circle_radius) # Current point is the center of the circle, at (0,0)
-result = result.center(1.5,0.0).rect(0.5,0.5) # New work center is  (1.5,0.0)
-
-result = result.center(-1.5,1.5).circle(0.25) # New work center is ( 0.0,1.5).
-#The new center is specified relative to the previous center, not global coordinates!
-
+# 7.  All 2D geometry is extruded to the specified thickness of the plate.
+# 7a. The small circle and the square are enclosed in the outer circle of the
+#      plate and so it is assumed that we want them to be cut out of the plate.
+#      A separate cut operation is not needed.
 result = result.extrude(thickness)
 
-#Boiler plate code to render our solid in FreeCAD's GUI
-Part.show(result.toFreecad())
+# Displays the result of this script
+show_object(result)

@@ -1,32 +1,22 @@
-#File: Ex015_Rotated_Workplanes.py
-#To use this example file, you need to first follow the "Using CadQuery From Inside FreeCAD"
-#instructions here: https://github.com/dcowden/cadquery#installing----using-cadquery-from-inside-freecad
+import cadquery as cq
 
-#You run this example by typing the following in the FreeCAD python console, making sure to change
-#the path to this example, and the name of the example appropriately.
-#import sys
-#sys.path.append('/home/user/Downloads/cadquery/examples/FreeCAD')
-#import Ex015_Rotated_Workplanes
+# 1.  Establishes a workplane that an object can be built on.
+# 1a. Uses the named plane orientation "front" to define the workplane, meaning
+#     that the positive Z direction is "up", and the negative Z direction
+#     is "down".
+# 2.  Creates a plain box to base future geometry on with the box() function.
+# 3.  Selects the top-most Z face of the box.
+# 4.  Creates a new workplane and then moves and rotates it with the
+#     transformed function.
+# 5.  Creates a for-construction rectangle that only exists to use for placing
+#     other geometry.
+# 6.  Selects the vertices of the for-construction rectangle.
+# 7.  Places holes at the center of each selected vertex.
+# 7a. Since the workplane is rotated, this results in angled holes in the face.
+result = cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z") \
+                 .workplane() \
+                 .transformed(offset=(0, -1.5, 1.0), rotate=(60, 0, 0)) \
+                 .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.25)
 
-#If you need to reload the part after making a change, you can use the following lines within the FreeCAD console.
-#reload(Ex015_Rotated_Workplanes)
-
-#You'll need to delete the original shape that was created, and the new shape should be named sequentially
-# (Shape001, etc).
-
-#You can also tie these blocks of code to macros, buttons, and keybindings in FreeCAD for quicker access.
-#You can get a more information on this example at
-# http://parametricparts.com/docs/examples.html#an-extruded-prismatic-solid
-
-import cadquery
-from cadquery import Vector
-import Part
-
-#Create a rotated workplane and put holes in each corner of a rectangle on that workplane, producing angled holes
-#in the face
-result = cadquery.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").workplane()  \
-    .transformed(offset=Vector(0, -1.5, 1.0), rotate=Vector(60, 0, 0)) \
-    .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.25)
-
-#Boiler plate code to render our solid in FreeCAD's GUI
-Part.show(result.toFreecad())
+# Displays the result of this script
+show_object(result)
