@@ -105,3 +105,6 @@ except ImportError:
     path = _fc_path()
     sys.path.insert(0, path)
     import FreeCAD
+
+# logging
+import console_logging
