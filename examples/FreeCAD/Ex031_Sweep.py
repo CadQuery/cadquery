@@ -15,7 +15,7 @@ defaultSweep = cq.Workplane("XY").circle(1.0).sweep(path)
 
 # Sweep defaults to making a solid and not generating a Frenet solid. Setting Frenet to True helps prevent creep in
 # the orientation of the profile as it is being swept
-frenetShell = cq.Workplane("XY").circle(1.0).sweep(path, makeSolid=False, isFrenet=True)
+frenetShell = cq.Workplane("XY").circle(1.0).sweep(path, makeSolid=True, isFrenet=True)
 
 # We can sweep shapes other than circles
 defaultRect = cq.Workplane("XY").rect(1.0, 1.0).sweep(path)
