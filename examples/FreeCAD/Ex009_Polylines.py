@@ -6,7 +6,6 @@ import cadquery as cq
 
 # Define the points that the polyline will be drawn to/thru
 pts = [
-    (0, H/2.0),
     (W/2.0, H/2.0),
     (W/2.0, (H/2.0 - t)),
     (t/2.0, (H/2.0-t)),
