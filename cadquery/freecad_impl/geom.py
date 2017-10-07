@@ -90,13 +90,25 @@ class Vector(object):
     def x(self):
         return self.wrapped.x
 
+    @x.setter
+    def x(self, value):
+        self.wrapped.x = value
+
     @property
     def y(self):
         return self.wrapped.y
 
+    @y.setter
+    def y(self, value):
+        self.wrapped.y = value
+
     @property
     def z(self):
         return self.wrapped.z
+
+    @z.setter
+    def z(self, value):
+        self.wrapped.z = value
 
     @property
     def Length(self):
@@ -161,6 +173,9 @@ class Vector(object):
     def __add__(self, v):
         return self.add(v)
 
+    def __sub__(self, v):
+        return self.sub(v)
+
     def __repr__(self):
         return self.wrapped.__repr__()
 
@@ -168,10 +183,14 @@ class Vector(object):
         return self.wrapped.__str__()
 
     def __ne__(self, other):
-        return self.wrapped.__ne__(other)
+        if isinstance(other, Vector):
+            return self.wrapped.__ne__(other.wrapped)
+        return False
 
     def __eq__(self, other):
-        return self.wrapped.__eq__(other)
+        if isinstance(other, Vector):
+            return self.wrapped.__eq__(other.wrapped)
+        return False
 
 
 class Matrix:

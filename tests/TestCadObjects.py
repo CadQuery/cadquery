@@ -89,7 +89,32 @@ class TestCadObjects(BaseTest):
 
     def testVectorAdd(self):
         result = Vector(1, 2, 0) + Vector(0, 0, 3)
+        self.assertIsInstance(result, Vector)
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), result.toTuple(), 3)
+
+    def testVectorSub(self):
+        result = Vector(1, 2, 3) - Vector(6, 5, 4)
+        self.assertIsInstance(result, Vector)
+        self.assertTupleAlmostEquals((-5, -3, -1), result.toTuple())
+
+    def testVectorEquality(self):
+        v1 = Vector(1, 2, 3)
+        v2 = Vector(1, 2, 3)  # same value as v1, different id
+        v3 = Vector(1, 2, 4)
+        self.assertEqual(v1 == v2, True)
+        self.assertEqual(v1 != v2, False)
+        self.assertEqual(v1 == v3, False)
+        self.assertEqual(v1 != v3, True)
+
+    def testVectorCoords(self):
+        (x, y, z) = (1, 2, 3)
+        v = Vector(x, y, z)
+        for (coord, init_val) in (('x', x), ('y', y), ('z', z)):
+            new_val = init_val + 10
+            self.assertEqual(getattr(v, coord), init_val)
+            setattr(v, coord, new_val)
+            self.assertEqual(getattr(v, coord), new_val)
+            setattr(v, coord, init_val)
 
     def testTranslate(self):
         e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
