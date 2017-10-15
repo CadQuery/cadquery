@@ -574,13 +574,93 @@ class Shape(object):
         return Shape.cast(BRepAlgoAPI_Common(self.wrapped,
                                              toIntersect.wrapped).Shape())
 
-    def to_html(self):
+    def _ipython_display_(self):
         """
         Jupyter 3D representation support
         """
 
-        raise NotImplemented
+        from . import exporters
+        from six import StringIO
+        import json
+        import pythreejs
+        import numpy as np
+        
+        color='yellow'
+        
+        out = StringIO() 
+        
+        exporters.exportShape(self,
+                              exporters.ExportTypes.TJS,
+                              out)
 
+        contents = out.getvalue()
+        out.close()
+   
+        # Take the string and create a proper json object
+        contents = json.loads(contents)
+    
+        # Vertices and Faces are both flat lists, but the pythreejs module requires list of lists
+        old_v = contents['vertices']
+        old_f = contents['faces']
+    
+        # Splits the list up in 3s, to produce a list of lists representing the vertices
+        vertices = [old_v[i:i+3] for i in range(0, len(old_v), 3)]
+    
+        # JSON Schema has first position in the face's list reserved to indicate type.
+        # Cadquery returns Triangle mesh, so we know that we must split list into lists of length 4
+        # 1st entry to indicate triangle, next 3 to specify vertices
+        three_faces = [old_f[i:i+4] for i in range(0, len(old_f), 4)]
+        faces = []
+    
+        # Drop the first entry in the face list
+        for entry in three_faces:
+            entry.pop(0)
+            faces.append(entry)
+    
+        # Cadquery does not supply face normals in the JSON,
+        # and we cannot use THREE.JS built in 'computefaceNormals'
+        # (at least, not easily)
+        # Instead, we just calculate the face normals ourselves.
+        # It is just the cross product of 2 vectors in the triangle.
+        # TODO: see if there is a better way to achieve this result
+        face_normals = []
+    
+        for entry in faces:
+            v_a = np.asarray(vertices[entry[0]])
+            v_b = np.asarray(vertices[entry[1]])
+            v_c = np.asarray(vertices[entry[2]])
+    
+            vec_a = v_b - v_a
+            vec_b = v_c - v_a
+    
+            cross = np.cross(vec_a, vec_b)
+    
+            face_normals.append([cross[0], cross[1], cross[2]])
+    
+        # set up geometry
+        geom = pythreejs.PlainGeometry(vertices=vertices, faces=faces, faceNormals=face_normals)
+        mtl = pythreejs.LambertMaterial(color=color)
+        obj = pythreejs.Mesh(geometry=geom, material=mtl)
+    
+        # set up scene and camera
+        cam_dist = 5
+        fov = 35
+        cam = pythreejs.PerspectiveCamera(
+            position=[cam_dist, cam_dist, cam_dist], fov=fov,
+            children=[pythreejs.DirectionalLight(color='#ffffff', position=[3, 5, 1], intensity=0.9)])
+        scn_chld = [
+            obj,
+            pythreejs.AmbientLight(color='#dddddd')
+        ]
+        scn = pythreejs.Scene(children=scn_chld)
+    
+        render = pythreejs.Renderer(
+            camera=cam,
+            scene=scn,
+            controls=[pythreejs.OrbitControls(controlling=cam)]
+            )
+    
+        return render._ipython_display_()
 
 class Vertex(Shape):
     """
