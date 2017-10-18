@@ -1,3 +1,4 @@
+# NOTE: This example may not run correctly in some revisions of FreeCAD 0.16
 import numpy as np
 import cadquery as cq
 
@@ -9,10 +10,11 @@ offset = 5
 # The polyline is defined as numpy.array so that operations like translation
 # of all points are simplified.
 pts = np.array([
+    (0, 0),
     (side, 0),
     (side, side),
     (0, side),
-    (0, 0),
+    (0, 0)
 ]) + [offset, offset]
 
 result = cq.Workplane('XY') \
