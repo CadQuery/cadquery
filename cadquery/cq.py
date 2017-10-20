@@ -2579,3 +2579,14 @@ class Workplane(CQ):
             raise AttributeError(
                 "%s object doesn't support `clean()` method!" % obj.ShapeType())
         return self.newObject(cleanObjects)
+        
+    def _repr_html_(self):
+        """
+        Special method for rendering current object in a jupyter notebook
+        """
+        
+        if type(self.objects[0]) is Vector:
+           return '&lt {} &gt'.format(self.__repr__()[1:-1])
+        else:
+            return Compound.makeCompound(self.objects)._repr_html_()
+
