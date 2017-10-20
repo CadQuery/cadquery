@@ -24,7 +24,7 @@ You can find the full cadquery documentation at http://dcowden.github.io/cadquer
 Getting Started With CadQuery
 ========================================
 
-The easiest way to get started with CadQuery is to Install FreeCAD (version 14+)  (http://www.freecadweb.org/), and then to use our great CadQuery-FreeCAD plugin here: https://github.com/jmwright/cadquery-freecad-module
+The easiest way to get started with CadQuery is to Install FreeCAD (version 16+)  (http://www.freecadweb.org/), and then to use our great CadQuery-FreeCAD plugin here: https://github.com/jmwright/cadquery-freecad-module
 
 
 It includes the latest version of cadquery alreadby bundled, and has super-easy installation on Mac, Windows, and Unix.
