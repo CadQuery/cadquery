@@ -4,7 +4,7 @@ MAINTAINER <dave.cowden@gmail.com>
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
-EVN CQ_HOME=/opt/cadquery
+ENV CQ_HOME=/opt/cadquery
 
 #from continuum: https://hub.docker.com/r/continuumio/anaconda/~/dockerfile/
 RUN apt-get update --fix-missing && apt-get install -y wget bzip2 ca-certificates \
@@ -31,6 +31,9 @@ RUN add-apt-repository -y ppa:freecad-maintainers/freecad-stable && \
     apt-get update && apt-get install -y freecad
 
 RUN mkdir -p $CQ_HOME
+RUN mkdir -p $CQ_HOME/build_data
+VOLUME $CQ_HOME/build_data
+
 COPY requirements-dev.txt  runtests.py  cq_cmd.py cq_cmd.sh setup.py  README.md MANIFEST setup.cfg $CQ_HOME/
 COPY cadquery $CQ_HOME/cadquery
 COPY examples $CQ_HOME/examples
