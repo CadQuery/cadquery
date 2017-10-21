@@ -31,11 +31,11 @@ Build a local model using stdin/stdout::
 
      cat Ex001_Simple_Block.py | docker run -i dcowden/cadquery:latest build --in_spec stdin --format STEP --out_spec stdout
 
-     *... STEP output on the console*
+     ... STEP output on the console
 
 Build local models and output to the same directory::
 
-     *sudo docker run -v $PWD:/home/cq -i dcowden/cadquery:latest build --in_spec Ex001_Simple_Block.py --format STEP*
+     docker run -v $PWD:/home/cq -i dcowden/cadquery:latest build --in_spec Ex001_Simple_Block.py --format STEP
      INFO: Reading from file 'Ex001_Simple_Block.py'
      INFO: Parsed Script 'Ex001_Simple_Block.py'.
      INFO: This script provides parameters length,thickness,height, which can be customized at build time.
