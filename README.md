@@ -17,6 +17,37 @@ CadQuery has several goals:
 
 Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
 
+Getting Started with the docker image
+=======================================
+The caduery docker image (https://hub.docker.com/r/dcowden/cadquery/)  includes cadquery and all of its dependencies. It can be used to run cadquery scripts without any installation required ( other than docker, of course)
+
+Examples:
+
+Display the Documentation::
+
+     docker run dcowden/cadquery:latest
+
+Build a local model using stdin/stdout::
+
+     cat Ex001_Simple_Block.py | docker run -i dcowden/cadquery:latest build --in_spec stdin --format STEP --out_spec stdout
+
+     *... STEP output on the console*
+
+Build local models and output to the same directory::
+
+     *sudo docker run -v $PWD:/home/cq -i dcowden/cadquery:latest build --in_spec Ex001_Simple_Block.py --format STEP*
+     INFO: Reading from file 'Ex001_Simple_Block.py'
+     INFO: Parsed Script 'Ex001_Simple_Block.py'.
+     INFO: This script provides parameters length,thickness,height, which can be customized at build time.
+     INFO: The script will run with default variable values
+     INFO: use --param_file to provide a json file that contains values to override the defaults
+     INFO: Output Format is 'STEP'. Use --output-format to change it.
+     INFO: Output Path is './cqobject-%(counter)d.%(format)s'. Use --out_spec to change it.
+     INFO: Script Generated 1 result Objects
+     INFO: Writing STEP Output to './cqobject-1.STEP'
+
+
+
 Full Documentation
 ============================
 You can find the full cadquery documentation at http://dcowden.github.io/cadquery
@@ -189,7 +220,7 @@ You can use CadQuery inside of FreeCAD. There's an excellent plugin module here 
 Work is underway on a stand-alone gui here:  https://github.com/jmwright/cadquery-gui
 
 ### ParametricParts.com
-If you are impatient and want to see a working example with no installation, have a look at this lego brick example http://parametricparts.com/parts/vqb5dy69/. 
+If you are impatient and want to see a working example with no installation, have a look at this lego brick example http://parametricparts.com/parts/vqb5dy69/.
 
 The script that generates the model is on the 'modelscript' tab.
 
@@ -247,7 +278,7 @@ Roadmap/Future Work
 =======================
 
 Work has begun on Cadquery 2.0, which will feature:
- 
+
    1. Feature trees, for more powerful selection
    2. Direct use of OpenCascade Community Edition(OCE), so that it is no longer required to install FreeCAD
    3. https://github.com/jmwright/cadquery-gui, which will allow visualization of workplanes  
@@ -269,4 +300,3 @@ If you are familiar with how jQuery, you will probably recognize several jQuery 
 *
 * Ability to use the library along side other python libraries
 * Clear and complete documentation, with plenty of samples.
-
