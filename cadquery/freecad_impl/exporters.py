@@ -5,6 +5,8 @@ import Drawing
 
 import tempfile, os, StringIO
 
+#weird syntax i know
+from ..freecad_impl import suppress_stdout_stderr
 
 try:
     import xml.etree.cElementTree as ET
@@ -31,6 +33,7 @@ def toString(shape, exportType, tolerance=0.1):
     return s.getvalue()
 
 
+
 def exportShape(shape,exportType,fileLike,tolerance=0.1):
     """
         :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
@@ -48,6 +51,7 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
 
     if exportType == ExportTypes.TJS:
         #tessellate the model
+
         tess = shape.tessellate(tolerance)
 
         mesher = JsonMesh() #warning: needs to be changed to remove buildTime and exportTime!!!
@@ -71,14 +75,16 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
         (h, outFileName) = tempfile.mkstemp()
         #weird, but we need to close this file. the next step is going to write to
         #it from c code, so it needs to be closed.
+        #FreeCAD junks up stdout with a bunch of messages, so this context
+        #manager supresses that stuff in the case we're trying to write to stdout
         os.close(h)
-
-        if exportType == ExportTypes.STEP:
-            shape.exportStep(outFileName)
-        elif exportType == ExportTypes.STL:
-            shape.wrapped.exportStl(outFileName)
-        else:
-            raise ValueError("No idea how i got here")
+        with suppress_stdout_stderr():
+            if exportType == ExportTypes.STEP:
+                shape.exportStep(outFileName)
+            elif exportType == ExportTypes.STL:
+                shape.wrapped.exportStl(outFileName)
+            else:
+                raise ValueError("No idea how i got here")
 
         res = readAndDeleteFile(outFileName)
         fileLike.write(res)
@@ -389,4 +395,3 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 """
 
 PATHTEMPLATE="\t\t\t<path d=\"%s\" />\n"
-

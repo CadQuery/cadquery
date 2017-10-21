@@ -4,7 +4,7 @@ MAINTAINER <dave.cowden@gmail.com>
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
-
+EVN CQ_HOME=/opt/cadquery
 
 #from continuum: https://hub.docker.com/r/continuumio/anaconda/~/dockerfile/
 RUN apt-get update --fix-missing && apt-get install -y wget bzip2 ca-certificates \
@@ -30,16 +30,16 @@ RUN apt-get install -y software-properties-common
 RUN add-apt-repository -y ppa:freecad-maintainers/freecad-stable && \
     apt-get update && apt-get install -y freecad
 
-RUN mkdir -p /opt/cadquery
-COPY requirements-dev.txt  runtests.py  cq_cmd.py cq_cmd.sh setup.py  README.md MANIFEST setup.cfg /opt/cadquery/
-COPY cadquery /opt/cadquery/cadquery
-COPY examples /opt/cadquery/examples
-COPY tests /opt/cadquery/tests
+RUN mkdir -p $CQ_HOME
+COPY requirements-dev.txt  runtests.py  cq_cmd.py cq_cmd.sh setup.py  README.md MANIFEST setup.cfg $CQ_HOME/
+COPY cadquery $CQ_HOME/cadquery
+COPY examples $CQ_HOME/examples
+COPY tests $CQ_HOME/tests
 
 
 RUN pip install -r /opt/cadquery/requirements-dev.txt
-RUN cd /opt/cadquery && python ./setup.py install
-RUN chmod +x /opt/cadquery/cq_cmd.sh
+RUN cd $CQ_HOME && python ./setup.py install
+RUN chmod +x $CQ_HOME/cq_cmd.sh
 RUN useradd -ms /bin/bash cq
 USER cq
 WORKDIR /home/cq

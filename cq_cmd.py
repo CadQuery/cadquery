@@ -7,12 +7,90 @@
 # default output format is STEP
 #
 from __future__ import print_function
+import sys,os
+
+
+
+#FreeCAD has crudified the stdout stream with a bunch of STEP output
+#garbage
+#this cleans it up
+#so it is possible to use stdout for object output
+class suppress_stdout_stderr(object):
+    '''
+    A context manager for doing a "deep suppression" of stdout and stderr in
+    Python, i.e. will suppress all print, even if the print originates in a
+    compiled C/Fortran sub-function.
+       This will not suppress raised exceptions, since exceptions are printed
+    to stderr just before a script exits, and after the context manager has
+    exited (at least, I think that is why it lets exceptions through).
+
+    '''
+    def __init__(self):
+        # Open a pair of null files
+        self.null_fds =  [os.open(os.devnull,os.O_RDWR) for x in range(2)]
+        # Save the actual stdout (1) and stderr (2) file descriptors.
+        self.save_fds = [os.dup(1), os.dup(2)]
+
+    def __enter__(self):
+        # Assign the null pointers to stdout and stderr.
+        os.dup2(self.null_fds[0],1)
+        os.dup2(self.null_fds[1],2)
+
+    def __exit__(self, *_):
+        # Re-assign the real stdout/stderr back to (1) and (2)
+        os.dup2(self.save_fds[0],1)
+        os.dup2(self.save_fds[1],2)
+        # Close all file descriptors
+        for fd in self.null_fds + self.save_fds:
+            os.close(fd)
+
+
 from cadquery import cqgi,exporters
 import argparse
-import sys
 import os.path
 import json
+import tempfile
 
+class FilepathShapeWriter(object):
+    #a shape writer that writes a new file in a directory for each object
+    def __init__(self,file_pattern, shape_format):
+        self.shape_format=shape_format
+        self.file_pattern=file_pattern
+        self.counter = 1
+
+    def _compute_file_name(self):
+        return self.file_pattern % ({ "counter": self.counter,"format": self.shape_format } )
+
+    def write_shapes(self,shape_list):
+        for result in shape_list:
+            shape = result.shape
+            file_name = self._compute_file_name()
+            info("Writing %s Output to '%s'" % (self.shape_format, file_name))
+            s = open(file_name,'w')
+            exporters.exportShape(shape,self.shape_format,s)
+            s.flush()
+            s.close()
+
+class StdoutShapeWriter(object):
+    #has extra code to prevent freecad crap from junking up stdout
+    def __init__(self,shape_format ):
+        self.shape_format = shape_format
+
+    def write_shapes(self,shape_list):
+        #f = open('/tmp/cqtemp','w')
+        #with suppress_stdout_stderr():
+        exporters.exportShape(shape_list[0].shape,self.shape_format,sys.stdout)
+        #f.flush()
+        #f.close()
+        #f = open('/tmp/cqtemp')
+        #sys.stdout.write(f.read())
+
+
+def create_shape_writer(out_spec,shape_format):
+    if out_spec == 'stdout':
+        return StdoutShapeWriter(shape_format)
+    else:
+        return FilepathShapeWriter(out_spec,shape_format)
 
 class ErrorCodes(object):
     SCRIPT_ERROR=2
@@ -35,17 +113,6 @@ def warning(msg):
 def info(msg):
     eprint("INFO: %s" % msg)
 
-def make_output_filename(counter,format_pattern, shape_format):
-    return format_pattern % ({ "counter": counter,"format": shape_format } )
-
-def read_param_file(file_name):
-    if file_name is not None:
-        p = read_file_as_string(file_name)
-        if p is not None:
-            info("Build Parameters: %s" % str(p))
-            return json.parse(p)
-
-    return {}
 def read_file_as_string(file_name):
     if os.path.isfile(file_name):
         f = open(file_name)
@@ -55,8 +122,27 @@ def read_file_as_string(file_name):
     else:
         return None
 
+class ParameterHandler(object):
+    def __init__(self):
+        self.params = {}
+
+    def apply_file(self,file_spec):
+        if file_spec is not None:
+            p = read_file_as_string(file_spec)
+            if p is not None:
+                d = json.loads(p)
+                self.params.update(d)
+
+    def apply_string(self,param_string):
+        if param_string is not None:
+            r = json.loads(param_string)
+            self.params.update(r)
+
+    def get(self):
+        return self.params
+
 def read_input_script(file_name):
-    if file_name:
+    if file_name != "stdin":
         s = read_file_as_string(file_name)
         if s is None:
             error("%s does not appear to be a readable file." % file_name,ErrorCodes.INVALID_INPUT)
@@ -73,83 +159,49 @@ def check_input_format(input_format):
         error("Invalid Input format '%s'. Valid values: %s" % ( input_format, str(valid_types)) ,
         ErrorCodes.INVALID_OUTPUT_FORMAT)
 
-def export_to_file(filename, shape, shape_format):
-    info("Writing %s Output to '%s'" % (shape_format, filename))
-    s = open(filename,'w')
-    exporters.exportShape(shape,shape_format,s)
-    s.flush()
-    s.close()
 
-def output_single_result(user_output_filename, shape_format,shape_result,file_format_pattern):
-    output_filename = None
-    if user_output_filename is None:
-        output_filename = make_output_filename(1,file_format_pattern,shape_format)
-    elif os.path.isfile(user_output_filename):
-        output_filename = user_output_filename
-    elif os.path.isdir(user_output_filename):
-        output_filename = os.path.join(user_output_filename, make_output_filename(1,file_format_pattern,shape_format))
-    else:
-        error("Can't write to destination %s'" % user_output_filename, ErrorCodes.INVALID_OUTPUT_DESTINATION)
-    export_to_file(output_filename,shape_result.shape,shape_format)
-
-def output_multiple_results(output_filename,shape_format, result_list,file_format_pattern):
-
-    if output_filename is None or not os.path.isdir(output_filename):
-        info("No output destination provided. using current directory.")
-        output_filename = "."
-    counter = 1
-    for shape_result in result_list:
-        fname = make_output_filename(counter,file_format_pattern,shape_format)
-        outfile_name = os.path.join(output_filename, fname)
-        export_to_file(outfile_name,shape_result.shape,shape_format)
-        counter += 1
-
-def process_parameters(script_param_file, script_params):
+def describe_parameters(user_params, script_params):
     if len(script_params)> 0:
         parameter_names = ",".join(script_params.keys())
         info("This script provides parameters %s, which can be customized at build time." % parameter_names)
     else:
         info("This script provides no customizable build parameters.")
-
-    params = read_param_file(script_param_file)
-    if len(params) > 0:
+    if len(user_params) > 0:
         info("User Supplied Parameter Values ( Override Model Defaults):")
-        info(str(params))
+        for k,v in user_params.iteritems():
+            info("\tParameter: %s=%s" % (k,v))
     else:
         info("The script will run with default variable values")
         info("use --param_file to provide a json file that contains values to override the defaults")
-    return params
 
 def run(args):
 
-
-    input_script = read_input_script(args.in_file)
-    script_name = 'stdin' if args.in_file is None else args.in_file
+    info("Reading from file '%s'" % args.in_spec)
+    input_script = read_input_script(args.in_spec)
+    script_name = 'stdin' if args.in_spec is None else args.in_spec
     cq_model = cqgi.parse(input_script)
     info("Parsed Script '%s'." % script_name)
 
-    params = process_parameters(args.param_file,cq_model.metadata.parameters)
+    param_handler = ParameterHandler()
+    param_handler.apply_file(args.param_file)
+    param_handler.apply_string(args.params)
+    user_params = param_handler.get()
+    describe_parameters(user_params,cq_model.metadata.parameters)
 
-    output_format = 'STEP'
-    if args.output_format:
-        check_input_format(args.output_format)
-        output_format = args.output_format
+    check_input_format(args.format)
 
-    info("Output Format is '%s'. Use --output-format to change it." % output_format)
-    info("Output Directory is '%s'. Use --out_dir to change it." % args.out_dir)
-    info("Output File Pattern is '%s'. Use --filename_pattern to change it." % args.filename_pattern)
+    build_result = cq_model.build(build_parameters=user_params)
 
-    build_result = cq_model.build(build_parameters=params)
+    info("Output Format is '%s'. Use --output-format to change it." % args.format)
+    info("Output Path is '%s'. Use --out_spec to change it." % args.out_spec)
+
     if build_result.success:
         result_list = build_result.results
         info("Script Generated %d result Objects" % len(result_list))
-        if len(result_list) > 1:
-            output_multiple_results(args.out_dir, output_format, result_list,args.filename_pattern)
-        else:
-            output_single_result(args.out_dir,output_format,result_list[0],args.filename_pattern)
+        shape_writer = create_shape_writer(args.out_spec,args.format)
+        shape_writer.write_shapes(result_list)
     else:
         error("Script Error: '%s'" % build_result.exception,ErrorCodes.SCRIPT_ERROR)
-
 
 if __name__=='__main__':
 
@@ -164,11 +216,10 @@ The sequential file number and the format are available.
 Default: cqobject-%%(counter)d.%%(format)s
     """
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument("--output_format", action="store",help="Output Object format (TJS|STEP|STL|SVG)")
+    parser.add_argument("--format", action="store",default="STEP",help="Output Object format (TJS|STEP|STL|SVG)")
     parser.add_argument("--param_file", action="store",help="Parameter Values File, in JSON format")
-    parser.add_argument("--in_file", action="store", help="Input File path. If omitted, read stdin")
-    parser.add_argument("--filename_pattern",action="store", default="cqobject-%(counter)d.%(format)s",help=filename_pattern_help)
-    parser.add_argument("--out_dir", action="store", help="Output File Directory. If omitted, current work directory is used")
+    parser.add_argument("--params",action="store", help="JSON encoded parameter values. They override values provided in param_file")
+    parser.add_argument("--in_spec", action="store", required=True, help="Input File path. Use stdin to read standard in")
+    parser.add_argument("--out_spec", action="store",default="./cqobject-%(counter)d.%(format)s",help=filename_pattern_help)
     args = parser.parse_args()
-
     run(args)
