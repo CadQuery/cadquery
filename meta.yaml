@@ -1,0 +1,22 @@
+package:
+  name: cadquery-occ
+  version: 0
+
+source: 
+  path: .
+
+build:
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python {{ python }}
+    - setuptools
+  run:
+    - python {{ python }}
+    - oce 0.18.1
+    - pythonocc-core 0.18
+    - pyparsing 2.1.4
+
+about:
+  summary: Experimental CadQuery fork based on PythonOCC
