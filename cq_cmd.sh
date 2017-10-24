@@ -24,7 +24,6 @@ if [ -z "$1" ]; then
    exit 1
 fi;
 if [ "$1" == "build" ]; then
-  echo "Launching python with arguments ${@:2}"
    exec python -u /opt/cadquery/cq_cmd.py "${@:2}"
 fi;
 if [ "$1" == "runserver" ]; then
