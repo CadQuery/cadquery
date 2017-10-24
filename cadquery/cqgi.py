@@ -261,7 +261,12 @@ class InputParameter:
 
         if self.varType == NumberParameterType:
             try:
-                f = float(new_value)
+                # Sometimes a value must stay as an int for the script to work properly
+                if isinstance(new_value, int):
+                    f = int(new_value)
+                else:
+                    f = float(new_value)
+
                 self.ast_node.n = f
             except ValueError:
                 raise InvalidParameterError(
