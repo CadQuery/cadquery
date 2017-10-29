@@ -2,7 +2,7 @@
     Tests file importers such as STEP
 """
 #core modules
-import StringIO
+import io
 
 from cadquery import *
 from cadquery import exporters

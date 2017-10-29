@@ -127,7 +127,7 @@ class TestCadQuery(BaseTest):
         result = result.makeCubes(1.0)
         result = result.combineSolids()
         self.saveModel(result)
-        self.assertEquals(1,result.solids().size() )
+        self.assertEqual(1,result.solids().size() )
 
 
     def testCylinderPlugin(self):
@@ -153,7 +153,7 @@ class TestCadQuery(BaseTest):
         #now test. here we want weird workplane to see if the objects are transformed right
         s = Workplane(Plane(Vector((0,0,0)),Vector((1,-1,0)),Vector((1,1,0)))).rect(2.0,3.0,forConstruction=True).vertices() \
             .cyl(0.25,0.5)
-        self.assertEquals(1,s.solids().size() )
+        self.assertEqual(1,s.solids().size() )
         self.saveModel(s)
 
     def testPolygonPlugin(self):
@@ -180,7 +180,7 @@ class TestCadQuery(BaseTest):
         s = Workplane("XY").box(4.0,4.0,0.25).faces(">Z").workplane().rect(2.0,2.0,forConstruction=True).vertices()\
             .rPoly(5,0.5).cutThruAll()
 
-        self.assertEquals(26,s.faces().size()) #6 base sides, 4 pentagons, 5 sides each = 26
+        self.assertEqual(26,s.faces().size()) #6 base sides, 4 pentagons, 5 sides each = 26
         self.saveModel(s)
 
 
@@ -619,41 +619,42 @@ class TestCadQuery(BaseTest):
         self.assertListEqual([bb.xlen, bb.ylen, bb.zlen], [1, 1, 0.5])
 
     def testBoundingBox(self):
-	"""
-	Tests the boudingbox center of a model
-	"""
-	result0 = (Workplane("XY")
-           	   .moveTo(10,0)
-                   .lineTo(5,0)
-                   .threePointArc((3.9393,0.4393),(3.5,1.5))
-                   .threePointArc((3.0607,2.5607),(2,3))
-                   .lineTo(1.5,3)
-                   .threePointArc((0.4393,3.4393),(0,4.5))
-                   .lineTo(0,13.5)
-                   .threePointArc((0.4393,14.5607),(1.5,15))
-                   .lineTo(28,15)
-                   .lineTo(28,13.5)
-                   .lineTo(24,13.5)
-                   .lineTo(24,11.5)
-                   .lineTo(27,11.5)
-                   .lineTo(27,10)
-                   .lineTo(22,10)
-                   .lineTo(22,13.2)
-                   .lineTo(14.5,13.2)
-                   .lineTo(14.5,10)
-                   .lineTo(12.5,10 )
-                   .lineTo(12.5,13.2)
-                   .lineTo(5.5,13.2)
-                   .lineTo(5.5,2)
-                   .threePointArc((5.793,1.293),(6.5,1))
-                   .lineTo(10,1)
-                   .close())
-	result = result0.extrude(100)
-	bb_center = result.val().BoundingBox().center
-	self.saveModel(result)
-	self.assertAlmostEqual(14.0, bb_center.x, 3)
-	self.assertAlmostEqual(7.5, bb_center.y, 3)
-	self.assertAlmostEqual(50.0, bb_center.z, 3)
+        """
+        Tests the boudingbox center of a model
+        """
+        result0 = (Workplane("XY")
+                    .moveTo(10,0)
+                    .lineTo(5,0)
+                    .threePointArc((3.9393,0.4393),(3.5,1.5))
+                    .threePointArc((3.0607,2.5607),(2,3))
+                    .lineTo(1.5,3)
+                    .threePointArc((0.4393,3.4393),(0,4.5))
+                    .lineTo(0,13.5)
+                    .threePointArc((0.4393,14.5607),(1.5,15))
+                    .lineTo(28,15)
+                    .lineTo(28,13.5)
+                    .lineTo(24,13.5)
+                    .lineTo(24,11.5)
+                    .lineTo(27,11.5)
+                    .lineTo(27,10)
+                    .lineTo(22,10)
+                    .lineTo(22,13.2)
+                    .lineTo(14.5,13.2)
+                    .lineTo(14.5,10)
+                    .lineTo(12.5,10 )
+                    .lineTo(12.5,13.2)
+                    .lineTo(5.5,13.2)
+                    .lineTo(5.5,2)
+                    .threePointArc((5.793,1.293),(6.5,1))
+                    .lineTo(10,1)
+                    .close())
+    	  
+        result = result0.extrude(100)
+        bb_center = result.val().BoundingBox().center
+        self.saveModel(result)
+        self.assertAlmostEqual(14.0, bb_center.x, 3)
+        self.assertAlmostEqual(7.5, bb_center.y, 3)
+        self.assertAlmostEqual(50.0, bb_center.z, 3)
 
     def testCutThroughAll(self):
         """
@@ -832,7 +833,7 @@ class TestCadQuery(BaseTest):
         """
         s = Workplane("XY").lineTo(2, 2).threePointArc((3, 1), (2, 0)) \
             .mirrorX().extrude(0.25)
-        self.assertEquals(6, s.faces().size())
+        self.assertEqual(6, s.faces().size())
         self.saveModel(s)
 
     def testUnorderedMirror(self):
@@ -857,8 +858,8 @@ class TestCadQuery(BaseTest):
 
         r = Workplane("XY").polyline(points).mirrorX()
 
-        self.assertEquals(1, r.wires().size())
-        self.assertEquals(18, r.edges().size())
+        self.assertEqual(1, r.wires().size())
+        self.assertEqual(18, r.edges().size())
 
     # def testChainedMirror(self):
     #     """
@@ -972,7 +973,7 @@ class TestCadQuery(BaseTest):
             (-1.0, -1.0), (0.0, 0.0), (1.0, 1.0)
         ]
         c.faces(">Z").workplane().pushPoints(pnts).cboreHole(0.1, 0.25, 0.25, 0.75)
-        self.assertEquals(18, c.faces().size())
+        self.assertEqual(18, c.faces().size())
         self.saveModel(c)
 
         # Tests the case where the depth of the cboreHole is not specified
@@ -981,7 +982,7 @@ class TestCadQuery(BaseTest):
             (-1.0, -1.0), (0.0, 0.0), (1.0, 1.0)
         ]
         c2.faces(">Z").workplane().pushPoints(pnts).cboreHole(0.1, 0.25, 0.25)
-        self.assertEquals(15, c2.faces().size())
+        self.assertEqual(15, c2.faces().size())
 
     def testCounterSinks(self):
         """
@@ -1044,7 +1045,7 @@ class TestCadQuery(BaseTest):
         Tests creating a single box
         """
         s = Workplane("XY").box(2, 3, 4)
-        self.assertEquals(1, s.solids().size())
+        self.assertEqual(1, s.solids().size())
         self.saveModel(s)
 
     def testSimpleShell(self):
@@ -1053,7 +1054,7 @@ class TestCadQuery(BaseTest):
         """
         s = Workplane("XY").box(2, 2, 2).faces("+Z").shell(0.05)
         self.saveModel(s)
-        self.assertEquals(23, s.faces().size())
+        self.assertEqual(23, s.faces().size())
 
 
     def testOpenCornerShell(self):
@@ -1072,7 +1073,7 @@ class TestCadQuery(BaseTest):
 
     def testTopFaceFillet(self):
         s = Workplane("XY").box(1, 1, 1).faces("+Z").edges().fillet(0.1)
-        self.assertEquals(s.faces().size(), 10)
+        self.assertEqual(s.faces().size(), 10)
         self.saveModel(s)
 
     def testBoxPointList(self):
@@ -1081,65 +1082,65 @@ class TestCadQuery(BaseTest):
         """
         s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().box(0.25, 0.25, 0.25, combine=True)
         #1 object, 4 solids because the object is a compound
-        self.assertEquals(1, s.solids().size())
-        self.assertEquals(1, s.size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(1, s.size())
         self.saveModel(s)
 
         s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().box(0.25, 0.25, 0.25, combine=False)
         #4 objects, 4 solids, because each is a separate solid
-        self.assertEquals(4, s.size())
-        self.assertEquals(4, s.solids().size())
+        self.assertEqual(4, s.size())
+        self.assertEqual(4, s.solids().size())
 
     def testBoxCombine(self):
         s = Workplane("XY").box(4, 4, 0.5).faces(">Z").workplane().rect(3, 3, forConstruction=True).vertices().box(0.25, 0.25, 0.25, combine=True)
 
         self.saveModel(s)
-        self.assertEquals(1, s.solids().size())  # we should have one big solid
-        self.assertEquals(26, s.faces().size())  # should have 26 faces. 6 for the box, and 4x5 for the smaller cubes
+        self.assertEqual(1, s.solids().size())  # we should have one big solid
+        self.assertEqual(26, s.faces().size())  # should have 26 faces. 6 for the box, and 4x5 for the smaller cubes
 
     def testSphereDefaults(self):
         s = Workplane("XY").sphere(10)
         #self.saveModel(s) # Until FreeCAD fixes their sphere operation
-        self.assertEquals(1, s.solids().size())
-        self.assertEquals(1, s.faces().size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(1, s.faces().size())
 
     def testSphereCustom(self):
         s = Workplane("XY").sphere(10, angle1=0, angle2=90, angle3=360, centered=(False, False, False))
         self.saveModel(s)
-        self.assertEquals(1, s.solids().size())
-        self.assertEquals(2, s.faces().size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(2, s.faces().size())
 
     def testSpherePointList(self):
         s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().sphere(0.25, combine=False)
         #self.saveModel(s) # Until FreeCAD fixes their sphere operation
-        self.assertEquals(4, s.solids().size())
-        self.assertEquals(4, s.faces().size())
+        self.assertEqual(4, s.solids().size())
+        self.assertEqual(4, s.faces().size())
 
     def testSphereCombine(self):
         s = Workplane("XY").rect(4.0, 4.0, forConstruction=True).vertices().sphere(0.25, combine=True)
         #self.saveModel(s) # Until FreeCAD fixes their sphere operation
-        self.assertEquals(1, s.solids().size())
-        self.assertEquals(4, s.faces().size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(4, s.faces().size())
 
     def testQuickStartXY(self):
         s = Workplane(Plane.XY()).box(2, 4, 0.5).faces(">Z").workplane().rect(1.5, 3.5, forConstruction=True)\
         .vertices().cskHole(0.125, 0.25, 82, depth=None)
-        self.assertEquals(1, s.solids().size())
-        self.assertEquals(14, s.faces().size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(14, s.faces().size())
         self.saveModel(s)
 
     def testQuickStartYZ(self):
         s = Workplane(Plane.YZ()).box(2, 4, 0.5).faces(">X").workplane().rect(1.5, 3.5, forConstruction=True)\
             .vertices().cskHole(0.125, 0.25, 82, depth=None)
-        self.assertEquals(1, s.solids().size())
-        self.assertEquals(14, s.faces().size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(14, s.faces().size())
         self.saveModel(s)
 
     def testQuickStartXZ(self):
         s = Workplane(Plane.XZ()).box(2, 4, 0.5).faces(">Y").workplane().rect(1.5, 3.5, forConstruction=True)\
                                  .vertices().cskHole(0.125, 0.25, 82, depth=None)
-        self.assertEquals(1, s.solids().size())
-        self.assertEquals(14, s.faces().size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(14, s.faces().size())
         self.saveModel(s)
 
     def testDoubleTwistedLoft(self):
@@ -1152,8 +1153,8 @@ class TestCadQuery(BaseTest):
 
     def testTwistedLoft(self):
         s = Workplane("XY").polygon(8,20.0).workplane(offset=4.0).transformed(rotate=Vector(0,0,15.0)).polygon(8,20).loft()
-        self.assertEquals(10,s.faces().size())
-        self.assertEquals(1,s.solids().size())
+        self.assertEqual(10,s.faces().size())
+        self.assertEqual(1,s.solids().size())
         self.saveModel(s)
 
     def testUnions(self):
@@ -1168,7 +1169,7 @@ class TestCadQuery(BaseTest):
         #union stuff
         for oo in o:
             s  = s.union(oo)
-        print "Total time %0.3f" % (time.time() - beginTime)
+        print("Total time %0.3f" % (time.time() - beginTime))
 
         #Test unioning a Solid object
         s = Workplane(Plane.XY())
@@ -1203,7 +1204,7 @@ class TestCadQuery(BaseTest):
             s.add(oo)
         s = s.combineSolids()
 
-        print "Total time %0.3f" % (time.time() - beginTime)
+        print("Total time %0.3f" % (time.time() - beginTime))
 
         self.saveModel(s)
 

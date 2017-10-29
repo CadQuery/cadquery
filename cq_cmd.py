@@ -6,7 +6,7 @@
 # if no output filename is provided, output goes to stdout
 # default output format is STEP
 #
-from __future__ import print_function
+
 import sys,os
 
 
@@ -132,13 +132,13 @@ def check_input_format(input_format):
 
 def describe_parameters(user_params, script_params):
     if len(script_params)> 0:
-        parameter_names = ",".join(script_params.keys())
+        parameter_names = ",".join(list(script_params.keys()))
         info("This script provides parameters %s, which can be customized at build time." % parameter_names)
     else:
         info("This script provides no customizable build parameters.")
     if len(user_params) > 0:
         info("User Supplied Parameter Values ( Override Model Defaults):")
-        for k,v in user_params.iteritems():
+        for k,v in user_params.items():
             info("\tParameter: %s=%s" % (k,v))
     else:
         info("The script will run with default variable values")

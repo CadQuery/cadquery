@@ -341,10 +341,10 @@ class CQ(object):
             if not all(_isCoPlanar(self.objects[0], f) for f in self.objects[1:]):
                 raise ValueError("Selected faces must be co-planar.")
 
-	    if centerOption == 'CenterOfMass':
-		center = Shape.CombinedCenter(self.objects)
-	    elif centerOption == 'CenterOfBoundBox':
-		center = Shape.CombinedCenterOfBoundBox(self.objects)
+            if centerOption == 'CenterOfMass':
+                center = Shape.CombinedCenter(self.objects)
+            elif centerOption == 'CenterOfBoundBox':
+                center = Shape.CombinedCenterOfBoundBox(self.objects)
 
             normal = self.objects[0].normalAt()
             xDir = _computeXdir(normal)
@@ -353,18 +353,18 @@ class CQ(object):
             obj = self.objects[0]
 
             if isinstance(obj, Face):
-		if centerOption == 'CenterOfMass':
-                    center = obj.Center()
-		elif centerOption == 'CenterOfBoundBox':
-                    center = obj.CenterOfBoundBox()
+                if centerOption == 'CenterOfMass':
+                        center = obj.Center()
+                elif centerOption == 'CenterOfBoundBox':
+                        center = obj.CenterOfBoundBox()
                 normal = obj.normalAt(center)
                 xDir = _computeXdir(normal)
             else:
                 if hasattr(obj, 'Center'):
-		    if centerOption == 'CenterOfMass':
-		        center = obj.Center()
-		    elif centerOption == 'CenterOfBoundBox':
-		        center = obj.CenterOfBoundBox()
+                    if centerOption == 'CenterOfMass':
+                        center = obj.Center()
+                    elif centerOption == 'CenterOfBoundBox':
+                        center = obj.CenterOfBoundBox()
                     normal = self.plane.zDir
                     xDir = self.plane.xDir
                 else:
@@ -479,7 +479,7 @@ class CQ(object):
         toReturn = self._collectProperty(objType)
 
         if selector is not None:
-            if isinstance(selector, str) or isinstance(selector, unicode):
+            if isinstance(selector, str) or isinstance(selector, str):
                 selectorObj = selectors.StringSyntaxSelector(selector)
             else:
                 selectorObj = selector
@@ -743,16 +743,16 @@ class CQ(object):
                                for o in self.objects])
 
     def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
-	"""
-	Mirror a single CQ object. This operation is the same as in the FreeCAD PartWB's mirroring
-
-	:param mirrorPlane: the plane to mirror about
-	:type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
-	:param basePointVector: the base point to mirror about
-	:type basePointVector: tuple
-	"""
-	newS = self.newObject([self.objects[0].mirror(mirrorPlane, basePointVector)])
-	return newS.first()
+        """
+        Mirror a single CQ object. This operation is the same as in the FreeCAD PartWB's mirroring
+    
+        :param mirrorPlane: the plane to mirror about
+        :type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
+        :param basePointVector: the base point to mirror about
+        :type basePointVector: tuple
+        """
+        newS = self.newObject([self.objects[0].mirror(mirrorPlane, basePointVector)])
+        return newS.first()
 
 
     def translate(self, vec):
@@ -935,7 +935,7 @@ class Workplane(CQ):
 
         if inPlane.__class__.__name__ == 'Plane':
             tmpPlane = inPlane
-        elif isinstance(inPlane, str) or isinstance(inPlane, unicode):
+        elif isinstance(inPlane, str) or isinstance(inPlane, str):
             tmpPlane = Plane.named(inPlane, origin)
         else:
             tmpPlane = None

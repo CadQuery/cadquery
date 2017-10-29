@@ -24,6 +24,7 @@ from collections import defaultdict
 from pyparsing import Literal,Word,nums,Optional,Combine,oneOf,upcaseTokens,\
                       CaselessLiteral,Group,infixNotation,opAssoc,Forward,\
                       ZeroOrMore,Keyword
+from functools import reduce
 
 
 class Selector(object):
@@ -306,17 +307,17 @@ class DirectionMinMaxSelector(Selector):
         #make and distance to object dict
         objectDict = {distance(el) : el for el in objectList}
         #transform it into an ordered dict
-        objectDict = OrderedDict(sorted(objectDict.items(),
+        objectDict = OrderedDict(sorted(list(objectDict.items()),
                                         key=lambda x: x[0]))
 
         # find out the max/min distance
         if self.directionMax:
-            d = objectDict.keys()[-1]
+            d = list(objectDict.keys())[-1]
         else:
-            d = objectDict.keys()[0]
+            d = list(objectDict.keys())[0]
             
         # return all objects at the max/min distance (within a tolerance)
-        return filter(lambda o: abs(d - distance(o)) < self.TOLERANCE, objectList)
+        return [o for o in objectList if abs(d - distance(o)) < self.TOLERANCE]
 
 class DirectionNthSelector(ParallelDirSelector):
     """
@@ -351,7 +352,7 @@ class DirectionNthSelector(ParallelDirSelector):
             objectDict[round(distance(el),digits)].append(el)
         
         # choose the Nth unique rounded distance
-        nth_distance = sorted(objectDict.keys(),
+        nth_distance = sorted(list(objectDict.keys()),
                               reverse=not self.directionMax)[self.N]
             
         # map back to original objects and return

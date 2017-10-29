@@ -41,7 +41,7 @@ class TestCQGI(BaseTest):
         model = cqgi.CQModel(TESTSCRIPT)
         metadata = model.metadata
 
-        self.assertEquals(set(metadata.parameters.keys()), {'height', 'width', 'a', 'b', 'foo'})
+        self.assertEqual(set(metadata.parameters.keys()), {'height', 'width', 'a', 'b', 'foo'})
 
     def test_build_with_debug(self):
         model = cqgi.CQModel(TEST_DEBUG_SCRIPT)
@@ -128,9 +128,9 @@ class TestCQGI(BaseTest):
 
         model = cqgi.CQModel(script)
         result = model.build({})
-        self.assertEquals(2, len(result.results))
-        self.assertEquals(1, result.results[0].shape)
-        self.assertEquals(2, result.results[1].shape)
+        self.assertEqual(2, len(result.results))
+        self.assertEqual(1, result.results[0].shape)
+        self.assertEqual(2, result.results[1].shape)
 
     def test_that_assinging_number_to_string_works(self):
         script = textwrap.dedent(
@@ -140,7 +140,7 @@ class TestCQGI(BaseTest):
             """
         )
         result = cqgi.parse(script).build( {'h': 33.33})
-        self.assertEquals(result.results[0].shape, "33.33")
+        self.assertEqual(result.results[0].shape, "33.33")
 
     def test_that_assigning_string_to_number_fails(self):
         script = textwrap.dedent(
@@ -187,7 +187,7 @@ class TestCQGI(BaseTest):
         result = cqgi.parse(script).build({'h': False})
 
         self.assertTrue(result.success)
-        self.assertEquals(result.first_result.shape,'*False*')
+        self.assertEqual(result.first_result.shape,'*False*')
 
     def test_that_only_top_level_vars_are_detected(self):
         script = textwrap.dedent(
@@ -205,4 +205,4 @@ class TestCQGI(BaseTest):
 
         model = cqgi.parse(script)
 
-        self.assertEquals(2, len(model.metadata.parameters))
+        self.assertEqual(2, len(model.metadata.parameters))
