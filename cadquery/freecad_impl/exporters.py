@@ -159,8 +159,7 @@ class AmfWriter(object):
             v3 = ET.SubElement(triangle,'v3')
             v3.text = str(t[2])
 
-
-        ET.ElementTree(amf).write(outFile,encoding='ISO-8859-1')
+        ET.ElementTree(amf).write(outFile,encoding="unicode",xml_declaration=True)
 
 """
     Objects that represent
