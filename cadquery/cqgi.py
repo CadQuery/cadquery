@@ -47,7 +47,7 @@ class CQModel(object):
         # TODO: pick up other scirpt metadata:
         # describe
         # pick up validation methods
-	self._find_descriptions()
+        self._find_descriptions()
 
     def _find_vars(self):
         """
@@ -111,7 +111,7 @@ class CQModel(object):
             result.set_debug(collector.debugObjects )
             result.set_success_result(collector.outputObjects)
 
-        except Exception, ex:
+        except Exception as ex:
             #print "Error Executing Script:"
             result.set_failure_result(ex)
             #traceback.print_exc()
@@ -125,7 +125,7 @@ class CQModel(object):
     def set_param_values(self, params):
         model_parameters = self.metadata.parameters
 
-        for k, v in params.iteritems():
+        for k, v in params.items():
             if k not in model_parameters:
                 raise InvalidParameterError("Cannot set value '%s': not a parameter of the model." % k)
 
@@ -424,7 +424,7 @@ class ParameterDescriptionFinder(ast.NodeTransformer):
                 #first parameter is the variable,
                 #second is the description
                 varname = node.args[0].id
-		desc = node.args[1].s
+                desc = node.args[1].s
                 self.cqModel.add_parameter_description(varname,desc)
 
        except:
@@ -457,7 +457,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                     self.cqModel.add_script_parameter(
                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
         except:
-            print "Unable to handle assignment for variable '%s'" % var_name
+            print("Unable to handle assignment for variable '%s'" % var_name)
             pass
 
     def visit_Assign(self, node):
@@ -477,6 +477,6 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                     self.handle_assignment(n.id, v)
         except:
             traceback.print_exc()
-            print "Unable to handle assignment for node '%s'" % ast.dump(left_side)
+            print("Unable to handle assignment for node '%s'" % ast.dump(left_side))
 
         return node

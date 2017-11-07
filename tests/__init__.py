@@ -49,7 +49,7 @@ class BaseTest(unittest.TestCase):
 
     def assertTupleAlmostEquals(self, expected, actual, places=7):
         for i, j in zip(actual, expected):
-            self.assertAlmostEquals(i, j, places)
+            self.assertAlmostEqual(i, j, places)
 
 __all__ = ['TestCadObjects', 'TestCadQuery', 'TestCQSelectors', 'TestWorkplanes', 'TestExporters', 'TestCQSelectors', 'TestImporters','TestCQGI']
 __all__ = [

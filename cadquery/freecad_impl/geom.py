@@ -274,7 +274,7 @@ class Plane(object):
             return namedPlanes[stdName]
         except KeyError:
             raise ValueError('Supported names are {}'.format(
-                namedPlanes.keys()))
+                list(namedPlanes.keys())))
 
     @classmethod
     def XY(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):

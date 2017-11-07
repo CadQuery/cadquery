@@ -25,17 +25,17 @@ class TestCadObjects(BaseTest):
         """
         v = Vertex(Part.Vertex(1, 1, 1))
         self.assertEqual(1, v.X)
-        self.assertEquals(Vector, type(v.Center()))
+        self.assertEqual(Vector, type(v.Center()))
 
     def testBasicBoundingBox(self):
         v = Vertex(Part.Vertex(1, 1, 1))
         v2 = Vertex(Part.Vertex(2, 2, 2))
-        self.assertEquals(BoundBox, type(v.BoundingBox()))
-        self.assertEquals(BoundBox, type(v2.BoundingBox()))
+        self.assertEqual(BoundBox, type(v.BoundingBox()))
+        self.assertEqual(BoundBox, type(v2.BoundingBox()))
 
         bb1 = v.BoundingBox().add(v2.BoundingBox())
 
-        self.assertEquals(bb1.xlen, 1.0)
+        self.assertEqual(bb1.xlen, 1.0)
 
     def testEdgeWrapperCenter(self):
         e = Edge(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
@@ -79,13 +79,13 @@ class TestCadObjects(BaseTest):
         # Now test. here we want weird workplane to see if the objects are transformed right
         s = Workplane("XY").rect(2.0, 3.0, forConstruction=True).vertices().cyl(0.25, 0.5)
 
-        self.assertEquals(4, len(s.val().Solids()))
+        self.assertEqual(4, len(s.val().Solids()))
         self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().Center().toTuple(), 3)
 
     def testDot(self):
         v1 = Vector(2, 2, 2)
         v2 = Vector(1, -1, 1)
-        self.assertEquals(2.0, v1.dot(v2))
+        self.assertEqual(2.0, v1.dot(v2))
 
     def testVectorAdd(self):
         result = Vector(1, 2, 0) + Vector(0, 0, 3)
@@ -124,7 +124,7 @@ class TestCadObjects(BaseTest):
 
     def testVertices(self):
         e = Shape.cast(Part.makeLine((0, 0, 0), (1, 1, 0)))
-        self.assertEquals(2, len(e.Vertices()))
+        self.assertEqual(2, len(e.Vertices()))
 
     def testWireMakeHelixDefault(self):
         (pitch, height, radius) = (1., 5., 2.)

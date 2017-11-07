@@ -37,8 +37,8 @@ def importStep(fileName):
     """      
     #Now read and return the shape
     try:
-	#print fileName        
-	rshape = Part.read(fileName)
+        #print fileName        
+        rshape = Part.read(fileName)
 
         #Make sure that we extract all the solids
         solids = []
@@ -54,12 +54,12 @@ def importStepFromURL(url):
     #Now read and return the shape
     try:
         webFile = urlreader.urlopen(url)
-	tempFile = tempfile.NamedTemporaryFile(suffix='.step', delete=False)
-	tempFile.write(webFile.read())
+        tempFile = tempfile.NamedTemporaryFile(suffix='.step', delete=False)
+        tempFile.write(webFile.read())
         webFile.close()
-	tempFile.close()  
+        tempFile.close()  
 
-	rshape = Part.read(tempFile.name)
+        rshape = Part.read(tempFile.name)
 
         #Make sure that we extract all the solids
         solids = []

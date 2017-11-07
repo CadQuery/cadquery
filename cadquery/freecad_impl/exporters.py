@@ -3,7 +3,7 @@ import cadquery
 import FreeCAD
 import Drawing
 
-import tempfile, os, StringIO
+import tempfile, os, io
 
 #weird syntax i know
 from ..freecad_impl import suppress_stdout_stderr
@@ -28,7 +28,7 @@ class UNITS:
 
 
 def toString(shape, exportType, tolerance=0.1):
-    s = StringIO.StringIO()
+    s = io.StringIO()
     exportShape(shape, exportType, s, tolerance)
     return s.getvalue()
 
@@ -159,8 +159,7 @@ class AmfWriter(object):
             v3 = ET.SubElement(triangle,'v3')
             v3.text = str(t[2])
 
-
-        ET.ElementTree(amf).write(outFile,encoding='ISO-8859-1')
+        ET.ElementTree(amf).write(outFile,encoding="unicode",xml_declaration=True)
 
 """
     Objects that represent

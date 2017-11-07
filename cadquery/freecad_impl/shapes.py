@@ -436,7 +436,7 @@ class Edge(Shape):
 
     def geomType(self):
         t = type(self.wrapped.Curve)
-        if self.edgetypes.has_key(t):
+        if t in self.edgetypes:
             return self.edgetypes[t]
         else:
             return "Unknown Edge Curve Type: %s" % str(t)
@@ -619,7 +619,7 @@ class Face(Shape):
 
     def geomType(self):
         t = type(self.wrapped.Surface)
-        if self.facetypes.has_key(t):
+        if t in self.facetypes:
             return self.facetypes[t]
         else:
             return "Unknown Face Surface Type: %s" % str(t)

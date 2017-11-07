@@ -141,4 +141,4 @@ with suppress_stdout_stderr():
         import FreeCAD
 
 # logging
-import console_logging
+from . import console_logging
