@@ -9,10 +9,11 @@ install:
 - python ./setup.py install
 - pip install -r requirements-dev.txt
 - pip install travis-sphinx
+- pip install sphinx_rtd_theme
 
 script:
 - coverage run --source=cadquery ./runtests.py
-- travis-sphinx --nowarn --source=doc build
+- travis-sphinx build --nowarn --source=doc
 
 after_success:
 - coveralls
