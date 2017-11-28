@@ -60,6 +60,9 @@ def output_suspended(stdout=True, stderr=True):
         ...
         >>> print('bar')
         bar
+
+    However, this doesn't work with external processes.
+    For example, those called by FreeCAD.
     """
     original_stdout = sys.stdout
     original_stderr = sys.stderr
