@@ -88,60 +88,61 @@ class Vector(object):
 
     @property
     def x(self):
-        return self.wrapped.x
+        return self._wrapped.x
 
     @x.setter
     def x(self, value):
-        self.wrapped.x = value
+        self._wrapped.x = value
 
     @property
     def y(self):
-        return self.wrapped.y
+        return self._wrapped.y
 
     @y.setter
     def y(self, value):
-        self.wrapped.y = value
+        self._wrapped.y = value
 
     @property
     def z(self):
-        return self.wrapped.z
+        return self._wrapped.z
 
     @z.setter
     def z(self, value):
-        self.wrapped.z = value
+        self._wrapped.z = value
 
     @property
     def Length(self):
-        return self.wrapped.Length
+        return self._wrapped.Length
 
     @property
     def wrapped(self):
         return self._wrapped
 
     def toTuple(self):
-        return (self.x, self.y, self.z)
+        v = self._wrapped
+        return (v.x, v.y, v.z)
 
     # TODO: is it possible to create a dynamic proxy without all this code?
     def cross(self, v):
-        return Vector(self.wrapped.cross(v.wrapped))
+        return Vector(self._wrapped.cross(v.wrapped))
 
     def dot(self, v):
-        return self.wrapped.dot(v.wrapped)
+        return self._wrapped.dot(v.wrapped)
 
     def sub(self, v):
-        return Vector(self.wrapped.sub(v.wrapped))
+        return Vector(self._wrapped.sub(v.wrapped))
 
     def add(self, v):
-        return Vector(self.wrapped.add(v.wrapped))
+        return Vector(self._wrapped.add(v.wrapped))
 
     def multiply(self, scale):
         """Return a copy multiplied by the provided scalar"""
-        tmp_fc_vector = FreeCAD.Base.Vector(self.wrapped)
+        tmp_fc_vector = FreeCAD.Base.Vector(self._wrapped)
         return Vector(tmp_fc_vector.multiply(scale))
 
     def normalized(self):
         """Return a normalized version of this vector"""
-        tmp_fc_vector = FreeCAD.Base.Vector(self.wrapped)
+        tmp_fc_vector = FreeCAD.Base.Vector(self._wrapped)
         tmp_fc_vector.normalize()
         return Vector(tmp_fc_vector)
 
@@ -156,7 +157,7 @@ class Vector(object):
         return self
 
     def getAngle(self, v):
-        return self.wrapped.getAngle(v.wrapped)
+        return self._wrapped.getAngle(v.wrapped)
 
     def distanceToLine(self):
         raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
@@ -170,17 +171,33 @@ class Vector(object):
     def projectToPlane(self):
         raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
 
+    def __bool__(self):
+        return any(coord != 0 for coord in self.toTuple())
+
+    __nonzero__ = __bool__  # python 2.x compatability
+
     def __add__(self, v):
         return self.add(v)
 
     def __sub__(self, v):
         return self.sub(v)
 
+    def __mul__(self, scalar):
+        return self.multiply(scalar)
+
+    def __div__(self, scalar):
+        if scalar == 0:
+            raise ZeroDivisionError("%r division by zero" % (type(self)))
+        return self.multiply(1. / scalar)
+
+    def __abs__(self):
+        return self.Length
+
     def __repr__(self):
-        return self.wrapped.__repr__()
+        return self._wrapped.__repr__()
 
     def __str__(self):
-        return self.wrapped.__str__()
+        return self._wrapped.__str__()
 
     def __ne__(self, other):
         if isinstance(other, Vector):

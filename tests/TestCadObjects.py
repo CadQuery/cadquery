@@ -92,6 +92,29 @@ class TestCadObjects(BaseTest):
         self.assertIsInstance(result, Vector)
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), result.toTuple(), 3)
 
+    def testVectorArithmeticOverides(self):
+        V = lambda x,y,z: Vector(x,y,z)
+        self.assertEqual(V(1,2,3) + V(4,5,6), V(5,7,9))  # addition
+        self.assertEqual(V(1,2,3) - V(5,4,3), V(-4,-2,0))  # subtraction
+        self.assertEqual((V(1,2,3) * 2).toTuple(), (2,4,6))  # multiplication
+        self.assertEqual((V(1,2,3) / 2).toTuple(), (0.5,1,1.5))  # division
+
+    def testVectorBoolCast(self):
+        # zero vector
+        self.assertEqual(bool(Vector(0,0,0)), False)
+        # positive axes
+        self.assertEqual(bool(Vector(1,0,0)), True)
+        self.assertEqual(bool(Vector(0,1,0)), True)
+        self.assertEqual(bool(Vector(0,0,1)), True)
+        # negative axes
+        self.assertEqual(bool(Vector(-1,0,0)), True)
+        self.assertEqual(bool(Vector(0,-1,0)), True)
+        self.assertEqual(bool(Vector(0,0,-1)), True)
+
+    def testVectorDivideByZero(self):
+        with self.assertRaises(ZeroDivisionError):
+            Vector(1, 2, 3) / 0
+
     def testVectorSub(self):
         result = Vector(1, 2, 3) - Vector(6, 5, 4)
         self.assertIsInstance(result, Vector)
