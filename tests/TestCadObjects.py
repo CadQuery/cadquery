@@ -115,6 +115,16 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(ZeroDivisionError):
             Vector(1, 2, 3) / 0
 
+    def testVectorLength(self):
+        calc_length = lambda v: sqrt(v.x**2 + v.y**2 + v.z**2)
+        vectors = [
+            Vector(0,0,0), Vector(1,2,3), Vector(-1,-5,10),
+        ]
+        for v in vectors:
+            expected = calc_length(v)
+            self.assertEqual(v.Length, expected)
+            self.assertEqual(abs(v), expected)
+
     def testVectorSub(self):
         result = Vector(1, 2, 3) - Vector(6, 5, 4)
         self.assertIsInstance(result, Vector)
