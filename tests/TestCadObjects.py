@@ -12,12 +12,45 @@ from cadquery import *
 class TestCadObjects(BaseTest):
 
     def testVectorConstructors(self):
-        v1 = Vector(1, 2, 3)
-        v2 = Vector((1, 2, 3))
-        v3 = Vector(FreeCAD.Base.Vector(1, 2, 3))
+        # Assert 3 ints represents x, y, z respectively
+        #   (why?, this is assumed for all other assertions)
+        v = Vector(1, 2, 3)
+        self.assertEqual((v.x, v.y, v.z), (1, 2, 3))
 
-        for v in [v1, v2, v3]:
-            self.assertTupleAlmostEquals((1, 2, 3), v.toTuple(), 4)
+        # --- Positive Cases
+        # empty
+        self.assertEquals(Vector(), Vector(0, 0, 0))
+        # tuples
+        self.assertEquals(Vector((1, 2, 3)), Vector(1, 2, 3))
+        self.assertEquals(Vector((1, 2)), Vector(1, 2, 0))
+        self.assertEquals(Vector((1,)), Vector(1, 0, 0))
+        # lists
+        self.assertEquals(Vector([1, 2, 3]), Vector(1, 2, 3))
+        self.assertEquals(Vector([1, 2]), Vector(1, 2, 0))
+        self.assertEquals(Vector([1]), Vector(1, 0, 0))
+        # < 3 numbers
+        self.assertEquals(Vector(1, 2), Vector(1, 2, 0))
+        self.assertEquals(Vector(1), Vector(1, 0, 0))
+        # wrappers
+        self.assertEquals(Vector(Vector(1, 2, 3)), Vector(1, 2, 3))
+        self.assertEquals(Vector(FreeCAD.Base.Vector(1, 2, 3)), Vector(1, 2, 3))
+        # named coords
+        self.assertEquals(Vector(x=1, y=2, z=3), Vector(1, 2, 3))
+        self.assertEquals(Vector(x=1), Vector(1, 0, 0))
+        self.assertEquals(Vector(y=2), Vector(0, 2, 0))
+        self.assertEquals(Vector(z=3), Vector(0, 0, 3))
+
+        # --- Negative Cases
+        with self.assertRaises(ValueError):
+            Vector('blah')  # invalid type
+        with self.assertRaises(ValueError):
+            Vector(1, 2, 3, 4)
+        with self.assertRaises(ValueError):
+            Vector((1, 2, 3, 4))
+        with self.assertRaises(ValueError):
+            Vector([1, 2, 3, 4])
+        with self.assertRaises(ValueError):
+            Vector(1, 2, z=3)  # mixing listed and named args not supported
 
     def testVertex(self):
         """

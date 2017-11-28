@@ -108,8 +108,9 @@ class Vector(object):
                         v = arg
                         fV = FreeCAD.Base.Vector(v.x, v.y, v.z)  # create copy
                     elif isinstance(arg, (list, tuple)):
-                        fV = FreeCAD.Base.Vector(*arg)
-        else:
+                        if (1 <= len(arg) <= 3):
+                            fV = FreeCAD.Base.Vector(*arg)
+        elif not args:
             if set(kwargs.keys()) - set('xyz'):
                 pass  # kwargs contains invalid arguments, raise exception
             else:
