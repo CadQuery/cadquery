@@ -8,7 +8,15 @@ import math,sys,os.path,time
 #my modules
 from cadquery import *
 from cadquery import exporters
-from tests import BaseTest,writeStringToFile,makeUnitCube,readFileAsString,makeUnitSquareWire,makeCube
+from tests import (
+    BaseTest,
+    writeStringToFile,
+    makeUnitCube,
+    readFileAsString,
+    makeUnitSquareWire,
+    makeCube,
+    output_suspended,
+)
 
 #where unit test output will be saved
 import sys
@@ -75,8 +83,10 @@ class TestCadQuery(BaseTest):
             shape must be a CQ object
             Save models in SVG and STEP format
         """
-        shape.exportSvg(os.path.join(OUTDIR,self._testMethodName + ".svg"))
-        shape.val().exportStep(os.path.join(OUTDIR,self._testMethodName + ".step"))
+
+        with output_suspended():
+            shape.exportSvg(os.path.join(OUTDIR,self._testMethodName + ".svg"))
+            shape.val().exportStep(os.path.join(OUTDIR,self._testMethodName + ".step"))
 
     def testToFreeCAD(self):
         """
@@ -648,7 +658,7 @@ class TestCadQuery(BaseTest):
                     .threePointArc((5.793,1.293),(6.5,1))
                     .lineTo(10,1)
                     .close())
-    	  
+
         result = result0.extrude(100)
         bb_center = result.val().BoundingBox().center
         self.saveModel(result)

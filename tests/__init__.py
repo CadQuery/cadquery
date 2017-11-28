@@ -2,6 +2,7 @@ from cadquery import *
 import unittest
 import sys
 import os
+from contextlib import contextmanager
 
 import FreeCAD
 
@@ -45,13 +46,45 @@ def toTuple(v):
         raise RuntimeError("dont know how to convert type %s to tuple" % str(type(v)) )
 
 
+@contextmanager
+def output_suspended(stdout=True, stderr=True):
+    """
+    Suspend all logging to stdout &/or stderr within
+    a context block.
+
+    .. doctest::
+
+        >>> from tests import output_suspended
+        >>> with output_suspended(stdout=True, stderr=True):
+        ...     print('foo')
+        ...
+        >>> print('bar')
+        bar
+    """
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    null_handle = open(os.devnull, 'w')
+
+    try:
+        if stdout:
+            sys.stdout = null_handle
+        if stderr:
+            sys.stderr = null_handle
+        yield
+    finally:
+        if stdout:
+            sys.stdout = original_stdout
+        if stderr:
+            sys.stderr = original_stderr
+
+
 class BaseTest(unittest.TestCase):
 
     def assertTupleAlmostEquals(self, expected, actual, places=7):
         for i, j in zip(actual, expected):
             self.assertAlmostEqual(i, j, places)
 
-__all__ = ['TestCadObjects', 'TestCadQuery', 'TestCQSelectors', 'TestWorkplanes', 'TestExporters', 'TestCQSelectors', 'TestImporters','TestCQGI']
+
 __all__ = [
     'TestCQGI',
     'TestCQSelectors',

@@ -4,7 +4,8 @@ from tests import *
 import cadquery
 import unittest
 
-#if you are on python 2.7, you can use -m uniitest discover.
+#if you are on python 2.7, you can use.
+#   python -m unittest discover -s tests -p "Test*" --verbose
 #but this is required for python 2.6.6 on windows. FreeCAD0.12 will not load
 #on py 2.7.x on win
 suite = unittest.TestSuite()
