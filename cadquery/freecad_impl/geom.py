@@ -18,6 +18,7 @@
 """
 
 import math
+from copy import copy
 import cadquery
 import FreeCAD
 import Part as FreeCADPart
@@ -58,31 +59,71 @@ def sortWiresByBuildOrder(wireList, plane, result=[]):
 class Vector(object):
     """Create a 3-dimensional vector
 
-        :param args: a 3-d vector, with x-y-z parts.
+        **you can provide any of:**
 
-        you can either provide:
-            * nothing (in which case the null vector is return)
-            * a FreeCAD vector
-            * a vector ( in which case it is copied )
-            * a 3-tuple
-            * three float values, x, y, and z
+        * nothing (in which case a zero vector is return)
+        * a :class:`FreeCAD.Base.Vector` instance to wrap
+        * a :class:`Vector` (in which case it is copied)
+        * a 2-tuple of :class:`float`, ``(x, y)`` (z=0)
+        * a 3-tuple of :class:`float`, ``(x, y, z)``
+        * 2 :class:`float` values, as ``x``, and ``y``
+        * 3 :class:`float` values, as ``x``, ``y``, and ``z``
+        * named coordinates, like ``Vector(x=1, z=2)``
+
+        .. doctest::
+
+            >>> from cadquery import Vector
+            >>> import FreeCAD
+            >>> Vector()
+            Vector (0.0, 0.0, 0.0)
+            >>> Vector(FreeCAD.Base.Vector(1,2,3))
+            Vector (1.0, 2.0, 3.0)
+            >>> Vector(Vector(4,5,6))
+            Vector (4.0, 5.0, 6.0)
+            >>> Vector((1, 2))
+            Vector (1.0, 2.0, 0.0)
+            >>> Vector((1, 2, 3))
+            Vector (1.0, 2.0, 3.0)
+            >>> Vector(4, 5)
+            Vector (4.0, 5.0, 0.0)
+            >>> Vector(4, 5, 6)
+            Vector (4.0, 5.0, 6.0)
+            >>> Vector(x=1, z=2)
+            Vector (1.0, 0.0, 2.0)
     """
-    def __init__(self, *args):
-        if len(args) == 3:
-            fV = FreeCAD.Base.Vector(args[0], args[1], args[2])
-        elif len(args) == 1:
-            if isinstance(args[0], Vector):
-                fV = args[0].wrapped
-            elif isinstance(args[0], tuple):
-                fV = FreeCAD.Base.Vector(args[0][0], args[0][1], args[0][2])
-            elif isinstance(args[0], FreeCAD.Base.Vector):
-                fV = args[0]
-            else:
-                fV = args[0]
-        elif len(args) == 0:
-            fV = FreeCAD.Base.Vector(0, 0, 0)
+    def __init__(self, *args, **kwargs):
+        fV = None
+
+        if args and not kwargs:
+            if (1 <= len(args) <= 3):  # 1, 2, or 3 arguments (no keyword arguments given)
+                if isinstance(args[0], (int, float)):
+                    # First argument is a number, pass list through to freecad
+                    fV = FreeCAD.Base.Vector(*args)
+                elif len(args) == 1:
+                    arg = args[0]  # only 1 argument given
+                    if isinstance(arg, Vector):
+                        v = arg.wrapped
+                        fV = FreeCAD.Base.Vector(v.x, v.y, v.z)  # create copy
+                    elif isinstance(arg, FreeCAD.Base.Vector):
+                        v = arg
+                        fV = FreeCAD.Base.Vector(v.x, v.y, v.z)  # create copy
+                    elif isinstance(arg, (list, tuple)):
+                        fV = FreeCAD.Base.Vector(*arg)
         else:
-            raise ValueError("Expected three floats, FreeCAD Vector, or 3-tuple")
+            if set(kwargs.keys()) - set('xyz'):
+                pass  # kwargs contains invalid arguments, raise exception
+            else:
+                fV = FreeCAD.Base.Vector(
+                    kwargs.get('x', 0),
+                    kwargs.get('y', 0),
+                    kwargs.get('z', 0),
+                )
+
+        if fV is None:
+            raise ValueError(
+                "Expected 2 or 3 floats, FreeCAD Vector, 2 or 3-tuple, or named lower-case coords. " + \
+                ("%r %r" % (args, kwargs))
+            )
 
         self._wrapped = fV
 
