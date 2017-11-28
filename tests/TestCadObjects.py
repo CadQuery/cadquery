@@ -50,7 +50,11 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(ValueError):
             Vector([1, 2, 3, 4])
         with self.assertRaises(ValueError):
-            Vector(1, 2, z=3)  # mixing listed and named args not supported
+            # mixing listed and named args not supported
+            Vector(1, 2, z=3)
+        with self.assertRaises(ValueError):
+            # non-numeric as first parameter
+            Vector(FreeCAD.Base.Vector(1, 2, 3), 1)
 
     def testVertex(self):
         """
