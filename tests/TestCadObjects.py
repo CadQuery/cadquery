@@ -5,7 +5,7 @@ from math import pi, sin, sqrt, radians
 from tests import BaseTest
 import FreeCAD
 import Part
-
+from copy import copy
 
 from cadquery import *
 
@@ -55,6 +55,17 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(ValueError):
             # non-numeric as first parameter
             Vector(FreeCAD.Base.Vector(1, 2, 3), 1)
+
+    def testVectorCopy(self):
+        a = Vector(1, 2, 3)
+        b = copy(a)
+        # assert copy is equal
+        self.assertEqual(a.toTuple(), (1, 2, 3))
+        self.assertEqual(b.toTuple(), (1, 2, 3))
+        # assert changes to original don't effect copy
+        a.x = 100
+        self.assertEqual(a.toTuple(), (100, 2, 3))
+        self.assertEqual(b.toTuple(), (1, 2, 3))
 
     def testVertex(self):
         """

@@ -251,6 +251,9 @@ class Vector(object):
             return self.wrapped.__eq__(other.wrapped)
         return False
 
+    def __copy__(self):
+        return type(self)(self._wrapped)
+
 
 class Matrix:
     """A 3d , 4x4 transformation matrix.
