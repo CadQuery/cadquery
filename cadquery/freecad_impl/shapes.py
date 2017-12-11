@@ -424,12 +424,11 @@ class Edge(Shape):
             FreeCADPart.Circle: 'CIRCLE'
         }
 
-        if hasattr(FreeCADPart,"LineSegment"):
-            #FreeCAD <= 0.16
-            self.edgetypes[FreeCADPart.LineSegment] = 'LINE'
-        else:
-            #FreeCAD >= 0.17
+        if hasattr(FreeCADPart,"Line"):
             self.edgetypes[FreeCADPart.Line] = 'LINE'
+
+        if hasattr(FreeCADPart,"LineSegment"):
+            self.edgetypes[FreeCADPart.LineSegment] = 'LINE'
 
          # Helps identify this solid through the use of an ID
         self.label = ""
