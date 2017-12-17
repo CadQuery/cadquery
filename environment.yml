@@ -29,7 +29,7 @@ dependencies:
 - conda-forge::libxcb=1.12=1
 - conda-forge::libxml2=2.9.4=4
 - conda-forge::pcre=8.39=0
-- conda-forge::qt=5.6.2=3
+- conda-forge::qt=5
 - conda-forge::sip=4.18=py27_1
 - conda-forge::tbb=2017_20170226=0
 - conda-forge::xorg-libxau=1.0.8=3
@@ -127,7 +127,6 @@ dependencies:
 - wrapt=1.10.11=py27_0
 - yaml=0.1.6=0
 - zeromq=4.1.5=0
-- zlib=1.2.11=0
 - pip:
   - backports-abc==0.5
   - backports.functools-lru-cache==1.4

@@ -1,5 +1,9 @@
 from OCC.Display.WebGl.x3dom_renderer import X3DExporter
+from OCC.gp import gp_Quaternion, gp_Vec
 from uuid import uuid1
+from math import tan
+
+from .geom import BoundBox
 
 N_HEADER_LINES = 10
 BOILERPLATE = \
@@ -8,7 +12,7 @@ BOILERPLATE = \
 <div style='height: {height}px; width: 100%;' width='100%' height='{height}px'>
     <x3d style='height: {height}px; width: 100%;' id='{id}' width='100%' height='{height}px'>
         <scene>
-            <Viewpoint  position='0,0,0' orientation='0.77 0.32 0.55 1.28' fieldOfView='0.2'></Viewpoint>
+            <Viewpoint  position='{x},{y},{z}' centerOfRotation='{x0} {y0} {z0}' orientation='{rot}' fieldOfView='{fov}'></Viewpoint>
             {src}
         </scene>
     </x3d>
@@ -20,16 +24,43 @@ BOILERPLATE = \
         scr.src = 'http://www.x3dom.org/download/x3dom.js';
         scr.async = false;
         scr.id = 'X3DOM_JS_MODULE';
+        scr.onload = function () {{
+           x3dom.reload();   
+        }}
         head.insertBefore(scr, head.lastChild);
     }}
-    x3dom.reload();
-    document.getElementById('{id}').runtime.fitAll()
+    else {{
+        x3dom.reload();
+    }}
+    
+    //$(document).ready(function() {{
+    //    x3dom.reload();
+    //}})
+    
+    //document.getElementById('{id}').runtime.fitAll()
 </script>
 '''
 
-def add_x3d_boilerplate(src, height=400):
+#https://stackoverflow.com/questions/950087/how-do-i-include-a-javascript-file-in-another-javascript-file
+#better if else
 
-    return BOILERPLATE.format(src=src, id=uuid1(), height=height)
+ROT = (0.77,0.3,0.55,1.28)
+ROT = (0.,0,0,1.)
+FOV = 0.2
+
+def add_x3d_boilerplate(src, height=400, center=(0,0,0), d=(0,0,15), fov=FOV, rot='{} {} {} {} '.format(*ROT)):
+
+    return BOILERPLATE.format(src=src,
+                              id=uuid1(),
+                              height=height,
+                              x=d[0],
+                              y=d[1],
+                              z=d[2],
+                              x0=center[0],
+                              y0=center[1],
+                              z0=center[2],
+                              fov=fov,
+                              rot=rot)
 
 def x3d_display(shape,
                 vertex_shader=None,
@@ -59,4 +90,14 @@ def x3d_display(shape,
         x3d_str = exporter.to_x3dfile_string()
         x3d_str = '\n'.join(x3d_str.splitlines()[N_HEADER_LINES:])
         
-        return add_x3d_boilerplate(x3d_str)
+        bb = BoundBox._fromTopoDS(shape)
+        d = max(bb.xlen,bb.ylen,bb.zlen)
+        c = bb.center
+        
+        vec = gp_Vec(0,0,d/1.5/tan(FOV/2))
+        quat = gp_Quaternion(*ROT)
+        vec = quat*(vec) + c.wrapped
+        
+        return add_x3d_boilerplate(x3d_str,
+                                   d=(vec.X(),vec.Y(),vec.Z()),
+                                   center=(c.x,c.y,c.z))
