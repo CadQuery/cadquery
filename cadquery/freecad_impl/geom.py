@@ -166,27 +166,27 @@ class Vector(object):
 
     # TODO: is it possible to create a dynamic proxy without all this code?
     def cross(self, v):
-        return Vector(self._wrapped.cross(v.wrapped))
+        return type(self)(self._wrapped.cross(v.wrapped))
 
     def dot(self, v):
         return self._wrapped.dot(v.wrapped)
 
     def sub(self, v):
-        return Vector(self._wrapped.sub(v.wrapped))
+        return type(self)(self._wrapped.sub(v.wrapped))
 
     def add(self, v):
-        return Vector(self._wrapped.add(v.wrapped))
+        return type(self)(self._wrapped.add(v.wrapped))
 
     def multiply(self, scale):
         """Return a copy multiplied by the provided scalar"""
         tmp_fc_vector = FreeCAD.Base.Vector(self._wrapped)
-        return Vector(tmp_fc_vector.multiply(scale))
+        return type(self)(tmp_fc_vector.multiply(scale))
 
     def normalized(self):
         """Return a normalized version of this vector"""
         tmp_fc_vector = FreeCAD.Base.Vector(self._wrapped)
         tmp_fc_vector.normalize()
-        return Vector(tmp_fc_vector)
+        return type(self)(tmp_fc_vector)
 
     def Center(self):
         """Return the vector itself
@@ -231,6 +231,9 @@ class Vector(object):
         if scalar == 0:
             raise ZeroDivisionError("%r division by zero" % (type(self)))
         return self.multiply(1. / scalar)
+
+    def __neg__(self):
+        return type(self)(self.wrapped.negative())
 
     def __abs__(self):
         return self.Length

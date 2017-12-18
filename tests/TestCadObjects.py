@@ -197,6 +197,10 @@ class TestCadObjects(BaseTest):
             self.assertEqual(getattr(v, coord), new_val)
             setattr(v, coord, init_val)
 
+    def testVectorNegative(self):
+        v = Vector(1, -2, 3)
+        self.assertEqual(-v, Vector(-1, 2, -3))
+
     def testTranslate(self):
         e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
         e2 = e.translate(Vector(0, 0, 1))
