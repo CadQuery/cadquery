@@ -424,12 +424,11 @@ class Edge(Shape):
             FreeCADPart.Circle: 'CIRCLE'
         }
 
-        if hasattr(FreeCADPart,"LineSegment"):
-            #FreeCAD <= 0.16
-            self.edgetypes[FreeCADPart.LineSegment] = 'LINE'
-        else:
-            #FreeCAD >= 0.17
+        if hasattr(FreeCADPart,"Line"):
             self.edgetypes[FreeCADPart.Line] = 'LINE'
+
+        if hasattr(FreeCADPart,"LineSegment"):
+            self.edgetypes[FreeCADPart.LineSegment] = 'LINE'
 
          # Helps identify this solid through the use of an ID
         self.label = ""
@@ -831,6 +830,8 @@ class Solid(Shape):
         #make faces for the top and bottom
         startFace = FreeCADPart.Face(startWires)
         endFace = FreeCADPart.Face(endWires)
+        startFace.validate()
+        endFace.validate()
 
         #collect all the faces from the sides
         faceList = [startFace]
@@ -877,6 +878,7 @@ class Solid(Shape):
             freeCADWires.append(w.wrapped)
 
         f = FreeCADPart.Face(freeCADWires)
+        f.validate()
         result = f.extrude(vecNormal.wrapped)
 
         return Shape.cast(result)
@@ -913,6 +915,7 @@ class Solid(Shape):
             freeCADWires.append(w.wrapped)
 
         f = FreeCADPart.Face(freeCADWires)
+        f.validate()
 
         rotateCenter = FreeCAD.Base.Vector(axisStart)
         rotateAxis = FreeCAD.Base.Vector(axisEnd)
