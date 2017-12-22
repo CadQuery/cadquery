@@ -29,13 +29,9 @@ BOILERPLATE = \
         }}
         head.insertBefore(scr, head.lastChild);
     }}
-    else {{
+    else if (typeof x3dom != 'undefined') {{ //call reload only if x3dom already loaded
         x3dom.reload();
     }}
-    
-    //$(document).ready(function() {{
-    //    x3dom.reload();
-    //}})
     
     //document.getElementById('{id}').runtime.fitAll()
 </script>
