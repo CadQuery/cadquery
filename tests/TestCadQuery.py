@@ -15,8 +15,8 @@ from tests import (
     readFileAsString,
     makeUnitSquareWire,
     makeCube,
-    output_suspended,
 )
+from cadquery.freecad_impl import suppress_stdout_stderr
 
 #where unit test output will be saved
 import sys
@@ -84,7 +84,7 @@ class TestCadQuery(BaseTest):
             Save models in SVG and STEP format
         """
 
-        with output_suspended():
+        with suppress_stdout_stderr():
             shape.exportSvg(os.path.join(OUTDIR,self._testMethodName + ".svg"))
             shape.val().exportStep(os.path.join(OUTDIR,self._testMethodName + ".step"))
 
@@ -691,7 +691,8 @@ class TestCadQuery(BaseTest):
         try:
             t = r.faces(">Y").workplane().circle(0.125).cutToOffsetFromFace(r.faces().mminDist(Dir.Y),0.1)
             self.assertEqual(10,t.faces().size() ) #should end up being a blind hole
-            t.first().val().exportStep('c:/temp/testCutToFace.STEP')
+            with suppress_stdout_stderr():
+                t.first().val().exportStep('c:/temp/testCutToFace.STEP')
         except:
             pass
             #Not Implemented Yet
@@ -721,7 +722,8 @@ class TestCadQuery(BaseTest):
         #most users dont understand what a wire is, they are just drawing
 
         r = s.lineTo(1.0,0).lineTo(0,1.0).close().wire().extrude(0.25)
-        r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesStep1.STEP'))
+        with suppress_stdout_stderr():
+            r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesStep1.STEP'))
 
         self.assertEqual(0,s.faces().size()) #no faces on the original workplane
         self.assertEqual(5,r.faces().size() ) # 5 faces on newly created object
@@ -729,12 +731,14 @@ class TestCadQuery(BaseTest):
         #now add a circle through a side face
         r.faces("+XY").workplane().circle(0.08).cutThruAll()
         self.assertEqual(6,r.faces().size())
-        r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesXY.STEP'))
+        with suppress_stdout_stderr():
+            r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesXY.STEP'))
 
         #now add a circle through a top
         r.faces("+Z").workplane().circle(0.08).cutThruAll()
         self.assertEqual(9,r.faces().size())
-        r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesZ.STEP'))
+        with suppress_stdout_stderr():
+            r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesZ.STEP'))
 
         self.saveModel(r)
 

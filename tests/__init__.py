@@ -46,41 +46,6 @@ def toTuple(v):
         raise RuntimeError("dont know how to convert type %s to tuple" % str(type(v)) )
 
 
-@contextmanager
-def output_suspended(stdout=True, stderr=True):
-    """
-    Suspend all logging to stdout &/or stderr within
-    a context block.
-
-    .. doctest::
-
-        >>> from tests import output_suspended
-        >>> with output_suspended(stdout=True, stderr=True):
-        ...     print('foo')
-        ...
-        >>> print('bar')
-        bar
-
-    However, this doesn't work with external processes.
-    For example, those called by FreeCAD.
-    """
-    original_stdout = sys.stdout
-    original_stderr = sys.stderr
-    null_handle = open(os.devnull, 'w')
-
-    try:
-        if stdout:
-            sys.stdout = null_handle
-        if stderr:
-            sys.stderr = null_handle
-        yield
-    finally:
-        if stdout:
-            sys.stdout = original_stdout
-        if stderr:
-            sys.stderr = original_stderr
-
-
 class BaseTest(unittest.TestCase):
 
     def assertTupleAlmostEquals(self, expected, actual, places=7):
