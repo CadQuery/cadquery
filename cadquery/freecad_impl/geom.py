@@ -425,17 +425,30 @@ class Plane(object):
         :type normal: a FreeCAD Vector
         :raises: ValueError if the specified xDir is not orthogonal to the provided normal.
         :return: a plane in the global space, with the xDirection of the plane in the specified direction.
+
+        **Non-orthogonal vectors**
+
+        If the ``xDir`` and ``normal`` vectors are not orthogonal, the ``normal``
+        (or ``z`` axis) vector direction is preserved, and truely orthogonal
+        ``x`` and ``y`` axes are calculated with cross products.
+
+        * ``y = z.cross(x)``, and
+        * ``x = y.cross(z)``
         """
+        # z-axis
         normal = Vector(normal)
         if (normal.Length == 0.0):
             raise ValueError('normal should be non null')
         self.zDir = normal.normalized()
+
+        # x-axis
         xDir = Vector(xDir)
         if (xDir.Length == 0.0):
             raise ValueError('xDir should be non null')
+
         self._setPlaneDir(xDir)
 
-        self.invZDir = self.zDir.multiply(-1.0)
+        self.invZDir = -self.zDir
 
         self.origin = origin
 
@@ -625,11 +638,9 @@ class Plane(object):
 
     def _setPlaneDir(self, xDir):
         """Set the vectors parallel to the plane, i.e. xDir and yDir"""
-        if (self.zDir.dot(xDir) > 1e-5):
-            raise ValueError('xDir must be parralel to the plane')
-        xDir = Vector(xDir)
-        self.xDir = xDir.normalized()
+        self.xDir = Vector(xDir)
         self.yDir = self.zDir.cross(self.xDir).normalized()
+        self.xDir = self.yDir.cross(self.zDir).normalized()
 
     def _calcTransforms(self):
         """Computes transformation matrices to convert between coordinates
