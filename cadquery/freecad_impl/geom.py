@@ -18,6 +18,7 @@
 """
 
 import math
+from copy import copy
 import cadquery
 import FreeCAD
 import Part as FreeCADPart
@@ -58,92 +59,134 @@ def sortWiresByBuildOrder(wireList, plane, result=[]):
 class Vector(object):
     """Create a 3-dimensional vector
 
-        :param args: a 3-d vector, with x-y-z parts.
+        **you can provide any of:**
 
-        you can either provide:
-            * nothing (in which case the null vector is return)
-            * a FreeCAD vector
-            * a vector ( in which case it is copied )
-            * a 3-tuple
-            * three float values, x, y, and z
+        * nothing (in which case a zero vector is return)
+        * a :class:`FreeCAD.Base.Vector` instance to wrap
+        * a :class:`Vector` (in which case it is copied)
+        * a 2-tuple of :class:`float`, ``(x, y)`` (z=0)
+        * a 3-tuple of :class:`float`, ``(x, y, z)``
+        * 2 :class:`float` values, as ``x``, and ``y``
+        * 3 :class:`float` values, as ``x``, ``y``, and ``z``
+        * named coordinates, like ``Vector(x=1, z=2)``
+
+        .. doctest::
+
+            >>> from cadquery import Vector
+            >>> import FreeCAD
+            >>> Vector()
+            Vector (0.0, 0.0, 0.0)
+            >>> Vector(FreeCAD.Base.Vector(1,2,3))
+            Vector (1.0, 2.0, 3.0)
+            >>> Vector(Vector(4,5,6))
+            Vector (4.0, 5.0, 6.0)
+            >>> Vector((1, 2))
+            Vector (1.0, 2.0, 0.0)
+            >>> Vector((1, 2, 3))
+            Vector (1.0, 2.0, 3.0)
+            >>> Vector(4, 5)
+            Vector (4.0, 5.0, 0.0)
+            >>> Vector(4, 5, 6)
+            Vector (4.0, 5.0, 6.0)
+            >>> Vector(x=1, z=2)
+            Vector (1.0, 0.0, 2.0)
     """
-    def __init__(self, *args):
-        if len(args) == 3:
-            fV = FreeCAD.Base.Vector(args[0], args[1], args[2])
-        elif len(args) == 1:
-            if isinstance(args[0], Vector):
-                fV = args[0].wrapped
-            elif isinstance(args[0], tuple):
-                fV = FreeCAD.Base.Vector(args[0][0], args[0][1], args[0][2])
-            elif isinstance(args[0], FreeCAD.Base.Vector):
-                fV = args[0]
+    def __init__(self, *args, **kwargs):
+        fV = None
+
+        if args and not kwargs:
+            if (1 <= len(args) <= 3):  # 1, 2, or 3 arguments (no keyword arguments given)
+                if isinstance(args[0], (int, float)):
+                    # First argument is a number, pass list through to freecad
+                    fV = FreeCAD.Base.Vector(*args)
+                elif len(args) == 1:
+                    arg = args[0]  # only 1 argument given
+                    if isinstance(arg, Vector):
+                        v = arg.wrapped
+                        fV = FreeCAD.Base.Vector(v.x, v.y, v.z)  # create copy
+                    elif isinstance(arg, FreeCAD.Base.Vector):
+                        v = arg
+                        fV = FreeCAD.Base.Vector(v.x, v.y, v.z)  # create copy
+                    elif isinstance(arg, (list, tuple)):
+                        if (1 <= len(arg) <= 3):
+                            fV = FreeCAD.Base.Vector(*arg)
+        elif not args:
+            if set(kwargs.keys()) - set('xyz'):
+                pass  # kwargs contains invalid arguments, raise exception
             else:
-                fV = args[0]
-        elif len(args) == 0:
-            fV = FreeCAD.Base.Vector(0, 0, 0)
-        else:
-            raise ValueError("Expected three floats, FreeCAD Vector, or 3-tuple")
+                fV = FreeCAD.Base.Vector(
+                    kwargs.get('x', 0),
+                    kwargs.get('y', 0),
+                    kwargs.get('z', 0),
+                )
+
+        if fV is None:
+            raise ValueError(
+                "Expected 2 or 3 floats, FreeCAD Vector, 2 or 3-tuple, or named lower-case coords. " + \
+                ("%r %r" % (args, kwargs))
+            )
 
         self._wrapped = fV
 
     @property
     def x(self):
-        return self.wrapped.x
+        return self._wrapped.x
 
     @x.setter
     def x(self, value):
-        self.wrapped.x = value
+        self._wrapped.x = value
 
     @property
     def y(self):
-        return self.wrapped.y
+        return self._wrapped.y
 
     @y.setter
     def y(self, value):
-        self.wrapped.y = value
+        self._wrapped.y = value
 
     @property
     def z(self):
-        return self.wrapped.z
+        return self._wrapped.z
 
     @z.setter
     def z(self, value):
-        self.wrapped.z = value
+        self._wrapped.z = value
 
     @property
     def Length(self):
-        return self.wrapped.Length
+        return self._wrapped.Length
 
     @property
     def wrapped(self):
         return self._wrapped
 
     def toTuple(self):
-        return (self.x, self.y, self.z)
+        v = self._wrapped
+        return (v.x, v.y, v.z)
 
     # TODO: is it possible to create a dynamic proxy without all this code?
     def cross(self, v):
-        return Vector(self.wrapped.cross(v.wrapped))
+        return type(self)(self._wrapped.cross(v.wrapped))
 
     def dot(self, v):
-        return self.wrapped.dot(v.wrapped)
+        return self._wrapped.dot(v.wrapped)
 
     def sub(self, v):
-        return Vector(self.wrapped.sub(v.wrapped))
+        return type(self)(self._wrapped.sub(v.wrapped))
 
     def add(self, v):
-        return Vector(self.wrapped.add(v.wrapped))
+        return type(self)(self._wrapped.add(v.wrapped))
 
     def multiply(self, scale):
         """Return a copy multiplied by the provided scalar"""
-        tmp_fc_vector = FreeCAD.Base.Vector(self.wrapped)
-        return Vector(tmp_fc_vector.multiply(scale))
+        tmp_fc_vector = FreeCAD.Base.Vector(self._wrapped)
+        return type(self)(tmp_fc_vector.multiply(scale))
 
     def normalized(self):
         """Return a normalized version of this vector"""
-        tmp_fc_vector = FreeCAD.Base.Vector(self.wrapped)
+        tmp_fc_vector = FreeCAD.Base.Vector(self._wrapped)
         tmp_fc_vector.normalize()
-        return Vector(tmp_fc_vector)
+        return type(self)(tmp_fc_vector)
 
     def Center(self):
         """Return the vector itself
@@ -156,7 +199,7 @@ class Vector(object):
         return self
 
     def getAngle(self, v):
-        return self.wrapped.getAngle(v.wrapped)
+        return self._wrapped.getAngle(v.wrapped)
 
     def distanceToLine(self):
         raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
@@ -170,17 +213,36 @@ class Vector(object):
     def projectToPlane(self):
         raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
 
+    def __bool__(self):
+        return any(coord != 0 for coord in self.toTuple())
+
+    __nonzero__ = __bool__  # python 2.x compatability
+
     def __add__(self, v):
         return self.add(v)
 
     def __sub__(self, v):
         return self.sub(v)
 
+    def __mul__(self, scalar):
+        return self.multiply(scalar)
+
+    def __div__(self, scalar):
+        if scalar == 0:
+            raise ZeroDivisionError("%r division by zero" % (type(self)))
+        return self.multiply(1. / scalar)
+
+    def __neg__(self):
+        return type(self)(self.wrapped.negative())
+
+    def __abs__(self):
+        return self.Length
+
     def __repr__(self):
-        return self.wrapped.__repr__()
+        return self._wrapped.__repr__()
 
     def __str__(self):
-        return self.wrapped.__str__()
+        return self._wrapped.__str__()
 
     def __ne__(self, other):
         if isinstance(other, Vector):
@@ -191,6 +253,9 @@ class Vector(object):
         if isinstance(other, Vector):
             return self.wrapped.__eq__(other.wrapped)
         return False
+
+    def __copy__(self):
+        return type(self)(self._wrapped)
 
 
 class Matrix:
@@ -360,17 +425,30 @@ class Plane(object):
         :type normal: a FreeCAD Vector
         :raises: ValueError if the specified xDir is not orthogonal to the provided normal.
         :return: a plane in the global space, with the xDirection of the plane in the specified direction.
+
+        **Non-orthogonal vectors**
+
+        If the ``xDir`` and ``normal`` vectors are not orthogonal, the ``normal``
+        (or ``z`` axis) vector direction is preserved, and truely orthogonal
+        ``x`` and ``y`` axes are calculated with cross products.
+
+        * ``y = z.cross(x)``, and
+        * ``x = y.cross(z)``
         """
+        # z-axis
         normal = Vector(normal)
         if (normal.Length == 0.0):
             raise ValueError('normal should be non null')
         self.zDir = normal.normalized()
+
+        # x-axis
         xDir = Vector(xDir)
         if (xDir.Length == 0.0):
             raise ValueError('xDir should be non null')
+
         self._setPlaneDir(xDir)
 
-        self.invZDir = self.zDir.multiply(-1.0)
+        self.invZDir = -self.zDir
 
         self.origin = origin
 
@@ -560,11 +638,9 @@ class Plane(object):
 
     def _setPlaneDir(self, xDir):
         """Set the vectors parallel to the plane, i.e. xDir and yDir"""
-        if (self.zDir.dot(xDir) > 1e-5):
-            raise ValueError('xDir must be parralel to the plane')
-        xDir = Vector(xDir)
-        self.xDir = xDir.normalized()
+        self.xDir = Vector(xDir)
         self.yDir = self.zDir.cross(self.xDir).normalized()
+        self.xDir = self.yDir.cross(self.zDir).normalized()
 
     def _calcTransforms(self):
         """Computes transformation matrices to convert between coordinates

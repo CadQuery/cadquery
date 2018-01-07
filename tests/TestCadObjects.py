@@ -5,19 +5,67 @@ from math import pi, sin, sqrt, radians
 from tests import BaseTest
 import FreeCAD
 import Part
-
+from copy import copy
 
 from cadquery import *
 
 class TestCadObjects(BaseTest):
 
     def testVectorConstructors(self):
-        v1 = Vector(1, 2, 3)
-        v2 = Vector((1, 2, 3))
-        v3 = Vector(FreeCAD.Base.Vector(1, 2, 3))
+        # Assert 3 ints represents x, y, z respectively
+        #   (why?, this is assumed for all other assertions)
+        v = Vector(1, 2, 3)
+        self.assertEqual((v.x, v.y, v.z), (1, 2, 3))
 
-        for v in [v1, v2, v3]:
-            self.assertTupleAlmostEquals((1, 2, 3), v.toTuple(), 4)
+        # --- Positive Cases
+        # empty
+        self.assertEquals(Vector(), Vector(0, 0, 0))
+        # tuples
+        self.assertEquals(Vector((1, 2, 3)), Vector(1, 2, 3))
+        self.assertEquals(Vector((1, 2)), Vector(1, 2, 0))
+        self.assertEquals(Vector((1,)), Vector(1, 0, 0))
+        # lists
+        self.assertEquals(Vector([1, 2, 3]), Vector(1, 2, 3))
+        self.assertEquals(Vector([1, 2]), Vector(1, 2, 0))
+        self.assertEquals(Vector([1]), Vector(1, 0, 0))
+        # < 3 numbers
+        self.assertEquals(Vector(1, 2), Vector(1, 2, 0))
+        self.assertEquals(Vector(1), Vector(1, 0, 0))
+        # wrappers
+        self.assertEquals(Vector(Vector(1, 2, 3)), Vector(1, 2, 3))
+        self.assertEquals(Vector(FreeCAD.Base.Vector(1, 2, 3)), Vector(1, 2, 3))
+        # named coords
+        self.assertEquals(Vector(x=1, y=2, z=3), Vector(1, 2, 3))
+        self.assertEquals(Vector(x=1), Vector(1, 0, 0))
+        self.assertEquals(Vector(y=2), Vector(0, 2, 0))
+        self.assertEquals(Vector(z=3), Vector(0, 0, 3))
+
+        # --- Negative Cases
+        with self.assertRaises(ValueError):
+            Vector('blah')  # invalid type
+        with self.assertRaises(ValueError):
+            Vector(1, 2, 3, 4)
+        with self.assertRaises(ValueError):
+            Vector((1, 2, 3, 4))
+        with self.assertRaises(ValueError):
+            Vector([1, 2, 3, 4])
+        with self.assertRaises(ValueError):
+            # mixing listed and named args not supported
+            Vector(1, 2, z=3)
+        with self.assertRaises(ValueError):
+            # non-numeric as first parameter
+            Vector(FreeCAD.Base.Vector(1, 2, 3), 1)
+
+    def testVectorCopy(self):
+        a = Vector(1, 2, 3)
+        b = copy(a)
+        # assert copy is equal
+        self.assertEqual(a.toTuple(), (1, 2, 3))
+        self.assertEqual(b.toTuple(), (1, 2, 3))
+        # assert changes to original don't effect copy
+        a.x = 100
+        self.assertEqual(a.toTuple(), (100, 2, 3))
+        self.assertEqual(b.toTuple(), (1, 2, 3))
 
     def testVertex(self):
         """
@@ -92,6 +140,39 @@ class TestCadObjects(BaseTest):
         self.assertIsInstance(result, Vector)
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), result.toTuple(), 3)
 
+    def testVectorArithmeticOverides(self):
+        V = lambda x,y,z: Vector(x,y,z)
+        self.assertEqual(V(1,2,3) + V(4,5,6), V(5,7,9))  # addition
+        self.assertEqual(V(1,2,3) - V(5,4,3), V(-4,-2,0))  # subtraction
+        self.assertEqual((V(1,2,3) * 2).toTuple(), (2,4,6))  # multiplication
+        self.assertEqual((V(1,2,3) / 2).toTuple(), (0.5,1,1.5))  # division
+
+    def testVectorBoolCast(self):
+        # zero vector
+        self.assertEqual(bool(Vector(0,0,0)), False)
+        # positive axes
+        self.assertEqual(bool(Vector(1,0,0)), True)
+        self.assertEqual(bool(Vector(0,1,0)), True)
+        self.assertEqual(bool(Vector(0,0,1)), True)
+        # negative axes
+        self.assertEqual(bool(Vector(-1,0,0)), True)
+        self.assertEqual(bool(Vector(0,-1,0)), True)
+        self.assertEqual(bool(Vector(0,0,-1)), True)
+
+    def testVectorDivideByZero(self):
+        with self.assertRaises(ZeroDivisionError):
+            Vector(1, 2, 3) / 0
+
+    def testVectorLength(self):
+        calc_length = lambda v: sqrt(v.x**2 + v.y**2 + v.z**2)
+        vectors = [
+            Vector(0,0,0), Vector(1,2,3), Vector(-1,-5,10),
+        ]
+        for v in vectors:
+            expected = calc_length(v)
+            self.assertEqual(v.Length, expected)
+            self.assertEqual(abs(v), expected)
+
     def testVectorSub(self):
         result = Vector(1, 2, 3) - Vector(6, 5, 4)
         self.assertIsInstance(result, Vector)
@@ -115,6 +196,10 @@ class TestCadObjects(BaseTest):
             setattr(v, coord, new_val)
             self.assertEqual(getattr(v, coord), new_val)
             setattr(v, coord, init_val)
+
+    def testVectorNegative(self):
+        v = Vector(1, -2, 3)
+        self.assertEqual(-v, Vector(-1, 2, -3))
 
     def testTranslate(self):
         e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
