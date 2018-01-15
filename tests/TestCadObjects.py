@@ -201,6 +201,51 @@ class TestCadObjects(BaseTest):
         v = Vector(1, -2, 3)
         self.assertEqual(-v, Vector(-1, 2, -3))
 
+    def testPlaneEqual(self):
+        # default orientation
+        self.assertEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1))
+        )
+        # moved origin
+        self.assertEqual(
+            Plane(origin=(2,1,-1), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(2,1,-1), xDir=(1,0,0), normal=(0,0,1))
+        )
+        # moved x-axis
+        self.assertEqual(
+            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1)),
+            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1))
+        )
+        # moved z-axis
+        self.assertEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1)),
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1))
+        )
+
+    def testPlaneNotEqual(self):
+        # type difference
+        for value in [None, 0, 1, 'abc']:
+            self.assertNotEqual(
+                Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+                value
+            )
+        # origin difference
+        self.assertNotEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(0,0,1), xDir=(1,0,0), normal=(0,0,1))
+        )
+        # x-axis difference
+        self.assertNotEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1))
+        )
+        # z-axis difference
+        self.assertNotEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1))
+        )
+
     def testTranslate(self):
         e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
         e2 = e.translate(Vector(0, 0, 1))
