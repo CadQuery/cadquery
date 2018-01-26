@@ -682,7 +682,7 @@ class CQ(object):
         """
         return exporters.getSVG(self.val().wrapped, opts)
 
-    def exportSvg(self, fileName):
+    def exportSvg(self, fileName, view_vector=(-1.75,1.1,5)):
         """
         Exports the first item on the stack as an SVG file
 
@@ -691,7 +691,7 @@ class CQ(object):
         :param fileName: the filename to export
         :type fileName: String, absolute path to the file
         """
-        exporters.exportSVG(self, fileName)
+        exporters.exportSVG(self, fileName, view_vector)
 
     def rotateAboutCenter(self, axisEndPoint, angleDegrees):
         """
