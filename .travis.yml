@@ -6,7 +6,8 @@ python:
 matrix:
   include:
     - python: 2.7 
-    - python: 3.6 env: FREECAD_LIB="$HOME/miniconda/envs/freecad_cq3/lib/"
+    - python: 3.6
+      env: FREECAD_LIB="$HOME/miniconda/envs/freecad_cq3/lib/"
 
 before_install:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
@@ -52,7 +53,7 @@ branches:
   except:
   - pythonocc
   - 2_0_branch
-  deploy:
+deploy:
   provider: pypi
   user: dcowden
   password:
