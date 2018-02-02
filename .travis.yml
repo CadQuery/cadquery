@@ -8,11 +8,7 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - gcc-multilib
-      - g++-multilib
-      - lib32z1+
-      - lsb-core
-      - g++-7
+      - libstdc++6
 
 matrix:
   include:
