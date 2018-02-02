@@ -2,6 +2,18 @@ language: python
 sudo: false
 dist: trusty
 
+#addons from pythonocc build .travis file
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-multilib
+      - g++-multilib
+      - lib32z1+
+      - lsb-core
+      - g++-7
+
 matrix:
   include:
     - python: 2.7 
