@@ -18,13 +18,14 @@ install:
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   fi
 - bash miniconda.sh -b -p $HOME/miniconda
-#- export PATH="$HOME/miniconda/bin:$PATH"
+- OLD_PATH="$PATH"
+- export PATH="$HOME/miniconda/bin:$PATH"
 - hash -r
-- alias conda=~/miniconda/bin/conda
 - conda config --set always_yes yes --set changeps1 no
 - conda update -q conda
 - conda info -a
 - conda create -y -q -n freecad_cq3 -c freecad -c conda-forge freecad=0.17 python=3.6 pyparsing
+- export PATH="$OLD_PATH"
 - source ~/miniconda/bin/activate freecad_cq3
 - python setup.py install
 - unalias conda
