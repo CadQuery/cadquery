@@ -19,6 +19,7 @@ before_install:
 - conda config --set always_yes yes --set changeps1 no;
 - conda create -y -q -n test_cq -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18 pyparsing mock;
 - source ~/miniconda/bin/activate test_cq;
+- python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
 
 install:
 - python setup.py install
