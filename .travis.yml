@@ -1,44 +1,45 @@
 language: python
-before_install:
-- sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable
-- sudo apt-get update -qq
-install:
-- sudo apt-get install -y freecad freecad-doc
-- gcc --version
-- g++ --version
-- python ./setup.py install
-- pip install -r requirements-dev.txt
-- pip install travis-sphinx
-- pip install sphinx_rtd_theme
 
-# Install miniconda, cf https://conda.io/docs/user-guide/tasks/use-conda-with-travis-ci.html
+matrix:
+  include:
+    - python: 2.7 
+    - python: 3.6 env: FREECAD_LIB="$HOME/miniconda/envs/freecad_cq3/lib/"
+
+before_install:
+- if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  else
+    sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable;
+    sudo apt-get update -qq;
+    sudo apt-get install -y freecad freecad-doc;
+  fi
+
+install:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    python ./setup.py install;
+    pip install -r requirements-dev.txt;
+    pip install travis-sphinx;
+    pip install sphinx_rtd_theme;
   else
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    bash miniconda.sh -b -p $HOME/miniconda
+    export PATH="$HOME/miniconda/bin:$PATH"
+    hash -r
+    conda config --set always_yes yes --set changeps1 no
+    conda update -q conda
+    conda info -a
+    conda create -y -q -n freecad_cq3 -c freecad -c conda-forge freecad=0.17 python=3.6 pyparsing conda mock
+    export PATH="$OLD_PATH"
+    source ~/miniconda/bin/activate freecad_cq3
+    python setup.py install
   fi
-- bash miniconda.sh -b -p $HOME/miniconda
-- OLD_PATH="$PATH"
-- export PATH="$HOME/miniconda/bin:$PATH"
-- hash -r
-- conda config --set always_yes yes --set changeps1 no
-- conda update -q conda
-- conda info -a
-- conda create -y -q -n freecad_cq3 -c freecad -c conda-forge freecad=0.17 python=3.6 pyparsing
-- export PATH="$OLD_PATH"
-- source ~/miniconda/bin/activate freecad_cq3
-- python setup.py install
 
 script:
-# py3 part
-- export FREECAD_LIB=~/miniconda/envs/freecad_cq3/lib/
 - python runtests.py
-- source deactivate
-- unset FREECAD_LIB
-#py2 part
-- python runtests.py
-- coverage run --source=cadquery ./runtests.py
-- travis-sphinx build --nowarn --source=doc
+- if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+    coverage run --source=cadquery ./runtests.py;
+    travis-sphinx build --nowarn --source=doc;
+  fi
 
 after_success:
 - coveralls
