@@ -28,7 +28,6 @@ install:
 - export PATH="$OLD_PATH"
 - source ~/miniconda/bin/activate freecad_cq3
 - python setup.py install
-- unalias conda
 
 script:
 # py3 part
