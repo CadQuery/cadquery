@@ -3,10 +3,7 @@
 """
 # core modules
 import sys
-if sys.version_info.major == 2:
-    import cStringIO as StringIO
-else:
-    import io as StringIO
+import io
 
 # my modules
 from cadquery import *
@@ -23,10 +20,15 @@ class TestExporters(BaseTest):
             returns the result in case the case wants to do more checks also
         """
         p = Workplane("XY").box(1, 2, 3)
-        s = StringIO.StringIO()
+
+        if eType ==  exporters.ExportTypes.AMF:
+            s = io.BytesIO()
+        else:
+            s = io.StringIO()
+        
         exporters.exportShape(p, eType, s, 0.1)
 
-        result = s.getvalue()
+        result = '{}'.format(s.getvalue())
 
         for q in stringsToFind:
             self.assertTrue(result.find(q) > -1)

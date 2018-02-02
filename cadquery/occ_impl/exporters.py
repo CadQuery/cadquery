@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from OCC.Visualization import Tesselator
 
 import cadquery
@@ -119,7 +120,7 @@ def readAndDeleteFile(fileName):
     """
     res = ""
     with open(fileName, 'r') as f:
-        res = f.read()
+        res = "{}".format(f.read())
 
     os.remove(fileName)
     return res
@@ -183,8 +184,8 @@ class AmfWriter(object):
             v2.text = str(t[1])
             v3 = ET.SubElement(triangle, 'v3')
             v3.text = str(t[2])
-
-        ET.ElementTree(amf).write(outFile, encoding='ISO-8859-1')
+        
+        amf = ET.ElementTree(amf).write(outFile, xml_declaration=True)
 
 
 """
