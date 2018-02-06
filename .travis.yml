@@ -30,13 +30,13 @@ install:
 - python setup.py install;
 
 script:
-- python runtests.py
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
     coverage run --source=cadquery ./runtests.py;
     travis-sphinx build --nowarn --source=doc;
   fi
+- python runtests.py
 
-after_success:
+after_script:
 - coveralls
 - travis-sphinx deploy
 
