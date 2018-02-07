@@ -16,7 +16,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
-
+from __future__ import division
 import math
 from copy import copy
 import cadquery
@@ -227,7 +227,7 @@ class Vector(object):
     def __mul__(self, scalar):
         return self.multiply(scalar)
 
-    def __div__(self, scalar):
+    def __truediv__(self, scalar):
         if scalar == 0:
             raise ZeroDivisionError("%r division by zero" % (type(self)))
         return self.multiply(1. / scalar)

@@ -1,4 +1,5 @@
 #system modules
+from __future__ import division
 import sys
 import unittest
 from math import pi, sin, sqrt, radians
