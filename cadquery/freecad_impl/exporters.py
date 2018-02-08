@@ -1,3 +1,5 @@
+from __future__ import unicode_literals 
+
 import cadquery
 
 import FreeCAD
@@ -86,7 +88,7 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
             else:
                 raise ValueError("No idea how i got here")
 
-        res = readAndDeleteFile(outFileName)
+        res = '{}'.format(readAndDeleteFile(outFileName))
         fileLike.write(res)
 
 def readAndDeleteFile(fileName):
@@ -159,7 +161,7 @@ class AmfWriter(object):
             v3 = ET.SubElement(triangle,'v3')
             v3.text = str(t[2])
 
-        ET.ElementTree(amf).write(outFile,encoding="unicode",xml_declaration=True)
+        ET.ElementTree(amf).write(outFile,xml_declaration=True)
 
 """
     Objects that represent

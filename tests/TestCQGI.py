@@ -103,7 +103,7 @@ class TestCQGI(BaseTest):
         self.assertFalse(result.success)
         self.assertIsNotNone(result.exception)
 
-        self.assertTrue(str(result.exception) == "ERROR")
+        self.assertTrue(result.exception.args[0] == "ERROR")
 
     def test_that_invalid_syntax_in_script_fails_immediately(self):
         badscript = textwrap.dedent(
@@ -115,7 +115,7 @@ class TestCQGI(BaseTest):
         with self.assertRaises(Exception) as context:
             model = cqgi.CQModel(badscript)
 
-        self.assertTrue('invalid syntax' in str(context.exception))
+        self.assertTrue('invalid syntax' in context.exception.args)
 
     def test_that_two_results_are_returned(self):
         script = textwrap.dedent(

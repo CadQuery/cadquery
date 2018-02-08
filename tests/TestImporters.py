@@ -7,6 +7,7 @@ import io
 from cadquery import *
 from cadquery import exporters
 from cadquery import importers
+from cadquery.freecad_impl import suppress_stdout_stderr
 from tests import BaseTest
 
 #where unit test output will be saved
@@ -47,7 +48,8 @@ class TestImporters(BaseTest):
         """
         Tests STEP file import
         """
-        self.importBox(importers.ImportTypes.STEP, OUTDIR + "/tempSTEP.step")
+        with suppress_stdout_stderr():
+            self.importBox(importers.ImportTypes.STEP, OUTDIR + "/tempSTEP.step")
 
 if __name__ == '__main__':
     import unittest

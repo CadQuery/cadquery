@@ -2,6 +2,7 @@ from cadquery import *
 import unittest
 import sys
 import os
+from contextlib import contextmanager
 
 import FreeCAD
 
@@ -51,7 +52,7 @@ class BaseTest(unittest.TestCase):
         for i, j in zip(actual, expected):
             self.assertAlmostEqual(i, j, places)
 
-__all__ = ['TestCadObjects', 'TestCadQuery', 'TestCQSelectors', 'TestWorkplanes', 'TestExporters', 'TestCQSelectors', 'TestImporters','TestCQGI']
+
 __all__ = [
     'TestCQGI',
     'TestCQSelectors',
