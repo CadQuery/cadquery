@@ -107,6 +107,7 @@ class CQModel(object):
                 .build()
 
             c = compile(self.ast_tree, CQSCRIPT, 'exec')
+
             exec (c, env)
             result.set_debug(collector.debugObjects )
             result.set_success_result(collector.outputObjects)
@@ -130,6 +131,7 @@ class CQModel(object):
                 raise InvalidParameterError("Cannot set value '%s': not a parameter of the model." % k)
 
             p = model_parameters[k]
+
             p.set_value(v)
 
 
@@ -276,9 +278,15 @@ class InputParameter:
             self.ast_node.s = str(new_value)
         elif self.varType == BooleanParameterType:
             if new_value:
-                self.ast_node.id = 'True'
+                if hasattr(ast, 'NameConstant'):
+                    self.ast_node.value = True
+                else:
+                    self.ast_node.id = 'True'
             else:
-                self.ast_node.id = 'False'
+                if hasattr(ast, 'NameConstant'):
+                    self.ast_node.value = False
+                else:
+                    self.ast_node.id = 'False'
         else:
             raise ValueError("Unknown Type of var: ", str(self.varType))
 
@@ -454,7 +462,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
                 elif value_node.id == 'False':
                     self.cqModel.add_script_parameter(
-                        InputParameter.create(value_node, var_name, BooleanParameterType, True))
+                        InputParameter.create(value_node, var_name, BooleanParameterType, False))
             elif hasattr(ast, 'NameConstant') and type(value_node) == ast.NameConstant:
                 if value_node.value == True:
                     self.cqModel.add_script_parameter(
