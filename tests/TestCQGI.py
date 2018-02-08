@@ -102,7 +102,6 @@ class TestCQGI(BaseTest):
         result = model.build({})
         self.assertFalse(result.success)
         self.assertIsNotNone(result.exception)
-
         self.assertTrue(result.exception.args[0] == "ERROR")
 
     def test_that_invalid_syntax_in_script_fails_immediately(self):

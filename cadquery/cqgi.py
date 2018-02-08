@@ -107,7 +107,6 @@ class CQModel(object):
                 .build()
 
             c = compile(self.ast_tree, CQSCRIPT, 'exec')
-
             exec (c, env)
             result.set_debug(collector.debugObjects )
             result.set_success_result(collector.outputObjects)
@@ -131,7 +130,6 @@ class CQModel(object):
                 raise InvalidParameterError("Cannot set value '%s': not a parameter of the model." % k)
 
             p = model_parameters[k]
-
             p.set_value(v)
 
 
