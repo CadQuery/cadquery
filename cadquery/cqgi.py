@@ -253,7 +253,6 @@ class InputParameter:
         return p
 
     def set_value(self, new_value):
-
         if len(self.valid_values) > 0 and new_value not in self.valid_values:
             raise InvalidParameterError(
                 "Cannot set value '{0:s}' for parameter '{1:s}': not a valid value. Valid values are {2:s} "
@@ -456,7 +455,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                 elif value_node.id == 'False':
                     self.cqModel.add_script_parameter(
                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
-            elif type(value_node) == ast.NameConstant:
+            elif hasattr(ast, 'NameConstant') and type(value_node) == ast.NameConstant:
                 if value_node.value == True:
                     self.cqModel.add_script_parameter(
                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
@@ -476,7 +475,12 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             if isinstance(left_side,ast.Attribute):
                 return
 
-            if type(node.value) in [ast.Num, ast.Str, ast.Name, ast.NameConstant]:
+            # Handle the NamedConstant type that is only present in Python 3
+            astTypes = [ast.Num, ast.Str, ast.Name]
+            if hasattr(ast, 'NameConstant'):
+                astTypes.append(ast.NameConstant)
+
+            if type(node.value) in astTypes:
                 self.handle_assignment(left_side.id, node.value)
             elif type(node.value) == ast.Tuple:
                 # we have a multi-value assignment
