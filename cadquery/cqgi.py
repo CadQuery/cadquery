@@ -139,8 +139,8 @@ class ShapeResult(object):
     """
     def __init__(self):
         self.shape = None
-        self.options = None  
-      
+        self.options = None
+
 class BuildResult(object):
     """
     The result of executing a CadQuery script.
@@ -449,13 +449,20 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             elif type(value_node) == ast.Str:
                 self.cqModel.add_script_parameter(
                     InputParameter.create(value_node, var_name, StringParameterType, value_node.s))
-            elif type(value_node == ast.Name):
+            elif type(value_node) == ast.Name:
                 if value_node.id == 'True':
                     self.cqModel.add_script_parameter(
                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
                 elif value_node.id == 'False':
                     self.cqModel.add_script_parameter(
                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
+            elif type(value_node) == ast.NameConstant:
+                if value_node.value == True:
+                    self.cqModel.add_script_parameter(
+                        InputParameter.create(value_node, var_name, BooleanParameterType, True))
+                else:
+                    self.cqModel.add_script_parameter(
+                        InputParameter.create(value_node, var_name, BooleanParameterType, False))
         except:
             print("Unable to handle assignment for variable '%s'" % var_name)
             pass
@@ -469,7 +476,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             if isinstance(left_side,ast.Attribute):
                 return
 
-            if type(node.value) in [ast.Num, ast.Str, ast.Name]:
+            if type(node.value) in [ast.Num, ast.Str, ast.Name, ast.NameConstant]:
                 self.handle_assignment(left_side.id, node.value)
             elif type(node.value) == ast.Tuple:
                 # we have a multi-value assignment
