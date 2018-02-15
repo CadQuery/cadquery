@@ -55,7 +55,7 @@ class TestImporters(BaseTest):
         """
         Tests STEP file import from a URL
         """
-        stepURL = "https://raw.githubusercontent.com/easyw/kicadStepUpMod/master/demo/demo-fc16.step"
+        stepURL = "https://raw.githubusercontent.com/dcowden/cadquery/master/doc/_static/box_export.step"
 
         importedShape = importers.importStepFromURL(stepURL)
 
