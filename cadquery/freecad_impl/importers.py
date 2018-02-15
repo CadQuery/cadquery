@@ -56,6 +56,7 @@ def importStepFromURL(url):
         if hasattr(urlreader, "urlopen"):
             webFile = urlreader.urlopen(url)
         else:
+            import urllib.request
             webFile = urlreader.request.urlopen()
 
         tempFile = tempfile.NamedTemporaryFile(suffix='.step', delete=False)
