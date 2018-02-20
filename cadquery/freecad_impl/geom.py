@@ -325,18 +325,18 @@ class Plane(object):
 
         namedPlanes = {
             # origin, xDir, normal
-            'XY': Plane(origin, (1, 0, 0), (0, 0, 1)),
-            'YZ': Plane(origin, (0, 1, 0), (1, 0, 0)),
-            'ZX': Plane(origin, (0, 0, 1), (0, 1, 0)),
-            'XZ': Plane(origin, (1, 0, 0), (0, -1, 0)),
-            'YX': Plane(origin, (0, 1, 0), (0, 0, -1)),
-            'ZY': Plane(origin, (0, 0, 1), (-1, 0, 0)),
-            'front': Plane(origin, (1, 0, 0), (0, 0, 1)),
-            'back': Plane(origin, (-1, 0, 0), (0, 0, -1)),
-            'left': Plane(origin, (0, 0, 1), (-1, 0, 0)),
-            'right': Plane(origin, (0, 0, -1), (1, 0, 0)),
-            'top': Plane(origin, (1, 0, 0), (0, 1, 0)),
-            'bottom': Plane(origin, (1, 0, 0), (0, -1, 0))
+            'XY': cls(origin, (1, 0, 0), (0, 0, 1)),
+            'YZ': cls(origin, (0, 1, 0), (1, 0, 0)),
+            'ZX': cls(origin, (0, 0, 1), (0, 1, 0)),
+            'XZ': cls(origin, (1, 0, 0), (0, -1, 0)),
+            'YX': cls(origin, (0, 1, 0), (0, 0, -1)),
+            'ZY': cls(origin, (0, 0, 1), (-1, 0, 0)),
+            'front': cls(origin, (1, 0, 0), (0, 0, 1)),
+            'back': cls(origin, (-1, 0, 0), (0, 0, -1)),
+            'left': cls(origin, (0, 0, 1), (-1, 0, 0)),
+            'right': cls(origin, (0, 0, -1), (1, 0, 0)),
+            'top': cls(origin, (1, 0, 0), (0, 1, 0)),
+            'bottom': cls(origin, (1, 0, 0), (0, -1, 0))
         }
 
         try:
@@ -347,73 +347,73 @@ class Plane(object):
 
     @classmethod
     def XY(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('XY', origin)
+        plane = cls.named('XY', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def YZ(cls, origin=(0, 0, 0), xDir=Vector(0, 1, 0)):
-        plane = Plane.named('YZ', origin)
+        plane = cls.named('YZ', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def ZX(cls, origin=(0, 0, 0), xDir=Vector(0, 0, 1)):
-        plane = Plane.named('ZX', origin)
+        plane = cls.named('ZX', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def XZ(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('XZ', origin)
+        plane = cls.named('XZ', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def YX(cls, origin=(0, 0, 0), xDir=Vector(0, 1, 0)):
-        plane = Plane.named('YX', origin)
+        plane = cls.named('YX', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def ZY(cls, origin=(0, 0, 0), xDir=Vector(0, 0, 1)):
-        plane = Plane.named('ZY', origin)
+        plane = cls.named('ZY', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def front(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('front', origin)
+        plane = cls.named('front', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def back(cls, origin=(0, 0, 0), xDir=Vector(-1, 0, 0)):
-        plane = Plane.named('back', origin)
+        plane = cls.named('back', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def left(cls, origin=(0, 0, 0), xDir=Vector(0, 0, 1)):
-        plane = Plane.named('left', origin)
+        plane = cls.named('left', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def right(cls, origin=(0, 0, 0), xDir=Vector(0, 0, -1)):
-        plane = Plane.named('right', origin)
+        plane = cls.named('right', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def top(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('top', origin)
+        plane = cls.named('top', origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def bottom(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('bottom', origin)
+        plane = cls.named('bottom', origin)
         plane._setPlaneDir(xDir)
         return plane
 
@@ -595,7 +595,7 @@ class Plane(object):
         newXdir = Vector(m.multiply(self.xDir.wrapped))
         newZdir = Vector(m.multiply(self.zDir.wrapped))
 
-        return Plane(self.origin, newXdir, newZdir)
+        return type(self)(self.origin, newXdir, newZdir)
 
     def rotateShapes(self, listOfShapes, rotationMatrix):
         """Rotate the listOfShapes by the supplied rotationMatrix
