@@ -239,7 +239,7 @@ class CQ(object):
         """
         if type(obj) == list:
             self.objects.extend(obj)
-        elif type(obj) == CQ or type(obj) == Workplane:
+        elif isinstance(obj, CQ):
             self.objects.extend(obj.objects)
         else:
             self.objects.append(obj)
@@ -2131,7 +2131,7 @@ class Workplane(CQ):
         """
 
         #first collect all of the items together
-        if type(toUnion) == CQ or type(toUnion) == Workplane:
+        if isinstance(toUnion, CQ):
             solids = toUnion.solids().vals()
             if len(solids) < 1:
                 raise ValueError("CQ object  must have at least one solid on the stack to union!")
