@@ -1,4 +1,4 @@
-from __future__ import unicode_literals 
+from __future__ import unicode_literals
 
 import cadquery
 
@@ -378,7 +378,7 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 %(visibleContent)s
        </g>
     </g>
-    <g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
+    <!-- <g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
         <line x1="30" y1="-30" x2="75" y2="-33" stroke-width="3" stroke="#000000" />
          <text x="80" y="-30" style="stroke:#000000">X </text>
 
@@ -387,11 +387,11 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
         <line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3" stroke="#000000" />
          <text x="65" y="-5" style="stroke:#000000">Z </text>
-        <!--
+         --><!--
             <line x1="0" y1="0" x2="%(unitScale)s" y2="0" stroke-width="3" />
             <text x="0" y="20" style="stroke:#000000">1  %(uom)s </text>
         -->
-    </g>
+    </g> -->
 </svg>
 """
 
