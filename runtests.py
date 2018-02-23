@@ -15,7 +15,6 @@ suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestCQSelectors.TestC
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestCadQuery.TestCadQuery))
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestExporters.TestExporters))
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestImporters.TestImporters))
-unittest.TextTestRunner().run(suite)
 
 if __name__ == '__main__':
     result = unittest.TextTestRunner().run(suite)
