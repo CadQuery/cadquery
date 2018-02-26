@@ -481,9 +481,10 @@ class CQ(object):
         toReturn = self._collectProperty(objType)
 
         if selector is not None:
-            if isinstance(selector, str) or isinstance(selector, str):
+            # if isinstance(selector, str) or isinstance(selector, str):
+            try:
                 selectorObj = selectors.StringSyntaxSelector(selector)
-            else:
+            except:
                 selectorObj = selector
             toReturn = selectorObj.filter(toReturn)
 
@@ -943,10 +944,11 @@ class Workplane(CQ):
 
         if inPlane.__class__.__name__ == 'Plane':
             tmpPlane = inPlane
-        elif isinstance(inPlane, str) or isinstance(inPlane, str):
-            tmpPlane = Plane.named(inPlane, origin)
         else:
-            tmpPlane = None
+            try:
+                tmpPlane = Plane.named(inPlane, origin)
+            except ValueError:
+                tmpPlane = None
 
         if tmpPlane is None:
             raise ValueError(
