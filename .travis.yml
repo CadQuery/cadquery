@@ -2,7 +2,7 @@ language: python
 
 matrix:
   include:
-    - python: 2.7 
+    - python: 2.7
     - python: 3.6
       env: FREECAD_LIB="$HOME/miniconda/envs/freecad_cq3/lib/"
 
@@ -31,7 +31,7 @@ install:
 
 script:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-    coverage run --source=cadquery ./runtests.py;
+    coverage run --source=cadquery --omit cq_directive.py ./runtests.py;
     travis-sphinx build --nowarn --source=doc;
   fi
 - python runtests.py
