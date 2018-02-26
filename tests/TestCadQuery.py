@@ -235,6 +235,42 @@ class TestCadQuery(BaseTest):
         self.assertEqual(type(r.val()), Solid)
         self.assertEqual(type(r.first().val()),Solid)
 
+    def testMirror(self):
+        box = Workplane("XY").box(1, 1, 5)
+        box2 = box.mirror()
+        box3 = box.mirror("XZ")
+        box4 = box.mirror("YZ")
+
+        # Box 2 (XY mirror)
+        startPoint2 = box2.faces("<Y").edges("<X").first().val().startPoint().toTuple()
+        endPoint2 = box2.faces("<Y").edges("<X").first().val().endPoint().toTuple()
+        self.assertEqual(-0.5, startPoint2[0])
+        self.assertEqual(-0.5, startPoint2[1])
+        self.assertEqual(2.5, startPoint2[2])
+        self.assertEqual(-0.5, endPoint2[0])
+        self.assertEqual(-0.5, endPoint2[1])
+        self.assertEqual(-2.5, endPoint2[2])
+
+        # Box 3 (XZ mirror)
+        startPoint3 = box3.faces("<Y").edges("<X").first().val().startPoint().toTuple()
+        endPoint3 = box3.faces("<Y").edges("<X").first().val().endPoint().toTuple()
+        self.assertEqual(-0.5, startPoint3[0])
+        self.assertEqual(-0.5, startPoint3[1])
+        self.assertEqual(-2.5, startPoint3[2])
+        self.assertEqual(-0.5, endPoint3[0])
+        self.assertEqual(-0.5, endPoint3[1])
+        self.assertEqual(2.5, endPoint3[2])
+
+        # Box 4 (YZ mirror)
+        startPoint4 = box4.faces("<Y").edges("<X").first().val().startPoint().toTuple()
+        endPoint4 = box4.faces("<Y").edges("<X").first().val().endPoint().toTuple()
+        self.assertEqual(-0.5, startPoint4[0])
+        self.assertEqual(-0.5, startPoint4[1])
+        self.assertEqual(-2.5, startPoint4[2])
+        self.assertEqual(-0.5, endPoint4[0])
+        self.assertEqual(-0.5, endPoint4[1])
+        self.assertEqual(2.5, endPoint4[2])
+
     def testRotate(self):
         """Test solid rotation at the CQ object level."""
         box = Workplane("XY").box(1, 1, 5)

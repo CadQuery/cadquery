@@ -104,10 +104,47 @@ class TestCadObjects(BaseTest):
         self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
 
     def testCenterOfBoundBox(self):
-        pass
+        """
+        Tests whether or not a proper geometric center can be found for an object
+        """
+        def cylinders(self, radius, height):
+            def _cyl(pnt):
+                # Inner function to build a cylinder
+                return Solid.makeCylinder(radius, height, pnt)
+
+            # Combine all the cylinders into a single compound
+            r = self.eachpoint(_cyl, True).combineSolids()
+
+            return r
+
+        Workplane.cyl = cylinders
+
+        # One solid in the compound
+        s = Workplane("XY").pushPoints([(0.0, 0.0, 0.0)]).cyl(0.25, 0.5)
+        self.assertEqual(1, len(s.val().Solids()))
+        self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().CenterOfBoundBox().toTuple(), 2)
 
     def testCombinedCenterOfBoundBox(self):
-        pass
+        """
+        Tests whether or not a proper geometric center can be found for multiple
+        objects in a compound.
+        """
+        def cylinders(self, radius, height):
+            def _cyl(pnt):
+                # Inner function to build a cylinder
+                return Solid.makeCylinder(radius, height, pnt)
+
+            # Combine all the cylinders into a single compound
+            r = self.eachpoint(_cyl, True).combineSolids()
+
+            return r
+
+        Workplane.cyl = cylinders
+
+        # Multiple solids in the compound
+        s = Workplane("XY").rect(2.0, 3.0, forConstruction=True).vertices().cyl(0.25, 0.5)
+        self.assertEqual(4, len(s.val().Solids()))
+        self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().CenterOfBoundBox().toTuple(), 2)
 
     def testCompoundCenter(self):
         """
