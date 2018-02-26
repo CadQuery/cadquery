@@ -96,7 +96,7 @@ def readAndDeleteFile(fileName):
         read data from file provided, and delete it when done
         return the contents as a string
     """
-    res = ""
+    res = ''
     with open(fileName,'r') as f:
         res = f.read()
 
@@ -171,20 +171,20 @@ class AmfWriter(object):
 class JsonMesh(object):
     def __init__(self):
 
-        self.vertices = [];
-        self.faces = [];
-        self.nVertices = 0;
-        self.nFaces = 0;
+        self.vertices = []
+        self.faces = []
+        self.nVertices = 0
+        self.nFaces = 0
 
-    def addVertex(self,x,y,z):
-        self.nVertices += 1;
-        self.vertices.extend([x,y,z]);
+    def addVertex(self, x, y, z):
+        self.nVertices += 1
+        self.vertices.extend([x,y,z])
 
     #add triangle composed of the three provided vertex indices
-    def addTriangleFace(self, i,j,k):
+    def addTriangleFace(self, i, j, k):
         #first position means justa simple triangle
-        self.nFaces += 1;
-        self.faces.extend([0,int(i),int(j),int(k)]);
+        self.nFaces += 1
+        self.faces.extend([0, int(i), int(j), int(k)])
 
     """
         Get a json model from this model.
@@ -195,7 +195,7 @@ class JsonMesh(object):
             'vertices' : str(self.vertices),
             'faces' : str(self.faces),
             'nVertices': self.nVertices,
-            'nFaces' : self.nFaces
+            'nFaces': self.nFaces,
         };
 
 
@@ -283,16 +283,16 @@ def getSVG(shape,opts=None):
 
     svg =  SVG_TEMPLATE % (
         {
-            "unitScale" : str(unitScale),
-            "strokeWidth" : str(1.0/unitScale),
-            "hiddenContent" :  hiddenContent ,
-            "visibleContent" :visibleContent,
-            "xTranslate" : str(xTranslate),
-            "yTranslate" : str(yTranslate),
-            "width" : str(width),
-            "height" : str(height),
-            "textboxY" :str(height - 30),
-            "uom" : str(uom)
+            'unitScale': str(unitScale),
+            'strokeWidth': str(1.0 / unitScale),
+            'hiddenContent':  hiddenContent ,
+            'visibleContent': visibleContent,
+            'xTranslate': str(xTranslate),
+            'yTranslate': str(yTranslate),
+            'width': str(width),
+            'height': str(height),
+            'textboxY': str(height - 30),
+            'uom': str(uom)
         }
     )
     #svg = SVG_TEMPLATE % (
