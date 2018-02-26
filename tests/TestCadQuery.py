@@ -1324,6 +1324,70 @@ class TestCadQuery(BaseTest):
             line(-10,0).close().extrude(10,clean=False).clean()
         self.assertEqual(6, s.faces().size())
 
+    def testPlanes(self):
+        """
+        Test other planes other than the normal ones (XY, YZ)
+        """
+        # ZX plane
+        s = Workplane(Plane.ZX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # YX plane
+        s = Workplane(Plane.YX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # YX plane
+        s = Workplane(Plane.YX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # ZY plane
+        s = Workplane(Plane.ZY())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # front plane
+        s = Workplane(Plane.front())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # back plane
+        s = Workplane(Plane.back())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # left plane
+        s = Workplane(Plane.left())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # right plane
+        s = Workplane(Plane.right())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # top plane
+        s = Workplane(Plane.top())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # bottom plane
+        s = Workplane(Plane.bottom())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
     def testCup(self):
 
         """
