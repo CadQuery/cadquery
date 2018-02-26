@@ -235,6 +235,14 @@ class TestCadQuery(BaseTest):
         self.assertEqual(type(r.val()), Solid)
         self.assertEqual(type(r.first().val()),Solid)
 
+    def testMirror(self):
+        box = Workplane("XY").box(1, 1, 5)
+        box2 = box.mirror()
+        box3 = box.mirror("XZ")
+        box3 = box.mirror("YZ")
+
+        # self.assertTupleAlmostEquals((1.0, 2.0, 3.0), e2.Center().toTuple(), 3)
+
     def testRotate(self):
         """Test solid rotation at the CQ object level."""
         box = Workplane("XY").box(1, 1, 5)
