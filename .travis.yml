@@ -31,7 +31,7 @@ install:
 
 script:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-    coverage run --source=cadquery --omit=cq_directive.py ./runtests.py;
+    coverage run --source=cadquery --omit=cadquery/cq_directive.py ./runtests.py;
     travis-sphinx build --nowarn --source=doc;
   fi
 - python runtests.py
