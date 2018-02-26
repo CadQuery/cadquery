@@ -122,7 +122,7 @@ class TestCadObjects(BaseTest):
         # One solid in the compound
         s = Workplane("XY").pushPoints([(0.0, 0.0, 0.0)]).cyl(0.25, 0.5)
         self.assertEqual(1, len(s.val().Solids()))
-        self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().Center().toTuple(), 3)
+        self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().CenterOfBoundBox().toTuple(), 2)
 
     def testCombinedCenterOfBoundBox(self):
         """
@@ -144,7 +144,7 @@ class TestCadObjects(BaseTest):
         # Multiple solids in the compound
         s = Workplane("XY").rect(2.0, 3.0, forConstruction=True).vertices().cyl(0.25, 0.5)
         self.assertEqual(4, len(s.val().Solids()))
-        self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().Center().toTuple(), 3)
+        self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().CenterOfBoundBox().toTuple(), 2)
 
     def testCompoundCenter(self):
         """
