@@ -236,7 +236,7 @@ def getPaths(freeCadSVG):
         return ([],[])
 
 
-def getSVG(shape, view_vector, opts=None):
+def getSVG(shape, view_vectorr=(-1.75,1.1,5), opts=None):
     """
         Export a shape to SVG
     """
