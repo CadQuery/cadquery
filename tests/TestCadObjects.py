@@ -72,9 +72,61 @@ class TestCadObjects(BaseTest):
         """
             Tests basic vertex functions
         """
+        # Tests casting a vertex
+        vc = Vertex.cast(Part.Vertex(1, 1, 1))
+        self.assertEqual(1, vc.X)
+        self.assertEqual(Vector, type(vc.Center()))
+
+        # Tests vertex instantiation
         v = Vertex(Part.Vertex(1, 1, 1))
         self.assertEqual(1, v.X)
         self.assertEqual(Vector, type(v.Center()))
+
+    def testFace(self):
+        """
+        Test basic face functions, cast and instantiation
+        """
+        edge1 = Part.makeLine((0, 0, 0), (0, 10, 0))
+        edge2 = Part.makeLine((0, 10, 0), (10, 10, 0))
+        edge3 = Part.makeLine((10, 10, 0), (10, 0, 0))
+        edge4 = Part.makeLine((10, 0, 0), (0, 0, 0))
+        wire1 = Part.Wire([edge1,edge2,edge3,edge4])
+        face1 = Part.Face(wire1)
+
+        mplanec = Face.cast(face1)
+        mplane = Face(face1)
+
+        self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
+
+    def testShapeProps(self):
+        """
+        Tests miscellaneous properties of the shape object
+        """
+        e = Shape(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
+
+        # Geometry type
+        self.assertEqual(e.geomType(), 'Edge')
+
+        # Dynamic type checking
+        self.assertTrue(e.isType(e, 'Edge'))
+
+        # Checking null objects
+        self.assertFalse(e.isNull())
+
+        # Checking for sameness
+        self.assertTrue(e.isSame(e))
+
+        # Checking for equality
+        self.assertTrue(e.isEqual(e))
+
+        # Checking for shape validity
+        self.assertTrue(e.isValid())
+
+        # Testing whether shape is closed
+        self.assertTrue(e.Closed())
+
+        # Getting the area of the circle
+        # self.assertAlmostEqual(12.566, e.Area(), 3)
 
     def testBasicBoundingBox(self):
         v = Vertex(Part.Vertex(1, 1, 1))
@@ -145,6 +197,16 @@ class TestCadObjects(BaseTest):
         s = Workplane("XY").rect(2.0, 3.0, forConstruction=True).vertices().cyl(0.25, 0.5)
         self.assertEqual(4, len(s.val().Solids()))
         self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().CenterOfBoundBox().toTuple(), 2)
+
+    def testCenter(self):
+        """
+        Tests finding the center of shapes and solids
+        """
+        circle = Workplane("XY").circle(10.0)
+        cylinder = circle.extrude(10.0)
+
+        self.assertTupleAlmostEquals((0.0, 0.0, 0.0), circle.val().Center().toTuple(), 3)
+        self.assertTupleAlmostEquals((0.0, 0.0, 5.0), cylinder.val().Center().toTuple(), 3)
 
     def testCompoundCenter(self):
         """
@@ -238,6 +300,13 @@ class TestCadObjects(BaseTest):
     def testVectorNegative(self):
         v = Vector(1, -2, 3)
         self.assertEqual(-v, Vector(-1, 2, -3))
+
+    def testShapeInit(self):
+        """
+        Tests whether a Shape object can be instantiated without
+        throwing an error.
+        """
+        e = Shape(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
 
     def testPlaneEqual(self):
         # default orientation
