@@ -96,7 +96,7 @@ class TestCadObjects(BaseTest):
         mplanec = Face.cast(face1)
         mplane = Face(face1)
 
-        #self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
+        self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
 
     def testShapeProps(self):
         """
