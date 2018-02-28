@@ -92,6 +92,7 @@ class TestCadObjects(BaseTest):
         edge4 = Part.makeLine((10, 0, 0), (0, 0, 0))
         wire1 = Part.Wire([edge1,edge2,edge3,edge4])
         face1 = Part.Face(wire1)
+        face1.normalAt(0.0, 0.0)
 
         mplanec = Face.cast(face1)
         mplane = Face(face1)
