@@ -306,7 +306,13 @@ class Shape(object):
         return [Solid(i) for i in self.wrapped.Solids]
 
     def Area(self):
-        return self.wrapped.Area
+        """
+        Returns the area of a shape, but only if it is a face
+        """
+        if self.wrapped.ShapeType == 'Face':
+          return self.wrapped.Area
+        else:
+          raise ValueError("shape type must be 'Face' to calculate the area")
 
     def Length(self):
         return self.wrapped.Length

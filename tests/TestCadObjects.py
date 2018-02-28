@@ -92,12 +92,11 @@ class TestCadObjects(BaseTest):
         edge4 = Part.makeLine((10, 0, 0), (0, 0, 0))
         wire1 = Part.Wire([edge1,edge2,edge3,edge4])
         face1 = Part.Face(wire1)
-        face1.normalAt(0.0, 0.0)
 
         mplanec = Face.cast(face1)
         mplane = Face(face1)
 
-        self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
+        self.assertTupleAlmostEquals((5.0, 5.0, 0.0), mplane.Center().toTuple(), 3)
 
     def testShapeProps(self):
         """
@@ -126,8 +125,13 @@ class TestCadObjects(BaseTest):
         # Testing whether shape is closed
         self.assertTrue(e.Closed())
 
-        # Getting the area of the circle
-        # self.assertAlmostEqual(12.566, e.Area(), 3)
+        # Trying to get the area of the circular edge
+        with self.assertRaises(ValueError):
+            e.Area()
+
+        # Getting the area of the square face
+        mplane = Face.makePlane(10.0, 10.0)
+        self.assertAlmostEqual(100.0, mplane.Area(), 3)
 
     def testBasicBoundingBox(self):
         v = Vertex(Part.Vertex(1, 1, 1))
