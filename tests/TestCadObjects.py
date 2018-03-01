@@ -109,6 +109,7 @@ class TestCadObjects(BaseTest):
 
         # Dynamic type checking
         self.assertTrue(e.isType(e, 'Edge'))
+        self.assertFalse(e.isType(None, 'Edge'))
 
         # Checking null objects
         self.assertFalse(e.isNull())
@@ -132,6 +133,10 @@ class TestCadObjects(BaseTest):
         # Getting the area of the square face
         mplane = Face.makePlane(10.0, 10.0)
         self.assertAlmostEqual(100.0, mplane.Area(), 3)
+
+        # Getting the center of a solid
+        s = Solid.makeCylinder(10.0, 10.0)
+        self.assertTupleAlmostEquals((0.0, 0.0, 5.0), s.Center().toTuple(), 3)
 
     def testBasicBoundingBox(self):
         v = Vertex(Part.Vertex(1, 1, 1))
