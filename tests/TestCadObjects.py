@@ -364,6 +364,39 @@ class TestCadObjects(BaseTest):
 
         self.assertTupleAlmostEquals((1.0, 2.0, 4.0), e2.Center().toTuple(), 3)
 
+    def testScale(self):
+        """
+        Tests scaling a shape and whether the dimensions are correct afterwards
+        """
+        e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
+        e2 = e.scale(0.5)
+
+        self.assertAlmostEquals(2.0, e2.BoundingBox().xlen)
+        self.assertAlmostEquals(2.0, e2.BoundingBox().ylen)
+
+    def testCopy(self):
+        """
+        Tests making a copy of a shape object and whether the new one has the
+        same properties as the original.
+        """
+        e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
+        e2 = e.copy()
+
+        self.assertEquals(e.BoundingBox().xlen, e2.BoundingBox().xlen)
+        self.assertEquals(e.BoundingBox().ylen, e2.BoundingBox().ylen)
+
+    def testRuledSurface(self):
+        """
+        Tests making a ruled surface from two edges/wires.
+        """
+        edge1 = Shape(Part.makeLine((0, 0, 5), (0, 10, 5)))
+        edge2 = Shape(Part.makeLine((5, 5, 0), (10, 10, 0)))
+
+        surf1 = Face.makeRuledSurface(edge1, edge2)
+
+        self.assertEquals(surf1.ShapeType(), 'Face')
+        self.assertTrue(surf1.isValid())
+
     def testVertices(self):
         e = Shape.cast(Part.makeLine((0, 0, 0), (1, 1, 0)))
         self.assertEqual(2, len(e.Vertices()))

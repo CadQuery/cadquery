@@ -656,7 +656,7 @@ class Face(Shape):
         Create a ruled surface out of two edges or wires. If wires are used then
         these must have the same
         """
-        return Shape.cast(FreeCADPart.makeRuledSurface(edgeOrWire1.obj, edgeOrWire2.obj, dist))
+        return Shape.cast(FreeCADPart.makeRuledSurface(edgeOrWire1.wrapped, edgeOrWire2.wrapped))
 
     def cut(self, faceToCut):
         "Remove a face from another one"
