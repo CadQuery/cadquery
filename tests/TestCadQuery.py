@@ -87,7 +87,7 @@ class TestCadQuery(BaseTest):
         with suppress_stdout_stderr():
             shape.exportSvg(os.path.join(OUTDIR,self._testMethodName + ".svg"))
             shape.val().exportStep(os.path.join(OUTDIR,self._testMethodName + ".step"))
-            # shape.val().exportStl(os.path.join(OUTDIR,self._testMethodName + ".stl"))
+            shape.val().exportStl(os.path.join(OUTDIR,self._testMethodName + ".stl"))
 
     def testToFreeCAD(self):
         """
