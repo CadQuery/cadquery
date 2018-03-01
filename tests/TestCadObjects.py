@@ -371,8 +371,8 @@ class TestCadObjects(BaseTest):
         e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
         e2 = e.scale(0.5)
 
-        self.assertAlmostEquals(2.0, e2.BoundingBox().xlen)
-        self.assertAlmostEquals(2.0, e2.BoundingBox().ylen)
+        self.assertAlmostEquals(2.0, e2.BoundingBox().xlen, 3)
+        self.assertAlmostEquals(2.0, e2.BoundingBox().ylen, 3)
 
     def testCopy(self):
         """
