@@ -139,8 +139,8 @@ class ShapeResult(object):
     """
     def __init__(self):
         self.shape = None
-        self.options = None  
-      
+        self.options = None
+
 class BuildResult(object):
     """
     The result of executing a CadQuery script.
@@ -253,7 +253,6 @@ class InputParameter:
         return p
 
     def set_value(self, new_value):
-
         if len(self.valid_values) > 0 and new_value not in self.valid_values:
             raise InvalidParameterError(
                 "Cannot set value '{0:s}' for parameter '{1:s}': not a valid value. Valid values are {2:s} "
@@ -277,9 +276,15 @@ class InputParameter:
             self.ast_node.s = str(new_value)
         elif self.varType == BooleanParameterType:
             if new_value:
-                self.ast_node.id = 'True'
+                if hasattr(ast, 'NameConstant'):
+                    self.ast_node.value = True
+                else:
+                    self.ast_node.id = 'True'
             else:
-                self.ast_node.id = 'False'
+                if hasattr(ast, 'NameConstant'):
+                    self.ast_node.value = False
+                else:
+                    self.ast_node.id = 'False'
         else:
             raise ValueError("Unknown Type of var: ", str(self.varType))
 
@@ -449,13 +454,20 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             elif type(value_node) == ast.Str:
                 self.cqModel.add_script_parameter(
                     InputParameter.create(value_node, var_name, StringParameterType, value_node.s))
-            elif type(value_node == ast.Name):
+            elif type(value_node) == ast.Name:
                 if value_node.id == 'True':
                     self.cqModel.add_script_parameter(
                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
                 elif value_node.id == 'False':
                     self.cqModel.add_script_parameter(
+                        InputParameter.create(value_node, var_name, BooleanParameterType, False))
+            elif hasattr(ast, 'NameConstant') and type(value_node) == ast.NameConstant:
+                if value_node.value == True:
+                    self.cqModel.add_script_parameter(
                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
+                else:
+                    self.cqModel.add_script_parameter(
+                        InputParameter.create(value_node, var_name, BooleanParameterType, False))
         except:
             print("Unable to handle assignment for variable '%s'" % var_name)
             pass
@@ -469,7 +481,12 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             if isinstance(left_side,ast.Attribute):
                 return
 
-            if type(node.value) in [ast.Num, ast.Str, ast.Name]:
+            # Handle the NamedConstant type that is only present in Python 3
+            astTypes = [ast.Num, ast.Str, ast.Name]
+            if hasattr(ast, 'NameConstant'):
+                astTypes.append(ast.NameConstant)
+
+            if type(node.value) in astTypes:
                 self.handle_assignment(left_side.id, node.value)
             elif type(node.value) == ast.Tuple:
                 # we have a multi-value assignment

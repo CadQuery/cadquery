@@ -1,6 +1,8 @@
 """
     Tests basic workplane functionality
 """
+#from __future__ import unicode_literals
+
 #core modules
 import io
 
@@ -18,13 +20,20 @@ class TestExporters(BaseTest):
             returns the result in case the case wants to do more checks also
         """
         p = Workplane("XY").box(1,2,3)
-        s = io.StringIO()
-        exporters.exportShape(p,eType,s,0.1)
 
-        result = s.getvalue()
-        #print result
-        for q in stringsToFind:
-            self.assertTrue(result.find(q) > -1 )
+        if eType == exporters.ExportTypes.AMF:
+            s = io.BytesIO()
+            exporters.exportShape(p,eType,s,0.1)
+            result = s.getvalue()
+            for q in stringsToFind:
+                self.assertTrue(result.decode().find(q) > -1 )
+        else:
+            s = io.StringIO()
+            exporters.exportShape(p,eType,s,0.1)
+            result = s.getvalue()
+            for q in stringsToFind:
+                self.assertTrue(q in result)
+
         return result
 
     def testSTL(self):

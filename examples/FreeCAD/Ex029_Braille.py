@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-
+from __future__ import division
 
 from collections import namedtuple
 
 import cadquery as cq
 
 # text_lines is a list of text lines.
-# FreeCAD in braille (converted with braille-converter:
+# "CadQuery" in braille (converted with braille-converter:
 # https://github.com/jpaugh/braille-converter.git).
-text_lines = ['⠠ ⠋ ⠗ ⠑ ⠑ ⠠ ⠉ ⠠ ⠁ ⠠ ⠙']
+text_lines = [u'⠠ ⠉ ⠁ ⠙ ⠠ ⠟ ⠥ ⠻ ⠽']
 # See http://www.tiresias.org/research/reports/braille_cell.htm for examples
 # of braille cell geometry.
 horizontal_interdot = 2.5
@@ -40,16 +40,18 @@ class Point(object):
         return Point(self.x + other.x, self.y + other.y)
 
     def __len__(self):
+        """Necessary to have it accepted as input to CadQuery"""
         return 2
 
     def __getitem__(self, index):
+        """Necessary to have it accepted as input to CadQuery"""
         return (self.x, self.y)[index]
 
     def __str__(self):
         return '({}, {})'.format(self.x, self.y)
 
 
-def brailleToPoints(text, cell_geometry):
+def braille_to_points(text, cell_geometry):
     # Unicode bit pattern (cf. https://en.wikipedia.org/wiki/Braille_Patterns).
     mask1 = 0b00000001
     mask2 = 0b00000010
@@ -75,7 +77,7 @@ def brailleToPoints(text, cell_geometry):
     pos = (pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8)
 
     # Braille blank pattern (u'\u2800').
-    blank = '⠀'
+    blank = u'⠀'
     points = []
     # Position of dot1 along the x-axis (horizontal).
     character_origin = 0
@@ -108,8 +110,8 @@ def get_plate_width(text_lines, cell_geometry):
 def get_cylinder_radius(cell_geometry):
     """Return the radius the cylinder should have
 
-    The cylinder have the same radius as the half-sphere make the dots (the
-    hidden and the shown part of the dots).
+    The cylinder have the same radius as the half-sphere that make the dots
+    (the hidden and the shown part of the dots).
     The radius is such that the spherical cap with diameter
     cell_geometry.dot_diameter has a height of cell_geometry.dot_height.
     """
@@ -138,7 +140,7 @@ def make_embossed_plate(text_lines, cell_geometry):
     """Make an embossed plate with dots as spherical caps
 
     Method:
-        - make a thin plate on which sit cylinders
+        - make a thin plate, called base, on which sit cylinders
         - fillet the upper edge of the cylinders so to get pseudo half-spheres
         - make the union with a thicker plate so that only the sphere caps stay
           "visible".
@@ -151,7 +153,7 @@ def make_embossed_plate(text_lines, cell_geometry):
     y = base_height - 3 * cell_geometry.vertical_interdot
     line_start_pos = Point(cell_geometry.horizontal_interdot, y)
     for text in text_lines:
-        dots = brailleToPoints(text, cell_geometry)
+        dots = braille_to_points(text, cell_geometry)
         dots = [p + line_start_pos for p in dots]
         dot_pos += dots
         line_start_pos += Point(0, -cell_geometry.interline)

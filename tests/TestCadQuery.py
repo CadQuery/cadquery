@@ -108,7 +108,6 @@ class TestCadQuery(BaseTest):
 
         # Make sure that a couple of sections from the SVG output make sense
         self.assertTrue(r_str.index('path d=" M 2.35965 -2.27987 L 4.0114 -3.23936 "') > 0)
-        self.assertTrue(r_str.index('line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3"') > 0)
 
     def testCubePlugin(self):
         """
@@ -235,6 +234,42 @@ class TestCadQuery(BaseTest):
         self.assertEqual(7,r.faces().size() )
         self.assertEqual(type(r.val()), Solid)
         self.assertEqual(type(r.first().val()),Solid)
+
+    def testMirror(self):
+        box = Workplane("XY").box(1, 1, 5)
+        box2 = box.mirror()
+        box3 = box.mirror("XZ")
+        box4 = box.mirror("YZ")
+
+        # Box 2 (XY mirror)
+        startPoint2 = box2.faces("<Y").edges("<X").first().val().startPoint().toTuple()
+        endPoint2 = box2.faces("<Y").edges("<X").first().val().endPoint().toTuple()
+        self.assertEqual(-0.5, startPoint2[0])
+        self.assertEqual(-0.5, startPoint2[1])
+        self.assertEqual(2.5, startPoint2[2])
+        self.assertEqual(-0.5, endPoint2[0])
+        self.assertEqual(-0.5, endPoint2[1])
+        self.assertEqual(-2.5, endPoint2[2])
+
+        # Box 3 (XZ mirror)
+        startPoint3 = box3.faces("<Y").edges("<X").first().val().startPoint().toTuple()
+        endPoint3 = box3.faces("<Y").edges("<X").first().val().endPoint().toTuple()
+        self.assertEqual(-0.5, startPoint3[0])
+        self.assertEqual(-0.5, startPoint3[1])
+        self.assertEqual(-2.5, startPoint3[2])
+        self.assertEqual(-0.5, endPoint3[0])
+        self.assertEqual(-0.5, endPoint3[1])
+        self.assertEqual(2.5, endPoint3[2])
+
+        # Box 4 (YZ mirror)
+        startPoint4 = box4.faces("<Y").edges("<X").first().val().startPoint().toTuple()
+        endPoint4 = box4.faces("<Y").edges("<X").first().val().endPoint().toTuple()
+        self.assertEqual(-0.5, startPoint4[0])
+        self.assertEqual(-0.5, startPoint4[1])
+        self.assertEqual(-2.5, startPoint4[2])
+        self.assertEqual(-0.5, endPoint4[0])
+        self.assertEqual(-0.5, endPoint4[1])
+        self.assertEqual(2.5, endPoint4[2])
 
     def testRotate(self):
         """Test solid rotation at the CQ object level."""
@@ -1288,6 +1323,80 @@ class TestCadQuery(BaseTest):
         s = Workplane("XY").moveTo(0,0).line(5,0).line(5,0).line(0,10).\
             line(-10,0).close().extrude(10,clean=False).clean()
         self.assertEqual(6, s.faces().size())
+
+    def testPlanes(self):
+        """
+        Test other planes other than the normal ones (XY, YZ)
+        """
+        # ZX plane
+        s = Workplane(Plane.ZX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # YX plane
+        s = Workplane(Plane.YX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # YX plane
+        s = Workplane(Plane.YX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # ZY plane
+        s = Workplane(Plane.ZY())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # front plane
+        s = Workplane(Plane.front())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # back plane
+        s = Workplane(Plane.back())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # left plane
+        s = Workplane(Plane.left())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # right plane
+        s = Workplane(Plane.right())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # top plane
+        s = Workplane(Plane.top())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # bottom plane
+        s = Workplane(Plane.bottom())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+    def testIsIndide(self):
+        """
+        Testing if one box is inside of another.
+        """
+        box1 = Workplane(Plane.XY()).box(10, 10, 10)
+        box2 = Workplane(Plane.XY()).box(5, 5, 5)
+
+        self.assertFalse(box2.val().BoundingBox().isInside(box1.val().BoundingBox()))
+        self.assertTrue(box1.val().BoundingBox().isInside(box2.val().BoundingBox()))
 
     def testCup(self):
 

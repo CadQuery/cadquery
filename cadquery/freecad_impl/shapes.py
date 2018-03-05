@@ -165,7 +165,7 @@ class Shape(object):
             if the provide object is not a shape at all
         """
         if hasattr(obj, 'ShapeType'):
-            return obj.ShapeType == strType
+            return obj.ShapeType() == strType
         else:
             return False
 

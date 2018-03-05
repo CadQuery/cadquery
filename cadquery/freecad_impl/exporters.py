@@ -1,4 +1,4 @@
-from __future__ import unicode_literals 
+from __future__ import unicode_literals
 
 import cadquery
 
@@ -84,11 +84,11 @@ def exportShape(shape,exportType,fileLike,tolerance=0.1):
             if exportType == ExportTypes.STEP:
                 shape.exportStep(outFileName)
             elif exportType == ExportTypes.STL:
-                shape.wrapped.exportStl(outFileName)
+                shape.wrapped.exportStl(outFileName,tolerance)
             else:
                 raise ValueError("No idea how i got here")
 
-        res = readAndDeleteFile(outFileName)
+        res = '{}'.format(readAndDeleteFile(outFileName))
         fileLike.write(res)
 
 def readAndDeleteFile(fileName):
@@ -96,7 +96,7 @@ def readAndDeleteFile(fileName):
         read data from file provided, and delete it when done
         return the contents as a string
     """
-    res = ""
+    res = ''
     with open(fileName,'r') as f:
         res = f.read()
 
@@ -161,7 +161,7 @@ class AmfWriter(object):
             v3 = ET.SubElement(triangle,'v3')
             v3.text = str(t[2])
 
-        ET.ElementTree(amf).write(outFile,encoding="unicode",xml_declaration=True)
+        ET.ElementTree(amf).write(outFile,xml_declaration=True)
 
 """
     Objects that represent
@@ -171,20 +171,20 @@ class AmfWriter(object):
 class JsonMesh(object):
     def __init__(self):
 
-        self.vertices = [];
-        self.faces = [];
-        self.nVertices = 0;
-        self.nFaces = 0;
+        self.vertices = []
+        self.faces = []
+        self.nVertices = 0
+        self.nFaces = 0
 
-    def addVertex(self,x,y,z):
-        self.nVertices += 1;
-        self.vertices.extend([x,y,z]);
+    def addVertex(self, x, y, z):
+        self.nVertices += 1
+        self.vertices.extend([x,y,z])
 
     #add triangle composed of the three provided vertex indices
-    def addTriangleFace(self, i,j,k):
+    def addTriangleFace(self, i, j, k):
         #first position means justa simple triangle
-        self.nFaces += 1;
-        self.faces.extend([0,int(i),int(j),int(k)]);
+        self.nFaces += 1
+        self.faces.extend([0, int(i), int(j), int(k)])
 
     """
         Get a json model from this model.
@@ -195,7 +195,7 @@ class JsonMesh(object):
             'vertices' : str(self.vertices),
             'faces' : str(self.faces),
             'nVertices': self.nVertices,
-            'nFaces' : self.nFaces
+            'nFaces': self.nFaces,
         };
 
 
@@ -283,16 +283,16 @@ def getSVG(shape, opts=None, view_vector=(-1.75, 1.1, 5.0)):
 
     svg =  SVG_TEMPLATE % (
         {
-            "unitScale" : str(unitScale),
-            "strokeWidth" : str(1.0/unitScale),
-            "hiddenContent" :  hiddenContent ,
-            "visibleContent" :visibleContent,
-            "xTranslate" : str(xTranslate),
-            "yTranslate" : str(yTranslate),
-            "width" : str(width),
-            "height" : str(height),
-            "textboxY" :str(height - 30),
-            "uom" : str(uom)
+            'unitScale': str(unitScale),
+            'strokeWidth': str(1.0 / unitScale),
+            'hiddenContent':  hiddenContent ,
+            'visibleContent': visibleContent,
+            'xTranslate': str(xTranslate),
+            'yTranslate': str(yTranslate),
+            'width': str(width),
+            'height': str(height),
+            'textboxY': str(height - 30),
+            'uom': str(uom)
         }
     )
     #svg = SVG_TEMPLATE % (
@@ -376,20 +376,6 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
        <g  stroke="rgb(0, 0, 0)" fill="none">
 %(visibleContent)s
        </g>
-    </g>
-    <g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
-        <line x1="30" y1="-30" x2="75" y2="-33" stroke-width="3" stroke="#000000" />
-         <text x="80" y="-30" style="stroke:#000000">X </text>
-
-        <line x1="30" y1="-30" x2="30" y2="-75" stroke-width="3" stroke="#000000" />
-         <text x="25" y="-85" style="stroke:#000000">Y </text>
-
-        <line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3" stroke="#000000" />
-         <text x="65" y="-5" style="stroke:#000000">Z </text>
-        <!--
-            <line x1="0" y1="0" x2="%(unitScale)s" y2="0" stroke-width="3" />
-            <text x="0" y="20" style="stroke:#000000">1  %(uom)s </text>
-        -->
     </g>
 </svg>
 """

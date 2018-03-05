@@ -8,7 +8,7 @@ import sys
 import os
 import urllib as urlreader
 import tempfile
-  
+
 class ImportTypes:
     STEP = "STEP"
 
@@ -34,10 +34,9 @@ def importStep(fileName):
     """
         Accepts a file name and loads the STEP file into a cadquery shape
         :param fileName: The path and name of the STEP file to be imported
-    """      
+    """
     #Now read and return the shape
     try:
-        #print fileName        
         rshape = Part.read(fileName)
 
         #Make sure that we extract all the solids
@@ -50,14 +49,20 @@ def importStep(fileName):
         raise ValueError("STEP File Could not be loaded")
 
 #Loads a STEP file from an URL into a CQ.Workplane object
-def importStepFromURL(url):    
+def importStepFromURL(url):
     #Now read and return the shape
     try:
-        webFile = urlreader.urlopen(url)
+        # Account for differences in urllib between Python 2 and 3
+        if hasattr(urlreader, "urlopen"):
+            webFile = urlreader.urlopen(url)
+        else:
+            import urllib.request
+            webFile = urllib.request.urlopen(url)
+
         tempFile = tempfile.NamedTemporaryFile(suffix='.step', delete=False)
         tempFile.write(webFile.read())
         webFile.close()
-        tempFile.close()  
+        tempFile.close()
 
         rshape = Part.read(tempFile.name)
 
