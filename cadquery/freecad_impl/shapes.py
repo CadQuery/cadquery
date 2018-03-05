@@ -107,15 +107,15 @@ class Shape(object):
     # TODO: all these should move into the exporters folder.
     # we dont need a bunch of exporting code stored in here!
     #
-    def exportStl(self, fileName):
-        self.wrapped.exportStl(fileName)
+    def exportStl(self, fileName, tolerance=0.1):
+        self.wrapped.exportStl(fileName, tolerance)
 
     def exportStep(self, fileName):
         self.wrapped.exportStep(fileName)
 
-    def exportShape(self, fileName, fileFormat):
+    def exportShape(self, fileName, fileFormat, tolerance=0.1):
         if fileFormat == ExportFormats.STL:
-            self.wrapped.exportStl(fileName)
+            self.wrapped.exportStl(fileName, tolerance)
         elif fileFormat == ExportFormats.BREP:
             self.wrapped.exportBrep(fileName)
         elif fileFormat == ExportFormats.STEP:
@@ -306,7 +306,13 @@ class Shape(object):
         return [Solid(i) for i in self.wrapped.Solids]
 
     def Area(self):
-        return self.wrapped.Area
+        """
+        Returns the area of a shape, but only if it is a face
+        """
+        if self.wrapped.ShapeType == 'Face':
+          return self.wrapped.Area
+        else:
+          raise ValueError("shape type must be 'Face' to calculate the area")
 
     def Length(self):
         return self.wrapped.Length
@@ -650,7 +656,7 @@ class Face(Shape):
         Create a ruled surface out of two edges or wires. If wires are used then
         these must have the same
         """
-        return Shape.cast(FreeCADPart.makeRuledSurface(edgeOrWire1.obj, edgeOrWire2.obj, dist))
+        return Shape.cast(FreeCADPart.makeRuledSurface(edgeOrWire1.wrapped, edgeOrWire2.wrapped))
 
     def cut(self, faceToCut):
         "Remove a face from another one"

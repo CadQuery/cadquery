@@ -96,7 +96,7 @@ class TestCadObjects(BaseTest):
         mplanec = Face.cast(face1)
         mplane = Face(face1)
 
-        #self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
+        self.assertTupleAlmostEquals((5.0, 5.0, 0.0), mplane.Center().toTuple(), 3)
 
     def testShapeProps(self):
         """
@@ -109,6 +109,7 @@ class TestCadObjects(BaseTest):
 
         # Dynamic type checking
         self.assertTrue(e.isType(e, 'Edge'))
+        self.assertFalse(e.isType(None, 'Edge'))
 
         # Checking null objects
         self.assertFalse(e.isNull())
@@ -125,8 +126,17 @@ class TestCadObjects(BaseTest):
         # Testing whether shape is closed
         self.assertTrue(e.Closed())
 
-        # Getting the area of the circle
-        # self.assertAlmostEqual(12.566, e.Area(), 3)
+        # Trying to get the area of the circular edge
+        with self.assertRaises(ValueError):
+            e.Area()
+
+        # Getting the area of the square face
+        mplane = Face.makePlane(10.0, 10.0)
+        self.assertAlmostEqual(100.0, mplane.Area(), 3)
+
+        # Getting the center of a solid
+        s = Solid.makeCylinder(10.0, 10.0)
+        self.assertTupleAlmostEquals((0.0, 0.0, 5.0), s.Center().toTuple(), 3)
 
     def testBasicBoundingBox(self):
         v = Vertex(Part.Vertex(1, 1, 1))
@@ -358,6 +368,39 @@ class TestCadObjects(BaseTest):
         e2 = e.translate(Vector(0, 0, 1))
 
         self.assertTupleAlmostEquals((1.0, 2.0, 4.0), e2.Center().toTuple(), 3)
+
+    def testScale(self):
+        """
+        Tests scaling a shape and whether the dimensions are correct afterwards
+        """
+        e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
+        e2 = e.scale(0.5)
+
+        self.assertAlmostEquals(2.0, e2.BoundingBox(tolerance=0.0001).xlen, 3)
+        self.assertAlmostEquals(2.0, e2.BoundingBox(tolerance=0.0001).ylen, 3)
+
+    def testCopy(self):
+        """
+        Tests making a copy of a shape object and whether the new one has the
+        same properties as the original.
+        """
+        e = Shape.cast(Part.makeCircle(2.0, FreeCAD.Base.Vector(1, 2, 3)))
+        e2 = e.copy()
+
+        self.assertEquals(e.BoundingBox().xlen, e2.BoundingBox().xlen)
+        self.assertEquals(e.BoundingBox().ylen, e2.BoundingBox().ylen)
+
+    def testRuledSurface(self):
+        """
+        Tests making a ruled surface from two edges/wires.
+        """
+        edge1 = Shape(Part.makeLine((0, 0, 5), (0, 10, 5)))
+        edge2 = Shape(Part.makeLine((5, 5, 0), (10, 10, 0)))
+
+        surf1 = Face.makeRuledSurface(edge1, edge2)
+
+        self.assertEquals(surf1.ShapeType(), 'Face')
+        self.assertTrue(surf1.isValid())
 
     def testVertices(self):
         e = Shape.cast(Part.makeLine((0, 0, 0), (1, 1, 0)))

@@ -81,12 +81,13 @@ class TestCadQuery(BaseTest):
     def saveModel(self, shape):
         """
             shape must be a CQ object
-            Save models in SVG and STEP format
+            Save models in SVG, STEP and STL format
         """
 
         with suppress_stdout_stderr():
             shape.exportSvg(os.path.join(OUTDIR,self._testMethodName + ".svg"))
             shape.val().exportStep(os.path.join(OUTDIR,self._testMethodName + ".step"))
+            shape.val().exportStl(os.path.join(OUTDIR,self._testMethodName + ".stl"))
 
     def testToFreeCAD(self):
         """
