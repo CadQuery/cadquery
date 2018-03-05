@@ -107,15 +107,15 @@ class Shape(object):
     # TODO: all these should move into the exporters folder.
     # we dont need a bunch of exporting code stored in here!
     #
-    def exportStl(self, fileName):
-        self.wrapped.exportStl(fileName)
+    def exportStl(self, fileName, tolerance=0.1):
+        self.wrapped.exportStl(fileName, tolerance)
 
     def exportStep(self, fileName):
         self.wrapped.exportStep(fileName)
 
-    def exportShape(self, fileName, fileFormat):
+    def exportShape(self, fileName, fileFormat, tolerance=0.1):
         if fileFormat == ExportFormats.STL:
-            self.wrapped.exportStl(fileName)
+            self.wrapped.exportStl(fileName, tolerance)
         elif fileFormat == ExportFormats.BREP:
             self.wrapped.exportBrep(fileName)
         elif fileFormat == ExportFormats.STEP:
