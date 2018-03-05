@@ -87,13 +87,7 @@ class TestCadQuery(BaseTest):
         with suppress_stdout_stderr():
             shape.exportSvg(os.path.join(OUTDIR,self._testMethodName + ".svg"))
             shape.val().exportStep(os.path.join(OUTDIR,self._testMethodName + ".step"))
-
-    def testSaveSTL(self):
-        shape = Workplane("XY").box(6.0,8.0,0.5).faces(">Z").rect(4.0,4.0,forConstruction=True).vertices()
-        shape = shape.makeCubes(1.0)
-        shape = shape.combineSolids()
-
-        shape.val().exportStl(os.path.join(OUTDIR,self._testMethodName + ".stl"))
+            shape.val().exportStl(os.path.join(OUTDIR,self._testMethodName + ".stl"))
 
     def testToFreeCAD(self):
         """
