@@ -240,7 +240,7 @@ def getSVG(shape, opts=None, view_vector=(-1.75, 1.1, 5.0)):
     """
         Export a shape to SVG
     """
-    print view_vector
+    
     d = {'width':800,'height':240,'marginLeft':200,'marginTop':20}
 
     if opts:
@@ -307,7 +307,7 @@ def exportSVG(shape, fileName, view_vector=(-1.75,1.1,5)):
         TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
         export a view of a part to svg
     """
-    svg = getSVG(shape.val().wrapped, view_vector)
+    svg = getSVG(shape.val().wrapped, opts=None, view_vector=view_vector)
     f = open(fileName,'w')
     f.write(svg)
     f.close()

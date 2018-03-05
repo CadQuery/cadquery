@@ -671,7 +671,7 @@ class CQ(object):
         """
         return self._selectObjects('Compounds', selector)
 
-    def toSvg(self, opts=None):
+    def toSvg(self, opts=None, view_vector=(-1.75,1.1,5)):
         """
         Returns svg text that represents the first item on the stack.
 
@@ -679,9 +679,12 @@ class CQ(object):
 
         :param opts: svg formatting options
         :type opts: dictionary, width and height
+
+        :param view_vector: camera's view direction vector
+        :type view_vector: tuple, (x, y, z)
         :return: a string that contains SVG that represents this item.
         """
-        return exporters.getSVG(self.val().wrapped, opts)
+        return exporters.getSVG(self.val().wrapped, opts=opts, view_vector=view_vector)
 
     def exportSvg(self, fileName, view_vector=(-1.75,1.1,5)):
         """
@@ -690,6 +693,9 @@ class CQ(object):
         For testing purposes mainly.
 
         :param fileName: the filename to export
+
+        :param view_vector: camera's view direction vector
+        :type view_vector: tuple, (x, y, z)
         :type fileName: String, absolute path to the file
         """
         exporters.exportSVG(self, fileName, view_vector)
