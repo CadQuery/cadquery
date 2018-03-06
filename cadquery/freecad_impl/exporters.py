@@ -236,11 +236,11 @@ def getPaths(freeCadSVG):
         return ([],[])
 
 
-def getSVG(shape,opts=None):
+def getSVG(shape, opts=None, view_vector=(-1.75, 1.1, 5.0)):
     """
         Export a shape to SVG
     """
-
+    
     d = {'width':800,'height':240,'marginLeft':200,'marginTop':20}
 
     if opts:
@@ -255,7 +255,7 @@ def getSVG(shape,opts=None):
     marginTop=float(d['marginTop'])
 
     #TODO:  provide option to give 3 views
-    viewVector = FreeCAD.Base.Vector(-1.75,1.1,5)
+    viewVector = FreeCAD.Base.Vector(view_vector)
     (visibleG0,visibleG1,hiddenG0,hiddenG1) = Drawing.project(shape,viewVector)
 
     (hiddenPaths,visiblePaths) = getPaths(Drawing.projectToSVG(shape,viewVector,"ShowHiddenLines")) #this param is totally undocumented!
@@ -301,14 +301,13 @@ def getSVG(shape,opts=None):
     return svg
 
 
-def exportSVG(shape, fileName):
+def exportSVG(shape, fileName, view_vector=(-1.75,1.1,5)):
     """
         accept a cadquery shape, and export it to the provided file
         TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
         export a view of a part to svg
     """
-
-    svg = getSVG(shape.val().wrapped)
+    svg = getSVG(shape.val().wrapped, opts=None, view_vector=view_vector)
     f = open(fileName,'w')
     f.write(svg)
     f.close()
