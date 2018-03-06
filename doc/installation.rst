@@ -47,12 +47,8 @@ If you prefer to have a GUI available, your best option is to use
 Simply extract cadquery-freecad-module into your FreeCAD installation. You'll end up
 with a cadquery workbench that allows you to interactively run scripts, and then see the results in the FreeCAD GUI
 
-Zero Step  Install
+Zero Step Install
 -------------------------------------------------
 
 If you would like to use cadquery with no installation all, you can
-use `ParametricParts.com <https://www.parametricparts.com>`_, a web-based platform that runs cadquery scripts
-
-It is free, and allows running and viewing cadquery scripts in your web browser or mobile phone
-
-
+use mybinder to `launch a Jupyter Notebook Server <https://mybinder.org/v2/gh/RustyVermeer/tryCQ/master>`_ pre-configured to run CadQuery.

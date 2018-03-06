@@ -3,7 +3,6 @@
 The CadQuery Gateway Interface
 ====================================
 
-
 CadQuery is first and foremost designed as a library, which can be used as a part of any project.
 In this context, there is no need for a standard script format or gateway api.
 
@@ -19,11 +18,9 @@ Today, three execution environments exist:
    inside of the FreeCAD IDE, and displays objects in the display window
  *  the cq-directive, which is used to execute scripts inside of sphinx-doc,
     producing documented examples that include both a script and an SVG representation of the object that results
- * `ParametricParts.com <https://www.parametricparts.com>`_, which provides a web-based way to prompt user input for
-    variables, and then display the result output in a web page.
+ * `Jupyter Notebooks <https://mybinder.org/v2/gh/RustyVermeer/tryCQ/master>`_, which provide a web-based way to build, view, and export scripts.
 
 The CQGI is distributed with cadquery, and standardizes the interface between execution environments and cadquery scripts.
-
 
 The Script Side
 -----------------

@@ -1,3 +1,7 @@
+<p align="center">
+   <img src="http://dcowden.github.io/cadquery/_static/cadquery_logo_dark.svg" width="100"/>
+</p>
+
 What is a CadQuery?
 ========================================
 
@@ -17,9 +21,46 @@ CadQuery has several goals:
 
 Using CadQuery, you can write short, simple scripts that produce high quality CAD models.  It is easy to make many different objects using a single script that can be customized.
 
+Full Documentation and a Welcoming Community
+============================
+You can find the full cadquery documentation at http://dcowden.github.io/cadquery
+
+We also have a Google Group to make it easy to get help from other CadQuery users. We want you to feel welcome and encourage you to join the group and introduce yourself. We would also love to hear what you are doing with CadQuery. https://groups.google.com/forum/#!forum/cadquery
+
+Getting Started With CadQuery
+========================================
+
+Installation instructions for all following use cases can be found [here](http://dcowden.github.io/cadquery/installation.html).
+
+It is currently possible to use CadQuery for your own projects in 4 different ways:
+  * as a plugin for FreeCAD
+  * using the Docker Image to operate CadQuery as a CLI
+  * as a plugin running on a Jupyter Notebook server
+  * a standalone installation
+
+## I just want to try things out!
+
+If you are interested in trying CadQuery without installing anything, your best option is to experiment with CadQuery scripts running on a Jupyter server.
+
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/RustyVermeer/tryCQ/master)
+
+That button will launch a Jupyter Server pre-configured with CadQuery and its dependencies. It contains a folder with many useful examples to showcase CadQuery's features.
+
+## I'd like to use CadQuery on my own setup
+
+The easiest way to get started with CadQuery is to Install FreeCAD (version 16+)  (http://www.freecadweb.org/), and then to use our great CadQuery-FreeCAD plugin here: https://github.com/jmwright/cadquery-freecad-module
+
+It includes the latest version of cadquery already bundled, and has super-easy installation on Mac, Windows, and Unix.
+
+It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
+
+## I have other ideas and want to run things my own way
+
+Awesome! CadQuery is built with this attitude in mind. If none of the existing usage methods work for you, you are more than welcome to forge your own path. You'll probably find the most success using the Docker image. You can alternatively install CadQuery as a standalone package.
+
 Getting Started with the docker image
 =======================================
-The caduery docker image (https://hub.docker.com/r/dcowden/cadquery/)  includes cadquery and all of its dependencies. It can be used to run cadquery scripts without any installation required ( other than docker, of course)
+The CadQuery docker image (https://hub.docker.com/r/dcowden/cadquery/)  includes cadquery and all of its dependencies. It can be used to run cadquery scripts without any installation required ( other than docker, of course)
 
 Examples:
 
@@ -33,7 +74,7 @@ Build a local model using stdin/stdout::
 
      ... STEP output on the console
 
-Build local models and output to the same directory::
+Build local models and output to the same directory:
 
      docker run -v $PWD:/home/cq -i dcowden/cadquery:latest build --in_spec Ex001_Simple_Block.py --format STEP
      INFO: Reading from file 'Ex001_Simple_Block.py'
@@ -46,26 +87,8 @@ Build local models and output to the same directory::
      INFO: Script Generated 1 result Objects
      INFO: Writing STEP Output to './cqobject-1.STEP'
 
-
-
-Full Documentation
-============================
-You can find the full cadquery documentation at http://dcowden.github.io/cadquery
-
-Getting Started With CadQuery
-========================================
-
-The easiest way to get started with CadQuery is to Install FreeCAD (version 16+)  (http://www.freecadweb.org/), and then to use our great CadQuery-FreeCAD plugin here: https://github.com/jmwright/cadquery-freecad-module
-
-
-It includes the latest version of cadquery alreadby bundled, and has super-easy installation on Mac, Windows, and Unix.
-
-It has tons of awesome features like integration with FreeCAD so you can see your objects, code-autocompletion, an examples bundle, and script saving/loading. Its definitely the best way to kick the tires!
-
-We also have a Google Group to make it easy to get help from other CadQuery users. Please join the group and introduce yourself, and we would also love to hear what you are doing with CadQuery. https://groups.google.com/forum/#!forum/cadquery
-
-Examples
-======================
+Projects Using CadQuery
+=========================
 
 This resin mold was modeled using cadquery and then created on a CNC machine:
 
@@ -143,8 +166,6 @@ The cadquery script is surprisingly short, and allows easily customizing any of 
 
 Thanks go to cadquery contributor hyOzd ( Altu Technology ) for the example!
 
-Projects Using CadQuery
-=========================
 
 KiCad uses cadquery to build high quality models of electrictronic components. ( https://github.com/KiCad/packages3D )
 
@@ -166,7 +187,7 @@ The mach30 project used cadquery to develop a tool that will create a rocket thr
 This example uses Jupyter notebook to produce a really cool web-based scripting environment ( https://github.com/RustyVermeer/avnb/blob/master/readme.md ) :
 
 <p align="center">
-   <img src="https://github.com/RustyVermeer/avnb/raw/master/example.gif" width="700"/>
+   <img src="https://github.com/RustyVermeer/cqnb/raw/master/showcase.gif" width="350"/>
 </p>
 
 
@@ -176,7 +197,19 @@ This example uses Jupyter notebook to produce a really cool web-based scripting 
 We would love to link to your cadquery based project. Just let us know and we'll add it here.
 
 
+Where does the name CadQuery come from?
+========================================
 
+CadQuery is inspired by jQuery, a popular framework that
+revolutionized web development involving javascript.
+
+If you are familiar with jQuery, you will probably recognize several jQuery features that CadQuery uses:
+
+* A fluent api to create clean, easy to read code
+* Language features that make selection and iteration incredibly easy
+*
+* Ability to use the library along side other python libraries
+* Clear and complete documentation, with plenty of samples.
 
 Why CadQuery instead of OpenSCAD?
 ========================================
@@ -208,74 +241,17 @@ License
 CadQuery is licensed under the terms of the Apache Public License, version 2.0.
 A copy of the license can be found at http://www.apache.org/licenses/LICENSE-2.0
 
-CadQuery GUI Interfaces
-=======================
+Ongoing and Future Work
+============
 
-There are currently several known CadQuery GUIs:
-
-### CadQuery FreeCAD Module
-You can use CadQuery inside of FreeCAD. There's an excellent plugin module here https://github.com/jmwright/cadquery-freecad-module
-
-### CadQuery GUI (under active development)
+### CadQuery GUI (under development)
 Work is underway on a stand-alone gui here:  https://github.com/jmwright/cadquery-gui
 
-### ParametricParts.com
-If you are impatient and want to see a working example with no installation, have a look at this lego brick example http://parametricparts.com/parts/vqb5dy69/.
+### CadQuery Parts / Assembly Handling
+Work by Fragmuffin is ongoing with the [cqparts](https://github.com/fragmuffin/cqparts) repo.
 
-The script that generates the model is on the 'modelscript' tab.
-
-
-Installing -- FreeStanding Installation
-========================================
-
-Use these steps if you would like to write CadQuery scripts as a python API.  In this case, FreeCAD is used only as a CAD kernel.
-
-1. install FreeCAD, version 0.15 or greater for your platform.  https://github.com/FreeCAD/FreeCAD/releases.
-
-2. adjust your path if necessary.  FreeCAD bundles a python interpreter, but you'll probably want to use your own,
-   preferably one that has virtualenv available.  To use FreeCAD from any python interpreter, just append the FreeCAD
-   lib directory to your path. On  (*Nix)::
-
-```python
-		import sys
-		sys.path.append('/usr/lib/freecad/lib')
-```
-
-   or on Windows::
-
-```python
-		import sys
-		sys.path.append('/c/apps/FreeCAD/bin')
-```
-
-   *NOTE* FreeCAD on Windows will not work with python 2.7-- you must use pthon 2.6.X!!!!
-
-3. install cadquery::
-```bash
-		pip install cadquery
-```
-4. installing cadquery should install pyparsing as well, but if not::
-```bash
-		pip install pyparsing
-```
-5. test your installation::
-```python
-		from cadquery import *
-		box = Workplane("XY").box(1,2,3)
-		exporters.toString(box,'STL')
-```
-You're up and running!
-
-Installing -- Using CadQuery from Inside FreeCAD
-=================================================
-
-Use the CadQuery module for FreeCAD here:
-   https://github.com/jmwright/cadquery-freecad-module
-
-It includes a distribution of the latest version of cadquery.
-
-Roadmap/Future Work
-=======================
+### Moving to Python3 and away from FreeCAD as a dependency
+Adam Urbańczyk has been working hard on his own [CQ fork](https://github.com/adam-urbanczyk/cadquery) which uses only PythonOCC instead of FreeCAD.
 
 Work has begun on Cadquery 2.0, which will feature:
 
@@ -286,17 +262,3 @@ Work has begun on Cadquery 2.0, which will feature:
 The project page can be found here: https://github.com/dcowden/cadquery/projects/1
 
 A more detailed description of the plan for CQ 2.0 is here: https://docs.google.com/document/d/1cXuxBkVeYmGOo34MGRdG7E3ILypQqkrJ26oVf3CUSPQ
-
-Where does the name CadQuery come from?
-========================================
-
-CadQuery is inspired by jQuery, a popular framework that
-revolutionized web development involving javascript.
-
-If you are familiar with how jQuery, you will probably recognize several jQuery features that CadQuery uses:
-
-* A fluent api to create clean, easy to read code
-* Language features that make selection and iteration incredibly easy
-*
-* Ability to use the library along side other python libraries
-* Clear and complete documentation, with plenty of samples.

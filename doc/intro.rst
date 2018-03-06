@@ -31,7 +31,7 @@ produces a flat plate with a hole in the middle::
 
 ..  image:: _static/simpleblock.png
 
-That's a bit of a dixie-cup example. But it is pretty similar to a more useful part: a parametric pillow block for a
+That is a simple example, but it is similar to a more useful part: a parametric pillow block for a
 standard 608-size ball bearing::
 
     (length,height,diam, thickness,padding) = ( 30.0,40.0,22.0,10.0,8.0)
@@ -43,7 +43,7 @@ standard 608-size ball bearing::
 
 ..  image:: _static/pillowblock.png
 
-Lots more examples are available in the :ref:`examples`
+Many examples are available in the :ref:`examples`
 
 CadQuery is a library,  GUIs are separate
 ==============================================
@@ -51,16 +51,16 @@ CadQuery is a library,  GUIs are separate
 CadQuery is a library, that's intentionally designed to be usable as a GUI-less library. This enables
 its use in a variety of engineering and scientific applications that create 3d models programmatically.
 
-If you'd like a GUI, you have a couple of options:
+If you would like a GUI, you have a couple of options:
 
    * Install cadquery as a part of `The CadQuery Freecad Module <https://github.com/jmwright/cadquery-freecad-module>`_
-   * Use `ParametricParts.com <https://www.parametricparts.com>`_, a web-based platform that runs cadQuery scripts
+   * Use `tryCQ <https://mybinder.org/v2/gh/RustyVermeer/tryCQ/master>`_, a Jupyter Notebook server using `mybinder.org <https://mybinder.org/>`_. This solution runs entirely in your browser. 
 
 
 Why CadQuery instead of OpenSCAD?
 ============================================
 
-Like OpenSCAD, CadQuery is an open-source, script based, parametric model generator. But CadQuery has several key advantages:
+Like OpenSCAD, CadQuery is an open-source, script based, parametric model generator. However, CadQuery stands out in many ways and has several key advantages:
 
     1. **The scripts use a standard programming language**, python, and thus can benefit from the associated infrastructure.
        This includes many standard libraries and IDEs
@@ -69,7 +69,7 @@ Like OpenSCAD, CadQuery is an open-source, script based, parametric model genera
        by OCC include NURBS, splines, surface sewing, STL repair, STEP import/export,  and other complex operations,
        in addition to the standard CSG operations supported by CGAL
 
-    3. **Ability to import/export STEP** We think the ability to begin with a STEP model, created in a CAD package,
+    3. **Ability to import/export STEP** the ability to begin with a STEP model, created in a CAD package,
        and then add parametric features is key.  This is possible in OpenSCAD using STL, but STL is a lossy format
 
     4. **Less Code and easier scripting**  CadQuery scripts require less code to create most objects, because it is possible to locate
