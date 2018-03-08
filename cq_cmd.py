@@ -6,7 +6,7 @@
 # if no output filename is provided, output goes to stdout
 # default output format is STEP
 #
-
+from __future__ import print_function
 import sys,os
 
 
@@ -20,6 +20,7 @@ import argparse
 import os.path
 import json
 import tempfile
+
 
 class FilepathShapeWriter(object):
     #a shape writer that writes a new file in a directory for each object

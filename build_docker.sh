@@ -12,7 +12,7 @@ cp examples/FreeCAD/Ex001_Simple_Block.py $CQ_TEST_DIR
 
 
 fail_test(  ){
-   "Test Failed."
+   echo "Test Failed."
 }
 
 echo "Running Tests..."
