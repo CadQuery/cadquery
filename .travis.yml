@@ -15,7 +15,7 @@ before_install:
     conda config --set always_yes yes --set changeps1 no;
     conda update -q conda;
     conda info -a;
-    conda create -y -q -n freecad_cq3 -c freecad -c conda-forge freecad=0.17=py36_11 python=3.6 pyparsing conda mock;
+    conda create -y -q -n freecad_cq3 -c freecad -c conda-forge freecad=0.17=py36_11 occt=7.2.0=occt7.2.0_0 python=3.6 pyparsing conda mock;
     source ~/miniconda/bin/activate freecad_cq3;
   else
     sudo add-apt-repository -y ppa:freecad-maintainers/freecad-stable;
