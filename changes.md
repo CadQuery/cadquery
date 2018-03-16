@@ -2,7 +2,7 @@ Changes
 =======
 
 
-v1.1.0 (Unreleased)
+v1.1.0
 ------
    * Fixes and addition of graphical examples for selectors (thanks @adam-urbanczyk) #181
    * Added intersect operation (thanks @fragmuffin) #189
@@ -18,6 +18,11 @@ v1.1.0 (Unreleased)
    * Fixed Line versus LineSegment incompatibility between FreeCAD 0.16 and 0.17 #209
    * @RustyVermeer fixed a long-standing bug with the extrusion of invalid faces #210
    * @adam-urbanczyk fixed a Python 2 versus Python 3 (unicode) issue with SVG export #215
+   * Python 3 support was completed by the community with @adam-urbanczyk leading the way
+   * SVG export improvements including orientation control from @RustyVermeer #232
+   * Improved test coverage
+   * @galou fixed braille example #229
+   
    
 v1.0.0
 ------
