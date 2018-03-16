@@ -402,6 +402,84 @@ class TestCadObjects(BaseTest):
         self.assertEquals(surf1.ShapeType(), 'Face')
         self.assertTrue(surf1.isValid())
 
+    def testCut(self):
+        """
+        Tests cutting one face from another.
+        """
+        # Face 1
+        edge1 = Part.makeLine((0, 0, 0), (0, 10, 0))
+        edge2 = Part.makeLine((0, 10, 0), (10, 10, 0))
+        edge3 = Part.makeLine((10, 10, 0), (10, 0, 0))
+        edge4 = Part.makeLine((10, 0, 0), (0, 0, 0))
+        wire1 = Part.Wire([edge1,edge2,edge3,edge4])
+        face1 = Part.Face(wire1)
+        cqFace1 = Face(face1)
+
+        # Face 2 (face to cut out of face 1)
+        edge1 = Part.makeLine((0, 0, 0), (0, 5, 0))
+        edge2 = Part.makeLine((0, 5, 0), (5, 5, 0))
+        edge3 = Part.makeLine((5, 5, 0), (5, 0, 0))
+        edge4 = Part.makeLine((5, 0, 0), (0, 0, 0))
+        wire1 = Part.Wire([edge1,edge2,edge3,edge4])
+        face2 = Part.Face(wire1)
+        cqFace2 = Face(face2)
+
+        # Face resulting from cut
+        cqFace3 = cqFace1.cut(cqFace2)
+
+        self.assertEquals(len(cqFace3.Faces()), 1)
+        self.assertEquals(len(cqFace3.Edges()), 6)
+
+    def testFuse(self):
+        """
+        Tests fusing one face to another.
+        """
+        # Face 1
+        edge1 = Part.makeLine((0, 0, 0), (0, 10, 0))
+        edge2 = Part.makeLine((0, 10, 0), (10, 10, 0))
+        edge3 = Part.makeLine((10, 10, 0), (10, 0, 0))
+        edge4 = Part.makeLine((10, 0, 0), (0, 0, 0))
+        wire1 = Part.Wire([edge1,edge2,edge3,edge4])
+        face1 = Part.Face(wire1)
+        cqFace1 = Face(face1)
+
+        # Face 2 (face to cut out of face 1)
+        edge1 = Part.makeCircle(4.0)
+        wire1 = Part.Wire([edge1])
+        face2 = Part.Face(wire1)
+        cqFace2 = Face(face2)
+
+        # Face resulting from fuse
+        cqFace3 = cqFace1.fuse(cqFace2)
+
+        self.assertEquals(len(cqFace3.Faces()), 3)
+        self.assertEquals(len(cqFace3.Edges()), 8)
+
+    def testIntersect(self):
+        """
+        Tests finding the intersection of two faces.
+        """
+        # Face 1
+        edge1 = Part.makeLine((0, 0, 0), (0, 10, 0))
+        edge2 = Part.makeLine((0, 10, 0), (10, 10, 0))
+        edge3 = Part.makeLine((10, 10, 0), (10, 0, 0))
+        edge4 = Part.makeLine((10, 0, 0), (0, 0, 0))
+        wire1 = Part.Wire([edge1,edge2,edge3,edge4])
+        face1 = Part.Face(wire1)
+        cqFace1 = Face(face1)
+
+        # Face 2 (face to cut out of face 1)
+        edge1 = Part.makeCircle(4.0)
+        wire1 = Part.Wire([edge1])
+        face2 = Part.Face(wire1)
+        cqFace2 = Face(face2)
+
+        # Face resulting from the intersection
+        cqFace3 = cqFace1.intersect(cqFace2)
+
+        self.assertEquals(len(cqFace3.Faces()), 1)
+        self.assertEquals(len(cqFace3.Edges()), 3)
+
     def testVertices(self):
         e = Shape.cast(Part.makeLine((0, 0, 0), (1, 1, 0)))
         self.assertEqual(2, len(e.Vertices()))
