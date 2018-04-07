@@ -1,5 +1,6 @@
 import math
 import cadquery
+import numpy as np
 
 from OCC.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
 from OCC.Bnd import Bnd_Box
@@ -134,7 +135,7 @@ class Vector(object):
 
     def __eq__(self, other):
         return self.wrapped == other.wrapped
-    '''  
+    '''
     is not implemented in OCC
     def __ne__(self, other):
         return self.wrapped.__ne__(other)
@@ -191,6 +192,56 @@ class Matrix:
 
     def inverse(self):
         return Matrix(self.wrapped.Invert())
+
+    def multiply(self, other):
+
+        if isinstance(other.wrapped, gp_Vec):
+            # cqparts uses this method to transform origins from
+            # local to world corrdinates, so let's do that
+
+            vec       = other.wrapped.Transformed(self.wrapped)
+            translate = gp_Vec(self.wrapped.TranslationPart())
+            return Vector(vec + translate)
+
+        return Matrix(self.wrapped.Multiplied(other.wrapped))
+
+    ## Can't return a PythonOCC TRSF object here becase the shape is wrong
+    ## cqparts needs just a flat list (column major) for matrix defintions in gltf exporter
+    def transposed_list(self):
+        data = trsf_np(self.wrapped)
+
+        if np.shape(data) == (3,4):
+            data = np.array([
+                        data[0] + [0],
+                        data[1] + [0],
+                        data[2] + [0],
+                        [0.0,0.0,0.0,1.0]
+                    ])
+
+        return list(data.transpose().flatten())
+
+    def __str__(self):
+        return gp_trsf_print(self.wrapped)
+
+def trsf_np(trsf, trim=False):
+    if type(trsf).__module__ == np.__name__:
+        return trsf
+
+    _f = lambda x: [trsf.Value(x, i) for i in range(1, 5)]
+    return np.array([_f(1),_f(2),_f(3)])
+
+def gp_vec_print(vec):
+    x = vec.X()
+    y = vec.Y()
+    z = vec.Z()
+    return "< gp_Vec: {x:.3f}, {y:.3f}, {z:.3f} >".format(**vars())
+
+def gp_trsf_print(trsf):
+    _f = lambda x: [trsf.Value(x, i) for i in range(1, 5)]
+    a, b, c, d = _f(1)
+    e, f, g, h = _f(2)
+    i, j, k, l = _f(3)
+    return "< gp_Trsf:\n {a:.3f}, {b:.3f}, {c:.3f}, {d:.3f}\n {e:.3f}, {f:.3f}, {g:.3f}, {h:.3f}\n {i:.3f}, {j:.3f}, {k:.3f}, {l:.3f} >".format(**vars())
 
 
 class Plane(object):

@@ -100,6 +100,8 @@ from OCC.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 from OCC.BRepTools import breptools_Write
 
+from OCC.Visualization import Tesselator
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -189,7 +191,7 @@ class Shape(object):
     @classmethod
     def cast(cls, obj, forConstruction=False):
         "Returns the right type of wrapper, given a FreeCAD object"
-        '''        
+        '''
         if type(obj) == FreeCAD.Base.Vector:
             return Vector(obj)
         '''  # FIXME to be removed?
@@ -579,7 +581,7 @@ class Shape(object):
         Jupyter 3D representation support
         """
 
-        from .jupyter_tools import x3d_display           
+        from .jupyter_tools import x3d_display
         return x3d_display(self.wrapped, export_edges=True)
 
 
@@ -989,7 +991,22 @@ class Shell(Shape):
 class Mixin3D(object):
 
     def tessellate(self, tolerance):
-        return self.wrapped.tessellate(tolerance)
+        tess = Tesselator(self.wrapped)
+        tess.Compute(compute_edges=True, mesh_quality=tolerance)
+
+        vertices = []
+        indexes  = []
+
+        # add vertices
+        for i_vert in range(tess.ObjGetVertexCount()):
+            xyz = tess.GetVertex(i_vert)
+            vertices.append(Vector(*xyz))
+
+        # add triangles
+        for i_tr in range(tess.ObjGetTriangleCount()):
+            indexes.append(tess.GetTriangleIndex(i_tr))
+
+        return vertices, indexes
 
     def fillet(self, radius, edgeList):
         """
