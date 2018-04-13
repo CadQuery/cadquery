@@ -10,10 +10,10 @@ build:
 
 requirements:
   build:
-    - python {{ python }}
+    - python {{ environ.get('TRAVIS_PYTHON_VERSION') }}
     - setuptools
   run:
-    - python {{ python }}
+    - python {{ environ.get('TRAVIS_PYTHON_VERSION') }}
     - oce 0.18.1
     - pythonocc-core 0.18
     - pyparsing 2.1.4
