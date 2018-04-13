@@ -6,6 +6,7 @@ branches:
   only:
   - cq1_pythonocc
   - master
+  - /v\d+\.\d+\.?d*\-*[a-z]*/
 
 #addons from pythonocc build .travis file
 addons:
