@@ -18,10 +18,11 @@ addons:
 env:
     global:
         - secure: "nfiQ5cpf0Nb0XF3lNn1Qaa6GRM9rtllkCFAGp/K1r7TniEnKZuomGXGFqDwsEbd3tnWS4DrtKhKKYYXVc34UBGF7Ty6bufoyVP5TRK1N+daHSdi/pl3fmJbBmkpVnoylbutPY7TuW8yleJZFF6GKA54XguWQWU/KwiR8EwlzVDcgDGyGo7Gu3SdSGHixpRLKaWcBzWdK944ga75adZLe8S4nW8cALlvxyTfdMU2PhGzgUaQFTET621hJh1Fqjnkh6EAl20sFbrly8crk3qVeWCCZlhR6slRC8C4nhYfqdQb9mVrhglPnQLDsT0detqlprIUfe3qiiDonTQfBkx3DIm5x9qec+I4fO8BLYbAiIMTRKS+ZnPP3Lr3KFiY4AjZvj7Fax5JlmX8DqQzd82lyzsxUbn9rXCJyesfIBx+AV6xhad5vQ/9j4KRSHDElujOYL5yr76oCA+Y8LY+IXJoTT8LfZO8dKXvdeSCHFk3xbJMhnFRze2Hg8Pk0f2RDlZb2JU2X76eL749+xl2/fUSpxnTZHmTcmLClsuYmvy2hfaZf8xjVNq/o8If0CLNs/SyIcQtJldu3gMpUaOuUC511TS+7c8u248GP/IIsVl7VwJwGotNZIttMbWllsxqHkj0dstn+zpcj3UayXwhrqX6DR7aTpfd+FkwvSRVBIA2xGN8="
-    matrix:
-      include:
-        - python: 2.7 
-        - python: 3.6
+
+matrix:
+  include:
+    - python: 2.7 
+    - python: 3.6
 
 before_install:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
@@ -51,9 +52,8 @@ before_deploy:
 - sh conda_build.sh
 
 deploy:
-
--provider: script
-    skip_cleanup: true
-    script: anaconda -t $ANACONDA_TOKEN
-    on: 
-        tags: true
+    - provider: script
+      skip_cleanup: true
+      script: anaconda -t $ANACONDA_TOKEN upload conda-bld/**/cadquery-*.tar.bz2
+      on: 
+         tags: true
