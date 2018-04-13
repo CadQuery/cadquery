@@ -55,6 +55,6 @@ before_deploy:
 deploy:
     - provider: script
       skip_cleanup: true
-      script: anaconda -t $ANACONDA_TOKEN upload /tmp/cbld/**/cadquery-*.tar.bz2
+      script: anaconda -v -t $ANACONDA_TOKEN upload /tmp/cbld/**/cadquery-*.tar.bz2
       on: 
          tags: true
