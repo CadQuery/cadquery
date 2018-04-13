@@ -50,7 +50,7 @@ after_success:
 - codecov
 
 before_deploy:
-- conda install conda-build
+- conda install anaconda conda-build
 - sh conda_build.sh
 
 deploy:
