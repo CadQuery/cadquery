@@ -49,12 +49,12 @@ after_success:
 - codecov
 
 before_deploy:
-- conda install anaconda conda-build
+- conda install anaconda-client conda-build
 - sh conda_build.sh
 
 deploy:
     - provider: script
       skip_cleanup: true
-      script: conda_deploy.sh
+      script: anaconda -t $ANACONDA_TOKEN upload /tmp/cbld/**/cadquery-*.tar.bz2
       on: 
          tags: true
