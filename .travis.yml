@@ -1,60 +1,48 @@
 language: python
 sudo: false
 dist: trusty
-
 branches:
   only:
   - cq1_pythonocc
   - master
-  - /v\d+\.\d+\.?d*\-*[a-z]*/
-
-#addons from pythonocc build .travis file
+  - "/v\\d+\\.\\d+\\.?d*\\-*[a-z]*/"
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test
+    - ubuntu-toolchain-r-test
     packages:
-      - libstdc++6
-
+    - libstdc++6
 env:
-    global:
-        - secure: "nfiQ5cpf0Nb0XF3lNn1Qaa6GRM9rtllkCFAGp/K1r7TniEnKZuomGXGFqDwsEbd3tnWS4DrtKhKKYYXVc34UBGF7Ty6bufoyVP5TRK1N+daHSdi/pl3fmJbBmkpVnoylbutPY7TuW8yleJZFF6GKA54XguWQWU/KwiR8EwlzVDcgDGyGo7Gu3SdSGHixpRLKaWcBzWdK944ga75adZLe8S4nW8cALlvxyTfdMU2PhGzgUaQFTET621hJh1Fqjnkh6EAl20sFbrly8crk3qVeWCCZlhR6slRC8C4nhYfqdQb9mVrhglPnQLDsT0detqlprIUfe3qiiDonTQfBkx3DIm5x9qec+I4fO8BLYbAiIMTRKS+ZnPP3Lr3KFiY4AjZvj7Fax5JlmX8DqQzd82lyzsxUbn9rXCJyesfIBx+AV6xhad5vQ/9j4KRSHDElujOYL5yr76oCA+Y8LY+IXJoTT8LfZO8dKXvdeSCHFk3xbJMhnFRze2Hg8Pk0f2RDlZb2JU2X76eL749+xl2/fUSpxnTZHmTcmLClsuYmvy2hfaZf8xjVNq/o8If0CLNs/SyIcQtJldu3gMpUaOuUC511TS+7c8u248GP/IIsVl7VwJwGotNZIttMbWllsxqHkj0dstn+zpcj3UayXwhrqX6DR7aTpfd+FkwvSRVBIA2xGN8="
-
+  global:
+    secure: FTbKUc2zB8ijViUlvO/RZ6t8xz1dpAj8cgnRwYSHstPaoHVHbhYalruwD0tGxIcZbemP29qG2G/xxIDSR8HbfJZkaLdg0lzAX9PvvNSnUAkI+W2biEZjr2fIeyBxFWnXX6TMwpbMLYQWgDIbMJr/o2Z0ztmRxPIbd5T7MQP+0Co5facGl+xjpk08PqLQRnSr85eUXM8FaS3W6gx7q2Fb1lPVSmSzLS1cmRnkk6lmOp0ph4nXUVK9o/P8l/EbUoJ/+sA2oraLYuLyj2XpSzuiN3XNQabRjq/oTp5ZWL2sfmvI6ugcmnluYEHqwAB2pOsbYGW7aj6w0aFU/sawyBpsvRnVbluFGV7BkfVcU8Xet9TnIQfSOVLe2SOzyENioSMX+0hczlkSaNSVgxJHw8Gf1X4tB0QMiaYJUh7oLoYvvycVrWE7SKyHQTaLTEkRWY3aDrEQfTrZaZZIi20o5sAirP9ain/g3Z7jVIA5cEUILfIVdU1LWpf+GrvPDan3WR9uLWGS2VUCxhchzS3wh+0908KUI+nNyE7rCDyiZVoXDuL5XVfjf7fe0rtIYRrNsQ7qoi8YYTpy8DO90bEI8nDRaEkbhOxo40R2S65EQ+aFBeXMToOl32RdqBNs7I7NXq4C/slLWU7L6xQLiJAsdxG+H9Zh5tzZNnW4mRfBEPaime8=
 matrix:
   include:
-    - python: 2.7 
-    - python: 3.6
-
+  - python: 2.7
+  - python: 3.6
 before_install:
-- if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-  else
-    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-  fi
+- if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  -O miniconda.sh; else wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+  -O miniconda.sh; fi
 - bash miniconda.sh -b -p $HOME/miniconda;
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 - hash -r;
 - conda config --set always_yes yes --set changeps1 no;
-- conda create -y -q -n test_cq -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18 pyparsing mock;
+- conda create -y -q -n test_cq -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18
+  pyparsing mock;
 - source ~/miniconda/bin/activate test_cq;
 - python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
-
 install:
 - python setup.py install
-
 script:
 - python runtests.py
-
 after_success:
 - codecov
-
 before_deploy:
 - conda install anaconda-client conda-build
 - sh conda_build.sh
-
 deploy:
-    - provider: script
-      skip_cleanup: true
-      script: anaconda -v -t $ANACONDA_TOKEN upload /tmp/cbld/**/cadquery-*.tar.bz2
-      on: 
-         tags: true
+- provider: script
+  skip_cleanup: true
+  script: anaconda -v -t $ANACONDA_TOKEN upload /tmp/cbld/**/cadquery-*.tar.bz2
+  on:
+    tags: true
