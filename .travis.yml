@@ -44,7 +44,6 @@ install:
 
 script:
 - python runtests.py
-- 
 
 after_success:
 - codecov
@@ -56,6 +55,6 @@ before_deploy:
 deploy:
     - provider: script
       skip_cleanup: true
-      script: anaconda -t $ANACONDA_TOKEN upload /tmp/cbld/**/cadquery-*.tar.bz2
+      script: conda_deploy.sh
       on: 
          tags: true
