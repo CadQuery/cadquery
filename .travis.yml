@@ -2,6 +2,11 @@ language: python
 sudo: false
 dist: trusty
 
+branches:
+  only:
+  - cq1_pythonocc
+  - master
+
 #addons from pythonocc build .travis file
 addons:
   apt:
@@ -10,10 +15,13 @@ addons:
     packages:
       - libstdc++6
 
-matrix:
-  include:
-    - python: 2.7 
-    - python: 3.6
+env:
+    global:
+        - secure: "nfiQ5cpf0Nb0XF3lNn1Qaa6GRM9rtllkCFAGp/K1r7TniEnKZuomGXGFqDwsEbd3tnWS4DrtKhKKYYXVc34UBGF7Ty6bufoyVP5TRK1N+daHSdi/pl3fmJbBmkpVnoylbutPY7TuW8yleJZFF6GKA54XguWQWU/KwiR8EwlzVDcgDGyGo7Gu3SdSGHixpRLKaWcBzWdK944ga75adZLe8S4nW8cALlvxyTfdMU2PhGzgUaQFTET621hJh1Fqjnkh6EAl20sFbrly8crk3qVeWCCZlhR6slRC8C4nhYfqdQb9mVrhglPnQLDsT0detqlprIUfe3qiiDonTQfBkx3DIm5x9qec+I4fO8BLYbAiIMTRKS+ZnPP3Lr3KFiY4AjZvj7Fax5JlmX8DqQzd82lyzsxUbn9rXCJyesfIBx+AV6xhad5vQ/9j4KRSHDElujOYL5yr76oCA+Y8LY+IXJoTT8LfZO8dKXvdeSCHFk3xbJMhnFRze2Hg8Pk0f2RDlZb2JU2X76eL749+xl2/fUSpxnTZHmTcmLClsuYmvy2hfaZf8xjVNq/o8If0CLNs/SyIcQtJldu3gMpUaOuUC511TS+7c8u248GP/IIsVl7VwJwGotNZIttMbWllsxqHkj0dstn+zpcj3UayXwhrqX6DR7aTpfd+FkwvSRVBIA2xGN8="
+    matrix:
+      include:
+        - python: 2.7 
+        - python: 3.6
 
 before_install:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
@@ -25,7 +33,7 @@ before_install:
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 - hash -r;
 - conda config --set always_yes yes --set changeps1 no;
-- conda create -y -q -n test_cq -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18 pyparsing mock;
+- conda create -y -q -n test_cq -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18 pyparsing mock conda-build;
 - source ~/miniconda/bin/activate test_cq;
 - python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
 
@@ -34,8 +42,18 @@ install:
 
 script:
 - python runtests.py
+- 
 
-branches:
-  except:
-  - pythonocc
-  - 2_0_branch
+after_success:
+- codecov
+
+before_deploy:
+- sh conda_build.sh
+
+deploy:
+
+-provider: script
+    skip_cleanup: true
+    script: anaconda -t $ANACONDA_TOKEN
+    on: 
+        tags: true
