@@ -14,7 +14,7 @@ addons:
     - libstdc++6
 env:
   global:
-    secure: FTbKUc2zB8ijViUlvO/RZ6t8xz1dpAj8cgnRwYSHstPaoHVHbhYalruwD0tGxIcZbemP29qG2G/xxIDSR8HbfJZkaLdg0lzAX9PvvNSnUAkI+W2biEZjr2fIeyBxFWnXX6TMwpbMLYQWgDIbMJr/o2Z0ztmRxPIbd5T7MQP+0Co5facGl+xjpk08PqLQRnSr85eUXM8FaS3W6gx7q2Fb1lPVSmSzLS1cmRnkk6lmOp0ph4nXUVK9o/P8l/EbUoJ/+sA2oraLYuLyj2XpSzuiN3XNQabRjq/oTp5ZWL2sfmvI6ugcmnluYEHqwAB2pOsbYGW7aj6w0aFU/sawyBpsvRnVbluFGV7BkfVcU8Xet9TnIQfSOVLe2SOzyENioSMX+0hczlkSaNSVgxJHw8Gf1X4tB0QMiaYJUh7oLoYvvycVrWE7SKyHQTaLTEkRWY3aDrEQfTrZaZZIi20o5sAirP9ain/g3Z7jVIA5cEUILfIVdU1LWpf+GrvPDan3WR9uLWGS2VUCxhchzS3wh+0908KUI+nNyE7rCDyiZVoXDuL5XVfjf7fe0rtIYRrNsQ7qoi8YYTpy8DO90bEI8nDRaEkbhOxo40R2S65EQ+aFBeXMToOl32RdqBNs7I7NXq4C/slLWU7L6xQLiJAsdxG+H9Zh5tzZNnW4mRfBEPaime8=
+    secure: CVHlDL4GG6uDjvz9TceVjoeCSjO7KUPmcW1xHkLtUpdqVHdI0z7WhlULeZdugeqaaK9My37E5TvaJgVpW2fhCNguKJfVVWUE0khLB76dinWrio1BPaTxPKqI63tYFArHVqiLQMK2ZI7ZvnrUK+rlaNOkAMpczrZDXANZfVP73ksTGG4+252mWdUY0jRXJr+he4+uKI6l3Z6bd/GbIRfEIi4gfibZNLDLWvlbpyW3/jLy8yOSXuA5Ed0Oods/WGB/q+jQzJxFV9loWeEafvMpz6cjmgJ0ST3l5FA/ZzGzAtgH+fpXDAcUIFXrKciDF2YaFYhDvWF9d94swZYNXvWfAS/4cGMjgABX03nIcXZVz9iWfmi7/I5PE0O7xCjA2XOF7d1124h5y6oMbK+jV/+IzvmM4bQ295ixY84/G9okoV4Q6mSukVQ3zCK9saF2BC+oNP3SEkH+Sd5ZrsgFXDPK27RHV84Nj1xLiZ4F810v1nsw7afBUs8APts9uAMuyIhg6/4ir9S/OQ83Ox/3YlaL01+EzAliGkMmMZLvvISxgPk6TMsJxpN4ixirSuWOygRDpfMGwX2dYUw1v8qwfCkvEqMoKkfGhNY+YoCGlO0y3lslU4iaQElRwtrr8jCP3sS5f+9RvbPRvzKryI89MuqnqBq8w0JqYKPYy2OkCYLfzZg=
 matrix:
   include:
   - python: 2.7
@@ -43,6 +43,6 @@ before_deploy:
 deploy:
 - provider: script
   skip_cleanup: true
-  script: anaconda -v -t $ANACONDA_TOKEN upload --user cadquery /tmp/cbld/**/cadquery-*.tar.bz2
+  script: anaconda -v -t $ANACONDA_TOKEN upload --force --user cadquery /tmp/cbld/**/cadquery-*.tar.bz2
   on:
     tags: true
