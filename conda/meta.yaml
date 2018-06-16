@@ -1,6 +1,6 @@
 package:
   name: cadquery-occ
-  version: 0
+  version:  {{ environ.get('TRAVIS_TAG') }}
 
 source: 
   path: ..
@@ -10,6 +10,7 @@ build:
 
 requirements:
   build:
+    - string: {{ environ.get('TRAVIS_COMMIT') }}
     - python {{ environ.get('TRAVIS_PYTHON_VERSION') }}
     - setuptools
   run:
