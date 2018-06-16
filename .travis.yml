@@ -5,7 +5,7 @@ branches:
   only:
   - cq1_pythonocc
   - master
-  - "/v\\d+\\.\\d+\\.?d*\\-*[a-z]*/"
+  - "/\\d+\\.\\d+\\.?d*\\-*[a-z]*/"
 addons:
   apt:
     sources:
