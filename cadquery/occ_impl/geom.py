@@ -164,20 +164,24 @@ class Matrix:
     """
 
     def __init__(self, matrix=None):
+        
         if matrix is None:
             self.wrapped = gp_Trsf()
         else:
             self.wrapped = matrix
 
     def rotateX(self, angle):
+        
         self._rotate(gp.OX(),
                      angle)
 
     def rotateY(self, angle):
+        
         self._rotate(gp.OY(),
                      angle)
 
     def rotateZ(self, angle):
+        
         self._rotate(gp.OZ(),
                      angle)
 
@@ -190,8 +194,12 @@ class Matrix:
         self.wrapped = self.wrapped * new
 
     def inverse(self):
+        
         return Matrix(self.wrapped.Invert())
-
+    
+    def multiply(self,other):
+        
+        return Matrix(self.wrapped*other.wrapped)
 
 class Plane(object):
     """A 2D coordinate system in space
