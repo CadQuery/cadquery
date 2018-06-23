@@ -68,7 +68,7 @@ dependencies:
 - nbformat=4.4.0=py27_0
 - notebook=5.0.0=py27_0
 - numpydoc=0.7.0=py27_0
-- oce::oce=0.18.1=1
+- oce::oce=0.18.3=3
 - openssl=1.0.2l=0
 - pandocfilters=1.4.2=py27_0
 - path.py=10.3.1=py27_0
