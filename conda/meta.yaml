@@ -15,8 +15,8 @@ requirements:
     - setuptools
   run:
     - python {{ environ.get('TRAVIS_PYTHON_VERSION') }}
-    - oce 0.18.1
-    - pythonocc-core 0.18
+    - oce 0.18.3
+    - pythonocc-core 0.18.1
     - pyparsing 2.1.4
 
 about:
