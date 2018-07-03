@@ -6,7 +6,7 @@ source:
   path: ..
 
 build:
-  string: {{ environ.get('TRAVIS_COMMIT') }}
+  string: {{ 'py'+environ.get('TRAVIS_PYTHON_VERSION')+environ.get('TRAVIS_COMMIT')[:8] }}
   script: python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
