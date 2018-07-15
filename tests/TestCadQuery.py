@@ -3,10 +3,7 @@
 
 """
 # system modules
-import math
-import sys
-import os.path
-import time
+import math,os.path,time,tempfile
 
 # my modules
 from cadquery import *
@@ -14,11 +11,7 @@ from cadquery import exporters
 from tests import BaseTest, writeStringToFile, makeUnitCube, readFileAsString, makeUnitSquareWire, makeCube
 
 # where unit test output will be saved
-import sys
-if sys.platform.startswith("win"):
-    OUTDIR = "c:/temp"
-else:
-    OUTDIR = "/tmp"
+OUTDIR = tempfile.gettempdir()
 SUMMARY_FILE = os.path.join(OUTDIR, "testSummary.html")
 
 SUMMARY_TEMPLATE = """<html>
