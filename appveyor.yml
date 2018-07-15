@@ -1,0 +1,22 @@
+shallow_clone: true
+
+platform:
+    - x64
+
+environment:
+    matrix:
+        - PYTHON_VERSION: 3.6
+          MINICONDA_DIRNAME: C:\Miniconda36-x64
+
+install:
+    - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
+    - conda config --set always_yes yes
+    - conda update -q conda
+    - conda create --quiet --name cqtest -c cadquery -c conda-forge -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18 python=%PYTHON_VERSION% pyparsing mock coverage codecov
+    - activate cqtest
+    - python setup.py install
+
+build: false
+
+test_script:
+    - coverage run runtests.py
