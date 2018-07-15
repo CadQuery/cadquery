@@ -7,6 +7,9 @@ environment:
     matrix:
         - PYTHON_VERSION: 3.6
           MINICONDA_DIRNAME: C:\Miniconda36-x64
+    
+    ANACONDA_TOKEN:
+        secure: nxF/a2f3iS9KXGu7B/wKJYAk7Sm5wyAjoZoqJvPbRoVK4saaozVwOxDrjwJjJAYb
 
 install:
     - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
@@ -20,3 +23,15 @@ build: false
 
 test_script:
     - coverage run runtests.py
+
+deploy:
+- provider: Script
+  on:
+    APPVEYOR_REPO_TAG: true
+
+before_deploy:
+    - conda install anaconda-client conda-build
+    - call conda_build.bat
+
+deploy_script:
+    - anaconda -v -t %ANACONDA_TOKEN% upload --force --user cadquery cadquery-*.tar.bz2
