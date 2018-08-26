@@ -31,6 +31,8 @@ deploy:
 
 before_deploy:
     - conda install anaconda-client conda-build
+    - conda info --envs
+    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
     - call conda_build.bat
 
 deploy_script:
