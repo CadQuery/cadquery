@@ -30,7 +30,6 @@ deploy:
     APPVEYOR_REPO_TAG: true
 
 before_deploy:
-    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
     - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
     - set "TRAVIS_TAG=%APPVEYOR_REPO_TAG_NAME%"
     - set "TRAVIS_COMMIT=%APPVEYOR_REPO_COMMIT%"
