@@ -34,7 +34,6 @@ before_deploy:
     - set "TRAVIS_TAG=%APPVEYOR_REPO_TAG_NAME%"
     - set "TRAVIS_COMMIT=%APPVEYOR_REPO_COMMIT%"
     - set "TRAVIS_PYTHON_VERSION=%PYTHON_VERSION%"
-    - echo %TRAVIS_PYTHON_VERSION%
     - conda config --set always_yes yes
     - activate cqtest
     - conda install anaconda-client conda-build
