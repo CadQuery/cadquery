@@ -17,7 +17,7 @@ requirements:
     - python {{ environ.get('TRAVIS_PYTHON_VERSION') }}
     - oce 0.18
     - pythonocc-core 0.18.1
-    - pyparsing 2.1.4
+    - pyparsing 2.*
 
 about:
   summary: Experimental CadQuery fork based on PythonOCC
