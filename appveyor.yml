@@ -41,4 +41,4 @@ before_deploy:
     - call conda_build.bat
 
 deploy_script:
-    - anaconda -v -t %ANACONDA_TOKEN% upload --force --user cadquery cadquery-*.tar.bz2
+    - anaconda -v -t %ANACONDA_TOKEN% upload --force --user cadquery ./win-64/cadquery-*.tar.bz2
