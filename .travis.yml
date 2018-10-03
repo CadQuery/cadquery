@@ -1,31 +1,54 @@
-language: python
+language: generic
+
 sudo: false
 dist: trusty
 
-#addons from pythonocc build .travis file
+branches:
+  only:
+  - cq1_pythonocc
+  - master
+  - "/\\d+\\.\\d+\\.?d*\\-*[a-z]*/"
+
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test
+    - ubuntu-toolchain-r-test
     packages:
-      - libstdc++6
+    - libstdc++6
+
+env:
+  global:
+    secure: CVHlDL4GG6uDjvz9TceVjoeCSjO7KUPmcW1xHkLtUpdqVHdI0z7WhlULeZdugeqaaK9My37E5TvaJgVpW2fhCNguKJfVVWUE0khLB76dinWrio1BPaTxPKqI63tYFArHVqiLQMK2ZI7ZvnrUK+rlaNOkAMpczrZDXANZfVP73ksTGG4+252mWdUY0jRXJr+he4+uKI6l3Z6bd/GbIRfEIi4gfibZNLDLWvlbpyW3/jLy8yOSXuA5Ed0Oods/WGB/q+jQzJxFV9loWeEafvMpz6cjmgJ0ST3l5FA/ZzGzAtgH+fpXDAcUIFXrKciDF2YaFYhDvWF9d94swZYNXvWfAS/4cGMjgABX03nIcXZVz9iWfmi7/I5PE0O7xCjA2XOF7d1124h5y6oMbK+jV/+IzvmM4bQ295ixY84/G9okoV4Q6mSukVQ3zCK9saF2BC+oNP3SEkH+Sd5ZrsgFXDPK27RHV84Nj1xLiZ4F810v1nsw7afBUs8APts9uAMuyIhg6/4ir9S/OQ83Ox/3YlaL01+EzAliGkMmMZLvvISxgPk6TMsJxpN4ixirSuWOygRDpfMGwX2dYUw1v8qwfCkvEqMoKkfGhNY+YoCGlO0y3lslU4iaQElRwtrr8jCP3sS5f+9RvbPRvzKryI89MuqnqBq8w0JqYKPYy2OkCYLfzZg=
 
 matrix:
   include:
-    - python: 2.7 
-    - python: 3.6
+  - env: TRAVIS_PYTHON_VERSION=2.7
+    os: osx
+  - env: TRAVIS_PYTHON_VERSION=2.7
+    os: linux
+  - env: TRAVIS_PYTHON_VERSION=3.6
+    os: osx
+  - env: TRAVIS_PYTHON_VERSION=3.6
+    os: linux
 
 before_install:
-- if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+- if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      PY_MAJOR=2 ;
   else
-    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-  fi
+      PY_MAJOR=3 ;
+  fi ;
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      OS=Linux ;
+  else
+      OS=MacOSX ;
+  fi ;
+  wget https://repo.continuum.io/miniconda/Miniconda$PY_MAJOR-latest-$OS-x86_64.sh -O miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda;
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 - hash -r;
 - conda config --set always_yes yes --set changeps1 no;
-- conda create -y -q -n test_cq -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18 pyparsing mock;
+- conda create -y -q -n test_cq -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18
+  pyparsing mock;
 - source ~/miniconda/bin/activate test_cq;
 - python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
 
@@ -35,7 +58,16 @@ install:
 script:
 - python runtests.py
 
-branches:
-  except:
-  - pythonocc
-  - 2_0_branch
+after_success:
+- codecov
+
+before_deploy:
+- conda install anaconda-client conda-build
+- sh conda_build.sh
+
+deploy:
+- provider: script
+  skip_cleanup: true
+  script: anaconda -v -t $ANACONDA_TOKEN upload --force --user cadquery /tmp/cbld/**/cadquery-*.tar.bz2
+  on:
+    tags: true
