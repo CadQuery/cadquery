@@ -321,11 +321,11 @@ class Shape(object):
     def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
 
         if mirrorPlane == "XY" or mirrorPlane == "YX":
-            mirrorPlaneNormalVector = gp_Vec(0, 0, 1)
+            mirrorPlaneNormalVector = gp_Dir(0, 0, 1)
         elif mirrorPlane == "XZ" or mirrorPlane == "ZX":
-            mirrorPlaneNormalVector = gp_Vec(0, 1, 0)
+            mirrorPlaneNormalVector = gp_Dir(0, 1, 0)
         elif mirrorPlane == "YZ" or mirrorPlane == "ZY":
-            mirrorPlaneNormalVector = gp_Vec(1, 0, 0)
+            mirrorPlaneNormalVector = gp_Dir(1, 0, 0)
 
         if type(basePointVector) == tuple:
             basePointVector = Vector(basePointVector)
@@ -334,7 +334,7 @@ class Shape(object):
         T.SetMirror(gp_Ax2(gp_Pnt(*basePointVector.toTuple()),
                            mirrorPlaneNormalVector))
 
-        return Shape.cast(self.wrapped.Transformed(T))
+        return self._apply_transform(T)
 
     @staticmethod
     def _center_of_mass(shape):

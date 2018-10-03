@@ -3,10 +3,7 @@
 
 """
 # system modules
-import math
-import sys
-import os.path
-import time
+import math,os.path,time,tempfile
 
 # my modules
 from cadquery import *
@@ -14,11 +11,7 @@ from cadquery import exporters
 from tests import BaseTest, writeStringToFile, makeUnitCube, readFileAsString, makeUnitSquareWire, makeCube
 
 # where unit test output will be saved
-import sys
-if sys.platform.startswith("win"):
-    OUTDIR = "c:/temp"
-else:
-    OUTDIR = "/tmp"
+OUTDIR = tempfile.gettempdir()
 SUMMARY_FILE = os.path.join(OUTDIR, "testSummary.html")
 
 SUMMARY_TEMPLATE = """<html>
@@ -525,14 +518,14 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(1.5, d.edges().vertices().item(0).val().Z, 3)
 
     def testSolidReferencesCombine(self):
-        "test that solid references are updated correctly"
+        "test that solid references are preserved correctly"
         c = CQ(makeUnitCube())  # the cube is the context solid
         self.assertEqual(6, c.faces().size())  # cube has six faces
 
         r = c.faces('>Z').workplane().circle(0.125).extrude(
             0.5, True)  # make a boss, not updating the original
         self.assertEqual(8, r.faces().size())  # just the boss faces
-        self.assertEqual(8, c.faces().size())  # original is modified too
+        self.assertEqual(6, c.faces().size())  # original is not modified
 
     def testSolidReferencesCombineTrue(self):
         s = Workplane(Plane.XY())
@@ -545,8 +538,8 @@ class TestCadQuery(BaseTest):
         t = r.faces(">Z").workplane().rect(0.25, 0.25).extrude(0.5, True)
         # of course the result has 11 faces
         self.assertEqual(11, t.faces().size())
-        # r does as well. the context solid for r was updated since combine was true
-        self.assertEqual(11, r.faces().size())
+        # r (being the parent) remains unmodified
+        self.assertEqual(6, r.faces().size())
         self.saveModel(r)
 
     def testSolidReferenceCombineFalse(self):
@@ -753,16 +746,16 @@ class TestCadQuery(BaseTest):
         self.assertEqual(5, r.faces().size())
 
         # now add a circle through a side face
-        r.faces("+XY").workplane().circle(0.08).cutThruAll()
-        self.assertEqual(6, r.faces().size())
-        r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesXY.STEP'))
+        r1 = r.faces("+XY").workplane().circle(0.08).cutThruAll()
+        self.assertEqual(6, r1.faces().size())
+        r1.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesXY.STEP'))
 
         # now add a circle through a top
-        r.faces("+Z").workplane().circle(0.08).cutThruAll()
-        self.assertEqual(9, r.faces().size())
-        r.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesZ.STEP'))
+        r2 = r1.faces("+Z").workplane().circle(0.08).cutThruAll()
+        self.assertEqual(9, r2.faces().size())
+        r2.val().exportStep(os.path.join(OUTDIR, 'testBasicLinesZ.STEP'))
 
-        self.saveModel(r)
+        self.saveModel(r2)
 
     def test2DDrawing(self):
         """
@@ -1011,7 +1004,7 @@ class TestCadQuery(BaseTest):
         pnts = [
             (-1.0, -1.0), (0.0, 0.0), (1.0, 1.0)
         ]
-        c.faces(">Z").workplane().pushPoints(
+        c = c.faces(">Z").workplane().pushPoints(
             pnts).cboreHole(0.1, 0.25, 0.25, 0.75)
         self.assertEqual(18, c.faces().size())
         self.saveModel(c)
@@ -1021,7 +1014,8 @@ class TestCadQuery(BaseTest):
         pnts = [
             (-1.0, -1.0), (0.0, 0.0), (1.0, 1.0)
         ]
-        c2.faces(">Z").workplane().pushPoints(pnts).cboreHole(0.1, 0.25, 0.25)
+        c2 = c2.faces(">Z").workplane().pushPoints(
+            pnts).cboreHole(0.1, 0.25, 0.25)
         self.assertEqual(15, c2.faces().size())
 
     def testCounterSinks(self):
@@ -1414,17 +1408,17 @@ class TestCadQuery(BaseTest):
 
         # weird geometry happens if we make the fillets in the wrong order
         if p_sideRadius > p_topAndBottomRadius:
-            oshell.edges("|Z").fillet(p_sideRadius)
-            oshell.edges("#Z").fillet(p_topAndBottomRadius)
+            oshell = oshell.edges("|Z").fillet(p_sideRadius)\
+                .edges("#Z").fillet(p_topAndBottomRadius)
         else:
-            oshell.edges("#Z").fillet(p_topAndBottomRadius)
-            oshell.edges("|Z").fillet(p_sideRadius)
+            oshell = oshell.edges("#Z").fillet(p_topAndBottomRadius)\
+                .edges("|Z").fillet(p_sideRadius)
 
         # inner shell
         ishell = oshell.faces("<Z").workplane(p_thickness, True)\
             .rect((p_outerWidth - 2.0 * p_thickness), (p_outerLength - 2.0 * p_thickness))\
             .extrude((p_outerHeight - 2.0 * p_thickness), False)  # set combine false to produce just the new boss
-        ishell.edges("|Z").fillet(p_sideRadius - p_thickness)
+        ishell = ishell.edges("|Z").fillet(p_sideRadius - p_thickness)
 
         # make the box outer box
         box = oshell.cut(ishell)
@@ -1433,13 +1427,12 @@ class TestCadQuery(BaseTest):
         POSTWIDTH = (p_outerWidth - 2.0 * p_screwpostInset)
         POSTLENGTH = (p_outerLength - 2.0 * p_screwpostInset)
 
-        postCenters = box.faces(">Z").workplane(-p_thickness)\
+        box = box.faces(">Z").workplane(-p_thickness)\
             .rect(POSTWIDTH, POSTLENGTH, forConstruction=True)\
-            .vertices()
-
-        for v in postCenters.all():
-            v.circle(p_screwpostOD / 2.0).circle(p_screwpostID / 2.0)\
-                .extrude((-1.0) * (p_outerHeight + p_lipHeight - p_thickness), True)
+            .vertices()\
+            .circle(p_screwpostOD / 2.0)\
+            .circle(p_screwpostID / 2.0)\
+            .extrude((-1.0) * (p_outerHeight + p_lipHeight - p_thickness), True)
 
         # split lid into top and bottom parts
         (lid, bottom) = box.faces(">Z").workplane(-p_thickness -

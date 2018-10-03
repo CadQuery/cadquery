@@ -191,7 +191,6 @@ class CQ(object):
         for tc in toCombine:
             s = s.fuse(tc)
 
-        ctxSolid.wrapped = s.wrapped
         return self.newObject([s])
 
     def all(self):
@@ -812,7 +811,6 @@ class CQ(object):
                 raise ValueError("Shelling requires that faces be selected")
 
         s = solidRef.shell(self.objects, thickness)
-        solidRef.wrapped = s.wrapped
         return self.newObject([s])
 
     def fillet(self, radius):
@@ -843,7 +841,6 @@ class CQ(object):
             raise ValueError("Fillets requires that edges be selected")
 
         s = solid.fillet(radius, edgeList)
-        solid.wrapped = s.wrapped
         return self.newObject([s])
 
     def chamfer(self, length, length2=None):
@@ -882,7 +879,6 @@ class CQ(object):
 
         s = solid.chamfer(length, length2, edgeList)
 
-        solid.wrapped = s.wrapped
         return self.newObject([s])
 
 
@@ -1795,7 +1791,6 @@ class Workplane(CQ):
         if clean:
             s = s.clean()
 
-        ctxSolid.wrapped = s.wrapped
         return self.newObject([s])
 
     # but parameter list is different so a simple function pointer wont work
@@ -2127,7 +2122,6 @@ class Workplane(CQ):
         r = obj
         if baseSolid is not None:
             r = baseSolid.fuse(obj)
-            baseSolid.wrapped = r.wrapped
 
         return self.newObject([r])
 
@@ -2260,7 +2254,6 @@ class Workplane(CQ):
         if clean:
             s = s.clean()
 
-        solidRef.wrapped = s.wrapped
         return self.newObject([s])
 
     def cutThruAll(self, positive=False, clean=True):
