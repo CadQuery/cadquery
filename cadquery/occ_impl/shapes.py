@@ -462,6 +462,10 @@ class Shape(object):
     def Area(self):
         raise NotImplementedError
 
+    def Volume(self):
+        # when density == 1, mass == volume
+        return Shape.computeMass(self)
+
     def _apply_transform(self, T):
 
         return Shape.cast(BRepBuilderAPI_Transform(self.wrapped,
