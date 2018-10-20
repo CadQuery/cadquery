@@ -195,7 +195,7 @@ class Matrix:
 
     def inverse(self):
 
-        return Matrix(self.wrapped.Invert())
+        return Matrix(self.wrapped.Inverted())
 
     def multiply(self, other):
 
