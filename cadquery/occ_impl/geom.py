@@ -199,21 +199,20 @@ class Matrix:
 
     def multiply(self, other):
 
-        if isinstance(other.wrapped, gp_Vec):
-            # cqparts uses this method to transform origins from
-            # local to world corrdinates, so let's do that
-
-            vec       = other.wrapped.Transformed(self.wrapped)
-            translate = gp_Vec(self.wrapped.TranslationPart())
-            return Vector(vec + translate)
+        if isinstance(other, Vector):
+            return other.transform(self)
 
         return Matrix(self.wrapped.Multiplied(other.wrapped))
 
-    ## Can't return a PythonOCC TRSF object here becase the shape is wrong
-    ## cqparts needs just a flat list (column major) for matrix defintions in gltf exporter
     def transposed_list(self):
+        """Needed by the cqparts gltf exporter
+        """
         
-        return [self.wrapped.Value(j,i) for i in range(1,5) for j in range(1,4)]
+        trsf = self.wrapped
+        data = [[trsf.Value(i,j) for j in range(1,5)] for i in range(1,4)] + \
+               [[0.,0.,0.,1.]]
+        
+        return [data[j][i] for i in range(4) for j in range(4)]
 
 class Plane(object):
     """A 2D coordinate system in space
