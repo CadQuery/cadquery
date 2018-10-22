@@ -134,7 +134,7 @@ class Vector(object):
 
     def __eq__(self, other):
         return self.wrapped == other.wrapped
-    '''  
+    '''
     is not implemented in OCC
     def __ne__(self, other):
         return self.wrapped.__ne__(other)
@@ -164,24 +164,24 @@ class Matrix:
     """
 
     def __init__(self, matrix=None):
-        
+
         if matrix is None:
             self.wrapped = gp_Trsf()
         else:
             self.wrapped = matrix
 
     def rotateX(self, angle):
-        
+
         self._rotate(gp.OX(),
                      angle)
 
     def rotateY(self, angle):
-        
+
         self._rotate(gp.OY(),
                      angle)
 
     def rotateZ(self, angle):
-        
+
         self._rotate(gp.OZ(),
                      angle)
 
@@ -194,12 +194,25 @@ class Matrix:
         self.wrapped = self.wrapped * new
 
     def inverse(self):
-        
+
         return Matrix(self.wrapped.Inverted())
-    
-    def multiply(self,other):
+
+    def multiply(self, other):
+
+        if isinstance(other, Vector):
+            return other.transform(self)
+
+        return Matrix(self.wrapped.Multiplied(other.wrapped))
+
+    def transposed_list(self):
+        """Needed by the cqparts gltf exporter
+        """
         
-        return Matrix(self.wrapped*other.wrapped)
+        trsf = self.wrapped
+        data = [[trsf.Value(i,j) for j in range(1,5)] for i in range(1,4)] + \
+               [[0.,0.,0.,1.]]
+        
+        return [data[j][i] for i in range(4) for j in range(4)]
 
 class Plane(object):
     """A 2D coordinate system in space
