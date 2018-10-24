@@ -832,7 +832,8 @@ class Wire(Shape, Mixin1D):
         return w
 
     @classmethod
-    def makeHelix(cls, pitch, height, radius, center=Vector(0, 0, 0), dir=Vector(0, 0, 1), angle=360.0):
+    def makeHelix(cls, pitch, height, radius, center=Vector(0, 0, 0), 
+                  dir=Vector(0, 0, 1), angle=360.0, lefthand=False):
         """
         Make a helix with a given pitch, height and radius
         By default a cylindrical surface is used to create the helix. If
@@ -849,7 +850,10 @@ class Wire(Shape, Mixin1D):
                                             radius)
 
         # 2. construct an semgent in the u,v domain
-        geom_line = Geom2d_Line(gp_Pnt2d(0.0, 0.0), gp_Dir2d(2 * pi, pitch))
+        if lefthand:
+            geom_line = Geom2d_Line(gp_Pnt2d(0.0, 0.0), gp_Dir2d(-2 * pi, pitch))
+        else:
+            geom_line = Geom2d_Line(gp_Pnt2d(0.0, 0.0), gp_Dir2d(2 * pi, pitch))
 
         # 3. put it together into a wire
         n_turns = height / pitch
