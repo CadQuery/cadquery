@@ -133,7 +133,7 @@ class Vector(object):
         return 'Vector: ' + str((self.x, self.y, self.z))
 
     def __eq__(self, other):
-        return self.wrapped == other.wrapped
+        return self.x == other.x and self.y == other.y and self.z == other.z
     '''
     is not implemented in OCC
     def __ne__(self, other):
