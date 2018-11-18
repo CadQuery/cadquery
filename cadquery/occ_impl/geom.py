@@ -28,7 +28,7 @@ class Vector(object):
         elif len(args) == 1:
             if isinstance(args[0], Vector):
                 fV = gp_Vec(args[0].wrapped.XYZ())
-            elif isinstance(args[0], tuple) or isinstance(args[0], list):
+            elif isinstance(args[0], (tuple, list)):
                 fV = gp_Vec(*args[0])
             elif isinstance(args[0], gp_Vec):
                 fV = gp_Vec(args[0].XYZ())
