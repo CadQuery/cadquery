@@ -108,6 +108,13 @@ class TestCadObjects(BaseTest):
         result = Vector(1, 2, 0) + Vector(0, 0, 3)
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), result.toTuple(), 3)
 
+    def testVectorEquals(self):
+        a = Vector(1, 2, 3)
+        b = Vector(1, 2, 3)
+        c = Vector(1, 2, 3.000001)
+        self.assertEqual(a, b)
+        self.assertEqual(a, c)
+
     def testTranslate(self):
         e = Edge.makeCircle(2, (1, 2, 3))
         e2 = e.translate(Vector(0, 0, 1))
