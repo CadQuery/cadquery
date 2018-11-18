@@ -40,7 +40,6 @@ class Vector(object):
                 fV = gp_Vec(args[0])
             else:
                 raise TypeError("Expected three floats, OCC Geom_, or 3-tuple")
-                fV = args[0]
         elif len(args) == 0:
             fV = gp_Vec(0, 0, 0)
         else:
