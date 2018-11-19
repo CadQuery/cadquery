@@ -29,6 +29,8 @@ def importShape(importType, fileName):
     # Check to see what type of file we're working with
     if importType == ImportTypes.STEP:
         return importStep(fileName)
+    else:
+        raise RuntimeError("Unsupported import type: '{}'".format(importType))
 
 
 # Loads a STEP file into a CQ.Workplane object
@@ -57,8 +59,6 @@ def importStep(fileName):
         raise ValueError("STEP File Could not be loaded")
 
 # Loads a STEP file from an URL into a CQ.Workplane object
-
-
 def importStepFromURL(url):
     # Now read and return the shape
     try:
