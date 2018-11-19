@@ -8,6 +8,7 @@ import urllib as urlreader
 import tempfile
 
 from OCC.STEPControl import STEPControl_Reader
+import OCC.IFSelect
 
 
 class ImportTypes:
@@ -38,23 +39,22 @@ def importStep(fileName):
         :param fileName: The path and name of the STEP file to be imported
     """
     # Now read and return the shape
-    try:
-        reader = STEPControl_Reader()
-        reader.ReadFile(fileName)
-        reader.TransferRoot()
+    reader = STEPControl_Reader()
+    readStatus = reader.ReadFile(fileName)
+    if readStatus != OCC.IFSelect.IFSelect_RetDone:
+        raise ValueError("STEP File could not be loaded")
+    reader.TransferRoot()
 
-        occ_shapes = []
-        for i in range(reader.NbShapes()):
-            occ_shapes.append(reader.Shape(i + 1))
+    occ_shapes = []
+    for i in range(reader.NbShapes()):
+        occ_shapes.append(reader.Shape(i + 1))
 
-        # Make sure that we extract all the solids
-        solids = []
-        for shape in occ_shapes:
-            solids.append(Shape.cast(shape))
+    # Make sure that we extract all the solids
+    solids = []
+    for shape in occ_shapes:
+        solids.append(Shape.cast(shape))
 
-        return cadquery.Workplane("XY").newObject(solids)
-    except:
-        raise ValueError("STEP File Could not be loaded")
+    return cadquery.Workplane("XY").newObject(solids)
 
 # Loads a STEP file from an URL into a CQ.Workplane object
 
