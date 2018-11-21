@@ -30,7 +30,7 @@ def importShape(importType, fileName):
     if importType == ImportTypes.STEP:
         return importStep(fileName)
     else:
-        raise RuntimeError("Unsupported import type: '{}'".format(importType))
+        raise RuntimeError("Unsupported import type: {!r}".format(importType))
 
 
 # Loads a STEP file into a CQ.Workplane object
