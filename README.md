@@ -1,5 +1,5 @@
-[![Travis Build Status](https://api.travis-ci.org/adam-urbanczyk/cadquery.svg?branch=cq1_pythonocc)](https://api.travis-ci.org/adam-urbanczyk/cadquery?branch=cq1_pythonocc)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/ub6t3qrjj5h7g1vp/branch/cq1_pythonocc?svg=true)](https://ci.appveyor.com/project/adam-urbanczyk/cadquery/branch/cq1_pythonocc)
+[![Travis Build Status](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)
+[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/cf4qg6kpyqmcje1h?svg=true)](https://ci.appveyor.com/api/projects/status/cf4qg6kpyqmcje1h?svg=true)
 
 This is an experimental CadQuery fork that uses PythonOCC instead of FreeCAD. It also has preliminary Jupyter notebook integration.
 
