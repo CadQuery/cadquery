@@ -51,12 +51,13 @@ before_install:
   pyparsing mock;
 - source ~/miniconda/bin/activate test_cq;
 - python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
+- pip install codecov
 
 install:
 - python setup.py install
 
 script:
-- python runtests.py
+- coverage run runtests.py
 
 after_success:
 - codecov
