@@ -167,8 +167,23 @@ class Matrix:
 
         if matrix is None:
             self.wrapped = gp_Trsf()
-        else:
+        elif isinstance(matrix, gp_Trsf):
             self.wrapped = matrix
+        elif isinstance(matrix, list):
+            self.wrapped = gp_Trsf()
+            if len(matrix) == 12:
+                self.wrapped.SetValues(*matrix)
+            elif len(matrix) == 16:
+                # Only use first 12 values - the last 4 must be [0, 0, 0, 1].
+                last4 = matrix[12:]
+                if last4 != [0., 0., 0., 1.]:
+                    raise ValueError("Expected the last 4 values to be [0,0,0,1], but got: {}".format(last4))
+                self.wrapped.SetValues(*matrix[0:12])
+            else:
+                raise TypeError("Matrix constructor requires list of length 12 or 16")
+        else:
+            raise TypeError(
+                    "Invalid param to matrix constructor: {}".format(matrix))
 
     def rotateX(self, angle):
 
@@ -213,6 +228,25 @@ class Matrix:
                [[0.,0.,0.,1.]]
         
         return [data[j][i] for i in range(4) for j in range(4)]
+
+    def __getitem__(self, rc):
+        """Provide Matrix[r, c] syntax for accessing individual values. The row
+        and column parameters start at zero, which is consistent with most
+        python libraries, but is counter to gp_Trsf(), which is 1-indexed.
+        """
+        if len(rc) != 2:
+            raise IndexError("Matrix subscript must provide (row, column)")
+        r, c = rc[0], rc[1]
+        if r >= 0 and r < 4 and c >= 0 and c < 4:
+            if r < 3:
+                return self.wrapped.Value(r+1,c+1)
+            else:
+                # gp_Trsf doesn't provide access to the 4th row because it has
+                # an implied value as below:
+                return [0., 0., 0., 1.][c]
+        else:
+            raise IndexError("Out of bounds access into 4x4 matrix: {}".format(rc))
+
 
 class Plane(object):
     """A 2D coordinate system in space
