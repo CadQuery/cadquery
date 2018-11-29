@@ -115,6 +115,49 @@ class TestCadObjects(BaseTest):
         self.assertEqual(a, b)
         self.assertEqual(a, c)
 
+    def testMatrixCreationAndAccess(self):
+        def matrix_vals(m):
+            return [m[r,c] for r in range(4) for c in range(4)]
+        # default constructor creates a 4x4 identity matrix
+        m = Matrix()
+        identity = [1., 0., 0., 0.,
+                    0., 1., 0., 0.,
+                    0., 0., 1., 0.,
+                    0., 0., 0., 1.]
+        self.assertEqual(identity, matrix_vals(m))
+
+        vals4x4 = [1., 0., 0., 1.,
+                   0., 1., 0., 2.,
+                   0., 0., 1., 3.,
+                   0., 0., 0., 1.,]
+
+        # test constructor with 16-value input
+        m = Matrix(vals4x4)
+        self.assertEqual(vals4x4, matrix_vals(m))
+
+        # test constructor with 12-value input (the last 4 are an implied
+        # [0,0,0,1])
+        m = Matrix(vals4x4[0:12])
+        self.assertEqual(vals4x4, matrix_vals(m))
+
+        # Test 16-value input with invalid values for the last 4
+        invalid = [1., 0., 0., 1.,
+                   0., 1., 0., 2.,
+                   0., 0., 1., 3.,
+                   1., 2., 3., 4.,]
+        with self.assertRaises(ValueError):
+            Matrix(invalid)
+
+        # Test input with invalid size
+        with self.assertRaises(TypeError):
+            Matrix([1,2,3])
+
+        # test out-of-bounds access
+        m = Matrix()
+        with self.assertRaises(IndexError):
+            m[5, 5]
+
+
     def testTranslate(self):
         e = Edge.makeCircle(2, (1, 2, 3))
         e2 = e.translate(Vector(0, 0, 1))
