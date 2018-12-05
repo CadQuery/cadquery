@@ -80,12 +80,24 @@ class Vector(object):
     def sub(self, v):
         return Vector(self.wrapped.Subtracted(v.wrapped))
 
+    def __sub__(self, v):
+        return self.sub(v)
+
     def add(self, v):
         return Vector(self.wrapped.Added(v.wrapped))
+
+    def __add__(self, v):
+        return self.add(v)
 
     def multiply(self, scale):
         """Return a copy multiplied by the provided scalar"""
         return Vector(self.wrapped.Multiplied(scale))
+
+    def __mul__(self, scale):
+        return self.multiply(scale)
+
+    def __truediv__(self, denom):
+        return self.multiply(1.0 / denom)
 
     def normalized(self):
         """Return a normalized version of this vector"""
@@ -125,6 +137,12 @@ class Vector(object):
 
     def __sub__(self, v):
         return self.sub(v)
+
+    def __neg__(self):
+        return self * -1
+
+    def __abs__(self):
+        return self.Length
 
     def __repr__(self):
         return 'Vector: ' + str((self.x, self.y, self.z))
