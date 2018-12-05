@@ -108,6 +108,25 @@ class TestCadObjects(BaseTest):
         result = Vector(1, 2, 0) + Vector(0, 0, 3)
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), result.toTuple(), 3)
 
+    def testVectorOperators(self):
+        result = Vector(1, 1, 1) + Vector(2, 2, 2)
+        self.assertEqual(Vector(3, 3, 3), result)
+
+        result = Vector(1, 2, 3) - Vector(3, 2, 1)
+        self.assertEqual(Vector(-2, 0, 2), result)
+
+        result = Vector(1, 2, 3) * 2
+        self.assertEqual(Vector(2, 4, 6), result)
+
+        result = Vector(2, 4, 6) / 2
+        self.assertEqual(Vector(1, 2, 3), result)
+
+        self.assertEqual(Vector(-1, -1, -1), -Vector(1, 1, 1))
+
+        self.assertEqual(0, abs(Vector(0, 0, 0)))
+        self.assertEqual(1, abs(Vector(1, 0, 0)))
+        self.assertEqual((1+4+9)**0.5, abs(Vector(1, 2, 3)))
+
     def testVectorEquals(self):
         a = Vector(1, 2, 3)
         b = Vector(1, 2, 3)
