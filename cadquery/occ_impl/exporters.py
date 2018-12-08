@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from OCC.Visualization import Tesselator
+from OCC.Core.Visualization import Tesselator
 
 import cadquery
 
@@ -14,14 +14,14 @@ else:
 from .shapes import Shape, Compound, TOLERANCE
 from .geom import BoundBox
 
-from OCC.gp import gp_Ax2, gp_Pnt, gp_Dir
-from OCC.BRep import BRep_Tool
-from OCC.BRepMesh import BRepMesh_IncrementalMesh
-from OCC.BRepLib import breplib
-from OCC.TopLoc import TopLoc_Location
-from OCC.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
-from OCC.HLRAlgo import HLRAlgo_Projector
-from OCC.GCPnts import GCPnts_QuasiUniformDeflection
+from OCC.Core.gp import gp_Ax2, gp_Pnt, gp_Dir
+from OCC.Core.BRep import BRep_Tool
+from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+from OCC.Core.BRepLib import breplib
+from OCC.Core.TopLoc import TopLoc_Location
+from OCC.Core.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
+from OCC.Core.HLRAlgo import HLRAlgo_Projector
+from OCC.Core.GCPnts import GCPnts_QuasiUniformDeflection
 
 try:
     import xml.etree.cElementTree as ET

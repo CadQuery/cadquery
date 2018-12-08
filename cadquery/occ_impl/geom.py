@@ -1,10 +1,10 @@
 import math
 import cadquery
 
-from OCC.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
-from OCC.Bnd import Bnd_Box
-from OCC.BRepBndLib import brepbndlib_Add  # brepbndlib_AddOptimal
-from OCC.BRepMesh import BRepMesh_IncrementalMesh
+from OCC.Core.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
+from OCC.Core.Bnd import Bnd_Box
+from OCC.Core.BRepBndLib import brepbndlib_Add  # brepbndlib_AddOptimal
+from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
 
 TOL = 1e-2
 
@@ -43,7 +43,7 @@ class Vector(object):
         elif len(args) == 0:
             fV = gp_Vec(0, 0, 0)
         else:
-            raise ValueError("Expected three floats, OCC Geom_, or 3-tuple")
+            raise ValueError("Expected three floats, OCC.Core.Geom_, or 3-tuple")
 
         self._wrapped = fV
 
@@ -168,7 +168,7 @@ class Vector(object):
 
     def transform(self, T):
 
-        # to gp_Pnt to obey cq transformation convention (in OCC vectors do not translate)
+        # to gp_Pnt to obey cq transformation convention (in OCC.Core.vectors do not translate)
         pnt = self.toPnt()
         pnt_t = pnt.Transformed(T.wrapped)
 
@@ -652,7 +652,7 @@ class Plane(object):
 
 
 class BoundBox(object):
-    """A BoundingBox for an object or set of objects. Wraps the OCC one"""
+    """A BoundingBox for an object or set of objects. Wraps the OCC.Core.one"""
 
     def __init__(self, bb):
         self.wrapped = bb

@@ -83,7 +83,7 @@ class TestCadQuery(BaseTest):
 
         r = r.toOCC()
 
-        import OCC
+        import OCC.Core as OCC
         self.assertEqual(type(r), OCC.TopoDS.TopoDS_Compound)
 
     def testToSVG(self):

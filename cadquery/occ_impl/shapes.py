@@ -1,15 +1,15 @@
 from cadquery import Vector, BoundBox
 
-import OCC.TopAbs as ta  # Tolopolgy type enum
-import OCC.GeomAbs as ga  # Geometry type enum
+import OCC.Core.TopAbs as ta  # Tolopolgy type enum
+import OCC.Core.GeomAbs as ga  # Geometry type enum
 
-from OCC.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ,
+from OCC.Core.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ,
                     gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
 
 # collection of pints (used for spline construction)
-from OCC.TColgp import TColgp_Array1OfPnt
-from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
-from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
+from OCC.Core.TColgp import TColgp_Array1OfPnt
+from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
+from OCC.Core.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
                                 BRepBuilderAPI_MakeFace,
                                 BRepBuilderAPI_MakePolygon,
@@ -18,14 +18,14 @@ from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_GTransform,
                                 BRepBuilderAPI_Transform)
 # properties used to store mass calculation result
-from OCC.GProp import GProp_GProps
-from OCC.BRepGProp import BRepGProp_Face, \
+from OCC.Core.GProp import GProp_GProps
+from OCC.Core.BRepGProp import BRepGProp_Face, \
     brepgprop_LinearProperties,  \
     brepgprop_SurfaceProperties, \
     brepgprop_VolumeProperties  # used for mass calculation
-from OCC.BRepLProp import BRepLProp_CLProps  # local curve properties
+from OCC.Core.BRepLProp import BRepLProp_CLProps  # local curve properties
 
-from OCC.BRepPrimAPI import (BRepPrimAPI_MakeBox,  # TODO list functions/used for making primitives
+from OCC.Core.BRepPrimAPI import (BRepPrimAPI_MakeBox,  # TODO list functions/used for making primitives
                              BRepPrimAPI_MakeCone,
                              BRepPrimAPI_MakeCylinder,
                              BRepPrimAPI_MakeTorus,
@@ -34,13 +34,13 @@ from OCC.BRepPrimAPI import (BRepPrimAPI_MakeBox,  # TODO list functions/used fo
                              BRepPrimAPI_MakeRevol,
                              BRepPrimAPI_MakeSphere)
 
-from OCC.TopExp import TopExp_Explorer  # Toplogy explorer
-from OCC.BRepTools import (BRepTools_WireExplorer,  # might be needed for iterating thorugh wires
+from OCC.Core.TopExp import TopExp_Explorer  # Toplogy explorer
+from OCC.Core.BRepTools import (BRepTools_WireExplorer,  # might be needed for iterating thorugh wires
                            breptools_UVBounds)
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
-from OCC.BRep import BRep_Tool
+from OCC.Core.BRep import BRep_Tool
 
-from OCC.TopoDS import (topods_Vertex,  # downcasting functions
+from OCC.Core.TopoDS import (topods_Vertex,  # downcasting functions
                         topods_Edge,
                         topods_Wire,
                         topods_Face,
@@ -48,65 +48,65 @@ from OCC.TopoDS import (topods_Vertex,  # downcasting functions
                         topods_Compound,
                         topods_Solid)
 
-from OCC.TopoDS import (TopoDS_Shell,
+from OCC.Core.TopoDS import (TopoDS_Shell,
                         TopoDS_Compound,
                         TopoDS_Builder)
 
-from OCC.GC import GC_MakeArcOfCircle  # geometry construction
-from OCC.GCE2d import GCE2d_MakeSegment
-from OCC.GeomAPI import (GeomAPI_PointsToBSpline,
+from OCC.Core.GC import GC_MakeArcOfCircle  # geometry construction
+from OCC.Core.GCE2d import GCE2d_MakeSegment
+from OCC.Core.GeomAPI import (GeomAPI_PointsToBSpline,
                          GeomAPI_ProjectPointOnSurf)
 
-from OCC.BRepFill import brepfill_Shell, brepfill_Face
+from OCC.Core.BRepFill import brepfill_Shell, brepfill_Face
 
-from OCC.BRepAlgoAPI import (BRepAlgoAPI_Common,
+from OCC.Core.BRepAlgoAPI import (BRepAlgoAPI_Common,
                              BRepAlgoAPI_Fuse,
                              BRepAlgoAPI_Cut)
 
-from OCC.GeomLProp import GeomLProp_SLProps
+from OCC.Core.GeomLProp import GeomLProp_SLProps
 
-from OCC.Geom import Geom_ConicalSurface, Geom_CylindricalSurface
-from OCC.Geom2d import Geom2d_Line
+from OCC.Core.Geom import Geom_ConicalSurface, Geom_CylindricalSurface
+from OCC.Core.Geom2d import Geom2d_Line
 
-from OCC.BRepLib import breplib_BuildCurves3d
+from OCC.Core.BRepLib import breplib_BuildCurves3d
 
-from OCC.BRepOffsetAPI import (BRepOffsetAPI_ThruSections,
+from OCC.Core.BRepOffsetAPI import (BRepOffsetAPI_ThruSections,
                                BRepOffsetAPI_MakePipe,
                                BRepOffsetAPI_MakePipeShell,
                                BRepOffsetAPI_MakeThickSolid)
 
-from OCC.BRepFilletAPI import (BRepFilletAPI_MakeChamfer,
+from OCC.Core.BRepFilletAPI import (BRepFilletAPI_MakeChamfer,
                                BRepFilletAPI_MakeFillet)
 
-from OCC.TopTools import (TopTools_IndexedDataMapOfShapeListOfShape,
+from OCC.Core.TopTools import (TopTools_IndexedDataMapOfShapeListOfShape,
                           TopTools_ListOfShape)
 
-from OCC.TopExp import topexp_MapShapesAndAncestors
+from OCC.Core.TopExp import topexp_MapShapesAndAncestors
 
-from OCC.TopTools import TopTools_HSequenceOfShape, Handle_TopTools_HSequenceOfShape
+from OCC.Core.TopTools import TopTools_HSequenceOfShape, Handle_TopTools_HSequenceOfShape
 
-from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
+from OCC.Core.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
-from OCC.ShapeFix import ShapeFix_Wire, ShapeFix_Face
+from OCC.Core.ShapeFix import ShapeFix_Wire, ShapeFix_Face
 
-from OCC.STEPControl import STEPControl_Writer, STEPControl_AsIs
+from OCC.Core.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
-from OCC.BRepMesh import BRepMesh_IncrementalMesh
-from OCC.StlAPI import StlAPI_Writer
+from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+from OCC.Core.StlAPI import StlAPI_Writer
 
-from OCC.TopTools import TopTools_DataMapOfShapeListOfShape, TopTools_ListIteratorOfListOfShape
+from OCC.Core.TopTools import TopTools_DataMapOfShapeListOfShape, TopTools_ListIteratorOfListOfShape
 
-from OCC.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+from OCC.Core.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
-from OCC.BRepTools import breptools_Write
+from OCC.Core.BRepTools import breptools_Write
 
-from OCC.Visualization import Tesselator
+from OCC.Core.Visualization import Tesselator
 
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.
-HASH_CODE_MAX = int(1e+6)  # required by OCC HashCode
+HASH_CODE_MAX = int(1e+6)  # required by OCC.Core.HashCode
 
 shape_LUT = \
     {ta.TopAbs_VERTEX: 'Vertex',
@@ -1403,7 +1403,7 @@ class Compound(Shape, Mixin3D):
 
         return cls(comp)
 
-# TODO this is likely not needed if sing PythonOCC correclty but we will see
+# TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
 
 
 def sortWiresByBuildOrder(wireList, plane, result=[]):

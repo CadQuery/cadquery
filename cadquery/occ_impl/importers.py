@@ -7,8 +7,8 @@ import os
 import urllib as urlreader
 import tempfile
 
-from OCC.STEPControl import STEPControl_Reader
-import OCC.IFSelect
+from OCC.Core.STEPControl import STEPControl_Reader
+import OCC.Core.IFSelect
 
 
 class ImportTypes:
@@ -41,7 +41,7 @@ def importStep(fileName):
     # Now read and return the shape
     reader = STEPControl_Reader()
     readStatus = reader.ReadFile(fileName)
-    if readStatus != OCC.IFSelect.IFSelect_RetDone:
+    if readStatus != OCC.Core.IFSelect.IFSelect_RetDone:
         raise ValueError("STEP File could not be loaded")
     reader.TransferRoot()
 
