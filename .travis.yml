@@ -47,7 +47,7 @@ before_install:
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 - hash -r;
 - conda config --set always_yes yes --set changeps1 no;
-- conda create -y -q -n test_cq -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18
+- conda create -y -q -n test_cq -c tpaviot -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18.2
   pyparsing mock;
 - source ~/miniconda/bin/activate test_cq;
 - python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
