@@ -117,19 +117,19 @@ class TestCadObjects(BaseTest):
 
     def testMatrixCreationAndAccess(self):
         def matrix_vals(m):
-            return [m[r,c] for r in range(4) for c in range(4)]
+            return [[m[r,c] for c in range(4)] for r in range(4)]
         # default constructor creates a 4x4 identity matrix
         m = Matrix()
-        identity = [1., 0., 0., 0.,
-                    0., 1., 0., 0.,
-                    0., 0., 1., 0.,
-                    0., 0., 0., 1.]
+        identity = [[1., 0., 0., 0.],
+                    [0., 1., 0., 0.],
+                    [0., 0., 1., 0.],
+                    [0., 0., 0., 1.]]
         self.assertEqual(identity, matrix_vals(m))
 
-        vals4x4 = [1., 0., 0., 1.,
-                   0., 1., 0., 2.,
-                   0., 0., 1., 3.,
-                   0., 0., 0., 1.,]
+        vals4x4 = [[1., 0., 0., 1.],
+                   [0., 1., 0., 2.],
+                   [0., 0., 1., 3.],
+                   [0., 0., 0., 1.]]
 
         # test constructor with 16-value input
         m = Matrix(vals4x4)
@@ -141,10 +141,10 @@ class TestCadObjects(BaseTest):
         self.assertEqual(vals4x4, matrix_vals(m))
 
         # Test 16-value input with invalid values for the last 4
-        invalid = [1., 0., 0., 1.,
-                   0., 1., 0., 2.,
-                   0., 0., 1., 3.,
-                   1., 2., 3., 4.,]
+        invalid = [[1., 0., 0., 1.],
+                   [0., 1., 0., 2.],
+                   [0., 0., 1., 3.],
+                   [1., 2., 3., 4.]]
         with self.assertRaises(ValueError):
             Matrix(invalid)
 

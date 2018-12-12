@@ -161,6 +161,18 @@ class Matrix:
     """A 3d , 4x4 transformation matrix.
 
     Used to move geometry in space.
+
+    The provided "matrix" parameter may be None, a gp_Trsf, or a nested list of
+    values.
+
+    If given a nested list, it is expected to be of the form:
+
+        [[m11, m12, m13, m14],
+         [m21, m22, m23, m24],
+         [m31, m32, m33, m34]]
+
+    A fourth row may be given, but it is expected to be: [0.0, 0.0, 0.0, 1.0]
+    since this is a transform matrix.
     """
 
     def __init__(self, matrix=None):
@@ -171,14 +183,16 @@ class Matrix:
             self.wrapped = matrix
         elif isinstance(matrix, list):
             self.wrapped = gp_Trsf()
-            if len(matrix) == 12:
-                self.wrapped.SetValues(*matrix)
-            elif len(matrix) == 16:
-                # Only use first 12 values - the last 4 must be [0, 0, 0, 1].
-                last4 = matrix[12:]
-                if last4 != [0., 0., 0., 1.]:
-                    raise ValueError("Expected the last 4 values to be [0,0,0,1], but got: {}".format(last4))
-                self.wrapped.SetValues(*matrix[0:12])
+            if len(matrix) == 3:
+                flattened = [e for row in matrix for e in row]
+                self.wrapped.SetValues(*flattened)
+            elif len(matrix) == 4:
+                # Only use first 3 rows - the last must be [0, 0, 0, 1].
+                lastRow = matrix[3]
+                if lastRow != [0., 0., 0., 1.]:
+                    raise ValueError("Expected the last row to be [0,0,0,1], but got: {}".format(lastRow))
+                flattened = [e for row in matrix[0:3] for e in row]
+                self.wrapped.SetValues(*flattened)
             else:
                 raise TypeError("Matrix constructor requires list of length 12 or 16")
         else:
