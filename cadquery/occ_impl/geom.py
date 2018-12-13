@@ -28,7 +28,7 @@ class Vector(object):
         elif len(args) == 1:
             if isinstance(args[0], Vector):
                 fV = gp_Vec(args[0].wrapped.XYZ())
-            elif isinstance(args[0], tuple):
+            elif isinstance(args[0], (tuple, list)):
                 fV = gp_Vec(*args[0])
             elif isinstance(args[0], gp_Vec):
                 fV = gp_Vec(args[0].XYZ())
@@ -39,11 +39,11 @@ class Vector(object):
             elif isinstance(args[0], gp_XYZ):
                 fV = gp_Vec(args[0])
             else:
-                fV = args[0]
+                raise TypeError("Expected three floats, OCC gp_, or 3-tuple")
         elif len(args) == 0:
             fV = gp_Vec(0, 0, 0)
         else:
-            raise ValueError("Expected three floats, OCC Geom_, or 3-tuple")
+            raise TypeError("Expected three floats, OCC gp_, or 3-tuple")
 
         self._wrapped = fV
 
