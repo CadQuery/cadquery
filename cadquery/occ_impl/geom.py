@@ -179,14 +179,43 @@ class Matrix:
     """A 3d , 4x4 transformation matrix.
 
     Used to move geometry in space.
+
+    The provided "matrix" parameter may be None, a gp_Trsf, or a nested list of
+    values.
+
+    If given a nested list, it is expected to be of the form:
+
+        [[m11, m12, m13, m14],
+         [m21, m22, m23, m24],
+         [m31, m32, m33, m34]]
+
+    A fourth row may be given, but it is expected to be: [0.0, 0.0, 0.0, 1.0]
+    since this is a transform matrix.
     """
 
     def __init__(self, matrix=None):
 
         if matrix is None:
             self.wrapped = gp_Trsf()
-        else:
+        elif isinstance(matrix, gp_Trsf):
             self.wrapped = matrix
+        elif isinstance(matrix, list):
+            self.wrapped = gp_Trsf()
+            if len(matrix) == 3:
+                flattened = [e for row in matrix for e in row]
+                self.wrapped.SetValues(*flattened)
+            elif len(matrix) == 4:
+                # Only use first 3 rows - the last must be [0, 0, 0, 1].
+                lastRow = matrix[3]
+                if lastRow != [0., 0., 0., 1.]:
+                    raise ValueError("Expected the last row to be [0,0,0,1], but got: {}".format(lastRow))
+                flattened = [e for row in matrix[0:3] for e in row]
+                self.wrapped.SetValues(*flattened)
+            else:
+                raise TypeError("Matrix constructor requires list of length 12 or 16")
+        else:
+            raise TypeError(
+                    "Invalid param to matrix constructor: {}".format(matrix))
 
     def rotateX(self, angle):
 
@@ -231,6 +260,25 @@ class Matrix:
                [[0.,0.,0.,1.]]
         
         return [data[j][i] for i in range(4) for j in range(4)]
+
+    def __getitem__(self, rc):
+        """Provide Matrix[r, c] syntax for accessing individual values. The row
+        and column parameters start at zero, which is consistent with most
+        python libraries, but is counter to gp_Trsf(), which is 1-indexed.
+        """
+        if len(rc) != 2:
+            raise IndexError("Matrix subscript must provide (row, column)")
+        r, c = rc[0], rc[1]
+        if r >= 0 and r < 4 and c >= 0 and c < 4:
+            if r < 3:
+                return self.wrapped.Value(r+1,c+1)
+            else:
+                # gp_Trsf doesn't provide access to the 4th row because it has
+                # an implied value as below:
+                return [0., 0., 0., 1.][c]
+        else:
+            raise IndexError("Out of bounds access into 4x4 matrix: {}".format(rc))
+
 
 class Plane(object):
     """A 2D coordinate system in space
