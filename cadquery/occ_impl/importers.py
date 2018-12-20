@@ -45,7 +45,8 @@ def importStep(fileName):
     readStatus = reader.ReadFile(fileName)
     if readStatus != OCC.IFSelect.IFSelect_RetDone:
         raise ValueError("STEP File could not be loaded")
-    reader.TransferRoot()
+    for i in range(reader.NbRootsForTransfer()):
+        reader.TransferRoot(i+1)
 
     occ_shapes = []
     for i in range(reader.NbShapes()):
