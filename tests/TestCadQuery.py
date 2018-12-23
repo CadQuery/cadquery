@@ -418,6 +418,54 @@ class TestCadQuery(BaseTest):
         self.assertEqual(3, result.faces().size())
         self.assertEqual(3, result.edges().size())
 
+    def testSweepAlongListOfWires(self):
+        """
+        Tests the operation of sweeping along a list of wire(s) along a path
+        """
+
+        # X axis line length 20.0
+        path = Workplane("XZ").moveTo(-10, 0).lineTo(10, 0)
+
+        # Sweep a circle from diameter 2.0 to diameter 1.0 to diameter 2.0 along X axis length 10.0 + 10.0
+        defaultSweep = Workplane("YZ").workplane(offset=-10.0).circle(2.0). \
+            workplane(offset=10.0).circle(1.0). \
+            workplane(offset=10.0).circle(2.0).sweep(path, sweepAlongWires=True)
+
+        # We can sweep thrue different shapes
+        recttocircleSweep = Workplane("YZ").workplane(offset=-10.0).rect(2.0, 2.0). \
+            workplane(offset=8.0).circle(1.0).workplane(offset=4.0).circle(1.0). \
+            workplane(offset=8.0).rect(2.0, 2.0).sweep(path, sweepAlongWires=True)
+
+        circletorectSweep = Workplane("YZ").workplane(offset=-10.0).circle(1.0). \
+            workplane(offset=7.0).rect(2.0, 2.0).workplane(offset=6.0).rect(2.0, 2.0). \
+            workplane(offset=7.0).circle(1.0).sweep(path, sweepAlongWires=True)
+
+        # Placement of the Shape is important otherwise could produce unexpected shape
+        specialSweep = Workplane("YZ").circle(1.0).workplane(offset=10.0).rect(2.0, 2.0). \
+            sweep(path, sweepAlongWires=True)
+
+        # Switch to an arc for the path : line l=5.0 then half circle r=4.0 then line l=5.0
+        path = Workplane("XZ").moveTo(-5, 4).lineTo(0, 4). \
+                threePointArc((4, 0), (0, -4)).lineTo(-5, -4)
+
+        # Placement of different shapes should follow the path
+        # cylinder r=1.5 along first line
+        # then sweep allong arc from r=1.5 to r=1.0
+        # then cylinder r=1.0 along last line
+        arcSweep = Workplane("YZ").workplane(offset=-5).moveTo(0, 4).circle(1.5). \
+            workplane(offset=5).circle(1.5). \
+            moveTo(0, -8).circle(1.0). \
+            workplane(offset=-5).circle(1.0). \
+            sweep(path, sweepAlongWires=True)
+
+        # Test and saveModel
+        self.assertEqual(1, defaultSweep.solids().size())
+        self.assertEqual(1, circletorectSweep.solids().size())
+        self.assertEqual(1, recttocircleSweep.solids().size())
+        self.assertEqual(1, specialSweep.solids().size())
+        self.assertEqual(1, arcSweep.solids().size())
+        self.saveModel(defaultSweep)
+
     def testTwistExtrude(self):
         """
         Tests extrusion while twisting through an angle.
@@ -802,6 +850,37 @@ class TestCadQuery(BaseTest):
                           r.vertices(
                               selectors.NearestToPointSelector((0.0, 0.0, 0.0)))
                           .first().val().Y))
+
+        # Test the sagittaArc and radiusArc functions
+        a1 = Workplane(Plane.YZ()).threePointArc((5, 1), (10, 0))
+        a2 = Workplane(Plane.YZ()).sagittaArc((10, 0), -1)
+        a3 = Workplane(Plane.YZ()).threePointArc((6, 2), (12, 0))
+        a4 = Workplane(Plane.YZ()).radiusArc((12, 0), -10)
+
+        assert(a1.edges().first().val().geomType() == "CIRCLE")
+        assert(a2.edges().first().val().geomType() == "CIRCLE")
+        assert(a3.edges().first().val().geomType() == "CIRCLE")
+        assert(a4.edges().first().val().geomType() == "CIRCLE")
+
+        assert(a1.edges().first().val().Length() == a2.edges().first().val().Length())
+        assert(a3.edges().first().val().Length() == a4.edges().first().val().Length())
+
+    def testPolarLines(self):
+        """
+        Draw some polar lines and check expected results
+        """
+
+        # Test the PolarLine* functions
+        s = Workplane(Plane.XY())
+        r = s.polarLine(10, 45) \
+            .polarLineTo(10, -45) \
+            .polarLine(10, -180) \
+            .polarLine(-10, -90) \
+            .close()
+
+        # a single wire, 5 edges
+        self.assertEqual(1, r.wires().size())
+        self.assertEqual(5, r.wires().edges().size())
 
     def testLargestDimension(self):
         """
@@ -1326,6 +1405,80 @@ class TestCadQuery(BaseTest):
             line(-10, 0).close().extrude(10, clean=False).clean()
         self.assertEqual(6, s.faces().size())
 
+    def testPlanes(self):
+        """
+        Test other planes other than the normal ones (XY, YZ)
+        """
+        # ZX plane
+        s = Workplane(Plane.ZX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # YX plane
+        s = Workplane(Plane.YX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # YX plane
+        s = Workplane(Plane.YX())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # ZY plane
+        s = Workplane(Plane.ZY())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # front plane
+        s = Workplane(Plane.front())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # back plane
+        s = Workplane(Plane.back())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # left plane
+        s = Workplane(Plane.left())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # right plane
+        s = Workplane(Plane.right())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # top plane
+        s = Workplane(Plane.top())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+        # bottom plane
+        s = Workplane(Plane.bottom())
+        result = s.rect(2.0, 4.0).extrude(0.5).faces(">Z").workplane()\
+            .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
+        self.saveModel(result)
+
+    def testIsIndide(self):
+        """
+        Testing if one box is inside of another.
+        """
+        box1 = Workplane(Plane.XY()).box(10, 10, 10)
+        box2 = Workplane(Plane.XY()).box(5, 5, 5)
+
+        self.assertFalse(box2.val().BoundingBox().isInside(box1.val().BoundingBox()))
+        self.assertTrue(box1.val().BoundingBox().isInside(box2.val().BoundingBox()))
+
     def testCup(self):
         """
             UOM = "mm"
@@ -1486,3 +1639,36 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(delta.toTuple(),
                                      (0., 0., 2. * h),
                                      decimal_places)
+
+    def testClose(self):
+        # Close without endPoint and startPoint coincide.
+        # Create a half-circle
+        a = Workplane(Plane.XY()).sagittaArc((10, 0), 2).close().extrude(2)
+
+        # Close when endPoint and startPoint coincide.
+        # Create a double half-circle
+        b = Workplane(Plane.XY()).sagittaArc((10, 0), 2).sagittaArc((0, 0), 2).close().extrude(2)
+
+        # The b shape shall have twice the volume of the a shape.
+        self.assertAlmostEqual(a.val().Volume() * 2.0, b.val().Volume())
+
+        # Testcase 3 from issue #238
+        thickness = 3.0
+        length = 10.0
+        width = 5.0
+
+        obj1 = Workplane('XY', origin=(0, 0, -thickness / 2)) \
+            .moveTo(length / 2, 0).threePointArc((0, width / 2), (-length / 2, 0)) \
+            .threePointArc((0, -width / 2), (length / 2, 0)) \
+            .close().extrude(thickness)
+
+        os_x = 8.0    # Offset in X
+        os_y = -19.5  # Offset in Y
+
+        obj2 = Workplane('YZ', origin=(os_x, os_y, -thickness / 2)) \
+            .moveTo(os_x + length / 2, os_y).sagittaArc((os_x -length / 2, os_y), width / 2) \
+            .sagittaArc((os_x + length / 2, os_y), width / 2) \
+            .close().extrude(thickness)
+
+        # The obj1 shape shall have the same volume as the obj2 shape.
+        self.assertAlmostEqual(obj1.val().Volume(), obj2.val().Volume())
