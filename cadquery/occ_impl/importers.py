@@ -30,6 +30,8 @@ def importShape(importType, fileName):
     # Check to see what type of file we're working with
     if importType == ImportTypes.STEP:
         return importStep(fileName)
+    else:
+        raise RuntimeError("Unsupported import type: {!r}".format(importType))
 
 
 # Loads a STEP file into a CQ.Workplane object
@@ -43,7 +45,8 @@ def importStep(fileName):
     readStatus = reader.ReadFile(fileName)
     if readStatus != OCC.Core.IFSelect.IFSelect_RetDone:
         raise ValueError("STEP File could not be loaded")
-    reader.TransferRoot()
+    for i in range(reader.NbRootsForTransfer()):
+        reader.TransferRoot(i+1)
 
     occ_shapes = []
     for i in range(reader.NbShapes()):
@@ -57,8 +60,6 @@ def importStep(fileName):
     return cadquery.Workplane("XY").newObject(solids)
 
 # Loads a STEP file from an URL into a CQ.Workplane object
-
-
 def importStepFromURL(url):
     # Now read and return the shape
     try:

@@ -3,6 +3,7 @@
 """
 # core modules
 import tempfile
+import os
 
 from cadquery import *
 from cadquery import exporters
@@ -58,6 +59,15 @@ class TestImporters(BaseTest):
         with self.assertRaises(ValueError):
             importers.importShape(importers.ImportTypes.STEP, tmpfile)
 
+    def testImportMultipartSTEP(self):
+        """
+        Import a STEP file that contains two objects and ensure that both are
+        loaded.
+        """
+        testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+        filename = os.path.join(testdataDir, "red_cube_blue_cylinder.step")
+        objs = importers.importShape(importers.ImportTypes.STEP, filename)
+        self.assertEqual(2, len(objs.all()))
 
 if __name__ == '__main__':
     import unittest
