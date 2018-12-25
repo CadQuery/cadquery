@@ -796,7 +796,7 @@ class BoundBox(object):
     @classmethod
     def _fromTopoDS(cls, shape, tol=TOL, optimal=False):
         '''
-        Constructs a bounnding box from a TopoDS_Shape
+        Constructs a bounding box from a TopoDS_Shape
         '''
         bbox = Bnd_Box()
         bbox.SetGap(tol)
@@ -811,6 +811,14 @@ class BoundBox(object):
 
         return cls(bbox)
 
-    def isInside(self, anotherBox):
+    def isInside(self, b2):
         """Is the provided bounding box inside this one?"""
-        return not anotherBox.wrapped.IsOut(self.wrapped)
+        if (b2.xmin > self.xmin and
+            b2.ymin > self.ymin and
+            b2.zmin > self.zmin and
+            b2.xmax < self.xmax and
+            b2.ymax < self.ymax and
+            b2.zmax < self.zmax):
+            return True
+        else:
+            return False
