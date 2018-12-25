@@ -38,11 +38,7 @@ class Vector(object):
                     fV = gp_Vec(*arg)
                 elif len(arg)==2:
                     fV = gp_Vec(*arg,0)
-            elif isinstance(args[0], gp_Vec):
-                fV = gp_Vec(args[0].XYZ())
-            elif isinstance(args[0], gp_Pnt):
-                fV = gp_Vec(args[0].XYZ())
-            elif isinstance(args[0], gp_Dir):
+            elif isinstance(args[0], (gp_Vec, gp_Pnt, gp_Dir)):
                 fV = gp_Vec(args[0].XYZ())
             elif isinstance(args[0], gp_XYZ):
                 fV = gp_Vec(args[0])
