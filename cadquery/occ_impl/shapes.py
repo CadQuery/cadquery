@@ -1364,7 +1364,6 @@ class Solid(Shape, Mixin3D):
         :param path: The wire to sweep the face resulting from the wires over
         :return: a Solid object
         """
-
         if path.ShapeType() == 'Edge':
             path = Wire.assembleEdges([path, ])
 
@@ -1393,17 +1392,21 @@ class Solid(Shape, Mixin3D):
         :param path: The wire to sweep the face resulting from the wires over
         :return: a Solid object
         """
+        if path.ShapeType() == 'Edge':
+            path = Wire.assembleEdges([path, ])
 
         builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
         
         for p in profiles:
-            builder.add(p.wrapped)
+            builder.Add(p.wrapped)
+            
+        builder.SetMode(isFrenet)
+        builder.Build()
             
         if makeSolid:
             builder.MakeSolid()
             
-        builder.SetMode(isFrenet)
-        builder.Build()
+       
 
         return cls(builder.Shape())
 
