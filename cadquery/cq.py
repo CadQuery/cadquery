@@ -2382,7 +2382,7 @@ class Workplane(CQ):
 
         if isinstance(toIntersect, CQ):
             solidToIntersect = toIntersect.val()
-        elif isinstance(toIntersect, Solid):
+        elif isinstance(toIntersect, Solid) or isinstance(toIntersect, Compound):
             solidToIntersect = toIntersect
         else:
             raise ValueError("Cannot intersect type '{}'".format(type(toIntersect)))
