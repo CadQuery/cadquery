@@ -2589,9 +2589,7 @@ class Workplane(CQ):
                     section.append(ws[i])
 
             # implementation
-            outW = Wire(section[0].wrapped)
-            inW = section[1:]
-            thisObj = Solid.sweep(outW, inW, path.val(), makeSolid, isFrenet)
+            thisObj = Solid.sweep_multi(section, path.val(), makeSolid, isFrenet)
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
