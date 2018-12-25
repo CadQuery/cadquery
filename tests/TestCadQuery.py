@@ -731,6 +731,11 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(6, currentS.faces().size())
         self.assertAlmostEqual(currentS.val().Volume(),0.5)
+        
+        currentS.intersect(toIntersect)
+
+        self.assertEqual(6, currentS.faces().size())
+        self.assertAlmostEqual(currentS.val().Volume(),0.5)
 
     def testBoundingBox(self):
         """
