@@ -1516,7 +1516,7 @@ class TestCadQuery(BaseTest):
             .rect(1.5, 3.5, forConstruction=True).vertices().cskHole(0.125, 0.25, 82, depth=None)
         self.saveModel(result)
 
-    def testIsIndide(self):
+    def testIsInside(self):
         """
         Testing if one box is inside of another.
         """
