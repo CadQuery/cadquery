@@ -2,7 +2,7 @@
 import sys
 import unittest
 from tests import BaseTest
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_DZ
+from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_DZ, gp_XYZ
 from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
                                 BRepBuilderAPI_MakeFace)
@@ -24,9 +24,26 @@ class TestCadObjects(BaseTest):
         v1 = Vector(1, 2, 3)
         v2 = Vector((1, 2, 3))
         v3 = Vector(gp_Vec(1, 2, 3))
+        v4 = Vector([1,2,3])
+        v5 = Vector(gp_XYZ(1,2,3))
 
-        for v in [v1, v2, v3]:
+        for v in [v1, v2, v3, v4, v5]:
             self.assertTupleAlmostEquals((1, 2, 3), v.toTuple(), 4)
+            
+        v6 = Vector((1,2))
+        v7 = Vector([1,2])
+        v8 = Vector(1,2)
+        
+        for v in [v6, v7, v8]:
+            self.assertTupleAlmostEquals((1, 2, 0), v.toTuple(), 4)
+        
+        v9 = Vector()
+        self.assertTupleAlmostEquals((0, 0, 0), v9.toTuple(), 4)
+        
+        v9.x = 1.
+        v9.y = 2.
+        v9.z = 3.
+        self.assertTupleAlmostEquals((1, 2, 3), (v9.x, v9.y, v9.z), 4)
 
     def testVertex(self):
         """
