@@ -19,22 +19,26 @@ class Vector(object):
             * a gp_Vec
             * a vector ( in which case it is copied )
             * a 3-tuple
-            * three float values, x, y, and z
+            * a 2-tuple (z assumed to be 0)
+            * three float values: x, y, and z
+            * two float values: x,y
     """
 
     def __init__(self, *args):
         if len(args) == 3:
             fV = gp_Vec(*args)
+        elif len(args) == 2:
+            fV = gp_Vec(*args,0)
         elif len(args) == 1:
             if isinstance(args[0], Vector):
                 fV = gp_Vec(args[0].wrapped.XYZ())
             elif isinstance(args[0], (tuple, list)):
-                fV = gp_Vec(*args[0])
-            elif isinstance(args[0], gp_Vec):
-                fV = gp_Vec(args[0].XYZ())
-            elif isinstance(args[0], gp_Pnt):
-                fV = gp_Vec(args[0].XYZ())
-            elif isinstance(args[0], gp_Dir):
+                arg = args[0]
+                if len(arg)==3:
+                    fV = gp_Vec(*arg)
+                elif len(arg)==2:
+                    fV = gp_Vec(*arg,0)
+            elif isinstance(args[0], (gp_Vec, gp_Pnt, gp_Dir)):
                 fV = gp_Vec(args[0].XYZ())
             elif isinstance(args[0], gp_XYZ):
                 fV = gp_Vec(args[0])
@@ -50,14 +54,26 @@ class Vector(object):
     @property
     def x(self):
         return self.wrapped.X()
+    
+    @x.setter
+    def x(self,value):
+        self.wrapped.SetX(value)
 
     @property
     def y(self):
         return self.wrapped.Y()
+    
+    @y.setter
+    def y(self,value):
+        self.wrapped.SetY(value)
 
     @property
     def z(self):
         return self.wrapped.Z()
+    
+    @z.setter
+    def z(self,value):
+        self.wrapped.SetZ(value)
 
     @property
     def Length(self):
@@ -776,7 +792,7 @@ class BoundBox(object):
     @classmethod
     def _fromTopoDS(cls, shape, tol=TOL, optimal=False):
         '''
-        Constructs a bounnding box from a TopoDS_Shape
+        Constructs a bounding box from a TopoDS_Shape
         '''
         bbox = Bnd_Box()
         bbox.SetGap(tol)
@@ -791,6 +807,14 @@ class BoundBox(object):
 
         return cls(bbox)
 
-    def isInside(self, anotherBox):
+    def isInside(self, b2):
         """Is the provided bounding box inside this one?"""
-        return not anotherBox.wrapped.IsOut(self.wrapped)
+        if (b2.xmin > self.xmin and
+            b2.ymin > self.ymin and
+            b2.zmin > self.zmin and
+            b2.xmax < self.xmax and
+            b2.ymax < self.ymax and
+            b2.zmax < self.zmax):
+            return True
+        else:
+            return False
