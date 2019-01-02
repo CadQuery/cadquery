@@ -102,6 +102,8 @@ from OCC.BRepTools import breptools_Write
 
 from OCC.Visualization import Tesselator
 
+from OCC.LocOpe import LocOpe_DPrism
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -1280,13 +1282,14 @@ class Solid(Shape, Mixin3D):
         return cls(BRepAlgoAPI_Cut(outer_solid, inner_comp).Shape())
 
     @classmethod
-    def extrudeLinear(cls, outerWire, innerWires, vecNormal):
+    def extrudeLinear(cls, outerWire, innerWires, vecNormal, taper=0):
         """
             Attempt to extrude the list of wires  into a prismatic solid in the provided direction
 
             :param outerWire: the outermost wire
             :param innerWires: a list of inner wires
-            :param vecNormal: a vector along which to extrude the wires
+            :param vecNormal: a vector along which to extrude the wires, default=None
+            :param taper: taper angle, default=0
             :return: a Solid object
 
             The wires must not intersect
@@ -1303,18 +1306,20 @@ class Solid(Shape, Mixin3D):
             reliable.
         """
 
-        # one would think that fusing faces into a compound and then extruding would work,
-        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc),
-        # but then cutting it from the main solid fails with BRep_NotDone.
-        # the work around is to extrude each and then join the resulting solids, which seems to work
-
-        # FreeCAD allows this in one operation, but others might not
-
-        face = Face.makeFromWires(outerWire, innerWires)
-        prism_builder = BRepPrimAPI_MakePrism(
-            face.wrapped, vecNormal.wrapped, True)
-
+        if taper==0:
+            face = Face.makeFromWires(outerWire, innerWires)
+            prism_builder = BRepPrimAPI_MakePrism(
+                face.wrapped, vecNormal.wrapped, True)
+        else:
+            face = Face.makeFromWires(outerWire)
+            faceNormal = face.normalAt()
+            d = 1 if vecNormal.getAngle(faceNormal)<90 * DEG2RAD else -1
+            prism_builder = LocOpe_DPrism(face.wrapped,
+                                          d * vecNormal.Length,
+                                          d * taper * DEG2RAD)
+            
         return cls(prism_builder.Shape())
+            
 
     @classmethod
     def revolve(cls, outerWire, innerWires, angleDegrees, axisStart, axisEnd):
