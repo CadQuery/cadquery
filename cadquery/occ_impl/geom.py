@@ -309,6 +309,10 @@ class Plane(object):
     created automatically from faces.
     """
 
+    # equality tolerances
+    _eq_tolerance_origin = 1e-6
+    _eq_tolerance_dot = 1e-6
+
     @classmethod
     def named(cls, stdName, origin=(0, 0, 0)):
         """Create a predefined Plane based on the conventional names.
@@ -457,6 +461,23 @@ class Plane(object):
         self.zDir = zDir.normalized()
         self._setPlaneDir(xDir)
         self.origin = origin
+
+    def _eq_iter(self, other):
+        """Iterator to successively test equality"""
+        cls = type(self)
+        yield isinstance(other, Plane)  # comparison is with another Plane
+        # origins are the same
+        yield abs(self.origin - other.origin) < cls._eq_tolerance_origin
+        # z-axis vectors are parallel (assumption: both are unit vectors)
+        yield abs(self.zDir.dot(other.zDir) - 1) < cls._eq_tolerance_dot
+        # x-axis vectors are parallel (assumption: both are unit vectors)
+        yield abs(self.xDir.dot(other.xDir) - 1) < cls._eq_tolerance_dot
+
+    def __eq__(self, other):
+        return all(self._eq_iter(other))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def origin(self):
