@@ -166,14 +166,19 @@ class TestCadObjects(BaseTest):
                    [0., 1., 0., 2.],
                    [0., 0., 1., 3.],
                    [0., 0., 0., 1.]]
+        vals4x4_tuple = tuple(tuple(r) for r in  vals4x4)
 
         # test constructor with 16-value input
         m = Matrix(vals4x4)
         self.assertEqual(vals4x4, matrix_vals(m))
+        m = Matrix(vals4x4_tuple)
+        self.assertEqual(vals4x4, matrix_vals(m))
 
         # test constructor with 12-value input (the last 4 are an implied
         # [0,0,0,1])
-        m = Matrix(vals4x4[0:12])
+        m = Matrix(vals4x4[:3])
+        self.assertEqual(vals4x4, matrix_vals(m))
+        m = Matrix(vals4x4_tuple[:3])
         self.assertEqual(vals4x4, matrix_vals(m))
 
         # Test 16-value input with invalid values for the last 4
@@ -184,14 +189,24 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(ValueError):
             Matrix(invalid)
 
-        # Test input with invalid size
+        # Test input with invalid size / nested types
+        with self.assertRaises(TypeError):
+            Matrix([[1, 2, 3, 4], [1, 2, 3], [1, 2, 3, 4]])
         with self.assertRaises(TypeError):
             Matrix([1,2,3])
+
+        # Invalid sub-type
+        with self.assertRaises(TypeError):
+            Matrix([[1, 2, 3, 4], 'abc', [1, 2, 3, 4]])
 
         # test out-of-bounds access
         m = Matrix()
         with self.assertRaises(IndexError):
-            m[5, 5]
+            m[0, 4]
+        with self.assertRaises(IndexError):
+            m[4, 0]
+        with self.assertRaises(IndexError):
+            m['ab']
 
 
     def testTranslate(self):
