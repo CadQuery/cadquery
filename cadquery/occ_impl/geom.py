@@ -811,10 +811,11 @@ class BoundBox(object):
         return None
 
     @classmethod
-    def _fromTopoDS(cls, shape, tol=TOL, optimal=False):
+    def _fromTopoDS(cls, shape, tol=None, optimal=False):
         '''
         Constructs a bounding box from a TopoDS_Shape
         '''
+        tol = TOL if tol is None else tol  # tol = TOL (by default)
         bbox = Bnd_Box()
         bbox.SetGap(tol)
         if optimal:
