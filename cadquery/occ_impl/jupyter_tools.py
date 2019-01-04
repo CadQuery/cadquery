@@ -47,7 +47,7 @@ FOV = 0.2
 def add_x3d_boilerplate(src, height=400, center=(0,0,0), d=(0,0,15), fov=FOV, rot='{} {} {} {} '.format(*ROT)):
 
     return BOILERPLATE.format(src=src,
-                              id=uuid1(),
+                              id=uuid4(),
                               height=height,
                               x=d[0],
                               y=d[1],
