@@ -1,6 +1,6 @@
 from OCC.Display.WebGl.x3dom_renderer import X3DExporter
 from OCC.gp import gp_Quaternion, gp_Vec
-from uuid import uuid1
+from uuid import uuid4
 from math import tan
 from xml.etree import ElementTree
 
