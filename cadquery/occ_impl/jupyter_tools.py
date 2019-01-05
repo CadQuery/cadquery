@@ -98,6 +98,6 @@ def x3d_display(shape,
         vec = quat*(vec) + c.wrapped
 
         # return boilerplate + Scene
-        return add_x3d_boilerplate(str(ElementTree.tostring(scene_tag).decode('utf-8')),
+        return add_x3d_boilerplate(ElementTree.tostring(scene_tag).decode('utf-8'),
                                    d=(vec.X(),vec.Y(),vec.Z()),
                                    center=(c.x,c.y,c.z))
