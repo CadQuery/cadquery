@@ -83,7 +83,7 @@ def x3d_display(shape,
                                mesh_quality)
         
         exporter.compute()
-        x3d_str = exporter.to_x3dfile_string()
+        x3d_str = exporter.to_x3dfile_string(shape_id=0)
         x3d_str = '\n'.join(x3d_str.splitlines()[N_HEADER_LINES:])
         
         bb = BoundBox._fromTopoDS(shape)
