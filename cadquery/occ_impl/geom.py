@@ -215,20 +215,21 @@ class Matrix:
             self.wrapped = gp_Trsf()
         elif isinstance(matrix, gp_Trsf):
             self.wrapped = matrix
-        elif isinstance(matrix, list):
+        elif isinstance(matrix, (list, tuple)):
+            # Validate matrix size & 4x4 last row value
+            valid_sizes = all(
+                (isinstance(row, (list, tuple)) and (len(row) == 4))
+                for row in matrix
+            ) and len(matrix) in (3, 4)
+            if not valid_sizes:
+                raise TypeError("Matrix constructor requires 2d list of 4x3 or 4x4, but got: {!r}".format(matrix))
+            elif (len(matrix) == 4) and (tuple(matrix[3]) != (0,0,0,1)):
+                raise ValueError("Expected the last row to be [0,0,0,1], but got: {!r}".format(matrix[3]))
+
+            # Assign values to matrix
             self.wrapped = gp_Trsf()
-            if len(matrix) == 3:
-                flattened = [e for row in matrix for e in row]
-                self.wrapped.SetValues(*flattened)
-            elif len(matrix) == 4:
-                # Only use first 3 rows - the last must be [0, 0, 0, 1].
-                lastRow = matrix[3]
-                if lastRow != [0., 0., 0., 1.]:
-                    raise ValueError("Expected the last row to be [0,0,0,1], but got: {}".format(lastRow))
-                flattened = [e for row in matrix[0:3] for e in row]
-                self.wrapped.SetValues(*flattened)
-            else:
-                raise TypeError("Matrix constructor requires list of length 12 or 16")
+            flattened = [e for row in matrix[:3] for e in row]
+            self.wrapped.SetValues(*flattened)
         else:
             raise TypeError(
                     "Invalid param to matrix constructor: {}".format(matrix))
@@ -282,18 +283,18 @@ class Matrix:
         and column parameters start at zero, which is consistent with most
         python libraries, but is counter to gp_Trsf(), which is 1-indexed.
         """
-        if len(rc) != 2:
+        if not isinstance(rc, tuple) or (len(rc) != 2):
             raise IndexError("Matrix subscript must provide (row, column)")
-        r, c = rc[0], rc[1]
-        if r >= 0 and r < 4 and c >= 0 and c < 4:
+        (r, c) = rc
+        if (0 <= r <= 3) and (0 <= c <= 3):
             if r < 3:
-                return self.wrapped.Value(r+1,c+1)
+                return self.wrapped.Value(r + 1, c + 1)
             else:
                 # gp_Trsf doesn't provide access to the 4th row because it has
                 # an implied value as below:
                 return [0., 0., 0., 1.][c]
         else:
-            raise IndexError("Out of bounds access into 4x4 matrix: {}".format(rc))
+            raise IndexError("Out of bounds access into 4x4 matrix: {!r}".format(rc))
 
 
 class Plane(object):
