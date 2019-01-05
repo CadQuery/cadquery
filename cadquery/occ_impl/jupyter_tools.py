@@ -2,10 +2,10 @@ from OCC.Display.WebGl.x3dom_renderer import X3DExporter
 from OCC.gp import gp_Quaternion, gp_Vec
 from uuid import uuid1
 from math import tan
+from xml.etree import ElementTree
 
 from .geom import BoundBox
 
-N_HEADER_LINES = 10
 BOILERPLATE = \
 '''
 <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
@@ -25,14 +25,14 @@ BOILERPLATE = \
         scr.async = false;
         scr.id = 'X3DOM_JS_MODULE';
         scr.onload = function () {{
-           x3dom.reload();   
+           x3dom.reload();
         }}
         head.insertBefore(scr, head.lastChild);
     }}
     else if (typeof x3dom != 'undefined') {{ //call reload only if x3dom already loaded
         x3dom.reload();
     }}
-    
+
     //document.getElementById('{id}').runtime.fitAll()
 </script>
 '''
@@ -69,7 +69,8 @@ def x3d_display(shape,
                 line_color=(0,0,0),
                 line_width=2.,
                 mesh_quality=.3):
-        
+
+        # Export to XML <Scene> tag
         exporter = X3DExporter(shape,
                                vertex_shader,
                                fragment_shader,
@@ -81,19 +82,22 @@ def x3d_display(shape,
                                line_color,
                                line_width,
                                mesh_quality)
-        
+
         exporter.compute()
         x3d_str = exporter.to_x3dfile_string(shape_id=0)
-        x3d_str = '\n'.join(x3d_str.splitlines()[N_HEADER_LINES:])
-        
+        xml_et = ElementTree.fromstring(x3d_str)
+        scene_tag = xml_et.find('./Scene')
+
+        # Viewport Parameters
         bb = BoundBox._fromTopoDS(shape)
         d = max(bb.xlen,bb.ylen,bb.zlen)
         c = bb.center
-        
+
         vec = gp_Vec(0,0,d/1.5/tan(FOV/2))
         quat = gp_Quaternion(*ROT)
         vec = quat*(vec) + c.wrapped
-        
-        return add_x3d_boilerplate(x3d_str,
+
+        # return boilerplate + Scene
+        return add_x3d_boilerplate(ElementTree.tostring(scene_tag),
                                    d=(vec.X(),vec.Y(),vec.Z()),
                                    center=(c.x,c.y,c.z))
