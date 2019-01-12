@@ -4,7 +4,6 @@ from .shapes import Shape
 
 import sys
 import os
-import urllib as urlreader
 import tempfile
 
 from OCC.Core.STEPControl import STEPControl_Reader
@@ -58,18 +57,3 @@ def importStep(fileName):
         solids.append(Shape.cast(shape))
 
     return cadquery.Workplane("XY").newObject(solids)
-
-# Loads a STEP file from an URL into a CQ.Workplane object
-def importStepFromURL(url):
-    # Now read and return the shape
-    try:
-        webFile = urlreader.urlopen(url)
-        tempFile = tempfile.NamedTemporaryFile(suffix='.step', delete=False)
-        tempFile.write(webFile.read())
-        webFile.close()
-        tempFile.close()
-
-        return importStep(tempFile.name)
-    except:
-        raise ValueError("STEP File from the URL: " +
-                         url + " Could not be loaded")

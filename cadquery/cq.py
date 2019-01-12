@@ -1065,6 +1065,45 @@ class Workplane(CQ):
             lpoints = list(cpoints)
 
         return self.pushPoints(lpoints)
+    
+    def polarArray(self, radius, startAngle, angle, count, fill=True):
+        """
+        Creates an polar array of points and pushes them onto the stack.
+        The 0 degree reference angle is located along the local X-axis.
+
+        :param radius: Radius of the array.
+        :param startAngle: Starting angle (degrees) of array. 0 degrees is
+            situated along local X-axis.
+        :param angle: The angle (degrees) to fill with elements. A positive
+            value will fill in the counter-clockwise direction. If fill is
+            false, angle is the angle between elements.
+        :param count: Number of elements in array. ( > 0 )
+        """
+
+        if count <= 0:
+            raise ValueError("No elements in array")
+
+        # First element at start angle, convert to cartesian coords
+        x = radius * math.cos(math.radians(startAngle))
+        y = radius * math.sin(math.radians(startAngle))
+        points = [(x, y)]
+
+        # Calculate angle between elements
+        if fill:
+            if angle % 360 == 0:
+                angle = angle / count
+            elif count > 1:
+                # Inclusive start and end
+                angle = angle / (count - 1)
+
+        # Add additional elements
+        for i in range(1, count):
+            phi = math.radians(startAngle + (angle * i))
+            x = radius * math.cos(phi)
+            y = radius * math.sin(phi)
+            points.append((x, y))
+
+        return self.pushPoints(points)
 
     def pushPoints(self, pntList):
         """
@@ -1203,7 +1242,36 @@ class Workplane(CQ):
         """
         p = self._findFromPoint(True)
         return self.lineTo(xCoord, p.y, forConstruction)
+    
+    def polarLine(self, distance, angle, forConstruction=False):
+        """
+        Make a line of the given length, at the given angle from the current point
 
+        :param float distance: distance of the end of the line from the current point
+        :param float angle: angle of the vector to the end of the line with the x-axis
+        :return: the Workplane object with the current point at the end of the new line
+       """
+        x = math.cos(math.radians(angle)) * distance
+        y = math.sin(math.radians(angle)) * distance
+
+        return self.line(x, y, forConstruction)
+
+    def polarLineTo(self, distance, angle, forConstruction=False):
+        """
+        Make a line from the current point to the given polar co-ordinates
+
+        Useful if it is more convenient to specify the end location rather than
+        the distance and angle from the current point
+
+        :param float distance: distance of the end of the line from the origin
+        :param float angle: angle of the vector to the end of the line with the x-axis
+        :return: the Workplane object with the current point at the end of the new line
+        """
+        x = math.cos(math.radians(angle)) * distance
+        y = math.sin(math.radians(angle)) * distance
+
+        return self.lineTo(x, y, forConstruction)
+    
     # absolute move in current plane, not drawing
     def moveTo(self, x=0, y=0):
         """
@@ -1314,6 +1382,66 @@ class Workplane(CQ):
             self._addPendingEdge(arc)
 
         return self.newObject([arc])
+    
+    def sagittaArc(self, endPoint, sag, forConstruction=False):
+        """
+        Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
+
+        :param endPoint: end point for the arc
+        :type endPoint: 2-tuple, in workplane coordinates
+        :param sag: the sagitta of the arc
+        :type sag: float, perpendicular distance from arc center to arc baseline.
+        :return: a workplane with the current point at the end of the arc
+
+        The sagitta is the distance from the center of the arc to the arc base.
+        Given that a closed contour is drawn clockwise;
+        A positive sagitta means convex arc and negative sagitta means concave arc.
+        See "https://en.wikipedia.org/wiki/Sagitta_(geometry)" for more information.
+        """
+
+        startPoint = self._findFromPoint(useLocalCoords=True)
+        endPoint = Vector(endPoint)
+        midPoint = endPoint.add(startPoint).multiply(0.5)
+
+        sagVector = endPoint.sub(startPoint).normalized().multiply(abs(sag))
+        if(sag > 0):
+            sagVector.x, sagVector.y = -sagVector.y, sagVector.x # Rotate sagVector +90 deg
+        else:
+            sagVector.x, sagVector.y = sagVector.y, -sagVector.x # Rotate sagVector -90 deg
+
+        sagPoint = midPoint.add(sagVector)
+
+        return self.threePointArc(sagPoint, endPoint, forConstruction)
+
+    def radiusArc(self, endPoint, radius, forConstruction=False):
+        """
+        Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
+
+        :param endPoint: end point for the arc
+        :type endPoint: 2-tuple, in workplane coordinates
+        :param radius: the radius of the arc
+        :type radius: float, the radius of the arc between start point and end point.
+        :return: a workplane with the current point at the end of the arc
+
+        Given that a closed contour is drawn clockwise;
+        A positive radius means convex arc and negative radius means concave arc.
+        """
+
+        startPoint = self._findFromPoint(useLocalCoords=True)
+        endPoint = Vector(endPoint)
+
+        # Calculate the sagitta from the radius
+        length = endPoint.sub(startPoint).Length / 2.0
+        try:
+            sag = abs(radius) - math.sqrt(radius**2 - length**2)
+        except ValueError:
+            raise ValueError("Arc radius is not large enough to reach the end point.")
+
+        # Return a sagittaArc
+        if radius > 0:
+            return self.sagittaArc(endPoint, sag, forConstruction)
+        else:
+            return self.sagittaArc(endPoint, -sag, forConstruction)
 
     def rotateAndCopy(self, matrix):
         """
@@ -1746,7 +1874,14 @@ class Workplane(CQ):
 
             s = Workplane().lineTo(1,0).lineTo(1,1).close().extrude(0.2)
         """
-        self.lineTo(self.ctx.firstPoint.x, self.ctx.firstPoint.y)
+        endPoint = self._findFromPoint(True)
+        startPoint = self.ctx.firstPoint
+
+        # Check if there is a distance between startPoint and endPoint
+        # that is larger than what is considered a numerical error.
+        # If so; add a line segment between endPoint and startPoint
+        if endPoint.sub(startPoint).Length > 1e-6:
+            self.lineTo(self.ctx.firstPoint.x, self.ctx.firstPoint.y)
 
         # Need to reset the first point after closing a wire
         self.ctx.firstPoint = None
@@ -2091,24 +2226,25 @@ class Workplane(CQ):
             newS = newS.clean()
         return newS
 
-    def sweep(self, path, makeSolid=True, isFrenet=False, combine=True, clean=True):
+    def sweep(self, path, sweepAlongWires=False, makeSolid=True, isFrenet=False, combine=True, clean=True):
         """
         Use all un-extruded wires in the parent chain to create a swept solid.
 
         :param path: A wire along which the pending wires will be swept
+        :param boolean sweepAlongWires:
+            False to create multiple swept from wires on the chain along path
+            True to create only one solid swept along path with shape following the list of wires on the chain
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
         """
 
-        # returns a Solid (or a compound if there were multiple)
-        r = self._sweep(path.wire(), makeSolid, isFrenet)
+        r = self._sweep(path.wire(), sweepAlongWires, makeSolid, isFrenet)  # returns a Solid (or a compound if there were multiple)
         if combine:
             newS = self._combineWithBase(r)
         else:
             newS = self.newObject([r])
-        if clean:
-            newS = newS.clean()
+        if clean: newS = newS.clean()
         return newS
 
     def _combineWithBase(self, obj):
@@ -2217,6 +2353,43 @@ class Workplane(CQ):
 
         if clean:
             newS = newS.clean()
+
+        if combine:
+            solidRef.wrapped = newS.wrapped
+
+        return self.newObject([newS])
+    
+    def intersect(self, toIntersect, combine=True, clean=True):
+        """
+        Intersects the provided solid from the current solid.
+
+        if combine=True, the result and the original are updated to point to the new object
+        if combine=False, the result will be on the stack, but the original is unmodified
+
+        :param toIntersect: object to intersect
+        :type toIntersect: a solid object, or a CQ object having a solid,
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :raises: ValueError if there is no solid to intersect with in the chain
+        :return: a CQ object with the resulting object selected
+        """
+
+        # look for parents to intersect with
+        solidRef = self.findSolid(searchStack=True, searchParents=True)
+
+        if solidRef is None:
+            raise ValueError("Cannot find solid to intersect with")
+        solidToIntersect = None
+
+        if isinstance(toIntersect, CQ):
+            solidToIntersect = toIntersect.val()
+        elif isinstance(toIntersect, Solid) or isinstance(toIntersect, Compound):
+            solidToIntersect = toIntersect
+        else:
+            raise ValueError("Cannot intersect type '{}'".format(type(toIntersect)))
+
+        newS = solidRef.intersect(solidToIntersect)
+
+        if clean: newS = newS.clean()
 
         if combine:
             solidRef.wrapped = newS.wrapped
@@ -2386,27 +2559,37 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def _sweep(self, path, makeSolid=True, isFrenet=False):
+    def _sweep(self, path, sweepAlongWires=False, makeSolid=True, isFrenet=False):
         """
         Makes a swept solid from an existing set of pending wires.
 
         :param path: A wire along which the pending wires will be swept
+        :param boolean sweepAlongWires:
+            False to create multiple swept from wires on the chain along path
+            True to create only one solid swept along path with shape following the list of wires on the chain
         :return:a FreeCAD solid, suitable for boolean operations
         """
 
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
         s = time.time()
-        wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires), self.plane, [])
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires), self.plane, [])
         # print "sorted wires in %d sec" % ( time.time() - s )
-        # now all of the wires have been used to create an extrusion
-        self.ctx.pendingWires = []
+        self.ctx.pendingWires = []  # now all of the wires have been used to create an extrusion
 
         toFuse = []
-        for ws in wireSets:
-            thisObj = Solid.sweep(
-                ws[0], ws[1:], path.val(), makeSolid, isFrenet)
+        if not sweepAlongWires:
+            for ws in wireSets:
+                thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid, isFrenet)
+                toFuse.append(thisObj)
+        else:
+            section = []
+            for ws in wireSets:
+                for i in range(0, len(ws)):
+                    section.append(ws[i])
+
+            # implementation
+            thisObj = Solid.sweep_multi(section, path.val(), makeSolid, isFrenet)
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)

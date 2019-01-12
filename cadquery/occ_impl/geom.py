@@ -19,22 +19,26 @@ class Vector(object):
             * a gp_Vec
             * a vector ( in which case it is copied )
             * a 3-tuple
-            * three float values, x, y, and z
+            * a 2-tuple (z assumed to be 0)
+            * three float values: x, y, and z
+            * two float values: x,y
     """
 
     def __init__(self, *args):
         if len(args) == 3:
             fV = gp_Vec(*args)
+        elif len(args) == 2:
+            fV = gp_Vec(*args,0)
         elif len(args) == 1:
             if isinstance(args[0], Vector):
                 fV = gp_Vec(args[0].wrapped.XYZ())
             elif isinstance(args[0], (tuple, list)):
-                fV = gp_Vec(*args[0])
-            elif isinstance(args[0], gp_Vec):
-                fV = gp_Vec(args[0].XYZ())
-            elif isinstance(args[0], gp_Pnt):
-                fV = gp_Vec(args[0].XYZ())
-            elif isinstance(args[0], gp_Dir):
+                arg = args[0]
+                if len(arg)==3:
+                    fV = gp_Vec(*arg)
+                elif len(arg)==2:
+                    fV = gp_Vec(*arg,0)
+            elif isinstance(args[0], (gp_Vec, gp_Pnt, gp_Dir)):
                 fV = gp_Vec(args[0].XYZ())
             elif isinstance(args[0], gp_XYZ):
                 fV = gp_Vec(args[0])
@@ -50,14 +54,26 @@ class Vector(object):
     @property
     def x(self):
         return self.wrapped.X()
+    
+    @x.setter
+    def x(self,value):
+        self.wrapped.SetX(value)
 
     @property
     def y(self):
         return self.wrapped.Y()
+    
+    @y.setter
+    def y(self,value):
+        self.wrapped.SetY(value)
 
     @property
     def z(self):
         return self.wrapped.Z()
+    
+    @z.setter
+    def z(self,value):
+        self.wrapped.SetZ(value)
 
     @property
     def Length(self):
@@ -199,20 +215,21 @@ class Matrix:
             self.wrapped = gp_Trsf()
         elif isinstance(matrix, gp_Trsf):
             self.wrapped = matrix
-        elif isinstance(matrix, list):
+        elif isinstance(matrix, (list, tuple)):
+            # Validate matrix size & 4x4 last row value
+            valid_sizes = all(
+                (isinstance(row, (list, tuple)) and (len(row) == 4))
+                for row in matrix
+            ) and len(matrix) in (3, 4)
+            if not valid_sizes:
+                raise TypeError("Matrix constructor requires 2d list of 4x3 or 4x4, but got: {!r}".format(matrix))
+            elif (len(matrix) == 4) and (tuple(matrix[3]) != (0,0,0,1)):
+                raise ValueError("Expected the last row to be [0,0,0,1], but got: {!r}".format(matrix[3]))
+
+            # Assign values to matrix
             self.wrapped = gp_Trsf()
-            if len(matrix) == 3:
-                flattened = [e for row in matrix for e in row]
-                self.wrapped.SetValues(*flattened)
-            elif len(matrix) == 4:
-                # Only use first 3 rows - the last must be [0, 0, 0, 1].
-                lastRow = matrix[3]
-                if lastRow != [0., 0., 0., 1.]:
-                    raise ValueError("Expected the last row to be [0,0,0,1], but got: {}".format(lastRow))
-                flattened = [e for row in matrix[0:3] for e in row]
-                self.wrapped.SetValues(*flattened)
-            else:
-                raise TypeError("Matrix constructor requires list of length 12 or 16")
+            flattened = [e for row in matrix[:3] for e in row]
+            self.wrapped.SetValues(*flattened)
         else:
             raise TypeError(
                     "Invalid param to matrix constructor: {}".format(matrix))
@@ -266,18 +283,18 @@ class Matrix:
         and column parameters start at zero, which is consistent with most
         python libraries, but is counter to gp_Trsf(), which is 1-indexed.
         """
-        if len(rc) != 2:
+        if not isinstance(rc, tuple) or (len(rc) != 2):
             raise IndexError("Matrix subscript must provide (row, column)")
-        r, c = rc[0], rc[1]
-        if r >= 0 and r < 4 and c >= 0 and c < 4:
+        (r, c) = rc
+        if (0 <= r <= 3) and (0 <= c <= 3):
             if r < 3:
-                return self.wrapped.Value(r+1,c+1)
+                return self.wrapped.Value(r + 1, c + 1)
             else:
                 # gp_Trsf doesn't provide access to the 4th row because it has
                 # an implied value as below:
                 return [0., 0., 0., 1.][c]
         else:
-            raise IndexError("Out of bounds access into 4x4 matrix: {}".format(rc))
+            raise IndexError("Out of bounds access into 4x4 matrix: {!r}".format(rc))
 
 
 class Plane(object):
@@ -292,6 +309,10 @@ class Plane(object):
     Frequently, it is not necessary to create work planes, as they can be
     created automatically from faces.
     """
+
+    # equality tolerances
+    _eq_tolerance_origin = 1e-6
+    _eq_tolerance_dot = 1e-6
 
     @classmethod
     def named(cls, stdName, origin=(0, 0, 0)):
@@ -441,6 +462,23 @@ class Plane(object):
         self.zDir = zDir.normalized()
         self._setPlaneDir(xDir)
         self.origin = origin
+
+    def _eq_iter(self, other):
+        """Iterator to successively test equality"""
+        cls = type(self)
+        yield isinstance(other, Plane)  # comparison is with another Plane
+        # origins are the same
+        yield abs(self.origin - other.origin) < cls._eq_tolerance_origin
+        # z-axis vectors are parallel (assumption: both are unit vectors)
+        yield abs(self.zDir.dot(other.zDir) - 1) < cls._eq_tolerance_dot
+        # x-axis vectors are parallel (assumption: both are unit vectors)
+        yield abs(self.xDir.dot(other.xDir) - 1) < cls._eq_tolerance_dot
+
+    def __eq__(self, other):
+        return all(self._eq_iter(other))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def origin(self):
@@ -774,10 +812,11 @@ class BoundBox(object):
         return None
 
     @classmethod
-    def _fromTopoDS(cls, shape, tol=TOL, optimal=False):
+    def _fromTopoDS(cls, shape, tol=None, optimal=False):
         '''
-        Constructs a bounnding box from a TopoDS_Shape
+        Constructs a bounding box from a TopoDS_Shape
         '''
+        tol = TOL if tol is None else tol  # tol = TOL (by default)
         bbox = Bnd_Box()
         bbox.SetGap(tol)
         if optimal:
@@ -791,6 +830,14 @@ class BoundBox(object):
 
         return cls(bbox)
 
-    def isInside(self, anotherBox):
+    def isInside(self, b2):
         """Is the provided bounding box inside this one?"""
-        return not anotherBox.wrapped.IsOut(self.wrapped)
+        if (b2.xmin > self.xmin and
+            b2.ymin > self.ymin and
+            b2.zmin > self.zmin and
+            b2.xmax < self.xmax and
+            b2.ymax < self.ymax and
+            b2.zmax < self.zmax):
+            return True
+        else:
+            return False

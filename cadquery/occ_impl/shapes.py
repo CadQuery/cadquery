@@ -1364,22 +1364,49 @@ class Solid(Shape, Mixin3D):
         :param path: The wire to sweep the face resulting from the wires over
         :return: a Solid object
         """
-
         if path.ShapeType() == 'Edge':
             path = Wire.assembleEdges([path, ])
 
         if makeSolid:
             face = Face.makeFromWires(outerWire, innerWires)
-
             builder = BRepOffsetAPI_MakePipe(path.wrapped, face.wrapped)
-
+            rv = cls(builder.Shape())
         else:
-            builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
-            builder.Add(outerWire.wrapped)
-            for w in innerWires:
+            shapes = []
+            for w in [outerWire]+innerWires:
+                builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
+                builder.SetMode(isFrenet)
                 builder.Add(w.wrapped)
+                shapes.append(cls(builder.Shape()))
+            
+            rv = Compound.makeCompound(shapes)
 
+        return rv
+    
+    @classmethod
+    def sweep_multi(cls, profiles, path, makeSolid=True, isFrenet=False):
+        """
+        Multi section sweep. Only single outer profile per section is allowed.
+
+        :param profiles: list of profiles
+        :param path: The wire to sweep the face resulting from the wires over
+        :return: a Solid object
+        """
+        if path.ShapeType() == 'Edge':
+            path = Wire.assembleEdges([path, ])
+
+        builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
+        
+        for p in profiles:
+            builder.Add(p.wrapped)
+            
+        builder.SetMode(isFrenet)
         builder.Build()
+            
+        if makeSolid:
+            builder.MakeSolid()
+            
+       
 
         return cls(builder.Shape())
 
