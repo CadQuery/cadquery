@@ -22,10 +22,6 @@ env:
 
 matrix:
   include:
-  - env: TRAVIS_PYTHON_VERSION=2.7
-    os: osx
-  - env: TRAVIS_PYTHON_VERSION=2.7
-    os: linux
   - env: TRAVIS_PYTHON_VERSION=3.6
     os: osx
   - env: TRAVIS_PYTHON_VERSION=3.6
