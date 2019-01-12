@@ -65,8 +65,8 @@ after_success:
 - codecov
 
 after_failure:
-- coverage run runtests.py & pid=$! && fg
-- lldb --core /cores/core.$pid --batch --one-line "bt"
+- ls /cores/core.* 
+- lldb --core `ls /cores/core.*` --batch --one-line "bt"
 
 
 before_deploy:
