@@ -5,7 +5,7 @@ dist: trusty
 
 branches:
   only:
-  - cq1_pythonocc
+  - adam-urbanczyk-OCC-version-update
   - master
   - "/\\d+\\.\\d+\\.?d*\\-*[a-z]*/"
 
