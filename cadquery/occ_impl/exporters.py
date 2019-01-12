@@ -309,25 +309,25 @@ def getSVG(shape, opts=None):
     visible = []
 
     visible_sharp_edges = hlr_shapes.VCompound()
-    if not visible_sharp_edges.IsNull():
+    if visible_sharp_edges:
         visible.append(visible_sharp_edges)
 
     visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
-    if not visible_smooth_edges.IsNull():
+    if visible_smooth_edges:
         visible.append(visible_smooth_edges)
 
     visible_contour_edges = hlr_shapes.OutLineVCompound()
-    if not visible_contour_edges.IsNull():
+    if visible_contour_edges:
         visible.append(visible_contour_edges)
 
     hidden = []
 
     hidden_sharp_edges = hlr_shapes.HCompound()
-    if not hidden_sharp_edges.IsNull():
+    if hidden_sharp_edges:
         hidden.append(hidden_sharp_edges)
 
     hidden_contour_edges = hlr_shapes.OutLineHCompound()
-    if not hidden_contour_edges.IsNull():
+    if hidden_contour_edges:
         hidden.append(hidden_contour_edges)
 
     # Fix the underlying geometry - otherwise we will get segfaults
