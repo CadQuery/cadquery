@@ -15,7 +15,10 @@ addons:
     - ubuntu-toolchain-r-test
     packages:
     - libstdc++6
-
+  homebrew:
+    packages:
+    - lldb
+    - gdb
 env:
   global:
     secure: CVHlDL4GG6uDjvz9TceVjoeCSjO7KUPmcW1xHkLtUpdqVHdI0z7WhlULeZdugeqaaK9My37E5TvaJgVpW2fhCNguKJfVVWUE0khLB76dinWrio1BPaTxPKqI63tYFArHVqiLQMK2ZI7ZvnrUK+rlaNOkAMpczrZDXANZfVP73ksTGG4+252mWdUY0jRXJr+he4+uKI6l3Z6bd/GbIRfEIi4gfibZNLDLWvlbpyW3/jLy8yOSXuA5Ed0Oods/WGB/q+jQzJxFV9loWeEafvMpz6cjmgJ0ST3l5FA/ZzGzAtgH+fpXDAcUIFXrKciDF2YaFYhDvWF9d94swZYNXvWfAS/4cGMjgABX03nIcXZVz9iWfmi7/I5PE0O7xCjA2XOF7d1124h5y6oMbK+jV/+IzvmM4bQ295ixY84/G9okoV4Q6mSukVQ3zCK9saF2BC+oNP3SEkH+Sd5ZrsgFXDPK27RHV84Nj1xLiZ4F810v1nsw7afBUs8APts9uAMuyIhg6/4ir9S/OQ83Ox/3YlaL01+EzAliGkMmMZLvvISxgPk6TMsJxpN4ixirSuWOygRDpfMGwX2dYUw1v8qwfCkvEqMoKkfGhNY+YoCGlO0y3lslU4iaQElRwtrr8jCP3sS5f+9RvbPRvzKryI89MuqnqBq8w0JqYKPYy2OkCYLfzZg=
@@ -52,11 +55,19 @@ before_install:
 install:
 - python setup.py install
 
+before_script:
+- ulimit -c unlimited -S  
+
 script:
 - coverage run runtests.py
 
 after_success:
 - codecov
+
+after_failure:
+- COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
+- if [[ -f "$COREFILE" ]]; then gdb -c "$COREFILE" example -ex "thread apply all bt" -ex "set pagination 0" -batch; fi
+
 
 before_deploy:
 - conda install anaconda-client conda-build
