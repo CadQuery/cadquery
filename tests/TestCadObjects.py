@@ -2,7 +2,7 @@
 import sys
 import unittest
 from tests import BaseTest
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_DZ
+from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_DZ, gp_XYZ
 from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
                                 BRepBuilderAPI_MakeFace)
@@ -24,9 +24,26 @@ class TestCadObjects(BaseTest):
         v1 = Vector(1, 2, 3)
         v2 = Vector((1, 2, 3))
         v3 = Vector(gp_Vec(1, 2, 3))
+        v4 = Vector([1,2,3])
+        v5 = Vector(gp_XYZ(1,2,3))
 
-        for v in [v1, v2, v3]:
+        for v in [v1, v2, v3, v4, v5]:
             self.assertTupleAlmostEquals((1, 2, 3), v.toTuple(), 4)
+            
+        v6 = Vector((1,2))
+        v7 = Vector([1,2])
+        v8 = Vector(1,2)
+        
+        for v in [v6, v7, v8]:
+            self.assertTupleAlmostEquals((1, 2, 0), v.toTuple(), 4)
+        
+        v9 = Vector()
+        self.assertTupleAlmostEquals((0, 0, 0), v9.toTuple(), 4)
+        
+        v9.x = 1.
+        v9.y = 2.
+        v9.z = 3.
+        self.assertTupleAlmostEquals((1, 2, 3), (v9.x, v9.y, v9.z), 4)
 
     def testVertex(self):
         """
@@ -149,14 +166,19 @@ class TestCadObjects(BaseTest):
                    [0., 1., 0., 2.],
                    [0., 0., 1., 3.],
                    [0., 0., 0., 1.]]
+        vals4x4_tuple = tuple(tuple(r) for r in  vals4x4)
 
         # test constructor with 16-value input
         m = Matrix(vals4x4)
         self.assertEqual(vals4x4, matrix_vals(m))
+        m = Matrix(vals4x4_tuple)
+        self.assertEqual(vals4x4, matrix_vals(m))
 
         # test constructor with 12-value input (the last 4 are an implied
         # [0,0,0,1])
-        m = Matrix(vals4x4[0:12])
+        m = Matrix(vals4x4[:3])
+        self.assertEqual(vals4x4, matrix_vals(m))
+        m = Matrix(vals4x4_tuple[:3])
         self.assertEqual(vals4x4, matrix_vals(m))
 
         # Test 16-value input with invalid values for the last 4
@@ -167,14 +189,24 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(ValueError):
             Matrix(invalid)
 
-        # Test input with invalid size
+        # Test input with invalid size / nested types
+        with self.assertRaises(TypeError):
+            Matrix([[1, 2, 3, 4], [1, 2, 3], [1, 2, 3, 4]])
         with self.assertRaises(TypeError):
             Matrix([1,2,3])
+
+        # Invalid sub-type
+        with self.assertRaises(TypeError):
+            Matrix([[1, 2, 3, 4], 'abc', [1, 2, 3, 4]])
 
         # test out-of-bounds access
         m = Matrix()
         with self.assertRaises(IndexError):
-            m[5, 5]
+            m[0, 4]
+        with self.assertRaises(IndexError):
+            m[4, 0]
+        with self.assertRaises(IndexError):
+            m['ab']
 
 
     def testTranslate(self):
@@ -188,6 +220,50 @@ class TestCadObjects(BaseTest):
                                                gp_Pnt(1, 1, 0)).Edge())
         self.assertEqual(2, len(e.Vertices()))
 
+    def testPlaneEqual(self):
+        # default orientation
+        self.assertEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1))
+        )
+        # moved origin
+        self.assertEqual(
+            Plane(origin=(2,1,-1), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(2,1,-1), xDir=(1,0,0), normal=(0,0,1))
+        )
+        # moved x-axis
+        self.assertEqual(
+            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1)),
+            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1))
+        )
+        # moved z-axis
+        self.assertEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1)),
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1))
+        )
+ 
+    def testPlaneNotEqual(self):
+        # type difference
+        for value in [None, 0, 1, 'abc']:
+            self.assertNotEqual(
+                Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+                value
+            )
+        # origin difference
+        self.assertNotEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(0,0,1), xDir=(1,0,0), normal=(0,0,1))
+        )
+        # x-axis difference
+        self.assertNotEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1))
+        )
+        # z-axis difference
+        self.assertNotEqual(
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
+            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1))
+        )
 
 if __name__ == '__main__':
     unittest.main()
