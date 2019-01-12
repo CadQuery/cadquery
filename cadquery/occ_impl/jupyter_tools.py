@@ -1,6 +1,6 @@
 from OCC.Core.Display.WebGl.x3dom_renderer import X3DExporter
 from OCC.Core.gp import gp_Quaternion, gp_Vec
-from uuid import uuid1
+from uuid import uuid4
 from math import tan
 
 from .geom import BoundBox
