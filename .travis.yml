@@ -57,7 +57,7 @@ install:
 
 before_script:
 - ulimit -c unlimited -S 
-- rm /cores/core.*
+- rm -f /cores/core.*
 
 script:
 - coverage run runtests.py
