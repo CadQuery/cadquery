@@ -36,7 +36,7 @@ Selectors can be combined logically, currently defined operators include **and**
         .edges("|Z and >Y") \
         .chamfer(0.2)
     
-    build_object(result)
+    show_object(result)
 
 Much more complex expressions are possible as well:
 
@@ -49,7 +49,7 @@ Much more complex expressions are possible as well:
         .edges("not(<X or >X or <Y or >Y)") \
         .chamfer(0.1)
     
-    build_object(result)
+    show_object(result)
 
 .. _filteringfaces:
 
@@ -137,4 +137,4 @@ It is possible to use user defined vectors as a basis for the selectors. For exa
     # chamfer only one edge
     result = result.edges('>(-1,1,0)').chamfer(1)
     
-    build_object(result)
+    show_object(result)
