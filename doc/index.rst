@@ -1,9 +1,9 @@
 
 
-CadQuery Documentation
+CadQuery 2.0 Documentation
 ===================================
 
-CadQuery is an intuitive, easy-to-use python library for building parametric 3D CAD models.  It has several goals:
+CadQuery is an intuitive, easy-to-use Python library for building parametric 3D CAD models.  It has several goals:
 
     * Build models with scripts that are as close as possible to how you'd describe the object to a human,
       using a standard, already established programming language
@@ -17,7 +17,7 @@ CadQuery is an intuitive, easy-to-use python library for building parametric 3D 
 See CadQuery in Action
 -------------------------
 
-This `Getting Started Video <https://youtu.be/lxhBNOE7GVs>`_ will show you what CadQuery can do.
+This `Getting Started Video <https://youtu.be/lxhBNOE7GVs>`_ will show you what CadQuery can do. Please note that the video has not been updated for CadQuery 2.0 and still shows CadQuery use within FreeCAD.
 
 
 Quick Links
