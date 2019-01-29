@@ -9,7 +9,6 @@ import cadquery
 
 CQSCRIPT = "<cqscript>"
 
-
 def parse(script_source):
     """
     Parses the script as a model, and returns a model.
@@ -31,11 +30,10 @@ class CQModel(object):
 
     After construction, the metadata property contains
     a ScriptMetaData object, which describes the model in more detail,
-    and can be used to retrive the parameters defined by the model.
+    and can be used to retrieve the parameters defined by the model.
 
     the build method can be used to generate a 3d model
     """
-
     def __init__(self, script_source):
         """
         Create an object by parsing the supplied python script.
@@ -46,7 +44,7 @@ class CQModel(object):
         self.script_source = script_source
         self._find_vars()
 
-        # TODO: pick up other scirpt metadata:
+        # TODO: pick up other script metadata:
         # describe
         # pick up validation methods
         self._find_descriptions()
@@ -60,7 +58,7 @@ class CQModel(object):
         # are only at the top level of the script. IE, we'll ignore any
         # variable definitions at lower levels of the script
 
-        # we dont want to use the visit interface because here we excplicitly
+        # we don't want to use the visit interface because here we explicitly
         # want to walk only the top level of the tree.
         assignment_finder = ConstantAssignmentFinder(self.metadata)
 
@@ -87,7 +85,7 @@ class CQModel(object):
         :param build_parameters: a dictionary of variables. The variables must be
         assignable to the underlying variable type. These variables override default values in the script
         :param build_options: build options for how to build the model. Build options include things like
-        timeouts, tesselation tolerances, etc
+        timeouts, tessellation tolerances, etc
         :raises: Nothing. If there is an exception, it will be on the exception property of the result.
         This is the interface so that we can return other information on the result, such as the build time
         :return: a BuildResult object, which includes the status of the result, and either
@@ -103,25 +101,23 @@ class CQModel(object):
             self.set_param_values(build_parameters)
             collector = ScriptCallback()
             env = EnvironmentBuilder().with_real_builtins().with_cadquery_objects() \
-                .add_entry("build_object", collector.build_object) \
+                .add_entry("__name__", "__cqgi__") \
+                .add_entry("show_object", collector.show_object) \
                 .add_entry("debug", collector.debug) \
-                .add_entry("describe_parameter", collector.describe_parameter) \
+                .add_entry("describe_parameter",collector.describe_parameter) \
                 .build()
 
             c = compile(self.ast_tree, CQSCRIPT, 'exec')
-            exec(c, env)
-            result.set_debug(collector.debugObjects)
-            if collector.has_results():
-                result.set_success_result(collector.outputObjects)
-            else:
-                raise NoOutputError(
-                    "Script did not call build_object-- no output available.")
+            exec (c, env)
+            result.set_debug(collector.debugObjects )
+            result.set_success_result(collector.outputObjects)
+
         except Exception as ex:
-            print("Error Executing Script:")
+            #print "Error Executing Script:"
             result.set_failure_result(ex)
-            traceback.print_exc()
-            print("Full Text of Script:")
-            print(self.script_source)
+            #traceback.print_exc()
+            #print "Full Text of Script:"
+            #print self.script_source
 
         end = time.clock()
         result.buildTime = end - start
@@ -132,12 +128,19 @@ class CQModel(object):
 
         for k, v in params.items():
             if k not in model_parameters:
-                raise InvalidParameterError(
-                    "Cannot set value '%s': not a parameter of the model." % k)
+                raise InvalidParameterError("Cannot set value '%s': not a parameter of the model." % k)
 
             p = model_parameters[k]
             p.set_value(v)
 
+
+class ShapeResult(object):
+    """
+    An object created by a build, including the user parameters provided
+    """
+    def __init__(self):
+        self.shape = None
+        self.options = None
 
 class BuildResult(object):
     """
@@ -150,11 +153,10 @@ class BuildResult(object):
     If unsuccessful, the exception property contains a reference to
     the stack trace that occurred.
     """
-
     def __init__(self):
         self.buildTime = None
-        self.results = []
-        self.debugObjects = []
+        self.results = [] #list of ShapeResult
+        self.debugObjects = [] #list of ShapeResult
         self.first_result = None
         self.success = False
         self.exception = None
@@ -168,7 +170,8 @@ class BuildResult(object):
 
     def set_success_result(self, results):
         self.results = results
-        self.first_result = self.results[0]
+        if len(self.results) > 0:
+            self.first_result = self.results[0]
         self.success = True
 
 
@@ -177,15 +180,14 @@ class ScriptMetadata(object):
     Defines the metadata for a parsed CQ Script.
     the parameters property is a dict of InputParameter objects.
     """
-
     def __init__(self):
         self.parameters = {}
 
     def add_script_parameter(self, p):
         self.parameters[p.name] = p
 
-    def add_parameter_description(self, name, description):
-        print('Adding Parameter name=%s, desc=%s' % (name, description))
+    def add_parameter_description(self,name,description):
+        #print 'Adding Parameter name=%s, desc=%s' % ( name, description )
         p = self.parameters[name]
         p.desc = description
 
@@ -217,7 +219,6 @@ class InputParameter:
     provide additional metadata
 
     """
-
     def __init__(self):
 
         #: the default value for the variable.
@@ -253,20 +254,24 @@ class InputParameter:
         return p
 
     def set_value(self, new_value):
-        
         if len(self.valid_values) > 0 and new_value not in self.valid_values:
             raise InvalidParameterError(
                 "Cannot set value '{0:s}' for parameter '{1:s}': not a valid value. Valid values are {2:s} "
-                .format(str(new_value), self.name, str(self.valid_values)))
+                    .format(str(new_value), self.name, str(self.valid_values)))
 
         if self.varType == NumberParameterType:
             try:
-                f = float(new_value)
+                # Sometimes a value must stay as an int for the script to work properly
+                if isinstance(new_value, int):
+                    f = int(new_value)
+                else:
+                    f = float(new_value)
+
                 self.ast_node.n = f
             except ValueError:
                 raise InvalidParameterError(
                     "Cannot set value '{0:s}' for parameter '{1:s}': parameter must be numeric."
-                    .format(str(new_value), self.name))
+                        .format(str(new_value), self.name))
 
         elif self.varType == StringParameterType:
             self.ast_node.s = str(new_value)
@@ -292,30 +297,36 @@ class InputParameter:
 class ScriptCallback(object):
     """
     Allows a script to communicate with the container
-    the build_object() method is exposed to CQ scripts, to allow them
+    the show_object() method is exposed to CQ scripts, to allow them
     to return objects to the execution environment
     """
-
     def __init__(self):
         self.outputObjects = []
         self.debugObjects = []
 
-    def build_object(self, shape):
+    def show_object(self, shape,options={}):
         """
-        return an object to the executing environment
+        return an object to the executing environment, with options
         :param shape: a cadquery object
+        :param options: a dictionary of options that will be made available to the executing environment
         """
-        self.outputObjects.append(shape)
+        o = ShapeResult()
+        o.options=options
+        o.shape = shape
+        self.outputObjects.append(o)
 
-    def debug(self, obj, args={}):
+    def debug(self,obj,args={}):
         """
         Debug print/output an object, with optional arguments.
         """
-        self.debugObjects.append(DebugObject(obj, args))
+        s = ShapeResult()
+        s.shape = obj
+        s.options = args
+        self.debugObjects.append(s)
 
-    def describe_parameter(self, var_data):
+    def describe_parameter(self,var_data ):
         """
-        Do Nothing-- we parsed the ast ahead of exection to get what we need.
+        Do Nothing-- we parsed the ast ahead of execution to get what we need.
         """
         pass
 
@@ -329,17 +340,6 @@ class ScriptCallback(object):
         return len(self.outputObjects) > 0
 
 
-class DebugObject(object):
-    """
-    Represents a request to debug an object
-    Object is the type of object we want to debug
-    args are parameters for use during debuging ( for example, color, tranparency )
-    """
-
-    def __init__(self, object, args):
-        self.args = args
-        self.object = object
-
 
 class InvalidParameterError(Exception):
     """
@@ -351,7 +351,7 @@ class InvalidParameterError(Exception):
 
 class NoOutputError(Exception):
     """
-    Raised when the script does not execute the build_object() method to
+    Raised when the script does not execute the show_object() method to
     return a solid
     """
     pass
@@ -391,7 +391,6 @@ class EnvironmentBuilder(object):
     The environment includes the builtins, as well as
     the other methods the script will need.
     """
-
     def __init__(self):
         self.env = {}
 
@@ -414,33 +413,30 @@ class EnvironmentBuilder(object):
     def build(self):
         return self.env
 
-
 class ParameterDescriptionFinder(ast.NodeTransformer):
     """
     Visits a parse tree, looking for function calls to describe_parameter(var, description )
     """
-
     def __init__(self, cq_model):
         self.cqModel = cq_model
 
-    def visit_Call(self, node):
-        """
-        Called when we see a function call. Is it describe_parameter?
-        """
-        try:
+    def visit_Call(self,node):
+       """
+       Called when we see a function call. Is it describe_parameter?
+       """
+       try:
             if node.func.id == 'describe_parameter':
                 # looks like we have a call to our function.
                 # first parameter is the variable,
                 # second is the description
                 varname = node.args[0].id
                 desc = node.args[1].s
-                self.cqModel.add_parameter_description(varname, desc)
+                self.cqModel.add_parameter_description(varname,desc)
 
-        except:
-            print("Unable to handle function call")
+       except:
+            #print "Unable to handle function call"
             pass
-        return node
-
+       return node
 
 class ConstantAssignmentFinder(ast.NodeTransformer):
     """
@@ -452,6 +448,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
 
     def handle_assignment(self, var_name, value_node):
         try:
+
             if type(value_node) == ast.Num:
                 self.cqModel.add_script_parameter(
                     InputParameter.create(value_node, var_name, NumberParameterType, value_node.n))
@@ -466,12 +463,12 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                     self.cqModel.add_script_parameter(
                         InputParameter.create(value_node, var_name, BooleanParameterType, False))
             elif hasattr(ast, 'NameConstant') and type(value_node) == ast.NameConstant:
-                 if value_node.value == True:
-                     self.cqModel.add_script_parameter(
-                         InputParameter.create(value_node, var_name, BooleanParameterType, True))
-                 else:
-                     self.cqModel.add_script_parameter(
-                         InputParameter.create(value_node, var_name, BooleanParameterType, False))
+                if value_node.value == True:
+                    self.cqModel.add_script_parameter(
+                        InputParameter.create(value_node, var_name, BooleanParameterType, True))
+                else:
+                    self.cqModel.add_script_parameter(
+                        InputParameter.create(value_node, var_name, BooleanParameterType, False))
         except:
             print("Unable to handle assignment for variable '%s'" % var_name)
             pass
@@ -485,6 +482,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             if isinstance(left_side, ast.Attribute):
                 return
 
+            # Handle the NamedConstant type that is only present in Python 3
             astTypes = [ast.Num, ast.Str, ast.Name]
             if hasattr(ast, 'NameConstant'):
                 astTypes.append(ast.NameConstant)
@@ -497,7 +495,6 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                     self.handle_assignment(n.id, v)
         except:
             traceback.print_exc()
-            print("Unable to handle assignment for node '%s'" %
-                  ast.dump(left_side))
+            print("Unable to handle assignment for node '%s'" % ast.dump(left_side))
 
         return node
