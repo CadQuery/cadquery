@@ -6,21 +6,18 @@ CadQuery QuickStart
 
 .. module:: cadquery
 
-Want a quick glimpse of what CadQuery can do?  This quickstart will demonstrate the basics of cadQuery using a simple example
+Want a quick glimpse of what CadQuery can do?  This quickstart will demonstrate the basics of CadQuery using a simple example
 
-Prerequisites: FreeCAD + cadQuery-freeCAD-module in FreeCAD
+Prerequisites: Anaconda/Miniconda + CQ-editor running from an environment
 ==============================================================
 
-If you have not already done so, follow the :ref:`installation`, and  to install cadquery, FreeCAD,
-and the cadquery-freecad-module
+If you have not already done so, follow the :ref:`installation`, to install Anaconda/Miniconda and CQ-editor.
 
-After installation, open the CadQuery workbench:
+After installation, run CQ-editor:
 
 ..  image:: _static/quickstart/001.png
 
-You'll see that we start out with a single block.  Find the cadquery Code Window, at the bottom left.
-
-If you want check out a couple of the examples in the CadQuery->Examples menu.
+Find the CadQuery code editor, on the left side.  You'll see that we start out with the script for a simple block.
 
 What we'll accomplish
 ========================
@@ -32,13 +29,13 @@ We will build a fully parametric bearing pillow block in this quickstart.  Our f
 **We would like our block to have these features:**
 
     1. It should be sized to hold a single 608 ( 'skate' ) bearing, in the center of the block.
-    2. It should have counter sunk holes for M2 socket head cap screws at the corners
+    2. It should have counter-bored holes for M2 socket head cap screws at the corners.
     3. The length and width of the block should be configurable by the user to any reasonable size.
 
 A human would describe this as:
 
-     "A rectangular block 80mm x 60mm x 30mm , with countersunk holes for M2 socket head cap screws
-     at the corners, and a circular pocket 22mm in diameter in the middle for a bearing"
+     "A rectangular block 80mm x 60mm x 10mm , with counter-bored holes for M2 socket head cap screws
+     at the corners, and a circular pocket 22mm in diameter in the middle for a bearing."
 
 Human descriptions are very elegant, right?
 Hopefully our finished script will not be too much more complex than this human-oriented description.
@@ -49,7 +46,7 @@ Start With A single, simple Plate
 ======================================
 
 Lets start with a simple model that makes nothing but a rectangular block, but
-with place-holders for the dimensions. Paste this into the CodeWindow:
+with place-holders for the dimensions. Paste this into the code editor:
 
 .. code-block:: python
    :linenos:
@@ -62,9 +59,9 @@ with place-holders for the dimensions. Paste this into the CodeWindow:
     result = cq.Workplane("XY").box(height, width, thickness)
 
     # Render the solid
-    build_object(result)
+    show_object(result)
 
-Press F2 to run the script. You should see Our basic base.
+Press the green Render button in the toolbar to run the script. You should see our base object.
 
 ..  image:: _static/quickstart/002.png
 
@@ -73,7 +70,7 @@ Nothing special, but its a start!
 Add the Holes
 ================
 
-Our pillow block needs to have a 22mm diameter hole in the center of this block to hold the bearing.
+Our pillow block needs to have a 22mm diameter hole in the center to hold the bearing.
 
 This modification will do the trick:
 
@@ -91,9 +88,9 @@ This modification will do the trick:
         .faces(">Z").workplane().hole(diameter)
 
     # Render the solid
-    build_object(result)
+    show_object(result)
 
-Rebuild your model by pressing F2. Your block should look like this:
+Rebuild your model by clicking the Render button. Your block should look like this:
 
 ..  image:: _static/quickstart/003.png
 
@@ -105,8 +102,8 @@ The code is pretty compact, lets step through it.
 **Line 8**, we're adding the hole.
 :py:meth:`cadquery.CQ.faces` selects the top-most face in the Z direction, and then
 :py:meth:`cadquery.CQ.workplane` begins a new workplane located on this face. The center of this workplane
-is located at the geometric center of the shape, which in this case is the center of the plate.
-Finally, :py:meth:`cadquery.Workplane.hole` drills a hole through the part 22mm in diamter
+is located at the center of mass of the shape, which in this case is the center of the plate.
+Finally, :py:meth:`cadquery.Workplane.hole` drills a hole through the part, 22mm in diamter.
 
 .. note::
 
@@ -124,11 +121,11 @@ An M2 Socket head cap screw has these dimensions:
   * **Clearance Hole** : 2.4 mm
   * **CounterBore diameter** : 4.4 mm
 
-The centers of these holes should be 4mm from the edges of the block. And,
+The centers of these holes should be 12mm from the edges of the block. And,
 we want the block to work correctly even when the block is re-sized by the user.
 
 **Don't tell me** we'll have to repeat the steps above 8 times to get counter-bored holes?
-Good news!-- we can get the job done with just two lines of code. Here's the code we need:
+Good news!-- we can get the job done with just a few lines of code. Here's the code we need:
 
 .. code-block:: python
    :linenos:
@@ -149,10 +146,10 @@ Good news!-- we can get the job done with just two lines of code. Here's the cod
         .cboreHole(2.4, 4.4, 2.1)
 
     # Render the solid
-    build_object(result)
+    show_object(result)
 
 
-After pressing F2 to re-execute the model, you should see something like this:
+After clicking the Redner button to re-execute the model, you should see something like this:
 
         ..  image:: _static/quickstart/004.png
 
@@ -171,21 +168,21 @@ There are a couple of things to note about this line:
        but we are just using it to help define some other geometry.
     2. The center point of a workplane on a face is always at the center of the face, which works well here
     3. Unless you specifiy otherwise, a rectangle is drawn with its center on the current workplane center-- in
-       this case, the center of the top face of the block. So this rectangle will be centered on the face
+       this case, the center of the top face of the block. So this rectangle will be centered on the face.
 
 
-**Line 11** draws a rectangle 8mm smaller than the overall length and width of the block,which we will use to
+**Line 11** draws a rectangle 12mm smaller than the overall length and width of the block, which we will use to
 locate the corner holes. We'll use the vertices ( corners ) of this rectangle to locate the holes. The rectangle's
 center is at the center of the workplane, which in this case co-incides with the center of the bearing hole.
 
 **Line 12** selects the vertices of the rectangle, which we will use for the centers of the holes.
-The :py:meth:`cadquery.CQ.vertices` function selects the corners of the rectangle
+The :py:meth:`cadquery.CQ.vertices` function selects the corners of the rectangle.
 
 **Line 13** uses the cboreHole function to draw the holes.
-The :py:meth:`cadquery.Workplane.cboreHole` function is a handy CadQuery function that makes a counterbored hole,
-like most other CadQuery functions, operate on the values on the stack.  In this case, since we
+The :py:meth:`cadquery.Workplane.cboreHole` function is a handy CadQuery function that makes a counterbored hole. 
+Like most other CadQuery functions, it operates on the values on the stack.  In this case, since we
 selected the four vertices before calling the function, the function operates on each of the four points--
-which results in a counterbore hole at the corners.
+which results in a counterbore hole at each of the rectangle corners.
 
 
 Filleting
@@ -215,7 +212,7 @@ We can do that using the preset dictionaries in the parameter definition:
         .edges("|Z").fillet(2.0)
 
     # Render the solid
-    build_object(result)
+    show_object(result)
 
 **Line 13** fillets the edges using the   :py:meth:`cadquery.CQ.fillet` method.
 
@@ -236,7 +233,6 @@ with < 20 lines of code.
 Want to learn more?
 ====================
 
-   * Use the CadQuery->Examples menu of the cadquery workbench to explore a lot of other examples.
    * The :ref:`examples` contains lots of examples demonstrating cadquery features
    * The :ref:`apireference` is a good overview of language features grouped by function
    * The :ref:`classreference` is the hard-core listing of all functions available.
