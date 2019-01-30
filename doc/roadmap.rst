@@ -51,7 +51,7 @@ offsets
     offset profiles, including circles, rects, and other profiles.
 
 ellipses
-    create elipses and portions of elipses
+    create ellipses and portions of ellipses
 
 regular polygons
     several construction methods:

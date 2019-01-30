@@ -97,13 +97,13 @@ Rebuild your model by clicking the Render button. Your block should look like th
 
 The code is pretty compact, lets step through it.
 
-**Line 4** adds a new parameter, diameter, for the diamter of the hole
+**Line 4** adds a new parameter, diameter, for the diameter of the hole
 
 **Line 8**, we're adding the hole.
 :py:meth:`cadquery.CQ.faces` selects the top-most face in the Z direction, and then
 :py:meth:`cadquery.CQ.workplane` begins a new workplane located on this face. The center of this workplane
 is located at the center of mass of the shape, which in this case is the center of the plate.
-Finally, :py:meth:`cadquery.Workplane.hole` drills a hole through the part, 22mm in diamter.
+Finally, :py:meth:`cadquery.Workplane.hole` drills a hole through the part, 22mm in diameter.
 
 .. note::
 
@@ -173,7 +173,7 @@ There are a couple of things to note about this line:
 
 **Line 11** draws a rectangle 12mm smaller than the overall length and width of the block, which we will use to
 locate the corner holes. We'll use the vertices ( corners ) of this rectangle to locate the holes. The rectangle's
-center is at the center of the workplane, which in this case co-incides with the center of the bearing hole.
+center is at the center of the workplane, which in this case coincides with the center of the bearing hole.
 
 **Line 12** selects the vertices of the rectangle, which we will use for the centers of the holes.
 The :py:meth:`cadquery.CQ.vertices` function selects the corners of the rectangle.

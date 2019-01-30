@@ -4,7 +4,7 @@ Extending CadQuery
 ======================
 
 
-If you find that CadQuery doesnt suit your needs, you can easily extend it.  CadQuery provides several extension
+If you find that CadQuery does not suit your needs, you can easily extend it.  CadQuery provides several extension
 methods:
 
    * You can load plugins others have developed. This is by far the easiest way to access other code
@@ -108,7 +108,7 @@ are designed to aid in plugin creation:
    * :py:meth:`cadquery.Workplane.plane` provides a reference to the workplane, which allows you to convert between workplane
      coordinates and global coordinates:
      * :py:meth:`cadquery.occ_impl.geom.Plane.toWorldCoords` will convert local coordinates to global ones
-     * :py:meth:`cadquery.occ_impl.geom.Plane.toLocalCoords` will convet from global coordinates to local coordinates
+     * :py:meth:`cadquery.occ_impl.geom.Plane.toLocalCoords` will convert from global coordinates to local coordinates
 
 Coordinate Systems
 -----------------------
