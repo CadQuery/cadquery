@@ -49,7 +49,7 @@ CadQuery is a library,  GUIs are separate
 ==============================================
 
 CadQuery is a library, that's intentionally designed to be usable as a GUI-less library. This enables
-its use in a variety of engineering and scientific applications that create 3d models programmatically.
+its use in a variety of engineering and scientific applications that create 3D models programmatically.
 
 If you'd like a GUI, you have a couple of options:
 
@@ -87,7 +87,7 @@ revolutionized web development involving javascript.
 CadQuery is for 3D CAD what jQuery is for javascript.
 If you are familiar with how jQuery works, you will probably recognize several jQuery features that CadQuery uses:
 
-    * A fluent api to create clean, easy to read code
+    * A fluent API to create clean, easy to read code
 
     * Ability to use the library along side other Python libraries
 

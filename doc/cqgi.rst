@@ -5,7 +5,7 @@ The CadQuery Gateway Interface
 
 
 CadQuery is first and foremost designed as a library, which can be used as a part of any project.
-In this context, there is no need for a standard script format or gateway api.
+In this context, there is no need for a standard script format or gateway API.
 
 Though the embedded use case is the most common, several tools have been created which run
 cadquery scripts on behalf of the user, and then render the result of the script visually.
@@ -106,7 +106,7 @@ If a parameter called 'param' is defined in the model, it will be assigned the v
 An error will occur if a value is provided that is not defined in the model, or if the value provided cannot
 be assigned to a variable with the given name.
 
-build_options is used to set server-side settings like timeouts, tesselation tolerances, and other details about
+build_options is used to set server-side settings like timeouts, tessellation tolerances, and other details about
 how the model should be built.
 
 
@@ -139,7 +139,7 @@ You can list the variables defined in the model by using the return value of the
 The key of the dictionary is a string , and the value is a :py:class:`cadquery.cqgi.InputParameter` object
 See the CQGI API docs for more details.
 
-Future enhancments will include a safer sandbox to prevent malicious scripts.
+Future enhancements will include a safer sandbox to prevent malicious scripts.
 
 Important CQGI Methods
 -------------------------
@@ -154,7 +154,7 @@ These are the most important Methods and classes of the CQGI
     BuildResult
     ScriptCallback.show_object
 
-Complete CQGI api
+Complete CQGI API
 -----------------
 
 .. automodule:: cadquery.cqgi
