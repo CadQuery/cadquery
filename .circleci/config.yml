@@ -21,11 +21,11 @@ jobs:
       - run: conda create --quiet --name cqtest -c cadquery -c conda-forge -c dlr-sc pythonocc-core=0.18.2 python=$PYTHON_VERSION pyparsing mock lldb
       - run: |
           source activate cqtest
+          pip install coverage
           python setup.py install
           conda env list
           conda list
           coverage run runtests.py
-          pytest -s --cov=src
       
 workflows:
   version: 2
