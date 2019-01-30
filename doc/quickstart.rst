@@ -149,7 +149,7 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
     show_object(result)
 
 
-After clicking the Redner button to re-execute the model, you should see something like this:
+After clicking the Render button to re-execute the model, you should see something like this:
 
         ..  image:: _static/quickstart/004.png
 
