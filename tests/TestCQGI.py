@@ -19,7 +19,7 @@ TESTSCRIPT = textwrap.dedent(
         foo="bar"
 
         result =  "%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) )
-        build_object(result)
+        show_object(result)
     """
 )
 
@@ -31,7 +31,7 @@ TEST_DEBUG_SCRIPT = textwrap.dedent(
         foo="bar"
         debug(foo, { "color": 'yellow' } )
         result =  "%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) )
-        build_object(result)
+        show_object(result)
         debug(height )
     """
 )
@@ -121,9 +121,9 @@ class TestCQGI(BaseTest):
         script = textwrap.dedent(
             """
                 h = 1
-                build_object(h)
+                show_object(h)
                 h = 2
-                build_object(h)
+                show_object(h)
             """
         )
 
@@ -137,7 +137,7 @@ class TestCQGI(BaseTest):
         script = textwrap.dedent(
             """
                 h = "this is a string"
-                build_object(h)
+                show_object(h)
             """
         )
         result = cqgi.parse(script).build({'h': 33.33})
@@ -147,7 +147,7 @@ class TestCQGI(BaseTest):
         script = textwrap.dedent(
             """
                 h = 20.0
-                build_object(h)
+                show_object(h)
             """
         )
         result = cqgi.parse(script).build({'h': "a string"})
@@ -158,7 +158,7 @@ class TestCQGI(BaseTest):
         script = textwrap.dedent(
             """
                 h = 20.0
-                build_object(h)
+                show_object(h)
             """
         )
 
@@ -166,7 +166,7 @@ class TestCQGI(BaseTest):
         self.assertTrue(isinstance(result.exception,
                                    cqgi.InvalidParameterError))
 
-    def test_that_not_calling_build_object_raises_error(self):
+    def test_that_not_calling_show_object_raises_error(self):
         script = textwrap.dedent(
             """
                 h = 20.0
@@ -179,7 +179,7 @@ class TestCQGI(BaseTest):
         script = textwrap.dedent(
             """
                 r = cadquery.Workplane('XY').box(1,2,3)
-                build_object(r)
+                show_object(r)
             """
         )
 
@@ -191,7 +191,7 @@ class TestCQGI(BaseTest):
         script = textwrap.dedent(
             """
                 h = True
-                build_object( "*%s*" % str(h)  )
+                show_object( "*%s*" % str(h)  )
             """
         )
 
@@ -211,7 +211,7 @@ class TestCQGI(BaseTest):
                    x = 1
                    y = 2
 
-                build_object( "result"  )
+                show_object( "result"  )
             """
         )
 
