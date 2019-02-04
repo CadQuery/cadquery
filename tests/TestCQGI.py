@@ -178,6 +178,18 @@ class TestCQGI(BaseTest):
         self.assertTrue(result.success)
         self.assertIsNotNone(result.first_result)
 
+    def test_that_options_can_be_passed(self):
+        script = textwrap.dedent(
+            """
+                r = cadquery.Workplane('XY').box(1,2,3)
+                show_object(r, options={"rgba":(128, 255, 128, 0.0)})
+            """
+        )
+
+        result = cqgi.parse(script).build()
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.first_result.options)
+
     def test_setting_boolean_variable(self):
         script = textwrap.dedent(
             """
