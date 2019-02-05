@@ -113,11 +113,7 @@ class CQModel(object):
             result.set_success_result(collector.outputObjects)
 
         except Exception as ex:
-            #print "Error Executing Script:"
             result.set_failure_result(ex)
-            #traceback.print_exc()
-            #print "Full Text of Script:"
-            #print self.script_source
 
         end = time.clock()
         result.buildTime = end - start
@@ -187,7 +183,6 @@ class ScriptMetadata(object):
         self.parameters[p.name] = p
 
     def add_parameter_description(self,name,description):
-        #print 'Adding Parameter name=%s, desc=%s' % ( name, description )
         p = self.parameters[name]
         p.desc = description
 
