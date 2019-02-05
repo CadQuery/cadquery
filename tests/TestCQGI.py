@@ -198,7 +198,6 @@ class TestCQGI(BaseTest):
             """
         )
 
-        #result = cqgi.execute(script)
         result = cqgi.parse(script).build({'h': False})
 
         self.assertTrue(result.success)
