@@ -1668,11 +1668,24 @@ class TestCadQuery(BaseTest):
 
     def testExtrude(self):
         """
-        Test symmetric extrude
+        Test extrude
         """
         r = 1.
         h = 1.
         decimal_places = 9.
+        
+        # extrude in one direction
+        s = Workplane("XY").circle(r).extrude(h, both=False)
+
+        top_face = s.faces(">Z")
+        bottom_face = s.faces("<Z")
+
+        # calculate the distance between the top and the bottom face
+        delta = top_face.val().Center().sub(bottom_face.val().Center())
+
+        self.assertTupleAlmostEquals(delta.toTuple(),
+                                     (0., 0., h),
+                                     decimal_places)
 
         # extrude symmetrically
         s = Workplane("XY").circle(r).extrude(h, both=True)
@@ -1686,6 +1699,28 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(delta.toTuple(),
                                      (0., 0., 2. * h),
                                      decimal_places)
+        
+        # extrude with a positive taper
+        s = Workplane("XY").circle(r).extrude(h, taper=5)
+
+        top_face = s.faces(">Z")
+        bottom_face = s.faces("<Z")
+
+        # top and bottom face area
+        delta = top_face.val().Area() - bottom_face.val().Area()
+
+        self.assertTrue(delta < 0)
+        
+        # extrude with a negative taper
+        s = Workplane("XY").circle(r).extrude(h, taper=-5)
+
+        top_face = s.faces(">Z")
+        bottom_face = s.faces("<Z")
+
+        # top and bottom face area
+        delta = top_face.val().Area() - bottom_face.val().Area()
+
+        self.assertTrue(delta > 0)
 
     def testClose(self):
         # Close without endPoint and startPoint coincide.
