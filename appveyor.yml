@@ -15,7 +15,7 @@ install:
     - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
     - conda config --set always_yes yes
     - conda update -q conda
-    - conda create --quiet --name cqtest -c cadquery -c conda-forge -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18 python=%PYTHON_VERSION% pyparsing mock coverage codecov
+    - conda create --quiet --name cqtest -c cadquery -c conda-forge -c pythonocc -c oce -c conda-forge -c dlr-sc pythonocc-core=0.18.1 python=%PYTHON_VERSION% pyparsing mock coverage codecov
     - activate cqtest
     - pip install codecov
     - python setup.py install
