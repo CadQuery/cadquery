@@ -464,7 +464,8 @@ class Shape(object):
         return [Solid(i) for i in self._entities('Solid')]
 
     def Area(self):
-        raise NotImplementedError
+        # when 2D density == 1, mass == area
+        return Shape.computeMass(self)
 
     def Volume(self):
         # when density == 1, mass == volume
@@ -1288,7 +1289,7 @@ class Solid(Shape, Mixin3D):
 
             :param outerWire: the outermost wire
             :param innerWires: a list of inner wires
-            :param vecNormal: a vector along which to extrude the wires, default=None
+            :param vecNormal: a vector along which to extrude the wires
             :param taper: taper angle, default=0
             :return: a Solid object
 
