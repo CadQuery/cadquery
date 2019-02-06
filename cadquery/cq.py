@@ -2133,7 +2133,7 @@ class Workplane(CQ):
             newS = newS.clean()
         return newS
 
-    def extrude(self, distance, combine=True, clean=True, both=False):
+    def extrude(self, distance, combine=True, clean=True, both=False, taper=None):
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
@@ -2142,6 +2142,7 @@ class Workplane(CQ):
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
+        :param float taper: angle for optional tapered extrusion
         :return: a CQ object with the resulting solid selected.
 
         extrude always *adds* material to a part.
@@ -2159,7 +2160,7 @@ class Workplane(CQ):
             selected may not be planar
         """
         r = self._extrude(
-            distance, both=both)  # returns a Solid (or a compound if there were multiple)
+            distance, both=both, taper=taper)  # returns a Solid (or a compound if there were multiple)
 
         if combine:
             newS = self._combineWithBase(r)
@@ -2468,7 +2469,7 @@ class Workplane(CQ):
 
         return self.newObject([r])
 
-    def _extrude(self, distance, both=False):
+    def _extrude(self, distance, both=False, taper=None):
         """
         Make a prismatic solid from the existing set of pending wires.
 
@@ -2518,14 +2519,20 @@ class Workplane(CQ):
         # return r
 
         toFuse = []
-        for ws in wireSets:
-            thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
-            toFuse.append(thisObj)
-
-            if both:
-                thisObj = Solid.extrudeLinear(
-                    ws[0], ws[1:], eDir.multiply(-1.))
-                toFuse.append(thisObj)
+        
+        if taper:
+          for ws in wireSets:
+              thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
+              toFuse.append(thisObj)
+        else:
+          for ws in wireSets:
+              thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
+              toFuse.append(thisObj)
+  
+              if both:
+                  thisObj = Solid.extrudeLinear(
+                      ws[0], ws[1:], eDir.multiply(-1.))
+                  toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
 
