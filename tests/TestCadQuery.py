@@ -1699,9 +1699,15 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(delta.toTuple(),
                                      (0., 0., 2. * h),
                                      decimal_places)
-        
+    
+    def testTaperedExtrudeCutBlind(self):
+      
+        h = 1.
+        r = 1.
+        t = 5
+      
         # extrude with a positive taper
-        s = Workplane("XY").circle(r).extrude(h, taper=5)
+        s = Workplane("XY").circle(r).extrude(h, taper=t)
 
         top_face = s.faces(">Z")
         bottom_face = s.faces("<Z")
@@ -1712,7 +1718,7 @@ class TestCadQuery(BaseTest):
         self.assertTrue(delta < 0)
         
         # extrude with a negative taper
-        s = Workplane("XY").circle(r).extrude(h, taper=-5)
+        s = Workplane("XY").circle(r).extrude(h, taper=-t)
 
         top_face = s.faces(">Z")
         bottom_face = s.faces("<Z")
@@ -1721,6 +1727,14 @@ class TestCadQuery(BaseTest):
         delta = top_face.val().Area() - bottom_face.val().Area()
 
         self.assertTrue(delta > 0)
+        
+        # cut a tapered hole
+        s = Workplane("XY").rect(2*r,2*r).extrude(2*h).faces('>Z').workplane()\
+        .rect(r,r).cutBlind(-h, taper=t)
+        
+        middle_face = s.faces('>Z[-2]')
+        
+        self.assertTrue(middle_face.val().Area() < 1)
 
     def testClose(self):
         # Close without endPoint and startPoint coincide.

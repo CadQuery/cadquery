@@ -2397,7 +2397,7 @@ class Workplane(CQ):
 
         return self.newObject([newS])
 
-    def cutBlind(self, distanceToCut, clean=True):
+    def cutBlind(self, distanceToCut, clean=True, taper=None):
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
 
@@ -2408,6 +2408,7 @@ class Workplane(CQ):
         :type distanceToCut: float, >0 means in the positive direction of the workplane normal,
             <0 means in the negative direction
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param float taper: angle for optional tapered extrusion
         :raises: ValueError if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
@@ -2417,7 +2418,7 @@ class Workplane(CQ):
             Cut Up to Surface
         """
         # first, make the object
-        toCut = self._extrude(distanceToCut)
+        toCut = self._extrude(distanceToCut, taper=taper)
 
         # now find a solid in the chain
 
