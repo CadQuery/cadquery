@@ -7,7 +7,7 @@ from OCC.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ,
                     gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
 
 # collection of pints (used for spline construction)
-from OCC.TColgp import TColgp_Array1OfPnt
+from OCC.TColgp import TColgp_HArray1OfPnt
 from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
@@ -54,7 +54,7 @@ from OCC.TopoDS import (TopoDS_Shell,
 
 from OCC.GC import GC_MakeArcOfCircle  # geometry construction
 from OCC.GCE2d import GCE2d_MakeSegment
-from OCC.GeomAPI import (GeomAPI_PointsToBSpline,
+from OCC.GeomAPI import (GeomAPI_Interpolate,
                          GeomAPI_ProjectPointOnSurf)
 
 from OCC.BRepFill import brepfill_Shell, brepfill_Face
@@ -729,18 +729,28 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeSpline(cls, listOfVector):
+    def makeSpline(cls, listOfVector, tangents=None, periodic=False,
+                   tol = 1e-6):
         """
         Interpolate a spline through the provided points.
         :param cls:
         :param listOfVector: a list of Vectors that represent the points
+        :param tangents: tuple of Vectors specifying start and finish tangent
+        :param periodic: creation of peridic curves
+        :param tol: tolerance of the algorithm (consult OCC documentation)
         :return: an Edge
         """
-        pnts = TColgp_Array1OfPnt(0, len(listOfVector) - 1)
+        pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
         for ix, v in enumerate(listOfVector):
-            pnts.SetValue(ix, v.toPnt())
-
-        spline_geom = GeomAPI_PointsToBSpline(pnts).Curve()
+            pnts.SetValue(ix+1, v.toPnt())
+        
+        spline_builder = GeomAPI_Interpolate(pnts.GetHandle(), periodic, tol)
+        if tangents:
+          v1,v2 = tangents
+          spline_builder.Load(v1.wrapped,v2.wrapped) 
+        
+        spline_builder.Perform()
+        spline_geom = spline_builder.Curve()
 
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
 
