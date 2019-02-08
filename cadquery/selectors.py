@@ -170,7 +170,7 @@ class BaseDirSelector(Selector):
                     r.append(o)
             elif type(o) == Edge and (o.geomType() == 'LINE' or o.geomType() == 'PLANE'):
                 # an edge is parallel to a direction if its underlying geometry is plane or line
-                tangent = o.tangentAt(None)
+                tangent = o.tangentAt()
                 if self.test(tangent):
                     r.append(o)
 
