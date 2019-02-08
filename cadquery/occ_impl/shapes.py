@@ -634,6 +634,10 @@ class Mixin1D(object):
         brepgprop_LinearProperties(self.wrapped, Properties)
 
         return Properties.Mass()
+      
+    def IsClosed(self):
+      
+        return BRep_Tool.IsClosed(self.wrapped)
 
 
 class Edge(Shape, Mixin1D):
@@ -674,20 +678,17 @@ class Edge(Shape, Mixin1D):
 
         return Vector(curve.Value(umax))
 
-    def tangentAt(self, locationVector=None):
+    def tangentAt(self, locationParam=0.5):
         """
         Compute tangent vector at the specified location.
-        :param locationVector: location to use. Use the center point if None
+        :param locationParam: location to use in [0,1]
         :return: tangent vector
         """
 
         curve = self._geomAdaptor()
 
-        if locationVector:
-            raise NotImplementedError
-        else:
-            umin, umax = curve.FirstParameter(), curve.LastParameter()
-            umid = 0.5 * (umin + umax)
+        umin, umax = curve.FirstParameter(), curve.LastParameter()
+        umid = (1-locationParam)*umin + locationParam*umax
 
         # TODO what are good parameters for those?
         curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance())
