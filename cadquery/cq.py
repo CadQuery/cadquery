@@ -1311,7 +1311,8 @@ class Workplane(CQ):
         newCenter = p + Vector(xDist, yDist, 0)
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
-    def spline(self, listOfXYTuple, forConstruction=False):
+    def spline(self, listOfXYTuple, tangents=None, periodic=False,
+               forConstruction=False):
         """
         Create a spline interpolated through the provided points.
 
@@ -1344,12 +1345,16 @@ class Workplane(CQ):
           * provide access to control points
         """
         gstartPoint = self._findFromPoint(False)
-        gEndPoint = self.plane.toWorldCoords(listOfXYTuple[-1])
 
         vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
         allPoints = [gstartPoint] + vecs
+        
+        if tangents:
+          t1, t2 = tangents
+          tangents = (self.plane.toWorldCoords(t1),
+                      self.plane.toWorldCoords(t2))
 
-        e = Edge.makeSpline(allPoints)
+        e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
 
         if not forConstruction:
             self._addPendingEdge(e)
