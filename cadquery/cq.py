@@ -1318,6 +1318,8 @@ class Workplane(CQ):
 
         :param listOfXYTuple: points to interpolate through
         :type listOfXYTuple: list of 2-tuple
+        :param tangents: tuple of Vectors specifying start and finish tangent
+        :param periodic: creation of peridic curves
         :return: a Workplane object with the current point at the end of the spline
 
         The spline will begin at the current point, and
