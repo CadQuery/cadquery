@@ -362,6 +362,32 @@ class TestCadQuery(BaseTest):
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
         self.assertEqual(3, result.edges().size())
+        
+    def testSpline(self):
+        """
+        Tests construction of splines
+        """
+        pts = [
+            (0, 1),
+            (1, 2),
+            (2, 4)
+        ]
+
+        # Spline path - just a smoke test
+        path = Workplane("XZ").spline(pts).val()
+
+        # Closed spline
+        path_closed = Workplane("XZ").spline(pts,periodic=True).val()
+        self.assertTrue(path_closed.IsClosed())
+        
+        # attempt to build a face
+        w = Wire.assembleEdges([path_closed,])
+        f = Face.makeFromWires(w)
+        
+        # Spline with explicit tangets
+        path_const = Workplane("XZ").spline(pts,tangents=((0,1),(1,0))).val()
+        self.assertFalse(path.tangentAt(0) == path_const.tangentAt(0))
+        self.assertFalse(path.tangentAt(1) == path_const.tangentAt(1))
 
     def testSweep(self):
         """
