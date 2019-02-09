@@ -390,7 +390,7 @@ class TestCadQuery(BaseTest):
         f = Face.makeFromWires(w)
         self.assertFalse(f.isValid())
         
-        # Spline with explicit tangets
+        # Spline with explicit tangents
         path_const = Workplane("XZ").spline(pts,tangents=((0,1),(1,0))).val()
         self.assertFalse(path.tangentAt(0) == path_const.tangentAt(0))
         self.assertFalse(path.tangentAt(1) == path_const.tangentAt(1))
