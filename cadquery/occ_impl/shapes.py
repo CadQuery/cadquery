@@ -7,7 +7,7 @@ from OCC.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ,
                     gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
 
 # collection of pints (used for spline construction)
-from OCC.TColgp import TColgp_Array1OfPnt
+from OCC.TColgp import TColgp_HArray1OfPnt
 from OCC.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
@@ -54,7 +54,7 @@ from OCC.TopoDS import (TopoDS_Shell,
 
 from OCC.GC import GC_MakeArcOfCircle  # geometry construction
 from OCC.GCE2d import GCE2d_MakeSegment
-from OCC.GeomAPI import (GeomAPI_PointsToBSpline,
+from OCC.GeomAPI import (GeomAPI_Interpolate,
                          GeomAPI_ProjectPointOnSurf)
 
 from OCC.BRepFill import brepfill_Shell, brepfill_Face
@@ -103,6 +103,8 @@ from OCC.BRepTools import breptools_Write
 from OCC.Visualization import Tesselator
 
 from OCC.LocOpe import LocOpe_DPrism
+
+from OCC.BRepCheck import BRepCheck_Analyzer
 
 from math import pi, sqrt
 
@@ -315,7 +317,7 @@ class Shape(object):
         return self.wrapped.IsEqual(other.wrapped)
 
     def isValid(self):  # seems to be not used in the codebase -- remove?
-        raise NotImplemented
+        return BRepCheck_Analyzer(self.wrapped).IsValid()
 
     def BoundingBox(self, tolerance=0.1):  # need to implement that in GEOM
         return BoundBox._fromTopoDS(self.wrapped)
@@ -464,8 +466,11 @@ class Shape(object):
         return [Solid(i) for i in self._entities('Solid')]
 
     def Area(self):
-        # when 2D density == 1, mass == area
-        return Shape.computeMass(self)
+        Properties = GProp_GProps()
+        brepgprop_SurfaceProperties(self.wrapped,
+                                    Properties)
+
+        return Properties.Mass()
 
     def Volume(self):
         # when density == 1, mass == volume
@@ -634,6 +639,10 @@ class Mixin1D(object):
         brepgprop_LinearProperties(self.wrapped, Properties)
 
         return Properties.Mass()
+      
+    def IsClosed(self):
+      
+        return BRep_Tool.IsClosed(self.wrapped)
 
 
 class Edge(Shape, Mixin1D):
@@ -674,20 +683,17 @@ class Edge(Shape, Mixin1D):
 
         return Vector(curve.Value(umax))
 
-    def tangentAt(self, locationVector=None):
+    def tangentAt(self, locationParam=0.5):
         """
         Compute tangent vector at the specified location.
-        :param locationVector: location to use. Use the center point if None
+        :param locationParam: location to use in [0,1]
         :return: tangent vector
         """
 
         curve = self._geomAdaptor()
 
-        if locationVector:
-            raise NotImplementedError
-        else:
-            umin, umax = curve.FirstParameter(), curve.LastParameter()
-            umid = 0.5 * (umin + umax)
+        umin, umax = curve.FirstParameter(), curve.LastParameter()
+        umid = (1-locationParam)*umin + locationParam*umax
 
         # TODO what are good parameters for those?
         curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance())
@@ -729,18 +735,28 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeSpline(cls, listOfVector):
+    def makeSpline(cls, listOfVector, tangents=None, periodic=False,
+                   tol = 1e-6):
         """
         Interpolate a spline through the provided points.
         :param cls:
         :param listOfVector: a list of Vectors that represent the points
+        :param tangents: tuple of Vectors specifying start and finish tangent
+        :param periodic: creation of peridic curves
+        :param tol: tolerance of the algorithm (consult OCC documentation)
         :return: an Edge
         """
-        pnts = TColgp_Array1OfPnt(0, len(listOfVector) - 1)
+        pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
         for ix, v in enumerate(listOfVector):
-            pnts.SetValue(ix, v.toPnt())
-
-        spline_geom = GeomAPI_PointsToBSpline(pnts).Curve()
+            pnts.SetValue(ix+1, v.toPnt())
+        
+        spline_builder = GeomAPI_Interpolate(pnts.GetHandle(), periodic, tol)
+        if tangents:
+          v1,v2 = tangents
+          spline_builder.Load(v1.wrapped,v2.wrapped) 
+        
+        spline_builder.Perform()
+        spline_geom = spline_builder.Curve()
 
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
 
