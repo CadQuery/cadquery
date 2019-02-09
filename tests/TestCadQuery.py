@@ -380,9 +380,15 @@ class TestCadQuery(BaseTest):
         path_closed = Workplane("XZ").spline(pts,periodic=True).val()
         self.assertTrue(path_closed.IsClosed())
         
-        # attempt to build a face
+        # attempt to build a valid face
         w = Wire.assembleEdges([path_closed,])
         f = Face.makeFromWires(w)
+        self.assertTrue(f.isValid())
+        
+        # attempt to build an invalid face
+        w = Wire.assembleEdges([path,])
+        f = Face.makeFromWires(w)
+        self.assertFalse(f.isValid())
         
         # Spline with explicit tangets
         path_const = Workplane("XZ").spline(pts,tangents=((0,1),(1,0))).val()
