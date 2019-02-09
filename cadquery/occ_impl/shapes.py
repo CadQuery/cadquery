@@ -104,6 +104,8 @@ from OCC.Visualization import Tesselator
 
 from OCC.LocOpe import LocOpe_DPrism
 
+from OCC.BRepCheck import BRepCheck_Analyzer
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -315,7 +317,7 @@ class Shape(object):
         return self.wrapped.IsEqual(other.wrapped)
 
     def isValid(self):  # seems to be not used in the codebase -- remove?
-        raise NotImplemented
+        return BRepCheck_Analyzer(self.wrapped).IsValid()
 
     def BoundingBox(self, tolerance=0.1):  # need to implement that in GEOM
         return BoundBox._fromTopoDS(self.wrapped)
@@ -464,8 +466,11 @@ class Shape(object):
         return [Solid(i) for i in self._entities('Solid')]
 
     def Area(self):
-        # when 2D density == 1, mass == area
-        return Shape.computeMass(self)
+        Properties = GProp_GProps()
+        brepgprop_SurfaceProperties(self.wrapped,
+                                    Properties)
+
+        return Properties.Mass()
 
     def Volume(self):
         # when density == 1, mass == volume
