@@ -46,7 +46,7 @@ before_install:
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 - hash -r;
 - conda config --set always_yes yes --set changeps1 no;
-- conda create -y -q -n test_cq -c cadquery -c conda-forge pythonocc-core=0.18.2 oce=0.18.2 python=$TRAVIS_PYTHON_VERSION
+- conda create -y -q -n test_cq -c cadquery -c conda-forge -c dlr-sc pythonocc-core=0.18.2 oce=0.18.2 python=$TRAVIS_PYTHON_VERSION
   pyparsing mock lldb;
 - source ~/miniconda/bin/activate test_cq;
 - python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
