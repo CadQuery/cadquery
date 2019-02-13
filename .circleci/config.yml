@@ -18,7 +18,7 @@ jobs:
       - run: chmod +x ~/miniconda.sh && ~/miniconda.sh -b
       - run: echo "export PATH=~/miniconda3/bin:$PATH" >> $BASH_ENV
       - run: conda config --set always_yes yes
-      - run: conda create --quiet --name cqtest -c cadquery -c conda-forge -c dlr-sc pythonocc-core=0.18.2 oce=0.18.2 python=$PYTHON_VERSION pyparsing mock lldb
+      - run: conda create --quiet --name cqtest -c cadquery -c conda-forge pythonocc-core=0.18.2 oce=0.18.2 python=$PYTHON_VERSION pyparsing mock lldb
       - run: |
           source activate cqtest
           pip install coverage
