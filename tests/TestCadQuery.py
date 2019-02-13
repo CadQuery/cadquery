@@ -362,6 +362,38 @@ class TestCadQuery(BaseTest):
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
         self.assertEqual(3, result.edges().size())
+        
+    def testSpline(self):
+        """
+        Tests construction of splines
+        """
+        pts = [
+            (0, 1),
+            (1, 2),
+            (2, 4)
+        ]
+
+        # Spline path - just a smoke test
+        path = Workplane("XZ").spline(pts).val()
+
+        # Closed spline
+        path_closed = Workplane("XZ").spline(pts,periodic=True).val()
+        self.assertTrue(path_closed.IsClosed())
+        
+        # attempt to build a valid face
+        w = Wire.assembleEdges([path_closed,])
+        f = Face.makeFromWires(w)
+        self.assertTrue(f.isValid())
+        
+        # attempt to build an invalid face
+        w = Wire.assembleEdges([path,])
+        f = Face.makeFromWires(w)
+        self.assertFalse(f.isValid())
+        
+        # Spline with explicit tangents
+        path_const = Workplane("XZ").spline(pts,tangents=((0,1),(1,0))).val()
+        self.assertFalse(path.tangentAt(0) == path_const.tangentAt(0))
+        self.assertFalse(path.tangentAt(1) == path_const.tangentAt(1))
 
     def testSweep(self):
         """
@@ -1668,11 +1700,24 @@ class TestCadQuery(BaseTest):
 
     def testExtrude(self):
         """
-        Test symmetric extrude
+        Test extrude
         """
         r = 1.
         h = 1.
         decimal_places = 9.
+        
+        # extrude in one direction
+        s = Workplane("XY").circle(r).extrude(h, both=False)
+
+        top_face = s.faces(">Z")
+        bottom_face = s.faces("<Z")
+
+        # calculate the distance between the top and the bottom face
+        delta = top_face.val().Center().sub(bottom_face.val().Center())
+
+        self.assertTupleAlmostEquals(delta.toTuple(),
+                                     (0., 0., h),
+                                     decimal_places)
 
         # extrude symmetrically
         s = Workplane("XY").circle(r).extrude(h, both=True)
@@ -1686,6 +1731,42 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(delta.toTuple(),
                                      (0., 0., 2. * h),
                                      decimal_places)
+    
+    def testTaperedExtrudeCutBlind(self):
+      
+        h = 1.
+        r = 1.
+        t = 5
+      
+        # extrude with a positive taper
+        s = Workplane("XY").circle(r).extrude(h, taper=t)
+
+        top_face = s.faces(">Z")
+        bottom_face = s.faces("<Z")
+
+        # top and bottom face area
+        delta = top_face.val().Area() - bottom_face.val().Area()
+
+        self.assertTrue(delta < 0)
+        
+        # extrude with a negative taper
+        s = Workplane("XY").circle(r).extrude(h, taper=-t)
+
+        top_face = s.faces(">Z")
+        bottom_face = s.faces("<Z")
+
+        # top and bottom face area
+        delta = top_face.val().Area() - bottom_face.val().Area()
+
+        self.assertTrue(delta > 0)
+        
+        # cut a tapered hole
+        s = Workplane("XY").rect(2*r,2*r).extrude(2*h).faces('>Z').workplane()\
+        .rect(r,r).cutBlind(-h, taper=t)
+        
+        middle_face = s.faces('>Z[-2]')
+        
+        self.assertTrue(middle_face.val().Area() < 1)
 
     def testClose(self):
         # Close without endPoint and startPoint coincide.
