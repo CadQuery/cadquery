@@ -7,7 +7,7 @@ from OCC.Core.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ
                     gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
 
 # collection of pints (used for spline construction)
-from OCC.Core.TColgp import TColgp_Array1OfPnt
+from OCC.Core.TColgp import TColgp_HArray1OfPnt
 from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.Core.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
@@ -54,7 +54,7 @@ from OCC.Core.TopoDS import (TopoDS_Shell,
 
 from OCC.Core.GC import GC_MakeArcOfCircle  # geometry construction
 from OCC.Core.GCE2d import GCE2d_MakeSegment
-from OCC.Core.GeomAPI import (GeomAPI_PointsToBSpline,
+from OCC.Core.GeomAPI import (GeomAPI_Interpolate,
                          GeomAPI_ProjectPointOnSurf)
 
 from OCC.Core.BRepFill import brepfill_Shell, brepfill_Face
@@ -101,6 +101,10 @@ from OCC.Core.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 from OCC.Core.BRepTools import breptools_Write
 
 from OCC.Core.Visualization import Tesselator
+
+from OCC.LocOpe import LocOpe_DPrism
+
+from OCC.BRepCheck import BRepCheck_Analyzer
 
 from math import pi, sqrt
 
@@ -313,7 +317,7 @@ class Shape(object):
         return self.wrapped.IsEqual(other.wrapped)
 
     def isValid(self):  # seems to be not used in the codebase -- remove?
-        raise NotImplemented
+        return BRepCheck_Analyzer(self.wrapped).IsValid()
 
     def BoundingBox(self, tolerance=0.1):  # need to implement that in GEOM
         return BoundBox._fromTopoDS(self.wrapped)
@@ -462,7 +466,11 @@ class Shape(object):
         return [Solid(i) for i in self._entities('Solid')]
 
     def Area(self):
-        raise NotImplementedError
+        Properties = GProp_GProps()
+        brepgprop_SurfaceProperties(self.wrapped,
+                                    Properties)
+
+        return Properties.Mass()
 
     def Volume(self):
         # when density == 1, mass == volume
@@ -631,6 +639,10 @@ class Mixin1D(object):
         brepgprop_LinearProperties(self.wrapped, Properties)
 
         return Properties.Mass()
+      
+    def IsClosed(self):
+      
+        return BRep_Tool.IsClosed(self.wrapped)
 
 
 class Edge(Shape, Mixin1D):
@@ -671,20 +683,17 @@ class Edge(Shape, Mixin1D):
 
         return Vector(curve.Value(umax))
 
-    def tangentAt(self, locationVector=None):
+    def tangentAt(self, locationParam=0.5):
         """
         Compute tangent vector at the specified location.
-        :param locationVector: location to use. Use the center point if None
+        :param locationParam: location to use in [0,1]
         :return: tangent vector
         """
 
         curve = self._geomAdaptor()
 
-        if locationVector:
-            raise NotImplementedError
-        else:
-            umin, umax = curve.FirstParameter(), curve.LastParameter()
-            umid = 0.5 * (umin + umax)
+        umin, umax = curve.FirstParameter(), curve.LastParameter()
+        umid = (1-locationParam)*umin + locationParam*umax
 
         # TODO what are good parameters for those?
         curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance())
@@ -726,18 +735,28 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeSpline(cls, listOfVector):
+    def makeSpline(cls, listOfVector, tangents=None, periodic=False,
+                   tol = 1e-6):
         """
         Interpolate a spline through the provided points.
         :param cls:
         :param listOfVector: a list of Vectors that represent the points
+        :param tangents: tuple of Vectors specifying start and finish tangent
+        :param periodic: creation of peridic curves
+        :param tol: tolerance of the algorithm (consult OCC documentation)
         :return: an Edge
         """
-        pnts = TColgp_Array1OfPnt(0, len(listOfVector) - 1)
+        pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
         for ix, v in enumerate(listOfVector):
-            pnts.SetValue(ix, v.toPnt())
-
-        spline_geom = GeomAPI_PointsToBSpline(pnts).Curve()
+            pnts.SetValue(ix+1, v.toPnt())
+        
+        spline_builder = GeomAPI_Interpolate(pnts.GetHandle(), periodic, tol)
+        if tangents:
+          v1,v2 = tangents
+          spline_builder.Load(v1.wrapped,v2.wrapped) 
+        
+        spline_builder.Perform()
+        spline_geom = spline_builder.Curve()
 
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
 
@@ -1280,13 +1299,14 @@ class Solid(Shape, Mixin3D):
         return cls(BRepAlgoAPI_Cut(outer_solid, inner_comp).Shape())
 
     @classmethod
-    def extrudeLinear(cls, outerWire, innerWires, vecNormal):
+    def extrudeLinear(cls, outerWire, innerWires, vecNormal, taper=0):
         """
             Attempt to extrude the list of wires  into a prismatic solid in the provided direction
 
             :param outerWire: the outermost wire
             :param innerWires: a list of inner wires
             :param vecNormal: a vector along which to extrude the wires
+            :param taper: taper angle, default=0
             :return: a Solid object
 
             The wires must not intersect
@@ -1303,18 +1323,20 @@ class Solid(Shape, Mixin3D):
             reliable.
         """
 
-        # one would think that fusing faces into a compound and then extruding would work,
-        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc),
-        # but then cutting it from the main solid fails with BRep_NotDone.
-        # the work around is to extrude each and then join the resulting solids, which seems to work
-
-        # FreeCAD allows this in one operation, but others might not
-
-        face = Face.makeFromWires(outerWire, innerWires)
-        prism_builder = BRepPrimAPI_MakePrism(
-            face.wrapped, vecNormal.wrapped, True)
-
+        if taper==0:
+            face = Face.makeFromWires(outerWire, innerWires)
+            prism_builder = BRepPrimAPI_MakePrism(
+                face.wrapped, vecNormal.wrapped, True)
+        else:
+            face = Face.makeFromWires(outerWire)
+            faceNormal = face.normalAt()
+            d = 1 if vecNormal.getAngle(faceNormal)<90 * DEG2RAD else -1
+            prism_builder = LocOpe_DPrism(face.wrapped,
+                                          d * vecNormal.Length,
+                                          d * taper * DEG2RAD)
+            
         return cls(prism_builder.Shape())
+            
 
     @classmethod
     def revolve(cls, outerWire, innerWires, angleDegrees, axisStart, axisEnd):
