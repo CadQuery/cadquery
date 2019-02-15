@@ -2453,7 +2453,7 @@ class Workplane(CQ):
 
         see :py:meth:`cutBlind` to cut material to a limited depth
         """
-        maxDim = self.largestDimension()
+        maxDim = self.largestDimension()*1.1 #for numerical stability
         if not positive:
             maxDim *= (-1.0)
 

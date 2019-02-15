@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from OCC.Visualization import Tesselator
+from OCC.Core.Visualization import Tesselator
 
 import cadquery
 
@@ -14,14 +14,14 @@ else:
 from .shapes import Shape, Compound, TOLERANCE
 from .geom import BoundBox
 
-from OCC.gp import gp_Ax2, gp_Pnt, gp_Dir
-from OCC.BRep import BRep_Tool
-from OCC.BRepMesh import BRepMesh_IncrementalMesh
-from OCC.BRepLib import breplib
-from OCC.TopLoc import TopLoc_Location
-from OCC.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
-from OCC.HLRAlgo import HLRAlgo_Projector
-from OCC.GCPnts import GCPnts_QuasiUniformDeflection
+from OCC.Core.gp import gp_Ax2, gp_Pnt, gp_Dir
+from OCC.Core.BRep import BRep_Tool
+from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+from OCC.Core.BRepLib import breplib
+from OCC.Core.TopLoc import TopLoc_Location
+from OCC.Core.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
+from OCC.Core.HLRAlgo import HLRAlgo_Projector
+from OCC.Core.GCPnts import GCPnts_QuasiUniformDeflection
 
 try:
     import xml.etree.cElementTree as ET
@@ -309,25 +309,25 @@ def getSVG(shape, opts=None):
     visible = []
 
     visible_sharp_edges = hlr_shapes.VCompound()
-    if not visible_sharp_edges.IsNull():
+    if visible_sharp_edges:
         visible.append(visible_sharp_edges)
 
     visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
-    if not visible_smooth_edges.IsNull():
+    if visible_smooth_edges:
         visible.append(visible_smooth_edges)
 
     visible_contour_edges = hlr_shapes.OutLineVCompound()
-    if not visible_contour_edges.IsNull():
+    if visible_contour_edges:
         visible.append(visible_contour_edges)
 
     hidden = []
 
     hidden_sharp_edges = hlr_shapes.HCompound()
-    if not hidden_sharp_edges.IsNull():
+    if hidden_sharp_edges:
         hidden.append(hidden_sharp_edges)
 
     hidden_contour_edges = hlr_shapes.OutLineHCompound()
-    if not hidden_contour_edges.IsNull():
+    if hidden_contour_edges:
         hidden.append(hidden_contour_edges)
 
     # Fix the underlying geometry - otherwise we will get segfaults
