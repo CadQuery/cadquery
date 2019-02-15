@@ -19,7 +19,7 @@ TESTSCRIPT = textwrap.dedent(
         foo="bar"
 
         result =  "%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) )
-        build_object(result)
+        show_object(result)
     """
 )
 
@@ -31,7 +31,7 @@ TEST_DEBUG_SCRIPT = textwrap.dedent(
         foo="bar"
         debug(foo, { "color": 'yellow' } )
         result =  "%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) )
-        build_object(result)
+        show_object(result)
         debug(height )
     """
 )
@@ -50,10 +50,10 @@ class TestCQGI(BaseTest):
         result = model.build()
         debugItems = result.debugObjects
         self.assertTrue(len(debugItems) == 2)
-        self.assertTrue(debugItems[0].object == "bar")
-        self.assertTrue(debugItems[0].args == {"color": 'yellow'})
-        self.assertTrue(debugItems[1].object == 2.0)
-        self.assertTrue(debugItems[1].args == {})
+        self.assertTrue(debugItems[0].shape == "bar")
+        self.assertTrue(debugItems[0].options == {"color": 'yellow'})
+        self.assertTrue(debugItems[1].shape == 2.0)
+        self.assertTrue(debugItems[1].options == {})
 
     def test_build_with_empty_params(self):
         model = cqgi.CQModel(TESTSCRIPT)
@@ -61,12 +61,12 @@ class TestCQGI(BaseTest):
 
         self.assertTrue(result.success)
         self.assertTrue(len(result.results) == 1)
-        self.assertTrue(result.results[0] == "2.0|3.0|bar|1.0")
+        self.assertTrue(result.results[0].shape == "2.0|3.0|bar|1.0")
 
     def test_build_with_different_params(self):
         model = cqgi.CQModel(TESTSCRIPT)
         result = model.build({'height': 3.0})
-        self.assertTrue(result.results[0] == "3.0|3.0|bar|1.0")
+        self.assertTrue(result.results[0].shape == "3.0|3.0|bar|1.0")
 
     def test_describe_parameters(self):
         script = textwrap.dedent(
@@ -121,33 +121,33 @@ class TestCQGI(BaseTest):
         script = textwrap.dedent(
             """
                 h = 1
-                build_object(h)
+                show_object(h)
                 h = 2
-                build_object(h)
+                show_object(h)
             """
         )
 
         model = cqgi.CQModel(script)
         result = model.build({})
         self.assertEqual(2, len(result.results))
-        self.assertEqual(1, result.results[0])
-        self.assertEqual(2, result.results[1])
+        self.assertEqual(1, result.results[0].shape)
+        self.assertEqual(2, result.results[1].shape)
 
     def test_that_assinging_number_to_string_works(self):
         script = textwrap.dedent(
             """
                 h = "this is a string"
-                build_object(h)
+                show_object(h)
             """
         )
         result = cqgi.parse(script).build({'h': 33.33})
-        self.assertEqual(result.results[0], "33.33")
+        self.assertEqual(result.results[0].shape, "33.33")
 
     def test_that_assigning_string_to_number_fails(self):
         script = textwrap.dedent(
             """
                 h = 20.0
-                build_object(h)
+                show_object(h)
             """
         )
         result = cqgi.parse(script).build({'h': "a string"})
@@ -158,7 +158,7 @@ class TestCQGI(BaseTest):
         script = textwrap.dedent(
             """
                 h = 20.0
-                build_object(h)
+                show_object(h)
             """
         )
 
@@ -166,20 +166,11 @@ class TestCQGI(BaseTest):
         self.assertTrue(isinstance(result.exception,
                                    cqgi.InvalidParameterError))
 
-    def test_that_not_calling_build_object_raises_error(self):
-        script = textwrap.dedent(
-            """
-                h = 20.0
-            """
-        )
-        result = cqgi.parse(script).build()
-        self.assertTrue(isinstance(result.exception, cqgi.NoOutputError))
-
     def test_that_cq_objects_are_visible(self):
         script = textwrap.dedent(
             """
                 r = cadquery.Workplane('XY').box(1,2,3)
-                build_object(r)
+                show_object(r)
             """
         )
 
@@ -187,19 +178,30 @@ class TestCQGI(BaseTest):
         self.assertTrue(result.success)
         self.assertIsNotNone(result.first_result)
 
+    def test_that_options_can_be_passed(self):
+        script = textwrap.dedent(
+            """
+                r = cadquery.Workplane('XY').box(1,2,3)
+                show_object(r, options={"rgba":(128, 255, 128, 0.0)})
+            """
+        )
+
+        result = cqgi.parse(script).build()
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.first_result.options)
+
     def test_setting_boolean_variable(self):
         script = textwrap.dedent(
             """
                 h = True
-                build_object( "*%s*" % str(h)  )
+                show_object( "*%s*" % str(h)  )
             """
         )
 
-        #result = cqgi.execute(script)
         result = cqgi.parse(script).build({'h': False})
 
         self.assertTrue(result.success)
-        self.assertEqual(result.first_result, '*False*')
+        self.assertEqual(result.first_result.shape, '*False*')
 
     def test_that_only_top_level_vars_are_detected(self):
         script = textwrap.dedent(
@@ -211,7 +213,7 @@ class TestCQGI(BaseTest):
                    x = 1
                    y = 2
 
-                build_object( "result"  )
+                show_object( "result"  )
             """
         )
 
