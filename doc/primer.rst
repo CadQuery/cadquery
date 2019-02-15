@@ -23,7 +23,7 @@ When working in a BREP system, these fundamental constructs exist to define a sh
 
 When using CadQuery, all of these objects are created, hopefully with the least possible work. In the actual CAD
 kernel, there are another set of Geometrical constructs involved as well. For example, an arc-shaped edge will
-hold a reference to an underlying curve that is a full cricle, and each linear edge holds underneath it the equation
+hold a reference to an underlying curve that is a full circle, and each linear edge holds underneath it the equation
 for a line.  CadQuery shields you from these constructs.
 
 
@@ -63,7 +63,7 @@ See :ref:`2dOperations` to learn more.
 3D Construction
 ---------------------------
 
-You can construct 3D primatives such as boxes, spheres, wedges, and cylinders directly. You can also sweep, extrude,
+You can construct 3D primitives such as boxes, spheres, wedges, and cylinders directly. You can also sweep, extrude,
 and loft 2D geometry to form 3D features.  Of course the basic primitive operations are also available.
 
 See :ref:`3doperations` to learn more.
@@ -74,7 +74,7 @@ Selectors
 ---------------------------
 
 Selectors allow you to select one or more features, for use to define new features.  As an example, you might
-extrude a box, and then select the top face as the location for a new feture.  Or, you might extrude a box, and
+extrude a box, and then select the top face as the location for a new feature.  Or, you might extrude a box, and
 then select all of the vertical edges so that you can apply a fillet to them.
 
 You can select Vertices, Edges, Faces, Solids, and Wires using selectors.

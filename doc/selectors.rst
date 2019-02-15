@@ -36,7 +36,7 @@ Selectors can be combined logically, currently defined operators include **and**
         .edges("|Z and >Y") \
         .chamfer(0.2)
     
-    build_object(result)
+    show_object(result)
 
 Much more complex expressions are possible as well:
 
@@ -49,7 +49,7 @@ Much more complex expressions are possible as well:
         .edges("not(<X or >X or <Y or >Y)") \
         .chamfer(0.1)
     
-    build_object(result)
+    show_object(result)
 
 .. _filteringfaces:
 
@@ -70,14 +70,14 @@ The axis used in the listing below are for illustration: any axis would work sim
 Selector    Selects                                  Selector Class                                           # objects returned
 =========   =======================================  =======================================================  ==========================
 +Z          Faces with normal in +z direction        :py:class:`cadquery.DirectionSelector`                   0..many
-\|Z         Faces parallel to xy plane               :py:class:`cadquery.ParallelDirSelector`                 0..many
+\|Z         Faces parallel to XY plane               :py:class:`cadquery.ParallelDirSelector`                 0..many
 -X          Faces with  normal in neg x direction    :py:class:`cadquery.DirectionSelector`                   0..many
 #Z          Faces perpendicular to z direction       :py:class:`cadquery.PerpendicularDirSelector`            0..many
 %Plane      Faces of type plane                      :py:class:`cadquery.TypeSelector`                        0..many
 >Y          Face farthest in the positive y dir      :py:class:`cadquery.DirectionMinMaxSelector`             0..many
 <Y          Face farthest in the negative y dir      :py:class:`cadquery.DirectionMinMaxSelector`             0..many
 >Y[-2]      2nd Face farthest in the positive y dir  :py:class:`cadquery.DirectionMinMaxSelector`             0..many
-<Y[0]       1st closest Fase in the negative y dir   :py:class:`cadquery.DirectionMinMaxSelector`             0..many
+<Y[0]       1st closest Face in the negative y dir   :py:class:`cadquery.DirectionMinMaxSelector`             0..many
 =========   =======================================  =======================================================  ==========================
 
 
@@ -137,4 +137,4 @@ It is possible to use user defined vectors as a basis for the selectors. For exa
     # chamfer only one edge
     result = result.edges('>(-1,1,0)').chamfer(1)
     
-    build_object(result)
+    show_object(result)

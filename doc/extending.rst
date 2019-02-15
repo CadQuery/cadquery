@@ -4,40 +4,40 @@ Extending CadQuery
 ======================
 
 
-If you find that CadQuery doesnt suit your needs, you can easily extend it.  CadQuery provides several extension
+If you find that CadQuery does not suit your needs, you can easily extend it.  CadQuery provides several extension
 methods:
 
    * You can load plugins others have developed. This is by far the easiest way to access other code
-   * you can define your own plugins.
-   * you can use FreeCAD script directly
+   * You can define your own plugins.
+   * You can use PythonOCC scripting directly
 
 
-Using FreeCAD Script
+Using PythonOCC Script
 -----------------------
 
-The easiest way to extend CadQuery is to simply use FreeCAD script inside of your build method.  Just about
-any valid FreeCAD script will execute just fine. For example, this simple CadQuery script::
+The easiest way to extend CadQuery is to simply use PythonOCC scripting inside of your build method.  Just about
+any valid PythonOCC script will execute just fine. For example, this simple CadQuery script::
 
     return cq.Workplane("XY").box(1.0,2.0,3.0).val()
 
 is actually equivalent to::
 
-    return Part.makeBox(1.0,2.0,3.0)
+    return BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape()
 
-As long as you return a valid FreeCAD Shape, you can use any FreeCAD methods you like. You can even mix and match the
-two. For example, consider this script, which creates a FreeCAD box, but then uses cadquery to select its faces::
+As long as you return a valid PythonOCC Shape, you can use any PythonOCC methods you like. You can even mix and match the
+two. For example, consider this script, which creates a PythonOCC box, but then uses CadQuery to select its faces::
 
-    box = Part.makeBox(1.0,2.0,3.0)
+    box = BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape()
     cq = CQ(box).faces(">Z").size() # returns 6
 
 
 Extending CadQuery: Plugins
 ----------------------------
 
-Though you can get a lot done with FreeCAD, the code gets pretty nasty in a hurry. CadQuery shields you from
-a lot of the complexity of the FreeCAD api.
+Though you can get a lot done with PythonOCC, the code gets pretty nasty in a hurry. CadQuery shields you from
+a lot of the complexity of the PythonOCC API.
 
-You can get the best of both worlds by wrapping your freecad script into a CadQuery plugin.
+You can get the best of both worlds by wrapping your PythonOCC script into a CadQuery plugin.
 
 A CadQuery plugin is simply a function that is attached to the CadQuery :py:meth:`cadquery.CQ` or :py:meth:`cadquery.Workplane` class.
 When connected, your plugin can be used in the chain just like the built-in functions.
@@ -51,8 +51,8 @@ The Stack
 Every CadQuery object has a local stack, which contains a list of items.  The items on the stack will be
 one of these types:
 
-   * **A CadQuery SolidReference object**, which holds a reference to a FreeCAD solid
-   * **A FreeCAD object**, a Vertex, Edge, Wire, Face, Shell, Solid, or Compound
+   * **A CadQuery SolidReference object**, which holds a reference to a PythonOCC solid
+   * **A PythonOCC object**, a Vertex, Edge, Wire, Face, Shell, Solid, or Compound
 
 The stack is available by using self.objects, and will always contain at least one object.
 
@@ -65,7 +65,7 @@ The stack is available by using self.objects, and will always contain at least o
 Preserving the Chain
 -----------------------
 
-CadQuery's fluent api relies on the ability to chain calls together one after another. For this to work,
+CadQuery's fluent API relies on the ability to chain calls together one after another. For this to work,
 you must return a valid CadQuery object as a return value.  If you choose not to return a CadQuery object,
 then your plugin will end the chain. Sometimes this is desired for example :py:meth:`cadquery.CQ.size`
 
@@ -107,8 +107,8 @@ are designed to aid in plugin creation:
 
    * :py:meth:`cadquery.Workplane.plane` provides a reference to the workplane, which allows you to convert between workplane
      coordinates and global coordinates:
-     * :py:meth:`cadquery.freecad_impl.geom.Plane.toWorldCoords` will convert local coordinates to global ones
-     * :py:meth:`cadquery.freecad_impl.geom.Plane.toLocalCoords` will convet from global coordinates to local coordinates
+     * :py:meth:`cadquery.occ_impl.geom.Plane.toWorldCoords` will convert local coordinates to global ones
+     * :py:meth:`cadquery.occ_impl.geom.Plane.toLocalCoords` will convert from global coordinates to local coordinates
 
 Coordinate Systems
 -----------------------
@@ -169,12 +169,12 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
             #method, and convert to/from local coordinates.
             return self.eachpoint(_singleCube,True)
 
-        #link the plugin into cadQuery
+        #link the plugin into CadQuery
         cq.Workplane.makeCubes = makeCubes
 
         #use the plugin
         result = cq.Workplane("XY").box(6.0,8.0,0.5).faces(">Z")\
             .rect(4.0,4.0,forConstruction=True).vertices() \
             .makeCubes(1.0).combineSolids()
-        build_object(result)
+        show_object(result)
 
