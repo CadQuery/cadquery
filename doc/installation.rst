@@ -3,56 +3,38 @@
 Installing CadQuery
 ===================================
 
-CadQuery is based on `FreeCAD <http://sourceforge.net/apps/mediawiki/free-cad/index.php?title=Main_Page>`_,
-which is turn based on the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
+CadQuery 2.0 is based on
+`PythonOCC <http://www.pythonocc.org/>`_,
+which is a set of Python bindings for the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
 
-Prerequisites--FreeCAD and Python 2.6 or 2.7
+Anaconda or Miniconda (Python 3.x editions), Python 3.x
 ----------------------------------------------
-CadQuery requires FreeCAD and Python version 2.6.x or 2.7.x  *Python 3.x is NOT supported*
+CadQuery requires PythonOCC and Python version 3.x
 
-Ubuntu Command Line Installation
+Command Line Installation
 ------------------------------------------
 
-On Ubuntu, you can type::
+Once you have Anaconda or Miniconda installed, activate the environment you want to use and type::
 
-        sudo apt-get install -y freecad freecad-doc
-        pip install cadquery
-
-This `Unix Installation Video <http://youtu.be/InZu8jgaYCA>`_ will walk you through the installation
-
-
-Installation: Other Platforms
-------------------------------------------
-
-   1. Install FreeCAD using the appropriate installer for your platform, on `www.freecadweb.org <http://www.freecadweb.org/wiki/?title=Download>`_
-   2. pip install cadquery
-
-This `Windows Installation video <https://www.youtube.com/watch?v=dWw4Y_ah-8k>`_ will walk you through the installation on Windows
+        conda install -c pythonocc -c oce -c conda-forge -c dlr-sc -c CadQuery cadquery-occ
 
 Test Your Installation
 ------------------------
 
 If all has gone well, you can open a command line/prompt, and type::
 
-      $python
-      $import cadquery
-      $cadquery.Workplane('XY').box(1,2,3).toSvg()
+      $ python
+      $ import cadquery
+      $ cadquery.Workplane('XY').box(1,2,3).toSvg()
 
-Adding a Nicer GUI via the cadquery-freecad-module
+You should see raw SVG output displayed on the command line if the CadQuery installation was successful.
+
+Adding a Nicer GUI via CQ-editor
 --------------------------------------------------------
 
 If you prefer to have a GUI available, your best option is to use
-`The CadQuery Freecad Module <https://github.com/jmwright/cadquery-freecad-module>`_.
+`CQ-editor <https://github.com/CadQuery/CQ-editor>`_.
 
-Simply extract cadquery-freecad-module into your FreeCAD installation. You'll end up
-with a cadquery workbench that allows you to interactively run scripts, and then see the results in the FreeCAD GUI
-
-Zero Step  Install
--------------------------------------------------
-
-If you would like to use cadquery with no installation all, you can
-use `ParametricParts.com <https://www.parametricparts.com>`_, a web-based platform that runs cadquery scripts
-
-It is free, and allows running and viewing cadquery scripts in your web browser or mobile phone
+CQ-editor relies on Anaconda/Miniconda as well, and the README explains how to set up an environment that will run CQ-editor.
 
 
