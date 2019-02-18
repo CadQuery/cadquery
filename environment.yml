@@ -4,6 +4,7 @@ channels:
   - dlr-sc
   - oce
   - pythonocc
+  - tpaviot
 dependencies:
   - python=3.6
   - pythonocc-core=0.18.2
