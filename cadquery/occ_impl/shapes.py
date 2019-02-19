@@ -499,7 +499,7 @@ class Shape(object):
         T = gp_Trsf()
         T.SetRotation(gp_Ax1(startVector.toPnt(),
                              (endVector - startVector).toDir()),
-                      angleDegrees)
+                      angleDegrees * DEG2RAD)
 
         return self._apply_transform(T)
 
