@@ -671,7 +671,7 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
         .mirrorX().extrude(30.0,True)
 
     #make the neck
-    p.faces(">Z").workplane().circle(3.0).extrude(2.0,True)
+    result = p.faces(">Z").workplane().circle(3.0).extrude(2.0,True)
 
     #make a shell
     result = p.faces(">Z").shell(0.3)
