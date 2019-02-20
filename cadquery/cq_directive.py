@@ -38,7 +38,7 @@ def cq_directive(name, arguments, options, content, lineno,
         result = cqgi.parse(plot_code).build()
 
         if result.success:
-            exporters.exportShape(result.first_result, "SVG", _s)
+            exporters.exportShape(result.first_result.shape, "SVG", _s)
             out_svg = _s.getvalue()
         else:
             raise result.exception
