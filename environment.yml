@@ -1,13 +1,12 @@
 name: cadquery
 channels:
   - conda-forge
-  - dlr-sc
-  - oce
-  - pythonocc
-  - tpaviot
+  - cadquery
 dependencies:
   - python=3.6
   - pythonocc-core=0.18.2
+  - oce=0.18.2
+  - pyparsing
   - pip:
     - "--editable=."
     # Documentation
