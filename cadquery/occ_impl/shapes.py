@@ -1473,7 +1473,7 @@ class Compound(Shape, Mixin3D):
         
         text_3d = BRepPrimAPI_MakePrism(text_flat.wrapped, vecNormal.wrapped)
         
-        return cls(text_3d.Shape()).transformShape(position.fG)
+        return cls(text_3d.Shape()).transformShape(position.rG)
 
 # TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
 
