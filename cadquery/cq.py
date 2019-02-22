@@ -2268,6 +2268,20 @@ class Workplane(CQ):
             r = baseSolid.fuse(obj)
 
         return self.newObject([r])
+      
+    def _cutFromBase(self, obj):
+        """
+        Cuts the provided object from the base solid, if one can be found.
+        :param obj:
+        :return: a new object that represents the result of combining the base object with obj,
+           or obj if one could not be found
+        """
+        baseSolid = self.findSolid(searchParents=True)
+        r = obj
+        if baseSolid is not None:
+            r = baseSolid.cut(obj)
+
+        return self.newObject([r])
 
     def combine(self, clean=True):
         """
@@ -2770,6 +2784,45 @@ class Workplane(CQ):
             raise AttributeError(
                 "%s object doesn't support `clean()` method!" % obj.ShapeType())
         return self.newObject(cleanObjects)
+      
+    def text(self, txt, fontsize, distance, cut=True, combine=False, clean=True,
+             font="Arial", kind='regular'):
+        """
+        Create a 3D text
+
+        :param str txt: text to be rendered
+        :param distance: the distance to extrude, normal to the workplane plane
+        :type distance: float, negative means opposite the normal direction
+        :param float fontsize: size of the font
+        :param boolean cut: True to cut the resulting solid from the parent solids if found.
+        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param str font: fontname (default: Arial)
+        :param str kind: font type (default: Normal)
+        :return: a CQ object with the resulting solid selected.
+
+        extrude always *adds* material to a part.
+
+        The returned object is always a CQ object, and depends on wither combine is True, and
+        whether a context solid is already defined:
+
+        *  if combine is False, the new value is pushed onto the stack.
+        *  if combine is true, the value is combined with the context solid if it exists,
+           and the resulting solid becomes the new context solid.
+
+        """
+        r = Compound.makeText(txt,fontsize,distance,font=font,kind=kind,
+                              position=self.plane)
+        
+        if cut:
+            newS = self._cutFromBase(r)
+        elif combine:
+            newS = self._combineWithBase(r)
+        else:
+            newS = self.newObject([r])
+        if clean:
+            newS = newS.clean()
+        return newS
         
     def _repr_html_(self):
         """

@@ -1,4 +1,4 @@
-from cadquery import Vector, BoundBox
+from cadquery import Vector, BoundBox, Plane
 
 import OCC.Core.TopAbs as ta  # Tolopolgy type enum
 import OCC.Core.GeomAbs as ga  # Geometry type enum
@@ -105,6 +105,11 @@ from OCC.Core.Visualization import Tesselator
 from OCC.LocOpe import LocOpe_DPrism
 
 from OCC.BRepCheck import BRepCheck_Analyzer
+
+from OCC.Core.Addons import (text_to_brep,
+                             Font_FA_Regular,
+                             Font_FA_Italic,
+                             Font_FA_Bold)
 
 from math import pi, sqrt
 
@@ -1451,6 +1456,24 @@ class Compound(Shape, Mixin3D):
             comp_builder.Add(comp, s.wrapped)
 
         return cls(comp)
+      
+    @classmethod
+    def makeText(cls, text, size, height, font="Arial", kind='regular',
+                 position=Plane.XY()):
+        """
+        Create a 3D text
+        """
+        
+        font_kind = {'regular' : Font_FA_Regular,
+                     'bold'    : Font_FA_Bold,
+                     'italic'  : Font_FA_Italic}[kind]
+        
+        text_flat = Shape(text_to_brep(text, font, font_kind, size, False))
+        vecNormal = text_flat.Faces()[0].normalAt()*height
+        
+        text_3d = BRepPrimAPI_MakePrism(text_flat.wrapped, vecNormal.wrapped)
+        
+        return cls(text_3d.Shape()).transformShape(position.rG)
 
 # TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
 
