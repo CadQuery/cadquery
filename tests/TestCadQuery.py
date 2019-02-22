@@ -1810,7 +1810,11 @@ class TestCadQuery(BaseTest):
         #combined object should have smaller volume
         self.assertGreater(box.val().Volume(),obj1.val().Volume())
         
-        obj2 = box.faces('>Z').workplane().text('CQ 2.0',0.5,.05,cut=False,combine=True)
+        obj2 = box.faces('>Z').workplane()\
+            .text('CQ 2.0',0.5,.05,cut=False,combine=True)
+        
         #combined object should have bigger volume
         self.assertLess(box.val().Volume(),obj2.val().Volume())
-
+        
+        #verify that the number of top faces is correct (NB: this is font specific)
+        self.assertEqual(len(obj2.faces('>Z').vals()),5)
