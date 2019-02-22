@@ -1818,3 +1818,9 @@ class TestCadQuery(BaseTest):
         
         #verify that the number of top faces is correct (NB: this is font specific)
         self.assertEqual(len(obj2.faces('>Z').vals()),5)
+        
+        obj3 = box.faces('>Z').workplane()\
+            .text('CQ 2.0',0.5,.05,cut=False,combine=False)
+            
+        #verify that the number of solids is correct
+        self.assertEqual(len(obj3.solids().vals()),5)
