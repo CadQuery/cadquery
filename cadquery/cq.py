@@ -1312,7 +1312,7 @@ class Workplane(CQ):
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
     def spline(self, listOfXYTuple, tangents=None, periodic=False,
-               forConstruction=False):
+               forConstruction=False, includeCurrent=True):
         """
         Create a spline interpolated through the provided points.
 
@@ -1320,6 +1320,7 @@ class Workplane(CQ):
         :type listOfXYTuple: list of 2-tuple
         :param tangents: tuple of Vectors specifying start and finish tangent
         :param periodic: creation of peridic curves
+        :param includeCurrent: use current point as a starting point of the curve
         :return: a Workplane object with the current point at the end of the spline
 
         The spline will begin at the current point, and
@@ -1346,22 +1347,27 @@ class Workplane(CQ):
         Future Enhancements:
           * provide access to control points
         """
-        gstartPoint = self._findFromPoint(False)
 
         vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
-        allPoints = [gstartPoint] + vecs
         
+        if includeCurrent:
+            gstartPoint = self._findFromPoint(False)
+            allPoints = [gstartPoint] + vecs
+        else:
+            allPoints = vecs
+            
         if tangents:
-          t1, t2 = tangents
-          tangents = (self.plane.toWorldCoords(t1),
-                      self.plane.toWorldCoords(t2))
+            t1, t2 = tangents
+            tangents = (self.plane.toWorldCoords(t1),
+                        self.plane.toWorldCoords(t2))
 
         e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
+        w = Wire.assembleEdges([e])
 
         if not forConstruction:
-            self._addPendingEdge(e)
+            self._addPendingWire(w)
 
-        return self.newObject([e])
+        return self.newObject([w])
 
     def threePointArc(self, point1, point2, forConstruction=False):
         """
