@@ -1319,7 +1319,7 @@ class Workplane(CQ):
         :param listOfXYTuple: points to interpolate through
         :type listOfXYTuple: list of 2-tuple
         :param tangents: tuple of Vectors specifying start and finish tangent
-        :param periodic: creation of peridic curves
+        :param periodic: creation of periodic curves
         :param includeCurrent: use current point as a starting point of the curve
         :return: a Workplane object with the current point at the end of the spline
 
@@ -1368,6 +1368,23 @@ class Workplane(CQ):
             self._addPendingWire(w)
 
         return self.newObject([w])
+      
+    def parametricCurve(self, func, N=400, start=0, end=1):
+        """
+        Create a spline interpolated through the provided points.
+
+        :param func: function f(t) that will generate (x,y) pairs
+        :type func: float --> (float,float)
+        :param N: number of points for discretization
+        :param start: start value of the parameter t
+        :param end: end value of the parameter t
+        :return: a Workplane object with the current point unchanged
+
+        """
+
+        allPoints = [func(start+end*t/N) for t in range(N+1)]
+
+        return self.spline(allPoints,includeCurrent=False)
 
     def threePointArc(self, point1, point2, forConstruction=False):
         """
