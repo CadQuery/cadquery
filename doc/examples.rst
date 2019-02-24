@@ -1119,6 +1119,7 @@ This specific examples generates a helical cycloidal gear.
             return hypocycloid(t,r1,r2)
 
     # create the gear profile and extrude it
-    result = cq.Workplane('XY').parametricCurve(lambda t: gear(t*2*pi,6,1)).twistExtrude(15,90)
+    result = cq.Workplane('XY').parametricCurve(lambda t: gear(t*2*pi,6,1))\
+        .twistExtrude(15,90).faces('>Z').workplane().circle(2).cutThruAll()
 
     show_object(result)
