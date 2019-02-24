@@ -1375,15 +1375,15 @@ class Workplane(CQ):
 
         return self.newObject([rv])
       
-    def parametricCurve(self, func, N=400, start=0, end=1):
+    def parametricCurve(self, func, N=400, start=0, stop=1):
         """
         Create a spline interpolated through the provided points.
 
         :param func: function f(t) that will generate (x,y) pairs
         :type func: float --> (float,float)
         :param N: number of points for discretization
-        :param start: start value of the parameter t
-        :param end: end value of the parameter t
+        :param start: starting value of the parameter t
+        :param stop: final value of the parameter t
         :return: a Workplane object with the current point unchanged
 
         """
