@@ -1312,7 +1312,7 @@ class Workplane(CQ):
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
     def spline(self, listOfXYTuple, tangents=None, periodic=False,
-               forConstruction=False, includeCurrent=True):
+               forConstruction=False, includeCurrent=True, makeWire=False):
         """
         Create a spline interpolated through the provided points.
 
@@ -1321,6 +1321,7 @@ class Workplane(CQ):
         :param tangents: tuple of Vectors specifying start and finish tangent
         :param periodic: creation of periodic curves
         :param includeCurrent: use current point as a starting point of the curve
+        :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point at the end of the spline
 
         The spline will begin at the current point, and
@@ -1362,12 +1363,17 @@ class Workplane(CQ):
                         self.plane.toWorldCoords(t2))
 
         e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
-        w = Wire.assembleEdges([e])
+        
+        if makeWire:
+            rv = Wire.assembleEdges([e])
+            if not forConstruction:
+                self._addPendingWire(rv)
+        else:
+            rv = e
+            if not forConstruction:
+                self._addPendingEdge(e)
 
-        if not forConstruction:
-            self._addPendingWire(w)
-
-        return self.newObject([w])
+        return self.newObject([rv])
       
     def parametricCurve(self, func, N=400, start=0, end=1):
         """
