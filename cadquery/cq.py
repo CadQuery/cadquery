@@ -1065,7 +1065,7 @@ class Workplane(CQ):
             lpoints = list(cpoints)
 
         return self.pushPoints(lpoints)
-    
+
     def polarArray(self, radius, startAngle, angle, count, fill=True):
         """
         Creates an polar array of points and pushes them onto the stack.
@@ -1242,7 +1242,7 @@ class Workplane(CQ):
         """
         p = self._findFromPoint(True)
         return self.lineTo(xCoord, p.y, forConstruction)
-    
+
     def polarLine(self, distance, angle, forConstruction=False):
         """
         Make a line of the given length, at the given angle from the current point
@@ -1271,7 +1271,7 @@ class Workplane(CQ):
         y = math.sin(math.radians(angle)) * distance
 
         return self.lineTo(x, y, forConstruction)
-    
+
     # absolute move in current plane, not drawing
     def moveTo(self, x=0, y=0):
         """
@@ -1312,14 +1312,16 @@ class Workplane(CQ):
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
     def spline(self, listOfXYTuple, tangents=None, periodic=False,
-               forConstruction=False):
+               forConstruction=False, includeCurrent=True, makeWire=False):
         """
         Create a spline interpolated through the provided points.
 
         :param listOfXYTuple: points to interpolate through
         :type listOfXYTuple: list of 2-tuple
         :param tangents: tuple of Vectors specifying start and finish tangent
-        :param periodic: creation of peridic curves
+        :param periodic: creation of periodic curves
+        :param includeCurrent: use current point as a starting point of the curve
+        :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point at the end of the spline
 
         The spline will begin at the current point, and
@@ -1346,22 +1348,49 @@ class Workplane(CQ):
         Future Enhancements:
           * provide access to control points
         """
-        gstartPoint = self._findFromPoint(False)
 
         vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
-        allPoints = [gstartPoint] + vecs
-        
+
+        if includeCurrent:
+            gstartPoint = self._findFromPoint(False)
+            allPoints = [gstartPoint] + vecs
+        else:
+            allPoints = vecs
+
         if tangents:
-          t1, t2 = tangents
-          tangents = (self.plane.toWorldCoords(t1),
-                      self.plane.toWorldCoords(t2))
+            t1, t2 = tangents
+            tangents = (self.plane.toWorldCoords(t1),
+                        self.plane.toWorldCoords(t2))
 
         e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
 
-        if not forConstruction:
-            self._addPendingEdge(e)
+        if makeWire:
+            rv = Wire.assembleEdges([e])
+            if not forConstruction:
+                self._addPendingWire(rv)
+        else:
+            rv = e
+            if not forConstruction:
+                self._addPendingEdge(e)
 
-        return self.newObject([e])
+        return self.newObject([rv])
+
+    def parametricCurve(self, func, N=400, start=0, stop=1):
+        """
+        Create a spline interpolated through the provided points.
+
+        :param func: function f(t) that will generate (x,y) pairs
+        :type func: float --> (float,float)
+        :param N: number of points for discretization
+        :param start: starting value of the parameter t
+        :param stop: final value of the parameter t
+        :return: a Workplane object with the current point unchanged
+
+        """
+
+        allPoints = [func(start+stop*t/N) for t in range(N+1)]
+
+        return self.spline(allPoints,includeCurrent=False,makeWire=True)
 
     def threePointArc(self, point1, point2, forConstruction=False):
         """
@@ -1389,7 +1418,7 @@ class Workplane(CQ):
             self._addPendingEdge(arc)
 
         return self.newObject([arc])
-    
+
     def sagittaArc(self, endPoint, sag, forConstruction=False):
         """
         Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
@@ -2268,7 +2297,7 @@ class Workplane(CQ):
             r = baseSolid.fuse(obj)
 
         return self.newObject([r])
-      
+
     def _cutFromBase(self, obj):
         """
         Cuts the provided object from the base solid, if one can be found.
@@ -2380,7 +2409,7 @@ class Workplane(CQ):
             solidRef.wrapped = newS.wrapped
 
         return self.newObject([newS])
-    
+
     def intersect(self, toIntersect, combine=True, clean=True):
         """
         Intersects the provided solid from the current solid.
@@ -2541,7 +2570,7 @@ class Workplane(CQ):
         # return r
 
         toFuse = []
-        
+
         if taper:
           for ws in wireSets:
               thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
@@ -2550,7 +2579,7 @@ class Workplane(CQ):
           for ws in wireSets:
               thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
               toFuse.append(thisObj)
-  
+
               if both:
                   thisObj = Solid.extrudeLinear(
                       ws[0], ws[1:], eDir.multiply(-1.))
@@ -2784,7 +2813,7 @@ class Workplane(CQ):
             raise AttributeError(
                 "%s object doesn't support `clean()` method!" % obj.ShapeType())
         return self.newObject(cleanObjects)
-      
+
     def text(self, txt, fontsize, distance, cut=True, combine=False, clean=True,
              font="Arial", kind='regular'):
         """
@@ -2813,7 +2842,7 @@ class Workplane(CQ):
         """
         r = Compound.makeText(txt,fontsize,distance,font=font,kind=kind,
                               position=self.plane)
-        
+
         if cut:
             newS = self._cutFromBase(r)
         elif combine:
@@ -2823,12 +2852,12 @@ class Workplane(CQ):
         if clean:
             newS = newS.clean()
         return newS
-        
+
     def _repr_html_(self):
         """
         Special method for rendering current object in a jupyter notebook
         """
-        
+
         if type(self.objects[0]) is Vector:
            return '&lt {} &gt'.format(self.__repr__()[1:-1])
         else:
