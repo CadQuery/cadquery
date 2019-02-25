@@ -225,7 +225,7 @@ Polylines
 This example uses a polyline to create one half of an i-beam shape, which is mirrored to create the final profile.
 
 .. cq_plot::
-        
+
     (L,H,W,t) = ( 100.0, 20.0, 20.0, 1.0)
     pts = [
         (0,H/2.0),
@@ -344,7 +344,7 @@ Mirroring 3D Objects
                .lineTo(10,1)
                .close())
     result = result0.extrude(100)
-    
+
     result = result.rotate((0, 0, 0),(1, 0, 0), 90)
 
     result = result.translate(result.val().BoundingBox().center.multiply(-1))
@@ -354,8 +354,8 @@ Mirroring 3D Objects
     mirZY_neg = result.mirror(mirrorPlane="ZY", basePointVector=(-30,0,0))
     mirZY_pos = result.mirror(mirrorPlane="ZY", basePointVector=(30,0,0))
 
-    result = result.union(mirXY_neg).union(mirXY_pos).union(mirZY_neg).union(mirZY_pos) 
-    
+    result = result.union(mirXY_neg).union(mirXY_pos).union(mirZY_neg).union(mirZY_pos)
+
     show_object(result)
 
 .. topic:: Api References
@@ -363,13 +363,13 @@ Mirroring 3D Objects
     .. hlist::
         :columns: 2
 
-        * :py:meth:`Workplane.moveTo` 
+        * :py:meth:`Workplane.moveTo`
         * :py:meth:`Workplane.lineTo`
         * :py:meth:`Workplane.threePointArc`
-        * :py:meth:`Workplane.extrude`        
+        * :py:meth:`Workplane.extrude`
         * :py:meth:`Workplane.mirror`
-        * :py:meth:`Workplane.union`        
-        * :py:meth:`CQ.rotate`        
+        * :py:meth:`Workplane.union`
+        * :py:meth:`CQ.rotate`
 
 Creating Workplanes on Faces
 -----------------------------
@@ -701,25 +701,25 @@ A Parametric Enclosure
     p_outerWidth = 100.0 #Outer width of box enclosure
     p_outerLength = 150.0 #Outer length of box enclosure
     p_outerHeight = 50.0 #Outer height of box enclosure
-    
+
     p_thickness =  3.0 #Thickness of the box walls
     p_sideRadius =  10.0 #Radius for the curves around the sides of the box
     p_topAndBottomRadius =  2.0 #Radius for the curves on the top and bottom edges of the box
-    
+
     p_screwpostInset = 12.0 #How far in from the edges the screw posts should be place.
     p_screwpostID = 4.0 #Inner Diameter of the screw post holes, should be roughly screw diameter not including threads
     p_screwpostOD = 10.0 #Outer Diameter of the screw posts.\nDetermines overall thickness of the posts
-    
+
     p_boreDiameter = 8.0 #Diameter of the counterbore hole, if any
     p_boreDepth = 1.0 #Depth of the counterbore hole, if
     p_countersinkDiameter = 0.0 #Outer diameter of countersink.  Should roughly match the outer diameter of the screw head
     p_countersinkAngle = 90.0 #Countersink angle (complete angle between opposite sides, not from center to one side)
     p_flipLid = True #Whether to place the lid with the top facing down or not.
     p_lipHeight =  1.0 #Height of lip on the underside of the lid.\nSits inside the box body for a snug fit.
-    
+
     #outer shell
     oshell = cq.Workplane("XY").rect(p_outerWidth,p_outerLength).extrude(p_outerHeight + p_lipHeight)
-    
+
     #weird geometry happens if we make the fillets in the wrong order
     if p_sideRadius > p_topAndBottomRadius:
         oshell = oshell.edges("|Z").fillet(p_sideRadius)
@@ -727,35 +727,35 @@ A Parametric Enclosure
     else:
         oshell = oshell.edges("#Z").fillet(p_topAndBottomRadius)
         oshell = oshell.edges("|Z").fillet(p_sideRadius)
-    
+
     #inner shell
     ishell = oshell.faces("<Z").workplane(p_thickness,True)\
         .rect((p_outerWidth - 2.0* p_thickness),(p_outerLength - 2.0*p_thickness))\
         .extrude((p_outerHeight - 2.0*p_thickness),False) #set combine false to produce just the new boss
     ishell = ishell.edges("|Z").fillet(p_sideRadius - p_thickness)
-    
+
     #make the box outer box
     box = oshell.cut(ishell)
-    
+
     #make the screw posts
     POSTWIDTH = (p_outerWidth - 2.0*p_screwpostInset)
     POSTLENGTH = (p_outerLength  -2.0*p_screwpostInset)
-    
+
     box = box.faces(">Z").workplane(-p_thickness)\
         .rect(POSTWIDTH,POSTLENGTH,forConstruction=True)\
         .vertices().circle(p_screwpostOD/2.0).circle(p_screwpostID/2.0)\
         .extrude((-1.0)*(p_outerHeight + p_lipHeight -p_thickness ),True)
-    
+
     #split lid into top and bottom parts
     (lid,bottom) = box.faces(">Z").workplane(-p_thickness -p_lipHeight ).split(keepTop=True,keepBottom=True).all()  #splits into two solids
-    
+
     #translate the lid, and subtract the bottom from it to produce the lid inset
     lowerLid = lid.translate((0,0,-p_lipHeight))
     cutlip = lowerLid.cut(bottom).translate((p_outerWidth + p_thickness ,0,p_thickness - p_outerHeight + p_lipHeight))
-    
+
     #compute centers for counterbore/countersink or counterbore
     topOfLidCenters = cutlip.faces(">Z").workplane().rect(POSTWIDTH,POSTLENGTH,forConstruction=True).vertices()
-    
+
     #add holes of the desired type
     if p_boreDiameter > 0 and p_boreDepth > 0:
         topOfLid = topOfLidCenters.cboreHole(p_screwpostID,p_boreDiameter,p_boreDepth,(2.0)*p_thickness)
@@ -763,14 +763,14 @@ A Parametric Enclosure
         topOfLid = topOfLidCenters.cskHole(p_screwpostID,p_countersinkDiameter,p_countersinkAngle,(2.0)*p_thickness)
     else:
         topOfLid= topOfLidCenters.hole(p_screwpostID,(2.0)*p_thickness)
-    
+
     #flip lid upside down if desired
     if p_flipLid:
         topOfLid = topOfLid.rotateAboutCenter((1,0,0),180)
-    
+
     #return the combined result
     result =topOfLid.combineSolids(bottom)
-    
+
     show_object(result)
 
 .. topic:: Api References
@@ -1090,4 +1090,36 @@ Panel With Various Connector Holes
         result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(-173,-30-idx*h_sep).moveTo(-2.9176,-5.3).threePointArc((-6.05,0),(-2.9176,5.3)).lineTo(2.9176,5.3).threePointArc((6.05,0),(2.9176,-5.3)).close().cutThruAll()
 
     # Render the solid
+    show_object(result)
+
+
+Cycloidal gear
+--------------
+
+You can define complex geometries using the parametricCurve functionality.
+This specific examples generates a helical cycloidal gear.
+
+.. cq_plot::
+    :height: 400
+
+    import cadquery as cq
+    from math import sin, cos,pi,floor
+
+    # define the generating function
+    def hypocycloid(t,r1,r2):
+        return ((r1-r2)*cos(t)+r2*cos(r1/r2*t-t),(r1-r2)*sin(t)+r2*sin(-(r1/r2*t-t)))
+
+    def epicycloid(t,r1,r2):
+        return ((r1+r2)*cos(t)-r2*cos(r1/r2*t+t),(r1+r2)*sin(t)-r2*sin(r1/r2*t+t))
+
+    def gear(t,r1=4,r2=1):
+        if (-1)**(1+floor(t/2/pi*(r1/r2))) < 0:
+            return epicycloid(t,r1,r2)
+        else:
+            return hypocycloid(t,r1,r2)
+
+    # create the gear profile and extrude it
+    result = cq.Workplane('XY').parametricCurve(lambda t: gear(t*2*pi,6,1))\
+        .twistExtrude(15,90).faces('>Z').workplane().circle(2).cutThruAll()
+
     show_object(result)

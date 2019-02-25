@@ -362,7 +362,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
         self.assertEqual(3, result.edges().size())
-        
+
     def testSpline(self):
         """
         Tests construction of splines
@@ -379,17 +379,17 @@ class TestCadQuery(BaseTest):
         # Closed spline
         path_closed = Workplane("XZ").spline(pts,periodic=True).val()
         self.assertTrue(path_closed.IsClosed())
-        
+
         # attempt to build a valid face
         w = Wire.assembleEdges([path_closed,])
         f = Face.makeFromWires(w)
         self.assertTrue(f.isValid())
-        
+
         # attempt to build an invalid face
         w = Wire.assembleEdges([path,])
         f = Face.makeFromWires(w)
         self.assertFalse(f.isValid())
-        
+
         # Spline with explicit tangents
         path_const = Workplane("XZ").spline(pts,tangents=((0,1),(1,0))).val()
         self.assertFalse(path.tangentAt(0) == path_const.tangentAt(0))
@@ -763,7 +763,7 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(6, currentS.faces().size())
         self.assertAlmostEqual(currentS.val().Volume(),0.5)
-        
+
         currentS.intersect(toIntersect)
 
         self.assertEqual(6, currentS.faces().size())
@@ -1705,7 +1705,7 @@ class TestCadQuery(BaseTest):
         r = 1.
         h = 1.
         decimal_places = 9.
-        
+
         # extrude in one direction
         s = Workplane("XY").circle(r).extrude(h, both=False)
 
@@ -1731,13 +1731,13 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(delta.toTuple(),
                                      (0., 0., 2. * h),
                                      decimal_places)
-    
+
     def testTaperedExtrudeCutBlind(self):
-      
+
         h = 1.
         r = 1.
         t = 5
-      
+
         # extrude with a positive taper
         s = Workplane("XY").circle(r).extrude(h, taper=t)
 
@@ -1748,7 +1748,7 @@ class TestCadQuery(BaseTest):
         delta = top_face.val().Area() - bottom_face.val().Area()
 
         self.assertTrue(delta < 0)
-        
+
         # extrude with a negative taper
         s = Workplane("XY").circle(r).extrude(h, taper=-t)
 
@@ -1759,13 +1759,13 @@ class TestCadQuery(BaseTest):
         delta = top_face.val().Area() - bottom_face.val().Area()
 
         self.assertTrue(delta > 0)
-        
+
         # cut a tapered hole
         s = Workplane("XY").rect(2*r,2*r).extrude(2*h).faces('>Z').workplane()\
         .rect(r,r).cutBlind(-h, taper=t)
-        
+
         middle_face = s.faces('>Z[-2]')
-        
+
         self.assertTrue(middle_face.val().Area() < 1)
 
     def testClose(self):
@@ -1800,27 +1800,49 @@ class TestCadQuery(BaseTest):
 
         # The obj1 shape shall have the same volume as the obj2 shape.
         self.assertAlmostEqual(obj1.val().Volume(), obj2.val().Volume())
-        
+
     def testText(self):
-      
+
         box = Workplane("XY" ).box(4, 4, 0.5)
-        
+
         obj1 = box.faces('>Z').workplane().text('CQ 2.0',0.5,-.05,cut=True)
-        
+
         #combined object should have smaller volume
         self.assertGreater(box.val().Volume(),obj1.val().Volume())
-        
+
         obj2 = box.faces('>Z').workplane()\
             .text('CQ 2.0',0.5,.05,cut=False,combine=True)
-        
+
         #combined object should have bigger volume
         self.assertLess(box.val().Volume(),obj2.val().Volume())
-        
+
         #verify that the number of top faces is correct (NB: this is font specific)
         self.assertEqual(len(obj2.faces('>Z').vals()),5)
-        
+
         obj3 = box.faces('>Z').workplane()\
             .text('CQ 2.0',0.5,.05,cut=False,combine=False)
-            
+
         #verify that the number of solids is correct
         self.assertEqual(len(obj3.solids().vals()),5)
+
+    def testParametricCurve(self):
+
+        from math import sin, cos, pi
+
+        k = 4
+        r = 1
+
+        func = lambda t: ( r*(k+1)*cos(t) - r* cos((k+1)*t),
+                                    r*(k+1)*sin(t) - r* sin((k+1)*t))
+
+        res_open = Workplane('XY').parametricCurve(func).extrude(3)
+
+        #open profile generates an invalid solid
+        self.assertFalse(res_open.solids().val().isValid())
+
+        res_closed = Workplane('XY').parametricCurve(func,start=0,stop=2*pi)\
+            .extrude(3)
+
+        #closed profile will generate a valid solid with 3 faces
+        self.assertTrue(res_closed.solids().val().isValid())
+        self.assertEqual(len(res_closed.faces().vals()),3)
