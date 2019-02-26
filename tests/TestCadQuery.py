@@ -442,6 +442,15 @@ class TestCadQuery(BaseTest):
         self.assertEqual(5, result.faces().size())
         self.assertEqual(7, result.edges().size())
 
+        # Polyline path and different transition settings
+        for t in ('transformed','right','round'):
+            path = Workplane("XZ").polyline(pts)
+
+            # Test defaults
+            result = Workplane("XY").circle(0.2).rect(0.2,0.1).rect(0.2,0.1)\
+                .sweep(path,transition=t)
+            self.assertTrue(result.solids().val().isValid())
+
         # Arc path
         path = Workplane("XZ").threePointArc((1.0, 1.5), (0.0, 1.0))
 
