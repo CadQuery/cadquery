@@ -115,6 +115,7 @@ from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Bold)
 
 from math import pi, sqrt
+from functools import reduce
 
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.
@@ -1420,11 +1421,7 @@ class Solid(Shape, Mixin3D):
         rv,inner_shapes = shapes[0],shapes[1:]
 
         if inner_shapes:
-            if len(inner_shapes)>1:
-                inner_shapes = inner_shapes[0]\
-                    .fuse(Compound.makeCompound(inner_shapes[1:]))
-            else:
-                inner_shapes = Compound.makeCompound(inner_shapes)
+            inner_shapes = reduce(lambda a,b: a.fuse(b),inner_shapes)
             rv = rv.cut(inner_shapes)
 
         return rv
@@ -1451,7 +1448,6 @@ class Solid(Shape, Mixin3D):
 
         if makeSolid:
             builder.MakeSolid()
-
 
 
         return cls(builder.Shape())
