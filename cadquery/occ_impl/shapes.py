@@ -1057,7 +1057,6 @@ class Mixin3D(object):
 
         for e in nativeEdges:
             fillet_builder.Add(radius, e)
-        topexp_MapShapesAndAncestors(self.wrapped,
 
         return self.__class__(fillet_builder.Shape())
 
@@ -1073,7 +1072,7 @@ class Mixin3D(object):
 
         # make a edge --> faces mapping
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
-
+        topexp_MapShapesAndAncestors(self.wrapped,
                                      ta.TopAbs_EDGE,
                                      ta.TopAbs_FACE,
                                      edge_face_map)
