@@ -30,17 +30,15 @@ Combining Selectors
 
 Selectors can be combined logically, currently defined operators include **and**, **or**, **not** and **exc[ept]** (set difference).  For example:
 
-.. cq_plot:: 
+.. cadquery::
 
     result = cq.Workplane("XY").box(2, 2, 2) \
         .edges("|Z and >Y") \
         .chamfer(0.2)
-    
-    show_object(result)
 
 Much more complex expressions are possible as well:
 
-.. cq_plot:: 
+.. cadquery::
 
     result = cq.Workplane("XY").box(2, 2, 2) \
         .faces(">Z") \
@@ -48,8 +46,6 @@ Much more complex expressions are possible as well:
         .faces(">Z") \
         .edges("not(<X or >X or <Y or >Y)") \
         .chamfer(0.1)
-    
-    show_object(result)
 
 .. _filteringfaces:
 
@@ -130,11 +126,9 @@ User-defined Directions
 
 It is possible to use user defined vectors as a basis for the selectors. For example:
 
-.. cq_plot:: 
+.. cadquery::
 
     result = cq.Workplane("XY").box(10,10,10)
-    
+
     # chamfer only one edge
     result = result.edges('>(-1,1,0)').chamfer(1)
-    
-    show_object(result)
