@@ -1420,7 +1420,11 @@ class Solid(Shape, Mixin3D):
         rv,inner_shapes = shapes[0],shapes[1:]
 
         if inner_shapes:
-            inner_shapes = Compound.makeCompound(inner_shapes)
+            if len(inner_shapes)>1:
+                inner_shapes = inner_shapes[0]\
+                    .fuse(Compound.makeCompound(inner_shapes[1:]))
+            else:
+                inner_shapes = Compound.makeCompound(inner_shapes)
             rv = rv.cut(inner_shapes)
 
         return rv
