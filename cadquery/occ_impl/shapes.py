@@ -1057,6 +1057,7 @@ class Mixin3D(object):
 
         for e in nativeEdges:
             fillet_builder.Add(radius, e)
+        topexp_MapShapesAndAncestors(self.wrapped,
 
         return self.__class__(fillet_builder.Shape())
 
@@ -1073,7 +1074,6 @@ class Mixin3D(object):
         # make a edge --> faces mapping
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
 
-        topexp_MapShapesAndAncestors(self.wrapped,
                                      ta.TopAbs_EDGE,
                                      ta.TopAbs_FACE,
                                      edge_face_map)
@@ -1398,8 +1398,11 @@ class Solid(Shape, Mixin3D):
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
         :param path: The wire to sweep the face resulting from the wires over
-        :param makeSolid:
-        :param isFrenet:
+        :param boolean makeSolid: return Solid or Shell (defualt True)
+        :param boolean isFrenet: Frenet mode (default False)
+        :param transitionMode:
+            handling of profile orientation at C1 path discontinuities.
+            Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a Solid object
         """
         if path.ShapeType() == 'Edge':

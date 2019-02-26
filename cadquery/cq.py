@@ -2275,6 +2275,8 @@ class Workplane(CQ):
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param transition:
+            handling of profile orientation at C1 path discontinuities.
+            Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a CQ object with the resulting solid selected.
         """
 
