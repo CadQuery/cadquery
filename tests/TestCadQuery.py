@@ -442,6 +442,14 @@ class TestCadQuery(BaseTest):
         self.assertEqual(5, result.faces().size())
         self.assertEqual(7, result.edges().size())
 
+        # Polyline path and one inner profiles
+        path = Workplane("XZ").polyline(pts)
+
+        # Test defaults
+        result = Workplane("XY").circle(0.2).circle(0.1).sweep(path,transition='transformed')
+        self.assertEqual(8, result.faces().size())
+        self.assertEqual(14, result.edges().size())
+
         # Polyline path and different transition settings
         for t in ('transformed','right','round'):
             path = Workplane("XZ").polyline(pts)
