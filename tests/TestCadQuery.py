@@ -454,10 +454,17 @@ class TestCadQuery(BaseTest):
         for t in ('transformed','right','round'):
             path = Workplane("XZ").polyline(pts)
 
-            # Test defaults
-            result = Workplane("XY").circle(0.2).rect(0.2,0.1).rect(0.2,0.1)\
+            result = Workplane("XY").circle(0.2).rect(0.2,0.1).rect(0.1,0.2)\
                 .sweep(path,transition=t)
             self.assertTrue(result.solids().val().isValid())
+
+        # Polyline path and multiple inner profiles
+        path = Workplane("XZ").polyline(pts)
+
+        # Test defaults
+        result = Workplane("XY").circle(0.2).rect(0.2,0.1).rect(0.1,0.2)\
+            .circle(0.1).sweep(path)
+        self.assertTrue(result.solids().val().isValid())
 
         # Arc path
         path = Workplane("XZ").threePointArc((1.0, 1.5), (0.0, 1.0))
