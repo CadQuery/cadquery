@@ -438,7 +438,7 @@ class TestCadQuery(BaseTest):
         path = Workplane("XZ").polyline(pts)
 
         # Test defaults
-        result = Workplane("XY").circle(0.1).sweep(path)
+        result = Workplane("XY").circle(0.1).sweep(path,transition='transformed')
         self.assertEqual(5, result.faces().size())
         self.assertEqual(7, result.edges().size())
 
