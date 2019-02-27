@@ -111,6 +111,8 @@ from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Italic,
                              Font_FA_Bold)
 
+from OCC.Core.BRepFeat import BRepFeat_MakePrism
+
 from math import pi, sqrt
 
 TOLERANCE = 1e-6
@@ -644,9 +646,9 @@ class Mixin1D(object):
         brepgprop_LinearProperties(self.wrapped, Properties)
 
         return Properties.Mass()
-      
+
     def IsClosed(self):
-      
+
         return BRep_Tool.IsClosed(self.wrapped)
 
 
@@ -754,12 +756,12 @@ class Edge(Shape, Mixin1D):
         pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
         for ix, v in enumerate(listOfVector):
             pnts.SetValue(ix+1, v.toPnt())
-        
+
         spline_builder = GeomAPI_Interpolate(pnts.GetHandle(), periodic, tol)
         if tangents:
           v1,v2 = tangents
-          spline_builder.Load(v1.wrapped,v2.wrapped) 
-        
+          spline_builder.Load(v1.wrapped,v2.wrapped)
+
         spline_builder.Perform()
         spline_geom = spline_builder.Curve()
 
@@ -856,7 +858,7 @@ class Wire(Shape, Mixin1D):
         return w
 
     @classmethod
-    def makeHelix(cls, pitch, height, radius, center=Vector(0, 0, 0), 
+    def makeHelix(cls, pitch, height, radius, center=Vector(0, 0, 0),
                   dir=Vector(0, 0, 1), angle=360.0, lefthand=False):
         """
         Make a helix with a given pitch, height and radius
@@ -1339,9 +1341,9 @@ class Solid(Shape, Mixin3D):
             prism_builder = LocOpe_DPrism(face.wrapped,
                                           d * vecNormal.Length,
                                           d * taper * DEG2RAD)
-            
+
         return cls(prism_builder.Shape())
-            
+
 
     @classmethod
     def revolve(cls, outerWire, innerWires, angleDegrees, axisStart, axisEnd):
@@ -1405,11 +1407,11 @@ class Solid(Shape, Mixin3D):
                 builder.SetMode(isFrenet)
                 builder.Add(w.wrapped)
                 shapes.append(cls(builder.Shape()))
-            
+
             rv = Compound.makeCompound(shapes)
 
         return rv
-    
+
     @classmethod
     def sweep_multi(cls, profiles, path, makeSolid=True, isFrenet=False):
         """
@@ -1423,20 +1425,39 @@ class Solid(Shape, Mixin3D):
             path = Wire.assembleEdges([path, ])
 
         builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
-        
+
         for p in profiles:
             builder.Add(p.wrapped)
-            
+
         builder.SetMode(isFrenet)
         builder.Build()
-            
+
         if makeSolid:
             builder.MakeSolid()
-            
-       
+
+
 
         return cls(builder.Shape())
 
+    def prism(self, basis, profile, depth=None, thruAll=True, additive=True):
+        """
+        Make a prismatic feature (additive or subtractive)
+        """
+
+        face = Face.makeFromWires(profile)
+        feat = BRepFeat_MakePrism(self.wrapped,
+                                  basis.wrapped,
+                                  face.wrapped,
+                                  basis.normalAt().wrapped,
+                                  additive,
+                                  False)
+
+        if thruAll:
+            feat.PerformThruAll()
+        else:
+            feat.Perform(depth)
+
+        return self.__class__(feat.Shape())
 
 class Compound(Shape, Mixin3D):
     """
@@ -1456,23 +1477,23 @@ class Compound(Shape, Mixin3D):
             comp_builder.Add(comp, s.wrapped)
 
         return cls(comp)
-      
+
     @classmethod
     def makeText(cls, text, size, height, font="Arial", kind='regular',
                  position=Plane.XY()):
         """
         Create a 3D text
         """
-        
+
         font_kind = {'regular' : Font_FA_Regular,
                      'bold'    : Font_FA_Bold,
                      'italic'  : Font_FA_Italic}[kind]
-        
+
         text_flat = Shape(text_to_brep(text, font, font_kind, size, False))
         vecNormal = text_flat.Faces()[0].normalAt()*height
-        
+
         text_3d = BRepPrimAPI_MakePrism(text_flat.wrapped, vecNormal.wrapped)
-        
+
         return cls(text_3d.Shape()).transformShape(position.rG)
 
 # TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
