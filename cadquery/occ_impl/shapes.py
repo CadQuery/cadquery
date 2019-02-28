@@ -16,7 +16,10 @@ from OCC.Core.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeWire,
                                 BRepBuilderAPI_Copy,
                                 BRepBuilderAPI_GTransform,
-                                BRepBuilderAPI_Transform)
+                                BRepBuilderAPI_Transform,
+                                BRepBuilderAPI_Transformed,
+                                BRepBuilderAPI_RightCorner,
+                                BRepBuilderAPI_RoundCorner)
 # properties used to store mass calculation result
 from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRepGProp import BRepGProp_Face, \
@@ -112,6 +115,7 @@ from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Bold)
 
 from math import pi, sqrt
+from functools import reduce
 
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.
@@ -192,7 +196,7 @@ class Shape(object):
         """Experimental clean using ShapeUpgrade"""
 
         upgrader = ShapeUpgrade_UnifySameDomain(
-            self.wrapped, True, True, False)
+            self.wrapped, True, True, True)
         upgrader.Build()
 
         return self.cast(upgrader.Shape())
@@ -644,9 +648,9 @@ class Mixin1D(object):
         brepgprop_LinearProperties(self.wrapped, Properties)
 
         return Properties.Mass()
-      
+
     def IsClosed(self):
-      
+
         return BRep_Tool.IsClosed(self.wrapped)
 
 
@@ -754,12 +758,12 @@ class Edge(Shape, Mixin1D):
         pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
         for ix, v in enumerate(listOfVector):
             pnts.SetValue(ix+1, v.toPnt())
-        
+
         spline_builder = GeomAPI_Interpolate(pnts.GetHandle(), periodic, tol)
         if tangents:
           v1,v2 = tangents
-          spline_builder.Load(v1.wrapped,v2.wrapped) 
-        
+          spline_builder.Load(v1.wrapped,v2.wrapped)
+
         spline_builder.Perform()
         spline_geom = spline_builder.Curve()
 
@@ -856,7 +860,7 @@ class Wire(Shape, Mixin1D):
         return w
 
     @classmethod
-    def makeHelix(cls, pitch, height, radius, center=Vector(0, 0, 0), 
+    def makeHelix(cls, pitch, height, radius, center=Vector(0, 0, 0),
                   dir=Vector(0, 0, 1), angle=360.0, lefthand=False):
         """
         Make a helix with a given pitch, height and radius
@@ -1068,7 +1072,6 @@ class Mixin3D(object):
 
         # make a edge --> faces mapping
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
-
         topexp_MapShapesAndAncestors(self.wrapped,
                                      ta.TopAbs_EDGE,
                                      ta.TopAbs_FACE,
@@ -1339,9 +1342,9 @@ class Solid(Shape, Mixin3D):
             prism_builder = LocOpe_DPrism(face.wrapped,
                                           d * vecNormal.Length,
                                           d * taper * DEG2RAD)
-            
+
         return cls(prism_builder.Shape())
-            
+
 
     @classmethod
     def revolve(cls, outerWire, innerWires, angleDegrees, axisStart, axisEnd):
@@ -1381,35 +1384,50 @@ class Solid(Shape, Mixin3D):
 
         return cls(revol_builder.Shape())
 
+    _transModeDict = {'transformed' : BRepBuilderAPI_Transformed,
+                      'round' : BRepBuilderAPI_RoundCorner,
+                      'right' : BRepBuilderAPI_RightCorner}
+
     @classmethod
-    def sweep(cls, outerWire, innerWires, path, makeSolid=True, isFrenet=False):
+    def sweep(cls, outerWire, innerWires, path, makeSolid=True, isFrenet=False,
+              transitionMode='transformed'):
         """
         Attempt to sweep the list of wires  into a prismatic solid along the provided path
 
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
         :param path: The wire to sweep the face resulting from the wires over
+        :param boolean makeSolid: return Solid or Shell (defualt True)
+        :param boolean isFrenet: Frenet mode (default False)
+        :param transitionMode:
+            handling of profile orientation at C1 path discontinuities.
+            Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a Solid object
         """
         if path.ShapeType() == 'Edge':
             path = Wire.assembleEdges([path, ])
 
-        if makeSolid:
-            face = Face.makeFromWires(outerWire, innerWires)
-            builder = BRepOffsetAPI_MakePipe(path.wrapped, face.wrapped)
-            rv = cls(builder.Shape())
-        else:
-            shapes = []
-            for w in [outerWire]+innerWires:
-                builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
-                builder.SetMode(isFrenet)
-                builder.Add(w.wrapped)
-                shapes.append(cls(builder.Shape()))
-            
-            rv = Compound.makeCompound(shapes)
+        shapes = []
+        for w in [outerWire]+innerWires:
+            builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
+            builder.SetMode(isFrenet)
+            builder.SetTransitionMode(cls._transModeDict[transitionMode])
+            builder.Add(w.wrapped)
+
+            builder.Build()
+            if makeSolid:
+                builder.MakeSolid()
+
+            shapes.append(cls(builder.Shape()))
+
+        rv,inner_shapes = shapes[0],shapes[1:]
+
+        if inner_shapes:
+            inner_shapes = reduce(lambda a,b: a.fuse(b),inner_shapes)
+            rv = rv.cut(inner_shapes)
 
         return rv
-    
+
     @classmethod
     def sweep_multi(cls, profiles, path, makeSolid=True, isFrenet=False):
         """
@@ -1423,17 +1441,16 @@ class Solid(Shape, Mixin3D):
             path = Wire.assembleEdges([path, ])
 
         builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
-        
+
         for p in profiles:
             builder.Add(p.wrapped)
-            
+
         builder.SetMode(isFrenet)
         builder.Build()
-            
+
         if makeSolid:
             builder.MakeSolid()
-            
-       
+
 
         return cls(builder.Shape())
 
@@ -1456,23 +1473,23 @@ class Compound(Shape, Mixin3D):
             comp_builder.Add(comp, s.wrapped)
 
         return cls(comp)
-      
+
     @classmethod
     def makeText(cls, text, size, height, font="Arial", kind='regular',
                  position=Plane.XY()):
         """
         Create a 3D text
         """
-        
+
         font_kind = {'regular' : Font_FA_Regular,
                      'bold'    : Font_FA_Bold,
                      'italic'  : Font_FA_Italic}[kind]
-        
+
         text_flat = Shape(text_to_brep(text, font, font_kind, size, False))
         vecNormal = text_flat.Faces()[0].normalAt()*height
-        
+
         text_3d = BRepPrimAPI_MakePrism(text_flat.wrapped, vecNormal.wrapped)
-        
+
         return cls(text_3d.Shape()).transformShape(position.rG)
 
 # TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
