@@ -2136,8 +2136,7 @@ class Workplane(CQ):
         """
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
-        wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires), self.plane, [])
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
 
         # now all of the wires have been used to create an extrusion
         self.ctx.pendingWires = []
@@ -2539,7 +2538,7 @@ class Workplane(CQ):
         # result is a list of lists
         s = time.time()
         wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires), self.plane, [])
+            list(self.ctx.pendingWires), [])
         # print "sorted wires in %d sec" % ( time.time() - s )
         # now all of the wires have been used to create an extrusion
         self.ctx.pendingWires = []
@@ -2603,7 +2602,7 @@ class Workplane(CQ):
         """
         # We have to gather the wires to be revolved
         wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires), self.plane, [])
+            list(self.ctx.pendingWires))
 
         # Mark that all of the wires have been used to create a revolution
         self.ctx.pendingWires = []
@@ -2631,7 +2630,7 @@ class Workplane(CQ):
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
         s = time.time()
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires), self.plane, [])
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
         # print "sorted wires in %d sec" % ( time.time() - s )
         self.ctx.pendingWires = []  # now all of the wires have been used to create an extrusion
 
