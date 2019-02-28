@@ -184,7 +184,7 @@ class AmfWriter(object):
             v2.text = str(t[1])
             v3 = ET.SubElement(triangle, 'v3')
             v3.text = str(t[2])
-        
+
         amf = ET.ElementTree(amf).write(outFile, xml_declaration=True)
 
 
@@ -304,7 +304,7 @@ def getSVG(shape, opts=None):
     hlr.Update()
     hlr.Hide()
 
-    hlr_shapes = HLRBRep_HLRToShape(hlr.GetHandle())
+    hlr_shapes = HLRBRep_HLRToShape(hlr)
 
     visible = []
 

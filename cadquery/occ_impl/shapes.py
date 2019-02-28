@@ -757,7 +757,7 @@ class Edge(Shape, Mixin1D):
         for ix, v in enumerate(listOfVector):
             pnts.SetValue(ix+1, v.toPnt())
 
-        spline_builder = GeomAPI_Interpolate(pnts.GetHandle(), periodic, tol)
+        spline_builder = GeomAPI_Interpolate(pnts, periodic, tol)
         if tangents:
           v1,v2 = tangents
           spline_builder.Load(v1.wrapped,v2.wrapped)
@@ -887,7 +887,7 @@ class Wire(Shape, Mixin1D):
         u_stop = geom_line.Value(sqrt(n_turns * ((2 * pi)**2 + pitch**2)))
         geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
 
-        e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf.GetHandle()).Edge()
+        e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf).Edge()
 
         # 4. Convert to wire and fix building 3d geom from 2d geom
         w = BRepBuilderAPI_MakeWire(e).Wire()
