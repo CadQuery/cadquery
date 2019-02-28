@@ -16,7 +16,10 @@ from OCC.Core.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeWire,
                                 BRepBuilderAPI_Copy,
                                 BRepBuilderAPI_GTransform,
-                                BRepBuilderAPI_Transform)
+                                BRepBuilderAPI_Transform,
+                                BRepBuilderAPI_Transformed,
+                                BRepBuilderAPI_RightCorner,
+                                BRepBuilderAPI_RoundCorner)
 # properties used to store mass calculation result
 from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRepGProp import BRepGProp_Face, \
@@ -114,6 +117,7 @@ from OCC.Core.Addons import (text_to_brep,
 from OCC.Core.BRepFeat import BRepFeat_MakePrism, BRepFeat_MakeDPrism
 
 from math import pi, sqrt
+from functools import reduce
 
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.
@@ -194,7 +198,7 @@ class Shape(object):
         """Experimental clean using ShapeUpgrade"""
 
         upgrader = ShapeUpgrade_UnifySameDomain(
-            self.wrapped, True, True, False)
+            self.wrapped, True, True, True)
         upgrader.Build()
 
         return self.cast(upgrader.Shape())
@@ -1070,7 +1074,6 @@ class Mixin3D(object):
 
         # make a edge --> faces mapping
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
-
         topexp_MapShapesAndAncestors(self.wrapped,
                                      ta.TopAbs_EDGE,
                                      ta.TopAbs_FACE,
@@ -1383,32 +1386,47 @@ class Solid(Shape, Mixin3D):
 
         return cls(revol_builder.Shape())
 
+    _transModeDict = {'transformed' : BRepBuilderAPI_Transformed,
+                      'round' : BRepBuilderAPI_RoundCorner,
+                      'right' : BRepBuilderAPI_RightCorner}
+
     @classmethod
-    def sweep(cls, outerWire, innerWires, path, makeSolid=True, isFrenet=False):
+    def sweep(cls, outerWire, innerWires, path, makeSolid=True, isFrenet=False,
+              transitionMode='transformed'):
         """
         Attempt to sweep the list of wires  into a prismatic solid along the provided path
 
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
         :param path: The wire to sweep the face resulting from the wires over
+        :param boolean makeSolid: return Solid or Shell (defualt True)
+        :param boolean isFrenet: Frenet mode (default False)
+        :param transitionMode:
+            handling of profile orientation at C1 path discontinuities.
+            Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a Solid object
         """
         if path.ShapeType() == 'Edge':
             path = Wire.assembleEdges([path, ])
 
-        if makeSolid:
-            face = Face.makeFromWires(outerWire, innerWires)
-            builder = BRepOffsetAPI_MakePipe(path.wrapped, face.wrapped)
-            rv = cls(builder.Shape())
-        else:
-            shapes = []
-            for w in [outerWire]+innerWires:
-                builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
-                builder.SetMode(isFrenet)
-                builder.Add(w.wrapped)
-                shapes.append(cls(builder.Shape()))
+        shapes = []
+        for w in [outerWire]+innerWires:
+            builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
+            builder.SetMode(isFrenet)
+            builder.SetTransitionMode(cls._transModeDict[transitionMode])
+            builder.Add(w.wrapped)
 
-            rv = Compound.makeCompound(shapes)
+            builder.Build()
+            if makeSolid:
+                builder.MakeSolid()
+
+            shapes.append(cls(builder.Shape()))
+
+        rv,inner_shapes = shapes[0],shapes[1:]
+
+        if inner_shapes:
+            inner_shapes = reduce(lambda a,b: a.fuse(b),inner_shapes)
+            rv = rv.cut(inner_shapes)
 
         return rv
 
@@ -1434,8 +1452,6 @@ class Solid(Shape, Mixin3D):
 
         if makeSolid:
             builder.MakeSolid()
-
-
 
         return cls(builder.Shape())
 
