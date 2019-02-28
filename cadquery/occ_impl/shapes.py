@@ -111,7 +111,7 @@ from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Italic,
                              Font_FA_Bold)
 
-from OCC.Core.BRepFeat import BRepFeat_MakePrism
+from OCC.Core.BRepFeat import BRepFeat_MakePrism, BRepFeat_MakeDPrism
 
 from math import pi, sqrt
 
@@ -1439,25 +1439,39 @@ class Solid(Shape, Mixin3D):
 
         return cls(builder.Shape())
 
-    def prism(self, basis, profile, depth=None, thruAll=True, additive=True):
+    def dprism(self, basis, profiles, depth=None, taper=0, thruAll=True,
+              additive=True):
         """
         Make a prismatic feature (additive or subtractive)
+
+        :param basis: face to perfrom the operation on
+        :param profiles: list of profiles
+        :param depth: depth of the cut or extrusion
+        :param thruAll: cut thruAll
+        :return: a Solid object
         """
 
-        face = Face.makeFromWires(profile)
-        feat = BRepFeat_MakePrism(self.wrapped,
-                                  basis.wrapped,
-                                  face.wrapped,
-                                  basis.normalAt().wrapped,
-                                  additive,
-                                  False)
+        sorted_profiles = sortWiresByBuildOrder(profiles)
+        shape = self.wrapped
+        basis = basis.wrapped
+        for p in sorted_profiles:
+            face = Face.makeFromWires(p[0],p[1:])
+            feat = BRepFeat_MakeDPrism(shape,
+                                       face.wrapped,
+                                       basis,
+                                       #basis.normalAt().toDir(),
+                                       taper*DEG2RAD,
+                                       additive,
+                                       False)
 
-        if thruAll:
-            feat.PerformThruAll()
-        else:
-            feat.Perform(depth)
+            if thruAll:
+                feat.PerformThruAll()
+            else:
+                feat.Perform(depth)
 
-        return self.__class__(feat.Shape())
+            shape = feat.Shape()
+
+        return self.__class__(shape)
 
 class Compound(Shape, Mixin3D):
     """
@@ -1499,7 +1513,7 @@ class Compound(Shape, Mixin3D):
 # TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
 
 
-def sortWiresByBuildOrder(wireList, plane, result=[]):
+def sortWiresByBuildOrder(wireList, result=[]):
     """Tries to determine how wires should be combined into faces.
 
     Assume:
