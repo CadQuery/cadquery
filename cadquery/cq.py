@@ -2496,7 +2496,7 @@ class Workplane(CQ):
 
         return self.newObject([s])
 
-    def cutThruAll(self, positive=False, clean=True):
+    def cutThruAll(self, positive=False, clean=True, taper=0):
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
 
@@ -2519,7 +2519,8 @@ class Workplane(CQ):
 
         rv = []
         for solid in solidRef.Solids():
-            s = solid.dprism(faceRef, wires, thruAll=True, additive=False)
+            s = solid.dprism(faceRef, wires, thruAll=True, additive=False,
+                             taper=-taper)
 
             if clean:
                 s = s.clean()
