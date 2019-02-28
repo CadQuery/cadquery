@@ -432,6 +432,20 @@ class CQ(object):
         else:
             raise ValueError("Cannot End the chain-- no parents!")
 
+    def _findType(self, types, searchStack=True, searchParents=True):
+
+        if searchStack:
+            for s in self.objects:
+                if isinstance(s, types):
+                    return s
+
+        if searchParents and self.parent is not None:
+            return self.parent._findType(types,
+                                         searchStack=True,
+                                         searchParents=True)
+
+        return None
+
     def findSolid(self, searchStack=True, searchParents=True):
         """
         Finds the first solid object in the chain, searching from the current node
@@ -452,19 +466,21 @@ class CQ(object):
         if the plugin implements a unary operation, or if the operation will automatically merge its
         results with an object already on the stack.
         """
-        #notfound = ValueError("Cannot find a Valid Solid to Operate on!")
 
-        if searchStack:
-            for s in self.objects:
-                if isinstance(s, Solid):
-                    return s
-                elif isinstance(s, Compound):
-                    return s
+        return self._findType((Solid, Compound), searchStack, searchParents)
 
-        if searchParents and self.parent is not None:
-            return self.parent.findSolid(searchStack=True, searchParents=searchParents)
+    def findFace(self, searchStack=True, searchParents=True):
+        """
+        Finds the first face object in the chain, searching from the current node
+        backwards through parents until one is found.
 
-        return None
+        :param searchStack: should objects on the stack be searched first.
+        :param searchParents: should parents be searched?
+        :raises: ValueError if no solid is found in the current object or its parents,
+            and errorOnEmpty is True
+        """
+
+        return self._findType(Face, searchStack, searchParents)
 
     def _selectObjects(self, objType, selector=None):
         """
@@ -2495,11 +2511,22 @@ class Workplane(CQ):
 
         see :py:meth:`cutBlind` to cut material to a limited depth
         """
-        maxDim = self.largestDimension()*1.1 #for numerical stability
-        if not positive:
-            maxDim *= (-1.0)
+        wires = self.ctx.pendingWires
+        self.ctx.pendingWires = []
 
-        return self.cutBlind(maxDim, clean)
+        solidRef = self.findSolid()
+        faceRef = self.findFace()
+
+        rv = []
+        for solid in solidRef.Solids():
+            s = solid.dprism(faceRef, wires, thruAll=True, additive=False)
+
+            if clean:
+                s = s.clean()
+
+            rv.append(s)
+
+        return self.newObject(rv)
 
     def loft(self, filled=True, ruled=False, combine=True):
         """
