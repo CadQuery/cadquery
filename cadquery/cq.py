@@ -2263,7 +2263,8 @@ class Workplane(CQ):
             newS = newS.clean()
         return newS
 
-    def sweep(self, path, sweepAlongWires=False, makeSolid=True, isFrenet=False, combine=True, clean=True):
+    def sweep(self, path, sweepAlongWires=False, makeSolid=True, isFrenet=False,
+              combine=True, clean=True, transition='right'):
         """
         Use all un-extruded wires in the parent chain to create a swept solid.
 
@@ -2273,10 +2274,14 @@ class Workplane(CQ):
             True to create only one solid swept along path with shape following the list of wires on the chain
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param transition:
+            handling of profile orientation at C1 path discontinuities.
+            Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a CQ object with the resulting solid selected.
         """
 
-        r = self._sweep(path.wire(), sweepAlongWires, makeSolid, isFrenet)  # returns a Solid (or a compound if there were multiple)
+        r = self._sweep(path.wire(), sweepAlongWires, makeSolid, isFrenet,
+                        transition)  # returns a Solid (or a compound if there were multiple)
         if combine:
             newS = self._combineWithBase(r)
         else:
@@ -2617,7 +2622,8 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def _sweep(self, path, sweepAlongWires=False, makeSolid=True, isFrenet=False):
+    def _sweep(self, path, sweepAlongWires=False, makeSolid=True,
+               isFrenet=False, transition='right'):
         """
         Makes a swept solid from an existing set of pending wires.
 
@@ -2625,7 +2631,7 @@ class Workplane(CQ):
         :param boolean sweepAlongWires:
             False to create multiple swept from wires on the chain along path
             True to create only one solid swept along path with shape following the list of wires on the chain
-        :return:a FreeCAD solid, suitable for boolean operations
+        :return:a solid, suitable for boolean operations
         """
 
         # group wires together into faces based on which ones are inside the others
@@ -2638,7 +2644,8 @@ class Workplane(CQ):
         toFuse = []
         if not sweepAlongWires:
             for ws in wireSets:
-                thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid, isFrenet)
+                thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid,
+                                      isFrenet, transition)
                 toFuse.append(thisObj)
         else:
             section = []
