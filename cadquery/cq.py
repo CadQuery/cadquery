@@ -476,7 +476,7 @@ class CQ(object):
 
         :param searchStack: should objects on the stack be searched first.
         :param searchParents: should parents be searched?
-        :raises: ValueError if no solid is found in the current object or its parents,
+        :raises: ValueError if no face is found in the current object or its parents,
             and errorOnEmpty is True
         """
 
@@ -2521,6 +2521,15 @@ class Workplane(CQ):
 
         solidRef = self.findSolid()
         faceRef = self.findFace()
+
+        #if no faces on the stack take the nearest face parallel to the plane zDir
+        if not faceRef:
+            #first select all with faces with good orietation
+            sel = selectors.PerpendicularDirSelector(self.plane.zDir)
+            faces = sel.filter(solidRef.Faces())
+            #then select the closest
+            sel = selectors.NearestToPointSelector(self.plane.origin.toTuple())
+            faceRef = sel.filter(faces)[0]
 
         rv = []
         for solid in solidRef.Solids():
