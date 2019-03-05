@@ -839,10 +839,15 @@ class TestCadQuery(BaseTest):
         r = s.rect(2.0, 2.0).rect(
             1.3, 1.3, forConstruction=True).vertices().circle(0.125).extrude(0.5)
 
-        # side hole, thru all
-        t = r.faces(">Y").workplane().circle(0.125).cutThruAll()
-        self.saveModel(t)
+
+        # thru all without explicit face selection
+        t = r.circle(0.5).cutThruAll()
         self.assertEqual(11, t.faces().size())
+
+        # side hole, thru all
+        t = t.faces(">Y").workplane().circle(0.125).cutThruAll()
+        self.saveModel(t)
+        self.assertEqual(13, t.faces().size())
 
     def testCutToFaceOffsetNOTIMPLEMENTEDYET(self):
         """
