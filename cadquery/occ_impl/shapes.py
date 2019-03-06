@@ -114,6 +114,8 @@ from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Italic,
                              Font_FA_Bold)
 
+from OCC.Core.BRepFeat import BRepFeat_MakePrism, BRepFeat_MakeDPrism
+
 from math import pi, sqrt
 from functools import reduce
 
@@ -759,7 +761,7 @@ class Edge(Shape, Mixin1D):
         for ix, v in enumerate(listOfVector):
             pnts.SetValue(ix+1, v.toPnt())
 
-        spline_builder = GeomAPI_Interpolate(pnts.GetHandle(), periodic, tol)
+        spline_builder = GeomAPI_Interpolate(pnts, periodic, tol)
         if tangents:
           v1,v2 = tangents
           spline_builder.Load(v1.wrapped,v2.wrapped)
@@ -889,7 +891,7 @@ class Wire(Shape, Mixin1D):
         u_stop = geom_line.Value(sqrt(n_turns * ((2 * pi)**2 + pitch**2)))
         geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
 
-        e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf.GetHandle()).Edge()
+        e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf).Edge()
 
         # 4. Convert to wire and fix building 3d geom from 2d geom
         w = BRepBuilderAPI_MakeWire(e).Wire()
@@ -1451,9 +1453,40 @@ class Solid(Shape, Mixin3D):
         if makeSolid:
             builder.MakeSolid()
 
-
         return cls(builder.Shape())
 
+    def dprism(self, basis, profiles, depth=None, taper=0, thruAll=True,
+              additive=True):
+        """
+        Make a prismatic feature (additive or subtractive)
+
+        :param basis: face to perfrom the operation on
+        :param profiles: list of profiles
+        :param depth: depth of the cut or extrusion
+        :param thruAll: cut thruAll
+        :return: a Solid object
+        """
+
+        sorted_profiles = sortWiresByBuildOrder(profiles)
+        shape = self.wrapped
+        basis = basis.wrapped
+        for p in sorted_profiles:
+            face = Face.makeFromWires(p[0],p[1:])
+            feat = BRepFeat_MakeDPrism(shape,
+                                       face.wrapped,
+                                       basis,
+                                       taper*DEG2RAD,
+                                       additive,
+                                       False)
+
+            if thruAll:
+                feat.PerformThruAll()
+            else:
+                feat.Perform(depth)
+
+            shape = feat.Shape()
+
+        return self.__class__(shape)
 
 class Compound(Shape, Mixin3D):
     """
@@ -1495,7 +1528,7 @@ class Compound(Shape, Mixin3D):
 # TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
 
 
-def sortWiresByBuildOrder(wireList, plane, result=[]):
+def sortWiresByBuildOrder(wireList, result=[]):
     """Tries to determine how wires should be combined into faces.
 
     Assume:
