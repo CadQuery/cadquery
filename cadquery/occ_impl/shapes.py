@@ -1475,7 +1475,6 @@ class Solid(Shape, Mixin3D):
             feat = BRepFeat_MakeDPrism(shape,
                                        face.wrapped,
                                        basis,
-                                       #basis.normalAt().toDir(),
                                        taper*DEG2RAD,
                                        additive,
                                        False)
