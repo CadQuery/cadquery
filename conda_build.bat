@@ -1,1 +1,1 @@
-conda build conda/meta.yaml -c cadquery -c conda-forge --output-folder .
+conda build -c cadquery -c conda-forge --output-folder . conda/meta.yaml
