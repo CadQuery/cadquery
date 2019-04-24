@@ -2,7 +2,7 @@ package:
   name: cadquery-occ
   version:  {{ environ.get('TRAVIS_TAG') }}
 
-source: 
+source:
   path: ..
 
 build:
@@ -16,7 +16,7 @@ requirements:
   run:
     - python {{ environ.get('TRAVIS_PYTHON_VERSION') }}
     - oce 0.18
-    - pythonocc-core 0.18.1
+    - pythonocc-core 0.18.2
     - pyparsing 2.*
 
 about:
