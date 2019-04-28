@@ -41,7 +41,7 @@ from OCC.Core.TopExp import TopExp_Explorer  # Toplogy explorer
 from OCC.Core.BRepTools import (BRepTools_WireExplorer,  # might be needed for iterating thorugh wires
                            breptools_UVBounds)
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
-from OCC.Core.BRep import BRep_Tool
+from OCC.Core.BRep import BRep_Tool, BRep_Tool_Degenerated
 
 from OCC.Core.TopoDS import (topods_Vertex,  # downcasting functions
                         topods_Edge,
@@ -105,9 +105,9 @@ from OCC.Core.BRepTools import breptools_Write
 
 from OCC.Core.Visualization import Tesselator
 
-from OCC.LocOpe import LocOpe_DPrism
+from OCC.Core.LocOpe import LocOpe_DPrism
 
-from OCC.BRepCheck import BRepCheck_Analyzer
+from OCC.Core.BRepCheck import BRepCheck_Analyzer
 
 from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Regular,
@@ -115,6 +115,7 @@ from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Bold)
 
 from OCC.Core.BRepFeat import BRepFeat_MakePrism, BRepFeat_MakeDPrism
+
 
 from math import pi, sqrt
 from functools import reduce
@@ -473,7 +474,7 @@ class Shape(object):
         return [Vertex(i) for i in self._entities('Vertex')]
 
     def Edges(self):
-        return [Edge(i) for i in self._entities('Edge')]
+        return [Edge(i) for i in self._entities('Edge') if not BRep_Tool_Degenerated(i)]
 
     def Compounds(self):
         return [Compound(i) for i in self._entities('Compound')]

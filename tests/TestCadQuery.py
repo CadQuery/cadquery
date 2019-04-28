@@ -361,7 +361,7 @@ class TestCadQuery(BaseTest):
         result = Workplane("XY").lineTo(0, 10).lineTo(5, 0).close().revolve()
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
-        self.assertEqual(3, result.edges().size())
+        self.assertEqual(2, result.edges().size())
 
     def testSpline(self):
         """
