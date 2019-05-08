@@ -30,8 +30,8 @@ on_success:
 
 deploy:
 - provider: Script
-  on:
-    APPVEYOR_REPO_TAG: true
+#  on:
+#    APPVEYOR_REPO_TAG: true
 
 before_deploy:
     - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
