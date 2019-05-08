@@ -41,7 +41,7 @@ from OCC.Core.TopExp import TopExp_Explorer  # Toplogy explorer
 from OCC.Core.BRepTools import (BRepTools_WireExplorer,  # might be needed for iterating thorugh wires
                            breptools_UVBounds)
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
-from OCC.Core.BRep import BRep_Tool
+from OCC.Core.BRep import BRep_Tool, BRep_Tool_Degenerated
 
 from OCC.Core.TopoDS import (topods_Vertex,  # downcasting functions
                         topods_Edge,
@@ -105,9 +105,9 @@ from OCC.Core.BRepTools import breptools_Write
 
 from OCC.Core.Visualization import Tesselator
 
-from OCC.LocOpe import LocOpe_DPrism
+from OCC.Core.LocOpe import LocOpe_DPrism
 
-from OCC.BRepCheck import BRepCheck_Analyzer
+from OCC.Core.BRepCheck import BRepCheck_Analyzer
 
 from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Regular,
@@ -115,6 +115,7 @@ from OCC.Core.Addons import (text_to_brep,
                              Font_FA_Bold)
 
 from OCC.Core.BRepFeat import BRepFeat_MakePrism, BRepFeat_MakeDPrism
+
 
 from math import pi, sqrt
 from functools import reduce
@@ -161,16 +162,28 @@ geom_LUT = \
      ta.TopAbs_SOLID: 'Solid',
      ta.TopAbs_COMPOUND: 'Compound'}
 
-# TODO there are many more geometry types, what to do with those?
-geom_LUT_EDGE_FACE = \
-    {ga.GeomAbs_Arc: 'ARC',
-     ga.GeomAbs_Circle: 'CIRCLE',
-     ga.GeomAbs_Line: 'LINE',
-     ga.GeomAbs_BSplineCurve: 'SPLINE',  # BSpline or Bezier?
-     ga.GeomAbs_Plane: 'PLANE',
-     ga.GeomAbs_Sphere: 'SPHERE',
-     ga.GeomAbs_Cone: 'CONE',
-     }
+geom_LUT_FACE = \
+    {ga.GeomAbs_Plane : 'PLANE',
+     ga.GeomAbs_Cylinder : 'CYLINDER',
+     ga.GeomAbs_Cone : 'CONE',
+     ga.GeomAbs_Sphere : 'SPHERE',
+     ga.GeomAbs_Torus : 'TORUS',
+     ga.GeomAbs_BezierSurface : 'BEZIER',
+     ga.GeomAbs_BSplineSurface : 'BSPLINE',
+     ga.GeomAbs_SurfaceOfRevolution : 'REVOLUTION',
+     ga.GeomAbs_SurfaceOfExtrusion : 'EXTRUSION',
+     ga.GeomAbs_OffsetSurface : 'OFFSET',
+     ga.GeomAbs_OtherSurface : 'OTHER'}
+
+geom_LUT_EDGE = \
+    {ga.GeomAbs_Line : 'LINE',
+     ga.GeomAbs_Circle : 'CIRCLE',
+     ga.GeomAbs_Ellipse : 'ELLIPSE',
+     ga.GeomAbs_Hyperbola : 'HYPERBOLA',
+     ga.GeomAbs_Parabola : 'PARABOLA',
+     ga.GeomAbs_BezierCurve : 'BEZIER',
+     ga.GeomAbs_BSplineCurve : 'BSPLINE',
+     ga.GeomAbs_OtherCurve : 'OTHER'}
 
 
 def downcast(topods_obj):
@@ -300,8 +313,10 @@ class Shape(object):
 
         if type(tr) is str:
             return tr
+        elif tr is BRepAdaptor_Curve:
+            return geom_LUT_EDGE[tr(self.wrapped).GetType()]
         else:
-            return geom_LUT_EDGE_FACE[tr(self.wrapped).GetType()]
+            return geom_LUT_FACE[tr(self.wrapped).GetType()]
 
     def isType(self, obj, strType):  # TODO why here?
         """
@@ -459,7 +474,7 @@ class Shape(object):
         return [Vertex(i) for i in self._entities('Vertex')]
 
     def Edges(self):
-        return [Edge(i) for i in self._entities('Edge')]
+        return [Edge(i) for i in self._entities('Edge') if not BRep_Tool_Degenerated(i)]
 
     def Compounds(self):
         return [Compound(i) for i in self._entities('Compound')]
