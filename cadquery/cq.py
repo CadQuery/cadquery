@@ -857,7 +857,7 @@ class CQ(object):
             raise ValueError("Fillets requires that edges be selected")
 
         s = solid.fillet(radius, edgeList)
-        return self.newObject([s])
+        return self.newObject([s.clean()])
 
     def chamfer(self, length, length2=None):
         """
