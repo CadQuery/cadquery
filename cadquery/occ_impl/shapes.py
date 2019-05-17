@@ -1020,19 +1020,20 @@ class Face(Shape):
         '''
         Makes a planar face from one or more wires
         '''
-        face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped,
-                                               False)  # True is for planar only
+        face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped,True)
 
         for w in innerWires:
             face_builder.Add(w.wrapped)
         face_builder.Build()
         
-        sf = ShapeFix_Shape(face_builder.Shape())
-        sf.SetPrecision(1e-9)
-        sf.SetMaxTolerance(1e-9)
-        sf.Perform()
+        face = face_builder.Shape()
         
-        return cls.cast(sf.Shape())
+        if not BRepCheck_Analyzer(face).IsValid():
+            sf = ShapeFix_Shape(face)
+            sf.Perform()
+            face = sf.Shape()
+        
+        return cls.cast(face)
 
 
 class Shell(Shape):
