@@ -1078,30 +1078,31 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, r.wires().size())
         self.assertEqual(18, r.edges().size())
 
-    # def testChainedMirror(self):
-    #     """
-    #     Tests whether or not calling mirrorX().mirrorY() works correctly
-    #     """
-    #     r = 20
-    #     s = 7
-    #     t = 1.5
-    #
-    #     points = [
-    #         (0, t/2),
-    #         (r/2-1.5*t, r/2-t),
-    #         (s/2, r/2-t),
-    #         (s/2, r/2),
-    #         (r/2, r/2),
-    #         (r/2, s/2),
-    #         (r/2-t, s/2),
-    #         (r/2-t, r/2-1.5*t),
-    #         (t/2, 0)
-    #     ]
-    #
-    #     r = Workplane("XY").polyline(points).mirrorX().mirrorY()
-    #
-    #     self.assertEquals(1, r.wires().size())
-    #     self.assertEquals(32, r.edges().size())
+    def testChainedMirror(self):
+        """
+        Tests whether or not calling mirrorX().mirrorY() works correctly
+        """
+        r = 20
+        s = 7
+        t = 1.5
+   
+        points = [
+             (0, t/2),
+             (r/2-1.5*t, r/2-t),
+             (s/2, r/2-t),
+             (s/2, r/2),
+             (r/2, r/2),
+             (r/2, s/2),
+             (r/2-t, s/2),
+             (r/2-t, r/2-1.5*t),
+             (t/2, 0)
+        ]
+    
+        r = Workplane("XY").polyline(points).mirrorX().mirrorY() \
+            .extrude(1).faces('>Z')
+    
+        self.assertEquals(1, r.wires().size())
+        self.assertEquals(32, r.edges().size())
 
     # TODO: Re-work testIbeam test below now that chaining works
     # TODO: Add toLocalCoords and toWorldCoords tests
