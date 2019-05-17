@@ -39,7 +39,8 @@ from OCC.Core.BRepPrimAPI import (BRepPrimAPI_MakeBox,  # TODO list functions/us
 
 from OCC.Core.TopExp import TopExp_Explorer  # Toplogy explorer
 from OCC.Core.BRepTools import (BRepTools_WireExplorer,  # might be needed for iterating thorugh wires
-                           breptools_UVBounds)
+                                breptools_UVBounds,
+                                breptools_OuterWire)
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
 from OCC.Core.BRep import BRep_Tool, BRep_Tool_Degenerated
 
@@ -90,7 +91,7 @@ from OCC.Core.TopTools import TopTools_HSequenceOfShape, Handle_TopTools_HSequen
 
 from OCC.Core.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
-from OCC.Core.ShapeFix import ShapeFix_Wire, ShapeFix_Face
+from OCC.Core.ShapeFix import ShapeFix_Shape, ShapeFix_Wire, ShapeFix_Face
 
 from OCC.Core.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
@@ -975,6 +976,16 @@ class Face(Shape):
                                     Properties)
 
         return Vector(Properties.CentreOfMass())
+    
+    def outerWire(self):
+        
+        return self.cast(breptools_OuterWire(self.wrapped))
+    
+    def innerWires(self):
+        
+        outer = self.outerWire()
+        
+        return [w for w in self.Wires() if not w.isSame(outer)]
 
     @classmethod
     def makePlane(cls, length, width, basePnt=(0, 0, 0), dir=(0, 0, 1)):
@@ -1010,17 +1021,18 @@ class Face(Shape):
         Makes a planar face from one or more wires
         '''
         face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped,
-                                               True)  # True is for planar only
+                                               False)  # True is for planar only
 
         for w in innerWires:
             face_builder.Add(w.wrapped)
         face_builder.Build()
-        f = face_builder.Face()
-
-        sf = ShapeFix_Face(f)  # fix wire orientation
-        sf.FixOrientation()
-
-        return cls(sf.Face())
+        
+        sf = ShapeFix_Shape(face_builder.Shape())
+        sf.SetPrecision(1e-9)
+        sf.SetMaxTolerance(1e-9)
+        sf.Perform()
+        
+        return cls.cast(sf.Shape())
 
 
 class Shell(Shape):
@@ -1543,7 +1555,7 @@ class Compound(Shape, Mixin3D):
 # TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
 
 
-def sortWiresByBuildOrder(wireList, result=[]):
+def sortWiresByBuildOrder(wireList, result={}):
     """Tries to determine how wires should be combined into faces.
 
     Assume:
@@ -1564,29 +1576,11 @@ def sortWiresByBuildOrder(wireList, result=[]):
     if len(wireList) < 2:
         return [wireList, ]
 
-    # make a Face
-    face = Face.makeFromWires(wireList[0], wireList[1:])
-
-    # use FixOrientation
-    outer_inner_map = TopTools_DataMapOfShapeListOfShape()
-    sf = ShapeFix_Face(face.wrapped)  # fix wire orientation
-    sf.FixOrientation(outer_inner_map)
-
-    # Iterate through the Inner:Outer Mapping
-    all_wires = face.Wires()
-    result = {w: outer_inner_map.Find(
-        w.wrapped) for w in all_wires if outer_inner_map.IsBound(w.wrapped)}
-
-    # construct the result
-    rv = []
-    for k, v in result.items():
-        tmp = [k, ]
-
-        iterator = TopTools_ListIteratorOfListOfShape(v)
-        while iterator.More():
-            tmp.append(Wire(iterator.Value()))
-            iterator.Next()
-
-        rv.append(tmp)
+    # make a Face, NB: this might return
+    faces = Face.makeFromWires(wireList[0], wireList[1:])
+    
+    rv = []    
+    for face in faces.Faces():
+        rv.append([face.outerWire(),] + face.innerWires())
 
     return rv
