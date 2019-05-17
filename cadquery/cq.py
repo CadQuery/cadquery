@@ -2670,28 +2670,19 @@ class Workplane(CQ):
         :return:a solid, suitable for boolean operations
         """
 
-        # group wires together into faces based on which ones are inside the others
-        # result is a list of lists
-        s = time.time()
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
-        # print "sorted wires in %d sec" % ( time.time() - s )
-        self.ctx.pendingWires = []  # now all of the wires have been used to create an extrusion
-
         toFuse = []
         if not sweepAlongWires:
+            wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
             for ws in wireSets:
                 thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid,
                                       isFrenet, transition)
                 toFuse.append(thisObj)
         else:
-            section = []
-            for ws in wireSets:
-                for i in range(0, len(ws)):
-                    section.append(ws[i])
-
-            # implementation
-            thisObj = Solid.sweep_multi(section, path.val(), makeSolid, isFrenet)
+            sections = self.ctx.pendingWires
+            thisObj = Solid.sweep_multi(sections, path.val(), makeSolid, isFrenet)
             toFuse.append(thisObj)
+        
+        self.ctx.pendingWires = []
 
         return Compound.makeCompound(toFuse)
 
