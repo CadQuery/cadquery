@@ -1835,7 +1835,8 @@ class TestCadQuery(BaseTest):
 
         box = Workplane("XY" ).box(4, 4, 0.5)
 
-        obj1 = box.faces('>Z').workplane().text('CQ 2.0',0.5,-.05,cut=True)
+        obj1 = box.faces('>Z').workplane()\
+            .text('CQ 2.0',0.5,-.05,cut=True,align='left',valign='bottom')
 
         #combined object should have smaller volume
         self.assertGreater(box.val().Volume(),obj1.val().Volume())
@@ -1850,7 +1851,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(obj2.faces('>Z').vals()),5)
 
         obj3 = box.faces('>Z').workplane()\
-            .text('CQ 2.0',0.5,.05,cut=False,combine=False)
+            .text('CQ 2.0',0.5,.05,cut=False,combine=False,align='right',valign='top')
 
         #verify that the number of solids is correct
         self.assertEqual(len(obj3.solids().vals()),5)

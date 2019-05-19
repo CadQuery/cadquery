@@ -1506,7 +1506,7 @@ class Compound(Shape, Mixin3D):
 
     @classmethod
     def makeText(cls, text, size, height, font="Arial", kind='regular',
-                 position=Plane.XY()):
+                 align='center', valign='center',position=Plane.XY()):
         """
         Create a 3D text
         """
@@ -1516,6 +1516,22 @@ class Compound(Shape, Mixin3D):
                      'italic'  : Font_FA_Italic}[kind]
 
         text_flat = Shape(text_to_brep(text, font, font_kind, size, False))
+        bb = text_flat.BoundingBox()
+        
+        t = Vector()
+        
+        if align == 'center':
+            t.x = -bb.xlen/2
+        elif align == 'right':
+            t.x = -bb.xlen
+            
+        if valign == 'center':
+            t.y = -bb.ylen/2
+        elif valign == 'top':
+            t.y = -bb.ylen
+            
+        text_flat = text_flat.translate(t)
+        
         vecNormal = text_flat.Faces()[0].normalAt()*height
 
         text_3d = BRepPrimAPI_MakePrism(text_flat.wrapped, vecNormal.wrapped)
