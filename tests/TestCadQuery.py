@@ -474,7 +474,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(3, result.faces().size())
         self.assertEqual(3, result.edges().size())
 
-    def testSweepAlongListOfWires(self):
+    def testMultisectionSweep(self):
         """
         Tests the operation of sweeping along a list of wire(s) along a path
         """
@@ -485,20 +485,20 @@ class TestCadQuery(BaseTest):
         # Sweep a circle from diameter 2.0 to diameter 1.0 to diameter 2.0 along X axis length 10.0 + 10.0
         defaultSweep = Workplane("YZ").workplane(offset=-10.0).circle(2.0). \
             workplane(offset=10.0).circle(1.0). \
-            workplane(offset=10.0).circle(2.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=10.0).circle(2.0).sweep(path, multisection=True)
 
         # We can sweep thrue different shapes
         recttocircleSweep = Workplane("YZ").workplane(offset=-10.0).rect(2.0, 2.0). \
             workplane(offset=8.0).circle(1.0).workplane(offset=4.0).circle(1.0). \
-            workplane(offset=8.0).rect(2.0, 2.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=8.0).rect(2.0, 2.0).sweep(path, multisection=True)
 
         circletorectSweep = Workplane("YZ").workplane(offset=-10.0).circle(1.0). \
             workplane(offset=7.0).rect(2.0, 2.0).workplane(offset=6.0).rect(2.0, 2.0). \
-            workplane(offset=7.0).circle(1.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=7.0).circle(1.0).sweep(path, multisection=True)
 
         # Placement of the Shape is important otherwise could produce unexpected shape
         specialSweep = Workplane("YZ").circle(1.0).workplane(offset=10.0).rect(2.0, 2.0). \
-            sweep(path, sweepAlongWires=True)
+            sweep(path, multisection=True)
 
         # Switch to an arc for the path : line l=5.0 then half circle r=4.0 then line l=5.0
         path = Workplane("XZ").moveTo(-5, 4).lineTo(0, 4). \
@@ -512,7 +512,7 @@ class TestCadQuery(BaseTest):
             workplane(offset=5).circle(1.5). \
             moveTo(0, -8).circle(1.0). \
             workplane(offset=-5).circle(1.0). \
-            sweep(path, sweepAlongWires=True)
+            sweep(path, multisection=True)
 
         # Test and saveModel
         self.assertEqual(1, defaultSweep.solids().size())
