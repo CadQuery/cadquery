@@ -10,16 +10,18 @@ from OCC.Core.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ
 from OCC.Core.TColgp import TColgp_HArray1OfPnt
 from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCC.Core.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
-                                BRepBuilderAPI_MakeEdge,
-                                BRepBuilderAPI_MakeFace,
-                                BRepBuilderAPI_MakePolygon,
-                                BRepBuilderAPI_MakeWire,
-                                BRepBuilderAPI_Copy,
-                                BRepBuilderAPI_GTransform,
-                                BRepBuilderAPI_Transform,
-                                BRepBuilderAPI_Transformed,
-                                BRepBuilderAPI_RightCorner,
-                                BRepBuilderAPI_RoundCorner)
+                                     BRepBuilderAPI_MakeEdge,
+                                     BRepBuilderAPI_MakeFace,
+                                     BRepBuilderAPI_MakePolygon,
+                                     BRepBuilderAPI_MakeWire,
+                                     BRepBuilderAPI_Sewing,
+                                     BRepBuilderAPI_MakeSolid,
+                                     BRepBuilderAPI_Copy,
+                                     BRepBuilderAPI_GTransform,
+                                     BRepBuilderAPI_Transform,
+                                     BRepBuilderAPI_Transformed,
+                                     BRepBuilderAPI_RightCorner,
+                                     BRepBuilderAPI_RoundCorner)
 # properties used to store mass calculation result
 from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRepGProp import BRepGProp_Face, \
@@ -216,6 +218,17 @@ class Shape(object):
         upgrader.Build()
 
         return self.cast(upgrader.Shape())
+    
+    def fix(self):
+        """Try to fix shape if not valid"""
+        if not BRepCheck_Analyzer(self.wrapped).IsValid():
+            sf = ShapeFix_Shape(self.wrapped)
+            sf.Perform()
+            fixed = downcast(sf.Shape())
+            
+            return self.cast(fixed)
+        
+        return self
 
     @classmethod
     def cast(cls, obj, forConstruction=False):
@@ -1020,20 +1033,16 @@ class Face(Shape):
         '''
         Makes a planar face from one or more wires
         '''
+        
         face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped,True)
 
         for w in innerWires:
             face_builder.Add(w.wrapped)
-        face_builder.Build()
         
+        face_builder.Build()
         face = face_builder.Shape()
         
-        if not BRepCheck_Analyzer(face).IsValid():
-            sf = ShapeFix_Shape(face)
-            sf.Perform()
-            face = sf.Shape()
-        
-        return cls.cast(face)
+        return cls.cast(face).fix()
 
 
 class Shell(Shape):
@@ -1044,14 +1053,14 @@ class Shell(Shape):
     @classmethod
     def makeShell(cls, listOfFaces):
 
-        shell_wrapped = TopoDS_Shell()
-        shell_builder = TopoDS_Builder()
-        shell_builder.MakeShell(shell_wrapped)
+        shell_builder = BRepBuilderAPI_Sewing()
 
         for face in listOfFaces:
             shell_builder.Add(face.wrapped)
 
-        return cls(shell_wrapped)
+        shell_builder.Perform()
+        
+        return cls.cast(shell_builder.SewedShape())
 
 
 class Mixin3D(object):
@@ -1153,7 +1162,7 @@ class Solid(Shape, Mixin3D):
     """
     a single solid
     """
-
+    
     @classmethod
     def isSolid(cls, obj):
         """
@@ -1164,6 +1173,11 @@ class Solid(Shape, Mixin3D):
                     (obj.ShapeType == 'Compound' and len(obj.Solids) > 0):
                 return True
         return False
+    
+    @classmethod
+    def makeSolid(cls, shell):
+
+        return cls(BRepBuilderAPI_MakeSolid(shell.wrapped).Solid())
 
     @classmethod
     def makeBox(cls, length, width, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
@@ -1553,9 +1567,6 @@ class Compound(Shape, Mixin3D):
 
         return cls(text_3d.Shape()).transformShape(position.rG)
 
-# TODO this is likely not needed if sing PythonOCC.Core.correclty but we will see
-
-
 def sortWiresByBuildOrder(wireList, result={}):
     """Tries to determine how wires should be combined into faces.
 
@@ -1577,7 +1588,7 @@ def sortWiresByBuildOrder(wireList, result={}):
     if len(wireList) < 2:
         return [wireList, ]
 
-    # make a Face, NB: this might return
+    # make a Face, NB: this might return a compound of faces
     faces = Face.makeFromWires(wireList[0], wireList[1:])
     
     rv = []    
