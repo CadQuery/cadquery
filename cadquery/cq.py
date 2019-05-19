@@ -2842,7 +2842,7 @@ class Workplane(CQ):
         return self.newObject(cleanObjects)
 
     def text(self, txt, fontsize, distance, cut=True, combine=False, clean=True,
-             font="Arial", kind='regular'):
+             font="Arial", kind='regular',align='center',valign='center'):
         """
         Create a 3D text
 
@@ -2855,6 +2855,8 @@ class Workplane(CQ):
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param str font: fontname (default: Arial)
         :param str kind: font type (default: Normal)
+        :param str align:  horizontal alignment (default: center)
+        :param str valign: horizontal alignment (default: center)
         :return: a CQ object with the resulting solid selected.
 
         extrude always *adds* material to a part.
@@ -2868,7 +2870,7 @@ class Workplane(CQ):
 
         """
         r = Compound.makeText(txt,fontsize,distance,font=font,kind=kind,
-                              position=self.plane)
+                              align=align, valign=valign, position=self.plane)
 
         if cut:
             newS = self._cutFromBase(r)
