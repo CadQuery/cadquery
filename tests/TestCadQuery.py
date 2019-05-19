@@ -1877,3 +1877,27 @@ class TestCadQuery(BaseTest):
         #closed profile will generate a valid solid with 3 faces
         self.assertTrue(res_closed.solids().val().isValid())
         self.assertEqual(len(res_closed.faces().vals()),3)
+        
+    def testMakeShellSolid(self):
+
+        c0 = math.sqrt(2)/4
+        vertices = [[c0, -c0,  c0], [c0,  c0, -c0], [-c0,  c0,  c0], [-c0, -c0, -c0]]
+        faces_ixs = [[0, 1, 2, 0], [1, 0, 3, 1], [2, 3, 0, 2], [3, 2, 1, 3]]
+        
+        faces = []
+        for ixs in faces_ixs:
+            lines = []
+            for v1,v2 in zip(ixs,ixs[1:]):
+                lines.append(Edge.makeLine(Vector(*vertices[v1]),
+                                           Vector(*vertices[v2])))
+            wire = Wire.combine(lines)
+            faces.append(Face.makeFromWires(wire))
+        
+        shell = Shell.makeShell(faces)
+        solid = Solid.makeSolid(shell)
+        
+        self.assertTrue(shell.isValid())
+        self.assertTrue(solid.isValid())
+        
+        self.assertEqual(len(solid.Vertices()),4)
+        self.assertEqual(len(solid.Faces()),4)
