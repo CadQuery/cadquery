@@ -1506,7 +1506,7 @@ class Compound(Shape, Mixin3D):
 
     @classmethod
     def makeText(cls, text, size, height, font="Arial", kind='regular',
-                 align='center', valign='center',position=Plane.XY()):
+                 halign='center', valign='center',position=Plane.XY()):
         """
         Create a 3D text
         """
@@ -1520,9 +1520,9 @@ class Compound(Shape, Mixin3D):
         
         t = Vector()
         
-        if align == 'center':
+        if halign == 'center':
             t.x = -bb.xlen/2
-        elif align == 'right':
+        elif halign == 'right':
             t.x = -bb.xlen
             
         if valign == 'center':
