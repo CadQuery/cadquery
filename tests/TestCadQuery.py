@@ -474,7 +474,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(3, result.faces().size())
         self.assertEqual(3, result.edges().size())
 
-    def testSweepAlongListOfWires(self):
+    def testMultisectionSweep(self):
         """
         Tests the operation of sweeping along a list of wire(s) along a path
         """
@@ -485,20 +485,20 @@ class TestCadQuery(BaseTest):
         # Sweep a circle from diameter 2.0 to diameter 1.0 to diameter 2.0 along X axis length 10.0 + 10.0
         defaultSweep = Workplane("YZ").workplane(offset=-10.0).circle(2.0). \
             workplane(offset=10.0).circle(1.0). \
-            workplane(offset=10.0).circle(2.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=10.0).circle(2.0).sweep(path, multisection=True)
 
         # We can sweep thrue different shapes
         recttocircleSweep = Workplane("YZ").workplane(offset=-10.0).rect(2.0, 2.0). \
             workplane(offset=8.0).circle(1.0).workplane(offset=4.0).circle(1.0). \
-            workplane(offset=8.0).rect(2.0, 2.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=8.0).rect(2.0, 2.0).sweep(path, multisection=True)
 
         circletorectSweep = Workplane("YZ").workplane(offset=-10.0).circle(1.0). \
             workplane(offset=7.0).rect(2.0, 2.0).workplane(offset=6.0).rect(2.0, 2.0). \
-            workplane(offset=7.0).circle(1.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=7.0).circle(1.0).sweep(path, multisection=True)
 
         # Placement of the Shape is important otherwise could produce unexpected shape
         specialSweep = Workplane("YZ").circle(1.0).workplane(offset=10.0).rect(2.0, 2.0). \
-            sweep(path, sweepAlongWires=True)
+            sweep(path, multisection=True)
 
         # Switch to an arc for the path : line l=5.0 then half circle r=4.0 then line l=5.0
         path = Workplane("XZ").moveTo(-5, 4).lineTo(0, 4). \
@@ -512,7 +512,7 @@ class TestCadQuery(BaseTest):
             workplane(offset=5).circle(1.5). \
             moveTo(0, -8).circle(1.0). \
             workplane(offset=-5).circle(1.0). \
-            sweep(path, sweepAlongWires=True)
+            sweep(path, multisection=True)
 
         # Test and saveModel
         self.assertEqual(1, defaultSweep.solids().size())
@@ -1078,30 +1078,31 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, r.wires().size())
         self.assertEqual(18, r.edges().size())
 
-    # def testChainedMirror(self):
-    #     """
-    #     Tests whether or not calling mirrorX().mirrorY() works correctly
-    #     """
-    #     r = 20
-    #     s = 7
-    #     t = 1.5
-    #
-    #     points = [
-    #         (0, t/2),
-    #         (r/2-1.5*t, r/2-t),
-    #         (s/2, r/2-t),
-    #         (s/2, r/2),
-    #         (r/2, r/2),
-    #         (r/2, s/2),
-    #         (r/2-t, s/2),
-    #         (r/2-t, r/2-1.5*t),
-    #         (t/2, 0)
-    #     ]
-    #
-    #     r = Workplane("XY").polyline(points).mirrorX().mirrorY()
-    #
-    #     self.assertEquals(1, r.wires().size())
-    #     self.assertEquals(32, r.edges().size())
+    def testChainedMirror(self):
+        """
+        Tests whether or not calling mirrorX().mirrorY() works correctly
+        """
+        r = 20
+        s = 7
+        t = 1.5
+   
+        points = [
+             (0, t/2),
+             (r/2-1.5*t, r/2-t),
+             (s/2, r/2-t),
+             (s/2, r/2),
+             (r/2, r/2),
+             (r/2, s/2),
+             (r/2-t, s/2),
+             (r/2-t, r/2-1.5*t),
+             (t/2, 0)
+        ]
+    
+        r = Workplane("XY").polyline(points).mirrorX().mirrorY() \
+            .extrude(1).faces('>Z')
+    
+        self.assertEquals(1, r.wires().size())
+        self.assertEquals(32, r.edges().size())
 
     # TODO: Re-work testIbeam test below now that chaining works
     # TODO: Add toLocalCoords and toWorldCoords tests
@@ -1834,7 +1835,8 @@ class TestCadQuery(BaseTest):
 
         box = Workplane("XY" ).box(4, 4, 0.5)
 
-        obj1 = box.faces('>Z').workplane().text('CQ 2.0',0.5,-.05,cut=True)
+        obj1 = box.faces('>Z').workplane()\
+            .text('CQ 2.0',0.5,-.05,cut=True,halign='left',valign='bottom')
 
         #combined object should have smaller volume
         self.assertGreater(box.val().Volume(),obj1.val().Volume())
@@ -1849,7 +1851,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(obj2.faces('>Z').vals()),5)
 
         obj3 = box.faces('>Z').workplane()\
-            .text('CQ 2.0',0.5,.05,cut=False,combine=False)
+            .text('CQ 2.0',0.5,.05,cut=False,combine=False,halign='right',valign='top')
 
         #verify that the number of solids is correct
         self.assertEqual(len(obj3.solids().vals()),5)
@@ -1875,3 +1877,28 @@ class TestCadQuery(BaseTest):
         #closed profile will generate a valid solid with 3 faces
         self.assertTrue(res_closed.solids().val().isValid())
         self.assertEqual(len(res_closed.faces().vals()),3)
+        
+    def testMakeShellSolid(self):
+
+        c0 = math.sqrt(2)/4
+        vertices = [[c0, -c0,  c0], [c0,  c0, -c0], [-c0,  c0,  c0], [-c0, -c0, -c0]]
+        faces_ixs = [[0, 1, 2, 0], [1, 0, 3, 1], [2, 3, 0, 2], [3, 2, 1, 3]]
+        
+        faces = []
+        for ixs in faces_ixs:
+            lines = []
+            for v1,v2 in zip(ixs,ixs[1:]):
+                lines.append(Edge.makeLine(Vector(*vertices[v1]),
+                                           Vector(*vertices[v2])))
+            wire = Wire.combine(lines)
+            faces.append(Face.makeFromWires(wire))
+        
+        shell = Shell.makeShell(faces)
+        solid = Solid.makeSolid(shell)
+        
+        self.assertTrue(shell.isValid())
+        self.assertTrue(solid.isValid())
+        
+        self.assertEqual(len(solid.Vertices()),4)
+        self.assertEqual(len(solid.Faces()),4)
+        

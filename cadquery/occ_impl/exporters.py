@@ -1,8 +1,6 @@
 from __future__ import unicode_literals
 from OCC.Core.Visualization import Tesselator
 
-import cadquery
-
 import tempfile
 import os
 import sys
@@ -15,10 +13,7 @@ from .shapes import Shape, Compound, TOLERANCE
 from .geom import BoundBox
 
 from OCC.Core.gp import gp_Ax2, gp_Pnt, gp_Dir
-from OCC.Core.BRep import BRep_Tool
-from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
 from OCC.Core.BRepLib import breplib
-from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
 from OCC.Core.HLRAlgo import HLRAlgo_Projector
 from OCC.Core.GCPnts import GCPnts_QuasiUniformDeflection
@@ -61,6 +56,8 @@ def exportShape(shape, exportType, fileLike, tolerance=0.1):
         The object should be already open and ready to write. The caller is responsible
         for closing the object
     """
+    
+    from ..cq import CQ
 
     def tessellate(shape):
         tess = Tesselator(shape.wrapped)
@@ -68,7 +65,7 @@ def exportShape(shape, exportType, fileLike, tolerance=0.1):
 
         return tess
 
-    if isinstance(shape, cadquery.CQ):
+    if isinstance(shape, CQ):
         shape = shape.val()
 
     if exportType == ExportTypes.TJS:

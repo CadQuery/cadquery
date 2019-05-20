@@ -17,11 +17,9 @@
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
-import time
 import math
-from cadquery import *
-from cadquery import selectors
-from cadquery import exporters
+from . import Vector, Plane, Shape, Edge, Wire, Face, Solid, Compound, \
+    sortWiresByBuildOrder, selectors, exporters
 
 
 class CQContext(object):
@@ -857,7 +855,7 @@ class CQ(object):
             raise ValueError("Fillets requires that edges be selected")
 
         s = solid.fillet(radius, edgeList)
-        return self.newObject([s])
+        return self.newObject([s.clean()])
 
     def chamfer(self, length, length2=None):
         """
@@ -2278,7 +2276,7 @@ class Workplane(CQ):
             newS = newS.clean()
         return newS
 
-    def sweep(self, path, sweepAlongWires=False, makeSolid=True, isFrenet=False,
+    def sweep(self, path, multisection=False, sweepAlongWires=None, makeSolid=True, isFrenet=False,
               combine=True, clean=True, transition='right'):
         """
         Use all un-extruded wires in the parent chain to create a swept solid.
@@ -2294,8 +2292,16 @@ class Workplane(CQ):
             Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a CQ object with the resulting solid selected.
         """
+        
+        if not sweepAlongWires is None:
+            multisection=sweepAlongWires
+            
+            from warnings import warn
+            warn('sweepAlongWires keyword argument is is depracated and will '\
+                 'be removed in the next version; use multisection instead', 
+                 DeprecationWarning)
 
-        r = self._sweep(path.wire(), sweepAlongWires, makeSolid, isFrenet,
+        r = self._sweep(path.wire(), multisection, makeSolid, isFrenet,
                         transition)  # returns a Solid (or a compound if there were multiple)
         if combine:
             newS = self._combineWithBase(r)
@@ -2578,10 +2584,9 @@ class Workplane(CQ):
 
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
-        s = time.time()
+        
         wireSets = sortWiresByBuildOrder(
             list(self.ctx.pendingWires), [])
-        # print "sorted wires in %d sec" % ( time.time() - s )
         # now all of the wires have been used to create an extrusion
         self.ctx.pendingWires = []
 
@@ -2595,20 +2600,6 @@ class Workplane(CQ):
 
         # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there are
         # multiple sets
-
-        # IMPORTANT NOTE: OCC is slow slow slow in boolean operations.  So you do NOT want to fuse
-        # each item to another and save the result-- instead, you want to combine all of the new
-        # items into a compound, and fuse them together!!!
-        # r = None
-        # for ws in wireSets:
-        #     thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
-        #     if r is None:
-        #         r = thisObj
-        #     else:
-        #         s = time.time()
-        #         r = r.fuse(thisObj)
-        #         print "Fused in %0.3f sec" % ( time.time() - s )
-        # return r
 
         toFuse = []
 
@@ -2658,40 +2649,31 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def _sweep(self, path, sweepAlongWires=False, makeSolid=True,
-               isFrenet=False, transition='right'):
+    def _sweep(self, path, multisection=False, makeSolid=True, isFrenet=False, 
+               transition='right'):
         """
         Makes a swept solid from an existing set of pending wires.
 
         :param path: A wire along which the pending wires will be swept
-        :param boolean sweepAlongWires:
+        :param boolean multisection:
             False to create multiple swept from wires on the chain along path
             True to create only one solid swept along path with shape following the list of wires on the chain
         :return:a solid, suitable for boolean operations
         """
 
-        # group wires together into faces based on which ones are inside the others
-        # result is a list of lists
-        s = time.time()
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
-        # print "sorted wires in %d sec" % ( time.time() - s )
-        self.ctx.pendingWires = []  # now all of the wires have been used to create an extrusion
-
         toFuse = []
-        if not sweepAlongWires:
+        if not multisection:
+            wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
             for ws in wireSets:
                 thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid,
                                       isFrenet, transition)
                 toFuse.append(thisObj)
         else:
-            section = []
-            for ws in wireSets:
-                for i in range(0, len(ws)):
-                    section.append(ws[i])
-
-            # implementation
-            thisObj = Solid.sweep_multi(section, path.val(), makeSolid, isFrenet)
+            sections = self.ctx.pendingWires
+            thisObj = Solid.sweep_multi(sections, path.val(), makeSolid, isFrenet)
             toFuse.append(thisObj)
+        
+        self.ctx.pendingWires = []
 
         return Compound.makeCompound(toFuse)
 
@@ -2858,7 +2840,7 @@ class Workplane(CQ):
         return self.newObject(cleanObjects)
 
     def text(self, txt, fontsize, distance, cut=True, combine=False, clean=True,
-             font="Arial", kind='regular'):
+             font="Arial", kind='regular',halign='center',valign='center'):
         """
         Create a 3D text
 
@@ -2871,6 +2853,8 @@ class Workplane(CQ):
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param str font: fontname (default: Arial)
         :param str kind: font type (default: Normal)
+        :param str halign: horizontal alignment (default: center)
+        :param str valign: vertical alignment (default: center)
         :return: a CQ object with the resulting solid selected.
 
         extrude always *adds* material to a part.
@@ -2884,7 +2868,7 @@ class Workplane(CQ):
 
         """
         r = Compound.makeText(txt,fontsize,distance,font=font,kind=kind,
-                              position=self.plane)
+                              halign=halign, valign=valign, position=self.plane)
 
         if cut:
             newS = self._cutFromBase(r)
