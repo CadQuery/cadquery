@@ -1,4 +1,4 @@
-from cadquery import Vector, BoundBox, Plane
+from .geom import Vector, BoundBox, Plane
 
 import OCC.Core.TopAbs as ta  # Tolopolgy type enum
 import OCC.Core.GeomAbs as ga  # Geometry type enum
@@ -1130,7 +1130,7 @@ class Solid(Shape, Mixin3D):
     
     @classmethod
     def makeSolid(cls, shell):
-
+        
         return cls(BRepBuilderAPI_MakeSolid(shell.wrapped).Solid())
 
     @classmethod
