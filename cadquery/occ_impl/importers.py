@@ -1,10 +1,5 @@
-
-import cadquery
+from .. import cq
 from .shapes import Shape
-
-import sys
-import os
-import tempfile
 
 from OCC.Core.STEPControl import STEPControl_Reader
 import OCC.Core.IFSelect
@@ -39,6 +34,7 @@ def importStep(fileName):
         Accepts a file name and loads the STEP file into a cadquery shape
         :param fileName: The path and name of the STEP file to be imported
     """
+    
     # Now read and return the shape
     reader = STEPControl_Reader()
     readStatus = reader.ReadFile(fileName)
@@ -56,4 +52,4 @@ def importStep(fileName):
     for shape in occ_shapes:
         solids.append(Shape.cast(shape))
 
-    return cadquery.Workplane("XY").newObject(solids)
+    return cq.Workplane("XY").newObject(solids)

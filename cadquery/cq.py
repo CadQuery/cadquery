@@ -18,10 +18,8 @@
 """
 
 import math
-from cadquery import Vector, Plane, Shape, Edge, Wire, Face, Solid, Compound, \
-    sortWiresByBuildOrder
-from cadquery import selectors
-from cadquery import exporters
+from . import Vector, Plane, Shape, Edge, Wire, Face, Solid, Compound, \
+    sortWiresByBuildOrder, selectors, exporters
 
 
 class CQContext(object):
