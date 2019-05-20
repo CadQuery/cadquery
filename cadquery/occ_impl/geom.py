@@ -1,6 +1,5 @@
 import math
-import cadquery
-
+        
 from OCC.Core.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
 from OCC.Core.Bnd import Bnd_Box
 from OCC.Core.BRepBndLib import brepbndlib_Add  # brepbndlib_AddOptimal
@@ -147,12 +146,6 @@ class Vector(object):
     def projectToPlane(self):
         raise NotImplementedError(
             "Have not needed this yet, but FreeCAD supports it!")
-
-    def __add__(self, v):
-        return self.add(v)
-
-    def __sub__(self, v):
-        return self.sub(v)
 
     def __neg__(self):
         return self * -1
@@ -573,9 +566,11 @@ class Plane(object):
         orient the box in space correctly.
 
         """
+        from .shapes import Shape
+        
         if isinstance(obj, Vector):
             return obj.transform(self.fG)
-        elif isinstance(obj, cadquery.Shape):
+        elif isinstance(obj, Shape):
             return obj.transformShape(self.fG)
         else:
             raise ValueError(
