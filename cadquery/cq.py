@@ -267,8 +267,10 @@ class CQ(object):
 
         :param offset:  offset for the work plane in the Z direction. Default
         :param invert:  invert the Z direction from that of the face.
+        :param centerOption: how local origin of workplane is determined
         :type offset: float or None=0.0
         :type invert: boolean or None=False
+        :type centerOption: string or None='CenterOfMass'
         :rtype: Workplane object ( which is a subclass of CQ )
 
         The first element on the stack must be a face, a set of
@@ -282,7 +284,8 @@ class CQ(object):
            * The origin will be located in the *center* of the
              face/faces, if a face/faces was selected. If a vertex was
              selected, the origin will be at the vertex, and located
-             on the face.
+             on the face. The centerOption paramter sets how the center is defined.
+             Options are 'CenterOfMass', 'CenterOfBoundBox', or 'ProjectedOrigin'.
            * The Z direction will be normal to the plane of the face,computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
@@ -331,6 +334,23 @@ class CQ(object):
                 xd = Vector(1, 0, 0)
             return xd
 
+        def _pointOnPlane(center, normal, point):
+            """
+            Returns the point on the plane defined by center and normal nearest to the input 
+            argument point.
+            """
+            a = normal.x; b = normal.y; c = normal.z
+            x0 = center.x; y0 = center.y; z0 = center.z
+            x1 = point.x; y1 = point.y; z1 = point.z
+
+            denom = a**2 + b**2 + c**2
+
+            nearest_x = (-a*b*y1 - a*c*z1 + a*(a*x0 + b*y0 + c*z0) + x1*(b**2 + c**2))/denom
+            nearest_y = (-a*b*x1 - b*c*z1 + b*(a*x0 + b*y0 + c*z0) + y1*(a**2 + c**2))/denom
+            nearest_z = (-a*c*x1 - b*c*y1 + c*(a*x0 + b*y0 + c*z0) + z1*(a**2 + b**2))/denom
+
+            return Vector(nearest_x, nearest_y, nearest_z)
+
         if len(self.objects) > 1:
             # are all objects 'PLANE'?
             if not all(o.geomType() in ('PLANE', 'CIRCLE') for o in self.objects):
@@ -341,7 +361,7 @@ class CQ(object):
             if not all(_isCoPlanar(self.objects[0], f) for f in self.objects[1:]):
                 raise ValueError("Selected faces must be co-planar.")
 
-            if centerOption == 'CenterOfMass':
+            if centerOption == 'CenterOfMass' or centerOption == 'ProjectedOrigin':
                 center = Shape.CombinedCenter(self.objects)
             elif centerOption == 'CenterOfBoundBox':
                 center = Shape.CombinedCenterOfBoundBox(self.objects)
@@ -353,7 +373,7 @@ class CQ(object):
             obj = self.objects[0]
 
             if isinstance(obj, Face):
-                if centerOption == 'CenterOfMass':
+                if centerOption == 'CenterOfMass' or centerOption == 'ProjectedOrigin':
                     center = obj.Center()
                 elif centerOption == 'CenterOfBoundBox':
                     center = obj.CenterOfBoundBox()
@@ -361,7 +381,7 @@ class CQ(object):
                 xDir = _computeXdir(normal)
             else:
                 if hasattr(obj, 'Center'):
-                    if centerOption == 'CenterOfMass':
+                    if centerOption == 'CenterOfMass' or centerOption == 'ProjectedOrigin':
                         center = obj.Center()
                     elif centerOption == 'CenterOfBoundBox':
                         center = obj.CenterOfBoundBox()
@@ -370,6 +390,10 @@ class CQ(object):
                 else:
                     raise ValueError(
                         "Needs a face or a vertex or point on a work plane")
+
+        # update center to projected origin if desired
+        if centerOption == 'ProjectedOrigin':
+            center = _pointOnPlane(center, normal, Vector(0, 0, 0))
 
         # invert if requested
         if invert:
