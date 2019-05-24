@@ -334,23 +334,6 @@ class CQ(object):
                 xd = Vector(1, 0, 0)
             return xd
 
-        def _pointOnPlane(center, normal, point):
-            """
-            Returns the point on the plane defined by center and normal nearest to the input 
-            argument point.
-            """
-            a = normal.x; b = normal.y; c = normal.z
-            x0 = center.x; y0 = center.y; z0 = center.z
-            x1 = point.x; y1 = point.y; z1 = point.z
-
-            denom = a**2 + b**2 + c**2
-
-            nearest_x = (-a*b*y1 - a*c*z1 + a*(a*x0 + b*y0 + c*z0) + x1*(b**2 + c**2))/denom
-            nearest_y = (-a*b*x1 - b*c*z1 + b*(a*x0 + b*y0 + c*z0) + y1*(a**2 + c**2))/denom
-            nearest_z = (-a*c*x1 - b*c*y1 + c*(a*x0 + b*y0 + c*z0) + z1*(a**2 + b**2))/denom
-
-            return Vector(nearest_x, nearest_y, nearest_z)
-
         if len(self.objects) > 1:
             # are all objects 'PLANE'?
             if not all(o.geomType() in ('PLANE', 'CIRCLE') for o in self.objects):
@@ -393,7 +376,9 @@ class CQ(object):
 
         # update center to projected origin if desired
         if centerOption == 'ProjectedOrigin':
-            center = _pointOnPlane(center, normal, Vector(0, 0, 0))
+            projected_center = Vector(0, 0, 0)
+            projected_center.projectToPlane(center, normal)
+            center = projected_center
 
         # invert if requested
         if invert:
