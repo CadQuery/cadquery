@@ -21,7 +21,7 @@ A human would describe this as:
      "A block 80mm square x 30mm thick , with countersunk holes for M2 socket head cap screws
      at the corners, and a circular pocket 22mm in diameter in the middle for a bearing"
 
-The goal is to have the CadQuery script that produces this object be as close as possible to the english phrase
+The goal is to have the CadQuery script that produces this object be as close as possible to the English phrase
 a human would use.
 
 
@@ -38,7 +38,7 @@ If you have experience with 3D CAD systems, you also know that there is a key de
 After the base block is created, how the hole is located is key.  If it is located from one edge, changing the block
 size will have a different affect than if the hole is located from the center.
 
-Many scripting langauges do not provide a way to capture design intent-- because they require that you always work in
+Many scripting languages do not provide a way to capture design intent-- because they require that you always work in
 global coordinates.  CadQuery is different-- you can locate features relative to others in a relative way-- preserving
 the design intent just like a human would when creating a drawing or building an object.
 
@@ -66,7 +66,7 @@ in the software industry, such as:
     1. Easily re-using features between objects
     2. Storing objects using version control systems
     3. Computing the differences between objects by using source control tools
-    4. Share objects on the internet
+    4. Share objects on the Internet
     5. Automate testing and generation by allowing objects to be built from within libraries
 
 CadQuery is designed to make 3D content creation easy enough that the above benefits can be attained without more work

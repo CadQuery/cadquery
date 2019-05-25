@@ -7,7 +7,7 @@ Introduction
 What is CadQuery
 ========================================
 
-CadQuery is an intuitive, easy-to-use python library for building parametric 3D CAD models.  It has several goals:
+CadQuery is an intuitive, easy-to-use Python library for building parametric 3D CAD models.  It has several goals:
 
     * Build models with scripts that are as close as possible to how you'd describe the object to a human,
       using a standard, already established programming language
@@ -18,9 +18,9 @@ CadQuery is an intuitive, easy-to-use python library for building parametric 3D 
 
     * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 
-CadQuery is based on
-`FreeCAD <http://sourceforge.net/apps/mediawiki/free-cad/index.php?title=Main_Page>`_,
-which is turn based on the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
+CadQuery 2.0 is based on
+`PythonOCC <http://www.pythonocc.org/>`_,
+which is a set of Python bindings for the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
 
 Using CadQuery, you can build fully parametric models with a very small amount of code. For example, this simple script
 produces a flat plate with a hole in the middle::
@@ -49,12 +49,13 @@ CadQuery is a library,  GUIs are separate
 ==============================================
 
 CadQuery is a library, that's intentionally designed to be usable as a GUI-less library. This enables
-its use in a variety of engineering and scientific applications that create 3d models programmatically.
+its use in a variety of engineering and scientific applications that create 3D models programmatically.
 
 If you'd like a GUI, you have a couple of options:
 
-   * Install cadquery as a part of `The CadQuery Freecad Module <https://github.com/jmwright/cadquery-freecad-module>`_
-   * Use `ParametricParts.com <https://www.parametricparts.com>`_, a web-based platform that runs cadQuery scripts
+   * The Qt-based GUI `CQ-editor <https://github.com/CadQuery/CQ-editor>`_
+   * As an Jupyter extension `cadquery-jupyter-extension
+ <https://github.com/bernhard-42/cadquery-jupyter-extension>`_
 
 
 Why CadQuery instead of OpenSCAD?
@@ -62,7 +63,7 @@ Why CadQuery instead of OpenSCAD?
 
 Like OpenSCAD, CadQuery is an open-source, script based, parametric model generator. But CadQuery has several key advantages:
 
-    1. **The scripts use a standard programming language**, python, and thus can benefit from the associated infrastructure.
+    1. **The scripts use a standard programming language**, Python, and thus can benefit from the associated infrastructure.
        This includes many standard libraries and IDEs
 
     2. **More powerful CAD kernel** OpenCascade is much more powerful than CGAL. Features supported natively
@@ -83,12 +84,12 @@ Where does the name CadQuery come from?
 CadQuery is inspired by `jQuery <http://www.jquery.com>`_ , a popular framework that
 revolutionized web development involving javascript.
 
-CadQuery is for 3D CAD  what jQuery is for javascript.
+CadQuery is for 3D CAD what jQuery is for javascript.
 If you are familiar with how jQuery works, you will probably recognize several jQuery features that CadQuery uses:
 
-    * A fluent api to create clean, easy to read code
+    * A fluent API to create clean, easy to read code
 
-    * Ability to use the library along side other python libraries
+    * Ability to use the library along side other Python libraries
 
     * Clear and complete documentation, with plenty of samples.
 

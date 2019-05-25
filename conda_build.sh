@@ -1,1 +1,1 @@
-conda build conda/meta.yaml -c pythonocc -c oce -c conda-forge -c dlr-sc --croot /tmp/cbld
+conda build conda/meta.yaml -c cadquery -c conda-forge --croot /tmp/cbld

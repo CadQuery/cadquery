@@ -361,8 +361,8 @@ class TestCadQuery(BaseTest):
         result = Workplane("XY").lineTo(0, 10).lineTo(5, 0).close().revolve()
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
-        self.assertEqual(3, result.edges().size())
-        
+        self.assertEqual(2, result.edges().size())
+
     def testSpline(self):
         """
         Tests construction of splines
@@ -379,17 +379,17 @@ class TestCadQuery(BaseTest):
         # Closed spline
         path_closed = Workplane("XZ").spline(pts,periodic=True).val()
         self.assertTrue(path_closed.IsClosed())
-        
+
         # attempt to build a valid face
         w = Wire.assembleEdges([path_closed,])
         f = Face.makeFromWires(w)
         self.assertTrue(f.isValid())
-        
+
         # attempt to build an invalid face
         w = Wire.assembleEdges([path,])
         f = Face.makeFromWires(w)
         self.assertFalse(f.isValid())
-        
+
         # Spline with explicit tangents
         path_const = Workplane("XZ").spline(pts,tangents=((0,1),(1,0))).val()
         self.assertFalse(path.tangentAt(0) == path_const.tangentAt(0))
@@ -438,9 +438,33 @@ class TestCadQuery(BaseTest):
         path = Workplane("XZ").polyline(pts)
 
         # Test defaults
-        result = Workplane("XY").circle(0.1).sweep(path)
+        result = Workplane("XY").circle(0.1).sweep(path,transition='transformed')
         self.assertEqual(5, result.faces().size())
         self.assertEqual(7, result.edges().size())
+
+        # Polyline path and one inner profiles
+        path = Workplane("XZ").polyline(pts)
+
+        # Test defaults
+        result = Workplane("XY").circle(0.2).circle(0.1).sweep(path,transition='transformed')
+        self.assertEqual(8, result.faces().size())
+        self.assertEqual(14, result.edges().size())
+
+        # Polyline path and different transition settings
+        for t in ('transformed','right','round'):
+            path = Workplane("XZ").polyline(pts)
+
+            result = Workplane("XY").circle(0.2).rect(0.2,0.1).rect(0.1,0.2)\
+                .sweep(path,transition=t)
+            self.assertTrue(result.solids().val().isValid())
+
+        # Polyline path and multiple inner profiles
+        path = Workplane("XZ").polyline(pts)
+
+        # Test defaults
+        result = Workplane("XY").circle(0.2).rect(0.2,0.1).rect(0.1,0.2)\
+            .circle(0.1).sweep(path)
+        self.assertTrue(result.solids().val().isValid())
 
         # Arc path
         path = Workplane("XZ").threePointArc((1.0, 1.5), (0.0, 1.0))
@@ -450,7 +474,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(3, result.faces().size())
         self.assertEqual(3, result.edges().size())
 
-    def testSweepAlongListOfWires(self):
+    def testMultisectionSweep(self):
         """
         Tests the operation of sweeping along a list of wire(s) along a path
         """
@@ -461,20 +485,20 @@ class TestCadQuery(BaseTest):
         # Sweep a circle from diameter 2.0 to diameter 1.0 to diameter 2.0 along X axis length 10.0 + 10.0
         defaultSweep = Workplane("YZ").workplane(offset=-10.0).circle(2.0). \
             workplane(offset=10.0).circle(1.0). \
-            workplane(offset=10.0).circle(2.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=10.0).circle(2.0).sweep(path, multisection=True)
 
         # We can sweep thrue different shapes
         recttocircleSweep = Workplane("YZ").workplane(offset=-10.0).rect(2.0, 2.0). \
             workplane(offset=8.0).circle(1.0).workplane(offset=4.0).circle(1.0). \
-            workplane(offset=8.0).rect(2.0, 2.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=8.0).rect(2.0, 2.0).sweep(path, multisection=True)
 
         circletorectSweep = Workplane("YZ").workplane(offset=-10.0).circle(1.0). \
             workplane(offset=7.0).rect(2.0, 2.0).workplane(offset=6.0).rect(2.0, 2.0). \
-            workplane(offset=7.0).circle(1.0).sweep(path, sweepAlongWires=True)
+            workplane(offset=7.0).circle(1.0).sweep(path, multisection=True)
 
         # Placement of the Shape is important otherwise could produce unexpected shape
         specialSweep = Workplane("YZ").circle(1.0).workplane(offset=10.0).rect(2.0, 2.0). \
-            sweep(path, sweepAlongWires=True)
+            sweep(path, multisection=True)
 
         # Switch to an arc for the path : line l=5.0 then half circle r=4.0 then line l=5.0
         path = Workplane("XZ").moveTo(-5, 4).lineTo(0, 4). \
@@ -488,7 +512,7 @@ class TestCadQuery(BaseTest):
             workplane(offset=5).circle(1.5). \
             moveTo(0, -8).circle(1.0). \
             workplane(offset=-5).circle(1.0). \
-            sweep(path, sweepAlongWires=True)
+            sweep(path, multisection=True)
 
         # Test and saveModel
         self.assertEqual(1, defaultSweep.solids().size())
@@ -763,7 +787,7 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(6, currentS.faces().size())
         self.assertAlmostEqual(currentS.val().Volume(),0.5)
-        
+
         currentS.intersect(toIntersect)
 
         self.assertEqual(6, currentS.faces().size())
@@ -815,10 +839,15 @@ class TestCadQuery(BaseTest):
         r = s.rect(2.0, 2.0).rect(
             1.3, 1.3, forConstruction=True).vertices().circle(0.125).extrude(0.5)
 
-        # side hole, thru all
-        t = r.faces(">Y").workplane().circle(0.125).cutThruAll()
-        self.saveModel(t)
+
+        # thru all without explicit face selection
+        t = r.circle(0.5).cutThruAll()
         self.assertEqual(11, t.faces().size())
+
+        # side hole, thru all
+        t = t.faces(">Y").workplane().circle(0.125).cutThruAll()
+        self.saveModel(t)
+        self.assertEqual(13, t.faces().size())
 
     def testCutToFaceOffsetNOTIMPLEMENTEDYET(self):
         """
@@ -1049,30 +1078,31 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, r.wires().size())
         self.assertEqual(18, r.edges().size())
 
-    # def testChainedMirror(self):
-    #     """
-    #     Tests whether or not calling mirrorX().mirrorY() works correctly
-    #     """
-    #     r = 20
-    #     s = 7
-    #     t = 1.5
-    #
-    #     points = [
-    #         (0, t/2),
-    #         (r/2-1.5*t, r/2-t),
-    #         (s/2, r/2-t),
-    #         (s/2, r/2),
-    #         (r/2, r/2),
-    #         (r/2, s/2),
-    #         (r/2-t, s/2),
-    #         (r/2-t, r/2-1.5*t),
-    #         (t/2, 0)
-    #     ]
-    #
-    #     r = Workplane("XY").polyline(points).mirrorX().mirrorY()
-    #
-    #     self.assertEquals(1, r.wires().size())
-    #     self.assertEquals(32, r.edges().size())
+    def testChainedMirror(self):
+        """
+        Tests whether or not calling mirrorX().mirrorY() works correctly
+        """
+        r = 20
+        s = 7
+        t = 1.5
+   
+        points = [
+             (0, t/2),
+             (r/2-1.5*t, r/2-t),
+             (s/2, r/2-t),
+             (s/2, r/2),
+             (r/2, r/2),
+             (r/2, s/2),
+             (r/2-t, s/2),
+             (r/2-t, r/2-1.5*t),
+             (t/2, 0)
+        ]
+    
+        r = Workplane("XY").polyline(points).mirrorX().mirrorY() \
+            .extrude(1).faces('>Z')
+    
+        self.assertEquals(1, r.wires().size())
+        self.assertEquals(32, r.edges().size())
 
     # TODO: Re-work testIbeam test below now that chaining works
     # TODO: Add toLocalCoords and toWorldCoords tests
@@ -1705,7 +1735,7 @@ class TestCadQuery(BaseTest):
         r = 1.
         h = 1.
         decimal_places = 9.
-        
+
         # extrude in one direction
         s = Workplane("XY").circle(r).extrude(h, both=False)
 
@@ -1731,13 +1761,13 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(delta.toTuple(),
                                      (0., 0., 2. * h),
                                      decimal_places)
-    
+
     def testTaperedExtrudeCutBlind(self):
-      
+
         h = 1.
         r = 1.
         t = 5
-      
+
         # extrude with a positive taper
         s = Workplane("XY").circle(r).extrude(h, taper=t)
 
@@ -1748,7 +1778,7 @@ class TestCadQuery(BaseTest):
         delta = top_face.val().Area() - bottom_face.val().Area()
 
         self.assertTrue(delta < 0)
-        
+
         # extrude with a negative taper
         s = Workplane("XY").circle(r).extrude(h, taper=-t)
 
@@ -1759,13 +1789,13 @@ class TestCadQuery(BaseTest):
         delta = top_face.val().Area() - bottom_face.val().Area()
 
         self.assertTrue(delta > 0)
-        
+
         # cut a tapered hole
         s = Workplane("XY").rect(2*r,2*r).extrude(2*h).faces('>Z').workplane()\
         .rect(r,r).cutBlind(-h, taper=t)
-        
+
         middle_face = s.faces('>Z[-2]')
-        
+
         self.assertTrue(middle_face.val().Area() < 1)
 
     def testClose(self):
@@ -1800,3 +1830,75 @@ class TestCadQuery(BaseTest):
 
         # The obj1 shape shall have the same volume as the obj2 shape.
         self.assertAlmostEqual(obj1.val().Volume(), obj2.val().Volume())
+
+    def testText(self):
+
+        box = Workplane("XY" ).box(4, 4, 0.5)
+
+        obj1 = box.faces('>Z').workplane()\
+            .text('CQ 2.0',0.5,-.05,cut=True,halign='left',valign='bottom')
+
+        #combined object should have smaller volume
+        self.assertGreater(box.val().Volume(),obj1.val().Volume())
+
+        obj2 = box.faces('>Z').workplane()\
+            .text('CQ 2.0',0.5,.05,cut=False,combine=True)
+
+        #combined object should have bigger volume
+        self.assertLess(box.val().Volume(),obj2.val().Volume())
+
+        #verify that the number of top faces is correct (NB: this is font specific)
+        self.assertEqual(len(obj2.faces('>Z').vals()),5)
+
+        obj3 = box.faces('>Z').workplane()\
+            .text('CQ 2.0',0.5,.05,cut=False,combine=False,halign='right',valign='top')
+
+        #verify that the number of solids is correct
+        self.assertEqual(len(obj3.solids().vals()),5)
+
+    def testParametricCurve(self):
+
+        from math import sin, cos, pi
+
+        k = 4
+        r = 1
+
+        func = lambda t: ( r*(k+1)*cos(t) - r* cos((k+1)*t),
+                                    r*(k+1)*sin(t) - r* sin((k+1)*t))
+
+        res_open = Workplane('XY').parametricCurve(func).extrude(3)
+
+        #open profile generates an invalid solid
+        self.assertFalse(res_open.solids().val().isValid())
+
+        res_closed = Workplane('XY').parametricCurve(func,start=0,stop=2*pi)\
+            .extrude(3)
+
+        #closed profile will generate a valid solid with 3 faces
+        self.assertTrue(res_closed.solids().val().isValid())
+        self.assertEqual(len(res_closed.faces().vals()),3)
+        
+    def testMakeShellSolid(self):
+
+        c0 = math.sqrt(2)/4
+        vertices = [[c0, -c0,  c0], [c0,  c0, -c0], [-c0,  c0,  c0], [-c0, -c0, -c0]]
+        faces_ixs = [[0, 1, 2, 0], [1, 0, 3, 1], [2, 3, 0, 2], [3, 2, 1, 3]]
+        
+        faces = []
+        for ixs in faces_ixs:
+            lines = []
+            for v1,v2 in zip(ixs,ixs[1:]):
+                lines.append(Edge.makeLine(Vector(*vertices[v1]),
+                                           Vector(*vertices[v2])))
+            wire = Wire.combine(lines)
+            faces.append(Face.makeFromWires(wire))
+        
+        shell = Shell.makeShell(faces)
+        solid = Solid.makeSolid(shell)
+        
+        self.assertTrue(shell.isValid())
+        self.assertTrue(solid.isValid())
+        
+        self.assertEqual(len(solid.Vertices()),4)
+        self.assertEqual(len(solid.Faces()),4)
+        
