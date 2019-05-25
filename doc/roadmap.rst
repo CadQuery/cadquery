@@ -15,13 +15,10 @@ Core
 end(n)
     allows moving backwards a fixed number of parents in the chain, eg end(3) is same as end().end().end()
 
-FreeCAD object wrappers
-    return CQ wrappers for FreeCAD shapes instead of the native FreeCAD objects.
-
 Improved iteration tools for plugin developers
     make it easier to iterate over points and wires for plugins
 
-More parameter types (String? )
+More parameter types ( String? )
 
 face.outerWire
     allow selecting the outerWire of a face, so that it can be used for reference geometry or offsets
@@ -54,7 +51,7 @@ offsets
     offset profiles, including circles, rects, and other profiles.
 
 ellipses
-    create elipses and portions of elipses
+    create ellipses and portions of ellipses
 
 regular polygons
     several construction methods:

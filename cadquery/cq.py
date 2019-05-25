@@ -17,11 +17,9 @@
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
-import time
 import math
-from cadquery import *
-from cadquery import selectors
-from cadquery import exporters
+from . import Vector, Plane, Shape, Edge, Wire, Face, Solid, Compound, \
+    sortWiresByBuildOrder, selectors, exporters
 
 
 class CQContext(object):
@@ -432,6 +430,20 @@ class CQ(object):
         else:
             raise ValueError("Cannot End the chain-- no parents!")
 
+    def _findType(self, types, searchStack=True, searchParents=True):
+
+        if searchStack:
+            for s in self.objects:
+                if isinstance(s, types):
+                    return s
+
+        if searchParents and self.parent is not None:
+            return self.parent._findType(types,
+                                         searchStack=True,
+                                         searchParents=True)
+
+        return None
+
     def findSolid(self, searchStack=True, searchParents=True):
         """
         Finds the first solid object in the chain, searching from the current node
@@ -452,19 +464,21 @@ class CQ(object):
         if the plugin implements a unary operation, or if the operation will automatically merge its
         results with an object already on the stack.
         """
-        #notfound = ValueError("Cannot find a Valid Solid to Operate on!")
 
-        if searchStack:
-            for s in self.objects:
-                if isinstance(s, Solid):
-                    return s
-                elif isinstance(s, Compound):
-                    return s
+        return self._findType((Solid, Compound), searchStack, searchParents)
 
-        if searchParents and self.parent is not None:
-            return self.parent.findSolid(searchStack=True, searchParents=searchParents)
+    def findFace(self, searchStack=True, searchParents=True):
+        """
+        Finds the first face object in the chain, searching from the current node
+        backwards through parents until one is found.
 
-        return None
+        :param searchStack: should objects on the stack be searched first.
+        :param searchParents: should parents be searched?
+        :raises: ValueError if no face is found in the current object or its parents,
+            and errorOnEmpty is True
+        """
+
+        return self._findType(Face, searchStack, searchParents)
 
     def _selectObjects(self, objType, selector=None):
         """
@@ -841,7 +855,7 @@ class CQ(object):
             raise ValueError("Fillets requires that edges be selected")
 
         s = solid.fillet(radius, edgeList)
-        return self.newObject([s])
+        return self.newObject([s.clean()])
 
     def chamfer(self, length, length2=None):
         """
@@ -1065,7 +1079,7 @@ class Workplane(CQ):
             lpoints = list(cpoints)
 
         return self.pushPoints(lpoints)
-    
+
     def polarArray(self, radius, startAngle, angle, count, fill=True):
         """
         Creates an polar array of points and pushes them onto the stack.
@@ -1242,7 +1256,7 @@ class Workplane(CQ):
         """
         p = self._findFromPoint(True)
         return self.lineTo(xCoord, p.y, forConstruction)
-    
+
     def polarLine(self, distance, angle, forConstruction=False):
         """
         Make a line of the given length, at the given angle from the current point
@@ -1271,7 +1285,7 @@ class Workplane(CQ):
         y = math.sin(math.radians(angle)) * distance
 
         return self.lineTo(x, y, forConstruction)
-    
+
     # absolute move in current plane, not drawing
     def moveTo(self, x=0, y=0):
         """
@@ -1312,14 +1326,16 @@ class Workplane(CQ):
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
     def spline(self, listOfXYTuple, tangents=None, periodic=False,
-               forConstruction=False):
+               forConstruction=False, includeCurrent=True, makeWire=False):
         """
         Create a spline interpolated through the provided points.
 
         :param listOfXYTuple: points to interpolate through
         :type listOfXYTuple: list of 2-tuple
         :param tangents: tuple of Vectors specifying start and finish tangent
-        :param periodic: creation of peridic curves
+        :param periodic: creation of periodic curves
+        :param includeCurrent: use current point as a starting point of the curve
+        :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point at the end of the spline
 
         The spline will begin at the current point, and
@@ -1346,22 +1362,49 @@ class Workplane(CQ):
         Future Enhancements:
           * provide access to control points
         """
-        gstartPoint = self._findFromPoint(False)
 
         vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
-        allPoints = [gstartPoint] + vecs
-        
+
+        if includeCurrent:
+            gstartPoint = self._findFromPoint(False)
+            allPoints = [gstartPoint] + vecs
+        else:
+            allPoints = vecs
+
         if tangents:
-          t1, t2 = tangents
-          tangents = (self.plane.toWorldCoords(t1),
-                      self.plane.toWorldCoords(t2))
+            t1, t2 = tangents
+            tangents = (self.plane.toWorldCoords(t1),
+                        self.plane.toWorldCoords(t2))
 
         e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
 
-        if not forConstruction:
-            self._addPendingEdge(e)
+        if makeWire:
+            rv = Wire.assembleEdges([e])
+            if not forConstruction:
+                self._addPendingWire(rv)
+        else:
+            rv = e
+            if not forConstruction:
+                self._addPendingEdge(e)
 
-        return self.newObject([e])
+        return self.newObject([rv])
+
+    def parametricCurve(self, func, N=400, start=0, stop=1):
+        """
+        Create a spline interpolated through the provided points.
+
+        :param func: function f(t) that will generate (x,y) pairs
+        :type func: float --> (float,float)
+        :param N: number of points for discretization
+        :param start: starting value of the parameter t
+        :param stop: final value of the parameter t
+        :return: a Workplane object with the current point unchanged
+
+        """
+
+        allPoints = [func(start+stop*t/N) for t in range(N+1)]
+
+        return self.spline(allPoints,includeCurrent=False,makeWire=True)
 
     def threePointArc(self, point1, point2, forConstruction=False):
         """
@@ -1389,7 +1432,7 @@ class Workplane(CQ):
             self._addPendingEdge(arc)
 
         return self.newObject([arc])
-    
+
     def sagittaArc(self, endPoint, sag, forConstruction=False):
         """
         Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
@@ -2107,8 +2150,7 @@ class Workplane(CQ):
         """
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
-        wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires), self.plane, [])
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
 
         # now all of the wires have been used to create an extrusion
         self.ctx.pendingWires = []
@@ -2234,7 +2276,8 @@ class Workplane(CQ):
             newS = newS.clean()
         return newS
 
-    def sweep(self, path, sweepAlongWires=False, makeSolid=True, isFrenet=False, combine=True, clean=True):
+    def sweep(self, path, multisection=False, sweepAlongWires=None, makeSolid=True, isFrenet=False,
+              combine=True, clean=True, transition='right'):
         """
         Use all un-extruded wires in the parent chain to create a swept solid.
 
@@ -2244,10 +2287,22 @@ class Workplane(CQ):
             True to create only one solid swept along path with shape following the list of wires on the chain
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param transition:
+            handling of profile orientation at C1 path discontinuities.
+            Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a CQ object with the resulting solid selected.
         """
+        
+        if not sweepAlongWires is None:
+            multisection=sweepAlongWires
+            
+            from warnings import warn
+            warn('sweepAlongWires keyword argument is is depracated and will '\
+                 'be removed in the next version; use multisection instead', 
+                 DeprecationWarning)
 
-        r = self._sweep(path.wire(), sweepAlongWires, makeSolid, isFrenet)  # returns a Solid (or a compound if there were multiple)
+        r = self._sweep(path.wire(), multisection, makeSolid, isFrenet,
+                        transition)  # returns a Solid (or a compound if there were multiple)
         if combine:
             newS = self._combineWithBase(r)
         else:
@@ -2266,6 +2321,20 @@ class Workplane(CQ):
         r = obj
         if baseSolid is not None:
             r = baseSolid.fuse(obj)
+
+        return self.newObject([r])
+
+    def _cutFromBase(self, obj):
+        """
+        Cuts the provided object from the base solid, if one can be found.
+        :param obj:
+        :return: a new object that represents the result of combining the base object with obj,
+           or obj if one could not be found
+        """
+        baseSolid = self.findSolid(searchParents=True)
+        r = obj
+        if baseSolid is not None:
+            r = baseSolid.cut(obj)
 
         return self.newObject([r])
 
@@ -2366,7 +2435,7 @@ class Workplane(CQ):
             solidRef.wrapped = newS.wrapped
 
         return self.newObject([newS])
-    
+
     def intersect(self, toIntersect, combine=True, clean=True):
         """
         Intersects the provided solid from the current solid.
@@ -2438,7 +2507,7 @@ class Workplane(CQ):
 
         return self.newObject([s])
 
-    def cutThruAll(self, positive=False, clean=True):
+    def cutThruAll(self, positive=False, clean=True, taper=0):
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
 
@@ -2453,11 +2522,32 @@ class Workplane(CQ):
 
         see :py:meth:`cutBlind` to cut material to a limited depth
         """
-        maxDim = self.largestDimension()*1.1 #for numerical stability
-        if not positive:
-            maxDim *= (-1.0)
+        wires = self.ctx.pendingWires
+        self.ctx.pendingWires = []
 
-        return self.cutBlind(maxDim, clean)
+        solidRef = self.findSolid()
+        faceRef = self.findFace()
+
+        #if no faces on the stack take the nearest face parallel to the plane zDir
+        if not faceRef:
+            #first select all with faces with good orietation
+            sel = selectors.PerpendicularDirSelector(self.plane.zDir)
+            faces = sel.filter(solidRef.Faces())
+            #then select the closest
+            sel = selectors.NearestToPointSelector(self.plane.origin.toTuple())
+            faceRef = sel.filter(faces)[0]
+
+        rv = []
+        for solid in solidRef.Solids():
+            s = solid.dprism(faceRef, wires, thruAll=True, additive=False,
+                             taper=-taper)
+
+            if clean:
+                s = s.clean()
+
+            rv.append(s)
+
+        return self.newObject(rv)
 
     def loft(self, filled=True, ruled=False, combine=True):
         """
@@ -2494,10 +2584,9 @@ class Workplane(CQ):
 
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
-        s = time.time()
+        
         wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires), self.plane, [])
-        # print "sorted wires in %d sec" % ( time.time() - s )
+            list(self.ctx.pendingWires), [])
         # now all of the wires have been used to create an extrusion
         self.ctx.pendingWires = []
 
@@ -2512,22 +2601,8 @@ class Workplane(CQ):
         # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there are
         # multiple sets
 
-        # IMPORTANT NOTE: OCC is slow slow slow in boolean operations.  So you do NOT want to fuse
-        # each item to another and save the result-- instead, you want to combine all of the new
-        # items into a compound, and fuse them together!!!
-        # r = None
-        # for ws in wireSets:
-        #     thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
-        #     if r is None:
-        #         r = thisObj
-        #     else:
-        #         s = time.time()
-        #         r = r.fuse(thisObj)
-        #         print "Fused in %0.3f sec" % ( time.time() - s )
-        # return r
-
         toFuse = []
-        
+
         if taper:
           for ws in wireSets:
               thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
@@ -2536,7 +2611,7 @@ class Workplane(CQ):
           for ws in wireSets:
               thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
               toFuse.append(thisObj)
-  
+
               if both:
                   thisObj = Solid.extrudeLinear(
                       ws[0], ws[1:], eDir.multiply(-1.))
@@ -2560,7 +2635,7 @@ class Workplane(CQ):
         """
         # We have to gather the wires to be revolved
         wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires), self.plane, [])
+            list(self.ctx.pendingWires))
 
         # Mark that all of the wires have been used to create a revolution
         self.ctx.pendingWires = []
@@ -2574,38 +2649,31 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-    def _sweep(self, path, sweepAlongWires=False, makeSolid=True, isFrenet=False):
+    def _sweep(self, path, multisection=False, makeSolid=True, isFrenet=False, 
+               transition='right'):
         """
         Makes a swept solid from an existing set of pending wires.
 
         :param path: A wire along which the pending wires will be swept
-        :param boolean sweepAlongWires:
+        :param boolean multisection:
             False to create multiple swept from wires on the chain along path
             True to create only one solid swept along path with shape following the list of wires on the chain
-        :return:a FreeCAD solid, suitable for boolean operations
+        :return:a solid, suitable for boolean operations
         """
 
-        # group wires together into faces based on which ones are inside the others
-        # result is a list of lists
-        s = time.time()
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires), self.plane, [])
-        # print "sorted wires in %d sec" % ( time.time() - s )
-        self.ctx.pendingWires = []  # now all of the wires have been used to create an extrusion
-
         toFuse = []
-        if not sweepAlongWires:
+        if not multisection:
+            wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
             for ws in wireSets:
-                thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid, isFrenet)
+                thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid,
+                                      isFrenet, transition)
                 toFuse.append(thisObj)
         else:
-            section = []
-            for ws in wireSets:
-                for i in range(0, len(ws)):
-                    section.append(ws[i])
-
-            # implementation
-            thisObj = Solid.sweep_multi(section, path.val(), makeSolid, isFrenet)
+            sections = self.ctx.pendingWires
+            thisObj = Solid.sweep_multi(sections, path.val(), makeSolid, isFrenet)
             toFuse.append(thisObj)
+        
+        self.ctx.pendingWires = []
 
         return Compound.makeCompound(toFuse)
 
@@ -2770,12 +2838,53 @@ class Workplane(CQ):
             raise AttributeError(
                 "%s object doesn't support `clean()` method!" % obj.ShapeType())
         return self.newObject(cleanObjects)
-        
+
+    def text(self, txt, fontsize, distance, cut=True, combine=False, clean=True,
+             font="Arial", kind='regular',halign='center',valign='center'):
+        """
+        Create a 3D text
+
+        :param str txt: text to be rendered
+        :param distance: the distance to extrude, normal to the workplane plane
+        :type distance: float, negative means opposite the normal direction
+        :param float fontsize: size of the font
+        :param boolean cut: True to cut the resulting solid from the parent solids if found.
+        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param str font: fontname (default: Arial)
+        :param str kind: font type (default: Normal)
+        :param str halign: horizontal alignment (default: center)
+        :param str valign: vertical alignment (default: center)
+        :return: a CQ object with the resulting solid selected.
+
+        extrude always *adds* material to a part.
+
+        The returned object is always a CQ object, and depends on wither combine is True, and
+        whether a context solid is already defined:
+
+        *  if combine is False, the new value is pushed onto the stack.
+        *  if combine is true, the value is combined with the context solid if it exists,
+           and the resulting solid becomes the new context solid.
+
+        """
+        r = Compound.makeText(txt,fontsize,distance,font=font,kind=kind,
+                              halign=halign, valign=valign, position=self.plane)
+
+        if cut:
+            newS = self._cutFromBase(r)
+        elif combine:
+            newS = self._combineWithBase(r)
+        else:
+            newS = self.newObject([r])
+        if clean:
+            newS = newS.clean()
+        return newS
+
     def _repr_html_(self):
         """
         Special method for rendering current object in a jupyter notebook
         """
-        
+
         if type(self.objects[0]) is Vector:
            return '&lt {} &gt'.format(self.__repr__()[1:-1])
         else:
