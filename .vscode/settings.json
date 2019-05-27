@@ -1,0 +1,6 @@
+{
+    "python.linting.flake8Enabled": false,
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.pythonPath": "C:\\Users\\micha\\Anaconda3\\envs\\cq\\python.exe"
+}

@@ -376,9 +376,7 @@ class CQ(object):
 
         # update center to projected origin if desired
         if centerOption == 'ProjectedOrigin':
-            projected_center = Vector(0, 0, 0)
-            projected_center.projectToPlane(center, normal)
-            center = projected_center
+            center = Vector(0, 0, 0).projectToPlane(center, normal)
 
         # invert if requested
         if invert:

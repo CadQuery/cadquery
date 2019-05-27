@@ -151,6 +151,34 @@ class TestCadObjects(BaseTest):
         self.assertEqual(a, b)
         self.assertEqual(a, c)
 
+    def testVectorProject(self):
+        """
+        Test method to project vector to plane.
+        """
+        decimal_places = 9
+
+        normal = Vector(1, 2, 3)
+        base = Vector(5, 7, 9)
+        x_dir = Vector(1, 0, 0)
+
+        # test passing plane defined by base and normal
+        point = Vector(10, 11, 12).projectToPlane(base, normal)
+        self.assertTupleAlmostEquals(point.toTuple(), (59/7, 55/7, 51/7),
+                                     decimal_places)
+
+        point = Vector(10, 11, 12).projectToPlane(base, normal.normalized())
+        self.assertTupleAlmostEquals(point.toTuple(), (59/7, 55/7, 51/7),
+                                     decimal_places)
+
+        # test passing Plane object
+        point = Vector(10, 11, 12).projectToPlane(Plane(base, x_dir, normal))
+        self.assertTupleAlmostEquals(point.toTuple(), (59/7, 55/7, 51/7),
+                                     decimal_places)
+
+        # test wrong number of input arguments
+        with self.assertRaises(TypeError):
+            Vector(10,11.12).projectToPlane(1,1,1)
+
     def testMatrixCreationAndAccess(self):
         def matrix_vals(m):
             return [[m[r,c] for c in range(4)] for r in range(4)]
