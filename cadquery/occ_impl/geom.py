@@ -154,15 +154,20 @@ class Vector(object):
         if len(args) == 2:
             base = args[0]
             normal = args[1]
-        else:
+        elif len(args) == 1:
             base = args[0].origin
-            normal = args[1].zDir
+            normal = args[0].zDir
+        else:
+            raise TypeError("Expected 1 or 2 arguments consisting of 1 Plane object \
+or a base Vector and a normal Vector object.")
 
         result = self-normal*(((self-base).dot(normal))/normal.Length**2)
 
         self.x = result.x
         self.y = result.y
         self.z = result.z
+
+        return self
 
     def __neg__(self):
         return self * -1
