@@ -1924,6 +1924,22 @@ class TestCadQuery(BaseTest):
                   .plane.origin.toTuple()
         self.assertTupleAlmostEquals(origin, (45.0, 30.0, 10.0), decimal_places)
 
+        # test case where plane origin is shifted with center call
+        r = r.faces(">Z").workplane(centerOption='ProjectedOrigin').center(30,0) \
+             .hole(90)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (30.0, 0.0, 10.0), decimal_places)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedGlobalOrigin') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (0.0, 0.0, 10.0), decimal_places)
+
+        with self.assertRaises(ValueError):
+            origin = r.faces(">Z").workplane(centerOption='undefined')
+
+        # make sure projection works in all directions
         r = Workplane("YZ").polyline(pts).close().extrude(10.0)
 
         origin = r.faces(">X").workplane(centerOption='ProjectedOrigin') \
@@ -1951,6 +1967,3 @@ class TestCadQuery(BaseTest):
         origin = r.faces("<Y").workplane(centerOption='CenterOfBoundBox') \
                   .plane.origin.toTuple()
         self.assertTupleAlmostEquals(origin, (45.0, -10.0, 30.0), decimal_places)
-
-
-        
