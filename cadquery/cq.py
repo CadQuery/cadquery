@@ -285,7 +285,11 @@ class CQ(object):
              face/faces, if a face/faces was selected. If a vertex was
              selected, the origin will be at the vertex, and located
              on the face. The centerOption paramter sets how the center is defined.
-             Options are 'CenterOfMass', 'CenterOfBoundBox', or 'ProjectedOrigin'.
+             Options are 'CenterOfMass', 'CenterOfBoundBox', 'ProjectedOrigin', or
+             'ProjectedGlobalOrigin'. 'CenterOfMass' and 'CenterOfBoundBox' are 
+             in relation to the selected face/faces. 'ProjectedOrigin' uses the 
+             current origin that may have been updated by calls to transformed or
+             center. 'ProjectedGlobalOrigin' projects the global (0,0,0) origin.
            * The Z direction will be normal to the plane of the face,computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
@@ -344,10 +348,12 @@ class CQ(object):
             if not all(_isCoPlanar(self.objects[0], f) for f in self.objects[1:]):
                 raise ValueError("Selected faces must be co-planar.")
 
-            if centerOption == 'CenterOfMass' or centerOption == 'ProjectedOrigin':
+            if centerOption in {'CenterOfMass', 'ProjectedOrigin', 'ProjectedGlobalOrigin'}:
                 center = Shape.CombinedCenter(self.objects)
             elif centerOption == 'CenterOfBoundBox':
                 center = Shape.CombinedCenterOfBoundBox(self.objects)
+            else:
+                raise ValueError('Undefined value passed to centerOption')
 
             normal = self.objects[0].normalAt()
             xDir = _computeXdir(normal)
@@ -356,7 +362,7 @@ class CQ(object):
             obj = self.objects[0]
 
             if isinstance(obj, Face):
-                if centerOption == 'CenterOfMass' or centerOption == 'ProjectedOrigin':
+                if centerOption in {'CenterOfMass', 'ProjectedOrigin', 'ProjectedGlobalOrigin'}:
                     center = obj.Center()
                 elif centerOption == 'CenterOfBoundBox':
                     center = obj.CenterOfBoundBox()
@@ -364,7 +370,7 @@ class CQ(object):
                 xDir = _computeXdir(normal)
             else:
                 if hasattr(obj, 'Center'):
-                    if centerOption == 'CenterOfMass' or centerOption == 'ProjectedOrigin':
+                    if centerOption in {'CenterOfMass', 'ProjectedOrigin', 'ProjectedGlobalOrigin'}:
                         center = obj.Center()
                     elif centerOption == 'CenterOfBoundBox':
                         center = obj.CenterOfBoundBox()
@@ -376,7 +382,9 @@ class CQ(object):
 
         # update center to projected origin if desired
         if centerOption == 'ProjectedOrigin':
-            center = Vector(0, 0, 0).projectToPlane(center, normal)
+            center = self.plane.origin.projectToPlane(Plane(center, xDir, normal))
+        elif centerOption == 'ProjectedGlobalOrigin':
+            center = Vector(0,0,0).projectToPlane(Plane(center, xDir, normal))
 
         # invert if requested
         if invert:
