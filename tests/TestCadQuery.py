@@ -1928,8 +1928,24 @@ class TestCadQuery(BaseTest):
                   .plane.origin.toTuple()
         self.assertTupleAlmostEquals(origin, (30.0, 10.0, 10.0), decimal_places)
 
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin',origin=Vector(30,10,20)) \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (30.0, 10.0, 10.0), decimal_places)
+
         with self.assertRaises(ValueError):
             origin = r.faces(">Z").workplane(centerOption='undefined')
+
+        # test case where plane origin is shifted with center call
+        r = r.faces(">Z").workplane(centerOption='ProjectedOrigin').center(30,0) \
+             .hole(90)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (30.0, 0.0, 10.0), decimal_places)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin', origin=(0,0,0)) \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (0.0, 0.0, 10.0), decimal_places)
 
         # make sure projection works in all directions
         r = Workplane("YZ").polyline(pts).close().extrude(10.0)
