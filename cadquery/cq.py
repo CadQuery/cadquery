@@ -262,7 +262,7 @@ class CQ(object):
         return self.objects[0].wrapped
 
     def workplane(self, offset=0.0, invert=False, centerOption='CenterOfMass',
-                  origin=(0, 0, 0)):
+                  origin=None):
         """
         Creates a new 2-D workplane, located relative to the first face on the stack.
 
@@ -273,7 +273,7 @@ class CQ(object):
         :type offset: float or None=0.0
         :type invert: boolean or None=False
         :type centerOption: string or None='CenterOfMass'
-        :type origin: tuple
+        :type origin: Vector or None
         :rtype: Workplane object ( which is a subclass of CQ )
 
         The first element on the stack must be a face, a set of
@@ -290,8 +290,9 @@ class CQ(object):
              on the face. The centerOption paramter sets how the center is defined.
              Options are 'CenterOfMass', 'CenterOfBoundBox', or 'ProjectedOrigin'.
              'CenterOfMass' and 'CenterOfBoundBox' are in relation to the selected
-             face/faces. 'ProjectedOrigin' uses the supplied origin, which defaults
-             to (0, 0, 0).
+             face/faces. 'ProjectedOrigin' uses the current planes origin by default
+             or can be specified as an arbitrary point using the optional origin
+             parameter.
            * The Z direction will be normal to the plane of the face,computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
@@ -343,6 +344,11 @@ class CQ(object):
         if centerOption not in {'CenterOfMass', 'ProjectedOrigin', 'CenterOfBoundBox'}:
             raise ValueError('Undefined centerOption value provided.')
 
+        if origin is None and centerOption == 'ProjectedOrigin': 
+            origin = self.plane.origin
+        elif isinstance(origin, tuple):
+            origin = Vector(origin)
+
         if len(self.objects) > 1:
             # are all objects 'PLANE'?
             if not all(o.geomType() in ('PLANE', 'CIRCLE') for o in self.objects):
@@ -385,7 +391,7 @@ class CQ(object):
 
         # update center to projected origin if desired
         if centerOption == 'ProjectedOrigin':
-            center = Vector(origin).projectToPlane(Plane(center, xDir, normal))
+            center = origin.projectToPlane(Plane(center, xDir, normal))
 
         # invert if requested
         if invert:
