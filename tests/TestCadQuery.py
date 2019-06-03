@@ -1902,7 +1902,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(solid.Vertices()),4)
         self.assertEqual(len(solid.Faces()),4)
 
-    def testIsInside(self):
+    def testIsInsideSolid(self):
         # test solid
         model = Workplane('XY').box(10,10,10)
 
