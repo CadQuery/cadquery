@@ -1901,4 +1901,35 @@ class TestCadQuery(BaseTest):
         
         self.assertEqual(len(solid.Vertices()),4)
         self.assertEqual(len(solid.Faces()),4)
+
+    def testIsInside(self):
+        # test solid
+        model = Workplane('XY').box(10,10,10)
+
+        self.assertTrue(model.isInside((0,0,0)))
+        self.assertFalse(model.isInside((10,10,10)))
+        self.assertTrue(model.isInside((Vector(3,3,3))))
+        self.assertFalse(model.isInside((Vector(30.0,30.0,30.0))))
+
+        self.assertTrue(model.isInside((4.9,4.9,4.9), tolerance=0.01))
+        self.assertFalse(model.isInside((5.1,5.1,5.1), tolerance=0.01))
+
+        # test compound solid
+        model = Workplane('XY').box(10,10,10)
+        model = model.moveTo(50,50).box(10,10,10)
         
+        self.assertTrue(model.isInside((50,50,0)))
+        self.assertFalse(model.isInside((50,55,0)))
+
+        # make sure raises on non solid
+        model = Workplane('XY').rect(10,10)
+        with self.assertRaises(ValueError):
+            model.isInside((0,0,0))
+
+        # test solid with an internal void
+        void = Workplane('XY').box(10,10,10)
+        model = Workplane('XY').box(100,100,100).cut(void)
+
+        self.assertFalse(model.isInside((0,0,0)))
+        self.assertTrue(model.isInside((40,40,40)))
+        self.assertFalse(model.isInside((55,55,55)))
