@@ -108,6 +108,7 @@ from OCC.Core.Addons import (text_to_brep,
 
 from OCC.Core.BRepFeat import BRepFeat_MakeDPrism
 
+from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 
 from math import pi, sqrt
 from functools import reduce
@@ -398,6 +399,23 @@ class Shape(object):
             return Vector(Properties.CentreOfMass())
         else:
             raise NotImplementedError
+
+    @staticmethod
+    def isInside(obj, point, tolerance=1.0e-6):
+        """
+        Returns whether or not the point is inside a solid or compound
+        object within supplied tolerance.
+        """
+        if shape_LUT[obj.wrapped.ShapeType()] not in {'Solid', 'Compound'}:
+            raise ValueError('Solid or Compound shape required.')
+
+        if not isinstance(point, tuple):
+            point = point.toTuple()
+
+        solid_classifier = BRepClass3d_SolidClassifier(obj.wrapped)
+        solid_classifier.Perform(gp_Pnt(*point), tolerance)
+
+        return True if solid_classifier.State() == ta.TopAbs_IN else False
 
     @staticmethod
     def CombinedCenterOfBoundBox(objects, tolerance=0.1):
