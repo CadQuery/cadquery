@@ -409,13 +409,13 @@ class Shape(object):
         if shape_LUT[obj.wrapped.ShapeType()] not in {'Solid', 'Compound'}:
             raise ValueError('Solid or Compound shape required.')
 
-        if not isinstance(point, tuple):
+        if isinstance(point, Vector):
             point = point.toTuple()
 
         solid_classifier = BRepClass3d_SolidClassifier(obj.wrapped)
         solid_classifier.Perform(gp_Pnt(*point), tolerance)
 
-        return True if solid_classifier.State() == ta.TopAbs_IN else False
+        return (solid_classifier.State() == ta.TopAbs_IN)
 
     @staticmethod
     def CombinedCenterOfBoundBox(objects, tolerance=0.1):
