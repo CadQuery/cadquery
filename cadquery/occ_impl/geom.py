@@ -143,9 +143,18 @@ class Vector(object):
         raise NotImplementedError(
             "Have not needed this yet, but FreeCAD supports it!")
 
-    def projectToPlane(self):
-        raise NotImplementedError(
-            "Have not needed this yet, but FreeCAD supports it!")
+    def projectToPlane(self, plane):
+        """
+        Vector is projected onto the plane provided as input.
+
+        :param args: Plane object
+
+        Returns the projected vector.
+        """
+        base = plane.origin
+        normal = plane.zDir
+
+        return self-normal*(((self-base).dot(normal))/normal.Length**2)
 
     def __neg__(self):
         return self * -1

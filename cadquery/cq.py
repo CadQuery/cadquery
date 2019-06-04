@@ -261,14 +261,19 @@ class CQ(object):
 
         return self.objects[0].wrapped
 
-    def workplane(self, offset=0.0, invert=False, centerOption='CenterOfMass'):
+    def workplane(self, offset=0.0, invert=False, centerOption='CenterOfMass',
+                  origin=None):
         """
         Creates a new 2-D workplane, located relative to the first face on the stack.
 
         :param offset:  offset for the work plane in the Z direction. Default
         :param invert:  invert the Z direction from that of the face.
+        :param centerOption: how local origin of workplane is determined.
+        :param origin: origin for plane center, requires 'ProjectedOrigin' centerOption.
         :type offset: float or None=0.0
         :type invert: boolean or None=False
+        :type centerOption: string or None='CenterOfMass'
+        :type origin: Vector or None
         :rtype: Workplane object ( which is a subclass of CQ )
 
         The first element on the stack must be a face, a set of
@@ -282,7 +287,12 @@ class CQ(object):
            * The origin will be located in the *center* of the
              face/faces, if a face/faces was selected. If a vertex was
              selected, the origin will be at the vertex, and located
-             on the face.
+             on the face. The centerOption paramter sets how the center is defined.
+             Options are 'CenterOfMass', 'CenterOfBoundBox', or 'ProjectedOrigin'.
+             'CenterOfMass' and 'CenterOfBoundBox' are in relation to the selected
+             face/faces. 'ProjectedOrigin' uses the current planes origin by default
+             or can be specified as an arbitrary point using the optional origin
+             parameter.
            * The Z direction will be normal to the plane of the face,computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
@@ -331,6 +341,9 @@ class CQ(object):
                 xd = Vector(1, 0, 0)
             return xd
 
+        if centerOption not in {'CenterOfMass', 'ProjectedOrigin', 'CenterOfBoundBox'}:
+            raise ValueError('Undefined centerOption value provided.')
+
         if len(self.objects) > 1:
             # are all objects 'PLANE'?
             if not all(o.geomType() in ('PLANE', 'CIRCLE') for o in self.objects):
@@ -341,7 +354,7 @@ class CQ(object):
             if not all(_isCoPlanar(self.objects[0], f) for f in self.objects[1:]):
                 raise ValueError("Selected faces must be co-planar.")
 
-            if centerOption == 'CenterOfMass':
+            if centerOption in {'CenterOfMass', 'ProjectedOrigin'}:
                 center = Shape.CombinedCenter(self.objects)
             elif centerOption == 'CenterOfBoundBox':
                 center = Shape.CombinedCenterOfBoundBox(self.objects)
@@ -353,7 +366,7 @@ class CQ(object):
             obj = self.objects[0]
 
             if isinstance(obj, Face):
-                if centerOption == 'CenterOfMass':
+                if centerOption in {'CenterOfMass', 'ProjectedOrigin'}:
                     center = obj.Center()
                 elif centerOption == 'CenterOfBoundBox':
                     center = obj.CenterOfBoundBox()
@@ -361,7 +374,7 @@ class CQ(object):
                 xDir = _computeXdir(normal)
             else:
                 if hasattr(obj, 'Center'):
-                    if centerOption == 'CenterOfMass':
+                    if centerOption in {'CenterOfMass', 'ProjectedOrigin'}:
                         center = obj.Center()
                     elif centerOption == 'CenterOfBoundBox':
                         center = obj.CenterOfBoundBox()
@@ -370,6 +383,14 @@ class CQ(object):
                 else:
                     raise ValueError(
                         "Needs a face or a vertex or point on a work plane")
+
+        # update center to projected origin if desired
+        if centerOption == 'ProjectedOrigin':
+            if origin is None:
+                origin = self.plane.origin
+            elif isinstance(origin, tuple):
+                origin = Vector(origin)
+            center = origin.projectToPlane(Plane(center, xDir, normal))
 
         # invert if requested
         if invert:
