@@ -344,11 +344,6 @@ class CQ(object):
         if centerOption not in {'CenterOfMass', 'ProjectedOrigin', 'CenterOfBoundBox'}:
             raise ValueError('Undefined centerOption value provided.')
 
-        if origin is None and centerOption == 'ProjectedOrigin': 
-            origin = self.plane.origin
-        elif isinstance(origin, tuple):
-            origin = Vector(origin)
-
         if len(self.objects) > 1:
             # are all objects 'PLANE'?
             if not all(o.geomType() in ('PLANE', 'CIRCLE') for o in self.objects):
@@ -391,6 +386,10 @@ class CQ(object):
 
         # update center to projected origin if desired
         if centerOption == 'ProjectedOrigin':
+            if origin is None:
+                origin = self.plane.origin
+            elif isinstance(origin, tuple):
+                origin = Vector(origin)
             center = origin.projectToPlane(Plane(center, xDir, normal))
 
         # invert if requested
