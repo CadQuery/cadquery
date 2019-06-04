@@ -1901,4 +1901,77 @@ class TestCadQuery(BaseTest):
         
         self.assertEqual(len(solid.Vertices()),4)
         self.assertEqual(len(solid.Faces()),4)
-        
+
+    def testWorkplaneCenterOptions(self):
+        """
+        Test options for specifiying origin of workplane
+        """
+        decimal_places = 9
+
+        pts = [(90,0),(90,30),(30,30),(30,60),(0.0,60)]
+
+        r = Workplane("XY").polyline(pts).close().extrude(10.0)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (0.0, 0.0, 10.0), decimal_places)
+
+        origin = r.faces(">Z").workplane(centerOption='CenterOfMass') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (37.5, 22.5, 10.0), decimal_places)
+
+        origin = r.faces(">Z").workplane(centerOption='CenterOfBoundBox') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (45.0, 30.0, 10.0), decimal_places)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin',origin=(30,10,20)) \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (30.0, 10.0, 10.0), decimal_places)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin',origin=Vector(30,10,20)) \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (30.0, 10.0, 10.0), decimal_places)
+
+        with self.assertRaises(ValueError):
+            origin = r.faces(">Z").workplane(centerOption='undefined')
+
+        # test case where plane origin is shifted with center call
+        r = r.faces(">Z").workplane(centerOption='ProjectedOrigin').center(30,0) \
+             .hole(90)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (30.0, 0.0, 10.0), decimal_places)
+
+        origin = r.faces(">Z").workplane(centerOption='ProjectedOrigin', origin=(0,0,0)) \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (0.0, 0.0, 10.0), decimal_places)
+
+        # make sure projection works in all directions
+        r = Workplane("YZ").polyline(pts).close().extrude(10.0)
+
+        origin = r.faces(">X").workplane(centerOption='ProjectedOrigin') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (10.0, 0.0, 0.0), decimal_places)
+
+        origin = r.faces(">X").workplane(centerOption='CenterOfMass') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (10.0, 37.5, 22.5), decimal_places)
+
+        origin = r.faces(">X").workplane(centerOption='CenterOfBoundBox') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (10.0, 45.0, 30.0), decimal_places)
+
+        r = Workplane("XZ").polyline(pts).close().extrude(10.0)
+
+        origin = r.faces("<Y").workplane(centerOption='ProjectedOrigin') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (0.0, -10.0, 0.0), decimal_places)
+
+        origin = r.faces("<Y").workplane(centerOption='CenterOfMass') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (37.5, -10.0, 22.5), decimal_places)
+
+        origin = r.faces("<Y").workplane(centerOption='CenterOfBoundBox') \
+                  .plane.origin.toTuple()
+        self.assertTupleAlmostEquals(origin, (45.0, -10.0, 30.0), decimal_places)
