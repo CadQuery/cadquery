@@ -11,18 +11,18 @@ CadQuery is an intuitive, easy-to-use Python module for building parametric 3D C
 
 CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCAD, CadQuery is an open-source, script based, parametric model generator. However, CadQuery stands out in many ways and has several key advantages:
 
-	1. The scripts use a standard programming language, Python, and thus can benefit from the associated infrastructure. This includes many standard libraries and IDEs.
-	2. CadQuery's CAD kernel OpenCascade is much more powerful than CGAL. Features supported natively by OCC include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
-	3. Ability to import/export STEP and the ability to begin with a STEP model, created in a CAD package, and then add parametric features. This is possible in OpenSCAD using STL, but STL is a lossy format.
-	4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
-	5. CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
+1. The scripts use a standard programming language, Python, and thus can benefit from the associated infrastructure. This includes many standard libraries and IDEs.
+2. CadQuery's CAD kernel OpenCascade is much more powerful than CGAL. Features supported natively by OCC include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
+3. Ability to import/export STEP and the ability to begin with a STEP model, created in a CAD package, and then add parametric features. This is possible in OpenSCAD using STL, but STL is a lossy format.
+4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
+5. CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
 
-### Features
+### Key features
 * Build 3D models with scripts that are as close as possible to how you would describe the object to a human.
 * Create parametric models that can be very easily customized by end users.
 * Output high quality (loss-less) CAD formats like STEP in addition to STL and AMF.
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser.
-* Allows creation of advanced modeling capabilities such as fillets, extrudes with taper, and lofts.
+* Offer advanced modeling capabilities such as fillets, curvelinear extrudes, parametric curves and lofts.
 
 ### Why this fork
 
@@ -52,7 +52,7 @@ CQ-editor is an IDE that allows users to edit CadQuery model scripts in a GUI en
 
 The installation instructions for CQ-editor can be found [here](https://github.com/CadQuery/CQ-editor#installation).
 
-<img src="https://raw.githubusercontent.com/CadQuery/CQ-editor/master/screenshots/screenshot2.png" alt="CQ editor screenshot" width="800"/>
+<img src="https://raw.githubusercontent.com/CadQuery/CQ-editor/master/screenshots/screenshot3.png" alt="CQ editor screenshot" width="800"/>
 
 ### Jupyter
 
@@ -93,11 +93,11 @@ Thanks to @easyw for this example from the [kicad-3d-models-in-freecad project](
 
 <img src="http://dcowden.github.io/cadquery/_static/KiCad_Capacitors_SMD.jpg" alt="Circuit board generated in KiCAD" width="400"/>
 
-### 3D Printer Replacement Parts
+### 3D Printed Resin Mold
 
-Thanks to @adam-urbanczyk for this example of a Prusa i3 extruder support.
+Thanks to @eddieliberato for this example.
 
-<img src="https://camo.githubusercontent.com/ec681368dc2720e0908f81b46df7a43f4abc7058/687474703a2f2f64636f7764656e2e6769746875622e696f2f63616471756572792f5f7374617469632f65787472756465725f737570706f72742e706e67" alt="Prusa i3 extruder support" width="400"/>
+<img src="https://user-images.githubusercontent.com/13981538/55984103-f7968080-5c9c-11e9-94ef-b02b28be4432.png" alt="3D printed resin mold" height="250"/> <img src="https://user-images.githubusercontent.com/13981538/55984149-1ac13000-5c9d-11e9-9825-c0aadbadd280.png" alt="3D printed resin mold" height="250"/>
 
 ## License
 
