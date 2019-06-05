@@ -73,7 +73,7 @@ conda install -c conda-forge -c cadquery cadquery
 
 ## Getting help
 
-You can find the full CadQuery documentation at [https://cadquery.github.io/cadquery](https://cadquery.github.io/cadquery>).
+You can find the full CadQuery documentation at [cadquery.readthedocs.io](https://cadquery.readthedocs.io/).
 
 We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) to make it easy to get help from other CadQuery users. We want you to feel welcome and encourage you to join the group and introduce yourself. We would also love to hear what you are doing with CadQuery.
 
