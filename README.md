@@ -4,6 +4,7 @@
 [![Travis Build Status](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)
 [![Appveyor Build status](https://ci.appveyor.com/api/projects/status/cf4qg6kpyqmcje1h?svg=true)](https://ci.appveyor.com/api/projects/status/cf4qg6kpyqmcje1h?svg=true)
 [![codecov](https://codecov.io/gh/CadQuery/cadquery/branch/master/graph/badge.svg)](https://codecov.io/gh/CadQuery/cadquery)
+[![Documentation Status](https://readthedocs.org/projects/cadquery/badge/?version=latest)](https://cadquery.readthedocs.io/en/latest/?badge=latest)
 
 ## What is CadQuery
 
@@ -73,7 +74,7 @@ conda install -c conda-forge -c cadquery cadquery
 
 ## Getting help
 
-You can find the full CadQuery documentation at [https://cadquery.github.io/cadquery](https://cadquery.github.io/cadquery>).
+You can find the full CadQuery documentation at [cadquery.readthedocs.io](https://cadquery.readthedocs.io/).
 
 We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) to make it easy to get help from other CadQuery users. We want you to feel welcome and encourage you to join the group and introduce yourself. We would also love to hear what you are doing with CadQuery.
 
