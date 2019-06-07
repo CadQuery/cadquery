@@ -2528,15 +2528,14 @@ class Workplane(CQ):
 
         return self.newObject([s])
 
-    def cutThruAll(self, positive=False, clean=True, taper=0):
+    def cutThruAll(self, clean=True, taper=0):
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
+        Cuts through all material in both normal directions of workplane.
 
         Similar to extrude, except that a solid in the parent chain is required to remove material
         from. cutThruAll always removes material from a part.
 
-        :param boolean positive: True to cut in the positive direction, false to cut in the
-            negative direction
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
