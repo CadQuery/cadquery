@@ -2378,13 +2378,11 @@ class Workplane(CQ):
 
         return self.newObject([s])
 
-    def union(self, toUnion=None, combine=True, clean=True):
+    def union(self, toUnion=None, clean=True):
         """
         Unions all of the items on the stack of toUnion with the current solid.
         If there is no current solid, the items in toUnion are unioned together.
-        if combine=True, the result and the original are updated to point to the new object
-        if combine=False, the result will be on the stack, but the original is unmodified
-
+        
         :param toUnion:
         :type toUnion: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
@@ -2409,9 +2407,8 @@ class Workplane(CQ):
         # now combine with existing solid, if there is one
         # look for parents to cut from
         solidRef = self.findSolid(searchStack=True, searchParents=True)
-        if combine and solidRef is not None:
+        if solidRef is not None:
             r = solidRef.fuse(newS)
-            solidRef.wrapped = newS.wrapped
         else:
             r = newS
 
@@ -2420,13 +2417,10 @@ class Workplane(CQ):
 
         return self.newObject([r])
 
-    def cut(self, toCut, combine=True, clean=True):
+    def cut(self, toCut, clean=True):
         """
         Cuts the provided solid from the current solid, IE, perform a solid subtraction
-
-        if combine=True, the result and the original are updated to point to the new object
-        if combine=False, the result will be on the stack, but the original is unmodified
-
+        
         :param toCut: object to cut
         :type toCut: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
@@ -2451,19 +2445,13 @@ class Workplane(CQ):
 
         if clean:
             newS = newS.clean()
-
-        if combine:
-            solidRef.wrapped = newS.wrapped
-
+        
         return self.newObject([newS])
 
-    def intersect(self, toIntersect, combine=True, clean=True):
+    def intersect(self, toIntersect, clean=True):
         """
         Intersects the provided solid from the current solid.
-
-        if combine=True, the result and the original are updated to point to the new object
-        if combine=False, the result will be on the stack, but the original is unmodified
-
+        
         :param toIntersect: object to intersect
         :type toIntersect: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
@@ -2488,10 +2476,7 @@ class Workplane(CQ):
         newS = solidRef.intersect(solidToIntersect)
 
         if clean: newS = newS.clean()
-
-        if combine:
-            solidRef.wrapped = newS.wrapped
-
+        
         return self.newObject([newS])
 
     def cutBlind(self, distanceToCut, clean=True, taper=None):
