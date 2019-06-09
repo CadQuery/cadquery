@@ -41,7 +41,7 @@ The easiest way to install CadQuery and its dependencies is using conda:
 conda install -c conda-forge -c cadquery cadquery
 ```
 
-For thos who are interested, the [conda-packages repository](https://github.com/CadQuery/conda-packages) contains build information, packages and modifications for CadQuery's conda channel.
+For those who are interested, the [conda-packages repository](https://github.com/CadQuery/conda-packages) contains build information, packages and modifications for CadQuery's conda channel.
 
 ### CQ-editor GUI
 
@@ -57,7 +57,7 @@ The installation instructions for CQ-editor can be found [here](https://github.c
 
 ### Jupyter
 
-CadQuery supports Jupyter notebook out of the box using the extension created by @bernhard-42
+CadQuery supports Jupyter notebook out of the box using the jupyter-cadquery extension created by @bernhard-42:
 
 * [Installation](https://github.com/bernhard-42/jupyter-cadquery#installation)
 * [Usage](https://github.com/bernhard-42/jupyter-cadquery#jupyter-cadquery)
@@ -123,7 +123,7 @@ You do not need to be a software developer to have a big impact on this project.
 It is asked that all contributions to this project be made in a respectful and considerate way. Please use the [Python Community Code of Conduct's](https://www.python.org/psf/codeofconduct/) guidelines as a reference.
 
 ### How to Report a Bug
-When filing an bug report [issue](https://github.com/CadQuery/cadquery/issues), please be sure to answer these questions:
+When filing a bug report [issue](https://github.com/CadQuery/cadquery/issues), please be sure to answer these questions:
 
 1. What version of the software are you running?
 2. What operating system are you running the software on?
@@ -131,4 +131,4 @@ When filing an bug report [issue](https://github.com/CadQuery/cadquery/issues), 
 
 ### How to Suggest a Feature or Enhancement
 
-If you find yourself wishing for a feature that does not exist, you are probably not alone. There are bound to be others out there with similar needs. Open a [issue](https://github.com/CadQuery/cadquery/issues) which describes the feature you would like to see, why you need it, and how it should work.
+If you find yourself wishing for a feature that does not exist, you are probably not alone. There are bound to be others out there with similar needs. Open an [issue](https://github.com/CadQuery/cadquery/issues) which describes the feature you would like to see, why you need it, and how it should work.
