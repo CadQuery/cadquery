@@ -1227,9 +1227,9 @@ class TestCadQuery(BaseTest):
         self.assertEqual(7, c.faces().size())
 
         # now cut it in half sideways
-        c.faces(">Y").workplane(-0.5).split(keepTop=True)
-        self.saveModel(c)
-        self.assertEqual(8, c.faces().size())
+        result = c.faces(">Y").workplane(-0.5).split(keepTop=True)
+        self.saveModel(result)
+        self.assertEqual(8, result.faces().size())
 
     def testSplitKeepingBoth(self):
         """

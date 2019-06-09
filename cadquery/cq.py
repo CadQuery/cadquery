@@ -147,10 +147,8 @@ class CQ(object):
             # Put the one we are keeping on the stack, and also update the
             # context solidto the one we kept.
             if keepTop:
-                solid.wrapped = top.wrapped
                 return self.newObject([top])
             else:
-                solid.wrapped = bottom.wrapped
                 return self.newObject([bottom])
 
     def combineSolids(self, otherCQToCombine=None):
@@ -2568,7 +2566,6 @@ class Workplane(CQ):
             parentSolid = self.findSolid(searchStack=False, searchParents=True)
             if parentSolid is not None:
                 r = parentSolid.fuse(r)
-                parentSolid.wrapped = r.wrapped
 
         return self.newObject([r])
 
