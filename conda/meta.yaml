@@ -1,5 +1,5 @@
 package:
-  name: cadquery-occ
+  name: cadquery
   version:  {{ environ.get('PACKAGE_VERSION') }}
 
 source:
@@ -20,4 +20,4 @@ requirements:
     - pyparsing 2.*
 
 about:
-  summary: Experimental CadQuery fork based on PythonOCC
+  summary: CadQuery fork based on PythonOCC
