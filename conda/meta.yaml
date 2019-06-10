@@ -15,9 +15,16 @@ requirements:
     - setuptools
   run:
     - python {{ environ.get('PYTHON_VERSION') }}
-    - oce 0.18
-    - pythonocc-core 0.18.2
+    - oce 0.18.*
+    - pythonocc-core 0.18.2*
     - pyparsing 2.*
+    
+test:
+  source_files:
+    - runtests.py
+    - tests/
+  commands:
+    - python runtests.py
 
 about:
   summary: CadQuery fork based on PythonOCC
