@@ -3,6 +3,7 @@ import cadquery as cq
 # These can be modified rather than hardcoding values for each dimension.
 length = 80.0                               # Length of the block
 width = 60.0                                # Width of the block
+height = 100.0                              # Height of the block
 thickness = 10.0                         # Thickness of the block
 center_hole_dia = 22.0             # Diameter of center hole in block
 cbore_hole_diameter = 2.4     # Bolt shank/threads clearance hole diameter
