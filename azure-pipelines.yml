@@ -9,6 +9,7 @@ resources:
     - repository: templates
       type: github
       name: CadQuery/conda-packages
+      endpoint: CadQuery
 
 jobs:
 - template: conda-build.yml@templates
