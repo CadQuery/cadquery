@@ -771,9 +771,9 @@ class TestCadQuery(BaseTest):
         currentS = s.rect(2.0, 2.0).extrude(0.5)
         toCut = s.rect(1.0, 1.0).extrude(0.5)
 
-        currentS.cut(toCut.val())
+        resS = currentS.cut(toCut.val())
 
-        self.assertEqual(10, currentS.faces().size())
+        self.assertEqual(10, resS.faces().size())
 
     def testIntersect(self):
         """
@@ -783,15 +783,15 @@ class TestCadQuery(BaseTest):
         currentS = s.rect(2.0, 2.0).extrude(0.5)
         toIntersect = s.rect(1.0, 1.0).extrude(1)
 
-        currentS.intersect(toIntersect.val())
+        resS = currentS.intersect(toIntersect.val())
 
-        self.assertEqual(6, currentS.faces().size())
-        self.assertAlmostEqual(currentS.val().Volume(),0.5)
+        self.assertEqual(6, resS.faces().size())
+        self.assertAlmostEqual(resS.val().Volume(),0.5)
 
-        currentS.intersect(toIntersect)
+        resS = currentS.intersect(toIntersect)
 
-        self.assertEqual(6, currentS.faces().size())
-        self.assertAlmostEqual(currentS.val().Volume(),0.5)
+        self.assertEqual(6, resS.faces().size())
+        self.assertAlmostEqual(resS.val().Volume(),0.5)
 
     def testBoundingBox(self):
         """
@@ -1227,9 +1227,9 @@ class TestCadQuery(BaseTest):
         self.assertEqual(7, c.faces().size())
 
         # now cut it in half sideways
-        c.faces(">Y").workplane(-0.5).split(keepTop=True)
-        self.saveModel(c)
-        self.assertEqual(8, c.faces().size())
+        result = c.faces(">Y").workplane(-0.5).split(keepTop=True)
+        self.saveModel(result)
+        self.assertEqual(8, result.faces().size())
 
     def testSplitKeepingBoth(self):
         """
@@ -1414,10 +1414,9 @@ class TestCadQuery(BaseTest):
         currentS = s.rect(2.0, 2.0).extrude(0.5)
         toUnion = s.rect(1.0, 1.0).extrude(1.0)
 
-        currentS.union(toUnion.val(), combine=False)
-
-        # TODO: When unioning and combining is figured out, uncomment the following assert
-        # self.assertEqual(10,currentS.faces().size())
+        resS = currentS.union(toUnion)
+        
+        self.assertEqual(11,resS.faces().size())
 
     def testCombine(self):
         s = Workplane(Plane.XY())
