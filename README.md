@@ -39,7 +39,7 @@ It is currently possible to use CadQuery for your own projects in 3 different wa
 
 The easiest way to install CadQuery and its dependencies is using conda:
 ```
-conda install -c conda-forge -c cadquery cadquery
+conda install -c conda-forge -c cadquery cadquery=2
 ```
 
 For those who are interested, the [conda-packages repository](https://github.com/CadQuery/conda-packages) contains build information, packages and modifications for CadQuery's conda channel.
