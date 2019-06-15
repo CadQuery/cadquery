@@ -50,7 +50,10 @@ All 2-d operations require a **Workplane** object to be created.
 	Workplane.moveTo
 	Workplane.move
 	Workplane.spline
+	Workplane.parametricCurve
 	Workplane.threePointArc
+	Workplane.sagittaArc
+	Workplane.radiusArc
 	Workplane.rotateAndCopy
 	Workplane.mirrorY
 	Workplane.mirrorX
@@ -60,6 +63,7 @@ All 2-d operations require a **Workplane** object to be created.
 	Workplane.polyline
 	Workplane.close
 	Workplane.rarray
+	Workplane.polarArray
 
 .. _3doperations:
 
@@ -79,18 +83,28 @@ Some 3-d operations also require an active 2-d workplane, but some do not.
 	Workplane.cutBlind
 	Workplane.cutThruAll
 	Workplane.box
+	Workplane.sphere
 	Workplane.union
 	Workplane.combine
+	Workplane.intersect
+	Workplane.loft
+	Workplane.sweep
+	Workplane.twistExtrude
+	Workplane.revolve
+	Workplane.text
+	
 
 3-d operations that do NOT require a 2-d workplane to be active:
 
 .. autosummary::
 	CQ.shell
 	CQ.fillet
+	CQ.chamfer
 	CQ.split
 	CQ.rotate
 	CQ.rotateAboutCenter
 	CQ.translate
+	CQ.mirror
 
 File Management and Export
 ---------------------------------
