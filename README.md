@@ -3,6 +3,7 @@
 
 [![Travis Build Status](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)
 [![Appveyor Build status](https://ci.appveyor.com/api/projects/status/cf4qg6kpyqmcje1h?svg=true)](https://ci.appveyor.com/api/projects/status/cf4qg6kpyqmcje1h?svg=true)
+[![Build Status](https://dev.azure.com/cadquery/conda-packages/_apis/build/status/CadQuery.cadquery?branchName=master)](https://dev.azure.com/cadquery/conda-packages/_build/latest?definitionId=2&branchName=master)
 [![codecov](https://codecov.io/gh/CadQuery/cadquery/branch/master/graph/badge.svg)](https://codecov.io/gh/CadQuery/cadquery)
 [![Documentation Status](https://readthedocs.org/projects/cadquery/badge/?version=latest)](https://cadquery.readthedocs.io/en/latest/?badge=latest)
 
@@ -69,7 +70,7 @@ CadQuery supports Jupyter notebook out of the box using the jupyter-cadquery ext
 CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts. Use Anaconda/Miniconda to install CadQuery, and then add `import cadquery` to the top of your Python scripts.
 
 ```
-conda install -c conda-forge -c cadquery cadquery
+conda install -c conda-forge -c cadquery cadquery=2
 ```
 
 ## Getting help
