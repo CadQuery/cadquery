@@ -16,7 +16,7 @@ Command Line Installation
 
 Once you have Anaconda or Miniconda installed, activate the environment you want to use and type::
 
-        conda install -c pythonocc -c oce -c conda-forge -c dlr-sc -c CadQuery cadquery-occ
+        conda install -c conda-forge -c cadquery cadquery=2
 
 Test Your Installation
 ------------------------
