@@ -1345,7 +1345,7 @@ class Workplane(CQ):
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
     def spline(self, listOfXYTuple, tangents=None, periodic=False,
-               forConstruction=False, includeCurrent=True, makeWire=False):
+               forConstruction=False, includeCurrent=False, makeWire=False):
         """
         Create a spline interpolated through the provided points.
 
@@ -1895,7 +1895,8 @@ class Workplane(CQ):
 
         return self.eachpoint(_makePolygon, True)
 
-    def polyline(self, listOfXYTuple, forConstruction=False):
+    def polyline(self, listOfXYTuple, forConstruction=False,
+                 includeCurrent=False):
         """
         Create a polyline from a list of points
 
@@ -1904,6 +1905,7 @@ class Workplane(CQ):
         :param forConstruction: whether or not the edges are used for reference
         :type forConstruction: true if the edges are for reference, false if they are for creating geometry
             part geometry
+        :param includeCurrent: use current point as a starting point of the polyline
         :return: a new CQ object with a list of edges on the stack
 
         *NOTE* most commonly, the resulting wire should be closed.
@@ -1912,11 +1914,13 @@ class Workplane(CQ):
         # Our list of new edges that will go into a new CQ object
         edges = []
 
-        # The very first startPoint comes from our original object, but not after that
-        startPoint = self._findFromPoint(False)
+        if includeCurrent:
+            startPoint = self._findFromPoint(False)
+        else:
+            startPoint = self.plane.toWorldCoords(listOfXYTuple[0])
 
         # Draw a line for each set of points, starting from the from-point of the original CQ object
-        for curTuple in listOfXYTuple:
+        for curTuple in listOfXYTuple[1:]:
             endPoint = self.plane.toWorldCoords(curTuple)
 
             edges.append(Edge.makeLine(startPoint, endPoint))
