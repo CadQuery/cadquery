@@ -400,6 +400,7 @@ class TestCadQuery(BaseTest):
         Tests the operation of sweeping a wire(s) along a path
         """
         pts = [
+            (0, 0),
             (0, 1),
             (1, 2),
             (2, 4)
@@ -1062,6 +1063,7 @@ class TestCadQuery(BaseTest):
         t = 1.5
 
         points = [
+            (0, 0),
             (0, t / 2),
             (r / 2 - 1.5 * t, r / 2 - t),
             (s / 2, r / 2 - t),
@@ -1087,6 +1089,7 @@ class TestCadQuery(BaseTest):
         t = 1.5
    
         points = [
+             (0, 0),
              (0, t/2),
              (r/2-1.5*t, r/2-t),
              (s/2, r/2-t),
@@ -1122,6 +1125,7 @@ class TestCadQuery(BaseTest):
         # i just side-stepped it for now
 
         pts = [
+            (0, 0),
             (0, H / 2.0),
             (W / 2.0, H / 2.0),
             (W / 2.0, (H / 2.0 - t)),
@@ -1907,7 +1911,7 @@ class TestCadQuery(BaseTest):
         """
         decimal_places = 9
 
-        pts = [(90,0),(90,30),(30,30),(30,60),(0.0,60)]
+        pts = [(0,0),(90,0),(90,30),(30,30),(30,60),(0.0,60)]
 
         r = Workplane("XY").polyline(pts).close().extrude(10.0)
 
