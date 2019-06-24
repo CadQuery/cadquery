@@ -2891,17 +2891,3 @@ class Workplane(CQ):
            return '&lt {} &gt'.format(self.__repr__()[1:-1])
         else:
             return Compound.makeCompound(self.objects)._repr_html_()
-
-    def isInside(self, point, tolerance=1.0e-6):
-        """
-        Return whether or not a point is inside or outside a solid or compound
-        to the specified tolerance. The check is performed against the first
-        item on the stack.
-
-        :param point: point to be checked if it is inside solid
-        :param tolerance: tolerance of inside/outside check
-        :type point: tuple or Vector
-        :type tolerance: float
-        :return: boolean
-        """
-        return Shape.isInside(self.val(), point, tolerance)

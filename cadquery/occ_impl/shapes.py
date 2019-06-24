@@ -401,23 +401,6 @@ class Shape(object):
             raise NotImplementedError
 
     @staticmethod
-    def isInside(obj, point, tolerance=1.0e-6):
-        """
-        Returns whether or not the point is inside a solid or compound
-        object within supplied tolerance.
-        """
-        if shape_LUT[obj.wrapped.ShapeType()] not in {'Solid', 'Compound'}:
-            raise ValueError('Solid or Compound shape required.')
-
-        if isinstance(point, Vector):
-            point = point.toTuple()
-
-        solid_classifier = BRepClass3d_SolidClassifier(obj.wrapped)
-        solid_classifier.Perform(gp_Pnt(*point), tolerance)
-
-        return (solid_classifier.State() == ta.TopAbs_IN)
-
-    @staticmethod
     def CombinedCenterOfBoundBox(objects, tolerance=0.1):
         """
         Calculates the center of BoundBox of multiple objects.
@@ -1128,6 +1111,22 @@ class Mixin3D(object):
         shell_builder.Build()
 
         return self.__class__(shell_builder.Shape())
+
+    def isInside(self, point, tolerance=1.0e-6):
+        """
+        Returns whether or not the point is inside a solid or compound
+        object within supplied tolerance.
+        """
+        if shape_LUT[self.wrapped.ShapeType()] not in {'Solid', 'Compound'}:
+            raise ValueError('Solid or Compound shape required.')
+
+        if isinstance(point, Vector):
+            point = point.toTuple()
+
+        solid_classifier = BRepClass3d_SolidClassifier(self.wrapped)
+        solid_classifier.Perform(gp_Pnt(*point), tolerance)
+
+        return (solid_classifier.State() == ta.TopAbs_IN)
 
 
 class Solid(Shape, Mixin3D):
