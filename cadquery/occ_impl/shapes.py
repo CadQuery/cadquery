@@ -1115,18 +1115,20 @@ class Mixin3D(object):
     def isInside(self, point, tolerance=1.0e-6):
         """
         Returns whether or not the point is inside a solid or compound
-        object within supplied tolerance.
-        """
-        if shape_LUT[self.wrapped.ShapeType()] not in {'Solid', 'Compound'}:
-            raise ValueError('Solid or Compound shape required.')
+        object within the specified tolerance.
 
+        :param point: tuple or Vector representing 3D point to be tested
+        :param tolerance: tolerence for inside determination, default=1.0e-6
+        :return: bool indicating whether or not point is within solid
+        """
         if isinstance(point, Vector):
             point = point.toTuple()
 
         solid_classifier = BRepClass3d_SolidClassifier(self.wrapped)
         solid_classifier.Perform(gp_Pnt(*point), tolerance)
 
-        return (solid_classifier.State() == ta.TopAbs_IN)
+        return (solid_classifier.State() == ta.TopAbs_IN or 
+                solid_classifier.IsOnAFace())
 
 
 class Solid(Shape, Mixin3D):
