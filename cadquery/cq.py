@@ -2891,3 +2891,4 @@ class Workplane(CQ):
            return '&lt {} &gt'.format(self.__repr__()[1:-1])
         else:
             return Compound.makeCompound(self.objects)._repr_html_()
+
