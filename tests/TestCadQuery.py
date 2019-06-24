@@ -1911,16 +1911,19 @@ class TestCadQuery(BaseTest):
         self.assertTrue(solid.isInside((Vector(3,3,3))))
         self.assertFalse(solid.isInside((Vector(30.0,30.0,30.0))))
 
-        self.assertTrue(solid.isInside((4.9,4.9,4.9), tolerance=0.01))
-        self.assertFalse(solid.isInside((5.1,5.1,5.1), tolerance=0.01))
+        self.assertTrue(solid.isInside((0,0,4.99), tolerance=0.1))
+        self.assertTrue(solid.isInside((0,0,5))) # check point on surface
+        self.assertTrue(solid.isInside((0,0,5.01), tolerance=0.1))
+        self.assertFalse(solid.isInside((0,0,5.1), tolerance=0.1))
 
         # test compound solid
         model = Workplane('XY').box(10,10,10)
         model = model.moveTo(50,50).box(10,10,10)
         solid = model.val()
 
+        self.assertTrue(solid.isInside((0,0,0)))
         self.assertTrue(solid.isInside((50,50,0)))
-        self.assertFalse(solid.isInside((50,55,0)))
+        self.assertFalse(solid.isInside((50,56,0)))
 
         # make sure raises on non solid
         model = Workplane('XY').rect(10,10)
