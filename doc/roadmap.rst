@@ -83,13 +83,6 @@ construction lines
 mirror around centerline
     using centerline construction geometry
 
-rectangular array
-    automate creation of equally spread points
-
-polar array
-    create equally spaced copies of a feature around a circle
-    perhaps based on a construction circle?
-
 midpoint selection
     select midpoints of lines, arcs
 
@@ -106,9 +99,6 @@ feature snap
 polyline edges
     allow polyline to be combined with other edges/curves
 
-create text
-    ideally, in various fonts.
-
 3-d operations
 ---------------------
 
@@ -118,28 +108,12 @@ rotation/transform that return a copy
 primitive creation
     Need primitive creation for:
         * cone
-        * sphere
         * cylinder
         * torus
         * wedge
 
 extrude/cut up to surface
     allow a cut or extrude to terminate at another surface, rather than either through all or a fixed distance
-
-extrude along a path
-    rather than just normal to the plane.  This would include
-
-STEP import
-    allow embedding and importing step solids created in other tools, which
-    can then be further manipulated parametrically
-
-Dome
-    very difficult to do otherwise
-
-primitive boolean operations
-    * intersect
-    * union
-    * subtract
 
 
 Algorithms

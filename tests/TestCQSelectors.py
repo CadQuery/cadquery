@@ -122,6 +122,8 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(1, c.faces("+Y").size())
         self.assertEqual(1, c.faces("-Y").size())
         self.assertEqual(0, c.faces("XY").size())
+        self.assertEqual(c.faces("+X").val().Center(), c.faces("X").val().Center())
+        self.assertNotEqual(c.faces("+X").val().Center(), c.faces("-X").val().Center())
 
     def testParallelPlaneFaceFilter(self):
         c = CQ(makeUnitCube())

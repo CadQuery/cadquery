@@ -526,13 +526,11 @@ class _SimpleStringSyntaxSelector(Selector):
         self.operatorMinMax = {
             '>': True,
             '<': False,
-            '+': True,
-            '-': False
         }
 
         self.operator = {
             '+': DirectionSelector,
-            '-': DirectionSelector,
+            '-': lambda v: DirectionSelector(-v),
             '#': PerpendicularDirSelector,
             '|': ParallelDirSelector}
 
