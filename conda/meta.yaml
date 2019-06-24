@@ -1,23 +1,30 @@
 package:
-  name: cadquery-occ
-  version:  {{ environ.get('TRAVIS_TAG') }}
+  name: cadquery
+  version:  {{ environ.get('PACKAGE_VERSION') }}
 
 source:
   path: ..
 
 build:
-  string: {{ 'py'+environ.get('TRAVIS_PYTHON_VERSION')+environ.get('TRAVIS_COMMIT')[:8] }}
+  string: {{ 'py'+environ.get('PYTHON_VERSION')}}
   script: python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
   build:
-    - python {{ environ.get('TRAVIS_PYTHON_VERSION') }}
+    - python {{ environ.get('PYTHON_VERSION') }}
     - setuptools
   run:
-    - python {{ environ.get('TRAVIS_PYTHON_VERSION') }}
-    - oce 0.18
-    - pythonocc-core 0.18.2
+    - python {{ environ.get('PYTHON_VERSION') }}
+    - oce 0.18.*
+    - pythonocc-core 0.18.2*
     - pyparsing 2.*
+    
+test:
+  source_files:
+    - runtests.py
+    - tests/
+  commands:
+    - python runtests.py
 
 about:
-  summary: Experimental CadQuery fork based on PythonOCC
+  summary: CadQuery fork based on PythonOCC

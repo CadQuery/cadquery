@@ -115,7 +115,7 @@ from functools import reduce
 
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.
-HASH_CODE_MAX = int(1e+6)  # required by OCC.Core.HashCode
+HASH_CODE_MAX = 2147483647  # max 32bit signed int, required by OCC.Core.HashCode
 
 shape_LUT = \
     {ta.TopAbs_VERTEX: 'Vertex',
