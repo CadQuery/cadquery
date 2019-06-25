@@ -368,6 +368,7 @@ class TestCadQuery(BaseTest):
         Tests construction of splines
         """
         pts = [
+            (0, 0),
             (0, 1),
             (1, 2),
             (2, 4)
@@ -394,6 +395,10 @@ class TestCadQuery(BaseTest):
         path_const = Workplane("XZ").spline(pts,tangents=((0,1),(1,0))).val()
         self.assertFalse(path.tangentAt(0) == path_const.tangentAt(0))
         self.assertFalse(path.tangentAt(1) == path_const.tangentAt(1))
+        
+        # test include current
+        path1 = Workplane("XZ").spline(pts[1:],includeCurrent=True).val()
+        self.assertAlmostEqual(path.Length(),path1.Length())
 
     def testSweep(self):
         """
@@ -1079,6 +1084,13 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(1, r.wires().size())
         self.assertEqual(18, r.edges().size())
+
+        # try the same with includeCurrent=True        
+        r = Workplane("XY").polyline(points[1:],includeCurrent=True).mirrorX()
+
+        self.assertEqual(1, r.wires().size())
+        self.assertEqual(18, r.edges().size())
+
 
     def testChainedMirror(self):
         """
