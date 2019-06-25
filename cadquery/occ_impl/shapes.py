@@ -108,6 +108,7 @@ from OCC.Core.Addons import (text_to_brep,
 
 from OCC.Core.BRepFeat import BRepFeat_MakeDPrism
 
+from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 
 from math import pi, sqrt
 from functools import reduce
@@ -1110,6 +1111,24 @@ class Mixin3D(object):
         shell_builder.Build()
 
         return self.__class__(shell_builder.Shape())
+
+    def isInside(self, point, tolerance=1.0e-6):
+        """
+        Returns whether or not the point is inside a solid or compound
+        object within the specified tolerance.
+
+        :param point: tuple or Vector representing 3D point to be tested
+        :param tolerance: tolerence for inside determination, default=1.0e-6
+        :return: bool indicating whether or not point is within solid
+        """
+        if isinstance(point, Vector):
+            point = point.toTuple()
+
+        solid_classifier = BRepClass3d_SolidClassifier(self.wrapped)
+        solid_classifier.Perform(gp_Pnt(*point), tolerance)
+
+        return (solid_classifier.State() == ta.TopAbs_IN or 
+                solid_classifier.IsOnAFace())
 
 
 class Solid(Shape, Mixin3D):
