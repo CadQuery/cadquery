@@ -368,6 +368,7 @@ class TestCadQuery(BaseTest):
         Tests construction of splines
         """
         pts = [
+            (0, 0),
             (0, 1),
             (1, 2),
             (2, 4)
@@ -394,12 +395,17 @@ class TestCadQuery(BaseTest):
         path_const = Workplane("XZ").spline(pts,tangents=((0,1),(1,0))).val()
         self.assertFalse(path.tangentAt(0) == path_const.tangentAt(0))
         self.assertFalse(path.tangentAt(1) == path_const.tangentAt(1))
+        
+        # test include current
+        path1 = Workplane("XZ").spline(pts[1:],includeCurrent=True).val()
+        self.assertAlmostEqual(path.Length(),path1.Length())
 
     def testSweep(self):
         """
         Tests the operation of sweeping a wire(s) along a path
         """
         pts = [
+            (0, 0),
             (0, 1),
             (1, 2),
             (2, 4)
@@ -1062,6 +1068,7 @@ class TestCadQuery(BaseTest):
         t = 1.5
 
         points = [
+            (0, 0),
             (0, t / 2),
             (r / 2 - 1.5 * t, r / 2 - t),
             (s / 2, r / 2 - t),
@@ -1078,6 +1085,13 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, r.wires().size())
         self.assertEqual(18, r.edges().size())
 
+        # try the same with includeCurrent=True        
+        r = Workplane("XY").polyline(points[1:],includeCurrent=True).mirrorX()
+
+        self.assertEqual(1, r.wires().size())
+        self.assertEqual(18, r.edges().size())
+
+
     def testChainedMirror(self):
         """
         Tests whether or not calling mirrorX().mirrorY() works correctly
@@ -1087,6 +1101,7 @@ class TestCadQuery(BaseTest):
         t = 1.5
    
         points = [
+             (0, 0),
              (0, t/2),
              (r/2-1.5*t, r/2-t),
              (s/2, r/2-t),
@@ -1122,6 +1137,7 @@ class TestCadQuery(BaseTest):
         # i just side-stepped it for now
 
         pts = [
+            (0, 0),
             (0, H / 2.0),
             (W / 2.0, H / 2.0),
             (W / 2.0, (H / 2.0 - t)),
@@ -1946,7 +1962,7 @@ class TestCadQuery(BaseTest):
         """
         decimal_places = 9
 
-        pts = [(90,0),(90,30),(30,30),(30,60),(0.0,60)]
+        pts = [(0,0),(90,0),(90,30),(30,30),(30,60),(0.0,60)]
 
         r = Workplane("XY").polyline(pts).close().extrude(10.0)
 
