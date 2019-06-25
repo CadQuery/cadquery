@@ -1901,6 +1901,45 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(solid.Vertices()),4)
         self.assertEqual(len(solid.Faces()),4)
 
+    def testIsInsideSolid(self):
+        # test solid
+        model = Workplane('XY').box(10,10,10)
+        solid = model.val() # get first object on stack
+
+        self.assertTrue(solid.isInside((0,0,0)))
+        self.assertFalse(solid.isInside((10,10,10)))
+        self.assertTrue(solid.isInside((Vector(3,3,3))))
+        self.assertFalse(solid.isInside((Vector(30.0,30.0,30.0))))
+
+        self.assertTrue(solid.isInside((0,0,4.99), tolerance=0.1))
+        self.assertTrue(solid.isInside((0,0,5))) # check point on surface
+        self.assertTrue(solid.isInside((0,0,5.01), tolerance=0.1))
+        self.assertFalse(solid.isInside((0,0,5.1), tolerance=0.1))
+
+        # test compound solid
+        model = Workplane('XY').box(10,10,10)
+        model = model.moveTo(50,50).box(10,10,10)
+        solid = model.val()
+
+        self.assertTrue(solid.isInside((0,0,0)))
+        self.assertTrue(solid.isInside((50,50,0)))
+        self.assertFalse(solid.isInside((50,56,0)))
+
+        # make sure raises on non solid
+        model = Workplane('XY').rect(10,10)
+        solid = model.val()
+        with self.assertRaises(AttributeError):
+            solid.isInside((0,0,0))
+
+        # test solid with an internal void
+        void = Workplane('XY').box(10,10,10)
+        model = Workplane('XY').box(100,100,100).cut(void)
+        solid = model.val()
+
+        self.assertFalse(solid.isInside((0,0,0)))
+        self.assertTrue(solid.isInside((40,40,40)))
+        self.assertFalse(solid.isInside((55,55,55)))
+
     def testWorkplaneCenterOptions(self):
         """
         Test options for specifiying origin of workplane
