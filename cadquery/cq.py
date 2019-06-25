@@ -1916,11 +1916,13 @@ class Workplane(CQ):
 
         if includeCurrent:
             startPoint = self._findFromPoint(False)
+            points = listOfXYTuple
         else:
             startPoint = self.plane.toWorldCoords(listOfXYTuple[0])
+            points = listOfXYTuple[1:]
 
         # Draw a line for each set of points, starting from the from-point of the original CQ object
-        for curTuple in listOfXYTuple[1:]:
+        for curTuple in points:
             endPoint = self.plane.toWorldCoords(curTuple)
 
             edges.append(Edge.makeLine(startPoint, endPoint))
