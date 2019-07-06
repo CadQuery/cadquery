@@ -452,9 +452,11 @@ class CQ(object):
     def _findType(self, types, searchStack=True, searchParents=True):
 
         if searchStack:
-            for s in self.objects:
-                if isinstance(s, types):
-                    return s
+            rv = [s for s in self.objects if isinstance(s, types)]
+            if rv and types == (Solid, Compound):
+                return Compound.makeCompound(rv)
+            elif rv:
+                return rv[0]
 
         if searchParents and self.parent is not None:
             return self.parent._findType(types,
