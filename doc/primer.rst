@@ -7,7 +7,7 @@ CadQuery Concepts
 
 3D BREP Topology Concepts
 ---------------------------
-Before talking about CadQuery, it makes sense to talk a little about 3D CAD Topology. CadQuery is based upon the
+Before talking about CadQuery, it makes sense to talk a little about 3D CAD topology. CadQuery is based upon the
 OpenCascade kernel, which is uses Boundary Representations ( BREP ) for objects.  This just means that objects
 are defined by their enclosing surfaces.
 
@@ -22,7 +22,7 @@ When working in a BREP system, these fundamental constructs exist to define a sh
    :compound: a collection of solids
 
 When using CadQuery, all of these objects are created, hopefully with the least possible work. In the actual CAD
-kernel, there are another set of Geometrical constructs involved as well. For example, an arc-shaped edge will
+kernel, there is another set of Geometrical constructs involved as well. For example, an arc-shaped edge will
 hold a reference to an underlying curve that is a full circle, and each linear edge holds underneath it the equation
 for a line.  CadQuery shields you from these constructs.
 
@@ -55,7 +55,7 @@ See :py:class:`cadquery.Workplane` to learn more
 ---------------------------
 
 Once you create a workplane, you can work in 2D, and then later use the features you create to make 3D objects.
-You'll find all of the 2D constructs you expect-- circles, lines, arcs, mirroring, points, etc.
+You'll find all of the 2D constructs you expect -- circles, lines, arcs, mirroring, points, etc.
 
 See :ref:`2dOperations` to learn more.
 
@@ -73,13 +73,13 @@ See :ref:`3doperations` to learn more.
 Selectors
 ---------------------------
 
-Selectors allow you to select one or more features, for use to define new features.  As an example, you might
+Selectors allow you to select one or more features, in order to define new features.  As an example, you might
 extrude a box, and then select the top face as the location for a new feature.  Or, you might extrude a box, and
 then select all of the vertical edges so that you can apply a fillet to them.
 
 You can select Vertices, Edges, Faces, Solids, and Wires using selectors.
 
-Think of selectors as the equivalent of your hand and mouse, were you to build an object using a conventional CAD system.
+Think of selectors as the equivalent of your hand and mouse, if you were to build an object using a conventional CAD system.
 
 You can learn more about selectors :ref:`selectors`
 
@@ -87,9 +87,9 @@ You can learn more about selectors :ref:`selectors`
 Construction Geometry
 ---------------------------
 Construction geometry are features that are not part of the object, but are only defined to aid in building the object.
-A common example might be to define a rectangle, and then use the corners to define a the location of a set of holes.
+A common example might be to define a rectangle, and then use the corners to define the location of a set of holes.
 
-Most CadQuery construction methods provide a forConstruction keyword, which creates a feature that will only be used
+Most CadQuery construction methods provide a ``forConstruction`` keyword, which creates a feature that will only be used
 to locate other features
 
 
@@ -103,12 +103,12 @@ You can always go backwards to older operations by removing the current object f
 
     CQ(someObject).faces(">Z").first().vertices()
 
-returns a CadQuery object that contains all of the vertices on highest face of someObject. But you can always move
+returns a CadQuery object that contains all of the vertices on the highest face of someObject. But you can always move
 backwards in the stack to get the face as well::
 
     CQ(someObject).faces(">Z").first().vertices().end() #returns the same as CQ(someObject).faces(">Z").first()
 
-You can browse stack access methods here :ref:`stackMethods`
+You can browse stack access methods here: :ref:`stackMethods`.
 
 
 Chaining
@@ -133,7 +133,7 @@ combine the cylinder created by extruding the circle with the box, because the d
 to combine the result with the context solid. The hole() method works similarly-- CadQuery presumes that you want
 to subtract the hole from the context solid.
 
-If you want to avoid this, you can specified combine=False, and CadQuery will create the solid separately.
+If you want to avoid this, you can specify ``combine=False``, and CadQuery will create the solid separately.
 
 
 Iteration
@@ -145,7 +145,7 @@ For example, this::
 
     Workplane('XY').box(1,2,3).faces(">Z").vertices().circle(0.5)
 
-Will actually create 4 circles, because vertices() selects 4 vertices of a rectangular face, and the circle() method
+Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a rectangular face, and the ``circle()`` method
 iterates on each member of the stack.
 
 This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.CQ.Workplane.each` is useful for this purpose.
