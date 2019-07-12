@@ -2029,3 +2029,16 @@ class TestCadQuery(BaseTest):
         origin = r.faces("<Y").workplane(centerOption='CenterOfBoundBox') \
                   .plane.origin.toTuple()
         self.assertTupleAlmostEquals(origin, (45.0, -10.0, 30.0), decimal_places)
+        
+    def testFindSolid(self):
+        
+        r = Workplane("XY").pushPoints([(-2,0),(2,0)]).box(1,1,1,combine=False)
+        
+        # there should be two solids on the stack
+        self.assertEqual(len(r.objects),2)
+        self.assertTrue(isinstance(r.val(),Solid))        
+        
+        # find solid should return a compund of two solids
+        s = r.findSolid()
+        self.assertEqual(len(s.Solids()),2)
+        self.assertTrue(isinstance(s,Compound))
