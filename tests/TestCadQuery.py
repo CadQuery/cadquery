@@ -836,6 +836,15 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(7.5, bb_center.y, 3)
         self.assertAlmostEqual(50.0, bb_center.z, 3)
 
+        # The following will raise with the default tolerance of TOL 1e-2
+        bb = result.val().BoundingBox(tolerance=1e-3)
+        self.assertAlmostEqual(0.0, bb.xmin, 2)
+        self.assertAlmostEqual(28, bb.xmax, 2)
+        self.assertAlmostEqual(0.0, bb.ymin, 2)
+        self.assertAlmostEqual(15.0, bb.ymax, 2)
+        self.assertAlmostEqual(0.0, bb.zmin, 2)
+        self.assertAlmostEqual(100.0, bb.zmax, 2)
+
     def testCutThroughAll(self):
         """
             Tests a model that uses more than one workplane

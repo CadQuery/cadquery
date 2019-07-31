@@ -315,8 +315,8 @@ class Shape(object):
     def isValid(self):
         return BRepCheck_Analyzer(self.wrapped).IsValid()
 
-    def BoundingBox(self, tolerance=0.1):  # need to implement that in GEOM
-        return BoundBox._fromTopoDS(self.wrapped)
+    def BoundingBox(self, tolerance=None):  # need to implement that in GEOM
+        return BoundBox._fromTopoDS(self.wrapped, tol=tolerance)
 
     def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
 
@@ -353,7 +353,7 @@ class Shape(object):
         return Shape.centerOfMass(self)
 
     def CenterOfBoundBox(self, tolerance=0.1):
-        return self.BoundingBox(self.wrapped).center
+        return self.BoundingBox().center
 
     @staticmethod
     def CombinedCenter(objects):
