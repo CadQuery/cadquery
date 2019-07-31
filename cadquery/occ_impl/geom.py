@@ -827,7 +827,7 @@ class BoundBox(object):
             raise NotImplementedError
             # brepbndlib_AddOptimal(shape, bbox) #this is 'exact' but expensive - not yet wrapped by PythonOCC
         else:
-            mesh = BRepMesh_IncrementalMesh(shape, TOL, True)
+            mesh = BRepMesh_IncrementalMesh(shape, tol, True)
             mesh.Perform()
             # this is adds +margin but is faster
             brepbndlib_Add(shape, bbox, True)
