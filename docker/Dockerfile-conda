@@ -1,0 +1,33 @@
+FROM nvidia/cudagl:10.1-base
+LABEL source="https://github.com/CadQuery/cadquery/tree/master/docker" \
+      issues="https://github.com/CadQuery/cadquery/issues" \
+      license="https://github.com/CadQuery/cadquery/blob/master/LICENSE"
+
+# Upgrade packages
+RUN apt-get -qq  update && \
+    apt-get -qq -y upgrade && \
+    apt-get -q install -y wget
+
+# Install Conda
+RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
+    wget --quiet https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh
+
+# Add cadquery user
+RUN useradd -ms /bin/bash cadquery
+USER cadquery
+WORKDIR /home/cadquery
+
+ADD environment.yml environment.yml
+ADD setup.py setup.py
+
+RUN mkdir .conda
+ENV PATH=$PATH:/opt/conda/bin/
+RUN conda env create --name cadquery2 && \
+    conda activate cadquery2 && \
+    conda install -c conda-forge -c cadquery cadquery=2
+
+# Run CadQuery CLI script
+ADD cadquery.sh cadquery.sh
+ENTRYPOINT ["./cadquery.sh"]

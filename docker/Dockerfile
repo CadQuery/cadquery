@@ -47,9 +47,9 @@ RUN mkdir $INSTALL_PREFIX/cadquery && \
     python3 runtests.py
 
 # Clean system
-RUN cd / && rm -rf $INSTALL_PREFIX && \
-    pip3 uninstall -y six pyparsing && \
-    apt-get autoremove -y git cmake g++ libfreetype6-dev libfontconfig1-dev freeglut3-dev swig python3-dev python3-pip
+# RUN cd / && rm -rf $INSTALL_PREFIX && \
+#     pip3 uninstall -y six pyparsing && \
+#     apt-get autoremove -y git cmake g++ libfreetype6-dev libfontconfig1-dev freeglut3-dev swig python3-dev python3-pip
 
 COPY cadquery.sh cadquery.sh
 
