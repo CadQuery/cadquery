@@ -261,11 +261,10 @@ class TestCadQuery(BaseTest):
 
     def testLoftWithOneWireRaisesValueError(self):
         s = Workplane("XY").circle(5)
-        try:
+        with self.assertRaises(ValueError) as cm:
             s.loft()
-            self.assertFail()
-        except ValueError as e:
-            self.assertEqual(str(e), "More than one wire is required")
+        err = cm.exception
+        self.assertEqual(str(err), "More than one wire is required")
 
 
     def testLoftCombine(self):
