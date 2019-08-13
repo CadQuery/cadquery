@@ -1,3 +1,0 @@
-# Prevent undesired files to be committed
-*.svg
-*.py
