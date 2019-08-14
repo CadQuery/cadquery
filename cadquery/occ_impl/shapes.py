@@ -1214,6 +1214,8 @@ class Solid(Shape, Mixin3D):
             wants to make an infinitely thin shell for a real FreeCADPart.
         """
         # the True flag requests building a solid instead of a shell.
+        if len(listOfWire) < 2:
+            raise ValueError("More than one wire is required")
         loft_builder = BRepOffsetAPI_ThruSections(True, ruled)
 
         for w in listOfWire:

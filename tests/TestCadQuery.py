@@ -259,6 +259,14 @@ class TestCadQuery(BaseTest):
         # the resulting loft had a split on the side, not sure why really, i expected only 3 faces
         self.assertEqual(7, s.faces().size())
 
+    def testLoftWithOneWireRaisesValueError(self):
+        s = Workplane("XY").circle(5)
+        with self.assertRaises(ValueError) as cm:
+            s.loft()
+        err = cm.exception
+        self.assertEqual(str(err), "More than one wire is required")
+
+
     def testLoftCombine(self):
         """
             test combining a lof with another feature
