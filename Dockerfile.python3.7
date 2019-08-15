@@ -4,7 +4,12 @@ LABEL source="https://github.com/CadQuery/cadquery/tree/master/docker" \
       issues="https://github.com/CadQuery/cadquery/issues" \
       license="https://github.com/CadQuery/cadquery/blob/master/LICENSE"
 
-RUN ln -s /usr/bin/python3.6 /usr/bin/python
+# Install python 3.7
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt-get install -y python3.7 && \
+    ln -s /usr/bin/python3.7 /usr/bin/python
 
 # Install python dependencies
 RUN python -m pip install pyparsing
