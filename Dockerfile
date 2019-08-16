@@ -15,7 +15,7 @@ WORKDIR /cadquery
 RUN python setup.py install --single-version-externally-managed --record=record.txt
 RUN python runtests.py
 
-COPY cadquery.sh cadquery.sh
+COPY cadquery.sh cadquery
 
 # Run CadQuery CLI script
-ENTRYPOINT ["./cadquery.sh"]
+CMD ["./cadquery"]
