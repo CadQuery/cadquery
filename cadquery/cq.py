@@ -1370,12 +1370,12 @@ class Workplane(CQ):
             radius = diameter/2
             centerPoint = self.plane.toWorldCoords(pnt)
 
-            p1 = centerPoint.add(Vector((-length/2) + radius, diameter/2))
-            p2 = p1.add(Vector(length - diameter, 0))
-            p3 = p1.add(Vector(length - diameter, -diameter))
-            p4 = p1.add(Vector(0, -diameter))
-            arc1 = p2.add(Vector(radius, -radius))
-            arc2 = p4.add(Vector(-radius, radius))
+            p1 = centerPoint + Vector((-length/2) + radius, diameter/2)
+            p2 = p1 + Vector(length - diameter, 0)
+            p3 = p1 + Vector(length - diameter, -diameter)
+            p4 = p1 + Vector(0, -diameter)
+            arc1 = p2 + Vector(radius, -radius)
+            arc2 = p4 + Vector(-radius, radius)
 
             edges=[(Edge.makeLine(p1,p2))]
             edges.append(Edge.makeThreePointArc(p2, arc1, p3))
@@ -1384,7 +1384,7 @@ class Workplane(CQ):
 
             slot = Wire.assembleEdges(edges)
 
-            return slot.rotate(centerPoint, centerPoint.add(Vector(0,0,1)), angle)
+            return slot.rotate(centerPoint, centerPoint + Vector(0,0,1), angle)
 
         return self.eachpoint(_makeslot, True)
 
