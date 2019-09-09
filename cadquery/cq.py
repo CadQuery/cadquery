@@ -1346,7 +1346,7 @@ class Workplane(CQ):
         newCenter = p + Vector(xDist, yDist, 0)
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
-    def slot(self, length, diameter, angle):
+    def slot(self, length, diameter, angle=0):
         """
         Creates a rounded slot for each point on the stack.
 
