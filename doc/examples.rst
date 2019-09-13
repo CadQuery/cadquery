@@ -237,7 +237,7 @@ This example uses a polyline to create one half of an i-beam shape, which is mir
         (W/2.0,H/-2.0),
         (0,H/-2.0)
     ]
-    result = cq.Workplane("front").moveTo(*pts[0]).polyline(pts[1:]).mirrorY().extrude(L)
+    result = cq.Workplane("front").polyline(pts).mirrorY().extrude(L)
     show_object(result)
 
 .. topic:: Api References
