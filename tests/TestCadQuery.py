@@ -2060,23 +2060,23 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(s.Solids()),2)
         self.assertTrue(isinstance(s,Compound))
 
-    def testSlot(self):
+    def testSlot2D(self):
 
         decimal_places = 9
 
         # Ensure it produces a solid with the correct volume
-        result = Workplane("XY").slot(4,1,0).extrude(1)
+        result = Workplane("XY").slot2D(4,1,0).extrude(1)
         self.assertAlmostEqual(result.val().Volume(), 3.785398163, decimal_places)
 
         # Test for proper expected behaviour when cutting
         box = Workplane("XY").box(5,5,1)
-        result = box.faces(">Z").workplane().slot(4,1,0).cutThruAll()
+        result = box.faces(">Z").workplane().slot2D(4,1,0).cutThruAll()
         self.assertAlmostEqual(result.val().Volume(), 21.214601837, decimal_places)
-        result = box.faces(">Z").workplane().slot(4,1,0).cutBlind(-0.5)
+        result = box.faces(">Z").workplane().slot2D(4,1,0).cutBlind(-0.5)
         self.assertAlmostEqual(result.val().Volume(), 23.107300918, decimal_places)
 
         # Test to see if slot is rotated correctly
-        result = Workplane("XY").slot(4,1,45).extrude(1)
+        result = Workplane("XY").slot2D(4,1,45).extrude(1)
         point = result.faces(">Z").edges(">X").first().val().startPoint().toTuple()
         self.assertTupleAlmostEquals(point, (0.707106781, 1.414213562, 1.0), decimal_places)
 
