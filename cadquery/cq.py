@@ -1346,6 +1346,47 @@ class Workplane(CQ):
         newCenter = p + Vector(xDist, yDist, 0)
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
+    def slot2D(self, length, diameter, angle=0):
+        """
+        Creates a rounded slot for each point on the stack.
+
+        :param diameter: desired diameter, or width, of slot
+        :param length: desired end to end length of slot
+        :param angle: angle of slot in degrees, with 0 being along x-axis
+        :return: a new CQ object with the created wires on the stack
+
+        Can be used to create arrays of slots, such as in cooling applications:
+
+        result = cq.Workplane("XY").box(10,25,1).rarray(1,2,1,10).slot(8,1,0).cutThruAll()
+        """
+
+        def _makeslot(pnt):
+            """
+            Inner function that is used to create a slot for each point/object on the workplane
+            :param pnt: The center point for the slot
+            :return: A CQ object representing a slot
+            """
+
+            radius = diameter/2
+
+            p1 = pnt + Vector((-length/2) + radius, diameter/2)
+            p2 = p1 + Vector(length - diameter, 0)
+            p3 = p1 + Vector(length - diameter, -diameter)
+            p4 = p1 + Vector(0, -diameter)
+            arc1 = p2 + Vector(radius, -radius)
+            arc2 = p4 + Vector(-radius, radius)
+
+            edges=[(Edge.makeLine(p1,p2))]
+            edges.append(Edge.makeThreePointArc(p2, arc1, p3))
+            edges.append(Edge.makeLine(p3, p4))
+            edges.append(Edge.makeThreePointArc(p4, arc2, p1))
+
+            slot = Wire.assembleEdges(edges)
+
+            return slot.rotate(pnt, pnt + Vector(0,0,1), angle)
+
+        return self.eachpoint(_makeslot, True)
+
     def spline(self, listOfXYTuple, tangents=None, periodic=False,
                forConstruction=False, includeCurrent=False, makeWire=False):
         """
