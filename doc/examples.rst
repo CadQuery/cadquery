@@ -270,7 +270,7 @@ needs a complex profile
         (0.5, 1.0),
         (0, 1.0)
     ]
-    r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts).close()
+    r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts,includeCurrent=True).close()
     result = r.extrude(0.5)
     show_object(result)
 
