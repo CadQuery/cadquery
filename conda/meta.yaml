@@ -11,10 +11,10 @@ build:
 
 requirements:
   build:
-    - python >= {{ environ.get('PYTHON_VERSION') }}
+    - python >={{ environ.get('PYTHON_VERSION') }}
     - setuptools
   run:
-    - python >= {{ environ.get('PYTHON_VERSION') }}
+    - python >={{ environ.get('PYTHON_VERSION') }}
     - oce 0.18.*
     - pythonocc-core 0.18.2*
     - pyparsing 2.*
