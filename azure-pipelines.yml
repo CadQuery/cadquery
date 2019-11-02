@@ -34,3 +34,4 @@ jobs:
     vmImage: 'vs2017-win2016'
     py_maj: 3
     py_min: 6
+    conda_bld: 3.18
