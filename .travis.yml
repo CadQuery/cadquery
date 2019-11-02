@@ -29,6 +29,10 @@ matrix:
     os: osx
   - env: TRAVIS_PYTHON_VERSION=3.6
     os: linux
+  - env: TRAVIS_PYTHON_VERSION=3.7
+    os: osx
+  - env: TRAVIS_PYTHON_VERSION=3.7
+    os: linux
 
 before_install:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -46,8 +50,8 @@ before_install:
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 - hash -r;
 - conda config --set always_yes yes --set changeps1 no;
-- conda create -y -q -n test_cq -c cadquery -c conda-forge -c dlr-sc pythonocc-core=0.18.2 oce=0.18.2 python=$TRAVIS_PYTHON_VERSION
-  pyparsing mock lldb;
+- conda create -y -q -n test_cq -c cadquery -c conda-forge pythonocc-core=0.18.2 oce=0.18.2 python=$TRAVIS_PYTHON_VERSION
+  pyparsing mock;
 - source ~/miniconda/bin/activate test_cq;
 - python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
 - pip install codecov

@@ -7,7 +7,9 @@ environment:
     matrix:
         - PYTHON_VERSION: 3.6
           MINICONDA_DIRNAME: C:\Miniconda36-x64
-    
+        - PYTHON_VERSION: 3.7
+          MINICONDA_DIRNAME: C:\Miniconda37-x64
+          
     ANACONDA_TOKEN:
         secure: nxF/a2f3iS9KXGu7B/wKJYAk7Sm5wyAjoZoqJvPbRoVK4saaozVwOxDrjwJjJAYb
 
