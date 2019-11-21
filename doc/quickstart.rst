@@ -121,7 +121,7 @@ An M2 Socket head cap screw has these dimensions:
   * **Clearance Hole** : 2.4 mm
   * **CounterBore diameter** : 4.4 mm
 
-The centers of these holes should be 12mm from the edges of the block. And,
+The centers of these holes should be 6mm from the edges of the block. And,
 we want the block to work correctly even when the block is re-sized by the user.
 
 **Don't tell me** we'll have to repeat the steps above 8 times to get counter-bored holes?

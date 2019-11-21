@@ -36,7 +36,7 @@ humans will assume that:
 
 If you have experience with 3D CAD systems, you also know that there is a key design intent built into this object.
 After the base block is created, how the hole is located is key.  If it is located from one edge, changing the block
-size will have a different affect than if the hole is located from the center.
+size will have a different effect than if the hole is located from the center.
 
 Many scripting languages do not provide a way to capture design intent-- because they require that you always work in
 global coordinates.  CadQuery is different-- you can locate features relative to others in a relative way-- preserving
