@@ -1,6 +1,6 @@
 import math
         
-from OCC.Core.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp, gp_XYZ
+from OCC.Core.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
 from OCC.Core.Bnd import Bnd_Box
 from OCC.Core.BRepBndLib import brepbndlib_Add  # brepbndlib_AddOptimal
 from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
@@ -188,7 +188,7 @@ class Vector(object):
 
         # to gp_Pnt to obey cq transformation convention (in OCC.Core.vectors do not translate)
         pnt = self.toPnt()
-        pnt_t = pnt.Transformed(T.wrapped)
+        pnt_t = pnt.Transformed(T.wrapped.Trsf())
 
         return Vector(gp_Vec(pnt_t.XYZ()))
 
@@ -198,7 +198,7 @@ class Matrix:
 
     Used to move geometry in space.
 
-    The provided "matrix" parameter may be None, a gp_Trsf, or a nested list of
+    The provided "matrix" parameter may be None, a gp_GTrsf, or a nested list of
     values.
 
     If given a nested list, it is expected to be of the form:
@@ -214,9 +214,11 @@ class Matrix:
     def __init__(self, matrix=None):
 
         if matrix is None:
-            self.wrapped = gp_Trsf()
-        elif isinstance(matrix, gp_Trsf):
+            self.wrapped = gp_GTrsf()
+        elif isinstance(matrix, gp_GTrsf):
             self.wrapped = matrix
+        elif isinstance(matrix, gp_Trsf):
+            self.wrapped = gp_GTrsf(matrix)
         elif isinstance(matrix, (list, tuple)):
             # Validate matrix size & 4x4 last row value
             valid_sizes = all(
@@ -229,9 +231,11 @@ class Matrix:
                 raise ValueError("Expected the last row to be [0,0,0,1], but got: {!r}".format(matrix[3]))
 
             # Assign values to matrix
-            self.wrapped = gp_Trsf()
-            flattened = [e for row in matrix[:3] for e in row]
-            self.wrapped.SetValues(*flattened)
+            self.wrapped = gp_GTrsf()
+            [self.wrapped.SetValue(i+1,j+1,e) 
+             for i,row in enumerate(matrix[:3]) 
+             for j,e in enumerate(row)]
+            
         else:
             raise TypeError(
                     "Invalid param to matrix constructor: {}".format(matrix))
@@ -257,7 +261,7 @@ class Matrix:
         new.SetRotation(direction,
                         angle)
 
-        self.wrapped = self.wrapped * new
+        self.wrapped = self.wrapped * gp_GTrsf(new)
 
     def inverse(self):
 
@@ -283,7 +287,7 @@ class Matrix:
     def __getitem__(self, rc):
         """Provide Matrix[r, c] syntax for accessing individual values. The row
         and column parameters start at zero, which is consistent with most
-        python libraries, but is counter to gp_Trsf(), which is 1-indexed.
+        python libraries, but is counter to gp_GTrsf(), which is 1-indexed.
         """
         if not isinstance(rc, tuple) or (len(rc) != 2):
             raise IndexError("Matrix subscript must provide (row, column)")
@@ -292,7 +296,7 @@ class Matrix:
             if r < 3:
                 return self.wrapped.Value(r + 1, c + 1)
             else:
-                # gp_Trsf doesn't provide access to the 4th row because it has
+                # gp_GTrsf doesn't provide access to the 4th row because it has
                 # an implied value as below:
                 return [0., 0., 0., 1.][c]
         else:
@@ -722,6 +726,9 @@ class Plane(object):
         # the double-inverting is strange, and I don't understand it.
         forward = Matrix()
         inverse = Matrix()
+        
+        forwardT = gp_Trsf()
+        inverseT = gp_Trsf()
 
         global_coord_system = gp_Ax3()
         local_coord_system = gp_Ax3(gp_Pnt(*self.origin.toTuple()),
@@ -729,11 +736,13 @@ class Plane(object):
                                     gp_Dir(*self.xDir.toTuple())
                                     )
 
-        forward.wrapped.SetTransformation(global_coord_system,
-                                          local_coord_system)
-
-        inverse.wrapped.SetTransformation(local_coord_system,
-                                          global_coord_system)
+        forwardT.SetTransformation(global_coord_system,
+                                   local_coord_system)
+        forward.wrapped = gp_GTrsf(forwardT)
+        
+        inverseT.SetTransformation(local_coord_system,
+                                   global_coord_system)
+        inverse.wrapped = gp_GTrsf(inverseT)
 
         # TODO verify if this is OK
         self.lcs = local_coord_system
