@@ -529,7 +529,7 @@ class Shape(object):
         """
 
         r = Shape.cast(BRepBuilderAPI_Transform(self.wrapped,
-                                                tMatrix.wrapped).Shape())
+                                                tMatrix.wrapped.Trsf()).Shape())
         r.forConstruction = self.forConstruction
 
         return r
@@ -548,7 +548,7 @@ class Shape(object):
             which doesnt change the underlying type of the geometry, but cannot handle skew transformations
         """
         r = Shape.cast(BRepBuilderAPI_GTransform(self.wrapped,
-                                                 gp_GTrsf(tMatrix.wrapped),
+                                                 tMatrix.wrapped,
                                                  True).Shape())
         r.forConstruction = self.forConstruction
 
