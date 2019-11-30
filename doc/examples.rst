@@ -71,8 +71,8 @@ of a working plane is at the center of the face.  The default hole depth is thro
         center_hole_dia = 22.0
 
         # Create a box based on the dimensions above and add a 22mm center hole
-        result = cq.Workplane("XY").box(length, height, thickness) \
-            .faces(">Z").workplane().hole(center_hole_dia)
+        result = (cq.Workplane("XY").box(length, height, thickness)
+            .faces(">Z").workplane().hole(center_hole_dia))
 
         show_object(result)
 
@@ -121,8 +121,8 @@ closed curve.
 
 .. cq_plot::
 
-    result = cq.Workplane("front").lineTo(2.0, 0).lineTo(2.0, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0))\
-        .close().extrude(0.25)
+    result = (cq.Workplane("front").lineTo(2.0, 0).lineTo(2.0, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0))
+        .close().extrude(0.25))
     show_object(result)
 
 
@@ -152,7 +152,7 @@ A new work plane center can be established at any point.
     result = result.center(1.5, 0.0).rect(0.5, 0.5) # new work center is  (1.5, 0.0)
 
     result = result.center(-1.5, 1.5).circle(0.25) # new work center is ( 0.0, 1.5).
-    #the new center is specified relative to the previous center, not global coordinates!
+    # The new center is specified relative to the previous center, not global coordinates!
 
     result = result.extrude(0.25)
     show_object(result)
@@ -204,8 +204,8 @@ correct for small hole sizes.
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(3.0, 4.0, 0.25).pushPoints ( [ ( 0,0.75 ),(0, -0.75) ]) \
-        .polygon(6, 1.0).cutThruAll()
+    result = (cq.Workplane("front").box(3.0, 4.0, 0.25).pushPoints ( [ ( 0,0.75 ),(0, -0.75) ])
+        .polygon(6, 1.0).cutThruAll())
     show_object(result)
 
 .. topic:: Api References
@@ -467,9 +467,9 @@ You can create a rotated work plane by specifying angles of rotation relative to
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").workplane()  \
-         .transformed(offset=cq.Vector(0, -1.5, 1.0),rotate=cq.Vector(60, 0, 0)) \
-         .rect(1.5,1.5,forConstruction=True).vertices().hole(0.25)
+    result = (cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").workplane()
+         .transformed(offset=cq.Vector(0, -1.5, 1.0),rotate=cq.Vector(60, 0, 0))
+         .rect(1.5,1.5,forConstruction=True).vertices().hole(0.25))
     show_object(result)
 
 .. topic:: Api References
@@ -492,8 +492,8 @@ In the example below, a rectangle is drawn, and its vertices are used to locate 
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(2, 2, 0.5).faces(">Z").workplane() \
-        .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.125 )
+    result = (cq.Workplane("front").box(2, 2, 0.5).faces(">Z").workplane()
+        .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.125 ))
     show_object(result)
 
 .. topic:: Api References
@@ -538,8 +538,8 @@ and a circular section.
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").circle(1.5) \
-        .workplane(offset=3.0).rect(0.75, 0.5).loft(combine=True)
+    result = (cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").circle(1.5)
+        .workplane(offset=3.0).rect(0.75, 0.5).loft(combine=True))
 
     show_object(result)
 
@@ -563,8 +563,8 @@ Similar to :py:meth:`Workplane.hole` , these functions operate on a list of poin
 
 .. cq_plot::
 
-    result = cq.Workplane(cq.Plane.XY()).box(4,2, 0.5).faces(">Z").workplane().rect(3.5, 1.5, forConstruction=True)\
-    .vertices().cboreHole(0.125, 0.25, 0.125, depth=None)
+    result = (cq.Workplane(cq.Plane.XY()).box(4,2, 0.5).faces(">Z").workplane().rect(3.5, 1.5, forConstruction=True)
+    .vertices().cboreHole(0.125, 0.25, 0.125, depth=None))
 
     show_object(result)
 
@@ -614,10 +614,10 @@ with just a few lines of code.
 
         (length,height,bearing_diam, thickness,padding) = ( 30.0, 40.0, 22.0, 10.0, 8.0)
 
-        result = cq.Workplane("XY").box(length,height,thickness).faces(">Z").workplane().hole(bearing_diam) \
-                .faces(">Z").workplane() \
-                .rect(length-padding,height-padding,forConstruction=True) \
-                .vertices().cboreHole(2.4, 4.4, 2.1)
+        result = (cq.Workplane("XY").box(length,height,thickness).faces(">Z").workplane().hole(bearing_diam)
+                .faces(">Z").workplane()
+                .rect(length-padding,height-padding,forConstruction=True)
+                .vertices().cboreHole(2.4, 4.4, 2.1))
 
         show_object(result)
 
@@ -665,10 +665,10 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
     (L,w,t) = (20.0, 6.0, 3.0)
     s = cq.Workplane("XY")
 
-    #draw half the profile of the bottle and extrude it
-    p = s.center(-L/2.0, 0).vLine(w/2.0) \
-        .threePointArc((L/2.0, w/2.0 + t),(L, w/2.0)).vLine(-w/2.0) \
-        .mirrorX().extrude(30.0,True)
+    # Draw half the profile of the bottle and extrude it
+    p = (s.center(-L/2.0, 0).vLine(w/2.0)
+        .threePointArc((L/2.0, w/2.0 + t),(L, w/2.0)).vLine(-w/2.0)
+        .mirrorX().extrude(30.0,True))
 
     #make the neck
     p = p.faces(">Z").workplane().circle(3.0).extrude(2.0,True)
@@ -729,9 +729,9 @@ A Parametric Enclosure
         oshell = oshell.edges("|Z").fillet(p_sideRadius)
 
     #inner shell
-    ishell = oshell.faces("<Z").workplane(p_thickness,True)\
-        .rect((p_outerWidth - 2.0* p_thickness),(p_outerLength - 2.0*p_thickness))\
-        .extrude((p_outerHeight - 2.0*p_thickness),False) #set combine false to produce just the new boss
+    ishell = (oshell.faces("<Z").workplane(p_thickness,True)
+        .rect((p_outerWidth - 2.0* p_thickness),(p_outerLength - 2.0*p_thickness))
+        .extrude((p_outerHeight - 2.0*p_thickness),False) #set combine false to produce just the new boss)
     ishell = ishell.edges("|Z").fillet(p_sideRadius - p_thickness)
 
     #make the box outer box
@@ -741,10 +741,10 @@ A Parametric Enclosure
     POSTWIDTH = (p_outerWidth - 2.0*p_screwpostInset)
     POSTLENGTH = (p_outerLength  -2.0*p_screwpostInset)
 
-    box = box.faces(">Z").workplane(-p_thickness)\
-        .rect(POSTWIDTH,POSTLENGTH,forConstruction=True)\
-        .vertices().circle(p_screwpostOD/2.0).circle(p_screwpostID/2.0)\
-        .extrude((-1.0)*(p_outerHeight + p_lipHeight -p_thickness ),True)
+    box = (box.faces(">Z").workplane(-p_thickness)
+        .rect(POSTWIDTH,POSTLENGTH,forConstruction=True)
+        .vertices().circle(p_screwpostOD/2.0).circle(p_screwpostID/2.0)
+        .extrude((-1.0)*(p_outerHeight + p_lipHeight -p_thickness ),True))
 
     #split lid into top and bottom parts
     (lid,bottom) = box.faces(">Z").workplane(-p_thickness -p_lipHeight ).split(keepTop=True,keepBottom=True).all()  #splits into two solids
@@ -835,23 +835,23 @@ regarding the underside of the brick.
     s = s.faces("<Z").shell(-1.0 * t)
 
     # make the bumps on the top
-    s = s.faces(">Z").workplane(). \
-        rarray(pitch, pitch, lbumps, wbumps, True).circle(bumpDiam / 2.0) \
-        .extrude(bumpHeight)
+    s = (s.faces(">Z").workplane().
+        rarray(pitch, pitch, lbumps, wbumps, True).circle(bumpDiam / 2.0)
+        .extrude(bumpHeight))
 
     # add posts on the bottom. posts are different diameter depending on geometry
     # solid studs for 1 bump, tubes for multiple, none for 1x1
     tmp = s.faces("<Z").workplane(invert=True)
 
     if lbumps > 1 and wbumps > 1:
-        tmp = tmp.rarray(pitch, pitch, lbumps - 1, wbumps - 1, center=True). \
-            circle(postDiam / 2.0).circle(bumpDiam / 2.0).extrude(height - t)
+        tmp = (tmp.rarray(pitch, pitch, lbumps - 1, wbumps - 1, center=True).
+            circle(postDiam / 2.0).circle(bumpDiam / 2.0).extrude(height - t))
     elif lbumps > 1:
-        tmp = tmp.rarray(pitch, pitch, lbumps - 1, 1, center=True). \
-            circle(t).extrude(height - t)
+        tmp = (tmp.rarray(pitch, pitch, lbumps - 1, 1, center=True).
+            circle(t).extrude(height - t))
     elif wbumps > 1:
-        tmp = tmp.rarray(pitch, pitch, 1, wbumps - 1, center=True). \
-            circle(t).extrude(height - t)
+        tmp = (tmp.rarray(pitch, pitch, 1, wbumps - 1, center=True).
+            circle(t).extrude(height - t))
     else:
         tmp = s
 
@@ -1018,12 +1018,12 @@ Braille Example
             line_start_pos += Point(0, -cell_geometry.interline)
 
         r = get_cylinder_radius(cell_geometry)
-        base = base.faces('>Z').vertices('<XY').workplane() \
-            .pushPoints(dot_pos).circle(r) \
-            .extrude(r)
+        base = (base.faces('>Z').vertices('<XY').workplane()
+            .pushPoints(dot_pos).circle(r)
+            .extrude(r))
         # Make a fillet almost the same radius to get a pseudo spherical cap.
-        base = base.faces('>Z').edges() \
-            .fillet(r - 0.001)
+        base = (base.faces('>Z').edges()
+            .fillet(r - 0.001))
         hidding_box = cq.Workplane('XY').box(
             base_width, base_height, base_thickness, centered=(False, False, False))
         result = hidding_box.union(base)
@@ -1119,7 +1119,7 @@ This specific examples generates a helical cycloidal gear.
             return hypocycloid(t,r1,r2)
 
     # create the gear profile and extrude it
-    result = cq.Workplane('XY').parametricCurve(lambda t: gear(t*2*pi,6,1))\
-        .twistExtrude(15,90).faces('>Z').workplane().circle(2).cutThruAll()
+    result = (cq.Workplane('XY').parametricCurve(lambda t: gear(t*2*pi,6,1))
+        .twistExtrude(15,90).faces('>Z').workplane().circle(2).cutThruAll())
 
     show_object(result)

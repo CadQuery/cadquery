@@ -13,8 +13,8 @@ center_hole_dia = 22.0      # Diameter of center hole in block
 # 2.  The highest (max) Z face is selected and a new workplane is created on it.
 # 3.  The new workplane is used to drill a hole through the block.
 # 3a. The hole is automatically centered in the workplane.
-result = cq.Workplane("XY").box(length, height, thickness) \
-    .faces(">Z").workplane().hole(center_hole_dia)
+result = (cq.Workplane("XY").box(length, height, thickness)
+    .faces(">Z").workplane().hole(center_hole_dia))
 
 # Displays the result of this script
 show_object(result)

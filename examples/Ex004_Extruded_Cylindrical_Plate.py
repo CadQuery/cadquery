@@ -21,9 +21,9 @@ rectangle_length = 19.0     # Length of rectangular hole in cylindrical plate
 #     plate with a rectangular hole in the center.
 # 3a. circle() and rect() could be changed to any other shape to completely
 #     change the resulting plate and/or the hole in it.
-result = cq.Workplane("front").circle(circle_radius) \
-                              .rect(rectangle_width, rectangle_length) \
-                              .extrude(thickness)
+result = (cq.Workplane("front").circle(circle_radius)
+                              .rect(rectangle_width, rectangle_length)
+                              .extrude(thickness))
 
 # Displays the result of this script
 show_object(result)
