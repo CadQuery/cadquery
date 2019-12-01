@@ -30,10 +30,10 @@ polygon_dia = 1.0   # The diameter of the circle enclosing the polygon points
 #     like cutBlind() assume a positive cut direction, but cutThruAll() assumes
 #     instead that the cut is made from a max direction and cuts downward from
 #     that max through all objects.
-result = cq.Workplane("front").box(width, height, thickness) \
-                                    .pushPoints([(0, 0.75), (0, -0.75)]) \
-                                    .polygon(polygon_sides, polygon_dia) \
-                                    .cutThruAll()
+result = (cq.Workplane("front").box(width, height, thickness)
+                                    .pushPoints([(0, 0.75), (0, -0.75)])
+                                    .polygon(polygon_sides, polygon_dia)
+                                    .cutThruAll())
 
 # Displays the result of this script
 show_object(result)
