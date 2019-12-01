@@ -26,12 +26,12 @@ cbore_depth = 2.1                   # Bolt head pocket hole depth
 #     do not show up in the final displayed geometry.
 # 6.  The vertices of the rectangle (corners) are selected, and a counter-bored
 #     hole is placed at each of the vertices (all 4 of them at once).
-result = cq.Workplane("XY").box(length, height, thickness) \
-    .faces(">Z").workplane().hole(center_hole_dia) \
-    .faces(">Z").workplane() \
-    .rect(length - cbore_inset, height - cbore_inset, forConstruction=True) \
-    .vertices().cboreHole(cbore_hole_diameter, cbore_diameter, cbore_depth) \
-    .edges("|Z").fillet(2.0)
+result = (cq.Workplane("XY").box(length, height, thickness)
+    .faces(">Z").workplane().hole(center_hole_dia)
+    .faces(">Z").workplane()
+    .rect(length - cbore_inset, height - cbore_inset, forConstruction=True)
+    .vertices().cboreHole(cbore_hole_diameter, cbore_diameter, cbore_depth)
+    .edges("|Z").fillet(2.0))
 
 # Displays the result of this script
 show_object(result)
