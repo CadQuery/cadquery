@@ -2872,8 +2872,8 @@ class Workplane(CQ):
         :param zmin:The minimum Z location
         :param xmax:The maximum X location
         :param zmax: The maximum Z location
-        :param pnt: A vector for the origin of the direction for the wedge
-        :param dir: The direction vector for the major axis of the wedge
+        :param pnt: A vector (or tuple) for the origin of the direction for the wedge
+        :param dir: The direction vector (or tuple) for the major axis of the wedge
         :param combine: Whether the results should be combined with other solids on the stack
             (and each other)
         :param clean: true to attempt to have the kernel clean up the geometry, false otherwise
