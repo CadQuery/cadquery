@@ -1226,23 +1226,22 @@ class Solid(Shape, Mixin3D):
         return cls(loft_builder.Shape())
 
     @classmethod
-    def makeWedge(cls, xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
+    def makeWedge(cls, dx, dy, dz, xmin, zmin, xmax, zmax, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
         """
         Make a wedge located in pnt
         By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
         """
-        return cls(BRepPrimAPI_MakeWedge(gp_Ax2(pnt.toPnt(),
-                                                dir.toDir()),
-                                         xmin,
-                                         ymin,
-                                         zmin,
-                                         z2min,
-                                         x2min,
-                                         xmax,
-                                         ymax,
-                                         zmax,
-                                         z2max,
-                                         x2max).Solid())
+
+        return cls(BRepPrimAPI_MakeWedge(
+                    gp_Ax2(pnt.toPnt(),
+                    dir.toDir()),
+                    dx,
+                    dy,
+                    dz,
+                    xmin,
+                    zmin,
+                    xmax,
+                    zmax).Solid())
 
     @classmethod
     def makeSphere(cls, radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees1=0, angleDegrees2=90, angleDegrees3=360):

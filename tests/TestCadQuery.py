@@ -1365,7 +1365,7 @@ class TestCadQuery(BaseTest):
 
     def testSphereDefaults(self):
         s = Workplane("XY").sphere(10)
-        # self.saveModel(s) # Until FreeCAD fixes their sphere operation
+        self.saveModel(s) # Until FreeCAD fixes their sphere operation
         self.assertEqual(1, s.solids().size())
         self.assertEqual(1, s.faces().size())
 
@@ -1389,6 +1389,36 @@ class TestCadQuery(BaseTest):
         # self.saveModel(s) # Until FreeCAD fixes their sphere operation
         self.assertEqual(1, s.solids().size())
         self.assertEqual(4, s.faces().size())
+
+    def testWedgeDefaults(self):
+        s = Workplane("XY").wedge(10, 10, 10, 5, 5, 5, 5)
+        self.saveModel(s)
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(5, s.faces().size())
+        self.assertEqual(5, s.vertices().size())
+
+    def testWedgeCentering(self):
+        s = Workplane("XY").wedge(10, 10, 10, 5, 5, 5, 5, centered=(False, False, False))
+        # self.saveModel(s)
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(5, s.faces().size())
+        self.assertEqual(5, s.vertices().size())
+
+    def testWedgePointList(self):
+        s = Workplane("XY").rect(
+            4.0, 4.0, forConstruction=True).vertices().wedge(10, 10, 10, 5, 5, 5, 5, combine=False)
+        #self.saveModel(s)
+        self.assertEqual(4, s.solids().size())
+        self.assertEqual(20, s.faces().size())
+        self.assertEqual(20, s.vertices().size())
+
+    def testWedgeCombined(self):
+        s = Workplane("XY").rect(
+            4.0, 4.0, forConstruction=True).vertices().wedge(10, 10, 10, 5, 5, 5, 5, combine=True)
+        # self.saveModel(s)
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(12, s.faces().size())
+        self.assertEqual(16, s.vertices().size())
 
     def testQuickStartXY(self):
         s = Workplane(Plane.XY()).box(2, 4, 0.5).faces(">Z").workplane().rect(1.5, 3.5, forConstruction=True)\
