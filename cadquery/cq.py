@@ -1187,7 +1187,7 @@ class Workplane(CQ):
             #this workplane is centered at x=0.5,y=0.5, the center of the upper face
             s = Workplane().box(1,1,1).faces(">Z").workplane()
 
-            s.center(-0.5,-0.5) # move the center to the corner
+            s = s.center(-0.5,-0.5) # move the center to the corner
             t = s.circle(0.25).extrude(0.2)
             assert ( t.faces().size() == 9 ) # a cube with a cylindrical nub at the top right corner
 
