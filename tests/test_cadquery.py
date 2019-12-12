@@ -4,6 +4,9 @@
 """
 # system modules
 import math,os.path,time,tempfile
+from random import choice
+from random import random
+from random import randrange
 
 # my modules
 from cadquery import *
@@ -245,6 +248,32 @@ class TestCadQuery(BaseTest):
         self.assertEqual(-0.5, endPoint[0])
         self.assertEqual(-0.5, endPoint[1])
         self.assertEqual(2.5, endPoint[2])
+
+    def testPlaneRotateZNormal(self):
+        """
+        Rotation of a plane in the Z direction should never alter its normal.
+
+        This test creates random planes, with the normal in a random direction
+        among positive and negative X, Y and Z. The plane is defined with this
+        normal and another random perpendicular vector (the X-direction of the
+        plane). The plane is finally rotated a random angle in the Z-direction
+        to verify that the resulting plane maintains the same normal.
+        """
+        for _ in range(100):
+            normal_sign = choice((-1, 1))
+            normal_dir = randrange(3)
+            angle = (random() - 0.5) * 720
+
+            normal = [0, 0, 0]
+            normal[normal_dir] = normal_sign
+            xdir = [random(), random(), random()]
+            xdir[normal_dir] = 0
+
+            plane = Plane(origin=(0, 0, 0), xDir=xdir, normal=normal)
+            rotated = plane.rotated((0, 0, angle)).zDir.toTuple()
+            self.assertAlmostEqual(rotated[0], normal[0])
+            self.assertAlmostEqual(rotated[1], normal[1])
+            self.assertAlmostEqual(rotated[2], normal[2])
 
     def testLoft(self):
         """
