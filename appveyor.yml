@@ -19,14 +19,14 @@ install:
     - conda update -q conda
     - conda create --quiet --name cqtest -c cadquery -c conda-forge -c dlr-sc pythonocc-core=0.18.2 python=%PYTHON_VERSION% pyparsing mock coverage codecov
     - activate cqtest
-    - pip install codecov
+    - pip install .[dev]
     - python setup.py install
 
 build: false
 
 test_script:
-    - coverage run runtests.py
-    
+    - pytest -v --cov
+
 on_success:
     - codecov
 
