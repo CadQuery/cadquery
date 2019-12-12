@@ -32,6 +32,17 @@ setup(
     long_description=open('README.md').read(),
     packages=['cadquery','cadquery.contrib','cadquery.occ_impl','cadquery.plugins','tests'],
     install_requires=['pyparsing'],
+    extras_require={
+        'dev': [
+            # Documentation
+            'sphinx',
+            'sphinx_rtd_theme',
+            # Testing
+            'codecov',
+            'pytest',
+            'pytest-cov',
+         ],
+    },
     include_package_data=True,
     zip_safe=False,
     platforms='any',
