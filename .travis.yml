@@ -51,26 +51,25 @@ before_install:
 - hash -r;
 - conda config --set always_yes yes --set changeps1 no;
 - conda create -y -q -n test_cq -c cadquery -c conda-forge pythonocc-core=0.18.2 oce=0.18.2 python=$TRAVIS_PYTHON_VERSION
-  pyparsing mock;
 - source ~/miniconda/bin/activate test_cq;
+- pip install .[dev]
 - python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
-- pip install codecov
 
 install:
 - python setup.py install
 
 before_script:
-- ulimit -c unlimited -S 
+- ulimit -c unlimited -S
 - sudo rm -f /cores/core.*
 
 script:
-- coverage run runtests.py
+- pytest -v --cov
 
 after_success:
 - codecov
 
 after_failure:
-- ls /cores/core.* 
+- ls /cores/core.*
 - lldb --core `ls /cores/core.*` --batch --one-line "bt"
 
 
