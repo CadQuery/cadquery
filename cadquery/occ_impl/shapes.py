@@ -809,12 +809,15 @@ class Wire(Shape, Mixin1D):
         """
             Attempts to build a wire that consists of the edges in the provided list
             :param cls:
-            :param listOfEdges: a list of Edge objects
+            :param listOfEdges: a list of Edge objects. The edges are not to be consecutive.
             :return: a wire with the edges assembled
         """
+        
         wire_builder = BRepBuilderAPI_MakeWire()
-        for edge in listOfEdges:
-            wire_builder.Add(edge.wrapped)
+        edges_list = TopTools_ListOfShape()
+        for e in listOfEdges:
+            edges_list.Append(e.wrapped) 
+        wire_builder.Add(edges_list)
 
         return cls(wire_builder.Wire())
 
