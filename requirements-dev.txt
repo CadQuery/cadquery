@@ -1,3 +1,0 @@
-sphinx-rtd-theme==0.1.9
-travis-sphinx==1.1.0
-Sphinx==1.3.1
