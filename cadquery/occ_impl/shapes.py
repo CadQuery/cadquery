@@ -112,6 +112,7 @@ from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 
 from math import pi, sqrt
 from functools import reduce
+import warnings
 
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.
@@ -818,6 +819,11 @@ class Wire(Shape, Mixin1D):
         for e in listOfEdges:
             edges_list.Append(e.wrapped) 
         wire_builder.Add(edges_list)
+        if not wire_builder.IsDone():
+          w1 = 'BRepBuilderAPI_MakeWire::IsDone(): returns the construction status. BRepBuilderAPI_WireDone if the wire is built, or another value of the BRepBuilderAPI_WireError enumeration indicating why the construction failed = '+ str(wire_builder.IsDone())
+          w2 = 'BRepBuilderAPI_MakeWire::Error(): returns true if this algorithm contains a valid wire. IsDone returns false if: there are no edges in the wire, or the last edge which you tried to add was not connectable = ' + str(wire_builder.Error())
+          warnings.warn(w1)
+          warnings.warn(w2)
 
         return cls(wire_builder.Wire())
 
