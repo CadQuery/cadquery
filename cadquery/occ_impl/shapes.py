@@ -825,7 +825,7 @@ class Wire(Shape, Mixin1D):
           warnings.warn(w1)
           warnings.warn(w2)
 
-      return cls(wire_builder.Wire())
+        return cls(wire_builder.Wire())
 
     @classmethod
     def makeCircle(cls, radius, center, normal):
