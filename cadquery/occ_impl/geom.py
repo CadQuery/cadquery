@@ -619,7 +619,7 @@ class Plane(object):
         :param rotate: Vector [xDegrees, yDegrees, zDegrees]
         :return: a copy of this plane rotated as requested.
         """
-        rotate = Vector(rotate)
+        rotate = Vector(self.toWorldCoords(rotate))
         # Convert to radians.
         rotate = rotate.multiply(math.pi / 180.0)
 
