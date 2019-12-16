@@ -12,8 +12,8 @@ class TestAssembleEdgesWarning(BaseTest):
         thickness = 0.1
         edge_points = [[-7.,-7.,0.], [-3.,-10.,3.], [7.,-7.,0.], [7.,7.,0.], [-7.,7.,0.]]
         edge_wire = cq.Workplane('XY').polyline([(-7.,-7.), (7.,-7.), (7.,7.), (-7.,7.)])
-        edge_wire = edge_wire.add(cq.Workplane('XY').workplane().transformed(offset=cq.Vector(0, 0, -7), rotate=cq.Vector(0, 45, 0)).spline([(-7.,0.), (3,-3), (7.,0.)])) # Triggers BRepBuilderAPI_MakeWire error
-        surface_points = [[-3.,-3.,-3.], [3.,3.,3.]]
-        plate_1 = cq.Workplane('XY').interpPlate(surface_points, edge_wire, thickness)
+        edge_wire = edge_wire.add(cq.Workplane('XY').workplane().transformed(offset=cq.Vector(0, 0, -7), rotate=cq.Vector(0, 45, 0)).spline([(-7.,0.), (3,-3), (7.,0.)])) # Triggers BRepBuilderAPI_MakeWire error ('YZ' is correct)
+        edge_wire = [o.vals()[0] for o in edge_wire.all()]
+        edge_wire = cq.Wire.assembleEdges(edge_wire)
         
-        return plate_1
+        return edge_wire
