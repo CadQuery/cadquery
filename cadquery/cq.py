@@ -18,6 +18,7 @@
 """
 
 import math
+from copy import copy
 from . import (
     Vector,
     Plane,
@@ -71,6 +72,7 @@ class CQ(object):
         self.objects = []
         self.ctx = CQContext()
         self.parent = None
+        self._tag = None
 
         if obj:  # guarded because sometimes None for internal use
             self.objects.append(obj)
@@ -93,6 +95,17 @@ class CQ(object):
         r.ctx = self.ctx  # context solid remains the same
         r.objects = list(objlist)
         return r
+
+    def tag(self, name):
+        """
+        Tags the current CQ object for later reference.
+
+        :param name: the name to tag this object with
+        :type name: string
+        :returns: self, a cq object with tag applied
+        """
+        self._tag = name
+        return self
 
     def _collectProperty(self, propName):
         """
@@ -266,6 +279,22 @@ class CQ(object):
         """
         return self.objects[0]
 
+    def getTagged(self, name):
+        """
+        Search the parent chain for a an object with tag == name.
+
+        :param name: the tag to search for
+        :type name: string
+        :returns: the first CQ object in the parent chain with tag == name
+        :raises: ValueError if no object tagged name in the chain
+        """
+        if self._tag == name:
+            return self
+        if self.parent is None:
+            raise ValueError("No CQ object named {} in chain".format(name))
+        else:
+            return self.parent.getTagged(name)
+
     def toOCC(self):
         """
         Directly returns the wrapped FreeCAD object to cut down on the amount of boiler plate code
@@ -429,6 +458,31 @@ class CQ(object):
 
         # a new workplane has the center of the workplane on the stack
         return s
+
+    def copyWorkplane(self, obj):
+        """
+        Copies the workplane from obj.
+
+        :param obj: an object to copy the workplane from
+        :type obj: a CQ object
+        :returns: a CQ object with obj's workplane
+        """
+        out = Workplane(obj.plane)
+        out.parent = self
+        out.ctx = self.ctx
+        return out
+
+    def copyWorkplaneFromTagged(self, name):
+        """
+        Copies the workplane from a tagged parent.
+
+        :param name: tag to search for
+        :type name: string
+        :returns: a CQ object with name's workplane
+        """
+        tagged = self.getTagged(name)
+        out = self.copyWorkplane(tagged)
+        return out
 
     def first(self):
         """
@@ -1007,6 +1061,7 @@ class Workplane(CQ):
         self.objects = [self.plane.origin]
         self.parent = None
         self.ctx = CQContext()
+        self._tag = None
 
     def transformed(self, rotate=(0, 0, 0), offset=(0, 0, 0)):
         """
@@ -1048,7 +1103,7 @@ class Workplane(CQ):
 
         # copy the current state to the new object
         ns = Workplane("XY")
-        ns.plane = self.plane
+        ns.plane = copy(self.plane)
         ns.parent = self
         ns.objects = list(objlist)
         ns.ctx = self.ctx
@@ -1215,8 +1270,9 @@ class Workplane(CQ):
         The result is a cube with a round boss on the corner
         """
         "Shift local coordinates to the specified location, according to current coordinates"
-        self.plane.setOrigin2d(x, y)
-        n = self.newObject([self.plane.origin])
+        new_origin = self.plane.toWorldCoords((x, y))
+        n = self.newObject([new_origin])
+        n.plane.setOrigin2d(x, y)
         return n
 
     def lineTo(self, x, y, forConstruction=False):

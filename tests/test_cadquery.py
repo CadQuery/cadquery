@@ -2742,3 +2742,60 @@ class TestCadQuery(BaseTest):
             )
         edge_wire = [o.vals()[0] for o in edge_wire.all()]
         edge_wire = Wire.assembleEdges(edge_wire)
+
+    def testTag(self):
+
+        # test tagging
+        Workplane("XY").pushPoints([(-2, 0), (2, 0)]).box(1, 1, 1, combine=False)
+        result = (Workplane("XY").pushPoints([(-2, 0), (2, 0)])
+                  .box(1, 1, 1, combine=False).tag("2 solids")
+                  .union(Workplane("XY").box(6, 1, 1)))
+        self.assertEqual(len(result.objects), 1)
+        result = result.getTagged("2 solids")
+        self.assertEqual(len(result.objects), 2)
+
+        # tags can be used to create geometry for construction
+        part = ( # create a base solid
+            Workplane("XY").box(1, 1, 1).tag("base")
+            # do some stuff "for construction"
+            .faces(">Y").workplane().box(1, 3, 1)
+            .faces(">Z").workplane().box(2, 1, 1)
+            .faces(">X").workplane()
+            # create an edge, which CadQuery adds to the modelling context
+            .circle(0.5)
+            # go back to base object, but modelling context is preserved
+            .getTagged("base")
+            .faces(">Z").workplane().circle(0.5)
+            # loft between the top of the base object and the wire at the end of the "for construction" code
+            .loft()
+        )
+        # assert face is made at the end of the construction geometry
+        self.assertTupleAlmostEquals(part.faces(">X").val().Center().toTuple(),
+                                     (1.0, 0.5, 1.5),
+                                     9)
+        # assert face points in the x-direction, like the construction geometry
+        self.assertTupleAlmostEquals(part.faces(">X").val().normalAt().toTuple(),
+                                     (1.0, 0, 0),
+                                     9)
+
+    def testCopyWorkplane(self):
+
+        obj0 = Workplane("XY").box(1, 1, 10).faces(">Z").workplane()
+        obj1 = Workplane("XY").copyWorkplane(obj0).box(1, 1, 1)
+        self.assertTupleAlmostEquals((0, 0, 5),
+                                     obj1.val().Center().toTuple(),
+                                     9)
+
+    def testCopyWorkplaneFromTagged(self):
+
+        # create a flat, wide base. Extrude one object 4 units high, another
+        # object ontop of it 6 units high. Go back to base plane. Extrude an
+        # object 11 units high. Assert that top face is 11 units high.
+        result = (Workplane("XY").box(10, 10, 1, centered=(True, True, False))
+                  .faces(">Z").workplane().tag("base").center(3, 0).rect(2, 2)
+                  .extrude(4).faces(">Z").workplane().circle(1).extrude(6)
+                  .copyWorkplaneFromTagged("base").center(-3, 0).circle(1)
+                  .extrude(11))
+        self.assertTupleAlmostEquals(result.faces(">Z").val().Center().toTuple(),
+                                     (-3, 0, 12),
+                                     9)
