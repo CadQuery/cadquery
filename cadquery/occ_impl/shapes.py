@@ -110,9 +110,16 @@ from OCC.Core.BRepFeat import BRepFeat_MakeDPrism
 
 from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 
+from OCC.Core.GeomAbs import GeomAbs_C0 
+from OCC.Extend.TopologyUtils import TopologyExplorer, WireExplorer 
+from OCC.Core.GeomAbs import GeomAbs_Intersection 
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakeFilling 
+from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
+from OCC.Core.ShapeFix import ShapeFix_Wire
+import warnings
+
 from math import pi, sqrt
 from functools import reduce
-import warnings
 
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.
@@ -254,10 +261,10 @@ class Shape(object):
         return writer.Write(self.wrapped, fileName)
 
     def exportStep(self, fileName):
-
+        
         writer = STEPControl_Writer()
         writer.Transfer(self.wrapped, STEPControl_AsIs)
-
+        
         return writer.Write(fileName)
 
     def exportBrep(self, fileName):
@@ -530,7 +537,7 @@ class Shape(object):
         """
 
         r = Shape.cast(BRepBuilderAPI_Transform(self.wrapped,
-                                                tMatrix.wrapped.Trsf()).Shape())
+                                                tMatrix.wrapped).Shape())
         r.forConstruction = self.forConstruction
 
         return r
@@ -549,7 +556,7 @@ class Shape(object):
             which doesnt change the underlying type of the geometry, but cannot handle skew transformations
         """
         r = Shape.cast(BRepBuilderAPI_GTransform(self.wrapped,
-                                                 tMatrix.wrapped,
+                                                 gp_GTrsf(tMatrix.wrapped),
                                                  True).Shape())
         r.forConstruction = self.forConstruction
 
@@ -813,18 +820,19 @@ class Wire(Shape, Mixin1D):
             :param listOfEdges: a list of Edge objects. The edges are not to be consecutive.
             :return: a wire with the edges assembled
         """
-        
         wire_builder = BRepBuilderAPI_MakeWire()
+        
+        # begin new
         edges_list = TopTools_ListOfShape()
         for e in listOfEdges:
             edges_list.Append(e.wrapped) 
         wire_builder.Add(edges_list)
         if wire_builder.Error():
-          w1 = 'BRepBuilderAPI_MakeWire::IsDone(): returns true if this algorithm contains a valid wire. IsDone returns false if: there are no edges in the wire, or the last edge which you tried to add was not connectable = '+ str(wire_builder.IsDone())
-          w2 = 'BRepBuilderAPI_MakeWire::Error(): returns the construction status. BRepBuilderAPI_WireDone if the wire is built, or another value of the BRepBuilderAPI_WireError enumeration indicating why the construction failed = ' + str(wire_builder.Error())
-          warnings.warn(w1)
-          warnings.warn(w2)
-
+            w1 = 'BRepBuilderAPI_MakeWire::IsDone(): returns true if this algorithm contains a valid wire. IsDone returns false if: there are no edges in the wire, or the last edge which you tried to add was not connectable = '+ str(wire_builder.IsDone())
+            w2 = 'BRepBuilderAPI_MakeWire::Error(): returns the construction status. BRepBuilderAPI_WireDone if the wire is built, or another value of the BRepBuilderAPI_WireError enumeration indicating why the construction failed = ' + str(wire_builder.Error())
+            warnings.warn(w1)
+            warnings.warn(w2)
+        
         return cls(wire_builder.Wire())
 
     @classmethod
@@ -963,6 +971,47 @@ class Face(Shape):
         outer = self.outerWire()
         
         return [w for w in self.Wires() if not w.isSame(outer)]
+    
+    @classmethod
+    def makeNSidedSurface(cls, edges, points, continuity=GeomAbs_C0, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9):
+        """
+        Returns a surface enclosed by a closed polygon defined by 'edges' and going through 'points'.
+        :param points 
+        :type points: list of gp_Pnt
+        :param edges
+        :type edges: list of TopologyExplorer().edges()
+        :param continuity=GeomAbs_C0
+        :type continuity: OCC.Core.GeomAbs continuity condition
+        :param Degree = 3 (OCCT default)
+        :type Degree: Integer >= 2
+        :param NbPtsOnCur = 15 (OCCT default)
+        :type: NbPtsOnCur Integer >= 15
+        :param NbIter = 2 (OCCT default)
+        :type: NbIterInteger >= 2
+        :param Anisotropie = False (OCCT default)
+        :type Anisotropie: Boolean
+        :param: Tol2d = 0.00001 (OCCT default)
+        :type Tol2d: float > 0
+        :param Tol3d = 0.0001 (OCCT default)
+        :type Tol3dReal: float > 0
+        :param TolAng = 0.01 (OCCT default)
+        :type TolAngReal: float > 0
+        :param TolCurv = 0.1 (OCCT default)
+        :type TolCurvReal: float > 0
+        :param MaxDeg = 8 (OCCT default)
+        :type MaxDegInteger: Integer >= 2 (?)
+        :param MaxSegments = 9 (OCCT default)
+        :type MaxSegments: Integer >= 2 (?)
+        """
+        
+        n_sided = BRepOffsetAPI_MakeFilling(Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments)
+        for edg in edges:
+            n_sided.Add(edg, continuity)
+        for pt in points:
+            n_sided.Add(pt)
+        n_sided.Build()
+        face = n_sided.Shape()
+        return cls.cast(face).fix()
 
     @classmethod
     def makePlane(cls, length, width, basePnt=(0, 0, 0), dir=(0, 0, 1)):
@@ -1144,7 +1193,68 @@ class Solid(Shape, Mixin3D):
     """
     a single solid
     """
-    
+
+    @classmethod
+    def interpPlate(cls, surf_edges, surf_pts, thickness, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9):
+        """
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
+        
+        :param surf_edges
+        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
+        :type 2 surf_edges: list of unordered CadQuery wires
+        :param surf_pts = [] (uses only edges if [])
+        :type surf_pts: list of [x,y,z] float coordinates
+        :param thickness = 0 (returns 2D surface if 0)
+        :type thickness: float >= 0
+        :param Degree = 3 (OCCT default)
+        :type Degree: Integer >= 2
+        :param NbPtsOnCur = 15 (OCCT default)
+        :type: NbPtsOnCur Integer >= 15
+        :param NbIter = 2 (OCCT default)
+        :type: NbIterInteger >= 2
+        :param Anisotropie = False (OCCT default)
+        :type Anisotropie: Boolean
+        :param: Tol2d = 0.00001 (OCCT default)
+        :type Tol2d: float > 0
+        :param Tol3d = 0.0001 (OCCT default)
+        :type Tol3dReal: float > 0
+        :param TolAng = 0.01 (OCCT default)
+        :type TolAngReal: float > 0
+        :param TolCurv = 0.1 (OCCT default)
+        :type TolCurvReal: float > 0
+        :param MaxDeg = 8 (OCCT default)
+        :type MaxDegInteger: Integer >= 2 (?)
+        :param MaxSegments = 9 (OCCT default)
+        :type MaxSegments: Integer >= 2 (?)
+        """
+        
+        # POINTS CONSTRAINTS: List of (x,y,z) points provided
+        pts_array = [gp_Pnt(*pt) for pt in surf_pts]
+        
+        # EDGE CONSTRAINTS: build closed polygon
+        if isinstance(surf_edges, list): # List of (x,y,z) points provided
+            e_array = [Vector(*e) for e in surf_edges]
+            wire_builder = BRepBuilderAPI_MakePolygon()
+            for e in e_array: # Create polygon from edges
+                wire_builder.Add(e.toPnt())
+            wire_builder.Close()
+            w = wire_builder.Wire()
+        else: # Closed wires provided
+            w = surf_edges
+        edges = [i for i in TopologyExplorer(w).edges()]
+        
+        # MAKE SURFACE
+        continuity = GeomAbs_C0 # Fixed, changing to anything else crashes.
+        face = Face.makeNSidedSurface(edges, pts_array, continuity, Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments) 
+        
+        if thickness>0: # Thicken surface
+            solid = BRepOffset_MakeOffset()
+            solid.Initialize(face.wrapped, thickness, 1.e-5, BRepOffset_Skin, False, False, GeomAbs_Intersection, True) #The last True is important to make solid
+            solid.MakeOffsetShape()
+            return cls(solid.Shape())
+        else: # Return 2D surface only
+            return face
+
     @classmethod
     def isSolid(cls, obj):
         """
@@ -1235,22 +1345,23 @@ class Solid(Shape, Mixin3D):
         return cls(loft_builder.Shape())
 
     @classmethod
-    def makeWedge(cls, dx, dy, dz, xmin, zmin, xmax, zmax, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
+    def makeWedge(cls, xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
         """
         Make a wedge located in pnt
         By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
         """
-
-        return cls(BRepPrimAPI_MakeWedge(
-                    gp_Ax2(pnt.toPnt(),
-                    dir.toDir()),
-                    dx,
-                    dy,
-                    dz,
-                    xmin,
-                    zmin,
-                    xmax,
-                    zmax).Solid())
+        return cls(BRepPrimAPI_MakeWedge(gp_Ax2(pnt.toPnt(),
+                                                dir.toDir()),
+                                         xmin,
+                                         ymin,
+                                         zmin,
+                                         z2min,
+                                         x2min,
+                                         xmax,
+                                         ymax,
+                                         zmax,
+                                         z2max,
+                                         x2max).Solid())
 
     @classmethod
     def makeSphere(cls, radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees1=0, angleDegrees2=90, angleDegrees3=360):
