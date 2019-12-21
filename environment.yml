@@ -1,17 +1,17 @@
 name: cadquery
 channels:
-  - conda-forge
   - cadquery
+  - conda-forge
+  - defaults
 dependencies:
   - python>=3.6
-  - pythonocc-core=0.18.2
-  - oce=0.18.2
-  - pip
+  - cadquery::pythonocc-core
   - pyparsing
   - sphinx
   - sphinx_rtd_theme
   - codecov
   - pytest
   - pytest-cov
+  - pip
   - pip:
     - "--editable=."
