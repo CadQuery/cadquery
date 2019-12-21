@@ -116,8 +116,8 @@ from OCC.Core.GeomAbs import GeomAbs_Intersection
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakeFilling 
 from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
 from OCC.Core.ShapeFix import ShapeFix_Wire
-import warnings
 
+import warnings
 from math import pi, sqrt
 from functools import reduce
 
@@ -261,10 +261,10 @@ class Shape(object):
         return writer.Write(self.wrapped, fileName)
 
     def exportStep(self, fileName):
-        
+
         writer = STEPControl_Writer()
         writer.Transfer(self.wrapped, STEPControl_AsIs)
-        
+
         return writer.Write(fileName)
 
     def exportBrep(self, fileName):
@@ -537,7 +537,7 @@ class Shape(object):
         """
 
         r = Shape.cast(BRepBuilderAPI_Transform(self.wrapped,
-                                                tMatrix.wrapped).Shape())
+                                                tMatrix.wrapped.Trsf()).Shape())
         r.forConstruction = self.forConstruction
 
         return r
@@ -556,7 +556,7 @@ class Shape(object):
             which doesnt change the underlying type of the geometry, but cannot handle skew transformations
         """
         r = Shape.cast(BRepBuilderAPI_GTransform(self.wrapped,
-                                                 gp_GTrsf(tMatrix.wrapped),
+                                                 tMatrix.wrapped,
                                                  True).Shape())
         r.forConstruction = self.forConstruction
 
@@ -822,7 +822,6 @@ class Wire(Shape, Mixin1D):
         """
         wire_builder = BRepBuilderAPI_MakeWire()
         
-        # begin new
         edges_list = TopTools_ListOfShape()
         for e in listOfEdges:
             edges_list.Append(e.wrapped) 
@@ -971,7 +970,7 @@ class Face(Shape):
         outer = self.outerWire()
         
         return [w for w in self.Wires() if not w.isSame(outer)]
-    
+
     @classmethod
     def makeNSidedSurface(cls, edges, points, continuity=GeomAbs_C0, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9):
         """
@@ -1254,7 +1253,7 @@ class Solid(Shape, Mixin3D):
             return cls(solid.Shape())
         else: # Return 2D surface only
             return face
-
+    
     @classmethod
     def isSolid(cls, obj):
         """
@@ -1345,23 +1344,22 @@ class Solid(Shape, Mixin3D):
         return cls(loft_builder.Shape())
 
     @classmethod
-    def makeWedge(cls, xmin, ymin, zmin, z2min, x2min, xmax, ymax, zmax, z2max, x2max, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
+    def makeWedge(cls, dx, dy, dz, xmin, zmin, xmax, zmax, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
         """
         Make a wedge located in pnt
         By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
         """
-        return cls(BRepPrimAPI_MakeWedge(gp_Ax2(pnt.toPnt(),
-                                                dir.toDir()),
-                                         xmin,
-                                         ymin,
-                                         zmin,
-                                         z2min,
-                                         x2min,
-                                         xmax,
-                                         ymax,
-                                         zmax,
-                                         z2max,
-                                         x2max).Solid())
+
+        return cls(BRepPrimAPI_MakeWedge(
+                    gp_Ax2(pnt.toPnt(),
+                    dir.toDir()),
+                    dx,
+                    dy,
+                    dz,
+                    xmin,
+                    zmin,
+                    xmax,
+                    zmax).Solid())
 
     @classmethod
     def makeSphere(cls, radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angleDegrees1=0, angleDegrees2=90, angleDegrees3=360):
