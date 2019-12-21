@@ -50,7 +50,7 @@ before_install:
 - conda config --set always_yes yes --set changeps1 no;
 - conda env create -f environment.yml
 - source ~/miniconda/bin/activate cadquery
-- conda install python=$PYTHON_VERSION
+- conda install -c conda-forge -c defaults -c cadquery python=$PYTHON_VERSION
 
 install:
 - python setup.py install
