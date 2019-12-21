@@ -5,7 +5,6 @@ dist: trusty
 
 branches:
   only:
-  - adam-urbanczyk-OCC-version-update
   - master
   - "/\\d+\\.\\d+\\.?d*\\-*[a-z]*/"
 
@@ -25,17 +24,17 @@ env:
 
 matrix:
   include:
-  - env: TRAVIS_PYTHON_VERSION=3.6
+  - env: PYTHON_VERSION=3.6
     os: osx
-  - env: TRAVIS_PYTHON_VERSION=3.6
+  - env: PYTHON_VERSION=3.6
     os: linux
-  - env: TRAVIS_PYTHON_VERSION=3.7
+  - env: PYTHON_VERSION=3.7
     os: osx
-  - env: TRAVIS_PYTHON_VERSION=3.7
+  - env: PYTHON_VERSION=3.7
     os: linux
 
 before_install:
-- if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+- if [[ "$PYTHON_VERSION" == "2.7" ]]; then
       PY_MAJOR=2 ;
   else
       PY_MAJOR=3 ;
@@ -48,12 +47,10 @@ before_install:
   wget https://repo.continuum.io/miniconda/Miniconda$PY_MAJOR-latest-$OS-x86_64.sh -O miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda;
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
-- hash -r;
 - conda config --set always_yes yes --set changeps1 no;
-- conda create -y -q -n test_cq -c cadquery -c conda-forge pythonocc-core=0.18.2 oce=0.18.2 python=$TRAVIS_PYTHON_VERSION
-- source ~/miniconda/bin/activate test_cq;
-- pip install .[dev]
-- python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
+- conda env create -f environment.yml
+- conda activate cadquery
+- conda install python=$PYTHON_VERSION
 
 install:
 - python setup.py install
@@ -71,15 +68,3 @@ after_success:
 after_failure:
 - ls /cores/core.*
 - lldb --core `ls /cores/core.*` --batch --one-line "bt"
-
-
-before_deploy:
-- conda install anaconda-client conda-build
-- sh conda_build.sh
-
-deploy:
-- provider: script
-  skip_cleanup: true
-  script: anaconda -v -t $ANACONDA_TOKEN upload --force --user cadquery /tmp/cbld/**/cadquery-*.tar.bz2
-  on:
-    tags: true
