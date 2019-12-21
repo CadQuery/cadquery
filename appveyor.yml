@@ -18,7 +18,7 @@ install:
     - conda config --set always_yes yes
     - conda update -q conda
     - conda env create -f environment.yml
-    - conda activate cadquery
+    - activate cadquery
     - conda install python=%PYTHON_VERSION%
 
 build: false

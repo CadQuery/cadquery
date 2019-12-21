@@ -49,7 +49,7 @@ before_install:
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 - conda config --set always_yes yes --set changeps1 no;
 - conda env create -f environment.yml
-- conda activate cadquery
+- source ~/miniconda/bin/activate cadquery
 - conda install python=$PYTHON_VERSION
 
 install:
