@@ -19,7 +19,7 @@ install:
     - conda update -q conda
     - conda env create -f environment.yml
     - activate cadquery
-    - conda install python=%PYTHON_VERSION%
+    - conda install -c conda-forge -c defaults -c cadquery python=%PYTHON_VERSION%
 
 build: false
 
