@@ -1187,7 +1187,7 @@ class Workplane(CQ):
             #this workplane is centered at x=0.5,y=0.5, the center of the upper face
             s = Workplane().box(1,1,1).faces(">Z").workplane()
 
-            s.center(-0.5,-0.5) # move the center to the corner
+            s = s.center(-0.5,-0.5) # move the center to the corner
             t = s.circle(0.25).extrude(0.2)
             assert ( t.faces().size() == 9 ) # a cube with a cylindrical nub at the top right corner
 
@@ -2787,8 +2787,67 @@ class Workplane(CQ):
         else:
             # combine everything --> CRASHES, probably OCC 6 CAD kernel issue, better use pushpoints through each() instead
             return self.union(plates, clean=clean)
-    
-    
+
+    def interpPlate(self, surf_edges, surf_pts=[], thickness=0, combine=True, clean=True, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9):
+        """
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
+        
+        :param surf_edges
+        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
+        :type 2 surf_edges: list of unordered CadQuery wires
+        :param surf_pts = [] (uses only edges if [])
+        :type surf_pts: list of [x,y,z] float coordinates
+        :param thickness = 0 (returns 2D surface if 0)
+        :type thickness: float >= 0
+        :param combine: should the results be combined with other solids on the stack
+            (and each other)?
+        :type combine: true to combine shapes, false otherwise.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape      
+        :param Degree = 3 (OCCT default)
+        :type Degree: Integer >= 2
+        :param NbPtsOnCur = 15 (OCCT default)
+        :type: NbPtsOnCur Integer >= 15
+        :param NbIter = 2 (OCCT default)
+        :type: NbIterInteger >= 2
+        :param Anisotropie = False (OCCT default)
+        :type Anisotropie: Boolean
+        :param: Tol2d = 0.00001 (OCCT default)
+        :type Tol2d: float > 0
+        :param Tol3d = 0.0001 (OCCT default)
+        :type Tol3dReal: float > 0
+        :param TolAng = 0.01 (OCCT default)
+        :type TolAngReal: float > 0
+        :param TolCurv = 0.1 (OCCT default)
+        :type TolCurvReal: float > 0
+        :param MaxDeg = 8 (OCCT default)
+        :type MaxDegInteger: Integer >= 2 (?)
+        :param MaxSegments = 9 (OCCT default)
+        :type MaxSegments: Integer >= 2 (?)
+        """
+        
+        # If thickness is 0, only a 2D surface will be returned.
+        if thickness==0:
+            combine=False
+        
+        # If a list of wires is provided, make a closed wire
+        if not isinstance(surf_edges, list): 
+            surf_edges = [o.vals()[0] for o in surf_edges.all()]
+            surf_edges = Wire.assembleEdges(surf_edges)
+            surf_edges = surf_edges.wrapped
+        
+        # Creates interpolated plate
+        def _makeplate(pnt):
+            return Solid.interpPlate(surf_edges, surf_pts, thickness, Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments)
+
+        plates = self.eachpoint(_makeplate, True)
+
+        # if combination is not desired, just return the created boxes
+        if not combine:
+            return plates
+        else:
+            # combine everything --> CRASHES, probably OCC 6 CAD kernel issue, better use pushpoints through each() instead
+            return self.union(plates, clean=clean)
+
     def box(self, length, width, height, centered=(True, True, True), combine=True, clean=True):
         """
         Return a 3d box with specified dimensions for each object on the stack.
@@ -2922,6 +2981,64 @@ class Workplane(CQ):
             return spheres
         else:
             return self.union(spheres, clean=clean)
+
+    def wedge(self, dx, dy, dz, xmin, zmin, xmax, zmax, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1),
+              centered=(True, True, True), combine=True, clean=True):
+        """
+        :param dx: Distance along the X axis
+        :param dy: Distance along the Y axis
+        :param dz: Distance along the Z axis
+        :param xmin: The minimum X location
+        :param zmin:The minimum Z location
+        :param xmax:The maximum X location
+        :param zmax: The maximum Z location
+        :param pnt: A vector (or tuple) for the origin of the direction for the wedge
+        :param dir: The direction vector (or tuple) for the major axis of the wedge
+        :param combine: Whether the results should be combined with other solids on the stack
+            (and each other)
+        :param clean: true to attempt to have the kernel clean up the geometry, false otherwise
+        :return: A wedge object for each point on the stack
+
+        One wedge is created for each item on the current stack. If no items are on the stack, one
+        wedge using the current workplane center is created.
+
+        If combine is true, the result will be a single object on the stack:
+            If a solid was found in the chain, the result is that solid with all wedges produced
+            fused onto it otherwise, the result is the combination of all the produced wedges
+
+        If combine is false, the result will be a list of the wedges produced
+        """
+
+        # Convert the point tuple to a vector, if needed
+        if isinstance(pnt, tuple):
+            pnt = Vector(pnt)
+
+        # Convert the direction tuple to a vector, if needed
+        if isinstance(dir, tuple):
+            dir = Vector(dir)
+
+        def _makewedge(pnt):
+            (xp, yp, zp) = pnt.toTuple()
+
+            if not centered[0]:
+                xp += dx / 2.
+
+            if not centered[1]:
+                yp += dy / 2.
+
+            if not centered[2]:
+                zp += dx / 2.
+
+            return Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, Vector(xp, yp, zp), dir)
+
+        # We want a wedge for each point on the workplane
+        wedges = self.eachpoint(_makewedge)
+
+        # If we don't need to combine everything, just return the created wedges
+        if not combine:
+            return wedges
+        else:
+            return self.union(wedges, clean=clean)
 
     def clean(self):
         """
