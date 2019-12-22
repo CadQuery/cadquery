@@ -16,8 +16,8 @@ show_object(plate_0)
 thickness = 0.1
 edge_points = [[-7.,-7.,0.], [-3.,-10.,3.], [7.,-7.,0.], [7.,7.,0.], [-7.,7.,0.]]
 edge_wire = cq.Workplane('XY').polyline([(-7.,-7.), (7.,-7.), (7.,7.), (-7.,7.)])
-#edge_wire = edge_wire.add(cq.Workplane('YZ').workplane().transformed(offset=cq.Vector(0, 0, -7), rotate=cq.Vector(0, 45, 0)).polyline([(-7.,0.), (3,-3), (7.,0.)]))
-edge_wire = edge_wire.add(cq.Workplane('YZ').workplane().transformed(offset=cq.Vector(0, 0, -7), rotate=cq.Vector(0, 45, 0)).spline([(-7.,0.), (3,-3), (7.,0.)]))
+#edge_wire = edge_wire.add(cq.Workplane('YZ').workplane().transformed(offset=cq.Vector(0, 0, -7), rotate=cq.Vector(45, 0, 0)).polyline([(-7.,0.), (3,-3), (7.,0.)]))
+edge_wire = edge_wire.add(cq.Workplane('YZ').workplane().transformed(offset=cq.Vector(0, 0, -7), rotate=cq.Vector(45, 0, 0)).spline([(-7.,0.), (3,-3), (7.,0.)]))  # In CadQuery Sept-2019 it worked with rotate=cq.Vector(0, 45, 0). In CadQuery Dec-2019 rotate=cq.Vector(45, 0, 0) only closes the wire. 
 surface_points = [[-3.,-3.,-3.], [3.,3.,3.]]
 plate_1 = cq.Workplane('XY').interpPlate(edge_wire, surface_points, thickness)
 #plate_1 = cq.Workplane('XY').interpPlate(edge_points, surface_points, thickness) # list of (x,y,z) points instead of wires for edges
@@ -49,7 +49,6 @@ x_p = np.arange(-N*r1, N*r1, ca*2*r1)
 y_p = np.arange(-N*r1, N*r1, 3*r1)
 x_p, y_p = np.meshgrid(x_p, y_p)
 xy_p_even = [(x,y) for x,y in zip(x_p.flatten(), y_p.flatten())]
-print("xy_p_even = ", xy_p_even)
 # ODD ROWS
 x_p = np.arange(-(N-0.5)*r1*ca, (N+1.5)*r1*ca, ca*2*r1)
 y_p = np.arange(-(N-2+sa)*r1, (N+1+sa)*r1, 3*r1)
