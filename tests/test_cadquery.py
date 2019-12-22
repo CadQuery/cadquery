@@ -2799,3 +2799,32 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(result.faces(">Z").val().Center().toTuple(),
                                      (-3, 0, 12),
                                      9)
+
+    def testTagSelectors(self):
+
+        result0 = Workplane("XY").box(1, 1, 1).tag("box").sphere(1)
+        # result is currently a sphere
+        self.assertEqual(1, result0.faces().size())
+        # a box has 8 vertices
+        self.assertEqual(8, result0.vertices(tag="box").size())
+        # 6 faces
+        self.assertEqual(6, result0.faces(tag="box").size())
+        # 12 edges
+        self.assertEqual(12, result0.edges(tag="box").size())
+        # 6 wires
+        self.assertEqual(6, result0.wires(tag="box").size())
+
+        # create two solids, tag them, join to one solid
+        result1 = (Workplane("XY").pushPoints([(1, 0), (-1, 0)]).box(1, 1, 1)
+                   .tag("boxes").sphere(1))
+        self.assertEqual(1, result1.solids().size())
+        self.assertEqual(2, result1.solids(tag="boxes").size())
+        self.assertEqual(1, result1.shells().size())
+        self.assertEqual(2, result1.shells(tag="boxes").size())
+
+        # create 4 individual objects, tag it, then combine to one compound
+        result2 = (Workplane("XY").rect(4, 4).vertices()
+                   .box(1, 1, 1, combine=False).tag("4 objs"))
+        result2 = result2.newObject([Compound.makeCompound(result2.objects)])
+        self.assertEqual(1, result2.compounds().size())
+        self.assertEqual(0, result2.compounds(tag="4 objs").size())
