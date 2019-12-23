@@ -1,5 +1,5 @@
 """
-    Tests interpPlate functionality
+    Tests AssembleEdges functionality
 """
 
 import cadquery as cq
