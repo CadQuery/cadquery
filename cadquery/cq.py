@@ -590,9 +590,7 @@ class CQ(object):
             solids,shells, and other similar selector methods.  It is a useful extension point for
             plugin developers to make other selector methods.
         """
-        cq_obj = self
-        if tag:
-            cq_obj = self.getTagged(tag)
+        cq_obj = self.getTagged(tag) if tag else self
         # A single list of all faces from all objects on the stack
         toReturn = cq_obj._collectProperty(objType)
 
