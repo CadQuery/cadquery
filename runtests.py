@@ -16,6 +16,7 @@ suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestExporters.TestExp
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestImporters.TestImporters))
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestJupyter.TestJupyter))
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestWorkplanes.TestWorkplanes))
+suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestAssembleEdges.TestAssembleEdges))
 
 if __name__ == '__main__':
     result = unittest.TextTestRunner().run(suite)
