@@ -3,6 +3,7 @@
 """
 
 import cadquery as cq
+from tests import BaseTest
 
 class TestAssembleEdges(BaseTest):
     
