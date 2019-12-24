@@ -20,11 +20,12 @@ requirements:
     - pyparsing 2.*
     
 test:
+  requires:
+    - pytest	
   source_files:
-    - runtests.py
     - tests/
   commands:
-    - python runtests.py
+    - pytest -v
 
 about:
   summary: CadQuery fork based on PythonOCC
