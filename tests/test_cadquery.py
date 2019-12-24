@@ -2140,14 +2140,14 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(point, (0.707106781, 1.414213562, 1.0), decimal_places)
 
     def test_assembleEdges(self):
-        
+
         # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
         edge_points = [[-7.,-7.,0.], [-3.,-10.,3.], [7.,-7.,0.], [7.,7.,0.], [-7.,7.,0.]]
         edge_wire = Workplane('XY').polyline([(-7.,-7.), (7.,-7.), (7.,7.), (-7.,7.)])
-        edge_wire = edge_wire.add(Workplane('YZ').workplane().transformed(offset=Vector(0, 0, -7), rotate=Vector(45, 0, 0)).spline([(-7.,0.), (3,-3), (7.,0.)])) 
+        edge_wire = edge_wire.add(Workplane('YZ').workplane().transformed(offset=Vector(0, 0, -7), rotate=Vector(0, 45, 0)).spline([(-7.,0.), (3,-3), (7.,0.)])) 
         edge_wire = [o.vals()[0] for o in edge_wire.all()]
         edge_wire = Wire.assembleEdges(edge_wire)
-
+        
         # Embossed star, need to change optional parameters to obtain nice looking result.
         r1=3.
         r2=10.
@@ -2156,15 +2156,16 @@ class TestCadQuery(BaseTest):
         edge_wire = Workplane('XY').polyline(edge_points)
         edge_wire = [o.vals()[0] for o in edge_wire.all()]
         edge_wire = Wire.assembleEdges(edge_wire)
-
+                
         # Points on hexagonal pattern coordinates, use of pushpoints.
         r1 = 1.
         fn = 6
         edge_points = [[r1*math.cos(i * 2*math.pi/fn), r1*math.sin(i * 2*math.pi/fn)] for i in range(fn+1)]
+        surface_points = [[0.25,0,0.75], [-0.25,0,0.75], [0,0.25,0.75], [0,-0.25,0.75], [0,0,2]]
         edge_wire = Workplane('XY').polyline(edge_points)
         edge_wire = [o.vals()[0] for o in edge_wire.all()]
         edge_wire = Wire.assembleEdges(edge_wire)
-
+                
         # Gyroïd, all edges are splines on different workplanes.
         edge_points =  [[[3.54, 3.54], [1.77, 0.0], [3.54, -3.54]], [[-3.54, -3.54], [0.0, -1.77], [3.54, -3.54]], [[-3.54, -3.54], [0.0, -1.77], [3.54, -3.54]], [[-3.54, -3.54], [-1.77, 0.0], [-3.54, 3.54]], [[3.54, 3.54], [0.0, 1.77], [-3.54, 3.54]], [[3.54, 3.54], [0.0, 1.77], [-3.54, 3.54]]]
         plane_list =  ['XZ', 'XY', 'YZ', 'XZ', 'YZ', 'XY']
