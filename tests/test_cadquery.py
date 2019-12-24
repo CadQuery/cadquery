@@ -2152,7 +2152,7 @@ class TestCadQuery(BaseTest):
         r1=3.
         r2=10.
         fn=6
-        edge_points = [[r1*math.cos(i * pi/fn), r1*math.sin(i * pi/fn)]    if i%2==0  else   [r2*math.cos(i * pi/fn), r2*math.sin(i * pi/fn)]  for i in range(2*fn+1)]
+        edge_points = [[r1*math.cos(i * math.pi/fn), r1*math.sin(i * math.pi/fn)]    if i%2==0  else   [r2*math.cos(i * math.pi/fn), r2*math.sin(i * math.pi/fn)]  for i in range(2*fn+1)]
         edge_wire = Workplane('XY').polyline(edge_points)
         edge_wire = [o.vals()[0] for o in edge_wire.all()]
         edge_wire = Wire.assembleEdges(edge_wire)
@@ -2160,7 +2160,7 @@ class TestCadQuery(BaseTest):
         # Points on hexagonal pattern coordinates, use of pushpoints.
         r1 = 1.
         fn = 6
-        edge_points = [[r1*math.cos(i * 2*pi/fn), r1*math.sin(i * 2*pi/fn)] for i in range(fn+1)]
+        edge_points = [[r1*math.cos(i * 2*math.pi/fn), r1*math.sin(i * 2*math.pi/fn)] for i in range(fn+1)]
         edge_wire = Workplane('XY').polyline(edge_points)
         edge_wire = [o.vals()[0] for o in edge_wire.all()]
         edge_wire = Wire.assembleEdges(edge_wire)
