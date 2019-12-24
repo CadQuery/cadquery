@@ -6,9 +6,6 @@ dependencies:
   - python=3.6
   - pythonocc-core=0.18.2
   - oce=0.18.2
-  - pyparsing
+  - pip
   - pip:
-    - "--editable=."
-    # Documentation
-    - sphinx
-    - sphinx_rtd_theme
+    - "--editable=.[dev]"
