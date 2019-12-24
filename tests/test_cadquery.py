@@ -2140,7 +2140,7 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(point, (0.707106781, 1.414213562, 1.0), decimal_places)
 
     def test_assembleEdges(self):
-   
+        
         # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
         thickness = 0.1
         edge_points = [[-7.,-7.,0.], [-3.,-10.,3.], [7.,-7.,0.], [7.,7.,0.], [-7.,7.,0.]]
