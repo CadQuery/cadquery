@@ -812,19 +812,24 @@ class Wire(Shape, Mixin1D):
             :param cls:
             :param listOfEdges: a list of Edge objects. The edges are not to be consecutive.
             :return: a wire with the edges assembled
+            :BRepBuilderAPI_MakeWire::Error() values
+                :BRepBuilderAPI_WireDone = 0
+                :BRepBuilderAPI_EmptyWire = 1
+                :BRepBuilderAPI_DisconnectedWire = 2
+                :BRepBuilderAPI_NonManifoldWire = 3
         """
-        
         wire_builder = BRepBuilderAPI_MakeWire()
+        
         edges_list = TopTools_ListOfShape()
         for e in listOfEdges:
             edges_list.Append(e.wrapped) 
         wire_builder.Add(edges_list)
-        if wire_builder.Error():
-          w1 = 'BRepBuilderAPI_MakeWire::IsDone(): returns true if this algorithm contains a valid wire. IsDone returns false if: there are no edges in the wire, or the last edge which you tried to add was not connectable = '+ str(wire_builder.IsDone())
-          w2 = 'BRepBuilderAPI_MakeWire::Error(): returns the construction status. BRepBuilderAPI_WireDone if the wire is built, or another value of the BRepBuilderAPI_WireError enumeration indicating why the construction failed = ' + str(wire_builder.Error())
-          warnings.warn(w1)
-          warnings.warn(w2)
-
+        if wire_builder.Error()!=0:
+            w1 = 'BRepBuilderAPI_MakeWire::IsDone(): returns true if this algorithm contains a valid wire. IsDone returns false if: there are no edges in the wire, or the last edge which you tried to add was not connectable = '+ str(wire_builder.IsDone())
+            w2 = 'BRepBuilderAPI_MakeWire::Error(): returns the construction status. BRepBuilderAPI_WireDone if the wire is built, or another value of the BRepBuilderAPI_WireError enumeration indicating why the construction failed = ' + str(wire_builder.Error())
+            warnings.warn(w1)
+            warnings.warn(w2)
+        
         return cls(wire_builder.Wire())
 
     @classmethod
