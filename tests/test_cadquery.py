@@ -2141,7 +2141,7 @@ class TestCadQuery(BaseTest):
 
     def test_assembleEdges(self):
     """
-        Tests TestAssembleEdges functionality
+    Tests TestAssembleEdges functionality
     """
    
     # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
