@@ -2164,25 +2164,8 @@ class TestCadQuery(BaseTest):
             
     # Points on hexagonal pattern coordinates, use of pushpoints.
     r1 = 1.
-    N = 3
-    ca = cos(30. * pi/180.)
-    sa = sin(30. * pi/180.)
-    # EVEN ROWS
-    x_p = np.arange(-N*r1, N*r1, ca*2*r1)
-    y_p = np.arange(-N*r1, N*r1, 3*r1)
-    x_p, y_p = np.meshgrid(x_p, y_p)
-    xy_p_even = [(x,y) for x,y in zip(x_p.flatten(), y_p.flatten())]
-    # ODD ROWS
-    x_p = np.arange(-(N-0.5)*r1*ca, (N+1.5)*r1*ca, ca*2*r1)
-    y_p = np.arange(-(N-2+sa)*r1, (N+1+sa)*r1, 3*r1)
-    x_p, y_p = np.meshgrid(x_p, y_p)
-    xy_p_odd = [(x,y) for x,y in zip(x_p.flatten(), y_p.flatten())]
-    pts = xy_p_even + xy_p_odd
-    # Spike surface
-    thickness = 0.1
     fn = 6
     edge_points = [[r1*cos(i * 2*pi/fn), r1*sin(i * 2*pi/fn)] for i in range(fn+1)]
-    surface_points = [[0.25,0,0.75], [-0.25,0,0.75], [0,0.25,0.75], [0,-0.25,0.75], [0,0,2]]
     edge_wire = cq.Workplane('XY').polyline(edge_points)
     edge_wire = [o.vals()[0] for o in edge_wire.all()]
     edge_wire = cq.Wire.assembleEdges(edge_wire)
