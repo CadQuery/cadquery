@@ -472,7 +472,7 @@ class CQ(object):
         out.ctx = self.ctx
         return out
 
-    def copyWorkplaneFromTagged(self, name):
+    def workplaneFromTagged(self, name):
         """
         Copies the workplane from a tagged parent.
 

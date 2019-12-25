@@ -2786,7 +2786,7 @@ class TestCadQuery(BaseTest):
                                      obj1.val().Center().toTuple(),
                                      9)
 
-    def testCopyWorkplaneFromTagged(self):
+    def testWorkplaneFromTagged(self):
 
         # create a flat, wide base. Extrude one object 4 units high, another
         # object ontop of it 6 units high. Go back to base plane. Extrude an
@@ -2794,7 +2794,7 @@ class TestCadQuery(BaseTest):
         result = (Workplane("XY").box(10, 10, 1, centered=(True, True, False))
                   .faces(">Z").workplane().tag("base").center(3, 0).rect(2, 2)
                   .extrude(4).faces(">Z").workplane().circle(1).extrude(6)
-                  .copyWorkplaneFromTagged("base").center(-3, 0).circle(1)
+                  .workplaneFromTagged("base").center(-3, 0).circle(1)
                   .extrude(11))
         self.assertTupleAlmostEquals(result.faces(">Z").val().Center().toTuple(),
                                      (-3, 0, 12),
