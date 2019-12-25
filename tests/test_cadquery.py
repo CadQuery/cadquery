@@ -2142,6 +2142,7 @@ class TestCadQuery(BaseTest):
     def test_assembleEdges(self):
 
         # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
+        # Passes an open wire to assembleEdges so that IsDone is true but Error returns 2 to test the warning functionality.
         edge_points = [[-7.,-7.,0.], [-3.,-10.,3.], [7.,-7.,0.], [7.,7.,0.], [-7.,7.,0.]]
         edge_wire = Workplane('XY').polyline([(-7.,-7.), (7.,-7.), (7.,7.), (-7.,7.)])
         edge_wire = edge_wire.add(Workplane('YZ').workplane().transformed(offset=Vector(0, 0, -7), rotate=Vector(0, 45, 0)).spline([(-7.,0.), (3,-3), (7.,0.)])) 
