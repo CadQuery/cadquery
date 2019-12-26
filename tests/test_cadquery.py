@@ -2178,7 +2178,8 @@ class TestCadQuery(BaseTest):
         edge_wire = Wire.assembleEdges(edge_wire)
         
     def test_interpPlate(self):
-    
+        
+        import numpy as np
         # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
         thickness = 0
         edge_points = [[0.,0.,0.], [0.,10.,0.], [0.,10.,10.], [0.,0.,10.]]
