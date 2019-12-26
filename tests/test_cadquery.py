@@ -2227,7 +2227,7 @@ class TestCadQuery(BaseTest):
         edge_points = [[r1*math.cos(i * 2*math.pi/fn), r1*math.sin(i * 2*math.pi/fn)] for i in range(fn+1)]
         surface_points = [[0.25,0,0.75], [-0.25,0,0.75], [0,0.25,0.75], [0,-0.25,0.75], [0,0,2]]
         edge_wire = Workplane('XY').polyline(edge_points)
-        be = Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, Degree=2, NbPtsOnCur=20, NbIter=2, Anisotromath.pie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9)
+        be = Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, Degree=2, NbPtsOnCur=20, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9)
         # Pattern on sphere
         def face(pos): # If pushpoints is used directly with interpPlate --> crash! Use with each()
             return be.rotate((0,0,0),(0,0,1), 30).translate(pos).val()
