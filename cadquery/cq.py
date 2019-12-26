@@ -2788,66 +2788,6 @@ class Workplane(CQ):
             # combine everything --> CRASHES, probably OCC 6 CAD kernel issue, better use pushpoints through each() instead
             return self.union(plates, clean=clean)
 
-    def interpPlate(self, surf_edges, surf_pts=[], thickness=0, combine=True, clean=True, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9):
-        """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
-        
-        :param surf_edges
-        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
-        :type 2 surf_edges: list of unordered CadQuery wires
-        :param surf_pts = [] (uses only edges if [])
-        :type surf_pts: list of [x,y,z] float coordinates
-        :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float >= 0
-        :param combine: should the results be combined with other solids on the stack
-            (and each other)?
-        :type combine: true to combine shapes, false otherwise.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape      
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
-        """
-        
-        # If thickness is 0, only a 2D surface will be returned.
-        if thickness==0:
-            combine=False
-        
-        # If a list of wires is provided, make a closed wire
-        if not isinstance(surf_edges, list): 
-            surf_edges = [o.vals()[0] for o in surf_edges.all()]
-            surf_edges = Wire.assembleEdges(surf_edges)
-            surf_edges = surf_edges.wrapped
-        
-        # Creates interpolated plate
-        def _makeplate(pnt):
-            return Solid.interpPlate(surf_edges, surf_pts, thickness, Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments)
-
-        plates = self.eachpoint(_makeplate, True)
-
-        # if combination is not desired, just return the created boxes
-        if not combine:
-            return plates
-        else:
-            # combine everything --> CRASHES, probably OCC 6 CAD kernel issue, better use pushpoints through each() instead
-            return self.union(plates, clean=clean)
-
     def box(self, length, width, height, centered=(True, True, True), combine=True, clean=True):
         """
         Return a 3d box with specified dimensions for each object on the stack.
