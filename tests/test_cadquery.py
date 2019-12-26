@@ -2176,6 +2176,7 @@ class TestCadQuery(BaseTest):
             edge_wire = edge_wire.add(Workplane(plane_list[i+1]).workplane(offset=-offset_list[i+1]).spline(edge_points[i+1]))
         edge_wire = [o.vals()[0] for o in edge_wire.all()]
         edge_wire = Wire.assembleEdges(edge_wire)
+        
     def test_interpPlate(self):
     
         # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
@@ -2202,8 +2203,7 @@ class TestCadQuery(BaseTest):
         edge_wire = Workplane('XY').polyline(edge_points)
         r2=4.5
         surface_points = [[r2*math.cos(i * math.pi/fn), r2*math.sin(i * math.pi/fn), 1.]  for i in range(2*fn)] + [[0.,0.,-2.]]
-        plate_2 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotromath.pie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=49)
-        plate_2 = plate_2.translate((0,2*12,0))
+        plate_2 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=49)        
         
         # Points on hexagonal pattern coordinates, use of pushpoints.
         r1 = 1.
@@ -2232,7 +2232,6 @@ class TestCadQuery(BaseTest):
         def face(pos): # If pushpoints is used directly with interpPlate --> crash! Use with each()
             return be.rotate((0,0,0),(0,0,1), 30).translate(pos).val()
         plate_3 = Workplane('XY').pushPoints(pts).each(face)
-        plate_3 = plate_3.translate((0,4*11,0))
         
         # Gyroïd, all edges are splines on different workplanes.
         thickness = 0.1
@@ -2244,5 +2243,3 @@ class TestCadQuery(BaseTest):
             edge_wire = edge_wire.add(Workplane(plane_list[i+1]).workplane(offset=-offset_list[i+1]).spline(edge_points[i+1]))
         surface_points = [[0,0,0]]
         plate_4 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness)
-        plate_4 = plate_4.translate((0,5*12,0))
-        
