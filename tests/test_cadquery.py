@@ -4,6 +4,9 @@
 """
 # system modules
 import math,os.path,time,tempfile
+from random import choice
+from random import random
+from random import randrange
 
 # my modules
 from cadquery import *
@@ -245,6 +248,32 @@ class TestCadQuery(BaseTest):
         self.assertEqual(-0.5, endPoint[0])
         self.assertEqual(-0.5, endPoint[1])
         self.assertEqual(2.5, endPoint[2])
+
+    def testPlaneRotateZNormal(self):
+        """
+        Rotation of a plane in the Z direction should never alter its normal.
+
+        This test creates random planes, with the normal in a random direction
+        among positive and negative X, Y and Z. The plane is defined with this
+        normal and another random perpendicular vector (the X-direction of the
+        plane). The plane is finally rotated a random angle in the Z-direction
+        to verify that the resulting plane maintains the same normal.
+        """
+        for _ in range(100):
+            normal_sign = choice((-1, 1))
+            normal_dir = randrange(3)
+            angle = (random() - 0.5) * 720
+
+            normal = [0, 0, 0]
+            normal[normal_dir] = normal_sign
+            xdir = [random(), random(), random()]
+            xdir[normal_dir] = 0
+
+            plane = Plane(origin=(0, 0, 0), xDir=xdir, normal=normal)
+            rotated = plane.rotated((0, 0, angle)).zDir.toTuple()
+            self.assertAlmostEqual(rotated[0], normal[0])
+            self.assertAlmostEqual(rotated[1], normal[1])
+            self.assertAlmostEqual(rotated[2], normal[2])
 
     def testLoft(self):
         """
@@ -2110,3 +2139,40 @@ class TestCadQuery(BaseTest):
         point = result.faces(">Z").edges(">X").first().val().startPoint().toTuple()
         self.assertTupleAlmostEquals(point, (0.707106781, 1.414213562, 1.0), decimal_places)
 
+    def test_assembleEdges(self):
+
+        # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
+        # Passes an open wire to assembleEdges so that IsDone is true but Error returns 2 to test the warning functionality.
+        edge_points = [[-7.,-7.,0.], [-3.,-10.,3.], [7.,-7.,0.], [7.,7.,0.], [-7.,7.,0.]]
+        edge_wire = Workplane('XY').polyline([(-7.,-7.), (7.,-7.), (7.,7.), (-7.,7.)])
+        edge_wire = edge_wire.add(Workplane('YZ').workplane().transformed(offset=Vector(0, 0, -7), rotate=Vector(0, 45, 0)).spline([(-7.,0.), (3,-3), (7.,0.)])) 
+        edge_wire = [o.vals()[0] for o in edge_wire.all()]
+        edge_wire = Wire.assembleEdges(edge_wire)
+        
+        # Embossed star, need to change optional parameters to obtain nice looking result.
+        r1=3.
+        r2=10.
+        fn=6
+        edge_points = [[r1*math.cos(i * math.pi/fn), r1*math.sin(i * math.pi/fn)]    if i%2==0  else   [r2*math.cos(i * math.pi/fn), r2*math.sin(i * math.pi/fn)]  for i in range(2*fn+1)]
+        edge_wire = Workplane('XY').polyline(edge_points)
+        edge_wire = [o.vals()[0] for o in edge_wire.all()]
+        edge_wire = Wire.assembleEdges(edge_wire)
+                
+        # Points on hexagonal pattern coordinates, use of pushpoints.
+        r1 = 1.
+        fn = 6
+        edge_points = [[r1*math.cos(i * 2*math.pi/fn), r1*math.sin(i * 2*math.pi/fn)] for i in range(fn+1)]
+        surface_points = [[0.25,0,0.75], [-0.25,0,0.75], [0,0.25,0.75], [0,-0.25,0.75], [0,0,2]]
+        edge_wire = Workplane('XY').polyline(edge_points)
+        edge_wire = [o.vals()[0] for o in edge_wire.all()]
+        edge_wire = Wire.assembleEdges(edge_wire)
+                
+        # Gyroïd, all edges are splines on different workplanes.
+        edge_points =  [[[3.54, 3.54], [1.77, 0.0], [3.54, -3.54]], [[-3.54, -3.54], [0.0, -1.77], [3.54, -3.54]], [[-3.54, -3.54], [0.0, -1.77], [3.54, -3.54]], [[-3.54, -3.54], [-1.77, 0.0], [-3.54, 3.54]], [[3.54, 3.54], [0.0, 1.77], [-3.54, 3.54]], [[3.54, 3.54], [0.0, 1.77], [-3.54, 3.54]]]
+        plane_list =  ['XZ', 'XY', 'YZ', 'XZ', 'YZ', 'XY']
+        offset_list =  [-3.54, 3.54, 3.54, 3.54, -3.54, -3.54]
+        edge_wire = Workplane(plane_list[0]).workplane(offset=-offset_list[0]).spline(edge_points[0])
+        for i in range(len(edge_points)-1):
+            edge_wire = edge_wire.add(Workplane(plane_list[i+1]).workplane(offset=-offset_list[i+1]).spline(edge_points[i+1]))
+        edge_wire = [o.vals()[0] for o in edge_wire.all()]
+        edge_wire = Wire.assembleEdges(edge_wire)
