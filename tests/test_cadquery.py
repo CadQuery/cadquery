@@ -2179,7 +2179,6 @@ class TestCadQuery(BaseTest):
         
     def test_interpPlate(self):
         
-        import numpy as np
         # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
         thickness = 0
         edge_points = [[0.,0.,0.], [0.,10.,0.], [0.,10.,10.], [0.,0.,10.]]
@@ -2211,17 +2210,7 @@ class TestCadQuery(BaseTest):
         N = 3
         ca = math.cos(30. * math.pi/180.)
         sa = math.sin(30. * math.pi/180.)
-        # EVEN ROWS
-        x_p = np.arange(-N*r1, N*r1, ca*2*r1)
-        y_p = np.arange(-N*r1, N*r1, 3*r1)
-        x_p, y_p = np.meshgrid(x_p, y_p)
-        xy_p_even = [(x,y) for x,y in zip(x_p.flatten(), y_p.flatten())]
-        # ODD ROWS
-        x_p = np.arange(-(N-0.5)*r1*ca, (N+1.5)*r1*ca, ca*2*r1)
-        y_p = np.arange(-(N-2+sa)*r1, (N+1+sa)*r1, 3*r1)
-        x_p, y_p = np.meshgrid(x_p, y_p)
-        xy_p_odd = [(x,y) for x,y in zip(x_p.flatten(), y_p.flatten())]
-        pts = xy_p_even + xy_p_odd
+        pts =  [(-3.0, -3.0), (-1.2679491924311226, -3.0), (0.46410161513775483, -3.0), (2.196152422706632, -3.0), (-3.0, 0.0), (-1.2679491924311226, 0.0), (0.46410161513775483, 0.0), (2.196152422706632, 0.0), (-2.165063509461097, -1.5), (-0.4330127018922194, -1.5), (1.299038105676658, -1.5), (3.031088913245535, -1.5), (-2.165063509461097, 1.5), (-0.4330127018922194, 1.5), (1.299038105676658, 1.5), (3.031088913245535, 1.5)]
         # Smath.pike surface
         thickness = 0.1
         fn = 6
