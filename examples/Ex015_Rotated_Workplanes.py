@@ -13,10 +13,16 @@ import cadquery as cq
 # 6.  Selects the vertices of the for-construction rectangle.
 # 7.  Places holes at the center of each selected vertex.
 # 7a. Since the workplane is rotated, this results in angled holes in the face.
-result = (cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z")
-                 .workplane()
-                 .transformed(offset=(0, -1.5, 1.0), rotate=(60, 0, 0))
-                 .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.25))
+result = (
+    cq.Workplane("front")
+    .box(4.0, 4.0, 0.25)
+    .faces(">Z")
+    .workplane()
+    .transformed(offset=(0, -1.5, 1.0), rotate=(60, 0, 0))
+    .rect(1.5, 1.5, forConstruction=True)
+    .vertices()
+    .hole(0.25)
+)
 
 # Displays the result of this script
 show_object(result)

@@ -1,6 +1,16 @@
 import math
-        
-from OCC.Core.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
+
+from OCC.Core.gp import (
+    gp_Vec,
+    gp_Ax1,
+    gp_Ax3,
+    gp_Pnt,
+    gp_Dir,
+    gp_Trsf,
+    gp_GTrsf,
+    gp,
+    gp_XYZ,
+)
 from OCC.Core.Bnd import Bnd_Box
 from OCC.Core.BRepBndLib import brepbndlib_Add  # brepbndlib_AddOptimal
 from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
@@ -27,16 +37,16 @@ class Vector(object):
         if len(args) == 3:
             fV = gp_Vec(*args)
         elif len(args) == 2:
-            fV = gp_Vec(*args,0)
+            fV = gp_Vec(*args, 0)
         elif len(args) == 1:
             if isinstance(args[0], Vector):
                 fV = gp_Vec(args[0].wrapped.XYZ())
             elif isinstance(args[0], (tuple, list)):
                 arg = args[0]
-                if len(arg)==3:
+                if len(arg) == 3:
                     fV = gp_Vec(*arg)
-                elif len(arg)==2:
-                    fV = gp_Vec(*arg,0)
+                elif len(arg) == 2:
+                    fV = gp_Vec(*arg, 0)
             elif isinstance(args[0], (gp_Vec, gp_Pnt, gp_Dir)):
                 fV = gp_Vec(args[0].XYZ())
             elif isinstance(args[0], gp_XYZ):
@@ -53,25 +63,25 @@ class Vector(object):
     @property
     def x(self):
         return self.wrapped.X()
-    
+
     @x.setter
-    def x(self,value):
+    def x(self, value):
         self.wrapped.SetX(value)
 
     @property
     def y(self):
         return self.wrapped.Y()
-    
+
     @y.setter
-    def y(self,value):
+    def y(self, value):
         self.wrapped.SetY(value)
 
     @property
     def z(self):
         return self.wrapped.Z()
-    
+
     @z.setter
-    def z(self,value):
+    def z(self, value):
         self.wrapped.SetZ(value)
 
     @property
@@ -132,16 +142,13 @@ class Vector(object):
         return self.wrapped.Angle(v.wrapped)
 
     def distanceToLine(self):
-        raise NotImplementedError(
-            "Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
 
     def projectToLine(self):
-        raise NotImplementedError(
-            "Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
 
     def distanceToPlane(self):
-        raise NotImplementedError(
-            "Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
 
     def projectToPlane(self, plane):
         """
@@ -154,7 +161,7 @@ class Vector(object):
         base = plane.origin
         normal = plane.zDir
 
-        return self-normal*(((self-base).dot(normal))/normal.Length**2)
+        return self - normal * (((self - base).dot(normal)) / normal.Length ** 2)
 
     def __neg__(self):
         return self * -1
@@ -163,18 +170,19 @@ class Vector(object):
         return self.Length
 
     def __repr__(self):
-        return 'Vector: ' + str((self.x, self.y, self.z))
+        return "Vector: " + str((self.x, self.y, self.z))
 
     def __str__(self):
-        return 'Vector: ' + str((self.x, self.y, self.z))
+        return "Vector: " + str((self.x, self.y, self.z))
 
     def __eq__(self, other):
         return self.wrapped.IsEqual(other.wrapped, 0.00001, 0.00001)
-    '''
+
+    """
     is not implemented in OCC
     def __ne__(self, other):
         return self.wrapped.__ne__(other)
-    '''
+    """
 
     def toPnt(self):
 
@@ -222,44 +230,48 @@ class Matrix:
         elif isinstance(matrix, (list, tuple)):
             # Validate matrix size & 4x4 last row value
             valid_sizes = all(
-                (isinstance(row, (list, tuple)) and (len(row) == 4))
-                for row in matrix
+                (isinstance(row, (list, tuple)) and (len(row) == 4)) for row in matrix
             ) and len(matrix) in (3, 4)
             if not valid_sizes:
-                raise TypeError("Matrix constructor requires 2d list of 4x3 or 4x4, but got: {!r}".format(matrix))
-            elif (len(matrix) == 4) and (tuple(matrix[3]) != (0,0,0,1)):
-                raise ValueError("Expected the last row to be [0,0,0,1], but got: {!r}".format(matrix[3]))
+                raise TypeError(
+                    "Matrix constructor requires 2d list of 4x3 or 4x4, but got: {!r}".format(
+                        matrix
+                    )
+                )
+            elif (len(matrix) == 4) and (tuple(matrix[3]) != (0, 0, 0, 1)):
+                raise ValueError(
+                    "Expected the last row to be [0,0,0,1], but got: {!r}".format(
+                        matrix[3]
+                    )
+                )
 
             # Assign values to matrix
             self.wrapped = gp_GTrsf()
-            [self.wrapped.SetValue(i+1,j+1,e) 
-             for i,row in enumerate(matrix[:3]) 
-             for j,e in enumerate(row)]
-            
+            [
+                self.wrapped.SetValue(i + 1, j + 1, e)
+                for i, row in enumerate(matrix[:3])
+                for j, e in enumerate(row)
+            ]
+
         else:
-            raise TypeError(
-                    "Invalid param to matrix constructor: {}".format(matrix))
+            raise TypeError("Invalid param to matrix constructor: {}".format(matrix))
 
     def rotateX(self, angle):
 
-        self._rotate(gp.OX(),
-                     angle)
+        self._rotate(gp.OX(), angle)
 
     def rotateY(self, angle):
 
-        self._rotate(gp.OY(),
-                     angle)
+        self._rotate(gp.OY(), angle)
 
     def rotateZ(self, angle):
 
-        self._rotate(gp.OZ(),
-                     angle)
+        self._rotate(gp.OZ(), angle)
 
     def _rotate(self, direction, angle):
 
         new = gp_Trsf()
-        new.SetRotation(direction,
-                        angle)
+        new.SetRotation(direction, angle)
 
         self.wrapped = self.wrapped * gp_GTrsf(new)
 
@@ -277,11 +289,12 @@ class Matrix:
     def transposed_list(self):
         """Needed by the cqparts gltf exporter
         """
-        
+
         trsf = self.wrapped
-        data = [[trsf.Value(i,j) for j in range(1,5)] for i in range(1,4)] + \
-               [[0.,0.,0.,1.]]
-        
+        data = [[trsf.Value(i, j) for j in range(1, 5)] for i in range(1, 4)] + [
+            [0.0, 0.0, 0.0, 1.0]
+        ]
+
         return [data[j][i] for i in range(4) for j in range(4)]
 
     def __getitem__(self, rc):
@@ -298,7 +311,7 @@ class Matrix:
             else:
                 # gp_GTrsf doesn't provide access to the 4th row because it has
                 # an implied value as below:
-                return [0., 0., 0., 1.][c]
+                return [0.0, 0.0, 0.0, 1.0][c]
         else:
             raise IndexError("Out of bounds access into 4x4 matrix: {!r}".format(rc))
 
@@ -352,95 +365,94 @@ class Plane(object):
 
         namedPlanes = {
             # origin, xDir, normal
-            'XY': Plane(origin, (1, 0, 0), (0, 0, 1)),
-            'YZ': Plane(origin, (0, 1, 0), (1, 0, 0)),
-            'ZX': Plane(origin, (0, 0, 1), (0, 1, 0)),
-            'XZ': Plane(origin, (1, 0, 0), (0, -1, 0)),
-            'YX': Plane(origin, (0, 1, 0), (0, 0, -1)),
-            'ZY': Plane(origin, (0, 0, 1), (-1, 0, 0)),
-            'front': Plane(origin, (1, 0, 0), (0, 0, 1)),
-            'back': Plane(origin, (-1, 0, 0), (0, 0, -1)),
-            'left': Plane(origin, (0, 0, 1), (-1, 0, 0)),
-            'right': Plane(origin, (0, 0, -1), (1, 0, 0)),
-            'top': Plane(origin, (1, 0, 0), (0, 1, 0)),
-            'bottom': Plane(origin, (1, 0, 0), (0, -1, 0))
+            "XY": Plane(origin, (1, 0, 0), (0, 0, 1)),
+            "YZ": Plane(origin, (0, 1, 0), (1, 0, 0)),
+            "ZX": Plane(origin, (0, 0, 1), (0, 1, 0)),
+            "XZ": Plane(origin, (1, 0, 0), (0, -1, 0)),
+            "YX": Plane(origin, (0, 1, 0), (0, 0, -1)),
+            "ZY": Plane(origin, (0, 0, 1), (-1, 0, 0)),
+            "front": Plane(origin, (1, 0, 0), (0, 0, 1)),
+            "back": Plane(origin, (-1, 0, 0), (0, 0, -1)),
+            "left": Plane(origin, (0, 0, 1), (-1, 0, 0)),
+            "right": Plane(origin, (0, 0, -1), (1, 0, 0)),
+            "top": Plane(origin, (1, 0, 0), (0, 1, 0)),
+            "bottom": Plane(origin, (1, 0, 0), (0, -1, 0)),
         }
 
         try:
             return namedPlanes[stdName]
         except KeyError:
-            raise ValueError('Supported names are {}'.format(
-                list(namedPlanes.keys())))
+            raise ValueError("Supported names are {}".format(list(namedPlanes.keys())))
 
     @classmethod
     def XY(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('XY', origin)
+        plane = Plane.named("XY", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def YZ(cls, origin=(0, 0, 0), xDir=Vector(0, 1, 0)):
-        plane = Plane.named('YZ', origin)
+        plane = Plane.named("YZ", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def ZX(cls, origin=(0, 0, 0), xDir=Vector(0, 0, 1)):
-        plane = Plane.named('ZX', origin)
+        plane = Plane.named("ZX", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def XZ(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('XZ', origin)
+        plane = Plane.named("XZ", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def YX(cls, origin=(0, 0, 0), xDir=Vector(0, 1, 0)):
-        plane = Plane.named('YX', origin)
+        plane = Plane.named("YX", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def ZY(cls, origin=(0, 0, 0), xDir=Vector(0, 0, 1)):
-        plane = Plane.named('ZY', origin)
+        plane = Plane.named("ZY", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def front(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('front', origin)
+        plane = Plane.named("front", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def back(cls, origin=(0, 0, 0), xDir=Vector(-1, 0, 0)):
-        plane = Plane.named('back', origin)
+        plane = Plane.named("back", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def left(cls, origin=(0, 0, 0), xDir=Vector(0, 0, 1)):
-        plane = Plane.named('left', origin)
+        plane = Plane.named("left", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def right(cls, origin=(0, 0, 0), xDir=Vector(0, 0, -1)):
-        plane = Plane.named('right', origin)
+        plane = Plane.named("right", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def top(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('top', origin)
+        plane = Plane.named("top", origin)
         plane._setPlaneDir(xDir)
         return plane
 
     @classmethod
     def bottom(cls, origin=(0, 0, 0), xDir=Vector(1, 0, 0)):
-        plane = Plane.named('bottom', origin)
+        plane = Plane.named("bottom", origin)
         plane._setPlaneDir(xDir)
         return plane
 
@@ -458,12 +470,12 @@ class Plane(object):
         :return: a plane in the global space, with the xDirection of the plane in the specified direction.
         """
         zDir = Vector(normal)
-        if (zDir.Length == 0.0):
-            raise ValueError('normal should be non null')
+        if zDir.Length == 0.0:
+            raise ValueError("normal should be non null")
 
         xDir = Vector(xDir)
-        if (xDir.Length == 0.0):
-            raise ValueError('xDir should be non null')
+        if xDir.Length == 0.0:
+            raise ValueError("xDir should be non null")
 
         self.zDir = zDir.normalized()
         self._setPlaneDir(xDir)
@@ -489,7 +501,8 @@ class Plane(object):
     @property
     def origin(self):
         return self._origin
-# TODO is this property rly needed -- why not handle this in the constructor
+
+    # TODO is this property rly needed -- why not handle this in the constructor
 
     @origin.setter
     def origin(self, value):
@@ -545,7 +558,7 @@ class Plane(object):
 
         pass
 
-        '''
+        """
         # TODO: also use a set of points along the wire to test as well.
         # TODO: would it be more efficient to create objects in the local
         #       coordinate system, and then transform to global
@@ -562,7 +575,7 @@ class Plane(object):
         # findOutsideBox actually inspects both ways, here we only want to
         # know if one is inside the other
         return bb == BoundBox.findOutsideBox2D(bb, tb)
-        '''
+        """
 
     def toLocalCoords(self, obj):
         """Project the provided coordinates onto this plane
@@ -580,7 +593,7 @@ class Plane(object):
 
         """
         from .shapes import Shape
-        
+
         if isinstance(obj, Vector):
             return obj.transform(self.fG)
         elif isinstance(obj, Shape):
@@ -588,7 +601,9 @@ class Plane(object):
         else:
             raise ValueError(
                 "Don't know how to convert type {} to local coordinates".format(
-                    type(obj)))
+                    type(obj)
+                )
+            )
 
     def toWorldCoords(self, tuplePoint):
         """Convert a point in local coordinates to global coordinates
@@ -655,7 +670,7 @@ class Plane(object):
 
         raise NotImplementedError
 
-        '''
+        """
         resultWires = []
         for w in listOfShapes:
             mirrored = w.transformGeometry(rotationMatrix.wrapped)
@@ -681,21 +696,19 @@ class Plane(object):
 
                 resultWires.append(cadquery.Shape.cast(mirroredWire))
 
-        return resultWires'''
+        return resultWires"""
 
-    def mirrorInPlane(self, listOfShapes, axis='X'):
+    def mirrorInPlane(self, listOfShapes, axis="X"):
 
-        local_coord_system = gp_Ax3(self.origin.toPnt(),
-                                    self.zDir.toDir(),
-                                    self.xDir.toDir())
+        local_coord_system = gp_Ax3(
+            self.origin.toPnt(), self.zDir.toDir(), self.xDir.toDir()
+        )
         T = gp_Trsf()
 
-        if axis == 'X':
-            T.SetMirror(gp_Ax1(self.origin.toPnt(),
-                               local_coord_system.XDirection()))
-        elif axis == 'Y':
-            T.SetMirror(gp_Ax1(self.origin.toPnt(),
-                               local_coord_system.YDirection()))
+        if axis == "X":
+            T.SetMirror(gp_Ax1(self.origin.toPnt(), local_coord_system.XDirection()))
+        elif axis == "Y":
+            T.SetMirror(gp_Ax1(self.origin.toPnt(), local_coord_system.YDirection()))
         else:
             raise NotImplementedError
 
@@ -726,22 +739,21 @@ class Plane(object):
         # the double-inverting is strange, and I don't understand it.
         forward = Matrix()
         inverse = Matrix()
-        
+
         forwardT = gp_Trsf()
         inverseT = gp_Trsf()
 
         global_coord_system = gp_Ax3()
-        local_coord_system = gp_Ax3(gp_Pnt(*self.origin.toTuple()),
-                                    gp_Dir(*self.zDir.toTuple()),
-                                    gp_Dir(*self.xDir.toTuple())
-                                    )
+        local_coord_system = gp_Ax3(
+            gp_Pnt(*self.origin.toTuple()),
+            gp_Dir(*self.zDir.toTuple()),
+            gp_Dir(*self.xDir.toTuple()),
+        )
 
-        forwardT.SetTransformation(global_coord_system,
-                                   local_coord_system)
+        forwardT.SetTransformation(global_coord_system, local_coord_system)
         forward.wrapped = gp_GTrsf(forwardT)
-        
-        inverseT.SetTransformation(local_coord_system,
-                                   global_coord_system)
+
+        inverseT.SetTransformation(local_coord_system, global_coord_system)
         inverse.wrapped = gp_GTrsf(inverseT)
 
         # TODO verify if this is OK
@@ -767,11 +779,9 @@ class BoundBox(object):
         self.zmax = ZMax
         self.zlen = ZMax - ZMin
 
-        self.center = Vector((XMax + XMin) / 2,
-                             (YMax + YMin) / 2,
-                             (ZMax + ZMin) / 2)
+        self.center = Vector((XMax + XMin) / 2, (YMax + YMin) / 2, (ZMax + ZMin) / 2)
 
-        self.DiagonalLength = self.wrapped.SquareExtent()**0.5
+        self.DiagonalLength = self.wrapped.SquareExtent() ** 0.5
 
     def add(self, obj, tol=1e-8):
         """Returns a modified (expanded) bounding box
@@ -810,25 +820,29 @@ class BoundBox(object):
         the built-in implementation i do not understand.
         """
 
-        if (bb1.XMin < bb2.XMin and
-            bb1.XMax > bb2.XMax and
-            bb1.YMin < bb2.YMin and
-                bb1.YMax > bb2.YMax):
+        if (
+            bb1.XMin < bb2.XMin
+            and bb1.XMax > bb2.XMax
+            and bb1.YMin < bb2.YMin
+            and bb1.YMax > bb2.YMax
+        ):
             return bb1
 
-        if (bb2.XMin < bb1.XMin and
-            bb2.XMax > bb1.XMax and
-            bb2.YMin < bb1.YMin and
-                bb2.YMax > bb1.YMax):
+        if (
+            bb2.XMin < bb1.XMin
+            and bb2.XMax > bb1.XMax
+            and bb2.YMin < bb1.YMin
+            and bb2.YMax > bb1.YMax
+        ):
             return bb2
 
         return None
 
     @classmethod
     def _fromTopoDS(cls, shape, tol=None, optimal=False):
-        '''
+        """
         Constructs a bounding box from a TopoDS_Shape
-        '''
+        """
         tol = TOL if tol is None else tol  # tol = TOL (by default)
         bbox = Bnd_Box()
         bbox.SetGap(tol)
@@ -845,12 +859,14 @@ class BoundBox(object):
 
     def isInside(self, b2):
         """Is the provided bounding box inside this one?"""
-        if (b2.xmin > self.xmin and
-            b2.ymin > self.ymin and
-            b2.zmin > self.zmin and
-            b2.xmax < self.xmax and
-            b2.ymax < self.ymax and
-            b2.zmax < self.zmax):
+        if (
+            b2.xmin > self.xmin
+            and b2.ymin > self.ymin
+            and b2.zmin > self.zmin
+            and b2.xmax < self.xmax
+            and b2.ymax < self.ymax
+            and b2.zmax < self.zmax
+        ):
             return True
         else:
             return False

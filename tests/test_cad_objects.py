@@ -3,9 +3,11 @@ import sys
 import unittest
 from tests import BaseTest
 from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_DZ, gp_XYZ
-from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
-                                BRepBuilderAPI_MakeEdge,
-                                BRepBuilderAPI_MakeFace)
+from OCC.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeVertex,
+    BRepBuilderAPI_MakeEdge,
+    BRepBuilderAPI_MakeFace,
+)
 
 from OCC.GC import GC_MakeCircle
 
@@ -13,36 +15,34 @@ from cadquery import *
 
 
 class TestCadObjects(BaseTest):
-
     def _make_circle(self):
 
-        circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()),
-                         2.)
+        circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()), 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(circle).Edge())
 
     def testVectorConstructors(self):
         v1 = Vector(1, 2, 3)
         v2 = Vector((1, 2, 3))
         v3 = Vector(gp_Vec(1, 2, 3))
-        v4 = Vector([1,2,3])
-        v5 = Vector(gp_XYZ(1,2,3))
+        v4 = Vector([1, 2, 3])
+        v5 = Vector(gp_XYZ(1, 2, 3))
 
         for v in [v1, v2, v3, v4, v5]:
             self.assertTupleAlmostEquals((1, 2, 3), v.toTuple(), 4)
-            
-        v6 = Vector((1,2))
-        v7 = Vector([1,2])
-        v8 = Vector(1,2)
-        
+
+        v6 = Vector((1, 2))
+        v7 = Vector([1, 2])
+        v8 = Vector(1, 2)
+
         for v in [v6, v7, v8]:
             self.assertTupleAlmostEquals((1, 2, 0), v.toTuple(), 4)
-        
+
         v9 = Vector()
         self.assertTupleAlmostEquals((0, 0, 0), v9.toTuple(), 4)
-        
-        v9.x = 1.
-        v9.y = 2.
-        v9.z = 3.
+
+        v9.x = 1.0
+        v9.y = 2.0
+        v9.z = 3.0
         self.assertTupleAlmostEquals((1, 2, 3), (v9.x, v9.y, v9.z), 4)
 
     def testVertex(self):
@@ -70,20 +70,22 @@ class TestCadObjects(BaseTest):
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), e.Center().toTuple(), 3)
 
     def testEdgeWrapperMakeCircle(self):
-        halfCircleEdge = Edge.makeCircle(radius=10, pnt=(
-            0, 0, 0), dir=(0, 0, 1), angle1=0, angle2=180)
+        halfCircleEdge = Edge.makeCircle(
+            radius=10, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=0, angle2=180
+        )
 
-        #self.assertTupleAlmostEquals((0.0, 5.0, 0.0), halfCircleEdge.CenterOfBoundBox(0.0001).toTuple(),3)
+        # self.assertTupleAlmostEquals((0.0, 5.0, 0.0), halfCircleEdge.CenterOfBoundBox(0.0001).toTuple(),3)
         self.assertTupleAlmostEquals(
-            (10.0, 0.0, 0.0), halfCircleEdge.startPoint().toTuple(), 3)
+            (10.0, 0.0, 0.0), halfCircleEdge.startPoint().toTuple(), 3
+        )
         self.assertTupleAlmostEquals(
-            (-10.0, 0.0, 0.0), halfCircleEdge.endPoint().toTuple(), 3)
+            (-10.0, 0.0, 0.0), halfCircleEdge.endPoint().toTuple(), 3
+        )
 
     def testFaceWrapperMakePlane(self):
         mplane = Face.makePlane(10, 10)
 
-        self.assertTupleAlmostEquals(
-            (0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
+        self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
 
     def testCenterOfBoundBox(self):
         pass
@@ -109,12 +111,15 @@ class TestCadObjects(BaseTest):
         Workplane.cyl = cylinders
 
         # Now test. here we want weird workplane to see if the objects are transformed right
-        s = Workplane("XY").rect(
-            2.0, 3.0, forConstruction=True).vertices().cyl(0.25, 0.5)
+        s = (
+            Workplane("XY")
+            .rect(2.0, 3.0, forConstruction=True)
+            .vertices()
+            .cyl(0.25, 0.5)
+        )
 
         self.assertEqual(4, len(s.val().Solids()))
-        self.assertTupleAlmostEquals(
-            (0.0, 0.0, 0.25), s.val().Center().toTuple(), 3)
+        self.assertTupleAlmostEquals((0.0, 0.0, 0.25), s.val().Center().toTuple(), 3)
 
     def testDot(self):
         v1 = Vector(2, 2, 2)
@@ -142,7 +147,7 @@ class TestCadObjects(BaseTest):
 
         self.assertEqual(0, abs(Vector(0, 0, 0)))
         self.assertEqual(1, abs(Vector(1, 0, 0)))
-        self.assertEqual((1+4+9)**0.5, abs(Vector(1, 2, 3)))
+        self.assertEqual((1 + 4 + 9) ** 0.5, abs(Vector(1, 2, 3)))
 
     def testVectorEquals(self):
         a = Vector(1, 2, 3)
@@ -163,25 +168,31 @@ class TestCadObjects(BaseTest):
 
         # test passing Plane object
         point = Vector(10, 11, 12).projectToPlane(Plane(base, x_dir, normal))
-        self.assertTupleAlmostEquals(point.toTuple(), (59/7, 55/7, 51/7),
-                                     decimal_places)
+        self.assertTupleAlmostEquals(
+            point.toTuple(), (59 / 7, 55 / 7, 51 / 7), decimal_places
+        )
 
     def testMatrixCreationAndAccess(self):
         def matrix_vals(m):
-            return [[m[r,c] for c in range(4)] for r in range(4)]
+            return [[m[r, c] for c in range(4)] for r in range(4)]
+
         # default constructor creates a 4x4 identity matrix
         m = Matrix()
-        identity = [[1., 0., 0., 0.],
-                    [0., 1., 0., 0.],
-                    [0., 0., 1., 0.],
-                    [0., 0., 0., 1.]]
+        identity = [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
         self.assertEqual(identity, matrix_vals(m))
 
-        vals4x4 = [[1., 0., 0., 1.],
-                   [0., 1., 0., 2.],
-                   [0., 0., 1., 3.],
-                   [0., 0., 0., 1.]]
-        vals4x4_tuple = tuple(tuple(r) for r in  vals4x4)
+        vals4x4 = [
+            [1.0, 0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0, 2.0],
+            [0.0, 0.0, 1.0, 3.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        vals4x4_tuple = tuple(tuple(r) for r in vals4x4)
 
         # test constructor with 16-value input
         m = Matrix(vals4x4)
@@ -197,10 +208,12 @@ class TestCadObjects(BaseTest):
         self.assertEqual(vals4x4, matrix_vals(m))
 
         # Test 16-value input with invalid values for the last 4
-        invalid = [[1., 0., 0., 1.],
-                   [0., 1., 0., 2.],
-                   [0., 0., 1., 3.],
-                   [1., 2., 3., 4.]]
+        invalid = [
+            [1.0, 0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0, 2.0],
+            [0.0, 0.0, 1.0, 3.0],
+            [1.0, 2.0, 3.0, 4.0],
+        ]
         with self.assertRaises(ValueError):
             Matrix(invalid)
 
@@ -208,11 +221,11 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(TypeError):
             Matrix([[1, 2, 3, 4], [1, 2, 3], [1, 2, 3, 4]])
         with self.assertRaises(TypeError):
-            Matrix([1,2,3])
+            Matrix([1, 2, 3])
 
         # Invalid sub-type
         with self.assertRaises(TypeError):
-            Matrix([[1, 2, 3, 4], 'abc', [1, 2, 3, 4]])
+            Matrix([[1, 2, 3, 4], "abc", [1, 2, 3, 4]])
 
         # test out-of-bounds access
         m = Matrix()
@@ -221,8 +234,7 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(IndexError):
             m[4, 0]
         with self.assertRaises(IndexError):
-            m['ab']
-
+            m["ab"]
 
     def testTranslate(self):
         e = Edge.makeCircle(2, (1, 2, 3))
@@ -231,54 +243,53 @@ class TestCadObjects(BaseTest):
         self.assertTupleAlmostEquals((1.0, 2.0, 4.0), e2.Center().toTuple(), 3)
 
     def testVertices(self):
-        e = Shape.cast(BRepBuilderAPI_MakeEdge(gp_Pnt(0, 0, 0),
-                                               gp_Pnt(1, 1, 0)).Edge())
+        e = Shape.cast(BRepBuilderAPI_MakeEdge(gp_Pnt(0, 0, 0), gp_Pnt(1, 1, 0)).Edge())
         self.assertEqual(2, len(e.Vertices()))
 
     def testPlaneEqual(self):
         # default orientation
         self.assertEqual(
-            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
-            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1))
+            Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1)),
+            Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1)),
         )
         # moved origin
         self.assertEqual(
-            Plane(origin=(2,1,-1), xDir=(1,0,0), normal=(0,0,1)),
-            Plane(origin=(2,1,-1), xDir=(1,0,0), normal=(0,0,1))
+            Plane(origin=(2, 1, -1), xDir=(1, 0, 0), normal=(0, 0, 1)),
+            Plane(origin=(2, 1, -1), xDir=(1, 0, 0), normal=(0, 0, 1)),
         )
         # moved x-axis
         self.assertEqual(
-            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1)),
-            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1))
+            Plane(origin=(0, 0, 0), xDir=(1, 1, 0), normal=(0, 0, 1)),
+            Plane(origin=(0, 0, 0), xDir=(1, 1, 0), normal=(0, 0, 1)),
         )
         # moved z-axis
         self.assertEqual(
-            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1)),
-            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1))
+            Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 1, 1)),
+            Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 1, 1)),
         )
- 
+
     def testPlaneNotEqual(self):
         # type difference
-        for value in [None, 0, 1, 'abc']:
+        for value in [None, 0, 1, "abc"]:
             self.assertNotEqual(
-                Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
-                value
+                Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1)), value
             )
         # origin difference
         self.assertNotEqual(
-            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
-            Plane(origin=(0,0,1), xDir=(1,0,0), normal=(0,0,1))
+            Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1)),
+            Plane(origin=(0, 0, 1), xDir=(1, 0, 0), normal=(0, 0, 1)),
         )
         # x-axis difference
         self.assertNotEqual(
-            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
-            Plane(origin=(0,0,0), xDir=(1,1,0), normal=(0,0,1))
+            Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1)),
+            Plane(origin=(0, 0, 0), xDir=(1, 1, 0), normal=(0, 0, 1)),
         )
         # z-axis difference
         self.assertNotEqual(
-            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,0,1)),
-            Plane(origin=(0,0,0), xDir=(1,0,0), normal=(0,1,1))
+            Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1)),
+            Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 1, 1)),
         )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

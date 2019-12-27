@@ -13,7 +13,7 @@ sPnts = [
     (1.5, 1.0),
     (1.0, 1.25),
     (0.5, 1.0),
-    (0, 1.0)
+    (0, 1.0),
 ]
 
 # 2.  Generate our plate with the spline feature and make sure it is a

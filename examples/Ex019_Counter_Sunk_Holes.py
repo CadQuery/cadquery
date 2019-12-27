@@ -11,9 +11,15 @@ import cadquery as cq
 #     function.
 # 5a. When the depth of the counter-sink hole is set to None, the hole will be
 #     cut through.
-result = (cq.Workplane(cq.Plane.XY()).box(4, 2, 0.5).faces(">Z")
-                 .workplane().rect(3.5, 1.5, forConstruction=True)
-                 .vertices().cskHole(0.125, 0.25, 82.0, depth=None))
+result = (
+    cq.Workplane(cq.Plane.XY())
+    .box(4, 2, 0.5)
+    .faces(">Z")
+    .workplane()
+    .rect(3.5, 1.5, forConstruction=True)
+    .vertices()
+    .cskHole(0.125, 0.25, 82.0, depth=None)
+)
 
 # Displays the result of this script
 show_object(result)

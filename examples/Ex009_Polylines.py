@@ -6,13 +6,13 @@ import cadquery as cq
 
 # Define the points that the polyline will be drawn to/thru
 pts = [
-    (W/2.0, H/2.0),
-    (W/2.0, (H/2.0 - t)),
-    (t/2.0, (H/2.0-t)),
-    (t/2.0, (t - H/2.0)),
-    (W/2.0, (t - H/2.0)),
-    (W/2.0, H/-2.0),
-    (0, H/-2.0)
+    (W / 2.0, H / 2.0),
+    (W / 2.0, (H / 2.0 - t)),
+    (t / 2.0, (H / 2.0 - t)),
+    (t / 2.0, (t - H / 2.0)),
+    (W / 2.0, (t - H / 2.0)),
+    (W / 2.0, H / -2.0),
+    (0, H / -2.0),
 ]
 
 # We generate half of the I-beam outline and then mirror it to create the full
@@ -30,10 +30,7 @@ pts = [
 # 3.  Only half of the I-beam profile has been drawn so far. That half is
 #     mirrored around the Y-axis to create the complete I-beam profile.
 # 4.  The I-beam profile is extruded to the final length of the beam.
-result = (cq.Workplane("front").moveTo(0, H/2.0)
-                              .polyline(pts)
-                              .mirrorY()
-                              .extrude(L))
+result = cq.Workplane("front").moveTo(0, H / 2.0).polyline(pts).mirrorY().extrude(L)
 
 # Displays the result of this script
 show_object(result)
