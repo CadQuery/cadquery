@@ -460,6 +460,32 @@ This example uses an offset workplane to make a compound object, which is perfec
         * :py:meth:`Workplane.box`
         * :py:meth:`Workplane`
 
+Copying Workplanes
+--------------------------
+
+An existing CQ object can copy a workplane from another CQ object.
+
+.. cq_plot::
+
+    result = (cq.Workplane("front").circle(1).extrude(10) # make a cylinder
+              # We want to make a second cylinder perpendicular to the first, 
+              # but we have no face to base the workplane off
+              .copyWorkplane(
+                  # create a temporary object with the required workplane
+                  cq.Workplane("right", origin=(-5, 0, 0))
+              ).circle(1).extrude(10))
+    show_object(result)
+
+.. topic:: API References
+
+    .. hlist:
+        :columns: 2
+
+        * :py:meth:`CQ.copyWorkplane` **!**
+        * :py:meth:`Workplane.circle`
+        * :py:meth:`Workplane.extrude`
+        * :py:meth:`Workplane`
+
 Rotated Workplanes
 --------------------------
 
@@ -602,6 +628,55 @@ Here we fillet all of the edges of a simple plate.
         * :py:meth:`Workplane.fillet` **!**
         * :py:meth:`Workplane.box`
         * :py:meth:`Workplane.edges`
+        * :py:meth:`Workplane`
+
+Tagging objects
+----------------
+
+The :py:meth:`CQ.tag` method can be used to tag a particular object in the chain with a string. At a later point in the chain, the method :py:meth:`CQ.getTagged` can be used to return the previously tagged object (note that CQ objects share the modelling context throughout a chain, so going back to a previously tagged object will not change what is in the modelling context eg. unextruded edges).
+
+The method :py:meth:`CQ.getTagged` is awkward to use in chained calls (see :ref:`chaining`), the main utility of tags is when they are combined with other functions. The :py:meth:`CQ.workplaneFromTagged` method applies :py:meth:`CQ.copyWorkplane` to a tagged object. For example, when extruding two different solids from a surface, after the first solid is extruded it can become difficult to reselect the original surface with CadQuery's other selectors.
+
+.. cq_plot::
+
+    result = (cq.Workplane("XY")
+              # create and tag the base workplane
+              .box(10, 10, 10).faces(">Z").workplane().tag("baseplane")
+              # extrude a cylinder
+              .center(-3, 0).circle(1).extrude(3)
+              # to reselect the base workplane, simply
+              .workplaneFromTagged("baseplane")
+              # extrude a second cylinder
+              .center(3, 0).circle(1).extrude(2))
+    show_object(result)
+
+
+Tags can also be used with most selectors, including :py:meth:`CQ.vertices`, :py:meth:`CQ.faces`, :py:meth:`CQ.edges`, :py:meth:`CQ.wires`, :py:meth:`CQ.shells`, :py:meth:`CQ.solids` and :py:meth:`CQ.compounds`.
+
+.. cq_plot::
+
+    result = (cq.Workplane("XY")
+              # create a triangular prism and tag it
+              .polygon(3, 5).extrude(4).tag("prism")
+              # create a sphere that obscures the prism
+              .sphere(10)
+              # create features based on the prism's faces
+              .faces("<X", tag="prism").workplane().circle(1).cutThruAll()
+              .faces(">X", tag="prism").faces(">Y").workplane().circle(1).cutThruAll())
+    show_object(result)
+            
+.. topic:: Api References
+
+    .. hlist::
+        :columns: 2
+
+        * :py:meth:`CQ.tag` **!**
+        * :py:meth:`CQ.getTagged` **!**
+        * :py:meth:`CQ.workplaneFromTagged` **!**
+        * :py:meth:`Workplane.extrude`
+        * :py:meth:`Workplane.cutThruAll`
+        * :py:meth:`Workplane.circle`
+        * :py:meth:`Workplane.faces`
         * :py:meth:`Workplane`
 
 A Parametric Bearing Pillow Block

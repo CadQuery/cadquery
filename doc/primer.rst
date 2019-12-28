@@ -111,6 +111,8 @@ backwards in the stack to get the face as well::
 You can browse stack access methods here: :ref:`stackMethods`.
 
 
+.. _chaining:
+
 Chaining
 ---------------------------
 
