@@ -2202,7 +2202,6 @@ class TestCadQuery(BaseTest):
         edge_points = [[-7.,-7.,0.], [-3.,-10.,3.], [7.,-7.,0.], [7.,7.,0.], [-7.,7.,0.]]
         edge_wire = Workplane('XY').polyline([(-7.,-7.), (7.,-7.), (7.,7.), (-7.,7.)])
         edge_wire = edge_wire.add(Workplane('YZ').workplane().transformed(offset=Vector(0, 0, -7), rotate=Vector(45, 0, 0)).polyline([(-7.,0.), (3,-3), (7.,0.)])) 
-        edge_wire = edge_wire.add(Workplane('YZ').workplane().transformed(offset=Vector(0, 0, -7), rotate=Vector(45, 0, 0)).spline([(-7.,0.), (3,-3), (7.,0.)])) # In CadQuery Sept-2019 it worked with rotate=Vector(0, 45, 0). In CadQuery Dec-2019 rotate=Vector(45, 0, 0) only closes the wire. 
         surface_points = [[-3.,-3.,-3.], [3.,3.,3.]]
         plate_1 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness)
         #self.assertTrue(plate_1.val().isValid())
