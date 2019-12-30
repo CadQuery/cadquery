@@ -2187,7 +2187,7 @@ class TestCadQuery(BaseTest):
         
     def test_interpPlate(self):
         
-        decimal_places = 1
+        decimal_places = 0
         
         # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
         thickness = 0
