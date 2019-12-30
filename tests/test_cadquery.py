@@ -2187,15 +2187,15 @@ class TestCadQuery(BaseTest):
         
     def test_interpPlate(self):
         
-        decimal_places = 9
+        decimal_places = 1
         
         # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
         thickness = 0
         edge_points = [[0.,0.,0.], [0.,10.,0.], [0.,10.,10.], [0.,0.,10.]]
         surface_points = [[5.,5.,5.]]
         plate_0 = Workplane('XY').interpPlate(edge_points, surface_points, thickness)
-        #self.assertTrue(plate_0.val().isValid())
-        #self.assertAlmostEqual(plate_0.val().Area(), 141.218823892, decimal_places)
+        self.assertTrue(plate_0.val().isValid())
+        self.assertAlmostEqual(plate_0.val().Area(), 141.218823892, decimal_places)
          
         # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
         thickness = 0.1
@@ -2204,8 +2204,8 @@ class TestCadQuery(BaseTest):
         edge_wire = edge_wire.add(Workplane('YZ').workplane().transformed(offset=Vector(0, 0, -7), rotate=Vector(45, 0, 0)).spline([(-7.,0.), (3,-3), (7.,0.)])) 
         surface_points = [[-3.,-3.,-3.], [3.,3.,3.]]
         plate_1 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness)
-        #self.assertTrue(plate_1.val().isValid())
-        #self.assertAlmostEqual(plate_1.val().Volume(), 26.124970206, decimal_places)       
+        self.assertTrue(plate_1.val().isValid())
+        self.assertAlmostEqual(plate_1.val().Volume(), 26.124970206, decimal_places)       
         
         # Embossed star, need to change optional parameters to obtain nice looking result.
         r1=3.
