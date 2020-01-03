@@ -132,7 +132,7 @@ from OCC.Core.BRepFeat import BRepFeat_MakeDPrism
 
 from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 
-from math import pi, sqrt, tan, atan2
+from math import pi, sqrt
 from functools import reduce
 import warnings
 
