@@ -2020,6 +2020,41 @@ class Workplane(CQ):
 
         return self.eachpoint(makeCircleWire, useLocalCoordinates=True)
 
+    # ellipse from current point
+    def ellipse(self, x_radius, y_radius, angle1=360, angle2=360, rotation_angle=0.0,
+                closed=False, forConstruction=False):
+        """
+        Make an ellipse for each item on the stack.
+        :param x_radius: x radius of the ellipse (x-axis of plane the ellipse should lie in)
+        :type x_radius: float > 0
+        :param y_radius: y radius of the ellipse (y-axis of plane the ellipse should lie in)
+        :type y_radius: float > 0
+        :param forConstruction: should the new wires be reference geometry only?
+        :type forConstruction: true if the wires are for reference, false if they are creating
+            part geometry
+        :param rotation_angle: angle to rotate the ellipse (0 = no rotation = default)
+        :type rotation_angle: float
+        :param angle1: start angle of arc
+        :type angle1: float
+        :param angle2: end angle of arc
+        :type angle2: float
+        :param rotation_angle: angle to rotate the created ellipse / arc
+        :type rotation_angle: float
+        :return: a new CQ object with the created wires on the stack
+        
+        *NOTE* Due to a bug in opencascade (https://tracker.dev.opencascade.org/view.php?id=31290)
+        the center of mass (equals center for next shape) is shifted. To create concentric ellipses
+        use Workplane("XY")
+            .center(10, 20).ellipse(100,10)
+            .center(0, 0).ellipse(50, 5)
+        """
+        def makeEllipseWire(obj):
+            elip = Wire.makeEllipse(x_radius, y_radius, obj, Vector(0, 0, 1), angle1, angle2, rotation_angle, closed)
+            elip.forConstruction = forConstruction
+            return elip
+
+        return self.eachpoint(makeEllipseWire, useLocalCoordinates=True)
+
     def polygon(self, nSides, diameter, forConstruction=False):
         """
         Creates a polygon inscribed in a circle of the specified diameter for each point on

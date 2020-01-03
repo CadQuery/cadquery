@@ -3,6 +3,7 @@ from .geom import Vector, BoundBox, Plane
 import OCC.Core.TopAbs as ta  # Tolopolgy type enum
 import OCC.Core.GeomAbs as ga  # Geometry type enum
 
+<<<<<<< HEAD
 from OCC.Core.gp import (
     gp_Vec,
     gp_Pnt,
@@ -17,6 +18,10 @@ from OCC.Core.gp import (
     gp_Pnt2d,
     gp_Dir2d,
 )
+=======
+from OCC.Core.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ, gp_Elips,
+                         gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
+>>>>>>> added ellipse
 
 # collection of pints (used for spline construction)
 from OCC.Core.TColgp import TColgp_HArray1OfPnt
@@ -76,7 +81,7 @@ from OCC.Core.TopoDS import (
 
 from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Builder
 
-from OCC.Core.GC import GC_MakeArcOfCircle  # geometry construction
+from OCC.Core.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse   # geometry construction
 from OCC.Core.GCE2d import GCE2d_MakeSegment
 from OCC.Core.GeomAPI import GeomAPI_Interpolate, GeomAPI_ProjectPointOnSurf
 
@@ -127,7 +132,7 @@ from OCC.Core.BRepFeat import BRepFeat_MakeDPrism
 
 from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 
-from math import pi, sqrt
+from math import pi, sqrt, tan, atan2
 from functools import reduce
 import warnings
 
@@ -744,7 +749,49 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeSpline(cls, listOfVector, tangents=None, periodic=False, tol=1e-6):
+    def makeEllipse(cls, x_radius, y_radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1),
+                    angle1=360.0, angle2=360.0):
+        """
+        Interpolate a spline through the provided points.
+        :param cls:
+        :param x_radius: x radius of the ellipse (along the x-axis of plane the ellipse should lie in)
+        :param y_radius: y radius of the ellipse (along the y-axis of plane the ellipse should lie in)
+        :param pnt: vector representing the center of the ellipse
+        :param dir: vector representing the direction of the plane the ellipse should lie in
+        :param angle1: start angle of arc
+        :param angle2: end angle of arc (angle2 == angle1 return closed ellipse = default)
+        :return: an Edge
+        """
+
+        pnt = Vector(pnt).toPnt()
+        dir = Vector(dir).toDir()
+
+        ax1 = gp_Ax1(pnt, dir)
+        ax2 = gp_Ax2(pnt, dir)
+
+        if y_radius > x_radius:
+            # swap x and y radius and rotate by 90° afterwards to create an ellipse with x_radius < y_radius
+            correction_angle = 90.0 * DEG2RAD
+            ellipse_gp = gp_Elips(ax2, y_radius, x_radius).Rotated(ax1, correction_angle)
+        else:
+            correction_angle = 0.0
+            ellipse_gp = gp_Elips(ax2, x_radius, y_radius)
+
+        if angle1 == angle2:  # full ellipse case
+            ellipse = cls(BRepBuilderAPI_MakeEdge(ellipse_gp).Edge())
+        else:  # arc case
+            # take correction_angle into account
+            ellipse_geom = GC_MakeArcOfEllipse(ellipse_gp,
+                                               angle1 * DEG2RAD - correction_angle,
+                                               angle2 * DEG2RAD - correction_angle,
+                                               True).Value()
+            ellipse = cls(BRepBuilderAPI_MakeEdge(ellipse_geom).Edge())
+
+        return ellipse
+
+    @classmethod
+    def makeSpline(cls, listOfVector, tangents=None, periodic=False,
+                   tol = 1e-6):
         """
         Interpolate a spline through the provided points.
         :param cls:
@@ -859,6 +906,34 @@ class Wire(Shape, Mixin1D):
 
         circle_edge = Edge.makeCircle(radius, center, normal)
         w = cls.assembleEdges([circle_edge])
+        return w
+
+    @classmethod
+    def makeEllipse(cls, x_radius, y_radius, center, normal, angle1=360.0, angle2=360.0,
+                    rotation_angle=0.0, closed=True):
+        """
+            Makes an Ellipse centered at the provided point, having normal in the provided direction
+            :param x_radius: floating point major radius of the ellipse (x-axis), must be > 0
+            :param y_radius: floating point minor radius of the ellipse (y-axis), must be > 0
+            :param center: vector representing the center of the circle
+            :param normal: vector representing the direction of the plane the circle should lie in
+            :param angle1: start angle of arc
+            :param angle2: end angle of arc
+            :param rotation_angle: angle to rotate the created ellipse / arc
+            :return:
+        """
+
+        ellipse_edge = Edge.makeEllipse(x_radius, y_radius, center, normal, angle1, angle2)
+
+        if angle1 != angle2 and closed:
+            line = Edge.makeLine(ellipse_edge.endPoint(), ellipse_edge.startPoint())
+            w = cls.assembleEdges([ellipse_edge, line])
+        else:
+            w = cls.assembleEdges([ellipse_edge])
+
+        if rotation_angle != 0.0:
+            w = w.rotate(center, center + normal, rotation_angle)
+
         return w
 
     @classmethod

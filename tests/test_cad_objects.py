@@ -1,24 +1,31 @@
 # system modules
+import math
 import sys
 import unittest
 from tests import BaseTest
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_DZ, gp_XYZ
+from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp_DZ, gp_XYZ
 from OCC.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,
 )
 
-from OCC.GC import GC_MakeCircle
+from OCC.Core.GC import GC_MakeCircle
 
 from cadquery import *
 
+DEG2RAD = 2 * math.pi / 360
 
 class TestCadObjects(BaseTest):
     def _make_circle(self):
 
         circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()), 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(circle).Edge())
+
+    def _make_ellipse(self):
+
+        ellipse = gp_Elips(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()), 4., 2.)
+        return Shape.cast(BRepBuilderAPI_MakeEdge(ellipse).Edge())
 
     def testVectorConstructors(self):
         v1 = Vector(1, 2, 3)
@@ -69,6 +76,11 @@ class TestCadObjects(BaseTest):
 
         self.assertTupleAlmostEquals((1.0, 2.0, 3.0), e.Center().toTuple(), 3)
 
+    def testEdgeWrapperEllipseCenter(self):
+        e = self._make_ellipse()
+        w = Wire.assembleEdges([e])
+        self.assertTupleAlmostEquals((1.0, 2.0, 3.0), Face.makeFromWires(w).Center().toTuple(), 3)
+
     def testEdgeWrapperMakeCircle(self):
         halfCircleEdge = Edge.makeCircle(
             radius=10, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=0, angle2=180
@@ -81,6 +93,42 @@ class TestCadObjects(BaseTest):
         self.assertTupleAlmostEquals(
             (-10.0, 0.0, 0.0), halfCircleEdge.endPoint().toTuple(), 3
         )
+
+    def testEdgeWrapperMakeEllipse1(self):
+        # Check x_radius > y_radius
+        x_radius, y_radius = 20, 10
+        angle1, angle2 = -75.0, 90.0
+        arcEllipseEdge = Edge.makeEllipse(
+            x_radius=x_radius, y_radius=y_radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=angle1, angle2=angle2)
+
+        start = (x_radius * math.cos(angle1 * DEG2RAD), y_radius * math.sin(angle1 * DEG2RAD), 0.0)
+        end = (x_radius * math.cos(angle2 * DEG2RAD), y_radius * math.sin(angle2 * DEG2RAD), 0.0)
+        self.assertTupleAlmostEquals(start, arcEllipseEdge.startPoint().toTuple(), 3)
+        self.assertTupleAlmostEquals(end, arcEllipseEdge.endPoint().toTuple(), 3)
+
+    def testEdgeWrapperMakeEllipse2(self):
+        # Check x_radius < y_radius
+        x_radius, y_radius = 10, 20
+        angle1, angle2 = 0.0, 45.0
+        arcEllipseEdge = Edge.makeEllipse(
+            x_radius=x_radius, y_radius=y_radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=angle1, angle2=angle2)
+
+        start = (x_radius * math.cos(angle1 * DEG2RAD), y_radius * math.sin(angle1 * DEG2RAD), 0.0)
+        end = (x_radius * math.cos(angle2 * DEG2RAD), y_radius * math.sin(angle2 * DEG2RAD), 0.0)
+        self.assertTupleAlmostEquals(start, arcEllipseEdge.startPoint().toTuple(), 3)
+        self.assertTupleAlmostEquals(end, arcEllipseEdge.endPoint().toTuple(), 3)
+
+    def testEdgeWrapperMakeCircleWithEllipse(self):
+        # Check x_radius == y_radius
+        x_radius, y_radius = 20, 20
+        angle1, angle2 = 15.0, 60.0
+        arcEllipseEdge = Edge.makeEllipse(
+            x_radius=x_radius, y_radius=y_radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=angle1, angle2=angle2)
+
+        start = (x_radius * math.cos(angle1 * DEG2RAD), y_radius * math.sin(angle1 * DEG2RAD), 0.0)
+        end = (x_radius * math.cos(angle2 * DEG2RAD), y_radius * math.sin(angle2 * DEG2RAD), 0.0)
+        self.assertTupleAlmostEquals(start, arcEllipseEdge.startPoint().toTuple(), 3)
+        self.assertTupleAlmostEquals(end, arcEllipseEdge.endPoint().toTuple(), 3)
 
     def testFaceWrapperMakePlane(self):
         mplane = Face.makePlane(10, 10)

@@ -753,6 +753,44 @@ class TestCadQuery(BaseTest):
         self.saveModel(s)
         self.assertEqual(14, s.faces().size())
 
+    def testConcentricEllipses(self):
+        concentricEllipses  = (Workplane("XY")
+                                 .center(10, 20).ellipse(100,10)
+                                 .center(0, 0).ellipse(50, 5))
+        v = concentricEllipses.vertices().objects[0]
+        self.assertTupleAlmostEquals((v.X, v.Y), (10 + 50, 20), 3)
+
+    
+    def testClosedEllipseArc(self):
+        ellipseArc = Workplane("XY").ellipse(20, 10, angle1=30, angle2=-30, rotation_angle=0, closed=False)
+        self.assertFalse(ellipseArc.val().IsClosed())
+        ellipseArc = Workplane("XY").ellipse(20, 10, angle1=30, angle2=-30, rotation_angle=0, closed=True)
+        self.assertTrue(ellipseArc.val().IsClosed())
+
+    def testRotatedEllipse(self):
+        DEG2RAD = math.pi / 180.0
+        c = (5, 7)
+        a1, a2 = 30, -60
+        r1, r2 = 20, 10
+        ra = 25
+        ellipseArc = Workplane("XY").center(*c).ellipse(r1, r2, angle1=a1, angle2=a2, rotation_angle=ra)
+
+        start = ellipseArc.vertices().objects[0]
+        end = ellipseArc.vertices().objects[1]
+        
+        # rotation matrix
+        r = (( math.cos(ra*DEG2RAD), math.sin(ra*DEG2RAD)),
+            (-math.sin(ra*DEG2RAD), math.cos(ra*DEG2RAD)))
+        # points on ellipse around zero before rotation
+        sx, sy = r1 * math.cos(a1*DEG2RAD), r2 * math.sin(a1*DEG2RAD)
+        ex, ey = r1 * math.cos(a2*DEG2RAD), r2 * math.sin(a2*DEG2RAD)
+        # points on ellipse around zero after rotation
+        sx_rot, sy_rot = c[0] + (sx*r[0][0] + sy*r[1][0]), c[1] + (sx*r[0][1] + sy*r[1][1])
+        ex_rot, ey_rot = c[0] + (ex*r[0][0] + ey*r[1][0]), c[1] + (ex*r[0][1] + ey*r[1][1])
+        
+        self.assertTupleAlmostEquals((start.X, start.Y), (sx_rot, sy_rot), 3)
+        self.assertTupleAlmostEquals((end.X, end.Y), (ex_rot, ey_rot), 3)
+                
     def testLegoBrick(self):
         # test making a simple lego brick
         # which of the below
