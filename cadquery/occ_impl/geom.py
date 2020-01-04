@@ -1,9 +1,9 @@
 import math
         
-from OCC.Core.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
-from OCC.Core.Bnd import Bnd_Box
-from OCC.Core.BRepBndLib import brepbndlib_Add  # brepbndlib_AddOptimal
-from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
+from OCP.Bnd import Bnd_Box
+from OCP.BRepBndLib import BRepBndLib  # brepbndlib_AddOptimal
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
 
 TOL = 1e-2
 
@@ -186,7 +186,7 @@ class Vector(object):
 
     def transform(self, T):
 
-        # to gp_Pnt to obey cq transformation convention (in OCC.Core.vectors do not translate)
+        # to gp_Pnt to obey cq transformation convention (in OCP.vectors do not translate)
         pnt = self.toPnt()
         pnt_t = pnt.Transformed(T.wrapped.Trsf())
 
@@ -751,7 +751,7 @@ class Plane(object):
 
 
 class BoundBox(object):
-    """A BoundingBox for an object or set of objects. Wraps the OCC.Core.one"""
+    """A BoundingBox for an object or set of objects. Wraps the OCP.one"""
 
     def __init__(self, bb):
         self.wrapped = bb
@@ -839,7 +839,7 @@ class BoundBox(object):
             mesh = BRepMesh_IncrementalMesh(shape, tol, True)
             mesh.Perform()
             # this is adds +margin but is faster
-            brepbndlib_Add(shape, bbox, True)
+            BRepBndLib.Add_s(shape, bbox, True)
 
         return cls(bbox)
 

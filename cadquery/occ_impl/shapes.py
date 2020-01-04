@@ -1,15 +1,15 @@
 from .geom import Vector, BoundBox, Plane
 
-import OCC.Core.TopAbs as ta  # Tolopolgy type enum
-import OCC.Core.GeomAbs as ga  # Geometry type enum
+import OCP.TopAbs as ta  # Tolopolgy type enum
+import OCP.GeomAbs as ga  # Geometry type enum
 
-from OCC.Core.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ,
+from OCP.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ,
                          gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
 
 # collection of pints (used for spline construction)
-from OCC.Core.TColgp import TColgp_HArray1OfPnt
-from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
-from OCC.Core.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
+from OCP.TColgp import TColgp_Array1OfPnt
+from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
+from OCP.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                      BRepBuilderAPI_MakeEdge,
                                      BRepBuilderAPI_MakeFace,
                                      BRepBuilderAPI_MakePolygon,
@@ -23,99 +23,84 @@ from OCC.Core.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                      BRepBuilderAPI_RightCorner,
                                      BRepBuilderAPI_RoundCorner)
 # properties used to store mass calculation result
-from OCC.Core.GProp import GProp_GProps
-from OCC.Core.BRepGProp import BRepGProp_Face, \
-    brepgprop_LinearProperties,  \
-    brepgprop_SurfaceProperties, \
-    brepgprop_VolumeProperties  # used for mass calculation
-from OCC.Core.BRepLProp import BRepLProp_CLProps  # local curve properties
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp_Face, BRepGProp # used for mass calculation
+from OCP.BRepLProp import BRepLProp_CLProps  # local curve properties
 
-from OCC.Core.BRepPrimAPI import (BRepPrimAPI_MakeBox,
-                                  BRepPrimAPI_MakeCone,
-                                  BRepPrimAPI_MakeCylinder,
-                                  BRepPrimAPI_MakeTorus,
-                                  BRepPrimAPI_MakeWedge,
-                                  BRepPrimAPI_MakePrism,
-                                  BRepPrimAPI_MakeRevol,
-                                  BRepPrimAPI_MakeSphere)
+from OCP.BRepPrimAPI import (BRepPrimAPI_MakeBox,
+                            BRepPrimAPI_MakeCone,
+                            BRepPrimAPI_MakeCylinder,
+                            BRepPrimAPI_MakeTorus,
+                            BRepPrimAPI_MakeWedge,
+                            BRepPrimAPI_MakePrism,
+                            BRepPrimAPI_MakeRevol,
+                            BRepPrimAPI_MakeSphere)
 
-from OCC.Core.TopExp import TopExp_Explorer  # Toplogy explorer
-from OCC.Core.BRepTools import (breptools_UVBounds,
-                                breptools_OuterWire)
+from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
+
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
-from OCC.Core.BRep import BRep_Tool, BRep_Tool_Degenerated
+from OCP.BRep import BRep_Tool
 
-from OCC.Core.TopoDS import (topods_Vertex,  # downcasting functions
-                             topods_Edge,
-                             topods_Wire,
-                             topods_Face,
-                             topods_Shell,
-                             topods_Compound,
-                             topods_Solid)
+from OCP.TopoDS import TopoDS, TopoDS_Builder, TopoDS_Compound
 
-from OCC.Core.TopoDS import (TopoDS_Compound,
-                             TopoDS_Builder)
-
-from OCC.Core.GC import GC_MakeArcOfCircle  # geometry construction
-from OCC.Core.GCE2d import GCE2d_MakeSegment
-from OCC.Core.GeomAPI import (GeomAPI_Interpolate,
+from OCP.GC import GC_MakeArcOfCircle  # geometry construction
+from OCP.GCE2d import GCE2d_MakeSegment
+from OCP.GeomAPI import (GeomAPI_Interpolate,
                          GeomAPI_ProjectPointOnSurf)
 
-from OCC.Core.BRepFill import brepfill_Shell, brepfill_Face
+from OCP.BRepFill import BRepFill
 
-from OCC.Core.BRepAlgoAPI import (BRepAlgoAPI_Common,
+from OCP.BRepAlgoAPI import (BRepAlgoAPI_Common,
                                   BRepAlgoAPI_Fuse,
                                   BRepAlgoAPI_Cut)
 
-from OCC.Core.Geom import Geom_ConicalSurface, Geom_CylindricalSurface
-from OCC.Core.Geom2d import Geom2d_Line
+from OCP.Geom import Geom_ConicalSurface, Geom_CylindricalSurface
+from OCP.Geom2d import Geom2d_Line
 
-from OCC.Core.BRepLib import breplib_BuildCurves3d
+from OCP.BRepLib import BRepLib
 
-from OCC.Core.BRepOffsetAPI import (BRepOffsetAPI_ThruSections,
+from OCP.BRepOffsetAPI import (BRepOffsetAPI_ThruSections,
                                     BRepOffsetAPI_MakePipeShell,
                                     BRepOffsetAPI_MakeThickSolid)
 
-from OCC.Core.BRepFilletAPI import (BRepFilletAPI_MakeChamfer,
+from OCP.BRepFilletAPI import (BRepFilletAPI_MakeChamfer,
                                BRepFilletAPI_MakeFillet)
 
-from OCC.Core.TopTools import (TopTools_IndexedDataMapOfShapeListOfShape,
+from OCP.TopTools import (TopTools_IndexedDataMapOfShapeListOfShape,
                                TopTools_ListOfShape)
 
-from OCC.Core.TopExp import topexp_MapShapesAndAncestors
+from OCP.TopExp import TopExp
 
-from OCC.Core.ShapeFix import ShapeFix_Shape
+from OCP.ShapeFix import ShapeFix_Shape
 
-from OCC.Core.STEPControl import STEPControl_Writer, STEPControl_AsIs
+from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
-from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
-from OCC.Core.StlAPI import StlAPI_Writer
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.StlAPI import StlAPI_Writer
 
-from OCC.Core.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
-from OCC.Core.BRepTools import breptools_Write
+from OCP.BRepTools import BRepTools
 
-from OCC.Core.Visualization import Tesselator
+from OCP.LocOpe import LocOpe_DPrism
 
-from OCC.Core.LocOpe import LocOpe_DPrism
-
-from OCC.Core.BRepCheck import BRepCheck_Analyzer
-
-from OCC.Core.Addons import (text_to_brep,
+from OCP.BRepCheck import BRepCheck_Analyzer
+'''
+from OCP.Addons import (text_to_brep,
                              Font_FA_Regular,
                              Font_FA_Italic,
                              Font_FA_Bold)
+'''
+from OCP.BRepFeat import BRepFeat_MakeDPrism
 
-from OCC.Core.BRepFeat import BRepFeat_MakeDPrism
-
-from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
+from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 
 from math import pi, sqrt
 from functools import reduce
 
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.
-HASH_CODE_MAX = 2147483647  # max 32bit signed int, required by OCC.Core.HashCode
+HASH_CODE_MAX = 2147483647  # max 32bit signed int, required by OCP.HashCode
 
 shape_LUT = \
     {ta.TopAbs_VERTEX: 'Vertex',
@@ -128,23 +113,23 @@ shape_LUT = \
 
 shape_properties_LUT = \
     {ta.TopAbs_VERTEX: None,
-     ta.TopAbs_EDGE: brepgprop_LinearProperties,
-     ta.TopAbs_WIRE: brepgprop_LinearProperties,
-     ta.TopAbs_FACE: brepgprop_SurfaceProperties,
-     ta.TopAbs_SHELL: brepgprop_SurfaceProperties,
-     ta.TopAbs_SOLID: brepgprop_VolumeProperties,
-     ta.TopAbs_COMPOUND: brepgprop_VolumeProperties}
+     ta.TopAbs_EDGE: BRepGProp.LinearProperties_s,
+     ta.TopAbs_WIRE: BRepGProp.LinearProperties_s,
+     ta.TopAbs_FACE: BRepGProp.SurfaceProperties_s,
+     ta.TopAbs_SHELL: BRepGProp.SurfaceProperties_s,
+     ta.TopAbs_SOLID: BRepGProp.VolumeProperties_s,
+     ta.TopAbs_COMPOUND: BRepGProp.VolumeProperties_s}
 
 inverse_shape_LUT = {v: k for k, v in shape_LUT.items()}
 
 downcast_LUT = \
-    {ta.TopAbs_VERTEX: topods_Vertex,
-     ta.TopAbs_EDGE: topods_Edge,
-     ta.TopAbs_WIRE: topods_Wire,
-     ta.TopAbs_FACE: topods_Face,
-     ta.TopAbs_SHELL: topods_Shell,
-     ta.TopAbs_SOLID: topods_Solid,
-     ta.TopAbs_COMPOUND: topods_Compound}
+    {ta.TopAbs_VERTEX: TopoDS.Vertex_s,
+     ta.TopAbs_EDGE: TopoDS.Edge_s,
+     ta.TopAbs_WIRE: TopoDS.Wire_s,
+     ta.TopAbs_FACE: TopoDS.Face_s,
+     ta.TopAbs_SHELL: TopoDS.Shell_s,
+     ta.TopAbs_SOLID: TopoDS.Solid_s,
+     ta.TopAbs_COMPOUND: TopoDS.Compound_s}
 
 geom_LUT = \
     {ta.TopAbs_VERTEX: 'Vertex',
@@ -264,7 +249,7 @@ class Shape(object):
         Export given shape to a BREP file
         """
 
-        return breptools_Write(self.wrapped, fileName)
+        return BRepTools.Write_s(self.wrapped, fileName)
     
     def geomType(self):
         """
@@ -340,7 +325,7 @@ class Shape(object):
     def _center_of_mass(shape):
 
         Properties = GProp_GProps()
-        brepgprop_VolumeProperties(shape,
+        BRepGProp.VolumeProperties_s(shape,
                                    Properties)
 
         return Vector(Properties.CentreOfMass())
@@ -444,7 +429,7 @@ class Shape(object):
         return [Vertex(i) for i in self._entities('Vertex')]
 
     def Edges(self):
-        return [Edge(i) for i in self._entities('Edge') if not BRep_Tool_Degenerated(i)]
+        return [Edge(i) for i in self._entities('Edge') if not BRep_Tool.Degenerated_s(TopoDS.Edge_s(i))]
 
     def Compounds(self):
         return [Compound(i) for i in self._entities('Compound')]
@@ -463,7 +448,7 @@ class Shape(object):
 
     def Area(self):
         Properties = GProp_GProps()
-        brepgprop_SurfaceProperties(self.wrapped,
+        BRepGProp.SurfaceProperties_s(self.wrapped,
                                     Properties)
 
         return Properties.Mass()
@@ -609,7 +594,7 @@ class Vertex(Shape):
 
     def toTuple(self):
 
-        geom_point = BRep_Tool.Pnt(self.wrapped)
+        geom_point = BRep_Tool.Pnt_s(self.wrapped)
         return (geom_point.X(),
                 geom_point.Y(),
                 geom_point.Z())
@@ -632,13 +617,13 @@ class Mixin1D(object):
     def Length(self):
 
         Properties = GProp_GProps()
-        brepgprop_LinearProperties(self.wrapped, Properties)
+        BRepGProp.LinearProperties_s(self.wrapped, Properties)
 
         return Properties.Mass()
 
     def IsClosed(self):
 
-        return BRep_Tool.IsClosed(self.wrapped)
+        return BRep_Tool.IsClosed_s(self.wrapped)
 
 
 class Edge(Shape, Mixin1D):
@@ -703,7 +688,7 @@ class Edge(Shape, Mixin1D):
     def Center(self):
 
         Properties = GProp_GProps()
-        brepgprop_LinearProperties(self.wrapped,
+        BRepGProp.LinearProperties_s(self.wrapped,
                                    Properties)
 
         return Vector(Properties.CentreOfMass())
@@ -741,7 +726,7 @@ class Edge(Shape, Mixin1D):
         :param tol: tolerance of the algorithm (consult OCC documentation)
         :return: an Edge
         """
-        pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
+        pnts = TColgp_Array1OfPnt(1, len(listOfVector))
         for ix, v in enumerate(listOfVector):
             pnts.SetValue(ix+1, v.toPnt())
 
@@ -879,7 +864,7 @@ class Wire(Shape, Mixin1D):
 
         # 4. Convert to wire and fix building 3d geom from 2d geom
         w = BRepBuilderAPI_MakeWire(e).Wire()
-        breplib_BuildCurves3d(w)
+        BRepLib.BuildCurves3d_s(w)
 
         return cls(w)
 
@@ -887,8 +872,8 @@ class Wire(Shape, Mixin1D):
         """Attempt to stich wires"""
 
         wire_builder = BRepBuilderAPI_MakeWire()
-        wire_builder.Add(topods_Wire(self.wrapped))
-        wire_builder.Add(topods_Wire(other.wrapped))
+        wire_builder.Add(TopoDS.Wire_s(self.wrapped))
+        wire_builder.Add(TopoDS.Wire_s(other.wrapped))
         wire_builder.Build()
 
         return self.__class__(wire_builder.Wire())
@@ -903,11 +888,11 @@ class Face(Shape):
         """
         Return the underlying geometry
         """
-        return BRep_Tool.Surface(self.wrapped)
+        return BRep_Tool.Surface_s(self.wrapped)
 
     def _uvBounds(self):
 
-        return breptools_UVBounds(self.wrapped)
+        return BRepTools.UVBounds_s(self.wrapped)
 
     def normalAt(self, locationVector=None):
         """
@@ -940,14 +925,14 @@ class Face(Shape):
     def Center(self):
 
         Properties = GProp_GProps()
-        brepgprop_SurfaceProperties(self.wrapped,
+        BRepGProp.SurfaceProperties_s(self.wrapped,
                                     Properties)
 
         return Vector(Properties.CentreOfMass())
     
     def outerWire(self):
         
-        return self.cast(breptools_OuterWire(self.wrapped))
+        return self.cast(BRepTools.OuterWire_s(self.wrapped))
     
     def innerWires(self):
         
@@ -977,10 +962,10 @@ class Face(Shape):
         """
 
         if isinstance(edgeOrWire1, Wire):
-            return cls.cast(brepfill_Shell(edgeOrWire1.wrapped,
+            return cls.cast(BRepFill.Shell_s(edgeOrWire1.wrapped,
                                            edgeOrWire1.wrapped))
         else:
-            return cls.cast(brepfill_Face(edgeOrWire1.wrapped,
+            return cls.cast(BRepFill.Face_s(edgeOrWire1.wrapped,
                                           edgeOrWire1.wrapped))
 
     @classmethod
@@ -1066,7 +1051,7 @@ class Mixin3D(object):
 
         # make a edge --> faces mapping
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
-        topexp_MapShapesAndAncestors(self.wrapped,
+        TopExp.MapShapesAndAncestors_s(self.wrapped,
                                      ta.TopAbs_EDGE,
                                      ta.TopAbs_FACE,
                                      edge_face_map)
@@ -1086,7 +1071,7 @@ class Mixin3D(object):
             chamfer_builder.Add(d1,
                                 d2,
                                 e,
-                                topods_Face(face))  # NB: edge_face_map return a generic TopoDS_Shape
+                                TopoDS.Face_s(face))  # NB: edge_face_map return a generic TopoDS_Shape
         return self.__class__(chamfer_builder.Shape())
 
     def shell(self, faceList, thickness, tolerance=0.0001):
