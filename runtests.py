@@ -18,5 +18,5 @@ suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestJupyter.TestJupyt
 suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestWorkplanes.TestWorkplanes))
 
 if __name__ == '__main__':
-    result = unittest.TextTestRunner().run(suite)
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(not result.wasSuccessful())
