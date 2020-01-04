@@ -1,5 +1,5 @@
 from cadquery import *
-from OCC.gp import gp_Vec
+from OCP.gp import gp_Vec
 import unittest
 import sys
 import os

@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from OCC.Core.Visualization import Tesselator
+#from OCP.Visualization import Tesselator
 
 import tempfile
 import os
@@ -12,11 +12,11 @@ else:
 from .shapes import Shape, Compound, TOLERANCE
 from .geom import BoundBox
 
-from OCC.Core.gp import gp_Ax2, gp_Pnt, gp_Dir
-from OCC.Core.BRepLib import breplib
-from OCC.Core.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
-from OCC.Core.HLRAlgo import HLRAlgo_Projector
-from OCC.Core.GCPnts import GCPnts_QuasiUniformDeflection
+from OCP.gp import gp_Ax2, gp_Pnt, gp_Dir
+from OCP.BRepLib import BRepLib
+from OCP.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
+from OCP.HLRAlgo import HLRAlgo_Projector
+from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
 try:
     import xml.etree.cElementTree as ET
@@ -329,9 +329,9 @@ def getSVG(shape, opts=None):
 
     # Fix the underlying geometry - otherwise we will get segfaults
     for el in visible:
-        breplib.BuildCurves3d(el, TOLERANCE)
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
     for el in hidden:
-        breplib.BuildCurves3d(el, TOLERANCE)
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
 
     # convert to native CQ objects
     visible = list(map(Shape, visible))

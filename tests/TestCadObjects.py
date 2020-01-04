@@ -2,12 +2,12 @@
 import sys
 import unittest
 from tests import BaseTest
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_DZ, gp_XYZ
-from OCC.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
+from OCP.gp import gp, gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_XYZ
+from OCP.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                 BRepBuilderAPI_MakeEdge,
                                 BRepBuilderAPI_MakeFace)
 
-from OCC.GC import GC_MakeCircle
+from OCP.GC import GC_MakeCircle
 
 from cadquery import *
 
@@ -16,7 +16,7 @@ class TestCadObjects(BaseTest):
 
     def _make_circle(self):
 
-        circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()),
+        circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp.gp_DZ_s()),
                          2.)
         return Shape.cast(BRepBuilderAPI_MakeEdge(circle).Edge())
 
