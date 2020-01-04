@@ -242,17 +242,17 @@ class Matrix:
 
     def rotateX(self, angle):
 
-        self._rotate(gp.OX(),
+        self._rotate(gp.OX_s(),
                      angle)
 
     def rotateY(self, angle):
 
-        self._rotate(gp.OY(),
+        self._rotate(gp.OY_s(),
                      angle)
 
     def rotateZ(self, angle):
 
-        self._rotate(gp.OZ(),
+        self._rotate(gp.OZ_s(),
                      angle)
 
     def _rotate(self, direction, angle):
