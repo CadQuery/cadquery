@@ -1252,7 +1252,7 @@ class Solid(Shape, Mixin3D):
         continuity = GeomAbs_C0 # Fixed, changing to anything else crashes.
         face = Face.makeNSidedSurface(edges, pts_array, continuity, Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments) 
         
-        if thickness>0: # Thicken surface
+        if abs(thickness)>0: # Thicken surface, abs() because negative values are allowed (sets direction of thickening)
             solid = BRepOffset_MakeOffset()
             solid.Initialize(face.wrapped, thickness, 1.e-5, BRepOffset_Skin, False, False, GeomAbs_Intersection, True) #The last True is important to make solid
             solid.MakeOffsetShape()
