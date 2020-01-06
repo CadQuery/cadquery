@@ -978,10 +978,10 @@ class Face(Shape):
         return [w for w in self.Wires() if not w.isSame(outer)]
 
     @classmethod
-    def makeNSidedSurface(cls, edges, points, continuity=GeomAbs_C0, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9):
+    def makeNSidedSurface(cls, edges, points, continuity=GeomAbs_C0, degree=3, nbPtsOnCur=15, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=9):
         """
         Returns a surface enclosed by a closed polygon defined by 'edges' and going through 'points'.
-        :param points 
+        :param points
         :type points: list of gp_Pnt
         :param edges
         :type edges: list of TopologyExplorer().edges()
@@ -1008,8 +1008,8 @@ class Face(Shape):
         :param MaxSegments = 9 (OCCT default)
         :type MaxSegments: Integer >= 2 (?)
         """
-        
-        n_sided = BRepOffsetAPI_MakeFilling(Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments)
+
+        n_sided = BRepOffsetAPI_MakeFilling(degree, nbPtsOnCur, nbIter, anisotropy, tol2d, tol3d, tolAng, tolCurv, maxDeg, maxSegments)
         for edg in edges:
             n_sided.Add(edg, continuity)
         for pt in points:
@@ -1200,7 +1200,7 @@ class Solid(Shape, Mixin3D):
     """
     
     @classmethod
-    def interpPlate(cls, surf_edges, surf_pts, thickness, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9):
+    def interpPlate(cls, surf_edges, surf_pts, thickness, degree=3, nbPtsOnCur=15, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=9):
         """
         Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
 
@@ -1256,7 +1256,7 @@ class Solid(Shape, Mixin3D):
 
         # MAKE SURFACE
         continuity = GeomAbs_C0 # Fixed, changing to anything else crashes.
-        face = Face.makeNSidedSurface(edges, pts_array, continuity, Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments)
+        face = Face.makeNSidedSurface(edges, pts_array, continuity, degree, nbPtsOnCur, nbIter, anisotropy, tol2d, tol3d, tolAng, tolCurv, maxDeg, maxSegments)
 
         # THICKEN SURFACE
         if abs(thickness)>0: # abs() because negative values are allowed to set direction of thickening
