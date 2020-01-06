@@ -1203,14 +1203,14 @@ class Solid(Shape, Mixin3D):
     def interpPlate(cls, surf_edges, surf_pts, thickness, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9):
         """
         Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
-        
+
         :param surf_edges
         :type 1 surf_edges: list of [x,y,z] float ordered coordinates
-        :type 2 surf_edges: list of unordered CadQuery wires
+        :type 2 surf_edges: list of ordered or unordered CadQuery wires
         :param surf_pts = [] (uses only edges if [])
         :type surf_pts: list of [x,y,z] float coordinates
         :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float >= 0
+        :type thickness: float (may be negative or positive depending on thicknening direction)
         :param Degree = 3 (OCCT default)
         :type Degree: Integer >= 2
         :param NbPtsOnCur = 15 (OCCT default)
@@ -1232,34 +1232,41 @@ class Solid(Shape, Mixin3D):
         :param MaxSegments = 9 (OCCT default)
         :type MaxSegments: Integer >= 2 (?)
         """
-        
-        # POINTS CONSTRAINTS: List of (x,y,z) points provided
+
+        # POINTS CONSTRAINTS: list of (x,y,z) points, optional.
         pts_array = [gp_Pnt(*pt) for pt in surf_pts]
-        
-        # EDGE CONSTRAINTS: build closed polygon
-        if isinstance(surf_edges, list): # List of (x,y,z) points provided
+
+        # EDGE CONSTRAINTS
+        # If a list of wires is provided, make a closed wire
+        if not isinstance(surf_edges, list):
+            surf_edges = [o.vals()[0] for o in surf_edges.all()]
+            surf_edges = Wire.assembleEdges(surf_edges)
+            w = surf_edges.wrapped
+
+        # If a list of (x,y,z) points provided, build closed polygon
+        if isinstance(surf_edges, list):
             e_array = [Vector(*e) for e in surf_edges]
             wire_builder = BRepBuilderAPI_MakePolygon()
             for e in e_array: # Create polygon from edges
                 wire_builder.Add(e.toPnt())
             wire_builder.Close()
             w = wire_builder.Wire()
-        else: # Closed wires provided
-            w = surf_edges
+
         edges = [i for i in TopologyExplorer(w).edges()]
-        
+
         # MAKE SURFACE
         continuity = GeomAbs_C0 # Fixed, changing to anything else crashes.
-        face = Face.makeNSidedSurface(edges, pts_array, continuity, Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments) 
-        
-        if abs(thickness)>0: # Thicken surface, abs() because negative values are allowed (sets direction of thickening)
+        face = Face.makeNSidedSurface(edges, pts_array, continuity, Degree, NbPtsOnCur, NbIter, Anisotropie, Tol2d, Tol3d, TolAng, TolCurv, MaxDeg, MaxSegments)
+
+        # THICKEN SURFACE
+        if abs(thickness)>0: # abs() because negative values are allowed to set direction of thickening
             solid = BRepOffset_MakeOffset()
             solid.Initialize(face.wrapped, thickness, 1.e-5, BRepOffset_Skin, False, False, GeomAbs_Intersection, True) #The last True is important to make solid
             solid.MakeOffsetShape()
             return cls(solid.Shape())
         else: # Return 2D surface only
             return face
-        
+
     @classmethod
     def isSolid(cls, obj):
         """
