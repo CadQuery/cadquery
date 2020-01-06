@@ -1,5 +1,4 @@
-import numpy as np
-from numpy import sin, cos, pi, sqrt
+from math import sin, cos, pi, sqrt
 import cadquery as cq
 
 # TEST_1
@@ -8,6 +7,7 @@ thickness = 0
 edge_points = [[0.,0.,0.], [0.,10.,0.], [0.,10.,10.], [0.,0.,10.]]
 surface_points = [[5.,5.,5.]]
 plate_0 = cq.Workplane('XY').interpPlate(edge_points, surface_points, thickness)
+print("plate_0.val().Volume() = ", plate_0.val().Volume())
 plate_0 = plate_0.translate((0,6*12,0))
 show_object(plate_0)
 
@@ -21,6 +21,7 @@ edge_wire = edge_wire.add(cq.Workplane('YZ').workplane().transformed(offset=cq.V
 surface_points = [[-3.,-3.,-3.], [3.,3.,3.]]
 plate_1 = cq.Workplane('XY').interpPlate(edge_wire, surface_points, thickness)
 #plate_1 = cq.Workplane('XY').interpPlate(edge_points, surface_points, thickness) # list of (x,y,z) points instead of wires for edges
+print("plate_1.val().Volume() = ", plate_1.val().Volume())
 show_object(plate_1)
 
 # EXAMPLE 2
@@ -33,8 +34,9 @@ edge_points = [[r1*cos(i * pi/fn), r1*sin(i * pi/fn)]    if i%2==0  else   [r2*c
 edge_wire = cq.Workplane('XY').polyline(edge_points)
 r2=4.5
 surface_points = [[r2*cos(i * pi/fn), r2*sin(i * pi/fn), 1.]  for i in range(2*fn)] + [[0.,0.,-2.]]
-plate_2 = cq.Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=49)
+plate_2 = cq.Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, degree=3, nbPtsOnCur=15, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=49)
 #plate_2 = cq.Workplane('XY').interpPlate(edge_points, surface_points, thickness, combine=True, clean=True, Degree=3, NbPtsOnCur=15, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=49) # list of (x,y,z) points instead of wires for edges
+print("plate_2.val().Volume() = ", plate_2.val().Volume())
 plate_2 = plate_2.translate((0,2*12,0))
 show_object(plate_2)
 
@@ -45,28 +47,20 @@ N = 3
 ca = cos(30. * pi/180.)
 sa = sin(30. * pi/180.)
 # EVEN ROWS
-x_p = np.arange(-N*r1, N*r1, ca*2*r1)
-y_p = np.arange(-N*r1, N*r1, 3*r1)
-x_p, y_p = np.meshgrid(x_p, y_p)
-xy_p_even = [(x,y) for x,y in zip(x_p.flatten(), y_p.flatten())]
-# ODD ROWS
-x_p = np.arange(-(N-0.5)*r1*ca, (N+1.5)*r1*ca, ca*2*r1)
-y_p = np.arange(-(N-2+sa)*r1, (N+1+sa)*r1, 3*r1)
-x_p, y_p = np.meshgrid(x_p, y_p)
-xy_p_odd = [(x,y) for x,y in zip(x_p.flatten(), y_p.flatten())]
-pts = xy_p_even + xy_p_odd
+pts =  [(-3.0, -3.0), (-1.2679491924311226, -3.0), (0.46410161513775483, -3.0), (2.196152422706632, -3.0), (-3.0, 0.0), (-1.2679491924311226, 0.0), (0.46410161513775483, 0.0), (2.196152422706632, 0.0), (-2.165063509461097, -1.5), (-0.4330127018922194, -1.5), (1.299038105676658, -1.5), (3.031088913245535, -1.5), (-2.165063509461097, 1.5), (-0.4330127018922194, 1.5), (1.299038105676658, 1.5), (3.031088913245535, 1.5)]
 # Spike surface
 thickness = 0.1
 fn = 6
 edge_points = [[r1*cos(i * 2*pi/fn), r1*sin(i * 2*pi/fn)] for i in range(fn+1)]
 surface_points = [[0.25,0,0.75], [-0.25,0,0.75], [0,0.25,0.75], [0,-0.25,0.75], [0,0,2]]
 edge_wire = cq.Workplane('XY').polyline(edge_points)
-be = cq.Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, Degree=2, NbPtsOnCur=20, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9)
+be = cq.Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, degree=2, nbPtsOnCur=20, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=9)
 #be = cq.Workplane('XY').interpPlate(edge_points, surface_points, thickness, combine=True, clean=True, Degree=2, NbPtsOnCur=20, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9) # list of (x,y,z) points instead of wires for edges
 # Pattern on sphere
 def face(pos): # If pushpoints is used directly with interpPlate --> crash! Use with each()
     return be.rotate((0,0,0),(0,0,1), 30).translate(pos).val()
 plate_3 = cq.Workplane('XY').pushPoints(pts).each(face)
+print("plate_3.val().Volume() = ", plate_3.val().Volume())
 plate_3 = plate_3.translate((0,4*11,0))
 show_object(plate_3)
 
@@ -81,5 +75,6 @@ for i in range(len(edge_points)-1):
     edge_wire = edge_wire.add(cq.Workplane(plane_list[i+1]).workplane(offset=-offset_list[i+1]).spline(edge_points[i+1]))
 surface_points = [[0,0,0]]
 plate_4 = cq.Workplane('XY').interpPlate(edge_wire, surface_points, thickness)
+print("plate_4.val().Volume() = ", plate_4.val().Volume())
 plate_4 = plate_4.translate((0,5*12,0))
 show_object(plate_4)
