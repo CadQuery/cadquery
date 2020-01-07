@@ -2231,7 +2231,7 @@ class TestCadQuery(BaseTest):
             return be.rotate((0,0,0),(0,0,1), 30).translate(pos).val()
         plate_3 = Workplane('XY').pushPoints(pts).each(face)
         self.assertTrue(plate_3.val().isValid())
-        self.assertAlmostEqual(plate_3.val().Volume(), 0.459661032, 3)
+        self.assertAlmostEqual(plate_3.val().Volume(), 0.459661032, 1)
 
         # Gyroïd, all edges are splines on different workplanes.
         thickness = 0.1
