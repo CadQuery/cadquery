@@ -2178,6 +2178,10 @@ class TestCadQuery(BaseTest):
         edge_wire = Wire.assembleEdges(edge_wire)
 
     def test_interpPlate(self):
+        """
+        Tests the interpPlate() functionnalites
+        Numerical values of Areas and Volumes were obtained with the Area() and Volume() functions on a Linux machine under Debian 10 with python 3.7.
+        """
 
         # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
         thickness = 0
