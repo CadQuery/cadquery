@@ -2187,7 +2187,7 @@ class TestCadQuery(BaseTest):
         surface_points = [[5.,5.,5.]]
         plate_0 = Workplane('XY').interpPlate(edge_points, surface_points, thickness)
         self.assertTrue(plate_0.val().isValid())
-        self.assertAlmostEqual(plate_0.val().Area(), 141.218823892, decimal_places)
+        self.assertAlmostEqual(plate_0.val().Area(), 141.218823892, 1)
 
         # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
         thickness = 0.1
@@ -2198,7 +2198,7 @@ class TestCadQuery(BaseTest):
         surface_points = [[-3.,-3.,-3.], [3.,3.,3.]]
         plate_1 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_1.val().isValid())
-        self.assertAlmostEqual(plate_1.val().Volume(), 26.124970206, decimal_places)
+        self.assertAlmostEqual(plate_1.val().Volume(), 26.124970206, 3)
 
         # Embossed star, need to change optional parameters to obtain nice looking result.
         r1=3.
@@ -2211,7 +2211,7 @@ class TestCadQuery(BaseTest):
         surface_points = [[r2*math.cos(i * math.pi/fn), r2*math.sin(i * math.pi/fn), 1.]  for i in range(2*fn)] + [[0.,0.,-2.]]
         plate_2 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, degree=3, nbPtsOnCur=15, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=49)
         self.assertTrue(plate_2.val().isValid())
-        self.assertAlmostEqual(plate_2.val().Volume(), 10.956054314, decimal_places)
+        self.assertAlmostEqual(plate_2.val().Volume(), 10.956054314, 1)
 
         # Points on hexagonal pattern coordinates, use of pushpoints.
         r1 = 1.
@@ -2231,7 +2231,7 @@ class TestCadQuery(BaseTest):
             return be.rotate((0,0,0),(0,0,1), 30).translate(pos).val()
         plate_3 = Workplane('XY').pushPoints(pts).each(face)
         self.assertTrue(plate_3.val().isValid())
-        self.assertAlmostEqual(plate_3.val().Volume(), 0.459661032, decimal_places)
+        self.assertAlmostEqual(plate_3.val().Volume(), 0.459661032, 3)
 
         # Gyroïd, all edges are splines on different workplanes.
         thickness = 0.1
@@ -2244,4 +2244,4 @@ class TestCadQuery(BaseTest):
         surface_points = [[0,0,0]]
         plate_4 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_4.val().isValid())
-        self.assertAlmostEqual(plate_4.val().Volume(), 7.760559490, decimal_places)
+        self.assertAlmostEqual(plate_4.val().Volume(), 7.760559490, 3)
