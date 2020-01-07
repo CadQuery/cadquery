@@ -2211,7 +2211,7 @@ class TestCadQuery(BaseTest):
         surface_points = [[r2*math.cos(i * math.pi/fn), r2*math.sin(i * math.pi/fn), 1.]  for i in range(2*fn)] + [[0.,0.,-2.]]
         plate_2 = Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, degree=3, nbPtsOnCur=15, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=49)
         self.assertTrue(plate_2.val().isValid())
-        self.assertAlmostEqual(plate_2.val().Volume(), 10.956054314, 1)
+        self.assertAlmostEqual(plate_2.val().Volume(), 10.956054314, 0)
 
         # Points on hexagonal pattern coordinates, use of pushpoints.
         r1 = 1.
