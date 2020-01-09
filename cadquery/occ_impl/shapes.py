@@ -7,7 +7,7 @@ from OCP.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ,
                          gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
 
 # collection of pints (used for spline construction)
-from OCP.TColgp import TColgp_Array1OfPnt
+from OCP.TColgp import TColgp_Array1OfPnt, TColgp_HArray1OfPnt
 from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCP.BRepBuilderAPI import (BRepBuilderAPI_MakeVertex,
                                      BRepBuilderAPI_MakeEdge,
@@ -726,7 +726,7 @@ class Edge(Shape, Mixin1D):
         :param tol: tolerance of the algorithm (consult OCC documentation)
         :return: an Edge
         """
-        pnts = TColgp_Array1OfPnt(1, len(listOfVector))
+        pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
         for ix, v in enumerate(listOfVector):
             pnts.SetValue(ix+1, v.toPnt())
 
