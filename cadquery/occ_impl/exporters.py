@@ -60,10 +60,8 @@ def exportShape(shape, exportType, fileLike, tolerance=0.1):
     from ..cq import CQ
 
     def tessellate(shape):
-        tess = Tesselator(shape.wrapped)
-        tess.Compute(compute_edges=True, mesh_quality=tolerance)
 
-        return tess
+        return shape.tessellate(tolerance)
 
     if isinstance(shape, CQ):
         shape = shape.val()
@@ -73,13 +71,11 @@ def exportShape(shape, exportType, fileLike, tolerance=0.1):
         mesher = JsonMesh()
 
         # add vertices
-        for i_vert in range(tess.ObjGetVertexCount()):
-            v = tess.GetVertex(i_vert)
-            mesher.addVertex(*v)
+        for v in tess[0]:
+            mesher.addVertex(v.x,v.y,v.z)
 
         # add triangles
-        for i_tr in range(tess.ObjGetTriangleCount()):
-            t = tess.GetTriangleIndex(i_tr)
+        for t in tess[1]:
             mesher.addTriangleFace(*t)
 
         fileLike.write(mesher.toJson())
@@ -160,20 +156,18 @@ class AmfWriter(object):
         volume = ET.SubElement(mesh, 'volume')
 
         # add vertices
-        for i_vert in range(self.tessellation.ObjGetVertexCount()):
-            v = self.tessellation.GetVertex(i_vert)
+        for v in self.tessellation[0]:
             vtx = ET.SubElement(vertices, 'vertex')
             coord = ET.SubElement(vtx, 'coordinates')
             x = ET.SubElement(coord, 'x')
-            x.text = str(v[0])
+            x.text = str(v.x)
             y = ET.SubElement(coord, 'y')
-            y.text = str(v[1])
+            y.text = str(v.y)
             z = ET.SubElement(coord, 'z')
-            z.text = str(v[2])
+            z.text = str(v.z)
 
         # add triangles
-        for i_tr in range(self.tessellation.ObjGetTriangleCount()):
-            t = self.tessellation.GetTriangleIndex(i_tr)
+        for t in self.tessellation[1]:
             triangle = ET.SubElement(volume, 'triangle')
             v1 = ET.SubElement(triangle, 'v1')
             v1.text = str(t[0])

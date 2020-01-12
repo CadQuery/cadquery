@@ -98,6 +98,8 @@ from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 
 from OCP.TCollection import TCollection_HAsciiString
 
+from OCP.TopLoc import TopLoc_Location
+
 from math import pi, sqrt
 from functools import reduce
 
@@ -1009,22 +1011,33 @@ class Shell(Shape):
 class Mixin3D(object):
 
     def tessellate(self, tolerance):
-        tess = Tesselator(self.wrapped)
-        tess.Compute(compute_edges=True, mesh_quality=tolerance)
+        
+        import faulthandler
+        faulthandler.enable()
+        
+        if not BRepTools.Triangulation_s(self.wrapped,tolerance):
+            BRepMesh_IncrementalMesh(self.wrapped,tolerance,True)
+
 
         vertices = []
-        indexes  = []
+        triangles  = []
+        offset = 0
+        
+        for f in self.Faces():
+            
+            loc = TopLoc_Location()
+            poly = BRep_Tool.Triangulation_s(f.wrapped,loc)
+            Trsf = loc.Transformation()
+            
+            # add vertices
+            vertices += [Vector(v.X(),v.Y(),v.Z()) for v in (v.Transformed(Trsf) for v in poly.Nodes())]
+    
+            # add triangles
+            triangles += [tuple(el+offset for el in t.Get()) for t in poly.Triangles()]
+            
+            offset += poly.NbNodes()
 
-        # add vertices
-        for i_vert in range(tess.ObjGetVertexCount()):
-            xyz = tess.GetVertex(i_vert)
-            vertices.append(Vector(*xyz))
-
-        # add triangles
-        for i_tr in range(tess.ObjGetTriangleCount()):
-            indexes.append(tess.GetTriangleIndex(i_tr))
-
-        return vertices, indexes
+        return vertices, triangles
 
     def fillet(self, radius, edgeList):
         """
