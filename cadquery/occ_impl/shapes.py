@@ -85,15 +85,18 @@ from OCP.BRepTools import BRepTools
 from OCP.LocOpe import LocOpe_DPrism
 
 from OCP.BRepCheck import BRepCheck_Analyzer
-'''
-from OCP.Addons import (text_to_brep,
-                             Font_FA_Regular,
-                             Font_FA_Italic,
-                             Font_FA_Bold)
-'''
+
+from OCP.Font import (Font_FontMgr,
+                      Font_BRepTextBuilder,
+                      Font_FA_Regular,
+                      Font_FA_Italic,
+                      Font_FA_Bold)
+
 from OCP.BRepFeat import BRepFeat_MakeDPrism
 
 from OCP.BRepClass3d import BRepClass3d_SolidClassifier
+
+from OCP.TCollection import TCollection_HAsciiString
 
 from math import pi, sqrt
 from functools import reduce
@@ -1520,8 +1523,18 @@ class Compound(Shape, Mixin3D):
         font_kind = {'regular' : Font_FA_Regular,
                      'bold'    : Font_FA_Bold,
                      'italic'  : Font_FA_Italic}[kind]
+        
+        mgr = Font_FontMgr.GetInstance_s()
+        font = mgr.FindFont(TCollection_HAsciiString(font),
+                            font_kind,
+                            10)
 
-        text_flat = Shape(text_to_brep(text, font, font_kind, size, False))
+        builder = Font_BRepTextBuilder()
+        text_flat = Shape(builder.Perform(font.FontPath().ToCString(),
+                                          size,
+                                          font_kind,
+                                          text))
+        
         bb = text_flat.BoundingBox()
         
         t = Vector()
