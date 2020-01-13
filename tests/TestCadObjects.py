@@ -16,7 +16,7 @@ class TestCadObjects(BaseTest):
 
     def _make_circle(self):
 
-        circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp.gp_DZ_s()),
+        circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp.DZ_s()),
                          2.)
         return Shape.cast(BRepBuilderAPI_MakeEdge(circle).Edge())
 
