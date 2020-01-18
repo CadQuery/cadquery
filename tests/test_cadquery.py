@@ -2751,32 +2751,8 @@ class TestCadQuery(BaseTest):
                   .box(1, 1, 1, combine=False).tag("2 solids")
                   .union(Workplane("XY").box(6, 1, 1)))
         self.assertEqual(len(result.objects), 1)
-        result = result.getTagged("2 solids")
+        result = result._getTagged("2 solids")
         self.assertEqual(len(result.objects), 2)
-
-        # tags can be used to create geometry for construction
-        part = ( # create a base solid
-            Workplane("XY").box(1, 1, 1).tag("base")
-            # do some stuff "for construction"
-            .faces(">Y").workplane().box(1, 3, 1)
-            .faces(">Z").workplane().box(2, 1, 1)
-            .faces(">X").workplane()
-            # create an edge, which CadQuery adds to the modelling context
-            .circle(0.5)
-            # go back to base object, but modelling context is preserved
-            .getTagged("base")
-            .faces(">Z").workplane().circle(0.5)
-            # loft between the top of the base object and the wire at the end of the "for construction" code
-            .loft()
-        )
-        # assert face is made at the end of the construction geometry
-        self.assertTupleAlmostEquals(part.faces(">X").val().Center().toTuple(),
-                                     (1.0, 0.5, 1.5),
-                                     9)
-        # assert face points in the x-direction, like the construction geometry
-        self.assertTupleAlmostEquals(part.faces(">X").val().normalAt().toTuple(),
-                                     (1.0, 0, 0),
-                                     9)
 
     def testCopyWorkplane(self):
 

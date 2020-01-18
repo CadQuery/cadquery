@@ -279,7 +279,7 @@ class CQ(object):
         """
         return self.objects[0]
 
-    def getTagged(self, name):
+    def _getTagged(self, name):
         """
         Search the parent chain for a an object with tag == name.
 
@@ -293,7 +293,7 @@ class CQ(object):
         if self.parent is None:
             raise ValueError("No CQ object named {} in chain".format(name))
         else:
-            return self.parent.getTagged(name)
+            return self.parent._getTagged(name)
 
     def toOCC(self):
         """
@@ -480,7 +480,7 @@ class CQ(object):
         :type name: string
         :returns: a CQ object with name's workplane
         """
-        tagged = self.getTagged(name)
+        tagged = self._getTagged(name)
         out = self.copyWorkplane(tagged)
         return out
 
@@ -590,7 +590,7 @@ class CQ(object):
             solids,shells, and other similar selector methods.  It is a useful extension point for
             plugin developers to make other selector methods.
         """
-        cq_obj = self.getTagged(tag) if tag else self
+        cq_obj = self._getTagged(tag) if tag else self
         # A single list of all faces from all objects on the stack
         toReturn = cq_obj._collectProperty(objType)
 
