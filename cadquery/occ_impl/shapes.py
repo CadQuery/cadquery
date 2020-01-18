@@ -750,7 +750,7 @@ class Edge(Shape, Mixin1D):
 
     @classmethod
     def makeEllipse(cls, x_radius, y_radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1),
-                    angle1=360.0, angle2=360.0):
+                    angle1=360.0, angle2=360.0, sense=1):
         """
         Interpolate a spline through the provided points.
         :param cls:
@@ -760,6 +760,7 @@ class Edge(Shape, Mixin1D):
         :param dir: vector representing the direction of the plane the ellipse should lie in
         :param angle1: start angle of arc
         :param angle2: end angle of arc (angle2 == angle1 return closed ellipse = default)
+        :param sense: clockwise (-1) or counter clockwise (1)
         :return: an Edge
         """
 
@@ -784,7 +785,7 @@ class Edge(Shape, Mixin1D):
             ellipse_geom = GC_MakeArcOfEllipse(ellipse_gp,
                                                angle1 * DEG2RAD - correction_angle,
                                                angle2 * DEG2RAD - correction_angle,
-                                               True).Value()
+                                               sense==1).Value()
             ellipse = cls(BRepBuilderAPI_MakeEdge(ellipse_geom).Edge())
 
         return ellipse
