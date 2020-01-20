@@ -1,9 +1,9 @@
 import cadquery as cq
 
 # These can be modified rather than hardcoding values for each dimension.
-plate_radius = 2.0          # The radius of the plate that will be extruded
+plate_radius = 2.0  # The radius of the plate that will be extruded
 hole_pattern_radius = 0.25  # Radius of circle where the holes will be placed
-thickness = 0.125           # The thickness of the plate that will be extruded
+thickness = 0.125  # The thickness of the plate that will be extruded
 
 # Make a plate with 4 holes in it at various points in a polar arrangement from
 # the center of the workplane.

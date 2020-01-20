@@ -9,6 +9,7 @@ dependencies:
   - pyparsing
   - sphinx
   - sphinx_rtd_theme
+  - black
   - codecov
   - pytest
   - pytest-cov

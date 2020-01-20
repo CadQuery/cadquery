@@ -12,7 +12,6 @@ from tests import BaseTest
 
 
 class TestExporters(BaseTest):
-
     def _exportBox(self, eType, stringsToFind):
         """
             Exports a test object, and then looks for
@@ -21,31 +20,32 @@ class TestExporters(BaseTest):
         """
         p = Workplane("XY").box(1, 2, 3)
 
-        if eType ==  exporters.ExportTypes.AMF:
+        if eType == exporters.ExportTypes.AMF:
             s = io.BytesIO()
         else:
             s = io.StringIO()
-        
+
         exporters.exportShape(p, eType, s, 0.1)
 
-        result = '{}'.format(s.getvalue())
+        result = "{}".format(s.getvalue())
 
         for q in stringsToFind:
             self.assertTrue(result.find(q) > -1)
         return result
 
     def testSTL(self):
-        self._exportBox(exporters.ExportTypes.STL, ['facet normal'])
+        self._exportBox(exporters.ExportTypes.STL, ["facet normal"])
 
     def testSVG(self):
-        self._exportBox(exporters.ExportTypes.SVG, ['<svg', '<g transform'])
+        self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
     def testAMF(self):
-        self._exportBox(exporters.ExportTypes.AMF, ['<amf units', '</object>'])
+        self._exportBox(exporters.ExportTypes.AMF, ["<amf units", "</object>"])
 
     def testSTEP(self):
-        self._exportBox(exporters.ExportTypes.STEP, ['FILE_SCHEMA'])
+        self._exportBox(exporters.ExportTypes.STEP, ["FILE_SCHEMA"])
 
     def testTJS(self):
-        self._exportBox(exporters.ExportTypes.TJS, [
-                        'vertices', 'formatVersion', 'faces'])
+        self._exportBox(
+            exporters.ExportTypes.TJS, ["vertices", "formatVersion", "faces"]
+        )
