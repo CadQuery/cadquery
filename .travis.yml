@@ -24,27 +24,31 @@ env:
 
 matrix:
   include:
-  - env: PYTHON_VERSION=3.6
+  - name: "Python 3.6 - osx"
+    env: PYTHON_VERSION=3.6
     os: osx
-  - env: PYTHON_VERSION=3.6
+  - name: "Python 3.6 - linux"
+    env: PYTHON_VERSION=3.6
     os: linux
-  - env: PYTHON_VERSION=3.7
+  - name: "Python 3.7 - osx"
+    env: PYTHON_VERSION=3.7
     os: osx
-  - env: PYTHON_VERSION=3.7
+  - name: "Python 3.7 - linux"
+    env: PYTHON_VERSION=3.7
     os: linux
+  - name: "Lint"
+    env: PYTHON_VERSION=3.7
+    os: linux
+    script:
+    - black . --diff --check
 
 before_install:
-- if [[ "$PYTHON_VERSION" == "2.7" ]]; then
-      PY_MAJOR=2 ;
-  else
-      PY_MAJOR=3 ;
-  fi ;
-  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       OS=Linux ;
   else
       OS=MacOSX ;
   fi ;
-  wget https://repo.continuum.io/miniconda/Miniconda$PY_MAJOR-latest-$OS-x86_64.sh -O miniconda.sh
+  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$OS-x86_64.sh -O miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda;
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 - conda config --set always_yes yes --set changeps1 no;

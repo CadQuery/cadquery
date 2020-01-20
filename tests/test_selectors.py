@@ -1,4 +1,4 @@
-__author__ = 'dcowden'
+__author__ = "dcowden"
 
 """
     Tests for CadQuery Selectors
@@ -20,22 +20,19 @@ from cadquery import selectors
 
 
 class TestCQSelectors(BaseTest):
-
     def testWorkplaneCenter(self):
         "Test Moving workplane center"
         s = Workplane(Plane.XY())
 
         # current point and world point should be equal
-        self.assertTupleAlmostEquals(
-            (0.0, 0.0, 0.0), s.plane.origin.toTuple(), 3)
+        self.assertTupleAlmostEquals((0.0, 0.0, 0.0), s.plane.origin.toTuple(), 3)
 
         # move origin and confirm center moves
         s.center(-2.0, -2.0)
 
         # current point should be 0,0, but
 
-        self.assertTupleAlmostEquals(
-            (-2.0, -2.0, 0.0), s.plane.origin.toTuple(), 3)
+        self.assertTupleAlmostEquals((-2.0, -2.0, 0.0), s.plane.origin.toTuple(), 3)
 
     def testVertices(self):
         t = makeUnitSquareWire()  # square box
@@ -43,8 +40,7 @@ class TestCQSelectors(BaseTest):
 
         self.assertEqual(4, c.vertices().size())
         self.assertEqual(4, c.edges().size())
-        self.assertEqual(0, c.vertices().edges().size()
-                         )  # no edges on any vertices
+        self.assertEqual(0, c.vertices().edges().size())  # no edges on any vertices
         # but selecting all edges still yields all vertices
         self.assertEqual(4, c.edges().vertices().size())
         self.assertEqual(1, c.wires().size())  # just one wire
@@ -71,8 +67,7 @@ class TestCQSelectors(BaseTest):
     def testFirst(self):
         c = CQ(makeUnitCube())
         self.assertEqual(type(c.vertices().first().val()), Vertex)
-        self.assertEqual(
-            type(c.vertices().first().first().first().val()), Vertex)
+        self.assertEqual(type(c.vertices().first().first().first().val()), Vertex)
 
     def testCompounds(self):
         c = CQ(makeUnitSquareWire())
@@ -99,11 +94,11 @@ class TestCQSelectors(BaseTest):
     def testFaceTypesFilter(self):
         "Filters by face type"
         c = CQ(makeUnitCube())
-        self.assertEqual(c.faces().size(), c.faces('%PLANE').size())
-        self.assertEqual(c.faces().size(), c.faces('%plane').size())
-        self.assertEqual(0, c.faces('%sphere').size())
-        self.assertEqual(0, c.faces('%cone').size())
-        self.assertEqual(0, c.faces('%SPHERE').size())
+        self.assertEqual(c.faces().size(), c.faces("%PLANE").size())
+        self.assertEqual(c.faces().size(), c.faces("%plane").size())
+        self.assertEqual(0, c.faces("%sphere").size())
+        self.assertEqual(0, c.faces("%cone").size())
+        self.assertEqual(0, c.faces("%SPHERE").size())
 
     def testPerpendicularDirFilter(self):
         c = CQ(makeUnitCube())
@@ -131,10 +126,12 @@ class TestCQSelectors(BaseTest):
         # faces parallel to Z axis
         self.assertEqual(2, c.faces("|Z").size())
         # TODO: provide short names for ParallelDirSelector
-        self.assertEqual(2, c.faces(selectors.ParallelDirSelector(
-            Vector((0, 0, 1)))).size())  # same thing as above
-        self.assertEqual(2, c.faces(selectors.ParallelDirSelector(
-            Vector((0, 0, -1)))).size())  # same thing as above
+        self.assertEqual(
+            2, c.faces(selectors.ParallelDirSelector(Vector((0, 0, 1)))).size()
+        )  # same thing as above
+        self.assertEqual(
+            2, c.faces(selectors.ParallelDirSelector(Vector((0, 0, -1)))).size()
+        )  # same thing as above
 
         # just for fun, vertices on faces parallel to z
         self.assertEqual(8, c.faces("|Z").vertices().size())
@@ -178,97 +175,96 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(4, len(el))
 
     def testNthDistance(self):
-        c = Workplane('XY').pushPoints([(-2, 0), (2, 0)]).box(1, 1, 1)
+        c = Workplane("XY").pushPoints([(-2, 0), (2, 0)]).box(1, 1, 1)
 
         # 2nd face
         val = c.faces(selectors.DirectionNthSelector(Vector(1, 0, 0), 1)).val()
         self.assertAlmostEqual(val.Center().x, -1.5)
 
         # 2nd face with inversed selection vector
-        val = c.faces(selectors.DirectionNthSelector(
-            Vector(-1, 0, 0), 1)).val()
+        val = c.faces(selectors.DirectionNthSelector(Vector(-1, 0, 0), 1)).val()
         self.assertAlmostEqual(val.Center().x, 1.5)
 
         # 2nd last face
-        val = c.faces(selectors.DirectionNthSelector(
-            Vector(1, 0, 0), -2)).val()
+        val = c.faces(selectors.DirectionNthSelector(Vector(1, 0, 0), -2)).val()
         self.assertAlmostEqual(val.Center().x, 1.5)
 
         # Last face
-        val = c.faces(selectors.DirectionNthSelector(
-            Vector(1, 0, 0), -1)).val()
+        val = c.faces(selectors.DirectionNthSelector(Vector(1, 0, 0), -1)).val()
         self.assertAlmostEqual(val.Center().x, 2.5)
 
         # check if the selected face if normal to the specified Vector
-        self.assertAlmostEqual(
-            val.normalAt().cross(Vector(1, 0, 0)).Length, 0.0)
+        self.assertAlmostEqual(val.normalAt().cross(Vector(1, 0, 0)).Length, 0.0)
 
         # repeat the test using string based selector
 
         # 2nd face
-        val = c.faces('>(1,0,0)[1]').val()
+        val = c.faces(">(1,0,0)[1]").val()
         self.assertAlmostEqual(val.Center().x, -1.5)
-        val = c.faces('>X[1]').val()
+        val = c.faces(">X[1]").val()
         self.assertAlmostEqual(val.Center().x, -1.5)
 
         # 2nd face with inversed selection vector
-        val = c.faces('>(-1,0,0)[1]').val()
+        val = c.faces(">(-1,0,0)[1]").val()
         self.assertAlmostEqual(val.Center().x, 1.5)
-        val = c.faces('<X[1]').val()
+        val = c.faces("<X[1]").val()
         self.assertAlmostEqual(val.Center().x, 1.5)
 
         # 2nd last face
-        val = c.faces('>X[-2]').val()
+        val = c.faces(">X[-2]").val()
         self.assertAlmostEqual(val.Center().x, 1.5)
 
         # Last face
-        val = c.faces('>X[-1]').val()
+        val = c.faces(">X[-1]").val()
         self.assertAlmostEqual(val.Center().x, 2.5)
 
         # check if the selected face if normal to the specified Vector
-        self.assertAlmostEqual(
-            val.normalAt().cross(Vector(1, 0, 0)).Length, 0.0)
+        self.assertAlmostEqual(val.normalAt().cross(Vector(1, 0, 0)).Length, 0.0)
 
         # test selection of multiple faces with the same distance
-        c = Workplane('XY')\
-            .box(1, 4, 1, centered=(False, True, False)).faces('<Z')\
-            .box(2, 2, 2, centered=(True, True, False)).faces('>Z')\
+        c = (
+            Workplane("XY")
+            .box(1, 4, 1, centered=(False, True, False))
+            .faces("<Z")
+            .box(2, 2, 2, centered=(True, True, False))
+            .faces(">Z")
             .box(1, 1, 1, centered=(True, True, False))
+        )
 
         # select 2nd from the bottom (NB python indexing is 0-based)
-        vals = c.faces('>Z[1]').vals()
+        vals = c.faces(">Z[1]").vals()
         self.assertEqual(len(vals), 2)
 
-        val = c.faces('>Z[1]').val()
+        val = c.faces(">Z[1]").val()
         self.assertAlmostEqual(val.Center().z, 1)
 
         # do the same but by selecting 3rd from the top
-        vals = c.faces('<Z[2]').vals()
+        vals = c.faces("<Z[2]").vals()
         self.assertEqual(len(vals), 2)
 
-        val = c.faces('<Z[2]').val()
+        val = c.faces("<Z[2]").val()
         self.assertAlmostEqual(val.Center().z, 1)
 
         # do the same but by selecting 2nd last from the bottom
-        vals = c.faces('<Z[-2]').vals()
+        vals = c.faces("<Z[-2]").vals()
         self.assertEqual(len(vals), 2)
 
-        val = c.faces('<Z[-2]').val()
+        val = c.faces("<Z[-2]").val()
         self.assertAlmostEqual(val.Center().z, 1)
 
         # verify that <Z[-1] is equivalent to <Z
-        val1 = c.faces('<Z[-1]').val()
-        val2 = c.faces('<Z').val()
-        self.assertTupleAlmostEquals(val1.Center().toTuple(),
-                                     val2.Center().toTuple(),
-                                     3)
+        val1 = c.faces("<Z[-1]").val()
+        val2 = c.faces("<Z").val()
+        self.assertTupleAlmostEquals(
+            val1.Center().toTuple(), val2.Center().toTuple(), 3
+        )
 
         # verify that >Z[-1] is equivalent to >Z
-        val1 = c.faces('>Z[-1]').val()
-        val2 = c.faces('>Z').val()
-        self.assertTupleAlmostEquals(val1.Center().toTuple(),
-                                     val2.Center().toTuple(),
-                                     3)
+        val1 = c.faces(">Z[-1]").val()
+        val2 = c.faces(">Z").val()
+        self.assertTupleAlmostEquals(
+            val1.Center().toTuple(), val2.Center().toTuple(), 3
+        )
 
     def testNearestTo(self):
         c = CQ(makeUnitCube())
@@ -302,7 +298,7 @@ class TestCQSelectors(BaseTest):
             ((0.9, -0.1, -0.1), (1.1, 0.1, 0.1), (1.0, 0.0, 0.0)),
             ((0.9, 0.9, -0.1), (1.1, 1.1, 0.1), (1.0, 1.0, 0.0)),
             ((-0.1, 0.9, -0.1), (0.1, 1.1, 0.1), (0.0, 1.0, 0.0)),
-            ((0.9, -0.1, 0.9), (1.1, 0.1, 1.1), (1.0, 0.0, 1.0))
+            ((0.9, -0.1, 0.9), (1.1, 0.1, 1.1), (1.0, 0.0, 1.0)),
         ]
 
         for d in test_data_vertices:
@@ -318,11 +314,13 @@ class TestCQSelectors(BaseTest):
             self.assertTupleAlmostEquals(d[2], (v.X, v.Y, v.Z), 3)
 
         # test multiple vertices selection
-        vl = c.vertices(selectors.BoxSelector(
-            (-0.1, -0.1, 0.9), (0.1, 1.1, 1.1))).vals()
+        vl = c.vertices(
+            selectors.BoxSelector((-0.1, -0.1, 0.9), (0.1, 1.1, 1.1))
+        ).vals()
         self.assertEqual(2, len(vl))
-        vl = c.vertices(selectors.BoxSelector(
-            (-0.1, -0.1, -0.1), (0.1, 1.1, 1.1))).vals()
+        vl = c.vertices(
+            selectors.BoxSelector((-0.1, -0.1, -0.1), (0.1, 1.1, 1.1))
+        ).vals()
         self.assertEqual(4, len(vl))
 
         # test edge selection
@@ -331,7 +329,7 @@ class TestCQSelectors(BaseTest):
             ((0.4, -0.1, -0.1), (0.6, 0.1, 0.1), (0.5, 0.0, 0.0)),
             ((-0.1, -0.1, 0.4), (0.1, 0.1, 0.6), (0.0, 0.0, 0.5)),
             ((0.9, 0.9, 0.4), (1.1, 1.1, 0.6), (1.0, 1.0, 0.5)),
-            ((0.4, 0.9, 0.9), (0.6, 1.1, 1.1,), (0.5, 1.0, 1.0))
+            ((0.4, 0.9, 0.9), (0.6, 1.1, 1.1,), (0.5, 1.0, 1.0)),
         ]
 
         for d in test_data_edges:
@@ -347,11 +345,9 @@ class TestCQSelectors(BaseTest):
             self.assertTupleAlmostEquals(d[2], (ec.x, ec.y, ec.z), 3)
 
         # test multiple edge selection
-        el = c.edges(selectors.BoxSelector(
-            (-0.1, -0.1, -0.1), (0.6, 0.1, 0.6))).vals()
+        el = c.edges(selectors.BoxSelector((-0.1, -0.1, -0.1), (0.6, 0.1, 0.6))).vals()
         self.assertEqual(2, len(el))
-        el = c.edges(selectors.BoxSelector(
-            (-0.1, -0.1, -0.1), (1.1, 0.1, 0.6))).vals()
+        el = c.edges(selectors.BoxSelector((-0.1, -0.1, -0.1), (1.1, 0.1, 0.6))).vals()
         self.assertEqual(3, len(el))
 
         # test face selection
@@ -360,7 +356,7 @@ class TestCQSelectors(BaseTest):
             ((0.4, -0.1, 0.4), (0.6, 0.1, 0.6), (0.5, 0.0, 0.5)),
             ((0.9, 0.4, 0.4), (1.1, 0.6, 0.6), (1.0, 0.5, 0.5)),
             ((0.4, 0.4, 0.9), (0.6, 0.6, 1.1), (0.5, 0.5, 1.0)),
-            ((0.4, 0.4, -0.1), (0.6, 0.6, 0.1), (0.5, 0.5, 0.0))
+            ((0.4, 0.4, -0.1), (0.6, 0.6, 0.1), (0.5, 0.5, 0.0)),
         ]
 
         for d in test_data_faces:
@@ -376,22 +372,23 @@ class TestCQSelectors(BaseTest):
             self.assertTupleAlmostEquals(d[2], (fc.x, fc.y, fc.z), 3)
 
         # test multiple face selection
-        fl = c.faces(selectors.BoxSelector(
-            (0.4, 0.4, 0.4), (0.6, 1.1, 1.1))).vals()
+        fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (0.6, 1.1, 1.1))).vals()
         self.assertEqual(2, len(fl))
-        fl = c.faces(selectors.BoxSelector(
-            (0.4, 0.4, 0.4), (1.1, 1.1, 1.1))).vals()
+        fl = c.faces(selectors.BoxSelector((0.4, 0.4, 0.4), (1.1, 1.1, 1.1))).vals()
         self.assertEqual(3, len(fl))
 
         # test boundingbox option
-        el = c.edges(selectors.BoxSelector(
-            (-0.1, -0.1, -0.1), (1.1, 0.1, 0.6), True)).vals()
+        el = c.edges(
+            selectors.BoxSelector((-0.1, -0.1, -0.1), (1.1, 0.1, 0.6), True)
+        ).vals()
         self.assertEqual(1, len(el))
-        fl = c.faces(selectors.BoxSelector(
-            (0.4, 0.4, 0.4), (1.1, 1.1, 1.1), True)).vals()
+        fl = c.faces(
+            selectors.BoxSelector((0.4, 0.4, 0.4), (1.1, 1.1, 1.1), True)
+        ).vals()
         self.assertEqual(0, len(fl))
-        fl = c.faces(selectors.BoxSelector(
-            (-0.1, 0.4, -0.1), (1.1, 1.1, 1.1), True)).vals()
+        fl = c.faces(
+            selectors.BoxSelector((-0.1, 0.4, -0.1), (1.1, 1.1, 1.1), True)
+        ).vals()
         self.assertEqual(1, len(fl))
 
     def testAndSelector(self):
@@ -400,12 +397,13 @@ class TestCQSelectors(BaseTest):
         S = selectors.StringSyntaxSelector
         BS = selectors.BoxSelector
 
-        el = c.edges(selectors.AndSelector(
-            S('|X'), BS((-2, -2, 0.1), (2, 2, 2)))).vals()
+        el = c.edges(
+            selectors.AndSelector(S("|X"), BS((-2, -2, 0.1), (2, 2, 2)))
+        ).vals()
         self.assertEqual(2, len(el))
 
         # test 'and' (intersection) operator
-        el = c.edges(S('|X') & BS((-2, -2, 0.1), (2, 2, 2))).vals()
+        el = c.edges(S("|X") & BS((-2, -2, 0.1), (2, 2, 2))).vals()
         self.assertEqual(2, len(el))
 
         # test using extended string syntax
@@ -455,27 +453,27 @@ class TestCQSelectors(BaseTest):
 
         S = selectors.StringSyntaxSelector
 
-        fl = c.faces(selectors.InverseSelector(S('>Z'))).vals()
+        fl = c.faces(selectors.InverseSelector(S(">Z"))).vals()
         self.assertEqual(5, len(fl))
-        el = c.faces('>Z').edges(selectors.InverseSelector(S('>X'))).vals()
+        el = c.faces(">Z").edges(selectors.InverseSelector(S(">X"))).vals()
         self.assertEqual(3, len(el))
 
         # test invert operator
-        fl = c.faces(-S('>Z')).vals()
+        fl = c.faces(-S(">Z")).vals()
         self.assertEqual(5, len(fl))
-        el = c.faces('>Z').edges(-S('>X')).vals()
+        el = c.faces(">Z").edges(-S(">X")).vals()
         self.assertEqual(3, len(el))
 
         # test using extended string syntax
-        fl = c.faces('not >Z').vals()
+        fl = c.faces("not >Z").vals()
         self.assertEqual(5, len(fl))
-        el = c.faces('>Z').edges('not >X').vals()
+        el = c.faces(">Z").edges("not >X").vals()
         self.assertEqual(3, len(el))
 
     def testComplexStringSelector(self):
         c = CQ(makeUnitCube())
 
-        v = c.vertices('(>X and >Y) or (<X and <Y)').vals()
+        v = c.vertices("(>X and >Y) or (<X and <Y)").vals()
         self.assertEqual(4, len(v))
 
     def testFaceCount(self):
@@ -503,25 +501,27 @@ class TestCQSelectors(BaseTest):
 
         gram = selectors._expression_grammar
 
-        expressions = ['+X ',
-                       '-Y',
-                       '|(1,0,0)',
-                       '#(1.,1.4114,-0.532)',
-                       '%Plane',
-                       '>XZ',
-                       '<Z[-2]',
-                       '>(1,4,55.)[20]',
-                       '|XY',
-                       '<YZ[0]',
-                       'front',
-                       'back',
-                       'left',
-                       'right',
-                       'top',
-                       'bottom',
-                       'not |(1,1,0) and >(0,0,1) or XY except >(1,1,1)[-1]',
-                       '(not |(1,1,0) and >(0,0,1)) exc XY and (Z or X)',
-                       'not ( <X or >X or <Y or >Y )']
+        expressions = [
+            "+X ",
+            "-Y",
+            "|(1,0,0)",
+            "#(1.,1.4114,-0.532)",
+            "%Plane",
+            ">XZ",
+            "<Z[-2]",
+            ">(1,4,55.)[20]",
+            "|XY",
+            "<YZ[0]",
+            "front",
+            "back",
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "not |(1,1,0) and >(0,0,1) or XY except >(1,1,1)[-1]",
+            "(not |(1,1,0) and >(0,0,1)) exc XY and (Z or X)",
+            "not ( <X or >X or <Y or >Y )",
+        ]
 
         for e in expressions:
             gram.parseString(e, parseAll=True)

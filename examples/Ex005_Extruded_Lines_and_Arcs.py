@@ -1,8 +1,8 @@
 import cadquery as cq
 
 # These can be modified rather than hardcoding values for each dimension.
-width = 2.0         # Overall width of the plate
-thickness = 0.25    # Thickness of the plate
+width = 2.0  # Overall width of the plate
+thickness = 0.25  # Thickness of the plate
 
 # Extrude a plate outline made of lines and an arc
 # 1.  Establishes a workplane that an object can be built on.
@@ -34,12 +34,16 @@ thickness = 0.25    # Thickness of the plate
 # 7a. Without the close(), the 2D sketch will be left open and the extrude
 #     operation will provide unpredictable results.
 # 8.  The 2D sketch is extruded into a solid object of the specified thickness.
-result = (cq.Workplane("front").lineTo(width, 0)
-                              .lineTo(width, 1.0)
-                              .threePointArc((1.0, 1.5), (0.0, 1.0))
-                              .sagittaArc((-0.5, 1.0), 0.2)
-                              .radiusArc((-0.7, -0.2), -1.5)
-                              .close().extrude(thickness))
+result = (
+    cq.Workplane("front")
+    .lineTo(width, 0)
+    .lineTo(width, 1.0)
+    .threePointArc((1.0, 1.5), (0.0, 1.0))
+    .sagittaArc((-0.5, 1.0), 0.2)
+    .radiusArc((-0.7, -0.2), -1.5)
+    .close()
+    .extrude(thickness)
+)
 
 # Displays the result of this script
 show_object(result)

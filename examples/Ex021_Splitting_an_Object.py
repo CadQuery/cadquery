@@ -9,8 +9,7 @@ import cadquery as cq
 #     that new geometry can be built on.
 # 4.  Draws a 2D circle on the new workplane and then uses it to cut a hole
 #     all the way through the box.
-c = (cq.Workplane("XY").box(1, 1, 1).faces(">Z").workplane()
-                      .circle(0.25).cutThruAll())
+c = cq.Workplane("XY").box(1, 1, 1).faces(">Z").workplane().circle(0.25).cutThruAll()
 
 # 5.  Selects the face furthest away from the origin in the +Y axis direction.
 # 6.  Creates an offset workplane that is set in the center of the object.

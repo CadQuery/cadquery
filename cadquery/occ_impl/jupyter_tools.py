@@ -6,8 +6,7 @@ from xml.etree import ElementTree
 
 from .geom import BoundBox
 
-BOILERPLATE = \
-'''
+BOILERPLATE = """
 <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
 <div style='height: {height}px; width: 100%;' width='100%' height='{height}px'>
     <x3d style='height: {height}px; width: 100%;' id='{id}' width='100%' height='{height}px'>
@@ -35,69 +34,86 @@ BOILERPLATE = \
 
     //document.getElementById('{id}').runtime.fitAll()
 </script>
-'''
+"""
 
-#https://stackoverflow.com/questions/950087/how-do-i-include-a-javascript-file-in-another-javascript-file
-#better if else
+# https://stackoverflow.com/questions/950087/how-do-i-include-a-javascript-file-in-another-javascript-file
+# better if else
 
-ROT = (0.77,0.3,0.55,1.28)
-ROT = (0.,0,0,1.)
+ROT = (0.77, 0.3, 0.55, 1.28)
+ROT = (0.0, 0, 0, 1.0)
 FOV = 0.2
 
-def add_x3d_boilerplate(src, height=400, center=(0,0,0), d=(0,0,15), fov=FOV, rot='{} {} {} {} '.format(*ROT)):
 
-    return BOILERPLATE.format(src=src,
-                              id=uuid4(),
-                              height=height,
-                              x=d[0],
-                              y=d[1],
-                              z=d[2],
-                              x0=center[0],
-                              y0=center[1],
-                              z0=center[2],
-                              fov=fov,
-                              rot=rot)
+def add_x3d_boilerplate(
+    src,
+    height=400,
+    center=(0, 0, 0),
+    d=(0, 0, 15),
+    fov=FOV,
+    rot="{} {} {} {} ".format(*ROT),
+):
 
-def x3d_display(shape,
-                vertex_shader=None,
-                fragment_shader=None,
-                export_edges=True,
-                color=(1,1,0),
-                specular_color=(1,1,1),
-                shininess=0.4,
-                transparency=0.4,
-                line_color=(0,0,0),
-                line_width=2.,
-                mesh_quality=.3):
+    return BOILERPLATE.format(
+        src=src,
+        id=uuid4(),
+        height=height,
+        x=d[0],
+        y=d[1],
+        z=d[2],
+        x0=center[0],
+        y0=center[1],
+        z0=center[2],
+        fov=fov,
+        rot=rot,
+    )
 
-        # Export to XML <Scene> tag
-        exporter = X3DExporter(shape,
-                               vertex_shader,
-                               fragment_shader,
-                               export_edges,
-                               color,
-                               specular_color,
-                               shininess,
-                               transparency,
-                               line_color,
-                               line_width,
-                               mesh_quality)
 
-        exporter.compute()
-        x3d_str = exporter.to_x3dfile_string(shape_id=0)
-        xml_et = ElementTree.fromstring(x3d_str)
-        scene_tag = xml_et.find('./Scene')
+def x3d_display(
+    shape,
+    vertex_shader=None,
+    fragment_shader=None,
+    export_edges=True,
+    color=(1, 1, 0),
+    specular_color=(1, 1, 1),
+    shininess=0.4,
+    transparency=0.4,
+    line_color=(0, 0, 0),
+    line_width=2.0,
+    mesh_quality=0.3,
+):
 
-        # Viewport Parameters
-        bb = BoundBox._fromTopoDS(shape)
-        d = max(bb.xlen,bb.ylen,bb.zlen)
-        c = bb.center
+    # Export to XML <Scene> tag
+    exporter = X3DExporter(
+        shape,
+        vertex_shader,
+        fragment_shader,
+        export_edges,
+        color,
+        specular_color,
+        shininess,
+        transparency,
+        line_color,
+        line_width,
+        mesh_quality,
+    )
 
-        vec = gp_Vec(0,0,d/1.5/tan(FOV/2))
-        quat = gp_Quaternion(*ROT)
-        vec = quat*(vec) + c.wrapped
+    exporter.compute()
+    x3d_str = exporter.to_x3dfile_string(shape_id=0)
+    xml_et = ElementTree.fromstring(x3d_str)
+    scene_tag = xml_et.find("./Scene")
 
-        # return boilerplate + Scene
-        return add_x3d_boilerplate(ElementTree.tostring(scene_tag).decode('utf-8'),
-                                   d=(vec.X(),vec.Y(),vec.Z()),
-                                   center=(c.x,c.y,c.z))
+    # Viewport Parameters
+    bb = BoundBox._fromTopoDS(shape)
+    d = max(bb.xlen, bb.ylen, bb.zlen)
+    c = bb.center
+
+    vec = gp_Vec(0, 0, d / 1.5 / tan(FOV / 2))
+    quat = gp_Quaternion(*ROT)
+    vec = quat * (vec) + c.wrapped
+
+    # return boilerplate + Scene
+    return add_x3d_boilerplate(
+        ElementTree.tostring(scene_tag).decode("utf-8"),
+        d=(vec.X(), vec.Y(), vec.Z()),
+        center=(c.x, c.y, c.z),
+    )

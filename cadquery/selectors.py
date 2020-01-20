@@ -21,9 +21,22 @@ import re
 import math
 from cadquery import Vector, Edge, Vertex, Face, Solid, Shell, Compound
 from collections import defaultdict
-from pyparsing import Literal, Word, nums, Optional, Combine, oneOf, upcaseTokens,\
-    CaselessLiteral, Group, infixNotation, opAssoc, Forward,\
-    ZeroOrMore, Keyword
+from pyparsing import (
+    Literal,
+    Word,
+    nums,
+    Optional,
+    Combine,
+    oneOf,
+    upcaseTokens,
+    CaselessLiteral,
+    Group,
+    infixNotation,
+    opAssoc,
+    Forward,
+    ZeroOrMore,
+    Keyword,
+)
 from functools import reduce
 
 
@@ -81,7 +94,6 @@ class NearestToPointSelector(Selector):
         self.pnt = pnt
 
     def filter(self, objectList):
-
         def dist(tShape):
             return tShape.Center().sub(Vector(*self.pnt)).Length
             # if tShape.ShapeType == 'Vertex':
@@ -121,15 +133,18 @@ class BoxSelector(Selector):
         def isInsideBox(p):
             # using XOR for checking if x/y/z is in between regardless
             # of order of x/y/z0 and x/y/z1
-            return ((p.x < x0) ^ (p.x < x1)) and \
-                   ((p.y < y0) ^ (p.y < y1)) and \
-                   ((p.z < z0) ^ (p.z < z1))
+            return (
+                ((p.x < x0) ^ (p.x < x1))
+                and ((p.y < y0) ^ (p.y < y1))
+                and ((p.z < z0) ^ (p.z < z1))
+            )
 
         for o in objectList:
             if self.test_boundingbox:
                 bb = o.BoundingBox()
-                if isInsideBox(Vector(bb.xmin, bb.ymin, bb.zmin)) and \
-                   isInsideBox(Vector(bb.xmax, bb.ymax, bb.zmax)):
+                if isInsideBox(Vector(bb.xmin, bb.ymin, bb.zmin)) and isInsideBox(
+                    Vector(bb.xmax, bb.ymax, bb.zmax)
+                ):
                     result.append(o)
             else:
                 if isInsideBox(o.Center()):
@@ -168,7 +183,9 @@ class BaseDirSelector(Selector):
 
                 if self.test(normal):
                     r.append(o)
-            elif type(o) == Edge and (o.geomType() == 'LINE' or o.geomType() == 'PLANE'):
+            elif type(o) == Edge and (
+                o.geomType() == "LINE" or o.geomType() == "PLANE"
+            ):
                 # an edge is parallel to a direction if its underlying geometry is plane or line
                 tangent = o.tangentAt()
                 if self.test(tangent):
@@ -247,8 +264,7 @@ class PerpendicularDirSelector(BaseDirSelector):
 
     def test(self, vec):
         angle = self.direction.getAngle(vec)
-        r = (abs(angle) < self.TOLERANCE) or (
-            abs(angle - math.pi) < self.TOLERANCE)
+        r = (abs(angle) < self.TOLERANCE) or (abs(angle - math.pi) < self.TOLERANCE)
         return not r
 
 
@@ -314,17 +330,16 @@ class DirectionMinMaxSelector(Selector):
         self.TOLERANCE = tolerance
 
     def filter(self, objectList):
-
         def distance(tShape):
             return tShape.Center().dot(self.vector)
 
         # import OrderedDict
         from collections import OrderedDict
+
         # make and distance to object dict
         objectDict = {distance(el): el for el in objectList}
         # transform it into an ordered dict
-        objectDict = OrderedDict(sorted(list(objectDict.items()),
-                                        key=lambda x: x[0]))
+        objectDict = OrderedDict(sorted(list(objectDict.items()), key=lambda x: x[0]))
 
         # find out the max/min distance
         if self.directionMax:
@@ -370,8 +385,9 @@ class DirectionNthSelector(ParallelDirSelector):
             objectDict[round(distance(el), digits)].append(el)
 
         # choose the Nth unique rounded distance
-        nth_distance = sorted(list(objectDict.keys()),
-                              reverse=not self.directionMax)[self.N]
+        nth_distance = sorted(list(objectDict.keys()), reverse=not self.directionMax)[
+            self.N
+        ]
 
         # map back to original objects and return
         return objectDict[nth_distance]
@@ -388,8 +404,9 @@ class BinarySelector(Selector):
         self.right = right
 
     def filter(self, objectList):
-        return self.filterResults(self.left.filter(objectList),
-                                  self.right.filter(objectList))
+        return self.filterResults(
+            self.left.filter(objectList), self.right.filter(objectList)
+        )
 
     def filterResults(self, r_left, r_right):
         raise NotImplementedError
@@ -445,52 +462,56 @@ def _makeGrammar():
     """
 
     # float definition
-    point = Literal('.')
-    plusmin = Literal('+') | Literal('-')
+    point = Literal(".")
+    plusmin = Literal("+") | Literal("-")
     number = Word(nums)
     integer = Combine(Optional(plusmin) + number)
     floatn = Combine(integer + Optional(point + Optional(number)))
 
     # vector definition
-    lbracket = Literal('(')
-    rbracket = Literal(')')
-    comma = Literal(',')
-    vector = Combine(lbracket + floatn('x') + comma +
-                     floatn('y') + comma + floatn('z') + rbracket)
+    lbracket = Literal("(")
+    rbracket = Literal(")")
+    comma = Literal(",")
+    vector = Combine(
+        lbracket + floatn("x") + comma + floatn("y") + comma + floatn("z") + rbracket
+    )
 
     # direction definition
-    simple_dir = oneOf(['X', 'Y', 'Z', 'XY', 'XZ', 'YZ'])
-    direction = simple_dir('simple_dir') | vector('vector_dir')
+    simple_dir = oneOf(["X", "Y", "Z", "XY", "XZ", "YZ"])
+    direction = simple_dir("simple_dir") | vector("vector_dir")
 
     # CQ type definition
-    cqtype = oneOf(['Plane', 'Cylinder', 'Sphere', 'Cone', 'Line', 'Circle', 'Arc'],
-                   caseless=True)
+    cqtype = oneOf(
+        ["Plane", "Cylinder", "Sphere", "Cone", "Line", "Circle", "Arc"], caseless=True
+    )
     cqtype = cqtype.setParseAction(upcaseTokens)
 
     # type operator
-    type_op = Literal('%')
+    type_op = Literal("%")
 
     # direction operator
-    direction_op = oneOf(['>', '<'])
+    direction_op = oneOf([">", "<"])
 
     # index definition
-    ix_number = Group(Optional('-') + Word(nums))
-    lsqbracket = Literal('[').suppress()
-    rsqbracket = Literal(']').suppress()
+    ix_number = Group(Optional("-") + Word(nums))
+    lsqbracket = Literal("[").suppress()
+    rsqbracket = Literal("]").suppress()
 
-    index = lsqbracket + ix_number('index') + rsqbracket
+    index = lsqbracket + ix_number("index") + rsqbracket
 
     # other operators
-    other_op = oneOf(['|', '#', '+', '-'])
+    other_op = oneOf(["|", "#", "+", "-"])
 
     # named view
-    named_view = oneOf(['front', 'back', 'left', 'right', 'top', 'bottom'])
+    named_view = oneOf(["front", "back", "left", "right", "top", "bottom"])
 
-    return direction('only_dir') | \
-        (type_op('type_op') + cqtype('cq_type')) | \
-        (direction_op('dir_op') + direction('dir') + Optional(index)) | \
-        (other_op('other_op') + direction('dir')) | \
-        named_view('named_view')
+    return (
+        direction("only_dir")
+        | (type_op("type_op") + cqtype("cq_type"))
+        | (direction_op("dir_op") + direction("dir") + Optional(index))
+        | (other_op("other_op") + direction("dir"))
+        | named_view("named_view")
+    )
 
 
 _grammar = _makeGrammar()  # make a grammar instance
@@ -506,33 +527,34 @@ class _SimpleStringSyntaxSelector(Selector):
 
         # define all token to object mappings
         self.axes = {
-            'X': Vector(1, 0, 0),
-            'Y': Vector(0, 1, 0),
-            'Z': Vector(0, 0, 1),
-            'XY': Vector(1, 1, 0),
-            'YZ': Vector(0, 1, 1),
-            'XZ': Vector(1, 0, 1)
+            "X": Vector(1, 0, 0),
+            "Y": Vector(0, 1, 0),
+            "Z": Vector(0, 0, 1),
+            "XY": Vector(1, 1, 0),
+            "YZ": Vector(0, 1, 1),
+            "XZ": Vector(1, 0, 1),
         }
 
         self.namedViews = {
-            'front': (Vector(0, 0, 1), True),
-            'back': (Vector(0, 0, 1), False),
-            'left': (Vector(1, 0, 0), False),
-            'right': (Vector(1, 0, 0), True),
-            'top': (Vector(0, 1, 0), True),
-            'bottom': (Vector(0, 1, 0), False)
+            "front": (Vector(0, 0, 1), True),
+            "back": (Vector(0, 0, 1), False),
+            "left": (Vector(1, 0, 0), False),
+            "right": (Vector(1, 0, 0), True),
+            "top": (Vector(0, 1, 0), True),
+            "bottom": (Vector(0, 1, 0), False),
         }
 
         self.operatorMinMax = {
-            '>': True,
-            '<': False,
+            ">": True,
+            "<": False,
         }
 
         self.operator = {
-            '+': DirectionSelector,
-            '-': lambda v: DirectionSelector(-v),
-            '#': PerpendicularDirSelector,
-            '|': ParallelDirSelector}
+            "+": DirectionSelector,
+            "-": lambda v: DirectionSelector(-v),
+            "#": PerpendicularDirSelector,
+            "|": ParallelDirSelector,
+        }
 
         self.parseResults = parseResults
         self.mySelector = self._chooseSelector(parseResults)
@@ -541,23 +563,25 @@ class _SimpleStringSyntaxSelector(Selector):
         """
         Sets up the underlying filters accordingly
         """
-        if 'only_dir' in pr:
+        if "only_dir" in pr:
             vec = self._getVector(pr)
             return DirectionSelector(vec)
 
-        elif 'type_op' in pr:
+        elif "type_op" in pr:
             return TypeSelector(pr.cq_type)
 
-        elif 'dir_op' in pr:
+        elif "dir_op" in pr:
             vec = self._getVector(pr)
             minmax = self.operatorMinMax[pr.dir_op]
 
-            if 'index' in pr:
-                return DirectionNthSelector(vec, int(''.join(pr.index.asList())), minmax)
+            if "index" in pr:
+                return DirectionNthSelector(
+                    vec, int("".join(pr.index.asList())), minmax
+                )
             else:
                 return DirectionMinMaxSelector(vec, minmax)
 
-        elif 'other_op' in pr:
+        elif "other_op" in pr:
             vec = self._getVector(pr)
             return self.operator[pr.other_op](vec)
 
@@ -569,7 +593,7 @@ class _SimpleStringSyntaxSelector(Selector):
         """
         Translate parsed vector string into a CQ Vector
         """
-        if 'vector_dir' in pr:
+        if "vector_dir" in pr:
             vec = pr.vector_dir
             return Vector(float(vec.x), float(vec.y), float(vec.z))
         else:
@@ -590,10 +614,10 @@ def _makeExpressionGrammar(atom):
     """
 
     # define operators
-    and_op = Literal('and')
-    or_op = Literal('or')
-    delta_op = oneOf(['exc', 'except'])
-    not_op = Literal('not')
+    and_op = Literal("and")
+    or_op = Literal("or")
+    delta_op = oneOf(["exc", "except"])
+    not_op = Literal("not")
 
     def atom_callback(res):
         return _SimpleStringSyntaxSelector(res)
@@ -622,11 +646,15 @@ def _makeExpressionGrammar(atom):
         return InverseSelector(right)
 
     # construct the final grammar and set all the callbacks
-    expr = infixNotation(atom,
-                         [(and_op, 2, opAssoc.LEFT, and_callback),
-                          (or_op, 2, opAssoc.LEFT, or_callback),
-                          (delta_op, 2, opAssoc.LEFT, exc_callback),
-                          (not_op, 1, opAssoc.RIGHT, not_callback)])
+    expr = infixNotation(
+        atom,
+        [
+            (and_op, 2, opAssoc.LEFT, and_callback),
+            (or_op, 2, opAssoc.LEFT, or_callback),
+            (delta_op, 2, opAssoc.LEFT, exc_callback),
+            (not_op, 1, opAssoc.RIGHT, not_callback),
+        ],
+    )
 
     return expr
 
@@ -690,8 +718,7 @@ class StringSyntaxSelector(Selector):
         Feed the input string through the parser and construct an relevant complex selector object
         """
         self.selectorString = selectorString
-        parse_result = _expression_grammar.parseString(selectorString,
-                                                       parseAll=True)
+        parse_result = _expression_grammar.parseString(selectorString, parseAll=True)
         self.mySelector = parse_result.asList()[0]
 
     def filter(self, objectList):
