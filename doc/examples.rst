@@ -633,9 +633,9 @@ Here we fillet all of the edges of a simple plate.
 Tagging objects
 ----------------
 
-The :py:meth:`CQ.tag` method can be used to tag a particular object in the chain with a string. At a later point in the chain, the method :py:meth:`CQ.getTagged` can be used to return the previously tagged object (note that CQ objects share the modelling context throughout a chain, so going back to a previously tagged object will not change what is in the modelling context eg. unextruded edges).
+The :py:meth:`CQ.tag` method can be used to tag a particular object in the chain with a string, so that it can be refered to later in the chain. 
 
-The method :py:meth:`CQ.getTagged` is awkward to use in chained calls (see :ref:`chaining`), the main utility of tags is when they are combined with other functions. The :py:meth:`CQ.workplaneFromTagged` method applies :py:meth:`CQ.copyWorkplane` to a tagged object. For example, when extruding two different solids from a surface, after the first solid is extruded it can become difficult to reselect the original surface with CadQuery's other selectors.
+The :py:meth:`CQ.workplaneFromTagged` method applies :py:meth:`CQ.copyWorkplane` to a tagged object. For example, when extruding two different solids from a surface, after the first solid is extruded it can become difficult to reselect the original surface with CadQuery's other selectors.
 
 .. cq_plot::
 
@@ -664,7 +664,7 @@ Tags can also be used with most selectors, including :py:meth:`CQ.vertices`, :py
               .faces("<X", tag="prism").workplane().circle(1).cutThruAll()
               .faces(">X", tag="prism").faces(">Y").workplane().circle(1).cutThruAll())
     show_object(result)
-            
+
 .. topic:: Api References
 
     .. hlist::
