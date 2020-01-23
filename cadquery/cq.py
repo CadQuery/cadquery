@@ -1002,7 +1002,6 @@ class Workplane(CQ):
 
         self.obj = obj
         self.plane = tmpPlane
-        self.firstPoint = None
         # Changed so that workplane has the center as the first item on the stack
         self.objects = [self.plane.origin]
         self.parent = None
