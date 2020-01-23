@@ -2751,7 +2751,7 @@ class TestCadQuery(BaseTest):
             .pushPoints([(-2, 0), (2, 0)])
             .box(1, 1, 1, combine=False)
             .tag("2 solids")
-            .union(Workplane("XY") .box(6, 1, 1))
+            .union(Workplane("XY").box(6, 1, 1))
         )
         self.assertEqual(len(result.objects), 1)
         result = result._getTagged("2 solids")
