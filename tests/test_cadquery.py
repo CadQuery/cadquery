@@ -2746,10 +2746,13 @@ class TestCadQuery(BaseTest):
     def testTag(self):
 
         # test tagging
-        Workplane("XY").pushPoints([(-2, 0), (2, 0)]).box(1, 1, 1, combine=False)
-        result = (Workplane("XY").pushPoints([(-2, 0), (2, 0)])
-                  .box(1, 1, 1, combine=False).tag("2 solids")
-                  .union(Workplane("XY").box(6, 1, 1)))
+        result = (
+            Workplane("XY")
+            .pushPoints([(-2, 0), (2, 0)])
+            .box(1, 1, 1, combine=False)
+            .tag("2 solids")
+            .union(Workplane("XY") .box(6, 1, 1))
+        )
         self.assertEqual(len(result.objects), 1)
         result = result._getTagged("2 solids")
         self.assertEqual(len(result.objects), 2)
@@ -2758,23 +2761,34 @@ class TestCadQuery(BaseTest):
 
         obj0 = Workplane("XY").box(1, 1, 10).faces(">Z").workplane()
         obj1 = Workplane("XY").copyWorkplane(obj0).box(1, 1, 1)
-        self.assertTupleAlmostEquals((0, 0, 5),
-                                     obj1.val().Center().toTuple(),
-                                     9)
+        self.assertTupleAlmostEquals((0, 0, 5), obj1.val().Center().toTuple(), 9)
 
     def testWorkplaneFromTagged(self):
 
         # create a flat, wide base. Extrude one object 4 units high, another
         # object ontop of it 6 units high. Go back to base plane. Extrude an
         # object 11 units high. Assert that top face is 11 units high.
-        result = (Workplane("XY").box(10, 10, 1, centered=(True, True, False))
-                  .faces(">Z").workplane().tag("base").center(3, 0).rect(2, 2)
-                  .extrude(4).faces(">Z").workplane().circle(1).extrude(6)
-                  .workplaneFromTagged("base").center(-3, 0).circle(1)
-                  .extrude(11))
-        self.assertTupleAlmostEquals(result.faces(">Z").val().Center().toTuple(),
-                                     (-3, 0, 12),
-                                     9)
+        result = (
+            Workplane("XY")
+            .box(10, 10, 1, centered=(True, True, False))
+            .faces(">Z")
+            .workplane()
+            .tag("base")
+            .center(3, 0)
+            .rect(2, 2)
+            .extrude(4)
+            .faces(">Z")
+            .workplane()
+            .circle(1)
+            .extrude(6)
+            .workplaneFromTagged("base")
+            .center(-3, 0)
+            .circle(1)
+            .extrude(11)
+        )
+        self.assertTupleAlmostEquals(
+            result.faces(">Z").val().Center().toTuple(), (-3, 0, 12), 9
+        )
 
     def testTagSelectors(self):
 
@@ -2791,16 +2805,26 @@ class TestCadQuery(BaseTest):
         self.assertEqual(6, result0.wires(tag="box").size())
 
         # create two solids, tag them, join to one solid
-        result1 = (Workplane("XY").pushPoints([(1, 0), (-1, 0)]).box(1, 1, 1)
-                   .tag("boxes").sphere(1))
+        result1 = (
+            Workplane("XY")
+            .pushPoints([(1, 0), (-1, 0)])
+            .box(1, 1, 1)
+            .tag("boxes")
+            .sphere(1)
+        )
         self.assertEqual(1, result1.solids().size())
         self.assertEqual(2, result1.solids(tag="boxes").size())
         self.assertEqual(1, result1.shells().size())
         self.assertEqual(2, result1.shells(tag="boxes").size())
 
         # create 4 individual objects, tag it, then combine to one compound
-        result2 = (Workplane("XY").rect(4, 4).vertices()
-                   .box(1, 1, 1, combine=False).tag("4 objs"))
+        result2 = (
+            Workplane("XY")
+            .rect(4, 4)
+            .vertices()
+            .box(1, 1, 1, combine=False)
+            .tag("4 objs")
+        )
         result2 = result2.newObject([Compound.makeCompound(result2.objects)])
         self.assertEqual(1, result2.compounds().size())
         self.assertEqual(0, result2.compounds(tag="4 objs").size())
