@@ -28,7 +28,7 @@ class TestCQSelectors(BaseTest):
         self.assertTupleAlmostEquals((0.0, 0.0, 0.0), s.plane.origin.toTuple(), 3)
 
         # move origin and confirm center moves
-        s.center(-2.0, -2.0)
+        s = s.center(-2.0, -2.0)
 
         # current point should be 0,0, but
 

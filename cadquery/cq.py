@@ -18,6 +18,7 @@
 """
 
 import math
+from copy import copy
 from . import (
     Vector,
     Plane,
@@ -71,6 +72,7 @@ class CQ(object):
         self.objects = []
         self.ctx = CQContext()
         self.parent = None
+        self._tag = None
 
         if obj:  # guarded because sometimes None for internal use
             self.objects.append(obj)
@@ -93,6 +95,17 @@ class CQ(object):
         r.ctx = self.ctx  # context solid remains the same
         r.objects = list(objlist)
         return r
+
+    def tag(self, name):
+        """
+        Tags the current CQ object for later reference.
+
+        :param name: the name to tag this object with
+        :type name: string
+        :returns: self, a cq object with tag applied
+        """
+        self._tag = name
+        return self
 
     def _collectProperty(self, propName):
         """
@@ -266,6 +279,22 @@ class CQ(object):
         """
         return self.objects[0]
 
+    def _getTagged(self, name):
+        """
+        Search the parent chain for a an object with tag == name.
+
+        :param name: the tag to search for
+        :type name: string
+        :returns: the first CQ object in the parent chain with tag == name
+        :raises: ValueError if no object tagged name in the chain
+        """
+        if self._tag == name:
+            return self
+        if self.parent is None:
+            raise ValueError("No CQ object named {} in chain".format(name))
+        else:
+            return self.parent._getTagged(name)
+
     def toOCC(self):
         """
         Directly returns the wrapped FreeCAD object to cut down on the amount of boiler plate code
@@ -430,6 +459,31 @@ class CQ(object):
         # a new workplane has the center of the workplane on the stack
         return s
 
+    def copyWorkplane(self, obj):
+        """
+        Copies the workplane from obj.
+
+        :param obj: an object to copy the workplane from
+        :type obj: a CQ object
+        :returns: a CQ object with obj's workplane
+        """
+        out = Workplane(obj.plane)
+        out.parent = self
+        out.ctx = self.ctx
+        return out
+
+    def workplaneFromTagged(self, name):
+        """
+        Copies the workplane from a tagged parent.
+
+        :param name: tag to search for
+        :type name: string
+        :returns: a CQ object with name's workplane
+        """
+        tagged = self._getTagged(name)
+        out = self.copyWorkplane(tagged)
+        return out
+
     def first(self):
         """
         Return the first item on the stack
@@ -522,20 +576,23 @@ class CQ(object):
 
         return self._findType(Face, searchStack, searchParents)
 
-    def _selectObjects(self, objType, selector=None):
+    def _selectObjects(self, objType, selector=None, tag=None):
         """
             Filters objects of the selected type with the specified selector,and returns results
 
             :param objType: the type of object we are searching for
             :type objType: string: (Vertex|Edge|Wire|Solid|Shell|Compound|CompSolid)
+            :param tag: if set, search the tagged CQ object instead of self
+            :type tag: string
             :return: a CQ object with the selected objects on the stack.
 
             **Implementation Note**: This is the base implementation of the vertices,edges,faces,
             solids,shells, and other similar selector methods.  It is a useful extension point for
             plugin developers to make other selector methods.
         """
+        cq_obj = self._getTagged(tag) if tag else self
         # A single list of all faces from all objects on the stack
-        toReturn = self._collectProperty(objType)
+        toReturn = cq_obj._collectProperty(objType)
 
         if selector is not None:
             if isinstance(selector, str) or isinstance(selector, str):
@@ -546,7 +603,7 @@ class CQ(object):
 
         return self.newObject(toReturn)
 
-    def vertices(self, selector=None):
+    def vertices(self, selector=None, tag=None):
         """
         Select the vertices of objects on the stack, optionally filtering the selection. If there
         are multiple objects on the stack, the vertices of all objects are collected and a list of
@@ -554,6 +611,8 @@ class CQ(object):
 
         :param selector:
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains  the *distinct* vertices of *all* objects on the
            current stack, after being filtered by the selector, if provided
 
@@ -575,9 +634,9 @@ class CQ(object):
         :py:class:`StringSyntaxSelector`
 
         """
-        return self._selectObjects("Vertices", selector)
+        return self._selectObjects("Vertices", selector, tag)
 
-    def faces(self, selector=None):
+    def faces(self, selector=None, tag=None):
         """
         Select the faces of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the faces of all objects are collected and a list of all the
@@ -585,6 +644,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* faces of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -607,9 +668,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects("Faces", selector)
+        return self._selectObjects("Faces", selector, tag)
 
-    def edges(self, selector=None):
+    def edges(self, selector=None, tag=None):
         """
         Select the edges of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the edges of all objects are collected and a list of all the
@@ -617,6 +678,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* edges of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -638,9 +701,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects("Edges", selector)
+        return self._selectObjects("Edges", selector, tag)
 
-    def wires(self, selector=None):
+    def wires(self, selector=None, tag=None):
         """
         Select the wires of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the wires of all objects are collected and a list of all the
@@ -648,6 +711,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* wires of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -661,9 +726,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects("Wires", selector)
+        return self._selectObjects("Wires", selector, tag)
 
-    def solids(self, selector=None):
+    def solids(self, selector=None, tag=None):
         """
         Select the solids of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the solids of all objects are collected and a list of all the
@@ -671,6 +736,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -687,9 +754,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects("Solids", selector)
+        return self._selectObjects("Solids", selector, tag)
 
-    def shells(self, selector=None):
+    def shells(self, selector=None, tag=None):
         """
         Select the shells of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the shells of all objects are collected and a list of all the
@@ -697,6 +764,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -707,9 +776,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects("Shells", selector)
+        return self._selectObjects("Shells", selector, tag)
 
-    def compounds(self, selector=None):
+    def compounds(self, selector=None, tag=None):
         """
         Select compounds on the stack, optionally filtering the selection. If there are multiple
         objects on the stack, they are collected and a list of all the distinct compounds
@@ -717,6 +786,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -725,7 +796,7 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects("Compounds", selector)
+        return self._selectObjects("Compounds", selector, tag)
 
     def toSvg(self, opts=None):
         """
@@ -1006,6 +1077,7 @@ class Workplane(CQ):
         self.objects = [self.plane.origin]
         self.parent = None
         self.ctx = CQContext()
+        self._tag = None
 
     def transformed(self, rotate=(0, 0, 0), offset=(0, 0, 0)):
         """
@@ -1047,7 +1119,7 @@ class Workplane(CQ):
 
         # copy the current state to the new object
         ns = Workplane("XY")
-        ns.plane = self.plane
+        ns.plane = copy(self.plane)
         ns.parent = self
         ns.objects = list(objlist)
         ns.ctx = self.ctx
@@ -1214,8 +1286,9 @@ class Workplane(CQ):
         The result is a cube with a round boss on the corner
         """
         "Shift local coordinates to the specified location, according to current coordinates"
-        self.plane.setOrigin2d(x, y)
-        n = self.newObject([self.plane.origin])
+        new_origin = self.plane.toWorldCoords((x, y))
+        n = self.newObject([new_origin])
+        n.plane.setOrigin2d(x, y)
         return n
 
     def lineTo(self, x, y, forConstruction=False):
