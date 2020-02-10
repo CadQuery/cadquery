@@ -195,6 +195,7 @@ class Shape(object):
 
         upgrader = ShapeUpgrade_UnifySameDomain(
             self.wrapped, True, True, True)
+        upgrader.AllowInternalEdges(True)
         upgrader.Build()
 
         return self.cast(upgrader.Shape())
@@ -560,9 +561,6 @@ class Shape(object):
         """
 
         fuse_op = BRepAlgoAPI_Fuse(self.wrapped, toFuse.wrapped)
-        fuse_op.RefineEdges()
-        fuse_op.FuseEdges()
-        # fuse_op.SetFuzzyValue(TOLERANCE)
         fuse_op.Build()
 
         return Shape.cast(fuse_op.Shape())
@@ -1539,8 +1537,7 @@ class Compound(Shape, Mixin3D):
         
         mgr = Font_FontMgr.GetInstance_s()
         font = mgr.FindFont(TCollection_HAsciiString(font),
-                            font_kind,
-                            10)
+                            font_kind)
 
         builder = Font_BRepTextBuilder()
         text_flat = Shape(builder.Perform(font.FontPath().ToCString(),
