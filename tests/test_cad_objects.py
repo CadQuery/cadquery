@@ -16,6 +16,7 @@ from cadquery import *
 
 DEG2RAD = 2 * math.pi / 360
 
+
 class TestCadObjects(BaseTest):
     def _make_circle(self):
 
@@ -24,7 +25,7 @@ class TestCadObjects(BaseTest):
 
     def _make_ellipse(self):
 
-        ellipse = gp_Elips(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()), 4., 2.)
+        ellipse = gp_Elips(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()), 4.0, 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(ellipse).Edge())
 
     def testVectorConstructors(self):
@@ -79,7 +80,9 @@ class TestCadObjects(BaseTest):
     def testEdgeWrapperEllipseCenter(self):
         e = self._make_ellipse()
         w = Wire.assembleEdges([e])
-        self.assertTupleAlmostEquals((1.0, 2.0, 3.0), Face.makeFromWires(w).Center().toTuple(), 3)
+        self.assertTupleAlmostEquals(
+            (1.0, 2.0, 3.0), Face.makeFromWires(w).Center().toTuple(), 3
+        )
 
     def testEdgeWrapperMakeCircle(self):
         halfCircleEdge = Edge.makeCircle(
@@ -99,10 +102,24 @@ class TestCadObjects(BaseTest):
         x_radius, y_radius = 20, 10
         angle1, angle2 = -75.0, 90.0
         arcEllipseEdge = Edge.makeEllipse(
-            x_radius=x_radius, y_radius=y_radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=angle1, angle2=angle2)
+            x_radius=x_radius,
+            y_radius=y_radius,
+            pnt=(0, 0, 0),
+            dir=(0, 0, 1),
+            angle1=angle1,
+            angle2=angle2,
+        )
 
-        start = (x_radius * math.cos(angle1 * DEG2RAD), y_radius * math.sin(angle1 * DEG2RAD), 0.0)
-        end = (x_radius * math.cos(angle2 * DEG2RAD), y_radius * math.sin(angle2 * DEG2RAD), 0.0)
+        start = (
+            x_radius * math.cos(angle1 * DEG2RAD),
+            y_radius * math.sin(angle1 * DEG2RAD),
+            0.0,
+        )
+        end = (
+            x_radius * math.cos(angle2 * DEG2RAD),
+            y_radius * math.sin(angle2 * DEG2RAD),
+            0.0,
+        )
         self.assertTupleAlmostEquals(start, arcEllipseEdge.startPoint().toTuple(), 3)
         self.assertTupleAlmostEquals(end, arcEllipseEdge.endPoint().toTuple(), 3)
 
@@ -111,10 +128,24 @@ class TestCadObjects(BaseTest):
         x_radius, y_radius = 10, 20
         angle1, angle2 = 0.0, 45.0
         arcEllipseEdge = Edge.makeEllipse(
-            x_radius=x_radius, y_radius=y_radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=angle1, angle2=angle2)
+            x_radius=x_radius,
+            y_radius=y_radius,
+            pnt=(0, 0, 0),
+            dir=(0, 0, 1),
+            angle1=angle1,
+            angle2=angle2,
+        )
 
-        start = (x_radius * math.cos(angle1 * DEG2RAD), y_radius * math.sin(angle1 * DEG2RAD), 0.0)
-        end = (x_radius * math.cos(angle2 * DEG2RAD), y_radius * math.sin(angle2 * DEG2RAD), 0.0)
+        start = (
+            x_radius * math.cos(angle1 * DEG2RAD),
+            y_radius * math.sin(angle1 * DEG2RAD),
+            0.0,
+        )
+        end = (
+            x_radius * math.cos(angle2 * DEG2RAD),
+            y_radius * math.sin(angle2 * DEG2RAD),
+            0.0,
+        )
         self.assertTupleAlmostEquals(start, arcEllipseEdge.startPoint().toTuple(), 3)
         self.assertTupleAlmostEquals(end, arcEllipseEdge.endPoint().toTuple(), 3)
 
@@ -123,10 +154,24 @@ class TestCadObjects(BaseTest):
         x_radius, y_radius = 20, 20
         angle1, angle2 = 15.0, 60.0
         arcEllipseEdge = Edge.makeEllipse(
-            x_radius=x_radius, y_radius=y_radius, pnt=(0, 0, 0), dir=(0, 0, 1), angle1=angle1, angle2=angle2)
+            x_radius=x_radius,
+            y_radius=y_radius,
+            pnt=(0, 0, 0),
+            dir=(0, 0, 1),
+            angle1=angle1,
+            angle2=angle2,
+        )
 
-        start = (x_radius * math.cos(angle1 * DEG2RAD), y_radius * math.sin(angle1 * DEG2RAD), 0.0)
-        end = (x_radius * math.cos(angle2 * DEG2RAD), y_radius * math.sin(angle2 * DEG2RAD), 0.0)
+        start = (
+            x_radius * math.cos(angle1 * DEG2RAD),
+            y_radius * math.sin(angle1 * DEG2RAD),
+            0.0,
+        )
+        end = (
+            x_radius * math.cos(angle2 * DEG2RAD),
+            y_radius * math.sin(angle2 * DEG2RAD),
+            0.0,
+        )
         self.assertTupleAlmostEquals(start, arcEllipseEdge.startPoint().toTuple(), 3)
         self.assertTupleAlmostEquals(end, arcEllipseEdge.endPoint().toTuple(), 3)
 

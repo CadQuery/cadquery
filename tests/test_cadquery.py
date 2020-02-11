@@ -497,7 +497,6 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(path.Length(), path1.Length())
 
     def testRotatedEllipse(self):
-
         def rotatePoint(x, y, alpha):
             # rotation matrix
             a = alpha * DEG2RAD
@@ -517,52 +516,108 @@ class TestCadQuery(BaseTest):
         ex_rot, ey_rot = rotatePoint(*ellipsePoints(r1, r2, a2), ra)
 
         # startAtCurrent=False, sense = 1
-        ellipseArc1 = Workplane("XY").moveTo(*p0).ellipseArc(
-            r1, r2, startAtCurrent=False, angle1=a1, angle2=a2, rotation_angle=ra)
+        ellipseArc1 = (
+            Workplane("XY")
+            .moveTo(*p0)
+            .ellipseArc(
+                r1, r2, startAtCurrent=False, angle1=a1, angle2=a2, rotation_angle=ra
+            )
+        )
         start = ellipseArc1.vertices().objects[0]
         end = ellipseArc1.vertices().objects[1]
 
-        self.assertTupleAlmostEquals((start.X, start.Y), (p0[0] + sx_rot, p0[1] + sy_rot), 3)
-        self.assertTupleAlmostEquals((end.X, end.Y), (p0[0] + ex_rot, p0[1] + ey_rot), 3)
+        self.assertTupleAlmostEquals(
+            (start.X, start.Y), (p0[0] + sx_rot, p0[1] + sy_rot), 3
+        )
+        self.assertTupleAlmostEquals(
+            (end.X, end.Y), (p0[0] + ex_rot, p0[1] + ey_rot), 3
+        )
 
         # startAtCurrent=True, sense = 1
-        ellipseArc2 = Workplane("XY").moveTo(*p0).ellipseArc(
-            r1, r2, startAtCurrent=True, angle1=a1, angle2=a2, rotation_angle=ra)
+        ellipseArc2 = (
+            Workplane("XY")
+            .moveTo(*p0)
+            .ellipseArc(
+                r1, r2, startAtCurrent=True, angle1=a1, angle2=a2, rotation_angle=ra
+            )
+        )
         start = ellipseArc2.vertices().objects[0]
         end = ellipseArc2.vertices().objects[1]
 
-        self.assertTupleAlmostEquals((start.X, start.Y), (p0[0] + sx_rot - sx_rot, p0[1] + sy_rot - sy_rot), 3)
-        self.assertTupleAlmostEquals((end.X, end.Y), (p0[0] + ex_rot - sx_rot, p0[1] + ey_rot - sy_rot), 3)
+        self.assertTupleAlmostEquals(
+            (start.X, start.Y), (p0[0] + sx_rot - sx_rot, p0[1] + sy_rot - sy_rot), 3
+        )
+        self.assertTupleAlmostEquals(
+            (end.X, end.Y), (p0[0] + ex_rot - sx_rot, p0[1] + ey_rot - sy_rot), 3
+        )
 
         # startAtCurrent=False, sense = -1
-        ellipseArc3 = Workplane("XY").moveTo(*p0).ellipseArc(
-            r1, r2, startAtCurrent=False, angle1=a1, angle2=a2, rotation_angle=ra, sense=-1)
+        ellipseArc3 = (
+            Workplane("XY")
+            .moveTo(*p0)
+            .ellipseArc(
+                r1,
+                r2,
+                startAtCurrent=False,
+                angle1=a1,
+                angle2=a2,
+                rotation_angle=ra,
+                sense=-1,
+            )
+        )
         start = ellipseArc3.vertices().objects[0]
         end = ellipseArc3.vertices().objects[1]
 
         # swap start and end points for coparison due to different sense
-        self.assertTupleAlmostEquals((start.X, start.Y), (p0[0] + ex_rot, p0[1] + ey_rot), 3)
-        self.assertTupleAlmostEquals((end.X, end.Y), (p0[0] + sx_rot, p0[1] + sy_rot), 3)
+        self.assertTupleAlmostEquals(
+            (start.X, start.Y), (p0[0] + ex_rot, p0[1] + ey_rot), 3
+        )
+        self.assertTupleAlmostEquals(
+            (end.X, end.Y), (p0[0] + sx_rot, p0[1] + sy_rot), 3
+        )
 
         # startAtCurrent=True, sense = -1
-        ellipseArc4 = Workplane("XY").moveTo(*p0).ellipseArc(
-            r1, r2, startAtCurrent=True, angle1=a1, angle2=a2, rotation_angle=ra, sense=-1)
+        ellipseArc4 = (
+            Workplane("XY")
+            .moveTo(*p0)
+            .ellipseArc(
+                r1,
+                r2,
+                startAtCurrent=True,
+                angle1=a1,
+                angle2=a2,
+                rotation_angle=ra,
+                sense=-1,
+            )
+        )
         start = ellipseArc4.vertices().objects[0]
         end = ellipseArc4.vertices().objects[1]
 
         # swap start and end points for coparison due to different sense
-        self.assertTupleAlmostEquals((start.X, start.Y), (p0[0] + ex_rot - ex_rot, p0[1] + ey_rot - ey_rot), 3)
-        self.assertTupleAlmostEquals((end.X, end.Y), (p0[0] + sx_rot - ex_rot, p0[1] + sy_rot - ey_rot), 3)
+        self.assertTupleAlmostEquals(
+            (start.X, start.Y), (p0[0] + ex_rot - ex_rot, p0[1] + ey_rot - ey_rot), 3
+        )
+        self.assertTupleAlmostEquals(
+            (end.X, end.Y), (p0[0] + sx_rot - ex_rot, p0[1] + sy_rot - ey_rot), 3
+        )
 
     def testEllipseArcsClockwise(self):
-        ellipseArc = Workplane("XY").moveTo(10,15).ellipseArc(5, 4, -10, 190, 45, sense=-1, startAtCurrent=False)
+        ellipseArc = (
+            Workplane("XY")
+            .moveTo(10, 15)
+            .ellipseArc(5, 4, -10, 190, 45, sense=-1, startAtCurrent=False)
+        )
         sp = ellipseArc.val().startPoint()
         ep = ellipseArc.val().endPoint()
-        self.assertTupleAlmostEquals((sp.x, sp.y), ( 7.009330014275797, 11.027027582524015), 3)
-        self.assertTupleAlmostEquals((ep.x, ep.y), (13.972972417475985, 17.990669985724203), 3)
+        self.assertTupleAlmostEquals(
+            (sp.x, sp.y), (7.009330014275797, 11.027027582524015), 3
+        )
+        self.assertTupleAlmostEquals(
+            (ep.x, ep.y), (13.972972417475985, 17.990669985724203), 3
+        )
 
-        ellipseArc = (ellipseArc
-            .ellipseArc(5, 4, -10, 190, 315, sense=-1)
+        ellipseArc = (
+            ellipseArc.ellipseArc(5, 4, -10, 190, 315, sense=-1)
             .ellipseArc(5, 4, -10, 190, 225, sense=-1)
             .ellipseArc(5, 4, -10, 190, 135, sense=-1)
         )
@@ -570,14 +625,22 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals((sp.x, sp.y), (ep.x, ep.y), 3)
 
     def testEllipseArcsCounterClockwise(self):
-        ellipseArc = Workplane("XY").moveTo(10,15).ellipseArc(5, 4, -10, 190, 45, startAtCurrent=False)
+        ellipseArc = (
+            Workplane("XY")
+            .moveTo(10, 15)
+            .ellipseArc(5, 4, -10, 190, 45, startAtCurrent=False)
+        )
         sp = ellipseArc.val().startPoint()
         ep = ellipseArc.val().endPoint()
-        self.assertTupleAlmostEquals((sp.x, sp.y), (13.972972417475985, 17.990669985724203), 3)
-        self.assertTupleAlmostEquals((ep.x, ep.y), ( 7.009330014275797, 11.027027582524015), 3)
+        self.assertTupleAlmostEquals(
+            (sp.x, sp.y), (13.972972417475985, 17.990669985724203), 3
+        )
+        self.assertTupleAlmostEquals(
+            (ep.x, ep.y), (7.009330014275797, 11.027027582524015), 3
+        )
 
-        ellipseArc = (ellipseArc
-            .ellipseArc(5, 4, -10, 190, 135)
+        ellipseArc = (
+            ellipseArc.ellipseArc(5, 4, -10, 190, 135)
             .ellipseArc(5, 4, -10, 190, 225)
             .ellipseArc(5, 4, -10, 190, 315)
         )
@@ -591,13 +654,23 @@ class TestCadQuery(BaseTest):
         r1, r2 = 20, 10
         ra = 25
 
-        ellipseArc1 = Workplane("XY").moveTo(*p0).ellipseArc(
-            r1, r2, startAtCurrent=False, angle1=a1, angle2=a2, rotation_angle=ra)
+        ellipseArc1 = (
+            Workplane("XY")
+            .moveTo(*p0)
+            .ellipseArc(
+                r1, r2, startAtCurrent=False, angle1=a1, angle2=a2, rotation_angle=ra
+            )
+        )
         sp1 = ellipseArc1.val().startPoint()
         ep1 = ellipseArc1.val().endPoint()
 
-        ellipseArc2 = Workplane("XY").moveTo(*p0).ellipseArc(
-            r1, r2, startAtCurrent=False, angle1=a1, angle2=a2, rotation_angle=ra)
+        ellipseArc2 = (
+            Workplane("XY")
+            .moveTo(*p0)
+            .ellipseArc(
+                r1, r2, startAtCurrent=False, angle1=a1, angle2=a2, rotation_angle=ra
+            )
+        )
         sp2 = ellipseArc2.val().startPoint()
         ep2 = ellipseArc2.val().endPoint()
 
@@ -862,9 +935,9 @@ class TestCadQuery(BaseTest):
         self.assertEqual(14, s.faces().size())
 
     def testConcentricEllipses(self):
-        concentricEllipses  = (Workplane("XY")
-                                 .center(10, 20).ellipse(100,10)
-                                 .center(0, 0).ellipse(50, 5))
+        concentricEllipses = (
+            Workplane("XY").center(10, 20).ellipse(100, 10).center(0, 0).ellipse(50, 5)
+        )
         v = concentricEllipses.vertices().objects[0]
         self.assertTupleAlmostEquals((v.X, v.Y), (10 + 50, 20), 3)
 

@@ -1567,8 +1567,18 @@ class Workplane(CQ):
 
         return self.spline(allPoints, includeCurrent=False, makeWire=True)
 
-    def ellipseArc(self, x_radius, y_radius, angle1=360, angle2=360, rotation_angle=0.0, sense=1,
-                forConstruction=False, startAtCurrent=True, makeWire=False):
+    def ellipseArc(
+        self,
+        x_radius,
+        y_radius,
+        angle1=360,
+        angle2=360,
+        rotation_angle=0.0,
+        sense=1,
+        forConstruction=False,
+        startAtCurrent=True,
+        makeWire=False,
+    ):
         """Draw an elliptical arc with x and y radiuses either with start point at current point or
         or current point being the center of the arc
 
@@ -1583,11 +1593,19 @@ class Workplane(CQ):
         :param makeWire: convert the resulting arc edge to a wire
         """
 
-
         # Start building the ellipse with the current point as center
         center = self._findFromPoint(useLocalCoords=False)
-        e = Edge.makeEllipse(x_radius, y_radius, center, self.plane.zDir, self.plane.xDir, angle1, angle2, sense==1)
-        
+        e = Edge.makeEllipse(
+            x_radius,
+            y_radius,
+            center,
+            self.plane.zDir,
+            self.plane.xDir,
+            angle1,
+            angle2,
+            sense == 1,
+        )
+
         # Rotate if necessary
         if rotation_angle != 0.0:
             e = e.rotate(center, center.add(self.plane.zDir), rotation_angle)
@@ -2082,8 +2100,16 @@ class Workplane(CQ):
             .center(10, 20).ellipse(100,10)
             .center(0, 0).ellipse(50, 5)
         """
+
         def makeEllipseWire(obj):
-            elip = Wire.makeEllipse(x_radius, y_radius, obj, Vector(0, 0, 1), Vector(1, 0, 0), rotation_angle=rotation_angle)
+            elip = Wire.makeEllipse(
+                x_radius,
+                y_radius,
+                obj,
+                Vector(0, 0, 1),
+                Vector(1, 0, 0),
+                rotation_angle=rotation_angle,
+            )
             elip.forConstruction = forConstruction
             return elip
 
