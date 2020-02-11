@@ -3,7 +3,6 @@ from .geom import Vector, BoundBox, Plane
 import OCC.Core.TopAbs as ta  # Tolopolgy type enum
 import OCC.Core.GeomAbs as ga  # Geometry type enum
 
-<<<<<<< HEAD
 from OCC.Core.gp import (
     gp_Vec,
     gp_Pnt,
@@ -12,16 +11,13 @@ from OCC.Core.gp import (
     gp_Ax3,
     gp_Dir,
     gp_Circ,
+    gp_Elips,
     gp_Trsf,
     gp_Pln,
     gp_GTrsf,
     gp_Pnt2d,
     gp_Dir2d,
 )
-=======
-from OCC.Core.gp import (gp_Vec, gp_Pnt, gp_Ax1, gp_Ax2, gp_Ax3, gp_Dir, gp_Circ, gp_Elips,
-                         gp_Trsf, gp_Pln, gp_GTrsf, gp_Pnt2d, gp_Dir2d)
->>>>>>> added ellipse
 
 # collection of pints (used for spline construction)
 from OCC.Core.TColgp import TColgp_HArray1OfPnt
@@ -749,7 +745,7 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeEllipse(cls, x_radius, y_radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1),
+    def makeEllipse(cls, x_radius, y_radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), xdir=Vector(1, 0, 0),
                     angle1=360.0, angle2=360.0, sense=1):
         """
         Interpolate a spline through the provided points.
@@ -766,9 +762,10 @@ class Edge(Shape, Mixin1D):
 
         pnt = Vector(pnt).toPnt()
         dir = Vector(dir).toDir()
+        xdir = Vector(xdir).toDir()
 
         ax1 = gp_Ax1(pnt, dir)
-        ax2 = gp_Ax2(pnt, dir)
+        ax2 = gp_Ax2(pnt, dir, xdir)
 
         if y_radius > x_radius:
             # swap x and y radius and rotate by 90° afterwards to create an ellipse with x_radius < y_radius
@@ -910,7 +907,7 @@ class Wire(Shape, Mixin1D):
         return w
 
     @classmethod
-    def makeEllipse(cls, x_radius, y_radius, center, normal, angle1=360.0, angle2=360.0,
+    def makeEllipse(cls, x_radius, y_radius, center, normal, xDir, angle1=360.0, angle2=360.0,
                     rotation_angle=0.0, closed=True):
         """
             Makes an Ellipse centered at the provided point, having normal in the provided direction
@@ -924,7 +921,7 @@ class Wire(Shape, Mixin1D):
             :return:
         """
 
-        ellipse_edge = Edge.makeEllipse(x_radius, y_radius, center, normal, angle1, angle2)
+        ellipse_edge = Edge.makeEllipse(x_radius, y_radius, center, normal, xDir, angle1, angle2)
 
         if angle1 != angle2 and closed:
             line = Edge.makeLine(ellipse_edge.endPoint(), ellipse_edge.startPoint())

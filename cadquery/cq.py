@@ -1585,13 +1585,12 @@ class Workplane(CQ):
 
 
         # Start building the ellipse with the current point as center
-        # to support strating as the result of center(x,y) or moveTo(x,y) do not use local coordinates
         center = self._findFromPoint(useLocalCoords=False)
-        e = Edge.makeEllipse(x_radius, y_radius, center, Vector(0, 0, 1), angle1, angle2, sense==1)
-
+        e = Edge.makeEllipse(x_radius, y_radius, center, self.plane.zDir, self.plane.xDir, angle1, angle2, sense==1)
+        
         # Rotate if necessary
         if rotation_angle != 0.0:
-            e = e.rotate(center, center.add(Vector(0,0,1)), rotation_angle)
+            e = e.rotate(center, center.add(self.plane.zDir), rotation_angle)
 
         # Move the start point of the ellipse onto the last current point
         if startAtCurrent:
@@ -2076,7 +2075,7 @@ class Workplane(CQ):
         :type forConstruction: true if the wires are for reference, false if they are creating
             part geometry
         :return: a new CQ object with the created wires on the stack
-        
+
         *NOTE* Due to a bug in opencascade (https://tracker.dev.opencascade.org/view.php?id=31290)
         the center of mass (equals center for next shape) is shifted. To create concentric ellipses
         use Workplane("XY")
@@ -2084,7 +2083,7 @@ class Workplane(CQ):
             .center(0, 0).ellipse(50, 5)
         """
         def makeEllipseWire(obj):
-            elip = Wire.makeEllipse(x_radius, y_radius, obj, Vector(0, 0, 1), rotation_angle=rotation_angle)
+            elip = Wire.makeEllipse(x_radius, y_radius, obj, Vector(0, 0, 1), Vector(1, 0, 0), rotation_angle=rotation_angle)
             elip.forConstruction = forConstruction
             return elip
 
