@@ -4,6 +4,7 @@ from OCC.Core.Visualization import Tesselator
 import tempfile
 import os
 import sys
+
 if sys.version_info.major == 2:
     import cStringIO as StringIO
 else:
@@ -56,7 +57,7 @@ def exportShape(shape, exportType, fileLike, tolerance=0.1):
         The object should be already open and ready to write. The caller is responsible
         for closing the object
     """
-    
+
     from ..cq import CQ
 
     def tessellate(shape):
@@ -116,7 +117,7 @@ def readAndDeleteFile(fileName):
         return the contents as a string
     """
     res = ""
-    with open(fileName, 'r') as f:
+    with open(fileName, "r") as f:
         res = "{}".format(f.read())
 
     os.remove(fileName)
@@ -152,34 +153,34 @@ class AmfWriter(object):
         self.tessellation = tessellation
 
     def writeAmf(self, outFile):
-        amf = ET.Element('amf', units=self.units)
+        amf = ET.Element("amf", units=self.units)
         # TODO: if result is a compound, we need to loop through them
-        object = ET.SubElement(amf, 'object', id="0")
-        mesh = ET.SubElement(object, 'mesh')
-        vertices = ET.SubElement(mesh, 'vertices')
-        volume = ET.SubElement(mesh, 'volume')
+        object = ET.SubElement(amf, "object", id="0")
+        mesh = ET.SubElement(object, "mesh")
+        vertices = ET.SubElement(mesh, "vertices")
+        volume = ET.SubElement(mesh, "volume")
 
         # add vertices
         for i_vert in range(self.tessellation.ObjGetVertexCount()):
             v = self.tessellation.GetVertex(i_vert)
-            vtx = ET.SubElement(vertices, 'vertex')
-            coord = ET.SubElement(vtx, 'coordinates')
-            x = ET.SubElement(coord, 'x')
+            vtx = ET.SubElement(vertices, "vertex")
+            coord = ET.SubElement(vtx, "coordinates")
+            x = ET.SubElement(coord, "x")
             x.text = str(v[0])
-            y = ET.SubElement(coord, 'y')
+            y = ET.SubElement(coord, "y")
             y.text = str(v[1])
-            z = ET.SubElement(coord, 'z')
+            z = ET.SubElement(coord, "z")
             z.text = str(v[2])
 
         # add triangles
         for i_tr in range(self.tessellation.ObjGetTriangleCount()):
             t = self.tessellation.GetTriangleIndex(i_tr)
-            triangle = ET.SubElement(volume, 'triangle')
-            v1 = ET.SubElement(triangle, 'v1')
+            triangle = ET.SubElement(volume, "triangle")
+            v1 = ET.SubElement(triangle, "v1")
             v1.text = str(t[0])
-            v2 = ET.SubElement(triangle, 'v2')
+            v2 = ET.SubElement(triangle, "v2")
             v2.text = str(t[1])
-            v3 = ET.SubElement(triangle, 'v3')
+            v3 = ET.SubElement(triangle, "v3")
             v3.text = str(t[2])
 
         amf = ET.ElementTree(amf).write(outFile, xml_declaration=True)
@@ -217,11 +218,11 @@ class JsonMesh(object):
 
     def toJson(self):
         return JSON_TEMPLATE % {
-            'vertices': str(self.vertices),
-            'faces': str(self.faces),
-            'nVertices': self.nVertices,
-            'nFaces': self.nFaces
-        };
+            "vertices": str(self.vertices),
+            "faces": str(self.faces),
+            "nVertices": self.nVertices,
+            "nFaces": self.nFaces,
+        }
 
 
 def makeSVGedge(e):
@@ -235,20 +236,16 @@ def makeSVGedge(e):
     start = curve.FirstParameter()
     end = curve.LastParameter()
 
-    points = GCPnts_QuasiUniformDeflection(curve,
-                                           DISCRETIZATION_TOLERANCE,
-                                           start,
-                                           end)
+    points = GCPnts_QuasiUniformDeflection(curve, DISCRETIZATION_TOLERANCE, start, end)
 
     if points.IsDone():
-        point_it = (points.Value(i + 1) for i in
-                    range(points.NbPoints()))
+        point_it = (points.Value(i + 1) for i in range(points.NbPoints()))
 
         p = next(point_it)
-        cs.write('M{},{} '.format(p.X(), p.Y()))
+        cs.write("M{},{} ".format(p.X(), p.Y()))
 
         for p in point_it:
-            cs.write('L{},{} '.format(p.X(), p.Y()))
+            cs.write("L{},{} ".format(p.X(), p.Y()))
 
     return cs.getvalue()
 
@@ -277,7 +274,7 @@ def getSVG(shape, opts=None):
         Export a shape to SVG
     """
 
-    d = {'width': 800, 'height': 240, 'marginLeft': 200, 'marginTop': 20}
+    d = {"width": 800, "height": 240, "marginLeft": 200, "marginTop": 20}
 
     if opts:
         d.update(opts)
@@ -285,17 +282,15 @@ def getSVG(shape, opts=None):
     # need to guess the scale and the coordinate center
     uom = guessUnitOfMeasure(shape)
 
-    width = float(d['width'])
-    height = float(d['height'])
-    marginLeft = float(d['marginLeft'])
-    marginTop = float(d['marginTop'])
+    width = float(d["width"])
+    height = float(d["height"])
+    marginLeft = float(d["marginLeft"])
+    marginTop = float(d["marginTop"])
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
 
-    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(),
-                                         DEFAULT_DIR)
-                                  )
+    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), DEFAULT_DIR))
 
     hlr.Projector(projector)
     hlr.Update()
@@ -336,8 +331,7 @@ def getSVG(shape, opts=None):
     # convert to native CQ objects
     visible = list(map(Shape, visible))
     hidden = list(map(Shape, hidden))
-    (hiddenPaths, visiblePaths) = getPaths(visible,
-                                           hidden)
+    (hiddenPaths, visiblePaths) = getPaths(visible, hidden)
 
     # get bounding box -- these are all in 2-d space
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
@@ -346,8 +340,10 @@ def getSVG(shape, opts=None):
     unitScale = min(width / bb.xlen * 0.75, height / bb.ylen * 0.75)
 
     # compute amount to translate-- move the top left into view
-    (xTranslate, yTranslate) = ((0 - bb.xmin) + marginLeft /
-                                unitScale, (0 - bb.ymax) - marginTop / unitScale)
+    (xTranslate, yTranslate) = (
+        (0 - bb.xmin) + marginLeft / unitScale,
+        (0 - bb.ymax) - marginTop / unitScale,
+    )
 
     # compute paths ( again -- had to strip out freecad crap )
     hiddenContent = ""
@@ -362,19 +358,19 @@ def getSVG(shape, opts=None):
         {
             "unitScale": str(unitScale),
             "strokeWidth": str(1.0 / unitScale),
-            "hiddenContent":  hiddenContent,
+            "hiddenContent": hiddenContent,
             "visibleContent": visibleContent,
             "xTranslate": str(xTranslate),
             "yTranslate": str(yTranslate),
             "width": str(width),
             "height": str(height),
             "textboxY": str(height - 30),
-            "uom": str(uom)
+            "uom": str(uom),
         }
     )
     # svg = SVG_TEMPLATE % (
     #    {"content": projectedContent}
-    #)
+    # )
     return svg
 
 
@@ -386,7 +382,7 @@ def exportSVG(shape, fileName):
     """
 
     svg = getSVG(shape.val())
-    f = open(fileName, 'w')
+    f = open(fileName, "w")
     f.write(svg)
     f.close()
 
@@ -471,4 +467,4 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 </svg>
 """
 
-PATHTEMPLATE = "\t\t\t<path d=\"%s\" />\n"
+PATHTEMPLATE = '\t\t\t<path d="%s" />\n'
