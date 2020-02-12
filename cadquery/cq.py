@@ -2730,7 +2730,7 @@ class Workplane(CQ):
 
     def interpPlate(self, surf_edges, surf_pts=[], thickness=0, combine=True, clean=True, degree=3, nbPtsOnCur=15, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=9):
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very ressources intensive depending on the complexity of the shape. In this case set combine=False.
 
         :param surf_edges
         :type 1 surf_edges: list of [x,y,z] float ordered coordinates
@@ -2771,7 +2771,7 @@ class Workplane(CQ):
 
         # Creates interpolated plate
         def _makeplate(pnt):
-            return Solid.interpPlate(surf_edges, surf_pts, thickness, degree, nbPtsOnCur, nbIter, anisotropy, tol2d, tol3d, tolAng, tolCurv, maxDeg, maxSegments)
+            return Solid.interpPlate(surf_edges, surf_pts, thickness, degree, nbPtsOnCur, nbIter, anisotropy, tol2d, tol3d, tolAng, tolCurv, maxDeg, maxSegments).translate(pnt)
 
         plates = self.eachpoint(_makeplate, True)
 
@@ -2779,7 +2779,6 @@ class Workplane(CQ):
         if not combine:
             return plates
         else:
-            # combine everything --> CRASHES when using pushpoints directly with interpPlate, probably OCC 6 CAD kernel issue, better use pushpoints through each() instead.
             return self.union(plates, clean=clean)
 
     def box(self, length, width, height, centered=(True, True, True), combine=True, clean=True):
