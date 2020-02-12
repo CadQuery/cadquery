@@ -50,13 +50,13 @@ class BaseTest(unittest.TestCase):
 
 
 __all__ = [
-    'TestCadObjects',
-    'TestCadQuery',
-    'TestCQGI',
-    'TestCQSelectors',
-    'TestCQSelectors',
-    'TestExporters',
-    'TestImporters',
-    'TestJupyter',
-    'TestWorkplanes',
+    "TestCadObjects",
+    "TestCadQuery",
+    "TestCQGI",
+    "TestCQSelectors",
+    "TestCQSelectors",
+    "TestExporters",
+    "TestImporters",
+    "TestJupyter",
+    "TestWorkplanes",
 ]
