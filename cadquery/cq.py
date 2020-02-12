@@ -2867,7 +2867,7 @@ class Workplane(CQ):
         surf_edges,
         surf_pts=[],
         thickness=0,
-        combine=True,
+        combine=False,
         clean=True,
         degree=3,
         nbPtsOnCur=15,
@@ -2945,7 +2945,7 @@ class Workplane(CQ):
             return plates
         else:
             return self.union(plates, clean=clean)
-        
+
     def box(
         self,
         length,
