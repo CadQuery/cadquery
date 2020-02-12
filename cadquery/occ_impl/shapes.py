@@ -88,6 +88,9 @@ from OCC.Core.ShapeFix import ShapeFix_Shape
 
 from OCC.Core.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
+from OCC.Core.STEPControl import STEPControl_Writer, STEPControl_AsIs, STEPControl_Controller
+from OCC.Core.Interface import Interface_Static_SetCVal
+from OCC.Core.Interface import Interface_Static_SetIVal
 from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
 from OCC.Core.StlAPI import StlAPI_Writer
 
@@ -110,10 +113,10 @@ from OCC.Core.BRepFeat import BRepFeat_MakeDPrism
 
 from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 
-from OCC.Core.GeomAbs import GeomAbs_C0 
-from OCC.Extend.TopologyUtils import TopologyExplorer, WireExplorer 
-from OCC.Core.GeomAbs import GeomAbs_Intersection 
-from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakeFilling 
+from OCC.Core.GeomAbs import GeomAbs_C0
+from OCC.Extend.TopologyUtils import TopologyExplorer, WireExplorer
+from OCC.Core.GeomAbs import GeomAbs_Intersection
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
 from OCC.Core.ShapeFix import ShapeFix_Wire
 
@@ -262,12 +265,25 @@ class Shape(object):
         return writer.Write(self.wrapped, fileName)
 
     def exportStep(self, fileName):
-
+        """
+        STEPControl_AsIs                                  translates an Open CASCADE shape to its highest possible STEP representation.
+        STEPControl_ManifoldSolidBrep            translates an Open CASCADE shape to a STEP manifold_solid_brep or brep_with_voids entity. NO
+        STEPControl_FacetedBrep                     translates an Open CASCADE shape into a STEP faceted_brep entity. NO
+        STEPControl_ShellBasedSurfaceModel  translates an Open CASCADE shape into a STEP shell_based_surface_model entity. SAME SIZE
+        STEPControl_GeometricCurveSet          translates an Open CASCADE shape into a STEP geometric_curve_set entity. LINES ONLY
+        surface_curve_mode:
+            0: write without pcurves (2 times smaller STEP file)
+            1 (Default): write with pcurves
+        """
+        c = STEPControl_Controller()
+        c.Init() 
+        Interface_Static_SetCVal("write.step.schema", "AP214")
+        Interface_Static_SetIVal('write.surfacecurve.mode', 0)
         writer = STEPControl_Writer()
         writer.Transfer(self.wrapped, STEPControl_AsIs)
-
+        
         return writer.Write(fileName)
-
+    
     def exportBrep(self, fileName):
         """
         Export given shape to a BREP file
@@ -1232,7 +1248,7 @@ class Solid(Shape, Mixin3D):
         :param MaxSegments = 9 (OCCT default)
         :type MaxSegments: Integer >= 2 (?)
         """
-
+        
         # POINTS CONSTRAINTS: list of (x,y,z) points, optional.
         pts_array = [gp_Pnt(*pt) for pt in surf_pts]
 
