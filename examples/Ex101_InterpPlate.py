@@ -47,19 +47,14 @@ N = 3
 ca = cos(30. * pi/180.)
 sa = sin(30. * pi/180.)
 # EVEN ROWS
-pts =  [(-3.0, -3.0), (-1.2679491924311226, -3.0), (0.46410161513775483, -3.0), (2.196152422706632, -3.0), (-3.0, 0.0), (-1.2679491924311226, 0.0), (0.46410161513775483, 0.0), (2.196152422706632, 0.0), (-2.165063509461097, -1.5), (-0.4330127018922194, -1.5), (1.299038105676658, -1.5), (3.031088913245535, -1.5), (-2.165063509461097, 1.5), (-0.4330127018922194, 1.5), (1.299038105676658, 1.5), (3.031088913245535, 1.5)]
+pts =  [(-3.0, -3.0), (-1.267949, -3.0), (0.464102, -3.0), (2.196152, -3.0), (-3.0, 0.0), (-1.267949, 0.0), (0.464102, 0.0), (2.196152, 0.0), (-2.133974, -1.5), (-0.401923, -1.5), (1.330127, -1.5), (3.062178, -1.5), (-2.133975, 1.5), (-0.401924, 1.5), (1.330127, 1.5), (3.062178, 1.5)]
 # Spike surface
 thickness = 0.1
 fn = 6
-edge_points = [[r1*cos(i * 2*pi/fn), r1*sin(i * 2*pi/fn)] for i in range(fn+1)]
-surface_points = [[0.25,0,0.75], [-0.25,0,0.75], [0,0.25,0.75], [0,-0.25,0.75], [0,0,2]]
+edge_points = [[r1*cos(i * 2*pi/fn + 30*pi/180), r1*sin(i * 2*pi/fn + 30*pi/180)] for i in range(fn+1)]
+surface_points = [[r1/4*cos(i * 2*pi/fn + 30*pi/180), r1/4*sin(i * 2*pi/fn + 30*pi/180), 0.75] for i in range(fn+1)] + [[0,0,2]]
 edge_wire = cq.Workplane('XY').polyline(edge_points)
-be = cq.Workplane('XY').interpPlate(edge_wire, surface_points, thickness, combine=True, clean=True, degree=2, nbPtsOnCur=20, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=9)
-#be = cq.Workplane('XY').interpPlate(edge_points, surface_points, thickness, combine=True, clean=True, Degree=2, NbPtsOnCur=20, NbIter=2, Anisotropie=False, Tol2d=0.00001, Tol3d=0.0001, TolAng=0.01, TolCurv=0.1, MaxDeg=8, MaxSegments=9) # list of (x,y,z) points instead of wires for edges
-# Pattern on sphere
-def face(pos): # If pushpoints is used directly with interpPlate --> crash! Use with each()
-    return be.rotate((0,0,0),(0,0,1), 30).translate(pos).val()
-plate_3 = cq.Workplane('XY').pushPoints(pts).each(face)
+plate_3 = cq.Workplane('XY').pushPoints(pts).interpPlate(edge_wire, surface_points, thickness, combine=False, clean=False, degree=2, nbPtsOnCur=20, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=9)
 print("plate_3.val().Volume() = ", plate_3.val().Volume())
 plate_3 = plate_3.translate((0,4*11,0))
 show_object(plate_3)
