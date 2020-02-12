@@ -1049,7 +1049,8 @@ class Face(Shape):
         n_sided = BRepOffsetAPI_MakeFilling(
             degree,
             nbPtsOnCur,
-            nbIter, anisotropy,
+            nbIter,
+            anisotropy,
             tol2d,
             tol3d,
             tolAng,
@@ -1327,19 +1328,20 @@ class Solid(Shape, Mixin3D):
         )
 
         # THICKEN SURFACE
-        if abs(thickness) > 0:  # abs() because negative values are allowed to set direction of thickening
+        if (
+            abs(thickness) > 0
+        ):  # abs() because negative values are allowed to set direction of thickening
             solid = BRepOffset_MakeOffset()
-            
             solid.Initialize(
                 face.wrapped,
-                thickness, 1.e-5,
+                thickness,
+                1.e-5,
                 BRepOffset_Skin,
                 False,
                 False,
                 GeomAbs_Intersection,
                 True,
             )  # The last True is important to make solid
-            
             solid.MakeOffsetShape()
             return cls(solid.Shape())
         else:  # Return 2D surface only
