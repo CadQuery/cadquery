@@ -2880,7 +2880,7 @@ class Workplane(CQ):
         tolAng=0.01,
         tolCurv=0.1,
         maxDeg=8,
-        maxSegments=9
+        maxSegments=9,
     ):
         """
         Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very ressources intensive depending on the complexity of the shape. In this case set combine=False.
@@ -2924,7 +2924,21 @@ class Workplane(CQ):
 
         # Creates interpolated plate
         def _makeplate(pnt):
-            return Solid.interpPlate(surf_edges, surf_pts, thickness, degree, nbPtsOnCur, nbIter, anisotropy, tol2d, tol3d, tolAng, tolCurv, maxDeg, maxSegments).translate(pnt)
+            return Solid.interpPlate(
+                surf_edges,
+                surf_pts,
+                thickness,
+                degree,
+                nbPtsOnCur,
+                nbIter,
+                anisotropy,
+                tol2d,
+                tol3d,
+                tolAng,
+                tolCurv,
+                maxDeg,
+                maxSegments,
+            ).translate(pnt)
 
         plates = self.eachpoint(_makeplate, True)
 
