@@ -2862,6 +2862,8 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
+
+
     def interpPlate(
         self,
         surf_edges,
@@ -2917,8 +2919,8 @@ class Workplane(CQ):
         """
 
         # If thickness is 0, only a 2D surface will be returned.
-        if thickness==0:
-            combine=False
+        if thickness == 0:
+            combine = False
 
         # Creates interpolated plate
         def _makeplate(pnt):
@@ -2931,7 +2933,6 @@ class Workplane(CQ):
             return plates
         else:
             return self.union(plates, clean=clean)
-
     def box(
         self,
         length,
