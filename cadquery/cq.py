@@ -2862,8 +2862,6 @@ class Workplane(CQ):
 
         return Compound.makeCompound(toFuse)
 
-
-
     def interpPlate(
         self,
         surf_edges,
@@ -2947,6 +2945,7 @@ class Workplane(CQ):
             return plates
         else:
             return self.union(plates, clean=clean)
+        
     def box(
         self,
         length,
