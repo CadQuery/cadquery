@@ -18,8 +18,20 @@
 """
 
 import math
-from . import Vector, Plane, Shape, Edge, Wire, Face, Solid, Compound, \
-    sortWiresByBuildOrder, selectors, exporters
+from copy import copy
+from . import (
+    Vector,
+    Plane,
+    Shape,
+    Edge,
+    Wire,
+    Face,
+    Solid,
+    Compound,
+    sortWiresByBuildOrder,
+    selectors,
+    exporters,
+)
 
 
 class CQContext(object):
@@ -31,7 +43,9 @@ class CQContext(object):
     """
 
     def __init__(self):
-        self.pendingWires = []   # a list of wires that have been created and need to be extruded
+        self.pendingWires = (
+            []
+        )  # a list of wires that have been created and need to be extruded
         # a list of created pending edges that need to be joined into wires
         self.pendingEdges = []
         # a reference to the first point for a set of edges.
@@ -58,6 +72,7 @@ class CQ(object):
         self.objects = []
         self.ctx = CQContext()
         self.parent = None
+        self._tag = None
 
         if obj:  # guarded because sometimes None for internal use
             self.objects.append(obj)
@@ -81,6 +96,17 @@ class CQ(object):
         r.objects = list(objlist)
         return r
 
+    def tag(self, name):
+        """
+        Tags the current CQ object for later reference.
+
+        :param name: the name to tag this object with
+        :type name: string
+        :returns: self, a cq object with tag applied
+        """
+        self._tag = name
+        return self
+
     def _collectProperty(self, propName):
         """
         Collects all of the values for propName,
@@ -99,8 +125,12 @@ class CQ(object):
             # tricky-- if an object is a compound of solids,
             # do not return all of the solids underneath-- typically
             # then we'll keep joining to ourself
-            if propName == 'Solids' and isinstance(o, Solid) and o.ShapeType() == 'Compound':
-                for i in getattr(o, 'Compounds')():
+            if (
+                propName == "Solids"
+                and isinstance(o, Solid)
+                and o.ShapeType() == "Compound"
+            ):
+                for i in getattr(o, "Compounds")():
                     all[i.hashCode()] = i
             else:
                 if hasattr(o, propName):
@@ -249,6 +279,22 @@ class CQ(object):
         """
         return self.objects[0]
 
+    def _getTagged(self, name):
+        """
+        Search the parent chain for a an object with tag == name.
+
+        :param name: the tag to search for
+        :type name: string
+        :returns: the first CQ object in the parent chain with tag == name
+        :raises: ValueError if no object tagged name in the chain
+        """
+        if self._tag == name:
+            return self
+        if self.parent is None:
+            raise ValueError("No CQ object named {} in chain".format(name))
+        else:
+            return self.parent._getTagged(name)
+
     def toOCC(self):
         """
         Directly returns the wrapped FreeCAD object to cut down on the amount of boiler plate code
@@ -259,8 +305,9 @@ class CQ(object):
 
         return self.objects[0].wrapped
 
-    def workplane(self, offset=0.0, invert=False, centerOption='CenterOfMass',
-                  origin=None):
+    def workplane(
+        self, offset=0.0, invert=False, centerOption="CenterOfMass", origin=None
+    ):
         """
         Creates a new 2-D workplane, located relative to the first face on the stack.
 
@@ -310,6 +357,7 @@ class CQ(object):
             For now you can work around by creating a workplane and then offsetting the center
             afterwards.
         """
+
         def _isCoPlanar(f0, f1):
             """Test if two faces are on the same plane."""
             p0 = f0.Center()
@@ -318,9 +366,11 @@ class CQ(object):
             n1 = f1.normalAt()
 
             # test normals (direction of planes)
-            if not ((abs(n0.x - n1.x) < self.ctx.tolerance) or
-                    (abs(n0.y - n1.y) < self.ctx.tolerance) or
-                    (abs(n0.z - n1.z) < self.ctx.tolerance)):
+            if not (
+                (abs(n0.x - n1.x) < self.ctx.tolerance)
+                or (abs(n0.y - n1.y) < self.ctx.tolerance)
+                or (abs(n0.z - n1.z) < self.ctx.tolerance)
+            ):
                 return False
 
             # test if p1 is on the plane of f0 (offset of planes)
@@ -339,22 +389,23 @@ class CQ(object):
                 xd = Vector(1, 0, 0)
             return xd
 
-        if centerOption not in {'CenterOfMass', 'ProjectedOrigin', 'CenterOfBoundBox'}:
-            raise ValueError('Undefined centerOption value provided.')
+        if centerOption not in {"CenterOfMass", "ProjectedOrigin", "CenterOfBoundBox"}:
+            raise ValueError("Undefined centerOption value provided.")
 
         if len(self.objects) > 1:
             # are all objects 'PLANE'?
-            if not all(o.geomType() in ('PLANE', 'CIRCLE') for o in self.objects):
+            if not all(o.geomType() in ("PLANE", "CIRCLE") for o in self.objects):
                 raise ValueError(
-                    "If multiple objects selected, they all must be planar faces.")
+                    "If multiple objects selected, they all must be planar faces."
+                )
 
             # are all faces co-planar with each other?
             if not all(_isCoPlanar(self.objects[0], f) for f in self.objects[1:]):
                 raise ValueError("Selected faces must be co-planar.")
 
-            if centerOption in {'CenterOfMass', 'ProjectedOrigin'}:
+            if centerOption in {"CenterOfMass", "ProjectedOrigin"}:
                 center = Shape.CombinedCenter(self.objects)
-            elif centerOption == 'CenterOfBoundBox':
+            elif centerOption == "CenterOfBoundBox":
                 center = Shape.CombinedCenterOfBoundBox(self.objects)
 
             normal = self.objects[0].normalAt()
@@ -364,26 +415,27 @@ class CQ(object):
             obj = self.objects[0]
 
             if isinstance(obj, Face):
-                if centerOption in {'CenterOfMass', 'ProjectedOrigin'}:
+                if centerOption in {"CenterOfMass", "ProjectedOrigin"}:
                     center = obj.Center()
-                elif centerOption == 'CenterOfBoundBox':
+                elif centerOption == "CenterOfBoundBox":
                     center = obj.CenterOfBoundBox()
                 normal = obj.normalAt(center)
                 xDir = _computeXdir(normal)
             else:
-                if hasattr(obj, 'Center'):
-                    if centerOption in {'CenterOfMass', 'ProjectedOrigin'}:
+                if hasattr(obj, "Center"):
+                    if centerOption in {"CenterOfMass", "ProjectedOrigin"}:
                         center = obj.Center()
-                    elif centerOption == 'CenterOfBoundBox':
+                    elif centerOption == "CenterOfBoundBox":
                         center = obj.CenterOfBoundBox()
                     normal = self.plane.zDir
                     xDir = self.plane.xDir
                 else:
                     raise ValueError(
-                        "Needs a face or a vertex or point on a work plane")
+                        "Needs a face or a vertex or point on a work plane"
+                    )
 
         # update center to projected origin if desired
-        if centerOption == 'ProjectedOrigin':
+        if centerOption == "ProjectedOrigin":
             if origin is None:
                 origin = self.plane.origin
             elif isinstance(origin, tuple):
@@ -406,6 +458,31 @@ class CQ(object):
 
         # a new workplane has the center of the workplane on the stack
         return s
+
+    def copyWorkplane(self, obj):
+        """
+        Copies the workplane from obj.
+
+        :param obj: an object to copy the workplane from
+        :type obj: a CQ object
+        :returns: a CQ object with obj's workplane
+        """
+        out = Workplane(obj.plane)
+        out.parent = self
+        out.ctx = self.ctx
+        return out
+
+    def workplaneFromTagged(self, name):
+        """
+        Copies the workplane from a tagged parent.
+
+        :param name: tag to search for
+        :type name: string
+        :returns: a CQ object with name's workplane
+        """
+        tagged = self._getTagged(name)
+        out = self.copyWorkplane(tagged)
+        return out
 
     def first(self):
         """
@@ -459,9 +536,7 @@ class CQ(object):
                 return rv[0]
 
         if searchParents and self.parent is not None:
-            return self.parent._findType(types,
-                                         searchStack=True,
-                                         searchParents=True)
+            return self.parent._findType(types, searchStack=True, searchParents=True)
 
         return None
 
@@ -501,20 +576,23 @@ class CQ(object):
 
         return self._findType(Face, searchStack, searchParents)
 
-    def _selectObjects(self, objType, selector=None):
+    def _selectObjects(self, objType, selector=None, tag=None):
         """
             Filters objects of the selected type with the specified selector,and returns results
 
             :param objType: the type of object we are searching for
             :type objType: string: (Vertex|Edge|Wire|Solid|Shell|Compound|CompSolid)
+            :param tag: if set, search the tagged CQ object instead of self
+            :type tag: string
             :return: a CQ object with the selected objects on the stack.
 
             **Implementation Note**: This is the base implementation of the vertices,edges,faces,
             solids,shells, and other similar selector methods.  It is a useful extension point for
             plugin developers to make other selector methods.
         """
+        cq_obj = self._getTagged(tag) if tag else self
         # A single list of all faces from all objects on the stack
-        toReturn = self._collectProperty(objType)
+        toReturn = cq_obj._collectProperty(objType)
 
         if selector is not None:
             if isinstance(selector, str) or isinstance(selector, str):
@@ -525,7 +603,7 @@ class CQ(object):
 
         return self.newObject(toReturn)
 
-    def vertices(self, selector=None):
+    def vertices(self, selector=None, tag=None):
         """
         Select the vertices of objects on the stack, optionally filtering the selection. If there
         are multiple objects on the stack, the vertices of all objects are collected and a list of
@@ -533,6 +611,8 @@ class CQ(object):
 
         :param selector:
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains  the *distinct* vertices of *all* objects on the
            current stack, after being filtered by the selector, if provided
 
@@ -554,9 +634,9 @@ class CQ(object):
         :py:class:`StringSyntaxSelector`
 
         """
-        return self._selectObjects('Vertices', selector)
+        return self._selectObjects("Vertices", selector, tag)
 
-    def faces(self, selector=None):
+    def faces(self, selector=None, tag=None):
         """
         Select the faces of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the faces of all objects are collected and a list of all the
@@ -564,6 +644,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* faces of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -586,9 +668,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects('Faces', selector)
+        return self._selectObjects("Faces", selector, tag)
 
-    def edges(self, selector=None):
+    def edges(self, selector=None, tag=None):
         """
         Select the edges of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the edges of all objects are collected and a list of all the
@@ -596,6 +678,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* edges of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -617,9 +701,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects('Edges', selector)
+        return self._selectObjects("Edges", selector, tag)
 
-    def wires(self, selector=None):
+    def wires(self, selector=None, tag=None):
         """
         Select the wires of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the wires of all objects are collected and a list of all the
@@ -627,6 +711,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* wires of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -640,9 +726,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects('Wires', selector)
+        return self._selectObjects("Wires", selector, tag)
 
-    def solids(self, selector=None):
+    def solids(self, selector=None, tag=None):
         """
         Select the solids of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the solids of all objects are collected and a list of all the
@@ -650,6 +736,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -666,9 +754,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects('Solids', selector)
+        return self._selectObjects("Solids", selector, tag)
 
-    def shells(self, selector=None):
+    def shells(self, selector=None, tag=None):
         """
         Select the shells of objects on the stack, optionally filtering the selection. If there are
         multiple objects on the stack, the shells of all objects are collected and a list of all the
@@ -676,6 +764,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -686,9 +776,9 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects('Shells', selector)
+        return self._selectObjects("Shells", selector, tag)
 
-    def compounds(self, selector=None):
+    def compounds(self, selector=None, tag=None):
         """
         Select compounds on the stack, optionally filtering the selection. If there are multiple
         objects on the stack, they are collected and a list of all the distinct compounds
@@ -696,6 +786,8 @@ class CQ(object):
 
         :param selector: A selector
         :type selector:  None, a Selector object, or a string selector expression.
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
         :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -704,7 +796,7 @@ class CQ(object):
 
         See more about selectors HERE
         """
-        return self._selectObjects('Compounds', selector)
+        return self._selectObjects("Compounds", selector, tag)
 
     def toSvg(self, opts=None):
         """
@@ -777,8 +869,9 @@ class CQ(object):
         :type angleDegrees: float
         :returns: a CQ object
         """
-        return self.newObject([o.rotate(axisStartPoint, axisEndPoint, angleDegrees)
-                               for o in self.objects])
+        return self.newObject(
+            [o.rotate(axisStartPoint, axisEndPoint, angleDegrees) for o in self.objects]
+        )
 
     def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
         """
@@ -789,8 +882,7 @@ class CQ(object):
         :param basePointVector: the base point to mirror about
         :type basePointVector: tuple
         """
-        newS = self.newObject(
-            [self.objects[0].mirror(mirrorPlane, basePointVector)])
+        newS = self.newObject([self.objects[0].mirror(mirrorPlane, basePointVector)])
         return newS.first()
 
     def translate(self, vec):
@@ -943,7 +1035,7 @@ class Workplane(CQ):
         :py:meth:`CQ.workplane`
     """
 
-    FOR_CONSTRUCTION = 'ForConstruction'
+    FOR_CONSTRUCTION = "ForConstruction"
 
     def __init__(self, inPlane, origin=(0, 0, 0), obj=None):
         """
@@ -967,7 +1059,7 @@ class Workplane(CQ):
         the *current point* is on the origin.
         """
 
-        if inPlane.__class__.__name__ == 'Plane':
+        if inPlane.__class__.__name__ == "Plane":
             tmpPlane = inPlane
         elif isinstance(inPlane, str) or isinstance(inPlane, str):
             tmpPlane = Plane.named(inPlane, origin)
@@ -976,15 +1068,16 @@ class Workplane(CQ):
 
         if tmpPlane is None:
             raise ValueError(
-                'Provided value {} is not a valid work plane'.format(inPlane))
+                "Provided value {} is not a valid work plane".format(inPlane)
+            )
 
         self.obj = obj
         self.plane = tmpPlane
-        self.firstPoint = None
         # Changed so that workplane has the center as the first item on the stack
         self.objects = [self.plane.origin]
         self.parent = None
         self.ctx = CQContext()
+        self._tag = None
 
     def transformed(self, rotate=(0, 0, 0), offset=(0, 0, 0)):
         """
@@ -999,10 +1092,10 @@ class Workplane(CQ):
         """
 
         # old api accepted a vector, so we'll check for that.
-        if rotate.__class__.__name__ == 'Vector':
+        if rotate.__class__.__name__ == "Vector":
             rotate = rotate.toTuple()
 
-        if offset.__class__.__name__ == 'Vector':
+        if offset.__class__.__name__ == "Vector":
             offset = offset.toTuple()
 
         p = self.plane.rotated(rotate)
@@ -1026,7 +1119,7 @@ class Workplane(CQ):
 
         # copy the current state to the new object
         ns = Workplane("XY")
-        ns.plane = self.plane
+        ns.plane = copy(self.plane)
         ns.parent = self
         ns.objects = list(objlist)
         ns.ctx = self.ctx
@@ -1060,8 +1153,7 @@ class Workplane(CQ):
         elif isinstance(obj, Vector):
             p = obj
         else:
-            raise RuntimeError(
-                "Cannot convert object type '%s' to vector " % type(obj))
+            raise RuntimeError("Cannot convert object type '%s' to vector " % type(obj))
 
         if useLocalCoords:
             return self.plane.toLocalCoords(p)
@@ -1194,8 +1286,9 @@ class Workplane(CQ):
         The result is a cube with a round boss on the corner
         """
         "Shift local coordinates to the specified location, according to current coordinates"
-        self.plane.setOrigin2d(x, y)
-        n = self.newObject([self.plane.origin])
+        new_origin = self.plane.toWorldCoords((x, y))
+        n = self.newObject([new_origin])
+        n.plane.setOrigin2d(x, y)
         return n
 
     def lineTo(self, x, y, forConstruction=False):
@@ -1367,28 +1460,35 @@ class Workplane(CQ):
             :return: A CQ object representing a slot
             """
 
-            radius = diameter/2
+            radius = diameter / 2
 
-            p1 = pnt + Vector((-length/2) + radius, diameter/2)
+            p1 = pnt + Vector((-length / 2) + radius, diameter / 2)
             p2 = p1 + Vector(length - diameter, 0)
             p3 = p1 + Vector(length - diameter, -diameter)
             p4 = p1 + Vector(0, -diameter)
             arc1 = p2 + Vector(radius, -radius)
             arc2 = p4 + Vector(-radius, radius)
 
-            edges=[(Edge.makeLine(p1,p2))]
+            edges = [(Edge.makeLine(p1, p2))]
             edges.append(Edge.makeThreePointArc(p2, arc1, p3))
             edges.append(Edge.makeLine(p3, p4))
             edges.append(Edge.makeThreePointArc(p4, arc2, p1))
 
             slot = Wire.assembleEdges(edges)
 
-            return slot.rotate(pnt, pnt + Vector(0,0,1), angle)
+            return slot.rotate(pnt, pnt + Vector(0, 0, 1), angle)
 
         return self.eachpoint(_makeslot, True)
 
-    def spline(self, listOfXYTuple, tangents=None, periodic=False,
-               forConstruction=False, includeCurrent=False, makeWire=False):
+    def spline(
+        self,
+        listOfXYTuple,
+        tangents=None,
+        periodic=False,
+        forConstruction=False,
+        includeCurrent=False,
+        makeWire=False,
+    ):
         """
         Create a spline interpolated through the provided points.
 
@@ -1435,8 +1535,7 @@ class Workplane(CQ):
 
         if tangents:
             t1, t2 = tangents
-            tangents = (self.plane.toWorldCoords(t1),
-                        self.plane.toWorldCoords(t2))
+            tangents = (self.plane.toWorldCoords(t1), self.plane.toWorldCoords(t2))
 
         e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
 
@@ -1464,9 +1563,9 @@ class Workplane(CQ):
 
         """
 
-        allPoints = [func(start+stop*t/N) for t in range(N+1)]
+        allPoints = [func(start + stop * t / N) for t in range(N + 1)]
 
-        return self.spline(allPoints,includeCurrent=False,makeWire=True)
+        return self.spline(allPoints, includeCurrent=False, makeWire=True)
 
     def threePointArc(self, point1, point2, forConstruction=False):
         """
@@ -1516,10 +1615,16 @@ class Workplane(CQ):
         midPoint = endPoint.add(startPoint).multiply(0.5)
 
         sagVector = endPoint.sub(startPoint).normalized().multiply(abs(sag))
-        if(sag > 0):
-            sagVector.x, sagVector.y = -sagVector.y, sagVector.x # Rotate sagVector +90 deg
+        if sag > 0:
+            sagVector.x, sagVector.y = (
+                -sagVector.y,
+                sagVector.x,
+            )  # Rotate sagVector +90 deg
         else:
-            sagVector.x, sagVector.y = sagVector.y, -sagVector.x # Rotate sagVector -90 deg
+            sagVector.x, sagVector.y = (
+                sagVector.y,
+                -sagVector.x,
+            )  # Rotate sagVector -90 deg
 
         sagPoint = midPoint.add(sagVector)
 
@@ -1545,7 +1650,7 @@ class Workplane(CQ):
         # Calculate the sagitta from the radius
         length = endPoint.sub(startPoint).Length / 2.0
         try:
-            sag = abs(radius) - math.sqrt(radius**2 - length**2)
+            sag = abs(radius) - math.sqrt(radius ** 2 - length ** 2)
         except ValueError:
             raise ValueError("Arc radius is not large enough to reach the end point.")
 
@@ -1580,8 +1685,7 @@ class Workplane(CQ):
         # attempt to consolidate wires together.
         consolidated = n.consolidateWires()
 
-        rotatedWires = self.plane.rotateShapes(
-            consolidated.wires().vals(), matrix)
+        rotatedWires = self.plane.rotateShapes(consolidated.wires().vals(), matrix)
 
         for w in rotatedWires:
             consolidated.objects.append(w)
@@ -1616,8 +1720,7 @@ class Workplane(CQ):
         # attempt to consolidate wires together.
         consolidated = n.consolidateWires()
 
-        mirroredWires = self.plane.mirrorInPlane(consolidated.wires().vals(),
-                                                 'Y')
+        mirroredWires = self.plane.mirrorInPlane(consolidated.wires().vals(), "Y")
 
         for w in mirroredWires:
             consolidated.objects.append(w)
@@ -1646,8 +1749,7 @@ class Workplane(CQ):
         # attempt to consolidate wires together.
         consolidated = n.consolidateWires()
 
-        mirroredWires = self.plane.mirrorInPlane(consolidated.wires().vals(),
-                                                 'X')
+        mirroredWires = self.plane.mirrorInPlane(consolidated.wires().vals(), "X")
 
         for w in mirroredWires:
             consolidated.objects.append(w)
@@ -1859,6 +1961,7 @@ class Workplane(CQ):
             better way to handle forConstruction
             project points not in the workplane plane onto the workplane plane
         """
+
         def makeRectangleWire(pnt):
             # Here pnt is in local coordinates due to useLocalCoords=True
             # (xc,yc,zc) = pnt.toTuple()
@@ -1909,6 +2012,7 @@ class Workplane(CQ):
             project points not in the workplane plane onto the workplane plane
 
         """
+
         def makeCircleWire(obj):
             cir = Wire.makeCircle(radius, obj, Vector(0, 0, 1))
             cir.forConstruction = forConstruction
@@ -1927,19 +2031,25 @@ class Workplane(CQ):
         :param diameter: the size of the circle the polygon is inscribed into
         :return: a polygon wire
         """
+
         def _makePolygon(center):
             # pnt is a vector in local coordinates
             angle = 2.0 * math.pi / nSides
             pnts = []
             for i in range(nSides + 1):
-                pnts.append(center + Vector((diameter / 2.0 * math.cos(angle * i)),
-                                            (diameter / 2.0 * math.sin(angle * i)), 0))
+                pnts.append(
+                    center
+                    + Vector(
+                        (diameter / 2.0 * math.cos(angle * i)),
+                        (diameter / 2.0 * math.sin(angle * i)),
+                        0,
+                    )
+                )
             return Wire.makePolygon(pnts, forConstruction)
 
         return self.eachpoint(_makePolygon, True)
 
-    def polyline(self, listOfXYTuple, forConstruction=False,
-                 includeCurrent=False):
+    def polyline(self, listOfXYTuple, forConstruction=False, includeCurrent=False):
         """
         Create a polyline from a list of points
 
@@ -2089,11 +2199,11 @@ class Workplane(CQ):
             boreDir = Vector(0, 0, -1)
             # first make the hole
             hole = Solid.makeCylinder(
-                diameter / 2.0, depth, center, boreDir)  # local coordianates!
+                diameter / 2.0, depth, center, boreDir
+            )  # local coordianates!
 
             # add the counter bore
-            cbore = Solid.makeCylinder(
-                cboreDiameter / 2.0, cboreDepth, center, boreDir)
+            cbore = Solid.makeCylinder(cboreDiameter / 2.0, cboreDepth, center, boreDir)
             r = hole.fuse(cbore)
             return r
 
@@ -2142,7 +2252,8 @@ class Workplane(CQ):
 
             # first make the hole
             hole = Solid.makeCylinder(
-                diameter / 2.0, depth, center, boreDir)  # local coords!
+                diameter / 2.0, depth, center, boreDir
+            )  # local coords!
             r = cskDiameter / 2.0
             h = r / math.tan(math.radians(cskAngle / 2.0))
             csk = Solid.makeCone(r, 0.0, h, center, boreDir)
@@ -2191,7 +2302,8 @@ class Workplane(CQ):
             boreDir = Vector(0, 0, -1)
             # first make the hole
             hole = Solid.makeCylinder(
-                diameter / 2.0, depth, center, boreDir)  # local coordinates!
+                diameter / 2.0, depth, center, boreDir
+            )  # local coordinates!
             return hole
 
         return self.cutEach(_makeHole, True, clean)
@@ -2235,8 +2347,9 @@ class Workplane(CQ):
         # are multiple sets
         r = None
         for ws in wireSets:
-            thisObj = Solid.extrudeLinearWithRotation(ws[0], ws[1:], self.plane.origin,
-                                                      eDir, angleDegrees)
+            thisObj = Solid.extrudeLinearWithRotation(
+                ws[0], ws[1:], self.plane.origin, eDir, angleDegrees
+            )
             if r is None:
                 r = thisObj
             else:
@@ -2277,7 +2390,8 @@ class Workplane(CQ):
             selected may not be planar
         """
         r = self._extrude(
-            distance, both=both, taper=taper)  # returns a Solid (or a compound if there were multiple)
+            distance, both=both, taper=taper
+        )  # returns a Solid (or a compound if there were multiple)
 
         if combine:
             newS = self._combineWithBase(r)
@@ -2287,7 +2401,9 @@ class Workplane(CQ):
             newS = newS.clean()
         return newS
 
-    def revolve(self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True, clean=True):
+    def revolve(
+        self, angleDegrees=360.0, axisStart=None, axisEnd=None, combine=True, clean=True
+    ):
         """
         Use all un-revolved wires in the parent chain to create a solid.
 
@@ -2344,8 +2460,17 @@ class Workplane(CQ):
             newS = newS.clean()
         return newS
 
-    def sweep(self, path, multisection=False, sweepAlongWires=None, makeSolid=True, isFrenet=False,
-              combine=True, clean=True, transition='right'):
+    def sweep(
+        self,
+        path,
+        multisection=False,
+        sweepAlongWires=None,
+        makeSolid=True,
+        isFrenet=False,
+        combine=True,
+        clean=True,
+        transition="right",
+    ):
         """
         Use all un-extruded wires in the parent chain to create a swept solid.
 
@@ -2360,22 +2485,27 @@ class Workplane(CQ):
             Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a CQ object with the resulting solid selected.
         """
-        
-        if not sweepAlongWires is None:
-            multisection=sweepAlongWires
-            
-            from warnings import warn
-            warn('sweepAlongWires keyword argument is is depracated and will '\
-                 'be removed in the next version; use multisection instead', 
-                 DeprecationWarning)
 
-        r = self._sweep(path.wire(), multisection, makeSolid, isFrenet,
-                        transition)  # returns a Solid (or a compound if there were multiple)
+        if not sweepAlongWires is None:
+            multisection = sweepAlongWires
+
+            from warnings import warn
+
+            warn(
+                "sweepAlongWires keyword argument is is depracated and will "
+                "be removed in the next version; use multisection instead",
+                DeprecationWarning,
+            )
+
+        r = self._sweep(
+            path.wire(), multisection, makeSolid, isFrenet, transition
+        )  # returns a Solid (or a compound if there were multiple)
         if combine:
             newS = self._combineWithBase(r)
         else:
             newS = self.newObject([r])
-        if clean: newS = newS.clean()
+        if clean:
+            newS = newS.clean()
         return newS
 
     def _combineWithBase(self, obj):
@@ -2442,7 +2572,8 @@ class Workplane(CQ):
             solids = toUnion.solids().vals()
             if len(solids) < 1:
                 raise ValueError(
-                    "CQ object  must have at least one solid on the stack to union!")
+                    "CQ object  must have at least one solid on the stack to union!"
+                )
             newS = solids.pop(0)
             for s in solids:
                 newS = newS.fuse(s)
@@ -2492,7 +2623,7 @@ class Workplane(CQ):
 
         if clean:
             newS = newS.clean()
-        
+
         return self.newObject([newS])
 
     def intersect(self, toIntersect, clean=True):
@@ -2522,8 +2653,9 @@ class Workplane(CQ):
 
         newS = solidRef.intersect(solidToIntersect)
 
-        if clean: newS = newS.clean()
-        
+        if clean:
+            newS = newS.clean()
+
         return self.newObject([newS])
 
     def cutBlind(self, distanceToCut, clean=True, taper=None):
@@ -2580,19 +2712,18 @@ class Workplane(CQ):
         solidRef = self.findSolid()
         faceRef = self.findFace()
 
-        #if no faces on the stack take the nearest face parallel to the plane zDir
+        # if no faces on the stack take the nearest face parallel to the plane zDir
         if not faceRef:
-            #first select all with faces with good orietation
+            # first select all with faces with good orietation
             sel = selectors.PerpendicularDirSelector(self.plane.zDir)
             faces = sel.filter(solidRef.Faces())
-            #then select the closest
+            # then select the closest
             sel = selectors.NearestToPointSelector(self.plane.origin.toTuple())
             faceRef = sel.filter(faces)[0]
 
         rv = []
         for solid in solidRef.Solids():
-            s = solid.dprism(faceRef, wires, thruAll=True, additive=False,
-                             taper=-taper)
+            s = solid.dprism(faceRef, wires, thruAll=True, additive=False, taper=-taper)
 
             if clean:
                 s = s.clean()
@@ -2635,9 +2766,8 @@ class Workplane(CQ):
 
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
-        
-        wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires), [])
+
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires), [])
         # now all of the wires have been used to create an extrusion
         self.ctx.pendingWires = []
 
@@ -2655,18 +2785,17 @@ class Workplane(CQ):
         toFuse = []
 
         if taper:
-          for ws in wireSets:
-              thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
-              toFuse.append(thisObj)
+            for ws in wireSets:
+                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
+                toFuse.append(thisObj)
         else:
-          for ws in wireSets:
-              thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
-              toFuse.append(thisObj)
+            for ws in wireSets:
+                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
+                toFuse.append(thisObj)
 
-              if both:
-                  thisObj = Solid.extrudeLinear(
-                      ws[0], ws[1:], eDir.multiply(-1.))
-                  toFuse.append(thisObj)
+                if both:
+                    thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir.multiply(-1.0))
+                    toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
 
@@ -2685,8 +2814,7 @@ class Workplane(CQ):
         This method is a utility method, primarily for plugin and internal use.
         """
         # We have to gather the wires to be revolved
-        wireSets = sortWiresByBuildOrder(
-            list(self.ctx.pendingWires))
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
 
         # Mark that all of the wires have been used to create a revolution
         self.ctx.pendingWires = []
@@ -2694,14 +2822,19 @@ class Workplane(CQ):
         # Revolve the wires, make a compound out of them and then fuse them
         toFuse = []
         for ws in wireSets:
-            thisObj = Solid.revolve(
-                ws[0], ws[1:], angleDegrees, axisStart, axisEnd)
+            thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees, axisStart, axisEnd)
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
 
-    def _sweep(self, path, multisection=False, makeSolid=True, isFrenet=False, 
-               transition='right'):
+    def _sweep(
+        self,
+        path,
+        multisection=False,
+        makeSolid=True,
+        isFrenet=False,
+        transition="right",
+    ):
         """
         Makes a swept solid from an existing set of pending wires.
 
@@ -2716,19 +2849,37 @@ class Workplane(CQ):
         if not multisection:
             wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
             for ws in wireSets:
-                thisObj = Solid.sweep(ws[0], ws[1:], path.val(), makeSolid,
-                                      isFrenet, transition)
+                thisObj = Solid.sweep(
+                    ws[0], ws[1:], path.val(), makeSolid, isFrenet, transition
+                )
                 toFuse.append(thisObj)
         else:
             sections = self.ctx.pendingWires
             thisObj = Solid.sweep_multi(sections, path.val(), makeSolid, isFrenet)
             toFuse.append(thisObj)
-        
+
         self.ctx.pendingWires = []
 
         return Compound.makeCompound(toFuse)
 
-    def interpPlate(self, surf_edges, surf_pts=[], thickness=0, combine=True, clean=True, degree=3, nbPtsOnCur=15, nbIter=2, anisotropy=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDeg=8, maxSegments=9):
+    def interpPlate(
+        self,
+        surf_edges,
+        surf_pts=[],
+        thickness=0,
+        combine=True,
+        clean=True,
+        degree=3,
+        nbPtsOnCur=15,
+        nbIter=2,
+        anisotropy=False,
+        tol2d=0.00001,
+        tol3d=0.0001,
+        tolAng=0.01,
+        tolCurv=0.1,
+        maxDeg=8,
+        maxSegments=9
+    ):
         """
         Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very ressources intensive depending on the complexity of the shape. In this case set combine=False.
 
@@ -2781,7 +2932,15 @@ class Workplane(CQ):
         else:
             return self.union(plates, clean=clean)
 
-    def box(self, length, width, height, centered=(True, True, True), combine=True, clean=True):
+    def box(
+        self,
+        length,
+        width,
+        height,
+        centered=(True, True, True),
+        combine=True,
+        clean=True,
+    ):
         """
         Return a 3d box with specified dimensions for each object on the stack.
 
@@ -2826,14 +2985,14 @@ class Workplane(CQ):
 
         def _makebox(pnt):
 
-            #(xp,yp,zp) = self.plane.toLocalCoords(pnt)
+            # (xp,yp,zp) = self.plane.toLocalCoords(pnt)
             (xp, yp, zp) = pnt.toTuple()
             if centered[0]:
-                xp -= (length / 2.0)
+                xp -= length / 2.0
             if centered[1]:
-                yp -= (width / 2.0)
+                yp -= width / 2.0
             if centered[2]:
-                zp -= (height / 2.0)
+                zp -= height / 2.0
 
             return Solid.makeBox(length, width, height, Vector(xp, yp, zp))
 
@@ -2846,8 +3005,17 @@ class Workplane(CQ):
             # combine everything
             return self.union(boxes, clean=clean)
 
-    def sphere(self, radius, direct=(0, 0, 1), angle1=-90, angle2=90, angle3=360,
-               centered=(True, True, True), combine=True, clean=True):
+    def sphere(
+        self,
+        radius,
+        direct=(0, 0, 1),
+        angle1=-90,
+        angle2=90,
+        angle3=360,
+        centered=(True, True, True),
+        combine=True,
+        clean=True,
+    ):
         """
         Returns a 3D sphere with the specified radius for each point on the stack
 
@@ -2904,7 +3072,9 @@ class Workplane(CQ):
             if not centered[2]:
                 zp += radius
 
-            return Solid.makeSphere(radius, Vector(xp, yp, zp), direct, angle1, angle2, angle3)
+            return Solid.makeSphere(
+                radius, Vector(xp, yp, zp), direct, angle1, angle2, angle3
+            )
 
         # We want a sphere for each point on the workplane
         spheres = self.eachpoint(_makesphere, True)
@@ -2915,8 +3085,21 @@ class Workplane(CQ):
         else:
             return self.union(spheres, clean=clean)
 
-    def wedge(self, dx, dy, dz, xmin, zmin, xmax, zmax, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1),
-              centered=(True, True, True), combine=True, clean=True):
+    def wedge(
+        self,
+        dx,
+        dy,
+        dz,
+        xmin,
+        zmin,
+        xmax,
+        zmax,
+        pnt=Vector(0, 0, 0),
+        dir=Vector(0, 0, 1),
+        centered=(True, True, True),
+        combine=True,
+        clean=True,
+    ):
         """
         :param dx: Distance along the X axis
         :param dy: Distance along the Y axis
@@ -2954,15 +3137,17 @@ class Workplane(CQ):
             (xp, yp, zp) = pnt.toTuple()
 
             if not centered[0]:
-                xp += dx / 2.
+                xp += dx / 2.0
 
             if not centered[1]:
-                yp += dy / 2.
+                yp += dy / 2.0
 
             if not centered[2]:
-                zp += dx / 2.
+                zp += dx / 2.0
 
-            return Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, Vector(xp, yp, zp), dir)
+            return Solid.makeWedge(
+                dx, dy, dz, xmin, zmin, xmax, zmax, Vector(xp, yp, zp), dir
+            )
 
         # We want a wedge for each point on the workplane
         wedges = self.eachpoint(_makewedge)
@@ -2998,11 +3183,23 @@ class Workplane(CQ):
             cleanObjects = [obj.clean() for obj in self.objects]
         except AttributeError:
             raise AttributeError(
-                "%s object doesn't support `clean()` method!" % obj.ShapeType())
+                "%s object doesn't support `clean()` method!" % obj.ShapeType()
+            )
         return self.newObject(cleanObjects)
 
-    def text(self, txt, fontsize, distance, cut=True, combine=False, clean=True,
-             font="Arial", kind='regular',halign='center',valign='center'):
+    def text(
+        self,
+        txt,
+        fontsize,
+        distance,
+        cut=True,
+        combine=False,
+        clean=True,
+        font="Arial",
+        kind="regular",
+        halign="center",
+        valign="center",
+    ):
         """
         Create a 3D text
 
@@ -3029,8 +3226,16 @@ class Workplane(CQ):
            and the resulting solid becomes the new context solid.
 
         """
-        r = Compound.makeText(txt,fontsize,distance,font=font,kind=kind,
-                              halign=halign, valign=valign, position=self.plane)
+        r = Compound.makeText(
+            txt,
+            fontsize,
+            distance,
+            font=font,
+            kind=kind,
+            halign=halign,
+            valign=valign,
+            position=self.plane,
+        )
 
         if cut:
             newS = self._cutFromBase(r)
@@ -3048,7 +3253,6 @@ class Workplane(CQ):
         """
 
         if type(self.objects[0]) is Vector:
-           return '&lt {} &gt'.format(self.__repr__()[1:-1])
+            return "&lt {} &gt".format(self.__repr__()[1:-1])
         else:
             return Compound.makeCompound(self.objects)._repr_html_()
-
