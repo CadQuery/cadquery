@@ -1244,7 +1244,8 @@ class Solid(Shape, Mixin3D):
     def interpPlate(
         cls,
         surf_edges,
-        surf_pts, thickness,
+        surf_pts,
+        thickness,
         degree=3,
         nbPtsOnCur=15,
         nbIter=2,
@@ -1335,7 +1336,7 @@ class Solid(Shape, Mixin3D):
             solid.Initialize(
                 face.wrapped,
                 thickness,
-                1.e-5,
+                1.0e-5,
                 BRepOffset_Skin,
                 False,
                 False,
