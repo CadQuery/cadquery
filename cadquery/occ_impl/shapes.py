@@ -96,7 +96,7 @@ from OCP.BRepFeat import BRepFeat_MakeDPrism
 
 from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 
-from OCP.TCollection import TCollection_HAsciiString
+from OCP.TCollection import TCollection_AsciiString
 
 from OCP.TopLoc import TopLoc_Location
 
@@ -1536,11 +1536,11 @@ class Compound(Shape, Mixin3D):
                      'italic'  : Font_FA_Italic}[kind]
         
         mgr = Font_FontMgr.GetInstance_s()
-        font = mgr.FindFont(TCollection_HAsciiString(font),
+        font = mgr.FindFont(TCollection_AsciiString(font),
                             font_kind)
 
         builder = Font_BRepTextBuilder()
-        text_flat = Shape(builder.Perform(font.FontPath().ToCString(),
+        text_flat = Shape(builder.Perform(font.FontPath(font_kind).ToCString(),
                                           size,
                                           font_kind,
                                           text))
