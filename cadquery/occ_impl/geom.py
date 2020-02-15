@@ -2,7 +2,7 @@ import math
         
 from OCP.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
 from OCP.Bnd import Bnd_Box
-from OCP.BRepBndLib import BRepBndLib  # brepbndlib_AddOptimal
+from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 
 TOL = 1e-2
@@ -825,16 +825,15 @@ class BoundBox(object):
         return None
 
     @classmethod
-    def _fromTopoDS(cls, shape, tol=None, optimal=False):
+    def _fromTopoDS(cls, shape, tol=None, optimal=True):
         '''
         Constructs a bounding box from a TopoDS_Shape
         '''
         tol = TOL if tol is None else tol  # tol = TOL (by default)
         bbox = Bnd_Box()
-        bbox.SetGap(tol)
+        
         if optimal:
-            raise NotImplementedError
-            # brepbndlib_AddOptimal(shape, bbox) #this is 'exact' but expensive - not yet wrapped by PythonOCC
+            BRepBndLib.AddOptimal_s(shape, bbox) #this is 'exact' but expensive - not yet wrapped by PythonOCC
         else:
             mesh = BRepMesh_IncrementalMesh(shape, tol, True)
             mesh.Perform()
