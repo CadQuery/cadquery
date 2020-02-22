@@ -791,6 +791,21 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
+    def makeTangentArc(cls, v1, v2, v3):
+        """
+        Makes a tangent arc from point v1, in the direction of v2 and ends at
+        v3.
+        :param cls:
+        :param v1: start vector
+        :param v2: tangent vector
+        :param v3: end vector
+        :return: an edge
+        """
+        circle_geom = GC_MakeArcOfCircle(v1.toPnt(), v2._wrapped, v3.toPnt()).Value()
+
+        return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
+
+    @classmethod
     def makeLine(cls, v1, v2):
         """
             Create a line between two points
