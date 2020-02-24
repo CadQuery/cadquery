@@ -634,19 +634,29 @@ class Plane(object):
         :param rotate: Vector [xDegrees, yDegrees, zDegrees]
         :return: a copy of this plane rotated as requested.
         """
-        rotate = Vector(self.toWorldCoords(rotate))
+        # NB: this is not a geometric Vector
+        rotate = Vector(rotate)
         # Convert to radians.
         rotate = rotate.multiply(math.pi / 180.0)
 
         # Compute rotation matrix.
-        m = Matrix()
-        m.rotateX(rotate.x)
-        m.rotateY(rotate.y)
-        m.rotateZ(rotate.z)
+        T1 = gp_Trsf()
+        T1.SetRotation(
+            gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*self.xDir.toTuple())), rotate.x
+        )
+        T2 = gp_Trsf()
+        T2.SetRotation(
+            gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*self.yDir.toTuple())), rotate.y
+        )
+        T3 = gp_Trsf()
+        T3.SetRotation(
+            gp_Ax1(gp_Pnt(*(0, 0, 0)), gp_Dir(*self.zDir.toTuple())), rotate.z
+        )
+        T = Matrix(gp_GTrsf(T1 * T2 * T3))
 
         # Compute the new plane.
-        newXdir = self.xDir.transform(m)
-        newZdir = self.zDir.transform(m)
+        newXdir = self.xDir.transform(T)
+        newZdir = self.zDir.transform(T)
 
         return Plane(self.origin, newXdir, newZdir)
 
