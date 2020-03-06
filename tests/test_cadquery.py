@@ -544,7 +544,14 @@ class TestCadQuery(BaseTest):
         # test include current
         path1 = Workplane("XZ").spline(pts[1:], includeCurrent=True).val()
         self.assertAlmostEqual(path.Length(), path1.Length())
-
+        
+        # test tangents and offset plane
+        pts = [(0,0), (-1,1), (-2,0), (-1,0)]
+        tangents = [(0,1), (1,0)]
+        
+        path2 = Workplane("XY", (0,0,10)).spline(pts, tangents=tangents)
+        self.assertAlmostEqual(path2.val().tangentAt(0).z, 0)
+        
     def testSweep(self):
         """
         Tests the operation of sweeping a wire(s) along a path
