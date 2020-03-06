@@ -1535,7 +1535,10 @@ class Workplane(CQ):
 
         if tangents:
             t1, t2 = tangents
-            tangents = (self.plane.toWorldCoords(t1), self.plane.toWorldCoords(t2))
+            tangents = (
+                self.plane.toWorldCoords(t1) - self.plane.origin,
+                self.plane.toWorldCoords(t2) - self.plane.origin,
+            )
 
         e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
 
