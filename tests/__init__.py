@@ -59,5 +59,4 @@ __all__ = [
     "TestImporters",
     "TestJupyter",
     "TestWorkplanes",
-    "TestAssembleEdges",
 ]

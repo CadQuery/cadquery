@@ -128,6 +128,14 @@ from OCC.Core.BRepFeat import BRepFeat_MakeDPrism
 
 from OCC.Core.BRepClass3d import BRepClass3d_SolidClassifier
 
+from OCC.Core.GeomAbs import GeomAbs_C0
+from OCC.Extend.TopologyUtils import TopologyExplorer, WireExplorer
+from OCC.Core.GeomAbs import GeomAbs_Intersection
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
+from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
+from OCC.Core.ShapeFix import ShapeFix_Wire
+
+import warnings
 from math import pi, sqrt
 from functools import reduce
 import warnings
@@ -1089,6 +1097,73 @@ class Face(Shape):
         return [w for w in self.Wires() if not w.isSame(outer)]
 
     @classmethod
+    def makeNSidedSurface(
+        cls,
+        edges,
+        points,
+        continuity=GeomAbs_C0,
+        degree=3,
+        nbPtsOnCur=15,
+        nbIter=2,
+        anisotropy=False,
+        tol2d=0.00001,
+        tol3d=0.0001,
+        tolAng=0.01,
+        tolCurv=0.1,
+        maxDeg=8,
+        maxSegments=9,
+    ):
+        """
+        Returns a surface enclosed by a closed polygon defined by 'edges' and going through 'points'.
+        :param points
+        :type points: list of gp_Pnt
+        :param edges
+        :type edges: list of TopologyExplorer().edges()
+        :param continuity=GeomAbs_C0
+        :type continuity: OCC.Core.GeomAbs continuity condition
+        :param Degree = 3 (OCCT default)
+        :type Degree: Integer >= 2
+        :param NbPtsOnCur = 15 (OCCT default)
+        :type: NbPtsOnCur Integer >= 15
+        :param NbIter = 2 (OCCT default)
+        :type: NbIterInteger >= 2
+        :param Anisotropie = False (OCCT default)
+        :type Anisotropie: Boolean
+        :param: Tol2d = 0.00001 (OCCT default)
+        :type Tol2d: float > 0
+        :param Tol3d = 0.0001 (OCCT default)
+        :type Tol3dReal: float > 0
+        :param TolAng = 0.01 (OCCT default)
+        :type TolAngReal: float > 0
+        :param TolCurv = 0.1 (OCCT default)
+        :type TolCurvReal: float > 0
+        :param MaxDeg = 8 (OCCT default)
+        :type MaxDegInteger: Integer >= 2 (?)
+        :param MaxSegments = 9 (OCCT default)
+        :type MaxSegments: Integer >= 2 (?)
+        """
+
+        n_sided = BRepOffsetAPI_MakeFilling(
+            degree,
+            nbPtsOnCur,
+            nbIter,
+            anisotropy,
+            tol2d,
+            tol3d,
+            tolAng,
+            tolCurv,
+            maxDeg,
+            maxSegments,
+        )
+        for edg in edges:
+            n_sided.Add(edg, continuity)
+        for pt in points:
+            n_sided.Add(pt)
+        n_sided.Build()
+        face = n_sided.Shape()
+        return cls.cast(face).fix()
+
+    @classmethod
     def makePlane(cls, length, width, basePnt=(0, 0, 0), dir=(0, 0, 1)):
         basePnt = Vector(basePnt)
         dir = Vector(dir)
@@ -1261,6 +1336,114 @@ class Solid(Shape, Mixin3D):
     """
     a single solid
     """
+
+    @classmethod
+    def interpPlate(
+        cls,
+        surf_edges,
+        surf_pts,
+        thickness,
+        degree=3,
+        nbPtsOnCur=15,
+        nbIter=2,
+        anisotropy=False,
+        tol2d=0.00001,
+        tol3d=0.0001,
+        tolAng=0.01,
+        tolCurv=0.1,
+        maxDeg=8,
+        maxSegments=9,
+    ):
+        """
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
+
+        :param surf_edges
+        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
+        :type 2 surf_edges: list of ordered or unordered CadQuery wires
+        :param surf_pts = [] (uses only edges if [])
+        :type surf_pts: list of [x,y,z] float coordinates
+        :param thickness = 0 (returns 2D surface if 0)
+        :type thickness: float (may be negative or positive depending on thicknening direction)
+        :param Degree = 3 (OCCT default)
+        :type Degree: Integer >= 2
+        :param NbPtsOnCur = 15 (OCCT default)
+        :type: NbPtsOnCur Integer >= 15
+        :param NbIter = 2 (OCCT default)
+        :type: NbIterInteger >= 2
+        :param Anisotropie = False (OCCT default)
+        :type Anisotropie: Boolean
+        :param: Tol2d = 0.00001 (OCCT default)
+        :type Tol2d: float > 0
+        :param Tol3d = 0.0001 (OCCT default)
+        :type Tol3dReal: float > 0
+        :param TolAng = 0.01 (OCCT default)
+        :type TolAngReal: float > 0
+        :param TolCurv = 0.1 (OCCT default)
+        :type TolCurvReal: float > 0
+        :param MaxDeg = 8 (OCCT default)
+        :type MaxDegInteger: Integer >= 2 (?)
+        :param MaxSegments = 9 (OCCT default)
+        :type MaxSegments: Integer >= 2 (?)
+        """
+
+        # POINTS CONSTRAINTS: list of (x,y,z) points, optional.
+        pts_array = [gp_Pnt(*pt) for pt in surf_pts]
+
+        # EDGE CONSTRAINTS
+        # If a list of wires is provided, make a closed wire
+        if not isinstance(surf_edges, list):
+            surf_edges = [o.vals()[0] for o in surf_edges.all()]
+            surf_edges = Wire.assembleEdges(surf_edges)
+            w = surf_edges.wrapped
+
+        # If a list of (x,y,z) points provided, build closed polygon
+        if isinstance(surf_edges, list):
+            e_array = [Vector(*e) for e in surf_edges]
+            wire_builder = BRepBuilderAPI_MakePolygon()
+            for e in e_array:  # Create polygon from edges
+                wire_builder.Add(e.toPnt())
+            wire_builder.Close()
+            w = wire_builder.Wire()
+
+        edges = [i for i in TopologyExplorer(w).edges()]
+
+        # MAKE SURFACE
+        continuity = GeomAbs_C0  # Fixed, changing to anything else crashes.
+        face = Face.makeNSidedSurface(
+            edges,
+            pts_array,
+            continuity,
+            degree,
+            nbPtsOnCur,
+            nbIter,
+            anisotropy,
+            tol2d,
+            tol3d,
+            tolAng,
+            tolCurv,
+            maxDeg,
+            maxSegments,
+        )
+
+        # THICKEN SURFACE
+        if (
+            abs(thickness) > 0
+        ):  # abs() because negative values are allowed to set direction of thickening
+            solid = BRepOffset_MakeOffset()
+            solid.Initialize(
+                face.wrapped,
+                thickness,
+                1.0e-5,
+                BRepOffset_Skin,
+                False,
+                False,
+                GeomAbs_Intersection,
+                True,
+            )  # The last True is important to make solid
+            solid.MakeOffsetShape()
+            return cls(solid.Shape())
+        else:  # Return 2D surface only
+            return face
 
     @classmethod
     def isSolid(cls, obj):
