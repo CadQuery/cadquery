@@ -940,7 +940,7 @@ class Wire(Shape, Mixin1D):
             :param angle1: start angle of arc
             :param angle2: end angle of arc
             :param rotation_angle: angle to rotate the created ellipse / arc
-            :return:
+            :return: Wire
         """
 
         ellipse_edge = Edge.makeEllipse(
