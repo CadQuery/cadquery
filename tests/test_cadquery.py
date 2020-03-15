@@ -738,12 +738,12 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(ep1.toTuple(), ep2.toTuple(), 3)
 
     def testMakeEllipse(self):
-        el = cq.Wire.makeEllipse(
+        el = Wire.makeEllipse(
             1,
             2,
-            cq.Vector(0, 0, 0),
-            cq.Vector(0, 0, 1),
-            cq.Vector(1, 0, 0),
+            Vector(0, 0, 0),
+            Vector(0, 0, 1),
+            Vector(1, 0, 0),
             0,
             90,
             45,
