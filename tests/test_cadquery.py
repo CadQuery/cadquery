@@ -737,6 +737,22 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(sp1.toTuple(), sp2.toTuple(), 3)
         self.assertTupleAlmostEquals(ep1.toTuple(), ep2.toTuple(), 3)
 
+    def testMakeEllipse(self):
+        el = cq.Wire.makeEllipse(
+            1,
+            2,
+            cq.Vector(0, 0, 0),
+            cq.Vector(0, 0, 1),
+            cq.Vector(1, 0, 0),
+            0,
+            90,
+            45,
+            True,
+        )
+
+        self.assertTrue(el.isClosed())
+        self.assertTrue(el.isValid())
+
     def testSweep(self):
         """
         Tests the operation of sweeping a wire(s) along a path
