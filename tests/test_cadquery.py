@@ -644,11 +644,11 @@ class TestCadQuery(BaseTest):
                 angle2=a2,
                 rotation_angle=ra,
                 sense=-1,
-                makeWire=True
+                makeWire=True,
             )
         )
 
-        self.assertEqual(len(ellipseArc4.ctx.pendingWires),1)
+        self.assertEqual(len(ellipseArc4.ctx.pendingWires), 1)
 
         start = ellipseArc4.vertices().objects[0]
         end = ellipseArc4.vertices().objects[1]
