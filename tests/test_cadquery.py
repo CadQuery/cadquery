@@ -544,7 +544,7 @@ class TestCadQuery(BaseTest):
         # test include current
         path1 = Workplane("XZ").spline(pts[1:], includeCurrent=True).val()
         self.assertAlmostEqual(path.Length(), path1.Length())
-        
+
         # test tangents and offset plane
         pts = [(0, 0), (-1, 1), (-2, 0), (-1, 0)]
         tangents = [(0, 1), (1, 0)]
