@@ -739,18 +739,10 @@ class TestCadQuery(BaseTest):
 
     def testMakeEllipse(self):
         el = Wire.makeEllipse(
-            1,
-            2,
-            Vector(0, 0, 0),
-            Vector(0, 0, 1),
-            Vector(1, 0, 0),
-            0,
-            90,
-            45,
-            True,
+            1, 2, Vector(0, 0, 0), Vector(0, 0, 1), Vector(1, 0, 0), 0, 90, 45, True,
         )
 
-        self.assertTrue(el.isClosed())
+        self.assertTrue(el.IsClosed())
         self.assertTrue(el.isValid())
 
     def testSweep(self):
