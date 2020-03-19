@@ -5,3 +5,4 @@ dist/*
 .idea/*
 cadquery.egg-info
 target/*
+.vscode
