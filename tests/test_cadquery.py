@@ -3267,9 +3267,9 @@ class TestCadQuery(BaseTest):
         s0 = (
             Workplane("XY")
             .hLine(1)
-            .tangentArcEndpoint((1, 1), relative=False)
+            .tangentArcPoint((1, 1), relative=False)
             .hLineTo(0)
-            .tangentArcEndpoint((0, 0), relative=False)
+            .tangentArcPoint((0, 0), relative=False)
             .close()
             .extrude(1)
         )
@@ -3280,9 +3280,9 @@ class TestCadQuery(BaseTest):
         s1 = (
             Workplane("XY")
             .hLine(1)
-            .tangentArcEndpoint((0, 1), relative=True)
+            .tangentArcPoint((0, 1), relative=True)
             .hLineTo(0)
-            .tangentArcEndpoint((0, -1), relative=True)
+            .tangentArcPoint((0, -1), relative=True)
             .close()
             .extrude(1)
         )
@@ -3295,9 +3295,9 @@ class TestCadQuery(BaseTest):
         s1 = (
             Workplane("XY")
             .vLine(2)
-            .tangentArcEndpoint((1, 0))
-            .tangentArcEndpoint((1, 0))
-            .tangentArcEndpoint((1, 0))
+            .tangentArcPoint((1, 0))
+            .tangentArcPoint((1, 0))
+            .tangentArcPoint((1, 0))
             .vLine(-2)
             .close()
             .extrude(1)
@@ -3308,13 +3308,13 @@ class TestCadQuery(BaseTest):
 
         # tangentArc on the end of a spline
         # spline will be a simple arc of a circle, then finished off with a
-        # tangentArcEndpoint
+        # tangentArcPoint
         angles = [idx * 1.5 * math.pi / 10 for idx in range(10)]
         pts = [(math.sin(a), math.cos(a)) for a in angles]
         s2 = (
             Workplane("XY")
             .spline(pts)
-            .tangentArcEndpoint((0, 1), relative=False)
+            .tangentArcPoint((0, 1), relative=False)
             .close()
             .extrude(1)
         )
@@ -3322,9 +3322,7 @@ class TestCadQuery(BaseTest):
         # start with a spline
         self.assertAlmostEqual(s2.val().Volume(), math.pi, 1)
         # assert local coords are mapped to global correctly
-        arc0 = (
-            Workplane("XZ", origin=(1, 1, 1)).hLine(1).tangentArcEndpoint((1, 1)).val()
-        )
+        arc0 = Workplane("XZ", origin=(1, 1, 1)).hLine(1).tangentArcPoint((1, 1)).val()
         self.assertTupleAlmostEquals(arc0.endPoint().toTuple(), (3, 1, 2), 4)
 
     def test_findFromEdge(self):
