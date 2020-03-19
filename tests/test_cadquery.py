@@ -3325,6 +3325,16 @@ class TestCadQuery(BaseTest):
         arc0 = Workplane("XZ", origin=(1, 1, 1)).hLine(1).tangentArcPoint((1, 1)).val()
         self.assertTupleAlmostEquals(arc0.endPoint().toTuple(), (3, 1, 2), 4)
 
+        # tangentArcPoint with 3-tuple argument
+        w0 = (
+            Workplane("XY")
+            .lineTo(1, 1)
+            .tangentArcPoint((1, 1, 1))
+            .wire()
+        )
+        zmax = w0.val().BoundingBox().zmax
+        self.assertAlmostEqual(zmax, 1, 1)
+
     def test_findFromEdge(self):
         part = Workplane("XY", origin=(1, 1, 1)).hLine(1)
         found_edge = part._findFromEdge(useLocalCoords=False)
