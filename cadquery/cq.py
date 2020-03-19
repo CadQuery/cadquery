@@ -1160,6 +1160,28 @@ class Workplane(CQ):
         else:
             return p
 
+    def _findFromEdge(self, useLocalCoords=False):
+        """
+        Finds the previous edge for an operation that needs it, similar to
+        method _findFromPoint. Examples include tangentArcPoint.
+
+        :param useLocalCoords: selects whether the point is returned
+        in local coordinates or global coordinates.
+        :return: an Edge
+        """
+        obj = self.objects[-1]
+
+        if not isinstance(obj, Edge):
+            raise RuntimeError(
+                "Previous Edge requested, but the previous object was of "
+                + f"type {type(obj)}, not an Edge."
+            )
+
+        if useLocalCoords:
+            obj = self.plane.toLocalCoords(obj)
+
+        return obj
+
     def rarray(self, xSpacing, ySpacing, xCount, yCount, center=True):
         """
         Creates an array of points and pushes them onto the stack.
@@ -1722,6 +1744,37 @@ class Workplane(CQ):
         else:
             return self.sagittaArc(endPoint, -sag, forConstruction)
 
+    def tangentArcPoint(self, endpoint, forConstruction=False, relative=True):
+        """
+        Draw an arc as a tangent from the end of the current edge to endpoint.
+
+        :param endpoint: point for the arc to end at
+        :type endpoint: 2-tuple, 3-tuple or Vector
+        :param relative: True if endpoint is specified relative to the current point, False if endpoint is in workplane coordinates
+        :type relative: Bool
+        :return: a Workplane object with an arc on the stack
+
+        Requires the the current first object on the stack is an Edge, as would
+        be the case after a lineTo operation or similar.
+        """
+
+        if not isinstance(endpoint, Vector):
+            endpoint = Vector(endpoint)
+        if relative:
+            endpoint = endpoint + self._findFromPoint(useLocalCoords=True)
+        endpoint = self.plane.toWorldCoords(endpoint)
+
+        previousEdge = self._findFromEdge()
+
+        arc = Edge.makeTangentArc(
+            previousEdge.endPoint(), previousEdge.tangentAt(1), endpoint
+        )
+
+        if not forConstruction:
+            self._addPendingEdge(arc)
+
+        return self.newObject([arc])
+
     def rotateAndCopy(self, matrix):
         """
         Makes a copy of all edges on the stack, rotates them according to the
@@ -2192,11 +2245,13 @@ class Workplane(CQ):
 
         :return: a CQ object with a completed wire on the stack, if possible.
 
-        After 2-d drafting with lineTo,threePointArc, and polyline, it is necessary
-        to convert the edges produced by these into one or more wires.
+        After 2-d drafting with methods such as lineTo, threePointArc,
+        tangentArcPoint and polyline, it is necessary to convert the edges
+        produced by these into one or more wires.
 
-        When a set of edges is closed, cadQuery assumes it is safe to build the group of edges
-        into a wire.  This example builds a simple triangular prism::
+        When a set of edges is closed, cadQuery assumes it is safe to build
+        the group of edges into a wire. This example builds a simple triangular
+        prism::
 
             s = Workplane().lineTo(1,0).lineTo(1,1).close().extrude(0.2)
         """
