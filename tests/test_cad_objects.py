@@ -97,6 +97,24 @@ class TestCadObjects(BaseTest):
             (-10.0, 0.0, 0.0), halfCircleEdge.endPoint().toTuple(), 3
         )
 
+    def testEdgeWrapperMakeTangentArc(self):
+        tangent_arc = Edge.makeTangentArc(
+            Vector(1, 1),  # starts at 1, 1
+            Vector(0, 1),  # tangent at start of arc is in the +y direction
+            Vector(2, 1),  # arc curves 180 degrees and ends at 2, 1
+        )
+        self.assertTupleAlmostEquals((1, 1, 0), tangent_arc.startPoint().toTuple(), 3)
+        self.assertTupleAlmostEquals((2, 1, 0), tangent_arc.endPoint().toTuple(), 3)
+        self.assertTupleAlmostEquals(
+            (0, 1, 0), tangent_arc.tangentAt(locationParam=0).toTuple(), 3
+        )
+        self.assertTupleAlmostEquals(
+            (1, 0, 0), tangent_arc.tangentAt(locationParam=0.5).toTuple(), 3
+        )
+        self.assertTupleAlmostEquals(
+            (0, -1, 0), tangent_arc.tangentAt(locationParam=1).toTuple(), 3
+        )
+
     def testEdgeWrapperMakeEllipse1(self):
         # Check x_radius > y_radius
         x_radius, y_radius = 20, 10

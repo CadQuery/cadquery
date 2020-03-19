@@ -806,7 +806,8 @@ A Parametric Enclosure
     #inner shell
     ishell = (oshell.faces("<Z").workplane(p_thickness,True)
         .rect((p_outerWidth - 2.0* p_thickness),(p_outerLength - 2.0*p_thickness))
-        .extrude((p_outerHeight - 2.0*p_thickness),False) #set combine false to produce just the new boss)
+        .extrude((p_outerHeight - 2.0*p_thickness),False) #set combine false to produce just the new boss
+    )
     ishell = ishell.edges("|Z").fillet(p_sideRadius - p_thickness)
 
     #make the box outer box

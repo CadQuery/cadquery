@@ -3260,3 +3260,91 @@ class TestCadQuery(BaseTest):
         plate_4 = Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_4.val().isValid())
         self.assertAlmostEqual(plate_4.val().Volume(), 7.760559490, 3)
+
+    def testTangentArcToPoint(self):
+
+        # create a simple shape with tangents of straight edges and see if it has the correct area
+        s0 = (
+            Workplane("XY")
+            .hLine(1)
+            .tangentArcPoint((1, 1), relative=False)
+            .hLineTo(0)
+            .tangentArcPoint((0, 0), relative=False)
+            .close()
+            .extrude(1)
+        )
+        area0 = s0.faces(">Z").val().Area()
+        self.assertAlmostEqual(area0, (1 + math.pi * 0.5 ** 2), 4)
+
+        # test relative coords
+        s1 = (
+            Workplane("XY")
+            .hLine(1)
+            .tangentArcPoint((0, 1), relative=True)
+            .hLineTo(0)
+            .tangentArcPoint((0, -1), relative=True)
+            .close()
+            .extrude(1)
+        )
+        self.assertTupleAlmostEquals(
+            s1.val().Center().toTuple(), s0.val().Center().toTuple(), 4
+        )
+        self.assertAlmostEqual(s1.val().Volume(), s0.val().Volume(), 4)
+
+        # consecutive tangent arcs
+        s1 = (
+            Workplane("XY")
+            .vLine(2)
+            .tangentArcPoint((1, 0))
+            .tangentArcPoint((1, 0))
+            .tangentArcPoint((1, 0))
+            .vLine(-2)
+            .close()
+            .extrude(1)
+        )
+        self.assertAlmostEqual(
+            s1.faces(">Z").val().Area(), 2 * 3 + 0.5 * math.pi * 0.5 ** 2, 4
+        )
+
+        # tangentArc on the end of a spline
+        # spline will be a simple arc of a circle, then finished off with a
+        # tangentArcPoint
+        angles = [idx * 1.5 * math.pi / 10 for idx in range(10)]
+        pts = [(math.sin(a), math.cos(a)) for a in angles]
+        s2 = (
+            Workplane("XY")
+            .spline(pts)
+            .tangentArcPoint((0, 1), relative=False)
+            .close()
+            .extrude(1)
+        )
+        # volume should almost be pi, but not accurately because we need to
+        # start with a spline
+        self.assertAlmostEqual(s2.val().Volume(), math.pi, 1)
+        # assert local coords are mapped to global correctly
+        arc0 = Workplane("XZ", origin=(1, 1, 1)).hLine(1).tangentArcPoint((1, 1)).val()
+        self.assertTupleAlmostEquals(arc0.endPoint().toTuple(), (3, 1, 2), 4)
+
+        # tangentArcPoint with 3-tuple argument
+        w0 = Workplane("XY").lineTo(1, 1).tangentArcPoint((1, 1, 1)).wire()
+        zmax = w0.val().BoundingBox().zmax
+        self.assertAlmostEqual(zmax, 1, 1)
+
+    def test_findFromEdge(self):
+        part = Workplane("XY", origin=(1, 1, 1)).hLine(1)
+        found_edge = part._findFromEdge(useLocalCoords=False)
+        self.assertTupleAlmostEquals(found_edge.startPoint().toTuple(), (1, 1, 1), 3)
+        self.assertTupleAlmostEquals(found_edge.Center().toTuple(), (1.5, 1, 1), 3)
+        self.assertTupleAlmostEquals(found_edge.endPoint().toTuple(), (2, 1, 1), 3)
+        found_edge = part._findFromEdge(useLocalCoords=True)
+        self.assertTupleAlmostEquals(found_edge.endPoint().toTuple(), (1, 0, 0), 3)
+        # check _findFromEdge can find a spline
+        pts = [(0, 0), (0, 1), (1, 2), (2, 4)]
+        spline0 = Workplane("XZ").spline(pts)._findFromEdge()
+        self.assertTupleAlmostEquals((2, 0, 4), spline0.endPoint().toTuple(), 3)
+        # check method fails if no edge is present
+        part2 = Workplane("XY").box(1, 1, 1)
+        with self.assertRaises(RuntimeError):
+            part2._findFromEdge()
+        with self.assertRaises(RuntimeError):
+            part2._findFromEdge(useLocalCoords=True)
