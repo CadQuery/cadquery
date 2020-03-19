@@ -3,8 +3,8 @@ import math
 import sys
 import unittest
 from tests import BaseTest
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp_DZ, gp_XYZ
-from OCC.BRepBuilderAPI import (
+from OCC.Core.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp_DZ, gp_XYZ
+from OCC.Core.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,

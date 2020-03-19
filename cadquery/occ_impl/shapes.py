@@ -116,7 +116,7 @@ from OCC.Core.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 from OCC.Core.BRepTools import breptools_Write
 
-from OCC.Core.Visualization import Tesselator
+from OCC.Core.Tesselator import ShapeTesselator
 
 from OCC.Core.LocOpe import LocOpe_DPrism
 
@@ -1241,7 +1241,7 @@ class Shell(Shape):
 
 class Mixin3D(object):
     def tessellate(self, tolerance):
-        tess = Tesselator(self.wrapped)
+        tess = ShapeTesselator(self.wrapped)
         tess.Compute(compute_edges=True, mesh_quality=tolerance)
 
         vertices = []

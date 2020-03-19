@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from OCC.Core.Visualization import Tesselator
+from OCC.Core.Tesselator import ShapeTesselator
 
 import tempfile
 import os
@@ -61,7 +61,7 @@ def exportShape(shape, exportType, fileLike, tolerance=0.1):
     from ..cq import CQ
 
     def tessellate(shape):
-        tess = Tesselator(shape.wrapped)
+        tess = ShapeTesselator(shape.wrapped)
         tess.Compute(compute_edges=True, mesh_quality=tolerance)
 
         return tess

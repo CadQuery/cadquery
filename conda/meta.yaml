@@ -15,8 +15,7 @@ requirements:
     - setuptools
   run:
     - python {{ environ.get('PYTHON_VERSION') }}
-    - oce 0.18.*
-    - pythonocc-core 0.18.2*
+    - pythonocc-core 7.4.*
     - pyparsing 2.*
     
 test:
