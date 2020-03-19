@@ -54,7 +54,7 @@ All 2-d operations require a **Workplane** object to be created.
 	Workplane.threePointArc
 	Workplane.sagittaArc
 	Workplane.radiusArc
-  Workplane.tangentArcEndpoint
+  Workplane.tangentArcPoint
 	Workplane.rotateAndCopy
 	Workplane.mirrorY
 	Workplane.mirrorX

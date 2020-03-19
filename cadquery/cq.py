@@ -1163,7 +1163,7 @@ class Workplane(CQ):
     def _findFromEdge(self, useLocalCoords=False):
         """
         Finds the previous edge for an operation that needs it, similar to
-        method _findFromPoint. Examples include tangentArcEndpoint.
+        method _findFromPoint. Examples include tangentArcPoint.
 
         :param useLocalCoords: selects whether the point is returned
         in local coordinates or global coordinates.
@@ -1744,12 +1744,12 @@ class Workplane(CQ):
         else:
             return self.sagittaArc(endPoint, -sag, forConstruction)
 
-    def tangentArcEndpoint(self, endpoint, forConstruction=False, relative=True):
+    def tangentArcPoint(self, endpoint, forConstruction=False, relative=True):
         """
         Draw an arc as a tangent from the end of the current edge to endpoint.
 
         :param endpoint: point for the arc to end at
-        :type endpoint: 2-tuple or Vector
+        :type endpoint: 2-tuple, 3-tuple or Vector
         :param relative: True if endpoint is specified relative to the current point, False if endpoint is in workplane coordinates
         :type relative: Bool
         :return: a Workplane object with an arc on the stack
@@ -2246,7 +2246,7 @@ class Workplane(CQ):
         :return: a CQ object with a completed wire on the stack, if possible.
 
         After 2-d drafting with methods such as lineTo, threePointArc,
-        tangentArcEndpoint and polyline, it is necessary to convert the edges
+        tangentArcPoint and polyline, it is necessary to convert the edges
         produced by these into one or more wires.
 
         When a set of edges is closed, cadQuery assumes it is safe to build
