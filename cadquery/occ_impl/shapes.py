@@ -801,7 +801,7 @@ class Edge(Shape, Mixin1D):
         :param v3: end vector
         :return: an edge
         """
-        circle_geom = GC_MakeArcOfCircle(v1.toPnt(), v2._wrapped, v3.toPnt()).Value()
+        circle_geom = GC_MakeArcOfCircle(v1.toPnt(), v2.wrapped, v3.toPnt()).Value()
 
         return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
