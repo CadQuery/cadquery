@@ -3326,12 +3326,7 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(arc0.endPoint().toTuple(), (3, 1, 2), 4)
 
         # tangentArcPoint with 3-tuple argument
-        w0 = (
-            Workplane("XY")
-            .lineTo(1, 1)
-            .tangentArcPoint((1, 1, 1))
-            .wire()
-        )
+        w0 = Workplane("XY").lineTo(1, 1).tangentArcPoint((1, 1, 1)).wire()
         zmax = w0.val().BoundingBox().zmax
         self.assertAlmostEqual(zmax, 1, 1)
 
