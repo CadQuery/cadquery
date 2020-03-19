@@ -1557,7 +1557,10 @@ class Workplane(CQ):
 
         if tangents:
             t1, t2 = tangents
-            tangents = (self.plane.toWorldCoords(t1), self.plane.toWorldCoords(t2))
+            tangents = (
+                self.plane.toWorldCoords(t1) - self.plane.origin,
+                self.plane.toWorldCoords(t2) - self.plane.origin,
+            )
 
         e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
 
@@ -1588,6 +1591,65 @@ class Workplane(CQ):
         allPoints = [func(start + stop * t / N) for t in range(N + 1)]
 
         return self.spline(allPoints, includeCurrent=False, makeWire=True)
+
+    def ellipseArc(
+        self,
+        x_radius,
+        y_radius,
+        angle1=360,
+        angle2=360,
+        rotation_angle=0.0,
+        sense=1,
+        forConstruction=False,
+        startAtCurrent=True,
+        makeWire=False,
+    ):
+        """Draw an elliptical arc with x and y radiuses either with start point at current point or
+        or current point being the center of the arc
+
+        :param x_radius: x radius of the ellipse (along the x-axis of plane the ellipse should lie in)
+        :param y_radius: y radius of the ellipse (along the y-axis of plane the ellipse should lie in)
+        :param angle1: start angle of arc
+        :param angle2: end angle of arc (angle2 == angle1 return closed ellipse = default)
+        :param rotation_angle: angle to rotate the created ellipse / arc
+        :param sense: clockwise (-1) or counter clockwise (1)
+        :param startAtCurrent: True: start point of arc is moved to current point; False: center of
+            arc is on current point
+        :param makeWire: convert the resulting arc edge to a wire
+        """
+
+        # Start building the ellipse with the current point as center
+        center = self._findFromPoint(useLocalCoords=False)
+        e = Edge.makeEllipse(
+            x_radius,
+            y_radius,
+            center,
+            self.plane.zDir,
+            self.plane.xDir,
+            angle1,
+            angle2,
+            sense == 1,
+        )
+
+        # Rotate if necessary
+        if rotation_angle != 0.0:
+            e = e.rotate(center, center.add(self.plane.zDir), rotation_angle)
+
+        # Move the start point of the ellipse onto the last current point
+        if startAtCurrent:
+            startPoint = e.startPoint()
+            e = e.translate(center.sub(startPoint))
+
+        if makeWire:
+            rv = Wire.assembleEdges([e])
+            if not forConstruction:
+                self._addPendingWire(rv)
+        else:
+            rv = e
+            if not forConstruction:
+                self._addPendingEdge(e)
+
+        return self.newObject([rv])
 
     def threePointArc(self, point1, point2, forConstruction=False):
         """
@@ -2072,6 +2134,42 @@ class Workplane(CQ):
             return cir
 
         return self.eachpoint(makeCircleWire, useLocalCoordinates=True)
+
+    # ellipse from current point
+    def ellipse(self, x_radius, y_radius, rotation_angle=0.0, forConstruction=False):
+        """
+        Make an ellipse for each item on the stack.
+        :param x_radius: x radius of the ellipse (x-axis of plane the ellipse should lie in)
+        :type x_radius: float > 0
+        :param y_radius: y radius of the ellipse (y-axis of plane the ellipse should lie in)
+        :type y_radius: float > 0
+        :param rotation_angle: angle to rotate the ellipse (0 = no rotation = default)
+        :type rotation_angle: float
+        :param forConstruction: should the new wires be reference geometry only?
+        :type forConstruction: true if the wires are for reference, false if they are creating
+            part geometry
+        :return: a new CQ object with the created wires on the stack
+
+        *NOTE* Due to a bug in opencascade (https://tracker.dev.opencascade.org/view.php?id=31290)
+        the center of mass (equals center for next shape) is shifted. To create concentric ellipses
+        use Workplane("XY")
+            .center(10, 20).ellipse(100,10)
+            .center(0, 0).ellipse(50, 5)
+        """
+
+        def makeEllipseWire(obj):
+            elip = Wire.makeEllipse(
+                x_radius,
+                y_radius,
+                obj,
+                Vector(0, 0, 1),
+                Vector(1, 0, 0),
+                rotation_angle=rotation_angle,
+            )
+            elip.forConstruction = forConstruction
+            return elip
+
+        return self.eachpoint(makeEllipseWire, useLocalCoordinates=True)
 
     def polygon(self, nSides, diameter, forConstruction=False):
         """
