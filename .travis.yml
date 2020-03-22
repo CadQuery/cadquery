@@ -5,7 +5,6 @@ dist: trusty
 
 branches:
   only:
-  - adam-urbanczyk-OCC-version-update
   - master
   - "/\\d+\\.\\d+\\.?d*\\-*[a-z]*/"
 
@@ -25,62 +24,51 @@ env:
 
 matrix:
   include:
-  - env: TRAVIS_PYTHON_VERSION=3.6
+  - name: "Python 3.6 - osx"
+    env: PYTHON_VERSION=3.6
     os: osx
-  - env: TRAVIS_PYTHON_VERSION=3.6
+  - name: "Python 3.6 - linux"
+    env: PYTHON_VERSION=3.6
     os: linux
-  - env: TRAVIS_PYTHON_VERSION=3.7
+  - name: "Python 3.7 - osx"
+    env: PYTHON_VERSION=3.7
     os: osx
-  - env: TRAVIS_PYTHON_VERSION=3.7
+  - name: "Python 3.7 - linux"
+    env: PYTHON_VERSION=3.7
     os: linux
+  - name: "Lint"
+    env: PYTHON_VERSION=3.7
+    os: linux
+    script:
+    - black . --diff --check
 
 before_install:
-- if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      PY_MAJOR=2 ;
-  else
-      PY_MAJOR=3 ;
-  fi ;
-  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       OS=Linux ;
   else
       OS=MacOSX ;
   fi ;
-  wget https://repo.continuum.io/miniconda/Miniconda$PY_MAJOR-latest-$OS-x86_64.sh -O miniconda.sh
+  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$OS-x86_64.sh -O miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda;
 - export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
-- hash -r;
 - conda config --set always_yes yes --set changeps1 no;
-- conda create -y -q -n test_cq -c cadquery -c conda-forge pythonocc-core=0.18.2 oce=0.18.2 python=$TRAVIS_PYTHON_VERSION
-  pyparsing mock;
-- source ~/miniconda/bin/activate test_cq;
-- python -c 'import OCC.gp as gp; print(gp.gp_Vec())'
-- pip install codecov
+- conda env create -f environment.yml
+- source ~/miniconda/bin/activate cadquery
+- conda install -c conda-forge -c defaults -c cadquery python=$PYTHON_VERSION
 
 install:
 - python setup.py install
 
 before_script:
-- ulimit -c unlimited -S 
+- ulimit -c unlimited -S
 - sudo rm -f /cores/core.*
 
 script:
-- coverage run runtests.py
+- pytest -v --cov
 
 after_success:
 - codecov
 
 after_failure:
-- ls /cores/core.* 
+- ls /cores/core.*
 - lldb --core `ls /cores/core.*` --batch --one-line "bt"
-
-
-before_deploy:
-- conda install anaconda-client conda-build
-- sh conda_build.sh
-
-deploy:
-- provider: script
-  skip_cleanup: true
-  script: anaconda -v -t $ANACONDA_TOKEN upload --force --user cadquery /tmp/cbld/**/cadquery-*.tar.bz2
-  on:
-    tags: true

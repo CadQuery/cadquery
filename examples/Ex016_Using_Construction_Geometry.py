@@ -12,10 +12,15 @@ import cadquery as cq
 #     other geometry.
 # 6.  Selects the vertices of the for-construction rectangle.
 # 7.  Places holes at the center of each selected vertex.
-result = cq.Workplane("front").box(2, 2, 0.5)\
-                 .faces(">Z").workplane() \
-                 .rect(1.5, 1.5, forConstruction=True).vertices() \
-                 .hole(0.125)
+result = (
+    cq.Workplane("front")
+    .box(2, 2, 0.5)
+    .faces(">Z")
+    .workplane()
+    .rect(1.5, 1.5, forConstruction=True)
+    .vertices()
+    .hole(0.125)
+)
 
 # Displays the result of this script
 show_object(result)

@@ -36,12 +36,18 @@ class TestImporters(BaseTest):
             self.assertTrue(importedShape.val().ShapeType() == "Solid")
 
             # Check the number of faces and vertices per face to make sure we have a box shape
-            self.assertTrue(importedShape.faces("+X").size() ==
-                            1 and importedShape.faces("+X").vertices().size() == 4)
-            self.assertTrue(importedShape.faces("+Y").size() ==
-                            1 and importedShape.faces("+Y").vertices().size() == 4)
-            self.assertTrue(importedShape.faces("+Z").size() ==
-                            1 and importedShape.faces("+Z").vertices().size() == 4)
+            self.assertTrue(
+                importedShape.faces("+X").size() == 1
+                and importedShape.faces("+X").vertices().size() == 4
+            )
+            self.assertTrue(
+                importedShape.faces("+Y").size() == 1
+                and importedShape.faces("+Y").vertices().size() == 4
+            )
+            self.assertTrue(
+                importedShape.faces("+Z").size() == 1
+                and importedShape.faces("+Z").vertices().size() == 4
+            )
 
     def testSTEP(self):
         """
@@ -55,7 +61,8 @@ class TestImporters(BaseTest):
         not segfault.
         """
         tmpfile = OUTDIR + "/badSTEP.step"
-        with open(tmpfile, 'w') as f: f.write("invalid STEP file")
+        with open(tmpfile, "w") as f:
+            f.write("invalid STEP file")
         with self.assertRaises(ValueError):
             importers.importShape(importers.ImportTypes.STEP, tmpfile)
 
@@ -69,6 +76,8 @@ class TestImporters(BaseTest):
         objs = importers.importShape(importers.ImportTypes.STEP, filename)
         self.assertEqual(2, len(objs.all()))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import unittest
+
     unittest.main()
