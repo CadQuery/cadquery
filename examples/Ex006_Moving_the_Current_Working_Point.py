@@ -1,8 +1,8 @@
 import cadquery as cq
 
 # These can be modified rather than hardcoding values for each dimension.
-circle_radius = 3.0     # The outside radius of the plate
-thickness = 0.25        # The thickness of the plate
+circle_radius = 3.0  # The outside radius of the plate
+thickness = 0.25  # The thickness of the plate
 
 # Make a plate with two cutouts in it by moving the workplane center point
 # 1.  Establishes a workplane that an object can be built on.

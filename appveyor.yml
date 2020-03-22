@@ -9,7 +9,7 @@ environment:
           MINICONDA_DIRNAME: C:\Miniconda36-x64
         - PYTHON_VERSION: 3.7
           MINICONDA_DIRNAME: C:\Miniconda37-x64
-          
+
     ANACONDA_TOKEN:
         secure: nxF/a2f3iS9KXGu7B/wKJYAk7Sm5wyAjoZoqJvPbRoVK4saaozVwOxDrjwJjJAYb
 
@@ -17,34 +17,14 @@ install:
     - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
     - conda config --set always_yes yes
     - conda update -q conda
-    - conda create --quiet --name cqtest -c cadquery -c conda-forge -c dlr-sc pythonocc-core=0.18.2 python=%PYTHON_VERSION% pyparsing mock coverage codecov
-    - activate cqtest
-    - pip install codecov
-    - python setup.py install
+    - conda env create -f environment.yml
+    - activate cadquery
+    - conda install -c conda-forge -c defaults -c cadquery python=%PYTHON_VERSION%
 
 build: false
 
 test_script:
-    - coverage run runtests.py
-    
+    - pytest -v --cov
+
 on_success:
     - codecov
-
-#deploy:
-#- provider: Script
-#  on:
-#    APPVEYOR_REPO_TAG: true
-
-#before_deploy:
-#    - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
-#    - set "TRAVIS_TAG=%APPVEYOR_REPO_TAG_NAME%"
-#    - set "TRAVIS_COMMIT=%APPVEYOR_REPO_COMMIT%"
-#    - set "TRAVIS_PYTHON_VERSION=%PYTHON_VERSION%"
-#    - conda config --set always_yes yes
-#    - activate cqtest
-#    - conda install anaconda-client conda-build
-#    - conda info --envs
-#    - call conda_build.bat
-
-#deploy_script:
-#    - anaconda -v -t %ANACONDA_TOKEN% upload --force --user cadquery ./win-64/cadquery-*.tar.bz2

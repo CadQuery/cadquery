@@ -1,15 +1,15 @@
 import cadquery as cq
 
 # These can be modified rather than hardcoding values for each dimension.
-length = 80.0                               # Length of the block
-width = 60.0                                # Width of the block
-height = 100.0                              # Height of the block
-thickness = 10.0                         # Thickness of the block
-center_hole_dia = 22.0             # Diameter of center hole in block
-cbore_hole_diameter = 2.4     # Bolt shank/threads clearance hole diameter
-cbore_inset = 12.0                    # How far from the edge the cbored holes are set
-cbore_diameter = 4.4              # Bolt head pocket hole diameter
-cbore_depth = 2.1                   # Bolt head pocket hole depth
+length = 80.0  # Length of the block
+width = 60.0  # Width of the block
+height = 100.0  # Height of the block
+thickness = 10.0  # Thickness of the block
+center_hole_dia = 22.0  # Diameter of center hole in block
+cbore_hole_diameter = 2.4  # Bolt shank/threads clearance hole diameter
+cbore_inset = 12.0  # How far from the edge the cbored holes are set
+cbore_diameter = 4.4  # Bolt head pocket hole diameter
+cbore_depth = 2.1  # Bolt head pocket hole depth
 
 # Create a 3D block based on the dimensions above and add a 22mm center hold
 # and 4 counterbored holes for bolts
@@ -26,12 +26,20 @@ cbore_depth = 2.1                   # Bolt head pocket hole depth
 #     do not show up in the final displayed geometry.
 # 6.  The vertices of the rectangle (corners) are selected, and a counter-bored
 #     hole is placed at each of the vertices (all 4 of them at once).
-result = cq.Workplane("XY").box(length, height, thickness) \
-    .faces(">Z").workplane().hole(center_hole_dia) \
-    .faces(">Z").workplane() \
-    .rect(length - cbore_inset, height - cbore_inset, forConstruction=True) \
-    .vertices().cboreHole(cbore_hole_diameter, cbore_diameter, cbore_depth) \
-    .edges("|Z").fillet(2.0)
+result = (
+    cq.Workplane("XY")
+    .box(length, height, thickness)
+    .faces(">Z")
+    .workplane()
+    .hole(center_hole_dia)
+    .faces(">Z")
+    .workplane()
+    .rect(length - cbore_inset, height - cbore_inset, forConstruction=True)
+    .vertices()
+    .cboreHole(cbore_hole_diameter, cbore_diameter, cbore_depth)
+    .edges("|Z")
+    .fillet(2.0)
+)
 
 # Displays the result of this script
 show_object(result)
