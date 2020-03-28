@@ -96,7 +96,7 @@ class CQModel(object):
         if not build_parameters:
             build_parameters = {}
 
-        start = time.clock()
+        start = time.perf_counter()
         result = BuildResult()
 
         try:
@@ -121,7 +121,7 @@ class CQModel(object):
         except Exception as ex:
             result.set_failure_result(ex)
 
-        end = time.clock()
+        end = time.perf_counter()
         result.buildTime = end - start
         return result
 
