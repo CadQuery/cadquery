@@ -2,7 +2,6 @@
 The CadQuery Gateway Interface.
 Provides classes and tools for executing CadQuery scripts
 """
-import sys
 import ast
 import traceback
 import time
