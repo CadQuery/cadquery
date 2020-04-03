@@ -24,7 +24,7 @@ jobs:
 - template: conda-build.yml@templates
   parameters:
     name: macOS_36
-    vmImage: 'macOS-10.13'
+    vmImage: 'macOS-10.15'
     py_maj: 3
     py_min: 6
 
@@ -45,7 +45,7 @@ jobs:
 - template: conda-build.yml@templates
   parameters:
     name: macOS_37
-    vmImage: 'macOS-10.13'
+    vmImage: 'macOS-10.15'
     py_maj: 3
     py_min: 7
 
