@@ -3348,3 +3348,13 @@ class TestCadQuery(BaseTest):
             part2._findFromEdge()
         with self.assertRaises(RuntimeError):
             part2._findFromEdge(useLocalCoords=True)
+
+    def testMakeHelix(self):
+
+        h = 10
+        pitch = 1.5
+        r = 1.2
+        obj = Wire.makeHelix(pitch, h, r)
+
+        bb = obj.BoundingBox()
+        self.assertAlmostEqual(bb.zlen, h, 1)
