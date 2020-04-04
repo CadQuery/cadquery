@@ -3352,7 +3352,7 @@ class TestCadQuery(BaseTest):
     def testMakeHelix(self):
 
         h = 10
-        pitch = 1.5 
+        pitch = 1.5
         r = 1.2
         obj = Wire.makeHelix(pitch, h, r)
 
