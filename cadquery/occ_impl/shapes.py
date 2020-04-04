@@ -1030,7 +1030,7 @@ class Wire(Shape, Mixin1D):
         # 3. put it together into a wire
         n_turns = height / pitch
         u_start = geom_line.Value(0.0)
-        u_stop = geom_line.Value(sqrt(n_turns * ((2 * pi) ** 2 + pitch ** 2)))
+        u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch ** 2))
         geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
 
         e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf).Edge()
