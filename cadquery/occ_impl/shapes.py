@@ -615,19 +615,22 @@ class Shape(object):
 
         cut_op = BRepAlgoAPI_Cut()
 
-        return self._bool_op([self.wrapped,], toCut, cut_op)
+        return self._bool_op((self,), toCut, cut_op)
 
     def fuse(self, *toFuse):
         """
         Fuse shapes together
         """
 
-        fuse_op = BRepAlgoAPI_Fuse(self.wrapped, toFuse.wrapped)
-        fuse_op.RefineEdges()
-        fuse_op.FuseEdges()
+        fuse_op = BRepAlgoAPI_Fuse()
         # fuse_op.SetFuzzyValue(TOLERANCE)
 
-        return self._bool_op([self.wrapped,], toFuse, fuse_op)
+        rv = self._bool_op((self,), toFuse, fuse_op)
+
+        fuse_op.RefineEdges()
+        fuse_op.FuseEdges()
+
+        return rv
 
     def intersect(self, *toIntersect):
         """
@@ -636,7 +639,7 @@ class Shape(object):
 
         intersect_op = BRepAlgoAPI_Common()
 
-        return self._bool_op([self.wrapped,], toIntersect, intersect_op)
+        return self._bool_op((self,), toIntersect, intersect_op)
 
     def _repr_html_(self):
         """
@@ -1991,12 +1994,15 @@ class Compound(Shape, Mixin3D):
         Fuse shapes together
         """
 
-        fuse_op = BRepAlgoAPI_Fuse(self.wrapped, toFuse.wrapped)
-        fuse_op.RefineEdges()
-        fuse_op.FuseEdges()
+        fuse_op = BRepAlgoAPI_Fuse()
         # fuse_op.SetFuzzyValue(TOLERANCE)
 
-        return self._bool_op(self, toFuse, fuse_op)
+        rv = self._bool_op(self, toFuse, fuse_op)
+
+        # fuse_op.RefineEdges()
+        # fuse_op.FuseEdges()
+
+        return rv
 
     def intersect(self, *toIntersect):
         """
