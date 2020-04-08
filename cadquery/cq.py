@@ -33,6 +33,8 @@ from . import (
     exporters,
 )
 
+from .utils import deprecate_kwarg
+
 
 class CQContext(object):
     """
@@ -305,6 +307,7 @@ class CQ(object):
 
         return self.objects[0].wrapped
 
+    @deprecate_kwarg("centerOption", "ProjectedOrigin")
     def workplane(
         self, offset=0.0, invert=False, centerOption="CenterOfMass", origin=None
     ):
@@ -2700,8 +2703,9 @@ class Workplane(CQ):
         """
         items = list(self.objects)
         s = items.pop(0)
-        for ss in items:
-            s = s.fuse(ss)
+
+        if items:
+            s.fuse(*items)
 
         if clean:
             s = s.clean()
@@ -2722,16 +2726,13 @@ class Workplane(CQ):
 
         # first collect all of the items together
         if type(toUnion) == CQ or type(toUnion) == Workplane:
-            solids = toUnion.solids().vals()
-            if len(solids) < 1:
+            newS = toUnion.solids().vals()
+            if len(newS) < 1:
                 raise ValueError(
                     "CQ object  must have at least one solid on the stack to union!"
                 )
-            newS = solids.pop(0)
-            for s in solids:
-                newS = newS.fuse(s)
         elif type(toUnion) in (Solid, Compound):
-            newS = toUnion
+            newS = (toUnion,)
         else:
             raise ValueError("Cannot union type '{}'".format(type(toUnion)))
 
@@ -2739,9 +2740,11 @@ class Workplane(CQ):
         # look for parents to cut from
         solidRef = self.findSolid(searchStack=True, searchParents=True)
         if solidRef is not None:
-            r = solidRef.fuse(newS)
+            r = solidRef.fuse(*newS)
+        elif len(newS) > 1:
+            r = newS.pop(0).fuse(*newS)
         else:
-            r = newS
+            r = newS[0]
 
         if clean:
             r = r.clean()
@@ -2766,13 +2769,13 @@ class Workplane(CQ):
             raise ValueError("Cannot find solid to cut from")
         solidToCut = None
         if type(toCut) == CQ or type(toCut) == Workplane:
-            solidToCut = toCut.val()
+            solidToCut = toCut.vals()
         elif type(toCut) in (Solid, Compound):
-            solidToCut = toCut
+            solidToCut = (toCut,)
         else:
             raise ValueError("Cannot cut type '{}'".format(type(toCut)))
 
-        newS = solidRef.cut(solidToCut)
+        newS = solidRef.cut(*solidToCut)
 
         if clean:
             newS = newS.clean()
@@ -2798,13 +2801,13 @@ class Workplane(CQ):
         solidToIntersect = None
 
         if isinstance(toIntersect, CQ):
-            solidToIntersect = toIntersect.val()
+            solidToIntersect = toIntersect.vals()
         elif isinstance(toIntersect, Solid) or isinstance(toIntersect, Compound):
-            solidToIntersect = toIntersect
+            solidToIntersect = (toIntersect,)
         else:
             raise ValueError("Cannot intersect type '{}'".format(type(toIntersect)))
 
-        newS = solidRef.intersect(solidToIntersect)
+        newS = solidRef.intersect(*solidToIntersect)
 
         if clean:
             newS = newS.clean()

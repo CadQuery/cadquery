@@ -59,7 +59,7 @@ from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
 from OCP.BRep import BRep_Tool
 
-from OCP.TopoDS import TopoDS, TopoDS_Builder, TopoDS_Compound
+from OCP.TopoDS import TopoDS, TopoDS_Builder, TopoDS_Compound, TopoDS_Iterator
 
 from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
 from OCP.GCE2d import GCE2d_MakeSegment
@@ -579,27 +579,56 @@ class Shape(object):
     def __hash__(self):
         return self.hashCode()
 
-    def cut(self, toCut):
+    def _bool_op(self, args, tools, op):
+        """
+        Generic boolean operation
+        """
+
+        arg = TopTools_ListOfShape()
+        for obj in args:
+            arg.Append(obj.wrapped)
+
+        tool = TopTools_ListOfShape()
+        for obj in tools:
+            tool.Append(obj.wrapped)
+
+        op.SetArguments(arg)
+        op.SetTools(tool)
+
+        op.SetRunParallel(True)
+        op.Build()
+
+        return Shape.cast(op.Shape())
+
+    def cut(self, *toCut):
         """
         Remove a shape from another one
         """
-        return Shape.cast(BRepAlgoAPI_Cut(self.wrapped, toCut.wrapped).Shape())
 
-    def fuse(self, toFuse):
+        cut_op = BRepAlgoAPI_Cut()
+
+        return self._bool_op((self,), toCut, cut_op)
+
+    def fuse(self, *toFuse):
         """
         Fuse shapes together
         """
 
-        fuse_op = BRepAlgoAPI_Fuse(self.wrapped, toFuse.wrapped)
-        fuse_op.Build()
+        fuse_op = BRepAlgoAPI_Fuse()
+        # fuse_op.SetFuzzyValue(TOLERANCE)
 
-        return Shape.cast(fuse_op.Shape())
+        rv = self._bool_op((self,), toFuse, fuse_op)
 
-    def intersect(self, toIntersect):
+        return rv
+
+    def intersect(self, *toIntersect):
         """
         Construct shape intersection
         """
-        return Shape.cast(BRepAlgoAPI_Common(self.wrapped, toIntersect.wrapped).Shape())
+
+        intersect_op = BRepAlgoAPI_Common()
+
+        return self._bool_op((self,), toIntersect, intersect_op)
 
     def _repr_html_(self):
         """
@@ -1015,7 +1044,7 @@ class Wire(Shape, Mixin1D):
         # 3. put it together into a wire
         n_turns = height / pitch
         u_start = geom_line.Value(0.0)
-        u_stop = geom_line.Value(sqrt(n_turns * ((2 * pi) ** 2 + pitch ** 2)))
+        u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch ** 2))
         geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
 
         e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf).Edge()
@@ -1947,6 +1976,51 @@ class Compound(Shape, Mixin3D):
         text_3d = BRepPrimAPI_MakePrism(text_flat.wrapped, vecNormal.wrapped)
 
         return cls(text_3d.Shape()).transformShape(position.rG)
+
+    def __iter__(self):
+        """
+        Iterate over subshapes.    
+
+        """
+
+        it = TopoDS_Iterator(self.wrapped)
+
+        while it.More():
+            yield Shape.cast(it.Value())
+            it.Next()
+
+    def cut(self, *toCut):
+        """
+        Remove a shape from another one
+        """
+
+        cut_op = BRepAlgoAPI_Cut()
+
+        return self._bool_op(self, toCut, cut_op)
+
+    def fuse(self, *toFuse):
+        """
+        Fuse shapes together
+        """
+
+        fuse_op = BRepAlgoAPI_Fuse()
+        # fuse_op.SetFuzzyValue(TOLERANCE)
+
+        rv = self._bool_op(self, toFuse, fuse_op)
+
+        # fuse_op.RefineEdges()
+        # fuse_op.FuseEdges()
+
+        return rv
+
+    def intersect(self, *toIntersect):
+        """
+        Construct shape intersection
+        """
+
+        intersect_op = BRepAlgoAPI_Common()
+
+        return self._bool_op(self, toIntersect, intersect_op)
 
 
 def sortWiresByBuildOrder(wireList, result={}):

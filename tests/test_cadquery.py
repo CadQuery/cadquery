@@ -1227,6 +1227,9 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(10, resS.faces().size())
 
+        with self.assertRaises(ValueError):
+            currentS.cut(toCut.faces().val())
+
     def testIntersect(self):
         """
         Tests the intersect function.
@@ -1244,6 +1247,15 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(6, resS.faces().size())
         self.assertAlmostEqual(resS.val().Volume(), 0.5)
+
+        b1 = Workplane("XY").box(1, 1, 1)
+        b2 = Workplane("XY", origin=(0, 0, 0.5)).box(1, 1, 1)
+        resS = b1.intersect(b2)
+
+        self.assertAlmostEqual(resS.val().Volume(), 0.5)
+
+        with self.assertRaises(ValueError):
+            b1.intersect(b2.faces().val())
 
     def testBoundingBox(self):
         """
@@ -2036,6 +2048,9 @@ class TestCadQuery(BaseTest):
         resS = currentS.union(toUnion)
 
         self.assertEqual(11, resS.faces().size())
+
+        with self.assertRaises(ValueError):
+            resS.union(toUnion.faces().val())
 
     def testCombine(self):
         s = Workplane(Plane.XY())
@@ -3348,3 +3363,29 @@ class TestCadQuery(BaseTest):
             part2._findFromEdge()
         with self.assertRaises(RuntimeError):
             part2._findFromEdge(useLocalCoords=True)
+
+    def testMakeHelix(self):
+
+        h = 10
+        pitch = 1.5
+        r = 1.2
+        obj = Wire.makeHelix(pitch, h, r)
+
+        bb = obj.BoundingBox()
+        self.assertAlmostEqual(bb.zlen, h, 1)
+
+    def testUnionCompound(self):
+
+        box1 = Workplane("XY").box(10, 20, 30)
+        box2 = Workplane("YZ").box(10, 20, 30)
+        shape_to_cut = Workplane("XY").box(15, 15, 15).translate((8, 8, 8))
+
+        list_of_shapes = []
+        for o in box1.all():
+            list_of_shapes.extend(o.vals())
+        for o in box2.all():
+            list_of_shapes.extend(o.vals())
+
+        obj = Workplane("XY").newObject(list_of_shapes).cut(shape_to_cut)
+
+        assert obj.val().isValid()
