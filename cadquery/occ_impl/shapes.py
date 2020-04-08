@@ -595,7 +595,7 @@ class Shape(object):
         op.SetArguments(arg)
         op.SetTools(tool)
 
-        op.SetRunParallel(True)
+        #op.SetRunParallel(True)
         op.Build()
 
         return Shape.cast(op.Shape())
