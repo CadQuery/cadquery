@@ -33,6 +33,8 @@ from . import (
     exporters,
 )
 
+from .utils import deprecate_kwarg
+
 
 class CQContext(object):
     """
@@ -305,6 +307,7 @@ class CQ(object):
 
         return self.objects[0].wrapped
 
+    @deprecate_kwarg("centerOption", "ProjectedOrigin")
     def workplane(
         self, offset=0.0, invert=False, centerOption="CenterOfMass", origin=None
     ):
