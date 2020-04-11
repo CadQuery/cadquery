@@ -2279,13 +2279,51 @@ class Workplane(CQ):
         how long or wide a feature must be to make sure to cut through all of the material
         :return: A value representing the largest dimension of the first solid on the stack
         """
+        xmin = ymin = zmin = 999999
+        xmax = ymax = zmax = -999999
+
+        # Get all the solids contained within this CQ object
+        solids = self.solids().vals()
+
+        # Protect against this being called on something like a blank workplane
+        if len(solids) == 0: return -1
+
+        # Find the combined outer bounds of all the solids
+        for solid in solids:
+            # Mins
+            if solid.BoundingBox().xmin < xmin:
+                xmin = solid.BoundingBox().xmin
+            if solid.BoundingBox().ymin < ymin:
+                ymin = solid.BoundingBox().ymin
+            if solid.BoundingBox().zmin < zmin:
+                zmin = solid.BoundingBox().zmin
+
+            # Maxes
+            if solid.BoundingBox().xmax > xmax:
+                xmax = solid.BoundingBox().xmax
+            if solid.BoundingBox().ymax > ymax:
+                ymax = solid.BoundingBox().ymax
+            if solid.BoundingBox().zmax > zmax:
+                zmax = solid.BoundingBox().zmax
+
+        xLength = (xmax - xmin)
+        yLength = (ymax - ymin)
+        zLength = (zmax - zmin)
+
+        centroid = Vector(xLength, yLength, zLength)
+
+        # Calculate the sphere size of the outer bounds of all solids
+        sphereSize = centroid.Length
+
+        return sphereSize
+
         # TODO: this implementation is naive and returns the dims of the first solid... most of
         # TODO: the time this works. but a stronger implementation would be to search all solids.
-        s = self.findSolid()
-        if s:
-            return s.BoundingBox().DiagonalLength * 5.0
-        else:
-            return -1
+        # s = self.findSolid()
+        # if s:
+        #     return s.BoundingBox().DiagonalLength * 5.0
+        # else:
+        #     return -1
 
     def cutEach(self, fcn, useLocalCoords=False, clean=True):
         """
