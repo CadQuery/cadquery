@@ -1997,7 +1997,12 @@ class Compound(Shape, Mixin3D):
         fuse_op = BRepAlgoAPI_Fuse()
         # fuse_op.SetFuzzyValue(TOLERANCE)
 
-        rv = self._bool_op(self, toFuse, fuse_op)
+        args = tuple(self) + toFuse
+
+        if len(args)<=1:
+            rv = self
+        else:
+            rv = self._bool_op(args[:1], args[1:], fuse_op)
 
         # fuse_op.RefineEdges()
         # fuse_op.FuseEdges()
