@@ -2675,6 +2675,8 @@ class Workplane(CQ):
         r = obj
         if baseSolid is not None:
             r = baseSolid.fuse(obj)
+        elif isinstance(obj, Compound):
+            r = obj.fuse()
 
         return self.newObject([r])
 
