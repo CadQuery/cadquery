@@ -1999,7 +1999,7 @@ class Compound(Shape, Mixin3D):
 
         args = tuple(self) + toFuse
 
-        if len(args)<=1:
+        if len(args) <= 1:
             rv = self
         else:
             rv = self._bool_op(args[:1], args[1:], fuse_op)
