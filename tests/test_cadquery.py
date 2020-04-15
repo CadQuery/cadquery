@@ -1733,7 +1733,6 @@ class TestCadQuery(BaseTest):
 
         # Tests the case where the depth of the cboreHole is not specified
         c2 = CQ(makeCube(3.0))
-        pnts = [(-1.0, -1.0), (0.0, 0.0), (1.0, 1.0)]
         c2 = c2.faces(">Z").workplane().pushPoints(pnts).cboreHole(0.1, 0.25, 0.25)
         self.assertEqual(15, c2.faces().size())
 
