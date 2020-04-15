@@ -2283,7 +2283,8 @@ class Workplane(CQ):
         compound = self.findSolid()
 
         # Protect against this being called on something like a blank workplane
-        if not compound: return -1
+        if not compound:
+            return -1
 
         # Get the extents of the bounding box of the solids
         xmin = compound.BoundingBox().xmin
@@ -2294,9 +2295,9 @@ class Workplane(CQ):
         zmax = compound.BoundingBox().zmax
 
         # Find the length of each axis
-        xLength = (xmax - xmin)
-        yLength = (ymax - ymin)
-        zLength = (zmax - zmin)
+        xLength = xmax - xmin
+        yLength = ymax - ymin
+        zLength = zmax - zmin
 
         # Calculate the sphere size of the outer bounds of all solids from the lengths along each axis
         centroid = Vector(xLength, yLength, zLength)
