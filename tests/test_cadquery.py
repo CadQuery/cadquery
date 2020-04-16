@@ -2548,6 +2548,8 @@ class TestCadQuery(BaseTest):
         # extrude symmetrically
         s = Workplane("XY").circle(r).extrude(h, both=True)
 
+        self.assertTrue(len(s.val().Solids()) == 1)
+
         top_face = s.faces(">Z")
         bottom_face = s.faces("<Z")
 
