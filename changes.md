@@ -3,6 +3,12 @@ Changes
 
 2.0 (stable release)
 ------
+
+### Deprecations and breaking changes
+   * `centerOption` default value will change from `CenterOfMass` to `ProjectedOirigin` in the 2.1 release #313
+
+### Non-breaking changes
+
    * Numerous commits to move from FreeCAD as the underlying API to PythonOCC - thanks @adam-urbanczyk for all the effort that required
    * Updated for Python 3.6 and 3.7
    * Made sure solids were fused when extrude both=True #321 - thanks @adam-urbanczyk
