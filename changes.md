@@ -5,7 +5,7 @@ Changes
 ------
 
 ### Deprecations and breaking changes
-   * `centerOption` default value will change from `CenterOfMass` to `ProjectedOirigin` in the 2.1 release #313
+   * `centerOption` default value will change from `CenterOfMass` to `ProjectedOrigin` in the 2.1 release #313
 
 ### Non-breaking changes
 
