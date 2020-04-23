@@ -32,7 +32,7 @@ Changes
    * Fixed bug where combine=True kept union from working properly #143 - thanks @adam-urbanczyk
    * Fixed bug where string selectors "-X" and "+X" returned the same thing #141 - thanks @gebner
    * Removed unused 'positive' argument from 'cutThruAll' #135 - thanks @mgreminger
-   * Increased the HASH_CODE_MAX to prevent hash collisions during face selection #140 - - thanks @mgreminger
+   * Increased the HASH_CODE_MAX to prevent hash collisions during face selection #140 - thanks @mgreminger
    * Added option to center workplane on projected origin #132 - thanks @mgreminger
    * Improved sweep along multisection wires #128 - thanks @adam-urbanczyk
    * Fixed version number that was missed during update to 2.x #129 - thanks @asukiaaa
