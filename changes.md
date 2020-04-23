@@ -37,6 +37,7 @@ Changes
    * Improved sweep along multisection wires #128 - thanks @adam-urbanczyk
    * Fixed version number that was missed during update to 2.x #129 - thanks @asukiaaa
    * Numerous CI and documentation improvements
+   * Support for text rendering #106
 
 2.0RC2 (release candidate)
 ------
