@@ -16,7 +16,7 @@ from setuptools import setup
 
 
 # if we are building in travis, use the build number as the sub-minor version
-version = "0.5-SNAPSHOT"
+version = "2.0"
 if "TRAVIS_TAG" in os.environ.keys():
     version = os.environ["TRAVIS_TAG"]
 
