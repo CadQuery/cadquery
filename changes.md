@@ -1,100 +1,60 @@
 Changes
 =======
 
-
-v0.1
------
-   * Initial Version
-
-v0.1.6
------
-   * Added STEP import and supporting tests
-
-v0.1.7
------
-   * Added revolve operation and supporting tests
-   * Fixed minor documentation errors
-
-v0.1.8
------
-   * Added toFreecad() function as a convenience for val().wrapped
-   * Converted all examples to use toFreecad()
-   * Updated all version numbers that were missed before
-   * Fixed import issues in Windows caused by fc_import
-   * Added/fixed Mac OS support
-   * Improved STEP import
-   * Fixed bug in rotateAboutCenter that negated its effect on solids
-   * Added Travis config (thanks @krasin)
-   * Removed redundant workplane.py file left over from the PParts.com migration
-   * Fixed toWorldCoordinates bug in moveTo (thanks @xix-xeaon)
-   * Added new tests for 2D drawing functions
-   * Integrated Coveralls.io, with a badge in README.md
-   * Integrated version badge in README.md
-    
-v0.2.0
------
-   * Fixed versioning to match the semantic versioning scheme
-   * Added license badge in changes.md
-   * Fixed Solid.makeSphere implementation
-   * Added CQ.sphere operation that mirrors CQ.box
-   * Updated copyright dates
-   * Cleaned up spelling and misc errors in docstrings
-   * Fixed FreeCAD import error on Arch Linux (thanks @moeb)
-   * Made FreeCAD import report import error instead of silently failing (thanks @moeb)
-   * Added ruled option for the loft operation (thanks @hyOzd)
-   * Fixed close() not working in planes other than XY (thanks @hyOzd)
-   * Added box selector with bounding box option (thanks @hyOzd)
-   * CQ.translate and CQ.rotate documentation fixes (thanks @hyOzd)
-   * Fixed centering of a sphere
-   * Increased test coverage
-   * Added a clean function to keep some operations from failing on solids that need simplified (thanks @hyOzd)
-   * Added a mention of the new Google Group to the readme
-   
-v0.3.0
------
-   * Fixed a bug where clean() could not be called on appropriate objects other than solids (thanks @hyOzd) #108
-   * Implemented new selectors that allow existing selectors to be combined with arithmetic/boolean operations (thanks @hyOzd) #110
-   * Fixed a bug where only 1 random edge was returned with multiple min/max selector matches (thanks @hyOzd) #111
-   * Implemented the creation of a workplane from multiple co-planar faces (thanks @hyOzd) #113
-   * Fixed the operation of Center() when called on a compound with multiple solids
-   * Add the named planes ZX YX ZY to define different normals (thanks @galou) #115
-   * Code cleanup in accordance with PEP 8 (thanks @galou)
-   * Fixed a bug with the close function not resetting the first point of the context correctly (thanks @huskier)
-   * Fixed the findSolid function so that it handles compounds #107
-   * Changed the polyline function so that it adds edges to the stack instead of a wire #102
-   * Add the ability to find the center of the bounding box, rather than the center of mass (thanks @huskier) #122
-   * Changed normalize function to normalized to match OCC/PythonOCC nomenclature #124
-   * Added a label attribute to all freecad_impl.shapes so that they can have IDs attached to them #124
-
-v0.4.0
+2.0 (stable release)
 ------
-   * Added Documentation, which is available on dcowden.github.io/cadquery
-   * Added CQGI, an adapter API that standardizes use of cadquery from within structured execution environments
-   * Added ability to import STEP files from a web URL (thanks @huskier ) #128
 
-v0.4.1
-------
-   * Minor CQGI updates
+### Deprecations and breaking changes
+   * `centerOption` default value will change from `CenterOfMass` to `ProjectedOrigin` in the 2.1 release #313
 
-v0.5.0-stable
-------
-   * Configuring Travis to push to PyPI on version releases.
+### Non-breaking changes
 
-v0.5.1
-------
-   * Mirroring fixes (thanks @huskier)
-   * Added a mirroring example (thanks @huskier)
+   * Numerous commits to move from FreeCAD as the underlying API to PythonOCC - thanks @adam-urbanczyk for all the effort that required
+   * Updated for Python 3.6 and 3.7
+   * Made sure solids were fused when extrude both=True #321 - thanks @adam-urbanczyk
+   * Improved boolean operations #312 - thanks @adam-urbanczyk
+   * Fixed a bug in helix creation #311 - thanks @adam-urbanczyk
+   * Improved MacOS support
+   * Updated CQGI counters for Python 3.8 compatibility #305 - thanks @jwhevans
+   * Added tangent arc operation #284 - thanks @marcus7070
+   * Added ellipse creation #265 - thanks @bernhard-42
+   * Added ability to produce a plate surface with a thickness (optional), enclosed by edge points, polylines or splines, and going through interpolation points (optional) #253 - thanks @bragostin
+   * Fix plane rotation method #243 - thanks @Peque
+   * Added ability to tag a particular object in the chain to be referred to later #252 - thanks @marcus7070
+   * Added Black formatting check to CI #255 - thanks @Peque
+   * Added ability to accept unordered edges when constructing a wire #237 - thanks @bragostin
+   * Updated to using pytest #236 - thanks @Peque
+   * Fixed wedge primitive and made wedge act consistent with other primitives #228
+   * Fix to correctly support anisotropic scaling #225 - thanks @adam-urbanczyk
+   * Documentation fixes #215 - thanks @Renha
+   * Fixed a spline example in the docs #200 - thanks @adam-urbanczyk
+   * Added 2D slot feature #186 - thanks @bweissinger
+   * Fixed a segmentation fault when trying to loft with one wire #161 - thanks @HLevering
+   * Fixed a bug where the tolerance parameter of BoundingBox had no effect #167 - thanks @mgreminger
+   * Fixed a bug when calling findSolid with multiple solids on stack #163 - thanks @adam-urbanczyk
+   * Documentation fixes #144 and #162 - thanks @westurner
+   * Fixed a feature/bug that prevented a polyline or spline from closing properly in some instances #156 - thanks @adam-urbanczyk
+   * Added ability to determine if an arbitrary point is inside a solid #138 - thanks @mgreminger
+   * Fixed bug where combine=True kept union from working properly #143 - thanks @adam-urbanczyk
+   * Fixed bug where string selectors "-X" and "+X" returned the same thing #141 - thanks @gebner
+   * Removed unused 'positive' argument from 'cutThruAll' #135 - thanks @mgreminger
+   * Increased the HASH_CODE_MAX to prevent hash collisions during face selection #140 - thanks @mgreminger
+   * Added option to center workplane on projected origin #132 - thanks @mgreminger
+   * Improved sweep along multisection wires #128 - thanks @adam-urbanczyk
+   * Fixed version number that was missed during update to 2.x #129 - thanks @asukiaaa
+   * Numerous CI and documentation improvements
+   * Support for text rendering #106
 
-v0.5.2
+2.0RC2 (release candidate)
 ------
-   * Added the sweep operation #33
+   * Changes included in v2.0 release
 
-v1.0.0
+2.0RC1 (release candidate)
 ------
-   * Added an option to do symmetric extrusion about the workplane (thanks @adam-urbanczyk)
-   * Extended selector syntax to include Nth selector and re-implemented selectors using pyparsing (thanks @adam-urbanczyk)
-   * Added logical operations to string selectors (thanks @adam-urbanczyk)
-   * Cleanup of README.md and changes.md (thanks @baoboa)
-   * Fixed bugs with toVector and Face 'Not Defined' errors (thanks @huskier)
-   * Refactor of the initialization code for PEP8 compliance and Python 3 compatibility (thanks @Peque)
-   * Making sure that the new pyparsing library dependency is handled properly (thanks @Peque)
+   * Changes included in v2.0 release
+
+2.0RC0 (release candidate)
+------
+   * Changes included in v2.0 release
+
+The changelog for older CadQuery 1.x releases can be found [here](https://github.com/dcowden/cadquery/blob/master/changes.md).
