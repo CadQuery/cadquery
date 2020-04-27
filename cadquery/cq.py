@@ -2286,24 +2286,7 @@ class Workplane(CQ):
         if not compound:
             return -1
 
-        # Get the extents of the bounding box of the solids
-        xmin = compound.BoundingBox().xmin
-        ymin = compound.BoundingBox().ymin
-        zmin = compound.BoundingBox().zmin
-        xmax = compound.BoundingBox().xmax
-        ymax = compound.BoundingBox().ymax
-        zmax = compound.BoundingBox().zmax
-
-        # Find the length of each axis
-        xLength = xmax - xmin
-        yLength = ymax - ymin
-        zLength = zmax - zmin
-
-        # Calculate the sphere size of the outer bounds of all solids from the lengths along each axis
-        centroid = Vector(xLength, yLength, zLength)
-        sphereSize = centroid.Length
-
-        return sphereSize
+        return compound.BoundingBox().DiagonalLength
 
     def cutEach(self, fcn, useLocalCoords=False, clean=True):
         """
