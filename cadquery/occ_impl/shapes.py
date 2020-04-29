@@ -254,7 +254,7 @@ class Shape(object):
 
     @classmethod
     def cast(cls, obj, forConstruction=False):
-        "Returns the right type of wrapper, given a FreeCAD object"
+        "Returns the right type of wrapper, given a OCCT object"
 
         tr = None
 
