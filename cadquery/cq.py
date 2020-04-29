@@ -2279,13 +2279,14 @@ class Workplane(CQ):
         how long or wide a feature must be to make sure to cut through all of the material
         :return: A value representing the largest dimension of the first solid on the stack
         """
-        # TODO: this implementation is naive and returns the dims of the first solid... most of
-        # TODO: the time this works. but a stronger implementation would be to search all solids.
-        s = self.findSolid()
-        if s:
-            return s.BoundingBox().DiagonalLength * 5.0
-        else:
+        # Get all the solids contained within this CQ object
+        compound = self.findSolid()
+
+        # Protect against this being called on something like a blank workplane
+        if not compound:
             return -1
+
+        return compound.BoundingBox().DiagonalLength
 
     def cutEach(self, fcn, useLocalCoords=False, clean=True):
         """
