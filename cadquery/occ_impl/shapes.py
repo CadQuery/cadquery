@@ -1952,7 +1952,7 @@ class Compound(Shape, Mixin3D):
 
         builder = Font_BRepTextBuilder()
         text_flat = Shape(
-            builder.Perform(font.FontPath(font_kind).ToCString(), size, font_kind, text)
+            builder.Perform(font.FontName().ToCString(), size, font_kind, text)
         )
 
         bb = text_flat.BoundingBox()
