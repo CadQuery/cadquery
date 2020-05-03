@@ -3420,6 +3420,27 @@ class Workplane(CQ):
             newS = newS.clean()
         return newS
 
+    def section(self, height=0.0):
+        """
+        Slices current solid at the given height.
+        
+        :param float height: height to slice at (default: 0)
+        :return: a CQ object with the resulting face(s).
+        """
+
+        solidRef = self.findSolid(searchStack=True, searchParents=True)
+
+        if solidRef is None:
+            raise ValueError("Cannot find solid to cut from")
+
+        plane = Face.makePlane(
+            basePnt=self.plane.origin + self.plane.zDir * height, dir=self.plane.zDir
+        )
+
+        r = solidRef.intersect(plane)
+
+        return self.newObject([r])
+
     def _repr_html_(self):
         """
         Special method for rendering current object in a jupyter notebook
