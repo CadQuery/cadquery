@@ -3431,7 +3431,7 @@ class Workplane(CQ):
         solidRef = self.findSolid(searchStack=True, searchParents=True)
 
         if solidRef is None:
-            raise ValueError("Cannot find solid to cut from")
+            raise ValueError("Cannot find solid to slice")
 
         plane = Face.makePlane(
             basePnt=self.plane.origin + self.plane.zDir * height, dir=self.plane.zDir
