@@ -3395,3 +3395,18 @@ class TestCadQuery(BaseTest):
         obj = Workplane("XY").newObject(list_of_shapes).cut(shape_to_cut)
 
         assert obj.val().isValid()
+
+    def testSection(self):
+
+        box = Workplane("XY", origin=(1, 2, 3)).box(1, 1, 1)
+
+        s1 = box.section()
+        s2 = box.section(0.5)
+
+        self.assertAlmostEqual(s1.faces().val().Area(), 1)
+        self.assertAlmostEqual(s2.faces().val().Area(), 1)
+
+        line = Workplane("XY").hLine(1)
+
+        with self.assertRaises(ValueError):
+            line.section()
