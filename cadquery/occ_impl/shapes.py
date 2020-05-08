@@ -1193,17 +1193,20 @@ class Face(Shape):
         return cls.cast(face).fix()
 
     @classmethod
-    def makePlane(cls, length, width, basePnt=(0, 0, 0), dir=(0, 0, 1)):
+    def makePlane(cls, length=None, width=None, basePnt=(0, 0, 0), dir=(0, 0, 1)):
         basePnt = Vector(basePnt)
         dir = Vector(dir)
 
         pln_geom = gp_Pln(basePnt.toPnt(), dir.toDir())
 
-        return cls(
-            BRepBuilderAPI_MakeFace(
+        if length and width:
+            pln_shape = BRepBuilderAPI_MakeFace(
                 pln_geom, -width * 0.5, width * 0.5, -length * 0.5, length * 0.5
             ).Face()
-        )
+        else:
+            pln_shape = BRepBuilderAPI_MakeFace(pln_geom).Face()
+
+        return cls(pln_shape)
 
     @classmethod
     def makeRuledSurface(cls, edgeOrWire1, edgeOrWire2, dist=None):
