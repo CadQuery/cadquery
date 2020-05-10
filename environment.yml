@@ -4,7 +4,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.6
+  - python>=3.7
   - ocp
   - pyparsing
   - sphinx
@@ -13,6 +13,7 @@ dependencies:
   - codecov
   - pytest
   - pytest-cov
+  - ezdxf
   - pip
   - pip:
     - "--editable=."
