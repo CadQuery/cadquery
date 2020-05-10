@@ -93,7 +93,7 @@ def _dxf_polyline(el):
 
 DXF_CONVERTERS = {
     'LINE'       : _dxf_line,
-    'CIRCLE'     : _dxf_arc,
+    'CIRCLE'     : _dxf_circle,
     'ARC'        : _dxf_arc,
     'POLYLINE'   : _dxf_polyline,
     'LWPOLYLINE' : _dxf_polyline
