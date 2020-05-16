@@ -454,7 +454,7 @@ class Shape(object):
 
         while explorer.More():
             item = explorer.Current()
-            out[item.__hash__()] = item  # some implementations use __hash__
+            out[item.HashCode(HASH_CODE_MAX)] = item  # needed to avoid pseudo-duplicate entities
             explorer.Next()
 
         return list(out.values())
