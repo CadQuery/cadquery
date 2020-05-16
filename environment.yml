@@ -5,7 +5,7 @@ channels:
   - defaults
 dependencies:
   - python>=3.6
-  - ipython
+  - ipython=6.5.0
   - ocp
   - pyparsing
   - sphinx
