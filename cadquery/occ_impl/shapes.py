@@ -264,9 +264,9 @@ class Shape(object):
 
         return tr
 
-    def exportStl(self, fileName, precision=1e-5):
+    def exportStl(self, fileName, precision=1e-3, angularPrecision=0.1):
 
-        mesh = BRepMesh_IncrementalMesh(self.wrapped, precision, True)
+        mesh = BRepMesh_IncrementalMesh(self.wrapped, precision, True, angularPrecision)
         mesh.Perform()
 
         writer = StlAPI_Writer()
