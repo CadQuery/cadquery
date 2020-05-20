@@ -7,7 +7,7 @@ dependencies:
   - python>=3.6
   - cadquery::pythonocc-core
   - pyparsing
-  - sphinx
+  - sphinx=2.4
   - sphinx_rtd_theme
   - black
   - codecov
