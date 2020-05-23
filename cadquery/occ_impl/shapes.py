@@ -1219,9 +1219,9 @@ class Face(Shape):
         """
 
         if isinstance(edgeOrWire1, Wire):
-            return cls.cast(BRepFill.Shell_s(edgeOrWire1.wrapped, edgeOrWire1.wrapped))
+            return cls.cast(BRepFill.Shell_s(edgeOrWire1.wrapped, edgeOrWire2.wrapped))
         else:
-            return cls.cast(BRepFill.Face_s(edgeOrWire1.wrapped, edgeOrWire1.wrapped))
+            return cls.cast(BRepFill.Face_s(edgeOrWire1.wrapped, edgeOrWire2.wrapped))
 
     @classmethod
     def makeFromWires(cls, outerWire, innerWires=[]):
