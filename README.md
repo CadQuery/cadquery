@@ -1,4 +1,4 @@
-![CadQuery logo](http://dcowden.github.io/cadquery/_static/cadquery_logo_dark.svg)
+![CadQuery logo](./doc/_static/logo/cadquery_logo_dark.svg)
 # CadQuery
 
 [![Travis Build Status](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)
@@ -14,7 +14,7 @@ CadQuery is an intuitive, easy-to-use Python module for building parametric 3D C
 CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCAD, CadQuery is an open-source, script based, parametric model generator. However, CadQuery stands out in many ways and has several key advantages:
 
 1. The scripts use a standard programming language, Python, and thus can benefit from the associated infrastructure. This includes many standard libraries and IDEs.
-2. CadQuery's CAD kernel OpenCascade is much more powerful than CGAL. Features supported natively by OCC include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
+2. CadQuery's CAD kernel Open CASCADE Technology (OCCT) is much more powerful than CGAL. Features supported natively by OCCT include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
 3. Ability to import/export STEP and the ability to begin with a STEP model, created in a CAD package, and then add parametric features. This is possible in OpenSCAD using STL, but STL is a lossy format.
 4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
 5. CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
@@ -28,7 +28,7 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 
 ### Why this fork
 
-The original version of CadQuery was built on the FreeCAD API. This was great because it allowed for fast development and easy cross-platform capability. However, we eventually started reaching the limits of the API for some advanced operations and selectors. This 2.0 version of CadQuery is based on Python-OCC, which is a Python wrapper around the OpenCASCADE kernel. This gives us a great deal more control and flexibility, at the expense of some simplicity and having to handle the cross-platform aspects of deployment ourselves. We believe this is a worthwhile trade-off to allow CadQuery to continue to grow and expand in the future.
+The original version of CadQuery was built on the FreeCAD API. This was great because it allowed for fast development and easy cross-platform capability. However, we eventually started reaching the limits of the API for some advanced operations and selectors. This 2.0 version of CadQuery is based directly on a Python wrapper of the OCCT kernel. This gives us a great deal more control and flexibility, at the expense of some simplicity and having to handle the cross-platform aspects of deployment ourselves. We believe this is a worthwhile trade-off to allow CadQuery to continue to grow and expand in the future.
 
 ## Getting started
 
@@ -41,8 +41,12 @@ The easiest way to install CadQuery and its dependencies is using conda:
 ```
 conda install -c conda-forge -c cadquery cadquery=2
 ```
+Development version can be installed as well:
+```
+conda install -c conda-forge -c cadquery cadquery=master
+```
 
-For those who are interested, the [conda-packages repository](https://github.com/CadQuery/conda-packages) contains build information, packages and modifications for CadQuery's conda channel.
+For those who are interested, the [OCP repository](https://github.com/CadQuery/OCP) contains the current OCCT wrapper used by CQ.
 
 ### CQ-editor GUI
 
