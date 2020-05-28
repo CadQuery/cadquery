@@ -3,14 +3,14 @@ import math
 import sys
 import unittest
 from tests import BaseTest
-from OCC.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp_DZ, gp_XYZ
-from OCC.BRepBuilderAPI import (
+from OCP.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp, gp_XYZ
+from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,
 )
 
-from OCC.Core.GC import GC_MakeCircle
+from OCP.GC import GC_MakeCircle
 
 from cadquery import *
 
@@ -20,12 +20,12 @@ DEG2RAD = 2 * math.pi / 360
 class TestCadObjects(BaseTest):
     def _make_circle(self):
 
-        circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()), 2.0)
+        circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp.DZ_s()), 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(circle).Edge())
 
     def _make_ellipse(self):
 
-        ellipse = gp_Elips(gp_Ax2(gp_Pnt(1, 2, 3), gp_DZ()), 4.0, 2.0)
+        ellipse = gp_Elips(gp_Ax2(gp_Pnt(1, 2, 3), gp.DZ_s()), 4.0, 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(ellipse).Edge())
 
     def testVectorConstructors(self):

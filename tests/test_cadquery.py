@@ -97,9 +97,9 @@ class TestCadQuery(BaseTest):
 
         r = r.toOCC()
 
-        import OCC.Core as OCC
+        import OCP
 
-        self.assertEqual(type(r), OCC.TopoDS.TopoDS_Compound)
+        self.assertEqual(type(r), OCP.TopoDS.TopoDS_Compound)
 
     def testToSVG(self):
         """
@@ -1631,8 +1631,8 @@ class TestCadQuery(BaseTest):
 
         r = Workplane("XY").polyline(points).mirrorX().mirrorY().extrude(1).faces(">Z")
 
-        self.assertEquals(1, r.wires().size())
-        self.assertEquals(32, r.edges().size())
+        self.assertEqual(1, r.wires().size())
+        self.assertEqual(32, r.edges().size())
 
     # TODO: Re-work testIbeam test below now that chaining works
     # TODO: Add toLocalCoords and toWorldCoords tests
@@ -2957,7 +2957,7 @@ class TestCadQuery(BaseTest):
         edge_wire = edge_wire.add(
             Workplane("YZ")
             .workplane()
-            .transformed(offset=Vector(0, 0, -7), rotate=Vector(0, 45, 0))
+            .transformed(offset=Vector(0, 0, -7), rotate=Vector(45, 0, 0))
             .spline([(-7.0, 0.0), (3, -3), (7.0, 0.0)])
         )
         edge_wire = [o.vals()[0] for o in edge_wire.all()]

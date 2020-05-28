@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-from OCC.Core.Visualization import Tesselator
+
+# from OCP.Visualization import Tesselator
 
 import tempfile
 import os
@@ -13,11 +14,11 @@ else:
 from .shapes import Shape, Compound, TOLERANCE
 from .geom import BoundBox
 
-from OCC.Core.gp import gp_Ax2, gp_Pnt, gp_Dir
-from OCC.Core.BRepLib import breplib
-from OCC.Core.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
-from OCC.Core.HLRAlgo import HLRAlgo_Projector
-from OCC.Core.GCPnts import GCPnts_QuasiUniformDeflection
+from OCP.gp import gp_Ax2, gp_Pnt, gp_Dir
+from OCP.BRepLib import BRepLib
+from OCP.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
+from OCP.HLRAlgo import HLRAlgo_Projector
+from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
 try:
     import xml.etree.cElementTree as ET
@@ -61,10 +62,8 @@ def exportShape(shape, exportType, fileLike, tolerance=0.1):
     from ..cq import CQ
 
     def tessellate(shape):
-        tess = Tesselator(shape.wrapped)
-        tess.Compute(compute_edges=True, mesh_quality=tolerance)
 
-        return tess
+        return shape.tessellate(tolerance)
 
     if isinstance(shape, CQ):
         shape = shape.val()
@@ -74,13 +73,11 @@ def exportShape(shape, exportType, fileLike, tolerance=0.1):
         mesher = JsonMesh()
 
         # add vertices
-        for i_vert in range(tess.ObjGetVertexCount()):
-            v = tess.GetVertex(i_vert)
-            mesher.addVertex(*v)
+        for v in tess[0]:
+            mesher.addVertex(v.x, v.y, v.z)
 
         # add triangles
-        for i_tr in range(tess.ObjGetTriangleCount()):
-            t = tess.GetTriangleIndex(i_tr)
+        for t in tess[1]:
             mesher.addTriangleFace(*t)
 
         fileLike.write(mesher.toJson())
@@ -161,20 +158,18 @@ class AmfWriter(object):
         volume = ET.SubElement(mesh, "volume")
 
         # add vertices
-        for i_vert in range(self.tessellation.ObjGetVertexCount()):
-            v = self.tessellation.GetVertex(i_vert)
+        for v in self.tessellation[0]:
             vtx = ET.SubElement(vertices, "vertex")
             coord = ET.SubElement(vtx, "coordinates")
             x = ET.SubElement(coord, "x")
-            x.text = str(v[0])
+            x.text = str(v.x)
             y = ET.SubElement(coord, "y")
-            y.text = str(v[1])
+            y.text = str(v.y)
             z = ET.SubElement(coord, "z")
-            z.text = str(v[2])
+            z.text = str(v.z)
 
         # add triangles
-        for i_tr in range(self.tessellation.ObjGetTriangleCount()):
-            t = self.tessellation.GetTriangleIndex(i_tr)
+        for t in self.tessellation[1]:
             triangle = ET.SubElement(volume, "triangle")
             v1 = ET.SubElement(triangle, "v1")
             v1.text = str(t[0])
@@ -301,32 +296,32 @@ def getSVG(shape, opts=None):
     visible = []
 
     visible_sharp_edges = hlr_shapes.VCompound()
-    if visible_sharp_edges:
+    if not visible_sharp_edges.IsNull():
         visible.append(visible_sharp_edges)
 
     visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
-    if visible_smooth_edges:
+    if not visible_smooth_edges.IsNull():
         visible.append(visible_smooth_edges)
 
     visible_contour_edges = hlr_shapes.OutLineVCompound()
-    if visible_contour_edges:
+    if not visible_contour_edges.IsNull():
         visible.append(visible_contour_edges)
 
     hidden = []
 
     hidden_sharp_edges = hlr_shapes.HCompound()
-    if hidden_sharp_edges:
+    if not hidden_sharp_edges.IsNull():
         hidden.append(hidden_sharp_edges)
 
     hidden_contour_edges = hlr_shapes.OutLineHCompound()
-    if hidden_contour_edges:
+    if not hidden_contour_edges.IsNull():
         hidden.append(hidden_contour_edges)
 
     # Fix the underlying geometry - otherwise we will get segfaults
     for el in visible:
-        breplib.BuildCurves3d(el, TOLERANCE)
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
     for el in hidden:
-        breplib.BuildCurves3d(el, TOLERANCE)
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
 
     # convert to native CQ objects
     visible = list(map(Shape, visible))

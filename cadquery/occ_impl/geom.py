@@ -1,19 +1,9 @@
 import math
 
-from OCC.Core.gp import (
-    gp_Vec,
-    gp_Ax1,
-    gp_Ax3,
-    gp_Pnt,
-    gp_Dir,
-    gp_Trsf,
-    gp_GTrsf,
-    gp,
-    gp_XYZ,
-)
-from OCC.Core.Bnd import Bnd_Box
-from OCC.Core.BRepBndLib import brepbndlib_Add  # brepbndlib_AddOptimal
-from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
+from OCP.Bnd import Bnd_Box
+from OCP.BRepBndLib import BRepBndLib
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
 
 TOL = 1e-2
 
@@ -142,13 +132,13 @@ class Vector(object):
         return self.wrapped.Angle(v.wrapped)
 
     def distanceToLine(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
 
     def projectToLine(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
 
     def distanceToPlane(self):
-        raise NotImplementedError("Have not needed this yet, but FreeCAD supports it!")
+        raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
 
     def projectToPlane(self, plane):
         """
@@ -194,7 +184,7 @@ class Vector(object):
 
     def transform(self, T):
 
-        # to gp_Pnt to obey cq transformation convention (in OCC.Core.vectors do not translate)
+        # to gp_Pnt to obey cq transformation convention (in OCP.vectors do not translate)
         pnt = self.toPnt()
         pnt_t = pnt.Transformed(T.wrapped.Trsf())
 
@@ -258,15 +248,15 @@ class Matrix:
 
     def rotateX(self, angle):
 
-        self._rotate(gp.OX(), angle)
+        self._rotate(gp.OX_s(), angle)
 
     def rotateY(self, angle):
 
-        self._rotate(gp.OY(), angle)
+        self._rotate(gp.OY_s(), angle)
 
     def rotateZ(self, angle):
 
-        self._rotate(gp.OZ(), angle)
+        self._rotate(gp.OZ_s(), angle)
 
     def _rotate(self, direction, angle):
 
@@ -773,7 +763,7 @@ class Plane(object):
 
 
 class BoundBox(object):
-    """A BoundingBox for an object or set of objects. Wraps the OCC.Core.one"""
+    """A BoundingBox for an object or set of objects. Wraps the OCP one"""
 
     def __init__(self, bb):
         self.wrapped = bb
@@ -849,21 +839,22 @@ class BoundBox(object):
         return None
 
     @classmethod
-    def _fromTopoDS(cls, shape, tol=None, optimal=False):
+    def _fromTopoDS(cls, shape, tol=None, optimal=True):
         """
         Constructs a bounding box from a TopoDS_Shape
         """
         tol = TOL if tol is None else tol  # tol = TOL (by default)
         bbox = Bnd_Box()
-        bbox.SetGap(tol)
+
         if optimal:
-            raise NotImplementedError
-            # brepbndlib_AddOptimal(shape, bbox) #this is 'exact' but expensive - not yet wrapped by PythonOCC
+            BRepBndLib.AddOptimal_s(
+                shape, bbox
+            )  # this is 'exact' but expensive - not yet wrapped by PythonOCC
         else:
             mesh = BRepMesh_IncrementalMesh(shape, tol, True)
             mesh.Perform()
             # this is adds +margin but is faster
-            brepbndlib_Add(shape, bbox, True)
+            BRepBndLib.Add_s(shape, bbox, True)
 
         return cls(bbox)
 
