@@ -5,7 +5,8 @@ channels:
   - defaults
 dependencies:
   - python>=3.6
-  - cadquery::pythonocc-core
+  - ipython=6.5.0
+  - ocp
   - pyparsing
   - sphinx=2.4
   - sphinx_rtd_theme
