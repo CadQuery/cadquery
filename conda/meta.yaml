@@ -17,6 +17,7 @@ requirements:
     - python {{ environ.get('PYTHON_VERSION') }}
     - ocp 7.4
     - pyparsing 2.*
+    - ipython 6.5.*
     
 test:
   requires:
