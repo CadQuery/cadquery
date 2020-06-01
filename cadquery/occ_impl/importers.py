@@ -66,81 +66,90 @@ def importStep(fileName):
 
 
 def _dxf_line(el):
-    
+
     try:
-        return (Edge.makeLine(Vector(el.dxf.start.xyz),
-                              Vector(el.dxf.end.xyz)),)
+        return (Edge.makeLine(Vector(el.dxf.start.xyz), Vector(el.dxf.end.xyz)),)
     except Exception:
         return ()
+
 
 def _dxf_circle(el):
-    
+
     try:
-        return (Edge.makeCircle(el.dxf.radius,
-                                Vector(el.dxf.center.xyz)),)
+        return (Edge.makeCircle(el.dxf.radius, Vector(el.dxf.center.xyz)),)
     except Exception:
         return ()
-    
+
+
 def _dxf_arc(el):
-    
+
     try:
-        return (Edge.makeCircle(el.dxf.radius,
-                                Vector(el.dxf.center.xyz),
-                                angle1=el.dxf.start_angle,
-                                angle2=el.dxf.end_angle),)
+        return (
+            Edge.makeCircle(
+                el.dxf.radius,
+                Vector(el.dxf.center.xyz),
+                angle1=el.dxf.start_angle,
+                angle2=el.dxf.end_angle,
+            ),
+        )
     except Exception:
         return ()
-    
+
+
 def _dxf_polyline(el):
-    
+
     rv = (DXF_CONVERTERS[e.dxf.dxftype](e) for e in el.virtual_entities())
-    
+
     return (e[0] for e in rv if e)
 
+
 DXF_CONVERTERS = {
-    'LINE'       : _dxf_line,
-    'CIRCLE'     : _dxf_circle,
-    'ARC'        : _dxf_arc,
-    'POLYLINE'   : _dxf_polyline,
-    'LWPOLYLINE' : _dxf_polyline
-    }
+    "LINE": _dxf_line,
+    "CIRCLE": _dxf_circle,
+    "ARC": _dxf_arc,
+    "POLYLINE": _dxf_polyline,
+    "LWPOLYLINE": _dxf_polyline,
+}
+
 
 def _dxf_convert(elements, tol):
 
-    rv = []   
+    rv = []
     edges = []
-    
+
     for el in elements:
         conv = DXF_CONVERTERS.get(el.dxf.dxftype)
         if conv:
             edges.extend(conv(el))
-    
+
     if edges:
         comp = Compound.makeCompound(edges)
         shape_out = OCP.TopoDS.TopoDS_Shape()
         BOPAlgo_Tools.EdgesToWires_s(comp.wrapped, shape_out)
-        rv =  Shape.cast(shape_out)
-        
+        rv = Shape.cast(shape_out)
+
         edges_in = TopTools_HSequenceOfShape()
         wires_out = TopTools_HSequenceOfShape()
-        
-        for e in edges: edges_in.Append(e.wrapped)
-        ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in,tol,False,wires_out)
-        
+
+        for e in edges:
+            edges_in.Append(e.wrapped)
+        ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
+
         rv = [Shape.cast(el) for el in wires_out]
-        
+
     return rv
 
-def importDXF(filename, tol=1e-6):   
-    
+
+def importDXF(filename, tol=1e-6):
+
     dxf = ezdxf.readfile(filename)
     faces = []
-    
-    for name,layer in dxf.modelspace().groupby(dxfattrib='layer').items():
+
+    for name, layer in dxf.modelspace().groupby(dxfattrib="layer").items():
         res = _dxf_convert(layer, tol)
         if res:
             wire_sets = sortWiresByBuildOrder(res)
             for wire_set in wire_sets:
                 faces.append(Face.makeFromWires(wire_set[0], wire_set[1:]))
-                
-    return cq.Workplane('XY').newObject(faces)
+
+    return cq.Workplane("XY").newObject(faces)

@@ -3440,7 +3440,7 @@ class Workplane(CQ):
         r = solidRef.intersect(plane)
 
         return self.newObject([r])
-    
+
     def toPending(self):
         """
         Adds wires/edges to pendingWires/pendingEdges.
