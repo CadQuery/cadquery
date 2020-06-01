@@ -85,10 +85,16 @@ class TestImporters(BaseTest):
         filename = os.path.join(testdataDir, "gear.dxf")
         
         obj = importers.importDXF(filename)
-        assert( obj.val().isValid() == False )
+        self.assertFalse( obj.val().isValid() )
         
         obj = importers.importDXF(filename, tol=1e-3)
-        assert( obj.val().isValid() == True )
+        self.assertTrue( obj.val().isValid() )
+        self.assertEqual( obj.faces().size(), 1)
+        self.assertEqual( obj.wires().size(), 2)
+        
+        obj = obj.wires().toPending().extrude(1)
+        self.assertTrue( obj.val().isValid() )
+        self.assertEqual( obj.solids().size(), 1)
 
         obj = importers.importShape(importers.ImportTypes.DXF, filename, tol=1e-3)
         assert( obj.val().isValid() == True )
