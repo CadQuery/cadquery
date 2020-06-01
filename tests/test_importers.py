@@ -15,6 +15,7 @@ OUTDIR = tempfile.gettempdir()
 # test data directory
 testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
 
+
 class TestImporters(BaseTest):
     def importBox(self, importType, fileName):
         """
@@ -76,28 +77,29 @@ class TestImporters(BaseTest):
         filename = os.path.join(testdataDir, "red_cube_blue_cylinder.step")
         objs = importers.importShape(importers.ImportTypes.STEP, filename)
         self.assertEqual(2, len(objs.all()))
-        
+
     def testImportDXF(self):
         """
         Test DXF import with various tolerances.
         """
 
         filename = os.path.join(testdataDir, "gear.dxf")
-        
+
         obj = importers.importDXF(filename)
-        self.assertFalse( obj.val().isValid() )
-        
+        self.assertFalse(obj.val().isValid())
+
         obj = importers.importDXF(filename, tol=1e-3)
-        self.assertTrue( obj.val().isValid() )
-        self.assertEqual( obj.faces().size(), 1)
-        self.assertEqual( obj.wires().size(), 2)
-        
+        self.assertTrue(obj.val().isValid())
+        self.assertEqual(obj.faces().size(), 1)
+        self.assertEqual(obj.wires().size(), 2)
+
         obj = obj.wires().toPending().extrude(1)
-        self.assertTrue( obj.val().isValid() )
-        self.assertEqual( obj.solids().size(), 1)
+        self.assertTrue(obj.val().isValid())
+        self.assertEqual(obj.solids().size(), 1)
 
         obj = importers.importShape(importers.ImportTypes.DXF, filename, tol=1e-3)
-        assert( obj.val().isValid() == True )
+        assert obj.val().isValid() == True
+
 
 if __name__ == "__main__":
     import unittest
