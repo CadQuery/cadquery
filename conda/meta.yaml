@@ -18,6 +18,7 @@ requirements:
     - oce 0.18.*
     - pythonocc-core 0.18.2*
     - pyparsing 2.*
+    - ezdxf
     
 test:
   requires:
