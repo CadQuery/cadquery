@@ -13,14 +13,13 @@ from OCP.gp import (
     gp_Circ,
     gp_Trsf,
     gp_Pln,
-    gp_GTrsf,
     gp_Pnt2d,
     gp_Dir2d,
     gp_Elips,
 )
 
 # collection of pints (used for spline construction)
-from OCP.TColgp import TColgp_Array1OfPnt, TColgp_HArray1OfPnt
+from OCP.TColgp import TColgp_HArray1OfPnt
 from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
@@ -29,7 +28,6 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakePolygon,
     BRepBuilderAPI_MakeWire,
     BRepBuilderAPI_Sewing,
-    BRepBuilderAPI_MakeSolid,
     BRepBuilderAPI_Copy,
     BRepBuilderAPI_GTransform,
     BRepBuilderAPI_Transform,
@@ -72,7 +70,7 @@ from OCP.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Fuse, BRepAlgoAPI_Cu
 from OCP.Geom import Geom_ConicalSurface, Geom_CylindricalSurface
 from OCP.Geom2d import Geom2d_Line
 
-from OCP.BRepLib import BRepLib, BRepLib_FuseEdges
+from OCP.BRepLib import BRepLib
 
 from OCP.BRepOffsetAPI import (
     BRepOffsetAPI_ThruSections,
@@ -86,7 +84,7 @@ from OCP.TopTools import TopTools_IndexedDataMapOfShapeListOfShape, TopTools_Lis
 
 from OCP.TopExp import TopExp
 
-from OCP.ShapeFix import ShapeFix_Shape
+from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid
 
 from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
@@ -121,7 +119,6 @@ from OCP.GeomAbs import GeomAbs_C0
 from OCP.GeomAbs import GeomAbs_Intersection
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
-from OCP.ShapeFix import ShapeFix_Wire
 
 from math import pi, sqrt
 from functools import reduce
@@ -264,9 +261,9 @@ class Shape(object):
 
         return tr
 
-    def exportStl(self, fileName, precision=1e-5):
+    def exportStl(self, fileName, precision=1e-3, angularPrecision=0.1):
 
-        mesh = BRepMesh_IncrementalMesh(self.wrapped, precision, True)
+        mesh = BRepMesh_IncrementalMesh(self.wrapped, precision, True, angularPrecision)
         mesh.Perform()
 
         writer = StlAPI_Writer()
@@ -454,7 +451,9 @@ class Shape(object):
 
         while explorer.More():
             item = explorer.Current()
-            out[item.__hash__()] = item  # some implementations use __hash__
+            out[
+                item.HashCode(HASH_CODE_MAX)
+            ] = item  # needed to avoid pseudo-duplicate entities
             explorer.Next()
 
         return list(out.values())
@@ -1193,17 +1192,20 @@ class Face(Shape):
         return cls.cast(face).fix()
 
     @classmethod
-    def makePlane(cls, length, width, basePnt=(0, 0, 0), dir=(0, 0, 1)):
+    def makePlane(cls, length=None, width=None, basePnt=(0, 0, 0), dir=(0, 0, 1)):
         basePnt = Vector(basePnt)
         dir = Vector(dir)
 
         pln_geom = gp_Pln(basePnt.toPnt(), dir.toDir())
 
-        return cls(
-            BRepBuilderAPI_MakeFace(
+        if length and width:
+            pln_shape = BRepBuilderAPI_MakeFace(
                 pln_geom, -width * 0.5, width * 0.5, -length * 0.5, length * 0.5
             ).Face()
-        )
+        else:
+            pln_shape = BRepBuilderAPI_MakeFace(pln_geom).Face()
+
+        return cls(pln_shape)
 
     @classmethod
     def makeRuledSurface(cls, edgeOrWire1, edgeOrWire2, dist=None):
@@ -1214,9 +1216,9 @@ class Face(Shape):
         """
 
         if isinstance(edgeOrWire1, Wire):
-            return cls.cast(BRepFill.Shell_s(edgeOrWire1.wrapped, edgeOrWire1.wrapped))
+            return cls.cast(BRepFill.Shell_s(edgeOrWire1.wrapped, edgeOrWire2.wrapped))
         else:
-            return cls.cast(BRepFill.Face_s(edgeOrWire1.wrapped, edgeOrWire1.wrapped))
+            return cls.cast(BRepFill.Face_s(edgeOrWire1.wrapped, edgeOrWire2.wrapped))
 
     @classmethod
     def makeFromWires(cls, outerWire, innerWires=[]):
@@ -1506,7 +1508,7 @@ class Solid(Shape, Mixin3D):
     @classmethod
     def makeSolid(cls, shell):
 
-        return cls(BRepBuilderAPI_MakeSolid(shell.wrapped).Solid())
+        return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
 
     @classmethod
     def makeBox(cls, length, width, height, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1)):
