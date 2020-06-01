@@ -2752,7 +2752,7 @@ class TestCadQuery(BaseTest):
         self.assertTrue(shell.isValid())
         self.assertTrue(solid.isValid())
 
-        #self.assertEqual(len(solid.Vertices()), 4) - does not work in OCCT7.4
+        self.assertEqual(len(solid.Vertices()), 4)
         self.assertEqual(len(solid.Faces()), 4)
 
     def testIsInsideSolid(self):
