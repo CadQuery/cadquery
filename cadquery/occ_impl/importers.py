@@ -3,8 +3,12 @@ from .geom import Vector
 from .shapes import Shape, Edge, Face, Compound, sortWiresByBuildOrder
 
 import ezdxf
+
 from OCP.BOPAlgo import BOPAlgo_Tools
 from OCP.STEPControl import STEPControl_Reader
+from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
+from OCP.TopTools import TopTools_HSequenceOfShape
+
 import OCP.IFSelect
 
 
@@ -18,7 +22,7 @@ class UNITS:
     IN = "in"
 
 
-def importShape(importType, fileName):
+def importShape(importType, fileName, *args, **kwargs):
     """
     Imports a file based on the type (STEP, STL, etc)
     :param importType: The type of file that we're importing
@@ -27,7 +31,9 @@ def importShape(importType, fileName):
 
     # Check to see what type of file we're working with
     if importType == ImportTypes.STEP:
-        return importStep(fileName)
+        return importStep(fileName, *args, **kwargs)
+    elif importType == ImportTypes.DXF:
+        return importDXF(fileName, *args, **kwargs)
     else:
         raise RuntimeError("Unsupported import type: {!r}".format(importType))
 
@@ -99,9 +105,9 @@ DXF_CONVERTERS = {
     'LWPOLYLINE' : _dxf_polyline
     }
 
-def _dxf_convert(elements):
+def _dxf_convert(elements, tol):
 
-    rv = None    
+    rv = []   
     edges = []
     
     for el in elements:
@@ -115,17 +121,25 @@ def _dxf_convert(elements):
         BOPAlgo_Tools.EdgesToWires_s(comp.wrapped, shape_out)
         rv =  Shape.cast(shape_out)
         
+        edges_in = TopTools_HSequenceOfShape()
+        wires_out = TopTools_HSequenceOfShape()
+        
+        for e in edges: edges_in.Append(e.wrapped)
+        ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in,tol,False,wires_out)
+        
+        rv = [Shape.cast(el) for el in wires_out]
+        
     return rv
 
-def importDXF(filename):   
+def importDXF(filename, tol=1e-6):   
     
     dxf = ezdxf.readfile(filename)
     faces = []
     
     for name,layer in dxf.modelspace().groupby(dxfattrib='layer').items():
-        res = _dxf_convert(layer)
+        res = _dxf_convert(layer, tol)
         if res:
-            wire_sets = sortWiresByBuildOrder(list(res))
+            wire_sets = sortWiresByBuildOrder(res)
             for wire_set in wire_sets:
                 faces.append(Face.makeFromWires(wire_set[0], wire_set[1:]))
                 
