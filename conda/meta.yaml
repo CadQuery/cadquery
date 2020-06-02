@@ -15,10 +15,10 @@ requirements:
     - setuptools
   run:
     - python {{ environ.get('PYTHON_VERSION') }}
-    - oce 0.18.*
-    - pythonocc-core 0.18.2*
+    - ocp 7.4
     - pyparsing 2.*
     - ezdxf
+    - ipython 6.5.*
     
 test:
   requires:
@@ -29,4 +29,4 @@ test:
     - pytest -v
 
 about:
-  summary: CadQuery fork based on PythonOCC
+  summary: CadQuery - scripted CAD based on OCCT
