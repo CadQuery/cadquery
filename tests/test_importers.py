@@ -98,7 +98,17 @@ class TestImporters(BaseTest):
         self.assertEqual(obj.solids().size(), 1)
 
         obj = importers.importShape(importers.ImportTypes.DXF, filename, tol=1e-3)
-        assert obj.val().isValid() == True
+        self.assertTrue(obj.val().isValid())
+        
+        # additional files to test more DXF entities
+        
+        filename = os.path.join(testdataDir, "MC 12x31.dxf")
+        obj = importers.importDXF(filename)
+        self.assertTrue(obj.val().isValid())
+        
+        filename = os.path.join(testdataDir, "1001.dxf")
+        obj = importers.importDXF(filename)
+        self.assertTrue(obj.val().isValid())
 
 
 if __name__ == "__main__":
