@@ -25,6 +25,7 @@ class UNITS:
 def importShape(importType, fileName, *args, **kwargs):
     """
     Imports a file based on the type (STEP, STL, etc)
+    
     :param importType: The type of file that we're importing
     :param fileName: THe name of the file that we're importing
     """
@@ -41,8 +42,9 @@ def importShape(importType, fileName, *args, **kwargs):
 # Loads a STEP file into a CQ.Workplane object
 def importStep(fileName):
     """
-        Accepts a file name and loads the STEP file into a cadquery shape
-        :param fileName: The path and name of the STEP file to be imported
+    Accepts a file name and loads the STEP file into a cadquery Workplane
+    
+    :param fileName: The path and name of the STEP file to be imported
     """
 
     # Now read and return the shape
@@ -141,6 +143,12 @@ def _dxf_convert(elements, tol):
 
 
 def importDXF(filename, tol=1e-6):
+    """
+    Loads a DXF file into a cadquery Workplane.
+    
+    :param fileName: The path and name of the DXF file to be imported
+    :param tol: The tolerance used for merging edges into wires (default: 1e-6)
+    """
 
     dxf = ezdxf.readfile(filename)
     faces = []
