@@ -8,7 +8,7 @@ dependencies:
   - ipython=6.5.0
   - ocp
   - pyparsing
-  - sphinx
+  - sphinx=2.4
   - sphinx_rtd_theme
   - black
   - codecov
