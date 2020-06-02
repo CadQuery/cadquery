@@ -3441,6 +3441,18 @@ class Workplane(CQ):
 
         return self.newObject([r])
 
+    def toPending(self):
+        """
+        Adds wires/edges to pendingWires/pendingEdges.
+        
+        :return: same CQ object with updated context.
+        """
+
+        self.ctx.pendingWires.extend(el for el in self.objects if isinstance(el, Wire))
+        self.ctx.pendingWires.extend(el for el in self.objects if isinstance(el, Edge))
+
+        return self
+
     def _repr_html_(self):
         """
         Special method for rendering current object in a jupyter notebook
