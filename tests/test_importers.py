@@ -5,8 +5,7 @@
 import tempfile
 import os
 
-from cadquery import *
-from cadquery import importers
+from cadquery import importers, Workplane
 from tests import BaseTest
 
 # where unit test output will be saved
