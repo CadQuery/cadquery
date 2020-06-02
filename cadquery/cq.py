@@ -3445,7 +3445,7 @@ class Workplane(CQ):
         """
         Adds wires/edges to pendingWires/pendingEdges.
         
-        :return: same CQ object wit updated context.
+        :return: same CQ object with updated context.
         """
 
         self.ctx.pendingWires.extend(el for el in self.objects if isinstance(el, Wire))
