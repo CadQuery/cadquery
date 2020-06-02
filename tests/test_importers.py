@@ -5,13 +5,14 @@
 import tempfile
 import os
 
-from cadquery import *
-from cadquery import exporters
-from cadquery import importers
+from cadquery import importers, Workplane
 from tests import BaseTest
 
 # where unit test output will be saved
 OUTDIR = tempfile.gettempdir()
+
+# test data directory
+testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
 
 
 class TestImporters(BaseTest):
@@ -71,10 +72,42 @@ class TestImporters(BaseTest):
         Import a STEP file that contains two objects and ensure that both are
         loaded.
         """
-        testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+
         filename = os.path.join(testdataDir, "red_cube_blue_cylinder.step")
         objs = importers.importShape(importers.ImportTypes.STEP, filename)
         self.assertEqual(2, len(objs.all()))
+
+    def testImportDXF(self):
+        """
+        Test DXF import with various tolerances.
+        """
+
+        filename = os.path.join(testdataDir, "gear.dxf")
+
+        obj = importers.importDXF(filename)
+        self.assertFalse(obj.val().isValid())
+
+        obj = importers.importDXF(filename, tol=1e-3)
+        self.assertTrue(obj.val().isValid())
+        self.assertEqual(obj.faces().size(), 1)
+        self.assertEqual(obj.wires().size(), 2)
+
+        obj = obj.wires().toPending().extrude(1)
+        self.assertTrue(obj.val().isValid())
+        self.assertEqual(obj.solids().size(), 1)
+
+        obj = importers.importShape(importers.ImportTypes.DXF, filename, tol=1e-3)
+        self.assertTrue(obj.val().isValid())
+
+        # additional files to test more DXF entities
+
+        filename = os.path.join(testdataDir, "MC 12x31.dxf")
+        obj = importers.importDXF(filename)
+        self.assertTrue(obj.val().isValid())
+
+        filename = os.path.join(testdataDir, "1001.dxf")
+        obj = importers.importDXF(filename)
+        self.assertTrue(obj.val().isValid())
 
 
 if __name__ == "__main__":
