@@ -120,6 +120,8 @@ from OCP.GeomAbs import GeomAbs_Intersection
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
 
+from OCP.BOPAlgo import BOPAlgo_GlueEnum
+
 from math import pi, sqrt
 from functools import reduce
 import warnings
@@ -608,12 +610,14 @@ class Shape(object):
 
         return self._bool_op((self,), toCut, cut_op)
 
-    def fuse(self, *toFuse):
+    def fuse(self, *toFuse, glue=False):
         """
         Fuse shapes together
         """
 
         fuse_op = BRepAlgoAPI_Fuse()
+        if glue:
+            fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
         # fuse_op.SetFuzzyValue(TOLERANCE)
 
         rv = self._bool_op((self,), toFuse, fuse_op)
@@ -2000,12 +2004,14 @@ class Compound(Shape, Mixin3D):
 
         return self._bool_op(self, toCut, cut_op)
 
-    def fuse(self, *toFuse):
+    def fuse(self, *toFuse, glue=False):
         """
         Fuse shapes together
         """
 
         fuse_op = BRepAlgoAPI_Fuse()
+        if glue:
+            fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
         # fuse_op.SetFuzzyValue(TOLERANCE)
 
         args = tuple(self) + toFuse
