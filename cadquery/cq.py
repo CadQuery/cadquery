@@ -2715,7 +2715,7 @@ class Workplane(CQ):
 
         return self.newObject([s])
 
-    def union(self, toUnion=None, clean=True):
+    def union(self, toUnion=None, clean=True, glue=False):
         """
         Unions all of the items on the stack of toUnion with the current solid.
         If there is no current solid, the items in toUnion are unioned together.
@@ -2723,6 +2723,7 @@ class Workplane(CQ):
         :param toUnion:
         :type toUnion: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param boolean glue: use a faster gluing mode for non-overlapping shapes
         :raises: ValueError if there is no solid to add to in the chain
         :return: a CQ object with the resulting object selected
         """
@@ -2743,9 +2744,9 @@ class Workplane(CQ):
         # look for parents to cut from
         solidRef = self.findSolid(searchStack=True, searchParents=True)
         if solidRef is not None:
-            r = solidRef.fuse(*newS)
+            r = solidRef.fuse(*newS, glue=glue)
         elif len(newS) > 1:
-            r = newS.pop(0).fuse(*newS)
+            r = newS.pop(0).fuse(*newS, glue=glue)
         else:
             r = newS[0]
 
