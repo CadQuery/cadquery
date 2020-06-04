@@ -3410,3 +3410,16 @@ class TestCadQuery(BaseTest):
 
         with self.assertRaises(ValueError):
             line.section()
+
+    def testGlue(self):
+
+        box1 = Workplane("XY").rect(1, 1).extrude(2)
+        box2 = Workplane("XY", origin=(0, 1, 0)).rect(1, 1).extrude(1)
+        res = box1.union(box2, glue=True)
+
+        self.assertEqual(res.faces().size(), 8)
+
+        obj = Workplane("XY").pushPoints([(0, 0), (0, 2)]).rect(1, 1).extrude(2)
+        res = obj.union(box2, glue=True)
+
+        self.assertEqual(res.faces().size(), 10)
