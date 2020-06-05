@@ -2715,7 +2715,7 @@ class Workplane(CQ):
 
         return self.newObject([s])
 
-    def union(self, toUnion=None, clean=True, glue=False):
+    def union(self, toUnion=None, clean=True, glue=False, tol=None):
         """
         Unions all of the items on the stack of toUnion with the current solid.
         If there is no current solid, the items in toUnion are unioned together.
@@ -2744,9 +2744,9 @@ class Workplane(CQ):
         # look for parents to cut from
         solidRef = self.findSolid(searchStack=True, searchParents=True)
         if solidRef is not None:
-            r = solidRef.fuse(*newS, glue=glue)
+            r = solidRef.fuse(*newS, glue=glue, tol=tol)
         elif len(newS) > 1:
-            r = newS.pop(0).fuse(*newS, glue=glue)
+            r = newS.pop(0).fuse(*newS, glue=glue, tol=tol)
         else:
             r = newS[0]
 

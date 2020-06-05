@@ -610,7 +610,7 @@ class Shape(object):
 
         return self._bool_op((self,), toCut, cut_op)
 
-    def fuse(self, *toFuse, glue=False):
+    def fuse(self, *toFuse, glue=False, tol=None):
         """
         Fuse shapes together
         """
@@ -618,7 +618,8 @@ class Shape(object):
         fuse_op = BRepAlgoAPI_Fuse()
         if glue:
             fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
-        # fuse_op.SetFuzzyValue(TOLERANCE)
+        if tol:
+            fuse_op.SetFuzzyValue(tol)
 
         rv = self._bool_op((self,), toFuse, fuse_op)
 
@@ -2004,7 +2005,7 @@ class Compound(Shape, Mixin3D):
 
         return self._bool_op(self, toCut, cut_op)
 
-    def fuse(self, *toFuse, glue=False):
+    def fuse(self, *toFuse, glue=False, tol=None):
         """
         Fuse shapes together
         """
@@ -2012,7 +2013,8 @@ class Compound(Shape, Mixin3D):
         fuse_op = BRepAlgoAPI_Fuse()
         if glue:
             fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
-        # fuse_op.SetFuzzyValue(TOLERANCE)
+        if tol:
+            fuse_op.SetFuzzyValue(tol)
 
         args = tuple(self) + toFuse
 
