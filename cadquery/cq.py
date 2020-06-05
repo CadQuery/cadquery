@@ -2722,8 +2722,9 @@ class Workplane(CQ):
         
         :param toUnion:
         :type toUnion: a solid object, or a CQ object having a solid,
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param boolean glue: use a faster gluing mode for non-overlapping shapes
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape (default True)
+        :param boolean glue: use a faster gluing mode for non-overlapping shapes (default False)
+        :param float tol: tolerance value for fuzzy bool operation mode (default None)
         :raises: ValueError if there is no solid to add to in the chain
         :return: a CQ object with the resulting object selected
         """
