@@ -3425,3 +3425,19 @@ class TestCadQuery(BaseTest):
         res = obj.union(box2, glue=True)
 
         self.assertEqual(res.faces().size(), 10)
+
+    def testFuzzyBoolOp(self):
+
+        eps = 1e-3
+
+        box1 = Workplane("XY").box(1, 1, 1)
+        box2 = Workplane("XY", origin=(1 + eps, 0.0)).box(1, 1, 1)
+        box3 = Workplane("XY", origin=(2, 0, 0)).box(1, 1, 1)
+
+        res = box1.union(box2)
+        res_fuzzy = box1.union(box2, tol=eps)
+        res_fuzzy2 = box1.union(box3).union(box2, tol=eps)
+
+        self.assertEqual(res.solids().size(), 2)
+        self.assertEqual(res_fuzzy.solids().size(), 1)
+        self.assertEqual(res_fuzzy2.solids().size(), 1)
