@@ -3419,7 +3419,9 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(res.faces().size(), 8)
 
-        obj = Workplane("XY").pushPoints([(0, 0), (0, 2)]).rect(1, 1).extrude(2)
+        obj = obj = (
+            Workplane("XY").rect(1, 1).extrude(2).moveTo(0, 2).rect(1, 1).extrude(2)
+        )
         res = obj.union(box2, glue=True)
 
         self.assertEqual(res.faces().size(), 10)
