@@ -41,6 +41,7 @@ matrix:
     os: linux
     script:
     - black . --diff --check
+    - pip install mypy
     - mypy cadquery
 
 before_install:
