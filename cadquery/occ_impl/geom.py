@@ -523,50 +523,6 @@ class Plane(object):
         """
         self.origin = self.toWorldCoords((x, y))
 
-    def isWireInside(self, baseWire, testWire):
-        """Determine if testWire is inside baseWire
-
-        Determine if testWire is inside baseWire, after both wires are projected
-        into the current plane.
-
-        :param baseWire: a reference wire
-        :type baseWire: a FreeCAD wire
-        :param testWire: another wire
-        :type testWire: a FreeCAD wire
-        :return: True if testWire is inside baseWire, otherwise False
-
-        If either wire does not lie in the current plane, it is projected into
-        the plane first.
-
-        *WARNING*:  This method is not 100% reliable. It uses bounding box
-        tests, but needs more work to check for cases when curves are complex.
-
-        Future Enhancements:
-            * Discretizing points along each curve to provide a more reliable
-              test.
-        """
-
-        pass
-
-        """
-        # TODO: also use a set of points along the wire to test as well.
-        # TODO: would it be more efficient to create objects in the local
-        #       coordinate system, and then transform to global
-        #       coordinates upon extrusion?
-
-        tBaseWire = baseWire.transformGeometry(self.fG)
-        tTestWire = testWire.transformGeometry(self.fG)
-
-        # These bounding boxes will have z=0, since we transformed them into the
-        # space of the plane.
-        bb = tBaseWire.BoundingBox()
-        tb = tTestWire.BoundingBox()
-
-        # findOutsideBox actually inspects both ways, here we only want to
-        # know if one is inside the other
-        return bb == BoundBox.findOutsideBox2D(bb, tb)
-        """
-
     def toLocalCoords(self, obj):
         """Project the provided coordinates onto this plane
 
@@ -649,54 +605,6 @@ class Plane(object):
         newZdir = self.zDir.transform(T)
 
         return Plane(self.origin, newXdir, newZdir)
-
-    def rotateShapes(self, listOfShapes, rotationMatrix):
-        """Rotate the listOfShapes by the supplied rotationMatrix
-
-        @param listOfShapes is a list of shape objects
-        @param rotationMatrix is a geom.Matrix object.
-        returns a list of shape objects rotated according to the rotationMatrix.
-        """
-        # Compute rotation matrix (global --> local --> rotate --> global).
-        # rm = self.plane.fG.multiply(matrix).multiply(self.plane.rG)
-        # rm = self.computeTransform(rotationMatrix)
-
-        # There might be a better way, but to do this rotation takes 3 steps:
-        # - transform geometry to local coordinates
-        # - then rotate about x
-        # - then transform back to global coordinates.
-
-        # TODO why is it here?
-
-        raise NotImplementedError
-
-        """
-        resultWires = []
-        for w in listOfShapes:
-            mirrored = w.transformGeometry(rotationMatrix.wrapped)
-
-            # If the first vertex of the second wire is not coincident with the
-            # first or last vertices of the first wire we have to fix the wire
-            # so that it will mirror correctly.
-            if ((mirrored.wrapped.Vertexes[0].X == w.wrapped.Vertexes[0].X and
-                 mirrored.wrapped.Vertexes[0].Y == w.wrapped.Vertexes[0].Y and
-                 mirrored.wrapped.Vertexes[0].Z == w.wrapped.Vertexes[0].Z) or
-                (mirrored.wrapped.Vertexes[0].X == w.wrapped.Vertexes[-1].X and
-                 mirrored.wrapped.Vertexes[0].Y == w.wrapped.Vertexes[-1].Y and
-                 mirrored.wrapped.Vertexes[0].Z == w.wrapped.Vertexes[-1].Z)):
-
-                resultWires.append(mirrored)
-            else:
-                # Make sure that our mirrored edges meet up and are ordered
-                # properly.
-                aEdges = w.wrapped.Edges
-                aEdges.extend(mirrored.wrapped.Edges)
-                comp = FreeCADPart.Compound(aEdges)
-                mirroredWire = comp.connectEdgesToWires(False).Wires[0]
-
-                resultWires.append(cadquery.Shape.cast(mirroredWire))
-
-        return resultWires"""
 
     def mirrorInPlane(self, listOfShapes, axis="X"):
 
