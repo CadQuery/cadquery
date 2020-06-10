@@ -1,7 +1,6 @@
 import math
 
-from typing import overload, Sequence, Union, TypeVar
-from numbers import Real
+from typing import overload, Sequence, Union, TypeVar, Tuple, Type
 
 from OCP.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
 from OCP.Bnd import Bnd_Box
@@ -9,8 +8,6 @@ from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 
 TOL = 1e-2
-
-V = TypeVar('V', bound='Vector') #cf. PEP563
 
 class Vector(object):
     """Create a 3-dimensional vector
@@ -27,18 +24,19 @@ class Vector(object):
             * two float values: x,y
     """
     
+    _wrapped : gp_Vec
     
     @overload
-    def __init__(self, x : Real, y : Real, z : Real) -> None: ...
+    def __init__(self, x : float, y : float, z : float) -> None: ...
     
     @overload
-    def __init__(self, x : Real, y : Real) -> None: ...
+    def __init__(self, x : float, y : float) -> None: ...
     
     @overload
-    def __init__(self, v : V) -> None: ...
+    def __init__(self, v : 'Vector') -> None: ...
     
     @overload
-    def __init__(self, v : Sequence[Real]) -> None: ...
+    def __init__(self, v : Sequence[float]) -> None: ...
     
     @overload
     def __init__(self, v : Union[gp_Vec, gp_Pnt, gp_Dir, gp_XYZ]) -> None: ...
@@ -74,74 +72,73 @@ class Vector(object):
         self._wrapped = fV
 
     @property
-    def x(self):
+    def x(self) -> float:
         return self.wrapped.X()
 
     @x.setter
-    def x(self, value):
+    def x(self, value : float) -> None:
         self.wrapped.SetX(value)
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self.wrapped.Y()
 
     @y.setter
-    def y(self, value):
+    def y(self, value : float) -> None:
         self.wrapped.SetY(value)
 
     @property
-    def z(self):
+    def z(self) -> float:
         return self.wrapped.Z()
 
     @z.setter
-    def z(self, value):
+    def z(self, value : float) -> None:
         self.wrapped.SetZ(value)
 
     @property
-    def Length(self):
+    def Length(self) -> float:
         return self.wrapped.Magnitude()
 
     @property
-    def wrapped(self):
+    def wrapped(self) -> gp_Vec:
         return self._wrapped
 
-    def toTuple(self):
+    def toTuple(self) -> Tuple[float,float,float]:
         return (self.x, self.y, self.z)
 
-    # TODO: is it possible to create a dynamic proxy without all this code?
-    def cross(self, v):
+    def cross(self, v : 'Vector')  -> 'Vector':
         return Vector(self.wrapped.Crossed(v.wrapped))
 
-    def dot(self, v):
+    def dot(self, v : 'Vector') -> float:
         return self.wrapped.Dot(v.wrapped)
 
-    def sub(self, v):
+    def sub(self, v : 'Vector')  -> 'Vector':
         return Vector(self.wrapped.Subtracted(v.wrapped))
 
-    def __sub__(self, v):
+    def __sub__(self, v : 'Vector')  -> 'Vector':
         return self.sub(v)
 
-    def add(self, v):
+    def add(self, v : 'Vector')  -> 'Vector':
         return Vector(self.wrapped.Added(v.wrapped))
 
-    def __add__(self, v):
+    def __add__(self, v : 'Vector')  -> 'Vector':
         return self.add(v)
 
-    def multiply(self, scale):
+    def multiply(self, scale : float)  -> 'Vector':
         """Return a copy multiplied by the provided scalar"""
         return Vector(self.wrapped.Multiplied(scale))
 
-    def __mul__(self, scale):
+    def __mul__(self, scale : float)  -> 'Vector':
         return self.multiply(scale)
 
-    def __truediv__(self, denom):
+    def __truediv__(self, denom : float)  -> 'Vector':
         return self.multiply(1.0 / denom)
 
-    def normalized(self):
+    def normalized(self)  -> 'Vector':
         """Return a normalized version of this vector"""
         return Vector(self.wrapped.Normalized())
 
-    def Center(self):
+    def Center(self)  -> 'Vector':
         """Return the vector itself
 
         The center of myself is myself.
@@ -151,7 +148,7 @@ class Vector(object):
         """
         return self
 
-    def getAngle(self, v):
+    def getAngle(self, v : 'Vector') -> float:
         return self.wrapped.Angle(v.wrapped)
 
     def distanceToLine(self):
@@ -163,7 +160,7 @@ class Vector(object):
     def distanceToPlane(self):
         raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
 
-    def projectToPlane(self, plane):
+    def projectToPlane(self, plane : 'Plane')  -> 'Vector':
         """
         Vector is projected onto the plane provided as input.
 
@@ -176,36 +173,30 @@ class Vector(object):
 
         return self - normal * (((self - base).dot(normal)) / normal.Length ** 2)
 
-    def __neg__(self):
+    def __neg__(self)  -> 'Vector':
         return self * -1
 
-    def __abs__(self):
+    def __abs__(self) -> float:
         return self.Length
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Vector: " + str((self.x, self.y, self.z))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Vector: " + str((self.x, self.y, self.z))
 
-    def __eq__(self, other):
+    def __eq__(self, other : 'Vector') -> bool: # type: ignore[override]
         return self.wrapped.IsEqual(other.wrapped, 0.00001, 0.00001)
 
-    """
-    is not implemented in OCC
-    def __ne__(self, other):
-        return self.wrapped.__ne__(other)
-    """
-
-    def toPnt(self):
+    def toPnt(self) -> gp_Pnt:
 
         return gp_Pnt(self.wrapped.XYZ())
 
-    def toDir(self):
+    def toDir(self) -> gp_Dir:
 
         return gp_Dir(self.wrapped.XYZ())
 
-    def transform(self, T):
+    def transform(self, T : 'Matrix')  -> 'Vector':
 
         # to gp_Pnt to obey cq transformation convention (in OCP.vectors do not translate)
         pnt = self.toPnt()
@@ -232,6 +223,17 @@ class Matrix:
     since this is a transform matrix.
     """
 
+    wrapped : gp_GTrsf
+    
+    @overload
+    def __init__(self) -> None: ...
+    
+    @overload
+    def __init__(self, matrix : Union[gp_GTrsf,gp_Trsf]) -> None: ...
+    
+    @overload
+    def __init__(self, matrix : Sequence[Sequence[float]]) -> None: ...
+    
     def __init__(self, matrix=None):
 
         if matrix is None:
@@ -269,29 +271,35 @@ class Matrix:
         else:
             raise TypeError("Invalid param to matrix constructor: {}".format(matrix))
 
-    def rotateX(self, angle):
+    def rotateX(self, angle : float):
 
         self._rotate(gp.OX_s(), angle)
 
-    def rotateY(self, angle):
+    def rotateY(self, angle : float):
 
         self._rotate(gp.OY_s(), angle)
 
-    def rotateZ(self, angle):
+    def rotateZ(self, angle : float):
 
         self._rotate(gp.OZ_s(), angle)
 
-    def _rotate(self, direction, angle):
+    def _rotate(self, direction : gp_Ax1, angle : float):
 
         new = gp_Trsf()
         new.SetRotation(direction, angle)
 
         self.wrapped = self.wrapped * gp_GTrsf(new)
 
-    def inverse(self):
+    def inverse(self) -> 'Matrix':
 
         return Matrix(self.wrapped.Inverted())
 
+    @overload
+    def multiply(self, other : Vector) -> Vector: ...
+
+    @overload
+    def multiply(self, other : 'Matrix') -> 'Matrix': ...
+    
     def multiply(self, other):
 
         if isinstance(other, Vector):
@@ -299,7 +307,7 @@ class Matrix:
 
         return Matrix(self.wrapped.Multiplied(other.wrapped))
 
-    def transposed_list(self):
+    def transposed_list(self) -> Sequence[float]:
         """Needed by the cqparts gltf exporter
         """
 
@@ -310,7 +318,7 @@ class Matrix:
 
         return [data[j][i] for i in range(4) for j in range(4)]
 
-    def __getitem__(self, rc):
+    def __getitem__(self, rc : Tuple[int,int]) -> float:
         """Provide Matrix[r, c] syntax for accessing individual values. The row
         and column parameters start at zero, which is consistent with most
         python libraries, but is counter to gp_GTrsf(), which is 1-indexed.
@@ -327,7 +335,6 @@ class Matrix:
                 return [0.0, 0.0, 0.0, 1.0][c]
         else:
             raise IndexError("Out of bounds access into 4x4 matrix: {!r}".format(rc))
-
 
 class Plane(object):
     """A 2D coordinate system in space
@@ -347,7 +354,7 @@ class Plane(object):
     _eq_tolerance_dot = 1e-6
 
     @classmethod
-    def named(cls, stdName, origin=(0, 0, 0)):
+    def named(cls : Type['Plane'], stdName : str, origin=(0, 0, 0)) -> 'Plane':
         """Create a predefined Plane based on the conventional names.
 
         :param stdName: one of (XY|YZ|ZX|XZ|YX|ZY|front|back|left|right|top|bottom)
@@ -515,8 +522,6 @@ class Plane(object):
     def origin(self):
         return self._origin
 
-    # TODO is this property rly needed -- why not handle this in the constructor
-
     @origin.setter
     def origin(self, value):
         self._origin = Vector(value)
@@ -665,7 +670,7 @@ class Plane(object):
         coordinates.
         """
         # r is the forward transformation matrix from world to local coordinates
-        # ok i will be really honest, i cannot understand exactly why this works
+        # ok i will be floatly honest, i cannot understand exactly why this works
         # something bout the order of the translation and the rotation.
         # the double-inverting is strange, and I don't understand it.
         forward = Matrix()
@@ -687,7 +692,6 @@ class Plane(object):
         inverseT.SetTransformation(local_coord_system, global_coord_system)
         inverse.wrapped = gp_GTrsf(inverseT)
 
-        # TODO verify if this is OK
         self.lcs = local_coord_system
         self.rG = inverse
         self.fG = forward
