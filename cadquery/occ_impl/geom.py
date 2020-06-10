@@ -1,5 +1,8 @@
 import math
 
+from typing import overload, Sequence, Union, TypeVar
+from numbers import Real
+
 from OCP.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
@@ -7,6 +10,7 @@ from OCP.BRepMesh import BRepMesh_IncrementalMesh
 
 TOL = 1e-2
 
+V = TypeVar('V', bound='Vector') #cf. PEP563
 
 class Vector(object):
     """Create a 3-dimensional vector
@@ -22,6 +26,25 @@ class Vector(object):
             * three float values: x, y, and z
             * two float values: x,y
     """
+    
+    
+    @overload
+    def __init__(self, x : Real, y : Real, z : Real) -> None: ...
+    
+    @overload
+    def __init__(self, x : Real, y : Real) -> None: ...
+    
+    @overload
+    def __init__(self, v : V) -> None: ...
+    
+    @overload
+    def __init__(self, v : Sequence[Real]) -> None: ...
+    
+    @overload
+    def __init__(self, v : Union[gp_Vec, gp_Pnt, gp_Dir, gp_XYZ]) -> None: ...
+    
+    @overload
+    def __init__(self) -> None: ...
 
     def __init__(self, *args):
         if len(args) == 3:
