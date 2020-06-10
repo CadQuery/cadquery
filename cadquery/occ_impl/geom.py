@@ -683,7 +683,7 @@ class Plane(object):
         coordinates.
         """
         # r is the forward transformation matrix from world to local coordinates
-        # ok i will be floatly honest, i cannot understand exactly why this works
+        # ok i will be really honest, i cannot understand exactly why this works
         # something bout the order of the translation and the rotation.
         # the double-inverting is strange, and I don't understand it.
         forward = Matrix()
