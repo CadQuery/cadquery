@@ -41,8 +41,7 @@ matrix:
     os: linux
     script:
     - black . --diff --check
-    - which mypy
-    - python -m mypy cadquery
+    - mypy cadquery
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
