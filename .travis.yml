@@ -41,7 +41,7 @@ matrix:
     os: linux
     script:
     - black . --diff --check
-    - pip install mypy git+https://github.com/CadQuery/OCP-stubs.git
+    - conda install -q -y -c cadquery -c conda-forge ocp && pip install mypy git+https://github.com/CadQuery/OCP-stubs.git
     - mypy cadquery
 
 before_install:
