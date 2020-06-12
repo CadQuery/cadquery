@@ -1,11 +1,12 @@
 import math
 
-from typing import overload, Sequence, Union, TypeVar, Tuple, Type
+from typing import overload, Sequence, Union, Tuple, Type, Optional
 
 from OCP.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.TopoDS import TopoDS_Shape
 
 TOL = 1e-2
 
@@ -713,7 +714,21 @@ class Plane(object):
 class BoundBox(object):
     """A BoundingBox for an object or set of objects. Wraps the OCP one"""
 
-    def __init__(self, bb):
+    wrapped: Bnd_Box
+
+    xmin: float
+    xmax: float
+    xlen: float
+
+    ymin: float
+    ymax: float
+    ylen: float
+
+    zmin: float
+    zmax: float
+    zlen: float
+
+    def __init__(self, bb: Bnd_Box) -> None:
         self.wrapped = bb
         XMin, YMin, ZMin, XMax, YMax, ZMax = bb.Get()
 
@@ -731,7 +746,11 @@ class BoundBox(object):
 
         self.DiagonalLength = self.wrapped.SquareExtent() ** 0.5
 
-    def add(self, obj, tol=1e-8):
+    def add(
+        self,
+        obj: Union[Tuple[float, float, float], Vector, "BoundBox"],
+        tol: float = 1e-8,
+    ) -> "BoundBox":
         """Returns a modified (expanded) bounding box
 
         obj can be one of several things:
@@ -757,7 +776,7 @@ class BoundBox(object):
         return BoundBox(tmp)
 
     @staticmethod
-    def findOutsideBox2D(bb1, bb2):
+    def findOutsideBox2D(bb1: "BoundBox", bb2: "BoundBox") -> Optional["BoundBox"]:
         """Compares bounding boxes
 
         Compares bounding boxes. Returns none if neither is inside the other.
@@ -769,25 +788,30 @@ class BoundBox(object):
         """
 
         if (
-            bb1.XMin < bb2.XMin
-            and bb1.XMax > bb2.XMax
-            and bb1.YMin < bb2.YMin
-            and bb1.YMax > bb2.YMax
+            bb1.xmin < bb2.xmin
+            and bb1.xmax > bb2.xmax
+            and bb1.ymin < bb2.ymin
+            and bb1.ymax > bb2.ymax
         ):
             return bb1
 
         if (
-            bb2.XMin < bb1.XMin
-            and bb2.XMax > bb1.XMax
-            and bb2.YMin < bb1.YMin
-            and bb2.YMax > bb1.YMax
+            bb2.xmin < bb1.xmin
+            and bb2.xmax > bb1.xmax
+            and bb2.ymin < bb1.ymin
+            and bb2.ymax > bb1.ymax
         ):
             return bb2
 
         return None
 
     @classmethod
-    def _fromTopoDS(cls, shape, tol=None, optimal=True):
+    def _fromTopoDS(
+        cls: Type["BoundBox"],
+        shape: TopoDS_Shape,
+        tol: Optional[float] = None,
+        optimal: bool = True,
+    ):
         """
         Constructs a bounding box from a TopoDS_Shape
         """
@@ -806,7 +830,7 @@ class BoundBox(object):
 
         return cls(bbox)
 
-    def isInside(self, b2):
+    def isInside(self, b2: "BoundBox") -> bool:
         """Is the provided bounding box inside this one?"""
         if (
             b2.xmin > self.xmin
