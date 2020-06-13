@@ -362,16 +362,15 @@ class Plane(object):
     Frequently, it is not necessary to create work planes, as they can be
     created automatically from faces.
     """
-    
+
     xDir: Vector
     yDir: Vector
     zDir: Vector
     _origin: Vector
-    
+
     lcs: gp_Ax3
     rG: Matrix
     fG: Matrix
-
 
     # equality tolerances
     _eq_tolerance_origin = 1e-6
