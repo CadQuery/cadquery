@@ -1,9 +1,12 @@
 import math
 
+from typing import overload, Sequence, Union, Tuple, Type, Optional
+
 from OCP.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.TopoDS import TopoDS_Shape
 
 TOL = 1e-2
 
@@ -22,6 +25,32 @@ class Vector(object):
             * three float values: x, y, and z
             * two float values: x,y
     """
+
+    _wrapped: gp_Vec
+
+    @overload
+    def __init__(self, x: float, y: float, z: float) -> None:
+        ...
+
+    @overload
+    def __init__(self, x: float, y: float) -> None:
+        ...
+
+    @overload
+    def __init__(self, v: "Vector") -> None:
+        ...
+
+    @overload
+    def __init__(self, v: Sequence[float]) -> None:
+        ...
+
+    @overload
+    def __init__(self, v: Union[gp_Vec, gp_Pnt, gp_Dir, gp_XYZ]) -> None:
+        ...
+
+    @overload
+    def __init__(self) -> None:
+        ...
 
     def __init__(self, *args):
         if len(args) == 3:
@@ -51,74 +80,73 @@ class Vector(object):
         self._wrapped = fV
 
     @property
-    def x(self):
+    def x(self) -> float:
         return self.wrapped.X()
 
     @x.setter
-    def x(self, value):
+    def x(self, value: float) -> None:
         self.wrapped.SetX(value)
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self.wrapped.Y()
 
     @y.setter
-    def y(self, value):
+    def y(self, value: float) -> None:
         self.wrapped.SetY(value)
 
     @property
-    def z(self):
+    def z(self) -> float:
         return self.wrapped.Z()
 
     @z.setter
-    def z(self, value):
+    def z(self, value: float) -> None:
         self.wrapped.SetZ(value)
 
     @property
-    def Length(self):
+    def Length(self) -> float:
         return self.wrapped.Magnitude()
 
     @property
-    def wrapped(self):
+    def wrapped(self) -> gp_Vec:
         return self._wrapped
 
-    def toTuple(self):
+    def toTuple(self) -> Tuple[float, float, float]:
         return (self.x, self.y, self.z)
 
-    # TODO: is it possible to create a dynamic proxy without all this code?
-    def cross(self, v):
+    def cross(self, v: "Vector") -> "Vector":
         return Vector(self.wrapped.Crossed(v.wrapped))
 
-    def dot(self, v):
+    def dot(self, v: "Vector") -> float:
         return self.wrapped.Dot(v.wrapped)
 
-    def sub(self, v):
+    def sub(self, v: "Vector") -> "Vector":
         return Vector(self.wrapped.Subtracted(v.wrapped))
 
-    def __sub__(self, v):
+    def __sub__(self, v: "Vector") -> "Vector":
         return self.sub(v)
 
-    def add(self, v):
+    def add(self, v: "Vector") -> "Vector":
         return Vector(self.wrapped.Added(v.wrapped))
 
-    def __add__(self, v):
+    def __add__(self, v: "Vector") -> "Vector":
         return self.add(v)
 
-    def multiply(self, scale):
+    def multiply(self, scale: float) -> "Vector":
         """Return a copy multiplied by the provided scalar"""
         return Vector(self.wrapped.Multiplied(scale))
 
-    def __mul__(self, scale):
+    def __mul__(self, scale: float) -> "Vector":
         return self.multiply(scale)
 
-    def __truediv__(self, denom):
+    def __truediv__(self, denom: float) -> "Vector":
         return self.multiply(1.0 / denom)
 
-    def normalized(self):
+    def normalized(self) -> "Vector":
         """Return a normalized version of this vector"""
         return Vector(self.wrapped.Normalized())
 
-    def Center(self):
+    def Center(self) -> "Vector":
         """Return the vector itself
 
         The center of myself is myself.
@@ -128,7 +156,7 @@ class Vector(object):
         """
         return self
 
-    def getAngle(self, v):
+    def getAngle(self, v: "Vector") -> float:
         return self.wrapped.Angle(v.wrapped)
 
     def distanceToLine(self):
@@ -140,7 +168,7 @@ class Vector(object):
     def distanceToPlane(self):
         raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
 
-    def projectToPlane(self, plane):
+    def projectToPlane(self, plane: "Plane") -> "Vector":
         """
         Vector is projected onto the plane provided as input.
 
@@ -153,36 +181,30 @@ class Vector(object):
 
         return self - normal * (((self - base).dot(normal)) / normal.Length ** 2)
 
-    def __neg__(self):
+    def __neg__(self) -> "Vector":
         return self * -1
 
-    def __abs__(self):
+    def __abs__(self) -> float:
         return self.Length
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Vector: " + str((self.x, self.y, self.z))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Vector: " + str((self.x, self.y, self.z))
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Vector") -> bool:  # type: ignore[override]
         return self.wrapped.IsEqual(other.wrapped, 0.00001, 0.00001)
 
-    """
-    is not implemented in OCC
-    def __ne__(self, other):
-        return self.wrapped.__ne__(other)
-    """
-
-    def toPnt(self):
+    def toPnt(self) -> gp_Pnt:
 
         return gp_Pnt(self.wrapped.XYZ())
 
-    def toDir(self):
+    def toDir(self) -> gp_Dir:
 
         return gp_Dir(self.wrapped.XYZ())
 
-    def transform(self, T):
+    def transform(self, T: "Matrix") -> "Vector":
 
         # to gp_Pnt to obey cq transformation convention (in OCP.vectors do not translate)
         pnt = self.toPnt()
@@ -208,6 +230,20 @@ class Matrix:
     A fourth row may be given, but it is expected to be: [0.0, 0.0, 0.0, 1.0]
     since this is a transform matrix.
     """
+
+    wrapped: gp_GTrsf
+
+    @overload
+    def __init__(self) -> None:
+        ...
+
+    @overload
+    def __init__(self, matrix: Union[gp_GTrsf, gp_Trsf]) -> None:
+        ...
+
+    @overload
+    def __init__(self, matrix: Sequence[Sequence[float]]) -> None:
+        ...
 
     def __init__(self, matrix=None):
 
@@ -246,28 +282,36 @@ class Matrix:
         else:
             raise TypeError("Invalid param to matrix constructor: {}".format(matrix))
 
-    def rotateX(self, angle):
+    def rotateX(self, angle: float):
 
         self._rotate(gp.OX_s(), angle)
 
-    def rotateY(self, angle):
+    def rotateY(self, angle: float):
 
         self._rotate(gp.OY_s(), angle)
 
-    def rotateZ(self, angle):
+    def rotateZ(self, angle: float):
 
         self._rotate(gp.OZ_s(), angle)
 
-    def _rotate(self, direction, angle):
+    def _rotate(self, direction: gp_Ax1, angle: float):
 
         new = gp_Trsf()
         new.SetRotation(direction, angle)
 
         self.wrapped = self.wrapped * gp_GTrsf(new)
 
-    def inverse(self):
+    def inverse(self) -> "Matrix":
 
         return Matrix(self.wrapped.Inverted())
+
+    @overload
+    def multiply(self, other: Vector) -> Vector:
+        ...
+
+    @overload
+    def multiply(self, other: "Matrix") -> "Matrix":
+        ...
 
     def multiply(self, other):
 
@@ -276,7 +320,7 @@ class Matrix:
 
         return Matrix(self.wrapped.Multiplied(other.wrapped))
 
-    def transposed_list(self):
+    def transposed_list(self) -> Sequence[float]:
         """Needed by the cqparts gltf exporter
         """
 
@@ -287,7 +331,7 @@ class Matrix:
 
         return [data[j][i] for i in range(4) for j in range(4)]
 
-    def __getitem__(self, rc):
+    def __getitem__(self, rc: Tuple[int, int]) -> float:
         """Provide Matrix[r, c] syntax for accessing individual values. The row
         and column parameters start at zero, which is consistent with most
         python libraries, but is counter to gp_GTrsf(), which is 1-indexed.
@@ -319,12 +363,21 @@ class Plane(object):
     created automatically from faces.
     """
 
+    xDir: Vector
+    yDir: Vector
+    zDir: Vector
+    _origin: Vector
+
+    lcs: gp_Ax3
+    rG: Matrix
+    fG: Matrix
+
     # equality tolerances
     _eq_tolerance_origin = 1e-6
     _eq_tolerance_dot = 1e-6
 
     @classmethod
-    def named(cls, stdName, origin=(0, 0, 0)):
+    def named(cls: Type["Plane"], stdName: str, origin=(0, 0, 0)) -> "Plane":
         """Create a predefined Plane based on the conventional names.
 
         :param stdName: one of (XY|YZ|ZX|XZ|YX|ZY|front|back|left|right|top|bottom)
@@ -492,8 +545,6 @@ class Plane(object):
     def origin(self):
         return self._origin
 
-    # TODO is this property rly needed -- why not handle this in the constructor
-
     @origin.setter
     def origin(self, value):
         self._origin = Vector(value)
@@ -522,50 +573,6 @@ class Plane(object):
         plane.
         """
         self.origin = self.toWorldCoords((x, y))
-
-    def isWireInside(self, baseWire, testWire):
-        """Determine if testWire is inside baseWire
-
-        Determine if testWire is inside baseWire, after both wires are projected
-        into the current plane.
-
-        :param baseWire: a reference wire
-        :type baseWire: a FreeCAD wire
-        :param testWire: another wire
-        :type testWire: a FreeCAD wire
-        :return: True if testWire is inside baseWire, otherwise False
-
-        If either wire does not lie in the current plane, it is projected into
-        the plane first.
-
-        *WARNING*:  This method is not 100% reliable. It uses bounding box
-        tests, but needs more work to check for cases when curves are complex.
-
-        Future Enhancements:
-            * Discretizing points along each curve to provide a more reliable
-              test.
-        """
-
-        pass
-
-        """
-        # TODO: also use a set of points along the wire to test as well.
-        # TODO: would it be more efficient to create objects in the local
-        #       coordinate system, and then transform to global
-        #       coordinates upon extrusion?
-
-        tBaseWire = baseWire.transformGeometry(self.fG)
-        tTestWire = testWire.transformGeometry(self.fG)
-
-        # These bounding boxes will have z=0, since we transformed them into the
-        # space of the plane.
-        bb = tBaseWire.BoundingBox()
-        tb = tTestWire.BoundingBox()
-
-        # findOutsideBox actually inspects both ways, here we only want to
-        # know if one is inside the other
-        return bb == BoundBox.findOutsideBox2D(bb, tb)
-        """
 
     def toLocalCoords(self, obj):
         """Project the provided coordinates onto this plane
@@ -650,54 +657,6 @@ class Plane(object):
 
         return Plane(self.origin, newXdir, newZdir)
 
-    def rotateShapes(self, listOfShapes, rotationMatrix):
-        """Rotate the listOfShapes by the supplied rotationMatrix
-
-        @param listOfShapes is a list of shape objects
-        @param rotationMatrix is a geom.Matrix object.
-        returns a list of shape objects rotated according to the rotationMatrix.
-        """
-        # Compute rotation matrix (global --> local --> rotate --> global).
-        # rm = self.plane.fG.multiply(matrix).multiply(self.plane.rG)
-        # rm = self.computeTransform(rotationMatrix)
-
-        # There might be a better way, but to do this rotation takes 3 steps:
-        # - transform geometry to local coordinates
-        # - then rotate about x
-        # - then transform back to global coordinates.
-
-        # TODO why is it here?
-
-        raise NotImplementedError
-
-        """
-        resultWires = []
-        for w in listOfShapes:
-            mirrored = w.transformGeometry(rotationMatrix.wrapped)
-
-            # If the first vertex of the second wire is not coincident with the
-            # first or last vertices of the first wire we have to fix the wire
-            # so that it will mirror correctly.
-            if ((mirrored.wrapped.Vertexes[0].X == w.wrapped.Vertexes[0].X and
-                 mirrored.wrapped.Vertexes[0].Y == w.wrapped.Vertexes[0].Y and
-                 mirrored.wrapped.Vertexes[0].Z == w.wrapped.Vertexes[0].Z) or
-                (mirrored.wrapped.Vertexes[0].X == w.wrapped.Vertexes[-1].X and
-                 mirrored.wrapped.Vertexes[0].Y == w.wrapped.Vertexes[-1].Y and
-                 mirrored.wrapped.Vertexes[0].Z == w.wrapped.Vertexes[-1].Z)):
-
-                resultWires.append(mirrored)
-            else:
-                # Make sure that our mirrored edges meet up and are ordered
-                # properly.
-                aEdges = w.wrapped.Edges
-                aEdges.extend(mirrored.wrapped.Edges)
-                comp = FreeCADPart.Compound(aEdges)
-                mirroredWire = comp.connectEdgesToWires(False).Wires[0]
-
-                resultWires.append(cadquery.Shape.cast(mirroredWire))
-
-        return resultWires"""
-
     def mirrorInPlane(self, listOfShapes, axis="X"):
 
         local_coord_system = gp_Ax3(
@@ -756,7 +715,6 @@ class Plane(object):
         inverseT.SetTransformation(local_coord_system, global_coord_system)
         inverse.wrapped = gp_GTrsf(inverseT)
 
-        # TODO verify if this is OK
         self.lcs = local_coord_system
         self.rG = inverse
         self.fG = forward
@@ -765,7 +723,21 @@ class Plane(object):
 class BoundBox(object):
     """A BoundingBox for an object or set of objects. Wraps the OCP one"""
 
-    def __init__(self, bb):
+    wrapped: Bnd_Box
+
+    xmin: float
+    xmax: float
+    xlen: float
+
+    ymin: float
+    ymax: float
+    ylen: float
+
+    zmin: float
+    zmax: float
+    zlen: float
+
+    def __init__(self, bb: Bnd_Box) -> None:
         self.wrapped = bb
         XMin, YMin, ZMin, XMax, YMax, ZMax = bb.Get()
 
@@ -783,7 +755,11 @@ class BoundBox(object):
 
         self.DiagonalLength = self.wrapped.SquareExtent() ** 0.5
 
-    def add(self, obj, tol=1e-8):
+    def add(
+        self,
+        obj: Union[Tuple[float, float, float], Vector, "BoundBox"],
+        tol: float = 1e-8,
+    ) -> "BoundBox":
         """Returns a modified (expanded) bounding box
 
         obj can be one of several things:
@@ -809,7 +785,7 @@ class BoundBox(object):
         return BoundBox(tmp)
 
     @staticmethod
-    def findOutsideBox2D(bb1, bb2):
+    def findOutsideBox2D(bb1: "BoundBox", bb2: "BoundBox") -> Optional["BoundBox"]:
         """Compares bounding boxes
 
         Compares bounding boxes. Returns none if neither is inside the other.
@@ -821,25 +797,30 @@ class BoundBox(object):
         """
 
         if (
-            bb1.XMin < bb2.XMin
-            and bb1.XMax > bb2.XMax
-            and bb1.YMin < bb2.YMin
-            and bb1.YMax > bb2.YMax
+            bb1.xmin < bb2.xmin
+            and bb1.xmax > bb2.xmax
+            and bb1.ymin < bb2.ymin
+            and bb1.ymax > bb2.ymax
         ):
             return bb1
 
         if (
-            bb2.XMin < bb1.XMin
-            and bb2.XMax > bb1.XMax
-            and bb2.YMin < bb1.YMin
-            and bb2.YMax > bb1.YMax
+            bb2.xmin < bb1.xmin
+            and bb2.xmax > bb1.xmax
+            and bb2.ymin < bb1.ymin
+            and bb2.ymax > bb1.ymax
         ):
             return bb2
 
         return None
 
     @classmethod
-    def _fromTopoDS(cls, shape, tol=None, optimal=True):
+    def _fromTopoDS(
+        cls: Type["BoundBox"],
+        shape: TopoDS_Shape,
+        tol: Optional[float] = None,
+        optimal: bool = True,
+    ):
         """
         Constructs a bounding box from a TopoDS_Shape
         """
@@ -858,7 +839,7 @@ class BoundBox(object):
 
         return cls(bbox)
 
-    def isInside(self, b2):
+    def isInside(self, b2: "BoundBox") -> bool:
         """Is the provided bounding box inside this one?"""
         if (
             b2.xmin > self.xmin

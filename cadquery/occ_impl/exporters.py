@@ -6,10 +6,7 @@ import tempfile
 import os
 import sys
 
-if sys.version_info.major == 2:
-    import cStringIO as StringIO
-else:
-    import io as StringIO
+import io as StringIO
 
 from .shapes import Shape, Compound, TOLERANCE
 from .geom import BoundBox
@@ -20,10 +17,7 @@ from OCP.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
 from OCP.HLRAlgo import HLRAlgo_Projector
 from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
-try:
-    import xml.etree.cElementTree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
+import xml.etree.cElementTree as ET
 
 DISCRETIZATION_TOLERANCE = 1e-3
 DEFAULT_DIR = gp_Dir(-1.75, 1.1, 5)
