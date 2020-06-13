@@ -4,4 +4,4 @@ branch = True
 [report]
 exclude_lines =
     # Ignore stub body
-    ...
+    \.\.\.
