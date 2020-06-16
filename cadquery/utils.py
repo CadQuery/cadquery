@@ -17,9 +17,21 @@ class deprecate_kwarg:
 
             if self.name not in f_sig_bound.kwargs:
                 warn(
-                    f"Default walue of {self.name} will change in next relase to {self.new_value}",
+                    f"Default walue of {self.name} will change in the next relase to {self.new_value}",
                     FutureWarning,
                 )
+
+            return f(*args, **kwargs)
+
+        return wrapped
+
+class deprecate:
+    
+    def __call__(self, f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+
+            warn(f"{f.__name__} will be removed in the next relase.",FutureWarning)
 
             return f(*args, **kwargs)
 
