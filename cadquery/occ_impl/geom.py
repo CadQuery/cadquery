@@ -7,6 +7,7 @@ from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.TopoDS import TopoDS_Shape
+from OCP.TopLoc import TopLoc_Location
 
 TOL = 1e-2
 
@@ -852,3 +853,18 @@ class BoundBox(object):
             return True
         else:
             return False
+        
+class Location(object):
+    """Relative location in 3D space"""
+    
+    
+    wrapped : TopLoc_Location
+    
+
+    def __init__(self, t: Vector, ax: Vector, angle: float) -> None:
+        
+        T = gp_Trsf()
+        T.SetRotation(gp_Ax1(Vector().toPnt(), ax.toDir()), angle)
+        T.SetTranslationPart(t.wrapped)
+        
+        self.wrapped = TopLoc_Location(T)
