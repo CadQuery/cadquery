@@ -210,12 +210,11 @@ class TestCadObjects(BaseTest):
         """
 
         def cylinders(self, radius, height):
-            def _cyl(pnt):
-                # Inner function to build a cylinder
-                return Solid.makeCylinder(radius, height, pnt)
+
+            c = Solid.makeCylinder(radius, height, Vector())
 
             # Combine all the cylinders into a single compound
-            r = self.eachpoint(_cyl, True).combineSolids()
+            r = self.eachpoint(lambda loc: c.located(loc), True).combineSolids()
 
             return r
 
