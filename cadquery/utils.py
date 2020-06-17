@@ -25,13 +25,13 @@ class deprecate_kwarg:
 
         return wrapped
 
+
 class deprecate:
-    
     def __call__(self, f):
         @wraps(f)
         def wrapped(*args, **kwargs):
 
-            warn(f"{f.__name__} will be removed in the next relase.",FutureWarning)
+            warn(f"{f.__name__} will be removed in the next relase.", FutureWarning)
 
             return f(*args, **kwargs)
 
