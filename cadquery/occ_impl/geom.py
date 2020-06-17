@@ -720,6 +720,11 @@ class Plane(object):
         self.rG = inverse
         self.fG = forward
 
+    @property
+    def location(self) -> "Location":
+
+        return Location(self)
+
 
 class BoundBox(object):
     """A BoundingBox for an object or set of objects. Wraps the OCP one"""
@@ -853,18 +858,66 @@ class BoundBox(object):
             return True
         else:
             return False
-        
+
+
 class Location(object):
     """Relative location in 3D space"""
-    
-    
-    wrapped : TopLoc_Location
-    
 
+    wrapped: TopLoc_Location
+
+    @overload
+    def __init__(self, t: Vector) -> None:
+        ...
+
+    @overload
+    def __init__(self, t: Plane) -> None:
+        ...
+
+    @overload
+    def __init__(self, t: Plane, v: Vector) -> None:
+        ...
+
+    @overload
+    def __init__(self, t: TopLoc_Location) -> None:
+        ...
+
+    @overload
     def __init__(self, t: Vector, ax: Vector, angle: float) -> None:
-        
+        ...
+
+    def __init__(self, *args):
+
         T = gp_Trsf()
-        T.SetRotation(gp_Ax1(Vector().toPnt(), ax.toDir()), angle)
-        T.SetTranslationPart(t.wrapped)
-        
+
+        if len(args) == 1:
+            t = args[0]
+
+            if isinstance(t, Vector):
+                T.SetTranslationPart(t.wrapped)
+            elif isinstance(t, Plane):
+                cs = gp_Ax3(t.origin.toPnt(), t.zDir.toDir(), t.xDir.toDir())
+                T.SetTransformation(cs)
+                T.Invert()
+            elif isinstance(t, TopLoc_Location):
+                self.wrapped = t
+                return
+        elif len(args) == 2:
+            t, v = args
+            cs = gp_Ax3(v.toPnt(), t.zDir.toDir(), t.xDir.toDir())
+            T.SetTransformation(cs)
+            T.Invert()
+        else:
+            t, ax, angle = args
+            T.SetRotation(gp_Ax1(Vector().toPnt(), ax.toDir()), angle)
+            T.SetTranslationPart(t.wrapped)
+
         self.wrapped = TopLoc_Location(T)
+
+    @property
+    def inverse(self) -> "Location":
+
+        return Location(self.wrapped.Inverted())
+
+    def __mul__(self, other: "Location") -> "Location":
+
+        return Location(self.wrapped * other.wrapped)
