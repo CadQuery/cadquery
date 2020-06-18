@@ -24,12 +24,12 @@ from typing import (
     Sequence,
     Union,
     Tuple,
-    Type,
     Optional,
     Any,
     Iterable,
     Callable,
     List,
+    cast
 )
 from typing_extensions import Literal
 
@@ -139,7 +139,7 @@ class CQ(object):
         self._tag = name
         return self
 
-    def _collectProperty(self, propName: str) -> Sequence[CQObject]:
+    def _collectProperty(self, propName: str) -> List[CQObject]:
         """
         Collects all of the values for propName,
         for all items on the stack.
@@ -251,7 +251,7 @@ class CQ(object):
 
         return self.newObject([s])
 
-    def all(self) -> Sequence["CQ"]:
+    def all(self) -> List["CQ"]:
         """
         Return a list of all CQ objects on the stack.
 
@@ -269,7 +269,7 @@ class CQ(object):
         """
         return len(self.objects)
 
-    def vals(self) -> Sequence[CQObject]:
+    def vals(self) -> List[CQObject]:
         """
         get the values in the current list
 
@@ -2437,9 +2437,8 @@ class Workplane(CQ):
 
         # will contain all of the counterbores as a single compound
         results = self.eachpoint(fcn, useLocalCoords).vals()
-        s = ctxSolid
-        for cb in results:
-            s = s.cut(cb)
+        
+        s = ctxSolid.cut(*results)
 
         if clean:
             s = s.clean()
@@ -3037,11 +3036,11 @@ class Workplane(CQ):
         # if no faces on the stack take the nearest face parallel to the plane zDir
         if not faceRef:
             # first select all with faces with good orietation
-            sel = selectors.PerpendicularDirSelector(self.plane.zDir)
-            faces = sel.filter(solidRef.Faces())
+            sel1 = selectors.PerpendicularDirSelector(self.plane.zDir)
+            faces = sel1.filter(solidRef.Faces())
             # then select the closest
-            sel = selectors.NearestToPointSelector(self.plane.origin.toTuple())
-            faceRef = sel.filter(faces)[0]
+            sel2 = selectors.NearestToPointSelector(self.plane.origin.toTuple())
+            faceRef = sel2.filter(faces)[0]
 
         rv = []
         for solid in solidRef.Solids():
@@ -3324,7 +3323,7 @@ class Workplane(CQ):
 
         """
 
-        xp, yp, zp = 0, 0, 0
+        (xp, yp, zp) = (0.0, 0.0, 0.0)
         if centered[0]:
             xp -= length / 2.0
         if centered[1]:
@@ -3393,7 +3392,7 @@ class Workplane(CQ):
         if isinstance(direct, tuple):
             direct = Vector(direct)
 
-        (xp, yp, zp) = 0, 0, 0
+        (xp, yp, zp) = (0.0, 0.0, 0.0)
 
         if not centered[0]:
             xp += radius
@@ -3463,7 +3462,7 @@ class Workplane(CQ):
         if isinstance(dir, tuple):
             dir = Vector(dir)
 
-        (xp, yp, zp) = (0, 0, 0)
+        (xp, yp, zp) = (0.0, 0.0, 0.0)
 
         if not centered[0]:
             xp += dx / 2.0
@@ -3506,12 +3505,9 @@ class Workplane(CQ):
         `clean` may fail to produce a clean output in some cases such as
         spherical faces.
         """
-        try:
-            cleanObjects = [obj.clean() for obj in self.objects]
-        except AttributeError:
-            raise AttributeError(
-                "%s object doesn't support `clean()` method!" % obj.ShapeType()
-            )
+        
+        cleanObjects = [cast(Any,obj).clean() if hasattr(obj,'clean') else obj for obj in self.objects]
+        
         return self.newObject(cleanObjects)
 
     def text(
@@ -3603,7 +3599,7 @@ class Workplane(CQ):
         """
 
         self.ctx.pendingWires.extend(el for el in self.objects if isinstance(el, Wire))
-        self.ctx.pendingWires.extend(el for el in self.objects if isinstance(el, Edge))
+        self.ctx.pendingEdges.extend(el for el in self.objects if isinstance(el, Edge))
 
         return self
 
