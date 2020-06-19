@@ -8,13 +8,13 @@ CadQuery Concepts
 3D BREP Topology Concepts
 ---------------------------
 Before talking about CadQuery, it makes sense to talk a little about 3D CAD topology. CadQuery is based upon the
-OpenCascade kernel, which is uses Boundary Representations ( BREP ) for objects.  This just means that objects
+OpenCascade kernel, which uses Boundary Representations ( BREP ) for objects.  This just means that objects
 are defined by their enclosing surfaces.
 
-When working in a BREP system, these fundamental constructs exist to define a shape ( working up the food chain):
+When working in a BREP system, these fundamental constructs exist to define a shape (working up the food chain):
 
    :vertex: a single point in space
-   :edge: a connection between two or more vertices along a particular path ( called a curve )
+   :edge: a connection between two or more vertices along a particular path (called a curve)
    :wire: a collection of edges that are connected together.
    :face: a set of edges or wires that enclose a surface
    :shell: a collection of faces that are connected together along some of their edges
@@ -130,14 +130,14 @@ The Context Solid
 
 Most of the time, you are building a single object, and adding features to that single object.  CadQuery watches
 your operations, and defines the first solid object created as the 'context solid'.  After that, any features
-you create are automatically combined ( unless you specify otherwise) with that solid.  This happens even if the
+you create are automatically combined (unless you specify otherwise) with that solid.  This happens even if the
 solid was created  a long way up in the stack.  For example::
 
     Workplane('XY').box(1,2,3).faces(">Z").circle(0.25).extrude()
 
 Will create a 1x2x3 box, with a cylindrical boss extending from the top face.  It was not necessary to manually
 combine the cylinder created by extruding the circle with the box, because the default behavior for extrude is
-to combine the result with the context solid. The hole() method works similarly-- CadQuery presumes that you want
+to combine the result with the context solid. The hole() method works similarly -- CadQuery presumes that you want
 to subtract the hole from the context solid.
 
 If you want to avoid this, you can specify ``combine=False``, and CadQuery will create the solid separately.
