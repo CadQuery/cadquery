@@ -603,7 +603,7 @@ class Plane(object):
                 )
             )
 
-    def toWorldCoords(self, tuplePoint):
+    def toWorldCoords(self, tuplePoint) -> Vector:
         """Convert a point in local coordinates to global coordinates
 
         :param tuplePoint: point in local coordinates to convert.
