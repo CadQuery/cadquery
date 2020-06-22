@@ -1,20 +1,14 @@
 # system modules
 import math
-import sys
 import unittest
 from tests import BaseTest
 from OCP.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp, gp_XYZ
-from OCP.BRepBuilderAPI import (
-    BRepBuilderAPI_MakeVertex,
-    BRepBuilderAPI_MakeEdge,
-    BRepBuilderAPI_MakeFace,
-)
-
-from OCP.GC import GC_MakeCircle
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 from cadquery import *
 
-DEG2RAD = 2 * math.pi / 360
+DEG2RAD = math.pi / 180
+RAD2DEG = 180 / math.pi
 
 
 class TestCadObjects(BaseTest):
@@ -399,6 +393,20 @@ class TestCadObjects(BaseTest):
             Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 0, 1)),
             Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 1, 1)),
         )
+
+    def testLocation(self):
+
+        # Vector
+        loc1 = Location(Vector(0, 0, 1))
+
+        T = loc1.wrapped.Transformation().TranslationPart()
+        self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 1), 6)
+
+        # rotation + translation
+        loc2 = Location(Vector(0, 0, 1), Vector(0, 0, 1), 45)
+
+        angle = loc2.wrapped.Transformation().GetRotation().GetRotationAngle() * RAD2DEG
+        self.assertAlmostEqual(45, angle)
 
 
 if __name__ == "__main__":
