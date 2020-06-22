@@ -590,6 +590,19 @@ class Shape(object):
 
         return r
 
+    def move(self, loc: Location) -> "Shape":
+
+        self.wrapped.Move(loc.wrapped)
+
+        return self
+
+    def moved(self, loc: Location) -> "Shape":
+
+        r = Shape.cast(self.wrapped.Moved(loc.wrapped))
+        r.forConstruction = self.forConstruction
+
+        return r
+
     def __hash__(self):
         return self.hashCode()
 
