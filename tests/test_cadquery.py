@@ -3438,3 +3438,26 @@ class TestCadQuery(BaseTest):
         self.assertEqual(res.solids().size(), 2)
         self.assertEqual(res_fuzzy.solids().size(), 1)
         self.assertEqual(res_fuzzy2.solids().size(), 1)
+
+    def testLocatedMoved(self):
+
+        box = Solid.makeBox(1, 1, 1, Vector(-0.5, -0.5, -0.5))
+        loc = Location(Vector(1, 1, 1))
+
+        box1 = box.located(loc)
+
+        self.assertTupleAlmostEquals(box1.Center().toTuple(), (1, 1, 1), 6)
+        self.assertTupleAlmostEquals(box.Center().toTuple(), (0, 0, 0), 6)
+
+        box.locate(loc)
+
+        self.assertTupleAlmostEquals(box.Center().toTuple(), (1, 1, 1), 6)
+
+        box2 = box.moved(loc)
+
+        self.assertTupleAlmostEquals(box.Center().toTuple(), (1, 1, 1), 6)
+        self.assertTupleAlmostEquals(box2.Center().toTuple(), (2, 2, 2), 6)
+
+        box.move(loc)
+
+        self.assertTupleAlmostEquals(box.Center().toTuple(), (2, 2, 2), 6)
