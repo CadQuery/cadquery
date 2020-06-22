@@ -10,11 +10,11 @@ used, but all objects types can be filtered.
 String selectors are simply shortcuts for using the full object equivalents. If you pass one of the
 string patterns in, CadQuery will automatically use the associated selector object.
 
-    * :py:meth:`cadquery.CQ.faces`
-    * :py:meth:`cadquery.CQ.edges`
-    * :py:meth:`cadquery.CQ.vertices`
-    * :py:meth:`cadquery.CQ.solids`
-    * :py:meth:`cadquery.CQ.shells`
+    * :py:meth:`cadquery.Workplane.faces`
+    * :py:meth:`cadquery.Workplane.edges`
+    * :py:meth:`cadquery.Workplane.vertices`
+    * :py:meth:`cadquery.Workplane.solids`
+    * :py:meth:`cadquery.Workplane.shells`
 
 .. note::
 
