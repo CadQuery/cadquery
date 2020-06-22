@@ -1475,7 +1475,7 @@ class Workplane(CQ):
 
         Can be used to create arrays of slots, such as in cooling applications:
 
-        result = cq.Workplane("XY").box(10,25,1).rarray(1,2,1,10).slot(8,1,0).cutThruAll()
+        result = cq.Workplane("XY").box(10,25,1).rarray(1,2,1,10).slot2D(8,1,0).cutThruAll()
         """
 
         def _makeslot(pnt):
