@@ -866,6 +866,10 @@ class Location(object):
     wrapped: TopLoc_Location
 
     @overload
+    def __init__(self) -> None:
+        ...
+
+    @overload
     def __init__(self, t: Vector) -> None:
         ...
 
@@ -889,7 +893,9 @@ class Location(object):
 
         T = gp_Trsf()
 
-        if len(args) == 1:
+        if len(args) == 0:
+            pass
+        elif len(args) == 1:
             t = args[0]
 
             if isinstance(t, Vector):
@@ -908,7 +914,7 @@ class Location(object):
             T.Invert()
         else:
             t, ax, angle = args
-            T.SetRotation(gp_Ax1(Vector().toPnt(), ax.toDir()), angle)
+            T.SetRotation(gp_Ax1(Vector().toPnt(), ax.toDir()), angle * math.pi / 180.0)
             T.SetTranslationPart(t.wrapped)
 
         self.wrapped = TopLoc_Location(T)

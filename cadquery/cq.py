@@ -1620,7 +1620,7 @@ class Workplane(object):
         slot = Wire.assembleEdges(edges)
         slot = slot.rotate(Vector(), Vector(0, 0, 1), angle)
 
-        return self.eachpoint(lambda loc: slot.located(loc), True)
+        return self.eachpoint(lambda loc: slot.moved(loc), True)
 
     def spline(
         self,
@@ -2180,23 +2180,23 @@ class Workplane(object):
         # convert stack to a list of points
         pnts = []
         plane = self.plane
+        loc = self.plane.location
+
         if len(self.objects) == 0:
             # nothing on the stack. here, we'll assume we should operate with the
             # origin as the context point
-            pnts.append(plane.location)
+            pnts.append(Location())
         else:
-            pnts.extend(
-                Location(plane, o.Center()) if isinstance(o, (Shape, Vector)) else o
-                for o in self.objects
-            )
+            for o in self.objects:
+                if isinstance(o, (Vector, Shape)):
+                    pnts.append(loc.inverse * Location(plane, o.Center()))
+                else:
+                    pnts.append(o)
 
         if useLocalCoordinates:
-            loc = self.plane.location
-            res = [
-                callback(p * loc.inverse).locate(p * loc.inverse * loc) for p in pnts
-            ]
+            res = [callback(p).move(loc) for p in pnts]
         else:
-            res = [callback(p) for p in pnts]
+            res = [callback(p * loc) for p in pnts]
 
         for r in res:
             if isinstance(r, Wire) and not r.forConstruction:
@@ -2250,7 +2250,7 @@ class Workplane(object):
 
         w = Wire.makePolygon([p1, p2, p3, p4, p1], forConstruction)
 
-        return self.eachpoint(lambda loc: w.located(loc), True)
+        return self.eachpoint(lambda loc: w.moved(loc), True)
 
     # circle from current point
     def circle(self, radius: float, forConstruction: bool = False) -> "Workplane":
@@ -2286,7 +2286,7 @@ class Workplane(object):
         c = Wire.makeCircle(radius, Vector(), Vector(0, 0, 1))
         c.forConstruction = forConstruction
 
-        return self.eachpoint(lambda loc: c.located(loc), True)
+        return self.eachpoint(lambda loc: c.moved(loc), True)
 
     # ellipse from current point
     def ellipse(
@@ -2326,7 +2326,7 @@ class Workplane(object):
         )
         e.forConstruction = forConstruction
 
-        return self.eachpoint(lambda loc: e.located(loc), True)
+        return self.eachpoint(lambda loc: e.moved(loc), True)
 
     def polygon(
         self, nSides: int, diameter: float, forConstruction: bool = False
@@ -2355,7 +2355,7 @@ class Workplane(object):
             )
         p = Wire.makePolygon(pnts, forConstruction)
 
-        return self.eachpoint(lambda loc: p.located(loc), True)
+        return self.eachpoint(lambda loc: p.moved(loc), True)
 
     def polyline(
         self,
@@ -2532,7 +2532,7 @@ class Workplane(object):
         cbore = Solid.makeCylinder(cboreDiameter / 2.0, cboreDepth, Vector(), boreDir)
         r = hole.fuse(cbore)
 
-        return self.cutEach(lambda loc: r.located(loc), True, clean)
+        return self.cutEach(lambda loc: r.moved(loc), True, clean)
 
     # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer wont work
@@ -2589,7 +2589,7 @@ class Workplane(object):
         csk = Solid.makeCone(r, 0.0, h, center, boreDir)
         res = hole.fuse(csk)
 
-        return self.cutEach(lambda loc: res.located(loc), True, clean)
+        return self.cutEach(lambda loc: res.moved(loc), True, clean)
 
     # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer wont work
@@ -2630,7 +2630,7 @@ class Workplane(object):
             diameter / 2.0, depth, Vector(), boreDir
         )  # local coordinates!
 
-        return self.cutEach(lambda loc: h.located(loc), True, clean)
+        return self.cutEach(lambda loc: h.moved(loc), True, clean)
 
     # TODO: duplicated code with _extrude and extrude
     def twistExtrude(
@@ -3305,7 +3305,7 @@ class Workplane(object):
             maxSegments,
         )
 
-        plates = self.eachpoint(lambda loc: p.located(loc), True)
+        plates = self.eachpoint(lambda loc: p.moved(loc), True)
 
         # if combination is not desired, just return the created boxes
         if not combine:
@@ -3374,7 +3374,7 @@ class Workplane(object):
 
         box = Solid.makeBox(length, width, height, Vector(xp, yp, zp))
 
-        boxes = self.eachpoint(lambda loc: box.located(loc), True)
+        boxes = self.eachpoint(lambda loc: box.moved(loc), True)
 
         # if combination is not desired, just return the created boxes
         if not combine:
@@ -3447,7 +3447,7 @@ class Workplane(object):
         s = Solid.makeSphere(radius, Vector(xp, yp, zp), direct, angle1, angle2, angle3)
 
         # We want a sphere for each point on the workplane
-        spheres = self.eachpoint(lambda loc: s.located(loc), True)
+        spheres = self.eachpoint(lambda loc: s.moved(loc), True)
 
         # If we don't need to combine everything, just return the created spheres
         if not combine:
@@ -3517,7 +3517,7 @@ class Workplane(object):
         w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, Vector(xp, yp, zp), dir)
 
         # We want a wedge for each point on the workplane
-        wedges = self.eachpoint(lambda loc: w.located(loc), True)
+        wedges = self.eachpoint(lambda loc: w.moved(loc), True)
 
         # If we don't need to combine everything, just return the created wedges
         if not combine:
