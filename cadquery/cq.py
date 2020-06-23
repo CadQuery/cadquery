@@ -167,7 +167,7 @@ class Workplane(object):
         if obj:
             self.objects = [obj]
         else:
-            self.objects = [self.plane.origin]
+            self.objects = []
 
         self.parent = None
         self.ctx = CQContext()
@@ -404,7 +404,7 @@ class Workplane(object):
         :return: the first value on the stack.
         :rtype: A CAD primitives
         """
-        return self.objects[0]
+        return self.objects[0] if self.objects else self.plane.origin
 
     def _getTagged(self, name: str) -> "Workplane":
         """
@@ -430,7 +430,7 @@ class Workplane(object):
         :rtype A FreeCAD object or a SolidReference
         """
 
-        return self.objects[0].wrapped
+        return self.val().wrapped
 
     @deprecate_kwarg("centerOption", "ProjectedOrigin")
     def workplane(
@@ -549,7 +549,7 @@ class Workplane(object):
             xDir = _computeXdir(normal)
 
         else:
-            obj = self.objects[0]
+            obj = self.val()
 
             if isinstance(obj, Face):
                 if centerOption in {"CenterOfMass", "ProjectedOrigin"}:
@@ -1252,7 +1252,7 @@ class Workplane(object):
 
         NOTE:
         """
-        obj = self.objects[-1]
+        obj = self.objects[-1] if self.objects else self.plane.origin
 
         if isinstance(obj, Edge):
             p = obj.endPoint()
@@ -1275,7 +1275,7 @@ class Workplane(object):
         in local coordinates or global coordinates.
         :return: an Edge
         """
-        obj = self.objects[-1]
+        obj = self.objects[-1] if self.objects else self.plane.origin
 
         if not isinstance(obj, Edge):
             raise RuntimeError(
@@ -3651,7 +3651,7 @@ class Workplane(object):
         Special method for rendering current object in a jupyter notebook
         """
 
-        if type(self.objects[0]) is Vector:
+        if type(self.val()) is Vector:
             return "&lt {} &gt".format(self.__repr__()[1:-1])
         else:
             return Compound.makeCompound(self.objects)._repr_html_()
