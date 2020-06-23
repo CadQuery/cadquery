@@ -39,16 +39,23 @@ See :ref:`apireference` to learn more.
 Workplanes
 ---------------------------
 
-Workplanes represent a plane in space, from which other features can be located. They have a center point and a local
-coordinate system.
+Most CAD programs use the concept of Workplanes. If you have experience with other CAD programs you will probably 
+feel comfortable with CadQuery's Workplanes, but if you don't have experience then they are an essential concept to 
+understand. 
 
-The most common way to create a workplane is to locate one on the face of a solid.  You can also create new workplanes
-in space, or relative to other planes using offsets or rotations.
+Workplanes represent a plane in space, from which other features can be located. They have a center point and a local 
+coordinate system. Most methods that create an object do so relative to the current workplane.
+
+Usually the first workplane created is the "XY" plane, also known as the "front" plane. Once a solid is defined the most 
+common way to create a workplane is to select a face on the solid that you intend to modify and create a new workplane 
+relative to it. You can also create new workplanes in anywhere in world coordinate system, or relative to other planes 
+using offsets or rotations.
 
 The most powerful feature of workplanes is that they allow you to work in 2D space in the coordinate system of the
-workplane, and then build 3D features based on local coordinates.  This makes scripts much easier to create and maintain.
+workplane, and then CadQuery will transform these points from the workplane coordinate system to the world coordinate 
+system so your 3D features are located where you intended. This makes scripts much easier to create and maintain.
 
-See :py:class:`cadquery.Workplane` to learn more
+See :py:class:`cadquery.Workplane` to learn more.
 
 
 2D Construction
