@@ -1055,7 +1055,7 @@ class Wire(Shape, Mixin1D):
 
         # 4. Convert to wire and fix building 3d geom from 2d geom
         w = BRepBuilderAPI_MakeWire(e).Wire()
-        BRepLib.BuildCurves3d_s(w, 1e-9, MaxSegment=1000)  # NB: preliminary values
+        BRepLib.BuildCurves3d_s(w, 1e-6, MaxSegment=2000)  # NB: preliminary values
 
         return cls(w)
 
