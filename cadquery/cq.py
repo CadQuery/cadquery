@@ -1719,7 +1719,7 @@ class Workplane(CQ):
 
     def radiusArc(self, endPoint, radius, forConstruction=False):
         """
-        Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
+        Draw an arc from the current point to endPoint with an arc defined by the radius.
 
         :param endPoint: end point for the arc
         :type endPoint: 2-tuple, in workplane coordinates
