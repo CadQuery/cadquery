@@ -1600,7 +1600,7 @@ class Workplane(object):
 
         Can be used to create arrays of slots, such as in cooling applications:
 
-        result = cq.Workplane("XY").box(10,25,1).rarray(1,2,1,10).slot(8,1,0).cutThruAll()
+        result = cq.Workplane("XY").box(10,25,1).rarray(1,2,1,10).slot2D(8,1,0).cutThruAll()
         """
 
         radius = diameter / 2
@@ -1848,7 +1848,7 @@ class Workplane(object):
         self, endPoint: VectorLike, radius: float, forConstruction: bool = False
     ) -> "Workplane":
         """
-        Draw an arc from the current point to endPoint with an arc defined by the readius.
+        Draw an arc from the current point to endPoint with an arc defined by the radius.
 
         :param endPoint: end point for the arc
         :type endPoint: 2-tuple, in workplane coordinates
