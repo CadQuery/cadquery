@@ -108,12 +108,12 @@ object has a list of objects, and a reference to its parent.
 
 You can always go backwards to older operations by removing the current object from the stack.  For example::
 
-    CQ(someObject).faces(">Z").first().vertices()
+    Workplane(someObject).faces(">Z").first().vertices()
 
 returns a CadQuery object that contains all of the vertices on the highest face of someObject. But you can always move
 backwards in the stack to get the face as well::
 
-    CQ(someObject).faces(">Z").first().vertices().end() #returns the same as CQ(someObject).faces(">Z").first()
+    Workplane(someObject).faces(">Z").first().vertices().end()
 
 You can browse stack access methods here: :ref:`stackMethods`.
 
@@ -162,6 +162,6 @@ For example, this::
 Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a rectangular face, and the ``circle()`` method
 iterates on each member of the stack.
 
-This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.CQ.Workplane.each` is useful for this purpose.
+This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.cq.Workplane.each` is useful for this purpose.
 
 

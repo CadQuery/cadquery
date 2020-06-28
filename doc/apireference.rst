@@ -4,10 +4,9 @@
 CadQuery API Reference
 ***********************
 
-The CadQuery API is made up of 3 main objects:
+The CadQuery API is made up of 2 main objects:
 
-* **CQ** -  An object that wraps a topological entity.
-* **Workplane** -- A subclass of CQ, that applies in a 2-D modelling context.
+* **Workplane** -- Wraps a topological entity and provides a 2-D modelling context.
 * **Selector** -- Filter and select things
 
 This page lists  methods of these objects grouped by **functional area**
@@ -25,7 +24,6 @@ Initialization
 Creating new workplanes and object chains
 
 .. autosummary::
-    CQ
     Workplane
 
 
@@ -54,7 +52,7 @@ All 2-d operations require a **Workplane** object to be created.
 	Workplane.threePointArc
 	Workplane.sagittaArc
 	Workplane.radiusArc
-  Workplane.tangentArcPoint
+    Workplane.tangentArcPoint
 	Workplane.rotateAndCopy
 	Workplane.mirrorY
 	Workplane.mirrorX
@@ -98,21 +96,21 @@ Some 3-d operations also require an active 2-d workplane, but some do not.
 3-d operations that do NOT require a 2-d workplane to be active:
 
 .. autosummary::
-	CQ.shell
-	CQ.fillet
-	CQ.chamfer
-	CQ.split
-	CQ.rotate
-	CQ.rotateAboutCenter
-	CQ.translate
-	CQ.mirror
+	Workplane.shell
+	Workplane.fillet
+	Workplane.chamfer
+	Workplane.split
+	Workplane.rotate
+	Workplane.rotateAboutCenter
+	Workplane.translate
+	Workplane.mirror
 
 File Management and Export
 ---------------------------------
 
 .. autosummary::
-    CQ.toSvg
-    CQ.exportSvg
+    Workplane.toSvg
+    Workplane.exportSvg
 
 
 .. autosummary::
@@ -138,22 +136,22 @@ Stack and Selector Methods
 CadQuery methods that operate on the stack
 
 .. autosummary::
-	CQ.all
-	CQ.size
-	CQ.vals
-	CQ.add
-	CQ.val
-	CQ.first
-	CQ.item
-	CQ.last
-	CQ.end
-	CQ.vertices
-	CQ.faces
-	CQ.edges
-	CQ.wires
-	CQ.solids
-	CQ.shells
-	CQ.compounds
+	Workplane.all
+	Workplane.size
+	Workplane.vals
+	Workplane.add
+	Workplane.val
+	Workplane.first
+	Workplane.item
+	Workplane.last
+	Workplane.end
+	Workplane.vertices
+	Workplane.faces
+	Workplane.edges
+	Workplane.wires
+	Workplane.solids
+	Workplane.shells
+	Workplane.compounds
 
 .. _selectors:
 

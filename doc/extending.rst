@@ -22,13 +22,13 @@ any valid PythonOCC script will execute just fine. For example, this simple CadQ
 
 is actually equivalent to::
 
-    return BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape()
+    return cq.Shape.cast(BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape())
 
 As long as you return a valid PythonOCC Shape, you can use any PythonOCC methods you like. You can even mix and match the
 two. For example, consider this script, which creates a PythonOCC box, but then uses CadQuery to select its faces::
 
-    box = BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape()
-    cq = CQ(box).faces(">Z").size() # returns 6
+    box = cq.Shape.cast(BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape())
+    cq = Workplane(box).faces(">Z").size() # returns 6
 
 
 Extending CadQuery: Plugins
@@ -67,14 +67,14 @@ Preserving the Chain
 
 CadQuery's fluent API relies on the ability to chain calls together one after another. For this to work,
 you must return a valid CadQuery object as a return value.  If you choose not to return a CadQuery object,
-then your plugin will end the chain. Sometimes this is desired for example :py:meth:`cadquery.CQ.size`
+then your plugin will end the chain. Sometimes this is desired for example :py:meth:`cadquery.Workplane.size`
 
 There are two ways you can safely continue the chain:
 
    1.  **return self**  If you simply wish to modify the stack contents, you can simply return a reference to
        self.  This approach is destructive, because the contents of the stack are modified, but it is also the
        simplest.
-   2.  :py:meth:`cadquery.CQ.newObject`  Most of the time, you will want to return a new object.  Using newObject will
+   2.  :py:meth:`cadquery.Workplane.newObject`  Most of the time, you will want to return a new object.  Using newObject will
        return a new CQ or Workplane object having the stack you specify, and will link this object to the
        previous one.  This preserves the original object and its stack.
 
@@ -94,7 +94,7 @@ are designed to aid in plugin creation:
    * :py:meth:`cadquery.Workplane.newObject` returns a new Workplane object with the provided stack, and with its parent set
      to the current object. The preferred way to continue the chain
 
-   * :py:meth:`cadquery.CQ.findSolid` returns the first Solid found in the chain, working from the current object upwards
+   * :py:meth:`cadquery.Workplane.findSolid` returns the first Solid found in the chain, working from the current object upwards
      in the chain. commonly used when your plugin will modify an existing solid, or needs to create objects and
      then combine them onto the 'main' part that is in progress
 
@@ -160,10 +160,10 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
             #self refers to the CQ or Workplane object
 
             #inner method that creates a cube
-            def _singleCube(pnt):
-                #pnt is a location in local coordinates
+            def _singleCube(loc):
+                #loc is a location in local coordinates
                 #since we're using eachpoint with useLocalCoordinates=True
-                return cq.Solid.makeBox(length,length,length,pnt)
+                return cq.Solid.makeBox(length,length,length,pnt).locate(loc)
 
             #use CQ utility method to iterate over the stack, call our
             #method, and convert to/from local coordinates.

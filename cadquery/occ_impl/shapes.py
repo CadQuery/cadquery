@@ -1,4 +1,4 @@
-from .geom import Vector, BoundBox, Plane
+from .geom import Vector, BoundBox, Plane, Location
 
 import OCP.TopAbs as ta  # Tolopolgy type enum
 import OCP.GeomAbs as ga  # Geometry type enum
@@ -363,7 +363,7 @@ class Shape(object):
 
         return Vector(Properties.CentreOfMass())
 
-    def Center(self):
+    def Center(self) -> Vector:
         """
         Center of mass
         """
@@ -577,6 +577,44 @@ class Shape(object):
 
         return r
 
+    def locate(self, loc: Location) -> "Shape":
+        """
+        Apply a location in absolute sense to self
+        """
+
+        self.wrapped.Location(loc.wrapped)
+
+        return self
+
+    def located(self, loc: Location) -> "Shape":
+        """
+        Apply a location in absolute sense to a copy of self
+        """
+
+        r = Shape.cast(self.wrapped.Located(loc.wrapped))
+        r.forConstruction = self.forConstruction
+
+        return r
+
+    def move(self, loc: Location) -> "Shape":
+        """
+        Apply a location in relative sense (i.e. update current location) to self
+        """
+
+        self.wrapped.Move(loc.wrapped)
+
+        return self
+
+    def moved(self, loc: Location) -> "Shape":
+        """
+        Apply a location in relative sense (i.e. update current location) to a copy of self
+        """
+
+        r = Shape.cast(self.wrapped.Moved(loc.wrapped))
+        r.forConstruction = self.forConstruction
+
+        return r
+
     def __hash__(self):
         return self.hashCode()
 
@@ -672,7 +710,7 @@ class Vertex(Shape):
     @classmethod
     def makeVertex(cls, x, y, z):
 
-        return cls(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
+        return cls.cast(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
 
 class Mixin1D(object):

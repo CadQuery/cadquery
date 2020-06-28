@@ -7,6 +7,7 @@ from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.TopoDS import TopoDS_Shape
+from OCP.TopLoc import TopLoc_Location
 
 TOL = 1e-2
 
@@ -602,7 +603,7 @@ class Plane(object):
                 )
             )
 
-    def toWorldCoords(self, tuplePoint):
+    def toWorldCoords(self, tuplePoint) -> Vector:
         """Convert a point in local coordinates to global coordinates
 
         :param tuplePoint: point in local coordinates to convert.
@@ -718,6 +719,11 @@ class Plane(object):
         self.lcs = local_coord_system
         self.rG = inverse
         self.fG = forward
+
+    @property
+    def location(self) -> "Location":
+
+        return Location(self)
 
 
 class BoundBox(object):
@@ -852,3 +858,84 @@ class BoundBox(object):
             return True
         else:
             return False
+
+
+class Location(object):
+    """Location in 3D space. Depending on usage can be absolute or relative.
+    
+    This class wraps the TopLoc_Location class from OCCT. It can be used to move Shape
+    objects in both relative and absolute manner. It is the preferred type to locate objects
+    in CQ.
+    """
+
+    wrapped: TopLoc_Location
+
+    @overload
+    def __init__(self) -> None:
+        """Empty location with not rotation or translation with respect to the original location."""
+        ...
+
+    @overload
+    def __init__(self, t: Vector) -> None:
+        """Location with translation t with respect to the orignal location."""
+        ...
+
+    @overload
+    def __init__(self, t: Plane) -> None:
+        """Location corresponding to the location of the Plane t."""
+        ...
+
+    @overload
+    def __init__(self, t: Plane, v: Vector) -> None:
+        """Location corresponding to the angular location of the Plane t with translation v."""
+        ...
+
+    @overload
+    def __init__(self, t: TopLoc_Location) -> None:
+        """Location wrapping the low-level TopLoc_Location object t"""
+        ...
+
+    @overload
+    def __init__(self, t: Vector, ax: Vector, angle: float) -> None:
+        """Location with translation t and rotation around ax by angle
+        with respect to the original location."""
+        ...
+
+    def __init__(self, *args):
+
+        T = gp_Trsf()
+
+        if len(args) == 0:
+            pass
+        elif len(args) == 1:
+            t = args[0]
+
+            if isinstance(t, Vector):
+                T.SetTranslationPart(t.wrapped)
+            elif isinstance(t, Plane):
+                cs = gp_Ax3(t.origin.toPnt(), t.zDir.toDir(), t.xDir.toDir())
+                T.SetTransformation(cs)
+                T.Invert()
+            elif isinstance(t, TopLoc_Location):
+                self.wrapped = t
+                return
+        elif len(args) == 2:
+            t, v = args
+            cs = gp_Ax3(v.toPnt(), t.zDir.toDir(), t.xDir.toDir())
+            T.SetTransformation(cs)
+            T.Invert()
+        else:
+            t, ax, angle = args
+            T.SetRotation(gp_Ax1(Vector().toPnt(), ax.toDir()), angle * math.pi / 180.0)
+            T.SetTranslationPart(t.wrapped)
+
+        self.wrapped = TopLoc_Location(T)
+
+    @property
+    def inverse(self) -> "Location":
+
+        return Location(self.wrapped.Inverted())
+
+    def __mul__(self, other: "Location") -> "Location":
+
+        return Location(self.wrapped * other.wrapped)
