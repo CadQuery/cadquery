@@ -399,10 +399,10 @@ class Workplane(object):
 
     def val(self) -> CQObject:
         """
-        Return the first value on the stack
+        Return the first value on the stack. If no value is present, current plane origin is returned.
 
         :return: the first value on the stack.
-        :rtype: A CAD primitives
+        :rtype: A CAD primitive
         """
         return self.objects[0] if self.objects else self.plane.origin
 
@@ -2993,7 +2993,7 @@ class Workplane(object):
         :type toIntersect: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises: ValueError if there is no solid to intersect with in the chain
-        :return: a CQ object with the resulting iobject selected
+        :return: a CQ object with the resulting object selected
         """
 
         # look for parents to intersect with
