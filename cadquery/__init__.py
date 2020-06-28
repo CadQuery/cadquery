@@ -1,5 +1,5 @@
 # these items point to the OCC implementation
-from .occ_impl.geom import Plane, BoundBox, Vector, Matrix
+from .occ_impl.geom import Plane, BoundBox, Vector, Matrix, Location
 from .occ_impl.shapes import (
     Shape,
     Vertex,
@@ -40,6 +40,7 @@ __all__ = [
     "BoundBox",
     "Matrix",
     "Vector",
+    "Location",
     "sortWiresByBuildOrder",
     "Shape",
     "Vertex",

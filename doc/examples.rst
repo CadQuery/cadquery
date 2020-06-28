@@ -369,7 +369,7 @@ Mirroring 3D Objects
         * :py:meth:`Workplane.extrude`
         * :py:meth:`Workplane.mirror`
         * :py:meth:`Workplane.union`
-        * :py:meth:`CQ.rotate`
+        * :py:meth:`Workplane.rotate`
 
 Creating Workplanes on Faces
 -----------------------------
@@ -481,7 +481,7 @@ An existing CQ object can copy a workplane from another CQ object.
     .. hlist:
         :columns: 2
 
-        * :py:meth:`CQ.copyWorkplane` **!**
+        * :py:meth:`Workplane.copyWorkplane` **!**
         * :py:meth:`Workplane.circle`
         * :py:meth:`Workplane.extrude`
         * :py:meth:`Workplane`
@@ -633,9 +633,9 @@ Here we fillet all of the edges of a simple plate.
 Tagging objects
 ----------------
 
-The :py:meth:`CQ.tag` method can be used to tag a particular object in the chain with a string, so that it can be refered to later in the chain. 
+The :py:meth:`Workplane.tag` method can be used to tag a particular object in the chain with a string, so that it can be refered to later in the chain. 
 
-The :py:meth:`CQ.workplaneFromTagged` method applies :py:meth:`CQ.copyWorkplane` to a tagged object. For example, when extruding two different solids from a surface, after the first solid is extruded it can become difficult to reselect the original surface with CadQuery's other selectors.
+The :py:meth:`Workplane.workplaneFromTagged` method applies :py:meth:`Workplane.copyWorkplane` to a tagged object. For example, when extruding two different solids from a surface, after the first solid is extruded it can become difficult to reselect the original surface with CadQuery's other selectors.
 
 .. cq_plot::
 
@@ -651,7 +651,7 @@ The :py:meth:`CQ.workplaneFromTagged` method applies :py:meth:`CQ.copyWorkplane`
     show_object(result)
 
 
-Tags can also be used with most selectors, including :py:meth:`CQ.vertices`, :py:meth:`CQ.faces`, :py:meth:`CQ.edges`, :py:meth:`CQ.wires`, :py:meth:`CQ.shells`, :py:meth:`CQ.solids` and :py:meth:`CQ.compounds`.
+Tags can also be used with most selectors, including :py:meth:`Workplane.vertices`, :py:meth:`Workplane.faces`, :py:meth:`Workplane.edges`, :py:meth:`Workplane.wires`, :py:meth:`Workplane.shells`, :py:meth:`Workplane.solids` and :py:meth:`Workplane.compounds`.
 
 .. cq_plot::
 
@@ -670,9 +670,9 @@ Tags can also be used with most selectors, including :py:meth:`CQ.vertices`, :py
     .. hlist::
         :columns: 2
 
-        * :py:meth:`CQ.tag` **!**
-        * :py:meth:`CQ.getTagged` **!**
-        * :py:meth:`CQ.workplaneFromTagged` **!**
+        * :py:meth:`Workplane.tag` **!**
+        * :py:meth:`Workplane.getTagged` **!**
+        * :py:meth:`Workplane.workplaneFromTagged` **!**
         * :py:meth:`Workplane.extrude`
         * :py:meth:`Workplane.cutThruAll`
         * :py:meth:`Workplane.circle`
@@ -858,11 +858,11 @@ A Parametric Enclosure
         * :py:meth:`Workplane.rect`
         * :py:meth:`Workplane.extrude`
         * :py:meth:`Workplane.box`
-        * :py:meth:`CQ.all`
-        * :py:meth:`CQ.faces`
-        * :py:meth:`CQ.vertices`
-        * :py:meth:`CQ.edges`
-        * :py:meth:`CQ.workplane`
+        * :py:meth:`Workplane.all`
+        * :py:meth:`Workplane.faces`
+        * :py:meth:`Workplane.vertices`
+        * :py:meth:`Workplane.edges`
+        * :py:meth:`Workplane.workplane`
         * :py:meth:`Workplane.fillet`
         * :py:meth:`Workplane.cut`
         * :py:meth:`Workplane.combineSolids`

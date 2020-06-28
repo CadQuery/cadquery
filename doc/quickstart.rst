@@ -100,8 +100,8 @@ The code is pretty compact, lets step through it.
 **Line 4** adds a new parameter, diameter, for the diameter of the hole
 
 **Line 8**, we're adding the hole.
-:py:meth:`cadquery.CQ.faces` selects the top-most face in the Z direction, and then
-:py:meth:`cadquery.CQ.workplane` begins a new workplane located on this face. The center of this workplane
+:py:meth:`cadquery.Workplane.faces` selects the top-most face in the Z direction, and then
+:py:meth:`cadquery.Workplane.workplane` begins a new workplane located on this face. The center of this workplane
 is located at the center of mass of the shape, which in this case is the center of the plate.
 Finally, :py:meth:`cadquery.Workplane.hole` drills a hole through the part, 22mm in diameter.
 
@@ -176,7 +176,7 @@ locate the corner holes. We'll use the vertices ( corners ) of this rectangle to
 center is at the center of the workplane, which in this case coincides with the center of the bearing hole.
 
 **Line 12** selects the vertices of the rectangle, which we will use for the centers of the holes.
-The :py:meth:`cadquery.CQ.vertices` function selects the corners of the rectangle.
+The :py:meth:`cadquery.Workplane.vertices` function selects the corners of the rectangle.
 
 **Line 13** uses the cboreHole function to draw the holes.
 The :py:meth:`cadquery.Workplane.cboreHole` function is a handy CadQuery function that makes a counterbored hole. 
@@ -214,9 +214,9 @@ We can do that using the preset dictionaries in the parameter definition:
     # Render the solid
     show_object(result)
 
-**Line 13** fillets the edges using the   :py:meth:`cadquery.CQ.fillet` method.
+**Line 13** fillets the edges using the   :py:meth:`cadquery.Workplane.fillet` method.
 
-To grab the right edges, the :py:meth:`cadquery.CQ.edges` selects all of the
+To grab the right edges, the :py:meth:`cadquery.Workplane.edges` selects all of the
 edges that are parallel to the Z axis ("\|Z"),
 
 The finished product looks like this:

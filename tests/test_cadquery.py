@@ -125,15 +125,11 @@ class TestCadQuery(BaseTest):
         def makeCubes(self, length):
             # self refers to the CQ or Workplane object
 
-            # inner method that creates a cube
-            def _singleCube(pnt):
-                # pnt is a location in local coordinates
-                # since we're using eachpoint with useLocalCoordinates=True
-                return Solid.makeBox(length, length, length, pnt)
+            # create the solid
+            s = Solid.makeBox(length, length, length, Vector(0, 0, 0))
 
-            # use CQ utility method to iterate over the stack, call our
-            # method, and convert to/from local coordinates.
-            return self.eachpoint(_singleCube, True)
+            # use CQ utility method to iterate over the stack an position the cubes
+            return self.eachpoint(lambda loc: s.located(loc), True)
 
         # link the plugin in
         Workplane.makeCubes = makeCubes
@@ -161,12 +157,12 @@ class TestCadQuery(BaseTest):
         """
 
         def cylinders(self, radius, height):
-            def _cyl(pnt):
-                # inner function to build a cylinder
-                return Solid.makeCylinder(radius, height, pnt)
+
+            # construct a cylinder at (0,0,0)
+            c = Solid.makeCylinder(radius, height, Vector(0, 0, 0))
 
             # combine all the cylinders into a single compound
-            r = self.eachpoint(_cyl, True).combineSolids()
+            r = self.eachpoint(lambda loc: c.located(loc), True).combineSolids()
             return r
 
         Workplane.cyl = cylinders
@@ -190,20 +186,19 @@ class TestCadQuery(BaseTest):
         """
 
         def rPoly(self, nSides, diameter):
-            def _makePolygon(center):
+            def _makePolygon(loc):
                 # pnt is a vector in local coordinates
                 angle = 2.0 * math.pi / nSides
                 pnts = []
                 for i in range(nSides + 1):
                     pnts.append(
-                        center
-                        + Vector(
+                        Vector(
                             (diameter / 2.0 * math.cos(angle * i)),
                             (diameter / 2.0 * math.sin(angle * i)),
                             0,
                         )
                     )
-                return Wire.makePolygon(pnts)
+                return Wire.makePolygon(pnts).located(loc)
 
             return self.eachpoint(_makePolygon, True)
 
@@ -240,8 +235,10 @@ class TestCadQuery(BaseTest):
         self.assertEqual(9, body.faces().size())
 
         # Test the case when using eachpoint with only a blank workplane
-        def callback_fn(pnt):
-            self.assertEqual((0.0, 0.0), (pnt.x, pnt.y))
+        def callback_fn(loc):
+            self.assertEqual(
+                Vector(0, 0, 0), Vector(loc.wrapped.Transformation().TranslationPart())
+            )
 
         r = Workplane("XY")
         r.objects = []
@@ -1152,7 +1149,7 @@ class TestCadQuery(BaseTest):
         s = Workplane("XY").box(1, 1, 1).faces(">Z").rect(1, 0.5).cutBlind(-0.2)
 
         w = s.faces(">Z").workplane()
-        o = w.objects[0]  # origin of the workplane
+        o = w.val()  # origin of the workplane
         self.assertAlmostEqual(o.x, 0.0, 3)
         self.assertAlmostEqual(o.y, 0.0, 3)
         self.assertAlmostEqual(o.z, 0.5, 3)
@@ -3441,3 +3438,26 @@ class TestCadQuery(BaseTest):
         self.assertEqual(res.solids().size(), 2)
         self.assertEqual(res_fuzzy.solids().size(), 1)
         self.assertEqual(res_fuzzy2.solids().size(), 1)
+
+    def testLocatedMoved(self):
+
+        box = Solid.makeBox(1, 1, 1, Vector(-0.5, -0.5, -0.5))
+        loc = Location(Vector(1, 1, 1))
+
+        box1 = box.located(loc)
+
+        self.assertTupleAlmostEquals(box1.Center().toTuple(), (1, 1, 1), 6)
+        self.assertTupleAlmostEquals(box.Center().toTuple(), (0, 0, 0), 6)
+
+        box.locate(loc)
+
+        self.assertTupleAlmostEquals(box.Center().toTuple(), (1, 1, 1), 6)
+
+        box2 = box.moved(loc)
+
+        self.assertTupleAlmostEquals(box.Center().toTuple(), (1, 1, 1), 6)
+        self.assertTupleAlmostEquals(box2.Center().toTuple(), (2, 2, 2), 6)
+
+        box.move(loc)
+
+        self.assertTupleAlmostEquals(box.Center().toTuple(), (2, 2, 2), 6)
