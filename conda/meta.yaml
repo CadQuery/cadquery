@@ -19,6 +19,7 @@ requirements:
     - pyparsing 2.*
     - ezdxf
     - ipython 6.5.*
+    - typing_extensions
     
 test:
   requires:
