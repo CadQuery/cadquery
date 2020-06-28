@@ -861,32 +861,44 @@ class BoundBox(object):
 
 
 class Location(object):
-    """Relative location in 3D space"""
+    """Location in 3D space. Depending on usage can be absolute or relative.
+    
+    This class wraps the TopLoc_Location class from OCCT. It can be used to move Shape
+    objects in both relative and absolute manner. It is the preferred type to locate objects
+    in CQ.
+    """
 
     wrapped: TopLoc_Location
 
     @overload
     def __init__(self) -> None:
+        """Empty location with not rotation or translation with respect to the original location."""
         ...
 
     @overload
     def __init__(self, t: Vector) -> None:
+        """Location with translation t with respect to the orignal location."""
         ...
 
     @overload
     def __init__(self, t: Plane) -> None:
+        """Location corresponding to the location of the Plane t."""
         ...
 
     @overload
     def __init__(self, t: Plane, v: Vector) -> None:
+        """Location corresponding to the angular location of the Plane t with translation v."""
         ...
 
     @overload
     def __init__(self, t: TopLoc_Location) -> None:
+        """Location wrapping the low-level TopLoc_Location object t"""
         ...
 
     @overload
     def __init__(self, t: Vector, ax: Vector, angle: float) -> None:
+        """Location with translation t and rotation around ax by angle
+        with respect to the original location."""
         ...
 
     def __init__(self, *args):
