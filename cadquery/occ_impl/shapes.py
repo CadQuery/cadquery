@@ -1,4 +1,7 @@
-from .geom import Vector, BoundBox, Plane, Location
+from typing import Type, Optional, Tuple, Union, Iterable, List, Sequence
+from typing_extensions import Literal
+
+from .geom import Vector, BoundBox, Plane, Location, Matrix
 
 import OCP.TopAbs as ta  # Tolopolgy type enum
 import OCP.GeomAbs as ga  # Geometry type enum
@@ -57,7 +60,7 @@ from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
 from OCP.BRep import BRep_Tool
 
-from OCP.TopoDS import TopoDS, TopoDS_Builder, TopoDS_Compound, TopoDS_Iterator
+from OCP.TopoDS import TopoDS, TopoDS_Shape, TopoDS_Builder, TopoDS_Compound, TopoDS_Iterator
 
 from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
 from OCP.GCE2d import GCE2d_MakeSegment
@@ -65,7 +68,7 @@ from OCP.GeomAPI import GeomAPI_Interpolate, GeomAPI_ProjectPointOnSurf
 
 from OCP.BRepFill import BRepFill
 
-from OCP.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Fuse, BRepAlgoAPI_Cut
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Fuse, BRepAlgoAPI_Cut, BRepAlgoAPI_BooleanOperation
 
 from OCP.Geom import Geom_ConicalSurface, Geom_CylindricalSurface
 from OCP.Geom2d import Geom2d_Line
@@ -197,8 +200,11 @@ geom_LUT_EDGE = {
     ga.GeomAbs_OtherCurve: "OTHER",
 }
 
+Shapes = Literal["Vertex","Edge","Wire","Shell","Solid","Compound"]
+Geoms = Literal["Vertex","Wire","Shell","Solid","Compound","PLANE", "CYLINDER", "CONE", "SPHERE", "TORUS", "BEZIER", "BSPLINE", "REVOLUTION", "EXTRUSION", "OFFSET","OTHER","LINE", "CIRCLE", "ELLIPSE", "HYPERBOLA", "PARABOLA"]
+VectorLike = Union[Vector, Tuple[float,float,float]]
 
-def downcast(topods_obj):
+def downcast(topods_obj : TopoDS_Shape) -> TopoDS_Shape:
     """
     Downcasts a TopoDS object to suitable specialized type
     """
@@ -211,15 +217,17 @@ class Shape(object):
         Represents a shape in the system.
         Wrappers the FreeCAD api
     """
+    
+    wrapped : TopoDS_Shape
 
-    def __init__(self, obj):
+    def __init__(self, obj: TopoDS_Shape):
         self.wrapped = downcast(obj)
         self.forConstruction = False
 
         # Helps identify this solid through the use of an ID
         self.label = ""
 
-    def clean(self):
+    def clean(self) -> "Shape":
         """Experimental clean using ShapeUpgrade"""
 
         upgrader = ShapeUpgrade_UnifySameDomain(self.wrapped, True, True, True)
@@ -228,7 +236,7 @@ class Shape(object):
 
         return self.cast(upgrader.Shape())
 
-    def fix(self):
+    def fix(self) -> "Shape":
         """Try to fix shape if not valid"""
         if not BRepCheck_Analyzer(self.wrapped).IsValid():
             sf = ShapeFix_Shape(self.wrapped)
@@ -240,7 +248,7 @@ class Shape(object):
         return self
 
     @classmethod
-    def cast(cls, obj, forConstruction=False):
+    def cast(cls: Type["Shape"], obj: TopoDS_Shape, forConstruction: bool=False) -> "Shape":
         "Returns the right type of wrapper, given a OCCT object"
 
         tr = None
@@ -263,7 +271,7 @@ class Shape(object):
 
         return tr
 
-    def exportStl(self, fileName, precision=1e-3, angularPrecision=0.1):
+    def exportStl(self, fileName: str, precision: float=1e-3, angularPrecision: float=0.1)->bool:
 
         mesh = BRepMesh_IncrementalMesh(self.wrapped, precision, True, angularPrecision)
         mesh.Perform()
@@ -272,21 +280,21 @@ class Shape(object):
 
         return writer.Write(self.wrapped, fileName)
 
-    def exportStep(self, fileName):
+    def exportStep(self, fileName: str)->bool:
 
         writer = STEPControl_Writer()
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
         return writer.Write(fileName)
 
-    def exportBrep(self, fileName):
+    def exportBrep(self, fileName: str) -> bool:
         """
         Export given shape to a BREP file
         """
 
         return BRepTools.Write_s(self.wrapped, fileName)
 
-    def geomType(self):
+    def geomType(self)->Geoms:
         """
             Gets the underlying geometry type
             :return: a string according to the geometry type.
@@ -320,25 +328,25 @@ class Shape(object):
         else:
             return geom_LUT_FACE[tr(self.wrapped).GetType()]
 
-    def hashCode(self):
+    def hashCode(self) -> int:
         return self.wrapped.HashCode(HASH_CODE_MAX)
 
-    def isNull(self):
+    def isNull(self) -> bool:
         return self.wrapped.IsNull()
 
-    def isSame(self, other):
+    def isSame(self, other:"Shape") -> bool:
         return self.wrapped.IsSame(other.wrapped)
 
-    def isEqual(self, other):
+    def isEqual(self, other:"Shape") -> bool:
         return self.wrapped.IsEqual(other.wrapped)
 
-    def isValid(self):
+    def isValid(self)->bool:
         return BRepCheck_Analyzer(self.wrapped).IsValid()
 
-    def BoundingBox(self, tolerance=None):  # need to implement that in GEOM
+    def BoundingBox(self, tolerance: Optional[float]=None) -> BoundBox:  # need to implement that in GEOM
         return BoundBox._fromTopoDS(self.wrapped, tol=tolerance)
 
-    def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
+    def mirror(self, mirrorPlane=Literal["XY","YX","XZ","ZX","YZ","ZY"], basePointVector:VectorLike=(0, 0, 0)) -> "Shape":
 
         if mirrorPlane == "XY" or mirrorPlane == "YX":
             mirrorPlaneNormalVector = gp_Dir(0, 0, 1)
@@ -356,7 +364,7 @@ class Shape(object):
         return self._apply_transform(T)
 
     @staticmethod
-    def _center_of_mass(shape):
+    def _center_of_mass(shape: "Shape") -> Vector:
 
         Properties = GProp_GProps()
         BRepGProp.VolumeProperties_s(shape, Properties)
@@ -370,11 +378,11 @@ class Shape(object):
 
         return Shape.centerOfMass(self)
 
-    def CenterOfBoundBox(self, tolerance=0.1):
+    def CenterOfBoundBox(self, tolerance: float=0.1) -> Vector:
         return self.BoundingBox().center
 
     @staticmethod
-    def CombinedCenter(objects):
+    def CombinedCenter(objects: Iterable["Shape"])->Vector:
         """
         Calculates the center of mass of multiple objects.
 
@@ -392,7 +400,7 @@ class Shape(object):
         return Vector(sum_wc.multiply(1.0 / total_mass))
 
     @staticmethod
-    def computeMass(obj):
+    def computeMass(obj: "Shape") -> float:
         """
         Calculates the 'mass' of an object.
         """
@@ -406,7 +414,7 @@ class Shape(object):
             raise NotImplementedError
 
     @staticmethod
-    def centerOfMass(obj):
+    def centerOfMass(obj: "Shape") -> Vector:
         """
         Calculates the 'mass' of an object.
         """
@@ -420,7 +428,7 @@ class Shape(object):
             raise NotImplementedError
 
     @staticmethod
-    def CombinedCenterOfBoundBox(objects, tolerance=0.1):
+    def CombinedCenterOfBoundBox(objects: Iterable["Shape"], tolerance:float=0.1)->Vector:
         """
         Calculates the center of BoundBox of multiple objects.
 
@@ -439,13 +447,13 @@ class Shape(object):
 
         return Vector(sum_wc.multiply(1.0 / total_mass))
 
-    def Closed(self):
+    def Closed(self)->bool:
         return self.wrapped.Closed()
 
-    def ShapeType(self):
+    def ShapeType(self)->Shapes:
         return shape_LUT[self.wrapped.ShapeType()]
 
-    def _entities(self, topo_type):
+    def _entities(self, topo_type:Shapes)->List[TopoDS_Shape]:
 
         out = {}  # using dict to prevent duplicates
 
@@ -460,47 +468,47 @@ class Shape(object):
 
         return list(out.values())
 
-    def Vertices(self):
+    def Vertices(self) -> List["Vertex"]:
 
         return [Vertex(i) for i in self._entities("Vertex")]
 
-    def Edges(self):
+    def Edges(self) -> List["Edge"]:
         return [
             Edge(i)
             for i in self._entities("Edge")
             if not BRep_Tool.Degenerated_s(TopoDS.Edge_s(i))
         ]
 
-    def Compounds(self):
+    def Compounds(self) -> List["Compound"]:
         return [Compound(i) for i in self._entities("Compound")]
 
-    def Wires(self):
+    def Wires(self) -> List["Wire"]:
         return [Wire(i) for i in self._entities("Wire")]
 
-    def Faces(self):
+    def Faces(self) -> List["Face"]:
         return [Face(i) for i in self._entities("Face")]
 
-    def Shells(self):
+    def Shells(self) -> List["Shell"]:
         return [Shell(i) for i in self._entities("Shell")]
 
-    def Solids(self):
+    def Solids(self) -> List["Solid"]:
         return [Solid(i) for i in self._entities("Solid")]
 
-    def Area(self):
+    def Area(self) -> float:
         Properties = GProp_GProps()
         BRepGProp.SurfaceProperties_s(self.wrapped, Properties)
 
         return Properties.Mass()
 
-    def Volume(self):
+    def Volume(self) -> float:
         # when density == 1, mass == volume
         return Shape.computeMass(self)
 
-    def _apply_transform(self, T):
+    def _apply_transform(self, T:gp_Trsf) -> "Shape":
 
         return Shape.cast(BRepBuilderAPI_Transform(self.wrapped, T, True).Shape())
 
-    def rotate(self, startVector, endVector, angleDegrees):
+    def rotate(self, startVector: Vector, endVector: Vector, angleDegrees: float) -> "Shape":
         """
         Rotates a shape around an axis
         :param startVector: start point of rotation axis  either a 3-tuple or a Vector
@@ -522,7 +530,7 @@ class Shape(object):
 
         return self._apply_transform(T)
 
-    def translate(self, vector):
+    def translate(self, vector: Vector)->"Shape":
 
         if type(vector) == tuple:
             vector = Vector(vector)
@@ -532,18 +540,18 @@ class Shape(object):
 
         return self._apply_transform(T)
 
-    def scale(self, factor):
+    def scale(self, factor: float) -> "Shape":
 
         T = gp_Trsf()
         T.SetScale(gp_Pnt(), factor)
 
         return self._apply_transform(T)
 
-    def copy(self):
+    def copy(self) -> "Shape":
 
         return Shape.cast(BRepBuilderAPI_Copy(self.wrapped).Shape())
 
-    def transformShape(self, tMatrix):
+    def transformShape(self, tMatrix: Matrix) -> "Shape":
         """
             tMatrix is a matrix object.
             returns a copy of the ojbect, transformed by the provided matrix,
@@ -557,7 +565,7 @@ class Shape(object):
 
         return r
 
-    def transformGeometry(self, tMatrix):
+    def transformGeometry(self, tMatrix: Matrix) -> "Shape":
         """
             tMatrix is a matrix object.
 
@@ -615,10 +623,10 @@ class Shape(object):
 
         return r
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return self.hashCode()
 
-    def _bool_op(self, args, tools, op):
+    def _bool_op(self, args : Iterable["Shape"], tools : Iterable["Shape"], op: BRepAlgoAPI_BooleanOperation) -> "Shape":
         """
         Generic boolean operation
         """
@@ -639,7 +647,7 @@ class Shape(object):
 
         return Shape.cast(op.Shape())
 
-    def cut(self, *toCut):
+    def cut(self, *toCut : "Shape") -> "Shape":
         """
         Remove a shape from another one
         """
@@ -648,7 +656,7 @@ class Shape(object):
 
         return self._bool_op((self,), toCut, cut_op)
 
-    def fuse(self, *toFuse, glue=False, tol=None):
+    def fuse(self, *toFuse: "Shape", glue:bool=False, tol:Optional[float]=None)  -> "Shape":
         """
         Fuse shapes together
         """
@@ -663,7 +671,7 @@ class Shape(object):
 
         return rv
 
-    def intersect(self, *toIntersect):
+    def intersect(self, *toIntersect:"Shape") -> "Shape":
         """
         Construct shape intersection
         """
@@ -687,7 +695,7 @@ class Vertex(Shape):
     A Single Point in Space
     """
 
-    def __init__(self, obj, forConstruction=False):
+    def __init__(self, obj: TopoDS_Shape, forConstruction: bool=False):
         """
             Create a vertex from a FreeCAD Vertex
         """
@@ -696,32 +704,32 @@ class Vertex(Shape):
         self.forConstruction = forConstruction
         self.X, self.Y, self.Z = self.toTuple()
 
-    def toTuple(self):
+    def toTuple(self)->Tuple[float,float,float]:
 
         geom_point = BRep_Tool.Pnt_s(self.wrapped)
         return (geom_point.X(), geom_point.Y(), geom_point.Z())
 
-    def Center(self):
+    def Center(self)->Vector:
         """
             The center of a vertex is itself!
         """
         return Vector(self.toTuple())
 
     @classmethod
-    def makeVertex(cls, x, y, z):
+    def makeVertex(cls:Type["Vertex"], x:float, y:float, z:float)->"Vertex":
 
         return cls.cast(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
 
 class Mixin1D(object):
-    def Length(self):
+    def Length(self)->float:
 
         Properties = GProp_GProps()
         BRepGProp.LinearProperties_s(self.wrapped, Properties)
 
         return Properties.Mass()
 
-    def IsClosed(self):
+    def IsClosed(self)->bool:
 
         return BRep_Tool.IsClosed_s(self.wrapped)
 
@@ -731,13 +739,13 @@ class Edge(Shape, Mixin1D):
     A trimmed curve that represents the border of a face
     """
 
-    def _geomAdaptor(self):
+    def _geomAdaptor(self)->BRepAdaptor_Curve:
         """
         Return the underlying geometry
         """
         return BRepAdaptor_Curve(self.wrapped)
 
-    def startPoint(self):
+    def startPoint(self)->Vector:
         """
 
             :return: a vector representing the start poing of this edge
@@ -750,7 +758,7 @@ class Edge(Shape, Mixin1D):
 
         return Vector(curve.Value(umin))
 
-    def endPoint(self):
+    def endPoint(self)->Vector:
         """
 
             :return: a vector representing the end point of this edge.
@@ -764,7 +772,7 @@ class Edge(Shape, Mixin1D):
 
         return Vector(curve.Value(umax))
 
-    def tangentAt(self, locationParam=0.5):
+    def tangentAt(self, locationParam:float=0.5)->Vector:
         """
         Compute tangent vector at the specified location.
         :param locationParam: location to use in [0,1]
@@ -785,7 +793,7 @@ class Edge(Shape, Mixin1D):
 
             return Vector(dir_handle)
 
-    def Center(self):
+    def Center(self)->Vector:
 
         Properties = GProp_GProps()
         BRepGProp.LinearProperties_s(self.wrapped, Properties)
@@ -794,8 +802,8 @@ class Edge(Shape, Mixin1D):
 
     @classmethod
     def makeCircle(
-        cls, radius, pnt=Vector(0, 0, 0), dir=Vector(0, 0, 1), angle1=360.0, angle2=360
-    ):
+        cls:Type["Edge"], radius:float, pnt:VectorLike=Vector(0, 0, 0), dir:VectorLike=Vector(0, 0, 1), angle1:float=360.0, angle2:float=360
+    )->"Edge":
         """
 
         """
@@ -814,16 +822,16 @@ class Edge(Shape, Mixin1D):
 
     @classmethod
     def makeEllipse(
-        cls,
-        x_radius,
-        y_radius,
-        pnt=Vector(0, 0, 0),
-        dir=Vector(0, 0, 1),
-        xdir=Vector(1, 0, 0),
-        angle1=360.0,
-        angle2=360.0,
-        sense=1,
-    ):
+        cls:Type["Edge"],
+        x_radius: float,
+        y_radius: float,
+        pnt: VectorLike=Vector(0, 0, 0),
+        dir: VectorLike=Vector(0, 0, 1),
+        xdir: VectorLike=Vector(1, 0, 0),
+        angle1: float=360.0,
+        angle2: float=360.0,
+        sense: Literal[-1,1]=1,
+    ) -> "Edge":
         """
         Makes an Ellipse centered at the provided point, having normal in the provided direction
         :param cls:
@@ -869,7 +877,7 @@ class Edge(Shape, Mixin1D):
         return ellipse
 
     @classmethod
-    def makeSpline(cls, listOfVector, tangents=None, periodic=False, tol=1e-6):
+    def makeSpline(cls: Type["Edge"], listOfVector: Iterable[Vector], tangents: Optional[Sequence[Vector]]=None, periodic:bool=False, tol:float=1e-6)->"Edge":
         """
         Interpolate a spline through the provided points.
         :param cls:
@@ -894,7 +902,7 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
 
     @classmethod
-    def makeThreePointArc(cls, v1, v2, v3):
+    def makeThreePointArc(cls: Type["Edge"], v1: Vector, v2: Vector, v3: Vector) -> "Edge":
         """
         Makes a three point arc through the provided points
         :param cls:
@@ -908,7 +916,7 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeTangentArc(cls, v1, v2, v3):
+    def makeTangentArc(cls: Type["Edge"], v1: Vector, v2: Vector, v3: Vector) -> "Edge":
         """
         Makes a tangent arc from point v1, in the direction of v2 and ends at
         v3.
@@ -923,7 +931,7 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeLine(cls, v1, v2):
+    def makeLine(cls: Type["Edge"], v1: Vector, v2: Vector) -> "Edge":
         """
             Create a line between two points
             :param v1: Vector that represents the first point
