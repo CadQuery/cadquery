@@ -286,14 +286,14 @@ class Shape(object):
         # Helps identify this solid through the use of an ID
         self.label = ""
 
-    def clean(self) -> "Shape":
+    def clean(self: T) -> T:
         """Experimental clean using ShapeUpgrade"""
 
         upgrader = ShapeUpgrade_UnifySameDomain(self.wrapped, True, True, True)
         upgrader.AllowInternalEdges(False)
         upgrader.Build()
 
-        return self.cast(upgrader.Shape())
+        return self.__class__(upgrader.Shape())
 
     def fix(self: T) -> T:
         """Try to fix shape if not valid"""
@@ -498,6 +498,24 @@ class Shape(object):
         else:
             raise NotImplementedError
 
+    @staticmethod
+    def CombinedCenterOfBoundBox(objects: List["Shape"]) -> Vector:
+        """
+        Calculates the center of BoundBox of multiple objects.
+        :param objects: a list of objects with mass 1
+        """
+        total_mass = len(objects)
+
+        weighted_centers = []
+        for o in objects:
+            weighted_centers.append(BoundBox._fromTopoDS(o.wrapped).center)
+
+        sum_wc = weighted_centers[0]
+        for wc in weighted_centers[1:]:
+            sum_wc = sum_wc.add(wc)
+
+        return Vector(sum_wc.multiply(1.0 / total_mass))
+
     def Closed(self) -> bool:
         return self.wrapped.Closed()
 
@@ -583,7 +601,7 @@ class Shape(object):
 
         return self._apply_transform(Tr)
 
-    def translate(self, vector: Vector) -> "Shape":
+    def translate(self: T, vector: Vector) -> T:
 
         if type(vector) == tuple:
             vector = Vector(vector)
@@ -1467,9 +1485,7 @@ class Mixin3D(object):
 
         return vertices, triangles
 
-    def fillet(
-        self: ShapeProtocol, radius: float, edgeList: Iterable[Edge]
-    ) -> ShapeProtocol:
+    def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
         """
         Fillets the specified edges of this solid.
         :param radius: float > 0, the radius of the fillet
@@ -1486,8 +1502,8 @@ class Mixin3D(object):
         return self.__class__(fillet_builder.Shape())
 
     def chamfer(
-        self: ShapeProtocol, length: float, length2: float, edgeList: Iterable[Edge]
-    ) -> ShapeProtocol:
+        self: Any, length: float, length2: Optional[float], edgeList: Iterable[Edge]
+    ) -> Any:
         """
         Chamfers the specified edges of this solid.
         :param length: length > 0, the length (length) of the chamfer
@@ -1521,11 +1537,11 @@ class Mixin3D(object):
         return self.__class__(chamfer_builder.Shape())
 
     def shell(
-        self: ShapeProtocol,
+        self: Any,
         faceList: Iterable[Face],
         thickness: float,
         tolerance: float = 0.0001,
-    ) -> ShapeProtocol:
+    ) -> Any:
         """
             make a shelled solid of given  by removing the list of faces
 
