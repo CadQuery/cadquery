@@ -3133,7 +3133,7 @@ class Workplane(object):
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
 
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires), [])
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
         # now all of the wires have been used to create an extrusion
         self.ctx.pendingWires = []
 
