@@ -543,7 +543,7 @@ class Plane(object):
         return not self.__eq__(other)
 
     @property
-    def origin(self):
+    def origin(self) -> Vector:
         return self._origin
 
     @origin.setter

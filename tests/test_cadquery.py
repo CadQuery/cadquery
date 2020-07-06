@@ -11,8 +11,10 @@ from random import randrange
 from pytest import approx
 
 # my modules
+
 from cadquery import *
 from cadquery import exporters
+from cadquery import occ_impl
 from tests import (
     BaseTest,
     writeStringToFile,
@@ -3461,3 +3463,20 @@ class TestCadQuery(BaseTest):
         box.move(loc)
 
         self.assertTupleAlmostEquals(box.Center().toTuple(), (2, 2, 2), 6)
+
+    def testNullShape(self):
+
+        from OCP.TopoDS import TopoDS_Shape
+
+        s = TopoDS_Shape()
+
+        # make sure raises on non solid
+        with self.assertRaises(ValueError):
+            r = occ_impl.shapes.downcast(s)
+
+    def testCenterOfBoundBox(self):
+
+        obj = Workplane().pushPoints([(0, 0), (2, 2)]).box(1, 1, 1)
+        c = obj.workplane(centerOption="CenterOfBoundBox").plane.origin
+
+        self.assertTupleAlmostEquals(c.toTuple(), (1, 1, 0), 6)
