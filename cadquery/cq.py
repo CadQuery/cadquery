@@ -29,6 +29,7 @@ from typing import (
     Iterable,
     Callable,
     List,
+    cast,
 )
 from typing_extensions import Literal
 
@@ -53,6 +54,11 @@ from .utils import deprecate_kwarg, deprecate
 CQObject = Union[Vector, Location, Shape]
 Selector = selectors.Selector
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
+
+
+def _selectShapes(objects: Iterable[Any]) -> List[Shape]:
+
+    return [el for el in objects if isinstance(el, Shape)]
 
 
 class CQContext(object):
@@ -328,9 +334,9 @@ class Workplane(object):
             ctxSolid = toCombine.pop(0)
 
         # now combine them all. make sure to save a reference to the ctxSolid pointer!
-        s = ctxSolid
+        s: Shape = ctxSolid
         if toCombine:
-            s = s.fuse(*toCombine)
+            s = s.fuse(*_selectShapes(toCombine))
 
         return self.newObject([s])
 
@@ -541,9 +547,9 @@ class Workplane(object):
                 raise ValueError("Selected faces must be co-planar.")
 
             if centerOption in {"CenterOfMass", "ProjectedOrigin"}:
-                center = Shape.CombinedCenter(self.objects)
+                center = Shape.CombinedCenter(_selectShapes(self.objects))
             elif centerOption == "CenterOfBoundBox":
-                center = Shape.CombinedCenterOfBoundBox(self.objects)
+                center = Shape.CombinedCenterOfBoundBox(_selectShapes(self.objects))
 
             normal = objs[0].normalAt()
             xDir = _computeXdir(normal)
@@ -1039,7 +1045,7 @@ class Workplane(object):
         """
         return self.newObject(
             [
-                o.rotate(axisStartPoint, axisEndPoint, angleDegrees)
+                o.rotate(Vector(axisStartPoint), Vector(axisEndPoint), angleDegrees)
                 if isinstance(o, Shape)
                 else o
                 for o in self.objects
@@ -1067,7 +1073,10 @@ class Workplane(object):
         :returns: a CQ object
         """
         return self.newObject(
-            [o.translate(vec) if isinstance(o, Shape) else o for o in self.objects]
+            [
+                o.translate(Vector(vec)) if isinstance(o, Shape) else o
+                for o in self.objects
+            ]
         )
 
     def shell(self, thickness: float) -> "Workplane":
@@ -1108,11 +1117,11 @@ class Workplane(object):
         """
         solidRef = self.findSolid()
 
-        for f in self.objects:
-            if type(f) != Face:
-                raise ValueError("Shelling requires that faces be selected")
+        faces = [f for f in self.objects if isinstance(f, Face)]
+        if len(faces) < len(self.objects):
+            raise ValueError("Shelling requires that faces are selected")
 
-        s = solidRef.shell(self.objects, thickness)
+        s = solidRef.shell(faces, thickness)
         return self.newObject([s])
 
     def fillet(self, radius: float) -> "Workplane":
@@ -1138,7 +1147,7 @@ class Workplane(object):
 
         solid = self.findSolid()
 
-        edgeList = self.edges().vals()
+        edgeList = cast(List[Edge], self.edges().vals())
         if len(edgeList) < 1:
             raise ValueError("Fillets requires that edges be selected")
 
@@ -1175,7 +1184,7 @@ class Workplane(object):
         """
         solid = self.findSolid()
 
-        edgeList = self.edges().vals()
+        edgeList = cast(List[Edge], self.edges().vals())
         if len(edgeList) < 1:
             raise ValueError("Chamfer requires that edges be selected")
 
@@ -1676,24 +1685,25 @@ class Workplane(object):
             allPoints = vecs
 
         if tangents:
-            t1, t2 = tangents
-            tangents = (
+            t1, t2 = Vector(tangents[0]), Vector(tangents[1])
+            tangents_g: Optional[Tuple[Vector, Vector]] = (
                 self.plane.toWorldCoords(t1) - self.plane.origin,
                 self.plane.toWorldCoords(t2) - self.plane.origin,
             )
+        else:
+            tangents_g = None
 
-        e = Edge.makeSpline(allPoints, tangents=tangents, periodic=periodic)
+        e = Edge.makeSpline(allPoints, tangents=tangents_g, periodic=periodic)
 
         if makeWire:
-            rv = Wire.assembleEdges([e])
+            rv_w = Wire.assembleEdges([e])
             if not forConstruction:
-                self._addPendingWire(rv)
+                self._addPendingWire(rv_w)
         else:
-            rv = e
             if not forConstruction:
                 self._addPendingEdge(e)
 
-        return self.newObject([rv])
+        return self.newObject([rv_w if makeWire else e])
 
     def parametricCurve(
         self,
@@ -1754,7 +1764,7 @@ class Workplane(object):
             self.plane.xDir,
             angle1,
             angle2,
-            sense == 1,
+            sense,
         )
 
         # Rotate if necessary
@@ -1767,15 +1777,14 @@ class Workplane(object):
             e = e.translate(center.sub(startPoint))
 
         if makeWire:
-            rv = Wire.assembleEdges([e])
+            rv_w = Wire.assembleEdges([e])
             if not forConstruction:
-                self._addPendingWire(rv)
+                self._addPendingWire(rv_w)
         else:
-            rv = e
             if not forConstruction:
                 self._addPendingEdge(e)
 
-        return self.newObject([rv])
+        return self.newObject([rv_w if makeWire else e])
 
     def threePointArc(
         self, point1: VectorLike, point2: VectorLike, forConstruction: bool = False
@@ -2048,7 +2057,7 @@ class Workplane(object):
         Additionally, it has a bug where a profile composed of two wires ( rather than one )
         also does not work properly. Together these are a real problem.
         """
-        wires = self.wires().vals()
+        wires = cast(List[Wire], self.wires().vals())
         if len(wires) < 2:
             return self
 
@@ -2471,7 +2480,7 @@ class Workplane(object):
             raise ValueError("Must have a solid in the chain to cut from!")
 
         # will contain all of the counterbores as a single compound
-        results = self.eachpoint(fcn, useLocalCoords).vals()
+        results = cast(List[Shape], self.eachpoint(fcn, useLocalCoords).vals())
 
         s = ctxSolid.cut(*results)
 
@@ -2850,7 +2859,7 @@ class Workplane(object):
             newS = newS.clean()
         return newS
 
-    def _combineWithBase(self, obj: CQObject) -> "Workplane":
+    def _combineWithBase(self, obj: Shape) -> "Workplane":
         """
         Combines the provided object with the base solid, if one can be found.
         :param obj:
@@ -2866,7 +2875,7 @@ class Workplane(object):
 
         return self.newObject([r])
 
-    def _cutFromBase(self, obj: CQObject) -> "Workplane":
+    def _cutFromBase(self, obj: Shape) -> "Workplane":
         """
         Cuts the provided object from the base solid, if one can be found.
         :param obj:
@@ -2921,9 +2930,9 @@ class Workplane(object):
         """
 
         # first collect all of the items together
-        newS: Sequence[CQObject]
+        newS: Sequence[Shape]
         if isinstance(toUnion, CQ):
-            newS = toUnion.solids().vals()
+            newS = cast(List[Shape], toUnion.solids().vals())
             if len(newS) < 1:
                 raise ValueError(
                     "CQ object  must have at least one solid on the stack to union!"
@@ -2967,10 +2976,10 @@ class Workplane(object):
         if solidRef is None:
             raise ValueError("Cannot find solid to cut from")
 
-        solidToCut: Sequence[CQObject]
+        solidToCut: Sequence[Shape]
 
         if isinstance(toCut, CQ):
-            solidToCut = toCut.vals()
+            solidToCut = _selectShapes(toCut.vals())
         elif isinstance(toCut, (Solid, Compound)):
             solidToCut = (toCut,)
         else:
@@ -3002,10 +3011,10 @@ class Workplane(object):
         if solidRef is None:
             raise ValueError("Cannot find solid to intersect with")
 
-        solidToIntersect: Sequence[CQObject]
+        solidToIntersect: Sequence[Shape]
 
         if isinstance(toIntersect, CQ):
-            solidToIntersect = toIntersect.vals()
+            solidToIntersect = _selectShapes(toIntersect.vals())
         elif isinstance(toIntersect, (Solid, Compound)):
             solidToIntersect = (toIntersect,)
         else:
@@ -3104,7 +3113,7 @@ class Workplane(object):
         wiresToLoft = self.ctx.pendingWires
         self.ctx.pendingWires = []
 
-        r = Solid.makeLoft(wiresToLoft, ruled)
+        r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
         if combine:
             parentSolid = self.findSolid(searchStack=False, searchParents=True)
@@ -3133,7 +3142,7 @@ class Workplane(object):
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
 
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires), [])
+        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
         # now all of the wires have been used to create an extrusion
         self.ctx.pendingWires = []
 
@@ -3190,7 +3199,9 @@ class Workplane(object):
         # Revolve the wires, make a compound out of them and then fuse them
         toFuse = []
         for ws in wireSets:
-            thisObj = Solid.revolve(ws[0], ws[1:], angleDegrees, axisStart, axisEnd)
+            thisObj = Solid.revolve(
+                ws[0], ws[1:], angleDegrees, Vector(axisStart), Vector(axisEnd)
+            )
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
@@ -3214,16 +3225,19 @@ class Workplane(object):
         """
 
         toFuse = []
+
+        p = path.val()
+        if not isinstance(p, (Wire, Edge)):
+            raise ValueError("Wire or Edge instance required")
+
         if not multisection:
             wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
             for ws in wireSets:
-                thisObj = Solid.sweep(
-                    ws[0], ws[1:], path.val(), makeSolid, isFrenet, transition
-                )
+                thisObj = Solid.sweep(ws[0], ws[1:], p, makeSolid, isFrenet, transition)
                 toFuse.append(thisObj)
         else:
             sections = self.ctx.pendingWires
-            thisObj = Solid.sweep_multi(sections, path.val(), makeSolid, isFrenet)
+            thisObj = Solid.sweep_multi(sections, p, makeSolid, isFrenet)
             toFuse.append(thisObj)
 
         self.ctx.pendingWires = []
@@ -3563,8 +3577,8 @@ class Workplane(object):
         clean: bool = True,
         font: str = "Arial",
         kind: Literal["regular", "bold", "italic"] = "regular",
-        halign: Literal["center", "top", "bottom"] = "center",
-        valign: Literal["center", "left", "right"] = "center",
+        halign: Literal["center", "left", "right"] = "center",
+        valign: Literal["center", "top", "bottom"] = "center",
     ) -> "Workplane":
         """
         Create a 3D text
@@ -3654,7 +3668,7 @@ class Workplane(object):
         if type(self.val()) is Vector:
             return "&lt {} &gt".format(self.__repr__()[1:-1])
         else:
-            return Compound.makeCompound(self.objects)._repr_html_()
+            return Compound.makeCompound(_selectShapes(self.objects))._repr_html_()
 
 
 # alias for backward compatibility
