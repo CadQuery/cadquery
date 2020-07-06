@@ -158,6 +158,8 @@ from OCP.BOPAlgo import BOPAlgo_GlueEnum
 
 from OCP.IFSelect import IFSelect_ReturnStatus
 
+from OCP.TopAbs import TopAbs_ShapeEnum
+
 from math import pi, sqrt
 from functools import reduce
 import warnings
@@ -261,20 +263,29 @@ VectorLike = Union[Vector, Tuple[float, float, float]]
 T = TypeVar("T", bound="Shape")
 
 
-def downcast(topods_obj: TopoDS_Shape) -> TopoDS_Shape:
+def shapetype(obj: TopoDS_Shape) -> TopAbs_ShapeEnum:
+
+    if obj.IsNull():
+        raise ValueError("Null TopoDS_Shape object")
+
+    return obj.ShapeType()
+
+
+def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
     """
     Downcasts a TopoDS object to suitable specialized type
     """
 
-    f_downcast: Any = downcast_LUT[topods_obj.ShapeType()]
+    f_downcast: Any = downcast_LUT[shapetype(obj)]
+    rv = f_downcast(obj)
 
-    return f_downcast(topods_obj)
+    return rv
 
 
 class Shape(object):
     """
         Represents a shape in the system.
-        Wrappers the FreeCAD api
+        Wrappers the FreeCAD apiSh
     """
 
     wrapped: TopoDS_Shape
@@ -325,7 +336,7 @@ class Shape(object):
             ta.TopAbs_COMPOUND: Compound,
         }
 
-        t = obj.ShapeType()
+        t = shapetype(obj)
         # NB downcast is nedded to handly TopoDS_Shape types
         tr = constructor_LUT[t](downcast(obj))
         tr.forConstruction = forConstruction
@@ -382,7 +393,7 @@ class Shape(object):
             Wire:   'Wire'
         """
 
-        tr: Any = geom_LUT[self.wrapped.ShapeType()]
+        tr: Any = geom_LUT[shapetype(self.wrapped)]
 
         if isinstance(tr, str):
             rv = tr
@@ -476,7 +487,7 @@ class Shape(object):
         Calculates the 'mass' of an object.
         """
         Properties = GProp_GProps()
-        calc_function = shape_properties_LUT[obj.wrapped.ShapeType()]
+        calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
 
         if calc_function:
             calc_function(obj.wrapped, Properties)
@@ -490,7 +501,7 @@ class Shape(object):
         Calculates the 'mass' of an object.
         """
         Properties = GProp_GProps()
-        calc_function = shape_properties_LUT[obj.wrapped.ShapeType()]
+        calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
 
         if calc_function:
             calc_function(obj.wrapped, Properties)
@@ -520,7 +531,7 @@ class Shape(object):
         return self.wrapped.Closed()
 
     def ShapeType(self) -> Shapes:
-        return tcast(Shapes, shape_LUT[self.wrapped.ShapeType()])
+        return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
     def _entities(self, topo_type: Shapes) -> List[TopoDS_Shape]:
 
