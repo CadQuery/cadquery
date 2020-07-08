@@ -10,7 +10,6 @@ from typing import (
     Any,
     overload,
     TypeVar,
-    Callable,
     cast as tcast,
 )
 from typing_extensions import Literal, Protocol
@@ -51,6 +50,7 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_Transformed,
     BRepBuilderAPI_RightCorner,
     BRepBuilderAPI_RoundCorner,
+    BRepBuilderAPI_MakeSolid,
 )
 
 # properties used to store mass calculation result
@@ -158,10 +158,9 @@ from OCP.BOPAlgo import BOPAlgo_GlueEnum
 
 from OCP.IFSelect import IFSelect_ReturnStatus
 
-from OCP.TopAbs import TopAbs_ShapeEnum
+from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 
 from math import pi, sqrt
-from functools import reduce
 import warnings
 
 TOLERANCE = 1e-6
@@ -1563,16 +1562,35 @@ class Mixin3D(object):
         """
 
         occ_faces_list = TopTools_ListOfShape()
-        for f in faceList:
-            occ_faces_list.Append(f.wrapped)
 
-        shell_builder = BRepOffsetAPI_MakeThickSolid(
-            self.wrapped, occ_faces_list, thickness, tolerance
-        )
+        if faceList:
+            for f in faceList:
+                occ_faces_list.Append(f.wrapped)
 
-        shell_builder.Build()
+            shell_builder = BRepOffsetAPI_MakeThickSolid(
+                self.wrapped, occ_faces_list, thickness, tolerance
+            )
 
-        return self.__class__(shell_builder.Shape())
+            shell_builder.Build()
+            rv = shell_builder.Shape()
+
+        else:  # if no faces provided a watertight solid will be constructed
+            shell_builder = BRepOffsetAPI_MakeThickSolid(
+                self.wrapped, occ_faces_list, thickness, tolerance
+            )
+
+            shell_builder.Build()
+            s1 = self.__class__(shell_builder.Shape()).Shells()[0].wrapped
+            s2 = self.Shells()[0].wrapped
+
+            # s1 can be outer or inner shell depending on the thickness sign
+            if thickness > 0:
+                rv = BRepBuilderAPI_MakeSolid(s1, s2).Shape()
+            else:
+                rv = BRepBuilderAPI_MakeSolid(s2, s1).Shape()
+
+        # fix needed for the orientations
+        return self.__class__(rv) if faceList else self.__class__(rv).fix()
 
     def isInside(
         self: ShapeProtocol, point: VectorLike, tolerance: float = 1.0e-6

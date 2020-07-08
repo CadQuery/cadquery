@@ -1118,8 +1118,6 @@ class Workplane(object):
         solidRef = self.findSolid()
 
         faces = [f for f in self.objects if isinstance(f, Face)]
-        if len(faces) < len(self.objects):
-            raise ValueError("Shelling requires that faces are selected")
 
         s = solidRef.shell(faces, thickness)
         return self.newObject([s])
