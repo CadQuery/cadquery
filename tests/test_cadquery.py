@@ -1816,6 +1816,18 @@ class TestCadQuery(BaseTest):
         self.saveModel(s)
         self.assertEqual(23, s.faces().size())
 
+    def testClosedShell(self):
+        """
+            Create a hollow box
+        """
+        s1 = Workplane("XY").box(2, 2, 2).shell(-0.1)
+        self.assertEqual(12, s1.faces().size())
+        self.assertTrue(s1.val().isValid())
+
+        s2 = Workplane("XY").box(2, 2, 2).shell(0.1)
+        self.assertEqual(32, s2.faces().size())
+        self.assertTrue(s2.val().isValid())
+
     def testOpenCornerShell(self):
         s = Workplane("XY").box(1, 1, 1)
         s1 = s.faces("+Z")
