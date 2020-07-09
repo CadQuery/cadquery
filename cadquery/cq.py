@@ -1344,6 +1344,7 @@ class Workplane(object):
         angle: float,
         count: int,
         fill: bool = True,
+        rotate=True,
     ) -> "Workplane":
         """
         Creates an polar array of points and pushes them onto the stack.
@@ -1356,15 +1357,23 @@ class Workplane(object):
             value will fill in the counter-clockwise direction. If fill is
             false, angle is the angle between elements.
         :param count: Number of elements in array. ( > 0 )
+        :param fill: Interpret the angle as total if True (default: True).
+        :param rotate: Rorate every item (default: True).
         """
 
         if count <= 0:
             raise ValueError("No elements in array")
 
         # First element at start angle, convert to cartesian coords
-        x = radius * math.cos(math.radians(startAngle))
-        y = radius * math.sin(math.radians(startAngle))
-        points = [Location(Vector(x, y), Vector(0, 0, 1), startAngle)]
+        x = radius * math.sin(math.radians(startAngle))
+        y = radius * math.cos(math.radians(startAngle))
+
+        if rotate:
+            loc = Location(Vector(x, y), Vector(0, 0, 1), -startAngle)
+        else:
+            loc = Location(Vector(x, y))
+
+        locs = [loc]
 
         # Calculate angle between elements
         if fill:
@@ -1376,14 +1385,19 @@ class Workplane(object):
 
         # Add additional elements
         for i in range(1, count):
-            phi = math.radians(startAngle + (angle * i))
-            x = radius * math.cos(phi)
-            y = radius * math.sin(phi)
-            points.append(
-                Location(Vector(x, y), Vector(0, 0, 1), startAngle + (angle * i))
-            )
+            phi_deg = startAngle + (angle * i)
+            phi = math.radians(phi_deg)
+            x = radius * math.sin(phi)
+            y = radius * math.cos(phi)
 
-        return self.pushPoints(points)
+            if rotate:
+                loc = Location(Vector(x, y), Vector(0, 0, 1), -phi_deg)
+            else:
+                loc = Location(Vector(x, y))
+
+            locs.append(loc)
+
+        return self.pushPoints(locs)
 
     def pushPoints(self, pntList: Iterable[Union[VectorLike, Location]]) -> "Workplane":
         """
