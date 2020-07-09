@@ -969,25 +969,42 @@ class TestCadQuery(BaseTest):
         s = Workplane("XY").polarArray(radius, 0, 180, 6)
         self.assertEqual(6, s.size())
 
+        to_x = lambda l: l.wrapped.Transformation().TranslationPart().X()
+        to_y = lambda l: l.wrapped.Transformation().TranslationPart().Y()
+        to_angle = (
+            lambda l: l.wrapped.Transformation().GetRotation().GetRotationAngle()
+            * 180.0
+            / math.pi
+        )
+
         # Test for proper placement when fill == True
         s = Workplane("XY").polarArray(radius, 0, 180, 3)
-        self.assertAlmostEqual(0, s.objects[1].x)
-        self.assertAlmostEqual(radius, s.objects[1].y)
+        self.assertAlmostEqual(0, to_y(s.objects[1]))
+        self.assertAlmostEqual(radius, to_x(s.objects[1]))
 
         # Test for proper placement when angle to fill is multiple of 360 deg
         s = Workplane("XY").polarArray(radius, 0, 360, 4)
-        self.assertAlmostEqual(0, s.objects[1].x)
-        self.assertAlmostEqual(radius, s.objects[1].y)
+        self.assertAlmostEqual(0, to_y(s.objects[1]))
+        self.assertAlmostEqual(radius, to_x(s.objects[1]))
 
         # Test for proper placement when fill == False
         s = Workplane("XY").polarArray(radius, 0, 90, 3, fill=False)
-        self.assertAlmostEqual(0, s.objects[1].x)
-        self.assertAlmostEqual(radius, s.objects[1].y)
+        self.assertAlmostEqual(0, to_y(s.objects[1]))
+        self.assertAlmostEqual(radius, to_x(s.objects[1]))
 
         # Test for proper operation of startAngle
         s = Workplane("XY").polarArray(radius, 90, 180, 3)
-        self.assertAlmostEqual(0, s.objects[0].x)
-        self.assertAlmostEqual(radius, s.objects[0].y)
+        self.assertAlmostEqual(radius, to_x(s.objects[0]))
+        self.assertAlmostEqual(0, to_y(s.objects[0]))
+
+        # Test for local rotation
+        s = Workplane().polarArray(radius, 0, 180, 3)
+        self.assertAlmostEqual(0, to_angle(s.objects[0]))
+        self.assertAlmostEqual(90, to_angle(s.objects[1]))
+
+        s = Workplane().polarArray(radius, 0, 180, 3, rotate=False)
+        self.assertAlmostEqual(0, to_angle(s.objects[0]))
+        self.assertAlmostEqual(0, to_angle(s.objects[1]))
 
     def testNestedCircle(self):
         s = (
