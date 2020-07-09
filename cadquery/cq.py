@@ -1364,7 +1364,7 @@ class Workplane(object):
         # First element at start angle, convert to cartesian coords
         x = radius * math.cos(math.radians(startAngle))
         y = radius * math.sin(math.radians(startAngle))
-        points = [(x, y)]
+        points = [Location(Vector(x, y), Vector(0, 0, 1), startAngle)]
 
         # Calculate angle between elements
         if fill:
@@ -1379,7 +1379,9 @@ class Workplane(object):
             phi = math.radians(startAngle + (angle * i))
             x = radius * math.cos(phi)
             y = radius * math.sin(phi)
-            points.append((x, y))
+            points.append(
+                Location(Vector(x, y), Vector(0, 0, 1), startAngle + (angle * i))
+            )
 
         return self.pushPoints(points)
 
@@ -1403,10 +1405,11 @@ class Workplane(object):
         Here the circle function operates on all three points, and is then extruded to create three
         holes. See :py:meth:`circle` for how it works.
         """
-        vecs = []
+        vecs: List[Union[Location, Vector]] = []
         for pnt in pntList:
-            vec = self.plane.toWorldCoords(pnt)
-            vecs.append(vec)
+            vecs.append(
+                pnt if isinstance(pnt, Location) else self.plane.toWorldCoords(pnt)
+            )
 
         return self.newObject(vecs)
 
