@@ -1344,7 +1344,7 @@ class Workplane(object):
         angle: float,
         count: int,
         fill: bool = True,
-        rotate=True,
+        rotate: bool = True,
     ) -> "Workplane":
         """
         Creates an polar array of points and pushes them onto the stack.
