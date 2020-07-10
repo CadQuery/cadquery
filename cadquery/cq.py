@@ -19,6 +19,7 @@
 
 import math
 from copy import copy
+from itertools import chain
 from typing import (
     overload,
     Sequence,
@@ -1933,44 +1934,6 @@ class Workplane(object):
 
         return self.newObject([arc])
 
-    '''
-    def rotateAndCopy(self, matrix: Matrix) -> "Workplane":
-        """
-        Makes a copy of all edges on the stack, rotates them according to the
-        provided matrix, and then attempts to consolidate them into a single wire.
-
-        :param matrix: a 4xr transformation matrix, in global coordinates
-        :type matrix: a FreeCAD Base.Matrix object
-        :return: a CadQuery object  with consolidated wires, and any originals on the stack.
-
-        The most common use case is to create a set of open edges, and then mirror them
-        around either the X or Y axis to complete a closed shape.
-
-        see :py:meth:`mirrorX` and :py:meth:`mirrorY` to mirror about the global X and Y axes
-        see :py:meth:`mirrorX` and for an example
-
-        Future Enhancements:
-            faster implementation: this one transforms 3 times to accomplish the result
-        """
-
-        # convert edges to a wire, if there are pending edges
-        n = self.wire(forConstruction=False)
-
-        # attempt to consolidate wires together.
-        consolidated = n.consolidateWires()
-
-        rotatedWires = self.plane.rotateShapes(consolidated.wires().vals(), matrix)
-
-        for w in rotatedWires:
-            consolidated.objects.append(w)
-            consolidated._addPendingWire(w)
-
-        # attempt again to consolidate all of the wires
-        c = consolidated.consolidateWires()
-
-        return c
-    '''
-
     def mirrorY(self) -> "Workplane":
         """
         Mirror entities around the y axis of the workplane plane.
@@ -2062,6 +2025,17 @@ class Workplane(object):
         """
         self.ctx.pendingWires.append(wire)
 
+    def _consolidateWires(self) -> List[Wire]:
+
+        wires = cast(
+            List[Union[Edge, Wire]],
+            [el for el in chain(self.ctx.pendingEdges, self.ctx.pendingWires)],
+        )
+        if not wires:
+            return []
+
+        return Wire.combine(wires)
+
     def consolidateWires(self) -> "Workplane":
         """
         Attempt to consolidate wires on the stack into a single.
@@ -2072,22 +2046,21 @@ class Workplane(object):
         Additionally, it has a bug where a profile composed of two wires ( rather than one )
         also does not work properly. Together these are a real problem.
         """
-        wires = cast(List[Wire], self.wires().vals())
-        if len(wires) < 2:
-            return self
 
-        # TODO: this makes the assumption that either all wires could be combined, or none.
-        # in reality trying each combination of wires is probably not reasonable anyway
-        w = Wire.combine(wires)
+        w = self._consolidateWires()
+
+        if not w:
+            return self
 
         # ok this is a little tricky. if we consolidate wires, we have to actually
         # modify the pendingWires collection to remove the original ones, and replace them
         # with the consolidate done
         # since we are already assuming that all wires could be consolidated, its easy, we just
         # clear the pending wire list
-        r = self.newObject([w])
-        r.ctx.pendingWires = []
-        r._addPendingWire(w)
+        r = self.newObject(w)
+        r.ctx.pendingWires = w
+        r.ctx.pendingEdges = []
+
         return r
 
     def wire(self, forConstruction: bool = False) -> "Workplane":
@@ -3674,6 +3647,26 @@ class Workplane(object):
         self.ctx.pendingEdges.extend(el for el in self.objects if isinstance(el, Edge))
 
         return self
+
+    def offset2D(
+        self, d: float, kind: Literal["arc", "intersection", "tangent"] = "arc"
+    ) -> "Workplane":
+        """
+        Creates a 2D offset wire.
+        
+        :param float d: thickness. Negative thickness denotes offset to inside.
+        :param kind: offset kind. Use "arc" for rounded and "intersection" for sharp edges (default "arc")
+        
+        :return: CQ object with resulting wire(s).
+        """
+
+        ws = self._consolidateWires()
+        rv = list(chain.from_iterable(w.offset2D(d, kind) for w in ws))
+
+        self.ctx.pendingEdges = []
+        self.ctx.pendingWires = rv
+
+        return self.newObject(rv)
 
     def _repr_html_(self) -> Any:
         """
