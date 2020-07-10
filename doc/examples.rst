@@ -537,14 +537,40 @@ In the example below, a rectangle is drawn, and its vertices are used to locate 
 Shelling To Create Thin features
 --------------------------------
 
-Shelling converts a solid object into a shell of uniform thickness.  To shell an object, one or more faces
-are removed, and then the inside of the solid is 'hollowed out' to make the shell.
+Shelling converts a solid object into a shell of uniform thickness.
 
+To shell an object and 'hollow out' the inside pass a negative thickness parameter
+to the :py:meth:`Workplane.shell()` method of a shape.
 
 .. cq_plot::
 
-    result = cq.Workplane("front").box(2, 2, 2).faces("+Z").shell(0.05)
+    result = cq.Workplane("front").box(2, 2, 2).shell(-0.1)
     show_object(result)
+
+A positive thickness parameter wraps an object with filleted outside edges
+and the original object will be the 'hollowed out' portion.
+
+.. cq_plot::
+
+    result = cq.Workplane("front").box(2, 2, 2).shell(0.1)
+    show_object(result)
+
+Use faces to select a single face to be removed from the resulting hollow shape.
+
+.. cq_plot::
+
+    result = cq.Workplane("front").box(2, 2, 2).faces("+Z").shell(0.1)
+    show_object(result)
+
+To remove multiple faces create a solid, select the first face using s.faces()
+and then use the :py:meth:`Workplane.add()` method to add each
+additional face.
+
+.. cq_plot::
+
+   s = cq.Workplane("front").box(2, 2, 2)
+   result = s.faces("+Z").add(s.faces("-X")).add(s.faces("+X")).shell(0.1)
+   show_object(result)
 
 .. topic:: Api References
 
@@ -552,6 +578,7 @@ are removed, and then the inside of the solid is 'hollowed out' to make the shel
         :columns: 2
 
         * :py:meth:`Workplane.shell` **!**
+        * :py:meth:`Workplane.add` **!**
         * :py:meth:`Workplane.box`
         * :py:meth:`Workplane.faces`
         * :py:meth:`Workplane`
