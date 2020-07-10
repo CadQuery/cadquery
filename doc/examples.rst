@@ -576,7 +576,7 @@ Multiple faces can be removed using more complex selectors.
         :columns: 2
 
         * :py:meth:`Workplane.shell` **!**
-        * :py:meth:`Workplane.add` **!**
+        * :ref:`selector_reference`
         * :py:meth:`Workplane.box`
         * :py:meth:`Workplane.faces`
         * :py:meth:`Workplane`
