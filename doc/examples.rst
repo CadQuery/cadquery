@@ -566,8 +566,12 @@ Multiple faces can be removed using more complex selectors.
 
 .. cq_plot::
 
-   s = cq.Workplane("front").box(2, 2, 2)
-   result = s.faces("+Z or -X or +X").shell(0.1)
+   result = (
+        cq.Workplane("front")
+        .box(2, 2, 2)
+        .faces("+Z or -X or +X")
+        .shell(0.1)
+   )
    show_object(result)
 
 .. topic:: Api References
