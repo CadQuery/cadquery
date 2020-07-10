@@ -555,21 +555,19 @@ and the original object will be the 'hollowed out' portion.
     result = cq.Workplane("front").box(2, 2, 2).shell(0.1)
     show_object(result)
 
-Use faces to select a single face to be removed from the resulting hollow shape.
+Use face selectors to select a face to be removed from the resulting hollow shape.
 
 .. cq_plot::
 
     result = cq.Workplane("front").box(2, 2, 2).faces("+Z").shell(0.1)
     show_object(result)
 
-To remove multiple faces create a solid, select the first face using s.faces()
-and then use the :py:meth:`Workplane.add()` method to add each
-additional face.
+Multiple faces can be removed using more complex selectors.
 
 .. cq_plot::
 
    s = cq.Workplane("front").box(2, 2, 2)
-   result = s.faces("+Z").add(s.faces("-X")).add(s.faces("+X")).shell(0.1)
+   result = s.faces("+Z or -X or +X").shell(0.1)
    show_object(result)
 
 .. topic:: Api References
