@@ -3551,3 +3551,11 @@ class TestCadQuery(BaseTest):
             .extrude(1)
         )
         self.assertEqual(s.solids().size(), 4)
+
+    def testConsolidateWires(self):
+
+        w1 = Workplane().lineTo(0, 1).lineTo(1, 1).consolidateWires()
+        self.assertEqual(w1.size(), 1)
+
+        w1 = Workplane().consolidateWires()
+        self.assertEqual(w1.size(), 0)
