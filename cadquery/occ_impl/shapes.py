@@ -110,6 +110,7 @@ from OCP.BRepOffsetAPI import (
     BRepOffsetAPI_ThruSections,
     BRepOffsetAPI_MakePipeShell,
     BRepOffsetAPI_MakeThickSolid,
+    BRepOffsetAPI_MakeOffset,
 )
 
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeChamfer, BRepFilletAPI_MakeFillet
@@ -149,8 +150,12 @@ from OCP.TCollection import TCollection_AsciiString
 
 from OCP.TopLoc import TopLoc_Location
 
-from OCP.GeomAbs import GeomAbs_Shape, GeomAbs_C0
-from OCP.GeomAbs import GeomAbs_Intersection
+from OCP.GeomAbs import (
+    GeomAbs_Shape,
+    GeomAbs_C0,
+    GeomAbs_Intersection,
+    GeomAbs_JoinType,
+)
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
 
@@ -159,6 +164,9 @@ from OCP.BOPAlgo import BOPAlgo_GlueEnum
 from OCP.IFSelect import IFSelect_ReturnStatus
 
 from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
+
+from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
+from OCP.TopTools import TopTools_HSequenceOfShape
 
 from math import pi, sqrt
 import warnings
@@ -281,6 +289,17 @@ def downcast(obj: TopoDS_Shape) -> TopoDS_Shape:
     return rv
 
 
+def fix(obj: TopoDS_Shape) -> TopoDS_Shape:
+    """
+    Fix a TopoDS object to suitable specialized type
+    """
+
+    sf = ShapeFix_Shape(obj)
+    sf.Perform()
+
+    return downcast(sf.Shape())
+
+
 class Shape(object):
     """
         Represents a shape in the system.
@@ -291,8 +310,8 @@ class Shape(object):
 
     def __init__(self, obj: TopoDS_Shape):
         self.wrapped = downcast(obj)
-        self.forConstruction = False
 
+        self.forConstruction = False
         # Helps identify this solid through the use of an ID
         self.label = ""
 
@@ -307,10 +326,8 @@ class Shape(object):
 
     def fix(self: T) -> T:
         """Try to fix shape if not valid"""
-        if not BRepCheck_Analyzer(self.wrapped).IsValid():
-            sf = ShapeFix_Shape(self.wrapped)
-            sf.Perform()
-            fixed = downcast(sf.Shape())
+        if not self.isValid():
+            fixed = fix(self.wrapped)
 
             return self.__class__(fixed)
 
@@ -1070,20 +1087,25 @@ class Wire(Shape, Mixin1D):
 
     @classmethod
     def combine(
-        cls: Type["Wire"], listOfWires: Iterable[Union["Wire", Edge]]
-    ) -> "Wire":
+        cls: Type["Wire"], listOfWires: Iterable[Union["Wire", Edge]], tol: float = 1e-9
+    ) -> List["Wire"]:
         """
         Attempt to combine a list of wires and egdes into a new wire.
         :param cls:
         :param listOfWires:
+        :param tol: default 1e-9
         :return: Wire
         """
 
-        wire_builder = BRepBuilderAPI_MakeWire()
-        for wire in listOfWires:
-            wire_builder.Add(wire.wrapped)
+        edges_in = TopTools_HSequenceOfShape()
+        wires_out = TopTools_HSequenceOfShape()
 
-        return cls(wire_builder.Wire())
+        for e in Compound.makeCompound(listOfWires).Edges():
+            edges_in.Append(e.wrapped)
+
+        ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
+
+        return [cls(el) for el in wires_out]
 
     @classmethod
     def assembleEdges(cls: Type["Wire"], listOfEdges: Iterable[Edge]) -> "Wire":
@@ -1243,6 +1265,31 @@ class Wire(Shape, Mixin1D):
         wire_builder.Build()
 
         return self.__class__(wire_builder.Wire())
+
+    def offset2D(
+        self, d: float, kind: Literal["arc", "intersection", "tangent"] = "arc"
+    ) -> List["Wire"]:
+        """Offsets a planar wire"""
+
+        kind_dict = {
+            "arc": GeomAbs_JoinType.GeomAbs_Arc,
+            "intersection": GeomAbs_JoinType.GeomAbs_Intersection,
+            "tangent": GeomAbs_JoinType.GeomAbs_Tangent,
+        }
+
+        offset = BRepOffsetAPI_MakeOffset()
+        offset.Init(kind_dict[kind])
+        offset.AddWire(self.wrapped)
+        offset.Perform(d)
+
+        obj = downcast(offset.Shape())
+
+        if isinstance(obj, TopoDS_Compound):
+            rv = [self.__class__(el.wrapped) for el in Compound(obj)]
+        else:
+            rv = [self.__class__(obj)]
+
+        return rv
 
 
 class Face(Shape):
@@ -1948,7 +1995,7 @@ class Solid(Shape, Mixin3D):
         """
         # make straight spine
         straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
-        straight_spine_w = Wire.combine([straight_spine_e,]).wrapped
+        straight_spine_w = Wire.combine([straight_spine_e,])[0].wrapped
 
         # make an auxliliary spine
         pitch = 360.0 / angleDegrees * vecNormal.Length
