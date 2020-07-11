@@ -136,6 +136,11 @@ If you are going to contribute code, make sure to follow this steps:
   things, start with just one!)
 - Fork the CadQuery repository, clone your fork and create a new branch to
   start working on your changes
+- Create a conda development environment with something like: conda env create -n cq-dev -f environment.yml
+- Activate the new conda enviornment: conda activate cq-dev
+- Install the master branch of cq-editor, if desired: conda install -c cadquery -c conda-forge cq-editor=master
+- Before making any changes verify that the current tests pass. Run `pytest` from the root of your cadquery clone, the result should end with something like:
+  - ============================ 215 passed, 57 warnings in 13.95s ============================
 - Start with the tests! How should CadQuery behave after your changes? Make
   sure to add some tests to the test suite to ensure proper behavior
 - Make sure your tests have assertions checking all the expected results
