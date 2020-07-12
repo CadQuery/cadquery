@@ -59,10 +59,14 @@ All 2-d operations require a **Workplane** object to be created.
 	Workplane.wire
 	Workplane.rect
 	Workplane.circle
+	Workplane.ellipse
+	Workplane.ellipseArc
 	Workplane.polyline
 	Workplane.close
 	Workplane.rarray
 	Workplane.polarArray
+	Workplane.slot2D
+	Workplane.offset2D
 
 .. _3doperations:
 
@@ -115,6 +119,7 @@ File Management and Export
 
 .. autosummary::
     importers.importStep
+    importers.importDXF
     exporters.exportShape
 
 

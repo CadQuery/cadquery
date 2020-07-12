@@ -3655,7 +3655,7 @@ class Workplane(object):
         Creates a 2D offset wire.
         
         :param float d: thickness. Negative thickness denotes offset to inside.
-        :param kind: offset kind. Use "arc" for rounded and "intersection" for sharp edges (default "arc")
+        :param kind: offset kind. Use "arc" for rounded and "intersection" for sharp edges (default: "arc")
         
         :return: CQ object with resulting wire(s).
         """
