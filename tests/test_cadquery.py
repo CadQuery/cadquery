@@ -1633,7 +1633,6 @@ class TestCadQuery(BaseTest):
         t = 1.5
 
         points = [
-            (0, 0),
             (0, t / 2),
             (r / 2 - 1.5 * t, r / 2 - t),
             (s / 2, r / 2 - t),
@@ -2771,7 +2770,7 @@ class TestCadQuery(BaseTest):
                 lines.append(
                     Edge.makeLine(Vector(*vertices[v1]), Vector(*vertices[v2]))
                 )
-            wire = Wire.combine(lines)
+            wire = Wire.combine(lines)[0]
             faces.append(Face.makeFromWires(wire))
 
         shell = Shell.makeShell(faces)
@@ -3509,3 +3508,54 @@ class TestCadQuery(BaseTest):
         c = obj.workplane(centerOption="CenterOfBoundBox").plane.origin
 
         self.assertTupleAlmostEquals(c.toTuple(), (1, 1, 0), 6)
+
+    def testOffset2D(self):
+
+        w1 = Workplane().rect(1, 1).offset2D(0.5, "arc")
+        self.assertEqual(w1.edges().size(), 8)
+
+        w2 = Workplane().rect(1, 1).offset2D(0.5, "tangent")
+        self.assertEqual(w2.edges().size(), 4)
+
+        w3 = Workplane().rect(1, 1).offset2D(0.5, "intersection")
+        self.assertEqual(w3.edges().size(), 4)
+
+        w4 = Workplane().pushPoints([(0, 0), (0, 5)]).rect(1, 1).offset2D(-0.5)
+        self.assertEqual(w4.wires().size(), 0)
+
+        w5 = Workplane().pushPoints([(0, 0), (0, 5)]).rect(1, 1).offset2D(-0.25)
+        self.assertEqual(w5.wires().size(), 2)
+
+        r = 20
+        s = 7
+        t = 1.5
+
+        points = [
+            (0, t / 2),
+            (r / 2 - 1.5 * t, r / 2 - t),
+            (s / 2, r / 2 - t),
+            (s / 2, r / 2),
+            (r / 2, r / 2),
+            (r / 2, s / 2),
+            (r / 2 - t, s / 2),
+            (r / 2 - t, r / 2 - 1.5 * t),
+            (t / 2, 0),
+        ]
+
+        s = (
+            Workplane("XY")
+            .polyline(points)
+            .mirrorX()
+            .mirrorY()
+            .offset2D(-0.9)
+            .extrude(1)
+        )
+        self.assertEqual(s.solids().size(), 4)
+
+    def testConsolidateWires(self):
+
+        w1 = Workplane().lineTo(0, 1).lineTo(1, 1).consolidateWires()
+        self.assertEqual(w1.size(), 1)
+
+        w1 = Workplane().consolidateWires()
+        self.assertEqual(w1.size(), 0)
