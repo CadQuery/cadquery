@@ -1,10 +1,9 @@
 from .. import cq
 from .geom import Vector
-from .shapes import Shape, Edge, Face, Compound, sortWiresByBuildOrder
+from .shapes import Shape, Edge, Face, sortWiresByBuildOrder
 
 import ezdxf
 
-from OCP.BOPAlgo import BOPAlgo_Tools
 from OCP.STEPControl import STEPControl_Reader
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.TopTools import TopTools_HSequenceOfShape
@@ -125,11 +124,6 @@ def _dxf_convert(elements, tol):
             edges.extend(conv(el))
 
     if edges:
-        comp = Compound.makeCompound(edges)
-        shape_out = OCP.TopoDS.TopoDS_Shape()
-        BOPAlgo_Tools.EdgesToWires_s(comp.wrapped, shape_out)
-        rv = Shape.cast(shape_out)
-
         edges_in = TopTools_HSequenceOfShape()
         wires_out = TopTools_HSequenceOfShape()
 
