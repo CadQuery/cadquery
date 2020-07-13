@@ -36,7 +36,7 @@ from OCP.gp import (
 
 # collection of pints (used for spline construction)
 from OCP.TColgp import TColgp_HArray1OfPnt
-from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
+from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface, BRepAdaptor_HCurve
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
@@ -168,6 +168,9 @@ from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.TopTools import TopTools_HSequenceOfShape
 
+from OCP.GCPnts import GCPnts_AbscissaPoint
+
+from OCP.GeomFill import GeomFill_Frenet, GeomFill_CorrectedFrenet, GeomFill_CorrectedFrenet,GeomFill_DiscreteTrihedron, GeomFill_ConstantBiNormal, 	GeomFill_DraftTrihedron
 from math import pi, sqrt
 import warnings
 
@@ -1076,6 +1079,41 @@ class Edge(Shape, Mixin1D):
             :return: A linear edge between the two provided points
         """
         return cls(BRepBuilderAPI_MakeEdge(v1.toPnt(), v2.toPnt()).Edge())
+
+    def locationAt(
+        self, d: float, mode: Literal["length", "parameter"] = "length"
+    ) -> Location:
+        """Generate location along the curve"""
+
+        curve = BRepAdaptor_Curve(self.wrapped)
+
+        if mode == "length":
+            l = GCPnts_AbscissaPoint.Length_s(curve)
+            param = GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
+        else:
+            param = d
+
+        frenet_law = 	GeomFill_Frenet()
+        frenet_law.SetCurve(BRepAdaptor_HCurve(curve))
+
+        tangent, normal, binormal = gp_Vec(), gp_Vec(), gp_Vec()
+
+        frenet_law.D0(param, tangent, normal, binormal)
+        pnt = curve.Value(param)
+
+        T = gp_Trsf()
+        T.SetTransformation(
+            gp_Ax3(pnt, gp_Dir(tangent.XYZ()), gp_Dir(normal.XYZ())), gp_Ax3()
+        )
+
+        return Location(TopLoc_Location(T))
+
+    def locations(
+        self, ds: Iterable[float], mode: Literal["length", "parameter"] = "length"
+    ) -> List[Location]:
+        """Generate locations along the curve"""
+
+        return [self.locationAt(d, mode) for d in ds]
 
 
 class Wire(Shape, Mixin1D):
