@@ -3559,3 +3559,33 @@ class TestCadQuery(BaseTest):
 
         w1 = Workplane().consolidateWires()
         self.assertEqual(w1.size(), 0)
+
+    def testLocationAt(self):
+
+        r = 1
+        e = Wire.makeHelix(r, r, r).Edges()[0]
+
+        locs_frenet = e.locations([0, 1], frame="frenet")
+
+        T1 = locs_frenet[0].wrapped.Transformation()
+        T2 = locs_frenet[1].wrapped.Transformation()
+
+        self.assertAlmostEqual(T1.TranslationPart().X(), r, 6)
+        self.assertAlmostEqual(T2.TranslationPart().X(), r, 6)
+        self.assertAlmostEqual(
+            T1.GetRotation().GetRotationAngle(), -T2.GetRotation().GetRotationAngle(), 6
+        )
+
+        ga = e._geomAdaptor()
+
+        locs_corrected = e.locations(
+            [ga.FirstParameter(), ga.LastParameter()],
+            mode="parameter",
+            frame="corrected",
+        )
+
+        T3 = locs_corrected[0].wrapped.Transformation()
+        T4 = locs_corrected[1].wrapped.Transformation()
+
+        self.assertAlmostEqual(T3.TranslationPart().X(), r, 6)
+        self.assertAlmostEqual(T4.TranslationPart().X(), r, 6)
