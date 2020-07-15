@@ -36,7 +36,7 @@ from OCP.gp import (
 
 # collection of pints (used for spline construction)
 from OCP.TColgp import TColgp_HArray1OfPnt
-from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
+from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface, BRepAdaptor_HCurve
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
@@ -168,6 +168,17 @@ from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.TopTools import TopTools_HSequenceOfShape
 
+from OCP.GCPnts import GCPnts_AbscissaPoint
+
+from OCP.GeomFill import (
+    GeomFill_Frenet,
+    GeomFill_CorrectedFrenet,
+    GeomFill_CorrectedFrenet,
+    GeomFill_DiscreteTrihedron,
+    GeomFill_ConstantBiNormal,
+    GeomFill_DraftTrihedron,
+    GeomFill_TrihedronLaw,
+)
 from math import pi, sqrt
 import warnings
 
@@ -1070,12 +1081,68 @@ class Edge(Shape, Mixin1D):
     @classmethod
     def makeLine(cls: Type["Edge"], v1: Vector, v2: Vector) -> "Edge":
         """
-            Create a line between two points
-            :param v1: Vector that represents the first point
-            :param v2: Vector that represents the second point
-            :return: A linear edge between the two provided points
+        Create a line between two points
+        :param v1: Vector that represents the first point
+        :param v2: Vector that represents the second point
+        :return: A linear edge between the two provided points
         """
         return cls(BRepBuilderAPI_MakeEdge(v1.toPnt(), v2.toPnt()).Edge())
+
+    def locationAt(
+        self,
+        d: float,
+        mode: Literal["length", "parameter"] = "length",
+        frame: Literal["frenet", "corrected"] = "frenet",
+    ) -> Location:
+        """Generate location along the curve
+        :param d: distance or parameter value
+        :param mode: position calculation mode (default: length)
+        :param frame: moving frame calculation method (default: frenet)
+        :return: A Location object representing local coordinate system at the specified distance.
+        """
+
+        curve = BRepAdaptor_Curve(self.wrapped)
+
+        if mode == "length":
+            l = GCPnts_AbscissaPoint.Length_s(curve)
+            param = GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
+        else:
+            param = d
+
+        law: GeomFill_TrihedronLaw
+        if frame == "frenet":
+            law = GeomFill_Frenet()
+        else:
+            law = GeomFill_CorrectedFrenet()
+
+        law.SetCurve(BRepAdaptor_HCurve(curve))
+
+        tangent, normal, binormal = gp_Vec(), gp_Vec(), gp_Vec()
+
+        law.D0(param, tangent, normal, binormal)
+        pnt = curve.Value(param)
+
+        T = gp_Trsf()
+        T.SetTransformation(
+            gp_Ax3(pnt, gp_Dir(tangent.XYZ()), gp_Dir(normal.XYZ())), gp_Ax3()
+        )
+
+        return Location(TopLoc_Location(T))
+
+    def locations(
+        self,
+        ds: Iterable[float],
+        mode: Literal["length", "parameter"] = "length",
+        frame: Literal["frenet", "corrected"] = "frenet",
+    ) -> List[Location]:
+        """Generate location along the curve
+        :param ds: distance or parameter values
+        :param mode: position calculation mode (default: length)
+        :param frame: moving frame calculation method (default: frenet)
+        :return: A list of Location objects representing local coordinate systems at the specified distances.
+        """
+
+        return [self.locationAt(d, mode, frame) for d in ds]
 
 
 class Wire(Shape, Mixin1D):
