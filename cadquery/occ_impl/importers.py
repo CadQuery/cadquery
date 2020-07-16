@@ -1,8 +1,9 @@
 from collections import OrderedDict
+from math import pi
 
 from .. import cq
 from .geom import Vector
-from .shapes import Shape, Edge, Face, sortWiresByBuildOrder
+from .shapes import Shape, Edge, Face, sortWiresByBuildOrder, DEG2RAD
 
 import ezdxf
 
@@ -18,6 +19,7 @@ from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 import OCP.IFSelect
 
+RAD2DEG = 360.0 / (2 * pi)
 
 class ImportTypes:
     STEP = "STEP"
@@ -147,16 +149,32 @@ def _dxf_spline(el):
             pts.SetValue(i + 1, gp_Pnt(*p))
 
         if rational:
-            spline = Geom_BSplineCurve(pts, knots, multiplicities, degree, periodic)
-        else:
             spline = Geom_BSplineCurve(
                 pts, knots, weights, multiplicities, degree, periodic
             )
+        else:
+            spline = Geom_BSplineCurve(pts, knots, multiplicities, degree, periodic)
 
         return (Edge(BRepBuilderAPI_MakeEdge(spline).Edge()),)
     except Exception:
         return ()
 
+def _dxf_ellipse(el):
+
+    try:
+        
+        return (
+            Edge.makeEllipse(
+                el.dxf.major_axis.magnitude,
+                el.minor_axis.magnitude,
+                pnt=Vector(el.dxf.center.xyz),
+                xdir=Vector(el.dxf.major_axis.xyz),
+                angle1=el.dxf.start_param * RAD2DEG,
+                angle2=el.dxf.end_param * RAD2DEG,
+            ),
+        )
+    except Exception:
+        return ()
 
 DXF_CONVERTERS = {
     "LINE": _dxf_line,
@@ -165,6 +183,7 @@ DXF_CONVERTERS = {
     "POLYLINE": _dxf_polyline,
     "LWPOLYLINE": _dxf_polyline,
     "SPLINE": _dxf_spline,
+    "ELLIPSE": _dxf_ellipse
 }
 
 
