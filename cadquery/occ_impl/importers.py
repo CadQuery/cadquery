@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from .. import cq
 from .geom import Vector
 from .shapes import Shape, Edge, Face, sortWiresByBuildOrder
@@ -7,6 +9,12 @@ import ezdxf
 from OCP.STEPControl import STEPControl_Reader
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.TopTools import TopTools_HSequenceOfShape
+from OCP.gp import gp_Pnt
+from OCP.Geom import Geom_BSplineCurve
+from OCP.TColgp import TColgp_Array1OfPnt
+from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+
 
 import OCP.IFSelect
 
@@ -104,12 +112,59 @@ def _dxf_polyline(el):
     return (e[0] for e in rv if e)
 
 
+def _dxf_spline(el):
+
+    try:
+        degree = el.dxf.degree
+        periodic = el.closed
+        rational = False
+
+        knots_unique = OrderedDict()
+        for k in el.knots:
+            if k in knots_unique:
+                knots_unique[k] += 1
+            else:
+                knots_unique[k] = 1
+
+        # assmble knots
+        knots = TColStd_Array1OfReal(1, len(knots_unique))
+        multiplicities = TColStd_Array1OfInteger(1, len(knots_unique))
+        for i, (k, m) in enumerate(knots_unique.items()):
+            knots.SetValue(i + 1, k)
+            multiplicities.SetValue(i + 1, m)
+
+        # assemble wieghts if present:
+        if el.weights:
+            rational = True
+
+            weights = OCP.TColStd.TColStd_Array1OfReal(1, len(el.weights))
+            for i, w in enumerate(el.weights):
+                weights.SetValue(i + 1, w)
+
+        # assmeble conotrol points
+        pts = TColgp_Array1OfPnt(1, len(el.control_points))
+        for i, p in enumerate(el.control_points):
+            pts.SetValue(i + 1, gp_Pnt(*p))
+
+        if rational:
+            spline = Geom_BSplineCurve(pts, knots, multiplicities, degree, periodic)
+        else:
+            spline = Geom_BSplineCurve(
+                pts, knots, weights, multiplicities, degree, periodic
+            )
+
+        return (Edge(BRepBuilderAPI_MakeEdge(spline).Edge()),)
+    except Exception:
+        return ()
+
+
 DXF_CONVERTERS = {
     "LINE": _dxf_line,
     "CIRCLE": _dxf_circle,
     "ARC": _dxf_arc,
     "POLYLINE": _dxf_polyline,
     "LWPOLYLINE": _dxf_polyline,
+    "SPLINE": _dxf_spline,
 }
 
 
