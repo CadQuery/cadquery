@@ -21,6 +21,7 @@ import OCP.IFSelect
 
 RAD2DEG = 360.0 / (2 * pi)
 
+
 class ImportTypes:
     STEP = "STEP"
     DXF = "DXF"
@@ -159,10 +160,11 @@ def _dxf_spline(el):
     except Exception:
         return ()
 
+
 def _dxf_ellipse(el):
 
     try:
-        
+
         return (
             Edge.makeEllipse(
                 el.dxf.major_axis.magnitude,
@@ -176,6 +178,7 @@ def _dxf_ellipse(el):
     except Exception:
         return ()
 
+
 DXF_CONVERTERS = {
     "LINE": _dxf_line,
     "CIRCLE": _dxf_circle,
@@ -183,7 +186,7 @@ DXF_CONVERTERS = {
     "POLYLINE": _dxf_polyline,
     "LWPOLYLINE": _dxf_polyline,
     "SPLINE": _dxf_spline,
-    "ELLIPSE": _dxf_ellipse
+    "ELLIPSE": _dxf_ellipse,
 }
 
 
