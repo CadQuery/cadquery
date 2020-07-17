@@ -151,12 +151,13 @@ def _dxf_spline(el):
 
         if rational:
             spline = Geom_BSplineCurve(
-                pts, knots, weights, multiplicities, degree, periodic
+                pts, weights, knots, multiplicities, degree, periodic
             )
         else:
             spline = Geom_BSplineCurve(pts, knots, multiplicities, degree, periodic)
 
         return (Edge(BRepBuilderAPI_MakeEdge(spline).Edge()),)
+
     except Exception:
         return ()
 
