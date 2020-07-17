@@ -109,6 +109,27 @@ class TestImporters(BaseTest):
         obj = importers.importDXF(filename)
         self.assertTrue(obj.val().isValid())
 
+        # test spline import
+
+        filename = os.path.join(testdataDir, "spline.dxf")
+        obj = importers.importDXF(filename, tol=1)
+        self.assertTrue(obj.val().isValid())
+        self.assertEqual(obj.faces().size(), 1)
+        self.assertEqual(obj.wires().size(), 2)
+
+        # test rational spline import
+        filename = os.path.join(testdataDir, "rational_spline.dxf")
+        obj = importers.importDXF(filename)
+        self.assertTrue(obj.val().isValid())
+        self.assertEqual(obj.faces().size(), 1)
+        self.assertEqual(obj.edges().size(), 1)
+
+        # importing of a complex shape exported from Inkscape
+        filename = os.path.join(testdataDir, "genshi.dxf")
+        obj = importers.importDXF(filename)
+        self.assertTrue(obj.val().isValid())
+        self.assertEqual(obj.faces().size(), 1)
+
 
 if __name__ == "__main__":
     import unittest
