@@ -16,6 +16,7 @@ dependencies:
   - pytest-cov
   - ezdxf
   - ipython
+  - typing_extensions
   - pip
   - pip:
     - "--editable=."
