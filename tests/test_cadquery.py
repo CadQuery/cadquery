@@ -1844,6 +1844,11 @@ class TestCadQuery(BaseTest):
         self.assertEqual(32, s2.faces().size())
         self.assertTrue(s2.val().isValid())
 
+        pts = [(1.0, 0.0), (0.3, 0.2), (0.0, 0.0), (0.3, -0.1), (1.0, -0.03)]
+
+        s3 = Workplane().polyline(pts).close().extrude(1).shell(-0.05)
+        self.assertTrue(s3.val().isValid())
+
     def testOpenCornerShell(self):
         s = Workplane("XY").box(1, 1, 1)
         s1 = s.faces("+Z")
