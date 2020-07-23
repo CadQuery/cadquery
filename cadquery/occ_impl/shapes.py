@@ -1682,7 +1682,7 @@ class Mixin3D(object):
                 occ_faces_list.Append(f.wrapped)
 
             shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped, occ_faces_list, thickness, tolerance
+                self.wrapped, occ_faces_list, thickness, tolerance, Intersection=True
             )
 
             shell_builder.Build()
@@ -1690,7 +1690,7 @@ class Mixin3D(object):
 
         else:  # if no faces provided a watertight solid will be constructed
             shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped, occ_faces_list, thickness, tolerance
+                self.wrapped, occ_faces_list, thickness, tolerance, Intersection=True
             )
 
             shell_builder.Build()
