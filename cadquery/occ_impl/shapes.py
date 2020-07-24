@@ -1665,6 +1665,7 @@ class Mixin3D(object):
         faceList: Iterable[Face],
         thickness: float,
         tolerance: float = 0.0001,
+        kind: Literal["arc", "intersection"] = "arc",
     ) -> Any:
         """
             make a shelled solid of given  by removing the list of faces
@@ -1675,6 +1676,11 @@ class Mixin3D(object):
         :return: a shelled solid
         """
 
+        kind_dict = {
+            "arc": GeomAbs_JoinType.GeomAbs_Arc,
+            "intersection": GeomAbs_JoinType.GeomAbs_Intersection,
+        }
+
         occ_faces_list = TopTools_ListOfShape()
 
         if faceList:
@@ -1682,7 +1688,12 @@ class Mixin3D(object):
                 occ_faces_list.Append(f.wrapped)
 
             shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped, occ_faces_list, thickness, tolerance, Intersection=True
+                self.wrapped,
+                occ_faces_list,
+                thickness,
+                tolerance,
+                Intersection=True,
+                Join=kind_dict[kind],
             )
 
             shell_builder.Build()
@@ -1690,7 +1701,12 @@ class Mixin3D(object):
 
         else:  # if no faces provided a watertight solid will be constructed
             shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped, occ_faces_list, thickness, tolerance, Intersection=True
+                self.wrapped,
+                occ_faces_list,
+                thickness,
+                tolerance,
+                Intersection=True,
+                Join=kind_dict[kind],
             )
 
             shell_builder.Build()

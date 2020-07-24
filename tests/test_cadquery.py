@@ -1828,9 +1828,21 @@ class TestCadQuery(BaseTest):
         """
             Create s simple box
         """
-        s = Workplane("XY").box(2, 2, 2).faces("+Z").shell(0.05)
-        self.saveModel(s)
-        self.assertEqual(23, s.faces().size())
+        s1 = Workplane("XY").box(2, 2, 2).faces("+Z").shell(0.05)
+        self.saveModel(s1)
+        self.assertEqual(23, s1.faces().size())
+
+        s2 = (
+            Workplane()
+            .ellipse(4, 2)
+            .extrude(4)
+            .faces(">Z")
+            .shell(+2, kind="intersection")
+        )
+        self.assertEqual(5, s2.faces().size())
+
+        s3 = Workplane().ellipse(4, 2).extrude(4).faces(">Z").shell(+2, kind="arc")
+        self.assertEqual(6, s3.faces().size())
 
     def testClosedShell(self):
         """
