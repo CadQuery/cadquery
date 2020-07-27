@@ -1,10 +1,5 @@
-from __future__ import unicode_literals
-
-# from OCP.Visualization import Tesselator
-
 import tempfile
 import os
-import sys
 
 import io as StringIO
 
@@ -19,8 +14,95 @@ from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
 import xml.etree.cElementTree as ET
 
+import ezdxf
+
+from math import pi
+
+RAD2DEG = 180 / pi
 DISCRETIZATION_TOLERANCE = 1e-3
 DEFAULT_DIR = gp_Dir(-1.75, 1.1, 5)
+
+JSON_TEMPLATE = """\
+{
+    "metadata" :
+    {
+        "formatVersion" : 3,
+        "generatedBy"   : "ParametricParts",
+        "vertices"      : %(nVertices)d,
+        "faces"         : %(nFaces)d,
+        "normals"       : 0,
+        "colors"        : 0,
+        "uvs"           : 0,
+        "materials"     : 1,
+        "morphTargets"  : 0
+    },
+
+    "scale" : 1.0,
+
+    "materials": [    {
+    "DbgColor" : 15658734,
+    "DbgIndex" : 0,
+    "DbgName" : "Material",
+    "colorAmbient" : [0.0, 0.0, 0.0],
+    "colorDiffuse" : [0.6400000190734865, 0.10179081114814892, 0.126246120426746],
+    "colorSpecular" : [0.5, 0.5, 0.5],
+    "shading" : "Lambert",
+    "specularCoef" : 50,
+    "transparency" : 1.0,
+    "vertexColors" : false
+    }],
+
+    "vertices": %(vertices)s,
+
+    "morphTargets": [],
+
+    "normals": [],
+
+    "colors": [],
+
+    "uvs": [[]],
+
+    "faces": %(faces)s
+}
+"""
+
+SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="%(width)s"
+   height="%(height)s"
+
+>
+    <g transform="scale(%(unitScale)s, -%(unitScale)s)   translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s"  fill="none">
+       <!-- hidden lines -->
+       <g  stroke="rgb(160, 160, 160)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
+%(hiddenContent)s
+       </g>
+
+       <!-- solid lines -->
+       <g  stroke="rgb(0, 0, 0)" fill="none">
+%(visibleContent)s
+       </g>
+    </g>
+    <g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
+        <line x1="30" y1="-30" x2="75" y2="-33" stroke-width="3" stroke="#000000" />
+         <text x="80" y="-30" style="stroke:#000000">X </text>
+
+        <line x1="30" y1="-30" x2="30" y2="-75" stroke-width="3" stroke="#000000" />
+         <text x="25" y="-85" style="stroke:#000000">Y </text>
+
+        <line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3" stroke="#000000" />
+         <text x="65" y="-5" style="stroke:#000000">Z </text>
+        <!--
+            <line x1="0" y1="0" x2="%(unitScale)s" y2="0" stroke-width="3" />
+            <text x="0" y="20" style="stroke:#000000">1  %(uom)s </text>
+        -->
+    </g>
+</svg>
+"""
+
+PATHTEMPLATE = '\t\t\t<path d="%s" />\n'
 
 
 class ExportTypes:
@@ -34,6 +116,11 @@ class ExportTypes:
 class UNITS:
     MM = "mm"
     IN = "in"
+
+
+def toCompound(shape):
+
+    return Compound.makeCompound(shape.vals())
 
 
 def toString(shape, exportType, tolerance=0.1):
@@ -376,84 +463,83 @@ def exportSVG(shape, fileName):
     f.close()
 
 
-JSON_TEMPLATE = """\
-{
-    "metadata" :
-    {
-        "formatVersion" : 3,
-        "generatedBy"   : "ParametricParts",
-        "vertices"      : %(nVertices)d,
-        "faces"         : %(nFaces)d,
-        "normals"       : 0,
-        "colors"        : 0,
-        "uvs"           : 0,
-        "materials"     : 1,
-        "morphTargets"  : 0
-    },
+def _dxf_line(e, msp, plane):
 
-    "scale" : 1.0,
+    msp.add_line(
+        plane.toLocalCoords(e.startPoint()).toTuple(),
+        plane.toLocalCoords(e.endPoint()).toTuple(),
+    )
 
-    "materials": [    {
-    "DbgColor" : 15658734,
-    "DbgIndex" : 0,
-    "DbgName" : "Material",
-    "colorAmbient" : [0.0, 0.0, 0.0],
-    "colorDiffuse" : [0.6400000190734865, 0.10179081114814892, 0.126246120426746],
-    "colorSpecular" : [0.5, 0.5, 0.5],
-    "shading" : "Lambert",
-    "specularCoef" : 50,
-    "transparency" : 1.0,
-    "vertexColors" : false
-    }],
 
-    "vertices": %(vertices)s,
+def _dxf_circle(e, msp, plane):
 
-    "morphTargets": [],
+    geom = e._geomAdaptor()
+    circ = geom.Circle()
 
-    "normals": [],
+    r = circ.Radius()
+    c = circ.Location().Transformed(plane.fG.wrapped.Trsf())
 
-    "colors": [],
+    if e.IsClosed():
+        msp.add_circle((c.X(), c.Y(), c.Z()), r)
+    else:
+        msp.add_arc(
+            (c.X(), c.Y(), c.Z()),
+            r,
+            RAD2DEG * geom.FirstParameter(),
+            RAD2DEG * geom.LastParameter(),
+            False,
+        )
 
-    "uvs": [[]],
 
-    "faces": %(faces)s
+def _dxf_ellipse(e, msp, plane):
+
+    geom = e._geomAdaptor()
+    ellipse = geom.Ellipse()
+
+    r1 = ellipse.MinorRadius()
+    r2 = ellipse.MajorRadius()
+
+    c = ellipse.Location().Transformed(plane.fG.wrapped.Trsf())
+    xdir = ellipse.XAxis().Direction().Transformed(plane.fG.wrapped.Trsf())
+    xax = r2 * xdir.XYZ()
+
+    msp.add_ellipse(
+        (c.X(), c.Y(), c.Z()),
+        (xax.X(), xax.Y(), xax.Z()),
+        r1 / r2,
+        geom.FirstParameter(),
+        geom.LastParameter(),
+    )
+
+
+def _dxf_spline(e, msp, plane):
+
+    pass
+
+
+def _dxf_any(e, msp, plane):
+
+    pass
+
+
+DXF_CONVERTERS = {
+    "LINE": _dxf_line,
+    "CIRCLE": _dxf_circle,
+    "ELLIPSE": _dxf_ellipse,
+    "BSPLINE": _dxf_spline,
 }
-"""
 
-SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   width="%(width)s"
-   height="%(height)s"
 
->
-    <g transform="scale(%(unitScale)s, -%(unitScale)s)   translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s"  fill="none">
-       <!-- hidden lines -->
-       <g  stroke="rgb(160, 160, 160)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
-%(hiddenContent)s
-       </g>
+def exportDXF(shape, fileName):
 
-       <!-- solid lines -->
-       <g  stroke="rgb(0, 0, 0)" fill="none">
-%(visibleContent)s
-       </g>
-    </g>
-    <g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
-        <line x1="30" y1="-30" x2="75" y2="-33" stroke-width="3" stroke="#000000" />
-         <text x="80" y="-30" style="stroke:#000000">X </text>
+    plane = shape.plane
+    shape = toCompound(shape)
 
-        <line x1="30" y1="-30" x2="30" y2="-75" stroke-width="3" stroke="#000000" />
-         <text x="25" y="-85" style="stroke:#000000">Y </text>
+    dxf = ezdxf.new()
+    msp = dxf.modelspace()
 
-        <line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3" stroke="#000000" />
-         <text x="65" y="-5" style="stroke:#000000">Z </text>
-        <!--
-            <line x1="0" y1="0" x2="%(unitScale)s" y2="0" stroke-width="3" />
-            <text x="0" y="20" style="stroke:#000000">1  %(uom)s </text>
-        -->
-    </g>
-</svg>
-"""
+    for e in shape.Edges():
+        conv = DXF_CONVERTERS.get(e.geomType(), _dxf_any)
+        conv(e, msp, plane)
 
-PATHTEMPLATE = '\t\t\t<path d="%s" />\n'
+    dxf.saveas(fileName)
