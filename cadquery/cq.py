@@ -1038,7 +1038,7 @@ class Workplane(object):
 
         :param axisStartPoint: The first point of the axis of rotation
         :type axisStartPoint: a 3-tuple of floats
-        :type axisEndPoint: The second point of the axis of rotation
+        :param axisEndPoint: The second point of the axis of rotation
         :type axisEndPoint: a 3-tuple of floats
         :param angleDegrees: the rotation angle, in degrees
         :type angleDegrees: float
