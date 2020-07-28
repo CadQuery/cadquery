@@ -27,7 +27,8 @@ from .selectors import (
     StringSyntaxSelector,
     Selector,
 )
-from .cq import CQ, Workplane, selectors
+from .cq import CQ, Workplane
+from . import selectors
 from . import plugins
 
 

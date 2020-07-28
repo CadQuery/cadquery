@@ -103,10 +103,11 @@ def exportDXF(w: Workplane, fname: str):
     plane = w.plane
     shape = toCompound(w).transformShape(plane.fG)
 
-    dxf = ezdxf.new(); raise ValueError("")
+    dxf = ezdxf.new()
     msp = dxf.modelspace()
 
     for e in shape.Edges():
+        
         conv = DXF_CONVERTERS.get(e.geomType(), _dxf_spline)
         conv(e, msp, plane)
 

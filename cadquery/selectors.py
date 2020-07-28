@@ -17,9 +17,9 @@
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
-import re
 import math
-from cadquery import Vector, Edge, Vertex, Face, Solid, Shell, Compound
+from .occ_impl.geom import Vector
+from .occ_impl.shapes import Edge, Face
 from collections import defaultdict
 from pyparsing import (
     Literal,

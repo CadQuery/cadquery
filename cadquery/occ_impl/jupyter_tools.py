@@ -1,8 +1,8 @@
 from IPython.display import SVG
 
-from .exporters import toString, ExportTypes
+from .exporters.svg import getSVG
 
 
 def display(shape):
 
-    return SVG(toString(shape, ExportTypes.SVG))
+    return SVG(getSVG(shape))

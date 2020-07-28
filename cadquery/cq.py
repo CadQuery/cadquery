@@ -34,11 +34,9 @@ from typing import (
 )
 from typing_extensions import Literal
 
-from . import (
-    Vector,
-    Plane,
-    Matrix,
-    Location,
+
+from .occ_impl.geom import Vector, Plane, Location
+from .occ_impl.shapes import (
     Shape,
     Edge,
     Wire,
@@ -46,14 +44,20 @@ from . import (
     Solid,
     Compound,
     sortWiresByBuildOrder,
-    selectors,
-    exporters,
 )
+
+from .occ_impl.exporters.svg import getSVG, exportSVG
 
 from .utils import deprecate_kwarg, deprecate
 
+from .selectors import (
+    Selector,
+    PerpendicularDirSelector,
+    NearestToPointSelector,
+    StringSyntaxSelector,
+)
+
 CQObject = Union[Vector, Location, Shape]
-Selector = selectors.Selector
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
 
 
@@ -753,7 +757,7 @@ class Workplane(object):
         selectorObj: Selector
         if selector:
             if isinstance(selector, str):
-                selectorObj = selectors.StringSyntaxSelector(selector)
+                selectorObj = StringSyntaxSelector(selector)
             else:
                 selectorObj = selector
             toReturn = selectorObj.filter(toReturn)
@@ -979,7 +983,7 @@ class Workplane(object):
         :type opts: dictionary, width and height
         :return: a string that contains SVG that represents this item.
         """
-        return exporters.getSVG(self.val(), opts)
+        return getSVG(self.val(), opts)
 
     def exportSvg(self, fileName: str) -> None:
         """
@@ -990,7 +994,7 @@ class Workplane(object):
         :param fileName: the filename to export
         :type fileName: String, absolute path to the file
         """
-        exporters.exportSVG(self, fileName)
+        exportSVG(self, fileName)
 
     def rotateAboutCenter(
         self, axisEndPoint: VectorLike, angleDegrees: float
@@ -3077,10 +3081,10 @@ class Workplane(object):
         # if no faces on the stack take the nearest face parallel to the plane zDir
         if not faceRef:
             # first select all with faces with good orietation
-            sel1 = selectors.PerpendicularDirSelector(self.plane.zDir)
+            sel1 = PerpendicularDirSelector(self.plane.zDir)
             faces = sel1.filter(solidRef.Faces())
             # then select the closest
-            sel2 = selectors.NearestToPointSelector(self.plane.origin.toTuple())
+            sel2 = NearestToPointSelector(self.plane.origin.toTuple())
             faceRef = sel2.filter(faces)[0]
 
         rv = []
