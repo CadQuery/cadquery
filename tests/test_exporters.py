@@ -7,7 +7,7 @@ import io
 
 # my modules
 from cadquery import *
-from cadquery import exporters
+from cadquery import exporters, importers
 from tests import BaseTest
 
 
@@ -49,3 +49,48 @@ class TestExporters(BaseTest):
         self._exportBox(
             exporters.ExportTypes.TJS, ["vertices", "formatVersion", "faces"]
         )
+
+    def testDXF(self):
+
+        s1 = (
+            Workplane("XZ")
+            .polygon(10, 10)
+            .ellipse(1, 2)
+            .extrude(1)
+            .edges("|Y")
+            .fillet(1)
+            .section()
+        )
+        exporters.dxf.exportDXF(s1, "res1.dxf")
+
+        s1_i = importers.importDXF("res1.dxf")
+
+        self.assertAlmostEquals(s1.val().Area(), s1_i.val().Area(), 6)
+        self.assertAlmostEquals(s1.edges().size(), s1_i.edges().size())
+
+        pts = [(0, 0), (0, 0.5), (1, 1)]
+        s2 = (
+            Workplane().spline(pts).close().extrude(1).edges("|Z").fillet(0.1).section()
+        )
+        exporters.dxf.exportDXF(s2, "res2.dxf")
+
+        s2_i = importers.importDXF("res2.dxf")
+
+        self.assertAlmostEquals(s2.val().Area(), s2_i.val().Area(), 6)
+        self.assertAlmostEquals(s2.edges().size(), s2_i.edges().size())
+
+        s3 = (
+            Workplane("XY")
+            .ellipseArc(1, 2, 0, 180)
+            .close()
+            .extrude(1)
+            .edges("|Z")
+            .fillet(0.1)
+            .section()
+        )
+        exporters.dxf.exportDXF(s3, "res3.dxf")
+
+        s3_i = importers.importDXF("res3.dxf")
+
+        self.assertAlmostEquals(s3.val().Area(), s3_i.val().Area(), 6)
+        self.assertAlmostEquals(s3.edges().size(), s3_i.edges().size())
