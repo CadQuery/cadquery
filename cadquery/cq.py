@@ -184,42 +184,6 @@ class Workplane(object):
         self.ctx = CQContext()
         self._tag = None
 
-    '''
-    def __init__(self, obj: Optional[CQObject]) -> None:
-        """
-        Construct a new CadQuery (CQ) object that wraps a CAD primitive.
-
-        :param obj: Object to Wrap.
-        :type obj: A CAD Primitive ( wire,vertex,face,solid,edge )
-        """
-        self.objects = []
-        self.ctx = CQContext()
-        self.parent = None
-        self._tag = None
-
-        if obj:  # guarded because sometimes None for internal use
-            self.objects.append(obj)
-    
-    def newObject(self, objlist: Sequence[CQObject]) -> "Workplane":
-        """
-        Make a new CQ object.
-
-        :param objlist: The stack of objects to use
-        :type objlist: a list of CAD primitives ( wire,face,edge,solid,vertex,etc )
-
-        The parent of the new object will be set to the current object,
-        to preserve the chain correctly.
-
-        Custom plugins and subclasses should use this method to create new CQ objects
-        correctly.
-        """
-        r = Workplane()  # create a completely blank one
-        r.parent = self
-        r.ctx = self.ctx  # context solid remains the same
-        r.objects = list(objlist)
-        return r
-    '''
-
     def tag(self, name: str) -> "Workplane":
         """
         Tags the current CQ object for later reference.
