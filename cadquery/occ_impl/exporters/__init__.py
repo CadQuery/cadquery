@@ -76,7 +76,7 @@ def export(
         if isinstance(w, Workplane):
             exportDXF(w, fname)
         else:
-            raise ValueError('Only Workplanes can be exported as DXF')
+            raise ValueError("Only Workplanes can be exported as DXF")
 
     elif exportType == ExportTypes.STEP:
         shape.exportStep(fname)

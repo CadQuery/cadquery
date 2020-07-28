@@ -796,7 +796,7 @@ class Shape(object):
         intersect_op = BRepAlgoAPI_Common()
 
         return self._bool_op((self,), toIntersect, intersect_op)
-    
+
     def tessellate(
         self, tolerance: float
     ) -> Tuple[List[Vector], List[Tuple[int, ...]]]:
@@ -1611,7 +1611,6 @@ class Shell(Shape):
 
 
 class Mixin3D(object):
-
     def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
         """
         Fillets the specified edges of this solid.

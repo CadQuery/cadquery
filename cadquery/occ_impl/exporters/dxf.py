@@ -107,7 +107,7 @@ def exportDXF(w: Workplane, fname: str):
     msp = dxf.modelspace()
 
     for e in shape.Edges():
-        
+
         conv = DXF_CONVERTERS.get(e.geomType(), _dxf_spline)
         conv(e, msp, plane)
 
