@@ -466,8 +466,7 @@ def exportSVG(shape, fileName):
 def _dxf_line(e, msp, plane):
 
     msp.add_line(
-        plane.toLocalCoords(e.startPoint()).toTuple(),
-        plane.toLocalCoords(e.endPoint()).toTuple(),
+        e.startPoint().toTuple(), e.endPoint().toTuple(),
     )
 
 
@@ -477,18 +476,26 @@ def _dxf_circle(e, msp, plane):
     circ = geom.Circle()
 
     r = circ.Radius()
-    c = circ.Location().Transformed(plane.fG.wrapped.Trsf())
+    c = circ.Location()
+
+    c_dy = circ.YAxis().Direction()
+    c_dz = circ.Axis().Direction()
+
+    dy = gp_Dir(0, 1, 0)
+
+    phi = c_dy.AngleWithRef(dy, c_dz)
+
+    if c_dz.XYZ().Z() > 0:
+        a1 = RAD2DEG * (geom.FirstParameter() - phi)
+        a2 = RAD2DEG * (geom.LastParameter() - phi)
+    else:
+        a1 = -RAD2DEG * (geom.LastParameter() + phi)
+        a2 = -RAD2DEG * (geom.FirstParameter() + phi)
 
     if e.IsClosed():
         msp.add_circle((c.X(), c.Y(), c.Z()), r)
     else:
-        msp.add_arc(
-            (c.X(), c.Y(), c.Z()),
-            r,
-            RAD2DEG * geom.FirstParameter(),
-            RAD2DEG * geom.LastParameter(),
-            False,
-        )
+        msp.add_arc((c.X(), c.Y(), c.Z()), r, a1, a2)
 
 
 def _dxf_ellipse(e, msp, plane):
@@ -499,8 +506,8 @@ def _dxf_ellipse(e, msp, plane):
     r1 = ellipse.MinorRadius()
     r2 = ellipse.MajorRadius()
 
-    c = ellipse.Location().Transformed(plane.fG.wrapped.Trsf())
-    xdir = ellipse.XAxis().Direction().Transformed(plane.fG.wrapped.Trsf())
+    c = ellipse.Location()
+    xdir = ellipse.XAxis().Direction()
     xax = r2 * xdir.XYZ()
 
     msp.add_ellipse(
@@ -533,7 +540,7 @@ DXF_CONVERTERS = {
 def exportDXF(shape, fileName):
 
     plane = shape.plane
-    shape = toCompound(shape)
+    shape = toCompound(shape).transformShape(plane.fG)
 
     dxf = ezdxf.new()
     msp = dxf.modelspace()
