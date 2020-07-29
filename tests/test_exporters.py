@@ -33,24 +33,43 @@ class TestExporters(BaseTest):
             self.assertTrue(result.find(q) > -1)
         return result
 
+    def _box(self):
+
+        return Workplane().box(1, 1, 1)
+
     def testSTL(self):
         self._exportBox(exporters.ExportTypes.STL, ["facet normal"])
+
+        exporters.export(self._box(), "out.stl")
 
     def testSVG(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
+        exporters.export(self._box(), "out.svg")
+
     def testAMF(self):
         self._exportBox(exporters.ExportTypes.AMF, ["<amf units", "</object>"])
 
+        exporters.export(self._box(), "out.amf")
+
     def testSTEP(self):
         self._exportBox(exporters.ExportTypes.STEP, ["FILE_SCHEMA"])
+
+        exporters.export(self._box(), "out.step")
 
     def testTJS(self):
         self._exportBox(
             exporters.ExportTypes.TJS, ["vertices", "formatVersion", "faces"]
         )
 
+        exporters.export(self._box(), "out.tjs")
+
     def testDXF(self):
+
+        exporters.export(self._box().section(), "out.dxf")
+
+        with self.assertRaises(ValueError):
+            exporters.export(self._box().val(), "out.dxf")
 
         s1 = (
             Workplane("XZ")
@@ -94,3 +113,11 @@ class TestExporters(BaseTest):
 
         self.assertAlmostEquals(s3.val().Area(), s3_i.val().Area(), 6)
         self.assertAlmostEquals(s3.edges().size(), s3_i.edges().size())
+
+    def testTypeHandling(self):
+
+        with self.assertRaises(ValueError):
+            exporters.export(self._box(), "out.random")
+
+        with self.assertRaises(ValueError):
+            exporters.export(self._box(), "out.stl", "STP")
