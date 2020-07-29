@@ -45,6 +45,8 @@ def export(
     """
 
     shape: Shape
+    f: IO
+
     if isinstance(w, Workplane):
         shape = toCompound(w)
     else:
