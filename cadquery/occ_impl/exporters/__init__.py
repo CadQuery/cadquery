@@ -69,17 +69,17 @@ def export(
         for ixs in tess[1]:
             mesher.addTriangleFace(*ixs)
 
-        with open(fname) as f:
+        with open(fname, "w") as f:
             f.write(mesher.toJson())
 
     elif exportType == ExportTypes.SVG:
-        with open(fname) as f:
+        with open(fname, "w") as f:
             f.write(getSVG(shape))
 
     elif exportType == ExportTypes.AMF:
         tess = shape.tessellate(tolerance)
         aw = AmfWriter(tess)
-        with open(fname) as f:
+        with open(fname, "wb") as f:
             aw.writeAmf(f)
 
     elif exportType == ExportTypes.DXF:
