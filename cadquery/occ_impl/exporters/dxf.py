@@ -99,6 +99,13 @@ DXF_CONVERTERS = {
 
 
 def exportDXF(w: Workplane, fname: str):
+    """
+    Export Workplane content to DXF. Works with 2D sections.
+        
+    :param w: Workplane to be exported.
+    :param fname: output filename.
+        
+    """
 
     plane = w.plane
     shape = toCompound(w).transformShape(plane.fG)

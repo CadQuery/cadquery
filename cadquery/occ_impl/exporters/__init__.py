@@ -6,6 +6,7 @@ from typing import IO, Optional, Union, cast
 from typing_extensions import Literal
 
 from ...cq import Workplane
+from ...utils import deprecate
 from ..shapes import Shape
 
 from .svg import getSVG
@@ -33,6 +34,15 @@ def export(
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
 ):
+
+    """
+    Export Wokrplane or Shape to file. Multiple entities are converted to compound.
+    
+    :param w:  Shape or Wokrplane to be exported.
+    :param fname: output filename.
+    :param exportType: the exportFormat to use. If None will be inferred from the extension. Default: None.
+    :param tolerance: the tolerance, in model units. Default 0.1.
+    """
 
     shape: Shape
     if isinstance(w, Workplane):
@@ -84,13 +94,18 @@ def export(
     elif exportType == ExportTypes.STL:
         shape.exportStl(fname, tolerance)
 
+    else:
+        raise ValueError("Unknown export type")
 
+
+@deprecate()
 def toString(shape, exportType, tolerance=0.1):
     s = StringIO.StringIO()
     exportShape(shape, exportType, s, tolerance)
     return s.getvalue()
 
 
+@deprecate()
 def exportShape(
     w: Union[Shape, Workplane],
     exportType: ExportLiterals,
@@ -100,7 +115,7 @@ def exportShape(
     """
         :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
         object, the first value is exported
-        :param exportFormat: the exportFormat to use
+        :param exportType: the exportFormat to use
         :param tolerance: the tolerance, in model units
         :param fileLike: a file like object to which the content will be written.
         The object should be already open and ready to write. The caller is responsible
@@ -157,6 +172,7 @@ def exportShape(
         fileLike.write(res)
 
 
+@deprecate()
 def readAndDeleteFile(fileName):
     """
         read data from file provided, and delete it when done
