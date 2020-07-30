@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 # if we are building in travis, use the build number as the sub-minor version
@@ -30,13 +30,7 @@ setup(
     author_email="dave.cowden@gmail.com",
     description="CadQuery is a parametric  scripting language for creating and traversing CAD models",
     long_description=open("README.md").read(),
-    packages=[
-        "cadquery",
-        "cadquery.contrib",
-        "cadquery.occ_impl",
-        "cadquery.plugins",
-        "tests",
-    ],
+    packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     platforms="any",
