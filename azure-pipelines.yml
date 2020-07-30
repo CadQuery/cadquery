@@ -4,7 +4,8 @@ trigger:
       - master
       - refs/tags/*
 
-pr: none
+pr:
+- master
 
 resources:
   repositories:
