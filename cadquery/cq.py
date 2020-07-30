@@ -34,11 +34,9 @@ from typing import (
 )
 from typing_extensions import Literal
 
-from . import (
-    Vector,
-    Plane,
-    Matrix,
-    Location,
+
+from .occ_impl.geom import Vector, Plane, Location
+from .occ_impl.shapes import (
     Shape,
     Edge,
     Wire,
@@ -46,14 +44,20 @@ from . import (
     Solid,
     Compound,
     sortWiresByBuildOrder,
-    selectors,
-    exporters,
 )
+
+from .occ_impl.exporters.svg import getSVG, exportSVG
 
 from .utils import deprecate_kwarg, deprecate
 
+from .selectors import (
+    Selector,
+    PerpendicularDirSelector,
+    NearestToPointSelector,
+    StringSyntaxSelector,
+)
+
 CQObject = Union[Vector, Location, Shape]
-Selector = selectors.Selector
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
 
 
@@ -179,42 +183,6 @@ class Workplane(object):
         self.parent = None
         self.ctx = CQContext()
         self._tag = None
-
-    '''
-    def __init__(self, obj: Optional[CQObject]) -> None:
-        """
-        Construct a new CadQuery (CQ) object that wraps a CAD primitive.
-
-        :param obj: Object to Wrap.
-        :type obj: A CAD Primitive ( wire,vertex,face,solid,edge )
-        """
-        self.objects = []
-        self.ctx = CQContext()
-        self.parent = None
-        self._tag = None
-
-        if obj:  # guarded because sometimes None for internal use
-            self.objects.append(obj)
-    
-    def newObject(self, objlist: Sequence[CQObject]) -> "Workplane":
-        """
-        Make a new CQ object.
-
-        :param objlist: The stack of objects to use
-        :type objlist: a list of CAD primitives ( wire,face,edge,solid,vertex,etc )
-
-        The parent of the new object will be set to the current object,
-        to preserve the chain correctly.
-
-        Custom plugins and subclasses should use this method to create new CQ objects
-        correctly.
-        """
-        r = Workplane()  # create a completely blank one
-        r.parent = self
-        r.ctx = self.ctx  # context solid remains the same
-        r.objects = list(objlist)
-        return r
-    '''
 
     def tag(self, name: str) -> "Workplane":
         """
@@ -753,7 +721,7 @@ class Workplane(object):
         selectorObj: Selector
         if selector:
             if isinstance(selector, str):
-                selectorObj = selectors.StringSyntaxSelector(selector)
+                selectorObj = StringSyntaxSelector(selector)
             else:
                 selectorObj = selector
             toReturn = selectorObj.filter(toReturn)
@@ -979,7 +947,7 @@ class Workplane(object):
         :type opts: dictionary, width and height
         :return: a string that contains SVG that represents this item.
         """
-        return exporters.getSVG(self.val(), opts)
+        return getSVG(self.val(), opts)
 
     def exportSvg(self, fileName: str) -> None:
         """
@@ -990,7 +958,7 @@ class Workplane(object):
         :param fileName: the filename to export
         :type fileName: String, absolute path to the file
         """
-        exporters.exportSVG(self, fileName)
+        exportSVG(self, fileName)
 
     def rotateAboutCenter(
         self, axisEndPoint: VectorLike, angleDegrees: float
@@ -3077,10 +3045,10 @@ class Workplane(object):
         # if no faces on the stack take the nearest face parallel to the plane zDir
         if not faceRef:
             # first select all with faces with good orietation
-            sel1 = selectors.PerpendicularDirSelector(self.plane.zDir)
+            sel1 = PerpendicularDirSelector(self.plane.zDir)
             faces = sel1.filter(solidRef.Faces())
             # then select the closest
-            sel2 = selectors.NearestToPointSelector(self.plane.origin.toTuple())
+            sel2 = NearestToPointSelector(self.plane.origin.toTuple())
             faceRef = sel2.filter(faces)[0]
 
         rv = []

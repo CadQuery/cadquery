@@ -250,6 +250,7 @@ geom_LUT_EDGE = {
     ga.GeomAbs_Parabola: "PARABOLA",
     ga.GeomAbs_BezierCurve: "BEZIER",
     ga.GeomAbs_BSplineCurve: "BSPLINE",
+    ga.GeomAbs_OffsetCurve: "OFFSET",
     ga.GeomAbs_OtherCurve: "OTHER",
 }
 
@@ -796,6 +797,38 @@ class Shape(object):
 
         return self._bool_op((self,), toIntersect, intersect_op)
 
+    def tessellate(
+        self, tolerance: float
+    ) -> Tuple[List[Vector], List[Tuple[int, ...]]]:
+
+        if not BRepTools.Triangulation_s(self.wrapped, tolerance):
+            BRepMesh_IncrementalMesh(self.wrapped, tolerance, True)
+
+        vertices = []
+        triangles = []
+        offset = 0
+
+        for f in self.Faces():
+
+            loc = TopLoc_Location()
+            poly = BRep_Tool.Triangulation_s(f.wrapped, loc)
+            Trsf = loc.Transformation()
+
+            # add vertices
+            vertices += [
+                Vector(v.X(), v.Y(), v.Z())
+                for v in (v.Transformed(Trsf) for v in poly.Nodes())
+            ]
+
+            # add triangles
+            triangles += [
+                tuple(el + offset for el in t.Get()) for t in poly.Triangles()
+            ]
+
+            offset += poly.NbNodes()
+
+        return vertices, triangles
+
     def _repr_html_(self):
         """
         Jupyter 3D representation support
@@ -807,8 +840,9 @@ class Shape(object):
 
 
 class ShapeProtocol(Protocol):
-
-    wrapped: TopoDS_Shape
+    @property
+    def wrapped(self) -> TopoDS_Shape:
+        ...
 
     def __init__(self, wrapped: TopoDS_Shape) -> None:
         ...
@@ -1577,38 +1611,6 @@ class Shell(Shape):
 
 
 class Mixin3D(object):
-    def tessellate(
-        self: ShapeProtocol, tolerance: float
-    ) -> Tuple[List[Vector], List[Tuple[int, ...]]]:
-
-        if not BRepTools.Triangulation_s(self.wrapped, tolerance):
-            BRepMesh_IncrementalMesh(self.wrapped, tolerance, True)
-
-        vertices = []
-        triangles = []
-        offset = 0
-
-        for f in self.Faces():
-
-            loc = TopLoc_Location()
-            poly = BRep_Tool.Triangulation_s(f.wrapped, loc)
-            Trsf = loc.Transformation()
-
-            # add vertices
-            vertices += [
-                Vector(v.X(), v.Y(), v.Z())
-                for v in (v.Transformed(Trsf) for v in poly.Nodes())
-            ]
-
-            # add triangles
-            triangles += [
-                tuple(el + offset for el in t.Get()) for t in poly.Triangles()
-            ]
-
-            offset += poly.NbNodes()
-
-        return vertices, triangles
-
     def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
         """
         Fillets the specified edges of this solid.
