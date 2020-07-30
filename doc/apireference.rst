@@ -120,7 +120,7 @@ File Management and Export
 .. autosummary::
     importers.importStep
     importers.importDXF
-    exporters.exportShape
+    exporters.export
 
 
 Iteration Methods
