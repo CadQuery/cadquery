@@ -822,7 +822,7 @@ class Shape(object):
 
             # add triangles
             triangles += [
-                tuple(el + offset for el in t.Get()) for t in poly.Triangles()
+                tuple(el + offset - 1 for el in t.Get()) for t in poly.Triangles()
             ]
 
             offset += poly.NbNodes()
