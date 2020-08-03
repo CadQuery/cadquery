@@ -24,7 +24,7 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 ### Key features
 * Build 3D models with scripts that are as close as possible to how you would describe the object to a human.
 * Create parametric models that can be very easily customized by end users.
-* Output high quality (loss-less) CAD formats like STEP in addition to STL and AMF.
+* Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL and AMF.
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser.
 * Offer advanced modeling capabilities such as fillets, curvelinear extrudes, parametric curves and lofts.
 
