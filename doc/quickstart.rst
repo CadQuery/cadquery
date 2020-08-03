@@ -223,6 +223,38 @@ The finished product looks like this:
 
         ..  image:: _static/quickstart/005.png
 
+Exporting
+=========
+
+If you want to fabricate a physical object you need to export the result to STL or DXF. Additionally, exporting as STEP for post-processing in another CAD tool is also possible.
+
+This can be easily accomplished using the :py:meth:`cadquery.exporters.export` function:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 13
+
+    height = 60.0
+    width = 80.0
+    thickness = 10.0
+    diameter = 22.0
+    padding = 12.0
+
+    # make the base
+    result = cq.Workplane("XY").box(height, width, thickness)\
+        .faces(">Z").workplane().hole(diameter)\
+        .faces(">Z").workplane() \
+        .rect(height - padding, width - padding, forConstruction=True)\
+        .vertices().cboreHole(2.4, 4.4, 2.1)\
+        .edges("|Z").fillet(2.0)
+
+    # Render the solid
+    show_object(result)
+    
+    # Export
+    cq.exporters.export(result,'result.stl')
+    cq.exporters.export(result.section(),'result.dxf')
+    cq.exporters.export(result,'result.step')
 
 Done!
 ============
