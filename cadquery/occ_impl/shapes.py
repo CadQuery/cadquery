@@ -799,13 +799,13 @@ class Shape(object):
 
     def tessellate(
         self, tolerance: float
-    ) -> Tuple[List[Vector], List[Tuple[int, ...]]]:
+    ) -> Tuple[List[Vector], List[Tuple[int, int, int]]]:
 
         if not BRepTools.Triangulation_s(self.wrapped, tolerance):
             BRepMesh_IncrementalMesh(self.wrapped, tolerance, True)
 
-        vertices = []
-        triangles = []
+        vertices: List[Vector] = []
+        triangles: List[Tuple[int, int, int]] = []
         offset = 0
 
         for f in self.Faces():
@@ -813,6 +813,11 @@ class Shape(object):
             loc = TopLoc_Location()
             poly = BRep_Tool.Triangulation_s(f.wrapped, loc)
             Trsf = loc.Transformation()
+            reverse = (
+                True
+                if f.wrapped.Orientation() == TopAbs_Orientation.TopAbs_REVERSED
+                else False
+            )
 
             # add vertices
             vertices += [
@@ -822,7 +827,18 @@ class Shape(object):
 
             # add triangles
             triangles += [
-                tuple(el + offset for el in t.Get()) for t in poly.Triangles()
+                (
+                    t.Value(1) + offset - 1,
+                    t.Value(3) + offset - 1,
+                    t.Value(2) + offset - 1,
+                )
+                if reverse
+                else (
+                    t.Value(1) + offset - 1,
+                    t.Value(2) + offset - 1,
+                    t.Value(3) + offset - 1,
+                )
+                for t in poly.Triangles()
             ]
 
             offset += poly.NbNodes()
