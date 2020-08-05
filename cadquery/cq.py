@@ -355,18 +355,19 @@ class Workplane(object):
         Adds an object or a list of objects to the stack
 
         :param obj: an object to add
-        :type obj: a CQ object, CAD primitive, or list of CAD primitives
-        :return: a CQ object with the requested operation performed
+        :type obj: a Workplane, CAD primitive, or list of CAD primitives
+        :return: a Workplane with the requested operation performed
 
-        If an CQ object, the values of that object's stack are added. If a list of cad primitives,
-        they are all added. If a single CAD primitive it is added
+        If an Workplane object, the values of that object's stack are added. If
+        a list of cad primitives, they are all added. If a single CAD primitive
+        then it is added.
 
-        Used in rare cases when you need to combine the results of several CQ results
-        into a single CQ object. Shelling is one common example
+        Used in rare cases when you need to combine the results of several CQ
+        results into a single Workplane object. Shelling is one common example.
         """
-        if type(obj) == list:
+        if isinstance(obj, list):
             self.objects.extend(obj)
-        elif type(obj) == CQ or type(obj) == Workplane:
+        elif isinstance(obj, Workplane):
             self.objects.extend(obj.objects)
         else:
             self.objects.append(obj)
