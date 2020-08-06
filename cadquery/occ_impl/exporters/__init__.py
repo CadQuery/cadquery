@@ -33,6 +33,7 @@ def export(
     fname: str,
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
+    angularPrecision: float = 0.1,
 ):
 
     """
@@ -42,6 +43,7 @@ def export(
     :param fname: output filename.
     :param exportType: the exportFormat to use. If None will be inferred from the extension. Default: None.
     :param tolerance: the tolerance, in model units. Default 0.1.
+    :param angularPrecision: the angular precision, in radians. Default 0.1 or about 5.7deg.
     """
 
     shape: Shape
@@ -60,7 +62,7 @@ def export(
             raise ValueError("Unknown extensions, specify export type explicitly")
 
     if exportType == ExportTypes.TJS:
-        tess = shape.tessellate(tolerance)
+        tess = shape.tessellate(tolerance, angularPrecision)
         mesher = JsonMesh()
 
         # add vertices
@@ -79,7 +81,7 @@ def export(
             f.write(getSVG(shape))
 
     elif exportType == ExportTypes.AMF:
-        tess = shape.tessellate(tolerance)
+        tess = shape.tessellate(tolerance, angularPrecision)
         aw = AmfWriter(tess)
         with open(fname, "wb") as f:
             aw.writeAmf(f)
@@ -94,16 +96,16 @@ def export(
         shape.exportStep(fname)
 
     elif exportType == ExportTypes.STL:
-        shape.exportStl(fname, tolerance)
+        shape.exportStl(fname, tolerance, angularPrecision)
 
     else:
         raise ValueError("Unknown export type")
 
 
 @deprecate()
-def toString(shape, exportType, tolerance=0.1):
+def toString(shape, exportType, tolerance=0.1, angularPrecision=0.1):
     s = StringIO.StringIO()
-    exportShape(shape, exportType, s, tolerance)
+    exportShape(shape, exportType, s, tolerance, angularPrecision)
     return s.getvalue()
 
 
@@ -113,20 +115,22 @@ def exportShape(
     exportType: ExportLiterals,
     fileLike: IO,
     tolerance: float = 0.1,
+    angularPrecision: float = 0.1,
 ):
     """
         :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
         object, the first value is exported
         :param exportType: the exportFormat to use
-        :param tolerance: the tolerance, in model units
         :param fileLike: a file like object to which the content will be written.
         The object should be already open and ready to write. The caller is responsible
         for closing the object
+        :param tolerance: the tolerance, in model units
+        :param angularPrecision: the angular precision, in radians. Default 0.1 or about 5.7deg.
     """
 
-    def tessellate(shape):
+    def tessellate(shape, angularPrecision):
 
-        return shape.tessellate(tolerance)
+        return shape.tessellate(tolerance, angularPrecision)
 
     shape: Shape
     if isinstance(w, Workplane):
@@ -135,7 +139,7 @@ def exportShape(
         shape = w
 
     if exportType == ExportTypes.TJS:
-        tess = tessellate(shape)
+        tess = tessellate(shape, angularPrecision)
         mesher = JsonMesh()
 
         # add vertices
@@ -151,7 +155,7 @@ def exportShape(
     elif exportType == ExportTypes.SVG:
         fileLike.write(getSVG(shape))
     elif exportType == ExportTypes.AMF:
-        tess = tessellate(shape)
+        tess = tessellate(shape, angularPrecision)
         aw = AmfWriter(tess)
         aw.writeAmf(fileLike)
     else:
@@ -166,7 +170,7 @@ def exportShape(
         if exportType == ExportTypes.STEP:
             shape.exportStep(outFileName)
         elif exportType == ExportTypes.STL:
-            shape.exportStl(outFileName, tolerance)
+            shape.exportStl(outFileName, tolerance, angularPrecision)
         else:
             raise ValueError("No idea how i got here")
 
