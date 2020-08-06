@@ -12,7 +12,7 @@ from tests import BaseTest
 
 
 class TestExporters(BaseTest):
-    def _exportBox(self, eType, stringsToFind):
+    def _exportBox(self, eType, stringsToFind, tolerance=0.1, angularPrecision=0.1):
         """
             Exports a test object, and then looks for
             all of the supplied strings to be in the result
@@ -25,7 +25,7 @@ class TestExporters(BaseTest):
         else:
             s = io.StringIO()
 
-        exporters.exportShape(p, eType, s, 0.1)
+        exporters.exportShape(p, eType, s, tolerance=tolerance, angularPrecision=angularPrecision)
 
         result = "{}".format(s.getvalue())
 
