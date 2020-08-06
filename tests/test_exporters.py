@@ -84,8 +84,8 @@ class TestExporters(BaseTest):
 
         s1_i = importers.importDXF("res1.dxf")
 
-        self.assertAlmostEquals(s1.val().Area(), s1_i.val().Area(), 6)
-        self.assertAlmostEquals(s1.edges().size(), s1_i.edges().size())
+        self.assertAlmostEqual(s1.val().Area(), s1_i.val().Area(), 6)
+        self.assertAlmostEqual(s1.edges().size(), s1_i.edges().size())
 
         pts = [(0, 0), (0, 0.5), (1, 1)]
         s2 = (
@@ -95,8 +95,8 @@ class TestExporters(BaseTest):
 
         s2_i = importers.importDXF("res2.dxf")
 
-        self.assertAlmostEquals(s2.val().Area(), s2_i.val().Area(), 6)
-        self.assertAlmostEquals(s2.edges().size(), s2_i.edges().size())
+        self.assertAlmostEqual(s2.val().Area(), s2_i.val().Area(), 6)
+        self.assertAlmostEqual(s2.edges().size(), s2_i.edges().size())
 
         s3 = (
             Workplane("XY")
@@ -111,8 +111,8 @@ class TestExporters(BaseTest):
 
         s3_i = importers.importDXF("res3.dxf")
 
-        self.assertAlmostEquals(s3.val().Area(), s3_i.val().Area(), 6)
-        self.assertAlmostEquals(s3.edges().size(), s3_i.edges().size())
+        self.assertAlmostEqual(s3.val().Area(), s3_i.val().Area(), 6)
+        self.assertAlmostEqual(s3.edges().size(), s3_i.edges().size())
 
     def testTypeHandling(self):
 
