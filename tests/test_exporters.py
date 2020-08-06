@@ -25,7 +25,9 @@ class TestExporters(BaseTest):
         else:
             s = io.StringIO()
 
-        exporters.exportShape(p, eType, s, tolerance=tolerance, angularPrecision=angularPrecision)
+        exporters.exportShape(
+            p, eType, s, tolerance=tolerance, angularPrecision=angularPrecision
+        )
 
         result = "{}".format(s.getvalue())
 
