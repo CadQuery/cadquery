@@ -372,10 +372,10 @@ class Shape(object):
         return tr
 
     def exportStl(
-        self, fileName: str, precision: float = 1e-3, angularPrecision: float = 0.1
+        self, fileName: str, tolerance: float = 1e-3, angularTolerance: float = 0.1
     ) -> bool:
 
-        mesh = BRepMesh_IncrementalMesh(self.wrapped, precision, True, angularPrecision)
+        mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
         mesh.Perform()
 
         writer = StlAPI_Writer()
@@ -798,11 +798,11 @@ class Shape(object):
         return self._bool_op((self,), toIntersect, intersect_op)
 
     def tessellate(
-        self, tolerance: float
+        self, tolerance: float, angularTolerance: float = 0.1
     ) -> Tuple[List[Vector], List[Tuple[int, int, int]]]:
 
         if not BRepTools.Triangulation_s(self.wrapped, tolerance):
-            BRepMesh_IncrementalMesh(self.wrapped, tolerance, True)
+            BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
 
         vertices: List[Vector] = []
         triangles: List[Tuple[int, int, int]] = []
