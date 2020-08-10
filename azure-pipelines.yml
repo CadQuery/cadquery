@@ -64,7 +64,7 @@ jobs:
     vmImage: 'ubuntu-16.04'
     py_maj: 3
     py_min: 8
-    conda_bld: 3.19
+    conda_bld: 3.19.2
 
 - template: conda-build.yml@templates
   parameters:
@@ -72,7 +72,7 @@ jobs:
     vmImage: 'macOS-10.15'
     py_maj: 3
     py_min: 8
-    conda_bld: 3.19
+    conda_bld: 3.19.2
 
 - template: conda-build.yml@templates
   parameters:
@@ -80,4 +80,4 @@ jobs:
     vmImage: 'vs2017-win2016'
     py_maj: 3
     py_min: 8
-    conda_bld: 3.19
+    conda_bld: 3.19.2
