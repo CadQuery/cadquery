@@ -57,3 +57,25 @@ jobs:
     py_maj: 3
     py_min: 7
     conda_bld: 3.18
+    
+- template: conda-build.yml@templates
+  parameters:
+    name: Linux_38
+    vmImage: 'ubuntu-16.04'
+    py_maj: 3
+    py_min: 8
+
+- template: conda-build.yml@templates
+  parameters:
+    name: macOS_38
+    vmImage: 'macOS-10.15'
+    py_maj: 3
+    py_min: 8
+
+- template: conda-build.yml@templates
+  parameters:
+    name: Windows_38
+    vmImage: 'vs2017-win2016'
+    py_maj: 3
+    py_min: 8
+    conda_bld: 3.18
