@@ -70,9 +70,9 @@ The axis used in the listing below are for illustration: any axis would work sim
 Selector    Selects                                  Selector Class                                           # objects returned
 =========   =======================================  =======================================================  ==========================
 +Z          Faces with normal in +z direction        :py:class:`cadquery.DirectionSelector`                   0..many
-\|Z         Faces parallel to XY plane               :py:class:`cadquery.ParallelDirSelector`                 0..many
--X          Faces with  normal in neg x direction    :py:class:`cadquery.DirectionSelector`                   0..many
-#Z          Faces perpendicular to z direction       :py:class:`cadquery.PerpendicularDirSelector`            0..many
+\|Z         Faces with normal parallel to z dir      :py:class:`cadquery.ParallelDirSelector`                 0..many
+-X          Faces with normal in neg x direction     :py:class:`cadquery.DirectionSelector`                   0..many
+#Z          Faces with normal orthogonal to z dir    :py:class:`cadquery.PerpendicularDirSelector`            0..many
 %Plane      Faces of type plane                      :py:class:`cadquery.TypeSelector`                        0..many
 >Y          Face farthest in the positive y dir      :py:class:`cadquery.DirectionMinMaxSelector`             0..many
 <Y          Face farthest in the negative y dir      :py:class:`cadquery.DirectionMinMaxSelector`             0..many
