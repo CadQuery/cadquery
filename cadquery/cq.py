@@ -124,22 +124,12 @@ class Workplane(object):
 
     _tag: Optional[str]
 
-    @overload
-    def __init__(self, obj: CQObject) -> None:
-        ...
-
-    @overload
     def __init__(
         self,
         inPlane: Union[Plane, str] = "XY",
         origin: VectorLike = (0, 0, 0),
-        obj: Optional[CQObject] = None,
+        obj: CQObject = None,
     ) -> None:
-        ...
-
-    def __init__(
-        self, inPlane="XY", origin=(0, 0, 0), obj=None,
-    ):
         """
         make a workplane from a particular plane
 
