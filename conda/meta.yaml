@@ -18,7 +18,7 @@ requirements:
     - ocp 7.4
     - pyparsing 2.*
     - ezdxf
-    - ipython 6.5.*
+    - ipython
     - typing_extensions
     
 test:
