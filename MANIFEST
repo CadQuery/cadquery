@@ -4,6 +4,7 @@ setup.cfg
 setup.py
 cadquery\cq.py
 cadquery\__init__.py
+cadquery\py.typed
 cadquery\cq_directive.py
 cadquery\selectors.py
 cadquery\cqgi.py
