@@ -3,6 +3,9 @@ build/
 doc/_build/*
 dist/*
 .idea/*
-cadquery.egg-info
+cadquery.egg-info/
 target/*
 .vscode
+MANIFEST
+out.*
+res?.dxf
