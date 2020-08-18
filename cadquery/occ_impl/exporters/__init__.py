@@ -103,7 +103,7 @@ def export(
 
 
 @deprecate()
-def toString(shape, exportType, tolerance=0.1, angularTolerance=0.1):
+def toString(shape, exportType, tolerance=0.1, angularTolerance=0.05):
     s = StringIO.StringIO()
     exportShape(shape, exportType, s, tolerance, angularTolerance)
     return s.getvalue()
