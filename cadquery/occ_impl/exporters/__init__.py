@@ -112,7 +112,7 @@ def exportShape(
     w: Union[Shape, Workplane],
     exportType: ExportLiterals,
     fileLike: IO,
-    tolerance: float = 0.1,
+    tolerance: float = 1E-3,
 ):
     """
         :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
