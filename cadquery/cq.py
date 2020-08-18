@@ -355,18 +355,19 @@ class Workplane(object):
         Adds an object or a list of objects to the stack
 
         :param obj: an object to add
-        :type obj: a CQ object, CAD primitive, or list of CAD primitives
-        :return: a CQ object with the requested operation performed
+        :type obj: a Workplane, CAD primitive, or list of CAD primitives
+        :return: a Workplane with the requested operation performed
 
-        If an CQ object, the values of that object's stack are added. If a list of cad primitives,
-        they are all added. If a single CAD primitive it is added
+        If an Workplane object, the values of that object's stack are added. If
+        a list of cad primitives, they are all added. If a single CAD primitive
+        then it is added.
 
-        Used in rare cases when you need to combine the results of several CQ results
-        into a single CQ object. Shelling is one common example
+        Used in rare cases when you need to combine the results of several CQ
+        results into a single Workplane object. Shelling is one common example.
         """
-        if type(obj) == list:
+        if isinstance(obj, list):
             self.objects.extend(obj)
-        elif type(obj) == CQ or type(obj) == Workplane:
+        elif isinstance(obj, Workplane):
             self.objects.extend(obj.objects)
         else:
             self.objects.append(obj)
@@ -698,7 +699,7 @@ class Workplane(object):
     def _selectObjects(
         self,
         objType: Any,
-        selector: Optional[Selector] = None,
+        selector: Optional[Union[Selector, str]] = None,
         tag: Optional[str] = None,
     ) -> "Workplane":
         """
@@ -729,7 +730,7 @@ class Workplane(object):
         return self.newObject(toReturn)
 
     def vertices(
-        self, selector: Optional[Selector] = None, tag: Optional[str] = None
+        self, selector: Optional[Union[Selector, str]] = None, tag: Optional[str] = None
     ) -> "Workplane":
         """
         Select the vertices of objects on the stack, optionally filtering the selection. If there
@@ -764,7 +765,7 @@ class Workplane(object):
         return self._selectObjects("Vertices", selector, tag)
 
     def faces(
-        self, selector: Optional[Selector] = None, tag: Optional[str] = None
+        self, selector: Optional[Union[Selector, str]] = None, tag: Optional[str] = None
     ) -> "Workplane":
         """
         Select the faces of objects on the stack, optionally filtering the selection. If there are
@@ -800,7 +801,7 @@ class Workplane(object):
         return self._selectObjects("Faces", selector, tag)
 
     def edges(
-        self, selector: Optional[Selector] = None, tag: Optional[str] = None
+        self, selector: Optional[Union[Selector, str]] = None, tag: Optional[str] = None
     ) -> "Workplane":
         """
         Select the edges of objects on the stack, optionally filtering the selection. If there are
@@ -835,7 +836,7 @@ class Workplane(object):
         return self._selectObjects("Edges", selector, tag)
 
     def wires(
-        self, selector: Optional[Selector] = None, tag: Optional[str] = None
+        self, selector: Optional[Union[Selector, str]] = None, tag: Optional[str] = None
     ) -> "Workplane":
         """
         Select the wires of objects on the stack, optionally filtering the selection. If there are
@@ -862,7 +863,7 @@ class Workplane(object):
         return self._selectObjects("Wires", selector, tag)
 
     def solids(
-        self, selector: Optional[Selector] = None, tag: Optional[str] = None
+        self, selector: Optional[Union[Selector, str]] = None, tag: Optional[str] = None
     ) -> "Workplane":
         """
         Select the solids of objects on the stack, optionally filtering the selection. If there are
@@ -892,7 +893,7 @@ class Workplane(object):
         return self._selectObjects("Solids", selector, tag)
 
     def shells(
-        self, selector: Optional[Selector] = None, tag: Optional[str] = None
+        self, selector: Optional[Union[Selector, str]] = None, tag: Optional[str] = None
     ) -> "Workplane":
         """
         Select the shells of objects on the stack, optionally filtering the selection. If there are
@@ -916,7 +917,7 @@ class Workplane(object):
         return self._selectObjects("Shells", selector, tag)
 
     def compounds(
-        self, selector: Optional[Selector] = None, tag: Optional[str] = None
+        self, selector: Optional[Union[Selector, str]] = None, tag: Optional[str] = None
     ) -> "Workplane":
         """
         Select compounds on the stack, optionally filtering the selection. If there are multiple

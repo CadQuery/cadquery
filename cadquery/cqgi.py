@@ -510,6 +510,25 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                             value_node, var_name, BooleanParameterType, False
                         )
                     )
+
+            elif hasattr(ast, "Constant") and type(value_node) == ast.Constant:
+
+                type_dict = {
+                    bool: BooleanParameterType,
+                    str: StringParameterType,
+                    float: NumberParameterType,
+                    int: NumberParameterType,
+                }
+
+                self.cqModel.add_script_parameter(
+                    InputParameter.create(
+                        value_node,
+                        var_name,
+                        type_dict[type(value_node.value)],
+                        value_node.value,
+                    )
+                )
+
         except:
             print("Unable to handle assignment for variable '%s'" % var_name)
             pass
@@ -527,6 +546,9 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             astTypes = [ast.Num, ast.Str, ast.Name]
             if hasattr(ast, "NameConstant"):
                 astTypes.append(ast.NameConstant)
+
+            if hasattr(ast, "Constant"):
+                astTypes.append(ast.Constant)
 
             if type(node.value) in astTypes:
                 self.handle_assignment(left_side.id, node.value)
