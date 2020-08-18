@@ -101,7 +101,7 @@ def export(
 
 
 @deprecate()
-def toString(shape, exportType, tolerance=0.1):
+def toString(shape, exportType, tolerance= 1E-3):
     s = StringIO.StringIO()
     exportShape(shape, exportType, s, tolerance)
     return s.getvalue()
