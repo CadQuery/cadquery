@@ -154,7 +154,7 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
 
 (The cubes are off-center because the boxes have their lower left corner at the reference points.)
 
-.. cq_plot::
+.. code-block:: python
 
         def makeCubes(self,length):
             #self refers to the CQ or Workplane object
@@ -176,5 +176,4 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
         result = cq.Workplane("XY").box(6.0,8.0,0.5).faces(">Z")\
             .rect(4.0,4.0,forConstruction=True).vertices() \
             .makeCubes(1.0).combineSolids()
-        show_object(result)
 

@@ -38,7 +38,11 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "cadquery.cq_directive",
+    "sphinxcadquery.sphinxcadquery",
 ]
+
+# Configure `sphinxcadquery`
+sphinxcadquery_include_source = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

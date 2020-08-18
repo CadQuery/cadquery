@@ -40,10 +40,10 @@ Simple Rectangular Plate
 
 Just about the simplest possible example, a rectangular box
 
-.. cq_plot::
+.. cadquery::
 
     result = cadquery.Workplane("front").box(2.0, 2.0, 0.5)
-    show_object(result)
+
 
 .. topic:: Api References
 
@@ -61,7 +61,7 @@ A rectangular box, but with a hole added.
 "\>Z" selects the top most face of the resulting box.  The hole is located in the center because the default origin
 of a working plane is at the center of the face.  The default hole depth is through the entire part.
 
-.. cq_plot::
+.. cadquery::
 
         # The dimensions of the box. These can be modified rather than changing the
         # object's code directly.
@@ -73,8 +73,6 @@ of a working plane is at the center of the face.  The default hole depth is thro
         # Create a box based on the dimensions above and add a 22mm center hole
         result = (cq.Workplane("XY").box(length, height, thickness)
             .faces(">Z").workplane().hole(center_hole_dia))
-
-        show_object(result)
 
 .. topic:: Api References
 
@@ -94,10 +92,9 @@ centered on the previously draw circle.
 
 By default, rectangles and circles are centered around the previous working point.
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("front").circle(2.0).rect(0.5, 0.75).extrude(0.5)
-    show_object(result)
 
 .. topic:: Api References
 
@@ -119,11 +116,10 @@ solid from 2-d operations.
 closed curve.
 
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane("front").lineTo(2.0, 0).lineTo(2.0, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0))
         .close().extrude(0.25))
-    show_object(result)
 
 
 .. topic:: Api References
@@ -146,7 +142,7 @@ though of course in this case it was possible to do it in one long line as well.
 
 A new work plane center can be established at any point.
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("front").circle(3.0) #current point is the center of the circle, at (0,0)
     result = result.center(1.5, 0.0).rect(0.5, 0.5) # new work center is  (1.5, 0.0)
@@ -155,7 +151,6 @@ A new work plane center can be established at any point.
     # The new center is specified relative to the previous center, not global coordinates!
 
     result = result.extrude(0.25)
-    show_object(result)
 
 
 .. topic:: Api References
@@ -178,13 +173,12 @@ is too cumbersome.
 You can use a list of points to construct multiple objects at once. Most construction methods,
 like :py:meth:`Workplane.circle` and :py:meth:`Workplane.rect`, will operate on multiple points if they are on the stack
 
-.. cq_plot::
+.. cadquery::
 
    r = cq.Workplane("front").circle(2.0)                       # make base
    r = r.pushPoints( [ (1.5, 0),(0, 1.5),(-1.5, 0),(0, -1.5) ] )     # now four points are on the stack
    r = r.circle( 0.25 )                                      # circle will operate on all four points
    result = r.extrude(0.125 )                               # make prism
-   show_object(result)
 
 .. topic:: Api References
 
@@ -202,11 +196,10 @@ Polygons
 You can create polygons for each stack point if you would like. Useful in 3d printers whos firmware does not
 correct for small hole sizes.
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane("front").box(3.0, 4.0, 0.25).pushPoints ( [ ( 0,0.75 ),(0, -0.75) ])
         .polygon(6, 1.0).cutThruAll())
-    show_object(result)
 
 .. topic:: Api References
 
@@ -224,7 +217,7 @@ Polylines
 
 This example uses a polyline to create one half of an i-beam shape, which is mirrored to create the final profile.
 
-.. cq_plot::
+.. cadquery::
 
     (L,H,W,t) = ( 100.0, 20.0, 20.0, 1.0)
     pts = [
@@ -238,7 +231,6 @@ This example uses a polyline to create one half of an i-beam shape, which is mir
         (0,H/-2.0)
     ]
     result = cq.Workplane("front").polyline(pts).mirrorY().extrude(L)
-    show_object(result)
 
 .. topic:: Api References
 
@@ -258,7 +250,7 @@ Defining an Edge with a Spline
 This example defines a side using a spline curve through a collection of points. Useful when you have an edge that
 needs a complex profile
 
-.. cq_plot::
+.. cadquery::
 
     s = cq.Workplane("XY")
     sPnts = [
@@ -272,7 +264,6 @@ needs a complex profile
     ]
     r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts,includeCurrent=True).close()
     result = r.extrude(0.5)
-    show_object(result)
 
 .. topic:: Api References
 
@@ -292,12 +283,11 @@ You can mirror 2-d geometry when your shape is symmetric.  In this example we al
 introduce horizontal and vertical lines, which make for slightly easier coding.
 
 
-.. cq_plot::
+.. cadquery::
 
    r = cq.Workplane("front").hLine(1.0)                            # 1.0 is the distance, not coordinate
    r = r.vLine(0.5).hLine(-0.25).vLine(-0.25).hLineTo(0.0)      # hLineTo allows using xCoordinate not distance
    result =r.mirrorY().extrude(0.25 )                           # mirror the geometry and extrude
-   show_object(result)
 
 .. topic:: Api References
 
@@ -315,7 +305,7 @@ introduce horizontal and vertical lines, which make for slightly easier coding.
 Mirroring 3D Objects
 -----------------------------
 
-.. cq_plot::
+.. cadquery::
 
     result0 = (cadquery.Workplane("XY")
                .moveTo(10,0)
@@ -356,7 +346,6 @@ Mirroring 3D Objects
 
     result = result.union(mirXY_neg).union(mirXY_pos).union(mirZY_neg).union(mirZY_pos)
 
-    show_object(result)
 
 .. topic:: Api References
 
@@ -387,11 +376,10 @@ face.
 
 Keep in mind that the origin of new workplanes are located at the center of a face by default.
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("front").box(2,3, 0.5)            #make a basic prism
     result = result.faces(">Z").workplane().hole(0.5)   #find the top-most face and make a hole
-    show_object(result)
 
 .. topic:: Api References
 
@@ -415,12 +403,11 @@ of at the center of the face
 The example also introduces :py:meth:`Workplane.cutThruAll`, which makes a cut through the entire part, no matter
 how deep the part is
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("front").box(3,2, 0.5)                 #make a basic prism
     result = result.faces(">Z").vertices("<XY").workplane()  #select the lower left vertex and make a workplane
     result = result.circle(1.0).cutThruAll()                 #cut the corner out
-    show_object(result)
 
 .. topic:: Api References
 
@@ -443,12 +430,11 @@ from an existing face.
 
 This example uses an offset workplane to make a compound object, which is perfectly valid!
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("front").box(3, 2, 0.5)                 #make a basic prism
     result = result.faces("<X").workplane(offset=0.75)       #workplane is offset from the object surface
     result = result.circle(1.0).extrude(0.5)                 #disc
-    show_object(result)
 
 .. topic:: Api References
 
@@ -465,16 +451,15 @@ Copying Workplanes
 
 An existing CQ object can copy a workplane from another CQ object.
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane("front").circle(1).extrude(10) # make a cylinder
-              # We want to make a second cylinder perpendicular to the first, 
+              # We want to make a second cylinder perpendicular to the first,
               # but we have no face to base the workplane off
               .copyWorkplane(
                   # create a temporary object with the required workplane
                   cq.Workplane("right", origin=(-5, 0, 0))
               ).circle(1).extrude(10))
-    show_object(result)
 
 .. topic:: API References
 
@@ -491,12 +476,11 @@ Rotated Workplanes
 
 You can create a rotated work plane by specifying angles of rotation relative to another workplane
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").workplane()
          .transformed(offset=cq.Vector(0, -1.5, 1.0),rotate=cq.Vector(60, 0, 0))
          .rect(1.5,1.5,forConstruction=True).vertices().hole(0.25))
-    show_object(result)
 
 .. topic:: Api References
 
@@ -516,11 +500,10 @@ locate other features, rather than to create them, are called ``Construction Geo
 
 In the example below, a rectangle is drawn, and its vertices are used to locate a set of holes.
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane("front").box(2, 2, 0.5).faces(">Z").workplane()
         .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.125 ))
-    show_object(result)
 
 .. topic:: Api References
 
@@ -542,29 +525,26 @@ Shelling converts a solid object into a shell of uniform thickness.
 To shell an object and 'hollow out' the inside pass a negative thickness parameter
 to the :py:meth:`Workplane.shell()` method of a shape.
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("front").box(2, 2, 2).shell(-0.1)
-    show_object(result)
 
 A positive thickness parameter wraps an object with filleted outside edges
 and the original object will be the 'hollowed out' portion.
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("front").box(2, 2, 2).shell(0.1)
-    show_object(result)
 
 Use face selectors to select a face to be removed from the resulting hollow shape.
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("front").box(2, 2, 2).faces("+Z").shell(0.1)
-    show_object(result)
 
 Multiple faces can be removed using more complex selectors.
 
-.. cq_plot::
+.. cadquery::
 
    result = (
         cq.Workplane("front")
@@ -572,7 +552,6 @@ Multiple faces can be removed using more complex selectors.
         .faces("+Z or -X or +X")
         .shell(0.1)
    )
-   show_object(result)
 
 .. topic:: Api References
 
@@ -591,12 +570,11 @@ Making Lofts
 A loft is a solid swept through a set of wires. This example creates lofted section between a rectangle
 and a circular section.
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").circle(1.5)
         .workplane(offset=3.0).rect(0.75, 0.5).loft(combine=True))
 
-    show_object(result)
 
 .. topic:: Api References
 
@@ -616,12 +594,11 @@ Counterbored and countersunk holes are so common that CadQuery creates macros to
 
 Similar to :py:meth:`Workplane.hole` , these functions operate on a list of points as well as a single point.
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane(cq.Plane.XY()).box(4,2, 0.5).faces(">Z").workplane().rect(3.5, 1.5, forConstruction=True)
     .vertices().cboreHole(0.125, 0.25, 0.125, depth=None))
 
-    show_object(result)
 
 .. topic:: Api References
 
@@ -644,10 +621,9 @@ Filleting is done by selecting the edges of a solid, and using the fillet functi
 
 Here we fillet all of the edges of a simple plate.
 
-.. cq_plot::
+.. cadquery::
 
     result = cq.Workplane("XY" ).box(3, 3, 0.5).edges("|Z").fillet(0.125)
-    show_object(result)
 
 .. topic:: Api References
 
@@ -662,11 +638,11 @@ Here we fillet all of the edges of a simple plate.
 Tagging objects
 ----------------
 
-The :py:meth:`Workplane.tag` method can be used to tag a particular object in the chain with a string, so that it can be refered to later in the chain. 
+The :py:meth:`Workplane.tag` method can be used to tag a particular object in the chain with a string, so that it can be refered to later in the chain.
 
 The :py:meth:`Workplane.workplaneFromTagged` method applies :py:meth:`Workplane.copyWorkplane` to a tagged object. For example, when extruding two different solids from a surface, after the first solid is extruded it can become difficult to reselect the original surface with CadQuery's other selectors.
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane("XY")
               # create and tag the base workplane
@@ -677,12 +653,11 @@ The :py:meth:`Workplane.workplaneFromTagged` method applies :py:meth:`Workplane.
               .workplaneFromTagged("baseplane")
               # extrude a second cylinder
               .center(3, 0).circle(1).extrude(2))
-    show_object(result)
 
 
 Tags can also be used with most selectors, including :py:meth:`Workplane.vertices`, :py:meth:`Workplane.faces`, :py:meth:`Workplane.edges`, :py:meth:`Workplane.wires`, :py:meth:`Workplane.shells`, :py:meth:`Workplane.solids` and :py:meth:`Workplane.compounds`.
 
-.. cq_plot::
+.. cadquery::
 
     result = (cq.Workplane("XY")
               # create a triangular prism and tag it
@@ -692,7 +667,6 @@ Tags can also be used with most selectors, including :py:meth:`Workplane.vertice
               # create features based on the prism's faces
               .faces("<X", tag="prism").workplane().circle(1).cutThruAll()
               .faces(">X", tag="prism").faces(">Y").workplane().circle(1).cutThruAll())
-    show_object(result)
 
 .. topic:: Api References
 
@@ -714,7 +688,7 @@ A Parametric Bearing Pillow Block
 Combining a few basic functions, its possible to make a very good parametric bearing pillow block,
 with just a few lines of code.
 
-.. cq_plot::
+.. cadquery::
 
         (length,height,bearing_diam, thickness,padding) = ( 30.0, 40.0, 22.0, 10.0, 8.0)
 
@@ -723,21 +697,18 @@ with just a few lines of code.
                 .rect(length-padding,height-padding,forConstruction=True)
                 .vertices().cboreHole(2.4, 4.4, 2.1))
 
-        show_object(result)
-
 
 Splitting an Object
 ---------------------
 
 You can split an object using a workplane, and retain either or both halves
 
-.. cq_plot::
+.. cadquery::
 
         c = cq.Workplane("XY").box(1,1,1).faces(">Z").workplane().circle(0.25).cutThruAll()
 
         #now cut it in half sideways
         result = c.faces(">Y").workplane(-0.5).split(keepTop=True)
-        show_object(result)
 
 .. topic:: Api References
 
@@ -764,7 +735,7 @@ Of course one difference between this sample and the OCC version is the length. 
 ones at 13 lines, but that's very short compared to the pythonOCC version, which is 10x longer!
 
 
-.. cq_plot::
+.. cadquery::
 
     (L,w,t) = (20.0, 6.0, 3.0)
     s = cq.Workplane("XY")
@@ -779,7 +750,6 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
 
     #make a shell
     result = p.faces(">Z").shell(0.3)
-    show_object(result)
 
 .. topic:: Api References
 
@@ -798,8 +768,8 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
 A Parametric Enclosure
 -----------------------
 
-.. cq_plot::
-    :height: 400
+.. cadquery::
+    :height: 400px
 
     #parameter definitions
     p_outerWidth = 100.0 #Outer width of box enclosure
@@ -876,7 +846,6 @@ A Parametric Enclosure
     #return the combined result
     result =topOfLid.combineSolids(bottom)
 
-    show_object(result)
 
 .. topic:: Api References
 
@@ -906,8 +875,9 @@ Lego Brick
 This script will produce any size regular rectangular Lego(TM) brick. Its only tricky because of the logic
 regarding the underside of the brick.
 
-.. cq_plot::
-    :height: 400
+.. cadquery::
+    :select: tmp
+    :height: 400px
 
     #####
     # Inputs
@@ -960,17 +930,13 @@ regarding the underside of the brick.
     else:
         tmp = s
 
-    # Render the solid
-    show_object(tmp)
-
 
 Braille Example
 ---------------------
 
-.. cq_plot::
-    :height: 400
+.. cadquery::
+    :height: 400px
 
-    from __future__ import unicode_literals, division
     from collections import namedtuple
 
 
@@ -1145,13 +1111,13 @@ Braille Example
     if base_thickness < get_cylinder_radius(_cell_geometry):
         raise ValueError('Base thickness should be at least {}'.format(dot_height))
 
-    show_object(make_embossed_plate(text_lines, _cell_geometry))
+    result = make_embossed_plate(text_lines, _cell_geometry)
 
 Panel With Various Connector Holes
 -----------------------------------
 
-.. cq_plot::
-    :height: 400
+.. cadquery::
+    :height: 400px
 
     # The dimensions of the model. These can be modified rather than changing the
     # object's code directly.
@@ -1194,9 +1160,6 @@ Panel With Various Connector Holes
     for idx in range(4):
         result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(-173,-30-idx*h_sep).moveTo(-2.9176,-5.3).threePointArc((-6.05,0),(-2.9176,5.3)).lineTo(2.9176,5.3).threePointArc((6.05,0),(2.9176,-5.3)).close().cutThruAll()
 
-    # Render the solid
-    show_object(result)
-
 
 Cycloidal gear
 --------------
@@ -1204,8 +1167,8 @@ Cycloidal gear
 You can define complex geometries using the parametricCurve functionality.
 This specific examples generates a helical cycloidal gear.
 
-.. cq_plot::
-    :height: 400
+.. cadquery::
+    :height: 400px
 
     import cadquery as cq
     from math import sin, cos,pi,floor
@@ -1226,5 +1189,3 @@ This specific examples generates a helical cycloidal gear.
     # create the gear profile and extrude it
     result = (cq.Workplane('XY').parametricCurve(lambda t: gear(t*2*pi,6,1))
         .twistExtrude(15,90).faces('>Z').workplane().circle(2).cutThruAll())
-
-    show_object(result)
