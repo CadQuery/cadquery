@@ -13,6 +13,7 @@ ConstraintKinds = Literal["Plane", "Point", "Axis"]
 
 class Constraint(object):
 
+    objects: Tuple[Shape, ...]
     args: Tuple[Shape, ...]
     kind: ConstraintKinds
 
