@@ -10,17 +10,23 @@ from .geom import Location
 
 DOF6 = Tuple[float, float, float, float, float, float]
 ConstraintMarker = Union[gp_Dir, gp_Pnt]
+Constraint = Tuple[Tuple[ConstraintMarker, ...], Tuple[ConstraintMarker, ...]]
 
 
 class ConstraintSolver(object):
 
     entities: Mapping[int, DOF6]
-    constraints: Mapping[
-        Tuple[int, int],
-        Tuple[Tuple[ConstraintMarker, ...], Tuple[ConstraintMarker, ...]],
-    ]
+    constraints: Mapping[Tuple[int, int], Constraint]
     ne: int
     nc: int
+
+    def __init__(
+        self,
+        entities: List[Location],
+        constraints: Mapping[Tuple[int, int], Constraint],
+    ):
+
+        pass
 
     def _jacobianSparsity(self) -> Array[(Any, Any), float]:
 
