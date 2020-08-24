@@ -76,7 +76,9 @@ class Assembly(object):
         ...
 
     @overload
-    def constrain(self, s1: Shape, s2: Shape, kind: ConstraintKinds):
+    def constrain(
+        self, id1: str, s1: Shape, id2: str, s2: Shape, kind: ConstraintKinds
+    ):
         ...
 
     def constrain(self, *args):
@@ -94,3 +96,15 @@ class Assembly(object):
     def load(self, path: str):
 
         raise NotImplementedError
+
+    @property
+    def shapes(self) -> List[Shape]:
+
+        rv: List[Shape] = []
+
+        if isinstance(self.obj, Shape):
+            rv = [self.obj]
+        elif isinstance(self.obj, Workplane):
+            rv = [el for el in self.obj.vals() if isinstance(el, Shape)]
+
+        return rv
