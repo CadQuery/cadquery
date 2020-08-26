@@ -234,4 +234,3 @@ def importDXF(filename, tol=1e-6, ignored_layers=[]):
                 faces.append(Face.makeFromWires(wire_set[0], wire_set[1:]))
 
     return cq.Workplane("XY").newObject(faces)
-
