@@ -9,6 +9,7 @@ from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_StepModelType
 from OCP.IFSelect import IFSelect_ReturnStatus
+from OCP.TDF import TDF_Label
 
 from ..geom import Location
 from ..shapes import Shape, Compound
@@ -39,18 +40,24 @@ def exportAssembly(assy: AssemblyProtocol, path) -> bool:
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
 
     # add root
-    root = tool.NewShape()
-    TDataStd_Name.Set_s(root, TCollection_ExtendedString(assy.name))
+    top = tool.NewShape()
 
-    if assy.shapes:
-        tool.SetShape(root, Compound.makeCompound(assy.shapes).moved(assy.loc).wrapped)
+    root = tool.AddComponent(
+        top, Compound.makeCompound(assy.shapes).moved(assy.loc).wrapped, True
+    )
+    TDataStd_Name.Set_s(root, TCollection_ExtendedString(assy.name))
 
     def processChildren(parent, children):
 
+        if tool.IsReference_s(parent):
+            parent_ref, parent = parent, TDF_Label()
+            tool.GetReferredShape_s(parent_ref, parent)
+
         for ch in children:
             ch_node = tool.AddComponent(
-                parent, Compound.makeCompound(ch.shapes).moved(ch.loc).wrapped
+                parent, Compound.makeCompound(ch.shapes).moved(ch.loc).wrapped, True
             )
+            tool.UpdateAssemblies()
             TDataStd_Name.Set_s(ch_node, TCollection_ExtendedString(ch.name))
 
             if ch.children:
@@ -62,6 +69,7 @@ def exportAssembly(assy: AssemblyProtocol, path) -> bool:
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)
+    writer.SetNameMode(True)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)
