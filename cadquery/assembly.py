@@ -42,6 +42,7 @@ class Assembly(object):
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
 
+        self.children = []
         self.objects = {self.name: self.obj}
 
     @overload
