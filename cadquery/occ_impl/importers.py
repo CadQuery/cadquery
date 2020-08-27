@@ -214,21 +214,21 @@ def _dxf_convert(elements, tol):
     return rv
 
 
-def importDXF(filename, tol=1e-6, ignored_layers=[]):
+def importDXF(filename, tol=1e-6, exclude=[]):
     """
     Loads a DXF file into a cadquery Workplane.
     
     :param fileName: The path and name of the DXF file to be imported
     :param tol: The tolerance used for merging edges into wires (default: 1e-6)
-    :param ignored_layers: a list of layer names not to import
+    :param exclude: a list of layer names not to import (default: [])
     """
 
     dxf = ezdxf.readfile(filename)
     faces = []
 
     for name, layer in dxf.modelspace().groupby(dxfattrib="layer").items():
-        res = _dxf_convert(layer, tol)
-        if res and name not in ignored_layers:
+        res = _dxf_convert(layer, tol) if name not in exclude else None
+        if res:
             wire_sets = sortWiresByBuildOrder(res)
             for wire_set in wire_sets:
                 faces.append(Face.makeFromWires(wire_set[0], wire_set[1:]))
