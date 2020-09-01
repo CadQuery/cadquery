@@ -29,21 +29,35 @@ class AssemblyProtocol(Protocol):
         ...
 
 
+def setName(l: TDF_Label, name, tool):
+
+    origin = l
+
+    if tool.IsReference_s(l):
+        origin = TDF_Label()
+        tool.GetReferredShape_s(l, origin)
+    else:
+        origin = l
+
+    TDataStd_Name.Set_s(origin, TCollection_ExtendedString(name))
+
+
 def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
 
     # prepare a doc
-    doc = TDocStd_Document(TCollection_ExtendedString("XmlXCAF"))
+    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
 
     # add root
     top = tool.NewShape()
+    TDataStd_Name.Set_s(top, TCollection_ExtendedString("CQ assembly"))
 
     root = tool.AddComponent(
         top, Compound.makeCompound(assy.shapes).moved(assy.loc).wrapped, True
     )
+    setName(root, assy.name, tool)
     tool.UpdateAssemblies()
-    TDataStd_Name.Set_s(root, TCollection_ExtendedString(assy.name))
 
     def processChildren(parent, children):
 
@@ -55,8 +69,9 @@ def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
             ch_node = tool.AddComponent(
                 parent, Compound.makeCompound(ch.shapes).moved(ch.loc).wrapped, True
             )
+
+            setName(ch_node, ch.name, tool)
             tool.UpdateAssemblies()
-            TDataStd_Name.Set_s(ch_node, TCollection_ExtendedString(ch.name))
 
             if ch.children:
                 processChildren(ch_node, ch.children)
