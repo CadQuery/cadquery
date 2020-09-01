@@ -2,6 +2,10 @@ from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_StepModelType
 from OCP.IFSelect import IFSelect_ReturnStatus
+from OCP.XCAFApp import XCAFApp_Application
+from OCP.XmlDrivers import XmlDrivers
+from OCP.TCollection import TCollection_ExtendedString
+from OCP.PCDM import PCDM_StoreStatus
 
 from ..assembly import AssemblyProtocol, toCAF
 
@@ -18,3 +22,16 @@ def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
     status = writer.Write(path)
 
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
+
+
+def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
+
+    _, doc = toCAF(assy)
+    app = XCAFApp_Application.GetApplication_s()
+    XmlDrivers.DefineFormat_s(app)
+
+    status = app.SaveAs(doc, TCollection_ExtendedString(path))
+
+    app.Close(doc)
+
+    return status == PCDM_StoreStatus.PCDM_SS_OK
