@@ -1,4 +1,4 @@
-from typing import Union, Optional, List, Mapping, Any, overload, Tuple
+from typing import Union, Optional, List, Mapping, Any, overload, Tuple, Iterator
 from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
@@ -109,3 +109,11 @@ class Assembly(object):
             rv = [el for el in self.obj.vals() if isinstance(el, Shape)]
 
         return rv
+
+    def traverse(self) -> Iterator[Tuple[str, "Assembly"]]:
+
+        for ch in self.children:
+            for el in ch.traverse():
+                yield el
+
+        yield (self.name, self)

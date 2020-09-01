@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Dict
 from typing_extensions import Protocol
 
 from OCP.TDocStd import TDocStd_Document
@@ -6,6 +6,7 @@ from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFDoc import XCAFDoc_DocumentTool
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
+from OCP.TopLoc import TopLoc_Location
 
 from .geom import Location
 from .shapes import Shape, Compound
@@ -26,6 +27,9 @@ class AssemblyProtocol(Protocol):
 
     @property
     def children(self) -> Iterable["AssemblyProtocol"]:
+        ...
+
+    def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 
 
@@ -53,30 +57,27 @@ def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
     top = tool.NewShape()
     TDataStd_Name.Set_s(top, TCollection_ExtendedString("CQ assembly"))
 
-    root = tool.AddComponent(
-        top, Compound.makeCompound(assy.shapes).moved(assy.loc).wrapped, True
-    )
-    setName(root, assy.name, tool)
-    tool.UpdateAssemblies()
+    # add leafs and subassemblies
+    subassys: Dict[str, Tuple[TDF_Label, Location]] = {}
+    for k, v in assy.traverse():
+        # leaf part
+        lab = tool.NewShape()
+        tool.SetShape(lab, Compound.makeCompound(v.shapes).wrapped)
+        setName(lab, f"{k}_part", tool)
 
-    def processChildren(parent, children):
+        # assy part
+        subassy = tool.NewShape()
+        tool.AddComponent(subassy, lab, TopLoc_Location())
+        setName(subassy, k, tool)
 
-        if tool.IsReference_s(parent):
-            parent_ref, parent = parent, TDF_Label()
-            tool.GetReferredShape_s(parent_ref, parent)
+        subassys[k] = (subassy, v.loc)
 
-        for ch in children:
-            ch_node = tool.AddComponent(
-                parent, Compound.makeCompound(ch.shapes).moved(ch.loc).wrapped, True
+        for ch in v.children:
+            tool.AddComponent(
+                subassy, subassys[ch.name][0], subassys[ch.name][1].wrapped
             )
 
-            setName(ch_node, ch.name, tool)
-            tool.UpdateAssemblies()
-
-            if ch.children:
-                processChildren(ch_node, ch.children)
-
-    processChildren(root, assy.children)
+    tool.AddComponent(top, subassys[assy.name][0], assy.loc.wrapped)
     tool.UpdateAssemblies()
 
-    return root, doc
+    return top, doc
