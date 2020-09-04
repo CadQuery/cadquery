@@ -5,10 +5,12 @@ from uuid import uuid1 as uuid
 from .cq import Workplane
 from .occ_impl.shapes import Shape
 from .occ_impl.geom import Location
+from .occ_impl.exporters.assembly import exportAssembly, exportCAF
 
 
 AssemblyObjects = Union[Shape, Workplane, None]
 ConstraintKinds = Literal["Plane", "Point", "Axis"]
+ExportLiterals = Literal["STEP", "XML"]
 
 
 class Constraint(object):
@@ -90,9 +92,21 @@ class Assembly(object):
 
         raise NotImplementedError
 
-    def save(self, path: str):
+    def save(self, path: str, exportType: Optional[ExportLiterals] = None):
 
-        raise NotImplementedError
+        if exportType is None:
+            t = path.split(".")[-1].upper()
+            if t in ExportLiterals.__args__:
+                exportType = t
+            else:
+                raise ValueError("Unknown extension, specify export type explicitly")
+
+        if exportType == "STEP":
+            exportAssembly(self, path)
+        elif exportType == "XML":
+            exportCAF(self, path)
+        else:
+            raise ValueError(f"Unknown format: {exportType}")
 
     def load(self, path: str):
 
