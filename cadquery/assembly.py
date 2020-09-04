@@ -1,4 +1,4 @@
-from typing import Union, Optional, List, Mapping, Any, overload, Tuple, Iterator
+from typing import Union, Optional, List, Mapping, Any, overload, Tuple, Iterator, cast
 from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
@@ -96,8 +96,8 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ExportLiterals.__args__:
-                exportType = t
+            if t in ("STEP", "XML"):
+                exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
 
