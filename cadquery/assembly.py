@@ -21,6 +21,8 @@ class Constraint(object):
 
 
 class Assembly(object):
+    """Nested assembly of Workplane and Shape objects defining their relative positions.
+    """
 
     loc: Location
     name: str
@@ -35,20 +37,44 @@ class Assembly(object):
 
     def __init__(
         self,
-        obj: AssemblyObjects,
+        obj: AssemblyObjects = None,
         loc: Optional[Location] = None,
         name: Optional[str] = None,
     ):
+        """
+        construct an assembly
+
+        :param obj: root object of the assembly (deafault: None)
+        :param loc: location of the root object (deafault: None, interpreted as identity transformation)
+        :param name: unique name of the root object (default: None, reasulting in an UUID being generated)
+        :return: An Assembly object.
+        
+        To create an empt assembly use::
+            
+            assy = Assembly(None)
+            
+        To create one containt a root object::
+            
+            b = Workplane().box(1,1,1)
+            assy = Assembly(b, Location(Vector(0,0,1)), name="root")
+            
+        """
 
         self.obj = obj
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
+        self.parent = None
 
         self.children = []
         self.objects = {self.name: self.obj}
 
     @overload
     def add(self, obj: "Assembly") -> "Assembly":
+        """
+        add a subassembly to the current assembly.
+        
+        :param obj: subassembly to be added
+        """
         ...
 
     @overload
@@ -58,6 +84,13 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
     ) -> "Assembly":
+        """
+        add a subassembly to the current assembly with explicit location and name
+        
+        :param obj: object to be added as a subassembly
+        :param loc: location of the root object (deafault: None, interpreted as identity transformation)
+        :param name: unique name of the root object (default: None, reasulting in an UUID being generated)
+        """
         ...
 
     def add(self, arg, **kwargs):
@@ -67,8 +100,13 @@ class Assembly(object):
             self.objects[arg.name] = arg.obj
             self.objects.update(arg.objects)
 
+            arg.parent = self
+
         else:
-            self.add(Assembly(arg, **kwargs))
+            assy = Assembly(arg, **kwargs)
+            assy.parent = self
+
+            self.add(assy)
 
         return self
 
@@ -97,6 +135,12 @@ class Assembly(object):
     def save(
         self, path: str, exportType: Optional[ExportLiterals] = None
     ) -> "Assembly":
+        """
+        save as STEP or OCCT native XML file
+        
+        :param path: filepath
+        :param exportType: export format (deafault: None, results in format being inferred form the path)
+        """
 
         if exportType is None:
             t = path.split(".")[-1].upper()
