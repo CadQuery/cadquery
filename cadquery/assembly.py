@@ -69,11 +69,18 @@ class Assembly(object):
         self.objects = {self.name: self.obj}
 
     @overload
-    def add(self, obj: "Assembly") -> "Assembly":
+    def add(
+        self,
+        obj: "Assembly",
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+    ) -> "Assembly":
         """
         add a subassembly to the current assembly.
         
         :param obj: subassembly to be added
+        :param loc: location of the root object (deafault: None, resulting in the location stored in the subassembly being used)
+        :param name: unique name of the root object (default: None, resulting in the name stored in the subassembly being used)
         """
         ...
 
@@ -89,16 +96,27 @@ class Assembly(object):
         
         :param obj: object to be added as a subassembly
         :param loc: location of the root object (deafault: None, interpreted as identity transformation)
-        :param name: unique name of the root object (default: None, reasulting in an UUID being generated)
+        :param name: unique name of the root object (default: None, resulting in an UUID being generated)
         """
         ...
 
     def add(self, arg, **kwargs):
 
         if isinstance(arg, Assembly):
-            self.children.append(arg)
-            self.objects[arg.name] = arg.obj
-            self.objects.update(arg.objects)
+
+            subassy = Assembly(
+                arg.obj,
+                kwargs["loc"] if kwargs.get("loc") else arg.loc,
+                kwargs["name"] if kwargs.get("name") else arg.name,
+            )
+
+            subassy.children.extend(arg.children)
+            subassy.objects[subassy.name] = subassy.obj
+            subassy.objects.update(arg.objects)
+
+            self.children.append(subassy)
+            self.objects[subassy.name] = subassy.obj
+            self.objects.update(subassy.objects)
 
             arg.parent = self
 
