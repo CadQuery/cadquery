@@ -2,7 +2,7 @@
 import math
 import unittest
 from tests import BaseTest
-from OCP.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp, gp_XYZ
+from OCP.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp, gp_XYZ, gp_Trsf
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 from cadquery import *
@@ -395,7 +395,7 @@ class TestCadObjects(BaseTest):
         )
 
     def testLocation(self):
-
+        
         # Vector
         loc1 = Location(Vector(0, 0, 1))
 
@@ -407,6 +407,13 @@ class TestCadObjects(BaseTest):
 
         angle = loc2.wrapped.Transformation().GetRotation().GetRotationAngle() * RAD2DEG
         self.assertAlmostEqual(45, angle)
+
+        # gp_Trsf
+        T = gp_Trsf()
+        T.SetTranslation(gp_Vec(0,0,1))
+        loc3 = Location(T)
+        
+        assert( loc1.wrapped.Transformation().TranslationPart().Z() == loc3.wrapped.Transformation().TranslationPart().Z())
 
 
 if __name__ == "__main__":
