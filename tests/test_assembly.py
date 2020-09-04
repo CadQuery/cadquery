@@ -8,7 +8,7 @@ from cadquery.occ_impl.exporters.assembly import exportAssembly, exportCAF
 @pytest.fixture
 def simple_assy():
 
-    b1 = cq.Workplane().box(1, 1, 1)
+    b1 = cq.Solid.makeBox(1,1,1)
     b2 = cq.Workplane().box(1, 1, 2)
     b3 = cq.Workplane().pushPoints([(0, 0), (-2, -5)]).box(1, 1, 3)
 
@@ -23,12 +23,12 @@ def simple_assy():
 def nested_assy():
 
     b1 = cq.Workplane().box(1, 1, 1)
-    b2 = cq.Workplane().box(1, 1, 2)
-    b3 = cq.Workplane().pushPoints([(0, 0), (-2, -5)]).box(1, 1, 3)
+    b2 = cq.Workplane().box(1, 1, 1)
+    b3 = cq.Workplane().pushPoints([(-2, 0), (2, 0)]).box(1, 1, .5)
 
-    assy = cq.Assembly(b1, loc=cq.Location(cq.Vector(2, -5, 0)), name="TOP")
-    assy2 = cq.Assembly(b2, loc=cq.Location(cq.Vector(2, 2, 0)), name="SECOND")
-    assy2.add(b3, loc=cq.Location(cq.Vector(0, -2, 0)), name="BOTTOM")
+    assy = cq.Assembly(b1, loc=cq.Location(cq.Vector(0, 0, 0)), name="TOP")
+    assy2 = cq.Assembly(b2, loc=cq.Location(cq.Vector(0, 4, 0)), name="SECOND")
+    assy2.add(b3, loc=cq.Location(cq.Vector(0, 4, 0)), name="BOTTOM")
 
     assy.add(assy2)
 
@@ -53,17 +53,17 @@ def test_assembly(simple_assy, nested_assy):
     assert kvs[-1][0] == "TOP"
 
 
-def test_step_export(simple_assy):
+def test_step_export(nested_assy):
 
-    exportAssembly(simple_assy, "simple.step")
+    exportAssembly(nested_assy, "nested.step")
 
-    w = cq.importers.importStep("simple.step")
+    w = cq.importers.importStep("nested.step")
     assert w.solids().size() == 4
 
     # check that locations were applied correctly
     c = cq.Compound.makeCompound(w.solids().vals()).Center()
     c.toTuple()
-    assert pytest.approx(c.toTuple()) == (2.888888888888889, -4.444444444444445, 0)
+    assert pytest.approx(c.toTuple()) == (0, 4, 0)
 
 
 def test_native_export(simple_assy):
