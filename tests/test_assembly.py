@@ -34,7 +34,6 @@ def nested_assy():
 
     return assy
 
-
 def test_assembly(simple_assy, nested_assy):
 
     # basic checks
@@ -72,3 +71,26 @@ def test_native_export(simple_assy):
 
     # only sanity check for now
     assert os.path.exists("assy.xml")
+
+def test_save(simple_assy):
+    
+    simple_assy.save('simple.step')
+    assert os.path.exists("simple.step")
+    
+    simple_assy.save('simple.xml')
+    assert os.path.exists("simple.xml")
+    
+    simple_assy.save('simple.step')
+    assert os.path.exists("simple.step")
+    
+    simple_assy.save('simple.stp','STEP')
+    assert os.path.exists("simple.stp")
+    
+    simple_assy.save('simple.caf','XML')
+    assert os.path.exists("simple.caf.xml")
+    
+    with pytest.raises(ValueError):
+        simple_assy.save('simple.dxf')
+    
+    with pytest.raises(ValueError):
+        simple_assy.save('simple.step','DXF')
