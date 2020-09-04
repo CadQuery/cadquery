@@ -48,7 +48,7 @@ class Assembly(object):
         self.objects = {self.name: self.obj}
 
     @overload
-    def add(self, obj: "Assembly"):
+    def add(self, obj: "Assembly") -> "Assembly":
         ...
 
     @overload
@@ -57,7 +57,7 @@ class Assembly(object):
         obj: AssemblyObjects,
         loc: Optional[Location] = None,
         name: Optional[str] = None,
-    ):
+    ) -> "Assembly":
         ...
 
     def add(self, arg, **kwargs):
@@ -70,29 +70,33 @@ class Assembly(object):
         else:
             self.add(Assembly(arg, **kwargs))
 
+        return self
+
     @overload
-    def constrain(self, query: str):
+    def constrain(self, query: str) -> "Assembly":
         ...
 
     @overload
-    def constrain(self, q1: str, q2: str, kind: ConstraintKinds):
+    def constrain(self, q1: str, q2: str, kind: ConstraintKinds) -> "Assembly":
         ...
 
     @overload
     def constrain(
         self, id1: str, s1: Shape, id2: str, s2: Shape, kind: ConstraintKinds
-    ):
+    ) -> "Assembly":
         ...
 
     def constrain(self, *args):
 
         raise NotImplementedError
 
-    def solve(self):
+    def solve(self) -> "Assembly":
 
         raise NotImplementedError
 
-    def save(self, path: str, exportType: Optional[ExportLiterals] = None):
+    def save(
+        self, path: str, exportType: Optional[ExportLiterals] = None
+    ) -> "Assembly":
 
         if exportType is None:
             t = path.split(".")[-1].upper()
@@ -108,7 +112,10 @@ class Assembly(object):
         else:
             raise ValueError(f"Unknown format: {exportType}")
 
-    def load(self, path: str):
+        return self
+
+    @classmethod
+    def load(cls, path: str) -> "Assembly":
 
         raise NotImplementedError
 
