@@ -87,7 +87,7 @@ def test_save(simple_assy):
     assert os.path.exists("simple.stp")
     
     simple_assy.save('simple.caf','XML')
-    assert os.path.exists("simple.caf.xml")
+    assert os.path.exists("simple.caf")
     
     with pytest.raises(ValueError):
         simple_assy.save('simple.dxf')

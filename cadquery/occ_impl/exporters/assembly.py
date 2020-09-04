@@ -38,7 +38,7 @@ def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
     ret = XmlDrivers_DocumentRetrievalDriver()
 
     app.DefineFormat(
-        TCollection_AsciiString("XmlXCAF"),
+        TCollection_AsciiString("XmlOcaf"),
         TCollection_AsciiString("Xml XCAF Document"),
         TCollection_AsciiString(path.split(".")[-1]),
         ret,
