@@ -3,8 +3,11 @@ from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_StepModelType
 from OCP.IFSelect import IFSelect_ReturnStatus
 from OCP.XCAFApp import XCAFApp_Application
-from OCP.XmlDrivers import XmlDrivers
-from OCP.TCollection import TCollection_ExtendedString
+from OCP.XmlDrivers import (
+    XmlDrivers_DocumentStorageDriver,
+    XmlDrivers_DocumentRetrievalDriver,
+)
+from OCP.TCollection import TCollection_ExtendedString, TCollection_AsciiString
 from OCP.PCDM import PCDM_StoreStatus
 
 from ..assembly import AssemblyProtocol, toCAF
@@ -28,7 +31,19 @@ def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
 
     _, doc = toCAF(assy)
     app = XCAFApp_Application.GetApplication_s()
-    XmlDrivers.DefineFormat_s(app)
+
+    store = XmlDrivers_DocumentStorageDriver(
+        TCollection_ExtendedString("Copyright: Open Cascade, 2001-2002")
+    )
+    ret = XmlDrivers_DocumentRetrievalDriver()
+
+    app.DefineFormat(
+        TCollection_AsciiString("XmlXCAF"),
+        TCollection_AsciiString("Xml XCAF Document"),
+        TCollection_AsciiString(path.split(".")[-1]),
+        ret,
+        store,
+    )
 
     status = app.SaveAs(doc, TCollection_ExtendedString(path))
 
