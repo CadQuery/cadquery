@@ -35,15 +35,7 @@ class AssemblyProtocol(Protocol):
 
 def setName(l: TDF_Label, name, tool):
 
-    origin = l
-
-    if tool.IsReference_s(l):
-        origin = TDF_Label()
-        tool.GetReferredShape_s(l, origin)
-    else:
-        origin = l
-
-    TDataStd_Name.Set_s(origin, TCollection_ExtendedString(name))
+    TDataStd_Name.Set_s(l, TCollection_ExtendedString(name))
 
 
 def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
