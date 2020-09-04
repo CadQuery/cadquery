@@ -165,3 +165,19 @@ iterates on each member of the stack.
 This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.cq.Workplane.each` is useful for this purpose.
 
 
+Assemblies
+----------
+
+Simple models can be combined into complex, possibly nested, assemblies::
+
+    part1 = Workplane().box(1,1,1)
+    part2 = Workplane().box(1,1,2)
+    part3 = Workplane().box(1,1,3)
+    
+    assy = (
+        Assembly(part1, Location((1,0,0)))
+        .add(part2, Location(1,0,0))
+        .add(part3, Location(-1,0,0))
+    )
+
+Note that the locations of the children parts are defined with respect to their parents - in the above example ``part3`` will be located at (0,0,0) in the global coordinate system.
