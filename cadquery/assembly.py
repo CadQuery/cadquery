@@ -5,6 +5,7 @@ from uuid import uuid1 as uuid
 from .cq import Workplane
 from .occ_impl.shapes import Shape
 from .occ_impl.geom import Location
+from .occ_impl.assembly import Color
 from .occ_impl.exporters.assembly import exportAssembly, exportCAF
 
 
@@ -26,6 +27,7 @@ class Assembly(object):
 
     loc: Location
     name: str
+    color: Optional[Color]
     metadata: Mapping[str, Any]
 
     obj: AssemblyObjects
@@ -40,6 +42,7 @@ class Assembly(object):
         obj: AssemblyObjects = None,
         loc: Optional[Location] = None,
         name: Optional[str] = None,
+        color: Optional[Color] = None,
     ):
         """
         construct an assembly
@@ -47,7 +50,9 @@ class Assembly(object):
         :param obj: root object of the assembly (deafault: None)
         :param loc: location of the root object (deafault: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, reasulting in an UUID being generated)
+        :param color: color of the added object (default: None)
         :return: An Assembly object.
+        
         
         To create an empt assembly use::
             
@@ -63,6 +68,7 @@ class Assembly(object):
         self.obj = obj
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
+        self.color = color if color else None
         self.parent = None
 
         self.children = []
@@ -74,6 +80,7 @@ class Assembly(object):
         obj: "Assembly",
         loc: Optional[Location] = None,
         name: Optional[str] = None,
+        color: Optional[Color] = None,
     ) -> "Assembly":
         """
         add a subassembly to the current assembly.
@@ -81,6 +88,7 @@ class Assembly(object):
         :param obj: subassembly to be added
         :param loc: location of the root object (deafault: None, resulting in the location stored in the subassembly being used)
         :param name: unique name of the root object (default: None, resulting in the name stored in the subassembly being used)
+        :param color: color of the added object (default: None, resulting in the color stored in the subassembly being used)
         """
         ...
 
@@ -90,6 +98,7 @@ class Assembly(object):
         obj: AssemblyObjects,
         loc: Optional[Location] = None,
         name: Optional[str] = None,
+        color: Optional[Color] = None,
     ) -> "Assembly":
         """
         add a subassembly to the current assembly with explicit location and name
@@ -97,6 +106,7 @@ class Assembly(object):
         :param obj: object to be added as a subassembly
         :param loc: location of the root object (deafault: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, resulting in an UUID being generated)
+        :param color: color of the added object (default: None)
         """
         ...
 
@@ -108,6 +118,7 @@ class Assembly(object):
                 arg.obj,
                 kwargs["loc"] if kwargs.get("loc") else arg.loc,
                 kwargs["name"] if kwargs.get("name") else arg.name,
+                kwargs["color"] if kwargs.get("color") else arg.color,
             )
 
             subassy.children.extend(arg.children)
