@@ -28,7 +28,7 @@ from .selectors import (
     Selector,
 )
 from .cq import CQ, Workplane
-from .assembly import Assembly
+from .assembly import Assembly, Color
 from . import selectors
 from . import plugins
 
@@ -37,6 +37,7 @@ __all__ = [
     "CQ",
     "Workplane",
     "Assembly",
+    "Color",
     "plugins",
     "selectors",
     "Plane",

@@ -1,15 +1,47 @@
-from typing import Iterable, Tuple, Dict
+from typing import Iterable, Tuple, Dict, overload, Optional
 from typing_extensions import Protocol
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
-from OCP.XCAFDoc import XCAFDoc_DocumentTool
+from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
+from OCP.Quantity import Quantity_ColorRGBA
 
 from .geom import Location
 from .shapes import Shape, Compound
+
+
+class Color(object):
+
+    wrapped: Quantity_ColorRGBA
+
+    @overload
+    def __init__(self, name: str):
+        ...
+
+    @overload
+    def __init__(self, r: float, g: float, b: float, a: float = 0):
+        ...
+
+    def __init__(self, *args, **kwargs):
+
+        if len(args) == 1:
+            self.wrapped = Quantity_ColorRGBA()
+            exists = Quantity_ColorRGBA.ColorFromName_s(args[0], self.wrapped)
+            if not exists:
+                raise ValueError(f"Unknown color name: {args[0]}")
+        elif len(args) == 3:
+            r, g, b = args
+            self.wrapped = Quantity_ColorRGBA(r, g, b, 1)
+            if kwargs.get("a"):
+                self.wrapped.SetAlpha(kwargs.get("a"))
+        elif len(args) == 4:
+            r, g, b, a = args
+            self.wrapped = Quantity_ColorRGBA(r, g, b, a)
+        else:
+            raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
 
 
 class AssemblyProtocol(Protocol):
@@ -19,6 +51,10 @@ class AssemblyProtocol(Protocol):
 
     @property
     def name(self) -> str:
+        ...
+
+    @property
+    def color(self) -> Optional[Color]:
         ...
 
     @property
@@ -33,9 +69,14 @@ class AssemblyProtocol(Protocol):
         ...
 
 
-def setName(l: TDF_Label, name, tool):
+def setName(l: TDF_Label, name: str, tool):
 
     TDataStd_Name.Set_s(l, TCollection_ExtendedString(name))
+
+
+def setColor(l: TDF_Label, color: Color, tool):
+
+    tool.SetColor(l, color.wrapped, XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
 
 def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
@@ -44,6 +85,7 @@ def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
+    ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
 
     # add root
     top = tool.NewShape()
@@ -61,6 +103,8 @@ def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
         subassy = tool.NewShape()
         tool.AddComponent(subassy, lab, TopLoc_Location())
         setName(subassy, k, tool)
+        if v.color:
+            setColor(subassy, v.color, ctool)
 
         subassys[k] = (subassy, v.loc)
 

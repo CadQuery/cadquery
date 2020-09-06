@@ -20,6 +20,8 @@ def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)
     writer.SetNameMode(True)
+    writer.SetColorMode(True)
+    writer.SetLayerMode(True)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)

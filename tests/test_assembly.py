@@ -8,7 +8,7 @@ from cadquery.occ_impl.exporters.assembly import exportAssembly, exportCAF
 @pytest.fixture
 def simple_assy():
 
-    b1 = cq.Solid.makeBox(1,1,1)
+    b1 = cq.Solid.makeBox(1, 1, 1)
     b2 = cq.Workplane().box(1, 1, 2)
     b3 = cq.Workplane().pushPoints([(0, 0), (-2, -5)]).box(1, 1, 3)
 
@@ -24,15 +24,37 @@ def nested_assy():
 
     b1 = cq.Workplane().box(1, 1, 1)
     b2 = cq.Workplane().box(1, 1, 1)
-    b3 = cq.Workplane().pushPoints([(-2, 0), (2, 0)]).box(1, 1, .5)
+    b3 = cq.Workplane().pushPoints([(-2, 0), (2, 0)]).box(1, 1, 0.5)
 
     assy = cq.Assembly(b1, loc=cq.Location(cq.Vector(0, 0, 0)), name="TOP")
     assy2 = cq.Assembly(b2, loc=cq.Location(cq.Vector(0, 4, 0)), name="SECOND")
     assy2.add(b3, loc=cq.Location(cq.Vector(0, 4, 0)), name="BOTTOM")
 
-    assy.add(assy2)
+    assy.add(assy2, color=cq.Color("green"))
 
     return assy
+
+
+def test_color():
+
+    c1 = cq.Color("red")
+    assert c1.wrapped.GetRGB().Red() == 1
+    assert c1.wrapped.Alpha() == 1
+
+    c2 = cq.Color(1, 0, 0)
+    assert c2.wrapped.GetRGB().Red() == 1
+    assert c2.wrapped.Alpha() == 1
+
+    c3 = cq.Color(1, 0, 0, 0.5)
+    assert c3.wrapped.GetRGB().Red() == 1
+    assert c3.wrapped.Alpha() == 0.5
+
+    with pytest.raises(ValueError):
+        cq.Color("?????")
+
+    with pytest.raises(ValueError):
+        cq.Color(1, 2, 3, 4, 5)
+
 
 def test_assembly(simple_assy, nested_assy):
 
@@ -72,25 +94,26 @@ def test_native_export(simple_assy):
     # only sanity check for now
     assert os.path.exists("assy.xml")
 
+
 def test_save(simple_assy):
-    
-    simple_assy.save('simple.step')
+
+    simple_assy.save("simple.step")
     assert os.path.exists("simple.step")
-    
-    simple_assy.save('simple.xml')
+
+    simple_assy.save("simple.xml")
     assert os.path.exists("simple.xml")
-    
-    simple_assy.save('simple.step')
+
+    simple_assy.save("simple.step")
     assert os.path.exists("simple.step")
-    
-    simple_assy.save('simple.stp','STEP')
+
+    simple_assy.save("simple.stp", "STEP")
     assert os.path.exists("simple.stp")
-    
-    simple_assy.save('simple.caf','XML')
+
+    simple_assy.save("simple.caf", "XML")
     assert os.path.exists("simple.caf")
-    
+
     with pytest.raises(ValueError):
-        simple_assy.save('simple.dxf')
-    
+        simple_assy.save("simple.dxf")
+
     with pytest.raises(ValueError):
-        simple_assy.save('simple.step','DXF')
+        simple_assy.save("simple.step", "DXF")
