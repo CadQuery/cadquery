@@ -19,10 +19,23 @@ class Color(object):
 
     @overload
     def __init__(self, name: str):
+        """
+        Construct a Color from a name.
+
+        :param name: name of the color, e.g. green
+        """
         ...
 
     @overload
     def __init__(self, r: float, g: float, b: float, a: float = 0):
+        """
+        Construct a Color from RGB(A) values.
+
+        :param r: red value, 0-1
+        :param g: green value, 0-1
+        :param b: blue value, 0-1
+        :param a: alpha value, 0-1 (default: 0)
+        """
         ...
 
     def __init__(self, *args, **kwargs):
