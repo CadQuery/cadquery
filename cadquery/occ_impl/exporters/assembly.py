@@ -1,3 +1,5 @@
+import os.path
+
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_StepModelType
@@ -19,9 +21,9 @@ def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)
-    writer.SetNameMode(True)
     writer.SetColorMode(True)
     writer.SetLayerMode(True)
+    writer.SetNameMode(True)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)
@@ -30,6 +32,10 @@ def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
 
 
 def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
+
+    folder, fname = os.path.split(path)
+    name, ext = os.path.splitext(fname)
+    ext = ext[1:] if ext[0] == "." else ext
 
     _, doc = toCAF(assy)
     app = XCAFApp_Application.GetApplication_s()
@@ -42,10 +48,13 @@ def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
     app.DefineFormat(
         TCollection_AsciiString("XmlOcaf"),
         TCollection_AsciiString("Xml XCAF Document"),
-        TCollection_AsciiString(path.split(".")[-1]),
+        TCollection_AsciiString(ext),
         ret,
         store,
     )
+
+    doc.SetRequestedFolder(TCollection_ExtendedString(folder))
+    doc.SetRequestedName(TCollection_ExtendedString(name))
 
     status = app.SaveAs(doc, TCollection_ExtendedString(path))
 
