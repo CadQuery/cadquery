@@ -9,11 +9,6 @@ branches:
   - "/\\d+\\.\\d+\\.?d*\\-*[a-z]*/"
 
 addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - libstdc++6
   homebrew:
     packages:
     - lldb
