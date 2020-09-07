@@ -19,6 +19,7 @@ Core Classes
      CQ
      Workplane
      Assembly
+     Constraint
 
 Topological Classes
 ----------------------
