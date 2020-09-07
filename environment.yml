@@ -10,6 +10,7 @@ dependencies:
   - pyparsing
   - sphinx=3.2.1
   - sphinx_rtd_theme
+  - sphinx-autodoc-typehints
   - black
   - codecov
   - pytest
