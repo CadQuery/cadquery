@@ -198,3 +198,6 @@ Workplane and Shape objects can be connected together into assemblies
         Assembly
         Assembly.add
         Assembly.save
+        Assembly.constrain
+        Constraint
+        Color

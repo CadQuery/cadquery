@@ -14,6 +14,9 @@ from .shapes import Shape, Compound
 
 
 class Color(object):
+    """
+    Wrapper for the OCCT color object Quantity_ColorRGBA.
+    """
 
     wrapped: Quantity_ColorRGBA
 
