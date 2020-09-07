@@ -15,12 +15,16 @@ ExportLiterals = Literal["STEP", "XML"]
 
 
 class Constraint(object):
+    """
+    Geometrical constraint between two shapes of an assembly.
+    """
 
     objects: Tuple[str, ...]
     args: Tuple[Shape, ...]
     kind: ConstraintKinds
+    param: Any
     
-    def __init__(self, objects: Tuple[str, ...], args: Tuple[Shape, ...], kind: ConstraintKinds):
+    def __init__(self, objects: Tuple[str, ...], args: Tuple[Shape, ...], kind: ConstraintKinds, param: Any = None):
         """
         Construct a constraint.
         """
@@ -28,6 +32,7 @@ class Constraint(object):
         self.objects = objects
         self.args = args
         self.kind = kind
+        self.param = param
 
 
 class Assembly(object):
@@ -81,6 +86,7 @@ class Assembly(object):
         self.parent = None
 
         self.children = []
+        self.constraints = []
         self.objects = {self.name: self.obj}
 
     @overload
@@ -177,12 +183,12 @@ class Assembly(object):
         return name, res.val() if isinstance(res.val(), Shape) else None
 
     @overload
-    def constrain(self, q1: str, q2: str, kind: ConstraintKinds) -> "Assembly":
+    def constrain(self, q1: str, q2: str, kind: ConstraintKinds, param: Any=None) -> "Assembly":
         ...
 
     @overload
     def constrain(
-        self, id1: str, s1: Shape, id2: str, s2: Shape, kind: ConstraintKinds
+        self, id1: str, s1: Shape, id2: str, s2: Shape, kind: ConstraintKinds, param: Any=None
     ) -> "Assembly":
         ...
 
@@ -191,16 +197,16 @@ class Assembly(object):
         Define a new constraint.
         """
         
-        if len(args) == 3:
-            q1, q2, kind = args
+        if len(args) == 4:
+            q1, q2, kind, param = args
             id1, s1 = self._query(q1)
             id2, s2 = self._query(q2)
-        elif len(args) == 5:
-            id1, s1, id2, s2, kind = args
+        elif len(args) == 6:
+            id1, s1, id2, s2, kind, param = args
         else:
             raise ValueError(f'Incompatibile arguments: {args}')
         
-        self.constraints.append(Constraint((id1, id2), (s1, s2), kind))
+        self.constraints.append(Constraint((id1, id2), (s1, s2), kind, param))
         
         return self
 
