@@ -194,6 +194,9 @@ class Assembly(object):
 
     @property
     def shapes(self) -> List[Shape]:
+        """
+        List of Shape objects in the .obj field
+        """
 
         rv: List[Shape] = []
 
@@ -205,6 +208,9 @@ class Assembly(object):
         return rv
 
     def traverse(self) -> Iterator[Tuple[str, "Assembly"]]:
+        """
+        Yield (name, child) pairs in a bottom-up manner
+        """
 
         for ch in self.children:
             for el in ch.traverse():
