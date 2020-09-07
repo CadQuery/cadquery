@@ -111,6 +111,9 @@ class Assembly(object):
         ...
 
     def add(self, arg, **kwargs):
+        """
+        add a subassembly to the current assembly.
+        """
 
         if isinstance(arg, Assembly):
 
