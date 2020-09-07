@@ -473,7 +473,8 @@ def _makeGrammar():
     rbracket = Literal(")")
     comma = Literal(",")
     vector = Combine(
-        lbracket + floatn("x") + comma + floatn("y") + comma + floatn("z") + rbracket
+        lbracket + floatn("x") + comma + floatn("y") + comma + floatn("z") + rbracket,
+        adjacent=False,
     )
 
     # direction definition

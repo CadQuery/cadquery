@@ -130,6 +130,20 @@ class TestImporters(BaseTest):
         self.assertTrue(obj.val().isValid())
         self.assertEqual(obj.faces().size(), 1)
 
+        # test layer filtering
+        filename = os.path.join(testdataDir, "three_layers.dxf")
+        obj = importers.importDXF(filename, exclude=["Layer2"])
+        self.assertTrue(obj.val().isValid())
+        self.assertEqual(obj.faces().size(), 2)
+        self.assertEqual(obj.wires().size(), 2)
+
+        # test dxf extrusion into the third dimension
+        extrusion_value = 15.0
+        tmp = obj.wires()
+        tmp.ctx.pendingWires = tmp.vals()
+        threed = tmp.extrude(extrusion_value)
+        self.assertEqual(threed.findSolid().BoundingBox().zlen, extrusion_value)
+
 
 if __name__ == "__main__":
     import unittest

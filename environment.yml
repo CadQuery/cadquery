@@ -21,3 +21,4 @@ dependencies:
   - pip
   - pip:
     - "--editable=."
+    - sphinxcadquery
