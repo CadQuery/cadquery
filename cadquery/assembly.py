@@ -16,9 +16,18 @@ ExportLiterals = Literal["STEP", "XML"]
 
 class Constraint(object):
 
-    objects: Tuple[Shape, ...]
+    objects: Tuple[str, ...]
     args: Tuple[Shape, ...]
     kind: ConstraintKinds
+    
+    def __init__(self, objects: Tuple[str, ...], args: Tuple[Shape, ...], kind: ConstraintKinds):
+        """
+        Construct a constraint.
+        """
+        
+        self.objects = objects
+        self.args = args
+        self.kind = kind
 
 
 class Assembly(object):
@@ -142,9 +151,30 @@ class Assembly(object):
 
         return self
 
-    @overload
-    def constrain(self, query: str) -> "Assembly":
-        ...
+
+    def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
+        """
+        Execute a selector query on the assembly. 
+        The query is expected to be in the following format:
+        
+            name@kind@args
+            
+        for example:
+        
+            obj_name@faces@>Z
+        
+        """
+        
+        name, kind, arg = q.split('@')
+        
+        tmp = Workplane()
+        obj = self.objects[name]
+        
+        if isinstance(obj, (Workplane, Shape)):
+            tmp.add(obj)
+            res = getattr(tmp, kind)(arg)
+        
+        return name, res.val() if isinstance(res.val(), Shape) else None
 
     @overload
     def constrain(self, q1: str, q2: str, kind: ConstraintKinds) -> "Assembly":
@@ -157,8 +187,22 @@ class Assembly(object):
         ...
 
     def constrain(self, *args):
-
-        raise NotImplementedError
+        """
+        Define a new constraint.
+        """
+        
+        if len(args) == 3:
+            q1, q2, kind = args
+            id1, s1 = self._query(q1)
+            id2, s2 = self._query(q2)
+        elif len(args) == 5:
+            id1, s1, id2, s2, kind = args
+        else:
+            raise ValueError(f'Incompatibile arguments: {args}')
+        
+        self.constraints.append(Constraint((id1, id2), (s1, s2), kind))
+        
+        return self
 
     def solve(self) -> "Assembly":
 
