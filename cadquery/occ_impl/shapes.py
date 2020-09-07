@@ -314,8 +314,7 @@ def fix(obj: TopoDS_Shape) -> TopoDS_Shape:
 
 class Shape(object):
     """
-        Represents a shape in the system.
-        Wrappers the FreeCAD apiSh
+    Represents a shape in the system.Wraps TopoDS_Shape.
     """
 
     wrapped: TopoDS_Shape
