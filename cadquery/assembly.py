@@ -1,4 +1,5 @@
-from typing import Union, Optional, List, Mapping, Any, overload, Tuple, Iterator, cast
+from functools import reduce
+from typing import Union, Optional, List, Dict, Any, overload, Tuple, Iterator, cast
 from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
@@ -21,16 +22,31 @@ class Constraint(object):
 
     objects: Tuple[str, ...]
     args: Tuple[Shape, ...]
+    locs: Tuple[Location, ...]
     kind: ConstraintKinds
     param: Any
-    
-    def __init__(self, objects: Tuple[str, ...], args: Tuple[Shape, ...], kind: ConstraintKinds, param: Any = None):
+
+    def __init__(
+        self,
+        objects: Tuple[str, ...],
+        args: Tuple[Shape, ...],
+        locs: Tuple[Location, ...],
+        kind: ConstraintKinds,
+        param: Any = None,
+    ):
         """
         Construct a constraint.
-        """
         
+        :param objects: object names refernced in the constraint
+        :param args: subshapes (e.g. faces or edges) of the objects
+        :param locs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
+        :param kind: constraint kind
+        :param param: optional arbitrary paramter passed to the solver
+        """
+
         self.objects = objects
         self.args = args
+        self.locs = locs
         self.kind = kind
         self.param = param
 
@@ -42,13 +58,13 @@ class Assembly(object):
     loc: Location
     name: str
     color: Optional[Color]
-    metadata: Mapping[str, Any]
+    metadata: Dict[str, Any]
 
     obj: AssemblyObjects
     parent: Optional["Assembly"]
     children: List["Assembly"]
 
-    objects: Mapping[str, AssemblyObjects]
+    objects: Dict[str, "Assembly"]
     constraints: List[Constraint]
 
     def __init__(
@@ -87,7 +103,24 @@ class Assembly(object):
 
         self.children = []
         self.constraints = []
-        self.objects = {self.name: self.obj}
+        self.objects = {self.name: self}
+
+    def _copy(self) -> "Assembly":
+        """
+        Make a deep copy of an assembly
+        """
+
+        rv = self.__class__(self.obj, self.loc, self.name, self.color)
+
+        for ch in self.children:
+            ch_copy = ch._copy()
+            ch_copy.parent = rv
+
+            rv.children.append(ch_copy)
+            rv.objects[ch_copy.name] = ch_copy
+            rv.objects.update(ch_copy.objects)
+
+        return rv
 
     @overload
     def add(
@@ -132,19 +165,14 @@ class Assembly(object):
 
         if isinstance(arg, Assembly):
 
-            subassy = Assembly(
-                arg.obj,
-                kwargs["loc"] if kwargs.get("loc") else arg.loc,
-                kwargs["name"] if kwargs.get("name") else arg.name,
-                kwargs["color"] if kwargs.get("color") else arg.color,
-            )
+            subassy = arg._copy()
 
-            subassy.children.extend(arg.children)
-            subassy.objects[subassy.name] = subassy.obj
-            subassy.objects.update(arg.objects)
+            subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
+            subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
+            subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
 
             self.children.append(subassy)
-            self.objects[subassy.name] = subassy.obj
+            self.objects[subassy.name] = subassy
             self.objects.update(subassy.objects)
 
             arg.parent = self
@@ -156,7 +184,6 @@ class Assembly(object):
             self.add(assy)
 
         return self
-
 
     def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
         """
@@ -170,25 +197,51 @@ class Assembly(object):
             obj_name@faces@>Z
         
         """
-        
-        name, kind, arg = q.split('@')
-        
+
+        name, kind, arg = q.split("@")
+
         tmp = Workplane()
-        obj = self.objects[name]
-        
+        obj = self.objects[name].obj
+
         if isinstance(obj, (Workplane, Shape)):
             tmp.add(obj)
             res = getattr(tmp, kind)(arg)
-        
+
         return name, res.val() if isinstance(res.val(), Shape) else None
 
+    def _subloc(self, name: str) -> Location:
+        """
+        Calculate relative location of an object in a subassembly.
+        """
+
+        rv = Location()
+        obj = self.objects[name]
+
+        if obj not in self.children:
+            locs = []
+            while not obj.parent is self:
+                locs.append(obj.loc)
+                obj = cast(Assembly, obj.parent)
+
+            rv = reduce(lambda l1, l2: l1 * l2, locs)
+
+        return rv
+
     @overload
-    def constrain(self, q1: str, q2: str, kind: ConstraintKinds, param: Any=None) -> "Assembly":
+    def constrain(
+        self, q1: str, q2: str, kind: ConstraintKinds, param: Any = None
+    ) -> "Assembly":
         ...
 
     @overload
     def constrain(
-        self, id1: str, s1: Shape, id2: str, s2: Shape, kind: ConstraintKinds, param: Any=None
+        self,
+        id1: str,
+        s1: Shape,
+        id2: str,
+        s2: Shape,
+        kind: ConstraintKinds,
+        param: Any = None,
     ) -> "Assembly":
         ...
 
@@ -196,7 +249,7 @@ class Assembly(object):
         """
         Define a new constraint.
         """
-        
+
         if len(args) == 4:
             q1, q2, kind, param = args
             id1, s1 = self._query(q1)
@@ -204,10 +257,14 @@ class Assembly(object):
         elif len(args) == 6:
             id1, s1, id2, s2, kind, param = args
         else:
-            raise ValueError(f'Incompatibile arguments: {args}')
-        
-        self.constraints.append(Constraint((id1, id2), (s1, s2), kind, param))
-        
+            raise ValueError(f"Incompatibile arguments: {args}")
+
+        loc1 = self._subloc(id1)
+        loc2 = self._subloc(id2)
+        self.constraints.append(
+            Constraint((id1, id2), (s1, s2), (loc1, loc2), kind, param)
+        )
+
         return self
 
     def solve(self) -> "Assembly":
