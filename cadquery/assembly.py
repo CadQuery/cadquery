@@ -4,9 +4,14 @@ from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape
-from .occ_impl.geom import Location
+from .occ_impl.shapes import Shape, Face, Edge, Wire
+from .occ_impl.geom import Location, Vector
 from .occ_impl.assembly import Color
+from .occ_impl.solver import (
+    ConstraintSolver,
+    ConstraintMarker,
+    Constraint as ConstraintPOD,
+)
 from .occ_impl.exporters.assembly import exportAssembly, exportCAF
 
 
@@ -49,6 +54,41 @@ class Constraint(object):
         self.locs = locs
         self.kind = kind
         self.param = param
+
+    def _getAxis(self, arg: Shape) -> Vector:
+
+        if isinstance(arg, Face):
+            rv = arg.normalAt()
+        elif isinstance(arg, Edge) and arg.geomType() != "CIRCLE":
+            rv = arg.tangentAt()
+        elif isinstance(arg, Edge) and arg.geomType() == "CIRCLE":
+            rv = arg.normal()
+        else:
+            raise ValueError(f"Cannot construct Axis for {arg}")
+
+        return rv
+
+    def toPOD(self) -> ConstraintPOD:
+        """
+        Convert the constraint to a representation used by the solver.
+        """
+
+        rv: List[Tuple[ConstraintMarker, ...]] = []
+
+        for arg, loc in zip(self.args, self.locs):
+
+            arg = arg.moved(loc)
+
+            if self.kind == "Axis":
+                rv.append((self._getAxis(arg).toDir(),))
+            elif self.kind == "Point":
+                rv.append((arg.Center().toPnt(),))
+            elif self.kind == "Plane":
+                rv.append((self._getAxis(arg).toDir(), arg.Center().toPnt()))
+            else:
+                raise ValueError(f"Unknown constraint kind {self.kind}")
+
+        return cast(ConstraintPOD, tuple(rv))
 
 
 class Assembly(object):
