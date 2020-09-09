@@ -977,6 +977,28 @@ class Edge(Shape, Mixin1D):
 
         return rv
 
+    def normal(self) -> Vector:
+        """
+        Calculate normal Vector. Only possible for CIRCLE or ELLIPSE
+        
+        :param locationParam: location to use in [0,1]
+        :return: tangent vector
+        """
+
+        curve = self._geomAdaptor()
+        gtype = self.geomType()
+
+        if gtype == "CIRCLE":
+            circ = curve.Circle()
+            rv = Vector(circ.Axis().Direction())
+        elif gtype == "ELLIPSE":
+            ell = curve.Ellipse()
+            rv = Vector(ell.Axis().Direction())
+        else:
+            raise ValueError(f"{gtype} has no normal")
+
+        return rv
+
     def Center(self) -> Vector:
 
         Properties = GProp_GProps()
