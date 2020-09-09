@@ -395,7 +395,7 @@ class TestCadObjects(BaseTest):
         )
 
     def testLocation(self):
-        
+
         # Vector
         loc1 = Location(Vector(0, 0, 1))
 
@@ -410,10 +410,13 @@ class TestCadObjects(BaseTest):
 
         # gp_Trsf
         T = gp_Trsf()
-        T.SetTranslation(gp_Vec(0,0,1))
+        T.SetTranslation(gp_Vec(0, 0, 1))
         loc3 = Location(T)
-        
-        assert( loc1.wrapped.Transformation().TranslationPart().Z() == loc3.wrapped.Transformation().TranslationPart().Z())
+
+        assert (
+            loc1.wrapped.Transformation().TranslationPart().Z()
+            == loc3.wrapped.Transformation().TranslationPart().Z()
+        )
 
 
 if __name__ == "__main__":
