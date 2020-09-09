@@ -70,6 +70,10 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
+    def parent(self) -> Optional["AssemblyProtocol"]:
+        ...
+
+    @property
     def color(self) -> Optional[Color]:
         ...
 
