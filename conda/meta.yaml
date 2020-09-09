@@ -20,6 +20,7 @@ requirements:
     - ezdxf
     - ipython
     - typing_extensions
+    - nptyping
     
 test:
   requires:

@@ -18,6 +18,7 @@ dependencies:
   - ezdxf
   - ipython
   - typing_extensions
+  - nptyping
   - pip
   - pip:
     - "--editable=."
