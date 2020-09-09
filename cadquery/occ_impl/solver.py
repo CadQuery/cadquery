@@ -15,7 +15,7 @@ Constraint = Tuple[Tuple[ConstraintMarker, ...], Tuple[ConstraintMarker, ...]]
 
 class ConstraintSolver(object):
 
-    entities: Mapping[int, DOF6]
+    entities: List[DOF6]
     constraints: Mapping[Tuple[int, int], Constraint]
     ne: int
     nc: int
@@ -26,7 +26,24 @@ class ConstraintSolver(object):
         constraints: Mapping[Tuple[int, int], Constraint],
     ):
 
-        pass
+        self.entities = [self._locToDOF6(loc) for loc in entities]
+        self.constraints = constraints
+        self.ne = len(entities)
+        self.nc = len(constraints)
+
+    @staticmethod
+    def _locToDOF6(loc: Location) -> DOF6:
+
+        T = loc.wrapped.Transformation()
+        v = T.TranslationPart()
+        q = T.GetRotation()
+
+        alpha_2 = (1 - q.W()) / (1 + q.W())
+        a = (alpha_2 + 1) * q.X() / 2
+        b = (alpha_2 + 1) * q.Y() / 2
+        c = (alpha_2 + 1) * q.Z() / 2
+
+        return (v.X(), v.Y(), v.Z(), a, b, c)
 
     def _jacobianSparsity(self) -> Array[(Any, Any), float]:
 
@@ -82,7 +99,7 @@ class ConstraintSolver(object):
 
     def solve(self) -> List[Location]:
 
-        x0 = array([el for el in self.entities.values()]).ravel()
+        x0 = array([el for el in self.entities]).ravel()
 
         res = least_squares(self._cost(), x0, jac_sparsity=self._jacobianSparsity())
         x = res.x
