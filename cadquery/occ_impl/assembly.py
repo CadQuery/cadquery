@@ -95,7 +95,7 @@ def setColor(l: TDF_Label, color: Color, tool):
     tool.SetColor(l, color.wrapped, XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
 
-def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
+def toCAF(assy: AssemblyProtocol, coloredSTEP: bool = False) -> Tuple[TDF_Label, TDocStd_Document]:
 
     # prepare a doc
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
@@ -119,8 +119,19 @@ def toCAF(assy: AssemblyProtocol) -> Tuple[TDF_Label, TDocStd_Document]:
         subassy = tool.NewShape()
         tool.AddComponent(subassy, lab, TopLoc_Location())
         setName(subassy, k, tool)
-        if v.color:
-            setColor(subassy, v.color, ctool)
+        
+        # handle colors - this logic is needed for proper STEP export
+        color = v.color
+        tmp = v
+        if coloredSTEP:
+            while not color and tmp.parent:
+                tmp = tmp.parent
+                color = tmp.color
+            if color:
+                setColor(lab, color, ctool)
+        else:
+            if color:
+                setColor(subassy, color, ctool)
 
         subassys[k] = (subassy, v.loc)
 

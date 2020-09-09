@@ -17,7 +17,7 @@ from ..assembly import AssemblyProtocol, toCAF
 
 def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
 
-    _, doc = toCAF(assy)
+    _, doc = toCAF(assy, True)
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)
