@@ -21,6 +21,7 @@ requirements:
     - ipython
     - typing_extensions
     - nptyping
+    - scipy
     
 test:
   requires:

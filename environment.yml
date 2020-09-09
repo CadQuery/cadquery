@@ -19,6 +19,7 @@ dependencies:
   - ipython
   - typing_extensions
   - nptyping
+  - scipy
   - pip
   - pip:
     - "--editable=."
