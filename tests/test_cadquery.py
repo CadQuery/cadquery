@@ -3615,7 +3615,7 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
 
         ell = Workplane().ellipse(1, 2).edges().val()
-        n = circ.normal()
+        n = ell.normal()
 
         self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
 
