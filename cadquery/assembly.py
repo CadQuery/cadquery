@@ -27,7 +27,7 @@ class Constraint(object):
 
     objects: Tuple[str, ...]
     args: Tuple[Shape, ...]
-    locs: Tuple[Location, ...]
+    sublocs: Tuple[Location, ...]
     kind: ConstraintKinds
     param: Any
 
@@ -35,7 +35,7 @@ class Constraint(object):
         self,
         objects: Tuple[str, ...],
         args: Tuple[Shape, ...],
-        locs: Tuple[Location, ...],
+        sublocs: Tuple[Location, ...],
         kind: ConstraintKinds,
         param: Any = None,
     ):
@@ -44,14 +44,14 @@ class Constraint(object):
         
         :param objects: object names refernced in the constraint
         :param args: subshapes (e.g. faces or edges) of the objects
-        :param locs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
+        :param sublocs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
         :param kind: constraint kind
         :param param: optional arbitrary paramter passed to the solver
         """
 
         self.objects = objects
         self.args = args
-        self.locs = locs
+        self.sublocs = sublocs
         self.kind = kind
         self.param = param
 
@@ -75,7 +75,7 @@ class Constraint(object):
 
         rv: List[Tuple[ConstraintMarker, ...]] = []
 
-        for arg, loc in zip(self.args, self.locs):
+        for arg, loc in zip(self.args, self.sublocs):
 
             arg = arg.moved(loc)
 
@@ -210,6 +210,7 @@ class Assembly(object):
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.parent = self
 
             self.children.append(subassy)
             self.objects[subassy.name] = subassy
@@ -260,7 +261,7 @@ class Assembly(object):
         obj = self.objects[name]
         name_out = name
 
-        if obj not in self.children:
+        if obj not in self.children and obj is not self:
             locs = []
             while not obj.parent is self:
                 locs.append(obj.loc)
@@ -289,17 +290,17 @@ class Assembly(object):
     ) -> "Assembly":
         ...
 
-    def constrain(self, *args):
+    def constrain(self, *args, param=None):
         """
         Define a new constraint.
         """
 
-        if len(args) == 4:
-            q1, q2, kind, param = args
+        if len(args) == 3:
+            q1, q2, kind = args
             id1, s1 = self._query(q1)
             id2, s2 = self._query(q2)
-        elif len(args) == 6:
-            id1, s1, id2, s2, kind, param = args
+        elif len(args) == 5:
+            id1, s1, id2, s2, kind = args
         else:
             raise ValueError(f"Incompatibile arguments: {args}")
 
