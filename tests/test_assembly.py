@@ -4,6 +4,8 @@ import os
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import exportAssembly, exportCAF
 
+from OCP.gp import gp_XYZ
+
 
 @pytest.fixture
 def simple_assy():
@@ -65,6 +67,7 @@ def test_assembly(simple_assy, nested_assy):
 
     assert len(nested_assy.objects) == 3
     assert len(nested_assy.children) == 1
+    assert nested_assy.objects["SECOND"].parent is nested_assy
 
     # bottm-up traversal
     kvs = list(nested_assy.traverse())
@@ -95,7 +98,7 @@ def test_native_export(simple_assy):
     assert os.path.exists("assy.xml")
 
 
-def test_save(simple_assy):
+def test_save(simple_assy, nested_assy):
 
     simple_assy.save("simple.step")
     assert os.path.exists("simple.step")
@@ -117,3 +120,49 @@ def test_save(simple_assy):
 
     with pytest.raises(ValueError):
         simple_assy.save("simple.step", "DXF")
+
+
+def test_constrain(simple_assy, nested_assy):
+
+    subassy1 = simple_assy.children[0]
+    subassy2 = simple_assy.children[1]
+
+    b1 = simple_assy.obj
+    b2 = subassy1.obj
+    b3 = subassy2.obj
+
+    simple_assy.constrain(
+        simple_assy.name, b1.Faces()[0], subassy1.name, b2.faces("<Z").val(), "Plane"
+    )
+    simple_assy.constrain(
+        simple_assy.name, b1.Faces()[0], subassy2.name, b3.faces("<Z").val(), "Axis"
+    )
+    simple_assy.constrain(
+        subassy1.name,
+        b2.faces(">Z").val(),
+        subassy2.name,
+        b3.faces("<Z").val(),
+        "Point",
+    )
+
+    assert len(simple_assy.constraints) == 3
+
+    nested_assy.constrain("TOP@faces@>Z", "BOTTOM@faces@<Z", "Plane")
+
+    assert len(nested_assy.constraints) == 1
+
+    constraint = nested_assy.constraints[0]
+
+    assert constraint.objects == ("TOP", "SECOND")
+    assert (
+        constraint.sublocs[0]
+        .wrapped.Transformation()
+        .TranslationPart()
+        .IsEqual(gp_XYZ(), 1e-9)
+    )
+    assert constraint.sublocs[1].wrapped.IsEqual(
+        nested_assy.objects["BOTTOM"].loc.wrapped
+    )
+
+    simple_assy.solve()
+    nested_assy.solve()
