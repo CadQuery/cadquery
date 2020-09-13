@@ -64,7 +64,12 @@ class ConstraintSolver(object):
 
         rv.SetTranslation(gp_Vec(x, y, z))
         rv.SetRotation(
-            gp_Quaternion(2 * a / m, 2 * b / m, 2 * c / m, (1 - m) / (m + 1))
+            gp_Quaternion(
+                2 * a / m if m != 0 else 0,
+                2 * b / m if m != 0 else 0,
+                2 * c / m if m != 0 else 0,
+                (1 - m) / (m + 1),
+            )
         )
 
         return rv
@@ -81,13 +86,15 @@ class ConstraintSolver(object):
                 self._build_transform(*x[6 * i : 6 * (i + 1)]) for i in range(ne)
             ]
 
-            for i, ((k1, k2), ms1, ms2) in enumerate(constraints.items()):
+            for i, ((k1, k2), (ms1, ms2)) in enumerate(constraints.items()):
                 t1 = transforms[k1]
                 t2 = transforms[k2]
 
                 for m1, m2 in zip(ms1, ms2):
                     if isinstance(m1, gp_Pnt):
-                        rv[i] += (m1.Transformed(t1) - m2.Transformed(t2)).Magnitude()
+                        rv[i] += (
+                            m1.Transformed(t1).XYZ() - m2.Transformed(t2).XYZ()
+                        ).Modulus()
                     elif isinstance(m1, gp_Dir):
                         rv[i] += m1.Transformed(t1) * m2.Transformed(t2)
                     else:
