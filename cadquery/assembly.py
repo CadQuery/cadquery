@@ -4,7 +4,7 @@ from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Face, Edge, Wire
+from .occ_impl.shapes import Shape, Face, Edge
 from .occ_impl.geom import Location, Vector
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
@@ -249,23 +249,27 @@ class Assembly(object):
 
         return name, res.val() if isinstance(res.val(), Shape) else None
 
-    def _subloc(self, name: str) -> Location:
+    def _subloc(self, name: str) -> Tuple[Location, str]:
         """
         Calculate relative location of an object in a subassembly.
+        
+        Returns the relative posiitons as well as the name of the top assembly.
         """
 
         rv = Location()
         obj = self.objects[name]
+        name_out = name
 
         if obj not in self.children:
             locs = []
             while not obj.parent is self:
                 locs.append(obj.loc)
                 obj = cast(Assembly, obj.parent)
+                name_out = obj.name
 
             rv = reduce(lambda l1, l2: l1 * l2, locs)
 
-        return rv
+        return (rv, name_out)
 
     @overload
     def constrain(
@@ -299,17 +303,47 @@ class Assembly(object):
         else:
             raise ValueError(f"Incompatibile arguments: {args}")
 
-        loc1 = self._subloc(id1)
-        loc2 = self._subloc(id2)
+        loc1, id1_top = self._subloc(id1)
+        loc2, id2_top = self._subloc(id2)
         self.constraints.append(
-            Constraint((id1, id2), (s1, s2), (loc1, loc2), kind, param)
+            Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
         )
 
         return self
 
     def solve(self) -> "Assembly":
+        """
+        Solve the constraints.
+        """
 
-        raise NotImplementedError
+        # get all entities and number them
+        ents = {}
+
+        i = 0
+        for c in self.constraints:
+            for name in c.objects:
+                if name not in ents:
+                    ents[name] = i
+                    i += 1
+
+        locs = [self.objects[n].loc for n in ents]
+
+        # construct the constraint mapping
+        c_mapping = {}
+        for c in self.constraints:
+            c_mapping[(ents[c.objects[0]], ents[c.objects[1]])] = c.toPOD()
+
+        # instantiate the solver
+        solver = ConstraintSolver(locs, c_mapping)
+
+        # solve
+        locs_new = solver.solve()
+
+        # update positions
+        for loc_new, n in zip(locs_new, ents):
+            self.objects[n].loc = loc_new
+
+        return self
 
     def save(
         self, path: str, exportType: Optional[ExportLiterals] = None
