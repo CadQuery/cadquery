@@ -321,21 +321,24 @@ class Assembly(object):
         ents = {}
 
         i = 0
+        lock_ix = 0
         for c in self.constraints:
             for name in c.objects:
                 if name not in ents:
                     ents[name] = i
+                    if name == self.name:
+                        lock_ix = i
                     i += 1
 
         locs = [self.objects[n].loc for n in ents]
 
         # construct the constraint mapping
-        c_mapping = {}
+        constraints = []
         for c in self.constraints:
-            c_mapping[(ents[c.objects[0]], ents[c.objects[1]])] = c.toPOD()
+            constraints.append(((ents[c.objects[0]], ents[c.objects[1]]), c.toPOD()))
 
         # instantiate the solver
-        solver = ConstraintSolver(locs, c_mapping)
+        solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
 
         # solve
         locs_new = solver.solve()
