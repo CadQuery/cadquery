@@ -1,9 +1,8 @@
 from typing import Tuple, Union, Any, Callable, List, Optional
 from nptyping import NDArray as Array
 
-from numpy import zeros, array, full, inf
-
-from scipy.optimize import least_squares
+from numpy import array
+from scipy.optimize import minimize
 
 from OCP.gp import gp_Vec, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
 
@@ -34,7 +33,7 @@ class ConstraintSolver(object):
         self.entities = [self._locToDOF6(loc) for loc in entities]
         self.constraints = []
 
-        # decompose inot simple constraints
+        # decompose into simple constraints
         for k, v in constraints:
             e1, e2 = v
             if e2:
@@ -62,22 +61,6 @@ class ConstraintSolver(object):
 
         return (v.X(), v.Y(), v.Z(), a, b, c)
 
-    def _jacobianSparsity(self) -> Array[(Any, Any), float]:
-
-        rv = zeros((self.nc, NDOF * self.ne))
-
-        for i, ((k1, k2), ((m1,), (m2,))) in enumerate(self.constraints):
-
-            k1_active = 1 if k1 not in self.locked else 0
-            k2_active = 1 if k2 not in self.locked else 0
-
-            rv[i, NDOF * k1 : NDOF * (k1 + 1)] = k1_active
-
-            if k2:
-                rv[i, NDOF * k2 : NDOF * (k2 + 1)] = k2_active
-
-        return rv
-
     def _build_transform(
         self, x: float, y: float, z: float, a: float, b: float, c: float
     ) -> gp_Trsf:
@@ -95,14 +78,13 @@ class ConstraintSolver(object):
 
         return rv
 
-    def _cost(self) -> Callable[[Array[(Any,), float]], Array[(Any,), float]]:
+    def _cost(self) -> Callable[[Array[(Any,), float]], float]:
         def f(x):
 
             constraints = self.constraints
-            nc = self.nc
             ne = self.ne
 
-            rv = zeros(nc)
+            rv = 0
 
             transforms = [
                 self._build_transform(*x[NDOF * i : NDOF * (i + 1)]) for i in range(ne)
@@ -114,11 +96,11 @@ class ConstraintSolver(object):
 
                 for m1, m2 in zip(ms1, ms2):
                     if isinstance(m1, gp_Pnt):
-                        rv[i] += (
+                        rv += (
                             m1.Transformed(t1).XYZ() - m2.Transformed(t2).XYZ()
-                        ).Modulus()
+                        ).Modulus() ** 2
                     elif isinstance(m1, gp_Dir):
-                        rv[i] += m1.Transformed(t1).Angle(m2.Transformed(t2))
+                        rv += (-1 - m1.Transformed(t1).Dot(m2.Transformed(t2))) ** 2
                     else:
                         raise NotImplementedError(f"{m1,m2}")
 
@@ -126,34 +108,19 @@ class ConstraintSolver(object):
 
         return f
 
-    def _bounds(self) -> Tuple[Array[(Any,), float], Array[(Any,), float]]:
-
-        bmin = full((NDOF * self.ne,), -inf)
-        bmax = full((NDOF * self.ne,), +inf)
-
-        for i in self.locked:
-            bmin[NDOF * i : (NDOF * i + NDOF)] = self.entities[i]
-            bmax[NDOF * i : (NDOF * i + NDOF)] = (
-                bmin[NDOF * i : (NDOF * i + NDOF)] + 1e-9
-            )
-
-        return bmin, bmax
-
     def solve(self) -> List[Location]:
 
         x0 = array([el for el in self.entities]).ravel()
-        res = least_squares(
+
+        res = minimize(
             self._cost(),
             x0,
-            jac="2-point",
-            jac_sparsity=self._jacobianSparsity(),
-            method="dogbox",
-            ftol=None,
-            gtol=1e-6,
-            xtol=None,
-            verbose=2,
+            method="BFGS",
+            options=dict(disp=True, ftol=1e-6, maxiter=500),
         )
+
         x = res.x
+        print(res.message)
 
         return [
             Location(self._build_transform(*x[NDOF * i : NDOF * (i + 1)]))
