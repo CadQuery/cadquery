@@ -694,6 +694,13 @@ class Shape(object):
 
         return r
 
+    def location(self) -> Location:
+        """
+        Return the current location
+        """
+
+        return Location(self.wrapped.Location())
+
     def locate(self, loc: Location) -> "Shape":
         """
         Apply a location in absolute sense to self
