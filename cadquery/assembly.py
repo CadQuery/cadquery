@@ -77,7 +77,7 @@ class Constraint(object):
 
         for arg, loc in zip(self.args, self.sublocs):
 
-            arg = arg.moved(loc)
+            arg = arg.located(loc * arg.location())
 
             if self.kind == "Axis":
                 rv.append((self._getAxis(arg).toDir(),))
