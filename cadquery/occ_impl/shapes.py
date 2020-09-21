@@ -2373,7 +2373,7 @@ class Compound(Shape, Mixin3D):
         size: float,
         height: float,
         font: str = "Arial",
-        filePath: Optional[str] = None,
+        fontPath: Optional[str] = None,
         kind: Literal["regular", "bold", "italic"] = "regular",
         halign: Literal["center", "left", "right"] = "center",
         valign: Literal["center", "top", "bottom"] = "center",
@@ -2391,10 +2391,10 @@ class Compound(Shape, Mixin3D):
 
         mgr = Font_FontMgr.GetInstance_s()
         
-        if filePath:
+        if fontPath:
 			system_font = Font_SystemFont(TCollection_AsciiString(font))
 
-			system_font.SetFontPath(font_kind, TCollection_AsciiString(path))
+			system_font.SetFontPath(font_kind, TCollection_AsciiString(fontPath))
 
 			mgr.RegisterFont(system_font, False) # not sure if "replace" should be True
 
