@@ -115,8 +115,8 @@ class ConstraintSolver(object):
         res = minimize(
             self._cost(),
             x0,
-            method="BFGS",
-            options=dict(disp=True, ftol=1e-6, maxiter=500),
+            method="L-BFGS-B",
+            options=dict(disp=True, ftol=1e-9, maxiter=1000),
         )
 
         x = res.x
