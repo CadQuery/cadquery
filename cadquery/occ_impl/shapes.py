@@ -2396,7 +2396,7 @@ class Compound(Shape, Mixin3D):
 
             system_font.SetFontPath(font_kind, TCollection_AsciiString(fontPath))
 
-            mgr.RegisterFont(system_font, False) # not sure if "replace" should be True
+            mgr.RegisterFont(system_font, False)  # not sure if "replace" should be True
 
         font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
 
