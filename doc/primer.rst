@@ -129,7 +129,7 @@ the core CQ methods to get at the objects that were created.
 Each time a new CadQuery object is produced during these chained calls, it has a ``parent`` attribute that points
 to the CadQuery object that created it. Several CadQuery methods search this parent chain, for example when searching
 for the context solid. You can also give a CadQuery object a tag, and further down your chain of CadQuery calls you
-can refer back to this particular object using it's tag.
+can refer back to this particular object using its tag.
 
 
 The Context Solid

@@ -41,6 +41,7 @@ matrix:
     env: PYTHON_VERSION=3.7
     os: linux
     script:
+    - pip install black==19.10b0
     - black . --diff --check
     - mypy cadquery
 
