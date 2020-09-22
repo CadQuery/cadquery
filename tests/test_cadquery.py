@@ -2699,6 +2699,7 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(obj1.val().Volume(), obj2.val().Volume())
 
     def testText(self):
+        global OUTDIR
 
         box = Workplane("XY").box(4, 4, 0.5)
 
@@ -2756,7 +2757,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=".",
+                fontPath=OUTDIR,
                 cut=False,
                 combine=False,
                 halign="right",
