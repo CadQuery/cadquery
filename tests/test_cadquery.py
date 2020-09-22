@@ -2749,6 +2749,25 @@ class TestCadQuery(BaseTest):
         # verify that the number of solids is correct
         self.assertEqual(len(obj3.solids().vals()), 5)
 
+        obj4 = (
+            box.faces(">Z")
+            .workplane()
+            .text(
+                "CQ 2.0",
+                0.5,
+                0.05,
+                fontPath=".\font.ttf",
+                cut=False,
+                combine=False,
+                halign="right",
+                valign="top",
+                font="Sans",
+            )
+        )
+
+        # verify that the number of solids is correct
+        self.assertEqual(len(obj4.solids().vals()), 5)
+
     def testParametricCurve(self):
 
         from math import sin, cos, pi
