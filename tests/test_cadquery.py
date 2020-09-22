@@ -2756,7 +2756,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=".\font.ttf",
+                fontPath="./font.ttf",
                 cut=False,
                 combine=False,
                 halign="right",
