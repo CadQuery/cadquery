@@ -2757,7 +2757,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=OUTDIR,
+                fontPath=os.path.join(OUTDIR, "Sans.ttf"),
                 cut=False,
                 combine=False,
                 halign="right",
