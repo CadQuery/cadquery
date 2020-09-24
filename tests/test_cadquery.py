@@ -24,6 +24,9 @@ from tests import (
     makeCube,
 )
 
+# test data directory
+testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+
 # where unit test output will be saved
 OUTDIR = tempfile.gettempdir()
 SUMMARY_FILE = os.path.join(OUTDIR, "testSummary.html")
@@ -2699,7 +2702,7 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(obj1.val().Volume(), obj2.val().Volume())
 
     def testText(self):
-        global OUTDIR
+        global testdataDir
 
         box = Workplane("XY").box(4, 4, 0.5)
 
@@ -2757,7 +2760,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=os.path.join(OUTDIR, "Sans.ttf"),
+                fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
                 cut=False,
                 combine=False,
                 halign="right",
