@@ -177,7 +177,7 @@ def test_constrain(simple_assy, nested_assy):
         simple_assy.children[0]
         .loc.wrapped.Transformation()
         .TranslationPart()
-        .IsEqual(gp_XYZ(-1, 0.5, 0.5), 5e-3)
+        .IsEqual(gp_XYZ(-1, 0.5, 0.5), 1e-2)
     )
 
     nested_assy.solve()
@@ -186,5 +186,5 @@ def test_constrain(simple_assy, nested_assy):
         nested_assy.children[0]
         .loc.wrapped.Transformation()
         .TranslationPart()
-        .IsEqual(gp_XYZ(2, -4, 0.75), 5e-3)
+        .IsEqual(gp_XYZ(2, -4, 0.75), 1e-2)
     )
