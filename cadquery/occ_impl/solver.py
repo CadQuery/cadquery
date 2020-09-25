@@ -193,7 +193,7 @@ class ConstraintSolver(object):
             x0,
             jac=jac,
             method="L-BFGS-B",
-            options=dict(disp=True, ftol=1e-9, maxiter=1000),
+            options=dict(disp=True, ftol=1e-14, maxiter=1000),
         )
 
         x = res.x
