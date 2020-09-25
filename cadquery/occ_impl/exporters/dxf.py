@@ -33,17 +33,18 @@ def _dxf_circle(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
 
     phi = c_dy.AngleWithRef(dy, c_dz)
 
-    if c_dz.XYZ().Z() > 0:
+    is_ccw = c_dz.XYZ().Z() > 0
+    if is_ccw:
         a1 = RAD2DEG * (geom.FirstParameter() - phi)
         a2 = RAD2DEG * (geom.LastParameter() - phi)
     else:
-        a1 = -RAD2DEG * (geom.LastParameter() + phi)
-        a2 = -RAD2DEG * (geom.FirstParameter() + phi)
+        a1 = -RAD2DEG * (geom.FirstParameter() - phi) + 180
+        a2 = -RAD2DEG * (geom.LastParameter() - phi) + 180
 
     if e.IsClosed():
         msp.add_circle((c.X(), c.Y(), c.Z()), r)
     else:
-        msp.add_arc((c.X(), c.Y(), c.Z()), r, a1, a2)
+        msp.add_arc((c.X(), c.Y(), c.Z()), r, a1, a2, is_ccw)
 
 
 def _dxf_ellipse(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
@@ -68,7 +69,7 @@ def _dxf_ellipse(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
 
 
 def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
-
+    
     adaptor = e._geomAdaptor()
     curve = GeomConvert.CurveToBSplineCurve_s(adaptor.Curve().Curve())
 
