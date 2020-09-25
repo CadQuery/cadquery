@@ -148,8 +148,9 @@ def test_constrain(simple_assy, nested_assy):
     assert len(simple_assy.constraints) == 3
 
     nested_assy.constrain("TOP@faces@>Z", "BOTTOM@faces@<Z", "Plane")
+    nested_assy.constrain("TOP@faces@>X", "BOTTOM@faces@<X", "Axis")
 
-    assert len(nested_assy.constraints) == 1
+    assert len(nested_assy.constraints) == 2
 
     constraint = nested_assy.constraints[0]
 
@@ -165,4 +166,25 @@ def test_constrain(simple_assy, nested_assy):
     )
 
     simple_assy.solve()
+
+    assert (
+        simple_assy.loc.wrapped.Transformation()
+        .TranslationPart()
+        .IsEqual(gp_XYZ(2, -5, 0), 1e-9)
+    )
+
+    assert (
+        simple_assy.children[0]
+        .loc.wrapped.Transformation()
+        .TranslationPart()
+        .IsEqual(gp_XYZ(-1, 0.5, 0.5), 5e-3)
+    )
+
     nested_assy.solve()
+
+    assert (
+        nested_assy.children[0]
+        .loc.wrapped.Transformation()
+        .TranslationPart()
+        .IsEqual(gp_XYZ(2, -4, 0.75), 5e-3)
+    )
