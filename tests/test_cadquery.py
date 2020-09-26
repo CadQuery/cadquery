@@ -2772,6 +2772,26 @@ class TestCadQuery(BaseTest):
         # verify that the number of solids is correct
         self.assertEqual(len(obj4.solids().vals()), 5)
 
+        # test to see if non-existent file causes segfault
+        obj5 = (
+            box.faces(">Z")
+            .workplane()
+            .text(
+                "CQ 2.0",
+                0.5,
+                0.05,
+                fontPath=os.path.join(testdataDir, "OpenSans-Irregular.ttf"),
+                cut=False,
+                combine=False,
+                halign="right",
+                valign="top",
+                font="Sans",
+            )
+        )
+
+        # verify that the number of solids is correct
+        self.assertEqual(len(obj5.solids().vals()), 5)
+
     def testParametricCurve(self):
 
         from math import sin, cos, pi
