@@ -2391,7 +2391,7 @@ class Compound(Shape, Mixin3D):
 
         mgr = Font_FontMgr.GetInstance_s()
 
-        if fontPath and not mgr.CheckFont(TCollection_AsciiString(fontPath).ToCString()):
+        if fontPath and mgr.CheckFont(TCollection_AsciiString(fontPath).ToCString()):
             system_font = Font_SystemFont(TCollection_AsciiString(font))
 
             system_font.SetFontPath(font_kind, TCollection_AsciiString(fontPath))
