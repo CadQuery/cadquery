@@ -8,7 +8,7 @@ from random import choice
 from random import random
 from random import randrange
 
-from pytest import approx
+from pytest import approx, raises
 
 # my modules
 
@@ -959,6 +959,9 @@ class TestCadQuery(BaseTest):
         self.saveModel(s)
         # 6 faces for the box, 2 faces for each cylinder
         self.assertEqual(6 + NUMX * NUMY * 2, s.faces().size())
+
+        with raises(ValueError):
+            Workplane().rarray(0, 0, NUMX, NUMY, True)
 
     def testPolarArray(self):
         radius = 10
