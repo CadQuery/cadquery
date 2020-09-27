@@ -14,7 +14,8 @@ CURVE_TOLERANCE = 1e-9
 def _dxf_line(e, msp, plane):
 
     msp.add_line(
-        e.startPoint().toTuple(), e.endPoint().toTuple(),
+        e.startPoint().toTuple(),
+        e.endPoint().toTuple(),
     )
 
 
@@ -33,18 +34,17 @@ def _dxf_circle(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
 
     phi = c_dy.AngleWithRef(dy, c_dz)
 
-    is_ccw = c_dz.XYZ().Z() > 0
-    if is_ccw:
+    if c_dz.XYZ().Z() > 0:
         a1 = RAD2DEG * (geom.FirstParameter() - phi)
         a2 = RAD2DEG * (geom.LastParameter() - phi)
     else:
-        a1 = -RAD2DEG * (geom.FirstParameter() - phi) + 180
-        a2 = -RAD2DEG * (geom.LastParameter() - phi) + 180
+        a1 = -RAD2DEG * (geom.LastParameter() - phi) + 180
+        a2 = -RAD2DEG * (geom.FirstParameter() - phi) + 180
 
     if e.IsClosed():
         msp.add_circle((c.X(), c.Y(), c.Z()), r)
     else:
-        msp.add_arc((c.X(), c.Y(), c.Z()), r, a1, a2, is_ccw)
+        msp.add_arc((c.X(), c.Y(), c.Z()), r, a1, a2)
 
 
 def _dxf_ellipse(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
@@ -69,7 +69,7 @@ def _dxf_ellipse(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
 
 
 def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
-    
+
     adaptor = e._geomAdaptor()
     curve = GeomConvert.CurveToBSplineCurve_s(adaptor.Curve().Curve())
 
@@ -102,10 +102,10 @@ DXF_CONVERTERS = {
 def exportDXF(w: Workplane, fname: str):
     """
     Export Workplane content to DXF. Works with 2D sections.
-        
+
     :param w: Workplane to be exported.
     :param fname: output filename.
-        
+
     """
 
     plane = w.plane
