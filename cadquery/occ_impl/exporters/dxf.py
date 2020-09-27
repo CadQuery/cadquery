@@ -37,8 +37,8 @@ def _dxf_circle(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
         a1 = RAD2DEG * (geom.FirstParameter() - phi)
         a2 = RAD2DEG * (geom.LastParameter() - phi)
     else:
-        a1 = -RAD2DEG * (geom.LastParameter() + phi)
-        a2 = -RAD2DEG * (geom.FirstParameter() + phi)
+        a1 = -RAD2DEG * (geom.LastParameter() - phi) + 180
+        a2 = -RAD2DEG * (geom.FirstParameter() - phi) + 180
 
     if e.IsClosed():
         msp.add_circle((c.X(), c.Y(), c.Z()), r)
@@ -101,10 +101,10 @@ DXF_CONVERTERS = {
 def exportDXF(w: Workplane, fname: str):
     """
     Export Workplane content to DXF. Works with 2D sections.
-        
+
     :param w: Workplane to be exported.
     :param fname: output filename.
-        
+
     """
 
     plane = w.plane
