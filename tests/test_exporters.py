@@ -14,9 +14,9 @@ from tests import BaseTest
 class TestExporters(BaseTest):
     def _exportBox(self, eType, stringsToFind, tolerance=0.1, angularTolerance=0.1):
         """
-            Exports a test object, and then looks for
-            all of the supplied strings to be in the result
-            returns the result in case the case wants to do more checks also
+        Exports a test object, and then looks for
+        all of the supplied strings to be in the result
+        returns the result in case the case wants to do more checks also
         """
         p = Workplane("XY").box(1, 2, 3)
 
@@ -115,6 +115,17 @@ class TestExporters(BaseTest):
 
         self.assertAlmostEqual(s3.val().Area(), s3_i.val().Area(), 6)
         self.assertAlmostEqual(s3.edges().size(), s3_i.edges().size())
+
+        cyl = Workplane("XY").circle(22).extrude(10, both=True).translate((-50, 0, 0))
+
+        s4 = Workplane("XY").box(80, 60, 5).cut(cyl).section()
+
+        exporters.dxf.exportDXF(s4, "res4.dxf")
+
+        s4_i = importers.importDXF("res4.dxf")
+
+        self.assertAlmostEqual(s4.val().Area(), s4_i.val().Area(), 6)
+        self.assertAlmostEqual(s4.edges().size(), s4_i.edges().size())
 
     def testTypeHandling(self):
 
