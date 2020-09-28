@@ -795,8 +795,6 @@ class Workplane(object):
             CQ(aCube).faces("|Z").size()
 
         returns 2, because a cube has 2 faces having normals parallel to the z direction
-
-        See more about selectors HERE
         """
         return self._selectObjects("Faces", selector, tag)
 
@@ -830,8 +828,6 @@ class Workplane(object):
             CQ(aCube).edges("|Z").size()
 
         returns 4, because a cube has 4 edges parallel to the z direction
-
-        See more about selectors HERE
         """
         return self._selectObjects("Edges", selector, tag)
 
@@ -857,8 +853,6 @@ class Workplane(object):
            CQ(aCube).faces("+Z").wires().size()
 
         returns 1, because a face typically only has one outer wire
-
-        See more about selectors HERE
         """
         return self._selectObjects("Wires", selector, tag)
 
@@ -887,8 +881,6 @@ class Workplane(object):
 
         It is possible for single CQ object ( or even a single CAD primitive ) to contain
         multiple solids.
-
-        See more about selectors HERE
         """
         return self._selectObjects("Solids", selector, tag)
 
@@ -911,8 +903,6 @@ class Workplane(object):
 
         Most solids will have a single shell, which represents the outer surface. A shell will
         typically be composed of multiple faces.
-
-        See more about selectors HERE
         """
         return self._selectObjects("Shells", selector, tag)
 
@@ -933,8 +923,6 @@ class Workplane(object):
 
         A compound contains multiple CAD primitives that resulted from a single operation, such as
         a union, cut, split, or fillet.  Compounds can contain multiple edges, wires, or solids.
-
-        See more about selectors HERE
         """
         return self._selectObjects("Compounds", selector, tag)
 
