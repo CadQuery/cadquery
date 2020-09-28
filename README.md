@@ -39,11 +39,19 @@ It is currently possible to use CadQuery for your own projects in 3 different wa
 * From a [Jupyter notebook](https://github.com/bernhard-42/jupyter-cadquery)
 * As a standalone library
 
-The easiest way to install CadQuery and its dependencies is using Anaconda:
+The easiest way to install CadQuery and its dependencies is using conda, which is included as part of an Anaconda/Miniconda installation:
 ```
+# Set up a new environment
+conda create -n cadquery
+
+# Activate the new environment
+conda activate cadquery
+
+# Install the released version of CadQuery
 conda install -c conda-forge -c cadquery cadquery=2
 ```
-Development version can be installed as well:
+
+Development version can be installed instead:
 ```
 conda install -c conda-forge -c cadquery cadquery=master
 ```
@@ -58,7 +66,7 @@ CQ-editor is an IDE that allows users to edit CadQuery model scripts in a GUI en
 * A CadQuery stack inspector.
 * Export to various formats, including STEP and STL, directly from the menu.
 
-***PLEASE NOTE:*** If you are planning to use CQ-editor, it requires a version of Anaconda which includes Python 3.7. A future release of CQ-editor will update it to be compatible with Python 3.8.
+***PLEASE NOTE:*** If you are planning to use CQ-editor, it requires an Anaconda environment (env) that includes Python 3.7. A future release of CQ-editor will update it to be compatible with Python 3.8.
 
 The installation instructions for CQ-editor can be found [here](https://github.com/CadQuery/CQ-editor#installation).
 
