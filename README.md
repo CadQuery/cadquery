@@ -39,11 +39,19 @@ It is currently possible to use CadQuery for your own projects in 3 different wa
 * From a [Jupyter notebook](https://github.com/bernhard-42/jupyter-cadquery)
 * As a standalone library
 
-The easiest way to install CadQuery and its dependencies is using conda:
+The easiest way to install CadQuery and its dependencies is using conda, which is included as part of an Anaconda/Miniconda installation:
 ```
+# Set up a new environment
+conda create -n cadquery
+
+# Activate the new environment
+conda activate cadquery
+
+# Install the released version of CadQuery
 conda install -c conda-forge -c cadquery cadquery=2
 ```
-Development version can be installed as well:
+
+Development version can be installed instead:
 ```
 conda install -c conda-forge -c cadquery cadquery=master
 ```
@@ -57,6 +65,8 @@ CQ-editor is an IDE that allows users to edit CadQuery model scripts in a GUI en
 * A graphical debugger that allows you to step through your scripts.
 * A CadQuery stack inspector.
 * Export to various formats, including STEP and STL, directly from the menu.
+
+***PLEASE NOTE:*** If you are planning to use CQ-editor, it requires an Anaconda environment (env) that includes Python 3.7. A future release of CQ-editor will update it to be compatible with Python 3.8.
 
 The installation instructions for CQ-editor can be found [here](https://github.com/CadQuery/CQ-editor#installation).
 
@@ -89,23 +99,23 @@ We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) 
 
 Here are just a few examples of how CadQuery is being used.
 
-### Resin Mold for Cable Repair 
+### FxBricks Lego Train System
 
-Thanks to @hyOzd ( Altu Technology ) for this example.
+[FxBricks](https://fxbricks.com/) uses CadQuery in the product development pipeline for their Lego train system. FxBricks has also given back to the community by creating [documentation for their CAD pipeline](https://github.com/fx-bricks/fx-cad-notes). They have also assembled [cq-kit](https://github.com/michaelgale/cq-kit), a library containing utility classes and functions to extend the capabilities of CadQuery. Thanks to @michaelgale and @fx-bricks for this example.
 
-![Resin mold example](https://camo.githubusercontent.com/3dcbe1b644b4b831d88e323ab5414a392d7feef0/687474703a2f2f64636f7764656e2e6769746875622e696f2f63616471756572792f5f7374617469632f68794f7a642d6361626c656669782e706e67) ![Resin mold being machined](http://dcowden.github.io/cadquery/_static/hyOzd-finished_thumb.jpg)
+![FxBricks Pipeline Diagram](https://raw.githubusercontent.com/fx-bricks/fx-cad-notes/master/images/model_overview.png)
 
-### Generation of KiCAD Component Files
+### Hexidor Board Game Development
 
-Thanks to @easyw for this example from the [kicad-3d-models-in-freecad project](https://github.com/easyw/kicad-3d-models-in-freecad).
+Hexidor is an expanded take on the Quoridor board game, and the development process has been chronicled [here](https://bruceisonfire.net/2020/04/23/my-adventure-with-flosscad-the-birth-of-hexidor/). CadQuery was used to generate the game board. Thanks to Bruce for this example.
 
-<img src="http://dcowden.github.io/cadquery/_static/KiCad_Capacitors_SMD.jpg" alt="Circuit board generated in KiCAD" width="400"/>
+<img src="https://bruceisonfire.net/wp-content/uploads/2020/04/16-945x709.jpg" alt="Hexidor Board Game" width="400"/>
 
 ### 3D Printed Resin Mold
 
-Thanks to @eddieliberato for this example.
+Thanks to @eddieliberato for sharing [this example](https://jungletools.blogspot.com/2017/06/an-anti-kink-device-for-novel-high-tech.html) of an anti-kink resin mold for a cable.
 
-<img src="https://user-images.githubusercontent.com/13981538/55984103-f7968080-5c9c-11e9-94ef-b02b28be4432.png" alt="3D printed resin mold" height="250"/> <img src="https://user-images.githubusercontent.com/13981538/55984149-1ac13000-5c9d-11e9-9825-c0aadbadd280.png" alt="3D printed resin mold" height="250"/>
+<img src="https://3.bp.blogspot.com/-2FiHOGUhtxo/WTRsViGdOXI/AAAAAAAAA-E/sb5ehwPVr-EncYC8RM2-v21M3AAmbjUjQCLcB/s1600/Screenshot%2Bfrom%2B2017-06-04%2B22-05-07.png" alt="3D printed resin mold" height="250"/>
 
 ## License
 
