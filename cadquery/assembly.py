@@ -88,6 +88,8 @@ class Constraint(object):
             else:
                 raise ValueError(f"Unknown constraint kind {self.kind}")
 
+        rv.append(self.param)
+
         return cast(ConstraintPOD, tuple(rv))
 
 
@@ -299,8 +301,14 @@ class Assembly(object):
             q1, q2, kind = args
             id1, s1 = self._query(q1)
             id2, s2 = self._query(q2)
+        elif len(args) == 4:
+            q1, q2, kind, param = args
+            id1, s1 = self._query(q1)
+            id2, s2 = self._query(q2)
         elif len(args) == 5:
             id1, s1, id2, s2, kind = args
+        elif len(args) == 6:
+            id1, s1, id2, s2, kind, param = args
         else:
             raise ValueError(f"Incompatibile arguments: {args}")
 

@@ -2,7 +2,7 @@ from typing import Tuple, Union, Any, Callable, List, Optional
 from nptyping import NDArray as Array
 
 from numpy import array, eye, zeros, pi
-from scipy.optimize import minimize, least_squares
+from scipy.optimize import minimize
 
 from OCP.gp import gp_Vec, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
 
@@ -10,7 +10,9 @@ from .geom import Location
 
 DOF6 = Tuple[float, float, float, float, float, float]
 ConstraintMarker = Union[gp_Dir, gp_Pnt]
-Constraint = Tuple[Tuple[ConstraintMarker, ...], Tuple[Optional[ConstraintMarker], ...]]
+Constraint = Tuple[
+    Tuple[ConstraintMarker, ...], Tuple[Optional[ConstraintMarker], ...], Optional[Any]
+]
 
 NDOF = 6
 DIR_SCALING = 1e4
@@ -37,13 +39,14 @@ class ConstraintSolver(object):
 
         # decompose into simple constraints
         for k, v in constraints:
-            e1, e2 = v
-            if e2:
-                for m1, m2 in zip(e1, e2):
-                    self.constraints.append((k, ((m1,), (m2,))))
+            ms1, ms2, d = v
+            if ms2:
+                for m1, m2 in zip(ms1, ms2):
+                    self.constraints.append((k, ((m1,), (m2,), d)))
             else:
-                for m1 in e1:
-                    self.constraints.append((k, ((m1,), (None,))))
+                raise NotImplementedError(
+                    "Single marker constraints are not implemented"
+                )
 
         self.ne = len(entities)
         self.locked = locked
@@ -86,13 +89,29 @@ class ConstraintSolver(object):
         Callable[[Array[(Any,), float]], float],
         Callable[[Array[(Any,), float]], Array[(Any,), float]],
     ]:
-        def pt_cost(m1: gp_Pnt, m2: gp_Pnt, t1: gp_Trsf, t2: gp_Trsf) -> float:
+        def pt_cost(
+            m1: gp_Pnt,
+            m2: gp_Pnt,
+            t1: gp_Trsf,
+            t2: gp_Trsf,
+            val: Optional[float] = None,
+        ) -> float:
 
-            return (m1.Transformed(t1).XYZ() - m2.Transformed(t2).XYZ()).SquareModulus()
+            val = 0 if val is None else val
+
+            return (
+                val - (m1.Transformed(t1).XYZ() - m2.Transformed(t2).XYZ()).Modulus()
+            ) ** 2
 
         def dir_cost(
-            m1: gp_Dir, m2: gp_Dir, t1: gp_Trsf, t2: gp_Trsf, val: float = pi
+            m1: gp_Dir,
+            m2: gp_Dir,
+            t1: gp_Trsf,
+            t2: gp_Trsf,
+            val: Optional[float] = None,
         ) -> float:
+
+            val = pi if val is None else val
 
             return (
                 DIR_SCALING * (val - m1.Transformed(t1).Angle(m2.Transformed(t2))) ** 2
@@ -109,15 +128,15 @@ class ConstraintSolver(object):
                 self._build_transform(*x[NDOF * i : NDOF * (i + 1)]) for i in range(ne)
             ]
 
-            for i, ((k1, k2), (ms1, ms2)) in enumerate(constraints):
+            for i, ((k1, k2), (ms1, ms2, d)) in enumerate(constraints):
                 t1 = transforms[k1] if k1 not in self.locked else gp_Trsf()
                 t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
 
                 for m1, m2 in zip(ms1, ms2):
                     if isinstance(m1, gp_Pnt):
-                        rv += pt_cost(m1, m2, t1, t2)
+                        rv += pt_cost(m1, m2, t1, t2, d)
                     elif isinstance(m1, gp_Dir):
-                        rv += dir_cost(m1, m2, t1, t2)
+                        rv += dir_cost(m1, m2, t1, t2, d)
                     else:
                         raise NotImplementedError(f"{m1,m2}")
 
@@ -142,13 +161,13 @@ class ConstraintSolver(object):
                 for j in range(NDOF)
             ]
 
-            for i, ((k1, k2), (ms1, ms2)) in enumerate(constraints):
+            for i, ((k1, k2), (ms1, ms2, d)) in enumerate(constraints):
                 t1 = transforms[k1] if k1 not in self.locked else gp_Trsf()
                 t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
 
                 for m1, m2 in zip(ms1, ms2):
                     if isinstance(m1, gp_Pnt):
-                        tmp = pt_cost(m1, m2, t1, t2)
+                        tmp = pt_cost(m1, m2, t1, t2, d)
 
                         for j in range(NDOF):
 
@@ -156,15 +175,15 @@ class ConstraintSolver(object):
                             t2j = transforms_delta[k2 * NDOF + j]
 
                             if k1 not in self.locked:
-                                tmp1 = pt_cost(m1, m2, t1j, t2)
+                                tmp1 = pt_cost(m1, m2, t1j, t2, d)
                                 rv[k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
 
                             if k2 not in self.locked:
-                                tmp2 = pt_cost(m1, m2, t1, t2j)
+                                tmp2 = pt_cost(m1, m2, t1, t2j, d)
                                 rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
 
                     elif isinstance(m1, gp_Dir):
-                        tmp = dir_cost(m1, m2, t1, t2)
+                        tmp = dir_cost(m1, m2, t1, t2, d)
 
                         for j in range(NDOF):
 
@@ -172,124 +191,14 @@ class ConstraintSolver(object):
                             t2j = transforms_delta[k2 * NDOF + j]
 
                             if k1 not in self.locked:
-                                tmp1 = dir_cost(m1, m2, t1j, t2)
+                                tmp1 = dir_cost(m1, m2, t1j, t2, d)
                                 rv[k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
 
                             if k2 not in self.locked:
-                                tmp2 = dir_cost(m1, m2, t1, t2j)
+                                tmp2 = dir_cost(m1, m2, t1, t2j, d)
                                 rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
                     else:
                         raise NotImplementedError(f"{m1,m2}")
-
-            return rv
-
-        return f, jac
-
-    def _costlsq(
-        self,
-    ) -> Tuple[
-        Callable[[Array[(Any,), float]], Array[(Any,), float]],
-        Callable[[Array[(Any,), float]], Array[(Any, Any), float]],
-    ]:
-        def pt_cost(m1: gp_Pnt, m2: gp_Pnt, t1: gp_Trsf, t2: gp_Trsf) -> float:
-
-            return (m1.Transformed(t1).XYZ() - m2.Transformed(t2).XYZ()).Modulus()
-
-        def dir_cost(
-            m1: gp_Dir, m2: gp_Dir, t1: gp_Trsf, t2: gp_Trsf, val: float = pi
-        ) -> float:
-
-            return val - m1.Transformed(t1).Angle(m2.Transformed(t2))
-
-        def f(x):
-
-            constraints = self.constraints
-            ne = self.ne
-            nc = self.nc
-
-            rv = zeros(nc + ne * NDOF)
-
-            transforms = [
-                self._build_transform(*x[NDOF * i : NDOF * (i + 1)]) for i in range(ne)
-            ]
-
-            for i, ((k1, k2), (ms1, ms2)) in enumerate(constraints):
-                t1 = transforms[k1] if k1 not in self.locked else gp_Trsf()
-                t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
-
-                for m1, m2 in zip(ms1, ms2):
-                    if isinstance(m1, gp_Pnt):
-                        rv[i] += pt_cost(m1, m2, t1, t2)
-                    elif isinstance(m1, gp_Dir):
-                        rv[i] += dir_cost(m1, m2, t1, t2)
-                    else:
-                        raise NotImplementedError(f"{m1,m2}")
-
-            rv[nc:] = 1e-9 * x ** 2
-
-            return rv
-
-        def jac(x):
-
-            constraints = self.constraints
-            ne = self.ne
-            nc = self.nc
-
-            delta = DIFF_EPS * eye(NDOF)
-
-            rv = zeros((nc + NDOF * ne, NDOF * ne))
-
-            transforms = [
-                self._build_transform(*x[NDOF * i : NDOF * (i + 1)]) for i in range(ne)
-            ]
-
-            transforms_delta = [
-                self._build_transform(*(x[NDOF * i : NDOF * (i + 1)] + delta[j, :]))
-                for i in range(ne)
-                for j in range(NDOF)
-            ]
-
-            for i, ((k1, k2), (ms1, ms2)) in enumerate(constraints):
-                t1 = transforms[k1] if k1 not in self.locked else gp_Trsf()
-                t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
-
-                for m1, m2 in zip(ms1, ms2):
-                    if isinstance(m1, gp_Pnt):
-                        tmp = pt_cost(m1, m2, t1, t2)
-
-                        for j in range(NDOF):
-
-                            t1j = transforms_delta[k1 * NDOF + j]
-                            t2j = transforms_delta[k2 * NDOF + j]
-
-                            if k1 not in self.locked:
-                                tmp1 = pt_cost(m1, m2, t1j, t2)
-                                rv[i, k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
-
-                            if k2 not in self.locked:
-                                tmp2 = pt_cost(m1, m2, t1, t2j)
-                                rv[i, k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
-
-                    elif isinstance(m1, gp_Dir):
-                        tmp = dir_cost(m1, m2, t1, t2)
-
-                        for j in range(NDOF):
-
-                            t1j = transforms_delta[k1 * NDOF + j]
-                            t2j = transforms_delta[k2 * NDOF + j]
-
-                            if k1 not in self.locked:
-                                tmp1 = dir_cost(m1, m2, t1j, t2)
-                                rv[i, k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
-
-                            if k2 not in self.locked:
-                                tmp2 = dir_cost(m1, m2, t1, t2j)
-                                rv[i, k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
-                    else:
-                        raise NotImplementedError(f"{m1,m2}")
-
-            for i in range(NDOF * ne):
-                rv[nc + i, i] = 1e-9
 
             return rv
 
