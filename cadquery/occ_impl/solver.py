@@ -214,7 +214,7 @@ class ConstraintSolver(object):
             x0,
             jac=jac,
             method="BFGS",
-            options=dict(disp=True, ftol=1e-12, maxiter=1000),
+            options=dict(disp=True, gtol=1e-12, maxiter=1000),
         )
 
         x = res.x
