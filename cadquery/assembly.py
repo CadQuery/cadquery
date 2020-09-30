@@ -218,8 +218,6 @@ class Assembly(object):
             self.objects[subassy.name] = subassy
             self.objects.update(subassy.objects)
 
-            arg.parent = self
-
         else:
             assy = Assembly(arg, **kwargs)
             assy.parent = self
