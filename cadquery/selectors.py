@@ -376,7 +376,7 @@ class DirectionNthSelector(ParallelDirSelector):
             return tShape.Center().dot(self.direction)
 
         # calculate how many digits of precision do we need
-        digits = int(1 / self.TOLERANCE)
+        digits = -math.floor(math.log10(self.TOLERANCE))
 
         # make a distance to object dict
         # this is one to many mapping so I am using a default dict with list
