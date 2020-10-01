@@ -126,11 +126,11 @@ class Assembly(object):
         :return: An Assembly object.
         
         
-        To create an empt assembly use::
+        To create an empty assembly use::
             
             assy = Assembly(None)
             
-        To create one containt a root object::
+        To create one constraint a root object::
             
             b = Workplane().box(1,1,1)
             assy = Assembly(b, Location(Vector(0,0,1)), name="root")

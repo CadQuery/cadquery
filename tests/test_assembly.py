@@ -69,7 +69,7 @@ def test_assembly(simple_assy, nested_assy):
     assert len(nested_assy.children) == 1
     assert nested_assy.objects["SECOND"].parent is nested_assy
 
-    # bottm-up traversal
+    # bottom-up traversal
     kvs = list(nested_assy.traverse())
 
     assert kvs[0][0] == "BOTTOM"
