@@ -27,6 +27,7 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 * Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL and AMF.
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser.
 * Offer advanced modeling capabilities such as fillets, curvelinear extrudes, parametric curves and lofts.
+* Build nested assemblies out of individual parts and other assemblies.
 
 ### Why this fork
 
@@ -100,6 +101,12 @@ Thanks to @hyOzd ( Altu Technology ) for this example.
 Thanks to @easyw for this example from the [kicad-3d-models-in-freecad project](https://github.com/easyw/kicad-3d-models-in-freecad).
 
 <img src="http://dcowden.github.io/cadquery/_static/KiCad_Capacitors_SMD.jpg" alt="Circuit board generated in KiCAD" width="400"/>
+
+### Spindle assembly
+
+Thanks to @marcus7070 for this example from [here](https://github.com/marcus7070/spindle-assy-example). 
+
+<img src="./doc/_static/assy.png" width="400">
 
 ### 3D Printed Resin Mold
 
