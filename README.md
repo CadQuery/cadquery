@@ -27,6 +27,7 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 * Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL and AMF.
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser.
 * Offer advanced modeling capabilities such as fillets, curvelinear extrudes, parametric curves and lofts.
+* Build nested assemblies out of individual parts and other assemblies.
 
 ### Why this fork
 
@@ -110,6 +111,12 @@ Here are just a few examples of how CadQuery is being used.
 Hexidor is an expanded take on the Quoridor board game, and the development process has been chronicled [here](https://bruceisonfire.net/2020/04/23/my-adventure-with-flosscad-the-birth-of-hexidor/). CadQuery was used to generate the game board. Thanks to Bruce for this example.
 
 <img src="https://bruceisonfire.net/wp-content/uploads/2020/04/16-945x709.jpg" alt="Hexidor Board Game" width="400"/>
+
+### Spindle assembly
+
+Thanks to @marcus7070 for this example from [here](https://github.com/marcus7070/spindle-assy-example). 
+
+<img src="./doc/_static/assy.png" width="400">
 
 ### 3D Printed Resin Mold
 

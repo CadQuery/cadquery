@@ -9,14 +9,14 @@ methods:
 
    * You can load plugins others have developed. This is by far the easiest way to access other code
    * You can define your own plugins.
-   * You can use PythonOCC scripting directly
+   * You can use OCP scripting directly
 
 
-Using PythonOCC Script
------------------------
+Using OpenCascade methods
+-------------------------
 
-The easiest way to extend CadQuery is to simply use PythonOCC scripting inside of your build method.  Just about
-any valid PythonOCC script will execute just fine. For example, this simple CadQuery script::
+The easiest way to extend CadQuery is to simply use OpenCascade/OCP scripting inside of your build method.  Just about
+any valid OCP script will execute just fine. For example, this simple CadQuery script::
 
     return cq.Workplane("XY").box(1.0,2.0,3.0).val()
 
@@ -24,8 +24,8 @@ is actually equivalent to::
 
     return cq.Shape.cast(BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape())
 
-As long as you return a valid PythonOCC Shape, you can use any PythonOCC methods you like. You can even mix and match the
-two. For example, consider this script, which creates a PythonOCC box, but then uses CadQuery to select its faces::
+As long as you return a valid OCP Shape, you can use any OCP methods you like. You can even mix and match the
+two. For example, consider this script, which creates a OCP box, but then uses CadQuery to select its faces::
 
     box = cq.Shape.cast(BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape())
     cq = Workplane(box).faces(">Z").size() # returns 6
@@ -34,10 +34,10 @@ two. For example, consider this script, which creates a PythonOCC box, but then 
 Extending CadQuery: Plugins
 ----------------------------
 
-Though you can get a lot done with PythonOCC, the code gets pretty nasty in a hurry. CadQuery shields you from
-a lot of the complexity of the PythonOCC API.
+Though you can get a lot done with OpenCascade, the code gets pretty nasty in a hurry. CadQuery shields you from
+a lot of the complexity of the OpenCascade API.
 
-You can get the best of both worlds by wrapping your PythonOCC script into a CadQuery plugin.
+You can get the best of both worlds by wrapping your OCP script into a CadQuery plugin.
 
 A CadQuery plugin is simply a function that is attached to the CadQuery :py:meth:`cadquery.CQ` or :py:meth:`cadquery.Workplane` class.
 When connected, your plugin can be used in the chain just like the built-in functions.
@@ -51,8 +51,8 @@ The Stack
 Every CadQuery object has a local stack, which contains a list of items.  The items on the stack will be
 one of these types:
 
-   * **A CadQuery SolidReference object**, which holds a reference to a PythonOCC solid
-   * **A PythonOCC object**, a Vertex, Edge, Wire, Face, Shell, Solid, or Compound
+   * **A CadQuery SolidReference object**, which holds a reference to a OCP solid
+   * **A OCP object**, a Vertex, Edge, Wire, Face, Shell, Solid, or Compound
 
 The stack is available by using self.objects, and will always contain at least one object.
 

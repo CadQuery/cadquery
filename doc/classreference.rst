@@ -18,6 +18,8 @@ Core Classes
 .. autosummary::
      CQ
      Workplane
+     Assembly
+     Constraint
 
 Topological Classes
 ----------------------
@@ -39,6 +41,7 @@ Geometry Classes
     Vector
     Matrix
     Plane
+    Location
 
 Selector Classes
 ---------------------

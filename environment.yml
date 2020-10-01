@@ -8,8 +8,9 @@ dependencies:
   - ipython
   - ocp
   - pyparsing
-  - sphinx=2.4
+  - sphinx=3.2.1
   - sphinx_rtd_theme
+  - sphinx-autodoc-typehints
   - black
   - codecov
   - pytest
@@ -17,6 +18,8 @@ dependencies:
   - ezdxf
   - ipython
   - typing_extensions
+  - nptyping
+  - scipy
   - pip
   - pip:
     - "--editable=."

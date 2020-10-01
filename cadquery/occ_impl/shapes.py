@@ -314,8 +314,7 @@ def fix(obj: TopoDS_Shape) -> TopoDS_Shape:
 
 class Shape(object):
     """
-        Represents a shape in the system.
-        Wrappers the FreeCAD apiSh
+    Represents a shape in the system. Wraps TopoDS_Shape.
     """
 
     wrapped: TopoDS_Shape
@@ -695,6 +694,13 @@ class Shape(object):
 
         return r
 
+    def location(self) -> Location:
+        """
+        Return the current location
+        """
+
+        return Location(self.wrapped.Location())
+
     def locate(self, loc: Location) -> "Shape":
         """
         Apply a location in absolute sense to self
@@ -975,6 +981,28 @@ class Edge(Shape, Mixin1D):
             rv = Vector(dir_handle)
         else:
             raise ValueError("Tangent not defined")
+
+        return rv
+
+    def normal(self) -> Vector:
+        """
+        Calculate normal Vector. Only possible for CIRCLE or ELLIPSE
+        
+        :param locationParam: location to use in [0,1]
+        :return: tangent vector
+        """
+
+        curve = self._geomAdaptor()
+        gtype = self.geomType()
+
+        if gtype == "CIRCLE":
+            circ = curve.Circle()
+            rv = Vector(circ.Axis().Direction())
+        elif gtype == "ELLIPSE":
+            ell = curve.Ellipse()
+            rv = Vector(ell.Axis().Direction())
+        else:
+            raise ValueError(f"{gtype} has no normal")
 
         return rv
 

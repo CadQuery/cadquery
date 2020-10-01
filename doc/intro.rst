@@ -19,7 +19,7 @@ CadQuery is an intuitive, easy-to-use Python library for building parametric 3D 
     * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 
 CadQuery 2.0 is based on
-`PythonOCC <http://www.pythonocc.org/>`_,
+`OCP https://github.com/CadQuery/OCP`_,
 which is a set of Python bindings for the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
 
 Using CadQuery, you can build fully parametric models with a very small amount of code. For example, this simple script
@@ -54,8 +54,7 @@ its use in a variety of engineering and scientific applications that create 3D m
 If you'd like a GUI, you have a couple of options:
 
    * The Qt-based GUI `CQ-editor <https://github.com/CadQuery/CQ-editor>`_
-   * As an Jupyter extension `cadquery-jupyter-extension
- <https://github.com/bernhard-42/cadquery-jupyter-extension>`_
+   * As an Jupyter extension `jupyter-cadquery <https://github.com/bernhard-42/jupyter-cadquery>`_
 
 
 Why CadQuery instead of OpenSCAD?
@@ -70,7 +69,7 @@ Like OpenSCAD, CadQuery is an open-source, script based, parametric model genera
        by OCC include NURBS, splines, surface sewing, STL repair, STEP import/export,  and other complex operations,
        in addition to the standard CSG operations supported by CGAL
 
-    3. **Ability to import/export STEP** We think the ability to begin with a STEP model, created in a CAD package,
+    3. **Ability to import/export STEP and DXF** We think the ability to begin with a STEP model, created in a CAD package,
        and then add parametric features is key.  This is possible in OpenSCAD using STL, but STL is a lossy format
 
     4. **Less Code and easier scripting**  CadQuery scripts require less code to create most objects, because it is possible to locate

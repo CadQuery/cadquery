@@ -185,3 +185,19 @@ as a basis for futher operations.
         SubtractSelector
         InverseSelector
         StringSyntaxSelector
+        
+Assemblies
+----------
+
+Workplane and Shape objects can be connected together into assemblies
+
+.. currentmodule:: cadquery
+
+.. autosummary::
+
+        Assembly
+        Assembly.add
+        Assembly.save
+        Assembly.constrain
+        Constraint
+        Color

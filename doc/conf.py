@@ -35,11 +35,14 @@ import cadquery
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "cadquery.cq_directive",
     "sphinxcadquery.sphinxcadquery",
 ]
+
+always_document_param_types = True
 
 # Configure `sphinxcadquery`
 sphinxcadquery_include_source = True

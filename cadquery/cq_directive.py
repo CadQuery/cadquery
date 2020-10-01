@@ -4,10 +4,9 @@ A special directive for including a cq object.
 """
 
 import traceback
-from cadquery import *
+from cadquery import exporters
 from cadquery import cqgi
-import io
-from docutils.parsers.rst import directives
+from docutils.parsers.rst import directives, Directive
 
 template = """
 
@@ -23,60 +22,66 @@ template = """
 template_content_indent = "      "
 
 
-def cq_directive(
-    name,
-    arguments,
-    options,
-    content,
-    lineno,
-    content_offset,
-    block_text,
-    state,
-    state_machine,
-):
-    # only consider inline snippets
-    plot_code = "\n".join(content)
+class cq_directive(Directive):
 
-    # Since we don't have a filename, use a hash based on the content
-    # the script must define a variable called 'out', which is expected to
-    # be a CQ object
-    out_svg = "Your Script Did not assign call build_output() function!"
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 2
+    option_spec = {
+        "height": directives.length_or_unitless,
+        "width": directives.length_or_percentage_or_unitless,
+        "align": directives.unchanged,
+    }
 
-    try:
-        _s = io.StringIO()
-        result = cqgi.parse(plot_code).build()
+    def run(self):
 
-        if result.success:
-            exporters.exportShape(result.first_result.shape, "SVG", _s)
-            out_svg = _s.getvalue()
-        else:
-            raise result.exception
+        options = self.options
+        content = self.content
+        state_machine = self.state_machine
 
-    except Exception:
-        traceback.print_exc()
-        out_svg = traceback.format_exc()
+        # only consider inline snippets
+        plot_code = "\n".join(content)
 
-    # now out
-    # Now start generating the lines of output
-    lines = []
+        # Since we don't have a filename, use a hash based on the content
+        # the script must define a variable called 'out', which is expected to
+        # be a CQ object
+        out_svg = "Your Script Did not assign call build_output() function!"
 
-    # get rid of new lines
-    out_svg = out_svg.replace("\n", "")
+        try:
+            result = cqgi.parse(plot_code).build()
 
-    txt_align = "left"
-    if "align" in options:
-        txt_align = options["align"]
+            if result.success:
+                out_svg = exporters.getSVG(
+                    exporters.toCompound(result.first_result.shape)
+                )
+            else:
+                raise result.exception
 
-    lines.extend((template % locals()).split("\n"))
+        except Exception:
+            traceback.print_exc()
+            out_svg = traceback.format_exc()
 
-    lines.extend(["::", ""])
-    lines.extend(["    %s" % row.rstrip() for row in plot_code.split("\n")])
-    lines.append("")
+        # now out
+        # Now start generating the lines of output
+        lines = []
 
-    if len(lines):
-        state_machine.insert_input(lines, state_machine.input_lines.source(0))
+        # get rid of new lines
+        out_svg = out_svg.replace("\n", "")
 
-    return []
+        txt_align = "left"
+        if "align" in options:
+            txt_align = options["align"]
+
+        lines.extend((template % locals()).split("\n"))
+
+        lines.extend(["::", ""])
+        lines.extend(["    %s" % row.rstrip() for row in plot_code.split("\n")])
+        lines.append("")
+
+        if len(lines):
+            state_machine.insert_input(lines, state_machine.input_lines.source(0))
+
+        return []
 
 
 def setup(app):
@@ -84,10 +89,4 @@ def setup(app):
     setup.config = app.config
     setup.confdir = app.confdir
 
-    options = {
-        "height": directives.length_or_unitless,
-        "width": directives.length_or_percentage_or_unitless,
-        "align": directives.unchanged,
-    }
-
-    app.add_directive("cq_plot", cq_directive, True, (0, 2, 0), **options)
+    app.add_directive("cq_plot", cq_directive)
