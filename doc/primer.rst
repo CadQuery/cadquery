@@ -165,3 +165,33 @@ iterates on each member of the stack.
 This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.cq.Workplane.each` is useful for this purpose.
 
 
+Assemblies
+----------
+
+Simple models can be combined into complex, possibly nested, assemblies.
+
+..  image:: _static/assy.png
+
+A simple example could look as follows::
+
+    from cadquery import *
+    
+    w = 10
+    d = 10
+    h = 10
+    
+    part1 = Workplane().box(2*w,2*d,h)
+    part2 = Workplane().box(w,d,2*h)
+    part3 = Workplane().box(w,d,3*h)
+    
+    assy = (
+        Assembly(part1, loc=Location(Vector(-w,0,h/2)))
+        .add(part2, loc=Location(Vector(1.5*w,-.5*d,h/2)), color=Color(0,0,1,0.5))
+        .add(part3, loc=Location(Vector(-.5*w,-.5*d,2*h)), color=Color("red"))
+    )
+
+Resulting in:
+
+..  image:: _static/simple_assy.png
+
+Note that the locations of the children parts are defined with respect to their parents - in the above example ``part3`` will be located at (-5,-5,20) in the global coordinate system. Assemblies with different colors can be created this way and exported to STEP or the native OCCT xml format.

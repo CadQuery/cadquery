@@ -3609,3 +3609,19 @@ class TestCadQuery(BaseTest):
 
         self.assertAlmostEqual(T3.TranslationPart().X(), r, 6)
         self.assertAlmostEqual(T4.TranslationPart().X(), r, 6)
+
+    def testNormal(self):
+
+        circ = Workplane().circle(1).edges().val()
+        n = circ.normal()
+
+        self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
+
+        ell = Workplane().ellipse(1, 2).edges().val()
+        n = ell.normal()
+
+        self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
+
+        with self.assertRaises(ValueError):
+            edge = Workplane().rect(1, 2).edges().val()
+            n = edge.normal()
