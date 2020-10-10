@@ -67,8 +67,6 @@ CQ-editor is an IDE that allows users to edit CadQuery model scripts in a GUI en
 * A CadQuery stack inspector.
 * Export to various formats, including STEP and STL, directly from the menu.
 
-***PLEASE NOTE:*** If you are planning to use CQ-editor, it requires an Anaconda environment (env) that includes Python 3.7. A future release of CQ-editor will update it to be compatible with Python 3.8.
-
 The installation instructions for CQ-editor can be found [here](https://github.com/CadQuery/CQ-editor#installation).
 
 <img src="https://raw.githubusercontent.com/CadQuery/CQ-editor/master/screenshots/screenshot3.png" alt="CQ editor screenshot" width="800"/>
