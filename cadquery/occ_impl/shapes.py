@@ -2397,7 +2397,7 @@ class Compound(Shape, Mixin3D):
             mgr.RegisterFont(font_t, True)
 
         else:
-           font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+            font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
 
         builder = Font_BRepTextBuilder()
         text_flat = Shape(
