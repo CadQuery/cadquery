@@ -2392,13 +2392,12 @@ class Compound(Shape, Mixin3D):
         mgr = Font_FontMgr.GetInstance_s()
 
         if fontPath and mgr.CheckFont(TCollection_AsciiString(fontPath).ToCString()):
-            system_font = Font_SystemFont(TCollection_AsciiString(font))
+            font_t = Font_SystemFont(TCollection_AsciiString(fontPath))
+            font_t.SetFontPath(font_kind, TCollection_AsciiString(fontPath))
+            mgr.RegisterFont(font_t, True)
 
-            system_font.SetFontPath(font_kind, TCollection_AsciiString(fontPath))
-
-            mgr.RegisterFont(system_font, False)  # not sure if "replace" should be True
-
-        font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+        else:
+           font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
 
         builder = Font_BRepTextBuilder()
         text_flat = Shape(
