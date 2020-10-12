@@ -3609,6 +3609,15 @@ class TestCadQuery(BaseTest):
 
         self.assertAlmostEqual(T3.TranslationPart().X(), r, 6)
         self.assertAlmostEqual(T4.TranslationPart().X(), r, 6)
+        
+        w = Wire.assembleEdges([Edge.makeLine(Vector(),Vector(0,1)), Edge.makeLine(Vector(0,1),Vector(1,1))])
+        locs_wire = e.locations([0, 1])
+        
+        T5 = locs_wire[0].wrapped.Transformation()
+        T6 = locs_wire[1].wrapped.Transformation()
+
+        self.assertAlmostEqual(T5.TranslationPart().X(), r, 0)
+        self.assertAlmostEqual(T6.TranslationPart().X(), r, 1)
 
     def testNormal(self):
 
