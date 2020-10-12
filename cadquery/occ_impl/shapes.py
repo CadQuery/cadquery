@@ -34,9 +34,15 @@ from OCP.gp import (
     gp_Elips,
 )
 
-# collection of pints (used for spline construction)
+# collection of points (used for spline construction)
 from OCP.TColgp import TColgp_HArray1OfPnt
-from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface, BRepAdaptor_HCurve
+from OCP.BRepAdaptor import (
+    BRepAdaptor_Curve,
+    BRepAdaptor_CompCurve,
+    BRepAdaptor_Surface,
+    BRepAdaptor_HCurve,
+)
+from OCP.Adaptor3d import Adaptor3d_Curve
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
@@ -918,6 +924,68 @@ class Mixin1D(object):
 
         return BRep_Tool.IsClosed_s(self.wrapped)
 
+    def locationAt(
+        self,
+        d: float,
+        mode: Literal["length", "parameter"] = "length",
+        frame: Literal["frenet", "corrected"] = "frenet",
+    ) -> Location:
+        """Generate location along the curve
+        :param d: distance or parameter value
+        :param mode: position calculation mode (default: length)
+        :param frame: moving frame calculation method (default: frenet)
+        :return: A Location object representing local coordinate system at the specified distance.
+        """
+
+        curve: Adaptor3d_Curve
+        if isinstance(self.wrapped, TopoDS_Edge):
+            curve = BRepAdaptor_Curve(self.wrapped)
+        elif isinstance(self.wrapped, TopoDS_Wire):
+            curve = BRepAdaptor_CompCurve(self.wrapped)
+        else:
+            raise ValueError(f"Unsupported type: {type(self.wrapped)}")
+
+        if mode == "length":
+            l = GCPnts_AbscissaPoint.Length_s(curve)
+            param = GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
+        else:
+            param = d
+
+        law: GeomFill_TrihedronLaw
+        if frame == "frenet":
+            law = GeomFill_Frenet()
+        else:
+            law = GeomFill_CorrectedFrenet()
+
+        law.SetCurve(BRepAdaptor_HCurve(curve))
+
+        tangent, normal, binormal = gp_Vec(), gp_Vec(), gp_Vec()
+
+        law.D0(param, tangent, normal, binormal)
+        pnt = curve.Value(param)
+
+        T = gp_Trsf()
+        T.SetTransformation(
+            gp_Ax3(pnt, gp_Dir(tangent.XYZ()), gp_Dir(normal.XYZ())), gp_Ax3()
+        )
+
+        return Location(TopLoc_Location(T))
+
+    def locations(
+        self,
+        ds: Iterable[float],
+        mode: Literal["length", "parameter"] = "length",
+        frame: Literal["frenet", "corrected"] = "frenet",
+    ) -> List[Location]:
+        """Generate location along the curve
+        :param ds: distance or parameter values
+        :param mode: position calculation mode (default: length)
+        :param frame: moving frame calculation method (default: frenet)
+        :return: A list of Location objects representing local coordinate systems at the specified distances.
+        """
+
+        return [self.locationAt(d, mode, frame) for d in ds]
+
 
 class Edge(Shape, Mixin1D):
     """
@@ -1165,62 +1233,6 @@ class Edge(Shape, Mixin1D):
         :return: A linear edge between the two provided points
         """
         return cls(BRepBuilderAPI_MakeEdge(v1.toPnt(), v2.toPnt()).Edge())
-
-    def locationAt(
-        self,
-        d: float,
-        mode: Literal["length", "parameter"] = "length",
-        frame: Literal["frenet", "corrected"] = "frenet",
-    ) -> Location:
-        """Generate location along the curve
-        :param d: distance or parameter value
-        :param mode: position calculation mode (default: length)
-        :param frame: moving frame calculation method (default: frenet)
-        :return: A Location object representing local coordinate system at the specified distance.
-        """
-
-        curve = BRepAdaptor_Curve(self.wrapped)
-
-        if mode == "length":
-            l = GCPnts_AbscissaPoint.Length_s(curve)
-            param = GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
-        else:
-            param = d
-
-        law: GeomFill_TrihedronLaw
-        if frame == "frenet":
-            law = GeomFill_Frenet()
-        else:
-            law = GeomFill_CorrectedFrenet()
-
-        law.SetCurve(BRepAdaptor_HCurve(curve))
-
-        tangent, normal, binormal = gp_Vec(), gp_Vec(), gp_Vec()
-
-        law.D0(param, tangent, normal, binormal)
-        pnt = curve.Value(param)
-
-        T = gp_Trsf()
-        T.SetTransformation(
-            gp_Ax3(pnt, gp_Dir(tangent.XYZ()), gp_Dir(normal.XYZ())), gp_Ax3()
-        )
-
-        return Location(TopLoc_Location(T))
-
-    def locations(
-        self,
-        ds: Iterable[float],
-        mode: Literal["length", "parameter"] = "length",
-        frame: Literal["frenet", "corrected"] = "frenet",
-    ) -> List[Location]:
-        """Generate location along the curve
-        :param ds: distance or parameter values
-        :param mode: position calculation mode (default: length)
-        :param frame: moving frame calculation method (default: frenet)
-        :return: A list of Location objects representing local coordinate systems at the specified distances.
-        """
-
-        return [self.locationAt(d, mode, frame) for d in ds]
 
 
 class Wire(Shape, Mixin1D):
