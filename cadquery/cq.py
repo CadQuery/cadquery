@@ -1700,7 +1700,8 @@ class Workplane(object):
 
         """
 
-        allPoints = [func(start + stop * t / N) for t in range(N + 1)]
+        diff = stop - start
+        allPoints = [func(start + diff * t / N) for t in range(N + 1)]
 
         return self.spline(allPoints, includeCurrent=False, makeWire=True)
 
