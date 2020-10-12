@@ -41,8 +41,9 @@ from OCP.BRepAdaptor import (
     BRepAdaptor_CompCurve,
     BRepAdaptor_Surface,
     BRepAdaptor_HCurve,
+    BRepAdaptor_HCompCurve,
 )
-from OCP.Adaptor3d import Adaptor3d_Curve
+from OCP.Adaptor3d import Adaptor3d_Curve, Adaptor3d_HCurve
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
@@ -179,10 +180,6 @@ from OCP.GCPnts import GCPnts_AbscissaPoint
 from OCP.GeomFill import (
     GeomFill_Frenet,
     GeomFill_CorrectedFrenet,
-    GeomFill_CorrectedFrenet,
-    GeomFill_DiscreteTrihedron,
-    GeomFill_ConstantBiNormal,
-    GeomFill_DraftTrihedron,
     GeomFill_TrihedronLaw,
 )
 from math import pi, sqrt
@@ -925,7 +922,7 @@ class Mixin1D(object):
         return BRep_Tool.IsClosed_s(self.wrapped)
 
     def locationAt(
-        self,
+        self: ShapeProtocol,
         d: float,
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
@@ -938,10 +935,14 @@ class Mixin1D(object):
         """
 
         curve: Adaptor3d_Curve
+        curveh: Adaptor3d_HCurve
+
         if isinstance(self.wrapped, TopoDS_Edge):
             curve = BRepAdaptor_Curve(self.wrapped)
+            curveh = BRepAdaptor_HCurve(curve)
         elif isinstance(self.wrapped, TopoDS_Wire):
             curve = BRepAdaptor_CompCurve(self.wrapped)
+            curveh = BRepAdaptor_HCompCurve(curve)
         else:
             raise ValueError(f"Unsupported type: {type(self.wrapped)}")
 
@@ -957,7 +958,7 @@ class Mixin1D(object):
         else:
             law = GeomFill_CorrectedFrenet()
 
-        law.SetCurve(BRepAdaptor_HCurve(curve))
+        law.SetCurve(curveh)
 
         tangent, normal, binormal = gp_Vec(), gp_Vec(), gp_Vec()
 
@@ -972,7 +973,7 @@ class Mixin1D(object):
         return Location(TopLoc_Location(T))
 
     def locations(
-        self,
+        self: ShapeProtocol,
         ds: Iterable[float],
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
