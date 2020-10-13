@@ -3114,6 +3114,22 @@ class TestCadQuery(BaseTest):
             result.faces(">Z").val().Center().toTuple(), (-3, 0, 12), 9
         )
 
+    def testWorkplaneOrientationOnVertex(self):
+
+        # create a 10 unit sized cube on the XY plane
+        parent = Workplane("XY").rect(10.0,10.0).extrude(10)
+
+        # assert that the direction tuples reflect accordingly
+        assert parent.plane.xDir.toTuple() == approx((1.0, 0.0, 0.0))
+        assert parent.plane.zDir.toTuple() == approx((0.0, 0.0, 1.0))
+
+        # select the <XZ vertex on the <Y face and create a new workplane.
+        child = parent.faces("<Y").vertices("<XZ").workplane()
+
+        # assert that the direction tuples reflect the new workplane on the <Y face
+        assert child.plane.xDir.toTuple() == approx((1.0, 0.0, -0.0))
+        assert child.plane.zDir.toTuple() == approx((0.0, -1.0, -0.0))
+
     def testTagSelectors(self):
 
         result0 = Workplane("XY").box(1, 1, 1).tag("box").sphere(1)

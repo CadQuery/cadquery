@@ -543,7 +543,7 @@ class Workplane(object):
                         if isinstance(obj, Shape)
                         else obj.Center()
                     )
-                if isinstance(self.parent.val(), Face):
+                if self.parent is not None and isinstance(self.parent.val(), Face):
                     normal = self.parent.val().normalAt(center)
                     xDir = _computeXdir(normal)
                 else:
