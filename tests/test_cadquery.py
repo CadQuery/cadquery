@@ -3117,7 +3117,7 @@ class TestCadQuery(BaseTest):
     def testWorkplaneOrientationOnVertex(self):
 
         # create a 10 unit sized cube on the XY plane
-        parent = Workplane("XY").rect(10.0,10.0).extrude(10)
+        parent = Workplane("XY").rect(10.0, 10.0).extrude(10)
 
         # assert that the direction tuples reflect accordingly
         assert parent.plane.xDir.toTuple() == approx((1.0, 0.0, 0.0))
