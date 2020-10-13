@@ -2,7 +2,7 @@ name: dockerhub-publish
 
 on:
   push:
-    branches: develop
+    branches: master
 
 jobs:
   main:
@@ -26,7 +26,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: cadquery/cadquery:dev
+          tags: cadquery/cadquery
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
