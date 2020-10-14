@@ -140,6 +140,7 @@ from OCP.Font import (
     Font_FA_Regular,
     Font_FA_Italic,
     Font_FA_Bold,
+    Font_SystemFont,
 )
 
 from OCP.BRepFeat import BRepFeat_MakeDPrism
@@ -2400,6 +2401,7 @@ class Compound(Shape, Mixin3D):
         size: float,
         height: float,
         font: str = "Arial",
+        fontPath: Optional[str] = None,
         kind: Literal["regular", "bold", "italic"] = "regular",
         halign: Literal["center", "left", "right"] = "center",
         valign: Literal["center", "top", "bottom"] = "center",
@@ -2416,7 +2418,14 @@ class Compound(Shape, Mixin3D):
         }[kind]
 
         mgr = Font_FontMgr.GetInstance_s()
-        font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+
+        if fontPath and mgr.CheckFont(TCollection_AsciiString(fontPath).ToCString()):
+            font_t = Font_SystemFont(TCollection_AsciiString(fontPath))
+            font_t.SetFontPath(font_kind, TCollection_AsciiString(fontPath))
+            mgr.RegisterFont(font_t, True)
+
+        else:
+            font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
 
         builder = Font_BRepTextBuilder()
         text_flat = Shape(

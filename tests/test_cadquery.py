@@ -24,6 +24,9 @@ from tests import (
     makeCube,
 )
 
+# test data directory
+testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+
 # where unit test output will be saved
 OUTDIR = tempfile.gettempdir()
 SUMMARY_FILE = os.path.join(OUTDIR, "testSummary.html")
@@ -2702,6 +2705,7 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(obj1.val().Volume(), obj2.val().Volume())
 
     def testText(self):
+        global testdataDir
 
         box = Workplane("XY").box(4, 4, 0.5)
 
@@ -2751,6 +2755,45 @@ class TestCadQuery(BaseTest):
 
         # verify that the number of solids is correct
         self.assertEqual(len(obj3.solids().vals()), 5)
+
+        obj4 = (
+            box.faces(">Z")
+            .workplane()
+            .text(
+                "CQ 2.0",
+                0.5,
+                0.05,
+                fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
+                cut=False,
+                combine=False,
+                halign="right",
+                valign="top",
+                font="Sans",
+            )
+        )
+
+        # verify that the number of solids is correct
+        self.assertEqual(len(obj4.solids().vals()), 5)
+
+        # test to see if non-existent file causes segfault
+        obj5 = (
+            box.faces(">Z")
+            .workplane()
+            .text(
+                "CQ 2.0",
+                0.5,
+                0.05,
+                fontPath=os.path.join(testdataDir, "OpenSans-Irregular.ttf"),
+                cut=False,
+                combine=False,
+                halign="right",
+                valign="top",
+                font="Sans",
+            )
+        )
+
+        # verify that the number of solids is correct
+        self.assertEqual(len(obj5.solids().vals()), 5)
 
     def testParametricCurve(self):
 
