@@ -104,7 +104,7 @@ def toCAF(
 ) -> Tuple[TDF_Label, TDocStd_Document]:
 
     # prepare a doc
-    doc = TDocStd_Document(TCollection_ExtendedString("XmlXCAF"))
+    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
