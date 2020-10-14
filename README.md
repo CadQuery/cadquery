@@ -94,6 +94,8 @@ You can find the full CadQuery documentation at [cadquery.readthedocs.io](https:
 
 We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) to make it easy to get help from other CadQuery users. We want you to feel welcome and encourage you to join the group and introduce yourself. We would also love to hear what you are doing with CadQuery.
 
+There is a [Discord channel](https://discord.gg/qz3uAdF) as well. Big thanks to the Elmer team for hosting us.
+
 ## Projects using CadQuery
 
 Here are just a few examples of how CadQuery is being used.
