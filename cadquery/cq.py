@@ -543,8 +543,14 @@ class Workplane(object):
                         if isinstance(obj, Shape)
                         else obj.Center()
                     )
-                normal = self.plane.zDir
-                xDir = self.plane.xDir
+
+                val = self.parent.val() if self.parent else None
+                if isinstance(val, Face):
+                    normal = val.normalAt(center)
+                    xDir = _computeXdir(normal)
+                else:
+                    normal = self.plane.zDir
+                    xDir = self.plane.xDir
             else:
                 raise ValueError("Needs a face or a vertex or point on a work plane")
 
