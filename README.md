@@ -48,12 +48,7 @@ conda create -n cadquery
 # Activate the new environment
 conda activate cadquery
 
-# Install the released version of CadQuery
-conda install -c conda-forge -c cadquery cadquery=2
-```
-
-Development version can be installed instead:
-```
+# CadQuery development is moving quickly, so it is best to install the latest version from GitHub master
 conda install -c conda-forge -c cadquery cadquery=master
 ```
 
