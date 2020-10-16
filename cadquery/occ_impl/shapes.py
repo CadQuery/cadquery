@@ -108,10 +108,15 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_BooleanOperation,
 )
 
-from OCP.Geom import Geom_ConicalSurface, Geom_CylindricalSurface, Geom_Surface
+from OCP.Geom import (
+    Geom_ConicalSurface,
+    Geom_CylindricalSurface,
+    Geom_Surface,
+    Geom_Plane,
+)
 from OCP.Geom2d import Geom2d_Line
 
-from OCP.BRepLib import BRepLib
+from OCP.BRepLib import BRepLib, BRepLib_FindSurface
 
 from OCP.BRepOffsetAPI import (
     BRepOffsetAPI_ThruSections,
@@ -875,6 +880,9 @@ class ShapeProtocol(Protocol):
     def Faces(self) -> List["Face"]:
         ...
 
+    def geomType(self) -> Geoms:
+        ...
+
 
 class Vertex(Shape):
     """
@@ -909,20 +917,159 @@ class Vertex(Shape):
         return cls(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
 
+class Mixin1DProtocol(ShapeProtocol, Protocol):
+    def _geomAdaptor(self) -> Adaptor3d_Curve:
+        ...
+
+    def _geomAdaptorH(self) -> Adaptor3d_HCurve:
+        ...
+
+    def locationAt(
+        self,
+        d: float,
+        mode: Literal["length", "parameter"] = "length",
+        frame: Literal["frenet", "corrected"] = "frenet",
+    ) -> Location:
+        ...
+
+
 class Mixin1D(object):
-    def Length(self: ShapeProtocol) -> float:
+    def _geomAdaptor(self: Mixin1DProtocol) -> Adaptor3d_Curve:
+        """
+        Return the underlying geometry
+        """
+
+        curve: Adaptor3d_Curve
+
+        if isinstance(self.wrapped, TopoDS_Edge):
+            curve = BRepAdaptor_Curve(self.wrapped)
+        elif isinstance(self.wrapped, TopoDS_Wire):
+            curve = BRepAdaptor_CompCurve(self.wrapped)
+        else:
+            raise ValueError(f"Unsupported type: {type(self.wrapped)}")
+
+        return curve
+
+    def _geomAdaptorH(
+        self: Mixin1DProtocol,
+    ) -> Tuple[Adaptor3d_Curve, Adaptor3d_HCurve]:
+        """
+        Return the underlying geometry
+        """
+
+        curve = self._geomAdaptor()
+        curveh: Adaptor3d_HCurve
+
+        if isinstance(self.wrapped, TopoDS_Edge):
+            curveh = BRepAdaptor_HCurve(curve)
+        elif isinstance(self.wrapped, TopoDS_Wire):
+            curveh = BRepAdaptor_HCompCurve(curve)
+        else:
+            raise ValueError(f"Unsupported type: {type(self.wrapped)}")
+
+        return curve, curveh
+
+    def startPoint(self: Mixin1DProtocol) -> Vector:
+        """
+
+            :return: a vector representing the start poing of this edge
+
+            Note, circles may have the start and end points the same
+        """
+
+        curve = self._geomAdaptor()
+        umin = curve.FirstParameter()
+
+        return Vector(curve.Value(umin))
+
+    def endPoint(self: Mixin1DProtocol) -> Vector:
+        """
+
+            :return: a vector representing the end point of this edge.
+
+            Note, circles may have the start and end points the same
+
+        """
+
+        curve = self._geomAdaptor()
+        umax = curve.LastParameter()
+
+        return Vector(curve.Value(umax))
+
+    def tangentAt(self: Mixin1DProtocol, locationParam: float = 0.5) -> Vector:
+        """
+        Compute tangent vector at the specified location.
+        :param locationParam: location to use in [0,1]
+        :return: tangent vector
+        """
+
+        curve = self._geomAdaptor()
+
+        umin, umax = curve.FirstParameter(), curve.LastParameter()
+        umid = (1 - locationParam) * umin + locationParam * umax
+
+        curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance())
+        curve_props.SetParameter(umid)
+
+        if curve_props.IsTangentDefined():
+            dir_handle = gp_Dir()  # this is awkward due to C++ pass by ref in the API
+            curve_props.Tangent(dir_handle)
+
+            rv = Vector(dir_handle)
+        else:
+            raise ValueError("Tangent not defined")
+
+        return rv
+
+    def normal(self: Mixin1DProtocol) -> Vector:
+        """
+        Calculate normal Vector. Only possible for CIRCLE or ELLIPSE
+        
+        :param locationParam: location to use in [0,1]
+        :return: tangent vector
+        """
+
+        curve = self._geomAdaptor()
+        gtype = self.geomType()
+
+        if gtype == "CIRCLE":
+            circ = curve.Circle()
+            rv = Vector(circ.Axis().Direction())
+        elif gtype == "ELLIPSE":
+            ell = curve.Ellipse()
+            rv = Vector(ell.Axis().Direction())
+        else:
+            fs = BRepLib_FindSurface(self.wrapped, OnlyPlane=True)
+            surf = fs.Surface()
+
+            if isinstance(surf, Geom_Plane):
+                pln = surf.Plane().Pln()
+                rv = Vector(pln.Axis().Direction())
+            else:
+                raise ValueError("Normal not defined")
+
+        return rv
+
+    def Center(self: Mixin1DProtocol) -> Vector:
+
+        Properties = GProp_GProps()
+        BRepGProp.LinearProperties_s(self.wrapped, Properties)
+
+        return Vector(Properties.CentreOfMass())
+
+    def Length(self: Mixin1DProtocol) -> float:
 
         Properties = GProp_GProps()
         BRepGProp.LinearProperties_s(self.wrapped, Properties)
 
         return Properties.Mass()
 
-    def IsClosed(self: ShapeProtocol) -> bool:
+    def IsClosed(self: Mixin1DProtocol) -> bool:
 
         return BRep_Tool.IsClosed_s(self.wrapped)
 
     def locationAt(
-        self: ShapeProtocol,
+        self: Mixin1DProtocol,
         d: float,
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
@@ -934,17 +1081,7 @@ class Mixin1D(object):
         :return: A Location object representing local coordinate system at the specified distance.
         """
 
-        curve: Adaptor3d_Curve
-        curveh: Adaptor3d_HCurve
-
-        if isinstance(self.wrapped, TopoDS_Edge):
-            curve = BRepAdaptor_Curve(self.wrapped)
-            curveh = BRepAdaptor_HCurve(curve)
-        elif isinstance(self.wrapped, TopoDS_Wire):
-            curve = BRepAdaptor_CompCurve(self.wrapped)
-            curveh = BRepAdaptor_HCompCurve(curve)
-        else:
-            raise ValueError(f"Unsupported type: {type(self.wrapped)}")
+        curve, curveh = self._geomAdaptorH()
 
         if mode == "length":
             l = GCPnts_AbscissaPoint.Length_s(curve)
@@ -973,7 +1110,7 @@ class Mixin1D(object):
         return Location(TopLoc_Location(T))
 
     def locations(
-        self: ShapeProtocol,
+        self: Mixin1DProtocol,
         ds: Iterable[float],
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
@@ -994,93 +1131,6 @@ class Edge(Shape, Mixin1D):
     """
 
     wrapped: TopoDS_Edge
-
-    def _geomAdaptor(self) -> BRepAdaptor_Curve:
-        """
-        Return the underlying geometry
-        """
-        return BRepAdaptor_Curve(self.wrapped)
-
-    def startPoint(self) -> Vector:
-        """
-
-            :return: a vector representing the start poing of this edge
-
-            Note, circles may have the start and end points the same
-        """
-
-        curve = self._geomAdaptor()
-        umin = curve.FirstParameter()
-
-        return Vector(curve.Value(umin))
-
-    def endPoint(self) -> Vector:
-        """
-
-            :return: a vector representing the end point of this edge.
-
-            Note, circles may have the start and end points the same
-
-        """
-
-        curve = self._geomAdaptor()
-        umax = curve.LastParameter()
-
-        return Vector(curve.Value(umax))
-
-    def tangentAt(self, locationParam: float = 0.5) -> Vector:
-        """
-        Compute tangent vector at the specified location.
-        :param locationParam: location to use in [0,1]
-        :return: tangent vector
-        """
-
-        curve = self._geomAdaptor()
-
-        umin, umax = curve.FirstParameter(), curve.LastParameter()
-        umid = (1 - locationParam) * umin + locationParam * umax
-
-        curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance())
-        curve_props.SetParameter(umid)
-
-        if curve_props.IsTangentDefined():
-            dir_handle = gp_Dir()  # this is awkward due to C++ pass by ref in the API
-            curve_props.Tangent(dir_handle)
-
-            rv = Vector(dir_handle)
-        else:
-            raise ValueError("Tangent not defined")
-
-        return rv
-
-    def normal(self) -> Vector:
-        """
-        Calculate normal Vector. Only possible for CIRCLE or ELLIPSE
-        
-        :param locationParam: location to use in [0,1]
-        :return: tangent vector
-        """
-
-        curve = self._geomAdaptor()
-        gtype = self.geomType()
-
-        if gtype == "CIRCLE":
-            circ = curve.Circle()
-            rv = Vector(circ.Axis().Direction())
-        elif gtype == "ELLIPSE":
-            ell = curve.Ellipse()
-            rv = Vector(ell.Axis().Direction())
-        else:
-            raise ValueError(f"{gtype} has no normal")
-
-        return rv
-
-    def Center(self) -> Vector:
-
-        Properties = GProp_GProps()
-        BRepGProp.LinearProperties_s(self.wrapped, Properties)
-
-        return Vector(Properties.CentreOfMass())
 
     @classmethod
     def makeCircle(
