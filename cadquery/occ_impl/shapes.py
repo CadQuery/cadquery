@@ -918,10 +918,18 @@ class Vertex(Shape):
 
 
 class Mixin1DProtocol(ShapeProtocol, Protocol):
-    def _geomAdaptor(self) -> Adaptor3d_Curve:
+    def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         ...
 
-    def _geomAdaptorH(self) -> Adaptor3d_HCurve:
+    def _geomAdaptorH(
+        self,
+    ) -> Tuple[
+        Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve],
+        Union[BRepAdaptor_HCurve, BRepAdaptor_HCompCurve],
+    ]:
+        ...
+
+    def paramAt(self, d: float) -> float:
         ...
 
     def locationAt(
@@ -934,12 +942,14 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
 
 
 class Mixin1D(object):
-    def _geomAdaptor(self: Mixin1DProtocol) -> Adaptor3d_Curve:
+    def _geomAdaptor(
+        self: Mixin1DProtocol,
+    ) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         """
         Return the underlying geometry
         """
 
-        curve: Adaptor3d_Curve
+        curve: Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]
 
         if isinstance(self.wrapped, TopoDS_Edge):
             curve = BRepAdaptor_Curve(self.wrapped)
@@ -952,17 +962,20 @@ class Mixin1D(object):
 
     def _geomAdaptorH(
         self: Mixin1DProtocol,
-    ) -> Tuple[Adaptor3d_Curve, Adaptor3d_HCurve]:
+    ) -> Tuple[
+        Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve],
+        Union[BRepAdaptor_HCurve, BRepAdaptor_HCompCurve],
+    ]:
         """
         Return the underlying geometry
         """
 
         curve = self._geomAdaptor()
-        curveh: Adaptor3d_HCurve
+        curveh: Union[BRepAdaptor_HCurve, BRepAdaptor_HCompCurve]
 
-        if isinstance(self.wrapped, TopoDS_Edge):
+        if isinstance(curve, BRepAdaptor_Curve):
             curveh = BRepAdaptor_HCurve(curve)
-        elif isinstance(self.wrapped, TopoDS_Wire):
+        elif isinstance(curve, BRepAdaptor_CompCurve):
             curveh = BRepAdaptor_HCompCurve(curve)
         else:
             raise ValueError(f"Unsupported type: {type(self.wrapped)}")
@@ -996,6 +1009,13 @@ class Mixin1D(object):
 
         return Vector(curve.Value(umax))
 
+    def paramAt(self: Mixin1DProtocol, d: float) -> float:
+
+        curve = self._geomAdaptor()
+
+        l = GCPnts_AbscissaPoint.Length_s(curve)
+        return GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
+
     def tangentAt(self: Mixin1DProtocol, locationParam: float = 0.5) -> Vector:
         """
         Compute tangent vector at the specified location.
@@ -1005,21 +1025,11 @@ class Mixin1D(object):
 
         curve = self._geomAdaptor()
 
-        umin, umax = curve.FirstParameter(), curve.LastParameter()
-        umid = (1 - locationParam) * umin + locationParam * umax
+        tmp = gp_Pnt()
+        res = gp_Vec()
+        curve.D1(self.paramAt(locationParam), tmp, res)
 
-        curve_props = BRepLProp_CLProps(curve, 2, curve.Tolerance())
-        curve_props.SetParameter(umid)
-
-        if curve_props.IsTangentDefined():
-            dir_handle = gp_Dir()  # this is awkward due to C++ pass by ref in the API
-            curve_props.Tangent(dir_handle)
-
-            rv = Vector(dir_handle)
-        else:
-            raise ValueError("Tangent not defined")
-
-        return rv
+        return Vector(gp_Dir(res))
 
     def normal(self: Mixin1DProtocol) -> Vector:
         """
@@ -1043,7 +1053,7 @@ class Mixin1D(object):
             surf = fs.Surface()
 
             if isinstance(surf, Geom_Plane):
-                pln = surf.Plane().Pln()
+                pln = surf.Pln()
                 rv = Vector(pln.Axis().Direction())
             else:
                 raise ValueError("Normal not defined")
@@ -1059,10 +1069,7 @@ class Mixin1D(object):
 
     def Length(self: Mixin1DProtocol) -> float:
 
-        Properties = GProp_GProps()
-        BRepGProp.LinearProperties_s(self.wrapped, Properties)
-
-        return Properties.Mass()
+        return GCPnts_AbscissaPoint.Length_s(self._geomAdaptor())
 
     def IsClosed(self: Mixin1DProtocol) -> bool:
 
@@ -1084,8 +1091,7 @@ class Mixin1D(object):
         curve, curveh = self._geomAdaptorH()
 
         if mode == "length":
-            l = GCPnts_AbscissaPoint.Length_s(curve)
-            param = GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
+            param = self.paramAt(d)
         else:
             param = d
 
