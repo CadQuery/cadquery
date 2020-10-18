@@ -942,46 +942,6 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
 
 
 class Mixin1D(object):
-    def _geomAdaptor(
-        self: Mixin1DProtocol,
-    ) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
-        """
-        Return the underlying geometry
-        """
-
-        curve: Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]
-
-        if isinstance(self.wrapped, TopoDS_Edge):
-            curve = BRepAdaptor_Curve(self.wrapped)
-        elif isinstance(self.wrapped, TopoDS_Wire):
-            curve = BRepAdaptor_CompCurve(self.wrapped)
-        else:
-            raise ValueError(f"Unsupported type: {type(self.wrapped)}")
-
-        return curve
-
-    def _geomAdaptorH(
-        self: Mixin1DProtocol,
-    ) -> Tuple[
-        Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve],
-        Union[BRepAdaptor_HCurve, BRepAdaptor_HCompCurve],
-    ]:
-        """
-        Return the underlying geometry
-        """
-
-        curve = self._geomAdaptor()
-        curveh: Union[BRepAdaptor_HCurve, BRepAdaptor_HCompCurve]
-
-        if isinstance(curve, BRepAdaptor_Curve):
-            curveh = BRepAdaptor_HCurve(curve)
-        elif isinstance(curve, BRepAdaptor_CompCurve):
-            curveh = BRepAdaptor_HCompCurve(curve)
-        else:
-            raise ValueError(f"Unsupported type: {type(self.wrapped)}")
-
-        return curve, curveh
-
     def startPoint(self: Mixin1DProtocol) -> Vector:
         """
 
@@ -1137,6 +1097,22 @@ class Edge(Shape, Mixin1D):
     """
 
     wrapped: TopoDS_Edge
+
+    def _geomAdaptor(self) -> BRepAdaptor_Curve:
+        """
+        Return the underlying geometry
+        """
+
+        return BRepAdaptor_Curve(self.wrapped)
+
+    def _geomAdaptorH(self) -> Tuple[BRepAdaptor_Curve, BRepAdaptor_HCurve]:
+        """
+        Return the underlying geometry
+        """
+
+        curve = self._geomAdaptor()
+
+        return curve, BRepAdaptor_HCurve(curve)
 
     @classmethod
     def makeCircle(
@@ -1298,6 +1274,22 @@ class Wire(Shape, Mixin1D):
     """
 
     wrapped: TopoDS_Wire
+
+    def _geomAdaptor(self) -> BRepAdaptor_CompCurve:
+        """
+        Return the underlying geometry
+        """
+
+        return BRepAdaptor_CompCurve(self.wrapped)
+
+    def _geomAdaptorH(self) -> Tuple[BRepAdaptor_CompCurve, BRepAdaptor_HCompCurve]:
+        """
+        Return the underlying geometry
+        """
+
+        curve = self._geomAdaptor()
+
+        return curve, BRepAdaptor_HCompCurve(curve)
 
     @classmethod
     def combine(
