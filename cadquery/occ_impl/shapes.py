@@ -1035,13 +1035,33 @@ class Mixin1D(object):
 
         return BRep_Tool.IsClosed_s(self.wrapped)
 
+    def positionAt(
+        self: Mixin1DProtocol,
+        d: float,
+        mode: Literal["length", "parameter"] = "length",
+    ) -> Vector:
+        """Generate a postion along the underlying curve.
+        :param d: distance or parameter value
+        :param mode: position calculation mode (default: length)
+        :return: A Vector on the underlying curve located at the specified d value.
+        """
+
+        curve = self._geomAdaptor()
+
+        if mode == "length":
+            param = self.paramAt(d)
+        else:
+            param = d
+
+        return Vector(curve.Value(param))
+
     def locationAt(
         self: Mixin1DProtocol,
         d: float,
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
     ) -> Location:
-        """Generate location along the curve
+        """Generate a location along the underlying curve.
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
