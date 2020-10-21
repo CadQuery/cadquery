@@ -931,6 +931,13 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
 
     def paramAt(self, d: float) -> float:
         ...
+        
+    def positionAt(
+        self,
+        d: float,
+        mode: Literal["length", "parameter"] = "length",
+    ) -> Vector:
+        ...
 
     def locationAt(
         self,
@@ -1054,6 +1061,19 @@ class Mixin1D(object):
             param = d
 
         return Vector(curve.Value(param))
+      
+    def positions(
+        self: Mixin1DProtocol,
+        ds: Iterable[float],
+        mode: Literal["length", "parameter"] = "length",
+    ) -> List[Vector]:
+        """Generate positions along the underlying curve
+        :param ds: distance or parameter values
+        :param mode: position calculation mode (default: length)
+        :return: A list of Vector objects.
+        """
+
+        return [self.positionAt(d, mode) for d in ds]
 
     def locationAt(
         self: Mixin1DProtocol,
