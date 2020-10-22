@@ -40,7 +40,7 @@ It is currently possible to use CadQuery for your own projects in 3 different wa
 * From a [Jupyter notebook](https://github.com/bernhard-42/jupyter-cadquery)
 * As a standalone library
 
-The easiest way to install CadQuery and its dependencies is using conda, which is included as part of an Anaconda/Miniconda installation:
+The easiest way to install CadQuery and its dependencies is using conda, which is included as part of an Anaconda/Miniconda installation. See the next section for an alternative to a full install of Anaconda that may be preferable to some users. The steps to install cadquery are as follows:
 ```
 # Set up a new environment
 conda create -n cadquery
@@ -53,6 +53,18 @@ conda install -c conda-forge -c cadquery cadquery=master
 ```
 
 For those who are interested, the [OCP repository](https://github.com/CadQuery/OCP) contains the current OCCT wrapper used by CQ.
+
+### Alternative Anaconda Installation Method
+
+For those unfamiliar (or uncomfortable) with Anaconda, it is probably best to install Miniconda to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniconda can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation. In Linux, the local directory installation method looks something like this:
+```
+# Install the script to ~/miniconda
+wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+bash miniconda.sh -b -p $HOME/miniconda
+
+# To activate and use Miniconda
+source $HOME/miniconda/bin/activate
+```
 
 ### CQ-editor GUI
 
@@ -75,9 +87,9 @@ CadQuery supports Jupyter notebook out of the box using the jupyter-cadquery ext
 
 <img src="https://raw.githubusercontent.com/bernhard-42/jupyter-cadquery/master/screenshots/0_intro.png" alt="CadQuery Jupyter extension screenshot" width="800"/>
 
-### Standalone
+### Standalone Stable Version
 
-CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts. Use Anaconda/Miniconda to install CadQuery, and then add `import cadquery` to the top of your Python scripts.
+CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts. Use Anaconda/Miniconda to install CadQuery, and then add `import cadquery` to the top of your Python scripts. If the stable version of CadQuery is desired, the following command will install it. However, be aware that the stable version can fall significantly behind the current state of CadQuery, so in many cases the `master` installation method at the beginning of the Getting Started section is preferable.
 
 ```
 conda install -c conda-forge -c cadquery cadquery=2
