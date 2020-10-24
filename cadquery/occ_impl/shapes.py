@@ -488,8 +488,8 @@ class Shape(object):
 
         return Shape.centerOfMass(self)
 
-    def CenterOfBoundBox(self, tolerance: float = 0.1) -> Vector:
-        return self.BoundingBox().center
+    def CenterOfBoundBox(self, tolerance: Optional[float] = None) -> Vector:
+        return self.BoundingBox(tolerance=tolerance).center
 
     @staticmethod
     def CombinedCenter(objects: Iterable["Shape"]) -> Vector:
