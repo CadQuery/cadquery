@@ -764,7 +764,7 @@ class BoundBox(object):
     def add(
         self,
         obj: Union[Tuple[float, float, float], Vector, "BoundBox"],
-        tol: float = 1e-8,
+        tol: Optional[float] = None,
     ) -> "BoundBox":
         """Returns a modified (expanded) bounding box
 
@@ -776,6 +776,8 @@ class BoundBox(object):
 
         This bounding box is not changed.
         """
+
+        tol = TOL if tol is None else tol  # tol = TOL (by default)
 
         tmp = Bnd_Box()
         tmp.SetGap(tol)
