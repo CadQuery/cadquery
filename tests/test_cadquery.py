@@ -3637,7 +3637,7 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
 
         r = Workplane().rect(1, 2).wires().val()
-        n = ell.normal()
+        n = r.normal()
 
         self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
 
@@ -3656,6 +3656,10 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(p0.toTuple(), (0, 0, 0), 6)
         self.assertTupleAlmostEquals(p1.toTuple(), (0, 1, 0), 6)
         self.assertTupleAlmostEquals(p2.toTuple(), (1, 1, 0), 6)
+        
+        p0 = w.positionAt(0.0, mode='param')
+
+        self.assertTupleAlmostEquals(p0.toTuple(), (0, 0, 0), 6)
 
         p0, p1, p2 = w.positions([0.0, 0.25, 0.5])
 
