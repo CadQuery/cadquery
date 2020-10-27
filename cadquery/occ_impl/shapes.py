@@ -931,11 +931,9 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
 
     def paramAt(self, d: float) -> float:
         ...
-        
+
     def positionAt(
-        self,
-        d: float,
-        mode: Literal["length", "parameter"] = "length",
+        self, d: float, mode: Literal["length", "parameter"] = "length",
     ) -> Vector:
         ...
 
@@ -952,9 +950,9 @@ class Mixin1D(object):
     def startPoint(self: Mixin1DProtocol) -> Vector:
         """
 
-            :return: a vector representing the start poing of this edge
+        :return: a vector representing the start poing of this edge
 
-            Note, circles may have the start and end points the same
+        Note, circles may have the start and end points the same
         """
 
         curve = self._geomAdaptor()
@@ -965,10 +963,9 @@ class Mixin1D(object):
     def endPoint(self: Mixin1DProtocol) -> Vector:
         """
 
-            :return: a vector representing the end point of this edge.
+        :return: a vector representing the end point of this edge.
 
-            Note, circles may have the start and end points the same
-
+        Note, circles may have the start and end points the same
         """
 
         curve = self._geomAdaptor()
@@ -977,16 +974,28 @@ class Mixin1D(object):
         return Vector(curve.Value(umax))
 
     def paramAt(self: Mixin1DProtocol, d: float) -> float:
+        """
+        Compute parameter value a the specified normalized distance.
+        
+        :param d: normalized distance [0, 1]
+        :return: parameter value
+        """
 
         curve = self._geomAdaptor()
 
         l = GCPnts_AbscissaPoint.Length_s(curve)
         return GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
 
-    def tangentAt(self: Mixin1DProtocol, locationParam: float = 0.5) -> Vector:
+    def tangentAt(
+        self: Mixin1DProtocol,
+        locationParam: float = 0.5,
+        mode: Literal["length", "parameter"] = "parameter",
+    ) -> Vector:
         """
         Compute tangent vector at the specified location.
-        :param locationParam: location to use in [0,1]
+        
+        :param locationParam: distance or parameter value (default: 0.5)
+        :param mode: position calculation mode (default: parameter)
         :return: tangent vector
         """
 
@@ -994,16 +1003,21 @@ class Mixin1D(object):
 
         tmp = gp_Pnt()
         res = gp_Vec()
-        curve.D1(self.paramAt(locationParam), tmp, res)
+
+        if mode == "length":
+            param = self.paramAt(locationParam)
+        else:
+            param = locationParam
+
+        curve.D1(self.paramAt(param), tmp, res)
 
         return Vector(gp_Dir(res))
 
     def normal(self: Mixin1DProtocol) -> Vector:
         """
-        Calculate normal Vector. Only possible for CIRCLE or ELLIPSE
+        Calculate the normal Vector. Only possible for planar curves.
         
-        :param locationParam: location to use in [0,1]
-        :return: tangent vector
+        :return: normal vector
         """
 
         curve = self._geomAdaptor()
@@ -1061,7 +1075,7 @@ class Mixin1D(object):
             param = d
 
         return Vector(curve.Value(param))
-      
+
     def positions(
         self: Mixin1DProtocol,
         ds: Iterable[float],
