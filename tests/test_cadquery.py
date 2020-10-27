@@ -3656,8 +3656,8 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(p0.toTuple(), (0, 0, 0), 6)
         self.assertTupleAlmostEquals(p1.toTuple(), (0, 1, 0), 6)
         self.assertTupleAlmostEquals(p2.toTuple(), (1, 1, 0), 6)
-        
-        p0 = w.positionAt(0.0, mode='param')
+
+        p0 = w.positionAt(0.0, mode="param")
 
         self.assertTupleAlmostEquals(p0.toTuple(), (0, 0, 0), 6)
 
@@ -3666,3 +3666,12 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(p0.toTuple(), (0, 0, 0), 6)
         self.assertTupleAlmostEquals(p1.toTuple(), (0, 0.5, 0), 6)
         self.assertTupleAlmostEquals(p2.toTuple(), (0, 1, 0), 6)
+
+    def testTangengAt(self):
+
+        pts = [(0, 0), (-1, 1), (-2, 0), (-1, 0)]
+
+        path = Workplane("XZ").spline(pts, tangents=((0, 1), (1, 0))).val()
+
+        self.assertTrue(path.tangentAt(0.5) == path.tangentAt(0.5))
+        self.assertFalse(path.tangentAt(0.5) == path.tangentAt(0.5, mode="length"))
