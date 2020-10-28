@@ -16,6 +16,7 @@ Core Classes
 ---------------------
 
 .. autosummary::
+
      CQ
      Workplane
      Assembly
@@ -25,12 +26,15 @@ Topological Classes
 ----------------------
 
 .. autosummary::
+    
     Shape
     Vertex
     Edge
+    occ_impl.shapes.Mixin1D
     Wire
     Face
     Shell
+    occ_impl.shapes.Mixin3D
     Solid
     Compound
 
@@ -38,6 +42,7 @@ Geometry Classes
 ------------------
 
 .. autosummary::
+
     Vector
     Matrix
     Plane
@@ -71,4 +76,5 @@ Class Details
 ---------------
 
 .. automodule:: cadquery
+   :show-inheritance: 
    :members:
