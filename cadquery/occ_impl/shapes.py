@@ -950,7 +950,7 @@ class Mixin1D(object):
     def startPoint(self: Mixin1DProtocol) -> Vector:
         """
 
-        :return: a vector representing the start poing of this edge
+        :return: a vector representing the start point of this edge
 
         Note, circles may have the start and end points the same
         """
@@ -975,7 +975,7 @@ class Mixin1D(object):
 
     def paramAt(self: Mixin1DProtocol, d: float) -> float:
         """
-        Compute parameter value a the specified normalized distance.
+        Compute parameter value at the specified normalized distance.
         
         :param d: normalized distance [0, 1]
         :return: parameter value
