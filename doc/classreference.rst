@@ -78,3 +78,11 @@ Class Details
 .. automodule:: cadquery
    :show-inheritance: 
    :members:
+
+.. autoclass:: occ_impl.shapes.Mixin1D
+   :show-inheritance: 
+   :members:
+
+.. autoclass:: occ_impl.shapes.Mixin3D
+   :show-inheritance: 
+   :members:
