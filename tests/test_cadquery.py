@@ -3669,6 +3669,20 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(T3.TranslationPart().X(), r, 6)
         self.assertAlmostEqual(T4.TranslationPart().X(), r, 6)
 
+        w = Wire.assembleEdges(
+            [
+                Edge.makeLine(Vector(), Vector(0, 1)),
+                Edge.makeLine(Vector(0, 1), Vector(1, 1)),
+            ]
+        )
+        locs_wire = e.locations([0, 1])
+
+        T5 = locs_wire[0].wrapped.Transformation()
+        T6 = locs_wire[1].wrapped.Transformation()
+
+        self.assertAlmostEqual(T5.TranslationPart().X(), r, 0)
+        self.assertAlmostEqual(T6.TranslationPart().X(), r, 1)
+
     def testNormal(self):
 
         circ = Workplane().circle(1).edges().val()
@@ -3681,6 +3695,53 @@ class TestCadQuery(BaseTest):
 
         self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
 
+        r = Workplane().rect(1, 2).wires().val()
+        n = r.normal()
+
+        self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
+
         with self.assertRaises(ValueError):
             edge = Workplane().rect(1, 2).edges().val()
             n = edge.normal()
+
+    def testPositionAt(self):
+
+        # test with an open wire
+        w = Workplane().lineTo(0, 1).lineTo(1, 1).wire().val()
+
+        p0 = w.positionAt(0.0)
+        p1 = w.positionAt(0.5)
+        p2 = w.positionAt(1.0)
+
+        self.assertTupleAlmostEquals(p0.toTuple(), (0, 0, 0), 6)
+        self.assertTupleAlmostEquals(p1.toTuple(), (0, 1, 0), 6)
+        self.assertTupleAlmostEquals(p2.toTuple(), (1, 1, 0), 6)
+
+        p0 = w.positionAt(0.0, mode="param")
+
+        self.assertTupleAlmostEquals(p0.toTuple(), (0, 0, 0), 6)
+
+        p0, p1, p2 = w.positions([0.0, 0.25, 0.5])
+
+        self.assertTupleAlmostEquals(p0.toTuple(), (0, 0, 0), 6)
+        self.assertTupleAlmostEquals(p1.toTuple(), (0, 0.5, 0), 6)
+        self.assertTupleAlmostEquals(p2.toTuple(), (0, 1, 0), 6)
+
+        # test with a closed wire
+        w = Workplane().lineTo(0, 1).close().wire().val()
+
+        p0 = w.positionAt(0.0)
+        p1 = w.positionAt(0.5)
+        p2 = w.positionAt(1.0)
+
+        self.assertTupleAlmostEquals(p0.toTuple(), p2.toTuple(), 6)
+        self.assertTupleAlmostEquals(p1.toTuple(), (0, 1, 0), 6)
+
+    def testTangengAt(self):
+
+        pts = [(0, 0), (-1, 1), (-2, 0), (-1, 0)]
+
+        path = Workplane("XZ").spline(pts, tangents=((0, 1), (1, 0))).val()
+
+        self.assertTrue(path.tangentAt(0.5) == path.tangentAt(0.5))
+        self.assertFalse(path.tangentAt(0.5) == path.tangentAt(0.5, mode="length"))
