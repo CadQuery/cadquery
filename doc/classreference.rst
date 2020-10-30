@@ -30,11 +30,11 @@ Topological Classes
     Shape
     Vertex
     Edge
-    occ_impl.shapes.Mixin1D
+    cadquery.occ_impl.shapes.Mixin1D
     Wire
     Face
     Shell
-    occ_impl.shapes.Mixin3D
+    cadquery.occ_impl.shapes.Mixin3D
     Solid
     Compound
 
@@ -79,10 +79,10 @@ Class Details
    :show-inheritance: 
    :members:
 
-.. autoclass:: occ_impl.shapes.Mixin1D
+.. autoclass:: cadquery.occ_impl.shapes.Mixin1D
    :show-inheritance: 
    :members:
 
-.. autoclass:: occ_impl.shapes.Mixin3D
+.. autoclass:: cadquery.occ_impl.shapes.Mixin3D
    :show-inheritance: 
    :members:
