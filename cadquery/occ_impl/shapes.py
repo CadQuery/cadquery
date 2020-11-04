@@ -2370,6 +2370,7 @@ class Solid(Shape, Mixin3D):
         path: Union[Wire, Edge],
         makeSolid: bool = True,
         isFrenet: bool = False,
+        mode: Union[Vector, Wire, Edge, None] = None,
         transitionMode: Literal["transformed", "round", "right"] = "transformed",
     ) -> "Shape":
         """
@@ -2380,6 +2381,7 @@ class Solid(Shape, Mixin3D):
         :param path: The wire to sweep the face resulting from the wires over
         :param boolean makeSolid: return Solid or Shell (defualt True)
         :param boolean isFrenet: Frenet mode (default False)
+        :param mode: additional sweep mode parameters.
         :param transitionMode:
             handling of profile orientation at C1 path discontinuities.
             Possible values are {'transformed','round', 'right'} (default: 'right').
@@ -2393,7 +2395,15 @@ class Solid(Shape, Mixin3D):
         shapes = []
         for w in [outerWire] + innerWires:
             builder = BRepOffsetAPI_MakePipeShell(p.wrapped)
-            builder.SetMode(isFrenet)
+            
+            #handle sweep mode
+            if isinstance(mode,Vector):
+                builder.SetMode(gp_Ax2(path.startPoint().toPnt(), mode.toDir()))
+            elif isinstance(mode,(Wire,Edge)):
+                builder.SetMode(mode.wrapped, False)
+            else:
+                builder.SetMode(isFrenet)
+            
             builder.SetTransitionMode(cls._transModeDict[transitionMode])
             builder.Add(w.wrapped)
 
