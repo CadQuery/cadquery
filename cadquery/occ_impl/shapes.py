@@ -2395,17 +2395,27 @@ class Solid(Shape, Mixin3D):
         shapes = []
         for w in [outerWire] + innerWires:
             builder = BRepOffsetAPI_MakePipeShell(p.wrapped)
-            
-            #handle sweep mode
-            if isinstance(mode,Vector):
-                builder.SetMode(gp_Ax2(path.startPoint().toPnt(), mode.toDir()))
-            elif isinstance(mode,(Wire,Edge)):
+
+            translate = False
+            rotate = False
+
+            # handle sweep mode
+            if isinstance(mode, Vector):
+                ax = gp_Ax2()
+                ax.SetLocation(path.startPoint().toPnt())
+                ax.SetDirection(mode.toDir())
+                builder.SetMode(ax)
+                rotate = True
+            elif isinstance(mode, Wire):
                 builder.SetMode(mode.wrapped, False)
+            elif isinstance(mode, Edge):
+                builder.SetMode(Wire.assembleEdges((mode,)).wrapped, False)
             else:
                 builder.SetMode(isFrenet)
-            
+
             builder.SetTransitionMode(cls._transModeDict[transitionMode])
-            builder.Add(w.wrapped)
+
+            builder.Add(w.wrapped, translate, rotate)
 
             builder.Build()
             if makeSolid:
