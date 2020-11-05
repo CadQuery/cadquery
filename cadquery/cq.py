@@ -31,6 +31,7 @@ from typing import (
     Callable,
     List,
     cast,
+    Dict,
 )
 from typing_extensions import Literal
 
@@ -78,6 +79,7 @@ class CQContext(object):
     pendingEdges: List[Edge]
     firstPoint: Optional[Vector]
     tolerance: float
+    tags: Dict[str, "Workplane"]
 
     def __init__(self):
         self.pendingWires = (
@@ -3188,7 +3190,9 @@ class Workplane(object):
         if not multisection:
             wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
             for ws in wireSets:
-                thisObj = Solid.sweep(ws[0], ws[1:], p, makeSolid, isFrenet, transition)
+                thisObj = Solid.sweep(
+                    ws[0], ws[1:], p, makeSolid, isFrenet, None, transition
+                )
                 toFuse.append(thisObj)
         else:
             sections = self.ctx.pendingWires
