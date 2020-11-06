@@ -2777,6 +2777,8 @@ class Workplane(object):
         combine: bool = True,
         clean: bool = True,
         transition: Literal["right", "round", "transformed"] = "right",
+        normal: Optional[VectorLike] = None,
+        auxSpine: Optional["Workplane"] = None,
     ) -> "Workplane":
         """
         Use all un-extruded wires in the parent chain to create a swept solid.
@@ -2790,6 +2792,8 @@ class Workplane(object):
         :param transition:
             handling of profile orientation at C1 path discontinuities.
             Possible values are {'transformed','round', 'right'} (default: 'right').
+        :param normal: optional fixed normal for extrusion
+        :param auxSpine: a wire defining the binormal along the extrusion path
         :return: a CQ object with the resulting solid selected.
         """
 
@@ -2805,7 +2809,7 @@ class Workplane(object):
             )
 
         r = self._sweep(
-            path.wire(), multisection, makeSolid, isFrenet, transition
+            path.wire(), multisection, makeSolid, isFrenet, transition, normal, auxSpine
         )  # returns a Solid (or a compound if there were multiple)
         newS: "CQ"
         if combine:
@@ -3170,6 +3174,8 @@ class Workplane(object):
         makeSolid: bool = True,
         isFrenet: bool = False,
         transition: Literal["right", "round", "transformed"] = "right",
+        normal: Optional[VectorLike] = None,
+        auxSpine: Optional["Workplane"] = None,
     ) -> Compound:
         """
         Makes a swept solid from an existing set of pending wires.
@@ -3178,6 +3184,11 @@ class Workplane(object):
         :param boolean multisection:
             False to create multiple swept from wires on the chain along path
             True to create only one solid swept along path with shape following the list of wires on the chain
+        :param transition:
+            handling of profile orientation at C1 path discontinuities.
+            Possible values are {'transformed','round', 'right'} (default: 'right').
+        :param normal: optional fixed normal for extrusion
+        :param auxSpine: a wire defining the binormal along the extrusion path
         :return:a solid, suitable for boolean operations
         """
 
@@ -3187,16 +3198,25 @@ class Workplane(object):
         if not isinstance(p, (Wire, Edge)):
             raise ValueError("Wire or Edge instance required")
 
+        mode: Union[Vector, Wire, None] = None
+        if normal:
+            mode = Vector(normal)
+        elif auxSpine:
+            wire = auxSpine.wire().val()
+            if not isinstance(wire, Wire):
+                raise ValueError("Wire instance required")
+            mode = wire
+
         if not multisection:
             wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
             for ws in wireSets:
                 thisObj = Solid.sweep(
-                    ws[0], ws[1:], p, makeSolid, isFrenet, None, transition
+                    ws[0], ws[1:], p, makeSolid, isFrenet, mode, transition
                 )
                 toFuse.append(thisObj)
         else:
             sections = self.ctx.pendingWires
-            thisObj = Solid.sweep_multi(sections, p, makeSolid, isFrenet)
+            thisObj = Solid.sweep_multi(sections, p, makeSolid, isFrenet, mode)
             toFuse.append(thisObj)
 
         self.ctx.pendingWires = []

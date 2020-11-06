@@ -2362,6 +2362,28 @@ class Solid(Shape, Mixin3D):
         "right": BRepBuilderAPI_RightCorner,
     }
 
+    @staticmethod
+    def _setSweepMode(
+        builder: BRepOffsetAPI_MakePipeShell,
+        path: Union[Wire, Edge],
+        mode: Union[Vector, Wire, Edge],
+    ) -> bool:
+
+        rotate = False
+
+        if isinstance(mode, Vector):
+            ax = gp_Ax2()
+            ax.SetLocation(path.startPoint().toPnt())
+            ax.SetDirection(mode.toDir())
+            builder.SetMode(ax)
+            rotate = True
+        elif isinstance(mode, Wire):
+            builder.SetMode(mode.wrapped, False)
+        elif isinstance(mode, Edge):
+            builder.SetMode(Wire.assembleEdges((mode,)).wrapped, False)
+
+        return rotate
+
     @classmethod
     def sweep(
         cls: Type["Solid"],
@@ -2400,16 +2422,8 @@ class Solid(Shape, Mixin3D):
             rotate = False
 
             # handle sweep mode
-            if isinstance(mode, Vector):
-                ax = gp_Ax2()
-                ax.SetLocation(path.startPoint().toPnt())
-                ax.SetDirection(mode.toDir())
-                builder.SetMode(ax)
-                rotate = True
-            elif isinstance(mode, Wire):
-                builder.SetMode(mode.wrapped, False)
-            elif isinstance(mode, Edge):
-                builder.SetMode(Wire.assembleEdges((mode,)).wrapped, False)
+            if mode:
+                rotate = cls._setSweepMode(builder, path, mode)
             else:
                 builder.SetMode(isFrenet)
 
@@ -2437,12 +2451,14 @@ class Solid(Shape, Mixin3D):
         path: Union[Wire, Edge],
         makeSolid: bool = True,
         isFrenet: bool = False,
+        mode: Union[Vector, Wire, Edge, None] = None,
     ) -> "Solid":
         """
         Multi section sweep. Only single outer profile per section is allowed.
 
         :param profiles: list of profiles
         :param path: The wire to sweep the face resulting from the wires over
+        :param mode: additional sweep mode parameters.
         :return: a Solid object
         """
         if isinstance(path, Edge):
@@ -2452,10 +2468,17 @@ class Solid(Shape, Mixin3D):
 
         builder = BRepOffsetAPI_MakePipeShell(w)
 
-        for p in profiles:
-            builder.Add(p.wrapped)
+        translate = False
+        rotate = False
 
-        builder.SetMode(isFrenet)
+        if mode:
+            rotate = cls._setSweepMode(builder, path, mode)
+        else:
+            builder.SetMode(isFrenet)
+
+        for p in profiles:
+            builder.Add(p.wrapped, translate, rotate)
+
         builder.Build()
 
         if makeSolid:
