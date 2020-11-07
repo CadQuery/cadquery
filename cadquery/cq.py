@@ -3198,13 +3198,13 @@ class Workplane(object):
         if not isinstance(p, (Wire, Edge)):
             raise ValueError("Wire or Edge instance required")
 
-        mode: Union[Vector, Wire, None] = None
+        mode: Union[Vector, Edge, Wire, None] = None
         if normal:
             mode = Vector(normal)
         elif auxSpine:
-            wire = auxSpine.wire().val()
-            if not isinstance(wire, Wire):
-                raise ValueError("Wire instance required")
+            wire = auxSpine.val()
+            if not isinstance(wire, (Edge, Wire)):
+                raise ValueError("Wire or Edge instance required")
             mode = wire
 
         if not multisection:

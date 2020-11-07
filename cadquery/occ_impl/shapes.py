@@ -2362,8 +2362,9 @@ class Solid(Shape, Mixin3D):
         "right": BRepBuilderAPI_RightCorner,
     }
 
-    @staticmethod
+    @classmethod
     def _setSweepMode(
+        cls,
         builder: BRepOffsetAPI_MakePipeShell,
         path: Union[Wire, Edge],
         mode: Union[Vector, Wire, Edge],
@@ -2377,12 +2378,20 @@ class Solid(Shape, Mixin3D):
             ax.SetDirection(mode.toDir())
             builder.SetMode(ax)
             rotate = True
-        elif isinstance(mode, Wire):
-            builder.SetMode(mode.wrapped, False)
-        elif isinstance(mode, Edge):
-            builder.SetMode(Wire.assembleEdges((mode,)).wrapped, False)
+        elif isinstance(mode, (Wire, Edge)):
+            builder.SetMode(cls._toWire(mode).wrapped, False)
 
         return rotate
+
+    @staticmethod
+    def _toWire(p: Union[Edge, Wire]) -> Wire:
+
+        if isinstance(p, Edge):
+            rv = Wire.assembleEdges([p,])
+        else:
+            rv = p
+
+        return rv
 
     @classmethod
     def sweep(
@@ -2409,10 +2418,7 @@ class Solid(Shape, Mixin3D):
             Possible values are {'transformed','round', 'right'} (default: 'right').
         :return: a Solid object
         """
-        if isinstance(path, Edge):
-            p = Wire.assembleEdges([path,])
-        else:
-            p = path
+        p = cls._toWire(path)
 
         shapes = []
         for w in [outerWire] + innerWires:
