@@ -781,6 +781,12 @@ class TestCadQuery(BaseTest):
         self.assertEqual(6, result.faces().size())
         self.assertEqual(12, result.edges().size())
 
+        # Test fixed normal
+        result = Workplane().circle(0.5).sweep(path, normal=Vector(0, 0, 1))
+        self.assertTupleAlmostEquals(
+            result.faces(">Z").val().normalAt().toTuple(), (0, 0, 1), 6
+        )
+
         # Polyline path
         path = Workplane("XZ").polyline(pts)
 
