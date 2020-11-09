@@ -2379,7 +2379,7 @@ class Solid(Shape, Mixin3D):
             builder.SetMode(ax)
             rotate = True
         elif isinstance(mode, (Wire, Edge)):
-            builder.SetMode(cls._toWire(mode).wrapped, False)
+            builder.SetMode(cls._toWire(mode).wrapped, True)
 
         return rotate
 

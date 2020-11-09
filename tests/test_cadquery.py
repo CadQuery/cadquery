@@ -843,6 +843,22 @@ class TestCadQuery(BaseTest):
         self.assertEqual(3, result.faces().size())
         self.assertEqual(3, result.edges().size())
 
+        # Test aux spine
+        pts1 = [(0, 0), (20, 100)]
+        pts2 = [(0, 20, 0), (20, 0, 100)]
+
+        path = Workplane("YZ").spline(pts1, tangents=[(0, 1, 0), (0, 1, 0)])
+        aux_path = Workplane("XY").spline(pts2, tangents=[(0, 0, 1), (0, 0, 1)])
+
+        result = Workplane("XY").rect(10, 20).sweep(path, auxSpine=aux_path)
+        bottom = result.faces("<Z")
+        top = result.faces(">Z")
+
+        v1 = bottom.wires().val().tangentAt(0.0)
+        v2 = top.wires().val().tangentAt(0.0)
+
+        self.assertAlmostEqual(v1.getAngle(v2), math.pi / 4, 6)
+
     def testMultisectionSweep(self):
         """
         Tests the operation of sweeping along a list of wire(s) along a path
