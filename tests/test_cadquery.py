@@ -781,6 +781,12 @@ class TestCadQuery(BaseTest):
         self.assertEqual(6, result.faces().size())
         self.assertEqual(12, result.edges().size())
 
+        # Test fixed normal
+        result = Workplane().circle(0.5).sweep(path, normal=Vector(0, 0, 1))
+        self.assertTupleAlmostEquals(
+            result.faces(">Z").val().normalAt().toTuple(), (0, 0, 1), 6
+        )
+
         # Polyline path
         path = Workplane("XZ").polyline(pts)
 
@@ -836,6 +842,30 @@ class TestCadQuery(BaseTest):
         result = Workplane("XY").circle(0.1).sweep(path)
         self.assertEqual(3, result.faces().size())
         self.assertEqual(3, result.edges().size())
+
+        # Test aux spine
+        pts1 = [(0, 0), (20, 100)]
+        pts2 = [(0, 20, 0), (20, 0, 100)]
+
+        path = Workplane("YZ").spline(pts1, tangents=[(0, 1, 0), (0, 1, 0)])
+        aux_path = Workplane("XY").spline(pts2, tangents=[(0, 0, 1), (0, 0, 1)])
+
+        result = Workplane("XY").rect(10, 20).sweep(path, auxSpine=aux_path)
+        bottom = result.faces("<Z")
+        top = result.faces(">Z")
+
+        v1 = bottom.wires().val().tangentAt(0.0)
+        v2 = top.wires().val().tangentAt(0.0)
+
+        self.assertAlmostEqual(v1.getAngle(v2), math.pi / 4, 6)
+
+        # Test aux spine invalid input handling
+        with raises(ValueError):
+            result = (
+                Workplane("XY")
+                .rect(10, 20)
+                .sweep(path, auxSpine=Workplane().box(1, 1, 1))
+            )
 
     def testMultisectionSweep(self):
         """
@@ -918,6 +948,30 @@ class TestCadQuery(BaseTest):
             .workplane(offset=-5)
             .circle(1.0)
             .sweep(path, multisection=True)
+        )
+
+        # Test multisection with normal
+        pts = [(0, 0), (20, 100)]
+
+        path = Workplane("YZ").spline(pts, tangents=[(0, 1, 0), (0, 1, 0)])
+        normalSweep = (
+            Workplane()
+            .rect(10, 10)
+            .workplane(offset=100)
+            .rect(10, 20)
+            .sweep(path, multisection=True, normal=(0, 1, 1))
+        )
+
+        self.assertTupleAlmostEquals(
+            normalSweep.faces("<Z").val().normalAt().toTuple(),
+            Vector(0, -1, -1).normalized().toTuple(),
+            6,
+        )
+
+        self.assertTupleAlmostEquals(
+            normalSweep.faces(">Z").val().normalAt().toTuple(),
+            Vector(0, 1, 1).normalized().toTuple(),
+            6,
         )
 
         # Test and saveModel
