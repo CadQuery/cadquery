@@ -2784,14 +2784,10 @@ class Workplane(object):
         Use all un-extruded wires in the parent chain to create a swept solid.
 
         :param path: A wire along which the pending wires will be swept
-        :param boolean sweepAlongWires:
-            False to create multiple swept from wires on the chain along path
-            True to create only one solid swept along path with shape following the list of wires on the chain
+        :param boolean multiSection: False to create multiple swept from wires on the chain along path. True to create only one solid swept along path with shape following the list of wires on the chain
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param transition:
-            handling of profile orientation at C1 path discontinuities.
-            Possible values are {'transformed','round', 'right'} (default: 'right').
+        :param transition: handling of profile orientation at C1 path discontinuities. Possible values are {'transformed','round', 'right'} (default: 'right').
         :param normal: optional fixed normal for extrusion
         :param auxSpine: a wire defining the binormal along the extrusion path
         :return: a CQ object with the resulting solid selected.
@@ -3189,7 +3185,7 @@ class Workplane(object):
             Possible values are {'transformed','round', 'right'} (default: 'right').
         :param normal: optional fixed normal for extrusion
         :param auxSpine: a wire defining the binormal along the extrusion path
-        :return:a solid, suitable for boolean operations
+        :return: a solid, suitable for boolean operations
         """
 
         toFuse = []
