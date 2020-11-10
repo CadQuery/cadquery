@@ -859,6 +859,14 @@ class TestCadQuery(BaseTest):
 
         self.assertAlmostEqual(v1.getAngle(v2), math.pi / 4, 6)
 
+        # Test aux spine invalid input handling
+        with raises(ValueError):
+            result = (
+                Workplane("XY")
+                .rect(10, 20)
+                .sweep(path, auxSpine=Workplane().box(1, 1, 1))
+            )
+
     def testMultisectionSweep(self):
         """
         Tests the operation of sweeping along a list of wire(s) along a path
@@ -940,6 +948,30 @@ class TestCadQuery(BaseTest):
             .workplane(offset=-5)
             .circle(1.0)
             .sweep(path, multisection=True)
+        )
+
+        # Test multisection with normal
+        pts = [(0, 0), (20, 100)]
+
+        path = Workplane("YZ").spline(pts, tangents=[(0, 1, 0), (0, 1, 0)])
+        normalSweep = (
+            Workplane()
+            .rect(10, 10)
+            .workplane(offset=100)
+            .rect(10, 20)
+            .sweep(path, multisection=True, normal=(0, 1, 1))
+        )
+
+        self.assertTupleAlmostEquals(
+            normalSweep.faces("<Z").val().normalAt().toTuple(),
+            Vector(0, -1, -1).normalized().toTuple(),
+            6,
+        )
+
+        self.assertTupleAlmostEquals(
+            normalSweep.faces(">Z").val().normalAt().toTuple(),
+            Vector(0, 1, 1).normalized().toTuple(),
+            6,
         )
 
         # Test and saveModel
