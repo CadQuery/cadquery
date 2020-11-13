@@ -6,7 +6,7 @@ channels:
 dependencies:
   - python>=3.6
   - ipython
-  - ocp
+  - ocp=7.4
   - pyparsing
   - sphinx=3.2.1
   - sphinx_rtd_theme
