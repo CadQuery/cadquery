@@ -190,7 +190,7 @@ from OCP.GeomFill import (
 )
 
 # for catching exceptions
-from OCP.Standard import Standard_NoSuchObject
+from OCP.Standard import Standard_NoSuchObject, Standard_Failure
 
 from math import pi, sqrt
 import warnings
@@ -1069,7 +1069,7 @@ class Mixin1D(object):
         geom = self._geomAdaptor()
         try:
             circ = geom.Circle()
-        except Standard_NoSuchObject as e:
+        except (Standard_NoSuchObject, Standard_Failure) as e:
             raise ValueError("Shape could not be reduced to a circle") from e
         return circ.Radius()
 
