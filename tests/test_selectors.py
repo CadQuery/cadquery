@@ -391,6 +391,84 @@ class TestCQSelectors(BaseTest):
         ).vals()
         self.assertEqual(1, len(fl))
 
+    def testRadiusNthSelector(self):
+        part = (
+            Workplane()
+            .box(10, 10, 1)
+            .edges(">(1, 1, 0) and |Z")
+            .fillet(1)
+            .edges(">(-1, 1, 0) and |Z")
+            .fillet(1)
+            .edges(">(-1, -1, 0) and |Z")
+            .fillet(2)
+            .edges(">(1, -1, 0) and |Z")
+            .fillet(3)
+            .faces(">Z")
+        )
+        # smallest radius is 1.0
+        self.assertAlmostEqual(
+            part.edges(selectors.RadiusNthSelector(0)).val().radius(), 1.0
+        )
+        # there are two edges with the smallest radius
+        self.assertEqual(len(part.edges(selectors.RadiusNthSelector(0)).vals()), 2)
+        # next radius is 2.0
+        self.assertAlmostEqual(
+            part.edges(selectors.RadiusNthSelector(1)).val().radius(), 2.0
+        )
+        # largest radius is 3.0
+        self.assertAlmostEqual(
+            part.edges(selectors.RadiusNthSelector(-1)).val().radius(), 3.0
+        )
+        # accessing index 3 should be an IndexError
+        with self.assertRaises(IndexError):
+            part.edges(selectors.RadiusNthSelector(3))
+        # reversed
+        self.assertAlmostEqual(
+            part.edges(selectors.RadiusNthSelector(0, directionMax=False))
+            .val()
+            .radius(),
+            3.0,
+        )
+
+        # test the selector on wires
+        wire_circles = (
+            Workplane()
+            .circle(2)
+            .moveTo(10, 0)
+            .circle(2)
+            .moveTo(20, 0)
+            .circle(4)
+            .consolidateWires()
+        )
+        self.assertEqual(
+            len(wire_circles.wires(selectors.RadiusNthSelector(0)).vals()), 2
+        )
+        self.assertEqual(
+            len(wire_circles.wires(selectors.RadiusNthSelector(1)).vals()), 1
+        )
+        self.assertAlmostEqual(
+            wire_circles.wires(selectors.RadiusNthSelector(0)).val().radius(), 2
+        )
+        self.assertAlmostEqual(
+            wire_circles.wires(selectors.RadiusNthSelector(1)).val().radius(), 4
+        )
+
+        # a polygon with rounded corners has a radius, according to OCCT
+        loop_wire = Wire.makePolygon(
+            [Vector(-10, 0, 0), Vector(0, 10, 0), Vector(10, 0, 0),]
+        )
+        loop_workplane = (
+            Workplane().add(loop_wire.offset2D(1)).add(loop_wire.offset2D(2))
+        )
+        self.assertAlmostEqual(
+            loop_workplane.wires(selectors.RadiusNthSelector(0)).val().radius(), 1.0
+        )
+        self.assertAlmostEqual(
+            loop_workplane.wires(selectors.RadiusNthSelector(1)).val().radius(), 2.0
+        )
+        with self.assertRaises(IndexError):
+            loop_workplane.wires(selectors.RadiusNthSelector(2))
+
     def testAndSelector(self):
         c = CQ(makeUnitCube())
 
