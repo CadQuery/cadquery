@@ -812,12 +812,19 @@ class Shape(object):
 
         return self._bool_op((self,), toIntersect, intersect_op)
 
+    def mesh(self, tolerance: float, angularTolerance: float = 0.1):
+        """
+        Generate traingulation if none exists.
+        """
+
+        if not BRepTools.Triangulation_s(self.wrapped, tolerance):
+            BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
+
     def tessellate(
         self, tolerance: float, angularTolerance: float = 0.1
     ) -> Tuple[List[Vector], List[Tuple[int, int, int]]]:
 
-        if not BRepTools.Triangulation_s(self.wrapped, tolerance):
-            BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
+        self.mesh(tolerance, angularTolerance)
 
         vertices: List[Vector] = []
         triangles: List[Tuple[int, int, int]] = []

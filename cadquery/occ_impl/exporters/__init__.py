@@ -5,6 +5,8 @@ import io as StringIO
 from typing import IO, Optional, Union, cast
 from typing_extensions import Literal
 
+from OCP.VrmlAPI import VrmlAPI
+
 from ...cq import Workplane
 from ...utils import deprecate
 from ..shapes import Shape
@@ -23,9 +25,10 @@ class ExportTypes:
     SVG = "SVG"
     TJS = "TJS"
     DXF = "DXF"
+    VRML = "VRML"
 
 
-ExportLiterals = Literal["STL", "STEP", "AMF", "SVG", "TJS", "DXF"]
+ExportLiterals = Literal["STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML"]
 
 
 def export(
@@ -97,6 +100,10 @@ def export(
 
     elif exportType == ExportTypes.STL:
         shape.exportStl(fname, tolerance, angularTolerance)
+
+    elif exportType == ExportTypes.VRML:
+        shape.mesh(tolerance, angularTolerance)
+        VrmlAPI.Write_s(shape.wrapped, fname)
 
     else:
         raise ValueError("Unknown export type")
