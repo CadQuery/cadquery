@@ -75,6 +75,9 @@ class TestExporters(BaseTest):
 
         assert res.startswith("#VRML V2.0")
 
+        # export again to trigger all paths in the code
+        exporters.export(self._box(), "out.vrml")
+
     def testDXF(self):
 
         exporters.export(self._box().section(), "out.dxf")
