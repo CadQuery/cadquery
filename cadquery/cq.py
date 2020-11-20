@@ -91,6 +91,7 @@ class CQContext(object):
         # Used to determine how to behave when close() is called
         self.firstPoint = None
         self.tolerance = 0.0001  # user specified tolerance
+        self.tags = {}
 
 
 class Workplane(object):
@@ -195,6 +196,8 @@ class Workplane(object):
         :returns: self, a cq object with tag applied
         """
         self._tag = name
+        self.ctx.tags[name] = self
+
         return self
 
     def _collectProperty(self, propName: str) -> List[CQObject]:
@@ -390,15 +393,15 @@ class Workplane(object):
 
         :param name: the tag to search for
         :type name: string
-        :returns: the first CQ object in the parent chain with tag == name
-        :raises: ValueError if no object tagged name in the chain
+        :returns: the a CQ object with tag == name
+        :raises: ValueError if no object tagged name
         """
-        if self._tag == name:
-            return self
-        if self.parent is None:
-            raise ValueError("No CQ object named {} in chain".format(name))
-        else:
-            return self.parent._getTagged(name)
+        rv = self.ctx.tags.get(name)
+
+        if rv is None:
+            raise ValueError(f"No CQ object named {name} in chain")
+
+        return rv
 
     def toOCC(self) -> Any:
         """
