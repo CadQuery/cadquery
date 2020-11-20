@@ -188,6 +188,10 @@ from OCP.GeomFill import (
     GeomFill_CorrectedFrenet,
     GeomFill_TrihedronLaw,
 )
+
+# for catching exceptions
+from OCP.Standard import Standard_NoSuchObject, Standard_Failure
+
 from math import pi, sqrt
 import warnings
 
@@ -1059,6 +1063,22 @@ class Mixin1D(object):
     def Length(self: Mixin1DProtocol) -> float:
 
         return GCPnts_AbscissaPoint.Length_s(self._geomAdaptor())
+
+    def radius(self: Mixin1DProtocol) -> float:
+        """
+        Calculate the radius.
+
+        Note that when applied to a Wire, the radius is simply the radius of the first edge.
+
+        :return: radius
+        :raises ValueError: if kernel can not reduce the shape to a circular edge
+        """
+        geom = self._geomAdaptor()
+        try:
+            circ = geom.Circle()
+        except (Standard_NoSuchObject, Standard_Failure) as e:
+            raise ValueError("Shape could not be reduced to a circle") from e
+        return circ.Radius()
 
     def IsClosed(self: Mixin1DProtocol) -> bool:
 
