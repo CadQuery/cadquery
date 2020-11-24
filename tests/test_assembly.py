@@ -24,9 +24,15 @@ def simple_assy():
 @pytest.fixture
 def nested_assy():
 
-    b1 = cq.Workplane().box(1, 1, 1)
-    b2 = cq.Workplane().box(1, 1, 1)
-    b3 = cq.Workplane().pushPoints([(-2, 0), (2, 0)]).box(1, 1, 0.5)
+    b1 = cq.Workplane().box(1, 1, 1).faces("<Z").tag("top_face").end()
+    b2 = cq.Workplane().box(1, 1, 1).faces("<Z").tag("bottom_face").end()
+    b3 = (
+        cq.Workplane()
+        .pushPoints([(-2, 0), (2, 0)])
+        .tag("pts")
+        .box(1, 1, 0.5)
+        .tag("boxes")
+    )
 
     assy = cq.Assembly(b1, loc=cq.Location(cq.Vector(0, 0, 0)), name="TOP")
     assy2 = cq.Assembly(b2, loc=cq.Location(cq.Vector(0, 4, 0)), name="SECOND")
@@ -188,3 +194,15 @@ def test_constrain(simple_assy, nested_assy):
         .TranslationPart()
         .IsEqual(gp_XYZ(2, -4, 0.75), 1e-6)
     )
+
+
+def test_constrain_with_tags(nested_assy):
+
+    nested_assy.add(None, name="dummy")
+    nested_assy.constrain("TOP?top_face", "BOTTOM", "Plane")
+
+    assert len(nested_assy.constraints) == 1
+
+    # test selection of a non-shape object
+    with pytest.raises(ValueError):
+        nested_assy.constrain("BOTTOM ? pts", "dummy", "Plane")
