@@ -29,8 +29,8 @@ def _define_grammar():
     Separator = Literal("@").suppress()
     TagSeparator = Literal("?").suppress()
 
-    Name = Word(alphas, alphanums).setResultsName("name")
-    Tag = Word(alphas, alphanums).setResultsName("tag")
+    Name = Word(alphas, alphanums + "_").setResultsName("name")
+    Tag = Word(alphas, alphanums + "_").setResultsName("tag")
     Selector = _selector_grammar.setResultsName("selector")
 
     SelectorType = (
