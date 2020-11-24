@@ -260,9 +260,12 @@ class Assembly(object):
         
             name[?tag][@kind@args]
             
-        for example:
+        valid example include:
         
-            obj_name@faces@>Z
+            obj_name @ faces @ >Z
+            obj_name?tag1@faces@>Z          
+            obj_name ? tag
+            obj_name
         
         """
 
