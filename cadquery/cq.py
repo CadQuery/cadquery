@@ -393,7 +393,7 @@ class Workplane(object):
 
         :param name: the tag to search for
         :type name: string
-        :returns: the a CQ object with tag == name
+        :returns: the CQ object with tag == name
         :raises: ValueError if no object tagged name
         """
         rv = self.ctx.tags.get(name)
