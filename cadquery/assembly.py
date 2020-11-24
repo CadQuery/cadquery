@@ -26,16 +26,23 @@ def _define_grammar():
 
     from pyparsing import Literal as Literal, Word, Optional, alphas, alphanums
 
-    Separator = Literal('@').suppress()
-    TagSeparator = Literal('?').suppress()
-    
-    Name = Word(alphas,alphanums).setResultsName('name')
-    Tag = Word(alphas,alphanums).setResultsName('tag')
-    Selector = _selector_grammar.setResultsName('selector')
-    
-    SelectorType = (Literal("solids") | Literal("faces") | Literal("edges") | Literal("vertices")).setResultsName('selector_kind')
-    
-    return Name + Optional( TagSeparator + Tag) + Optional( Separator + SelectorType + Separator + Selector)
+    Separator = Literal("@").suppress()
+    TagSeparator = Literal("?").suppress()
+
+    Name = Word(alphas, alphanums).setResultsName("name")
+    Tag = Word(alphas, alphanums).setResultsName("tag")
+    Selector = _selector_grammar.setResultsName("selector")
+
+    SelectorType = (
+        Literal("solids") | Literal("faces") | Literal("edges") | Literal("vertices")
+    ).setResultsName("selector_kind")
+
+    return (
+        Name
+        + Optional(TagSeparator + Tag)
+        + Optional(Separator + SelectorType + Separator + Selector)
+    )
+
 
 _grammar = _define_grammar()
 
@@ -263,8 +270,9 @@ class Assembly(object):
         res: Workplane
 
         query = _grammar.parseString(q, True)
+        name: str = query.name
 
-        obj = self.objects[query.name].obj
+        obj = self.objects[name].obj
 
         if isinstance(obj, Workplane) and query.tag:
             tmp = obj.ctx.tags[query.tag]
@@ -278,7 +286,9 @@ class Assembly(object):
         else:
             res = tmp
 
-        return query.name, res.val() if isinstance(res.val(), Shape) else None
+        val = res.val()
+
+        return name, val if isinstance(val, Shape) else None
 
     def _subloc(self, name: str) -> Tuple[Location, str]:
         """
