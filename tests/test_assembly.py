@@ -198,10 +198,11 @@ def test_constrain(simple_assy, nested_assy):
 
 def test_constrain_with_tags(nested_assy):
 
+    nested_assy.add(None, name="dummy")
     nested_assy.constrain("TOP?top_face", "BOTTOM", "Plane")
 
     assert len(nested_assy.constraints) == 1
 
     # test selection of a non-shape object
     with pytest.raises(ValueError):
-        nested_assy.constrain("BOTTOM ? pts", "SECOND")
+        nested_assy.constrain("BOTTOM ? pts", "dummy", "Plane")
