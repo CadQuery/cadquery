@@ -14,10 +14,30 @@ from .occ_impl.solver import (
 )
 from .occ_impl.exporters.assembly import exportAssembly, exportCAF
 
+from .selectors import _grammar as _selector_grammar
 
+# type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
 ConstraintKinds = Literal["Plane", "Point", "Axis"]
 ExportLiterals = Literal["STEP", "XML"]
+
+# enitity selector grammar definiiton
+def _define_grammar():
+
+    from pyparsing import Literal as Literal, Word, Optional, alphas, alphanums
+
+    Separator = Literal('@').suppress()
+    TagSeparator = Literal('?').suppress()
+    
+    Name = Word(alphas,alphanums).setResultsName('name')
+    Tag = Word(alphas,alphanums).setResultsName('tag')
+    Selector = _selector_grammar.setResultsName('selector')
+    
+    SelectorType = (Literal("solids") | Literal("faces") | Literal("edges") | Literal("vertices")).setResultsName('selector_kind')
+    
+    return Name + Optional( TagSeparator + Tag) + Optional( Separator + SelectorType + Separator + Selector)
+
+_grammar = _define_grammar()
 
 
 class Constraint(object):
@@ -231,7 +251,7 @@ class Assembly(object):
         Execute a selector query on the assembly. 
         The query is expected to be in the following format:
         
-            name@kind@args
+            name[?tag][@kind@args]
             
         for example:
         
@@ -239,16 +259,26 @@ class Assembly(object):
         
         """
 
-        name, kind, arg = q.split("@")
+        tmp: Workplane
+        res: Workplane
 
-        tmp = Workplane()
-        obj = self.objects[name].obj
+        query = _grammar.parseString(q, True)
 
-        if isinstance(obj, (Workplane, Shape)):
-            tmp.add(obj)
-            res = getattr(tmp, kind)(arg)
+        obj = self.objects[query.name].obj
 
-        return name, res.val() if isinstance(res.val(), Shape) else None
+        if isinstance(obj, Workplane) and query.tag:
+            tmp = obj.ctx.tags[query.tag]
+        elif isinstance(obj, (Workplane, Shape)):
+            tmp = Workplane().add(obj)
+        else:
+            raise ValueError("Workplane or Shape required to define a constraint")
+
+        if query.selector:
+            res = getattr(tmp, query.selector_kind)(query.selector)
+        else:
+            res = tmp
+
+        return query.name, res.val() if isinstance(res.val(), Shape) else None
 
     def _subloc(self, name: str) -> Tuple[Location, str]:
         """
