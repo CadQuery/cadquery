@@ -3178,6 +3178,9 @@ class TestCadQuery(BaseTest):
         result = result._getTagged("2 solids")
         self.assertEqual(len(result.objects), 2)
 
+        with self.assertRaises(ValueError):
+            result = result._getTagged("3 solids")
+
     def testCopyWorkplane(self):
 
         obj0 = Workplane("XY").box(1, 1, 10).faces(">Z").workplane()
