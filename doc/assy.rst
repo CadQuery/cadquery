@@ -72,12 +72,16 @@ Next we want to define functions generating the assembly components based on the
         return rv
     
     
-    def make_panel(w, h, t):
+    def make_panel(w, h, t, cutout):
     
         rv = (
             cq.Workplane("XZ")
             .rect(w, h)
             .extrude(t)
+            .faces(">Y")
+            .vertices()
+            .rect(2*cutout,2*cutout)
+            .cutThruAll()
             .faces("<Y")
             .workplane()
             .pushPoints([(-w / 3, HANDLE_L / 2), (-w / 3, -HANDLE_L / 2)])
@@ -165,7 +169,7 @@ Then we want to define all the constraints
         .add(make_connector(), name="con_bl", color=cq.Color("black"))
         .add(make_connector(), name="con_br", color=cq.Color("black"))
         .add(
-            make_panel(W + SLOT_D, H + SLOT_D, PANEL_T),
+            make_panel(W + SLOT_D, H + SLOT_D, PANEL_T, SLOT_D),
             name="panel",
             color=cq.Color(0, 0, 1, 0.2),
         )
@@ -193,7 +197,7 @@ Below is the complete code including the final solve step.
     
     PROFILE = cq.importers.importDXF("vslot-2020_1.dxf").wires()
     
-    SLOT_D = 5
+    SLOT_D = 6
     PANEL_T = 3
     
     HANDLE_D = 20
@@ -226,12 +230,16 @@ Below is the complete code including the final solve step.
         return rv
     
     
-    def make_panel(w, h, t):
+    def make_panel(w, h, t, cutout):
     
         rv = (
             cq.Workplane("XZ")
             .rect(w, h)
             .extrude(t)
+            .faces(">Y")
+            .vertices()
+            .rect(2*cutout,2*cutout)
+            .cutThruAll()
             .faces("<Y")
             .workplane()
             .pushPoints([(-w / 3, HANDLE_L / 2), (-w / 3, -HANDLE_L / 2)])
@@ -281,7 +289,7 @@ Below is the complete code including the final solve step.
         .add(make_connector(), name="con_bl", color=cq.Color("black"))
         .add(make_connector(), name="con_br", color=cq.Color("black"))
         .add(
-            make_panel(W + SLOT_D, H + SLOT_D, PANEL_T),
+            make_panel(W + 2*SLOT_D, H + 2*SLOT_D, PANEL_T, SLOT_D),
             name="panel",
             color=cq.Color(0, 0, 1, 0.2),
         )
