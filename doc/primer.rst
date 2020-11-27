@@ -175,15 +175,15 @@ Simple models can be combined into complex, possibly nested, assemblies.
 A simple example could look as follows::
 
     from cadquery import *
-    
+
     w = 10
     d = 10
     h = 10
-    
+
     part1 = Workplane().box(2*w,2*d,h)
     part2 = Workplane().box(w,d,2*h)
     part3 = Workplane().box(w,d,3*h)
-    
+
     assy = (
         Assembly(part1, loc=Location(Vector(-w,0,h/2)))
         .add(part2, loc=Location(Vector(1.5*w,-.5*d,h/2)), color=Color(0,0,1,0.5))
@@ -195,3 +195,74 @@ Resulting in:
 ..  image:: _static/simple_assy.png
 
 Note that the locations of the children parts are defined with respect to their parents - in the above example ``part3`` will be located at (-5,-5,20) in the global coordinate system. Assemblies with different colors can be created this way and exported to STEP or the native OCCT xml format.
+
+You can browse assembly related methods here: :ref:`assembly`.
+
+Assemblies with constraints
+---------------------------
+
+Sometimes it is not desirable to define the component positions explicitly but rather use
+constraints to obtain a fully parametric assembly. This can be achieved in the following way::
+
+    from cadquery import *
+
+    w = 10
+    d = 10
+    h = 10
+
+    part1 = Workplane().box(2*w,2*d,h)
+    part2 = Workplane().box(w,d,2*h)
+    part3 = Workplane().box(w,d,3*h)
+
+    assy = (
+        Assembly(part1, name='part1',loc=Location(Vector(-w,0,h/2)))
+        .add(part2, name='part2',color=Color(0,0,1,0.5))
+        .add(part3, name='part3',color=Color("red"))
+        .constrain('part1@faces@>Z','part3@faces@<Z','Axis')
+        .constrain('part1@faces@>Z','part2@faces@<Z','Axis')
+        .constrain('part1@faces@>Y','part3@faces@<Y','Axis')
+        .constrain('part1@faces@>Y','part2@faces@<Y','Axis')
+        .constrain('part1@vertices@>(-1,-1,1)','part3@vertices@>(-1,-1,-1)','Point')
+        .constrain('part1@vertices@>(1,-1,-1)','part2@vertices@>(-1,-1,-1)','Point')
+        .solve()
+)
+
+This code results in identical object as one from the previous section. The added benefit is that with changing parameters w,d,h
+the final locations will be calculated automatically. It is admittedly dense and can be made clearer using tags.
+Tags can be directly referenced when constructing the constraints::
+
+    from cadquery import *
+
+    w = 10
+    d = 10
+    h = 10
+
+    part1 = Workplane().box(2*w,2*d,h)
+    part2 = Workplane().box(w,d,2*h)
+    part3 = Workplane().box(w,d,3*h)
+
+    part1.faces('>Z').edges('<X').vertices('<Y').tag('pt1')
+    part1.faces('>X').edges('<Z').vertices('<Y').tag('pt2')
+    part3.faces('<Z').edges('<X').vertices('<Y').tag('pt1')
+    part2.faces('<X').edges('<Z').vertices('<Y').tag('pt2')
+
+    assy1 = (
+        Assembly(part1, name='part1',loc=Location(Vector(-w,0,h/2)))
+        .add(part2, name='part2',color=Color(0,0,1,0.5))
+        .add(part3, name='part3',color=Color("red"))
+        .constrain('part1@faces@>Z','part3@faces@<Z','Axis')
+        .constrain('part1@faces@>Z','part2@faces@<Z','Axis')
+        .constrain('part1@faces@>Y','part3@faces@<Y','Axis')
+        .constrain('part1@faces@>Y','part2@faces@<Y','Axis')
+        .constrain('part1?pt1','part3?pt1','Point')
+        .constrain('part1?pt2','part2?pt2','Point')
+        .solve()
+    )
+
+The following constraints are currently implemented:
+
+   :Axis: two normal vectors are anti-coincident or the cosine of the angle between them is equal to the specified value. Can be defined for all entities with consistent normal vector - planar faces, wired and edges.
+   :Point: two points are coincident or separated by a specified distance. Can be defined for all entities, center of mass is used for lines, faces, solids and the vertex position for vertices.
+   :Plane: combination of :Axis: and :Point: constraints.
+
+For a more elaborate assembly example see :ref:`assy_tutorial`.

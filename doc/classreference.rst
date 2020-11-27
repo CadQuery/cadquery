@@ -61,7 +61,6 @@ Selector Classes
     ParallelDirSelector
     DirectionSelector
     DirectionNthSelector
-    RadiusNthSelector
     PerpendicularDirSelector
     TypeSelector
     DirectionMinMaxSelector
