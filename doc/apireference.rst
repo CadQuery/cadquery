@@ -53,7 +53,6 @@ All 2-d operations require a **Workplane** object to be created.
 	Workplane.sagittaArc
 	Workplane.radiusArc
     Workplane.tangentArcPoint
-	Workplane.rotateAndCopy
 	Workplane.mirrorY
 	Workplane.mirrorX
 	Workplane.wire
@@ -166,7 +165,7 @@ Selectors
 Objects that filter and select CAD objects. Selectors are used to select existing geometry
 as a basis for futher operations.
 
-.. currentmodule:: cadquery
+.. currentmodule:: cadquery.selectors
 
 .. autosummary::
 
@@ -185,6 +184,8 @@ as a basis for futher operations.
         SubtractSelector
         InverseSelector
         StringSyntaxSelector
+
+.. _assembly:
         
 Assemblies
 ----------
@@ -199,5 +200,6 @@ Workplane and Shape objects can be connected together into assemblies
         Assembly.add
         Assembly.save
         Assembly.constrain
+        Assembly.solve
         Constraint
         Color
