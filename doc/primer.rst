@@ -265,4 +265,4 @@ The following constraints are currently implemented:
    :Point: two points are coincident or separated by a specified distance. Can be defined for all entities, center of mass is used for lines, faces, solids and the vertex position for vertices.
    :Plane: combination of :Axis: and :Point: constraints.
 
-For a more elaborate assembly example see :ref:`assy_tutorial`.
+For a more elaborate assembly example see :ref:`assytutorial`.
