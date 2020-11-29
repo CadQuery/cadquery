@@ -166,7 +166,6 @@ Objects that filter and select CAD objects. Selectors are used to select existin
 as a basis for futher operations.
 
 .. currentmodule:: cadquery.selectors
-
 .. autosummary::
 
         NearestToPointSelector
@@ -194,7 +193,6 @@ Assemblies
 Workplane and Shape objects can be connected together into assemblies
 
 .. currentmodule:: cadquery
-
 .. autosummary::
 
         Assembly
