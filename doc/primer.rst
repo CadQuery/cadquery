@@ -261,7 +261,7 @@ Tags can be directly referenced when constructing the constraints::
 
 The following constraints are currently implemented:
 
-   :Axis: two normal vectors are anti-coincident or the cosine of the angle between them is equal to the specified value. Can be defined for all entities with consistent normal vector - planar faces, wired and edges.
+   :Axis: two normal vectors are anti-coincident or the cosine of the angle between them is equal to the specified value. Can be defined for all entities with consistent normal vector - planar faces, wires and edges.
    :Point: two points are coincident or separated by a specified distance. Can be defined for all entities, center of mass is used for lines, faces, solids and the vertex position for vertices.
    :Plane: combination of :Axis: and :Point: constraints.
 
