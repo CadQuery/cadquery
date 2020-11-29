@@ -636,7 +636,7 @@ class Workplane(object):
         """
         return self.newObject([self.objects[-1]])
 
-    def end(self, n: int=1) -> "Workplane":
+    def end(self, n: int = 1) -> "Workplane":
         """
         Return the nth parent of this CQ element
         :param n: number of ancestor to return (default: 1)
@@ -651,14 +651,14 @@ class Workplane(object):
 
             CQ(obj).faces("+Z")
         """
-        
+
         rv = self
         for _ in range(n):
-          if rv.parent:
-              rv = rv.parent
-          else:
-              raise ValueError("Cannot End the chain-- no parents!")
-              
+            if rv.parent:
+                rv = rv.parent
+            else:
+                raise ValueError("Cannot End the chain-- no parents!")
+
         return rv
 
     def _findType(self, types, searchStack=True, searchParents=True):
