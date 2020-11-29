@@ -225,7 +225,7 @@ constraints to obtain a fully parametric assembly. This can be achieved in the f
         .constrain('part1@vertices@>(-1,-1,1)','part3@vertices@>(-1,-1,-1)','Point')
         .constrain('part1@vertices@>(1,-1,-1)','part2@vertices@>(-1,-1,-1)','Point')
         .solve()
-)
+    )
 
 This code results in identical object as one from the previous section. The added benefit is that with changing parameters w,d,h
 the final locations will be calculated automatically. It is admittedly dense and can be made clearer using tags.
