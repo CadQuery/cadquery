@@ -152,3 +152,75 @@ class TestWorkplanes(BaseTest):
         self.assertTupleAlmostEquals(p.zDir.toTuple(), xInvAxis_.toTuple(), 4)
         self.assertTupleAlmostEquals(p.xDir.toTuple(), zAxis_.toTuple(), 4)
         self.assertTupleAlmostEquals(p.yDir.toTuple(), yAxis_.toTuple(), 4)
+
+    def test_mirror(self):
+        """Create a unit box and mirror it so that it doubles in size"""
+        b2 = Workplane().box(1, 1, 1)
+        b2 = b2.mirror("XY", (0, 0, .5), union=True)
+        bbBox = b2.findSolid().BoundingBox()
+        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1., 1., 2])
+
+    def test_mirror_axis(self):
+        """Create a unit box and mirror it so that it doubles in size"""
+        b2 = Workplane().box(1, 1, 1)
+        b2 = b2.mirror((0, 0, 1), (0, 0, .5), union=True)
+        bbBox = b2.findSolid().BoundingBox()
+        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1., 1., 2])
+
+    def test_mirror_workplane(self):
+        """Create a unit box and mirror it so that it doubles in size"""
+        b2 = Workplane().box(1, 1, 1)
+
+        # double in Z plane
+        b2 = b2.mirror(b2.faces(">Z"), union=True)
+        bbBox = b2.findSolid().BoundingBox()
+        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1., 1., 2])
+
+        # double in Y plane
+        b2 = b2.mirror(b2.faces(">Y"), union=True)
+        bbBox = b2.findSolid().BoundingBox()
+        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1., 2., 2])
+
+        # double in X plane
+        b2 = b2.mirror(b2.faces(">X"), union=True)
+        bbBox = b2.findSolid().BoundingBox()
+        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [2., 2., 2])
+
+    def test_mirror_equivalence(self):
+        """test that the a plane string, plane normal and face object perform a mirror operation in the same way"""
+        boxes = []
+        boxDims = 1
+        for i in range(3):  # create 3 sets of identical boxes
+            boxTmp = Workplane("XY").box(boxDims, boxDims, boxDims)
+            boxTmp = boxTmp.translate([i * 2, 0, boxDims / 2])
+            boxes.append(boxTmp)
+
+        # 3 different types of plane definition
+        planeArg = ["XY", (0, 0, 1), boxes[0].faces("<Z")]
+        planeOffset = (0, 0, 0.5)  # use the safe offset for each
+        boxResults = []  # store the resulting mirrored objects
+        for b, p in zip(boxes, planeArg):
+            boxResults.append(b.mirror(p, planeOffset, union=True))
+
+        # all resulting boxes should be equal to each other
+        for i in range(len(boxResults) - 1):
+            curBoxDims = boxResults[i].findSolid().BoundingBox()  # get bbox dims
+            nextBoxDims = boxResults[i].findSolid().BoundingBox()  # get bbox dims
+            cbd = (curBoxDims.xlen, curBoxDims.ylen, curBoxDims.zlen)
+            nbd = (nextBoxDims.xlen, nextBoxDims.ylen, nextBoxDims.zlen)
+            self.assertTupleAlmostEquals(cbd, nbd, 4)
+
+    def test_mirror_face(self):
+        """Create a triangle and mirror into a unit box"""
+        r = (Workplane("XY")
+             .line(0, 1)
+             .line(1, -1)
+             .close()
+             .extrude(1))
+
+        bbBox = r.findSolid().BoundingBox()
+        self.assertTupleAlmostEquals((bbBox.xlen, bbBox.ylen, bbBox.zlen), (1., 1., 1.), 4)
+
+        r = r.mirror(r.faces().objects[1], union=True)
+        bbBox = r.findSolid().BoundingBox()
+        self.assertTupleAlmostEquals((bbBox.xlen, bbBox.ylen, bbBox.zlen), (1., 1., 1.), 4)

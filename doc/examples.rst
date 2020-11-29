@@ -360,6 +360,36 @@ Mirroring 3D Objects
         * :py:meth:`Workplane.union`
         * :py:meth:`Workplane.rotate`
 
+
+Mirroring from faces
+-----------------------------
+
+.. cadquery::
+
+This example shows how you can mirror about a selected face.  It also shows how the resulting mirrored object can be unioned immediately with the referenced mirror geometry.
+
+    r = (cq.Workplane("XY")
+         .line(0, 1)
+         .line(1, 0)
+         .line(0, -.5)
+         .close()
+         .extrude(1))
+mme
+    r = r.mirror(r.faces(">X"), union=True)
+
+
+.. topic:: Api References
+
+    .. hlist::
+        :columns: 2
+
+        * :py:meth:`Workplane.line`
+        * :py:meth:`Workplane.close`
+        * :py:meth:`Workplane.extrude`
+        * :py:meth:`Workplane.faces`
+        * :py:meth:`Workplane.mirror`
+        * :py:meth:`Workplane.union`
+
 Creating Workplanes on Faces
 -----------------------------
 
