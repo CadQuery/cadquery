@@ -1021,17 +1021,38 @@ class Workplane(object):
             ]
         )
 
-    def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
+    def mirror(self, mirrorPlane: Union[Literal["XY", ...], VectorLike, Face] = "XY", basePointVector=None,
+               union=False):
         """
         Mirror a single CQ object. This operation is the same as in the FreeCAD PartWB's mirroring
 
         :param mirrorPlane: the plane to mirror about
         :type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
-        :param basePointVector: the base point to mirror about
+        or the normal vector of the plane eg (1,0,0)
+        or a Face object
+        :param basePointVector: the base point to mirror about (this is overwritten if a Face is passed)
         :type basePointVector: tuple
+        :param union: If true will perform a union operation on the mirrored object
+        :type union: bool
         """
+        print(type(mirrorPlane))
+        if type(mirrorPlane) == Workplane or type(mirrorPlane) == Face:
+            if type(mirrorPlane) == Workplane:
+                mirrorPlane = mirrorPlane.objects[0]
+            # now mirrorPlane is a face object
+            if basePointVector is None:
+                basePointVector = mirrorPlane.Center()
+            else:
+                basePointVector = Vector(basePointVector)
+            mirrorPlane = mirrorPlane.normalAt(basePointVector)
+        else:
+            if basePointVector is None:
+                basePointVector = Vector(0, 0, 0)
         newS = self.newObject([self.objects[0].mirror(mirrorPlane, basePointVector)])
-        return newS.first()
+        if union:
+            return self.union(newS.first())
+        else:
+            return newS.first()
 
     def translate(self, vec: VectorLike) -> "Workplane":
         """
