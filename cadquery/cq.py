@@ -1029,7 +1029,7 @@ class Workplane(object):
 
     def mirror(
         self,
-        mirrorPlane: Union[Literal["XY", ...], VectorLike, Face] = "XY",
+        mirrorPlane: Union[Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike,Face] = "XY",
         basePointVector=None,
         union=False,
     ):
@@ -1038,14 +1038,12 @@ class Workplane(object):
 
         :param mirrorPlane: the plane to mirror about
         :type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
-        or the normal vector of the plane eg (1,0,0)
-        or a Face object
+        or the normal vector of the plane eg (1,0,0) or a Face object
         :param basePointVector: the base point to mirror about (this is overwritten if a Face is passed)
         :type basePointVector: tuple
         :param union: If true will perform a union operation on the mirrored object
         :type union: bool
         """
-        print(type(mirrorPlane))
         if type(mirrorPlane) == Workplane or type(mirrorPlane) == Face:
             if type(mirrorPlane) == Workplane:
                 mirrorPlane = mirrorPlane.objects[0]
