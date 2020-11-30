@@ -227,9 +227,10 @@ constraints to obtain a fully parametric assembly. This can be achieved in the f
         .solve()
     )
 
-This code results in identical object as one from the previous section. The added benefit is that with changing parameters w,d,h
-the final locations will be calculated automatically. It is admittedly dense and can be made clearer using tags.
-Tags can be directly referenced when constructing the constraints::
+This code results in identical object as one from the previous section. The added
+benefit is that with changing parameters ``w``, ``d``, ``h`` the final locations 
+will be calculated automatically. It is admittedly dense and can be made clearer
+using tags. Tags can be directly referenced when constructing the constraints::
 
     from cadquery import *
 

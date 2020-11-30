@@ -17,7 +17,6 @@ Defining parameters
 We want to start with defining the model parameters to allow for easy dimension changes later:
 
 .. code-block:: python
-   :linenos:
 
     import cadquery as cq
     
@@ -45,7 +44,6 @@ Defining reusable components
 Next we want to define functions generating the assembly components based on the specified parameters.
 
 .. code-block:: python
-   :linenos:
 
     def make_vslot(l):
     
@@ -124,7 +122,6 @@ Initial assembly
 Next we want to instantiate all the components and add them to the assembly.
 
 .. code-block:: python
-  :linenos:
    
     # define the elements
     door = (
@@ -155,7 +152,6 @@ Constraints definition
 Then we want to define all the constraints
 
 .. code-block:: python
-   :linenos:
 
     # define the constraints
     (
@@ -186,6 +182,23 @@ Then we want to define all the constraints
         .constrain("panel?hole1", "handle?mate1", "Plane")
         .constrain("panel?hole2", "handle?mate2", "Point")
     )
+    
+Should you need to do something unusual that is not possible with the string
+based selectors (e.g. use :py:class:`cadquery.selectors.BoxSelector` or a user-defined selector class),
+it is possible to pass :py:class:`cadquery.Shape` objects to the :py:meth:`cadquery.Assembly.constrain` method directly. For example, the above
+
+.. code-block:: python
+
+    .constrain('part1@faces@>Z','part3@faces@<Z','Axis')
+
+is equivalent to
+
+.. code-block:: python
+
+    .constrain('part1',part1.faces('>z').val(),'part3',part3.faces('<Z').val(),'Axis')
+
+This method requires a :py:class:`cadquery.Shape` object, so remember to use the :py:meth:`cadquery.Workplane.val`
+method to pass a single :py:class:`cadquery.Shape` and not the whole :py:class:`cadquery.Workplane` object.
 
 Final result
 ============
@@ -193,7 +206,6 @@ Final result
 Below is the complete code including the final solve step.
 
 .. code-block:: python
-   :linenos:
 
     import cadquery as cq
     
