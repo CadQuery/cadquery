@@ -278,7 +278,7 @@ class Assembly(object):
         obj = self.objects[name].obj
 
         if isinstance(obj, Workplane) and query.tag:
-            tmp = obj.ctx.tags[query.tag]
+            tmp = obj._getTagged(query.tag)
         elif isinstance(obj, (Workplane, Shape)):
             tmp = Workplane().add(obj)
         else:

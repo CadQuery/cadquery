@@ -51,7 +51,7 @@ Geometry Classes
 Selector Classes
 ---------------------
 
-
+.. currentmodule:: cadquery.selectors
 .. autosummary::
 
     Selector
@@ -61,7 +61,6 @@ Selector Classes
     ParallelDirSelector
     DirectionSelector
     DirectionNthSelector
-    RadiusNthSelector
     PerpendicularDirSelector
     TypeSelector
     DirectionMinMaxSelector
@@ -85,5 +84,9 @@ Class Details
    :members:
 
 .. autoclass:: cadquery.occ_impl.shapes.Mixin3D
+   :show-inheritance: 
+   :members:
+
+.. automodule:: cadquery.selectors
    :show-inheritance: 
    :members:
