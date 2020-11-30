@@ -1029,7 +1029,9 @@ class Workplane(object):
 
     def mirror(
         self,
-        mirrorPlane: Union[Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike,Face] = "XY",
+        mirrorPlane: Union[
+            Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike, Face
+        ] = "XY",
         basePointVector=None,
         union=False,
     ):
