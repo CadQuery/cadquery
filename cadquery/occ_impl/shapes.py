@@ -790,7 +790,7 @@ class Shape(object):
         of the geometry, but cannot handle skew transformations.
 
         :param tMatrix: The transformation matrix
-        :returns: a copy of the object, but with geometry transformed insetad
+        :returns: a copy of the object, but with geometry transformed instead
             of just rotated.
         """
         r = Shape.cast(
