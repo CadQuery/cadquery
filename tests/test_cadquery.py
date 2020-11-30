@@ -3802,3 +3802,12 @@ class TestCadQuery(BaseTest):
 
         self.assertTrue(path.tangentAt(0.5) == path.tangentAt(0.5))
         self.assertFalse(path.tangentAt(0.5) == path.tangentAt(0.5, mode="length"))
+
+    def testEnd(self):
+
+        with self.assertRaises(ValueError):
+            Workplane().end()
+
+        self.assertTrue(Workplane().objects == [])
+        self.assertTrue(Workplane().box(1, 1, 1).end().objects == [])
+        self.assertTrue(Workplane().box(1, 1, 1).box(2, 2, 1).end(2).objects == [])
