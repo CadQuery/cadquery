@@ -500,7 +500,9 @@ class Shape(object):
 
     def mirror(
         self,
-        mirrorPlane: Union[Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike] = "XY",
+        mirrorPlane: Union[
+            Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike
+        ] = "XY",
         basePointVector: VectorLike = (0, 0, 0),
     ) -> "Shape":
         """

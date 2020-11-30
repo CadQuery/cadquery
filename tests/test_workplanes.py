@@ -156,16 +156,16 @@ class TestWorkplanes(BaseTest):
     def test_mirror(self):
         """Create a unit box and mirror it so that it doubles in size"""
         b2 = Workplane().box(1, 1, 1)
-        b2 = b2.mirror("XY", (0, 0, .5), union=True)
+        b2 = b2.mirror("XY", (0, 0, 0.5), union=True)
         bbBox = b2.findSolid().BoundingBox()
-        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1., 1., 2])
+        assert [bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1.0, 1.0, 2]
 
     def test_mirror_axis(self):
         """Create a unit box and mirror it so that it doubles in size"""
         b2 = Workplane().box(1, 1, 1)
-        b2 = b2.mirror((0, 0, 1), (0, 0, .5), union=True)
+        b2 = b2.mirror((0, 0, 1), (0, 0, 0.5), union=True)
         bbBox = b2.findSolid().BoundingBox()
-        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1., 1., 2])
+        assert [bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1.0, 1.0, 2]
 
     def test_mirror_workplane(self):
         """Create a unit box and mirror it so that it doubles in size"""
@@ -174,17 +174,17 @@ class TestWorkplanes(BaseTest):
         # double in Z plane
         b2 = b2.mirror(b2.faces(">Z"), union=True)
         bbBox = b2.findSolid().BoundingBox()
-        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1., 1., 2])
+        assert [bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1.0, 1.0, 2]
 
         # double in Y plane
         b2 = b2.mirror(b2.faces(">Y"), union=True)
         bbBox = b2.findSolid().BoundingBox()
-        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1., 2., 2])
+        assert [bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1.0, 2.0, 2]
 
         # double in X plane
         b2 = b2.mirror(b2.faces(">X"), union=True)
         bbBox = b2.findSolid().BoundingBox()
-        assert ([bbBox.xlen, bbBox.ylen, bbBox.zlen] == [2., 2., 2])
+        assert [bbBox.xlen, bbBox.ylen, bbBox.zlen] == [2.0, 2.0, 2]
 
     def test_mirror_equivalence(self):
         """test that the a plane string, plane normal and face object perform a mirror operation in the same way"""
@@ -212,15 +212,15 @@ class TestWorkplanes(BaseTest):
 
     def test_mirror_face(self):
         """Create a triangle and mirror into a unit box"""
-        r = (Workplane("XY")
-             .line(0, 1)
-             .line(1, -1)
-             .close()
-             .extrude(1))
+        r = Workplane("XY").line(0, 1).line(1, -1).close().extrude(1)
 
         bbBox = r.findSolid().BoundingBox()
-        self.assertTupleAlmostEquals((bbBox.xlen, bbBox.ylen, bbBox.zlen), (1., 1., 1.), 4)
+        self.assertTupleAlmostEquals(
+            (bbBox.xlen, bbBox.ylen, bbBox.zlen), (1.0, 1.0, 1.0), 4
+        )
 
         r = r.mirror(r.faces().objects[1], union=True)
         bbBox = r.findSolid().BoundingBox()
-        self.assertTupleAlmostEquals((bbBox.xlen, bbBox.ylen, bbBox.zlen), (1., 1., 1.), 4)
+        self.assertTupleAlmostEquals(
+            (bbBox.xlen, bbBox.ylen, bbBox.zlen), (1.0, 1.0, 1.0), 4
+        )

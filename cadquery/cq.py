@@ -1027,8 +1027,12 @@ class Workplane(object):
             ]
         )
 
-    def mirror(self, mirrorPlane: Union[Literal["XY", ...], VectorLike, Face] = "XY", basePointVector=None,
-               union=False):
+    def mirror(
+        self,
+        mirrorPlane: Union[Literal["XY", ...], VectorLike, Face] = "XY",
+        basePointVector=None,
+        union=False,
+    ):
         """
         Mirror a single CQ object. This operation is the same as in the FreeCAD PartWB's mirroring
 
