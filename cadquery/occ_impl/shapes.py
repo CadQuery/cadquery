@@ -514,7 +514,7 @@ class Shape(object):
         :param basePointVector: The origin of the plane to mirror about
         :returns: The mirrored shape
         """
-        if type(mirrorPlane) == str:
+        if isinstance(mirrorPlane, str):
             if mirrorPlane == "XY" or mirrorPlane == "YX":
                 mirrorPlaneNormalVector = gp_Dir(0, 0, 1)
             elif mirrorPlane == "XZ" or mirrorPlane == "ZX":
@@ -524,8 +524,8 @@ class Shape(object):
         else:
             if isinstance(mirrorPlane, tuple):
                 mirrorPlaneNormalVector = gp_Dir(*mirrorPlane)
-            else:
-                mirrorPlaneNormalVector = gp_Dir(*mirrorPlane.toTuple())
+            elif isinstance(mirrorPlane, Vector):
+                mirrorPlaneNormalVector = mirrorPlane.toDir()
 
         if isinstance(basePointVector, tuple):
             basePointVector = Vector(basePointVector)
