@@ -1030,10 +1030,10 @@ class Workplane(object):
     def mirror(
         self,
         mirrorPlane: Union[
-            Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike, Face
+            Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike, Face, "Workplane"
         ] = "XY",
-        basePointVector=None,
-        union=False,
+        basePoint: Optional[VectorLike] = None,
+        union: bool = False,
     ):
         """
         Mirror a single CQ object. This operation is the same as in the FreeCAD PartWB's mirroring
@@ -1041,24 +1041,44 @@ class Workplane(object):
         :param mirrorPlane: the plane to mirror about
         :type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
         or the normal vector of the plane eg (1,0,0) or a Face object
-        :param basePointVector: the base point to mirror about (this is overwritten if a Face is passed)
-        :type basePointVector: tuple
+        :param basePoint: the base point to mirror about (this is overwritten if a Face is passed)
+        :type basePoint: tuple
         :param union: If true will perform a union operation on the mirrored object
         :type union: bool
         """
-        if type(mirrorPlane) == Workplane or type(mirrorPlane) == Face:
-            if type(mirrorPlane) == Workplane:
-                mirrorPlane = mirrorPlane.objects[0]
-            # now mirrorPlane is a face object
-            if basePointVector is None:
-                basePointVector = mirrorPlane.Center()
+
+        mp: Union[Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], Vector]
+        bp: Vector
+        face: Optional[Face] = None
+
+        # handle mirrorPLane
+        if isinstance(mirrorPlane, Workplane):
+            val = mirrorPlane.val()
+            if isinstance(val, Face):
+                mp = val.normalAt()
+                face = val
             else:
-                basePointVector = Vector(basePointVector)
-            mirrorPlane = mirrorPlane.normalAt(basePointVector)
+                raise ValueError(f"Face required, got {val}")
+        elif isinstance(mirrorPlane, Face):
+            mp = mirrorPlane.normalAt()
+            face = mirrorPlane
+        elif not isinstance(mirrorPlane, str):
+            mp = Vector(mirrorPlane)
         else:
-            if basePointVector is None:
-                basePointVector = Vector(0, 0, 0)
-        newS = self.newObject([self.objects[0].mirror(mirrorPlane, basePointVector)])
+            mp = mirrorPlane
+
+        # handle basePoint
+        if face and basePoint is None:
+            bp = face.Center()
+        elif basePoint is None:
+            bp = Vector()
+        else:
+            bp = Vector(basePoint)
+
+        newS = self.newObject(
+            [obj.mirror(mp, bp) for obj in self.vals() if isinstance(obj, Shape)]
+        )
+
         if union:
             return self.union(newS.first())
         else:
