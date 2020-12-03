@@ -162,13 +162,18 @@ class TestWorkplanes(BaseTest):
         self.assertAlmostEqual(b2.findSolid().Volume(), 2, 5)
 
     def test_all_planes(self):
-        """Create a unit box and mirror it so that it doubles in size"""
         b2 = Workplane().box(1, 1, 1)
         for p in ["XY", "YX", "XZ", "ZX", "YZ", "ZY"]:
             b2 = b2.mirror(p)
             bbBox = b2.findSolid().BoundingBox()
             assert [bbBox.xlen, bbBox.ylen, bbBox.zlen] == [1.0, 1.0, 1.0]
             self.assertAlmostEqual(b2.findSolid().Volume(), 1, 5)
+
+    def test_bad_plane_input(self):
+        b2 = Workplane().box(1, 1, 1)
+        with self.assertRaises(ValueError) as context:
+            b2.mirror(b2.edges())
+            self.assertTrue("Face required, got" in str(context.exception))
 
     def test_mirror_axis(self):
         """Create a unit box and mirror it so that it doubles in size"""
