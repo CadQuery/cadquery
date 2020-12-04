@@ -11,7 +11,7 @@ environment:
           MINICONDA_DIRNAME: C:\Miniconda37-x64
 
     ANACONDA_TOKEN:
-        secure: nxF/a2f3iS9KXGu7B/wKJYAk7Sm5wyAjoZoqJvPbRoVK4saaozVwOxDrjwJjJAYb
+        secure: $(anaconda_token)
 
 install:
     - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
