@@ -413,14 +413,13 @@ class Workplane(object):
 
         return self.val().wrapped
 
-    @deprecate_kwarg("centerOption", "ProjectedOrigin")
     def workplane(
         self,
         offset: float = 0.0,
         invert: bool = False,
         centerOption: Literal[
             "CenterOfMass", "ProjectedOrigin", "CenterOfBoundBox"
-        ] = "CenterOfMass",
+        ] = "ProjectedOrigin",
         origin: Optional[VectorLike] = None,
     ) -> "Workplane":
         """
