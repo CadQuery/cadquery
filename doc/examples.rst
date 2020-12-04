@@ -339,10 +339,10 @@ Mirroring 3D Objects
 
     result = result.translate(result.val().BoundingBox().center.multiply(-1))
 
-    mirXY_neg = result.mirror(mirrorPlane="XY", basePoint=(0, 0, -30))
-    mirXY_pos = result.mirror(mirrorPlane="XY", basePoint=(0, 0, 30))
-    mirZY_neg = result.mirror(mirrorPlane="ZY", basePoint=(-30,0,0))
-    mirZY_pos = result.mirror(mirrorPlane="ZY", basePoint=(30,0,0))
+    mirXY_neg = result.mirror(mirrorPlane="XY", basePointVector=(0, 0, -30))
+    mirXY_pos = result.mirror(mirrorPlane="XY", basePointVector=(0, 0, 30))
+    mirZY_neg = result.mirror(mirrorPlane="ZY", basePointVector=(-30, 0, 0))
+    mirZY_pos = result.mirror(mirrorPlane="ZY", basePointVector=(30, 0, 0))
 
     result = result.union(mirXY_neg).union(mirXY_pos).union(mirZY_neg).union(mirZY_pos)
 
