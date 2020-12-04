@@ -25,12 +25,15 @@ def makeUnitSquareWire():
     )
 
 
-def makeUnitCube():
-    return makeCube(1.0)
+def makeUnitCube(centered=True):
+    return makeCube(1.0, centered)
 
 
-def makeCube(size):
-    return Solid.makeBox(size, size, size)
+def makeCube(size, centered=True):
+    if centered:
+        return Workplane().rect(size, size).extrude(size).val()
+    else:
+        return Solid.makeBox(size, size, size)
 
 
 def toTuple(v):

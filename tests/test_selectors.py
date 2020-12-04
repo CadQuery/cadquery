@@ -76,7 +76,7 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(0, c.solids().size())
 
     def testSolid(self):
-        c = CQ(makeUnitCube())
+        c = CQ(makeUnitCube(False))
         # make sure all the counts are right for a cube
         self.assertEqual(1, c.solids().size())
         self.assertEqual(6, c.faces().size())
@@ -267,7 +267,7 @@ class TestCQSelectors(BaseTest):
         )
 
     def testNearestTo(self):
-        c = CQ(makeUnitCube())
+        c = CQ(makeUnitCube(centered=False))
 
         # nearest vertex to origin is (0,0,0)
         t = (0.1, 0.1, 0.1)
@@ -286,7 +286,7 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(1, len(s))
 
     def testBox(self):
-        c = CQ(makeUnitCube())
+        c = CQ(makeUnitCube(centered=False))
 
         # test vertice selection
         test_data_vertices = [
@@ -561,7 +561,7 @@ class TestCQSelectors(BaseTest):
 
     def testVertexFilter(self):
         "test selecting vertices on a face"
-        c = CQ(makeUnitCube())
+        c = CQ(makeUnitCube(centered=False))
 
         # TODO: filters work ok, but they are in global coordinates which sux. it would be nice
         # if they were available in coordinates local to the selected face
