@@ -255,7 +255,7 @@ class Assembly(object):
             self.objects.update(subassy.objects)
 
         else:
-            assy = Assembly(arg, **kwargs)
+            assy = self.__class__(arg, **kwargs)
             assy.parent = self
 
             self.add(assy)
