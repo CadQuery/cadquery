@@ -262,7 +262,7 @@ class Assembly(object):
 
         return self
 
-    def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
+    def _query_workplane(self, q: str) -> Tuple[str, Workplane]:
         """
         Execute a selector query on the assembly. 
         The query is expected to be in the following format:
@@ -298,7 +298,25 @@ class Assembly(object):
         else:
             res = tmp
 
-        val = res.val()
+        return name, res
+
+    def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
+        """
+        Execute a selector query on the assembly. 
+        The query is expected to be in the following format:
+        
+            name[?tag][@kind@args]
+            
+        valid example include:
+        
+            obj_name @ faces @ >Z
+            obj_name?tag1@faces@>Z          
+            obj_name ? tag
+            obj_name
+        
+        """
+        name, obj = self._query_workplane(q)
+        val = obj.val()
 
         return name, val if isinstance(val, Shape) else None
 
