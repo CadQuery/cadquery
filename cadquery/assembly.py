@@ -21,6 +21,8 @@ AssemblyObjects = Union[Shape, Workplane, None]
 ConstraintKinds = Literal["Plane", "Point", "Axis"]
 ExportLiterals = Literal["STEP", "XML"]
 
+PATH_DELIM = "/"
+
 # enitity selector grammar definiiton
 def _define_grammar():
 
@@ -29,7 +31,7 @@ def _define_grammar():
     Separator = Literal("@").suppress()
     TagSeparator = Literal("?").suppress()
 
-    Name = Word(alphas, alphanums + "_").setResultsName("name")
+    Name = Word(alphas, alphanums + "_" + PATH_DELIM).setResultsName("name")
     Tag = Word(alphas, alphanums + "_").setResultsName("tag")
     Selector = _selector_grammar.setResultsName("selector")
 
@@ -174,19 +176,27 @@ class Assembly(object):
         self.constraints = []
         self.objects = {self.name: self}
 
-    def _copy(self) -> "Assembly":
+    def _change_prefix(self, prefix):
+        _, delim, rest = self.name.rpartition(PATH_DELIM)
+        return prefix + delim + rest
+
+    def _add_prefix(self, path):
+        return path if self.name is None else self.name + PATH_DELIM + path
+
+    def _copy(self, name: str) -> "Assembly":
         """
         Make a deep copy of an assembly
         """
 
-        rv = self.__class__(self.obj, self.loc, self.name, self.color)
+        rv = self.__class__(self.obj, self.loc, name, self.color)
 
         for ch in self.children:
-            ch_copy = ch._copy()
+            full_name = ch._change_prefix(name)
+            ch_copy = ch._copy(full_name)
             ch_copy.parent = rv
 
             rv.children.append(ch_copy)
-            rv.objects[ch_copy.name] = ch_copy
+            rv.objects[full_name] = ch_copy
             rv.objects.update(ch_copy.objects)
 
         return rv
@@ -233,12 +243,11 @@ class Assembly(object):
         """
 
         if isinstance(arg, Assembly):
+            name = self._add_prefix(kwargs.get("name", arg.name))
+            subassy = arg._copy(name)
 
-            subassy = arg._copy()
-
-            subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
-            subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
-            subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.loc = kwargs.get("loc", arg.loc)
+            subassy.color = kwargs.get("color", arg.color)
             subassy.parent = self
 
             self.children.append(subassy)
