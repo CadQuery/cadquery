@@ -72,13 +72,12 @@ def test_assembly(simple_assy, nested_assy):
     assert len(simple_assy.shapes) == 1
 
     assert len(nested_assy.objects) == 3
-    assert len(nested_assy.children) == 1
-    assert nested_assy.objects["SECOND"].parent is nested_assy
+    assert nested_assy.objects["TOP/SECOND"].parent is nested_assy
 
     # bottom-up traversal
     kvs = list(nested_assy.traverse())
 
-    assert kvs[0][0] == "BOTTOM"
+    assert kvs[0][0] == "TOP/SECOND/BOTTOM"
     assert len(kvs[0][1].shapes[0].Solids()) == 2
     assert kvs[-1][0] == "TOP"
 
@@ -153,22 +152,17 @@ def test_constrain(simple_assy, nested_assy):
 
     assert len(simple_assy.constraints) == 3
 
-    nested_assy.constrain("TOP@faces@>Z", "BOTTOM@faces@<Z", "Plane")
-    nested_assy.constrain("TOP@faces@>X", "BOTTOM@faces@<X", "Axis")
+    nested_assy.constrain("TOP@faces@>Z", "TOP/SECOND/BOTTOM@faces@<Z", "Plane")
+    nested_assy.constrain("TOP@faces@>X", "TOP/SECOND/BOTTOM@faces@<X", "Axis")
 
     assert len(nested_assy.constraints) == 2
 
     constraint = nested_assy.constraints[0]
 
-    assert constraint.objects == ("TOP", "SECOND")
-    assert (
-        constraint.sublocs[0]
-        .wrapped.Transformation()
-        .TranslationPart()
-        .IsEqual(gp_XYZ(), 1e-9)
-    )
+    assert constraint.objects == ("TOP", "TOP/SECOND")
+    assert constraint.sublocs[0].wrapped.Transformation().TranslationPart().IsEqual(gp_XYZ(), 1e-9)
     assert constraint.sublocs[1].wrapped.IsEqual(
-        nested_assy.objects["BOTTOM"].loc.wrapped
+        nested_assy.objects["TOP/SECOND/BOTTOM"].loc.wrapped
     )
 
     simple_assy.solve()
@@ -199,10 +193,97 @@ def test_constrain(simple_assy, nested_assy):
 def test_constrain_with_tags(nested_assy):
 
     nested_assy.add(None, name="dummy")
-    nested_assy.constrain("TOP?top_face", "BOTTOM", "Plane")
+    nested_assy.constrain("TOP?top_face", "TOP/SECOND/BOTTOM", "Plane")
 
     assert len(nested_assy.constraints) == 1
 
     # test selection of a non-shape object
     with pytest.raises(ValueError):
-        nested_assy.constrain("BOTTOM ? pts", "dummy", "Plane")
+        nested_assy.constrain("TOP/SECOND/BOTTOM ? pts", "TOP/dummy", "Plane")
+
+
+def test_hierarchical_id():
+    root1 = cq.Workplane().box(1, 1, 1).tag("root1")
+    root2 = cq.Workplane().box(1, 1, 1).tag("root2")
+    root3 = cq.Workplane().box(1, 1, 1).tag("root3")
+    obj1 = cq.Workplane().box(1, 1, 1).tag("obj1")
+    obj2 = cq.Workplane().box(1, 1, 1).tag("obj2")
+    obj3 = cq.Workplane().box(1, 1, 1).tag("obj3")
+    obj4 = cq.Workplane().box(1, 1, 1).tag("obj4")
+    obj5 = cq.Workplane().box(1, 1, 1).tag("obj5")
+
+    assy1 = cq.Assembly(root1, name="root1").add(obj1, name="obj1").add(obj2, name="obj2")
+    expected1 = {  # assemly_id: object tag
+        "root1": "root1",
+        "root1/obj1": "obj1",
+        "root1/obj2": "obj2",
+    }
+
+    assy2 = (
+        cq.Assembly(root2, name="root2")
+        .add(obj1, name="obj1")
+        .add(obj3, name="obj3")
+        .add(assy1)
+        .add(assy1, name="assy1_2")
+        .add(obj4, name="obj4")
+    )
+    expected2 = {  # assemly_id: object tag
+        "root2": "root2",
+        "root2/obj1": "obj1",
+        "root2/obj3": "obj3",
+        "root2/root1": "root1",
+        "root2/root1/obj1": "obj1",
+        "root2/root1/obj2": "obj2",
+        "root2/assy1_2": "root1",
+        "root2/assy1_2/obj1": "obj1",
+        "root2/assy1_2/obj2": "obj2",
+        "root2/obj4": "obj4",
+    }
+
+    assy3 = (
+        cq.Assembly(root3, name="root3")
+        .add(assy1, name="assy1_1")
+        .add(assy2)
+        .add(assy2, name="assy2_2")
+        .add(assy1)
+        .add(obj5, name="obj5")
+    )
+
+    expected3 = {  # assemly_id: object tag
+        "root3": "root3",
+        "root3/assy1_1": "root1",
+        "root3/assy1_1/obj1": "obj1",
+        "root3/assy1_1/obj2": "obj2",
+        "root3/root2": "root2",
+        "root3/root2/obj1": "obj1",
+        "root3/root2/obj3": "obj3",
+        "root3/root2/root1": "root1",
+        "root3/root2/root1/obj1": "obj1",
+        "root3/root2/root1/obj2": "obj2",
+        "root3/root2/assy1_2": "root1",
+        "root3/root2/assy1_2/obj1": "obj1",
+        "root3/root2/assy1_2/obj2": "obj2",
+        "root3/root2/obj4": "obj4",
+        "root3/assy2_2": "root2",
+        "root3/assy2_2/obj1": "obj1",
+        "root3/assy2_2/obj3": "obj3",
+        "root3/assy2_2/root1": "root1",
+        "root3/assy2_2/root1/obj1": "obj1",
+        "root3/assy2_2/root1/obj2": "obj2",
+        "root3/assy2_2/assy1_2": "root1",
+        "root3/assy2_2/assy1_2/obj1": "obj1",
+        "root3/assy2_2/assy1_2/obj2": "obj2",
+        "root3/assy2_2/obj4": "obj4",
+        "root3/root1": "root1",
+        "root3/root1/obj1": "obj1",
+        "root3/root1/obj2": "obj2",
+        "root3/obj5": "obj5",
+    }
+
+    for assy, expected in ((assy1, expected1), (assy2, expected2), (assy3, expected3)):
+        assert len(expected) == len(assy.objects)
+        for k, v in assy.objects.items():
+            assert expected[k] == v.obj._tag
+        # check traversed assemblies are the same as in object dict
+        assert all([v is assy.objects[k] for k, v in assy.traverse()])
+
