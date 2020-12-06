@@ -2871,6 +2871,7 @@ class Workplane(object):
         :raises: ValueError if there are no items on the stack, or if they cannot be combined
         :return: a CQ object with the resulting object selected
         """
+        
         items: List[Shape] = [o for o in self.objects if isinstance(o, Shape)]
         s = items.pop(0)
 
