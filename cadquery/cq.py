@@ -140,9 +140,7 @@ class Workplane(object):
     ) -> None:
         ...
 
-    def __init__(
-        self, inPlane="XY", origin=(0, 0, 0), obj=None,
-    ):
+    def __init__(self, inPlane="XY", origin=(0, 0, 0), obj=None):
         """
         make a workplane from a particular plane
 
@@ -2082,7 +2080,7 @@ class Workplane(object):
         return self.newObject(others + [w])
 
     def each(
-        self, callback: Callable[[CQObject], Shape], useLocalCoordinates: bool = False,
+        self, callback: Callable[[CQObject], Shape], useLocalCoordinates: bool = False
     ) -> "Workplane":
         """
         Runs the provided function on each value in the stack, and collects the return values into
@@ -2134,7 +2132,7 @@ class Workplane(object):
         return self.newObject(results)
 
     def eachpoint(
-        self, callback: Callable[[Location], Shape], useLocalCoordinates: bool = False,
+        self, callback: Callable[[Location], Shape], useLocalCoordinates: bool = False
     ) -> "Workplane":
         """
         Same as each(), except each item on the stack is converted into a point before it
@@ -2856,10 +2854,7 @@ class Workplane(object):
         return self.newObject([r])
 
     def combine(
-        self,
-        clean: bool = True,
-        glue: bool = False,
-        tol: Optional[float] = None,
+        self, clean: bool = True, glue: bool = False, tol: Optional[float] = None
     ) -> "Workplane":
         """
         Attempts to combine all of the items on the stack into a single item.
@@ -2871,7 +2866,7 @@ class Workplane(object):
         :raises: ValueError if there are no items on the stack, or if they cannot be combined
         :return: a CQ object with the resulting object selected
         """
-        
+
         items: List[Shape] = [o for o in self.objects if isinstance(o, Shape)]
         s = items.pop(0)
 
