@@ -2166,7 +2166,7 @@ class TestCadQuery(BaseTest):
 
         objects1.combine()
         self.assertEqual(11, objects1.faces().size())
-        objects1.combine(glue=True)
+        objects1.combine(glue=True, tol=None)
         self.assertEqual(11, objects1.faces().size())
 
     def testCombineSolidsInLoop(self):
