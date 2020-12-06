@@ -2165,8 +2165,10 @@ class TestCadQuery(BaseTest):
         objects1 = s.rect(2.0, 2.0).extrude(0.5).faces(">Z").rect(1.0, 1.0).extrude(0.5)
 
         objects1.combine()
+        objects2.combine(glue=True)
 
         self.assertEqual(11, objects1.faces().size())
+        self.assertEqual(11, objects2.faces().size())
 
     def testCombineSolidsInLoop(self):
         # duplicates a memory problem of some kind reported when combining lots of objects
