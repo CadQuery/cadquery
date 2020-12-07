@@ -1080,9 +1080,9 @@ class Workplane(object):
         )
 
         if union:
-            return self.union(newS.first())
+            return self.union(newS)
         else:
-            return newS.first()
+            return newS
 
     def translate(self, vec: VectorLike) -> "Workplane":
         """
