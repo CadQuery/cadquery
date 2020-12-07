@@ -2162,7 +2162,9 @@ class TestCadQuery(BaseTest):
 
     def testCombine(self):
         s = Workplane(Plane.XY())
-        objects1 = objects2 = s.rect(2.0, 2.0).extrude(0.5).faces(">Z").rect(1.0, 1.0).extrude(0.5)
+        objects1 = objects2 = (
+            s.rect(2.0, 2.0).extrude(0.5).faces(">Z").rect(1.0, 1.0).extrude(0.5)
+        )
 
         objects1.combine()
         self.assertEqual(11, objects1.faces().size())
