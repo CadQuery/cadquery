@@ -206,7 +206,7 @@ class TestWorkplanes(BaseTest):
         self.assertAlmostEqual(b2.findSolid().Volume(), 8, 5)
 
     def test_mirror_equivalence(self):
-        """test that the a plane string, plane normal and face object perform a mirror operation in the same way"""
+        """test that the plane string, plane normal and face object perform a mirror operation in the same way"""
         boxes = []
         boxDims = 1
         for i in range(3):  # create 3 sets of identical boxes
