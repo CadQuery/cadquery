@@ -2168,7 +2168,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(11, objects1.faces().size())
         
         objects1 = s.rect(2.0, 2.0).extrude(0.5)
-        objects2 = s.rect(1.0, 1.0).extrude(0.5).translate((0,0,0.5))
+        objects2 = s.rect(1.0, 1.0).extrude(0.5).translate((0, 0, 0.5))
         objects2 = objects1.add(objects2).combine(glue=True, tol=None)
         self.assertEqual(11, objects2.faces().size())
 
