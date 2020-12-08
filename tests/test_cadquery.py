@@ -941,11 +941,11 @@ class TestCadQuery(BaseTest):
             .workplane(offset=-5)
             .moveTo(0, 4)
             .circle(1.5)
-            .workplane(offset=5)
+            .workplane(offset=5, centerOption="CenterOfMass")
             .circle(1.5)
             .moveTo(0, -8)
             .circle(1.0)
-            .workplane(offset=-5)
+            .workplane(offset=-5, centerOption="CenterOfMass")
             .circle(1.0)
             .sweep(path, multisection=True)
         )
@@ -1400,7 +1400,12 @@ class TestCadQuery(BaseTest):
         self.assertEqual(11, t.faces().size())
 
         # side hole, thru all
-        t = t.faces(">Y").workplane().circle(0.125).cutThruAll()
+        t = (
+            t.faces(">Y")
+            .workplane(centerOption="CenterOfMass")
+            .circle(0.125)
+            .cutThruAll()
+        )
         self.saveModel(t)
         self.assertEqual(13, t.faces().size())
 
@@ -1473,12 +1478,22 @@ class TestCadQuery(BaseTest):
         self.assertEqual(5, r.faces().size())
 
         # now add a circle through a side face
-        r1 = r.faces("+XY").workplane().circle(0.08).cutThruAll()
+        r1 = (
+            r.faces("+XY")
+            .workplane(centerOption="CenterOfMass")
+            .circle(0.08)
+            .cutThruAll()
+        )
         self.assertEqual(6, r1.faces().size())
         r1.val().exportStep(os.path.join(OUTDIR, "testBasicLinesXY.STEP"))
 
         # now add a circle through a top
-        r2 = r1.faces("+Z").workplane().circle(0.08).cutThruAll()
+        r2 = (
+            r1.faces("+Z")
+            .workplane(centerOption="CenterOfMass")
+            .circle(0.08)
+            .cutThruAll()
+        )
         self.assertEqual(9, r2.faces().size())
         r2.val().exportStep(os.path.join(OUTDIR, "testBasicLinesZ.STEP"))
 
@@ -2246,7 +2261,7 @@ class TestCadQuery(BaseTest):
             .rect(10, 5)
             .cutBlind(-5)
             .faces(">Z")
-            .workplane()
+            .workplane(centerOption="CenterOfMass")
             .center(0, 2.5)
             .rect(5, 5)
             .cutThruAll()
