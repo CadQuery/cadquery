@@ -341,8 +341,8 @@ Mirroring 3D Objects
 
     mirXY_neg = result.mirror(mirrorPlane="XY", basePointVector=(0, 0, -30))
     mirXY_pos = result.mirror(mirrorPlane="XY", basePointVector=(0, 0, 30))
-    mirZY_neg = result.mirror(mirrorPlane="ZY", basePointVector=(-30,0,0))
-    mirZY_pos = result.mirror(mirrorPlane="ZY", basePointVector=(30,0,0))
+    mirZY_neg = result.mirror(mirrorPlane="ZY", basePointVector=(-30, 0, 0))
+    mirZY_pos = result.mirror(mirrorPlane="ZY", basePointVector=(30, 0, 0))
 
     result = result.union(mirXY_neg).union(mirXY_pos).union(mirZY_neg).union(mirZY_pos)
 
@@ -359,6 +359,36 @@ Mirroring 3D Objects
         * :py:meth:`Workplane.mirror`
         * :py:meth:`Workplane.union`
         * :py:meth:`Workplane.rotate`
+
+
+Mirroring From Faces
+-----------------------------
+
+This example shows how you can mirror about a selected face.  It also shows how the resulting mirrored object can be unioned immediately with the referenced mirror geometry.
+
+.. cadquery::
+
+    result = (cq.Workplane("XY")
+              .line(0, 1)
+              .line(1, 0)
+              .line(0, -.5)
+              .close()
+              .extrude(1))
+
+    result = result.mirror(result.faces(">X"), union=True)
+
+
+.. topic:: Api References
+
+    .. hlist::
+        :columns: 2
+
+        * :py:meth:`Workplane.line`
+        * :py:meth:`Workplane.close`
+        * :py:meth:`Workplane.extrude`
+        * :py:meth:`Workplane.faces`
+        * :py:meth:`Workplane.mirror`
+        * :py:meth:`Workplane.union`
 
 Creating Workplanes on Faces
 -----------------------------

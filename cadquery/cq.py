@@ -1027,17 +1027,62 @@ class Workplane(object):
             ]
         )
 
-    def mirror(self, mirrorPlane="XY", basePointVector=(0, 0, 0)):
+    def mirror(
+        self,
+        mirrorPlane: Union[
+            Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike, Face, "Workplane"
+        ] = "XY",
+        basePointVector: Optional[VectorLike] = None,
+        union: bool = False,
+    ):
         """
         Mirror a single CQ object. This operation is the same as in the FreeCAD PartWB's mirroring
 
         :param mirrorPlane: the plane to mirror about
         :type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
-        :param basePointVector: the base point to mirror about
+        or the normal vector of the plane eg (1,0,0) or a Face object
+        :param basePointVector: the base point to mirror about (this is overwritten if a Face is passed)
         :type basePointVector: tuple
+        :param union: If true will perform a union operation on the mirrored object
+        :type union: bool
         """
-        newS = self.newObject([self.objects[0].mirror(mirrorPlane, basePointVector)])
-        return newS.first()
+
+        mp: Union[Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], Vector]
+        bp: Vector
+        face: Optional[Face] = None
+
+        # handle mirrorPLane
+        if isinstance(mirrorPlane, Workplane):
+            val = mirrorPlane.val()
+            if isinstance(val, Face):
+                mp = val.normalAt()
+                face = val
+            else:
+                raise ValueError(f"Face required, got {val}")
+        elif isinstance(mirrorPlane, Face):
+            mp = mirrorPlane.normalAt()
+            face = mirrorPlane
+        elif not isinstance(mirrorPlane, str):
+            mp = Vector(mirrorPlane)
+        else:
+            mp = mirrorPlane
+
+        # handle basePointVector
+        if face and basePointVector is None:
+            bp = face.Center()
+        elif basePointVector is None:
+            bp = Vector()
+        else:
+            bp = Vector(basePointVector)
+
+        newS = self.newObject(
+            [obj.mirror(mp, bp) for obj in self.vals() if isinstance(obj, Shape)]
+        )
+
+        if union:
+            return self.union(newS)
+        else:
+            return newS
 
     def translate(self, vec: VectorLike) -> "Workplane":
         """
