@@ -72,8 +72,8 @@ Selector    Selects                                  Selector Class             
 %Plane      Faces of type plane                      :py:class:`cadquery.TypeSelector`                        0..many
 >Y          Face farthest in the positive y dir      :py:class:`cadquery.DirectionMinMaxSelector`             0..many
 <Y          Face farthest in the negative y dir      :py:class:`cadquery.DirectionMinMaxSelector`             0..many
->Y[-2]      2nd Face farthest in the positive y dir  :py:class:`cadquery.DirectionMinMaxSelector`             0..many
-<Y[0]       1st closest Face in the negative y dir   :py:class:`cadquery.DirectionMinMaxSelector`             0..many
+>Y[-2]      2nd farthest Face normal to the y dir    :py:class:`cadquery.DirectionNthSelector`                0..many
+<Y[0]       1st closest Face normal to the y dir     :py:class:`cadquery.DirectionNthSelector`                0..many
 =========   =======================================  =======================================================  ==========================
 
 
