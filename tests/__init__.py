@@ -29,8 +29,8 @@ def makeUnitCube(centered=True):
     return makeCube(1.0, centered)
 
 
-def makeCube(size, centered=True):
-    if centered:
+def makeCube(size, xycentered=True):
+    if xycentered:
         return Workplane().rect(size, size).extrude(size).val()
     else:
         return Solid.makeBox(size, size, size)
