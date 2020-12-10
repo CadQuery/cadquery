@@ -286,4 +286,3 @@ def test_hierarchical_id():
             assert expected[k] == v.obj._tag
         # check traversed assemblies are the same as in object dict
         assert all([v is assy.objects[k] for k, v in assy.traverse()])
-

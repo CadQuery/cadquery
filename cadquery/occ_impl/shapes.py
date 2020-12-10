@@ -188,6 +188,10 @@ from OCP.GeomFill import (
     GeomFill_CorrectedFrenet,
     GeomFill_TrihedronLaw,
 )
+
+# for catching exceptions
+from OCP.Standard import Standard_NoSuchObject, Standard_Failure
+
 from math import pi, sqrt
 import warnings
 
@@ -391,6 +395,9 @@ class Shape(object):
         return writer.Write(self.wrapped, fileName)
 
     def exportStep(self, fileName: str) -> IFSelect_ReturnStatus:
+        """
+        Export this shape to a STEP file
+        """
 
         writer = STEPControl_Writer()
         writer.Transfer(self.wrapped, STEPControl_AsIs)
@@ -399,34 +406,35 @@ class Shape(object):
 
     def exportBrep(self, fileName: str) -> bool:
         """
-        Export given shape to a BREP file
+        Export this shape to a BREP file
         """
 
         return BRepTools.Write_s(self.wrapped, fileName)
 
     def geomType(self) -> Geoms:
         """
-            Gets the underlying geometry type
-            :return: a string according to the geometry type.
+        Gets the underlying geometry type.
 
-            Implementations can return any values desired, but the
-            values the user uses in type filters should correspond to these.
+        Implementations can return any values desired, but the values the user
+        uses in type filters should correspond to these.
 
-            As an example, if a user does::
+        As an example, if a user does::
 
-                CQ(object).faces("%mytype")
+            CQ(object).faces("%mytype")
 
-            The expectation is that the geomType attribute will return 'mytype'
+        The expectation is that the geomType attribute will return 'mytype'
 
-            The return values depend on the type of the shape:
+        The return values depend on the type of the shape:
 
-            Vertex:  always 'Vertex'
-            Edge:   LINE, ARC, CIRCLE, SPLINE
-            Face:   PLANE, SPHERE, CONE
-            Solid:  'Solid'
-            Shell:  'Shell'
-            Compound: 'Compound'
-            Wire:   'Wire'
+        | Vertex:  always 'Vertex'
+        | Edge:   LINE, ARC, CIRCLE, SPLINE
+        | Face:   PLANE, SPHERE, CONE
+        | Solid:  'Solid'
+        | Shell:  'Shell'
+        | Compound: 'Compound'
+        | Wire:   'Wire'
+
+        :returns: A string according to the geometry type
         """
 
         tr: Any = geom_LUT[shapetype(self.wrapped)]
@@ -441,37 +449,83 @@ class Shape(object):
         return tcast(Geoms, rv)
 
     def hashCode(self) -> int:
+        """
+        Returns a hashed value denoting this shape. It is computed from the
+        TShape and the Location. The Orientation is not used.
+        """
         return self.wrapped.HashCode(HASH_CODE_MAX)
 
     def isNull(self) -> bool:
+        """
+        Returns true if this shape is null. In other words, it references no
+        underlying shape with the potential to be given a location and an
+        orientation.
+        """
         return self.wrapped.IsNull()
 
     def isSame(self, other: "Shape") -> bool:
+        """
+        Returns True if other and this shape are same, i.e. if they share the
+        same TShape with the same Locations. Orientations may differ. Also see
+        :py:meth:`isEqual`
+        """
         return self.wrapped.IsSame(other.wrapped)
 
     def isEqual(self, other: "Shape") -> bool:
+        """
+        Returns True if two shapes are equal, i.e. if they share the same
+        TShape with the same Locations and Orientations. Also see
+        :py:meth:`isSame`.
+        """
         return self.wrapped.IsEqual(other.wrapped)
 
     def isValid(self) -> bool:
+        """
+        Returns True if no defect is detected on the shape S or any of its
+        subshapes. See the OCCT docs on BRepCheck_Analyzer::IsValid for a full
+        description of what is checked.
+        """
         return BRepCheck_Analyzer(self.wrapped).IsValid()
 
     def BoundingBox(
         self, tolerance: Optional[float] = None
     ) -> BoundBox:  # need to implement that in GEOM
+        """
+        Create a bounding box for this Shape.
+
+        :param tolerance: Tolerance value passed to :py:class:`BoundBox`
+        :returns: A :py:class:`BoundBox` object for this Shape
+        """
         return BoundBox._fromTopoDS(self.wrapped, tol=tolerance)
 
     def mirror(
         self,
-        mirrorPlane=Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"],
+        mirrorPlane: Union[
+            Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], VectorLike
+        ] = "XY",
         basePointVector: VectorLike = (0, 0, 0),
     ) -> "Shape":
+        """
+        Applies a mirror transform to this Shape. Does not duplicate objects
+        about the plane.
 
-        if mirrorPlane == "XY" or mirrorPlane == "YX":
-            mirrorPlaneNormalVector = gp_Dir(0, 0, 1)
-        elif mirrorPlane == "XZ" or mirrorPlane == "ZX":
-            mirrorPlaneNormalVector = gp_Dir(0, 1, 0)
-        elif mirrorPlane == "YZ" or mirrorPlane == "ZY":
-            mirrorPlaneNormalVector = gp_Dir(1, 0, 0)
+        :param mirrorPlane: The direction of the plane to mirror about - one of
+            'XY', 'XZ' or 'YZ'
+        :param basePointVector: The origin of the plane to mirror about
+        :returns: The mirrored shape
+        """
+        if isinstance(mirrorPlane, str):
+            if mirrorPlane == "XY" or mirrorPlane == "YX":
+                mirrorPlaneNormalVector = gp_Dir(0, 0, 1)
+            elif mirrorPlane == "XZ" or mirrorPlane == "ZX":
+                mirrorPlaneNormalVector = gp_Dir(0, 1, 0)
+            elif mirrorPlane == "YZ" or mirrorPlane == "ZY":
+                mirrorPlaneNormalVector = gp_Dir(1, 0, 0)
+        else:
+            if isinstance(mirrorPlane, tuple):
+                mirrorPlaneNormalVector = gp_Dir(*mirrorPlane)
+            elif isinstance(mirrorPlane, Vector):
+                mirrorPlaneNormalVector = mirrorPlane.toDir()
 
         if isinstance(basePointVector, tuple):
             basePointVector = Vector(basePointVector)
@@ -491,12 +545,16 @@ class Shape(object):
 
     def Center(self) -> Vector:
         """
-        Center of mass
+        :returns: The point of the center of mass of this Shape
         """
 
         return Shape.centerOfMass(self)
 
     def CenterOfBoundBox(self, tolerance: Optional[float] = None) -> Vector:
+        """
+        :param tolerance: Tolerance passed to the :py:meth:`BoundingBox` method
+        :returns: Center of the bounding box of this shape
+        """
         return self.BoundingBox(tolerance=tolerance).center
 
     @staticmethod
@@ -504,7 +562,7 @@ class Shape(object):
         """
         Calculates the center of mass of multiple objects.
 
-        :param objects: a list of objects with mass
+        :param objects: A list of objects with mass
         """
         total_mass = sum(Shape.computeMass(o) for o in objects)
         weighted_centers = [
@@ -521,6 +579,8 @@ class Shape(object):
     def computeMass(obj: "Shape") -> float:
         """
         Calculates the 'mass' of an object.
+
+        :param obj: Compute the mass of this object
         """
         Properties = GProp_GProps()
         calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
@@ -534,7 +594,9 @@ class Shape(object):
     @staticmethod
     def centerOfMass(obj: "Shape") -> Vector:
         """
-        Calculates the 'mass' of an object.
+        Calculates the center of 'mass' of an object.
+
+        :param obj: Compute the center of mass of this object
         """
         Properties = GProp_GProps()
         calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
@@ -548,8 +610,9 @@ class Shape(object):
     @staticmethod
     def CombinedCenterOfBoundBox(objects: List["Shape"]) -> Vector:
         """
-        Calculates the center of BoundBox of multiple objects.
-        :param objects: a list of objects with mass 1
+        Calculates the center of a bounding box of multiple objects.
+
+        :param objects: A list of objects
         """
         total_mass = len(objects)
 
@@ -564,6 +627,9 @@ class Shape(object):
         return Vector(sum_wc.multiply(1.0 / total_mass))
 
     def Closed(self) -> bool:
+        """
+        :returns: The closedness flag
+        """
         return self.wrapped.Closed()
 
     def ShapeType(self) -> Shapes:
@@ -585,10 +651,17 @@ class Shape(object):
         return list(out.values())
 
     def Vertices(self) -> List["Vertex"]:
+        """
+        :returns: All the vertices in this Shape
+        """
 
         return [Vertex(i) for i in self._entities("Vertex")]
 
     def Edges(self) -> List["Edge"]:
+        """
+        :returns: All the edges in this Shape
+        """
+
         return [
             Edge(i)
             for i in self._entities("Edge")
@@ -596,27 +669,53 @@ class Shape(object):
         ]
 
     def Compounds(self) -> List["Compound"]:
+        """
+        :returns: All the compounds in this Shape
+        """
+
         return [Compound(i) for i in self._entities("Compound")]
 
     def Wires(self) -> List["Wire"]:
+        """
+        :returns: All the wires in this Shape
+        """
+
         return [Wire(i) for i in self._entities("Wire")]
 
     def Faces(self) -> List["Face"]:
+        """
+        :returns: All the faces in this Shape
+        """
+
         return [Face(i) for i in self._entities("Face")]
 
     def Shells(self) -> List["Shell"]:
+        """
+        :returns: All the shells in this Shape
+        """
+
         return [Shell(i) for i in self._entities("Shell")]
 
     def Solids(self) -> List["Solid"]:
+        """
+        :returns: All the solids in this Shape
+        """
+
         return [Solid(i) for i in self._entities("Solid")]
 
     def Area(self) -> float:
+        """
+        :returns: The surface area of all faces in this Shape
+        """
         Properties = GProp_GProps()
         BRepGProp.SurfaceProperties_s(self.wrapped, Properties)
 
         return Properties.Mass()
 
     def Volume(self) -> float:
+        """
+        :returns: The volume of this Shape
+        """
         # when density == 1, mass == volume
         return Shape.computeMass(self)
 
@@ -628,11 +727,14 @@ class Shape(object):
         self: T, startVector: Vector, endVector: Vector, angleDegrees: float
     ) -> T:
         """
-        Rotates a shape around an axis
-        :param startVector: start point of rotation axis  either a 3-tuple or a Vector
-        :param endVector:  end point of rotation axis, either a 3-tuple or a Vector
+        Rotates a shape around an axis.
+
+        :param startVector: start point of rotation axis
+        :type startVector: either a 3-tuple or a Vector
+        :param endVector: end point of rotation axis
+        :type endVector: either a 3-tuple or a Vector
         :param angleDegrees:  angle to rotate, in degrees
-        :return: a copy of the shape, rotated
+        :returns: a copy of the shape, rotated
         """
         if type(startVector) == tuple:
             startVector = Vector(startVector)
@@ -649,6 +751,9 @@ class Shape(object):
         return self._apply_transform(Tr)
 
     def translate(self: T, vector: Vector) -> T:
+        """
+        Translates this shape through a transformation.
+        """
 
         if type(vector) == tuple:
             vector = Vector(vector)
@@ -659,6 +764,9 @@ class Shape(object):
         return self._apply_transform(T)
 
     def scale(self, factor: float) -> "Shape":
+        """
+        Scales this shape through a transformation.
+        """
 
         T = gp_Trsf()
         T.SetScale(gp_Pnt(), factor)
@@ -666,13 +774,18 @@ class Shape(object):
         return self._apply_transform(T)
 
     def copy(self) -> "Shape":
+        """
+        Creates a new object that is a copy of this object.
+        """
 
         return Shape.cast(BRepBuilderAPI_Copy(self.wrapped).Shape())
 
     def transformShape(self, tMatrix: Matrix) -> "Shape":
         """
-            tMatrix is a matrix object.
-            returns a copy of the ojbect, transformed by the provided matrix,
+        Transforms this Shape by tMatrix. Also see :py:meth:`transformGeometry`.
+
+        :param tMatrix: The transformation matrix
+        :returns: a copy of the object, transformed by the provided matrix,
             with all objects keeping their type
         """
 
@@ -685,16 +798,19 @@ class Shape(object):
 
     def transformGeometry(self, tMatrix: Matrix) -> "Shape":
         """
-            tMatrix is a matrix object.
+        Transforms this shape by tMatrix.
 
-            returns a copy of the object, but with geometry transformed insetad of just
-            rotated.
+        WARNING: transformGeometry will sometimes convert lines and circles to
+        splines, but it also has the ability to handle skew and stretching
+        transformations.
 
-            WARNING: transformGeometry will sometimes convert lines and circles to splines,
-            but it also has the ability to handle skew and stretching transformations.
+        If your transformation is only translation and rotation, it is safer to
+        use :py:meth:`transformShape`, which doesnt change the underlying type
+        of the geometry, but cannot handle skew transformations.
 
-            If your transformation is only translation and rotation, it is safer to use transformShape,
-            which doesnt change the underlying type of the geometry, but cannot handle skew transformations
+        :param tMatrix: The transformation matrix
+        :returns: a copy of the object, but with geometry transformed instead
+            of just rotated.
         """
         r = Shape.cast(
             BRepBuilderAPI_GTransform(self.wrapped, tMatrix.wrapped, True).Shape()
@@ -779,7 +895,7 @@ class Shape(object):
 
     def cut(self, *toCut: "Shape") -> "Shape":
         """
-        Remove a shape from another one
+        Remove the positional arguments from this Shape.
         """
 
         cut_op = BRepAlgoAPI_Cut()
@@ -790,7 +906,11 @@ class Shape(object):
         self, *toFuse: "Shape", glue: bool = False, tol: Optional[float] = None
     ) -> "Shape":
         """
-        Fuse shapes together
+        Fuse the positional arguments with this Shape.
+
+        :param glue: Sets the glue option for the algorithm, which allows
+            increasing performance of the intersection of the input shapes
+        :param tol: Additional tolerance
         """
 
         fuse_op = BRepAlgoAPI_Fuse()
@@ -805,7 +925,7 @@ class Shape(object):
 
     def intersect(self, *toIntersect: "Shape") -> "Shape":
         """
-        Construct shape intersection
+        Intersection of the positional arguments and this Shape.
         """
 
         intersect_op = BRepAlgoAPI_Common()
@@ -1059,6 +1179,22 @@ class Mixin1D(object):
     def Length(self: Mixin1DProtocol) -> float:
 
         return GCPnts_AbscissaPoint.Length_s(self._geomAdaptor())
+
+    def radius(self: Mixin1DProtocol) -> float:
+        """
+        Calculate the radius.
+
+        Note that when applied to a Wire, the radius is simply the radius of the first edge.
+
+        :return: radius
+        :raises ValueError: if kernel can not reduce the shape to a circular edge
+        """
+        geom = self._geomAdaptor()
+        try:
+            circ = geom.Circle()
+        except (Standard_NoSuchObject, Standard_Failure) as e:
+            raise ValueError("Shape could not be reduced to a circle") from e
+        return circ.Radius()
 
     def IsClosed(self: Mixin1DProtocol) -> bool:
 

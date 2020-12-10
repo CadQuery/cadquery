@@ -341,8 +341,8 @@ Mirroring 3D Objects
 
     mirXY_neg = result.mirror(mirrorPlane="XY", basePointVector=(0, 0, -30))
     mirXY_pos = result.mirror(mirrorPlane="XY", basePointVector=(0, 0, 30))
-    mirZY_neg = result.mirror(mirrorPlane="ZY", basePointVector=(-30,0,0))
-    mirZY_pos = result.mirror(mirrorPlane="ZY", basePointVector=(30,0,0))
+    mirZY_neg = result.mirror(mirrorPlane="ZY", basePointVector=(-30, 0, 0))
+    mirZY_pos = result.mirror(mirrorPlane="ZY", basePointVector=(30, 0, 0))
 
     result = result.union(mirXY_neg).union(mirXY_pos).union(mirZY_neg).union(mirZY_pos)
 
@@ -359,6 +359,36 @@ Mirroring 3D Objects
         * :py:meth:`Workplane.mirror`
         * :py:meth:`Workplane.union`
         * :py:meth:`Workplane.rotate`
+
+
+Mirroring From Faces
+-----------------------------
+
+This example shows how you can mirror about a selected face.  It also shows how the resulting mirrored object can be unioned immediately with the referenced mirror geometry.
+
+.. cadquery::
+
+    result = (cq.Workplane("XY")
+              .line(0, 1)
+              .line(1, 0)
+              .line(0, -.5)
+              .close()
+              .extrude(1))
+
+    result = result.mirror(result.faces(">X"), union=True)
+
+
+.. topic:: Api References
+
+    .. hlist::
+        :columns: 2
+
+        * :py:meth:`Workplane.line`
+        * :py:meth:`Workplane.close`
+        * :py:meth:`Workplane.extrude`
+        * :py:meth:`Workplane.faces`
+        * :py:meth:`Workplane.mirror`
+        * :py:meth:`Workplane.union`
 
 Creating Workplanes on Faces
 -----------------------------
@@ -406,7 +436,7 @@ how deep the part is
 .. cadquery::
 
     result = cq.Workplane("front").box(3,2, 0.5)                 #make a basic prism
-    result = result.faces(">Z").vertices("<XY").workplane()  #select the lower left vertex and make a workplane
+    result = result.faces(">Z").vertices("<XY").workplane(centerOption="CenterOfMass")  #select the lower left vertex and make a workplane
     result = result.circle(1.0).cutThruAll()                 #cut the corner out
 
 .. topic:: Api References
@@ -746,7 +776,7 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
         .mirrorX().extrude(30.0,True))
 
     #make the neck
-    p = p.faces(">Z").workplane().circle(3.0).extrude(2.0,True)
+    p = p.faces(">Z").workplane(centerOption="CenterOfMass").circle(3.0).extrude(2.0,True)
 
     #make a shell
     result = p.faces(">Z").shell(0.3)
@@ -1130,35 +1160,35 @@ Panel With Various Connector Holes
 
     h_sep = 60
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(157,210-idx*h_sep).moveTo(-23.5,0).circle(1.6).moveTo(23.5,0).circle(1.6).moveTo(-17.038896,-5.7).threePointArc((-19.44306,-4.70416),(-20.438896,-2.3)).lineTo(-21.25,2.3).threePointArc((-20.25416,4.70416),(-17.85,5.7)).lineTo(17.85,5.7).threePointArc((20.25416,4.70416),(21.25,2.3)).lineTo(20.438896,-2.3).threePointArc((19.44306,-4.70416),(17.038896,-5.7)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(157,210-idx*h_sep).moveTo(-23.5,0).circle(1.6).moveTo(23.5,0).circle(1.6).moveTo(-17.038896,-5.7).threePointArc((-19.44306,-4.70416),(-20.438896,-2.3)).lineTo(-21.25,2.3).threePointArc((-20.25416,4.70416),(-17.85,5.7)).lineTo(17.85,5.7).threePointArc((20.25416,4.70416),(21.25,2.3)).lineTo(20.438896,-2.3).threePointArc((19.44306,-4.70416),(17.038896,-5.7)).close().cutThruAll()
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(157,-30-idx*h_sep).moveTo(-16.65,0).circle(1.6).moveTo(16.65,0).circle(1.6).moveTo(-10.1889,-5.7).threePointArc((-12.59306,-4.70416),(-13.5889,-2.3)).lineTo(-14.4,2.3).threePointArc((-13.40416,4.70416),(-11,5.7)).lineTo(11,5.7).threePointArc((13.40416,4.70416),(14.4,2.3)).lineTo(13.5889,-2.3).threePointArc((12.59306,-4.70416),(10.1889,-5.7)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(157,-30-idx*h_sep).moveTo(-16.65,0).circle(1.6).moveTo(16.65,0).circle(1.6).moveTo(-10.1889,-5.7).threePointArc((-12.59306,-4.70416),(-13.5889,-2.3)).lineTo(-14.4,2.3).threePointArc((-13.40416,4.70416),(-11,5.7)).lineTo(11,5.7).threePointArc((13.40416,4.70416),(14.4,2.3)).lineTo(13.5889,-2.3).threePointArc((12.59306,-4.70416),(10.1889,-5.7)).close().cutThruAll()
 
     h_sep4DB9 = 30
     for idx in range(8):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(91,225-idx*h_sep4DB9).moveTo(-12.5,0).circle(1.6).moveTo(12.5,0).circle(1.6).moveTo(-6.038896,-5.7).threePointArc((-8.44306,-4.70416),(-9.438896,-2.3)).lineTo(-10.25,2.3).threePointArc((-9.25416,4.70416),(-6.85,5.7)).lineTo(6.85,5.7).threePointArc((9.25416,4.70416),(10.25,2.3)).lineTo(9.438896,-2.3).threePointArc((8.44306,-4.70416),(6.038896,-5.7)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(91,225-idx*h_sep4DB9).moveTo(-12.5,0).circle(1.6).moveTo(12.5,0).circle(1.6).moveTo(-6.038896,-5.7).threePointArc((-8.44306,-4.70416),(-9.438896,-2.3)).lineTo(-10.25,2.3).threePointArc((-9.25416,4.70416),(-6.85,5.7)).lineTo(6.85,5.7).threePointArc((9.25416,4.70416),(10.25,2.3)).lineTo(9.438896,-2.3).threePointArc((8.44306,-4.70416),(6.038896,-5.7)).close().cutThruAll()
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(25,210-idx*h_sep).moveTo(-23.5,0).circle(1.6).moveTo(23.5,0).circle(1.6).moveTo(-17.038896,-5.7).threePointArc((-19.44306,-4.70416),(-20.438896,-2.3)).lineTo(-21.25,2.3).threePointArc((-20.25416,4.70416),(-17.85,5.7)).lineTo(17.85,5.7).threePointArc((20.25416,4.70416),(21.25,2.3)).lineTo(20.438896,-2.3).threePointArc((19.44306,-4.70416),(17.038896,-5.7)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(25,210-idx*h_sep).moveTo(-23.5,0).circle(1.6).moveTo(23.5,0).circle(1.6).moveTo(-17.038896,-5.7).threePointArc((-19.44306,-4.70416),(-20.438896,-2.3)).lineTo(-21.25,2.3).threePointArc((-20.25416,4.70416),(-17.85,5.7)).lineTo(17.85,5.7).threePointArc((20.25416,4.70416),(21.25,2.3)).lineTo(20.438896,-2.3).threePointArc((19.44306,-4.70416),(17.038896,-5.7)).close().cutThruAll()
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(25,-30-idx*h_sep).moveTo(-16.65,0).circle(1.6).moveTo(16.65,0).circle(1.6).moveTo(-10.1889,-5.7).threePointArc((-12.59306,-4.70416),(-13.5889,-2.3)).lineTo(-14.4,2.3).threePointArc((-13.40416,4.70416),(-11,5.7)).lineTo(11,5.7).threePointArc((13.40416,4.70416),(14.4,2.3)).lineTo(13.5889,-2.3).threePointArc((12.59306,-4.70416),(10.1889,-5.7)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(25,-30-idx*h_sep).moveTo(-16.65,0).circle(1.6).moveTo(16.65,0).circle(1.6).moveTo(-10.1889,-5.7).threePointArc((-12.59306,-4.70416),(-13.5889,-2.3)).lineTo(-14.4,2.3).threePointArc((-13.40416,4.70416),(-11,5.7)).lineTo(11,5.7).threePointArc((13.40416,4.70416),(14.4,2.3)).lineTo(13.5889,-2.3).threePointArc((12.59306,-4.70416),(10.1889,-5.7)).close().cutThruAll()
 
     for idx in range(8):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(-41,225-idx*h_sep4DB9).moveTo(-12.5,0).circle(1.6).moveTo(12.5,0).circle(1.6).moveTo(-6.038896,-5.7).threePointArc((-8.44306,-4.70416),(-9.438896,-2.3)).lineTo(-10.25,2.3).threePointArc((-9.25416,4.70416),(-6.85,5.7)).lineTo(6.85,5.7).threePointArc((9.25416,4.70416),(10.25,2.3)).lineTo(9.438896,-2.3).threePointArc((8.44306,-4.70416),(6.038896,-5.7)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-41,225-idx*h_sep4DB9).moveTo(-12.5,0).circle(1.6).moveTo(12.5,0).circle(1.6).moveTo(-6.038896,-5.7).threePointArc((-8.44306,-4.70416),(-9.438896,-2.3)).lineTo(-10.25,2.3).threePointArc((-9.25416,4.70416),(-6.85,5.7)).lineTo(6.85,5.7).threePointArc((9.25416,4.70416),(10.25,2.3)).lineTo(9.438896,-2.3).threePointArc((8.44306,-4.70416),(6.038896,-5.7)).close().cutThruAll()
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(-107,210-idx*h_sep).moveTo(-23.5,0).circle(1.6).moveTo(23.5,0).circle(1.6).moveTo(-17.038896,-5.7).threePointArc((-19.44306,-4.70416),(-20.438896,-2.3)).lineTo(-21.25,2.3).threePointArc((-20.25416,4.70416),(-17.85,5.7)).lineTo(17.85,5.7).threePointArc((20.25416,4.70416),(21.25,2.3)).lineTo(20.438896,-2.3).threePointArc((19.44306,-4.70416),(17.038896,-5.7)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-107,210-idx*h_sep).moveTo(-23.5,0).circle(1.6).moveTo(23.5,0).circle(1.6).moveTo(-17.038896,-5.7).threePointArc((-19.44306,-4.70416),(-20.438896,-2.3)).lineTo(-21.25,2.3).threePointArc((-20.25416,4.70416),(-17.85,5.7)).lineTo(17.85,5.7).threePointArc((20.25416,4.70416),(21.25,2.3)).lineTo(20.438896,-2.3).threePointArc((19.44306,-4.70416),(17.038896,-5.7)).close().cutThruAll()
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(-107,-30-idx*h_sep).circle(14).rect(24.7487,24.7487, forConstruction=True).vertices().hole(3.2).cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-107,-30-idx*h_sep).circle(14).rect(24.7487,24.7487, forConstruction=True).vertices().hole(3.2).cutThruAll()
 
     for idx in range(8):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(-173,225-idx*h_sep4DB9).moveTo(-12.5,0).circle(1.6).moveTo(12.5,0).circle(1.6).moveTo(-6.038896,-5.7).threePointArc((-8.44306,-4.70416),(-9.438896,-2.3)).lineTo(-10.25,2.3).threePointArc((-9.25416,4.70416),(-6.85,5.7)).lineTo(6.85,5.7).threePointArc((9.25416,4.70416),(10.25,2.3)).lineTo(9.438896,-2.3).threePointArc((8.44306,-4.70416),(6.038896,-5.7)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-173,225-idx*h_sep4DB9).moveTo(-12.5,0).circle(1.6).moveTo(12.5,0).circle(1.6).moveTo(-6.038896,-5.7).threePointArc((-8.44306,-4.70416),(-9.438896,-2.3)).lineTo(-10.25,2.3).threePointArc((-9.25416,4.70416),(-6.85,5.7)).lineTo(6.85,5.7).threePointArc((9.25416,4.70416),(10.25,2.3)).lineTo(9.438896,-2.3).threePointArc((8.44306,-4.70416),(6.038896,-5.7)).close().cutThruAll()
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption='CenterOfBoundBox').center(-173,-30-idx*h_sep).moveTo(-2.9176,-5.3).threePointArc((-6.05,0),(-2.9176,5.3)).lineTo(2.9176,5.3).threePointArc((6.05,0),(2.9176,-5.3)).close().cutThruAll()
+        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-173,-30-idx*h_sep).moveTo(-2.9176,-5.3).threePointArc((-6.05,0),(-2.9176,5.3)).lineTo(2.9176,5.3).threePointArc((6.05,0),(2.9176,-5.3)).close().cutThruAll()
 
 
 Cycloidal gear
