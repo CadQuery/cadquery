@@ -103,20 +103,45 @@ class TestCQSelectors(BaseTest):
     def testPerpendicularDirFilter(self):
         c = CQ(makeUnitCube())
 
-        self.assertEqual(8, c.edges("#Z").size())  # 8 edges are perp. to z
-        self.assertEqual(4, c.faces("#Z").size())  # 4 faces are perp to z too!
+        perp_edges = c.edges("#Z")
+        self.assertEqual(8, perp_edges.size())  # 8 edges are perp. to z
+        # dot product of perpendicular vectors is zero
+        for e in perp_edges.vals():
+            self.assertAlmostEqual(e.tangentAt(0).dot(Vector(0, 0, 1)), 0.0)
+        perp_faces = c.faces("#Z")
+        self.assertEqual(4, perp_faces.size())  # 4 faces are perp to z too!
+        for f in perp_faces.vals():
+            self.assertAlmostEqual(f.normalAt(None).dot(Vector(0, 0, 1)), 0.0)
 
     def testFaceDirFilter(self):
         c = CQ(makeUnitCube())
         # a cube has one face in each direction
         self.assertEqual(1, c.faces("+Z").size())
+        self.assertTupleAlmostEquals(
+            (0, 0, 1), c.faces("+Z").val().Center().toTuple(), 3
+        )
         self.assertEqual(1, c.faces("-Z").size())
+        self.assertTupleAlmostEquals(
+            (0, 0, 0), c.faces("-Z").val().Center().toTuple(), 3
+        )
         self.assertEqual(1, c.faces("+X").size())
-        self.assertEqual(1, c.faces("X").size())  # should be same as +X
+        self.assertTupleAlmostEquals(
+            (0.5, 0, 0.5), c.faces("+X").val().Center().toTuple(), 3
+        )
         self.assertEqual(1, c.faces("-X").size())
+        self.assertTupleAlmostEquals(
+            (-0.5, 0, 0.5), c.faces("-X").val().Center().toTuple(), 3
+        )
         self.assertEqual(1, c.faces("+Y").size())
+        self.assertTupleAlmostEquals(
+            (0, 0.5, 0.5), c.faces("+Y").val().Center().toTuple(), 3
+        )
         self.assertEqual(1, c.faces("-Y").size())
+        self.assertTupleAlmostEquals(
+            (0, -0.5, 0.5), c.faces("-Y").val().Center().toTuple(), 3
+        )
         self.assertEqual(0, c.faces("XY").size())
+        self.assertEqual(1, c.faces("X").size())  # should be same as +X
         self.assertEqual(c.faces("+X").val().Center(), c.faces("X").val().Center())
         self.assertNotEqual(c.faces("+X").val().Center(), c.faces("-X").val().Center())
 
@@ -124,11 +149,12 @@ class TestCQSelectors(BaseTest):
         c = CQ(makeUnitCube())
 
         # faces parallel to Z axis
-        self.assertEqual(2, c.faces("|Z").size())
-        # TODO: provide short names for ParallelDirSelector
-        self.assertEqual(
-            2, c.faces(selectors.ParallelDirSelector(Vector((0, 0, 1)))).size()
-        )  # same thing as above
+        # these two should produce the same behaviour:
+        for s in ["|Z", selectors.ParallelDirSelector(Vector(0, 0, 1))]:
+            parallel_faces = c.faces(s)
+            self.assertEqual(2, parallel_faces.size())
+            for f in parallel_faces.vals():
+                self.assertAlmostEqual(abs(f.normalAt(None).dot(Vector(0, 0, 1))), 1)
         self.assertEqual(
             2, c.faces(selectors.ParallelDirSelector(Vector((0, 0, -1)))).size()
         )  # same thing as above
@@ -138,9 +164,15 @@ class TestCQSelectors(BaseTest):
 
     def testParallelEdgeFilter(self):
         c = CQ(makeUnitCube())
-        self.assertEqual(4, c.edges("|Z").size())
-        self.assertEqual(4, c.edges("|X").size())
-        self.assertEqual(4, c.edges("|Y").size())
+        for sel, vec in zip(
+            ["|X", "|Y", "|Z"], [Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)]
+        ):
+            edges = c.edges(sel)
+            # each direction should have 4 edges
+            self.assertEqual(4, edges.size())
+            # each edge should be parallel with vec and have a cross product with a length of 0
+            for e in edges.vals():
+                self.assertAlmostEqual(e.tangentAt(0).cross(vec).Length, 0.0)
 
     def testMaxDistance(self):
         c = CQ(makeUnitCube())
@@ -155,17 +187,19 @@ class TestCQSelectors(BaseTest):
             self.assertAlmostEqual(1.0, v.Z, 3)
 
         # test the case of multiple objects at the same distance
-        el = c.edges("<Z").vals()
+        el = c.edges(">Z").vals()
         self.assertEqual(4, len(el))
+        for e in el:
+            self.assertAlmostEqual(e.Center().z, 1)
 
     def testMinDistance(self):
         c = CQ(makeUnitCube())
 
-        # should select the topmost face
+        # should select the bottom face
         self.assertEqual(1, c.faces("<Z").size())
         self.assertEqual(4, c.faces("<Z").vertices().size())
 
-        # vertices should all be at z=1, if this is the top face
+        # vertices should all be at z=0, if this is the bottom face
         self.assertEqual(4, len(c.faces("<Z").vertices().vals()))
         for v in c.faces("<Z").vertices().vals():
             self.assertAlmostEqual(0.0, v.Z, 3)
@@ -173,6 +207,8 @@ class TestCQSelectors(BaseTest):
         # test the case of multiple objects at the same distance
         el = c.edges("<Z").vals()
         self.assertEqual(4, len(el))
+        for e in el:
+            self.assertAlmostEqual(e.Center().z, 0)
 
     def testNthDistance(self):
         c = Workplane("XY").pushPoints([(-2, 0), (2, 0)]).box(1, 1, 1)
@@ -252,18 +288,40 @@ class TestCQSelectors(BaseTest):
         val = c.faces("<Z[-2]").val()
         self.assertAlmostEqual(val.Center().z, 1)
 
+        # note that .val() will return the workplane center if the objects list
+        # is empty, so to make sure this test fails with a selector that
+        # selects nothing, use .vals()[0]
         # verify that <Z[-1] is equivalent to <Z
-        val1 = c.faces("<Z[-1]").val()
-        val2 = c.faces("<Z").val()
+        val1 = c.faces("<Z[-1]").vals()[0]
+        val2 = c.faces("<Z").vals()[0]
         self.assertTupleAlmostEquals(
             val1.Center().toTuple(), val2.Center().toTuple(), 3
         )
 
         # verify that >Z[-1] is equivalent to >Z
-        val1 = c.faces(">Z[-1]").val()
-        val2 = c.faces(">Z").val()
+        val1 = c.faces(">Z[-1]").vals()[0]
+        val2 = c.faces(">Z").vals()[0]
         self.assertTupleAlmostEquals(
             val1.Center().toTuple(), val2.Center().toTuple(), 3
+        )
+
+        # DirectionNthSelector should not select faces that are not perpendicular
+        twisted_boxes = (
+            Workplane()
+            .box(1, 1, 1, centered=(True, True, False))
+            .transformed(rotate=(45, 0, 0), offset=(0, 0, 3))
+            .box(1, 1, 1)
+        )
+        self.assertTupleAlmostEquals(
+            twisted_boxes.faces(">Z[-1]").val().Center().toTuple(), (0, 0, 1), 3
+        )
+        # this should select a face on the upper/rotated cube, not the lower/unrotated cube
+        self.assertGreater(twisted_boxes.faces("<(0, 1, 1)[-1]").val().Center().z, 1)
+        # verify that >Z[-1] is equivalent to >Z
+        self.assertTupleAlmostEquals(
+            twisted_boxes.faces(">(0, 1, 1)[0]").vals()[0].Center().toTuple(),
+            twisted_boxes.faces("<(0, 1, 1)[-1]").vals()[0].Center().toTuple(),
+            3,
         )
 
     def testNearestTo(self):
@@ -452,22 +510,6 @@ class TestCQSelectors(BaseTest):
         self.assertAlmostEqual(
             wire_circles.wires(selectors.RadiusNthSelector(1)).val().radius(), 4
         )
-
-        # a polygon with rounded corners has a radius, according to OCCT
-        loop_wire = Wire.makePolygon(
-            [Vector(-10, 0, 0), Vector(0, 10, 0), Vector(10, 0, 0),]
-        )
-        loop_workplane = (
-            Workplane().add(loop_wire.offset2D(1)).add(loop_wire.offset2D(2))
-        )
-        self.assertAlmostEqual(
-            loop_workplane.wires(selectors.RadiusNthSelector(0)).val().radius(), 1.0
-        )
-        self.assertAlmostEqual(
-            loop_workplane.wires(selectors.RadiusNthSelector(1)).val().radius(), 2.0
-        )
-        with self.assertRaises(IndexError):
-            loop_workplane.wires(selectors.RadiusNthSelector(2))
 
     def testAndSelector(self):
         c = CQ(makeUnitCube())
