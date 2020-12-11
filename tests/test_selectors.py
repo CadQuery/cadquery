@@ -146,7 +146,7 @@ class TestCQSelectors(BaseTest):
         self.assertNotEqual(c.faces("+X").val().Center(), c.faces("-X").val().Center())
 
     def testParallelPlaneFaceFilter(self):
-        c = CQ(makeUnitCube())
+        c = CQ(makeUnitCube(centered=False))
 
         # faces parallel to Z axis
         # these two should produce the same behaviour:
@@ -161,6 +161,13 @@ class TestCQSelectors(BaseTest):
 
         # just for fun, vertices on faces parallel to z
         self.assertEqual(8, c.faces("|Z").vertices().size())
+
+        # check that the X & Y center of these faces is the same as the box (ie. we haven't selected the wrong face)
+        faces = c.faces(selectors.ParallelDirSelector(Vector((0, 0, 1)))).vals()
+        for f in faces:
+            c = f.Center()
+            self.assertAlmostEqual(c.x, 0.5)
+            self.assertAlmostEqual(c.y, 0.5)
 
     def testParallelEdgeFilter(self):
         c = CQ(makeUnitCube())
