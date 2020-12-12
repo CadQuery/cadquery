@@ -26,12 +26,21 @@ PATH_DELIM = "/"
 # enitity selector grammar definiiton
 def _define_grammar():
 
-    from pyparsing import Literal as Literal, Word, Optional, alphas, alphanums, delimitedList
+    from pyparsing import (
+        Literal as Literal,
+        Word,
+        Optional,
+        alphas,
+        alphanums,
+        delimitedList,
+    )
 
     Separator = Literal("@").suppress()
     TagSeparator = Literal("?").suppress()
 
-    Name = delimitedList(Word(alphas, alphanums + "_"), PATH_DELIM, combine=True).setResultsName("name")
+    Name = delimitedList(
+        Word(alphas, alphanums + "_"), PATH_DELIM, combine=True
+    ).setResultsName("name")
     Tag = Word(alphas, alphanums + "_").setResultsName("tag")
     Selector = _selector_grammar.setResultsName("selector")
 
