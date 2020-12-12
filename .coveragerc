@@ -1,5 +1,6 @@
 [run]
 branch = True
+omit = cadquery/utils.py
 
 [report]
 exclude_lines =

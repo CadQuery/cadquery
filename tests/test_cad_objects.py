@@ -418,6 +418,68 @@ class TestCadObjects(BaseTest):
             == loc3.wrapped.Transformation().TranslationPart().Z()
         )
 
+    def testEdgeWrapperRadius(self):
+
+        # get a radius from a simple circle
+        e0 = Edge.makeCircle(2.4)
+        self.assertAlmostEqual(e0.radius(), 2.4)
+
+        # radius of an arc
+        e1 = Edge.makeCircle(1.8, pnt=(5, 6, 7), dir=(1, 1, 1), angle1=20, angle2=30)
+        self.assertAlmostEqual(e1.radius(), 1.8)
+
+        # test value errors
+        e2 = Edge.makeEllipse(10, 20)
+        with self.assertRaises(ValueError):
+            e2.radius()
+
+        # radius from a wire
+        w0 = Wire.makeCircle(10, Vector(1, 2, 3), (-1, 0, 1))
+        self.assertAlmostEqual(w0.radius(), 10)
+
+        # radius from a wire with multiple edges
+        rad = 2.3
+        pnt = (7, 8, 9)
+        direction = (1, 0.5, 0.1)
+        w1 = Wire.assembleEdges(
+            [
+                Edge.makeCircle(rad, pnt, direction, 0, 10),
+                Edge.makeCircle(rad, pnt, direction, 10, 25),
+                Edge.makeCircle(rad, pnt, direction, 25, 230),
+            ]
+        )
+        self.assertAlmostEqual(w1.radius(), rad)
+
+        # test value error from wire
+        w2 = Wire.makePolygon([Vector(-1, 0, 0), Vector(0, 1, 0), Vector(1, -1, 0),])
+        with self.assertRaises(ValueError):
+            w2.radius()
+
+        # (I think) the radius of a wire is the radius of it's first edge.
+        # Since this is stated in the docstring better make sure.
+        no_rad = Wire.assembleEdges(
+            [
+                Edge.makeLine(Vector(0, 0, 0), Vector(0, 1, 0)),
+                Edge.makeCircle(1.0, angle1=90, angle2=270),
+            ]
+        )
+        with self.assertRaises(ValueError):
+            no_rad.radius()
+        yes_rad = Wire.assembleEdges(
+            [
+                Edge.makeCircle(1.0, angle1=90, angle2=270),
+                Edge.makeLine(Vector(0, -1, 0), Vector(0, 1, 0)),
+            ]
+        )
+        self.assertAlmostEqual(yes_rad.radius(), 1.0)
+        many_rad = Wire.assembleEdges(
+            [
+                Edge.makeCircle(1.0, angle1=0, angle2=180),
+                Edge.makeCircle(3.0, pnt=Vector(2, 0, 0), angle1=180, angle2=359),
+            ]
+        )
+        self.assertAlmostEqual(many_rad.radius(), 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()

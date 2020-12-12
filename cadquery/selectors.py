@@ -300,6 +300,51 @@ class TypeSelector(Selector):
         return r
 
 
+class RadiusNthSelector(Selector):
+    """
+    Select the object with the Nth radius.
+
+    Applicability:
+        All Edge and Wires.
+
+    Will ignore any shape that can not be represented as a circle or an arc of
+    a circle.
+    """
+
+    def __init__(self, n, directionMax=True, tolerance=0.0001):
+        self.N = n
+        self.directionMax = directionMax
+        self.TOLERANCE = tolerance
+
+    def filter(self, objectList):
+        # calculate how many digits of precision do we need
+        digits = -math.floor(math.log10(self.TOLERANCE))
+
+        # make a radius dict
+        # this is one to many mapping so I am using a default dict with list
+        objectDict = defaultdict(list)
+        for el in objectList:
+            try:
+                rad = el.radius()
+            except ValueError:
+                continue
+            objectDict[round(rad, digits)].append(el)
+
+        # choose the Nth unique rounded distance
+        sortedObjectList = sorted(
+            list(objectDict.keys()), reverse=not self.directionMax
+        )
+        try:
+            nth_distance = sortedObjectList[self.N]
+        except IndexError:
+            raise IndexError(
+                f"Attempted to access the {self.N}-th radius in a list {len(sortedObjectList)} long"
+            )
+
+        # map back to original objects and return
+        return objectDict[nth_distance]
+
+
 class DirectionMinMaxSelector(Selector):
     """
         Selects objects closest or farthest in the specified direction

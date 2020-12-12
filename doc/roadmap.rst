@@ -9,28 +9,6 @@ RoadMap:  Planned Features
 Many features are planned for later versions.  This page tracks them.  If you find that you need features
 not listed here, let us know!
 
-Core
---------------------
-
-end(n)
-    allows moving backwards a fixed number of parents in the chain, eg end(3) is same as end().end().end()
-
-Improved iteration tools for plugin developers
-    make it easier to iterate over points and wires for plugins
-
-More parameter types ( String? )
-
-face.outerWire
-    allow selecting the outerWire of a face, so that it can be used for reference geometry or offsets
-
-Selectors
---------------------
-
-tagged entities
-    support tagging entities when they are created, so they can be selected later on using that tag.
-    ideally, tags are propagated to features that are created from these features ( ie, an edge tagged with 'foo'
-    that is later extruded into a face means that face would be tagged with 'foo' as well )
-
 
 Workplanes
 --------------------
@@ -43,21 +21,16 @@ workplane local rotations
 
 make a workplane from a wire
     useful to select outer wire and then operate from there, to allow offsets
+    
+Assemblies
+----------
+
+implement more constraints
+    in plane, on axis, parallel to vector
+
 
 2-d operations
 -------------------
-
-offsets
-    offset profiles, including circles, rects, and other profiles.
-
-ellipses
-    create ellipses and portions of ellipses
-
-regular polygons
-    several construction methods:
-        * number of sides and side length
-        * number of sides inscribed in circle
-        * number of sides circumscribed by circle
 
 arc construction using relative measures
     instead of forcing use of absolute workplane coordinates
@@ -114,12 +87,3 @@ primitive creation
 
 extrude/cut up to surface
     allow a cut or extrude to terminate at another surface, rather than either through all or a fixed distance
-
-
-Algorithms
----------------------
-
-Wire Discretization
-    Sample wires at point interval to improve closet wire computations
-
-

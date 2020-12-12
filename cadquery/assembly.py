@@ -21,15 +21,26 @@ AssemblyObjects = Union[Shape, Workplane, None]
 ConstraintKinds = Literal["Plane", "Point", "Axis"]
 ExportLiterals = Literal["STEP", "XML"]
 
+PATH_DELIM = "/"
+
 # enitity selector grammar definiiton
 def _define_grammar():
 
-    from pyparsing import Literal as Literal, Word, Optional, alphas, alphanums
+    from pyparsing import (
+        Literal as Literal,
+        Word,
+        Optional,
+        alphas,
+        alphanums,
+        delimitedList,
+    )
 
     Separator = Literal("@").suppress()
     TagSeparator = Literal("?").suppress()
 
-    Name = Word(alphas, alphanums + "_").setResultsName("name")
+    Name = delimitedList(
+        Word(alphas, alphanums + "_"), PATH_DELIM, combine=True
+    ).setResultsName("name")
     Tag = Word(alphas, alphanums + "_").setResultsName("tag")
     Selector = _selector_grammar.setResultsName("selector")
 
@@ -174,19 +185,27 @@ class Assembly(object):
         self.constraints = []
         self.objects = {self.name: self}
 
-    def _copy(self) -> "Assembly":
+    def _change_prefix(self, prefix):
+        _, delim, rest = self.name.rpartition(PATH_DELIM)
+        return prefix + delim + rest
+
+    def _add_prefix(self, path):
+        return path if self.name is None else self.name + PATH_DELIM + path
+
+    def _copy(self, name: str) -> "Assembly":
         """
         Make a deep copy of an assembly
         """
 
-        rv = self.__class__(self.obj, self.loc, self.name, self.color)
+        rv = self.__class__(self.obj, self.loc, name, self.color)
 
         for ch in self.children:
-            ch_copy = ch._copy()
+            full_name = ch._change_prefix(name)
+            ch_copy = ch._copy(full_name)
             ch_copy.parent = rv
 
             rv.children.append(ch_copy)
-            rv.objects[ch_copy.name] = ch_copy
+            rv.objects[full_name] = ch_copy
             rv.objects.update(ch_copy.objects)
 
         return rv
@@ -233,12 +252,11 @@ class Assembly(object):
         """
 
         if isinstance(arg, Assembly):
+            name = self._add_prefix(kwargs.get("name", arg.name))
+            subassy = arg._copy(name)
 
-            subassy = arg._copy()
-
-            subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
-            subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
-            subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.loc = kwargs.get("loc", arg.loc)
+            subassy.color = kwargs.get("color", arg.color)
             subassy.parent = self
 
             self.children.append(subassy)
@@ -246,14 +264,14 @@ class Assembly(object):
             self.objects.update(subassy.objects)
 
         else:
-            assy = Assembly(arg, **kwargs)
+            assy = self.__class__(arg, **kwargs)
             assy.parent = self
 
             self.add(assy)
 
         return self
 
-    def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
+    def _query_workplane(self, q: str) -> Tuple[str, Workplane]:
         """
         Execute a selector query on the assembly. 
         The query is expected to be in the following format:
@@ -278,7 +296,7 @@ class Assembly(object):
         obj = self.objects[name].obj
 
         if isinstance(obj, Workplane) and query.tag:
-            tmp = obj.ctx.tags[query.tag]
+            tmp = obj._getTagged(query.tag)
         elif isinstance(obj, (Workplane, Shape)):
             tmp = Workplane().add(obj)
         else:
@@ -289,7 +307,25 @@ class Assembly(object):
         else:
             res = tmp
 
-        val = res.val()
+        return name, res
+
+    def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
+        """
+        Execute a selector query on the assembly. 
+        The query is expected to be in the following format:
+        
+            name[?tag][@kind@args]
+            
+        valid example include:
+        
+            obj_name @ faces @ >Z
+            obj_name?tag1@faces@>Z          
+            obj_name ? tag
+            obj_name
+        
+        """
+        name, obj = self._query_workplane(q)
+        val = obj.val()
 
         return name, val if isinstance(val, Shape) else None
 
