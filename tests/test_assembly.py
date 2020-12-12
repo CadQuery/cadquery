@@ -160,7 +160,12 @@ def test_constrain(simple_assy, nested_assy):
     constraint = nested_assy.constraints[0]
 
     assert constraint.objects == ("TOP", "TOP/SECOND")
-    assert constraint.sublocs[0].wrapped.Transformation().TranslationPart().IsEqual(gp_XYZ(), 1e-9)
+    assert (
+        constraint.sublocs[0]
+        .wrapped.Transformation()
+        .TranslationPart()
+        .IsEqual(gp_XYZ(), 1e-9)
+    )
     assert constraint.sublocs[1].wrapped.IsEqual(
         nested_assy.objects["TOP/SECOND/BOTTOM"].loc.wrapped
     )
@@ -212,7 +217,9 @@ def test_hierarchical_id():
     obj4 = cq.Workplane().box(1, 1, 1).tag("obj4")
     obj5 = cq.Workplane().box(1, 1, 1).tag("obj5")
 
-    assy1 = cq.Assembly(root1, name="root1").add(obj1, name="obj1").add(obj2, name="obj2")
+    assy1 = (
+        cq.Assembly(root1, name="root1").add(obj1, name="obj1").add(obj2, name="obj2")
+    )
     expected1 = {  # assemly_id: object tag
         "root1": "root1",
         "root1/obj1": "obj1",
