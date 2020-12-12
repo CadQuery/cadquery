@@ -19,7 +19,7 @@
 
 import math
 from .occ_impl.geom import Vector
-from .occ_impl.shapes import Edge, Face
+from .occ_impl.shapes import Shape, Edge, Face, Wire
 from collections import defaultdict
 from pyparsing import (
     Literal,
@@ -38,6 +38,7 @@ from pyparsing import (
     Keyword,
 )
 from functools import reduce
+from typing import List, Union
 
 
 class Selector(object):
@@ -159,15 +160,15 @@ class BaseDirSelector(Selector):
         direction vector
     """
 
-    def __init__(self, vector, tolerance=0.0001):
+    def __init__(self, vector: Vector, tolerance: float = 0.0001):
         self.direction = vector
-        self.TOLERANCE = tolerance
+        self.tolerance = tolerance
 
-    def test(self, vec):
+    def test(self, vec: Vector) -> bool:
         "Test a specified vector. Subclasses override to provide other implementations"
         return True
 
-    def filter(self, objectList):
+    def filter(self, objectList: List[Union[Face, Edge]]) -> List[Union[Face, Edge]]:
         """
             There are lots of kinds of filters, but
             for planes they are always based on the normal of the plane,
@@ -176,20 +177,19 @@ class BaseDirSelector(Selector):
         r = []
         for o in objectList:
             # no really good way to avoid a switch here, edges and faces are simply different!
-
-            if type(o) == Face:
-                # a face is only parallell to a direction if it is a plane, and its normal is parallel to the dir
-                normal = o.normalAt(None)
-
-                if self.test(normal):
-                    r.append(o)
-            elif type(o) == Edge and (
+            if isinstance(o, Face):
+                # a face is only parallel to a direction if it is a plane, and its normal is parallel to the dir
+                test_vector = o.normalAt(None)
+            elif isinstance(o, Edge) and (
                 o.geomType() == "LINE" or o.geomType() == "PLANE"
             ):
                 # an edge is parallel to a direction if its underlying geometry is plane or line
-                tangent = o.tangentAt()
-                if self.test(tangent):
-                    r.append(o)
+                test_vector = o.tangentAt()
+            else:
+                continue
+
+            if self.test(test_vector):
+                r.append(o)
 
         return r
 
@@ -214,8 +214,8 @@ class ParallelDirSelector(BaseDirSelector):
             CQ(aCube).faces("|Z")
     """
 
-    def test(self, vec):
-        return self.direction.cross(vec).Length < self.TOLERANCE
+    def test(self, vec: Vector) -> bool:
+        return self.direction.cross(vec).Length < self.tolerance
 
 
 class DirectionSelector(BaseDirSelector):
@@ -238,8 +238,8 @@ class DirectionSelector(BaseDirSelector):
             CQ(aCube).faces("+Z")
     """
 
-    def test(self, vec):
-        return abs(self.direction.getAngle(vec) < self.TOLERANCE)
+    def test(self, vec: Vector) -> bool:
+        return self.direction.getAngle(vec) < self.tolerance
 
 
 class PerpendicularDirSelector(BaseDirSelector):
@@ -262,9 +262,9 @@ class PerpendicularDirSelector(BaseDirSelector):
             CQ(aCube).faces("#Z")
     """
 
-    def test(self, vec):
+    def test(self, vec: Vector) -> bool:
         angle = self.direction.getAngle(vec)
-        r = (abs(angle) < self.TOLERANCE) or (abs(angle - math.pi) < self.TOLERANCE)
+        r = (abs(angle) < self.tolerance) or (abs(angle - math.pi) < self.tolerance)
         return not r
 
 
@@ -289,10 +289,10 @@ class TypeSelector(Selector):
 
     """
 
-    def __init__(self, typeString):
+    def __init__(self, typeString: str):
         self.typeString = typeString.upper()
 
-    def filter(self, objectList):
+    def filter(self, objectList: List[Shape]) -> List[Shape]:
         r = []
         for o in objectList:
             if o.geomType() == self.typeString:
@@ -300,7 +300,73 @@ class TypeSelector(Selector):
         return r
 
 
-class RadiusNthSelector(Selector):
+class _NthSelector(Selector):
+    """
+    An abstract class that provides the methods to select the Nth object/objects of an ordered list.
+    """
+
+    def __init__(self, n: int, directionMax: bool = True, tolerance: float = 0.0001):
+        self.n = n
+        self.directionMax = directionMax
+        self.tolerance = tolerance
+
+    def filter(self, objectlist: List[Shape]) -> List[Shape]:
+        """
+        Return the nth object in the objectlist sorted by self.key and
+        clustered if within self.tolerance.
+        """
+        if len(objectlist) == 0:
+            # nothing to filter
+            return objectlist
+        clustered = self.cluster(objectlist)
+        if not self.directionMax:
+            clustered.reverse()
+        try:
+            out = clustered[self.n]
+        except IndexError:
+            raise IndexError(
+                f"Attempted to access index {self.n} of a list with length {len(clustered)}"
+            )
+
+        return out
+
+    def key(self, obj: Shape) -> float:
+        """
+        Return the key for ordering. Can raise a ValueError if obj can not be
+        used to create a key, which will result in obj being dropped by the
+        clustering method.
+        """
+        raise NotImplementedError
+
+    def cluster(self, objectlist: List[Shape]) -> List[List[Shape]]:
+        """
+        Clusters the elements of objectlist if they are within tolerance.
+        """
+        if len(objectlist) == 0:
+            return []
+        key_and_obj = []
+        for obj in objectlist:
+            # Need to handle value errors, such as what occurs when you try to
+            # access the radius of a straight line
+            try:
+                key = self.key(obj)
+            except ValueError:
+                # forget about this element and continue
+                continue
+            key_and_obj.append((key, obj))
+        key_and_obj.sort(key=lambda x: x[0])
+        clustered = [[]]  # type: List[List[Shape]]
+        start = key_and_obj[0][0]
+        for key, obj in key_and_obj:
+            if abs(key - start) <= self.tolerance:
+                clustered[-1].append(obj)
+            else:
+                clustered.append([obj])
+                start = key
+        return clustered
+
+
+class RadiusNthSelector(_NthSelector):
     """
     Select the object with the Nth radius.
 
@@ -311,131 +377,70 @@ class RadiusNthSelector(Selector):
     a circle.
     """
 
-    def __init__(self, n, directionMax=True, tolerance=0.0001):
-        self.N = n
-        self.directionMax = directionMax
-        self.TOLERANCE = tolerance
-
-    def filter(self, objectList):
-        # calculate how many digits of precision do we need
-        digits = -math.floor(math.log10(self.TOLERANCE))
-
-        # make a radius dict
-        # this is one to many mapping so I am using a default dict with list
-        objectDict = defaultdict(list)
-        for el in objectList:
-            try:
-                rad = el.radius()
-            except ValueError:
-                continue
-            objectDict[round(rad, digits)].append(el)
-
-        # choose the Nth unique rounded distance
-        sortedObjectList = sorted(
-            list(objectDict.keys()), reverse=not self.directionMax
-        )
-        try:
-            nth_distance = sortedObjectList[self.N]
-        except IndexError:
-            raise IndexError(
-                f"Attempted to access the {self.N}-th radius in a list {len(sortedObjectList)} long"
-            )
-
-        # map back to original objects and return
-        return objectDict[nth_distance]
-
-
-class DirectionMinMaxSelector(Selector):
-    """
-        Selects objects closest or farthest in the specified direction
-        Used for faces, points, and edges
-
-        Applicability:
-            All object types. for a vertex, its point is used. for all other kinds
-            of objects, the center of mass of the object is used.
-
-        You can use the string shortcuts >(X|Y|Z) or <(X|Y|Z) if you want to
-        select based on a cardinal direction.
-
-        For example this::
-
-            CQ(aCube).faces ( DirectionMinMaxSelector((0,0,1),True )
-
-        Means to select the face having the center of mass farthest in the positive z direction,
-        and is the same as:
-
-            CQ(aCube).faces( ">Z" )
-
-    """
-
-    def __init__(self, vector, directionMax=True, tolerance=0.0001):
-        self.vector = vector
-        self.max = max
-        self.directionMax = directionMax
-        self.TOLERANCE = tolerance
-
-    def filter(self, objectList):
-        def distance(tShape):
-            return tShape.Center().dot(self.vector)
-
-        # import OrderedDict
-        from collections import OrderedDict
-
-        # make and distance to object dict
-        objectDict = {distance(el): el for el in objectList}
-        # transform it into an ordered dict
-        objectDict = OrderedDict(sorted(list(objectDict.items()), key=lambda x: x[0]))
-
-        # find out the max/min distance
-        if self.directionMax:
-            d = list(objectDict.keys())[-1]
+    def key(self, obj: Shape) -> float:
+        if hasattr(obj, "radius"):
+            return obj.radius()
         else:
-            d = list(objectDict.keys())[0]
-
-        # return all objects at the max/min distance (within a tolerance)
-        return [o for o in objectList if abs(d - distance(o)) < self.TOLERANCE]
+            raise ValueError("Can not get a radius from this object")
 
 
-class DirectionNthSelector(ParallelDirSelector):
+class DirectionMinMaxSelector(_NthSelector):
     """
-        Selects nth object parallel (or normal) to the specified direction
-        Used for faces and edges
+    Selects objects closest or farthest in the specified direction.
+    Used for faces, points, and edges
 
-        Applicability:
-            Linear Edges
-            Planar Faces
+    Applicability:
+        All object types. for a vertex, its point is used. for all other kinds
+        of objects, the center of mass of the object is used.
+
+    You can use the string shortcuts >(X|Y|Z) or <(X|Y|Z) if you want to select
+    based on a cardinal direction.
+
+    For example this::
+
+        CQ(aCube).faces ( DirectionMinMaxSelector((0,0,1),True )
+
+    Means to select the face having the center of mass farthest in the positive
+    z direction, and is the same as:
+
+        CQ(aCube).faces( ">Z" )
+
     """
 
-    def __init__(self, vector, n, directionMax=True, tolerance=0.0001):
+    def __init__(
+        self, vector: Vector, directionMax: bool = True, tolerance: float = 0.0001
+    ):
         self.direction = vector
-        self.max = max
-        self.directionMax = directionMax
-        self.TOLERANCE = tolerance
-        self.N = n
+        super().__init__(n=-1, directionMax=directionMax, tolerance=tolerance)
 
-    def filter(self, objectList):
-        # select first the objects that are normal/parallel to a given dir
-        objectList = super(DirectionNthSelector, self).filter(objectList)
+    def key(self, obj: Shape) -> float:
+        return obj.Center().dot(self.direction)
 
-        def distance(tShape):
-            return tShape.Center().dot(self.direction)
 
-        # calculate how many digits of precision do we need
-        digits = -math.floor(math.log10(self.TOLERANCE))
+class DirectionNthSelector(ParallelDirSelector, DirectionMinMaxSelector):
+    """
+    Selects nth object parallel (or normal) to the specified direction.
+    Used for faces and edges.
 
-        # make a distance to object dict
-        # this is one to many mapping so I am using a default dict with list
-        objectDict = defaultdict(list)
-        for el in objectList:
-            objectDict[round(distance(el), digits)].append(el)
+    Applicability:
+        Linear Edges
+        Planar Faces
+    """
 
-        # choose the Nth unique rounded distance
-        nth_distance = sorted(list(objectDict.keys()), reverse=not self.directionMax)[
-            self.N
-        ]
+    def __init__(
+        self,
+        vector: Vector,
+        n: int,
+        directionMax: bool = True,
+        tolerance: float = 0.0001,
+    ):
+        ParallelDirSelector.__init__(self, vector, tolerance)
+        _NthSelector.__init__(self, n, directionMax, tolerance)
 
-        # map back to original objects and return
-        return objectDict[nth_distance]
+    def filter(self, objectlist: List[Shape]) -> List[Shape]:
+        objectlist = ParallelDirSelector.filter(self, objectlist)
+        objectlist = _NthSelector.filter(self, objectlist)
+        return objectlist
 
 
 class BinarySelector(Selector):
