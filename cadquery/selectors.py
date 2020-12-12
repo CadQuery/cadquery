@@ -43,20 +43,19 @@ from typing import List, Union
 
 class Selector(object):
     """
-        Filters a list of objects
+    Filters a list of objects.
 
-        Filters must provide a single method that filters objects.
+    Filters must provide a single method that filters objects.
     """
 
     def filter(self, objectList):
         """
-            Filter the provided list
-            :param objectList: list to filter
-            :type objectList: list of FreeCAD primatives
-            :return: filtered list
+        Filter the provided list.
 
-            The default implementation returns the original list unfiltered
-
+        The default implementation returns the original list unfiltered.
+        :param objectList: list to filter
+        :type objectList: list of FreeCAD primatives
+        :return: filtered list
         """
         return objectList
 
@@ -156,8 +155,7 @@ class BoxSelector(Selector):
 
 class BaseDirSelector(Selector):
     """
-        A selector that handles selection on the basis of a single
-        direction vector
+    A selector that handles selection on the basis of a single direction vector.
     """
 
     def __init__(self, vector: Vector, tolerance: float = 0.0001):
@@ -170,9 +168,9 @@ class BaseDirSelector(Selector):
 
     def filter(self, objectList: List[Union[Face, Edge]]) -> List[Union[Face, Edge]]:
         """
-            There are lots of kinds of filters, but
-            for planes they are always based on the normal of the plane,
-            and for edges on the tangent vector along the edge
+        There are lots of kinds of filters, but for planes they are always
+        based on the normal of the plane, and for edges on the tangent vector
+        along the edge
         """
         r = []
         for o in objectList:
@@ -196,22 +194,21 @@ class BaseDirSelector(Selector):
 
 class ParallelDirSelector(BaseDirSelector):
     """
-        Selects objects parallel with the provided direction
+    Selects objects parallel with the provided direction.
 
-        Applicability:
-            Linear Edges
-            Planar Faces
+    Applicability:
+        Linear Edges
+        Planar Faces
 
-        Use the string syntax shortcut \|(X|Y|Z) if you want to select
-        based on a cardinal direction.
+    Use the string syntax shortcut \|(X|Y|Z) if you want to select based on a cardinal direction.
 
-        Example::
+    Example::
 
-            CQ(aCube).faces(ParallelDirSelector((0,0,1))
+        CQ(aCube).faces(ParallelDirSelector((0, 0, 1))
 
-        selects faces with a normals in the z direction, and is equivalent to::
+    selects faces with a normals in the z direction, and is equivalent to::
 
-            CQ(aCube).faces("|Z")
+        CQ(aCube).faces("|Z")
     """
 
     def test(self, vec: Vector) -> bool:
@@ -220,22 +217,21 @@ class ParallelDirSelector(BaseDirSelector):
 
 class DirectionSelector(BaseDirSelector):
     """
-        Selects objects aligned with the provided direction
+    Selects objects aligned with the provided direction.
 
-        Applicability:
-            Linear Edges
-            Planar Faces
+    Applicability:
+        Linear Edges
+        Planar Faces
 
-        Use the string syntax shortcut +/-(X|Y|Z) if you want to select
-        based on a cardinal direction.
+    Use the string syntax shortcut +/-(X|Y|Z) if you want to select based on a cardinal direction.
 
-        Example::
+    Example::
 
-            CQ(aCube).faces(DirectionSelector((0,0,1))
+        CQ(aCube).faces(DirectionSelector((0, 0, 1))
 
-        selects faces with a normals in the z direction, and is equivalent to::
+    selects faces with a normals in the z direction, and is equivalent to::
 
-            CQ(aCube).faces("+Z")
+        CQ(aCube).faces("+Z")
     """
 
     def test(self, vec: Vector) -> bool:
@@ -244,22 +240,22 @@ class DirectionSelector(BaseDirSelector):
 
 class PerpendicularDirSelector(BaseDirSelector):
     """
-        Selects objects perpendicular with the provided direction
+    Selects objects perpendicular with the provided direction.
 
-        Applicability:
-            Linear Edges
-            Planar Faces
+    Applicability:
+        Linear Edges
+        Planar Faces
 
-        Use the string syntax shortcut #(X|Y|Z) if you want to select
-        based on a cardinal direction.
+    Use the string syntax shortcut #(X|Y|Z) if you want to select based on a
+    cardinal direction.
 
-        Example::
+    Example::
 
-            CQ(aCube).faces(PerpendicularDirSelector((0,0,1))
+        CQ(aCube).faces(PerpendicularDirSelector((0, 0, 1))
 
-        selects faces with a normals perpendicular to the z direction, and is equivalent to::
+    selects faces with a normals perpendicular to the z direction, and is equivalent to::
 
-            CQ(aCube).faces("#Z")
+        CQ(aCube).faces("#Z")
     """
 
     def test(self, vec: Vector) -> bool:
@@ -270,22 +266,22 @@ class PerpendicularDirSelector(BaseDirSelector):
 
 class TypeSelector(Selector):
     """
-        Selects objects of the prescribed topological type.
+    Selects objects of the prescribed topological type.
 
-        Applicability:
-            Faces: Plane,Cylinder,Sphere
-            Edges: Line,Circle,Arc
+    Applicability:
+        Faces: Plane,Cylinder,Sphere
+        Edges: Line,Circle,Arc
 
-        You can use the shortcut selector %(PLANE|SPHERE|CONE) for faces,
-        and %(LINE|ARC|CIRCLE) for edges.
+    You can use the shortcut selector %(PLANE|SPHERE|CONE) for faces, and
+    %(LINE|ARC|CIRCLE) for edges.
 
-        For example this::
+    For example this::
 
-            CQ(aCube).faces ( TypeSelector("PLANE") )
+        CQ(aCube).faces ( TypeSelector("PLANE") )
 
-        will select 6 faces, and is equivalent to::
+    will select 6 faces, and is equivalent to::
 
-            CQ(aCube).faces( "%PLANE" )
+        CQ(aCube).faces( "%PLANE" )
 
     """
 
@@ -652,8 +648,8 @@ class _SimpleStringSyntaxSelector(Selector):
 
     def filter(self, objectList):
         """
-            selects minimum, maximum, positive or negative values relative to a direction
-            [+\|-\|<\|>\|] \<X\|Y\|Z>
+        selects minimum, maximum, positive or negative values relative to a direction
+        [+\|-\|<\|>\|] \<X\|Y\|Z>
         """
         return self.mySelector.filter(objectList)
 
@@ -759,7 +755,7 @@ class StringSyntaxSelector(Selector):
     Finally, it is also possible to use even more complex expressions with nesting
     and arbitrary number of terms, e.g.
 
-        (not >X[0] and #XY) or >XY[0] 
+        (not >X[0] and #XY) or >XY[0]
 
     Selectors are a complex topic: see :ref:`selector_reference` for more information
     """
