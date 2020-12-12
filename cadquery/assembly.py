@@ -31,7 +31,7 @@ def _define_grammar():
     Separator = Literal("@").suppress()
     TagSeparator = Literal("?").suppress()
 
-    Name = delimitedList(Word(alphas, alphanums + "_"), PATH_DELIM).setResultsName("name")
+    Name = delimitedList(Word(alphas, alphanums + "_"), PATH_DELIM, combine=True).setResultsName("name")
     Tag = Word(alphas, alphanums + "_").setResultsName("tag")
     Selector = _selector_grammar.setResultsName("selector")
 
