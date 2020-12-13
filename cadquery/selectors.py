@@ -19,8 +19,7 @@
 
 import math
 from .occ_impl.geom import Vector
-from .occ_impl.shapes import Shape, Edge, Face, Wire
-from collections import defaultdict
+from .occ_impl.shapes import Shape, Edge, Face
 from pyparsing import (
     Literal,
     Word,
@@ -379,11 +378,31 @@ class RadiusNthSelector(_NthSelector):
         else:
             raise ValueError("Can not get a radius from this object")
 
+class CenterNthSelector(_NthSelector):
+    """
+    Sorts objects into a list with order determined by the distance of their center projected onto the specified direction.
 
-class DirectionMinMaxSelector(_NthSelector):
+    Applicability:
+        All Shapes.
+    """
+
+    def __init__(
+            self,
+            n: int,
+            vector: Vector,
+            directionMax: bool = True,
+            tolerance: float = 0.0001,
+    ):
+        super().__init__(n, directionMax, tolerance)
+        self.direction = vector
+
+    def key(self, obj: Shape) -> float:
+        return obj.Center().dot(self.direction)
+
+
+class DirectionMinMaxSelector(CenterNthSelector):
     """
     Selects objects closest or farthest in the specified direction.
-    Used for faces, points, and edges
 
     Applicability:
         All object types. for a vertex, its point is used. for all other kinds
@@ -394,29 +413,25 @@ class DirectionMinMaxSelector(_NthSelector):
 
     For example this::
 
-        CQ(aCube).faces ( DirectionMinMaxSelector((0,0,1),True )
+        CQ(aCube).faces(DirectionMinMaxSelector((0, 0, 1), True)
 
     Means to select the face having the center of mass farthest in the positive
     z direction, and is the same as:
 
-        CQ(aCube).faces( ">Z" )
+        CQ(aCube).faces(">Z")
 
     """
 
     def __init__(
         self, vector: Vector, directionMax: bool = True, tolerance: float = 0.0001
     ):
-        self.direction = vector
-        super().__init__(n=-1, directionMax=directionMax, tolerance=tolerance)
-
-    def key(self, obj: Shape) -> float:
-        return obj.Center().dot(self.direction)
+        super().__init__(n=-1, vector=vector, directionMax=directionMax, tolerance=tolerance)
 
 
-class DirectionNthSelector(ParallelDirSelector, DirectionMinMaxSelector):
+# inherit from CenterNthSelector to get the CenterNthSelector.key method
+class DirectionNthSelector(ParallelDirSelector, CenterNthSelector):
     """
-    Selects nth object parallel (or normal) to the specified direction.
-    Used for faces and edges.
+    Filters for objects parallel (or normal) to the specified direction then returns the Nth one.
 
     Applicability:
         Linear Edges

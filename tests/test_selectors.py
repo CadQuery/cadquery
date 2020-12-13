@@ -181,6 +181,93 @@ class TestCQSelectors(BaseTest):
             for e in edges.vals():
                 self.assertAlmostEqual(e.tangentAt(0).cross(vec).Length, 0.0)
 
+    def testCenterNthSelector(self):
+        sel = selectors.CenterNthSelector
+        c = CQ(makeUnitCube(centered=True))
+
+        bottom_face = c.faces(sel(0, Vector(0, 0, 1)))
+        self.assertEqual(bottom_face.size(), 1)
+        self.assertTupleAlmostEquals((0, 0, 0), bottom_face.val().Center().toTuple(), 3)
+
+        side_faces = c.faces(sel(1, Vector(0, 0, 1)))
+        self.assertEqual(side_faces.size(), 4)
+        for f in side_faces.vals():
+            self.assertAlmostEqual(0.5, f.Center().z)
+
+        top_face = c.faces(sel(2, Vector(0, 0, 1)))
+        self.assertEqual(top_face.size(), 1)
+        self.assertTupleAlmostEquals((0, 0, 1), top_face.val().Center().toTuple(), 3)
+
+        with self.assertRaises(IndexError):
+            c.faces(sel(3, Vector(0, 0, 1)))
+
+        left_face = c.faces(sel(0, Vector(1, 0, 0)))
+        self.assertEqual(left_face.size(), 1)
+        self.assertTupleAlmostEquals((-0.5, 0, 0.5), left_face.val().Center().toTuple(), 3)
+
+        middle_faces = c.faces(sel(1, Vector(1, 0, 0)))
+        self.assertEqual(middle_faces.size(), 4)
+        for f in middle_faces.vals():
+            self.assertAlmostEqual(0, f.Center().x)
+
+        right_face = c.faces(sel(2, Vector(1, 0, 0)))
+        self.assertEqual(right_face.size(), 1)
+        self.assertTupleAlmostEquals((0.5, 0, 0.5), right_face.val().Center().toTuple(), 3)
+
+        with self.assertRaises(IndexError):
+            c.faces(sel(3, Vector(1, 0, 0)))
+
+        # lower corner faces
+        self.assertEqual(c.faces(sel(0, Vector(1, 1, 1))).size(), 3)
+        # upper corner faces
+        self.assertEqual(c.faces(sel(1, Vector(1, 1, 1))).size(), 3)
+        with self.assertRaises(IndexError):
+            c.faces(sel(2, Vector(1, 1, 1)))
+
+        for idx, z_val in zip([0, 1, 2], [0, 0.5, 1]):
+            edges = c.edges(sel(idx, Vector(0, 0, 1)))
+            self.assertEqual(edges.size(), 4)
+            for e in edges.vals():
+                self.assertAlmostEqual(z_val, e.Center().z)
+        with self.assertRaises(IndexError):
+            c.edges(sel(3, Vector(0, 0, 1)))
+
+        for idx, z_val in zip([0, 1], [0, 1]):
+            vertices = c.vertices(sel(idx, Vector(0, 0, 1)))
+            self.assertEqual(vertices.size(), 4)
+            for e in vertices.vals():
+                self.assertAlmostEqual(z_val, e.Z)
+        with self.assertRaises(IndexError):
+            c.vertices(sel(3, Vector(0, 0, 1)))
+
+        # select a non-linear edge
+        part = (
+             Workplane()
+             .rect(10, 10, centered=False)
+             .extrude(1)
+             .faces(">Z")
+             .workplane(centerOption="CenterOfMass")
+             .move(-3, 0)
+             .hole(2)
+        )
+        hole = part.faces(">Z").edges(sel(1, Vector(1, 0, 0)))
+        # have we selected a single hole?
+        self.assertEqual(1, hole.size())
+        self.assertAlmostEqual(1, hole.val().radius())
+
+        # select solids
+        box0 = Workplane().box(1, 1, 1, centered=(True, True, True))
+        box1 = Workplane("XY", origin=(10, 10, 10)).box(1, 1, 1, centered=(True, True, True))
+        part = box0.add(box1)
+        self.assertEqual(part.solids().size(), 2)
+        for direction in [(0, 0, 1), (0, 1, 0), (1, 0, 0)]:
+            box0_selected = part.solids(sel(0, Vector(direction)))
+            self.assertEqual(1, box0_selected.size())
+            self.assertTupleAlmostEquals((0, 0, 0), box0_selected.val().Center().toTuple(), 3)
+            box1_selected = part.solids(sel(1, Vector(direction)))
+            self.assertEqual(1, box0_selected.size())
+            self.assertTupleAlmostEquals((10, 10, 10), box1_selected.val().Center().toTuple(), 3)
+
     def testMaxDistance(self):
         c = CQ(makeUnitCube())
 
