@@ -471,6 +471,9 @@ class Assembly(object):
         yield (self.name, self)
 
     def _flatten(self, parents=[]):
+        """
+        Generate a dict with all ancestors with keys indicating parent-child relations.
+        """
 
         rv = {}
 
