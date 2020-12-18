@@ -19,7 +19,7 @@
 
 import math
 from .occ_impl.geom import Vector
-from .occ_impl.shapes import Shape, Edge, Face
+from .occ_impl.shapes import Shape, Edge, Face, Wire
 from pyparsing import (
     Literal,
     Word,
@@ -37,7 +37,7 @@ from pyparsing import (
     Keyword,
 )
 from functools import reduce
-from typing import List, Union
+from typing import List, Union, Sequence
 
 
 class Selector(object):
@@ -165,7 +165,7 @@ class BaseDirSelector(Selector):
         "Test a specified vector. Subclasses override to provide other implementations"
         return True
 
-    def filter(self, objectList: List[Union[Face, Edge]]) -> List[Union[Face, Edge]]:
+    def filter(self, objectList: Sequence[Shape]) -> List[Shape]:
         """
         There are lots of kinds of filters, but for planes they are always
         based on the normal of the plane, and for edges on the tangent vector
@@ -287,7 +287,7 @@ class TypeSelector(Selector):
     def __init__(self, typeString: str):
         self.typeString = typeString.upper()
 
-    def filter(self, objectList: List[Shape]) -> List[Shape]:
+    def filter(self, objectList: Sequence[Shape]) -> List[Shape]:
         r = []
         for o in objectList:
             if o.geomType() == self.typeString:
@@ -305,14 +305,14 @@ class _NthSelector(Selector):
         self.directionMax = directionMax
         self.tolerance = tolerance
 
-    def filter(self, objectlist: List[Shape]) -> List[Shape]:
+    def filter(self, objectlist: Sequence[Shape]) -> List[Shape]:
         """
         Return the nth object in the objectlist sorted by self.key and
         clustered if within self.tolerance.
         """
         if len(objectlist) == 0:
             # nothing to filter
-            return objectlist
+            return []
         clustered = self.cluster(objectlist)
         if not self.directionMax:
             clustered.reverse()
@@ -333,7 +333,7 @@ class _NthSelector(Selector):
         """
         raise NotImplementedError
 
-    def cluster(self, objectlist: List[Shape]) -> List[List[Shape]]:
+    def cluster(self, objectlist: Sequence[Shape]) -> List[List[Shape]]:
         """
         Clusters the elements of objectlist if they are within tolerance.
         """
@@ -373,7 +373,7 @@ class RadiusNthSelector(_NthSelector):
     """
 
     def key(self, obj: Shape) -> float:
-        if hasattr(obj, "radius"):
+        if isinstance(obj, (Edge, Wire)):
             return obj.radius()
         else:
             raise ValueError("Can not get a radius from this object")
@@ -448,7 +448,7 @@ class DirectionNthSelector(ParallelDirSelector, CenterNthSelector):
         ParallelDirSelector.__init__(self, vector, tolerance)
         _NthSelector.__init__(self, n, directionMax, tolerance)
 
-    def filter(self, objectlist: List[Shape]) -> List[Shape]:
+    def filter(self, objectlist: Sequence[Shape]) -> List[Shape]:
         objectlist = ParallelDirSelector.filter(self, objectlist)
         objectlist = _NthSelector.filter(self, objectlist)
         return objectlist
