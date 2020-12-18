@@ -153,8 +153,8 @@ def test_constrain(simple_assy, nested_assy):
 
     assert len(simple_assy.constraints) == 3
 
-    nested_assy.constrain("TOP@faces@>Z", "BOTTOM@faces@<Z", "Plane")
-    nested_assy.constrain("TOP@faces@>X", "BOTTOM@faces@<X", "Axis")
+    nested_assy.constrain("TOP@faces@>Z", "SECOND/BOTTOM@faces@<Z", "Plane")
+    nested_assy.constrain("TOP@faces@>X", "SECOND/BOTTOM@faces@<X", "Axis")
 
     assert len(nested_assy.constraints) == 2
 
@@ -168,7 +168,7 @@ def test_constrain(simple_assy, nested_assy):
         .IsEqual(gp_XYZ(), 1e-9)
     )
     assert constraint.sublocs[1].wrapped.IsEqual(
-        nested_assy.objects["BOTTOM"].loc.wrapped
+        nested_assy.objects["SECOND/BOTTOM"].loc.wrapped
     )
 
     simple_assy.solve()
@@ -199,10 +199,16 @@ def test_constrain(simple_assy, nested_assy):
 def test_constrain_with_tags(nested_assy):
 
     nested_assy.add(None, name="dummy")
-    nested_assy.constrain("TOP?top_face", "BOTTOM", "Plane")
+    nested_assy.constrain("TOP?top_face", "SECOND/BOTTOM", "Plane")
 
     assert len(nested_assy.constraints) == 1
 
     # test selection of a non-shape object
     with pytest.raises(ValueError):
-        nested_assy.constrain("BOTTOM ? pts", "dummy", "Plane")
+        nested_assy.constrain("SECOND/BOTTOM ? pts", "dummy", "Plane")
+
+
+def test_duplicate_name(nested_assy):
+
+    with pytest.raises(ValueError):
+        nested_assy.add(None, name="SECOND")
