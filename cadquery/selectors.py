@@ -378,6 +378,7 @@ class RadiusNthSelector(_NthSelector):
         else:
             raise ValueError("Can not get a radius from this object")
 
+
 class CenterNthSelector(_NthSelector):
     """
     Sorts objects into a list with order determined by the distance of their center projected onto the specified direction.
@@ -387,11 +388,11 @@ class CenterNthSelector(_NthSelector):
     """
 
     def __init__(
-            self,
-            n: int,
-            vector: Vector,
-            directionMax: bool = True,
-            tolerance: float = 0.0001,
+        self,
+        n: int,
+        vector: Vector,
+        directionMax: bool = True,
+        tolerance: float = 0.0001,
     ):
         super().__init__(n, directionMax, tolerance)
         self.direction = vector
@@ -425,7 +426,9 @@ class DirectionMinMaxSelector(CenterNthSelector):
     def __init__(
         self, vector: Vector, directionMax: bool = True, tolerance: float = 0.0001
     ):
-        super().__init__(n=-1, vector=vector, directionMax=directionMax, tolerance=tolerance)
+        super().__init__(
+            n=-1, vector=vector, directionMax=directionMax, tolerance=tolerance
+        )
 
 
 # inherit from CenterNthSelector to get the CenterNthSelector.key method
