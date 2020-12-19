@@ -312,7 +312,7 @@ class _NthSelector(Selector):
         """
         if len(objectlist) == 0:
             # nothing to filter
-            return []
+            raise ValueError("Can not return the Nth element of an empty list")
         clustered = self.cluster(objectlist)
         if not self.directionMax:
             clustered.reverse()
@@ -337,8 +337,6 @@ class _NthSelector(Selector):
         """
         Clusters the elements of objectlist if they are within tolerance.
         """
-        if len(objectlist) == 0:
-            return []
         key_and_obj = []
         for obj in objectlist:
             # Need to handle value errors, such as what occurs when you try to
