@@ -203,7 +203,9 @@ class TestCQSelectors(BaseTest):
 
         left_face = c.faces(sel(0, Vector(1, 0, 0)))
         self.assertEqual(left_face.size(), 1)
-        self.assertTupleAlmostEquals((-0.5, 0, 0.5), left_face.val().Center().toTuple(), 3)
+        self.assertTupleAlmostEquals(
+            (-0.5, 0, 0.5), left_face.val().Center().toTuple(), 3
+        )
 
         middle_faces = c.faces(sel(1, Vector(1, 0, 0)))
         self.assertEqual(middle_faces.size(), 4)
@@ -212,7 +214,9 @@ class TestCQSelectors(BaseTest):
 
         right_face = c.faces(sel(2, Vector(1, 0, 0)))
         self.assertEqual(right_face.size(), 1)
-        self.assertTupleAlmostEquals((0.5, 0, 0.5), right_face.val().Center().toTuple(), 3)
+        self.assertTupleAlmostEquals(
+            (0.5, 0, 0.5), right_face.val().Center().toTuple(), 3
+        )
 
         with self.assertRaises(IndexError):
             c.faces(sel(3, Vector(1, 0, 0)))
@@ -242,13 +246,13 @@ class TestCQSelectors(BaseTest):
 
         # select a non-linear edge
         part = (
-             Workplane()
-             .rect(10, 10, centered=False)
-             .extrude(1)
-             .faces(">Z")
-             .workplane(centerOption="CenterOfMass")
-             .move(-3, 0)
-             .hole(2)
+            Workplane()
+            .rect(10, 10, centered=False)
+            .extrude(1)
+            .faces(">Z")
+            .workplane(centerOption="CenterOfMass")
+            .move(-3, 0)
+            .hole(2)
         )
         hole = part.faces(">Z").edges(sel(1, Vector(1, 0, 0)))
         # have we selected a single hole?
@@ -257,16 +261,22 @@ class TestCQSelectors(BaseTest):
 
         # select solids
         box0 = Workplane().box(1, 1, 1, centered=(True, True, True))
-        box1 = Workplane("XY", origin=(10, 10, 10)).box(1, 1, 1, centered=(True, True, True))
+        box1 = Workplane("XY", origin=(10, 10, 10)).box(
+            1, 1, 1, centered=(True, True, True)
+        )
         part = box0.add(box1)
         self.assertEqual(part.solids().size(), 2)
         for direction in [(0, 0, 1), (0, 1, 0), (1, 0, 0)]:
             box0_selected = part.solids(sel(0, Vector(direction)))
             self.assertEqual(1, box0_selected.size())
-            self.assertTupleAlmostEquals((0, 0, 0), box0_selected.val().Center().toTuple(), 3)
+            self.assertTupleAlmostEquals(
+                (0, 0, 0), box0_selected.val().Center().toTuple(), 3
+            )
             box1_selected = part.solids(sel(1, Vector(direction)))
             self.assertEqual(1, box0_selected.size())
-            self.assertTupleAlmostEquals((10, 10, 10), box1_selected.val().Center().toTuple(), 3)
+            self.assertTupleAlmostEquals(
+                (10, 10, 10), box1_selected.val().Center().toTuple(), 3
+            )
 
     def testMaxDistance(self):
         c = CQ(makeUnitCube())
