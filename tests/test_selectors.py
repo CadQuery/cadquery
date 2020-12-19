@@ -145,6 +145,32 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(c.faces("+X").val().Center(), c.faces("X").val().Center())
         self.assertNotEqual(c.faces("+X").val().Center(), c.faces("-X").val().Center())
 
+    def testBaseDirSelector(self):
+        # BaseDirSelector isn't intended to be instantiated, use subclass
+        # ParallelDirSelector to test the code in BaseDirSelector
+        loose_selector = ParallelDirSelector(Vector(0, 0, 1), tolerance=10)
+
+        c = Workplane(makeUnitCube(centered=True))
+
+        # BaseDirSelector should filter out everything but Faces and Edges with
+        # geomType LINE
+        self.assertNotEqual(c.vertices().size(), 0)
+        self.assertEqual(c.vertices(loose_selector).size(), 0)
+
+        # This has an edge that is not a LINE
+        c_curves = Workplane().sphere(1)
+        self.assertNotEqual(c_curves.edges(), 0)
+        self.assertEqual(c_curves.edges(loose_selector).size(), 0)
+
+        # leave faces until I figure out if it should only be PLANE or all faces
+
+        self.assertNotEqual(c.solids().size(), 0)
+        self.assertEqual(c.solids(loose_selector).size(), 0)
+
+        comp = Workplane(makeUnitCube()).workplane().move(10, 10).box(1, 1, 1)
+        self.assertNotEqual(comp.compounds().size(), 0)
+        self.assertEqual(comp.compounds(loose_selector).size(), 0)
+
     def testParallelPlaneFaceFilter(self):
         c = CQ(makeUnitCube(centered=False))
 
@@ -183,7 +209,13 @@ class TestCQSelectors(BaseTest):
 
     def testCenterNthSelector(self):
         sel = selectors.CenterNthSelector
-        c = CQ(makeUnitCube(centered=True))
+
+        nothing = Workplane()
+        self.assertEqual(nothing.solids().size(), 0)
+        with self.assertRaises(ValueError):
+            nothing.solids(sel(0, Vector(0, 0, 1)))
+
+        c = Workplane(makeUnitCube(centered=True))
 
         bottom_face = c.faces(sel(0, Vector(0, 0, 1)))
         self.assertEqual(bottom_face.size(), 1)
@@ -554,6 +586,19 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(1, len(fl))
 
     def testRadiusNthSelector(self):
+
+        # test the key method behaves
+        rad = 2.3
+        arc = Edge.makeCircle(radius=rad)
+        sel = selectors.RadiusNthSelector(0)
+        self.assertAlmostEqual(rad, sel.key(arc), 3)
+        line = Edge.makeLine(Vector(0, 0, 0), Vector(1, 1, 1))
+        with self.assertRaises(ValueError):
+            sel.key(line)
+        solid = makeUnitCube()
+        with self.assertRaises(ValueError):
+            sel.key(solid)
+
         part = (
             Workplane()
             .box(10, 10, 1)
