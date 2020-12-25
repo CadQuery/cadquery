@@ -174,12 +174,11 @@ class BaseDirSelector(Selector):
         r = []
         for o in objectList:
             # no really good way to avoid a switch here, edges and faces are simply different!
-            if isinstance(o, Face):
-                # a face is only parallel to a direction if it is a plane, and its normal is parallel to the dir
+            if isinstance(o, Face) and o.geomType() == "PLANE":
+                # a face is only parallel to a direction if it is a plane, and
+                # its normal is parallel to the dir
                 test_vector = o.normalAt(None)
-            elif isinstance(o, Edge) and (
-                o.geomType() == "LINE" or o.geomType() == "PLANE"
-            ):
+            elif isinstance(o, Edge) and o.geomType() == "LINE":
                 # an edge is parallel to a direction if its underlying geometry is plane or line
                 test_vector = o.tangentAt()
             else:

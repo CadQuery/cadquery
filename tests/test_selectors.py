@@ -162,7 +162,12 @@ class TestCQSelectors(BaseTest):
         self.assertNotEqual(c_curves.edges(), 0)
         self.assertEqual(c_curves.edges(loose_selector).size(), 0)
 
-        # leave faces until I figure out if it should only be PLANE or all faces
+        # this has a Face that is not a PLANE
+        face_dir = c_curves.faces().val().normalAt(None)
+        self.assertNotEqual(c_curves.faces(), 0)
+        self.assertEqual(
+            c_curves.faces(ParallelDirSelector(face_dir, tolerance=10)).size(), 0
+        )
 
         self.assertNotEqual(c.solids().size(), 0)
         self.assertEqual(c.solids(loose_selector).size(), 0)
@@ -290,6 +295,11 @@ class TestCQSelectors(BaseTest):
         # have we selected a single hole?
         self.assertEqual(1, hole.size())
         self.assertAlmostEqual(1, hole.val().radius())
+
+        # can we select a non-planar face?
+        hole_face = part.faces(sel(1, Vector(1, 0, 0)))
+        self.assertEqual(hole_face.size(), 1)
+        self.assertNotEqual(hole_face.val().geomType(), "PLANE")
 
         # select solids
         box0 = Workplane().box(1, 1, 1, centered=(True, True, True))
