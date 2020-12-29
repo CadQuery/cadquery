@@ -1746,6 +1746,7 @@ class Workplane(object):
         N: int = 400,
         start: float = 0,
         stop: float = 1,
+        makeWire: bool = True,
     ) -> "Workplane":
         """
         Create a spline interpolated through the provided points.
@@ -1755,6 +1756,7 @@ class Workplane(object):
         :param N: number of points for discretization
         :param start: starting value of the parameter t
         :param stop: final value of the parameter t
+        :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point unchanged
 
         """
@@ -1762,7 +1764,7 @@ class Workplane(object):
         diff = stop - start
         allPoints = [func(start + diff * t / N) for t in range(N + 1)]
 
-        return self.spline(allPoints, includeCurrent=False, makeWire=True)
+        return self.spline(allPoints, includeCurrent=False, makeWire=makeWire)
 
     def ellipseArc(
         self,
