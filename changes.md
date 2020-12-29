@@ -1,6 +1,67 @@
 Changes
 =======
 
+2.1RC1 (release candidate)
+------
+   ### Breaking changes
+   * `centerOption` default value changed from `CenterOfMass` to `ProjectedOrigin` #532
+
+   ## Other changes
+
+   * Simplified `largestDimension()` bounding box check #317
+   * Added `FontPath` to `makeText()` #337
+   * Support for slicing (`section()`) of models #339 #349
+   * Added DXF import (relies on ezdxf) #351 #372 #406 #442
+   * Added DXF export #415 #419 #455
+   * Exposed `angularPrecision` parameter in `exportStl()` #329
+   * Fixed bug in `makeRuled()` #329
+   * Made solid construction from `shell()` more robust #329
+   * Added CadQuery logos to docs #329
+   * Added `toPending()` to allow adding wires/edges to `pendingWires`/`pendingEdges` #351
+   * Implemented `glue` parameter for `fuse()` #375
+   * Exposed parameters for fuzzy bool operations #375
+   * Started using MyPy in CI and type annotations #378 #380 #391
+   * Implemented a `Location` class #380
+   * Merged `CQ` class into `Workplane` to eliminate duplicated code #380
+   * Added additional parameters for `BuildCurves3d_s` method #387
+   * Implemented fully closed shelling #394
+   * Refactored `polarArray()` #395
+   * Improved local rotation handling #395
+   * Implemented 2D offset in `offset2D` #397
+   * Added `locationAt()` to generate locations along a curve #404
+   * Added DOI to README for references in research papers #412
+   * Changed `shell()` to set `Intersection` parameter to `True` #411
+   * Exposed joint type (`kind`) for `shell()` #413
+   * Refactored exporters #415
+   * Started using `find_packages()` in setup.py #418
+   * Tessellation winding fix #420
+   * Added `angularPrecision` to `export`, `exportShape` and `toString` #424
+   * Added py.typed file for PEP-561 compatibility #435
+   * Added assembly API with constraint solver #440 #482 #545 #556
+   * Integrated sphinxcadquery to add 3D visualization of parts to docs #111
+   * Allow spaces in Vector literal #445
+   * Added export to OCCT native CAF format #440
+   * Implemented color export in STEP generated from assemblies #440
+   * Added ability to set `fontPath` parameter for `text()` #453
+   * Now protect against `rarray()` spacings of 0 #454
+   * Changed Nth selector rounding `self.TOLERANCE` calculation to produce 4 decimal places #461
+   * Fixed `parametricCurve()` to use correct stop point #477
+   * Excluded tests from installation in setup.py #478
+   * Added `mesh()` method to shapes.py #482
+   * Added VRML export #482
+   * Implemented ability to create a child workplane on the vertex #480
+   * Improved consistency in handling of BoundaryBox tolerance #490
+   * Implemented `locations()` for Wires #475
+   * Exposed mode for sweep operations #496
+   * Added 'RadiusNthSelector()` #504
+   * Added tag-based constraint definition for assemblies #514
+   * Implemented ability to mirror from a selected face #527
+   * Improved edge selector tests #541
+   * Added `glue` parameter to `combine()` #535
+   * Finally fixed github-linguist statistics #547
+   * Updated for Python 3.8
+   * Numerous documentation updates and example additions
+
 2.0 (stable release)
 ------
 
