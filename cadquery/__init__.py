@@ -68,4 +68,4 @@ __all__ = [
     "plugins",
 ]
 
-__version__ = "2.1dev"
+__version__ = "2.1RC1"
