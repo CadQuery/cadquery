@@ -21,15 +21,26 @@ AssemblyObjects = Union[Shape, Workplane, None]
 ConstraintKinds = Literal["Plane", "Point", "Axis"]
 ExportLiterals = Literal["STEP", "XML"]
 
+PATH_DELIM = "/"
+
 # enitity selector grammar definiiton
 def _define_grammar():
 
-    from pyparsing import Literal as Literal, Word, Optional, alphas, alphanums
+    from pyparsing import (
+        Literal as Literal,
+        Word,
+        Optional,
+        alphas,
+        alphanums,
+        delimitedList,
+    )
 
     Separator = Literal("@").suppress()
     TagSeparator = Literal("?").suppress()
 
-    Name = Word(alphas, alphanums + "_").setResultsName("name")
+    Name = delimitedList(
+        Word(alphas, alphanums + "_"), PATH_DELIM, combine=True
+    ).setResultsName("name")
     Tag = Word(alphas, alphanums + "_").setResultsName("tag")
     Selector = _selector_grammar.setResultsName("selector")
 
@@ -234,6 +245,11 @@ class Assembly(object):
 
         if isinstance(arg, Assembly):
 
+            # enforce unique names
+            name = kwargs["name"] if kwargs.get("name") else arg.name
+            if name in self.objects:
+                raise ValueError("Unique name is required")
+
             subassy = arg._copy()
 
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
@@ -242,11 +258,10 @@ class Assembly(object):
             subassy.parent = self
 
             self.children.append(subassy)
-            self.objects[subassy.name] = subassy
-            self.objects.update(subassy.objects)
+            self.objects.update(subassy._flatten())
 
         else:
-            assy = Assembly(arg, **kwargs)
+            assy = self.__class__(arg, **kwargs)
             assy.parent = self
 
             self.add(assy)
@@ -454,3 +469,17 @@ class Assembly(object):
                 yield el
 
         yield (self.name, self)
+
+    def _flatten(self, parents=[]):
+        """
+        Generate a dict with all ancestors with keys indicating parent-child relations.
+        """
+
+        rv = {}
+
+        for ch in self.children:
+            rv.update(ch._flatten(parents=parents + [self.name]))
+
+        rv[PATH_DELIM.join(parents + [self.name])] = self
+
+        return rv
