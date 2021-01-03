@@ -281,6 +281,24 @@ class TestCQSelectors(BaseTest):
         with self.assertRaises(IndexError):
             c.vertices(sel(Vector(0, 0, 1), 3))
 
+        # test string version
+        face1 = c.faces(">>X[-1]")
+        face2 = c.faces("<<(2,0,1)[0]")
+        face3 = c.faces("<<X[0]")
+
+        self.assertTrue(face1.val().isSame(face2.val()))
+        self.assertTrue(face1.val().isSame(face3.val()))
+
+        prism = Workplane().rect(2, 2).extrude(1, taper=30)
+
+        # CenterNth disregards orientation
+        edges1 = prism.edges(">>Z[-2]")
+        self.assertEqual(len(edges1.vals()), 4)
+
+        # DirectionNth does not
+        with self.assertRaises(ValueError):
+            prism.edges(">Z[-2]")
+
         # select a non-linear edge
         part = (
             Workplane()
@@ -789,6 +807,7 @@ class TestCQSelectors(BaseTest):
             "%Plane",
             ">XZ",
             "<Z[-2]",
+            "<<Z[2]",
             ">(1,4,55.)[20]",
             "|XY",
             "<YZ[0]",
