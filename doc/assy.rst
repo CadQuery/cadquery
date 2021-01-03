@@ -59,7 +59,7 @@ Next we want to define functions generating the assembly components based on the
             .workplane()
             .cboreHole(6, 15, 18)
             .faces("<Z")
-            .workplane()
+            .workplane(centerOption="CenterOfMass")
             .cboreHole(6, 15, 18)
         )
     
@@ -238,7 +238,7 @@ Below is the complete code including the final solve step.
             .workplane()
             .cboreHole(6, 15, 18)
             .faces("<Z")
-            .workplane()
+            .workplane(centerOption="CenterOfMass")
             .cboreHole(6, 15, 18)
         )
     

@@ -35,10 +35,15 @@ The original version of CadQuery was built on the FreeCAD API. This was great be
 
 ## Getting started
 
+To quickly play around with CadQuery and see it's capabilities, see the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor) manual.  
+If you want to use CadQuery for your own project, keep reading: 
+
 It is currently possible to use CadQuery for your own projects in 3 different ways:
 * Using the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor)
 * From a [Jupyter notebook](https://github.com/bernhard-42/jupyter-cadquery)
 * As a standalone library
+    * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
+    * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
 
 The easiest way to install CadQuery and its dependencies is using conda, which is included as part of an Anaconda/Miniconda installation. See the next section for an alternative to a full install of Anaconda that may be preferable to some users. The steps to install cadquery are as follows:
 ```
