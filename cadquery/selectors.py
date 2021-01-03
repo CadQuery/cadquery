@@ -574,7 +574,7 @@ def _makeGrammar():
         direction("only_dir")
         | (type_op("type_op") + cqtype("cq_type"))
         | (direction_op("dir_op") + direction("dir") + Optional(index))
-        | (center_nth_op("center_nth_op") + direction("dir") + index)
+        | (center_nth_op("center_nth_op") + direction("dir") + Optional(index))
         | (other_op("other_op") + direction("dir"))
         | named_view("named_view")
     )
@@ -653,7 +653,10 @@ class _SimpleStringSyntaxSelector(Selector):
             vec = self._getVector(pr)
             minmax = self.operatorMinMax[pr.center_nth_op]
 
-            return CenterNthSelector(vec, int("".join(pr.index.asList())), minmax)
+            if "index" in pr:
+                return CenterNthSelector(vec, int("".join(pr.index.asList())), minmax)
+            else:
+                return CenterNthSelector(vec, -1, minmax)
 
         elif "other_op" in pr:
             vec = self._getVector(pr)
