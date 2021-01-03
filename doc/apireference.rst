@@ -45,6 +45,9 @@ All 2-d operations require a **Workplane** object to be created.
 	Workplane.vLine
 	Workplane.vLineTo
 	Workplane.hLine
+	Workplane.hLineTo
+	Workplane.polarLine
+	Workplane.polarLineTo
 	Workplane.moveTo
 	Workplane.move
 	Workplane.spline
