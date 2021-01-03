@@ -218,68 +218,68 @@ class TestCQSelectors(BaseTest):
         nothing = Workplane()
         self.assertEqual(nothing.solids().size(), 0)
         with self.assertRaises(ValueError):
-            nothing.solids(sel(0, Vector(0, 0, 1)))
+            nothing.solids(sel(Vector(0, 0, 1), 0))
 
         c = Workplane(makeUnitCube(centered=True))
 
-        bottom_face = c.faces(sel(0, Vector(0, 0, 1)))
+        bottom_face = c.faces(sel(Vector(0, 0, 1), 0))
         self.assertEqual(bottom_face.size(), 1)
         self.assertTupleAlmostEquals((0, 0, 0), bottom_face.val().Center().toTuple(), 3)
 
-        side_faces = c.faces(sel(1, Vector(0, 0, 1)))
+        side_faces = c.faces(sel(Vector(0, 0, 1), 1))
         self.assertEqual(side_faces.size(), 4)
         for f in side_faces.vals():
             self.assertAlmostEqual(0.5, f.Center().z)
 
-        top_face = c.faces(sel(2, Vector(0, 0, 1)))
+        top_face = c.faces(sel(Vector(0, 0, 1), 2))
         self.assertEqual(top_face.size(), 1)
         self.assertTupleAlmostEquals((0, 0, 1), top_face.val().Center().toTuple(), 3)
 
         with self.assertRaises(IndexError):
-            c.faces(sel(3, Vector(0, 0, 1)))
+            c.faces(sel(Vector(0, 0, 1), 3))
 
-        left_face = c.faces(sel(0, Vector(1, 0, 0)))
+        left_face = c.faces(sel(Vector(1, 0, 0), 0))
         self.assertEqual(left_face.size(), 1)
         self.assertTupleAlmostEquals(
             (-0.5, 0, 0.5), left_face.val().Center().toTuple(), 3
         )
 
-        middle_faces = c.faces(sel(1, Vector(1, 0, 0)))
+        middle_faces = c.faces(sel(Vector(1, 0, 0), 1))
         self.assertEqual(middle_faces.size(), 4)
         for f in middle_faces.vals():
             self.assertAlmostEqual(0, f.Center().x)
 
-        right_face = c.faces(sel(2, Vector(1, 0, 0)))
+        right_face = c.faces(sel(Vector(1, 0, 0), 2))
         self.assertEqual(right_face.size(), 1)
         self.assertTupleAlmostEquals(
             (0.5, 0, 0.5), right_face.val().Center().toTuple(), 3
         )
 
         with self.assertRaises(IndexError):
-            c.faces(sel(3, Vector(1, 0, 0)))
+            c.faces(sel(Vector(1, 0, 0), 3))
 
         # lower corner faces
-        self.assertEqual(c.faces(sel(0, Vector(1, 1, 1))).size(), 3)
+        self.assertEqual(c.faces(sel(Vector(1, 1, 1), 0)).size(), 3)
         # upper corner faces
-        self.assertEqual(c.faces(sel(1, Vector(1, 1, 1))).size(), 3)
+        self.assertEqual(c.faces(sel(Vector(1, 1, 1), 1)).size(), 3)
         with self.assertRaises(IndexError):
-            c.faces(sel(2, Vector(1, 1, 1)))
+            c.faces(sel(Vector(1, 1, 1), 2))
 
         for idx, z_val in zip([0, 1, 2], [0, 0.5, 1]):
-            edges = c.edges(sel(idx, Vector(0, 0, 1)))
+            edges = c.edges(sel(Vector(0, 0, 1), idx))
             self.assertEqual(edges.size(), 4)
             for e in edges.vals():
                 self.assertAlmostEqual(z_val, e.Center().z)
         with self.assertRaises(IndexError):
-            c.edges(sel(3, Vector(0, 0, 1)))
+            c.edges(sel(Vector(0, 0, 1), 3))
 
         for idx, z_val in zip([0, 1], [0, 1]):
-            vertices = c.vertices(sel(idx, Vector(0, 0, 1)))
+            vertices = c.vertices(sel(Vector(0, 0, 1), idx))
             self.assertEqual(vertices.size(), 4)
             for e in vertices.vals():
                 self.assertAlmostEqual(z_val, e.Z)
         with self.assertRaises(IndexError):
-            c.vertices(sel(3, Vector(0, 0, 1)))
+            c.vertices(sel(Vector(0, 0, 1), 3))
 
         # select a non-linear edge
         part = (
@@ -291,13 +291,13 @@ class TestCQSelectors(BaseTest):
             .move(-3, 0)
             .hole(2)
         )
-        hole = part.faces(">Z").edges(sel(1, Vector(1, 0, 0)))
+        hole = part.faces(">Z").edges(sel(Vector(1, 0, 0), 1))
         # have we selected a single hole?
         self.assertEqual(1, hole.size())
         self.assertAlmostEqual(1, hole.val().radius())
 
         # can we select a non-planar face?
-        hole_face = part.faces(sel(1, Vector(1, 0, 0)))
+        hole_face = part.faces(sel(Vector(1, 0, 0), 1))
         self.assertEqual(hole_face.size(), 1)
         self.assertNotEqual(hole_face.val().geomType(), "PLANE")
 
@@ -309,12 +309,12 @@ class TestCQSelectors(BaseTest):
         part = box0.add(box1)
         self.assertEqual(part.solids().size(), 2)
         for direction in [(0, 0, 1), (0, 1, 0), (1, 0, 0)]:
-            box0_selected = part.solids(sel(0, Vector(direction)))
+            box0_selected = part.solids(sel(Vector(direction), 0))
             self.assertEqual(1, box0_selected.size())
             self.assertTupleAlmostEquals(
                 (0, 0, 0), box0_selected.val().Center().toTuple(), 3
             )
-            box1_selected = part.solids(sel(1, Vector(direction)))
+            box1_selected = part.solids(sel(Vector(direction), 1))
             self.assertEqual(1, box0_selected.size())
             self.assertTupleAlmostEquals(
                 (10, 10, 10), box1_selected.val().Center().toTuple(), 3
