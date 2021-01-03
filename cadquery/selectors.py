@@ -386,8 +386,8 @@ class CenterNthSelector(_NthSelector):
 
     def __init__(
         self,
-        n: int,
         vector: Vector,
+        n: int,
         directionMax: bool = True,
         tolerance: float = 0.0001,
     ):
@@ -554,6 +554,9 @@ def _makeGrammar():
     # direction operator
     direction_op = oneOf([">", "<"])
 
+    # center Nth operator
+    center_nth_op = oneOf([">>", "<<"])
+
     # index definition
     ix_number = Group(Optional("-") + Word(nums))
     lsqbracket = Literal("[").suppress()
@@ -571,6 +574,7 @@ def _makeGrammar():
         direction("only_dir")
         | (type_op("type_op") + cqtype("cq_type"))
         | (direction_op("dir_op") + direction("dir") + Optional(index))
+        | (center_nth_op("center_nth_op") + direction("dir") + index)
         | (other_op("other_op") + direction("dir"))
         | named_view("named_view")
     )
@@ -608,7 +612,9 @@ class _SimpleStringSyntaxSelector(Selector):
 
         self.operatorMinMax = {
             ">": True,
+            ">>": True,
             "<": False,
+            "<<": False,
         }
 
         self.operator = {
@@ -642,6 +648,12 @@ class _SimpleStringSyntaxSelector(Selector):
                 )
             else:
                 return DirectionMinMaxSelector(vec, minmax)
+
+        elif "center_nth_op" in pr:
+            vec = self._getVector(pr)
+            minmax = self.operatorMinMax[pr.center_nth_op]
+
+            return CenterNthSelector(vec, int("".join(pr.index.asList())), minmax)
 
         elif "other_op" in pr:
             vec = self._getVector(pr)
