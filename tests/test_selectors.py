@@ -285,9 +285,11 @@ class TestCQSelectors(BaseTest):
         face1 = c.faces(">>X[-1]")
         face2 = c.faces("<<(2,0,1)[0]")
         face3 = c.faces("<<X[0]")
+        face4 = c.faces(">>X")
 
         self.assertTrue(face1.val().isSame(face2.val()))
         self.assertTrue(face1.val().isSame(face3.val()))
+        self.assertTrue(face1.val().isSame(face4.val()))
 
         prism = Workplane().rect(2, 2).extrude(1, taper=30)
 
@@ -808,6 +810,7 @@ class TestCQSelectors(BaseTest):
             ">XZ",
             "<Z[-2]",
             "<<Z[2]",
+            ">>(1,1,0)",
             ">(1,4,55.)[20]",
             "|XY",
             "<YZ[0]",
