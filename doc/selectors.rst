@@ -84,6 +84,8 @@ Selector    Selects                                    Selector Class
 <Y          Face farthest in the negative y dir        :py:class:`cadquery.DirectionMinMaxSelector`
 >Y[-2]      2nd farthest Face **normal** to the y dir  :py:class:`cadquery.DirectionNthSelector`
 <Y[0]       1st closest Face **normal** to the y dir   :py:class:`cadquery.DirectionNthSelector`
+>>Y[-2]     2nd farthest Face in the y dir             :py:class:`cadquery.CenterNthSelector`
+<<Y[0]      1st closest Face in the y dir              :py:class:`cadquery.CenterNthSelector`
 =========   =========================================  =======================================================
 
 
@@ -114,6 +116,8 @@ Selector  Selects                                               Selector Class
 <Y        Edges farthest in the negative y dir                  :py:class:`cadquery.DirectionMinMaxSelector`
 >Y[1]     2nd closest **parallel** edge in the positive y dir   :py:class:`cadquery.DirectionNthSelector`
 <Y[-2]    2nd farthest **parallel** edge in the negative y dir  :py:class:`cadquery.DirectionNthSelector`
+>>Y[-2]   2nd farthest edge in the y dir                        :py:class:`cadquery.CenterNthSelector`
+<<Y[0]    1st closest edge in the y dir                         :py:class:`cadquery.CenterNthSelector`
 ========  ====================================================  =============================================
 
 
@@ -129,6 +133,8 @@ Selector    Selects                                    Selector Class
 =========   =======================================    =======================================================
 >Y          Vertices farthest in the positive y dir    :py:class:`cadquery.DirectionMinMaxSelector`
 <Y          Vertices farthest in the negative y dir    :py:class:`cadquery.DirectionMinMaxSelector`
+>>Y[-2]     2nd farthest vertex in the y dir           :py:class:`cadquery.CenterNthSelector`
+<<Y[0]      1st closest vertex in the y dir            :py:class:`cadquery.CenterNthSelector`
 =========   =======================================    =======================================================
 
 User-defined Directions
