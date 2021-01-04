@@ -100,6 +100,16 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(0, c.faces("%cone").size())
         self.assertEqual(0, c.faces("%SPHERE").size())
 
+    def testEdgeTypesFilter(self):
+        "Filters by edge type"
+        c = Workplane().ellipse(3, 4).circle(1).extrude(1)
+        self.assertEqual(2, c.edges("%Ellipse").size())
+        self.assertEqual(2, c.edges("%circle").size())
+        self.assertEqual(2, c.edges("%LINE").size())
+        self.assertEqual(0, c.edges("%Bspline").size())
+        self.assertEqual(0, c.edges("%Offset").size())
+        self.assertEqual(0, c.edges("%HYPERBOLA").size())
+
     def testPerpendicularDirFilter(self):
         c = CQ(makeUnitCube())
 
