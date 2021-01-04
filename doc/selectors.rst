@@ -94,12 +94,12 @@ Selector    Selects                                    Selector Class
 Filtering Edges
 ----------------
 
-Some filter types are not supported for edges. The selector usually refers to the **direction** of the edge.
+The selector usually refers to the **direction** of the edge.
 
 .. warning::
 
-    Non-linear edges are not selected for any string selectors except type (%). Non-linear edges
-    are never returned when these filters are applied.
+    Non-linear edges are not selected for any string selectors except type (%) and center (>>).
+    Non-linear edges are never returned when these filters are applied.
 
 The axis used in the listing below are for illustration: any axis would work similarly in each case.
 
