@@ -19,7 +19,7 @@
 
 import math
 from .occ_impl.geom import Vector
-from .occ_impl.shapes import Shape, Edge, Face, Wire
+from .occ_impl.shapes import Shape, Edge, Face, Wire, geom_LUT_EDGE, geom_LUT_FACE
 from pyparsing import (
     Literal,
     Word,
@@ -544,7 +544,7 @@ def _makeGrammar():
 
     # CQ type definition
     cqtype = oneOf(
-        ["Plane", "Cylinder", "Sphere", "Cone", "Line", "Circle", "Arc"], caseless=True
+        set(geom_LUT_EDGE.values()) | set(geom_LUT_FACE.values()), caseless=True,
     )
     cqtype = cqtype.setParseAction(upcaseTokens)
 
