@@ -166,8 +166,7 @@ There are a couple of things to note about this line:
     1. The :py:meth:`cadquery.Workplane.rect` function draws a rectangle.  **forConstruction=True**
        tells CadQuery that this rectangle will not form a part of the solid,
        but we are just using it to help define some other geometry.
-    2. The center point of a workplane on a face is always at the center of the face, which works well here
-    3. Unless you specifiy otherwise, a rectangle is drawn with its center on the current workplane center-- in
+    2. Unless you specifiy otherwise, a rectangle is drawn with its center on the current workplane center-- in
        this case, the center of the top face of the block. So this rectangle will be centered on the face.
 
 

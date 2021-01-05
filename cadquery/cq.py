@@ -429,7 +429,7 @@ class Workplane(object):
         :param origin: origin for plane center, requires 'ProjectedOrigin' centerOption.
         :type offset: float or None=0.0
         :type invert: boolean or None=False
-        :type centerOption: string or None='CenterOfMass'
+        :type centerOption: string or None='ProjectedOrigin'
         :type origin: Vector or None
         :rtype: Workplane object ( which is a subclass of CQ )
 
@@ -441,15 +441,12 @@ class Workplane(object):
         The result will be a 2-d working plane
         with a new coordinate system set up as follows:
 
-           * The origin will be located in the *center* of the
-             face/faces, if a face/faces was selected. If a vertex was
-             selected, the origin will be at the vertex, and located
-             on the face. The centerOption paramter sets how the center is defined.
+           * The centerOption paramter sets how the center is defined.
              Options are 'CenterOfMass', 'CenterOfBoundBox', or 'ProjectedOrigin'.
              'CenterOfMass' and 'CenterOfBoundBox' are in relation to the selected
-             face/faces. 'ProjectedOrigin' uses the current planes origin by default
-             or can be specified as an arbitrary point using the optional origin
-             parameter.
+             face(s) or vertex (vertices). 'ProjectedOrigin' uses by default the current origin 
+             or the optional origin parameter (if specified) and projects it onto the plane
+             defined by the selected face(s).
            * The Z direction will be normal to the plane of the face,computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
