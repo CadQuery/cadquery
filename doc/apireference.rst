@@ -181,6 +181,7 @@ as a basis for futher operations.
         PerpendicularDirSelector
         TypeSelector
         DirectionMinMaxSelector
+        CenterNthSelector
         BinarySelector
         AndSelector
         SumSelector
