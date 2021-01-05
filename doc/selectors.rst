@@ -7,7 +7,7 @@ String Selectors Reference
 CadQuery selector strings allow filtering various types of object lists. Most commonly, Edges, Faces, and Vertices are
 used, but all objects types can be filtered.
 
-Object lists are created by using the following methods, which each each collect a type of shape:
+Object lists are created by using the following methods, which each collect a type of shape:
 
     * :py:meth:`cadquery.Workplane.vertices`
     * :py:meth:`cadquery.Workplane.edges`
