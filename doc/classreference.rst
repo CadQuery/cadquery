@@ -60,10 +60,12 @@ Selector Classes
     BaseDirSelector
     ParallelDirSelector
     DirectionSelector
-    DirectionNthSelector
     PerpendicularDirSelector
     TypeSelector
+    RadiusNthSelector
+    CenterNthSelector
     DirectionMinMaxSelector
+    DirectionNthSelector
     BinarySelector
     AndSelector
     SumSelector

@@ -1,6 +1,11 @@
 Changes
 =======
 
+Master
+------
+   ### Breaking changes
+   * Fixed bug in ParallelDirSelector where non-planar faces could be selected. Note this will be breaking if you've used DirectionNthSelector and a non-planar face made it into your object list. In that case eg. ">X[2]" will have to become ">X[1]".
+
 2.1RC1 (release candidate)
 ------
    ### Breaking changes
