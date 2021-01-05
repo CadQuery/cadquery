@@ -53,7 +53,7 @@ class Selector(object):
 
         The default implementation returns the original list unfiltered.
         :param objectList: list to filter
-        :type objectList: list of FreeCAD primatives
+        :type objectList: list of OCCT primitives
         :return: filtered list
         """
         return objectList
