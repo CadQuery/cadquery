@@ -1306,6 +1306,10 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError):
             currentS.cut(toCut.faces().val())
 
+        # Test syntactic sugar [__sub__ method]
+        sugar = currentS - toCut.val()
+        self.assertEqual(resS.faces().size(), sugar.faces().size())
+
     def testIntersect(self):
         """
         Tests the intersect function.
@@ -1332,6 +1336,10 @@ class TestCadQuery(BaseTest):
 
         with self.assertRaises(ValueError):
             b1.intersect(b2.faces().val())
+
+        # Test syntactic sugar [__mul__ method]
+        sugar = b1 * b2
+        self.assertEqual(resS.val().Volume(), sugar.val().Volume())
 
     def testBoundingBox(self):
         """
@@ -2174,6 +2182,10 @@ class TestCadQuery(BaseTest):
 
         with self.assertRaises(ValueError):
             resS.union(toUnion.faces().val())
+
+        # Test syntactic sugar [__add__ method]
+        sugar = currentS + toUnion
+        self.assertEqual(resS.faces().size(), sugar.faces().size())
 
     def testCombine(self):
         s = Workplane(Plane.XY())
