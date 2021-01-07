@@ -2968,6 +2968,16 @@ class Workplane(object):
             r = r.clean()
 
         return self.newObject([r])
+    
+    def __add__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+        """
+        Syntactic sugar for union.
+
+        Example::
+
+            r = box(1, 1, 1) + sphere(1)
+        """
+        return self.union(toUnion)
 
     def cut(
         self, toCut: Union["Workplane", Solid, Compound], clean: bool = True
@@ -3004,6 +3014,16 @@ class Workplane(object):
 
         return self.newObject([newS])
 
+    def __sub__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+        """
+        Syntactic sugar for cut.
+
+        Example::
+
+            r = box(1, 1, 1) - sphere(1)
+        """
+        return self.cut(toUnion)
+
     def intersect(
         self, toIntersect: Union["Workplane", Solid, Compound], clean: bool = True
     ) -> "Workplane":
@@ -3038,6 +3058,16 @@ class Workplane(object):
             newS = newS.clean()
 
         return self.newObject([newS])
+    
+    def __mul__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+        """
+        Syntactic sugar for intersect.
+
+        Example::
+
+            r = box(1, 1, 1) * sphere(1)
+        """
+        return self.intersect(toUnion)
 
     def cutBlind(
         self, distanceToCut: float, clean: bool = True, taper: Optional[float] = None
