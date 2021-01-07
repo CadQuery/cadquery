@@ -2974,8 +2974,9 @@ class Workplane(object):
         Syntactic sugar for union.
 
         Example::
-
-            r = box(1, 1, 1) + sphere(1)
+            Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
+            Sphere = Workplane("XY").sphere(1)
+            result = Box + Sphere
         """
         return self.union(toUnion)
 
@@ -3020,7 +3021,9 @@ class Workplane(object):
 
         Example::
 
-            r = box(1, 1, 1) - sphere(1)
+            Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
+            Sphere = Workplane("XY").sphere(1)
+            result = Box - Sphere
         """
         return self.cut(toUnion)
 
@@ -3065,7 +3068,9 @@ class Workplane(object):
 
         Example::
 
-            r = box(1, 1, 1) * sphere(1)
+            Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
+            Sphere = Workplane("XY").sphere(1)
+            result = Box * Sphere
         """
         return self.intersect(toUnion)
 
