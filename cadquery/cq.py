@@ -69,10 +69,10 @@ def _selectShapes(objects: Iterable[Any]) -> List[Shape]:
 
 class CQContext(object):
     """
-        A shared context for modeling.
+    A shared context for modeling.
 
-        All objects in the same CQ chain share a reference to this same object instance
-        which allows for shared state when needed,
+    All objects in the same CQ chain share a reference to this same object instance
+    which allows for shared state when needed.
     """
 
     pendingWires: List[Wire]
