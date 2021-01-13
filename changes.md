@@ -10,9 +10,9 @@ Master
 ------
    ### Breaking changes
    * `centerOption` default value changed from `CenterOfMass` to `ProjectedOrigin` #532
-   * `Wire.combine` interface changed - now it returns `List[Wire]`
-   * `Workplane.each` interface changed - callable of the `Callable[[Union[cadquery.occ_impl.geom.Vector, cadquery.occ_impl.geom.Location, cadquery.occ_impl.shapes.Shape]], cadquery.occ_impl.shapes.Shape]` type is required.
-   * `Workplane.eachpoint` interface changed - callable of the `Callable[[Union[cadquery.occ_impl.geom.Vector, cadquery.occ_impl.geom.Location, cadquery.occ_impl.shapes.Shape]], cadquery.occ_impl.shapes.Shape]` type is required.
+   * `Wire.combine` interface changed - now it returns `List[Wire]` #397
+   * `Workplane.each` interface changed - callable of the `Callable[[Union[cadquery.occ_impl.geom.Vector, cadquery.occ_impl.geom.Location, cadquery.occ_impl.shapes.Shape]], cadquery.occ_impl.shapes.Shape]` type is required #391
+   * `Workplane.eachpoint` interface changed - callable of the `Callable[[Union[cadquery.occ_impl.geom.Vector, cadquery.occ_impl.geom.Location, cadquery.occ_impl.shapes.Shape]], cadquery.occ_impl.shapes.Shape]` type is required #391
 
    ## Other changes
 
