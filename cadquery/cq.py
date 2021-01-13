@@ -232,21 +232,22 @@ class Workplane(object):
 
     def split(self, keepTop: bool = False, keepBottom: bool = False) -> "Workplane":
         """
-            Splits a solid on the stack into two parts, optionally keeping the separate parts.
+        Splits a solid on the stack into two parts, optionally keeping the separate parts.
 
-            :param boolean keepTop: True to keep the top, False or None to discard it
-            :param boolean keepBottom: True to keep the bottom, False or None to discard it
-            :raises: ValueError if keepTop and keepBottom are both false.
-            :raises: ValueError if there is not a solid in the current stack or the parent chain
-            :returns: CQ object with the desired objects on the stack.
+        :param boolean keepTop: True to keep the top, False or None to discard it
+        :param boolean keepBottom: True to keep the bottom, False or None to discard it
+        :raises: ValueError if keepTop and keepBottom are both false.
+        :raises: ValueError if there is not a solid in the current stack or the parent chain
+        :returns: CQ object with the desired objects on the stack.
 
-            The most common operation splits a solid and keeps one half. This sample creates
-            split bushing::
+        The most common operation splits a solid and keeps one half. This sample creates
+        split bushing::
 
-                #drill a hole in the side
-                c = Workplane().box(1,1,1).faces(">Z").workplane().circle(0.25).cutThruAll()F
-                #now cut it in half sideways
-                c.faces(">Y").workplane(-0.5).split(keepTop=True)
+            # drill a hole in the side
+            c = Workplane().box(1,1,1).faces(">Z").workplane().circle(0.25).cutThruAll()
+            
+            # now cut it in half sideways
+            c = c.faces(">Y").workplane(-0.5).split(keepTop=True)
         """
 
         solid = self.findSolid()
