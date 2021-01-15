@@ -202,7 +202,7 @@ class Workplane(object):
         """
         Collects all of the values for propName,
         for all items on the stack.
-        FreeCAD objects do not implement id correctly,
+        OCCT objects do not implement id correctly,
         so hashCode is used to ensure we don't add the same
         object multiple times.
 
@@ -335,7 +335,7 @@ class Workplane(object):
         """
         get the values in the current list
 
-        :rtype: list of FreeCAD objects
+        :rtype: list of occ_impl objects
         :returns: the values of the objects on the stack.
 
         Contrast with :py:meth:`all`, which returns CQ objects for all of the items on the stack
@@ -404,10 +404,9 @@ class Workplane(object):
 
     def toOCC(self) -> Any:
         """
-        Directly returns the wrapped FreeCAD object to cut down on the amount of boiler plate code
-        needed when rendering a model in FreeCAD's 3D view.
-        :return: The wrapped FreeCAD object
-        :rtype A FreeCAD object or a SolidReference
+        Directly returns the wrapped OCCT object.
+        :return: The wrapped OCCT object
+        :rtype TopoDS_Shape or a subclass
         """
 
         return self.val().wrapped
@@ -1031,7 +1030,7 @@ class Workplane(object):
         union: bool = False,
     ):
         """
-        Mirror a single CQ object. This operation is the same as in the FreeCAD PartWB's mirroring
+        Mirror a single CQ object.
 
         :param mirrorPlane: the plane to mirror about
         :type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
@@ -1968,9 +1967,6 @@ class Workplane(object):
              s = Workplane().lineTo(2,2).threePointArc((3,1),(2,0)).mirrorX().extrude(0.25)
 
         Produces a flat, heart shaped object
-
-        Future Enhancements:
-            mirrorX().mirrorY() should work but doesnt, due to some FreeCAD weirdness
         """
         # convert edges to a wire, if there are pending edges
         n = self.wire(forConstruction=False)
@@ -1997,9 +1993,6 @@ class Workplane(object):
         and finally joined into a new wire
 
         Typically used to make creating wires with symmetry easier.
-
-        Future Enhancements:
-            mirrorX().mirrorY() should work but doesnt, due to some FreeCAD weirdness
         """
         # convert edges to a wire, if there are pending edges
         n = self.wire(forConstruction=False)
@@ -2032,7 +2025,7 @@ class Workplane(object):
         """
         Queue a Wire for later extrusion
 
-        Internal Processing Note.  In FreeCAD, edges-->wires-->faces-->solids.
+        Internal Processing Note.  In OCCT, edges-->wires-->faces-->solids.
 
         but users do not normally care about these distinctions.  Users 'think' in terms
         of edges, and solids.
@@ -2061,10 +2054,6 @@ class Workplane(object):
         Attempt to consolidate wires on the stack into a single.
         If possible, a new object with the results are returned.
         if not possible, the wires remain separated
-
-        FreeCAD has a bug in Part.Wire([]) which does not create wires/edges properly sometimes
-        Additionally, it has a bug where a profile composed of two wires ( rather than one )
-        also does not work properly. Together these are a real problem.
         """
 
         w = self._consolidateWires()
@@ -2786,7 +2775,7 @@ class Workplane(object):
         # Make sure we account for users specifying angles larger than 360 degrees
         angleDegrees %= 360.0
 
-        # Compensate for FreeCAD not assuming that a 0 degree revolve means a 360 degree revolve
+        # Compensate for OCCT not assuming that a 0 degree revolve means a 360 degree revolve
         angleDegrees = 360.0 if angleDegrees == 0 else angleDegrees
 
         # The default start point of the vector defining the axis of rotation will be the origin
@@ -3143,7 +3132,7 @@ class Workplane(object):
 
         :param distance: distance to extrude
         :param boolean both: extrude in both directions symmetrically
-        :return: a FreeCAD solid, suitable for boolean operations.
+        :return: OCCT solid(s), suitable for boolean operations.
 
         This method is a utility method, primarily for plugin and internal use.
         It is the basis for cutBlind,extrude,cutThruAll, and all similar methods.
@@ -3199,7 +3188,7 @@ class Workplane(object):
         :type axisStart: tuple, a two tuple
         :param axisEnd: the end point of the axis of rotation
         :type axisEnd: tuple, a two tuple
-        :return: a FreeCAD solid, suitable for boolean operations.
+        :return: a OCCT solid(s), suitable for boolean operations.
 
         This method is a utility method, primarily for plugin and internal use.
         """

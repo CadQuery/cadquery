@@ -1498,7 +1498,7 @@ class Wire(Shape, Mixin1D):
         :param cls:
         :param listOfWires:
         :param tol: default 1e-9
-        :return: Wire
+        :return: List[Wire]
         """
 
         edges_in = TopTools_HSequenceOfShape()
