@@ -1338,7 +1338,7 @@ class TestCadQuery(BaseTest):
             b1.intersect(b2.faces().val())
 
         # Test syntactic sugar [__mul__ method]
-        sugar = b1 * b2
+        sugar = b1 & b2
         self.assertEqual(resS.val().Volume(), sugar.val().Volume())
 
     def testBoundingBox(self):
@@ -2184,7 +2184,7 @@ class TestCadQuery(BaseTest):
             resS.union(toUnion.faces().val())
 
         # Test syntactic sugar [__add__ method]
-        sugar = currentS + toUnion
+        sugar = currentS | toUnion
         self.assertEqual(resS.faces().size(), sugar.faces().size())
 
     def testCombine(self):

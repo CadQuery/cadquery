@@ -2969,15 +2969,15 @@ class Workplane(object):
 
         return self.newObject([r])
 
-    def __add__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+    def __or__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
         """
         Syntactic sugar for union.
-        Notice that `r = a + b` is equivalent to `r = a.union(b)`.
+        Notice that `r = a | b` is equivalent to `r = a.union(b)`.
 
         Example::
             Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
             Sphere = Workplane("XY").sphere(1)
-            result = Box + Sphere
+            result = Box | Sphere
         """
         return self.union(toUnion)
 
@@ -3064,16 +3064,16 @@ class Workplane(object):
 
         return self.newObject([newS])
 
-    def __mul__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+    def __and__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
         """
         Syntactic sugar for intersect.
-        Notice that `r = a * b` is equivalent to `r = a.intersect(b)`.
+        Notice that `r = a & b` is equivalent to `r = a.intersect(b)`.
 
         Example::
 
             Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
             Sphere = Workplane("XY").sphere(1)
-            result = Box * Sphere
+            result = Box & Sphere
         """
         return self.intersect(toUnion)
 
