@@ -2,8 +2,7 @@ import cadquery as cq
 
 # These can be modified rather than hardcoding values for each dimension.
 length = 80.0  # Length of the block
-width = 60.0  # Width of the block
-height = 100.0  # Height of the block
+width = 100.0  # Width of the block
 thickness = 10.0  # Thickness of the block
 center_hole_dia = 22.0  # Diameter of center hole in block
 cbore_hole_diameter = 2.4  # Bolt shank/threads clearance hole diameter
@@ -15,7 +14,7 @@ cbore_depth = 2.1  # Bolt head pocket hole depth
 # and 4 counterbored holes for bolts
 # 1.  Establishes a workplane that an object can be built on.
 # 1a. Uses the X and Y origins to define the workplane, meaning that the
-# positive Z direction is "up", and the negative Z direction is "down".
+#     positive Z direction is "up", and the negative Z direction is "down".
 # 2.  The highest(max) Z face is selected and a new workplane is created on it.
 # 3.  The new workplane is used to drill a hole through the block.
 # 3a. The hole is automatically centered in the workplane.
@@ -28,13 +27,13 @@ cbore_depth = 2.1  # Bolt head pocket hole depth
 #     hole is placed at each of the vertices (all 4 of them at once).
 result = (
     cq.Workplane("XY")
-    .box(length, height, thickness)
+    .box(length, width, thickness)
     .faces(">Z")
     .workplane()
     .hole(center_hole_dia)
     .faces(">Z")
     .workplane()
-    .rect(length - cbore_inset, height - cbore_inset, forConstruction=True)
+    .rect(length - cbore_inset, width - cbore_inset, forConstruction=True)
     .vertices()
     .cboreHole(cbore_hole_diameter, cbore_diameter, cbore_depth)
     .edges("|Z")
