@@ -404,7 +404,7 @@ class Assembly(object):
         # check if any constraints were specified
         if not constraints:
             raise ValueError("At least one constraint required")
-    
+
         # instantiate the solver
         solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
 
