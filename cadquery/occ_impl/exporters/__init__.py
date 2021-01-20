@@ -37,6 +37,7 @@ def export(
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
+    opt = None
 ):
 
     """
@@ -81,7 +82,7 @@ def export(
 
     elif exportType == ExportTypes.SVG:
         with open(fname, "w") as f:
-            f.write(getSVG(shape))
+            f.write(getSVG(shape, opt))
 
     elif exportType == ExportTypes.AMF:
         tess = shape.tessellate(tolerance, angularTolerance)
