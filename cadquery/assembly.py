@@ -401,6 +401,10 @@ class Assembly(object):
         for c in self.constraints:
             constraints.append(((ents[c.objects[0]], ents[c.objects[1]]), c.toPOD()))
 
+        # check if any constraints were specified
+        if not constraints:
+            raise ValueError("At least one constraint required")
+
         # instantiate the solver
         solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
 

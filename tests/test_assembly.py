@@ -212,3 +212,9 @@ def test_duplicate_name(nested_assy):
 
     with pytest.raises(ValueError):
         nested_assy.add(None, name="SECOND")
+
+
+def test_empty_solve(nested_assy):
+
+    with pytest.raises(ValueError):
+        nested_assy.solve()
