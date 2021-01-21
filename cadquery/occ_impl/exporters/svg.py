@@ -11,7 +11,6 @@ from OCP.HLRAlgo import HLRAlgo_Projector
 from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
 DISCRETIZATION_TOLERANCE = 1e-3
-DEFAULT_DIR = gp_Dir(-1.75, 1.1, 5)
 
 SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
@@ -23,32 +22,34 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 >
     <g transform="scale(%(unitScale)s, -%(unitScale)s)   translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s"  fill="none">
        <!-- hidden lines -->
-       <g  stroke="rgb(160, 160, 160)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
+       <g  stroke="rgb(%(hiddenColor)s)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
 %(hiddenContent)s
        </g>
 
        <!-- solid lines -->
-       <g  stroke="rgb(0, 0, 0)" fill="none">
+       <g  stroke="rgb(%(strokeColor)s)" fill="none">
 %(visibleContent)s
        </g>
     </g>
+    %(axesIndicator)s
 </svg>
 """
 
-    # <g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
-    #     <line x1="30" y1="-30" x2="75" y2="-33" stroke-width="3" stroke="#000000" />
-    #      <text x="80" y="-30" style="stroke:#000000">X </text>
+# The axes indicator - needs to be replaced with something dynamic eventually
+AXES_TEMPLATE = """<g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
+        <line x1="30" y1="-30" x2="75" y2="-33" stroke-width="3" stroke="#000000" />
+         <text x="80" y="-30" style="stroke:#000000">X </text>
 
-    #     <line x1="30" y1="-30" x2="30" y2="-75" stroke-width="3" stroke="#000000" />
-    #      <text x="25" y="-85" style="stroke:#000000">Y </text>
+        <line x1="30" y1="-30" x2="30" y2="-75" stroke-width="3" stroke="#000000" />
+         <text x="25" y="-85" style="stroke:#000000">Y </text>
 
-    #     <line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3" stroke="#000000" />
-    #      <text x="65" y="-5" style="stroke:#000000">Z </text>
-    #     <!--
-    #         <line x1="0" y1="0" x2="%(unitScale)s" y2="0" stroke-width="3" />
-    #         <text x="0" y="20" style="stroke:#000000">1  %(uom)s </text>
-    #     -->
-    # </g>
+        <line x1="30" y1="-30" x2="58" y2="-15" stroke-width="3" stroke="#000000" />
+         <text x="65" y="-5" style="stroke:#000000">Z </text>
+        <!--
+            <line x1="0" y1="0" x2="%(unitScale)s" y2="0" stroke-width="3" />
+            <text x="0" y="20" style="stroke:#000000">1  %(uom)s </text>
+        -->
+    </g>"""
 
 PATHTEMPLATE = '\t\t\t<path d="%s" />\n'
 
@@ -129,7 +130,18 @@ def getSVG(shape, opts=None):
         Export a shape to SVG
     """
 
-    d = {"width": 800, "height": 240, "marginLeft": 200, "marginTop": 20, "projectionDir": (-1.75, 1.1, 5)}
+    # Available options and their defaults
+    d = {"width": 800,
+         "height": 240,
+         "marginLeft": 200,
+         "marginTop": 20,
+         "projectionDir": (-1.75, 1.1, 5),
+         "showAxes": True,
+         "strokeWidth": -1.0, # -1 = calculated based on unitScale
+         "strokeColor": (0, 0, 0), # RGB 0-255
+         "hiddenColor": (160, 160, 160), #RGB 0-255
+         "showHidden": True
+        }
 
     if opts:
         d.update(opts)
@@ -141,12 +153,17 @@ def getSVG(shape, opts=None):
     height = float(d["height"])
     marginLeft = float(d["marginLeft"])
     marginTop = float(d["marginTop"])
-    projectionDir = gp_Dir(*tuple(d["projectionDir"]))
+    projectionDir = tuple(d["projectionDir"])
+    showAxes = bool(d["showAxes"])
+    strokeWidth = float(d["strokeWidth"])
+    strokeColor = tuple(d["strokeColor"])
+    hiddenColor = tuple(d["hiddenColor"])
+    showHidden = bool(d["showHidden"])
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
 
-    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), projectionDir))
+    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir)))
 
     hlr.Projector(projector)
     hlr.Update()
@@ -201,19 +218,40 @@ def getSVG(shape, opts=None):
         (0 - bb.ymax) - marginTop / unitScale,
     )
 
+    # If the user did not specify a stroke width, calculate it based on the unit scale
+    if strokeWidth == -1.0:
+        strokeWidth = 1.0 / unitScale
+
     # compute paths
     hiddenContent = ""
-    for p in hiddenPaths:
-        hiddenContent += PATHTEMPLATE % p
+
+    # Prevent hidden paths from being added if the user disabled them
+    if showHidden:
+        for p in hiddenPaths:
+            hiddenContent += PATHTEMPLATE % p
 
     visibleContent = ""
     for p in visiblePaths:
         visibleContent += PATHTEMPLATE % p
 
+    # If the caller wants the axes indicator and is using the default direction, add in the indicator
+    if showAxes and projectionDir == (-1.75, 1.1, 5):
+        axesIndicator = AXES_TEMPLATE % (
+            {
+                "unitScale": str(unitScale),
+                "textboxY": str(height - 30),
+                "uom": str(uom)
+            }
+        )
+    else:
+        axesIndicator = ""
+
     svg = SVG_TEMPLATE % (
         {
             "unitScale": str(unitScale),
-            "strokeWidth": str(1.0 / unitScale),
+            "strokeWidth": str(strokeWidth),
+            "strokeColor": str(strokeColor[0]) + "," + str(strokeColor[1]) + "," + str(strokeColor[2]),
+            "hiddenColor": str(hiddenColor[0]) + "," + str(hiddenColor[1]) + "," +  str(hiddenColor[2]),
             "hiddenContent": hiddenContent,
             "visibleContent": visibleContent,
             "xTranslate": str(xTranslate),
@@ -222,11 +260,10 @@ def getSVG(shape, opts=None):
             "height": str(height),
             "textboxY": str(height - 30),
             "uom": str(uom),
+            "axesIndicator": axesIndicator
         }
     )
-    # svg = SVG_TEMPLATE % (
-    #    {"content": projectedContent}
-    # )
+
     return svg
 
 
