@@ -2304,6 +2304,7 @@ class Workplane(object):
     ) -> "Workplane":
         """
         Make an ellipse for each item on the stack.
+
         :param x_radius: x radius of the ellipse (x-axis of plane the ellipse should lie in)
         :type x_radius: float > 0
         :param y_radius: y radius of the ellipse (y-axis of plane the ellipse should lie in)
