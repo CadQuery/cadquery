@@ -263,16 +263,8 @@ def getSVG(shape, opts=None):
         {
             "unitScale": str(unitScale),
             "strokeWidth": str(strokeWidth),
-            "strokeColor": str(strokeColor[0])
-            + ","
-            + str(strokeColor[1])
-            + ","
-            + str(strokeColor[2]),
-            "hiddenColor": str(hiddenColor[0])
-            + ","
-            + str(hiddenColor[1])
-            + ","
-            + str(hiddenColor[2]),
+            "strokeColor": ",".join([str(x) for x in strokeColor]),
+            "hiddenColor": ",".join([str(x) for x in hiddenColor]),
             "hiddenContent": hiddenContent,
             "visibleContent": visibleContent,
             "xTranslate": str(xTranslate),
