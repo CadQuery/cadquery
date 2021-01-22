@@ -61,7 +61,7 @@ class UNITS:
 
 def guessUnitOfMeasure(shape):
     """
-        Guess the unit of measure of a shape.
+    Guess the unit of measure of a shape.
     """
     bb = BoundBox._fromTopoDS(shape.wrapped)
 
@@ -83,7 +83,7 @@ def guessUnitOfMeasure(shape):
 
 def makeSVGedge(e):
     """
-
+    Creates an SVG edge from a OCCT edge.
     """
 
     cs = StringIO.StringIO()
@@ -108,7 +108,7 @@ def makeSVGedge(e):
 
 def getPaths(visibleShapes, hiddenShapes):
     """
-
+    Collects the visible and hidden edges from the CadQuery object.
     """
 
     hiddenPaths = []
@@ -127,21 +127,22 @@ def getPaths(visibleShapes, hiddenShapes):
 
 def getSVG(shape, opts=None):
     """
-        Export a shape to SVG
+    Export a shape to SVG
     """
 
     # Available options and their defaults
-    d = {"width": 800,
-         "height": 240,
-         "marginLeft": 200,
-         "marginTop": 20,
-         "projectionDir": (-1.75, 1.1, 5),
-         "showAxes": True,
-         "strokeWidth": -1.0, # -1 = calculated based on unitScale
-         "strokeColor": (0, 0, 0), # RGB 0-255
-         "hiddenColor": (160, 160, 160), #RGB 0-255
-         "showHidden": True
-        }
+    d = {
+        "width": 800,
+        "height": 240,
+        "marginLeft": 200,
+        "marginTop": 20,
+        "projectionDir": (-1.75, 1.1, 5),
+        "showAxes": True,
+        "strokeWidth": -1.0,  # -1 = calculated based on unitScale
+        "strokeColor": (0, 0, 0),  # RGB 0-255
+        "hiddenColor": (160, 160, 160),  # RGB 0-255
+        "showHidden": True,
+    }
 
     if opts:
         d.update(opts)
@@ -237,11 +238,7 @@ def getSVG(shape, opts=None):
     # If the caller wants the axes indicator and is using the default direction, add in the indicator
     if showAxes and projectionDir == (-1.75, 1.1, 5):
         axesIndicator = AXES_TEMPLATE % (
-            {
-                "unitScale": str(unitScale),
-                "textboxY": str(height - 30),
-                "uom": str(uom)
-            }
+            {"unitScale": str(unitScale), "textboxY": str(height - 30), "uom": str(uom)}
         )
     else:
         axesIndicator = ""
@@ -250,8 +247,16 @@ def getSVG(shape, opts=None):
         {
             "unitScale": str(unitScale),
             "strokeWidth": str(strokeWidth),
-            "strokeColor": str(strokeColor[0]) + "," + str(strokeColor[1]) + "," + str(strokeColor[2]),
-            "hiddenColor": str(hiddenColor[0]) + "," + str(hiddenColor[1]) + "," +  str(hiddenColor[2]),
+            "strokeColor": str(strokeColor[0])
+            + ","
+            + str(strokeColor[1])
+            + ","
+            + str(strokeColor[2]),
+            "hiddenColor": str(hiddenColor[0])
+            + ","
+            + str(hiddenColor[1])
+            + ","
+            + str(hiddenColor[2]),
             "hiddenContent": hiddenContent,
             "visibleContent": visibleContent,
             "xTranslate": str(xTranslate),
@@ -260,18 +265,18 @@ def getSVG(shape, opts=None):
             "height": str(height),
             "textboxY": str(height - 30),
             "uom": str(uom),
-            "axesIndicator": axesIndicator
+            "axesIndicator": axesIndicator,
         }
     )
 
     return svg
 
 
-def exportSVG(shape, fileName: str, opts = None):
+def exportSVG(shape, fileName: str, opts=None):
     """
-        accept a cadquery shape, and export it to the provided file
-        TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
-        export a view of a part to svg
+    Accept a cadquery shape, and export it to the provided file
+    TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
+    export a view of a part to svg
     """
 
     svg = getSVG(shape.val(), opts)
