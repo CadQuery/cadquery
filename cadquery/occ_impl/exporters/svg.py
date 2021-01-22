@@ -127,7 +127,23 @@ def getPaths(visibleShapes, hiddenShapes):
 
 def getSVG(shape, opts=None):
     """
-    Export a shape to SVG
+    Export a shape to SVG text.
+
+    :param shape: A CadQuery shape object to convert to an SVG string.
+    :type Shape: Vertex, Edge, Wire, Face, Shell, Solid, or Compound.
+    :param opts: An options dictionary that influences the SVG that is output.
+    :type opts: Dictionary, keys are as follows:
+        width: Document width of the resulting image.
+        height: Document height of the resulting image.
+        marginLeft: Inset margin from the left side of the document.
+        marginTop: Inset margin from the top side of the document.
+        projectionDir: Direction the camera will view the shape from.
+        showAxes: Whether or not to show the axes indicator, which will only be
+                  visible when the projectionDir is also at the default.
+        strokeWidth: Width of the line that visible edges are drawn with.
+        strokeColor: Color of the line that visible edges are drawn with.
+        hiddenColor: Color of the line that hidden edges are drawn with.
+        showHidden: Whether or not to show hidden lines.
     """
 
     # Available options and their defaults
