@@ -55,7 +55,7 @@ class TestExporters(BaseTest):
                 "height": 100,
                 "marginLeft": 10,
                 "marginTop": 10,
-                "showAxes": True,
+                "showAxes": False,
                 "projectionDir": (0, 0, 1),
                 "strokeWidth": 0.25,
                 "strokeColor": (255, 0, 0),
