@@ -44,12 +44,17 @@ class TestExporters(BaseTest):
 
         exporters.export(self._box(), "out.stl")
 
-    def testSTLOptions(self):
-        self._exportBox(exporters.ExportTypes.STL, ["facet normal"])
+    def testSVG(self):
+        self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
+
+        exporters.export(self._box(), "out.svg")
+
+    def testSVGOptions(self):
+        self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
         exporters.export(
             self._box(),
-            "out.stl",
+            "out.svg",
             opt={
                 "width": 100,
                 "height": 100,
@@ -63,11 +68,6 @@ class TestExporters(BaseTest):
                 "showHidden": True,
             },
         )
-
-    def testSVG(self):
-        self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
-
-        exporters.export(self._box(), "out.svg")
 
     def testAMF(self):
         self._exportBox(exporters.ExportTypes.AMF, ["<amf units", "</object>"])
