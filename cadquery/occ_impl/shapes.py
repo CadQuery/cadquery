@@ -2637,7 +2637,7 @@ class Solid(Shape, Mixin3D):
 
     def dprism(
         self,
-        basis: Face,
+        basis: Optional[Face],
         profiles: List[Wire],
         depth: Optional[float] = None,
         taper: float = 0,
@@ -2659,7 +2659,12 @@ class Solid(Shape, Mixin3D):
         for p in sorted_profiles:
             face = Face.makeFromWires(p[0], p[1:])
             feat = BRepFeat_MakeDPrism(
-                shape, face.wrapped, basis.wrapped, taper * DEG2RAD, additive, False
+                shape,
+                face.wrapped,
+                basis.wrapped if basis else TopoDS_Face(),
+                taper * DEG2RAD,
+                additive,
+                False,
             )
 
             if thruAll or depth is None:
