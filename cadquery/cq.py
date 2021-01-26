@@ -3084,20 +3084,9 @@ class Workplane(object):
         self.ctx.pendingWires = []
 
         solidRef = self.findSolid()
-        faceRef = self.findFace()
-
-        # if no faces on the stack take the nearest face parallel to the plane zDir
-        if not faceRef:
-            # first select all with faces with good orietation
-            sel1 = PerpendicularDirSelector(self.plane.zDir)
-            faces = sel1.filter(solidRef.Faces())
-            # then select the closest
-            sel2 = NearestToPointSelector(self.plane.origin.toTuple())
-            faceRef = sel2.filter(faces)[0]
-
         rv = []
         for solid in solidRef.Solids():
-            s = solid.dprism(faceRef, wires, thruAll=True, additive=False, taper=-taper)
+            s = solid.dprism(None, wires, thruAll=True, additive=False, taper=-taper)
 
             if clean:
                 s = s.clean()
