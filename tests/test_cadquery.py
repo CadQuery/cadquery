@@ -1409,6 +1409,28 @@ class TestCadQuery(BaseTest):
         self.saveModel(t)
         self.assertEqual(13, t.faces().size())
 
+        # no planar faces
+        sphere_r = 10.0
+
+        r = (
+            Workplane()
+            .sphere(sphere_r)
+            .workplane()
+            .circle(sphere_r / 2.0)
+            .cutThruAll()
+            .workplane()
+            .transformed(rotate=(90, 0, 0))
+            .circle(sphere_r / 2.0)
+            .cutThruAll()
+            .workplane()
+            .transformed(rotate=(0, 90, 0))
+            .circle(sphere_r / 2.0)
+            .cutThruAll()
+        )
+
+        self.assertTrue(r.val().isValid())
+        self.assertEqual(r.faces().size(), 7)
+
     def testCutToFaceOffsetNOTIMPLEMENTEDYET(self):
         """
             Tests cutting up to a given face, or an offset from a face
