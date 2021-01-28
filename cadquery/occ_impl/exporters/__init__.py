@@ -37,16 +37,18 @@ def export(
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
+    opt=None,
 ):
 
     """
     Export Wokrplane or Shape to file. Multiple entities are converted to compound.
-    
+
     :param w:  Shape or Wokrplane to be exported.
     :param fname: output filename.
     :param exportType: the exportFormat to use. If None will be inferred from the extension. Default: None.
     :param tolerance: the deflection tolerance, in model units. Default 0.1.
     :param angularTolerance: the angular tolerance, in radians. Default 0.1.
+    :param opt: additional options passed to the specific exporter. Default None.
     """
 
     shape: Shape
@@ -81,7 +83,7 @@ def export(
 
     elif exportType == ExportTypes.SVG:
         with open(fname, "w") as f:
-            f.write(getSVG(shape))
+            f.write(getSVG(shape, opt))
 
     elif exportType == ExportTypes.AMF:
         tess = shape.tessellate(tolerance, angularTolerance)
@@ -125,14 +127,14 @@ def exportShape(
     angularTolerance: float = 0.1,
 ):
     """
-        :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
-        object, the first value is exported
-        :param exportType: the exportFormat to use
-        :param fileLike: a file like object to which the content will be written.
-        The object should be already open and ready to write. The caller is responsible
-        for closing the object
-        :param tolerance: the linear tolerance, in model units. Default 0.1.
-        :param angularTolerance: the angular tolerance, in radians. Default 0.1.
+    :param shape:  the shape to export. it can be a shape object, or a cadquery object. If a cadquery
+    object, the first value is exported
+    :param exportType: the exportFormat to use
+    :param fileLike: a file like object to which the content will be written.
+    The object should be already open and ready to write. The caller is responsible
+    for closing the object
+    :param tolerance: the linear tolerance, in model units. Default 0.1.
+    :param angularTolerance: the angular tolerance, in radians. Default 0.1.
     """
 
     def tessellate(shape, angularTolerance):
@@ -188,8 +190,8 @@ def exportShape(
 @deprecate()
 def readAndDeleteFile(fileName):
     """
-        read data from file provided, and delete it when done
-        return the contents as a string
+    Read data from file provided, and delete it when done
+    return the contents as a string
     """
     res = ""
     with open(fileName, "r") as f:

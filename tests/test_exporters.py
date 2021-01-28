@@ -49,6 +49,26 @@ class TestExporters(BaseTest):
 
         exporters.export(self._box(), "out.svg")
 
+    def testSVGOptions(self):
+        self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
+
+        exporters.export(
+            self._box(),
+            "out.svg",
+            opt={
+                "width": 100,
+                "height": 100,
+                "marginLeft": 10,
+                "marginTop": 10,
+                "showAxes": False,
+                "projectionDir": (0, 0, 1),
+                "strokeWidth": 0.25,
+                "strokeColor": (255, 0, 0),
+                "hiddenColor": (0, 0, 255),
+                "showHidden": True,
+            },
+        )
+
     def testAMF(self):
         self._exportBox(exporters.ExportTypes.AMF, ["<amf units", "</object>"])
 

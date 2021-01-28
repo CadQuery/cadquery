@@ -11,7 +11,6 @@ from OCP.HLRAlgo import HLRAlgo_Projector
 from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
 DISCRETIZATION_TOLERANCE = 1e-3
-DEFAULT_DIR = gp_Dir(-1.75, 1.1, 5)
 
 SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
@@ -23,16 +22,21 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 >
     <g transform="scale(%(unitScale)s, -%(unitScale)s)   translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s"  fill="none">
        <!-- hidden lines -->
-       <g  stroke="rgb(160, 160, 160)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
+       <g  stroke="rgb(%(hiddenColor)s)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
 %(hiddenContent)s
        </g>
 
        <!-- solid lines -->
-       <g  stroke="rgb(0, 0, 0)" fill="none">
+       <g  stroke="rgb(%(strokeColor)s)" fill="none">
 %(visibleContent)s
        </g>
     </g>
-    <g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
+    %(axesIndicator)s
+</svg>
+"""
+
+# The axes indicator - needs to be replaced with something dynamic eventually
+AXES_TEMPLATE = """<g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255)">
         <line x1="30" y1="-30" x2="75" y2="-33" stroke-width="3" stroke="#000000" />
          <text x="80" y="-30" style="stroke:#000000">X </text>
 
@@ -45,9 +49,7 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <line x1="0" y1="0" x2="%(unitScale)s" y2="0" stroke-width="3" />
             <text x="0" y="20" style="stroke:#000000">1  %(uom)s </text>
         -->
-    </g>
-</svg>
-"""
+    </g>"""
 
 PATHTEMPLATE = '\t\t\t<path d="%s" />\n'
 
@@ -59,7 +61,7 @@ class UNITS:
 
 def guessUnitOfMeasure(shape):
     """
-        Guess the unit of measure of a shape.
+    Guess the unit of measure of a shape.
     """
     bb = BoundBox._fromTopoDS(shape.wrapped)
 
@@ -81,7 +83,7 @@ def guessUnitOfMeasure(shape):
 
 def makeSVGedge(e):
     """
-
+    Creates an SVG edge from a OCCT edge.
     """
 
     cs = StringIO.StringIO()
@@ -106,7 +108,7 @@ def makeSVGedge(e):
 
 def getPaths(visibleShapes, hiddenShapes):
     """
-
+    Collects the visible and hidden edges from the CadQuery object.
     """
 
     hiddenPaths = []
@@ -125,10 +127,38 @@ def getPaths(visibleShapes, hiddenShapes):
 
 def getSVG(shape, opts=None):
     """
-        Export a shape to SVG
+    Export a shape to SVG text.
+
+    :param shape: A CadQuery shape object to convert to an SVG string.
+    :type Shape: Vertex, Edge, Wire, Face, Shell, Solid, or Compound.
+    :param opts: An options dictionary that influences the SVG that is output.
+    :type opts: Dictionary, keys are as follows:
+        width: Document width of the resulting image.
+        height: Document height of the resulting image.
+        marginLeft: Inset margin from the left side of the document.
+        marginTop: Inset margin from the top side of the document.
+        projectionDir: Direction the camera will view the shape from.
+        showAxes: Whether or not to show the axes indicator, which will only be
+                  visible when the projectionDir is also at the default.
+        strokeWidth: Width of the line that visible edges are drawn with.
+        strokeColor: Color of the line that visible edges are drawn with.
+        hiddenColor: Color of the line that hidden edges are drawn with.
+        showHidden: Whether or not to show hidden lines.
     """
 
-    d = {"width": 800, "height": 240, "marginLeft": 200, "marginTop": 20}
+    # Available options and their defaults
+    d = {
+        "width": 800,
+        "height": 240,
+        "marginLeft": 200,
+        "marginTop": 20,
+        "projectionDir": (-1.75, 1.1, 5),
+        "showAxes": True,
+        "strokeWidth": -1.0,  # -1 = calculated based on unitScale
+        "strokeColor": (0, 0, 0),  # RGB 0-255
+        "hiddenColor": (160, 160, 160),  # RGB 0-255
+        "showHidden": True,
+    }
 
     if opts:
         d.update(opts)
@@ -140,11 +170,17 @@ def getSVG(shape, opts=None):
     height = float(d["height"])
     marginLeft = float(d["marginLeft"])
     marginTop = float(d["marginTop"])
+    projectionDir = tuple(d["projectionDir"])
+    showAxes = bool(d["showAxes"])
+    strokeWidth = float(d["strokeWidth"])
+    strokeColor = tuple(d["strokeColor"])
+    hiddenColor = tuple(d["hiddenColor"])
+    showHidden = bool(d["showHidden"])
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
 
-    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), DEFAULT_DIR))
+    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir)))
 
     hlr.Projector(projector)
     hlr.Update()
@@ -190,7 +226,7 @@ def getSVG(shape, opts=None):
     # get bounding box -- these are all in 2-d space
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
-    # width pixels for x, height pixesl for y
+    # width pixels for x, height pixels for y
     unitScale = min(width / bb.xlen * 0.75, height / bb.ylen * 0.75)
 
     # compute amount to translate-- move the top left into view
@@ -199,19 +235,36 @@ def getSVG(shape, opts=None):
         (0 - bb.ymax) - marginTop / unitScale,
     )
 
-    # compute paths ( again -- had to strip out freecad crap )
+    # If the user did not specify a stroke width, calculate it based on the unit scale
+    if strokeWidth == -1.0:
+        strokeWidth = 1.0 / unitScale
+
+    # compute paths
     hiddenContent = ""
-    for p in hiddenPaths:
-        hiddenContent += PATHTEMPLATE % p
+
+    # Prevent hidden paths from being added if the user disabled them
+    if showHidden:
+        for p in hiddenPaths:
+            hiddenContent += PATHTEMPLATE % p
 
     visibleContent = ""
     for p in visiblePaths:
         visibleContent += PATHTEMPLATE % p
 
+    # If the caller wants the axes indicator and is using the default direction, add in the indicator
+    if showAxes and projectionDir == (-1.75, 1.1, 5):
+        axesIndicator = AXES_TEMPLATE % (
+            {"unitScale": str(unitScale), "textboxY": str(height - 30), "uom": str(uom)}
+        )
+    else:
+        axesIndicator = ""
+
     svg = SVG_TEMPLATE % (
         {
             "unitScale": str(unitScale),
-            "strokeWidth": str(1.0 / unitScale),
+            "strokeWidth": str(strokeWidth),
+            "strokeColor": ",".join([str(x) for x in strokeColor]),
+            "hiddenColor": ",".join([str(x) for x in hiddenColor]),
             "hiddenContent": hiddenContent,
             "visibleContent": visibleContent,
             "xTranslate": str(xTranslate),
@@ -220,22 +273,21 @@ def getSVG(shape, opts=None):
             "height": str(height),
             "textboxY": str(height - 30),
             "uom": str(uom),
+            "axesIndicator": axesIndicator,
         }
     )
-    # svg = SVG_TEMPLATE % (
-    #    {"content": projectedContent}
-    # )
+
     return svg
 
 
-def exportSVG(shape, fileName: str):
+def exportSVG(shape, fileName: str, opts=None):
     """
-        accept a cadquery shape, and export it to the provided file
-        TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
-        export a view of a part to svg
+    Accept a cadquery shape, and export it to the provided file
+    TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
+    export a view of a part to svg
     """
 
-    svg = getSVG(shape.val())
+    svg = getSVG(shape.val(), opts)
     f = open(fileName, "w")
     f.write(svg)
     f.close()
