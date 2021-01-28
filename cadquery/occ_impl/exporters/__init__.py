@@ -48,6 +48,7 @@ def export(
     :param exportType: the exportFormat to use. If None will be inferred from the extension. Default: None.
     :param tolerance: the deflection tolerance, in model units. Default 0.1.
     :param angularTolerance: the angular tolerance, in radians. Default 0.1.
+    :param opt: additional options passed to the specific exporter. Default None.
     """
 
     shape: Shape
