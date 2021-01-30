@@ -357,6 +357,39 @@ class TestCadQuery(BaseTest):
             assert before[direction] == approx(after[direction])
         assert plane.origin.toTuple() == origin
 
+    def testRect(self):
+        x = 10
+        y = 11
+        s = Workplane().rect(x, y)
+        # a rectangle has 4 sides
+        self.assertEqual(s.edges().size(), 4)
+        # assert that the lower left corner is in the correct spot for all
+        # possible values of centered
+        for centered_x, xval in zip([True, False], [-x / 2, 0]):
+            for centered_y, yval in zip([True, False], [-y / 2, 0]):
+                s = Workplane().rect(x, y, centered=(centered_x, centered_y)).vertices("<X and <Y")
+                self.assertEqual(s.size(), 1)
+                self.assertTupleAlmostEquals(
+                    s.val().toTuple(), (xval, yval, 0), 3
+                )
+        # check that centered=True is the same as centered=(True, True)
+        for option0 in [True, False]:
+            v0 = (
+                Workplane()
+                .rect(x, y, centered=option0)
+                .vertices(">X and >Y")
+                .val()
+                .toTuple()
+            )
+            v1 = (
+                Workplane()
+                .rect(x, y, centered=(option0, option0))
+                .vertices(">X and >Y")
+                .val()
+                .toTuple()
+            )
+            self.assertTupleAlmostEquals(v0, v1, 3)
+
     def testLoft(self):
         """
             Test making a lofted solid

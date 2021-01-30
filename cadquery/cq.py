@@ -2214,7 +2214,7 @@ class Workplane(object):
         self,
         xLen: float,
         yLen: float,
-        centered: bool = True,
+        centered: Union[bool, Tuple[bool, bool]] = True,
         forConstruction: bool = False,
     ) -> "Workplane":
         """
@@ -2224,8 +2224,8 @@ class Workplane(object):
         :type xLen: float > 0
         :param yLen: length in yDirection ( in workplane coordinates )
         :type yLen: float > 0
-        :param boolean centered: true if the rect is centered on the reference point, false if the
-            lower-left is on the reference point
+        :param centered: should the center or the lower bound be on the reference point? A single
+          bool can also be given, eg. True is equivalent to (True, True).
         :param forConstruction: should the new wires be reference geometry only?
         :type forConstruction: true if the wires are for reference, false if they are creating part
             geometry
@@ -2239,22 +2239,32 @@ class Workplane(object):
         Creates 4 circles at the corners of a square centered on the origin.
 
         Future Enhancements:
-            better way to handle forConstruction
-            project points not in the workplane plane onto the workplane plane
+            * better way to handle forConstruction
+            * project points not in the workplane plane onto the workplane plane
         """
 
-        if centered:
-            p1 = Vector(xLen / -2.0, yLen / -2.0, 0)
-            p2 = Vector(xLen / 2.0, yLen / -2.0, 0)
-            p3 = Vector(xLen / 2.0, yLen / 2.0, 0)
-            p4 = Vector(xLen / -2.0, yLen / 2.0, 0)
-        else:
-            p1 = Vector()
-            p2 = Vector(xLen, 0, 0)
-            p3 = Vector(xLen, yLen, 0)
-            p4 = Vector(0, yLen, 0)
+        if isinstance(centered, bool):
+            centered = (centered, centered)
 
-        w = Wire.makePolygon([p1, p2, p3, p4, p1], forConstruction)
+        offset = Vector()
+        if not centered[0]:
+            offset += Vector(xLen / 2, 0, 0)
+        if not centered[1]:
+            offset += Vector(0, yLen / 2, 0)
+
+        points = [
+            Vector(xLen / -2.0, yLen / -2.0, 0),
+            Vector(xLen / 2.0, yLen / -2.0, 0),
+            Vector(xLen / 2.0, yLen / 2.0, 0),
+            Vector(xLen / -2.0, yLen / 2.0, 0),
+        ]
+
+        points = [x + offset for x in points]
+
+        # close the wire
+        points.append(points[0])
+
+        w = Wire.makePolygon(points, forConstruction)
 
         return self.eachpoint(lambda loc: w.moved(loc), True)
 
