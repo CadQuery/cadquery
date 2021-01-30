@@ -18,7 +18,7 @@ sPnts = [
 
 # 2.  Generate our plate with the spline feature and make sure it is a
 #     closed entity
-r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts,includeCurrent=True).close()
+r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts, includeCurrent=True).close()
 
 # 3.  Extrude to turn the wire into a plate
 result = r.extrude(0.5)
