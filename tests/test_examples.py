@@ -19,9 +19,10 @@ def test_example(p):
 
     # check if the resulting objects are valid
     for r in res.results:
+        r = r.shape
         if isinstance(r, cq.Workplane):
             for v in r.vals():
                 if isinstance(v, cq.Shape):
-                    assert v.IsValid()
+                    assert v.isValid()
         elif isinstance(r, cq.Shape):
-            assert r.IsValid()
+            assert r.isValid()
