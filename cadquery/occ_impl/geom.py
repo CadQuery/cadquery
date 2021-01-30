@@ -1,6 +1,7 @@
 import math
 
 from typing import overload, Sequence, Union, Tuple, Type, Optional
+from numbers import Real
 
 from OCP.gp import (
     gp_Vec,

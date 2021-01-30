@@ -9,7 +9,7 @@ from typish import instance_of, get_type
 from .hull import find_hull
 from .selectors import StringSyntaxSelector
 
-from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, edgesToWires
+from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, Vertex, edgesToWires
 from .occ_impl.geom import Location, Vector
 from .occ_impl.sketch_solver import (
     SketchConstraintSolver,
@@ -197,9 +197,9 @@ class Sketch(object):
         e3 = Edge.makeLine(p4, p3)
         e4 = Edge.makeThreePointArc(p3, p5, p1)
 
-        w = Wire.assembleEdges((e1, e2, e3, e4))
+        wire = Wire.assembleEdges((e1, e2, e3, e4))
 
-        return self.face(w, angle, mode, tag)
+        return self.face(wire, angle, mode, tag)
 
     def regularPolygon(
         self,
@@ -225,7 +225,7 @@ class Sketch(object):
         tag: Optional[str] = None,
     ) -> "Sketch":
 
-        w = Wire.makePolygon(pts)
+        w = Wire.makePolygon(p if isinstance(p, Vector) else Vector(*p) for p in pts)
 
         return self.face(w, angle, mode, tag)
 
@@ -379,7 +379,9 @@ class Sketch(object):
     def fillet(self, d: float) -> "Sketch":
 
         self._faces = Compound.makeCompound(
-            el.fillet2D(d, self._selection) for el in self._faces
+            el.fillet2D(d, (el for el in self._selection if isinstance(el, Vertex)))
+            for el in self._faces
+            if isinstance(el, (Face, Wire))
         )
 
         return self
@@ -387,7 +389,9 @@ class Sketch(object):
     def chamfer(self, d: float) -> "Sketch":
 
         self._faces = Compound.makeCompound(
-            el.chamfer2D(d, self._selection) for el in self._faces
+            el.chamfer2D(d, (el for el in self._selection if isinstance(el, Vertex)))
+            for el in self._faces
+            if isinstance(el, (Face, Wire))
         )
 
         return self
@@ -622,19 +626,19 @@ class Sketch(object):
             filter(lambda kv: isinstance(kv[1][0], Edge), self._tags.items())
         ):
 
-            v = v[0]
+            v0 = v[0]
 
             # dispatch on geom type
-            if v.geomType() == "LINE":
-                p1 = v.startPoint()
-                p2 = v.endPoint()
+            if v0.geomType() == "LINE":
+                p1 = v0.startPoint()
+                p2 = v0.endPoint()
                 ent = (p1.x, p1.y, p2.x, p2.y)
 
-            elif v.geomType() == "CIRCLE":
-                p = v.arcCenter()
-                a1 = v.paramAt(0)
-                a2 = v.paramAt(1)
-                r = v.radius()
+            elif v0.geomType() == "CIRCLE":
+                p = v0.arcCenter()
+                a1 = v0.paramAt(0)
+                a2 = v0.paramAt(1)
+                r = v0.radius()
                 ent = (p.x, p.y, a1, a2, r)
 
             else:
@@ -642,7 +646,7 @@ class Sketch(object):
 
             entities.append(ent)
             e2i[k] = i
-            geoms.append(v.geomType())
+            geoms.append(v0.geomType())
 
         # build the POD constraint list
         constraints = []
