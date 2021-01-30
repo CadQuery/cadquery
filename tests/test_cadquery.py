@@ -2258,7 +2258,7 @@ class TestCadQuery(BaseTest):
             .box(10, 10, 10)
             .faces(">Y")
             .workplane()
-            .rect(5, 10, 5)
+            .rect(5, 10, True)
             .extrude(20)
         )
 
@@ -2329,7 +2329,7 @@ class TestCadQuery(BaseTest):
             .box(10, 10, 10)
             .faces(">Y")
             .workplane()
-            .rect(5, 10, 5)
+            .rect(5, 10, True)
             .extrude(20, clean=False)
         )
 
