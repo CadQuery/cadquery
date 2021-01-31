@@ -25,7 +25,8 @@ requirements:
     
 test:
   requires:
-    - pytest	
+    - pytest
+    - docutils
   source_files:
     - tests/
   commands:
