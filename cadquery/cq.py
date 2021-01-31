@@ -3352,7 +3352,7 @@ class Workplane(object):
         length: float,
         width: float,
         height: float,
-        centered: Tuple[bool, bool, bool] = (True, True, True),
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: bool = True,
         clean: bool = True,
     ) -> "Workplane":
@@ -3369,44 +3369,55 @@ class Workplane(object):
             bound of the range?
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
-        :type combine: true to combine shapes, false otherwise.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
 
-        Centered is a tuple that describes whether the box should be centered on the x,y, and
+        Centered is a tuple that describes whether the box should be centered on the x, y, and
         z axes.  If true, the box is centered on the respective axis relative to the workplane
-        origin, if false, the workplane center will represent the lower bound of the resulting box
+        origin. If false, the workplane center will represent the lower bound of the resulting box.
+        centered=True can be used as a shortcut for centered=(True, True, True), and the same with
+        False.
 
-        one box is created for each item on the current stack. If no items are on the stack, one box
+        One box is created for each item on the current stack. If no items are on the stack, one box
         using the current workplane center is created.
 
-        If combine is true, the result will be a single object on the stack:
-            if a solid was found in the chain, the result is that solid with all boxes produced
-            fused onto it otherwise, the result is the combination of all the produced boxes
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all boxes produced fused onto it otherwise, the
+        result is the combination of all the produced boxes.
 
-        if combine is false, the result will be a list of the boxes produced
+        If combine is false, the result will be a list of the boxes produced.
 
         Most often boxes form the basis for a part::
 
-            #make a single box with lower left corner at origin
-            s = Workplane().box(1,2,3,centered=(False,False,False)
+            # make a single box with lower left corner at origin
+            s = Workplane().box(1, 2, 3, centered=False)
 
-        But sometimes it is useful to create an array of them:
+        But sometimes it is useful to create an array of them::
 
-            #create 4 small square bumps on a larger base plate:
-            s = Workplane().box(4,4,0.5).faces(">Z").workplane()\
-                .rect(3,3,forConstruction=True).vertices().box(0.25,0.25,0.25,combine=True)
+            # create 4 small square bumps on a larger base plate:
+            s = (
+                Workplane().
+                box(4, 4, 0.5).
+                faces(">Z").
+                workplane().
+                rect(3, 3, forConstruction=True)
+                .vertices()
+                .box(0.25, 0.25, 0.25, combine=True)
+            )
 
         """
 
-        (xp, yp, zp) = (0.0, 0.0, 0.0)
-        if centered[0]:
-            xp -= length / 2.0
-        if centered[1]:
-            yp -= width / 2.0
-        if centered[2]:
-            zp -= height / 2.0
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
 
-        box = Solid.makeBox(length, width, height, Vector(xp, yp, zp))
+        offset = Vector()
+        if centered[0]:
+            offset += Vector(-length / 2, 0, 0)
+        if centered[1]:
+            offset += Vector(0, -width / 2, 0)
+        if centered[2]:
+            offset += Vector(0, 0, -height / 2)
+
+        box = Solid.makeBox(length, width, height, offset)
 
         boxes = self.eachpoint(lambda loc: box.moved(loc), True)
 

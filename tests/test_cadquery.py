@@ -2052,6 +2052,35 @@ class TestCadQuery(BaseTest):
         # should have 26 faces. 6 for the box, and 4x5 for the smaller cubes
         self.assertEqual(26, s.faces().size())
 
+    def testBoxCentered(self):
+        x, y, z = 10, 11, 12
+        # check that the bottom corner is where we expect it for all possible combinations of centered
+        b = [True, False]
+        expected_x = [-x / 2, 0]
+        expected_y = [-y / 2, 0]
+        expected_z = [-z / 2, 0]
+        for (xopt, xval), (yopt, yval), (zopt, zval) in product(
+            zip(b, expected_x), zip(b, expected_y), zip(b, expected_z)
+        ):
+            s = (
+                Workplane()
+                .box(x, y, z, centered=(xopt, yopt, zopt))
+                .vertices("<X and <Y and <Z")
+            )
+            self.assertEqual(s.size(), 1)
+            self.assertTupleAlmostEquals(s.val().toTuple(), (xval, yval, zval), 3)
+        # check centered=True produces the same result as centered=(True, True, True)
+        for val in b:
+            s0 = Workplane().box(x, y, z, centered=val).vertices(">X and >Y and >Z")
+            self.assertEqual(s0.size(), 1)
+            s1 = (
+                Workplane()
+                .box(x, y, z, centered=(val, val, val))
+                .vertices(">X and >Y and >Z")
+            )
+            self.assertEqual(s0.size(), 1)
+            self.assertTupleAlmostEquals(s0.val().toTuple(), s1.val().toTuple(), 3)
+
     def testSphereDefaults(self):
         s = Workplane("XY").sphere(10)
         self.saveModel(s)  # Until FreeCAD fixes their sphere operation
