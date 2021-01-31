@@ -17,7 +17,7 @@ frenetShell = cq.Workplane("XY").circle(1.0).sweep(path, makeSolid=True, isFrene
 defaultRect = cq.Workplane("XY").rect(1.0, 1.0).sweep(path)
 
 # Switch to a polyline path, but have it use the same points as the spline
-path = cq.Workplane("XZ").polyline(pts)
+path = cq.Workplane("XZ").polyline(pts, includeCurrent=True)
 
 # Using a polyline path leads to the resulting solid having segments rather than a single swept outer face
 plineSweep = cq.Workplane("XY").circle(1.0).sweep(path)
@@ -32,5 +32,5 @@ arcSweep = cq.Workplane("XY").circle(0.5).sweep(path)
 show_object(defaultSweep)
 show_object(frenetShell.translate((5, 0, 0)))
 show_object(defaultRect.translate((10, 0, 0)))
-show_object(plineSweep.translate((15, 0, 0)))
+show_object(plineSweep)
 show_object(arcSweep.translate((20, 0, 0)))
