@@ -1,11 +1,11 @@
 import pytest
 
 from glob import glob
-from itertools import chain
+from itertools import chain, count
 
 from docutils.parsers.rst import directives, Directive
 from docutils.core import publish_doctree
-
+from docutils.utils import Reporter
 
 import cadquery as cq
 from cadquery import cqgi
@@ -15,7 +15,7 @@ from cadquery.cq_directive import cq_directive
 def find_examples(pattern="examples/*.py"):
 
     for p in glob(pattern):
-        with open(p) as f:
+        with open(p, encoding="UTF-8") as f:
             code = f.read()
 
         yield code
@@ -38,10 +38,12 @@ def find_examples_in_docs(pattern="doc/*.rst"):
 
     # read and parse all rst files
     for p in glob(pattern):
-        with open(p) as f:
+        with open(p, encoding="UTF-8") as f:
             doc = f.read()
 
-        publish_doctree(doc)
+        publish_doctree(
+            doc, settings_overrides={"report_level": Reporter.SEVERE_LEVEL + 1}
+        )
 
     # yield all code snippets
     for c in dummy_cq_directive.codes:
@@ -49,7 +51,9 @@ def find_examples_in_docs(pattern="doc/*.rst"):
         yield c
 
 
-@pytest.mark.parametrize("code", chain(find_examples(), find_examples_in_docs()))
+@pytest.mark.parametrize(
+    "code", chain(find_examples(), find_examples_in_docs()), ids=count(0)
+)
 def test_example(code):
 
     # build
