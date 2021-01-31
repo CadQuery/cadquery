@@ -2095,6 +2095,26 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, s.solids().size())
         self.assertEqual(2, s.faces().size())
 
+        # check that the bottom corner is where we expect it for all possible combinations of centered
+        radius = 10
+        for (xopt, xval), (yopt, yval), (zopt, zval) in product(
+            zip((True, False), (0, radius)), repeat=3
+        ):
+            s = Workplane().sphere(radius, centered=(xopt, yopt, zopt))
+            self.assertEqual(s.size(), 1)
+            self.assertTupleAlmostEquals(
+                s.val().Center().toTuple(), (xval, yval, zval), 3
+            )
+        # check centered=True produces the same result as centered=(True, True, True)
+        for val in (True, False):
+            s0 = Workplane().sphere(radius, centered=val)
+            self.assertEqual(s0.size(), 1)
+            s1 = Workplane().sphere(radius, centered=(val, val, val))
+            self.assertEqual(s0.size(), 1)
+            self.assertTupleAlmostEquals(
+                s0.val().Center().toTuple(), s1.val().Center().toTuple(), 3
+            )
+
     def testSpherePointList(self):
         s = (
             Workplane("XY")

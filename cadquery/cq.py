@@ -3435,7 +3435,7 @@ class Workplane(object):
         angle1: float = -90,
         angle2: float = 90,
         angle3: float = 360,
-        centered: Tuple[bool, bool, bool] = (True, True, True),
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: bool = True,
         clean: bool = True,
     ) -> "Workplane":
@@ -3453,43 +3453,45 @@ class Workplane(object):
         :param angle3: The third angle to sweep the sphere arc through
         :type angle3: float > 0
         :param centered: A three-tuple of booleans that determines whether the sphere is centered
-            on each axis origin
+            on each axis origin, or a single bool
         :param combine: Whether the results should be combined with other solids on the stack
             (and each other)
         :type combine: true to combine shapes, false otherwise
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: A sphere object for each point on the stack
 
-        Centered is a tuple that describes whether the sphere should be centered on the x,y, and
-        z axes.  If true, the sphere is centered on the respective axis relative to the workplane
-        origin, if false, the workplane center will represent the lower bound of the resulting
-        sphere.
+        Centered is a tuple that describes whether the sphere should be centered on the x, y, and
+        z axes. If true, the sphere is centered on the respective axis relative to the workplane
+        origin. If false, the workplane center will represent the lower bound of the resulting
+        sphere. centered=True can be used as a shortcut for centered=(True, True, True) and
+        the same with False.
 
         One sphere is created for each item on the current stack. If no items are on the stack, one
         box using the current workplane center is created.
 
-        If combine is true, the result will be a single object on the stack:
-            If a solid was found in the chain, the result is that solid with all spheres produced
-            fused onto it otherwise, the result is the combination of all the produced boxes
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all spheres produced fused onto it otherwise,
+        the result is the combination of all the produced boxes.
 
-        If combine is false, the result will be a list of the spheres produced
+        If combine is false, the result will be a list of the spheres produced.
         """
 
         # Convert the direction tuple to a vector, if needed
         if isinstance(direct, tuple):
             direct = Vector(direct)
 
-        (xp, yp, zp) = (0.0, 0.0, 0.0)
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
 
+        offset = Vector()
         if not centered[0]:
-            xp += radius
-
+            offset += Vector(radius, 0, 0)
         if not centered[1]:
-            yp += radius
-
+            offset += Vector(0, radius, 0)
         if not centered[2]:
-            zp += radius
+            offset += Vector(0, 0, radius)
 
-        s = Solid.makeSphere(radius, Vector(xp, yp, zp), direct, angle1, angle2, angle3)
+        s = Solid.makeSphere(radius, offset, direct, angle1, angle2, angle3)
 
         # We want a sphere for each point on the workplane
         spheres = self.eachpoint(lambda loc: s.moved(loc), True)
