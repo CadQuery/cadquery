@@ -11,7 +11,7 @@ result = cq.Workplane("front").box(3, 2, 0.5)
 # 3a. The top-most Z face is selected using the >Z selector.
 # 3b. The lower-left vertex of the faces is selected with the <XY selector.
 # 3c. A new workplane is created on the vertex to build future geometry on.
-result = result.faces(">Z").vertices("<XY").workplane()
+result = result.faces(">Z").vertices("<XY").workplane(centerOption="CenterOfMass")
 
 # 4.  A circle is drawn with the selected vertex as its center.
 # 4a. The circle is cut down through the box to cut the corner out.

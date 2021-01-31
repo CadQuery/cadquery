@@ -874,7 +874,7 @@ A Parametric Enclosure
         topOfLid = topOfLid.rotateAboutCenter((1,0,0),180)
 
     #return the combined result
-    result =topOfLid.combineSolids(bottom)
+    result =topOfLid.union(bottom)
 
 
 .. topic:: Api References
@@ -893,7 +893,7 @@ A Parametric Enclosure
         * :py:meth:`Workplane.workplane`
         * :py:meth:`Workplane.fillet`
         * :py:meth:`Workplane.cut`
-        * :py:meth:`Workplane.combineSolids`
+        * :py:meth:`Workplane.union`
         * :py:meth:`Workplane.rotateAboutCenter`
         * :py:meth:`Workplane.cboreHole`
         * :py:meth:`Workplane.cskHole`
