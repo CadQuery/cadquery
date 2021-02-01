@@ -3529,14 +3529,14 @@ class Workplane(object):
 
         (xp, yp, zp) = (0.0, 0.0, 0.0)
 
-        if not centered[0]:
-            xp += dx / 2.0
+        if centered[0]:
+            xp -= dx / 2.0
 
-        if not centered[1]:
-            yp += dy / 2.0
+        if centered[1]:
+            yp -= dy / 2.0
 
-        if not centered[2]:
-            zp += dx / 2.0
+        if centered[2]:
+            zp -= dx / 2.0
 
         w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, Vector(xp, yp, zp), dir)
 
