@@ -3536,7 +3536,7 @@ class Workplane(object):
             yp -= dy / 2.0
 
         if centered[2]:
-            zp -= dx / 2.0
+            zp -= dz / 2.0
 
         w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, Vector(xp, yp, zp), dir)
 
