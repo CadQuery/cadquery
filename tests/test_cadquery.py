@@ -7,6 +7,7 @@ import math, os.path, time, tempfile
 from random import choice
 from random import random
 from random import randrange
+from itertools import product
 
 from pytest import approx, raises
 
@@ -2069,6 +2070,22 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, s.solids().size())
         self.assertEqual(5, s.faces().size())
         self.assertEqual(5, s.vertices().size())
+        # check that the bottom corner is where we expect it for all possible combinations of centered
+        x, y, z = 10, 11, 12
+        b = [True, False]
+        expected_x = [-x / 2, 0]
+        expected_y = [-y / 2, 0]
+        expected_z = [-z / 2, 0]
+        for (xopt, xval), (yopt, yval), (zopt, zval) in product(
+            zip(b, expected_x), zip(b, expected_y), zip(b, expected_z)
+        ):
+            s = (
+                Workplane()
+                .wedge(x, y, z, 2, 2, x - 2, z - 2, centered=(xopt, yopt, zopt))
+                .vertices("<X and <Y and <Z")
+            )
+            self.assertEqual(s.size(), 1)
+            self.assertTupleAlmostEquals(s.val().toTuple(), (xval, yval, zval), 3)
 
     def testWedgePointList(self):
         s = (
