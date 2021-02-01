@@ -2152,6 +2152,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, s.solids().size())
         self.assertEqual(5, s.faces().size())
         self.assertEqual(5, s.vertices().size())
+
         # check that the bottom corner is where we expect it for all possible combinations of centered
         x, y, z = 10, 11, 12
         b = [True, False]
@@ -2168,6 +2169,21 @@ class TestCadQuery(BaseTest):
             )
             self.assertEqual(s.size(), 1)
             self.assertTupleAlmostEquals(s.val().toTuple(), (xval, yval, zval), 3)
+        # check centered=True produces the same result as centered=(True, True, True)
+        for val in b:
+            s0 = (
+                Workplane()
+                .wedge(x, y, z, 2, 2, x - 2, z - 2, centered=val)
+                .vertices(">X and >Z")
+            )
+            self.assertEqual(s0.size(), 1)
+            s1 = (
+                Workplane()
+                .wedge(x, y, z, 2, 2, x - 2, z - 2, centered=(val, val, val))
+                .vertices(">X and >Z")
+            )
+            self.assertEqual(s0.size(), 1)
+            self.assertTupleAlmostEquals(s0.val().toTuple(), s1.val().toTuple(), 3)
 
     def testWedgePointList(self):
         s = (

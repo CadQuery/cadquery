@@ -3522,24 +3522,26 @@ class Workplane(object):
         :param dy: Distance along the Y axis
         :param dz: Distance along the Z axis
         :param xmin: The minimum X location
-        :param zmin:The minimum Z location
-        :param xmax:The maximum X location
+        :param zmin: The minimum Z location
+        :param xmax: The maximum X location
         :param zmax: The maximum Z location
         :param pnt: A vector (or tuple) for the origin of the direction for the wedge
         :param dir: The direction vector (or tuple) for the major axis of the wedge
+        :param centered: should the center or the lower bound be on the reference point? A single
+          bool can also be given, eg. True is equivalent to (True, True).
         :param combine: Whether the results should be combined with other solids on the stack
-            (and each other)
-        :param clean: true to attempt to have the kernel clean up the geometry, false otherwise
+          (and each other)
+        :param clean: True to attempt to have the kernel clean up the geometry, False otherwise
         :return: A wedge object for each point on the stack
 
         One wedge is created for each item on the current stack. If no items are on the stack, one
         wedge using the current workplane center is created.
 
-        If combine is true, the result will be a single object on the stack:
-            If a solid was found in the chain, the result is that solid with all wedges produced
-            fused onto it otherwise, the result is the combination of all the produced wedges
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all wedges produced fused onto it otherwise,
+        the result is the combination of all the produced wedges.
 
-        If combine is false, the result will be a list of the wedges produced
+        If combine is false, the result will be a list of the wedges produced.
         """
 
         # Convert the point tuple to a vector, if needed
@@ -3550,18 +3552,18 @@ class Workplane(object):
         if isinstance(dir, tuple):
             dir = Vector(dir)
 
-        (xp, yp, zp) = (0.0, 0.0, 0.0)
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
 
+        offset = Vector()
         if centered[0]:
-            xp -= dx / 2.0
-
+            offset += Vector(-dx / 2, 0, 0)
         if centered[1]:
-            yp -= dy / 2.0
-
+            offset += Vector(0, -dy / 2, 0)
         if centered[2]:
-            zp -= dz / 2.0
+            offset += Vector(0, 0, -dz / 2)
 
-        w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, Vector(xp, yp, zp), dir)
+        w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, offset, dir)
 
         # We want a wedge for each point on the workplane
         wedges = self.eachpoint(lambda loc: w.moved(loc), True)
