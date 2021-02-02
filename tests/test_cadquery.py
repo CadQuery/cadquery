@@ -1035,24 +1035,50 @@ class TestCadQuery(BaseTest):
         self.assertEqual(6, r.faces().size())
 
     def testRectArray(self):
-        NUMX = 3
-        NUMY = 3
+        x_num = 3
+        y_num = 3
+        x_spacing = 8.0
+        y_spacing = 8.0
         s = (
             Workplane("XY")
             .box(40, 40, 5, centered=(True, True, True))
             .faces(">Z")
             .workplane()
-            .rarray(8.0, 8.0, NUMX, NUMY, True)
+            .rarray(x_spacing, y_spacing, x_num, y_num, True)
             .circle(2.0)
             .extrude(2.0)
         )
-        # s = Workplane("XY").box(40,40,5,centered=(True,True,True)).faces(">Z").workplane().circle(2.0).extrude(2.0)
         self.saveModel(s)
         # 6 faces for the box, 2 faces for each cylinder
-        self.assertEqual(6 + NUMX * NUMY * 2, s.faces().size())
+        self.assertEqual(6 + x_num * y_num * 2, s.faces().size())
 
         with raises(ValueError):
-            Workplane().rarray(0, 0, NUMX, NUMY, True)
+            Workplane().rarray(0, 0, x_num, y_num, True)
+
+        # check lower and upper corner points are correct for all combinations of centering
+        for x_opt, x_min, x_max in zip(
+            [True, False], [-x_spacing, 0.0], [x_spacing, x_spacing * 2]
+        ):
+            for y_opt, y_min, y_max in zip(
+                [True, False], [-y_spacing, 0.0], [y_spacing, y_spacing * 2]
+            ):
+                s = Workplane().rarray(
+                    x_spacing, y_spacing, x_num, y_num, center=(x_opt, y_opt)
+                )
+                lower = Vector(x_min, y_min, 0)
+                upper = Vector(x_max, y_max, 0)
+                self.assertTrue(lower in s.objects)
+                self.assertTrue(upper in s.objects)
+
+        # check centered=True is equivalent to centered=(True, True)
+        for val in [True, False]:
+            s0 = Workplane().rarray(x_spacing, y_spacing, x_num, y_num, center=val)
+            s1 = Workplane().rarray(
+                x_spacing, y_spacing, x_num, y_num, center=(val, val)
+            )
+            # check all the points in s0 are present in s1
+            self.assertTrue(all(pnt in s1.objects for pnt in s0.objects))
+            self.assertEqual(s0.size(), s1.size())
 
     def testPolarArray(self):
         radius = 10

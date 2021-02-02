@@ -1320,7 +1320,7 @@ class Workplane(object):
         ySpacing: float,
         xCount: int,
         yCount: int,
-        center: bool = True,
+        center: Union[bool, Tuple[bool, bool]] = True,
     ) -> "Workplane":
         """
         Creates an array of points and pushes them onto the stack.
@@ -1338,19 +1338,21 @@ class Workplane(object):
         if xSpacing <= 0 or ySpacing <= 0 or xCount < 1 or yCount < 1:
             raise ValueError("Spacing and count must be > 0 ")
 
+        if isinstance(center, bool):
+            center = (center, center)
+
         lpoints = []  # coordinates relative to bottom left point
         for x in range(xCount):
             for y in range(yCount):
-                lpoints.append((xSpacing * x, ySpacing * y))
+                lpoints.append(Vector(xSpacing * x, ySpacing * y))
 
         # shift points down and left relative to origin if requested
-        if center:
-            xc = xSpacing * (xCount - 1) * 0.5
-            yc = ySpacing * (yCount - 1) * 0.5
-            cpoints = []
-            for p in lpoints:
-                cpoints.append((p[0] - xc, p[1] - yc))
-            lpoints = list(cpoints)
+        offset = Vector()
+        if center[0]:
+            offset += Vector(-xSpacing * (xCount - 1) * 0.5, 0)
+        if center[1]:
+            offset += Vector(0, -ySpacing * (yCount - 1) * 0.5)
+        lpoints = [x + offset for x in lpoints]
 
         return self.pushPoints(lpoints)
 
