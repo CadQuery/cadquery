@@ -367,11 +367,13 @@ class TestCadQuery(BaseTest):
         # possible values of centered
         for centered_x, xval in zip([True, False], [-x / 2, 0]):
             for centered_y, yval in zip([True, False], [-y / 2, 0]):
-                s = Workplane().rect(x, y, centered=(centered_x, centered_y)).vertices("<X and <Y")
-                self.assertEqual(s.size(), 1)
-                self.assertTupleAlmostEquals(
-                    s.val().toTuple(), (xval, yval, 0), 3
+                s = (
+                    Workplane()
+                    .rect(x, y, centered=(centered_x, centered_y))
+                    .vertices("<X and <Y")
                 )
+                self.assertEqual(s.size(), 1)
+                self.assertTupleAlmostEquals(s.val().toTuple(), (xval, yval, 0), 3)
         # check that centered=True is the same as centered=(True, True)
         for option0 in [True, False]:
             v0 = (
