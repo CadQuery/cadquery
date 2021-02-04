@@ -2245,7 +2245,6 @@ class Workplane(object):
         Creates 4 circles at the corners of a square centered on the origin.
 
         Future Enhancements:
-            * better way to handle forConstruction
             * project points not in the workplane plane onto the workplane plane
         """
 
@@ -3469,7 +3468,7 @@ class Workplane(object):
 
         If combine is true, the result will be a single object on the stack. If a solid was found
         in the chain, the result is that solid with all spheres produced fused onto it otherwise,
-        the result is the combination of all the produced boxes.
+        the result is the combination of all the produced spheres.
 
         If combine is false, the result will be a list of the spheres produced.
         """
@@ -3537,11 +3536,11 @@ class Workplane(object):
         One wedge is created for each item on the current stack. If no items are on the stack, one
         wedge using the current workplane center is created.
 
-        If combine is true, the result will be a single object on the stack. If a solid was found
+        If combine is True, the result will be a single object on the stack. If a solid was found
         in the chain, the result is that solid with all wedges produced fused onto it otherwise,
         the result is the combination of all the produced wedges.
 
-        If combine is false, the result will be a list of the wedges produced.
+        If combine is False, the result will be a list of the wedges produced.
         """
 
         # Convert the point tuple to a vector, if needed
