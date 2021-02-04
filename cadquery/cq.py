@@ -3510,7 +3510,7 @@ class Workplane(object):
         zmax: float,
         pnt: VectorLike = Vector(0, 0, 0),
         dir: VectorLike = Vector(0, 0, 1),
-        centered: Tuple[bool, bool, bool] = (True, True, True),
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: bool = True,
         clean: bool = True,
     ) -> "Workplane":
