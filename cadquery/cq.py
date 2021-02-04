@@ -1331,8 +1331,10 @@ class Workplane(object):
         :param ySpacing: spacing between points in the y direction ( must be > 0)
         :param xCount: number of points ( > 0 )
         :param yCount: number of points ( > 0 )
-        :param center: if true, the array will be centered at the center of the workplane. if
-            false, the lower left corner will be at the center of the work plane
+        :param center: If True, the array will be centered around the workplane center.
+          If False, the lower corner will be on the reference point and the array will
+          extend in the positive x and y directions. Can also use a 2-tuple to specify
+          centering along each axis.
         """
 
         if xSpacing <= 0 or ySpacing <= 0 or xCount < 1 or yCount < 1:
@@ -2226,8 +2228,10 @@ class Workplane(object):
         :type xLen: float > 0
         :param yLen: length in yDirection ( in workplane coordinates )
         :type yLen: float > 0
-        :param centered: should the center or the lower bound be on the reference point? A single
-          bool can also be given, eg. True is equivalent to (True, True).
+        :param centered: If True, the rectangle will be centered around the reference
+          point. If False, the corner of the rectangle will be on the reference point and
+          it will extend in the positive x and y directions. Can also use a 2-tuple to
+          specify centering along each axis.
         :param forConstruction: should the new wires be reference geometry only?
         :type forConstruction: true if the wires are for reference, false if they are creating part
             geometry
@@ -3367,17 +3371,13 @@ class Workplane(object):
         :type width: float > 0
         :param height: box size in Z direction
         :type height: float > 0
-        :param centered: should the box be centered, or should reference point be at the lower
-            bound of the range?
+        :param centered: If True, the box will be centered around the reference point.
+          If False, the corner of the box will be on the reference point and it will
+          extend in the positive x, y and z directions. Can also use a 3-tuple to
+          specify centering along each axis.
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
         :param clean: call :py:meth:`clean` afterwards to have a clean shape
-
-        Centered is a tuple that describes whether the box should be centered on the x, y, and
-        z axes.  If true, the box is centered on the respective axis relative to the workplane
-        origin. If false, the workplane center will represent the lower bound of the resulting box.
-        centered=True can be used as a shortcut for centered=(True, True, True), and the same with
-        False.
 
         One box is created for each item on the current stack. If no items are on the stack, one box
         using the current workplane center is created.
@@ -3454,19 +3454,15 @@ class Workplane(object):
         :type angle2: float > 0
         :param angle3: The third angle to sweep the sphere arc through
         :type angle3: float > 0
-        :param centered: A three-tuple of booleans that determines whether the sphere is centered
-            on each axis origin, or a single bool
+        :param centered: If True, the sphere will be centered around the reference point. If False,
+          the corner of a bounding box around the sphere will be on the reference point and it
+          will extend in the positive x, y and z directions. Can also use a 3-tuple to specify
+          centering along each axis.
         :param combine: Whether the results should be combined with other solids on the stack
             (and each other)
         :type combine: true to combine shapes, false otherwise
         :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: A sphere object for each point on the stack
-
-        Centered is a tuple that describes whether the sphere should be centered on the x, y, and
-        z axes. If true, the sphere is centered on the respective axis relative to the workplane
-        origin. If false, the workplane center will represent the lower bound of the resulting
-        sphere. centered=True can be used as a shortcut for centered=(True, True, True) and
-        the same with False.
 
         One sphere is created for each item on the current stack. If no items are on the stack, one
         box using the current workplane center is created.
@@ -3529,8 +3525,10 @@ class Workplane(object):
         :param zmax: The maximum Z location
         :param pnt: A vector (or tuple) for the origin of the direction for the wedge
         :param dir: The direction vector (or tuple) for the major axis of the wedge
-        :param centered: should the center or the lower bound be on the reference point? A single
-          bool can also be given, eg. True is equivalent to (True, True).
+        :param centered: If True, the wedge will be centered around the reference point.
+          If False, the corner of the wedge will be on the reference point and it will
+          extend in the positive x, y and z directions. Can also use a 3-tuple to
+          specify centering along each axis.
         :param combine: Whether the results should be combined with other solids on the stack
           (and each other)
         :param clean: True to attempt to have the kernel clean up the geometry, False otherwise
