@@ -1320,7 +1320,7 @@ class Workplane(object):
         ySpacing: float,
         xCount: int,
         yCount: int,
-        center: bool = True,
+        center: Union[bool, Tuple[bool, bool]] = True,
     ) -> "Workplane":
         """
         Creates an array of points and pushes them onto the stack.
@@ -1331,26 +1331,30 @@ class Workplane(object):
         :param ySpacing: spacing between points in the y direction ( must be > 0)
         :param xCount: number of points ( > 0 )
         :param yCount: number of points ( > 0 )
-        :param center: if true, the array will be centered at the center of the workplane. if
-            false, the lower left corner will be at the center of the work plane
+        :param center: If True, the array will be centered around the workplane center.
+          If False, the lower corner will be on the reference point and the array will
+          extend in the positive x and y directions. Can also use a 2-tuple to specify
+          centering along each axis.
         """
 
         if xSpacing <= 0 or ySpacing <= 0 or xCount < 1 or yCount < 1:
             raise ValueError("Spacing and count must be > 0 ")
 
+        if isinstance(center, bool):
+            center = (center, center)
+
         lpoints = []  # coordinates relative to bottom left point
         for x in range(xCount):
             for y in range(yCount):
-                lpoints.append((xSpacing * x, ySpacing * y))
+                lpoints.append(Vector(xSpacing * x, ySpacing * y))
 
         # shift points down and left relative to origin if requested
-        if center:
-            xc = xSpacing * (xCount - 1) * 0.5
-            yc = ySpacing * (yCount - 1) * 0.5
-            cpoints = []
-            for p in lpoints:
-                cpoints.append((p[0] - xc, p[1] - yc))
-            lpoints = list(cpoints)
+        offset = Vector()
+        if center[0]:
+            offset += Vector(-xSpacing * (xCount - 1) * 0.5, 0)
+        if center[1]:
+            offset += Vector(0, -ySpacing * (yCount - 1) * 0.5)
+        lpoints = [x + offset for x in lpoints]
 
         return self.pushPoints(lpoints)
 
@@ -2214,7 +2218,7 @@ class Workplane(object):
         self,
         xLen: float,
         yLen: float,
-        centered: bool = True,
+        centered: Union[bool, Tuple[bool, bool]] = True,
         forConstruction: bool = False,
     ) -> "Workplane":
         """
@@ -2224,8 +2228,10 @@ class Workplane(object):
         :type xLen: float > 0
         :param yLen: length in yDirection ( in workplane coordinates )
         :type yLen: float > 0
-        :param boolean centered: true if the rect is centered on the reference point, false if the
-            lower-left is on the reference point
+        :param centered: If True, the rectangle will be centered around the reference
+          point. If False, the corner of the rectangle will be on the reference point and
+          it will extend in the positive x and y directions. Can also use a 2-tuple to
+          specify centering along each axis.
         :param forConstruction: should the new wires be reference geometry only?
         :type forConstruction: true if the wires are for reference, false if they are creating part
             geometry
@@ -2239,22 +2245,31 @@ class Workplane(object):
         Creates 4 circles at the corners of a square centered on the origin.
 
         Future Enhancements:
-            better way to handle forConstruction
-            project points not in the workplane plane onto the workplane plane
+            * project points not in the workplane plane onto the workplane plane
         """
 
-        if centered:
-            p1 = Vector(xLen / -2.0, yLen / -2.0, 0)
-            p2 = Vector(xLen / 2.0, yLen / -2.0, 0)
-            p3 = Vector(xLen / 2.0, yLen / 2.0, 0)
-            p4 = Vector(xLen / -2.0, yLen / 2.0, 0)
-        else:
-            p1 = Vector()
-            p2 = Vector(xLen, 0, 0)
-            p3 = Vector(xLen, yLen, 0)
-            p4 = Vector(0, yLen, 0)
+        if isinstance(centered, bool):
+            centered = (centered, centered)
 
-        w = Wire.makePolygon([p1, p2, p3, p4, p1], forConstruction)
+        offset = Vector()
+        if not centered[0]:
+            offset += Vector(xLen / 2, 0, 0)
+        if not centered[1]:
+            offset += Vector(0, yLen / 2, 0)
+
+        points = [
+            Vector(xLen / -2.0, yLen / -2.0, 0),
+            Vector(xLen / 2.0, yLen / -2.0, 0),
+            Vector(xLen / 2.0, yLen / 2.0, 0),
+            Vector(xLen / -2.0, yLen / 2.0, 0),
+        ]
+
+        points = [x + offset for x in points]
+
+        # close the wire
+        points.append(points[0])
+
+        w = Wire.makePolygon(points, forConstruction)
 
         return self.eachpoint(lambda loc: w.moved(loc), True)
 
@@ -3342,7 +3357,7 @@ class Workplane(object):
         length: float,
         width: float,
         height: float,
-        centered: Tuple[bool, bool, bool] = (True, True, True),
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: bool = True,
         clean: bool = True,
     ) -> "Workplane":
@@ -3355,48 +3370,55 @@ class Workplane(object):
         :type width: float > 0
         :param height: box size in Z direction
         :type height: float > 0
-        :param centered: should the box be centered, or should reference point be at the lower
-            bound of the range?
+        :param centered: If True, the box will be centered around the reference point.
+          If False, the corner of the box will be on the reference point and it will
+          extend in the positive x, y and z directions. Can also use a 3-tuple to
+          specify centering along each axis.
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
-        :type combine: true to combine shapes, false otherwise.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
 
-        Centered is a tuple that describes whether the box should be centered on the x,y, and
-        z axes.  If true, the box is centered on the respective axis relative to the workplane
-        origin, if false, the workplane center will represent the lower bound of the resulting box
-
-        one box is created for each item on the current stack. If no items are on the stack, one box
+        One box is created for each item on the current stack. If no items are on the stack, one box
         using the current workplane center is created.
 
-        If combine is true, the result will be a single object on the stack:
-            if a solid was found in the chain, the result is that solid with all boxes produced
-            fused onto it otherwise, the result is the combination of all the produced boxes
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all boxes produced fused onto it otherwise, the
+        result is the combination of all the produced boxes.
 
-        if combine is false, the result will be a list of the boxes produced
+        If combine is false, the result will be a list of the boxes produced.
 
         Most often boxes form the basis for a part::
 
-            #make a single box with lower left corner at origin
-            s = Workplane().box(1,2,3,centered=(False,False,False)
+            # make a single box with lower left corner at origin
+            s = Workplane().box(1, 2, 3, centered=False)
 
-        But sometimes it is useful to create an array of them:
+        But sometimes it is useful to create an array of them::
 
-            #create 4 small square bumps on a larger base plate:
-            s = Workplane().box(4,4,0.5).faces(">Z").workplane()\
-                .rect(3,3,forConstruction=True).vertices().box(0.25,0.25,0.25,combine=True)
+            # create 4 small square bumps on a larger base plate:
+            s = (
+                Workplane().
+                box(4, 4, 0.5).
+                faces(">Z").
+                workplane().
+                rect(3, 3, forConstruction=True)
+                .vertices()
+                .box(0.25, 0.25, 0.25, combine=True)
+            )
 
         """
 
-        (xp, yp, zp) = (0.0, 0.0, 0.0)
-        if centered[0]:
-            xp -= length / 2.0
-        if centered[1]:
-            yp -= width / 2.0
-        if centered[2]:
-            zp -= height / 2.0
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
 
-        box = Solid.makeBox(length, width, height, Vector(xp, yp, zp))
+        offset = Vector()
+        if centered[0]:
+            offset += Vector(-length / 2, 0, 0)
+        if centered[1]:
+            offset += Vector(0, -width / 2, 0)
+        if centered[2]:
+            offset += Vector(0, 0, -height / 2)
+
+        box = Solid.makeBox(length, width, height, offset)
 
         boxes = self.eachpoint(lambda loc: box.moved(loc), True)
 
@@ -3414,7 +3436,7 @@ class Workplane(object):
         angle1: float = -90,
         angle2: float = 90,
         angle3: float = 360,
-        centered: Tuple[bool, bool, bool] = (True, True, True),
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: bool = True,
         clean: bool = True,
     ) -> "Workplane":
@@ -3431,44 +3453,42 @@ class Workplane(object):
         :type angle2: float > 0
         :param angle3: The third angle to sweep the sphere arc through
         :type angle3: float > 0
-        :param centered: A three-tuple of booleans that determines whether the sphere is centered
-            on each axis origin
+        :param centered: If True, the sphere will be centered around the reference point. If False,
+          the corner of a bounding box around the sphere will be on the reference point and it
+          will extend in the positive x, y and z directions. Can also use a 3-tuple to specify
+          centering along each axis.
         :param combine: Whether the results should be combined with other solids on the stack
             (and each other)
         :type combine: true to combine shapes, false otherwise
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: A sphere object for each point on the stack
-
-        Centered is a tuple that describes whether the sphere should be centered on the x,y, and
-        z axes.  If true, the sphere is centered on the respective axis relative to the workplane
-        origin, if false, the workplane center will represent the lower bound of the resulting
-        sphere.
 
         One sphere is created for each item on the current stack. If no items are on the stack, one
         box using the current workplane center is created.
 
-        If combine is true, the result will be a single object on the stack:
-            If a solid was found in the chain, the result is that solid with all spheres produced
-            fused onto it otherwise, the result is the combination of all the produced boxes
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all spheres produced fused onto it otherwise,
+        the result is the combination of all the produced spheres.
 
-        If combine is false, the result will be a list of the spheres produced
+        If combine is false, the result will be a list of the spheres produced.
         """
 
         # Convert the direction tuple to a vector, if needed
         if isinstance(direct, tuple):
             direct = Vector(direct)
 
-        (xp, yp, zp) = (0.0, 0.0, 0.0)
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
 
+        offset = Vector()
         if not centered[0]:
-            xp += radius
-
+            offset += Vector(radius, 0, 0)
         if not centered[1]:
-            yp += radius
-
+            offset += Vector(0, radius, 0)
         if not centered[2]:
-            zp += radius
+            offset += Vector(0, 0, radius)
 
-        s = Solid.makeSphere(radius, Vector(xp, yp, zp), direct, angle1, angle2, angle3)
+        s = Solid.makeSphere(radius, offset, direct, angle1, angle2, angle3)
 
         # We want a sphere for each point on the workplane
         spheres = self.eachpoint(lambda loc: s.moved(loc), True)
@@ -3490,7 +3510,7 @@ class Workplane(object):
         zmax: float,
         pnt: VectorLike = Vector(0, 0, 0),
         dir: VectorLike = Vector(0, 0, 1),
-        centered: Tuple[bool, bool, bool] = (True, True, True),
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: bool = True,
         clean: bool = True,
     ) -> "Workplane":
@@ -3499,24 +3519,28 @@ class Workplane(object):
         :param dy: Distance along the Y axis
         :param dz: Distance along the Z axis
         :param xmin: The minimum X location
-        :param zmin:The minimum Z location
-        :param xmax:The maximum X location
+        :param zmin: The minimum Z location
+        :param xmax: The maximum X location
         :param zmax: The maximum Z location
         :param pnt: A vector (or tuple) for the origin of the direction for the wedge
         :param dir: The direction vector (or tuple) for the major axis of the wedge
+        :param centered: If True, the wedge will be centered around the reference point.
+          If False, the corner of the wedge will be on the reference point and it will
+          extend in the positive x, y and z directions. Can also use a 3-tuple to
+          specify centering along each axis.
         :param combine: Whether the results should be combined with other solids on the stack
-            (and each other)
-        :param clean: true to attempt to have the kernel clean up the geometry, false otherwise
+          (and each other)
+        :param clean: True to attempt to have the kernel clean up the geometry, False otherwise
         :return: A wedge object for each point on the stack
 
         One wedge is created for each item on the current stack. If no items are on the stack, one
         wedge using the current workplane center is created.
 
-        If combine is true, the result will be a single object on the stack:
-            If a solid was found in the chain, the result is that solid with all wedges produced
-            fused onto it otherwise, the result is the combination of all the produced wedges
+        If combine is True, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all wedges produced fused onto it otherwise,
+        the result is the combination of all the produced wedges.
 
-        If combine is false, the result will be a list of the wedges produced
+        If combine is False, the result will be a list of the wedges produced.
         """
 
         # Convert the point tuple to a vector, if needed
@@ -3527,18 +3551,18 @@ class Workplane(object):
         if isinstance(dir, tuple):
             dir = Vector(dir)
 
-        (xp, yp, zp) = (0.0, 0.0, 0.0)
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
 
+        offset = Vector()
         if centered[0]:
-            xp -= dx / 2.0
-
+            offset += Vector(-dx / 2, 0, 0)
         if centered[1]:
-            yp -= dy / 2.0
-
+            offset += Vector(0, -dy / 2, 0)
         if centered[2]:
-            zp -= dz / 2.0
+            offset += Vector(0, 0, -dz / 2)
 
-        w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, Vector(xp, yp, zp), dir)
+        w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, offset, dir)
 
         # We want a wedge for each point on the workplane
         wedges = self.eachpoint(lambda loc: w.moved(loc), True)
