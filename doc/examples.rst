@@ -1093,7 +1093,7 @@ Braille Example
         base_height = get_plate_height(text_lines, cell_geometry)
         base_thickness = get_base_plate_thickness(plate_thickness, cell_geometry)
         base = cq.Workplane('XY').box(base_width, base_height, base_thickness,
-                                      centered=(False, False, False))
+                                      centered=False)
         return base
 
 
@@ -1126,7 +1126,7 @@ Braille Example
         base = (base.faces('>Z').edges()
             .fillet(r - 0.001))
         hidding_box = cq.Workplane('XY').box(
-            base_width, base_height, base_thickness, centered=(False, False, False))
+            base_width, base_height, base_thickness, centered=False)
         result = hidding_box.union(base)
         return result
 

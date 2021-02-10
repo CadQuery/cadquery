@@ -357,6 +357,41 @@ class TestCadQuery(BaseTest):
             assert before[direction] == approx(after[direction])
         assert plane.origin.toTuple() == origin
 
+    def testRect(self):
+        x = 10
+        y = 11
+        s = Workplane().rect(x, y)
+        # a rectangle has 4 sides
+        self.assertEqual(s.edges().size(), 4)
+        # assert that the lower left corner is in the correct spot for all
+        # possible values of centered
+        for centered_x, xval in zip([True, False], [-x / 2, 0]):
+            for centered_y, yval in zip([True, False], [-y / 2, 0]):
+                s = (
+                    Workplane()
+                    .rect(x, y, centered=(centered_x, centered_y))
+                    .vertices("<X and <Y")
+                )
+                self.assertEqual(s.size(), 1)
+                self.assertTupleAlmostEquals(s.val().toTuple(), (xval, yval, 0), 3)
+        # check that centered=True is the same as centered=(True, True)
+        for option0 in [True, False]:
+            v0 = (
+                Workplane()
+                .rect(x, y, centered=option0)
+                .vertices(">X and >Y")
+                .val()
+                .toTuple()
+            )
+            v1 = (
+                Workplane()
+                .rect(x, y, centered=(option0, option0))
+                .vertices(">X and >Y")
+                .val()
+                .toTuple()
+            )
+            self.assertTupleAlmostEquals(v0, v1, 3)
+
     def testLoft(self):
         """
             Test making a lofted solid
@@ -1002,24 +1037,50 @@ class TestCadQuery(BaseTest):
         self.assertEqual(6, r.faces().size())
 
     def testRectArray(self):
-        NUMX = 3
-        NUMY = 3
+        x_num = 3
+        y_num = 3
+        x_spacing = 8.0
+        y_spacing = 8.0
         s = (
             Workplane("XY")
             .box(40, 40, 5, centered=(True, True, True))
             .faces(">Z")
             .workplane()
-            .rarray(8.0, 8.0, NUMX, NUMY, True)
+            .rarray(x_spacing, y_spacing, x_num, y_num, True)
             .circle(2.0)
             .extrude(2.0)
         )
-        # s = Workplane("XY").box(40,40,5,centered=(True,True,True)).faces(">Z").workplane().circle(2.0).extrude(2.0)
         self.saveModel(s)
         # 6 faces for the box, 2 faces for each cylinder
-        self.assertEqual(6 + NUMX * NUMY * 2, s.faces().size())
+        self.assertEqual(6 + x_num * y_num * 2, s.faces().size())
 
         with raises(ValueError):
-            Workplane().rarray(0, 0, NUMX, NUMY, True)
+            Workplane().rarray(0, 0, x_num, y_num, True)
+
+        # check lower and upper corner points are correct for all combinations of centering
+        for x_opt, x_min, x_max in zip(
+            [True, False], [-x_spacing, 0.0], [x_spacing, x_spacing * 2]
+        ):
+            for y_opt, y_min, y_max in zip(
+                [True, False], [-y_spacing, 0.0], [y_spacing, y_spacing * 2]
+            ):
+                s = Workplane().rarray(
+                    x_spacing, y_spacing, x_num, y_num, center=(x_opt, y_opt)
+                )
+                lower = Vector(x_min, y_min, 0)
+                upper = Vector(x_max, y_max, 0)
+                self.assertTrue(lower in s.objects)
+                self.assertTrue(upper in s.objects)
+
+        # check centered=True is equivalent to centered=(True, True)
+        for val in [True, False]:
+            s0 = Workplane().rarray(x_spacing, y_spacing, x_num, y_num, center=val)
+            s1 = Workplane().rarray(
+                x_spacing, y_spacing, x_num, y_num, center=(val, val)
+            )
+            # check all the points in s0 are present in s1
+            self.assertTrue(all(pnt in s1.objects for pnt in s0.objects))
+            self.assertEqual(s0.size(), s1.size())
 
     def testPolarArray(self):
         radius = 10
@@ -2019,6 +2080,35 @@ class TestCadQuery(BaseTest):
         # should have 26 faces. 6 for the box, and 4x5 for the smaller cubes
         self.assertEqual(26, s.faces().size())
 
+    def testBoxCentered(self):
+        x, y, z = 10, 11, 12
+        # check that the bottom corner is where we expect it for all possible combinations of centered
+        b = [True, False]
+        expected_x = [-x / 2, 0]
+        expected_y = [-y / 2, 0]
+        expected_z = [-z / 2, 0]
+        for (xopt, xval), (yopt, yval), (zopt, zval) in product(
+            zip(b, expected_x), zip(b, expected_y), zip(b, expected_z)
+        ):
+            s = (
+                Workplane()
+                .box(x, y, z, centered=(xopt, yopt, zopt))
+                .vertices("<X and <Y and <Z")
+            )
+            self.assertEqual(s.size(), 1)
+            self.assertTupleAlmostEquals(s.val().toTuple(), (xval, yval, zval), 3)
+        # check centered=True produces the same result as centered=(True, True, True)
+        for val in b:
+            s0 = Workplane().box(x, y, z, centered=val).vertices(">X and >Y and >Z")
+            self.assertEqual(s0.size(), 1)
+            s1 = (
+                Workplane()
+                .box(x, y, z, centered=(val, val, val))
+                .vertices(">X and >Y and >Z")
+            )
+            self.assertEqual(s0.size(), 1)
+            self.assertTupleAlmostEquals(s0.val().toTuple(), s1.val().toTuple(), 3)
+
     def testSphereDefaults(self):
         s = Workplane("XY").sphere(10)
         self.saveModel(s)  # Until FreeCAD fixes their sphere operation
@@ -2032,6 +2122,26 @@ class TestCadQuery(BaseTest):
         self.saveModel(s)
         self.assertEqual(1, s.solids().size())
         self.assertEqual(2, s.faces().size())
+
+        # check that the bottom corner is where we expect it for all possible combinations of centered
+        radius = 10
+        for (xopt, xval), (yopt, yval), (zopt, zval) in product(
+            zip((True, False), (0, radius)), repeat=3
+        ):
+            s = Workplane().sphere(radius, centered=(xopt, yopt, zopt))
+            self.assertEqual(s.size(), 1)
+            self.assertTupleAlmostEquals(
+                s.val().Center().toTuple(), (xval, yval, zval), 3
+            )
+        # check centered=True produces the same result as centered=(True, True, True)
+        for val in (True, False):
+            s0 = Workplane().sphere(radius, centered=val)
+            self.assertEqual(s0.size(), 1)
+            s1 = Workplane().sphere(radius, centered=(val, val, val))
+            self.assertEqual(s0.size(), 1)
+            self.assertTupleAlmostEquals(
+                s0.val().Center().toTuple(), s1.val().Center().toTuple(), 3
+            )
 
     def testSpherePointList(self):
         s = (
@@ -2070,6 +2180,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, s.solids().size())
         self.assertEqual(5, s.faces().size())
         self.assertEqual(5, s.vertices().size())
+
         # check that the bottom corner is where we expect it for all possible combinations of centered
         x, y, z = 10, 11, 12
         b = [True, False]
@@ -2086,6 +2197,21 @@ class TestCadQuery(BaseTest):
             )
             self.assertEqual(s.size(), 1)
             self.assertTupleAlmostEquals(s.val().toTuple(), (xval, yval, zval), 3)
+        # check centered=True produces the same result as centered=(True, True, True)
+        for val in b:
+            s0 = (
+                Workplane()
+                .wedge(x, y, z, 2, 2, x - 2, z - 2, centered=val)
+                .vertices(">X and >Z")
+            )
+            self.assertEqual(s0.size(), 1)
+            s1 = (
+                Workplane()
+                .wedge(x, y, z, 2, 2, x - 2, z - 2, centered=(val, val, val))
+                .vertices(">X and >Z")
+            )
+            self.assertEqual(s0.size(), 1)
+            self.assertTupleAlmostEquals(s0.val().toTuple(), s1.val().toTuple(), 3)
 
     def testWedgePointList(self):
         s = (
