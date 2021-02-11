@@ -3763,3 +3763,6 @@ class Workplane(object):
 
 # alias for backward compatibility
 CQ = Workplane
+
+# alias for |
+Workplane.__add__ = Workplane.__or__
