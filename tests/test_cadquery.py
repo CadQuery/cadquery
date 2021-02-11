@@ -2184,8 +2184,11 @@ class TestCadQuery(BaseTest):
             resS.union(toUnion.faces().val())
 
         # Test syntactic sugar [__add__ method]
-        sugar = currentS | toUnion
-        self.assertEqual(resS.faces().size(), sugar.faces().size())
+        sugar1 = currentS | toUnion
+        sugar2 = currentS + toUnion
+
+        self.assertEqual(resS.faces().size(), sugar1.faces().size())
+        self.assertEqual(resS.faces().size(), sugar2.faces().size())
 
     def testCombine(self):
         s = Workplane(Plane.XY())
