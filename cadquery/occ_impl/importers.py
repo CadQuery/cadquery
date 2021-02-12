@@ -223,6 +223,7 @@ def importDXF(filename, tol=1e-6, exclude=[]):
     :param exclude: a list of layer names not to import (default: [])
     """
 
+    # normalize layer names to conform the DXF spec
     exclude_lwr = [ex.lower() for ex in exclude]
 
     dxf = ezdxf.readfile(filename)
