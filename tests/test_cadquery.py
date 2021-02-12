@@ -3495,7 +3495,7 @@ class TestCadQuery(BaseTest):
         surface_points = [[-3.0, -3.0, -3.0], [3.0, 3.0, 3.0]]
         plate_1 = Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_1.val().isValid())
-        self.assertAlmostEqual(plate_1.val().Volume(), 26.124970206, 3)
+        self.assertAlmostEqual(plate_1.val().Volume(), 26.124970206, 2)
 
         # Embossed star, need to change optional parameters to obtain nice looking result.
         r1 = 3.0
@@ -3627,7 +3627,7 @@ class TestCadQuery(BaseTest):
         surface_points = [[0, 0, 0]]
         plate_4 = Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_4.val().isValid())
-        self.assertAlmostEqual(plate_4.val().Volume(), 7.760559490, 3)
+        self.assertAlmostEqual(plate_4.val().Volume(), 7.760559490, 2)
 
     def testTangentArcToPoint(self):
 
