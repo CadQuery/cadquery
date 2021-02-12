@@ -2975,6 +2975,25 @@ class Workplane(object):
 
         return self.newObject([r])
 
+    def __or__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+        """
+        Syntactic sugar for union.
+        Notice that `r = a | b` is equivalent to `r = a.union(b)` and `r = a + b`.
+
+        Example::
+            Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
+            Sphere = Workplane("XY").sphere(1)
+            result = Box | Sphere
+        """
+        return self.union(toUnion)
+
+    def __add__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+        """
+        Syntactic sugar for union.
+        Notice that `r = a + b` is equivalent to `r = a.union(b)` and `r = a | b`.
+        """
+        return self.union(toUnion)
+
     def cut(
         self, toCut: Union["Workplane", Solid, Compound], clean: bool = True
     ) -> "Workplane":
@@ -3010,6 +3029,19 @@ class Workplane(object):
 
         return self.newObject([newS])
 
+    def __sub__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+        """
+        Syntactic sugar for cut.
+        Notice that `r = a - b` is equivalent to `r = a.cut(b)`.
+
+        Example::
+
+            Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
+            Sphere = Workplane("XY").sphere(1)
+            result = Box - Sphere
+        """
+        return self.cut(toUnion)
+
     def intersect(
         self, toIntersect: Union["Workplane", Solid, Compound], clean: bool = True
     ) -> "Workplane":
@@ -3044,6 +3076,19 @@ class Workplane(object):
             newS = newS.clean()
 
         return self.newObject([newS])
+
+    def __and__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+        """
+        Syntactic sugar for intersect.
+        Notice that `r = a & b` is equivalent to `r = a.intersect(b)`.
+
+        Example::
+
+            Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
+            Sphere = Workplane("XY").sphere(1)
+            result = Box & Sphere
+        """
+        return self.intersect(toUnion)
 
     def cutBlind(
         self, distanceToCut: float, clean: bool = True, taper: Optional[float] = None

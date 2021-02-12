@@ -80,6 +80,7 @@ Class Details
 .. automodule:: cadquery
    :show-inheritance: 
    :members:
+   :special-members:
 
 .. autoclass:: cadquery.occ_impl.shapes.Mixin1D
    :show-inheritance: 
