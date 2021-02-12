@@ -2972,12 +2972,19 @@ class Workplane(object):
     def __or__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
         """
         Syntactic sugar for union.
-        Notice that `r = a | b` is equivalent to `r = a.union(b)`.
+        Notice that `r = a | b` is equivalent to `r = a.union(b)` and `r = a + b`.
 
         Example::
             Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
             Sphere = Workplane("XY").sphere(1)
             result = Box | Sphere
+        """
+        return self.union(toUnion)
+
+    def __add__(self, toUnion: Union["Workplane", Solid, Compound]) -> "Workplane":
+        """
+        Syntactic sugar for union.
+        Notice that `r = a + b` is equivalent to `r = a.union(b)` and `r = a | b`.
         """
         return self.union(toUnion)
 
@@ -3763,6 +3770,3 @@ class Workplane(object):
 
 # alias for backward compatibility
 CQ = Workplane
-
-# alias for |
-Workplane.__add__ = Workplane.__or__
