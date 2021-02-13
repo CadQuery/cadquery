@@ -2743,10 +2743,10 @@ class Compound(Shape, Mixin3D):
             font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
 
         builder = Font_BRepTextBuilder()
-        font_i = StdPrs_BRepFont(NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, size)
-        text_flat = Shape(
-            builder.Perform(font_i, NCollection_Utf8String(text))
+        font_i = StdPrs_BRepFont(
+            NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, size
         )
+        text_flat = Shape(builder.Perform(font_i, NCollection_Utf8String(text)))
 
         bb = text_flat.BoundingBox()
 
