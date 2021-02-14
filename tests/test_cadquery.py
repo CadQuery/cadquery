@@ -3887,6 +3887,13 @@ class TestCadQuery(BaseTest):
         )
         self.assertEqual(s.solids().size(), 4)
 
+        # test forConstruction
+        # forConstruction=True should place results in objects, not ctx.pendingWires
+        w6 = Workplane().hLine(1).vLine(1).close().offset2D(0.5, forConstruction=True)
+        self.assertEqual(len(w6.ctx.pendingWires), 0)
+        self.assertEqual(w6.size(), 1)
+        self.assertEqual(type(w6.val()), Wire)
+
     def testConsolidateWires(self):
 
         w1 = Workplane().lineTo(0, 1).lineTo(1, 1).consolidateWires()
