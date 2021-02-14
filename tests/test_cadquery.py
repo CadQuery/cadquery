@@ -565,20 +565,12 @@ class TestCadQuery(BaseTest):
         self.assertTrue(path_closed.IsClosed())
 
         # attempt to build a valid face
-        w = Wire.assembleEdges(
-            [
-                path_closed,
-            ]
-        )
+        w = Wire.assembleEdges([path_closed,])
         f = Face.makeFromWires(w)
         self.assertTrue(f.isValid())
 
         # attempt to build an invalid face
-        w = Wire.assembleEdges(
-            [
-                path,
-            ]
-        )
+        w = Wire.assembleEdges([path,])
         f = Face.makeFromWires(w)
         self.assertFalse(f.isValid())
 
@@ -897,15 +889,7 @@ class TestCadQuery(BaseTest):
 
     def testMakeEllipse(self):
         el = Wire.makeEllipse(
-            1,
-            2,
-            Vector(0, 0, 0),
-            Vector(0, 0, 1),
-            Vector(1, 0, 0),
-            0,
-            90,
-            45,
-            True,
+            1, 2, Vector(0, 0, 0), Vector(0, 0, 1), Vector(1, 0, 0), 0, 90, 45, True,
         )
 
         self.assertTrue(el.IsClosed())
