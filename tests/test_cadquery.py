@@ -3893,6 +3893,8 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(w6.ctx.pendingWires), 0)
         self.assertEqual(w6.size(), 1)
         self.assertEqual(type(w6.val()), Wire)
+        # make sure the resulting wire has forConstruction set
+        self.assertEqual(w6.val().forConstruction, True)
 
     def testConsolidateWires(self):
 
