@@ -1117,7 +1117,7 @@ class Mixin1D(object):
     def tangentAt(
         self: Mixin1DProtocol,
         locationParam: float = 0.5,
-        mode: Literal["length", "parameter"] = "parameter",
+        mode: Literal["length", "parameter"] = "length",
     ) -> Vector:
         """
         Compute tangent vector at the specified location.
