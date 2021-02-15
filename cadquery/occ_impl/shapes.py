@@ -1442,8 +1442,8 @@ class Edge(Shape, Mixin1D):
             spline_builder = GeomAPI_Interpolate(pnts, periodic, tol)
         else:
             parameters_array = TColStd_HArray1OfReal(1, len(parameters))
-            for index, value in enumerate(parameters):
-                parameters_array.SetValue(index + 1, value)
+            for p_index, p_value in enumerate(parameters):
+                parameters_array.SetValue(p_index + 1, p_value)
 
             spline_builder = GeomAPI_Interpolate(pnts, parameters_array, periodic, tol)
 
@@ -1458,10 +1458,10 @@ class Edge(Shape, Mixin1D):
                 # Specify a tangent for each interpolation point:
                 tangents_array = TColgp_Array1OfVec(1, len(tangents))
                 tangent_enabled_array = TColStd_HArray1OfBoolean(1, len(tangents))
-                for index, value in enumerate(tangents):
-                    tangent_enabled_array.SetValue(index + 1, value is not None)
-                    tangent_vec = value if value is not None else Vector()
-                    tangents_array.SetValue(index + 1, tangent_vec.wrapped)
+                for t_index, t_value in enumerate(tangents):
+                    tangent_enabled_array.SetValue(t_index + 1, t_value is not None)
+                    tangent_vec = t_value if t_value is not None else Vector()
+                    tangents_array.SetValue(t_index + 1, tangent_vec.wrapped)
 
                 spline_builder.Load(tangents_array, tangent_enabled_array, scale)
 
