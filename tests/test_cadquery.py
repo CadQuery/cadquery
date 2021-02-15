@@ -3999,13 +3999,21 @@ class TestCadQuery(BaseTest):
 
         path = Workplane("XZ").spline(pts, tangents=((0, 1), (1, 0))).val()
 
-        self.assertTrue(path.tangentAt(0.5) == path.tangentAt(0.5))
-        self.assertFalse(path.tangentAt(0.5) == path.tangentAt(0.5, mode="length"))
+        self.assertTrue(
+            path.tangentAt(0.0, mode="parameter") == path.tangentAt(0.0, mode="length")
+        )
+        self.assertFalse(
+            path.tangentAt(0.5, mode="parameter") == path.tangentAt(0.5, mode="length")
+        )
 
         arc = Workplane().radiusArc((2, 0), 1).val()
 
-        self.assertTupleAlmostEquals(arc.tangentAt(math.pi/2).toTuple(), (1, 0, 0), 6)
-        self.assertTupleAlmostEquals(arc.tangentAt(0.5, "length").toTuple(), (1, 0, 0), 6)
+        self.assertTupleAlmostEquals(
+            arc.tangentAt(math.pi / 2, "parameter").toTuple(), (1, 0, 0), 6
+        )
+        self.assertTupleAlmostEquals(
+            arc.tangentAt(0.5, "length").toTuple(), (1, 0, 0), 6
+        )
 
     def testEnd(self):
 
