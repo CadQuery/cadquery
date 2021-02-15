@@ -1137,7 +1137,7 @@ class Mixin1D(object):
         else:
             param = locationParam
 
-        curve.D1(self.paramAt(param), tmp, res)
+        curve.D1(param, tmp, res)
 
         return Vector(gp_Dir(res))
 
