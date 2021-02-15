@@ -4002,6 +4002,11 @@ class TestCadQuery(BaseTest):
         self.assertTrue(path.tangentAt(0.5) == path.tangentAt(0.5))
         self.assertFalse(path.tangentAt(0.5) == path.tangentAt(0.5, mode="length"))
 
+        arc = Workplane().radiusArc((2, 0), 1).val()
+
+        self.assertTupleAlmostEquals(arc.tangentAt(math.pi/2).toTuple(), (1, 0, 0), 6)
+        self.assertTupleAlmostEquals(arc.tangentAt(0.5, "length").toTuple(), (1, 0, 0), 6)
+
     def testEnd(self):
 
         with self.assertRaises(ValueError):
