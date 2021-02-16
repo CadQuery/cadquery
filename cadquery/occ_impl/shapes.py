@@ -1412,26 +1412,21 @@ class Edge(Shape, Mixin1D):
     ) -> "Edge":
         """
         Interpolate a spline through the provided points.
-        :param cls:
+
         :param listOfVector: a list of Vectors that represent the points
         :param tangents: tuple of Vectors specifying start and finish tangent
         :param periodic: creation of peridic curves
-        :param parameters: the value of the parameter at each interpolation point.
-            (The intepolated curve is represented as a vector-valued function of a
-            scalar parameter.)
-                If periodic == True, then len(parameters) must be
-            len(intepolation points) + 1, otherwise len(parameters) must be equal to
-            len(interpolation points).
-        :param scale: whether to scale the specified tangent vectors before
-            interpolating.
-                Each tangent is scaled, so it's length is equal to the derivative of
-            the Lagrange interpolated curve.
-                I.e., set this to True, if you want to use only the direction of
-            the tangent vectors specified by ``tangents``, but not their magnitude.
-        :param tol: tolerance of the algorithm (consult OCC documentation)
-                Used to check that the specified points are not too close to each
-            other, and that tangent vectors are not too short. (In either case
-            interpolation may fail.)
+        :param parameters: the value of the parameter at each interpolation point. (The intepolated
+          curve is represented as a vector-valued function of a scalar parameter.) If periodic ==
+          True, then len(parameters) must be len(intepolation points) + 1, otherwise len(parameters)
+          must be equal to len(interpolation points).
+        :param scale: whether to scale the specified tangent vectors before interpolating. Each
+          tangent is scaled, so it's length is equal to the derivative of the Lagrange interpolated
+          curve. I.e., set this to True, if you want to use only the direction of the tangent
+          vectors specified by ``tangents``, but not their magnitude.
+        :param tol: tolerance of the algorithm (consult OCC documentation). Used to check that the
+          specified points are not too close to each other, and that tangent vectors are not too
+          short. (In either case interpolation may fail.)
         :return: an Edge
         """
         pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
