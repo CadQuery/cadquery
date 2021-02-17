@@ -707,7 +707,7 @@ class TestCadQuery(BaseTest):
         ):
             spline = (
                 Workplane("XY")
-                .spline(points, tangents=tangents, tolerance=1)
+                .spline(points, tangents=tangents, tol=1)
                 .consolidateWires()
             )
 
@@ -717,10 +717,7 @@ class TestCadQuery(BaseTest):
         tangents = [(0, 0.5), (1, 0), (0, -1), (-1, 0)]
 
         with raises(ValueError):
-            spline = (
-                Workplane()
-                .spline(points, tangents=tangents)
-            )
+            spline = Workplane().spline(points, tangents=tangents)
 
     def testRotatedEllipse(self):
         def rotatePoint(x, y, alpha):
