@@ -1674,7 +1674,7 @@ class Workplane(object):
         periodic: bool = False,
         parameters: Optional[Sequence[float]] = None,
         scale: bool = True,
-        tolerance: Optional[float] = None,
+        tol: Optional[float] = None,
         forConstruction: bool = False,
         includeCurrent: bool = False,
         makeWire: bool = False,
@@ -1712,7 +1712,7 @@ class Workplane(object):
             
             I.e., set this to True, if you want to use only the direction of
             the tangent vectors specified by ``tangents``, but not their magnitude.
-        :param tolerance: tolerance of the algorithm (consult OCC documentation)
+        :param tol: tolerance of the algorithm (consult OCC documentation)
             
             Used to check that the specified points are not too close to each
             other, and that tangent vectors are not too short. (In either case
@@ -1743,9 +1743,6 @@ class Workplane(object):
 
         *WARNING*  It is fairly easy to create a list of points
         that cannot be correctly interpreted as a spline.
-
-        Future Enhancements:
-          * provide access to control points
         """
 
         vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
@@ -1766,23 +1763,14 @@ class Workplane(object):
         else:
             tangents_g = None
 
-        if tolerance is not None:
-            e = Edge.makeSpline(
-                allPoints,
-                tangents=tangents_g,
-                periodic=periodic,
-                parameters=parameters,
-                scale=scale,
-                tol=tolerance,
-            )
-        else:
-            e = Edge.makeSpline(
-                allPoints,
-                tangents=tangents_g,
-                periodic=periodic,
-                parameters=parameters,
-                scale=scale,
-            )
+        e = Edge.makeSpline(
+            allPoints,
+            tangents=tangents_g,
+            periodic=periodic,
+            parameters=parameters,
+            scale=scale,
+            **({'tol' : tol} if tol else {})
+        )
 
         if makeWire:
             rv_w = Wire.assembleEdges([e])
