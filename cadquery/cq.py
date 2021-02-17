@@ -1769,7 +1769,7 @@ class Workplane(object):
             periodic=periodic,
             parameters=parameters,
             scale=scale,
-            **({'tol' : tol} if tol else {})
+            **({"tol": tol} if tol else {}),
         )
 
         if makeWire:
