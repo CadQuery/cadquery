@@ -667,6 +667,31 @@ class TestCadQuery(BaseTest):
 
         self.assertAlmostEqual((test_point - expected_test_point).Length, 0)
 
+    def testSplineWithScaleFalse(self):
+        """
+        Like testSplineWithScaleTrue, but verifies the tangent vector is
+        different when scale=False.
+
+        The interpolation points and tangent vectors are the same in
+        `testSplineWithScaleTrue`, and `testSplineWithScaleFalse`. A test
+        point is rendered at the same parameter value in both cases, but its
+        coordinates are different in each case.
+        """
+        points = [(0, 0), (1, 1), (2, 0), (1, -1)]
+        tangents = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        parameters = range(len(points))
+
+        spline = (
+            Workplane("XY")
+            .spline(points, tangents=tangents, parameters=parameters, scale=False)
+            .consolidateWires()
+        )
+
+        test_point = spline.edges().val().positionAt(0.5, mode="parameter")
+        expected_test_point = Vector(0.375, 0.625, 0.0)
+
+        self.assertAlmostEqual((test_point - expected_test_point).Length, 0)
+
     def testSplineTangentMagnitudeBelowToleranceThrows(self):
         import OCP
 
@@ -685,22 +710,6 @@ class TestCadQuery(BaseTest):
                 .spline(points, tangents=tangents, tolerance=1)
                 .consolidateWires()
             )
-
-    def testSplineWithScaleFalse(self):
-        points = [(0, 0), (1, 1), (2, 0), (1, -1)]
-        tangents = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        parameters = range(len(points))
-
-        spline = (
-            Workplane("XY")
-            .spline(points, tangents=tangents, parameters=parameters, scale=False)
-            .consolidateWires()
-        )
-
-        test_point = spline.edges().val().positionAt(0.5, mode="parameter")
-        expected_test_point = Vector(0.375, 0.625, 0.0)
-
-        self.assertAlmostEqual((test_point - expected_test_point).Length, 0)
 
     def testRotatedEllipse(self):
         def rotatePoint(x, y, alpha):
