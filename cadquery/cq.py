@@ -1672,7 +1672,7 @@ class Workplane(object):
         listOfXYTuple: Iterable[VectorLike],
         tangents: Optional[Sequence[VectorLike]] = None,
         periodic: bool = False,
-        parameters: Optional[List[float]] = None,
+        parameters: Optional[Sequence[float]] = None,
         scale: bool = True,
         tolerance: Optional[float] = None,
         forConstruction: bool = False,

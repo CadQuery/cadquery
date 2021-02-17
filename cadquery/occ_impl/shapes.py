@@ -1406,7 +1406,7 @@ class Edge(Shape, Mixin1D):
         listOfVector: List[Vector],
         tangents: Optional[Sequence[Vector]] = None,
         periodic: bool = False,
-        parameters: Optional[List[float]] = None,
+        parameters: Optional[Sequence[float]] = None,
         scale: bool = True,
         tol: float = 1e-6,
     ) -> "Edge":
