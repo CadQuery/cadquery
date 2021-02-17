@@ -1686,31 +1686,39 @@ class Workplane(object):
         :type listOfXYTuple: list of 2-tuple
         :param tangents: vectors specifying the direction of the tangent to the
             curve at each of the specified interpolation points.
-                If only 2 tangents are given, they will be used as the initial and
+            
+            If only 2 tangents are given, they will be used as the initial and
             final tangent.
-                If some tangents are not specified (i.e., are None), no tangent
+            
+            If some tangents are not specified (i.e., are None), no tangent
             constraint will be applied to the corresponding interpolation point.
-                The spline will be C2 continuous at the interpolation points where
+            
+            The spline will be C2 continuous at the interpolation points where
             no tangent constraint is specified, and C1 continuous at the points
             where a tangent constraint is specified.
         :param periodic: creation of periodic curves
         :param parameters: the value of the parameter at each interpolation point.
             (The intepolated curve is represented as a vector-valued function of a
             scalar parameter.)
-                If periodic == True, then len(parameters) must be
+            
+            If periodic == True, then len(parameters) must be
             len(intepolation points) + 1, otherwise len(parameters) must be equal to
             len(interpolation points).
         :param scale: whether to scale the specified tangent vectors before
             interpolating.
-                Each tangent is scaled, so it's length is equal to the derivative of
+            
+            Each tangent is scaled, so it's length is equal to the derivative of
             the Lagrange interpolated curve.
-                I.e., set this to True, if you want to use only the direction of
+            
+            I.e., set this to True, if you want to use only the direction of
             the tangent vectors specified by ``tangents``, but not their magnitude.
         :param tolerance: tolerance of the algorithm (consult OCC documentation)
-                Used to check that the specified points are not too close to each
+            
+            Used to check that the specified points are not too close to each
             other, and that tangent vectors are not too short. (In either case
             interpolation may fail.)
-                Set to None to use the default tolerance.
+            
+            Set to None to use the default tolerance.
         :param includeCurrent: use current point as a starting point of the curve
         :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point at the end of the spline
