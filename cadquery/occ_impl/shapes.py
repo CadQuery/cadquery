@@ -1467,9 +1467,8 @@ class Edge(Shape, Mixin1D):
 
         spline_builder.Perform()
         if not spline_builder.IsDone():
-            raise ValueError(
-                "B-spline interpolation failed"
-            )
+            raise ValueError("B-spline interpolation failed")
+
         spline_geom = spline_builder.Curve()
 
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
