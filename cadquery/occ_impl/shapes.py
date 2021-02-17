@@ -1448,7 +1448,12 @@ class Edge(Shape, Mixin1D):
                 t1, t2 = tangents
                 spline_builder.Load(t1.wrapped, t2.wrapped, scale)
             else:
-                assert len(tangents) == len(listOfVector)
+                if len(tangents) != len(listOfVector):
+                    raise ValueError(
+                        f"There must be one tangent for each interpolation point, "
+                        f"or just two end point tangents. Tangent count: "
+                        f"{len(tangents)}, point count: {len(listOfVector)}"
+                    )
 
                 # Specify a tangent for each interpolation point:
                 tangents_array = TColgp_Array1OfVec(1, len(tangents))
