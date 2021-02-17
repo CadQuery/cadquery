@@ -711,6 +711,17 @@ class TestCadQuery(BaseTest):
                 .consolidateWires()
             )
 
+    def testSplineInputValidation(self):
+
+        points = [(0, 0), (1, 1), (2, 0)]
+        tangents = [(0, 0.5), (1, 0), (0, -1), (-1, 0)]
+
+        with raises(ValueError):
+            spline = (
+                Workplane()
+                .spline(points, tangents=tangents)
+            )
+
     def testRotatedEllipse(self):
         def rotatePoint(x, y, alpha):
             # rotation matrix
