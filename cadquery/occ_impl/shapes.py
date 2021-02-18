@@ -1436,10 +1436,10 @@ class Edge(Shape, Mixin1D):
         if parameters is None:
             spline_builder = GeomAPI_Interpolate(pnts, periodic, tol)
         else:
-            if len(parameters) != len(listOfVector):
+            if len(parameters) != (len(listOfVector) + periodic):
                 raise ValueError(
-                    f"There must be one parameter for each interpolation point, "
-                    f"or none specified. Tangent count: "
+                    "There must be one parameter for each interpolation point "
+                    "(plus one if periodic), or none specified. Parameter count: "
                     f"{len(parameters)}, point count: {len(listOfVector)}"
                 )
             parameters_array = TColStd_HArray1OfReal(1, len(parameters))
