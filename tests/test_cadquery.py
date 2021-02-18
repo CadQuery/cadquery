@@ -651,6 +651,12 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual((test_point1 - test_point2).Length, 0)
         self.assertAlmostEqual((test_point1 - expected_test_point).Length, 0)
 
+        # test periodic with parameters
+        spline3 = Workplane().spline(
+            points, periodic=True, parameters=[x for x in range(len(points) + 1)]
+        )
+        self.assertTrue(spline3.val().IsClosed())
+
     def testSplineWithScaleTrue(self):
         points = [(0, 0), (1, 1), (2, 0), (1, -1)]
         tangents = [(0, 1), (1, 0), (0, -1), (-1, 0)]
