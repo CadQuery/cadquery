@@ -245,7 +245,7 @@ class Workplane(object):
 
             # drill a hole in the side
             c = Workplane().box(1,1,1).faces(">Z").workplane().circle(0.25).cutThruAll()
-            
+
             # now cut it in half sideways
             c = c.faces(">Y").workplane(-0.5).split(keepTop=True)
         """
@@ -327,7 +327,7 @@ class Workplane(object):
 
     def size(self) -> int:
         """
-         Return the number of objects currently on the stack
+        Return the number of objects currently on the stack
         """
         return len(self.objects)
 
@@ -444,7 +444,7 @@ class Workplane(object):
            * The centerOption paramter sets how the center is defined.
              Options are 'CenterOfMass', 'CenterOfBoundBox', or 'ProjectedOrigin'.
              'CenterOfMass' and 'CenterOfBoundBox' are in relation to the selected
-             face(s) or vertex (vertices). 'ProjectedOrigin' uses by default the current origin 
+             face(s) or vertex (vertices). 'ProjectedOrigin' uses by default the current origin
              or the optional origin parameter (if specified) and projects it onto the plane
              defined by the selected face(s).
            * The Z direction will be normal to the plane of the face,computed
@@ -714,17 +714,17 @@ class Workplane(object):
         tag: Optional[str] = None,
     ) -> "Workplane":
         """
-            Filters objects of the selected type with the specified selector,and returns results
+        Filters objects of the selected type with the specified selector,and returns results
 
-            :param objType: the type of object we are searching for
-            :type objType: string: (Vertex|Edge|Wire|Solid|Shell|Compound|CompSolid)
-            :param tag: if set, search the tagged CQ object instead of self
-            :type tag: string
-            :return: a CQ object with the selected objects on the stack.
+        :param objType: the type of object we are searching for
+        :type objType: string: (Vertex|Edge|Wire|Solid|Shell|Compound|CompSolid)
+        :param tag: if set, search the tagged CQ object instead of self
+        :type tag: string
+        :return: a CQ object with the selected objects on the stack.
 
-            **Implementation Note**: This is the base implementation of the vertices,edges,faces,
-            solids,shells, and other similar selector methods.  It is a useful extension point for
-            plugin developers to make other selector methods.
+        **Implementation Note**: This is the base implementation of the vertices,edges,faces,
+        solids,shells, and other similar selector methods.  It is a useful extension point for
+        plugin developers to make other selector methods.
         """
         cq_obj = self._getTagged(tag) if tag else self
         # A single list of all faces from all objects on the stack
@@ -1571,7 +1571,7 @@ class Workplane(object):
         :param float distance: distance of the end of the line from the current point
         :param float angle: angle of the vector to the end of the line with the x-axis
         :return: the Workplane object with the current point at the end of the new line
-       """
+        """
         x = math.cos(math.radians(angle)) * distance
         y = math.sin(math.radians(angle)) * distance
 
@@ -1672,6 +1672,9 @@ class Workplane(object):
         listOfXYTuple: Iterable[VectorLike],
         tangents: Optional[Sequence[VectorLike]] = None,
         periodic: bool = False,
+        parameters: Optional[Sequence[float]] = None,
+        scale: bool = True,
+        tol: Optional[float] = None,
         forConstruction: bool = False,
         includeCurrent: bool = False,
         makeWire: bool = False,
@@ -1681,8 +1684,41 @@ class Workplane(object):
 
         :param listOfXYTuple: points to interpolate through
         :type listOfXYTuple: list of 2-tuple
-        :param tangents: tuple of Vectors specifying start and finish tangent
+        :param tangents: vectors specifying the direction of the tangent to the
+            curve at each of the specified interpolation points.
+            
+            If only 2 tangents are given, they will be used as the initial and
+            final tangent.
+            
+            If some tangents are not specified (i.e., are None), no tangent
+            constraint will be applied to the corresponding interpolation point.
+            
+            The spline will be C2 continuous at the interpolation points where
+            no tangent constraint is specified, and C1 continuous at the points
+            where a tangent constraint is specified.
         :param periodic: creation of periodic curves
+        :param parameters: the value of the parameter at each interpolation point.
+            (The intepolated curve is represented as a vector-valued function of a
+            scalar parameter.)
+            
+            If periodic == True, then len(parameters) must be
+            len(intepolation points) + 1, otherwise len(parameters) must be equal to
+            len(interpolation points).
+        :param scale: whether to scale the specified tangent vectors before
+            interpolating.
+            
+            Each tangent is scaled, so it's length is equal to the derivative of
+            the Lagrange interpolated curve.
+            
+            I.e., set this to True, if you want to use only the direction of
+            the tangent vectors specified by ``tangents``, but not their magnitude.
+        :param tol: tolerance of the algorithm (consult OCC documentation)
+            
+            Used to check that the specified points are not too close to each
+            other, and that tangent vectors are not too short. (In either case
+            interpolation may fail.)
+            
+            Set to None to use the default tolerance.
         :param includeCurrent: use current point as a starting point of the curve
         :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point at the end of the spline
@@ -1707,9 +1743,6 @@ class Workplane(object):
 
         *WARNING*  It is fairly easy to create a list of points
         that cannot be correctly interpreted as a spline.
-
-        Future Enhancements:
-          * provide access to control points
         """
 
         vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
@@ -1721,15 +1754,23 @@ class Workplane(object):
             allPoints = vecs
 
         if tangents:
-            t1, t2 = Vector(tangents[0]), Vector(tangents[1])
-            tangents_g: Optional[Tuple[Vector, Vector]] = (
-                self.plane.toWorldCoords(t1) - self.plane.origin,
-                self.plane.toWorldCoords(t2) - self.plane.origin,
-            )
+            tangents_g: Optional[Sequence[Vector]] = [
+                self.plane.toWorldCoords(t) - self.plane.origin
+                if t is not None
+                else None
+                for t in tangents
+            ]
         else:
             tangents_g = None
 
-        e = Edge.makeSpline(allPoints, tangents=tangents_g, periodic=periodic)
+        e = Edge.makeSpline(
+            allPoints,
+            tangents=tangents_g,
+            periodic=periodic,
+            parameters=parameters,
+            scale=scale,
+            **({"tol": tol} if tol else {}),
+        )
 
         if makeWire:
             rv_w = Wire.assembleEdges([e])
@@ -2937,7 +2978,7 @@ class Workplane(object):
         """
         Unions all of the items on the stack of toUnion with the current solid.
         If there is no current solid, the items in toUnion are unioned together.
-        
+
         :param toUnion:
         :type toUnion: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape (default True)
@@ -2999,7 +3040,7 @@ class Workplane(object):
     ) -> "Workplane":
         """
         Cuts the provided solid from the current solid, IE, perform a solid subtraction
-        
+
         :param toCut: object to cut
         :type toCut: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
@@ -3047,7 +3088,7 @@ class Workplane(object):
     ) -> "Workplane":
         """
         Intersects the provided solid from the current solid.
-        
+
         :param toIntersect: object to intersect
         :type toIntersect: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
@@ -3711,7 +3752,7 @@ class Workplane(object):
     def section(self, height: float = 0.0) -> "Workplane":
         """
         Slices current solid at the given height.
-        
+
         :param float height: height to slice at (default: 0)
         :return: a CQ object with the resulting face(s).
         """
@@ -3732,7 +3773,7 @@ class Workplane(object):
     def toPending(self) -> "Workplane":
         """
         Adds wires/edges to pendingWires/pendingEdges.
-        
+
         :return: same CQ object with updated context.
         """
 
