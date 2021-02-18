@@ -727,16 +727,12 @@ class TestCadQuery(BaseTest):
 
         with raises(ValueError):
             Workplane().spline(
-                points,
-                periodic=False,
-                parameters=[x for x in range(len(points) + 1)],
+                points, periodic=False, parameters=[x for x in range(len(points) + 1)],
             )
 
         with raises(ValueError):
             Workplane().spline(
-                points,
-                periodic=True,
-                parameters=[x for x in range(len(points))],
+                points, periodic=True, parameters=[x for x in range(len(points))],
             )
 
     def testRotatedEllipse(self):
