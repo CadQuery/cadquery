@@ -34,8 +34,18 @@ from OCP.gp import (
     gp_Elips,
 )
 
-# collection of points (used for spline construction)
+# Array of points (used for B-spline construction):
 from OCP.TColgp import TColgp_HArray1OfPnt
+
+# Array of vectors (used for B-spline interpolation):
+from OCP.TColgp import TColgp_Array1OfVec
+
+# Array of booleans (used for B-spline interpolation):
+from OCP.TColStd import TColStd_HArray1OfBoolean
+
+# Array of floats (used for B-spline interpolation):
+from OCP.TColStd import TColStd_HArray1OfReal
+
 from OCP.BRepAdaptor import (
     BRepAdaptor_Curve,
     BRepAdaptor_CompCurve,
@@ -1021,7 +1031,7 @@ class Vertex(Shape):
 
     def __init__(self, obj: TopoDS_Shape, forConstruction: bool = False):
         """
-            Create a vertex from a FreeCAD Vertex
+        Create a vertex from a FreeCAD Vertex
         """
         super(Vertex, self).__init__(obj)
 
@@ -1035,7 +1045,7 @@ class Vertex(Shape):
 
     def Center(self) -> Vector:
         """
-            The center of a vertex is itself!
+        The center of a vertex is itself!
         """
         return Vector(self.toTuple())
 
@@ -1104,7 +1114,7 @@ class Mixin1D(object):
     def paramAt(self: Mixin1DProtocol, d: float) -> float:
         """
         Compute parameter value at the specified normalized distance.
-        
+
         :param d: normalized distance [0, 1]
         :return: parameter value
         """
@@ -1121,7 +1131,7 @@ class Mixin1D(object):
     ) -> Vector:
         """
         Compute tangent vector at the specified location.
-        
+
         :param locationParam: distance or parameter value (default: 0.5)
         :param mode: position calculation mode (default: parameter)
         :return: tangent vector
@@ -1144,7 +1154,7 @@ class Mixin1D(object):
     def normal(self: Mixin1DProtocol) -> Vector:
         """
         Calculate the normal Vector. Only possible for planar curves.
-        
+
         :return: normal vector
         """
 
@@ -1321,9 +1331,6 @@ class Edge(Shape, Mixin1D):
         angle1: float = 360.0,
         angle2: float = 360,
     ) -> "Edge":
-        """
-
-        """
         pnt = Vector(pnt)
         dir = Vector(dir)
 
@@ -1399,27 +1406,75 @@ class Edge(Shape, Mixin1D):
         listOfVector: List[Vector],
         tangents: Optional[Sequence[Vector]] = None,
         periodic: bool = False,
+        parameters: Optional[Sequence[float]] = None,
+        scale: bool = True,
         tol: float = 1e-6,
     ) -> "Edge":
         """
         Interpolate a spline through the provided points.
-        :param cls:
+
         :param listOfVector: a list of Vectors that represent the points
         :param tangents: tuple of Vectors specifying start and finish tangent
         :param periodic: creation of peridic curves
-        :param tol: tolerance of the algorithm (consult OCC documentation)
+        :param parameters: the value of the parameter at each interpolation point. (The intepolated
+          curve is represented as a vector-valued function of a scalar parameter.) If periodic ==
+          True, then len(parameters) must be len(intepolation points) + 1, otherwise len(parameters)
+          must be equal to len(interpolation points).
+        :param scale: whether to scale the specified tangent vectors before interpolating. Each
+          tangent is scaled, so it's length is equal to the derivative of the Lagrange interpolated
+          curve. I.e., set this to True, if you want to use only the direction of the tangent
+          vectors specified by ``tangents``, but not their magnitude.
+        :param tol: tolerance of the algorithm (consult OCC documentation). Used to check that the
+          specified points are not too close to each other, and that tangent vectors are not too
+          short. (In either case interpolation may fail.)
         :return: an Edge
         """
         pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
         for ix, v in enumerate(listOfVector):
             pnts.SetValue(ix + 1, v.toPnt())
 
-        spline_builder = GeomAPI_Interpolate(pnts, periodic, tol)
+        if parameters is None:
+            spline_builder = GeomAPI_Interpolate(pnts, periodic, tol)
+        else:
+            if len(parameters) != (len(listOfVector) + periodic):
+                raise ValueError(
+                    "There must be one parameter for each interpolation point "
+                    "(plus one if periodic), or none specified. Parameter count: "
+                    f"{len(parameters)}, point count: {len(listOfVector)}"
+                )
+            parameters_array = TColStd_HArray1OfReal(1, len(parameters))
+            for p_index, p_value in enumerate(parameters):
+                parameters_array.SetValue(p_index + 1, p_value)
+
+            spline_builder = GeomAPI_Interpolate(pnts, parameters_array, periodic, tol)
+
         if tangents:
-            v1, v2 = tangents
-            spline_builder.Load(v1.wrapped, v2.wrapped)
+            if len(tangents) == 2 and len(listOfVector) != 2:
+                # Specify only initial and final tangent:
+                t1, t2 = tangents
+                spline_builder.Load(t1.wrapped, t2.wrapped, scale)
+            else:
+                if len(tangents) != len(listOfVector):
+                    raise ValueError(
+                        f"There must be one tangent for each interpolation point, "
+                        f"or just two end point tangents. Tangent count: "
+                        f"{len(tangents)}, point count: {len(listOfVector)}"
+                    )
+
+                # Specify a tangent for each interpolation point:
+                tangents_array = TColgp_Array1OfVec(1, len(tangents))
+                tangent_enabled_array = TColStd_HArray1OfBoolean(1, len(tangents))
+                for t_index, t_value in enumerate(tangents):
+                    tangent_enabled_array.SetValue(t_index + 1, t_value is not None)
+                    tangent_vec = t_value if t_value is not None else Vector()
+                    tangents_array.SetValue(t_index + 1, tangent_vec.wrapped)
+
+                spline_builder.Load(tangents_array, tangent_enabled_array, scale)
 
         spline_builder.Perform()
+        if not spline_builder.IsDone():
+            raise ValueError("B-spline interpolation failed")
+
         spline_geom = spline_builder.Curve()
 
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
@@ -1514,15 +1569,15 @@ class Wire(Shape, Mixin1D):
     @classmethod
     def assembleEdges(cls: Type["Wire"], listOfEdges: Iterable[Edge]) -> "Wire":
         """
-            Attempts to build a wire that consists of the edges in the provided list
-            :param cls:
-            :param listOfEdges: a list of Edge objects. The edges are not to be consecutive.
-            :return: a wire with the edges assembled
-            :BRepBuilderAPI_MakeWire::Error() values
-                :BRepBuilderAPI_WireDone = 0
-                :BRepBuilderAPI_EmptyWire = 1
-                :BRepBuilderAPI_DisconnectedWire = 2
-                :BRepBuilderAPI_NonManifoldWire = 3
+        Attempts to build a wire that consists of the edges in the provided list
+        :param cls:
+        :param listOfEdges: a list of Edge objects. The edges are not to be consecutive.
+        :return: a wire with the edges assembled
+        :BRepBuilderAPI_MakeWire::Error() values
+            :BRepBuilderAPI_WireDone = 0
+            :BRepBuilderAPI_EmptyWire = 1
+            :BRepBuilderAPI_DisconnectedWire = 2
+            :BRepBuilderAPI_NonManifoldWire = 3
         """
         wire_builder = BRepBuilderAPI_MakeWire()
 
@@ -1545,11 +1600,11 @@ class Wire(Shape, Mixin1D):
         cls: Type["Wire"], radius: float, center: Vector, normal: Vector
     ) -> "Wire":
         """
-            Makes a Circle centered at the provided point, having normal in the provided direction
-            :param radius: floating point radius of the circle, must be > 0
-            :param center: vector representing the center of the circle
-            :param normal: vector representing the direction of the plane the circle should lie in
-            :return:
+        Makes a Circle centered at the provided point, having normal in the provided direction
+        :param radius: floating point radius of the circle, must be > 0
+        :param center: vector representing the center of the circle
+        :param normal: vector representing the direction of the plane the circle should lie in
+        :return:
         """
 
         circle_edge = Edge.makeCircle(radius, center, normal)
@@ -1570,15 +1625,15 @@ class Wire(Shape, Mixin1D):
         closed: bool = True,
     ) -> "Wire":
         """
-            Makes an Ellipse centered at the provided point, having normal in the provided direction
-            :param x_radius: floating point major radius of the ellipse (x-axis), must be > 0
-            :param y_radius: floating point minor radius of the ellipse (y-axis), must be > 0
-            :param center: vector representing the center of the circle
-            :param normal: vector representing the direction of the plane the circle should lie in
-            :param angle1: start angle of arc
-            :param angle2: end angle of arc
-            :param rotation_angle: angle to rotate the created ellipse / arc
-            :return: Wire
+        Makes an Ellipse centered at the provided point, having normal in the provided direction
+        :param x_radius: floating point major radius of the ellipse (x-axis), must be > 0
+        :param y_radius: floating point minor radius of the ellipse (y-axis), must be > 0
+        :param center: vector representing the center of the circle
+        :param normal: vector representing the direction of the plane the circle should lie in
+        :param angle1: start angle of arc
+        :param angle2: end angle of arc
+        :param rotation_angle: angle to rotate the created ellipse / arc
+        :return: Wire
         """
 
         ellipse_edge = Edge.makeEllipse(
@@ -1715,11 +1770,11 @@ class Face(Shape):
 
     def normalAt(self, locationVector: Optional[Vector] = None) -> Vector:
         """
-            Computes the normal vector at the desired location on the face.
+        Computes the normal vector at the desired location on the face.
 
-            :returns: a  vector representing the direction
-            :param locationVector: the location to compute the normal at. If none, the center of the face is used.
-            :type locationVector: a vector that lies on the surface.
+        :returns: a  vector representing the direction
+        :param locationVector: the location to compute the normal at. If none, the center of the face is used.
+        :type locationVector: a vector that lies on the surface.
         """
         # get the geometry
         surface = self._geomAdaptor()
@@ -1779,7 +1834,7 @@ class Face(Shape):
         :param points
         :type points: list of gp_Pnt
         :param edges
-        :type edges: list of Edge 
+        :type edges: list of Edge
         :param continuity=GeomAbs_C0
         :type continuity: OCC.Core.GeomAbs continuity condition
         :param Degree = 3 (OCCT default)
@@ -2165,7 +2220,7 @@ class Solid(Shape, Mixin3D):
     @staticmethod
     def isSolid(obj: Shape) -> bool:
         """
-            Returns true if the object is a solid, false otherwise
+        Returns true if the object is a solid, false otherwise
         """
         if hasattr(obj, "ShapeType"):
             if obj.ShapeType == "Solid" or (
@@ -2274,9 +2329,9 @@ class Solid(Shape, Mixin3D):
         cls: Type["Solid"], listOfWire: List[Wire], ruled: bool = False
     ) -> "Solid":
         """
-            makes a loft from a list of wires
-            The wires will be converted into faces when possible-- it is presumed that nobody ever actually
-            wants to make an infinitely thin shell for a real FreeCADPart.
+        makes a loft from a list of wires
+        The wires will be converted into faces when possible-- it is presumed that nobody ever actually
+        wants to make an infinitely thin shell for a real FreeCADPart.
         """
         # the True flag requests building a solid instead of a shell.
         if len(listOfWire) < 2:
@@ -2362,24 +2417,24 @@ class Solid(Shape, Mixin3D):
         angleDegrees: float,
     ) -> "Solid":
         """
-            Creates a 'twisted prism' by extruding, while simultaneously rotating around the extrusion vector.
+        Creates a 'twisted prism' by extruding, while simultaneously rotating around the extrusion vector.
 
-            Though the signature may appear to be similar enough to extrudeLinear to merit combining them, the
-            construction methods used here are different enough that they should be separate.
+        Though the signature may appear to be similar enough to extrudeLinear to merit combining them, the
+        construction methods used here are different enough that they should be separate.
 
-            At a high level, the steps followed are:
-            (1) accept a set of wires
-            (2) create another set of wires like this one, but which are transformed and rotated
-            (3) create a ruledSurface between the sets of wires
-            (4) create a shell and compute the resulting object
+        At a high level, the steps followed are:
+        (1) accept a set of wires
+        (2) create another set of wires like this one, but which are transformed and rotated
+        (3) create a ruledSurface between the sets of wires
+        (4) create a shell and compute the resulting object
 
-            :param outerWire: the outermost wire, a cad.Wire
-            :param innerWires: a list of inner wires, a list of cad.Wire
-            :param vecCenter: the center point about which to rotate.  the axis of rotation is defined by
-                   vecNormal, located at vecCenter. ( a cad.Vector )
-            :param vecNormal: a vector along which to extrude the wires ( a cad.Vector )
-            :param angleDegrees: the angle to rotate through while extruding
-            :return: a cad.Solid object
+        :param outerWire: the outermost wire, a cad.Wire
+        :param innerWires: a list of inner wires, a list of cad.Wire
+        :param vecCenter: the center point about which to rotate.  the axis of rotation is defined by
+               vecNormal, located at vecCenter. ( a cad.Vector )
+        :param vecNormal: a vector along which to extrude the wires ( a cad.Vector )
+        :param angleDegrees: the angle to rotate through while extruding
+        :return: a cad.Solid object
         """
         # make straight spine
         straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
@@ -2418,26 +2473,26 @@ class Solid(Shape, Mixin3D):
         taper: float = 0,
     ) -> "Solid":
         """
-            Attempt to extrude the list of wires  into a prismatic solid in the provided direction
+        Attempt to extrude the list of wires  into a prismatic solid in the provided direction
 
-            :param outerWire: the outermost wire
-            :param innerWires: a list of inner wires
-            :param vecNormal: a vector along which to extrude the wires
-            :param taper: taper angle, default=0
-            :return: a Solid object
+        :param outerWire: the outermost wire
+        :param innerWires: a list of inner wires
+        :param vecNormal: a vector along which to extrude the wires
+        :param taper: taper angle, default=0
+        :return: a Solid object
 
-            The wires must not intersect
+        The wires must not intersect
 
-            Extruding wires is very non-trivial.  Nested wires imply very different geometry, and
-            there are many geometries that are invalid. In general, the following conditions must be met:
+        Extruding wires is very non-trivial.  Nested wires imply very different geometry, and
+        there are many geometries that are invalid. In general, the following conditions must be met:
 
-            * all wires must be closed
-            * there cannot be any intersecting or self-intersecting wires
-            * wires must be listed from outside in
-            * more than one levels of nesting is not supported reliably
+        * all wires must be closed
+        * there cannot be any intersecting or self-intersecting wires
+        * wires must be listed from outside in
+        * more than one levels of nesting is not supported reliably
 
-            This method will attempt to sort the wires, but there is much work remaining to make this method
-            reliable.
+        This method will attempt to sort the wires, but there is much work remaining to make this method
+        reliable.
         """
 
         if taper == 0:
@@ -2768,7 +2823,7 @@ class Compound(Shape, Mixin3D):
 
     def __iter__(self) -> Iterator[Shape]:
         """
-        Iterate over subshapes.    
+        Iterate over subshapes.
 
         """
 
