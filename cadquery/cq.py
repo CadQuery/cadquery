@@ -3783,13 +3783,17 @@ class Workplane(object):
         return self
 
     def offset2D(
-        self, d: float, kind: Literal["arc", "intersection", "tangent"] = "arc"
+        self,
+        d: float,
+        kind: Literal["arc", "intersection", "tangent"] = "arc",
+        forConstruction: bool = False,
     ) -> "Workplane":
         """
         Creates a 2D offset wire.
 
-        :param float d: thickness. Negative thickness denotes offset to inside.
+        :param d: thickness. Negative thickness denotes offset to inside.
         :param kind: offset kind. Use "arc" for rounded and "intersection" for sharp edges (default: "arc")
+        :param forConstruction: Should the result be added to pending wires?
 
         :return: CQ object with resulting wire(s).
         """
@@ -3798,7 +3802,12 @@ class Workplane(object):
         rv = list(chain.from_iterable(w.offset2D(d, kind) for w in ws))
 
         self.ctx.pendingEdges = []
-        self.ctx.pendingWires = rv
+        if forConstruction:
+            for wire in rv:
+                wire.forConstruction = True
+            self.ctx.pendingWires = []
+        else:
+            self.ctx.pendingWires = rv
 
         return self.newObject(rv)
 
