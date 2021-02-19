@@ -3226,10 +3226,7 @@ class Workplane(object):
         :return: OCCT solid(s), suitable for boolean operations.
 
         This method is a utility method, primarily for plugin and internal use.
-        It is the basis for cutBlind,extrude,cutThruAll, and all similar methods.
-
-        Future Enhancements:
-            extrude along a profile (sweep)
+        It is the basis for cutBlind, extrude, cutThruAll, and all similar methods.
         """
 
         # group wires together into faces based on which ones are inside the others
