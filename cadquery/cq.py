@@ -301,7 +301,7 @@ class Workplane(object):
             raise ValueError("Cannot Combine: at least one solid required!")
 
         # get context solid and we don't want to find our own objects
-        ctxSolid = self.findSolid(searchStack=False, searchParents=True)
+        ctxSolid = self.findSolid(search="parents")
 
         if ctxSolid is None:
             ctxSolid = toCombine.pop(0)
@@ -655,29 +655,28 @@ class Workplane(object):
 
         return rv
 
-    def _findType(self, types, searchStack=True, searchParents=True):
+    def _findType(self, types, search: Literal["stack", "parents"]):
 
-        if searchStack:
+        if search == "stack":
             rv = [s for s in self.objects if isinstance(s, types)]
             if rv and types == (Solid, Compound):
                 return Compound.makeCompound(rv)
             elif rv:
                 return rv[0]
 
-        if searchParents and self.parent is not None:
-            return self.parent._findType(types, searchStack=True, searchParents=True)
+        if (search == "parents") and self.parent is not None:
+            return self.parent._findType(types, search="stack")
 
         return None
 
     def findSolid(
-        self, searchStack: bool = True, searchParents: bool = True
+        self, search: Literal["stack", "parents"] = "stack"
     ) -> Union[Solid, Compound]:
         """
         Finds the first solid object in the chain, searching from the current node
         backwards through parents until one is found.
 
-        :param searchStack: should objects on the stack be searched first.
-        :param searchParents: should parents be searched?
+        :param search: should objects be searched on the stack or it's parents.
         :raises: ValueError if no solid is found in the current object or its parents,
             and errorOnEmpty is True
 
@@ -692,20 +691,19 @@ class Workplane(object):
         results with an object already on the stack.
         """
 
-        return self._findType((Solid, Compound), searchStack, searchParents)
+        return self._findType((Solid, Compound), search)
 
-    def findFace(self, searchStack: bool = True, searchParents: bool = True) -> Face:
+    def findFace(self, search: Literal["stack", "parents"] = "stack") -> Face:
         """
         Finds the first face object in the chain, searching from the current node
         backwards through parents until one is found.
 
-        :param searchStack: should objects on the stack be searched first.
-        :param searchParents: should parents be searched?
+        :param search: should objects be searched on the stack or it's parents.
         :raises: ValueError if no face is found in the current object or its parents,
             and errorOnEmpty is True
         """
 
-        return self._findType(Face, searchStack, searchParents)
+        return self._findType(Face, search)
 
     def _selectObjects(
         self,
@@ -2920,7 +2918,7 @@ class Workplane(object):
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-        baseSolid = self.findSolid(searchParents=True)
+        baseSolid = self.findSolid(search="parents")
         r = obj
         if baseSolid is not None:
             r = baseSolid.fuse(obj)
@@ -2936,7 +2934,7 @@ class Workplane(object):
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-        baseSolid = self.findSolid(searchParents=True)
+        baseSolid = self.findSolid(search="parents")
         r = obj
         if baseSolid is not None:
             r = baseSolid.cut(obj)
@@ -3003,7 +3001,7 @@ class Workplane(object):
 
         # now combine with existing solid, if there is one
         # look for parents to cut from
-        solidRef = self.findSolid(searchStack=True, searchParents=True)
+        solidRef = self.findSolid(search="stack")
         if solidRef is not None:
             r = solidRef.fuse(*newS, glue=glue, tol=tol)
         elif len(newS) > 1:
@@ -3049,7 +3047,7 @@ class Workplane(object):
         """
 
         # look for parents to cut from
-        solidRef = self.findSolid(searchStack=True, searchParents=True)
+        solidRef = self.findSolid(search="stack")
 
         if solidRef is None:
             raise ValueError("Cannot find solid to cut from")
@@ -3097,7 +3095,7 @@ class Workplane(object):
         """
 
         # look for parents to intersect with
-        solidRef = self.findSolid(searchStack=True, searchParents=True)
+        solidRef = self.findSolid(search="stack")
 
         if solidRef is None:
             raise ValueError("Cannot find solid to intersect with")
@@ -3209,7 +3207,7 @@ class Workplane(object):
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
         if combine:
-            parentSolid = self.findSolid(searchStack=False, searchParents=True)
+            parentSolid = self.findSolid(search="parents")
             if parentSolid is not None:
                 r = parentSolid.fuse(r)
 
@@ -3754,7 +3752,7 @@ class Workplane(object):
         :return: a CQ object with the resulting face(s).
         """
 
-        solidRef = self.findSolid(searchStack=True, searchParents=True)
+        solidRef = self.findSolid(search="stack")
 
         if solidRef is None:
             raise ValueError("Cannot find solid to slice")
