@@ -4241,3 +4241,16 @@ class TestCadQuery(BaseTest):
         w0 = Workplane().hLine(1).vLine(1).close()
         with raises(ValueError):
             w0.cutBlind(1)
+
+    def testFindFace(self):
+        # if there are no faces to find, should return None
+        w0 = Workplane()
+        self.assertEqual(w0.findFace(), None)
+
+        w1 = Workplane().box(1, 1, 1).faces(">Z")
+        self.assertTrue(isinstance(w1.findFace(), Face))
+        self.assertEqual(w1.findFace(searchStack=False), None)
+
+        w2 = w1.workplane().circle(0.1).extrude(0.1)
+        self.assertTrue(isinstance(w2.findFace(searchParents=True), Face))
+        self.assertEqual(w2.findFace(searchParents=False), None)

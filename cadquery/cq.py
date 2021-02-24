@@ -695,7 +695,9 @@ class Workplane(object):
 
         return self._findType((Solid, Compound), searchStack, searchParents)
 
-    def findFace(self, searchStack: bool = True, searchParents: bool = True) -> Face:
+    def findFace(
+        self, searchStack: bool = True, searchParents: bool = True
+    ) -> Optional[Face]:
         """
         Finds the first face object in the chain, searching from the current node
         backwards through parents until one is found.
