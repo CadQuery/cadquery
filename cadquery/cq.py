@@ -655,7 +655,7 @@ class Workplane(object):
 
         return rv
 
-    def _findType(self, types, search: Literal["stack", "parents"]):
+    def _findType(self, types, search):
 
         if search == "stack":
             rv = [s for s in self.objects if isinstance(s, types)]
@@ -663,6 +663,8 @@ class Workplane(object):
                 return Compound.makeCompound(rv)
             elif rv:
                 return rv[0]
+            else:
+                return self._findType(types, search="parents")
 
         if (search == "parents") and self.parent is not None:
             return self.parent._findType(types, search="stack")
