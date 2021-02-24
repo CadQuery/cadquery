@@ -1357,7 +1357,8 @@ class Edge(Shape, Mixin1D):
         sense: Literal[-1, 1] = 1,
     ) -> "Edge":
         """
-        Makes an Ellipse centered at the provided point, having normal in the provided direction
+        Makes an Ellipse centered at the provided point, having normal in the provided direction.
+
         :param cls:
         :param x_radius: x radius of the ellipse (along the x-axis of plane the ellipse should lie in)
         :param y_radius: y radius of the ellipse (along the y-axis of plane the ellipse should lie in)
