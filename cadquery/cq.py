@@ -250,10 +250,12 @@ class Workplane(object):
             c = c.faces(">Y").workplane(-0.5).split(keepTop=True)
         """
 
-        solid = self.findSolid()
-
         if (not keepTop) and (not keepBottom):
             raise ValueError("You have to keep at least one half")
+
+        solid = self.findSolid()
+        if solid is None:
+            raise ValueError("Cannot find solid to split")
 
         maxDim = solid.BoundingBox().DiagonalLength * 10.0
         topCutBox = self.rect(maxDim, maxDim)._extrude(maxDim)
@@ -302,7 +304,6 @@ class Workplane(object):
 
         # get context solid and we don't want to find our own objects
         ctxSolid = self.findSolid(searchStack=False, searchParents=True)
-
         if ctxSolid is None:
             ctxSolid = toCombine.pop(0)
 
@@ -676,10 +677,9 @@ class Workplane(object):
         Finds the first solid object in the chain, searching from the current node
         backwards through parents until one is found.
 
-        :param searchStack: should objects on the stack be searched first.
+        :param searchStack: should objects on the stack be searched first?
         :param searchParents: should parents be searched?
-        :raises: ValueError if no solid is found in the current object or its parents,
-            and errorOnEmpty is True
+        :returns: A solid or None if no solid is found.
 
         This function is very important for chains that are modifying a single parent object,
         most often a solid.
@@ -701,8 +701,7 @@ class Workplane(object):
 
         :param searchStack: should objects on the stack be searched first.
         :param searchParents: should parents be searched?
-        :raises: ValueError if no face is found in the current object or its parents,
-            and errorOnEmpty is True
+        :returns: A face or None if no face is found.
         """
 
         return self._findType(Face, searchStack, searchParents)
@@ -1133,6 +1132,8 @@ class Workplane(object):
             Better selectors to make it easier to select multiple faces
         """
         solidRef = self.findSolid()
+        if solidRef is None:
+            raise ValueError("Cannot find a solid to shell")
 
         faces = [f for f in self.objects if isinstance(f, Face)]
 
@@ -1161,6 +1162,8 @@ class Workplane(object):
         # TODO: we segfault
 
         solid = self.findSolid()
+        if solid is None:
+            raise ValueError("Cannot find a solid to fillet")
 
         edgeList = cast(List[Edge], self.edges().vals())
         if len(edgeList) < 1:
@@ -1198,6 +1201,8 @@ class Workplane(object):
             s = Workplane("XY").box(1,1,1).faces("+Z").chamfer(0.2, 0.1)
         """
         solid = self.findSolid()
+        if solid is None:
+            raise ValueError("Cannot find a solid to chamfer")
 
         edgeList = cast(List[Edge], self.edges().vals())
         if len(edgeList) < 1:
@@ -2531,7 +2536,7 @@ class Workplane(object):
         """
         ctxSolid = self.findSolid()
         if ctxSolid is None:
-            raise ValueError("Must have a solid in the chain to cut from!")
+            raise ValueError("Cannot find a solid to cut from")
 
         # will contain all of the counterbores as a single compound
         results = cast(List[Shape], self.eachpoint(fcn, useLocalCoords).vals())
@@ -3050,7 +3055,6 @@ class Workplane(object):
 
         # look for parents to cut from
         solidRef = self.findSolid(searchStack=True, searchParents=True)
-
         if solidRef is None:
             raise ValueError("Cannot find solid to cut from")
 
@@ -3098,7 +3102,6 @@ class Workplane(object):
 
         # look for parents to intersect with
         solidRef = self.findSolid(searchStack=True, searchParents=True)
-
         if solidRef is None:
             raise ValueError("Cannot find solid to intersect with")
 
@@ -3159,6 +3162,8 @@ class Workplane(object):
         # now find a solid in the chain
 
         solidRef = self.findSolid()
+        if solidRef is None:
+            raise ValueError("Cannot find a solid to cut")
 
         s = solidRef.cut(toCut)
 
@@ -3185,6 +3190,9 @@ class Workplane(object):
         self.ctx.pendingWires = []
 
         solidRef = self.findSolid()
+        if solidRef is None:
+            raise ValueError("Cannot find a solid to cut through")
+
         rv = []
         for solid in solidRef.Solids():
             s = solid.dprism(None, wires, thruAll=True, additive=False, taper=-taper)
@@ -3755,7 +3763,6 @@ class Workplane(object):
         """
 
         solidRef = self.findSolid(searchStack=True, searchParents=True)
-
         if solidRef is None:
             raise ValueError("Cannot find solid to slice")
 
