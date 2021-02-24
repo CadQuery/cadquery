@@ -293,10 +293,11 @@ class Workplane(object):
         combined and returned on the stack of the new object.
         """
         # loop through current stack objects, and combine them
-        toCombine = self.solids().vals()
+        toCombine = cast(List[Solid], self.solids().vals())
 
         if otherCQToCombine:
-            for obj in otherCQToCombine.solids().vals():
+            otherSolids = cast(List[Solid], otherCQToCombine.solids().vals())
+            for obj in otherSolids:
                 toCombine.append(obj)
 
         if len(toCombine) < 1:
@@ -672,7 +673,7 @@ class Workplane(object):
 
     def findSolid(
         self, searchStack: bool = True, searchParents: bool = True
-    ) -> Union[Solid, Compound]:
+    ) -> Optional[Union[Solid, Compound]]:
         """
         Finds the first solid object in the chain, searching from the current node
         backwards through parents until one is found.
@@ -2994,7 +2995,7 @@ class Workplane(object):
         """
 
         # first collect all of the items together
-        newS: Sequence[Shape]
+        newS: List[Shape]
         if isinstance(toUnion, CQ):
             newS = cast(List[Shape], toUnion.solids().vals())
             if len(newS) < 1:
@@ -3002,7 +3003,7 @@ class Workplane(object):
                     "CQ object  must have at least one solid on the stack to union!"
                 )
         elif isinstance(toUnion, (Solid, Compound)):
-            newS = (toUnion,)
+            newS = [toUnion]
         else:
             raise ValueError("Cannot union type '{}'".format(type(toUnion)))
 
