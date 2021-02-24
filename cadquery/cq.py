@@ -2776,7 +2776,7 @@ class Workplane(object):
 
         extrude always *adds* material to a part.
 
-        The returned object is always a CQ object, and depends on wither combine is True, and
+        The returned object is always a CQ object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
@@ -2822,7 +2822,7 @@ class Workplane(object):
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
 
-        The returned object is always a CQ object, and depends on wither combine is True, and
+        The returned object is always a CQ object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
@@ -3716,7 +3716,7 @@ class Workplane(object):
 
         extrude always *adds* material to a part.
 
-        The returned object is always a CQ object, and depends on wither combine is True, and
+        The returned object is always a CQ object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
