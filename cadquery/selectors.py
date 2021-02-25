@@ -198,7 +198,7 @@ class ParallelDirSelector(BaseDirSelector):
         Linear Edges
         Planar Faces
 
-    Use the string syntax shortcut |(X|Y|Z) if you want to select based on a cardinal direction.
+    Use the string syntax shortcut \|(X|Y|Z) if you want to select based on a cardinal direction.
 
     Example::
 
@@ -679,7 +679,7 @@ class _SimpleStringSyntaxSelector(Selector):
     def filter(self, objectList):
         r"""
         selects minimum, maximum, positive or negative values relative to a direction
-        [+|-|<|>|] <X|Y|Z>
+        ``[+|-|<|>|] <X|Y|Z>``
         """
         return self.mySelector.filter(objectList)
 
@@ -753,7 +753,7 @@ class StringSyntaxSelector(Selector):
 
     ***Modfiers*** are ``('|','+','-','<','>','%')``
 
-        :|:
+        :\|:
             parallel to ( same as :py:class:`ParallelDirSelector` ). Can return multiple objects.
         :#:
             perpendicular to (same as :py:class:`PerpendicularDirSelector` )
@@ -776,11 +776,11 @@ class StringSyntaxSelector(Selector):
         :and:
             Logical AND, e.g. >X and >Y
         :or:
-            Logical OR, e.g. |X or |Y
+            Logical OR, e.g. \|X or \|Y
         :not:
             Logical NOT, e.g. not #XY
         :exc(ept):
-            Set difference (equivalent to AND NOT): |X exc >Z
+            Set difference (equivalent to AND NOT): \|X exc >Z
 
     Finally, it is also possible to use even more complex expressions with nesting
     and arbitrary number of terms, e.g.
