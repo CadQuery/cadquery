@@ -1844,18 +1844,15 @@ class TestCadQuery(BaseTest):
         """
         r = Workplane("XY").box(1, 1, 1)
         dim = r.largestDimension()
-
         self.assertAlmostEqual(1.76, dim, 1)
 
         r = Workplane("XY").rect(1, 1).extrude(1)
         dim = r.largestDimension()
-
         self.assertAlmostEqual(1.76, dim, 1)
 
         r = Workplane("XY")
-        dim = r.largestDimension()
-
-        self.assertEqual(-1, dim)
+        with raises(ValueError):
+            r.largestDimension()
 
     def testOccBottle(self):
         """
@@ -3443,9 +3440,10 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(s.Solids()), 2)
         self.assertTrue(isinstance(s, Compound))
 
-        # if no solids are found, should return None
+        # if no solids are found, should raise ValueError
         w = Workplane().hLine(1).close()
-        self.assertEqual(w.findSolid(), None)
+        with raises(ValueError):
+            w.findSolid()
 
     def testSlot2D(self):
 
