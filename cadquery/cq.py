@@ -236,8 +236,8 @@ class Workplane(object):
 
         :param boolean keepTop: True to keep the top, False or None to discard it
         :param boolean keepBottom: True to keep the bottom, False or None to discard it
-        :raises: ValueError if keepTop and keepBottom are both false.
-        :raises: ValueError if there is not a solid in the current stack or the parent chain
+        :raises ValueError: if keepTop and keepBottom are both false.
+        :raises ValueError: if there is no solid in the current stack or parent chain
         :returns: CQ object with the desired objects on the stack.
 
         The most common operation splits a solid and keeps one half. This sample creates
@@ -1118,7 +1118,7 @@ class Workplane(object):
         :param thickness: a positive float, representing the thickness of the desired shell.
             Negative values shell inwards, positive values shell outwards.
         :param kind: kind of joints, intersetion or arc (default: arc).
-        :raises: ValueError if the current stack contains objects that are not faces of a solid
+        :raises ValueError: if the current stack contains objects that are not faces of a solid
              further up in the chain.
         :returns: a CQ object with the resulting shelled solid selected.
 
@@ -1162,15 +1162,14 @@ class Workplane(object):
 
         :param radius: the radius of the fillet, must be > zero
         :type radius: positive float
-        :raises: ValueError if at least one edge is not selected
-        :raises: ValueError if the solid containing the edge is not in the chain
+        :raises ValueError: if at least one edge is not selected
+        :raises ValueError: if the solid containing the edge is not in the chain
         :returns: cq object with the resulting solid selected.
 
         This example will create a unit cube, with the top edges filleted::
 
             s = Workplane().box(1,1,1).faces("+Z").edges().fillet(0.1)
         """
-        # TODO: we will need much better edge selectors for this to work
         # TODO: ensure that edges selected actually belong to the solid in the chain, otherwise,
         # TODO: we segfault
 
@@ -1199,8 +1198,8 @@ class Workplane(object):
         :param length2: optional parameter for asymmetrical chamfer
         :type length: positive float
         :type length2: positive float
-        :raises: ValueError if at least one edge is not selected
-        :raises: ValueError if the solid containing the edge is not in the chain
+        :raises ValueError: if at least one edge is not selected
+        :raises ValueError: if the solid containing the edge is not in the chain
         :returns: cq object with the resulting solid selected.
 
         This example will create a unit cube, with the top edges chamfered::
@@ -2515,8 +2514,11 @@ class Workplane(object):
     def largestDimension(self) -> float:
         """
         Finds the largest dimension in the stack.
+
         Used internally to create thru features, this is how you can compute
         how long or wide a feature must be to make sure to cut through all of the material
+
+        :raises ValueError: if no solids or compounds are found
         :return: A value representing the largest dimension of the first solid on the stack
         """
         # Get all the solids contained within this CQ object
@@ -2536,8 +2538,8 @@ class Workplane(object):
         :param fcn: a function suitable for use in the eachpoint method: ie, that accepts a vector
         :param useLocalCoords: same as for :py:meth:`eachpoint`
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :raises ValueError: if no solids or compounds are found in the stack or parent chain
         :return: a CQ object that contains the resulting solid
-        :raises: an error if there is not a context solid to cut from
         """
         ctxSolid = self.findSolid()
 
@@ -3058,7 +3060,7 @@ class Workplane(object):
         :param toCut: object to cut
         :type toCut: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :raises: ValueError if there is no solid to subtract from in the chain
+        :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
         """
 
@@ -3103,7 +3105,7 @@ class Workplane(object):
         :param toIntersect: object to intersect
         :type toIntersect: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :raises: ValueError if there is no solid to intersect with in the chain
+        :raises ValueError: if there is no solid to intersect with in the chain
         :return: a CQ object with the resulting object selected
         """
 
@@ -3153,7 +3155,7 @@ class Workplane(object):
             <0 means in the negative direction
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
-        :raises: ValueError if there is no solid to subtract from in the chain
+        :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
         see :py:meth:`cutThruAll` to cut material from the entire part
@@ -3183,7 +3185,7 @@ class Workplane(object):
         from. cutThruAll always removes material from a part.
 
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :raises: ValueError if there is no solid to subtract from in the chain
+        :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
         see :py:meth:`cutBlind` to cut material to a limited depth
@@ -3761,6 +3763,7 @@ class Workplane(object):
         Slices current solid at the given height.
 
         :param float height: height to slice at (default: 0)
+        :raises ValueError: if no solids or compounds are found
         :return: a CQ object with the resulting face(s).
         """
 
