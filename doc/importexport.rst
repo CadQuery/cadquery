@@ -42,8 +42,40 @@ Notes on the Formats
 Importing DXF
 ##############
 
+DXF files can be imported using the :py:meth:`importers.importDXF` method. There are 3 parameters that can be 
+passed this method to control how the DXF is handled.
+
+* *fileName* - The path and name of the DXF file to be imported.
+* *tol* - The tolerance used for merging edges into wires (default: 1e-6).
+* *exclude* - A list of layer names not to import (default: []).
+
+Importing a DXF profile with default settings and using it within a CadQuery script is shown in the following code.
+
+.. code-block:: python
+
+    import cadquery as cq
+
+    result = (
+        cq.importers.importDXF('/path/to/dxf/circle.dxf')
+        .wires().toPending()
+        .extrude(10)
+        )
+
+Note the use of the :py:meth:`Workplane.wires` and :py:meth:`Workplane.toPending` methods to make the DXF profile 
+ready for use during subsequent operations. Calling toPending() tells CadQuery to make the edges/wires available 
+to the next operation that is called in the chain.
+
 Importing STEP
 ###############
+
+STEP files can be imported using the :py:meth:`importers.importStep` method (note the capitalization of "Step"). 
+There are no parameters for this method other than the file path to import.
+
+.. code-block:: python
+
+    import cadquery as cq
+
+    result = cq.importers.importStep('/path/to/step/block.stp')
 
 Exporting SVG
 ##############
@@ -115,6 +147,12 @@ Which results in the following image:
 
 Exporting STL
 ##############
+
+The STL exporter is capable of adjusting the quality of the resulting STL, and accepts the following options.
+
+* ** - 
+* ** - 
+* ** - 
 
 Exporting Other Formats
 ########################
