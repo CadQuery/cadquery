@@ -62,11 +62,11 @@ writeStringToFile(SUMMARY_TEMPLATE, SUMMARY_FILE)
 class TestCadQuery(BaseTest):
     def tearDown(self):
         """
-            Update summary with data from this test.
-            This is a really hackey way of doing it-- we get a startup event from module load,
-            but there is no way in unittest to get a single shutdown event-- except for stuff in 2.7 and above
+        Update summary with data from this test.
+        This is a really hackey way of doing it-- we get a startup event from module load,
+        but there is no way in unittest to get a single shutdown event-- except for stuff in 2.7 and above
 
-            So what we do here is to read the existing file, stick in more content, and leave it
+        So what we do here is to read the existing file, stick in more content, and leave it
         """
         svgFile = os.path.join(OUTDIR, self._testMethodName + ".svg")
 
@@ -89,8 +89,8 @@ class TestCadQuery(BaseTest):
 
     def saveModel(self, shape):
         """
-            shape must be a CQ object
-            Save models in SVG and STEP format
+        shape must be a CQ object
+        Save models in SVG and STEP format
         """
         shape.exportSvg(os.path.join(OUTDIR, self._testMethodName + ".svg"))
         shape.val().exportStep(os.path.join(OUTDIR, self._testMethodName + ".step"))
@@ -155,11 +155,11 @@ class TestCadQuery(BaseTest):
 
     def testCylinderPlugin(self):
         """
-            Tests a cylinder plugin.
-            The plugin creates cylinders of the specified radius and height for each item on the stack
+        Tests a cylinder plugin.
+        The plugin creates cylinders of the specified radius and height for each item on the stack
 
-            This is a very short plugin that illustrates just about the simplest possible
-            plugin
+        This is a very short plugin that illustrates just about the simplest possible
+        plugin
         """
 
         def cylinders(self, radius, height):
@@ -185,10 +185,10 @@ class TestCadQuery(BaseTest):
 
     def testPolygonPlugin(self):
         """
-            Tests a plugin to make regular polygons around points on the stack
+        Tests a plugin to make regular polygons around points on the stack
 
-            Demonstratings using eachpoint to allow working in local coordinates
-            to create geometry
+        Demonstratings using eachpoint to allow working in local coordinates
+        to create geometry
         """
 
         def rPoly(self, nSides, diameter):
@@ -589,6 +589,151 @@ class TestCadQuery(BaseTest):
 
         path2 = Workplane("XY", (0, 0, 10)).spline(pts, tangents=tangents)
         self.assertAlmostEqual(path2.val().tangentAt(0).z, 0)
+
+    def testSplineWithMultipleTangents(self):
+        """
+        Tests specifying B-spline tangents, besides the start point and end
+        point tangents.
+        """
+
+        points = [(0, 0), (1, 1), (2, 0), (1, -1)]
+        tangents = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        parameters = range(len(points))
+
+        spline = (
+            Workplane("XY")
+            .spline(points, tangents=tangents, parameters=parameters)
+            .consolidateWires()
+        )
+
+        test_point = spline.edges().val().positionAt(2.5, mode="parameter")
+        expected_test_point = Vector(1.875, -0.625, 0.0)
+
+        self.assertAlmostEqual((test_point - expected_test_point).Length, 0)
+
+    def testSplineWithSpecifiedAndUnspecifiedTangents(self):
+        points = [(0, 0), (1, 1), (2, 0), (1, -1)]
+        tangents = [(0, 1), None, (0, -1), (-1, 0)]
+        parameters = range(len(points))
+
+        spline = (
+            Workplane("XY")
+            .spline(points, tangents=tangents, parameters=parameters)
+            .consolidateWires()
+        )
+
+        test_point = spline.edges().val().positionAt(1.5, mode="parameter")
+        expected_test_point = Vector(1.6875, 0.875, 0.0)
+
+        self.assertAlmostEqual((test_point - expected_test_point).Length, 0)
+
+    def testSplineSpecifyingParameters(self):
+        points = [(0, 0), (1, 1), (2, 0), (1, -1)]
+        tangents = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+        spline1 = (
+            Workplane("XY")
+            .spline(points, tangents=tangents, parameters=[0, 1, 2, 3])
+            .consolidateWires()
+        )
+        # Multiply all parameter values by 10:
+        spline2 = (
+            Workplane("XY")
+            .spline(points, tangents=tangents, parameters=[0, 10, 20, 30])
+            .consolidateWires()
+        )
+
+        # Test point equivalence for parameter, and pamater multiplied by 10:
+        test_point1 = spline1.edges().val().positionAt(1.5, mode="parameter")
+        test_point2 = spline2.edges().val().positionAt(15, mode="parameter")
+        expected_test_point = Vector(1.625, 0.625, 0.0)
+
+        self.assertAlmostEqual((test_point1 - test_point2).Length, 0)
+        self.assertAlmostEqual((test_point1 - expected_test_point).Length, 0)
+
+        # test periodic with parameters
+        spline3 = Workplane().spline(
+            points, periodic=True, parameters=[x for x in range(len(points) + 1)]
+        )
+        self.assertTrue(spline3.val().IsClosed())
+
+    def testSplineWithScaleTrue(self):
+        points = [(0, 0), (1, 1), (2, 0), (1, -1)]
+        tangents = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        parameters = range(len(points))
+
+        spline = (
+            Workplane("XY")
+            .spline(points, tangents=tangents, parameters=parameters, scale=True)
+            .consolidateWires()
+        )
+
+        test_point = spline.edges().val().positionAt(0.5, mode="parameter")
+        expected_test_point = Vector(0.375, 0.875, 0.0)
+
+        self.assertAlmostEqual((test_point - expected_test_point).Length, 0)
+
+    def testSplineWithScaleFalse(self):
+        """
+        Like testSplineWithScaleTrue, but verifies the tangent vector is
+        different when scale=False.
+
+        The interpolation points and tangent vectors are the same in
+        `testSplineWithScaleTrue`, and `testSplineWithScaleFalse`. A test
+        point is rendered at the same parameter value in both cases, but its
+        coordinates are different in each case.
+        """
+        points = [(0, 0), (1, 1), (2, 0), (1, -1)]
+        tangents = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        parameters = range(len(points))
+
+        spline = (
+            Workplane("XY")
+            .spline(points, tangents=tangents, parameters=parameters, scale=False)
+            .consolidateWires()
+        )
+
+        test_point = spline.edges().val().positionAt(0.5, mode="parameter")
+        expected_test_point = Vector(0.375, 0.625, 0.0)
+
+        self.assertAlmostEqual((test_point - expected_test_point).Length, 0)
+
+    def testSplineTangentMagnitudeBelowToleranceThrows(self):
+        import OCP
+
+        points = [(0, 0), (1, 1), (2, 0), (1, -1)]
+        # Use a tangent vector with magnitude 0.5:
+        tangents = [(0, 0.5), (1, 0), (0, -1), (-1, 0)]
+        parameters = range(len(points))
+
+        # Set tolerance above the 0.5 length of the tangent vector. This
+        # should throw an exception:
+        with raises(
+            (OCP.Standard.Standard_ConstructionError, OCP.Standard.Standard_Failure)
+        ):
+            spline = (
+                Workplane("XY")
+                .spline(points, tangents=tangents, tol=1)
+                .consolidateWires()
+            )
+
+    def testSplineInputValidation(self):
+
+        points = [(0, 0), (1, 1), (2, 0)]
+        tangents = [(0, 0.5), (1, 0), (0, -1), (-1, 0)]
+
+        with raises(ValueError):
+            spline = Workplane().spline(points, tangents=tangents)
+
+        with raises(ValueError):
+            Workplane().spline(
+                points, periodic=False, parameters=[x for x in range(len(points) + 1)],
+            )
+
+        with raises(ValueError):
+            Workplane().spline(
+                points, periodic=True, parameters=[x for x in range(len(points))],
+            )
 
     def testRotatedEllipse(self):
         def rotatePoint(x, y, alpha):
@@ -1267,7 +1412,7 @@ class TestCadQuery(BaseTest):
 
     def testSimpleWorkplane(self):
         """
-            A simple square part with a hole in it
+        A simple square part with a hole in it
         """
         s = Workplane(Plane.XY())
         r = (
@@ -1301,8 +1446,8 @@ class TestCadQuery(BaseTest):
 
     def testMultiWireWorkplane(self):
         """
-            A simple square part with a hole in it-- but this time done as a single extrusion
-            with two wires, as opposed to s cut
+        A simple square part with a hole in it-- but this time done as a single extrusion
+        with two wires, as opposed to s cut
         """
         s = Workplane(Plane.XY())
         r = s.rect(2.0, 2.0).circle(0.25).extrude(0.5)
@@ -1312,8 +1457,8 @@ class TestCadQuery(BaseTest):
 
     def testConstructionWire(self):
         """
-            Tests a wire with several holes, that are based on the vertices of a square
-            also tests using a workplane plane other than XY
+        Tests a wire with several holes, that are based on the vertices of a square
+        also tests using a workplane plane other than XY
         """
         s = Workplane(Plane.YZ())
         r = (
@@ -1329,7 +1474,7 @@ class TestCadQuery(BaseTest):
 
     def testTwoWorkplanes(self):
         """
-            Tests a model that uses more than one workplane
+        Tests a model that uses more than one workplane
         """
         # base block
         s = Workplane(Plane.XY())
@@ -1368,6 +1513,10 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError):
             currentS.cut(toCut.faces().val())
 
+        # Test syntactic sugar [__sub__ method]
+        sugar = currentS - toCut.val()
+        self.assertEqual(resS.faces().size(), sugar.faces().size())
+
     def testIntersect(self):
         """
         Tests the intersect function.
@@ -1394,6 +1543,10 @@ class TestCadQuery(BaseTest):
 
         with self.assertRaises(ValueError):
             b1.intersect(b2.faces().val())
+
+        # Test syntactic sugar [__mul__ method]
+        sugar = b1 & b2
+        self.assertEqual(resS.val().Volume(), sugar.val().Volume())
 
     def testBoundingBox(self):
         """
@@ -1445,7 +1598,7 @@ class TestCadQuery(BaseTest):
 
     def testCutThroughAll(self):
         """
-            Tests a model that uses more than one workplane
+        Tests a model that uses more than one workplane
         """
         # base block
         s = Workplane(Plane.XY())
@@ -1495,7 +1648,7 @@ class TestCadQuery(BaseTest):
 
     def testCutToFaceOffsetNOTIMPLEMENTEDYET(self):
         """
-            Tests cutting up to a given face, or an offset from a face
+        Tests cutting up to a given face, or an offset from a face
         """
         # base block
         s = Workplane(Plane.XY())
@@ -1721,7 +1874,7 @@ class TestCadQuery(BaseTest):
 
     def testSplineShape(self):
         """
-            Tests making a shape with an edge that is a spline
+        Tests making a shape with an edge that is a spline
         """
         s = Workplane(Plane.XY())
         sPnts = [
@@ -1739,7 +1892,7 @@ class TestCadQuery(BaseTest):
 
     def testSimpleMirror(self):
         """
-            Tests a simple mirroring operation
+        Tests a simple mirroring operation
         """
         s = (
             Workplane("XY")
@@ -1813,7 +1966,7 @@ class TestCadQuery(BaseTest):
 
     def testIbeam(self):
         """
-            Make an ibeam. demonstrates fancy mirroring
+        Make an ibeam. demonstrates fancy mirroring
         """
         s = Workplane(Plane.XY())
         L = 100.0
@@ -1912,7 +2065,7 @@ class TestCadQuery(BaseTest):
 
     def testCounterSinks(self):
         """
-            Tests countersinks
+        Tests countersinks
         """
         s = Workplane(Plane.XY())
         result = (
@@ -1985,7 +2138,7 @@ class TestCadQuery(BaseTest):
 
     def testSimpleShell(self):
         """
-            Create s simple box
+        Create s simple box
         """
         s1 = Workplane("XY").box(2, 2, 2).faces("+Z").shell(0.05)
         self.saveModel(s1)
@@ -2005,7 +2158,7 @@ class TestCadQuery(BaseTest):
 
     def testClosedShell(self):
         """
-            Create a hollow box
+        Create a hollow box
         """
         s1 = Workplane("XY").box(2, 2, 2).shell(-0.1)
         self.assertEqual(12, s1.faces().size())
@@ -2340,6 +2493,13 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError):
             resS.union(toUnion.faces().val())
 
+        # Test syntactic sugar [__add__ method]
+        sugar1 = currentS | toUnion
+        sugar2 = currentS + toUnion
+
+        self.assertEqual(resS.faces().size(), sugar1.faces().size())
+        self.assertEqual(resS.faces().size(), sugar2.faces().size())
+
     def testCombine(self):
         s = Workplane(Plane.XY())
         objects1 = s.rect(2.0, 2.0).extrude(0.5).faces(">Z").rect(1.0, 1.0).extrude(0.5)
@@ -2641,32 +2801,32 @@ class TestCadQuery(BaseTest):
 
     def testCup(self):
         """
-            UOM = "mm"
+        UOM = "mm"
 
-            #
-            # PARAMETERS and PRESETS
-            # These parameters can be manipulated by end users
-            #
-            bottomDiameter = FloatParam(min=10.0,presets={'default':50.0,'tumbler':50.0,'shot':35.0,'tea':50.0,'saucer':100.0},group="Basics", desc="Bottom diameter")
-            topDiameter = FloatParam(min=10.0,presets={'default':85.0,'tumbler':85.0,'shot':50.0,'tea':51.0,'saucer':400.0 },group="Basics", desc="Top diameter")
-            thickness = FloatParam(min=0.1,presets={'default':2.0,'tumbler':2.0,'shot':2.66,'tea':2.0,'saucer':2.0},group="Basics", desc="Thickness")
-            height = FloatParam(min=1.0,presets={'default':80.0,'tumbler':80.0,'shot':59.0,'tea':125.0,'saucer':40.0},group="Basics", desc="Overall height")
-            lipradius = FloatParam(min=1.0,presets={'default':1.0,'tumbler':1.0,'shot':0.8,'tea':1.0,'saucer':1.0},group="Basics", desc="Lip Radius")
-            bottomThickness = FloatParam(min=1.0,presets={'default':5.0,'tumbler':5.0,'shot':10.0,'tea':10.0,'saucer':5.0},group="Basics", desc="BottomThickness")
+        #
+        # PARAMETERS and PRESETS
+        # These parameters can be manipulated by end users
+        #
+        bottomDiameter = FloatParam(min=10.0,presets={'default':50.0,'tumbler':50.0,'shot':35.0,'tea':50.0,'saucer':100.0},group="Basics", desc="Bottom diameter")
+        topDiameter = FloatParam(min=10.0,presets={'default':85.0,'tumbler':85.0,'shot':50.0,'tea':51.0,'saucer':400.0 },group="Basics", desc="Top diameter")
+        thickness = FloatParam(min=0.1,presets={'default':2.0,'tumbler':2.0,'shot':2.66,'tea':2.0,'saucer':2.0},group="Basics", desc="Thickness")
+        height = FloatParam(min=1.0,presets={'default':80.0,'tumbler':80.0,'shot':59.0,'tea':125.0,'saucer':40.0},group="Basics", desc="Overall height")
+        lipradius = FloatParam(min=1.0,presets={'default':1.0,'tumbler':1.0,'shot':0.8,'tea':1.0,'saucer':1.0},group="Basics", desc="Lip Radius")
+        bottomThickness = FloatParam(min=1.0,presets={'default':5.0,'tumbler':5.0,'shot':10.0,'tea':10.0,'saucer':5.0},group="Basics", desc="BottomThickness")
 
-            #
-            # Your build method. It must return a solid object
-            #
-            def build():
-                br = bottomDiameter.value / 2.0
-                tr = topDiameter.value / 2.0
-                t = thickness.value
-                s1 = Workplane("XY").circle(br).workplane(offset=height.value).circle(tr).loft()
-                s2 = Workplane("XY").workplane(offset=bottomThickness.value).circle(br - t ).workplane(offset=height.value - t ).circle(tr - t).loft()
+        #
+        # Your build method. It must return a solid object
+        #
+        def build():
+            br = bottomDiameter.value / 2.0
+            tr = topDiameter.value / 2.0
+            t = thickness.value
+            s1 = Workplane("XY").circle(br).workplane(offset=height.value).circle(tr).loft()
+            s2 = Workplane("XY").workplane(offset=bottomThickness.value).circle(br - t ).workplane(offset=height.value - t ).circle(tr - t).loft()
 
-                cup = s1.cut(s2)
-                cup.faces(">Z").edges().fillet(lipradius.value)
-                return cup
+            cup = s1.cut(s2)
+            cup.faces(">Z").edges().fillet(lipradius.value)
+            return cup
         """
 
         # for some reason shell doesnt work on this simple shape. how disappointing!
@@ -2688,9 +2848,9 @@ class TestCadQuery(BaseTest):
 
     def testEnclosure(self):
         """
-            Builds an electronics enclosure
-            Original FreeCAD script: 81 source statements ,not including variables
-            This script: 34
+        Builds an electronics enclosure
+        Original FreeCAD script: 81 source statements ,not including variables
+        This script: 34
         """
 
         # parameter definitions
@@ -3872,6 +4032,15 @@ class TestCadQuery(BaseTest):
         )
         self.assertEqual(s.solids().size(), 4)
 
+        # test forConstruction
+        # forConstruction=True should place results in objects, not ctx.pendingWires
+        w6 = Workplane().hLine(1).vLine(1).close().offset2D(0.5, forConstruction=True)
+        self.assertEqual(len(w6.ctx.pendingWires), 0)
+        self.assertEqual(w6.size(), 1)
+        self.assertEqual(type(w6.val()), Wire)
+        # make sure the resulting wire has forConstruction set
+        self.assertEqual(w6.val().forConstruction, True)
+
     def testConsolidateWires(self):
 
         w1 = Workplane().lineTo(0, 1).lineTo(1, 1).consolidateWires()
@@ -3984,8 +4153,21 @@ class TestCadQuery(BaseTest):
 
         path = Workplane("XZ").spline(pts, tangents=((0, 1), (1, 0))).val()
 
-        self.assertTrue(path.tangentAt(0.5) == path.tangentAt(0.5))
-        self.assertFalse(path.tangentAt(0.5) == path.tangentAt(0.5, mode="length"))
+        self.assertTrue(
+            path.tangentAt(0.0, mode="parameter") == path.tangentAt(0.0, mode="length")
+        )
+        self.assertFalse(
+            path.tangentAt(0.5, mode="parameter") == path.tangentAt(0.5, mode="length")
+        )
+
+        arc = Workplane().radiusArc((2, 0), 1).val()
+
+        self.assertTupleAlmostEquals(
+            arc.tangentAt(math.pi / 2, "parameter").toTuple(), (1, 0, 0), 6
+        )
+        self.assertTupleAlmostEquals(
+            arc.tangentAt(0.5, "length").toTuple(), (1, 0, 0), 6
+        )
 
     def testEnd(self):
 

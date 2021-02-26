@@ -617,17 +617,24 @@ and a circular section.
         * :py:meth:`Workplane.circle`
         * :py:meth:`Workplane.rect`
 
-Making Counter-bored and counter-sunk holes
+Making Counter-bored and Counter-sunk Holes
 ----------------------------------------------
 
 Counterbored and countersunk holes are so common that CadQuery creates macros to create them in a single step.
 
-Similar to :py:meth:`Workplane.hole` , these functions operate on a list of points as well as a single point.
+Similar to :py:meth:`Workplane.hole`, these functions operate on a list of points as well as a single point.
 
 .. cadquery::
 
-    result = (cq.Workplane(cq.Plane.XY()).box(4,2, 0.5).faces(">Z").workplane().rect(3.5, 1.5, forConstruction=True)
-    .vertices().cboreHole(0.125, 0.25, 0.125, depth=None))
+    result = (
+        cq.Workplane(cq.Plane.XY())
+        .box(4, 2, 0.5)
+        .faces(">Z")
+        .workplane()
+        .rect(3.5, 1.5, forConstruction=True)
+        .vertices()
+        .cboreHole(0.125, 0.25, 0.125, depth=None)
+    )
 
 
 .. topic:: Api References
@@ -643,6 +650,67 @@ Similar to :py:meth:`Workplane.hole` , these functions operate on a list of poin
         * :py:meth:`Workplane.vertices`
         * :py:meth:`Workplane.faces`
         * :py:meth:`Workplane`
+
+Offsetting wires in 2D
+----------------------
+
+Two dimensional wires can be transformed with :py:meth:`Workplane.offset2D`. They can be offset
+inwards or outwards, and with different techniques for extending the corners.
+
+.. cadquery::
+
+    original = cq.Workplane().polygon(5, 10).extrude(0.1).translate((0, 0, 2))
+    arc = (
+        cq.Workplane()
+        .polygon(5, 10)
+        .offset2D(1, "arc")
+        .extrude(0.1)
+        .translate((0, 0, 1))
+    )
+    intersection = cq.Workplane().polygon(5, 10).offset2D(1, "intersection").extrude(0.1)
+    result = original.add(arc).add(intersection)
+
+
+Using the forConstruction argument you can do the common task of offsetting a series of bolt holes
+from the outline of an object. Here is the counterbore example from above but with the bolt holes
+offset from the edges.
+
+.. cadquery::
+
+    result = (
+        cq.Workplane()
+        .box(4, 2, 0.5)
+        .faces(">Z")
+        .edges()
+        .toPending()
+        .offset2D(-0.25, forConstruction=True)
+        .vertices()
+        .cboreHole(0.125, 0.25, 0.125, depth=None)
+    )
+
+
+Note that :py:meth:`Workplane.edges` is for selecting objects. It does not add the selected edges to
+pending edges in the modelling context, because this would result in your next extrusion including
+everything you had only selected in addition to the lines you had drawn. To specify you want these
+edges to be used in :py:meth:`Workplane.offset2D`, you call :py:meth:`Workplane.toPending` to
+explicitly put them in the list of pending edges.
+
+.. topic:: Api References
+
+    .. hlist::
+        :columns: 2
+
+        * :py:meth:`Workplane.offset2D` **!**
+        * :py:meth:`Workplane.cboreHole`
+        * :py:meth:`Workplane.cskHole`
+        * :py:meth:`Workplane.box`
+        * :py:meth:`Workplane.polygon`
+        * :py:meth:`Workplane.workplane`
+        * :py:meth:`Workplane.vertices`
+        * :py:meth:`Workplane.edges`
+        * :py:meth:`Workplane.faces`
+        * :py:meth:`Workplane`
+
 
 Rounding Corners with Fillet
 -----------------------------
