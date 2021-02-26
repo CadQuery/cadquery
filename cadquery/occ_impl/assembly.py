@@ -4,6 +4,7 @@ from typing_extensions import Protocol
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType
+from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
@@ -104,7 +105,11 @@ def toCAF(
 ) -> Tuple[TDF_Label, TDocStd_Document]:
 
     # prepare a doc
+    app = XCAFApp_Application.GetApplication_s()
+
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    app.InitDocument(doc)
+
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
