@@ -150,9 +150,9 @@ Exporting STL
 
 The STL exporter is capable of adjusting the quality of the resulting STL, and accepts the following options.
 
-* ** - 
-* ** - 
-* ** - 
+* *fileName* - The path and file name to write the STL output to.
+* *tolerance* - 
+* *angularTolerance* - 
 
 Exporting Other Formats
 ########################
