@@ -223,11 +223,14 @@ def importDXF(filename, tol=1e-6, exclude=[]):
     :param exclude: a list of layer names not to import (default: [])
     """
 
+    # normalize layer names to conform the DXF spec
+    exclude_lwr = [ex.lower() for ex in exclude]
+
     dxf = ezdxf.readfile(filename)
     faces = []
 
     for name, layer in dxf.modelspace().groupby(dxfattrib="layer").items():
-        res = _dxf_convert(layer, tol) if name not in exclude else None
+        res = _dxf_convert(layer, tol) if name.lower() not in exclude_lwr else None
         if res:
             wire_sets = sortWiresByBuildOrder(res)
             for wire_set in wire_sets:

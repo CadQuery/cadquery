@@ -191,7 +191,7 @@ class BaseDirSelector(Selector):
 
 
 class ParallelDirSelector(BaseDirSelector):
-    """
+    r"""
     Selects objects parallel with the provided direction.
 
     Applicability:
@@ -677,9 +677,9 @@ class _SimpleStringSyntaxSelector(Selector):
             return self.axes[pr.simple_dir]
 
     def filter(self, objectList):
-        """
+        r"""
         selects minimum, maximum, positive or negative values relative to a direction
-        [+\|-\|<\|>\|] \<X\|Y\|Z>
+        ``[+|-|<|>|] <X|Y|Z>``
         """
         return self.mySelector.filter(objectList)
 
@@ -740,7 +740,7 @@ _expression_grammar = _makeExpressionGrammar(_grammar)
 
 
 class StringSyntaxSelector(Selector):
-    """
+    r"""
     Filter lists objects using a simple string syntax. All of the filters available in the string syntax
     are also available ( usually with more functionality ) through the creation of full-fledged
     selector objects. see :py:class:`Selector` and its subclasses
@@ -776,11 +776,11 @@ class StringSyntaxSelector(Selector):
         :and:
             Logical AND, e.g. >X and >Y
         :or:
-            Logical OR, e.g. |X or |Y
+            Logical OR, e.g. \|X or \|Y
         :not:
             Logical NOT, e.g. not #XY
         :exc(ept):
-            Set difference (equivalent to AND NOT): |X exc >Z
+            Set difference (equivalent to AND NOT): \|X exc >Z
 
     Finally, it is also possible to use even more complex expressions with nesting
     and arbitrary number of terms, e.g.
