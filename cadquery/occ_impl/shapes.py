@@ -158,12 +158,15 @@ from OCP.BRepCheck import BRepCheck_Analyzer
 
 from OCP.Font import (
     Font_FontMgr,
-    Font_BRepTextBuilder,
     Font_FA_Regular,
     Font_FA_Italic,
     Font_FA_Bold,
     Font_SystemFont,
 )
+
+from OCP.StdPrs import StdPrs_BRepFont, StdPrs_BRepTextBuilder as Font_BRepTextBuilder
+
+from OCP.NCollection import NCollection_Utf8String
 
 from OCP.BRepFeat import BRepFeat_MakeDPrism
 
@@ -2796,9 +2799,10 @@ class Compound(Shape, Mixin3D):
             font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
 
         builder = Font_BRepTextBuilder()
-        text_flat = Shape(
-            builder.Perform(font_t.FontName().ToCString(), size, font_kind, text)
+        font_i = StdPrs_BRepFont(
+            NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, size
         )
+        text_flat = Shape(builder.Perform(font_i, NCollection_Utf8String(text)))
 
         bb = text_flat.BoundingBox()
 
