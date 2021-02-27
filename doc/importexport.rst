@@ -61,7 +61,7 @@ Importing a DXF profile with default settings and using it within a CadQuery scr
 
 Note the use of the :py:meth:`Workplane.wires` and :py:meth:`Workplane.toPending` methods to make the DXF profile 
 ready for use during subsequent operations. Calling ``toPending()`` tells CadQuery to make the edges/wires available 
-to the next operation that is called in the chain.
+to the next modelling operation that is called in the chain.
 
 Importing STEP
 ###############
