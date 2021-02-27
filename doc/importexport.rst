@@ -148,9 +148,8 @@ Exporting STL
 
 The STL exporter is capable of adjusting the quality of the resulting mesh, and accepts the following parameters.
 
-* ``fileName`` - The path and file name to write the STL output to.
-* ``tolerance`` - A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
-* ``angularTolerance`` - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
+.. automethod::
+    cadquery.occ_impl.shapes.Shape.exportStl
 
 For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the 
 optimum values that will produce an acceptable mesh.
