@@ -1,6 +1,7 @@
 # Don't display text diffs for files that are not human readable
 # Git should not modify line endings in these test files
 tests/testdata/* -diff -text
+*.svg
 
 # Jupyter notebooks should be classified as documentation
 *.ipynb linguist-documentation -diff -text
