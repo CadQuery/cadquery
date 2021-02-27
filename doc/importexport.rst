@@ -42,12 +42,10 @@ Notes on the Formats
 Importing DXF
 ##############
 
-DXF files can be imported using the :py:meth:`importers.importDXF` method. There are 3 parameters that can be 
-passed to this method to control how the DXF is handled.
+DXF files can be imported using the :py:meth:`importers.importDXF` method.
 
-* ``fileName`` - The path and name of the DXF file to be imported.
-* ``tol`` - The tolerance used for merging edges into wires (default: 1e-6).
-* ``exclude`` - A list of layer names not to import (default: []).
+.. automethod::
+    cadquery.importers.importDXF
 
 Importing a DXF profile with default settings and using it within a CadQuery script is shown in the following code.
 
