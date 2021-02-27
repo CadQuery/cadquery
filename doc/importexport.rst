@@ -189,7 +189,7 @@ optimum values that will produce an acceptable mesh. Note that parameters for AM
 Exporting TJS
 ##############
 
-The TJS (ThreeJS) exporter is capable of adjusting the quality of the resulting JSON-based mesh, and accepts the following parameters.
+The TJS (ThreeJS) exporter produces a file in JSON format that describes a scene for the ThreeJS WebGL renderer. The objects in the first argument are converted into a mesh and then form the ThreeJS geometry for the scene. The mesh can be adjusted with the following parameters.
 
 * ``fileName`` - The path and file name to write the ThreeJS output to.
 * ``tolerance`` - A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
