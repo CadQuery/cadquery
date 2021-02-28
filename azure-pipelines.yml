@@ -82,7 +82,7 @@ jobs:
     py_min: 8
     conda_bld: 3.19.2
 
- - template: conda-build.yml@templates
+- template: conda-build.yml@templates
   parameters:
     name: Linux_39
     vmImage: 'ubuntu-16.04'
