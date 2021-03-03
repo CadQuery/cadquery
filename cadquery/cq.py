@@ -236,8 +236,8 @@ class Workplane(object):
 
         :param boolean keepTop: True to keep the top, False or None to discard it
         :param boolean keepBottom: True to keep the bottom, False or None to discard it
-        :raises: ValueError if keepTop and keepBottom are both false.
-        :raises: ValueError if there is not a solid in the current stack or the parent chain
+        :raises ValueError: if keepTop and keepBottom are both false.
+        :raises ValueError: if there is no solid in the current stack or parent chain
         :returns: CQ object with the desired objects on the stack.
 
         The most common operation splits a solid and keeps one half. This sample creates
@@ -250,10 +250,10 @@ class Workplane(object):
             c = c.faces(">Y").workplane(-0.5).split(keepTop=True)
         """
 
-        solid = self.findSolid()
-
         if (not keepTop) and (not keepBottom):
             raise ValueError("You have to keep at least one half")
+
+        solid = self.findSolid()
 
         maxDim = solid.BoundingBox().DiagonalLength * 10.0
         topCutBox = self.rect(maxDim, maxDim)._extrude(maxDim)
@@ -291,18 +291,20 @@ class Workplane(object):
         combined and returned on the stack of the new object.
         """
         # loop through current stack objects, and combine them
-        toCombine = self.solids().vals()
+        toCombine = cast(List[Solid], self.solids().vals())
 
         if otherCQToCombine:
-            for obj in otherCQToCombine.solids().vals():
+            otherSolids = cast(List[Solid], otherCQToCombine.solids().vals())
+            for obj in otherSolids:
                 toCombine.append(obj)
 
         if len(toCombine) < 1:
             raise ValueError("Cannot Combine: at least one solid required!")
 
         # get context solid and we don't want to find our own objects
-        ctxSolid = self.findSolid(searchStack=False, searchParents=True)
-
+        ctxSolid = self._findType(
+            (Solid, Compound), searchStack=False, searchParents=True
+        )
         if ctxSolid is None:
             ctxSolid = toCombine.pop(0)
 
@@ -676,10 +678,9 @@ class Workplane(object):
         Finds the first solid object in the chain, searching from the current node
         backwards through parents until one is found.
 
-        :param searchStack: should objects on the stack be searched first.
+        :param searchStack: should objects on the stack be searched first?
         :param searchParents: should parents be searched?
-        :raises: ValueError if no solid is found in the current object or its parents,
-            and errorOnEmpty is True
+        :raises ValueError: if no solid is found
 
         This function is very important for chains that are modifying a single parent object,
         most often a solid.
@@ -692,7 +693,15 @@ class Workplane(object):
         results with an object already on the stack.
         """
 
-        return self._findType((Solid, Compound), searchStack, searchParents)
+        found = self._findType((Solid, Compound), searchStack, searchParents)
+
+        if found is None:
+            message = "on the stack or " if searchStack else ""
+            raise ValueError(
+                "Cannot find a solid {}in the parent chain".format(message)
+            )
+
+        return found
 
     def findFace(self, searchStack: bool = True, searchParents: bool = True) -> Face:
         """
@@ -701,11 +710,16 @@ class Workplane(object):
 
         :param searchStack: should objects on the stack be searched first.
         :param searchParents: should parents be searched?
-        :raises: ValueError if no face is found in the current object or its parents,
-            and errorOnEmpty is True
+        :returns: A face or None if no face is found.
         """
 
-        return self._findType(Face, searchStack, searchParents)
+        found = self._findType(Face, searchStack, searchParents)
+
+        if found is None:
+            message = "on the stack or " if searchStack else ""
+            raise ValueError("Cannot find a face {}in the parent chain".format(message))
+
+        return found
 
     def _selectObjects(
         self,
@@ -1104,7 +1118,7 @@ class Workplane(object):
         :param thickness: a positive float, representing the thickness of the desired shell.
             Negative values shell inwards, positive values shell outwards.
         :param kind: kind of joints, intersetion or arc (default: arc).
-        :raises: ValueError if the current stack contains objects that are not faces of a solid
+        :raises ValueError: if the current stack contains objects that are not faces of a solid
              further up in the chain.
         :returns: a CQ object with the resulting shelled solid selected.
 
@@ -1148,15 +1162,14 @@ class Workplane(object):
 
         :param radius: the radius of the fillet, must be > zero
         :type radius: positive float
-        :raises: ValueError if at least one edge is not selected
-        :raises: ValueError if the solid containing the edge is not in the chain
+        :raises ValueError: if at least one edge is not selected
+        :raises ValueError: if the solid containing the edge is not in the chain
         :returns: cq object with the resulting solid selected.
 
         This example will create a unit cube, with the top edges filleted::
 
             s = Workplane().box(1,1,1).faces("+Z").edges().fillet(0.1)
         """
-        # TODO: we will need much better edge selectors for this to work
         # TODO: ensure that edges selected actually belong to the solid in the chain, otherwise,
         # TODO: we segfault
 
@@ -1185,8 +1198,8 @@ class Workplane(object):
         :param length2: optional parameter for asymmetrical chamfer
         :type length: positive float
         :type length2: positive float
-        :raises: ValueError if at least one edge is not selected
-        :raises: ValueError if the solid containing the edge is not in the chain
+        :raises ValueError: if at least one edge is not selected
+        :raises ValueError: if the solid containing the edge is not in the chain
         :returns: cq object with the resulting solid selected.
 
         This example will create a unit cube, with the top edges chamfered::
@@ -2501,16 +2514,15 @@ class Workplane(object):
     def largestDimension(self) -> float:
         """
         Finds the largest dimension in the stack.
+
         Used internally to create thru features, this is how you can compute
         how long or wide a feature must be to make sure to cut through all of the material
+
+        :raises ValueError: if no solids or compounds are found
         :return: A value representing the largest dimension of the first solid on the stack
         """
         # Get all the solids contained within this CQ object
         compound = self.findSolid()
-
-        # Protect against this being called on something like a blank workplane
-        if not compound:
-            return -1
 
         return compound.BoundingBox().DiagonalLength
 
@@ -2526,12 +2538,10 @@ class Workplane(object):
         :param fcn: a function suitable for use in the eachpoint method: ie, that accepts a vector
         :param useLocalCoords: same as for :py:meth:`eachpoint`
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :raises ValueError: if no solids or compounds are found in the stack or parent chain
         :return: a CQ object that contains the resulting solid
-        :raises: an error if there is not a context solid to cut from
         """
         ctxSolid = self.findSolid()
-        if ctxSolid is None:
-            raise ValueError("Must have a solid in the chain to cut from!")
 
         # will contain all of the counterbores as a single compound
         results = cast(List[Shape], self.eachpoint(fcn, useLocalCoords).vals())
@@ -2920,7 +2930,9 @@ class Workplane(object):
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-        baseSolid = self.findSolid(searchParents=True)
+        baseSolid = self._findType(
+            (Solid, Compound), searchStack=True, searchParents=True
+        )
         r = obj
         if baseSolid is not None:
             r = baseSolid.fuse(obj)
@@ -2936,7 +2948,9 @@ class Workplane(object):
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-        baseSolid = self.findSolid(searchParents=True)
+        baseSolid = self._findType(
+            (Solid, Compound), searchStack=True, searchParents=True
+        )
         r = obj
         if baseSolid is not None:
             r = baseSolid.cut(obj)
@@ -2989,7 +3003,7 @@ class Workplane(object):
         """
 
         # first collect all of the items together
-        newS: Sequence[Shape]
+        newS: List[Shape]
         if isinstance(toUnion, CQ):
             newS = cast(List[Shape], toUnion.solids().vals())
             if len(newS) < 1:
@@ -2997,13 +3011,15 @@ class Workplane(object):
                     "CQ object  must have at least one solid on the stack to union!"
                 )
         elif isinstance(toUnion, (Solid, Compound)):
-            newS = (toUnion,)
+            newS = [toUnion]
         else:
             raise ValueError("Cannot union type '{}'".format(type(toUnion)))
 
         # now combine with existing solid, if there is one
         # look for parents to cut from
-        solidRef = self.findSolid(searchStack=True, searchParents=True)
+        solidRef = self._findType(
+            (Solid, Compound), searchStack=True, searchParents=True
+        )
         if solidRef is not None:
             r = solidRef.fuse(*newS, glue=glue, tol=tol)
         elif len(newS) > 1:
@@ -3044,15 +3060,12 @@ class Workplane(object):
         :param toCut: object to cut
         :type toCut: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :raises: ValueError if there is no solid to subtract from in the chain
+        :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
         """
 
         # look for parents to cut from
         solidRef = self.findSolid(searchStack=True, searchParents=True)
-
-        if solidRef is None:
-            raise ValueError("Cannot find solid to cut from")
 
         solidToCut: Sequence[Shape]
 
@@ -3092,15 +3105,12 @@ class Workplane(object):
         :param toIntersect: object to intersect
         :type toIntersect: a solid object, or a CQ object having a solid,
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :raises: ValueError if there is no solid to intersect with in the chain
+        :raises ValueError: if there is no solid to intersect with in the chain
         :return: a CQ object with the resulting object selected
         """
 
         # look for parents to intersect with
         solidRef = self.findSolid(searchStack=True, searchParents=True)
-
-        if solidRef is None:
-            raise ValueError("Cannot find solid to intersect with")
 
         solidToIntersect: Sequence[Shape]
 
@@ -3145,7 +3155,7 @@ class Workplane(object):
             <0 means in the negative direction
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
-        :raises: ValueError if there is no solid to subtract from in the chain
+        :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
         see :py:meth:`cutThruAll` to cut material from the entire part
@@ -3157,7 +3167,6 @@ class Workplane(object):
         toCut = self._extrude(distanceToCut, taper=taper)
 
         # now find a solid in the chain
-
         solidRef = self.findSolid()
 
         s = solidRef.cut(toCut)
@@ -3176,7 +3185,7 @@ class Workplane(object):
         from. cutThruAll always removes material from a part.
 
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :raises: ValueError if there is no solid to subtract from in the chain
+        :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
         see :py:meth:`cutBlind` to cut material to a limited depth
@@ -3185,6 +3194,7 @@ class Workplane(object):
         self.ctx.pendingWires = []
 
         solidRef = self.findSolid()
+
         rv = []
         for solid in solidRef.Solids():
             s = solid.dprism(None, wires, thruAll=True, additive=False, taper=-taper)
@@ -3209,7 +3219,9 @@ class Workplane(object):
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
         if combine:
-            parentSolid = self.findSolid(searchStack=False, searchParents=True)
+            parentSolid = self._findType(
+                (Solid, Compound), searchStack=False, searchParents=True
+            )
             if parentSolid is not None:
                 r = parentSolid.fuse(r)
 
@@ -3751,13 +3763,11 @@ class Workplane(object):
         Slices current solid at the given height.
 
         :param float height: height to slice at (default: 0)
+        :raises ValueError: if no solids or compounds are found
         :return: a CQ object with the resulting face(s).
         """
 
         solidRef = self.findSolid(searchStack=True, searchParents=True)
-
-        if solidRef is None:
-            raise ValueError("Cannot find solid to slice")
 
         plane = Face.makePlane(
             basePnt=self.plane.origin + self.plane.zDir * height, dir=self.plane.zDir

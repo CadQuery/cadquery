@@ -1517,6 +1517,11 @@ class TestCadQuery(BaseTest):
         sugar = currentS - toCut.val()
         self.assertEqual(resS.faces().size(), sugar.faces().size())
 
+        # test ValueError on no solid found
+        s0 = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            s0.cut(toCut.val())
+
     def testIntersect(self):
         """
         Tests the intersect function.
@@ -1547,6 +1552,10 @@ class TestCadQuery(BaseTest):
         # Test syntactic sugar [__mul__ method]
         sugar = b1 & b2
         self.assertEqual(resS.val().Volume(), sugar.val().Volume())
+
+        # raise ValueError when no solid found
+        with raises(ValueError):
+            Workplane().intersect(toIntersect)
 
     def testBoundingBox(self):
         """
@@ -1645,6 +1654,11 @@ class TestCadQuery(BaseTest):
 
         self.assertTrue(r.val().isValid())
         self.assertEqual(r.faces().size(), 7)
+
+        # test ValueError when no solids found
+        w0 = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            w0.cutThruAll()
 
     def testCutToFaceOffsetNOTIMPLEMENTEDYET(self):
         """
@@ -1830,18 +1844,15 @@ class TestCadQuery(BaseTest):
         """
         r = Workplane("XY").box(1, 1, 1)
         dim = r.largestDimension()
-
         self.assertAlmostEqual(1.76, dim, 1)
 
         r = Workplane("XY").rect(1, 1).extrude(1)
         dim = r.largestDimension()
-
         self.assertAlmostEqual(1.76, dim, 1)
 
         r = Workplane("XY")
-        dim = r.largestDimension()
-
-        self.assertEqual(-1, dim)
+        with raises(ValueError):
+            r.largestDimension()
 
     def testOccBottle(self):
         """
@@ -2018,6 +2029,11 @@ class TestCadQuery(BaseTest):
         self.saveModel(c)
         self.assertEqual(12, c.faces().size())
 
+        # should raise an error if no solid
+        c1 = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            c1.fillet(0.1)
+
     def testChamfer(self):
         """
         Test chamfer API with a box shape
@@ -2025,6 +2041,11 @@ class TestCadQuery(BaseTest):
         cube = CQ(makeUnitCube()).faces(">Z").chamfer(0.1)
         self.saveModel(cube)
         self.assertEqual(10, cube.faces().size())
+
+        # should raise an error if no solid
+        c1 = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            c1.chamfer(0.1)
 
     def testChamferAsymmetrical(self):
         """
@@ -2128,6 +2149,14 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, result.solids().size())
         self.assertEqual(8, result.solids().item(0).faces().size())
 
+    def testSplitError(self):
+        """
+        Test split produces the correct error when called with no solid to split.
+        """
+        w = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            w.split(keepTop=True)
+
     def testBoxDefaults(self):
         """
         Tests creating a single box
@@ -2155,6 +2184,11 @@ class TestCadQuery(BaseTest):
 
         s3 = Workplane().ellipse(4, 2).extrude(4).faces(">Z").shell(+2, kind="arc")
         self.assertEqual(6, s3.faces().size())
+
+        # test error on no solid found
+        s4 = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            s4.shell(1)
 
     def testClosedShell(self):
         """
@@ -3406,6 +3440,11 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(s.Solids()), 2)
         self.assertTrue(isinstance(s, Compound))
 
+        # if no solids are found, should raise ValueError
+        w = Workplane().hLine(1).close()
+        with raises(ValueError):
+            w.findSolid()
+
     def testSlot2D(self):
 
         decimal_places = 9
@@ -4177,3 +4216,42 @@ class TestCadQuery(BaseTest):
         self.assertTrue(Workplane().objects == [])
         self.assertTrue(Workplane().box(1, 1, 1).end().objects == [])
         self.assertTrue(Workplane().box(1, 1, 1).box(2, 2, 1).end(2).objects == [])
+
+    def testCutEach(self):
+
+        # base shape:
+        w = Workplane().box(3, 2, 2)
+        # cutter:
+        c = Workplane().box(2, 2, 2).val()
+        # cut all the corners off
+        w0 = w.vertices().cutEach(lambda loc: c.located(loc))
+        # we are left with a 1x2x2 box:
+        self.assertAlmostEqual(w0.val().Volume(), 4, 3)
+
+        # test error on no solid found
+        w1 = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            w1.cutEach(lambda loc: c.located(loc))
+
+    def testCutBlind(self):
+        # cutBlind is already tested in several of the complicated tests, so this method is short.
+        # test ValueError on no solid found
+        w0 = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            w0.cutBlind(1)
+
+    def testFindFace(self):
+        # if there are no faces to find, should raise ValueError
+        w0 = Workplane()
+        with raises(ValueError):
+            w0.findFace()
+
+        w1 = Workplane().box(1, 1, 1).faces(">Z")
+        self.assertTrue(isinstance(w1.findFace(), Face))
+        with raises(ValueError):
+            w1.findFace(searchStack=False)
+
+        w2 = w1.workplane().circle(0.1).extrude(0.1)
+        self.assertTrue(isinstance(w2.findFace(searchParents=True), Face))
+        with raises(ValueError):
+            w2.findFace(searchParents=False)
