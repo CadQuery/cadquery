@@ -234,7 +234,7 @@ class TestCadQuery(BaseTest):
         class ExtendedWorkplane(Workplane):
             def nonExistentInWorkplane(self):
                 pass
-        
+
         # Call an inherited fluent method:
         wp = ExtendedWorkplane("XY").moveTo(1, 2)
 
