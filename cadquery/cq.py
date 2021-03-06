@@ -752,7 +752,8 @@ class Workplane(object):
         solids,shells, and other similar selector methods.  It is a useful extension point for
         plugin developers to make other selector methods.
         """
-        cq_obj = self._getTagged(tag) if tag else self
+        self_as_workplane: Workplane = self
+        cq_obj = self._getTagged(tag) if tag else self_as_workplane
         # A single list of all faces from all objects on the stack
         toReturn = cq_obj._collectProperty(objType)
 
@@ -2980,7 +2981,7 @@ class Workplane(object):
         r = self._sweep(
             path.wire(), multisection, makeSolid, isFrenet, transition, normal, auxSpine
         )  # returns a Solid (or a compound if there were multiple)
-        newS: "CQ"
+        newS: WorkplaneT
         if combine:
             newS = self._combineWithBase(r)
         else:
