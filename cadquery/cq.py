@@ -2122,6 +2122,8 @@ class Workplane(object):
 
     def _consolidateWires(self) -> List[Wire]:
 
+        # note: do not use CQContext.popPendingEdges or Wires here, this method does not
+        # clear pending edges or wires.
         wires = cast(
             List[Union[Edge, Wire]],
             [el for el in chain(self.ctx.pendingEdges, self.ctx.pendingWires)],
@@ -2159,38 +2161,32 @@ class Workplane(object):
         Returns a CQ object with all pending edges connected into a wire.
 
         All edges on the stack that can be combined will be combined into a single wire object,
-        and other objects will remain on the stack unmodified
+        and other objects will remain on the stack unmodified. If there are no pending edges,
+        this method will just return self.
 
         :param forConstruction: whether the wire should be used to make a solid, or if it is just
             for reference
-        :type forConstruction: boolean. true if the object is only for reference
 
         This method is primarily of use to plugin developers making utilities for 2-d construction.
         This method should be called when a user operation implies that 2-d construction is
-        finished, and we are ready to begin working in 3d
+        finished, and we are ready to begin working in 3d.
 
         SEE '2-d construction concepts' for a more detailed explanation of how CadQuery handles
-        edges, wires, etc
+        edges, wires, etc.
 
         Any non edges will still remain.
         """
 
-        edges = self.ctx.pendingEdges
-
         # do not consolidate if there are no free edges
-        if len(edges) == 0:
+        if len(self.ctx.pendingEdges) == 0:
             return self
 
-        self.ctx.pendingEdges = []
-
-        others = []
-        for e in self.objects:
-            if type(e) != Edge:
-                others.append(e)
-
+        edges = self.ctx.popPendingEdges()
         w = Wire.assembleEdges(edges)
         if not forConstruction:
             self._addPendingWire(w)
+
+        others = [e for e in self.objects if not isinstance(e, Edge)]
 
         return self.newObject(others + [w])
 
@@ -2757,10 +2753,7 @@ class Workplane(object):
         """
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
-
-        # now all of the wires have been used to create an extrusion
-        self.ctx.pendingWires = []
+        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
 
         # compute extrusion vector and extrude
         eDir = self.plane.zDir.multiply(distance)
@@ -3210,13 +3203,12 @@ class Workplane(object):
 
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises ValueError: if there is no solid to subtract from in the chain
+        :raises ValueError: if there are no pending wires to cut with
         :return: a CQ object with the resulting object selected
 
         see :py:meth:`cutBlind` to cut material to a limited depth
         """
-        wires = self.ctx.pendingWires
-        self.ctx.pendingWires = []
-
+        wires = self.ctx.popPendingWires()
         solidRef = self.findSolid()
 
         rv = []
@@ -3237,8 +3229,7 @@ class Workplane(object):
         Make a lofted solid, through the set of wires.
         :return: a CQ object containing the created loft
         """
-        wiresToLoft = self.ctx.pendingWires
-        self.ctx.pendingWires = []
+        wiresToLoft = self.ctx.popPendingWires()
 
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
@@ -3268,9 +3259,7 @@ class Workplane(object):
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
 
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
-        # now all of the wires have been used to create an extrusion
-        self.ctx.pendingWires = []
+        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
 
         # compute extrusion vector and extrude
         eDir = self.plane.zDir.multiply(distance)
@@ -3316,11 +3305,8 @@ class Workplane(object):
 
         This method is a utility method, primarily for plugin and internal use.
         """
-        # We have to gather the wires to be revolved
-        wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
-
-        # Mark that all of the wires have been used to create a revolution
-        self.ctx.pendingWires = []
+        # Get the wires to be revolved
+        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
 
         # Revolve the wires, make a compound out of them and then fuse them
         toFuse = []
@@ -3373,18 +3359,16 @@ class Workplane(object):
             mode = wire
 
         if not multisection:
-            wireSets = sortWiresByBuildOrder(list(self.ctx.pendingWires))
+            wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
             for ws in wireSets:
                 thisObj = Solid.sweep(
                     ws[0], ws[1:], p, makeSolid, isFrenet, mode, transition
                 )
                 toFuse.append(thisObj)
         else:
-            sections = self.ctx.pendingWires
+            sections = self.ctx.popPendingWires()
             thisObj = Solid.sweep_multi(sections, p, makeSolid, isFrenet, mode)
             toFuse.append(thisObj)
-
-        self.ctx.pendingWires = []
 
         return Compound.makeCompound(toFuse)
 
