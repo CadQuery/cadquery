@@ -93,6 +93,30 @@ class CQContext(object):
         self.tolerance = 0.0001  # user specified tolerance
         self.tags = {}
 
+    def popPendingEdges(self, errorOnEmpty: bool = True) -> List[Edge]:
+        """
+        Get and clear pending edges.
+
+        :raises ValueError: if errorOnEmpty is True and no edges are present.
+        """
+        if errorOnEmpty and not self.pendingEdges:
+            raise ValueError("No pending edges present")
+        out = self.pendingEdges
+        self.pendingEdges = []
+        return out
+
+    def popPendingWires(self, errorOnEmpty: bool = True) -> List[Wire]:
+        """
+        Get and clear pending wires.
+
+        :raises ValueError: if errorOnEmpty is True and no wires are present.
+        """
+        if errorOnEmpty and not self.pendingWires:
+            raise ValueError("No pending wires present")
+        out = self.pendingWires
+        self.pendingWires = []
+        return out
+
 
 class Workplane(object):
     """

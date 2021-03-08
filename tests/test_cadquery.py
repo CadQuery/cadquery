@@ -4255,3 +4255,38 @@ class TestCadQuery(BaseTest):
         self.assertTrue(isinstance(w2.findFace(searchParents=True), Face))
         with raises(ValueError):
             w2.findFace(searchParents=False)
+
+    def testPopPending(self):
+        # test pending edges
+        w0 = Workplane().hLine(1)
+        self.assertEqual(len(w0.ctx.pendingEdges), 1)
+        edges = w0.ctx.popPendingEdges()
+        self.assertEqual(len(edges), 1)
+        self.assertEqual(edges[0], w0.val())
+        # pending edges should now be cleared
+        self.assertEqual(len(w0.ctx.pendingEdges), 0)
+
+        # test pending wires
+        w1 = Workplane().hLine(1).vLine(1).close()
+        wire = w1.val()
+        self.assertEqual(w1.ctx.pendingWires[0], wire)
+        pop_pending_output = w1.ctx.popPendingWires()
+        self.assertEqual(pop_pending_output[0], wire)
+        # pending wires should now be cleared
+        self.assertEqual(len(w1.ctx.pendingWires), 0)
+
+        # test error when empty pending edges
+        w2 = Workplane()
+        # the following 2 should not raise an exception
+        w2.ctx.popPendingEdges(errorOnEmpty=False)
+        w2.ctx.popPendingWires(errorOnEmpty=False)
+
+        # empty edges
+        w3 = Workplane().hLine(1).vLine(1).close()
+        with self.assertRaises(ValueError):
+            w3.ctx.popPendingEdges()
+
+        # empty wires
+        w4 = Workplane().circle(1).extrude(1)
+        with self.assertRaises(ValueError):
+            w4.ctx.popPendingWires()
