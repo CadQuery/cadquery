@@ -103,6 +103,7 @@ from OCP.TopoDS import (
     TopoDS_Vertex,
     TopoDS_Solid,
     TopoDS_Shell,
+    TopoDS_CompSolid,
 )
 
 from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
@@ -219,6 +220,7 @@ shape_LUT = {
     ta.TopAbs_FACE: "Face",
     ta.TopAbs_SHELL: "Shell",
     ta.TopAbs_SOLID: "Solid",
+    ta.TopAbs_COMPSOLID: "CompSolid",
     ta.TopAbs_COMPOUND: "Compound",
 }
 
@@ -241,6 +243,7 @@ downcast_LUT = {
     ta.TopAbs_FACE: TopoDS.Face_s,
     ta.TopAbs_SHELL: TopoDS.Shell_s,
     ta.TopAbs_SOLID: TopoDS.Solid_s,
+    ta.TopAbs_COMPSOLID: TopoDS.CompSolid_s,
     ta.TopAbs_COMPOUND: TopoDS.Compound_s,
 }
 
@@ -251,6 +254,7 @@ geom_LUT = {
     ta.TopAbs_FACE: BRepAdaptor_Surface,
     ta.TopAbs_SHELL: "Shell",
     ta.TopAbs_SOLID: "Solid",
+    ta.TopAbs_SOLID: "CompSolid",
     ta.TopAbs_COMPOUND: "Compound",
 }
 
@@ -280,7 +284,9 @@ geom_LUT_EDGE = {
     ga.GeomAbs_OtherCurve: "OTHER",
 }
 
-Shapes = Literal["Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "Compound"]
+Shapes = Literal[
+    "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"
+]
 Geoms = Literal[
     "Vertex",
     "Wire",
@@ -386,6 +392,7 @@ class Shape(object):
             ta.TopAbs_FACE: Face,
             ta.TopAbs_SHELL: Shell,
             ta.TopAbs_SOLID: Solid,
+            ta.TopAbs_COMPSOLID: CompSolid,
             ta.TopAbs_COMPOUND: Compound,
         }
 
@@ -725,6 +732,13 @@ class Shape(object):
         """
 
         return [Solid(i) for i in self._entities("Solid")]
+
+    def CompSolids(self) -> List["CompSolid"]:
+        """
+        :returns: All the compsolids in this Shape
+        """
+
+        return [CompSolid(i) for i in self._entities("CompSolid")]
 
     def Area(self) -> float:
         """
@@ -2744,6 +2758,14 @@ class Solid(Shape, Mixin3D):
             shape = feat.Shape()
 
         return Solid(shape)
+
+
+class CompSolid(Shape, Mixin3D):
+    """
+    a single compsolid
+    """
+
+    wrapped: TopoDS_CompSolid
 
 
 class Compound(Shape, Mixin3D):
