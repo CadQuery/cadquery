@@ -4255,3 +4255,17 @@ class TestCadQuery(BaseTest):
         self.assertTrue(isinstance(w2.findFace(searchParents=True), Face))
         with raises(ValueError):
             w2.findFace(searchParents=False)
+
+    def testCompSolid(self):
+
+        from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+
+        tool = Solid.makeSphere(1, angleDegrees3=120)
+        shell = tool.Shells()[0]
+        v = Vector(0, 0, 1)
+
+        builder = BRepPrimAPI_MakePrism(shell.wrapped, v.wrapped)
+        result = Shape.cast(builder.Shape())
+
+        self.assertEqual(len(result.CompSolids()), 1)
+        self.assertEqual(len(result.Solids()), 4)
