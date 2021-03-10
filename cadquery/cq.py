@@ -703,6 +703,7 @@ class Workplane(object):
 
         return found
 
+    @deprecate()
     def findFace(self, searchStack: bool = True, searchParents: bool = True) -> Face:
         """
         Finds the first face object in the chain, searching from the current node
