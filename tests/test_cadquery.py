@@ -4269,3 +4269,37 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(len(result.CompSolids()), 1)
         self.assertEqual(len(result.Solids()), 4)
+        
+    def testCompSolid(self):
+
+        from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+
+        tool = Solid.makeSphere(1, angleDegrees3=120)
+        shell = tool.Shells()[0]
+        v = Vector(0, 0, 1)
+
+        builder = BRepPrimAPI_MakePrism(shell.wrapped, v.wrapped)
+        result = Shape.cast(builder.Shape())
+
+        self.assertEqual(len(result.CompSolids()), 1)
+        self.assertEqual(len(result.Solids()), 4)
+
+    def test2Dfillet(self):
+
+        r = Workplane().rect(1,2).wires().val()
+        f = Face.makeFromWires(r)
+        verts = r.Vertices()
+
+        self.assertEqual(len(f.fillet2D(0.5, verts).Vertices()), 6)
+        self.assertEqual(len(r.fillet2D(0.5, verts).Vertices()), 6)
+        self.assertEqual(len(r.fillet2D(0.25, verts).Vertices()), 8)
+
+    def test2Dchamfer(self):
+
+        r = Workplane().rect(1,2).wires().val()
+        f = Face.makeFromWires(r)
+        verts = r.Vertices()
+
+        self.assertEqual(len(f.chamfer2D(0.5, verts).Vertices()), 6)
+        self.assertEqual(len(r.chamfer2D(0.5, verts).Vertices()), 6)
+        self.assertEqual(len(r.chamfer2D(0.25, verts).Vertices()), 8)
