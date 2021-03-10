@@ -7,6 +7,7 @@ from typing import (
     List,
     Sequence,
     Iterator,
+    Dict,
     Any,
     overload,
     TypeVar,
@@ -136,7 +137,11 @@ from OCP.BRepOffsetAPI import (
     BRepOffsetAPI_MakeOffset,
 )
 
-from OCP.BRepFilletAPI import BRepFilletAPI_MakeChamfer, BRepFilletAPI_MakeFillet
+from OCP.BRepFilletAPI import (
+    BRepFilletAPI_MakeChamfer,
+    BRepFilletAPI_MakeFillet,
+    BRepFilletAPI_MakeFillet2d,
+)
 
 from OCP.TopTools import TopTools_IndexedDataMapOfShapeListOfShape, TopTools_ListOfShape
 
@@ -679,6 +684,28 @@ class Shape(object):
             explorer.Next()
 
         return list(out.values())
+
+    def _entitiesFrom(
+        self, child_type: Shapes, parent_type: Shapes
+    ) -> Dict[TopoDS_Shape, List[TopoDS_Shape]]:
+
+        res = TopTools_IndexedDataMapOfShapeListOfShape()
+
+        TopTools_IndexedDataMapOfShapeListOfShape()
+        TopExp.MapShapesAndAncestors_s(
+            self.wrapped,
+            inverse_shape_LUT[child_type],
+            inverse_shape_LUT[parent_type],
+            res,
+        )
+
+        out: Dict[TopoDS_Shape, List[TopoDS_Shape]] = {}
+        for i in range(1, res.Extent() + 1):
+            out[downcast(res.FindKey(i))] = [
+                downcast(el) for el in res.FindFromIndex(i)
+            ]
+
+        return out
 
     def Vertices(self) -> List["Vertex"]:
         """
@@ -1778,6 +1805,24 @@ class Wire(Shape, Mixin1D):
 
         return rv
 
+    def fillet2D(self, radius: float, vertices: Iterable[Vertex]) -> "Wire":
+        """
+        Apply 2D fillet to a wire
+        """
+
+        f = Face.makeFromWires(self)
+
+        return f.fillet2D(radius, vertices).outerWire()
+
+    def chamfer2D(self, d: float, vertices: Iterable[Vertex]) -> "Wire":
+        """
+        Apply 2D chamfer to a wire
+        """
+
+        f = Face.makeFromWires(self)
+
+        return f.chamfer2D(d, vertices).outerWire()
+
 
 class Face(Shape):
     """
@@ -1973,6 +2018,35 @@ class Face(Shape):
         face = face_builder.Shape()
 
         return cls(face).fix()
+
+    def fillet2D(self, radius: float, vertices: Iterable[Vertex]) -> "Face":
+        """
+        Apply 2D fillet to a face
+        """
+
+        fillet_builder = BRepFilletAPI_MakeFillet2d(self.wrapped)
+
+        for v in vertices:
+            fillet_builder.AddFillet(v.wrapped, radius)
+
+        fillet_builder.Build()
+
+        return self.__class__(fillet_builder.Shape())
+
+    def chamfer2D(self, d: float, vertices: Iterable[Vertex]) -> "Face":
+        """
+        Apply 2D chamfer to a face
+        """
+
+        chamfer_builder = BRepFilletAPI_MakeFillet2d(self.wrapped)
+        edge_map = self._entitiesFrom("Vertex", "Edge")
+
+        for e1, e2 in edge_map.values():
+            chamfer_builder.AddChamfer(TopoDS.Edge_s(e1), TopoDS.Edge_s(e2), d, d)
+
+        chamfer_builder.Build()
+
+        return self.__class__(chamfer_builder.Shape()).fix()
 
 
 class Shell(Shape):
