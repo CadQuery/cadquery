@@ -394,8 +394,7 @@ class TestCadQuery(BaseTest):
 
     def testLoft(self):
         """
-            Test making a lofted solid
-        :return:
+        Test making a lofted solid
         """
         s = Workplane("XY").circle(4.0).workplane(5.0).rect(2.0, 2.0).loft()
         self.saveModel(s)
@@ -405,10 +404,13 @@ class TestCadQuery(BaseTest):
         # the resulting loft had a split on the side, not sure why really, i expected only 3 faces
         self.assertEqual(7, s.faces().size())
 
-    def testLoftWithOneWireRaisesValueError(self):
-        s = Workplane("XY").circle(5)
+    def testLoftRaisesValueError(self):
+        s0 = Workplane().hLine(1)  # no wires
+        with raises(ValueError):
+            s0.loft()
+        s1 = Workplane("XY").circle(5)  # one wire
         with self.assertRaises(ValueError) as cm:
-            s.loft()
+            s1.loft()
         err = cm.exception
         self.assertEqual(str(err), "More than one wire is required")
 
@@ -550,6 +552,14 @@ class TestCadQuery(BaseTest):
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
         self.assertEqual(2, result.edges().size())
+
+    def testRevolveErrors(self):
+        """
+        Test that revolve raises errors when used incorrectly.
+        """
+        result = Workplane("XY").lineTo(0, 10).lineTo(5, 0)
+        with raises(ValueError):
+            result.revolve()
 
     def testSpline(self):
         """
@@ -1039,6 +1049,11 @@ class TestCadQuery(BaseTest):
         v2 = top.wires().val().tangentAt(0.0)
 
         self.assertAlmostEqual(v1.getAngle(v2), math.pi / 4, 6)
+
+        # test for ValueError if pending wires is empty
+        w0 = Workplane().hLine(1).vLine(1)
+        with raises(ValueError):
+            w0.sweep(path)
 
         # Test aux spine invalid input handling
         with raises(ValueError):
@@ -1655,10 +1670,13 @@ class TestCadQuery(BaseTest):
         self.assertTrue(r.val().isValid())
         self.assertEqual(r.faces().size(), 7)
 
-        # test ValueError when no solids found
-        w0 = Workplane().hLine(1).vLine(1).close()
+        # test errors
+        box0 = Workplane().box(1, 1, 1).faces(">Z").workplane().hLine(1)
         with raises(ValueError):
-            w0.cutThruAll()
+            box0.cutThruAll()
+        no_box = Workplane().hLine(1).vLine(1).close()
+        with raises(ValueError):
+            no_box.cutThruAll()
 
     def testCutToFaceOffsetNOTIMPLEMENTEDYET(self):
         """
@@ -4255,6 +4273,46 @@ class TestCadQuery(BaseTest):
         self.assertTrue(isinstance(w2.findFace(searchParents=True), Face))
         with raises(ValueError):
             w2.findFace(searchParents=False)
+
+    def testPopPending(self):
+        # test pending edges
+        w0 = Workplane().hLine(1)
+        self.assertEqual(len(w0.ctx.pendingEdges), 1)
+        edges = w0.ctx.popPendingEdges()
+        self.assertEqual(len(edges), 1)
+        self.assertEqual(edges[0], w0.val())
+        # pending edges should now be cleared
+        self.assertEqual(len(w0.ctx.pendingEdges), 0)
+
+        # test pending wires
+        w1 = Workplane().hLine(1).vLine(1).close()
+        wire = w1.val()
+        self.assertEqual(w1.ctx.pendingWires[0], wire)
+        pop_pending_output = w1.ctx.popPendingWires()
+        self.assertEqual(pop_pending_output[0], wire)
+        # pending wires should now be cleared
+        self.assertEqual(len(w1.ctx.pendingWires), 0)
+
+        # test error when empty pending edges
+        w2 = Workplane()
+        # the following 2 should not raise an exception
+        w2.ctx.popPendingEdges(errorOnEmpty=False)
+        w2.ctx.popPendingWires(errorOnEmpty=False)
+
+        # empty edges
+        w3 = Workplane().hLine(1).vLine(1).close()
+        with self.assertRaises(ValueError):
+            w3.ctx.popPendingEdges()
+
+        # empty wires
+        w4 = Workplane().circle(1).extrude(1)
+        with self.assertRaises(ValueError):
+            w4.ctx.popPendingWires()
+
+        # test via cutBlind
+        w5 = Workplane().circle(1).extrude(1)
+        with self.assertRaises(ValueError):
+            w5.cutBlind(-1)
 
     def testCompSolid(self):
 
