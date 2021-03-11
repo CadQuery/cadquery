@@ -4279,11 +4279,15 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(f.fillet2D(0.5, verts).Vertices()), 6)
         self.assertEqual(len(r.fillet2D(0.5, verts).Vertices()), 6)
         self.assertEqual(len(r.fillet2D(0.25, verts).Vertices()), 8)
+
         # Test fillet2D with open wire and single vertex
         w0 = Workplane().hLine(1).vLine(1).wire()
         w0_verts = w0.vertices(">X and <Y").vals()
         unfilleted_wire0 = w0.val()
         filleted_wire0 = unfilleted_wire0.fillet2D(0.5, w0_verts)
+
+        self.assertEqual(len(filleted_wire0.Vertices()), 4)
+
         # the filleted wire is shorter than the original
         self.assertGreater(unfilleted_wire0.Length() - filleted_wire0.Length(), 0.1)
 
