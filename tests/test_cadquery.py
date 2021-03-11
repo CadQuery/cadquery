@@ -4327,3 +4327,42 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(len(result.CompSolids()), 1)
         self.assertEqual(len(result.Solids()), 4)
+
+    def test2Dfillet(self):
+
+        r = Workplane().rect(1, 2).wires().val()
+        f = Face.makeFromWires(r)
+        verts = r.Vertices()
+
+        self.assertEqual(len(f.fillet2D(0.5, verts).Vertices()), 6)
+        self.assertEqual(len(r.fillet2D(0.5, verts).Vertices()), 6)
+        self.assertEqual(len(r.fillet2D(0.25, verts).Vertices()), 8)
+
+        # Test fillet2D with open wire and single vertex
+        w0 = Workplane().hLine(1).vLine(1).wire()
+        w0_verts = w0.vertices(">X and <Y").vals()
+        unfilleted_wire0 = w0.val()
+        filleted_wire0 = unfilleted_wire0.fillet2D(0.5, w0_verts)
+
+        self.assertEqual(len(filleted_wire0.Vertices()), 4)
+
+        # the filleted wire is shorter than the original
+        self.assertGreater(unfilleted_wire0.Length() - filleted_wire0.Length(), 0.1)
+
+    def test2Dchamfer(self):
+
+        r = Workplane().rect(1, 2).wires().val()
+        f = Face.makeFromWires(r)
+        verts = r.Vertices()
+
+        self.assertEqual(len(f.chamfer2D(0.5, verts).Vertices()), 6)
+        self.assertEqual(len(r.chamfer2D(0.5, verts).Vertices()), 6)
+        self.assertEqual(len(r.chamfer2D(0.25, verts).Vertices()), 8)
+
+        r = Workplane().hLine(1).vLine(1).wire().val()
+        vs = r.Vertices()
+
+        self.assertEqual(len(r.chamfer2D(0.25, [vs[1]]).Vertices()), 4)
+
+        with raises(ValueError):
+            r.chamfer2D(0.25, [vs[0]])
