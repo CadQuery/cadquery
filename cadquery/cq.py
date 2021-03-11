@@ -240,9 +240,7 @@ class Workplane(object):
 
         return list(all.values())
 
-    def split(
-        self: T, keepTop: bool = False, keepBottom: bool = False
-    ) -> T:
+    def split(self: T, keepTop: bool = False, keepBottom: bool = False) -> T:
         """
         Splits a solid on the stack into two parts, optionally keeping the separate parts.
 
@@ -1001,9 +999,7 @@ class Workplane(object):
         """
         exportSVG(self, fileName)
 
-    def rotateAboutCenter(
-        self: T, axisEndPoint: VectorLike, angleDegrees: float
-    ) -> T:
+    def rotateAboutCenter(self: T, axisEndPoint: VectorLike, angleDegrees: float) -> T:
         """
         Rotates all items on the stack by the specified angle, about the specified axis
 
@@ -1212,9 +1208,7 @@ class Workplane(object):
         s = solid.fillet(radius, edgeList)
         return self.newObject([s.clean()])
 
-    def chamfer(
-        self: T, length: float, length2: Optional[float] = None
-    ) -> T:
+    def chamfer(self: T, length: float, length2: Optional[float] = None) -> T:
         """
         Chamfers a solid on the selected edges.
 
@@ -1465,9 +1459,7 @@ class Workplane(object):
 
         return self.pushPoints(locs)
 
-    def pushPoints(
-        self: T, pntList: Iterable[Union[VectorLike, Location]]
-    ) -> T:
+    def pushPoints(self: T, pntList: Iterable[Union[VectorLike, Location]]) -> T:
         """
         Pushes a list of points onto the stack as vertices.
         The points are in the 2-d coordinate space of the workplane face
@@ -1527,9 +1519,7 @@ class Workplane(object):
         n.plane.setOrigin2d(x, y)
         return n
 
-    def lineTo(
-        self: T, x: float, y: float, forConstruction: bool = False
-    ) -> T:
+    def lineTo(self: T, x: float, y: float, forConstruction: bool = False) -> T:
         """
         Make a line from the current point to the provided point
 
@@ -1551,9 +1541,7 @@ class Workplane(object):
         return self.newObject([p])
 
     # line a specified incremental amount from current point
-    def line(
-        self: T, xDist: float, yDist: float, forConstruction: bool = False
-    ) -> T:
+    def line(self: T, xDist: float, yDist: float, forConstruction: bool = False) -> T:
         """
         Make a line from the current point to the provided point, using
         dimensions relative to the current point
@@ -1567,9 +1555,7 @@ class Workplane(object):
         p = self._findFromPoint(True)  # return local coordinates
         return self.lineTo(p.x + xDist, yDist + p.y, forConstruction)
 
-    def vLine(
-        self: T, distance: float, forConstruction: bool = False
-    ) -> T:
+    def vLine(self: T, distance: float, forConstruction: bool = False) -> T:
         """
         Make a vertical line from the current point the provided distance
 
@@ -1578,9 +1564,7 @@ class Workplane(object):
         """
         return self.line(0, distance, forConstruction)
 
-    def hLine(
-        self: T, distance: float, forConstruction: bool = False
-    ) -> T:
+    def hLine(self: T, distance: float, forConstruction: bool = False) -> T:
         """
         Make a horizontal line from the current point the provided distance
 
@@ -1589,9 +1573,7 @@ class Workplane(object):
         """
         return self.line(distance, 0, forConstruction)
 
-    def vLineTo(
-        self: T, yCoord: float, forConstruction: bool = False
-    ) -> T:
+    def vLineTo(self: T, yCoord: float, forConstruction: bool = False) -> T:
         """
         Make a vertical line from the current point to the provided y coordinate.
 
@@ -1604,9 +1586,7 @@ class Workplane(object):
         p = self._findFromPoint(True)
         return self.lineTo(p.x, yCoord, forConstruction)
 
-    def hLineTo(
-        self: T, xCoord: float, forConstruction: bool = False
-    ) -> T:
+    def hLineTo(self: T, xCoord: float, forConstruction: bool = False) -> T:
         """
         Make a horizontal line from the current point to the provided x coordinate.
 
@@ -1691,9 +1671,7 @@ class Workplane(object):
         newCenter = p + Vector(xDist, yDist, 0)
         return self.newObject([self.plane.toWorldCoords(newCenter)])
 
-    def slot2D(
-        self: T, length: float, diameter: float, angle: float = 0
-    ) -> T:
+    def slot2D(self: T, length: float, diameter: float, angle: float = 0) -> T:
         """
         Creates a rounded slot for each point on the stack.
 
@@ -2390,9 +2368,7 @@ class Workplane(object):
         return self.eachpoint(lambda loc: w.moved(loc), True)
 
     # circle from current point
-    def circle(
-        self: T, radius: float, forConstruction: bool = False
-    ) -> T:
+    def circle(self: T, radius: float, forConstruction: bool = False) -> T:
         """
         Make a circle for each item on the stack.
 
@@ -3102,9 +3078,7 @@ class Workplane(object):
 
         return self.newObject([r])
 
-    def __or__(
-        self: T, toUnion: Union["Workplane", Solid, Compound]
-    ) -> T:
+    def __or__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for union.
         Notice that `r = a | b` is equivalent to `r = a.union(b)` and `r = a + b`.
@@ -3116,9 +3090,7 @@ class Workplane(object):
         """
         return self.union(toUnion)
 
-    def __add__(
-        self: T, toUnion: Union["Workplane", Solid, Compound]
-    ) -> T:
+    def __add__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for union.
         Notice that `r = a + b` is equivalent to `r = a.union(b)` and `r = a | b`.
@@ -3157,9 +3129,7 @@ class Workplane(object):
 
         return self.newObject([newS])
 
-    def __sub__(
-        self: T, toUnion: Union["Workplane", Solid, Compound]
-    ) -> T:
+    def __sub__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for cut.
         Notice that `r = a - b` is equivalent to `r = a.cut(b)`.
@@ -3206,9 +3176,7 @@ class Workplane(object):
 
         return self.newObject([newS])
 
-    def __and__(
-        self: T, toUnion: Union["Workplane", Solid, Compound]
-    ) -> T:
+    def __and__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for intersect.
         Notice that `r = a & b` is equivalent to `r = a.intersect(b)`.
@@ -3259,9 +3227,7 @@ class Workplane(object):
 
         return self.newObject([s])
 
-    def cutThruAll(
-        self: T, clean: bool = True, taper: float = 0
-    ) -> T:
+    def cutThruAll(self: T, clean: bool = True, taper: float = 0) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
         Cuts through all material in both normal directions of workplane.
