@@ -1904,10 +1904,7 @@ class Workplane(object):
         return self.newObject([rv_w if makeWire else e])
 
     def threePointArc(
-        self: T,
-        point1: VectorLike,
-        point2: VectorLike,
-        forConstruction: bool = False,
+        self: T, point1: VectorLike, point2: VectorLike, forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point, through point1, and ending at point2
@@ -1936,10 +1933,7 @@ class Workplane(object):
         return self.newObject([arc])
 
     def sagittaArc(
-        self: T,
-        endPoint: VectorLike,
-        sag: float,
-        forConstruction: bool = False,
+        self: T, endPoint: VectorLike, sag: float, forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
@@ -1977,10 +1971,7 @@ class Workplane(object):
         return self.threePointArc(sagPoint, endPoint, forConstruction)
 
     def radiusArc(
-        self: T,
-        endPoint: VectorLike,
-        radius: float,
-        forConstruction: bool = False,
+        self: T, endPoint: VectorLike, radius: float, forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point to endPoint with an arc defined by the radius.
@@ -2707,10 +2698,7 @@ class Workplane(object):
     # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer wont work
     def hole(
-        self: T,
-        diameter: float,
-        depth: Optional[float] = None,
-        clean: bool = True,
+        self: T, diameter: float, depth: Optional[float] = None, clean: bool = True,
     ) -> T:
         """
         Makes a hole for each item on the stack.
@@ -3001,10 +2989,7 @@ class Workplane(object):
         return self.newObject([r])
 
     def combine(
-        self: T,
-        clean: bool = True,
-        glue: bool = False,
-        tol: Optional[float] = None,
+        self: T, clean: bool = True, glue: bool = False, tol: Optional[float] = None,
     ) -> T:
         """
         Attempts to combine all of the items on the stack into a single item.
@@ -3143,9 +3128,7 @@ class Workplane(object):
         return self.cut(toUnion)
 
     def intersect(
-        self: T,
-        toIntersect: Union["Workplane", Solid, Compound],
-        clean: bool = True,
+        self: T, toIntersect: Union["Workplane", Solid, Compound], clean: bool = True,
     ) -> T:
         """
         Intersects the provided solid from the current solid.
