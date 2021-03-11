@@ -687,7 +687,7 @@ class Shape(object):
 
     def _entitiesFrom(
         self, child_type: Shapes, parent_type: Shapes
-    ) -> Dict[TopoDS_Shape, List[TopoDS_Shape]]:
+    ) -> Dict["Shape", List["Shape"]]:
 
         res = TopTools_IndexedDataMapOfShapeListOfShape()
 
@@ -699,10 +699,10 @@ class Shape(object):
             res,
         )
 
-        out: Dict[TopoDS_Shape, List[TopoDS_Shape]] = {}
+        out: Dict[Shape, List[Shape]] = {}
         for i in range(1, res.Extent() + 1):
-            out[downcast(res.FindKey(i))] = [
-                downcast(el) for el in res.FindFromIndex(i)
+            out[Shape.cast(res.FindKey(i))] = [
+                Shape.cast(el) for el in res.FindFromIndex(i)
             ]
 
         return out
@@ -930,6 +930,9 @@ class Shape(object):
 
     def __hash__(self) -> int:
         return self.hashCode()
+
+    def __eq__(self, other) -> bool:
+        return self.isSame(other)
 
     def _bool_op(
         self,
@@ -2041,8 +2044,16 @@ class Face(Shape):
         chamfer_builder = BRepFilletAPI_MakeFillet2d(self.wrapped)
         edge_map = self._entitiesFrom("Vertex", "Edge")
 
-        for e1, e2 in edge_map.values():
-            chamfer_builder.AddChamfer(TopoDS.Edge_s(e1), TopoDS.Edge_s(e2), d, d)
+        for v in vertices:
+            edges = edge_map[v]
+            if len(edges) < 2:
+                raise ValueError("Cannot chamfer at this location")
+
+            e1, e2 = edges
+
+            chamfer_builder.AddChamfer(
+                TopoDS.Edge_s(e1.wrapped), TopoDS.Edge_s(e2.wrapped), d, d
+            )
 
         chamfer_builder.Build()
 

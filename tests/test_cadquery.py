@@ -4296,3 +4296,11 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(f.chamfer2D(0.5, verts).Vertices()), 6)
         self.assertEqual(len(r.chamfer2D(0.5, verts).Vertices()), 6)
         self.assertEqual(len(r.chamfer2D(0.25, verts).Vertices()), 8)
+
+        r = Workplane().hLine(1).vLine(1).wire().val()
+        vs = r.Vertices()
+
+        self.assertEqual(len(r.chamfer2D(0.25, [vs[1]]).Vertices()), 4)
+
+        with raises(ValueError):
+            r.chamfer2D(0.25, [vs[0]])
