@@ -225,6 +225,27 @@ class TestCadQuery(BaseTest):
         self.assertEqual(26, s.faces().size())
         self.saveModel(s)
 
+    def testFluentMethodInheritance(self):
+        """
+        Tests that a derived class inherits fluent methods which return
+        instances of derived class when inherited.
+        """
+
+        class ExtendedWorkplane(Workplane):
+            def nonExistentInWorkplane(self):
+                pass
+
+        # Call an inherited fluent method:
+        wp = ExtendedWorkplane("XY").moveTo(1, 2)
+
+        # Verify that the inherited method returned an instance of the derived
+        # class:
+        self.assertEqual(type(wp), ExtendedWorkplane)
+
+        # The following is redundant, but can make the use case clearer.
+        # This must not raise an AttributeError:
+        wp.nonExistentInWorkplane()
+
     def testPointList(self):
         """
         Tests adding points and using them
