@@ -37,7 +37,7 @@ from pyparsing import (
     Keyword,
 )
 from functools import reduce
-from typing import List, Union, Sequence
+from typing import List, Union, Sequence, cast
 
 
 class Selector(object):
@@ -504,7 +504,9 @@ class AreaNthSelector(_NthSelector):
                           "Solid"):
             return obj.Area()
         elif shape_type == "Wire":
-            return Face.makeFromWires(obj).Area()
+            return Face.makeFromWires(
+                            cast(Wire, obj))\
+                       .Area()
         else:
             raise TypeError(
                 "AreaNthSelector supports only Wires, "\
