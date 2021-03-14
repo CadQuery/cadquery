@@ -453,6 +453,64 @@ class DirectionNthSelector(ParallelDirSelector, CenterNthSelector):
         objectlist = _NthSelector.filter(self, objectlist)
         return objectlist
 
+class AreaNthSelector(_NthSelector):
+    """
+    Selects object(s) with Nth area.
+
+    Applicability:
+        Faces, Shells, Solids - Shape.Area() is used to compute area
+        planar Wires - a temporary face is created to compute area
+
+    Among other things can be used to select one of 
+    the nested coplanar wires or faces. 
+
+    For example to create a fillet on a shank:
+
+        cq.Workplane("XY")\
+            .circle(5)\
+            .extrude(2)\
+            .circle(2)\
+            .extrude(10)\
+            .faces(">Z[-2]")\
+            .wires(AreaNthSelector(0))\
+            .fillet(2)
+
+    Or to create a lip on a case seam:
+        
+        cq.Workplane("XY")\
+            .rect(20, 20)\
+            .extrude(10)\
+            .edges("|Z or <Z")\
+            .fillet(2)\
+            .faces(">Z")\
+            .shell(2)\
+            .faces(">Z")\
+            .wires(AreaNthSelector(-1))\
+            .toPending()\
+            .workplane()\
+            .offset2D(-1)\
+            .extrude(1)\
+            .faces(">Z[-2]")\
+            .wires(AreaNthSelector(0))\
+            .toPending()\
+            .workplane()\
+            .cutBlind(2)    
+    """    
+    def key(self, obj: Shape) -> float:        
+        shape_type = obj.ShapeType()
+
+        if shape_type in ("Face", 
+                          "Shell", 
+                          "Solid"):
+            return obj.Area()
+        elif shape_type == "Wire":
+            return Face.makeFromWires(obj).Area()
+        else:
+            raise TypeError(
+                "AreaNthSelector supports only Wires, "\
+                "Faces, Shells and Solids, not {}"\
+                .format(shape_type))       
+
 
 class BinarySelector(Selector):
     """
