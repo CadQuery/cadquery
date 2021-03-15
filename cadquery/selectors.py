@@ -47,7 +47,7 @@ from pyparsing import (
     Keyword,
 )
 from functools import reduce
-from typing import List, Union, Sequence, cast
+from typing import List, Union, Sequence
 
 
 class Selector(object):
