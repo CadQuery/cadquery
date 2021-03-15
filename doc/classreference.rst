@@ -66,6 +66,8 @@ Selector Classes
     CenterNthSelector
     DirectionMinMaxSelector
     DirectionNthSelector
+    LengthNthSelector
+    AreaNthSelector
     BinarySelector
     AndSelector
     SumSelector

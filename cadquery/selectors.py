@@ -17,9 +17,19 @@
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
+from abc import abstractmethod, ABC
 import math
 from .occ_impl.geom import Vector
-from .occ_impl.shapes import Shape, Edge, Face, Wire, geom_LUT_EDGE, geom_LUT_FACE
+from .occ_impl.shapes import (
+    Shape,
+    Edge,
+    Face,
+    Wire,
+    Shell,
+    Solid,
+    geom_LUT_EDGE,
+    geom_LUT_FACE,
+)
 from pyparsing import (
     Literal,
     Word,
@@ -294,7 +304,7 @@ class TypeSelector(Selector):
         return r
 
 
-class _NthSelector(Selector):
+class _NthSelector(Selector, ABC):
     """
     An abstract class that provides the methods to select the Nth object/objects of an ordered list.
     """
@@ -324,6 +334,7 @@ class _NthSelector(Selector):
 
         return out
 
+    @abstractmethod
     def key(self, obj: Shape) -> float:
         """
         Return the key for ordering. Can raise a ValueError if obj can not be
@@ -454,9 +465,26 @@ class DirectionNthSelector(ParallelDirSelector, CenterNthSelector):
         return objectlist
 
 
+class LengthNthSelector(_NthSelector):
+    """
+    Select the object(s) with the Nth length
+
+    Applicability:
+        All Edge and Wire objects
+    """
+
+    def key(self, obj: Shape) -> float:
+        if isinstance(obj, (Edge, Wire)):
+            return obj.Length()
+        else:
+            raise ValueError(
+                f"LengthNthSelector supports only Edges and Wires, not {type(obj).__name__}"
+            )
+
+
 class AreaNthSelector(_NthSelector):
     """
-    Selects object(s) with Nth area.
+    Selects the object(s) with Nth area
 
     Applicability:
         Faces, Shells, Solids - Shape.Area() is used to compute area
@@ -467,48 +495,49 @@ class AreaNthSelector(_NthSelector):
 
     For example to create a fillet on a shank:
 
-        cq.Workplane("XY")\
-            .circle(5)\
-            .extrude(2)\
-            .circle(2)\
-            .extrude(10)\
-            .faces(">Z[-2]")\
-            .wires(AreaNthSelector(0))\
+        result = (
+            cq.Workplane("XY")
+            .circle(5)
+            .extrude(2)
+            .circle(2)
+            .extrude(10)
+            .faces(">Z[-2]")
+            .wires(AreaNthSelector(0))
             .fillet(2)
+        )
 
     Or to create a lip on a case seam:
         
-        cq.Workplane("XY")\
-            .rect(20, 20)\
-            .extrude(10)\
-            .edges("|Z or <Z")\
-            .fillet(2)\
-            .faces(">Z")\
-            .shell(2)\
-            .faces(">Z")\
-            .wires(AreaNthSelector(-1))\
-            .toPending()\
-            .workplane()\
-            .offset2D(-1)\
-            .extrude(1)\
-            .faces(">Z[-2]")\
-            .wires(AreaNthSelector(0))\
-            .toPending()\
-            .workplane()\
-            .cutBlind(2)    
+        result = (
+            cq.Workplane("XY")
+            .rect(20, 20)
+            .extrude(10)
+            .edges("|Z or <Z")
+            .fillet(2)
+            .faces(">Z")
+            .shell(2)
+            .faces(">Z")
+            .wires(AreaNthSelector(-1))
+            .toPending()
+            .workplane()
+            .offset2D(-1)
+            .extrude(1)
+            .faces(">Z[-2]")
+            .wires(AreaNthSelector(0))
+            .toPending()
+            .workplane()
+            .cutBlind(2)
+        )
     """
 
     def key(self, obj: Shape) -> float:
-        shape_type = obj.ShapeType()
-
-        if shape_type in ("Face", "Shell", "Solid"):
+        if isinstance(obj, (Face, Shell, Solid)):
             return obj.Area()
-        elif shape_type == "Wire":
-            return Face.makeFromWires(cast(Wire, obj)).Area()
+        elif isinstance(obj, Wire):
+            return Face.makeFromWires(obj).Area()
         else:
-            raise TypeError(
-                "AreaNthSelector supports only Wires, "
-                "Faces, Shells and Solids, not {}".format(shape_type)
+            raise ValueError(
+                f"AreaNthSelector supports only Wires, Faces, Shells and Solids, not {type(obj).__name__}"
             )
 
 
