@@ -824,10 +824,9 @@ The Classic OCC Bottle
 ----------------------
 
 CadQuery is based on the OpenCascade.org (OCC) modeling Kernel.  Those who are familiar with OCC know about the
-famous 'bottle' example. http://www.opencascade.org/org/gettingstarted/appli/
+famous 'bottle' example. `The bottle example in the OCCT online documentation <https://old.opencascade.com/doc/occt-7.5.0/overview/html/occt__tutorial.html>`_.
 
-A pythonOCC version is listed here
-    http://code.google.com/p/pythonocc/source/browse/trunk/src/examples/Tools/InteractiveViewer/scripts/Bottle.py?r=1046
+A pythonOCC version is listed `here <https://github.com/tpaviot/pythonocc-demos/blob/f3ea9b4f65a9dff482be04b153d4ce5ec2430e13/examples/core_classic_occ_bottle.py>`_.
 
 Of course one difference between this sample and the OCC version is the length. This sample is one of the longer
 ones at 13 lines, but that's very short compared to the pythonOCC version, which is 10x longer!
