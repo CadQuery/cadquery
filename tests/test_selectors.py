@@ -701,14 +701,31 @@ class TestCQSelectors(BaseTest):
         )
 
     def testAreaNthSelector_Vertices(self):
+        """
+        Raising exception when AreaNthSelector is used 
+        on unsupported Shapes (Vertices)
+        """
         with self.assertRaises(TypeError):
-            wp = Workplane("XY").box(10, 10, 10).vertices(selectors.AreaNthSelector(0))
+            Workplane("XY").box(10, 10, 10).vertices(selectors.AreaNthSelector(0))
 
     def testAreaNthSelector_Edges(self):
+        """
+        Raising exception when AreaNthSelector is used 
+        on unsupported Shapes (Edges)
+        """
         with self.assertRaises(TypeError):
-            wp = Workplane("XY").box(10, 10, 10).edges(selectors.AreaNthSelector(0))
+            Workplane("XY").box(10, 10, 10).edges(selectors.AreaNthSelector(0))
 
     def testAreaNthSelector_Wires(self):
+        """
+        Tests key parts of case seam leap creation algorithm 
+        (see example 26)
+
+        - Selecting top outer wire 
+        - Applying Offset2D and extruding a "lid"
+        - Selecting the innermost of three wires in preparation to
+          cut through the lid and leave a lip on the case seam
+        """
         # selecting top outermost wire of square box
         wp = (
             Workplane("XY")
@@ -723,12 +740,12 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(
             len(wp.vals()),
             1,
-            msg="Failed to select top outermost wire " "of the box: wrong N wires",
+            msg="Failed to select top outermost wire of the box: wrong N wires",
         )
         self.assertAlmostEqual(
             Face.makeFromWires(wp.val()).Area(),
             50 * 50,
-            msg="Failed to select top outermost wire " "of the box: wrong wire area",
+            msg="Failed to select top outermost wire of the box: wrong wire area",
         )
 
         # preparing to add an inside lip to the box
@@ -740,39 +757,42 @@ class TestCQSelectors(BaseTest):
         self.assertEqual(
             len(wp_outer_wire.vals()),
             1,
-            msg="Failed to select outermost wire " "of 2 faces: wrong N wires",
+            msg="Failed to select outermost wire of 2 faces: wrong N wires",
         )
         self.assertAlmostEqual(
             Face.makeFromWires(wp_outer_wire.val()).Area(),
             50 * 50,
-            msg="Failed to select outermost wire " "of 2 faces: wrong area",
+            msg="Failed to select outermost wire of 2 faces: wrong area",
         )
 
         wp_mid_wire = wp.wires(selectors.AreaNthSelector(1))
         self.assertEqual(
             len(wp_mid_wire.vals()),
             1,
-            msg="Failed to select middle wire " "of 2 faces: wrong N wires",
+            msg="Failed to select middle wire of 2 faces: wrong N wires",
         )
         self.assertAlmostEqual(
             Face.makeFromWires(wp_mid_wire.val()).Area(),
             (50 - 2 * 2) * (50 - 2 * 2),
-            msg="Failed to select middle wire " "of 2 faces: wrong area",
+            msg="Failed to select middle wire of 2 faces: wrong area",
         )
 
         wp_inner_wire = wp.wires(selectors.AreaNthSelector(0))
         self.assertEqual(
             len(wp_inner_wire.vals()),
             1,
-            msg="Failed to select inner wire " "of 2 faces: wrong N wires",
+            msg="Failed to select inner wire of 2 faces: wrong N wires",
         )
         self.assertAlmostEqual(
             Face.makeFromWires(wp_inner_wire.val()).Area(),
             (50 - 5 * 2) * (50 - 5 * 2),
-            msg="Failed to select inner wire " "of 2 faces: wrong area",
+            msg="Failed to select inner wire of 2 faces: wrong area",
         )
 
     def testAreaNthSelector_Faces(self):
+        """
+        Selecting two faces of 10x20x30 box with intermediate area.
+        """
         wp = Workplane("XY").box(10, 20, 30).faces(selectors.AreaNthSelector(1))
 
         self.assertEqual(
@@ -790,6 +810,9 @@ class TestCQSelectors(BaseTest):
         )
 
     def testAreaNthSelector_Shells(self):
+        """
+        Selecting one of three shells with the smallest surface area
+        """
         shells = [
             Shell.makeShell(Workplane("XY").box(20, 20, 20).faces().vals()),
             Shell.makeShell(Workplane("XY").box(10, 10, 10).faces().vals()),
@@ -810,6 +833,9 @@ class TestCQSelectors(BaseTest):
         )
 
     def testAreaNthSelector_Solids(self):
+        """
+        Selecting one of three solids with the smallest surface area
+        """
         shells = [
             Workplane("XY").box(20, 20, 20).solids().val(),
             Workplane("XY").box(10, 10, 10).solids().val(),
