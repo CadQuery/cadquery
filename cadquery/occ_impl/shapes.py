@@ -290,14 +290,7 @@ geom_LUT_EDGE = {
 }
 
 Shapes = Literal[
-    "Vertex", 
-    "Edge", 
-    "Wire", 
-    "Face", 
-    "Shell", 
-    "Solid", 
-    "CompSolid", 
-    "Compound"
+    "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"
 ]
 Geoms = Literal[
     "Vertex",

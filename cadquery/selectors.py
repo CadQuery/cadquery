@@ -453,6 +453,7 @@ class DirectionNthSelector(ParallelDirSelector, CenterNthSelector):
         objectlist = _NthSelector.filter(self, objectlist)
         return objectlist
 
+
 class AreaNthSelector(_NthSelector):
     """
     Selects object(s) with Nth area.
@@ -495,23 +496,20 @@ class AreaNthSelector(_NthSelector):
             .toPending()\
             .workplane()\
             .cutBlind(2)    
-    """    
-    def key(self, obj: Shape) -> float:        
+    """
+
+    def key(self, obj: Shape) -> float:
         shape_type = obj.ShapeType()
 
-        if shape_type in ("Face", 
-                          "Shell", 
-                          "Solid"):
+        if shape_type in ("Face", "Shell", "Solid"):
             return obj.Area()
         elif shape_type == "Wire":
-            return Face.makeFromWires(
-                            cast(Wire, obj))\
-                       .Area()
+            return Face.makeFromWires(cast(Wire, obj)).Area()
         else:
             raise TypeError(
-                "AreaNthSelector supports only Wires, "\
-                "Faces, Shells and Solids, not {}"\
-                .format(shape_type))       
+                "AreaNthSelector supports only Wires, "
+                "Faces, Shells and Solids, not {}".format(shape_type)
+            )
 
 
 class BinarySelector(Selector):
