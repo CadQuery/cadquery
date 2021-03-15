@@ -358,6 +358,21 @@ class _NthSelector(Selector):
         return clustered
 
 
+class LengthNthSelector(_NthSelector):
+    """
+    Select the object(s) with the Nth length
+
+    Applicability:
+        All Edge and Wire objects.
+    """
+
+    def key(self, obj:Shape) -> float:
+        if isinstance(obj, (Edge, Wire)):
+            return obj.Length()
+        else:
+            raise ValueError("Can not get a length from this object")
+
+
 class RadiusNthSelector(_NthSelector):
     """
     Select the object with the Nth radius.

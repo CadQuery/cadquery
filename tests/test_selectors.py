@@ -700,6 +700,50 @@ class TestCQSelectors(BaseTest):
             wire_circles.wires(selectors.RadiusNthSelector(1)).val().radius(), 4
         )
 
+    def testLengthNthSelector(self):
+        # test the key method behaves
+        unit_edge = Edge.makeLine(Vector(0, 0, 0), Vector(0, 0, 1))
+        sel = selectors.LengthNthSelector(0)
+        self.assertAlmostEqual(1, sel.key(unit_edge), 3)
+
+        unit_wire = Wire.assembleEdges([unit_edge])
+        self.assertAlmostEqual(1, sel.key(unit_wire), 3)
+
+        # no length defined for a face, shell, solid or compound
+        w0 = Workplane().rarray(2, 2, 2, 1).box(1, 1, 1)
+        for val in [
+            w0.faces().val(),
+            w0.shells().val(),
+            w0.compounds().val(),
+        ]:
+            with self.assertRaises(ValueError):
+                sel.key(val)
+
+        # test with no edges
+        with self.assertRaises(ValueError):
+            Workplane().edges(sel)
+        with self.assertRaises(IndexError):
+            Workplane().box(1, 1, 1).faces(sel)
+
+        # test with unit cube
+        w1 = Workplane(makeUnitCube()).edges(sel)
+        self.assertEqual(12, w1.size())
+
+        # test with wires
+        # make a large object with 4 holes drilled through it, select wires on
+        # the top face. Should have one long one and 4 short ones.
+        w2 = (
+            Workplane()
+            .box(10, 10, 1)
+            .faces(">Z")
+            .workplane()
+            .rarray(4, 4, 2, 2)
+            .hole(1)
+            .faces(">Z")
+        )
+        self.assertEqual(4, w2.wires(selectors.LengthNthSelector(0)).size())
+        self.assertEqual(1, w2.wires(selectors.LengthNthSelector(1)).size())
+
     def testAndSelector(self):
         c = CQ(makeUnitCube())
 
