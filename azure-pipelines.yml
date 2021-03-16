@@ -17,29 +17,8 @@ resources:
 jobs:
 - template: conda-build.yml@templates
   parameters:
-    name: Linux_36
-    vmImage: 'ubuntu-16.04'
-    py_maj: 3
-    py_min: 6
-
-- template: conda-build.yml@templates
-  parameters:
-    name: macOS_36
-    vmImage: 'macOS-10.15'
-    py_maj: 3
-    py_min: 6
-
-- template: conda-build.yml@templates
-  parameters:
-    name: Windows_36
-    vmImage: 'vs2017-win2016'
-    py_maj: 3
-    py_min: 6
-    conda_bld: 3.18
-- template: conda-build.yml@templates
-  parameters:
     name: Linux_37
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-18.04'
     py_maj: 3
     py_min: 7
 
@@ -61,7 +40,7 @@ jobs:
 - template: conda-build.yml@templates
   parameters:
     name: Linux_38
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-18.04'
     py_maj: 3
     py_min: 8
     conda_bld: 3.19.2
@@ -81,3 +60,27 @@ jobs:
     py_maj: 3
     py_min: 8
     conda_bld: 3.19.2
+
+- template: conda-build.yml@templates
+  parameters:
+    name: Linux_39
+    vmImage: 'ubuntu-18.04'
+    py_maj: 3
+    py_min: 9
+    conda_bld: 3.21.4
+
+- template: conda-build.yml@templates
+  parameters:
+    name: macOS_39
+    vmImage: 'macOS-10.15'
+    py_maj: 3
+    py_min: 9
+    conda_bld: 3.21.4
+
+- template: conda-build.yml@templates
+  parameters:
+    name: Windows_39
+    vmImage: 'vs2017-win2016'
+    py_maj: 3
+    py_min: 9
+    conda_bld: 3.21.4
