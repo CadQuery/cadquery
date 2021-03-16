@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Online documentation
+    url: https://cadquery.readthedocs.io/
+    about: CadQuery's extensive online documentation
+  - name: Discord channel
+    url: https://discord.gg/qz3uAdF
+    about: For more casual discussion and help
+  - name: Google group
+    url: https://groups.google.com/forum/#!forum/cadquery
+    about: Mailing list for CadQuery
