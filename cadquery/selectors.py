@@ -488,10 +488,12 @@ class AreaNthSelector(_NthSelector):
 
     Applicability:
         Faces, Shells, Solids - Shape.Area() is used to compute area
-        planar Wires - a temporary face is created to compute area
+        closed planar Wires - a temporary face is created to compute area
 
-    Among other things can be used to select one of 
-    the nested coplanar wires or faces. 
+    Will ignore non-planar or non-closed wires.
+    
+    Among other things can be used to select one of
+    the nested coplanar wires or faces.
 
     For example to create a fillet on a shank:
 
@@ -507,7 +509,7 @@ class AreaNthSelector(_NthSelector):
         )
 
     Or to create a lip on a case seam:
-        
+
         result = (
             cq.Workplane("XY")
             .rect(20, 20)
@@ -534,7 +536,12 @@ class AreaNthSelector(_NthSelector):
         if isinstance(obj, (Face, Shell, Solid)):
             return obj.Area()
         elif isinstance(obj, Wire):
-            return Face.makeFromWires(obj).Area()
+            try:
+                return Face.makeFromWires(obj).Area()
+            except Exception as ex:
+                raise ValueError(
+                    f"Can not compute area of the Wire: {ex}. AreaNthSelector supports only closed planar Wires."
+                )
         else:
             raise ValueError(
                 f"AreaNthSelector supports only Wires, Faces, Shells and Solids, not {type(obj).__name__}"

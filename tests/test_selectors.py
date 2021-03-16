@@ -826,7 +826,7 @@ class TestCQSelectors(BaseTest):
         with self.assertRaises(IndexError):
             Workplane("XY").box(10, 10, 10).edges(selectors.AreaNthSelector(0))
 
-    def testAreaNthSelector_Wires(self):
+    def testAreaNthSelector_NestedWires(self):
         """
         Tests key parts of case seam leap creation algorithm
         (see example 26)
@@ -897,6 +897,33 @@ class TestCQSelectors(BaseTest):
             Face.makeFromWires(wp_inner_wire.val()).Area(),
             (50 - 5 * 2) * (50 - 5 * 2),
             msg="Failed to select inner wire of 2 faces: wrong area",
+        )
+
+    def testAreaNthSelector_NonplanarWire(self):
+        """
+        AreaNthSelector should raise ValueError when
+        used on non-planar wires so that they are ignored by
+        _NthSelector.
+
+        Non-planar wires in stack should not prevent selection of
+        planar wires.
+        """
+        wp = Workplane("XY").circle(10).extrude(50)
+
+        with self.assertRaises(IndexError):
+            wp.wires(selectors.AreaNthSelector(1))
+
+        cylinder_flat_ends = wp.wires(selectors.AreaNthSelector(0))
+        self.assertEqual(
+            len(cylinder_flat_ends.vals()),
+            2,
+            msg="Failed to select cylinder flat end wires: wrong N wires",
+        )
+        self.assertTupleAlmostEquals(
+            [math.pi * 10 ** 2] * 2,
+            [Face.makeFromWires(wire).Area() for wire in cylinder_flat_ends.vals()],
+            5,
+            msg="Failed to select cylinder flat end wires: wrong area",
         )
 
     def testAreaNthSelector_Faces(self):
