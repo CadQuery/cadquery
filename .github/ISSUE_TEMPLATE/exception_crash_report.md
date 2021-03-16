@@ -29,7 +29,7 @@ assignees: ''
 OS:
 
 Was CadQuery installed using Conda?: <!-- Note Conda is the only official installation method. If you are not using Conda, please provide details of your build/install/packaging methods, since they are often relevant to bugs and crashes. -->
-Output of `conda list 'cadquery|cq-editor|ocp'` from your active Conda environment:
+Output of `conda list` from your active Conda environment:
 ```
 ```
 
