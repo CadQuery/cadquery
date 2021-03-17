@@ -1729,6 +1729,20 @@ class Workplane(object):
 
         return self.eachpoint(lambda loc: slot.moved(loc), True)
 
+    def _toVectors(
+        self, pts: Iterable[VectorLike], includeCurrent: bool
+    ) -> List[Vector]:
+
+        vecs = [self.plane.toWorldCoords(p) for p in pts]
+
+        if includeCurrent:
+            gstartPoint = self._findFromPoint(False)
+            allPoints = [gstartPoint] + vecs
+        else:
+            allPoints = vecs
+
+        return allPoints
+
     def spline(
         self: T,
         listOfXYTuple: Iterable[VectorLike],
@@ -1807,13 +1821,7 @@ class Workplane(object):
         that cannot be correctly interpreted as a spline.
         """
 
-        vecs = [self.plane.toWorldCoords(p) for p in listOfXYTuple]
-
-        if includeCurrent:
-            gstartPoint = self._findFromPoint(False)
-            allPoints = [gstartPoint] + vecs
-        else:
-            allPoints = vecs
+        allPoints = self._toVectors(listOfXYTuple, includeCurrent)
 
         if tangents:
             tangents_g: Optional[Sequence[Vector]] = [
@@ -1866,9 +1874,19 @@ class Workplane(object):
         """
 
         diff = stop - start
-        allPoints = [func(start + diff * t / N) for t in range(N + 1)]
+        allPoints = self._toVectors(
+            (func(start + diff * t / N) for t in range(N + 1)), False
+        )
 
-        return self.spline(allPoints, includeCurrent=False, makeWire=makeWire)
+        e = Edge.makeSplineApprox(allPoints)
+
+        if makeWire:
+            rv_w = Wire.assembleEdges([e])
+            self._addPendingWire(rv_w)
+        else:
+            self._addPendingEdge(e)
+
+        return self.newObject([rv_w if makeWire else e])
 
     def ellipseArc(
         self: T,
