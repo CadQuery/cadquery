@@ -109,7 +109,11 @@ from OCP.TopoDS import (
 
 from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
 from OCP.GCE2d import GCE2d_MakeSegment
-from OCP.GeomAPI import GeomAPI_Interpolate, GeomAPI_ProjectPointOnSurf
+from OCP.GeomAPI import (
+    GeomAPI_Interpolate,
+    GeomAPI_ProjectPointOnSurf,
+    GeomAPI_PointsToBSpline,
+)
 
 from OCP.BRepFill import BRepFill
 
@@ -1530,6 +1534,41 @@ class Edge(Shape, Mixin1D):
                 spline_builder.Load(tangents_array, tangent_enabled_array, scale)
 
         spline_builder.Perform()
+        if not spline_builder.IsDone():
+            raise ValueError("B-spline interpolation failed")
+
+        spline_geom = spline_builder.Curve()
+
+        return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
+
+    @classmethod
+    def makeSplineApprox(
+        cls: Type["Edge"],
+        listOfVector: List[Vector],
+        periodic: bool = False,
+        tol: float = 1e-6,
+        smoothing: Optional[Tuple[float, float, float]] = None,
+    ) -> "Edge":
+        """
+        Approximate a spline through the provided points.
+
+        :param listOfVector: a list of Vectors that represent the points
+        :param periodic: creation of peridic curves
+        :param tol: tolerance of the algorithm (consult OCC documentation). Used to check that the
+          specified points are not too close to each other, and that tangent vectors are not too
+          short. (In either case interpolation may fail.)
+        :param smoothing: optional tuple of 3 weigths use for variational smoothing (default: None)
+        :return: an Edge
+        """
+        pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
+        for ix, v in enumerate(listOfVector):
+            pnts.SetValue(ix + 1, v.toPnt())
+
+        if smoothing:
+            spline_builder = GeomAPI_PointsToBSpline(pnts, *smoothing, Tol3D=tol)
+        else:
+            spline_builder = GeomAPI_PointsToBSpline(pnts, periodic, Tol3D=tol)
+
         if not spline_builder.IsDone():
             raise ValueError("B-spline interpolation failed")
 
