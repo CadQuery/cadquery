@@ -700,6 +700,305 @@ class TestCQSelectors(BaseTest):
             wire_circles.wires(selectors.RadiusNthSelector(1)).val().radius(), 4
         )
 
+    def testLengthNthSelector_EmptyEdgesList(self):
+        """
+        LengthNthSelector should raise ValueError when
+        applied to an empty list
+        """
+        with self.assertRaises(ValueError):
+            Workplane().edges(selectors.LengthNthSelector(0))
+
+    def testLengthNthSelector_Faces(self):
+        """
+        LengthNthSelector should produce empty list when applied
+        to list of unsupported Shapes (Faces)
+        """
+        with self.assertRaises(IndexError):
+            Workplane().box(1, 1, 1).faces(selectors.LengthNthSelector(0))
+
+    def testLengthNthSelector_EdgesOfUnitCube(self):
+        """
+        Selecting all edges of unit cube
+        """
+        w1 = Workplane(makeUnitCube()).edges(selectors.LengthNthSelector(0))
+        self.assertEqual(
+            12,
+            w1.size(),
+            msg="Failed to select edges of a unit cube: wrong number of edges",
+        )
+
+    def testLengthNthSelector_EdgesOf123Cube(self):
+        """
+        Selecting 4 edges of length 2 belonging to 1x2x3 box
+        """
+        w1 = Workplane().box(1, 2, 3).edges(selectors.LengthNthSelector(1))
+        self.assertEqual(
+            4,
+            w1.size(),
+            msg="Failed to select edges of length 2 belonging to 1x2x3 box: wrong number of edges",
+        )
+        self.assertTupleAlmostEquals(
+            (2, 2, 2, 2),
+            (edge.Length() for edge in w1.vals()),
+            5,
+            msg="Failed to select edges of length 2 belonging to 1x2x3 box: wrong length",
+        )
+
+    def testLengthNthSelector_PlateWithHoles(self):
+        """
+        Creating 10x10 plate with 4 holes (dia=1)
+        and using LengthNthSelector to select hole rims
+        and plate perimeter wire on the top surface/
+        """
+        w2 = (
+            Workplane()
+            .box(10, 10, 1)
+            .faces(">Z")
+            .workplane()
+            .rarray(4, 4, 2, 2)
+            .hole(1)
+            .faces(">Z")
+        )
+
+        hole_rims = w2.wires(selectors.LengthNthSelector(0))
+
+        self.assertEqual(4, hole_rims.size())
+        self.assertEqual(
+            4, hole_rims.size(), msg="Failed to select hole rims: wrong N edges",
+        )
+
+        hole_circumference = math.pi * 1
+        self.assertTupleAlmostEquals(
+            [hole_circumference] * 4,
+            (edge.Length() for edge in hole_rims.vals()),
+            5,
+            msg="Failed to select hole rims: wrong length",
+        )
+
+        plate_perimeter = w2.wires(selectors.LengthNthSelector(1))
+
+        self.assertEqual(
+            1,
+            plate_perimeter.size(),
+            msg="Failed to select plate perimeter wire: wrong N wires",
+        )
+
+        self.assertAlmostEqual(
+            10 * 4,
+            plate_perimeter.val().Length(),
+            5,
+            msg="Failed to select plate perimeter wire: wrong length",
+        )
+
+    def testLengthNthSelector_UnsupportedShapes(self):
+        """
+        No length defined for a face, shell, solid or compound
+        """
+        w0 = Workplane().rarray(2, 2, 2, 1).box(1, 1, 1)
+        for val in [w0.faces().val(), w0.shells().val(), w0.compounds().val()]:
+            with self.assertRaises(ValueError):
+                selectors.LengthNthSelector(0).key(val)
+
+    def testLengthNthSelector_UnitEdgeAndWire(self):
+        """
+        Checks that key() method of LengthNthSelector 
+        calculates lengths of unit edge correctly
+        """
+        unit_edge = Edge.makeLine(Vector(0, 0, 0), Vector(0, 0, 1))
+        self.assertAlmostEqual(1, selectors.LengthNthSelector(0).key(unit_edge), 5)
+
+        unit_edge = Wire.assembleEdges([unit_edge])
+        self.assertAlmostEqual(1, selectors.LengthNthSelector(0).key(unit_edge), 5)
+
+    def testAreaNthSelector_Vertices(self):
+        """
+        Using AreaNthSelector on unsupported Shapes (Vertices)
+        should produce empty list
+        """
+        with self.assertRaises(IndexError):
+            Workplane("XY").box(10, 10, 10).vertices(selectors.AreaNthSelector(0))
+
+    def testAreaNthSelector_Edges(self):
+        """
+        Using AreaNthSelector on unsupported Shapes (Edges)
+        should produce empty list
+        """
+        with self.assertRaises(IndexError):
+            Workplane("XY").box(10, 10, 10).edges(selectors.AreaNthSelector(0))
+
+    def testAreaNthSelector_NestedWires(self):
+        """
+        Tests key parts of case seam leap creation algorithm
+        (see example 26)
+
+        - Selecting top outer wire
+        - Applying Offset2D and extruding a "lid"
+        - Selecting the innermost of three wires in preparation to
+          cut through the lid and leave a lip on the case seam
+        """
+        # selecting top outermost wire of square box
+        wp = (
+            Workplane("XY")
+            .rect(50, 50)
+            .extrude(50)
+            .faces(">Z")
+            .shell(-5, "intersection")
+            .faces(">Z")
+            .wires(selectors.AreaNthSelector(-1))
+        )
+
+        self.assertEqual(
+            len(wp.vals()),
+            1,
+            msg="Failed to select top outermost wire of the box: wrong N wires",
+        )
+        self.assertAlmostEqual(
+            Face.makeFromWires(wp.val()).Area(),
+            50 * 50,
+            msg="Failed to select top outermost wire of the box: wrong wire area",
+        )
+
+        # preparing to add an inside lip to the box
+        wp = wp.toPending().workplane().offset2D(-2).extrude(1).faces(">Z[-2]")
+        # workplane now has 2 faces selected:
+        # a square and a thin rectangular frame
+
+        wp_outer_wire = wp.wires(selectors.AreaNthSelector(-1))
+        self.assertEqual(
+            len(wp_outer_wire.vals()),
+            1,
+            msg="Failed to select outermost wire of 2 faces: wrong N wires",
+        )
+        self.assertAlmostEqual(
+            Face.makeFromWires(wp_outer_wire.val()).Area(),
+            50 * 50,
+            msg="Failed to select outermost wire of 2 faces: wrong area",
+        )
+
+        wp_mid_wire = wp.wires(selectors.AreaNthSelector(1))
+        self.assertEqual(
+            len(wp_mid_wire.vals()),
+            1,
+            msg="Failed to select middle wire of 2 faces: wrong N wires",
+        )
+        self.assertAlmostEqual(
+            Face.makeFromWires(wp_mid_wire.val()).Area(),
+            (50 - 2 * 2) * (50 - 2 * 2),
+            msg="Failed to select middle wire of 2 faces: wrong area",
+        )
+
+        wp_inner_wire = wp.wires(selectors.AreaNthSelector(0))
+        self.assertEqual(
+            len(wp_inner_wire.vals()),
+            1,
+            msg="Failed to select inner wire of 2 faces: wrong N wires",
+        )
+        self.assertAlmostEqual(
+            Face.makeFromWires(wp_inner_wire.val()).Area(),
+            (50 - 5 * 2) * (50 - 5 * 2),
+            msg="Failed to select inner wire of 2 faces: wrong area",
+        )
+
+    def testAreaNthSelector_NonplanarWire(self):
+        """
+        AreaNthSelector should raise ValueError when
+        used on non-planar wires so that they are ignored by
+        _NthSelector.
+
+        Non-planar wires in stack should not prevent selection of
+        planar wires.
+        """
+        wp = Workplane("XY").circle(10).extrude(50)
+
+        with self.assertRaises(IndexError):
+            wp.wires(selectors.AreaNthSelector(1))
+
+        cylinder_flat_ends = wp.wires(selectors.AreaNthSelector(0))
+        self.assertEqual(
+            len(cylinder_flat_ends.vals()),
+            2,
+            msg="Failed to select cylinder flat end wires: wrong N wires",
+        )
+        self.assertTupleAlmostEquals(
+            [math.pi * 10 ** 2] * 2,
+            [Face.makeFromWires(wire).Area() for wire in cylinder_flat_ends.vals()],
+            5,
+            msg="Failed to select cylinder flat end wires: wrong area",
+        )
+
+    def testAreaNthSelector_Faces(self):
+        """
+        Selecting two faces of 10x20x30 box with intermediate area.
+        """
+        wp = Workplane("XY").box(10, 20, 30).faces(selectors.AreaNthSelector(1))
+
+        self.assertEqual(
+            len(wp.vals()),
+            2,
+            msg="Failed to select two faces of 10-20-30 box "
+            "with intermediate area: wrong N faces",
+        )
+        self.assertTupleAlmostEquals(
+            (wp.vals()[0].Area(), wp.vals()[1].Area()),
+            (10 * 30, 10 * 30),
+            7,
+            msg="Failed to select two faces of 10-20-30 box "
+            "with intermediate area: wrong area",
+        )
+
+    def testAreaNthSelector_Shells(self):
+        """
+        Selecting one of three shells with the smallest surface area
+        """
+
+        sizes_iter = iter([10.0, 20.0, 30.0])
+
+        def next_box_shell(loc):
+            size = next(sizes_iter)
+            return Workplane().box(size, size, size).val().located(loc)
+
+        workplane_shells = Workplane().rarray(10, 1, 3, 1).eachpoint(next_box_shell)
+
+        selected_shells = workplane_shells.shells(selectors.AreaNthSelector(0))
+
+        self.assertEqual(
+            len(selected_shells.vals()),
+            1,
+            msg="Failed to select the smallest shell: wrong N shells",
+        )
+        self.assertAlmostEqual(
+            selected_shells.val().Area(),
+            10 * 10 * 6,
+            msg="Failed to select the smallest shell: wrong area",
+        )
+
+    def testAreaNthSelector_Solids(self):
+        """
+        Selecting 2 of 3 solids by surface area
+        """
+
+        sizes_iter = iter([10.0, 20.0, 20.0])
+
+        def next_box(loc):
+            size = next(sizes_iter)
+            return Workplane().box(size, size, size).val().located(loc)
+
+        workplane_solids = Workplane().rarray(30, 1, 3, 1).eachpoint(next_box)
+
+        selected_solids = workplane_solids.solids(selectors.AreaNthSelector(1))
+
+        self.assertEqual(
+            len(selected_solids.vals()),
+            2,
+            msg="Failed to select two larger solids: wrong N shells",
+        )
+        self.assertTupleAlmostEquals(
+            [20 * 20 * 6] * 2,
+            [solid.Area() for solid in selected_solids.vals()],
+            5,
+            msg="Failed to select two larger solids: wrong area",
+        )
+
     def testAndSelector(self):
         c = CQ(makeUnitCube())
 
