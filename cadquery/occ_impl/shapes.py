@@ -1545,7 +1545,6 @@ class Edge(Shape, Mixin1D):
     def makeSplineApprox(
         cls: Type["Edge"],
         listOfVector: List[Vector],
-        periodic: bool = False,
         tol: float = 1e-6,
         smoothing: Optional[Tuple[float, float, float]] = None,
     ) -> "Edge":
@@ -1553,7 +1552,6 @@ class Edge(Shape, Mixin1D):
         Approximate a spline through the provided points.
 
         :param listOfVector: a list of Vectors that represent the points
-        :param periodic: creation of peridic curves
         :param tol: tolerance of the algorithm (consult OCC documentation). Used to check that the
           specified points are not too close to each other, and that tangent vectors are not too
           short. (In either case interpolation may fail.)
@@ -1567,10 +1565,10 @@ class Edge(Shape, Mixin1D):
         if smoothing:
             spline_builder = GeomAPI_PointsToBSpline(pnts, *smoothing, Tol3D=tol)
         else:
-            spline_builder = GeomAPI_PointsToBSpline(pnts, periodic, Tol3D=tol)
+            spline_builder = GeomAPI_PointsToBSpline(pnts, Tol3D=tol)
 
         if not spline_builder.IsDone():
-            raise ValueError("B-spline interpolation failed")
+            raise ValueError("B-spline approximation failed")
 
         spline_geom = spline_builder.Curve()
 
