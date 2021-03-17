@@ -177,6 +177,8 @@ as a basis for futher operations.
         ParallelDirSelector
         DirectionSelector
         DirectionNthSelector
+		LengthNthSelector
+		AreaNthSelector
         RadiusNthSelector
         PerpendicularDirSelector
         TypeSelector
