@@ -425,7 +425,7 @@ class DirectionMinMaxSelector(CenterNthSelector):
         CQ(aCube).faces(DirectionMinMaxSelector((0, 0, 1), True)
 
     Means to select the face having the center of mass farthest in the positive
-    z direction, and is the same as:
+    z direction, and is the same as::
 
         CQ(aCube).faces(">Z")
 
@@ -487,49 +487,49 @@ class AreaNthSelector(_NthSelector):
     Selects the object(s) with Nth area
 
     Applicability:
-        Faces, Shells, Solids - Shape.Area() is used to compute area
-        closed planar Wires - a temporary face is created to compute area
+        - Faces, Shells, Solids - Shape.Area() is used to compute area
+        - closed planar Wires - a temporary face is created to compute area
 
     Will ignore non-planar or non-closed wires.
     
     Among other things can be used to select one of
     the nested coplanar wires or faces.
 
-    For example to create a fillet on a shank:
+    For example to create a fillet on a shank::
 
-        result = (
-            cq.Workplane("XY")
-            .circle(5)
-            .extrude(2)
-            .circle(2)
-            .extrude(10)
-            .faces(">Z[-2]")
-            .wires(AreaNthSelector(0))
-            .fillet(2)
-        )
+       result = (
+           cq.Workplane("XY")
+           .circle(5)
+           .extrude(2)
+           .circle(2)
+           .extrude(10)
+           .faces(">Z[-2]")
+           .wires(AreaNthSelector(0))
+           .fillet(2)
+       )
 
-    Or to create a lip on a case seam:
+    Or to create a lip on a case seam::
 
-        result = (
-            cq.Workplane("XY")
-            .rect(20, 20)
-            .extrude(10)
-            .edges("|Z or <Z")
-            .fillet(2)
-            .faces(">Z")
-            .shell(2)
-            .faces(">Z")
-            .wires(AreaNthSelector(-1))
-            .toPending()
-            .workplane()
-            .offset2D(-1)
-            .extrude(1)
-            .faces(">Z[-2]")
-            .wires(AreaNthSelector(0))
-            .toPending()
-            .workplane()
-            .cutBlind(2)
-        )
+       result = (
+           cq.Workplane("XY")
+           .rect(20, 20)
+           .extrude(10)
+           .edges("|Z or <Z")
+           .fillet(2)
+           .faces(">Z")
+           .shell(2)
+           .faces(">Z")
+           .wires(AreaNthSelector(-1))
+           .toPending()
+           .workplane()
+           .offset2D(-1)
+           .extrude(1)
+           .faces(">Z[-2]")
+           .wires(AreaNthSelector(0))
+           .toPending()
+           .workplane()
+           .cutBlind(2)
+       )
     """
 
     def key(self, obj: Shape) -> float:

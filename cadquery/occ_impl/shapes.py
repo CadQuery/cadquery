@@ -869,7 +869,7 @@ class Shape(object):
         transformations.
 
         If your transformation is only translation and rotation, it is safer to
-        use :py:meth:`transformShape`, which doesnt change the underlying type
+        use :py:meth:`transformShape`, which doesn't change the underlying type
         of the geometry, but cannot handle skew transformations.
 
         :param tMatrix: The transformation matrix
@@ -1607,7 +1607,7 @@ class Wire(Shape, Mixin1D):
         cls: Type["Wire"], listOfWires: Iterable[Union["Wire", Edge]], tol: float = 1e-9
     ) -> List["Wire"]:
         """
-        Attempt to combine a list of wires and egdes into a new wire.
+        Attempt to combine a list of wires and edges into a new wire.
         :param cls:
         :param listOfWires:
         :param tol: default 1e-9
@@ -2248,7 +2248,7 @@ class Solid(Shape, Mixin3D):
         :param surf_pts = [] (uses only edges if [])
         :type surf_pts: list of [x,y,z] float coordinates
         :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float (may be negative or positive depending on thicknening direction)
+        :type thickness: float (may be negative or positive depending on thickening direction)
         :param Degree = 3 (OCCT default)
         :type Degree: Integer >= 2
         :param NbPtsOnCur = 15 (OCCT default)
@@ -2423,7 +2423,7 @@ class Solid(Shape, Mixin3D):
     ) -> "Solid":
         """
         makeTorus(radius1,radius2,[pnt,dir,angle1,angle2,angle]) --
-        Make a torus with agiven radii and angles
+        Make a torus with a given radii and angles
         By default pnt=Vector(0,0,0),dir=Vector(0,0,1),angle1=0
         ,angle1=360 and angle=360'
         """

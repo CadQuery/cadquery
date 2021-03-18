@@ -477,7 +477,7 @@ class Workplane(object):
         The result will be a 2-d working plane
         with a new coordinate system set up as follows:
 
-           * The centerOption paramter sets how the center is defined.
+           * The centerOption parameter sets how the center is defined.
              Options are 'CenterOfMass', 'CenterOfBoundBox', or 'ProjectedOrigin'.
              'CenterOfMass' and 'CenterOfBoundBox' are in relation to the selected
              face(s) or vertex (vertices). 'ProjectedOrigin' uses by default the current origin
@@ -1443,7 +1443,7 @@ class Workplane(object):
             false, angle is the angle between elements.
         :param count: Number of elements in array. ( > 0 )
         :param fill: Interpret the angle as total if True (default: True).
-        :param rotate: Rorate every item (default: True).
+        :param rotate: Rotate every item (default: True).
         """
 
         if count <= 0:
@@ -2778,7 +2778,7 @@ class Workplane(object):
         complex geometries
 
         :param distance: the distance to extrude normal to the workplane
-        :param angle: angline ( in degrees) to rotate through the extrusion
+        :param angle: angle (in degrees) to rotate through the extrusion
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
@@ -2791,7 +2791,7 @@ class Workplane(object):
         eDir = self.plane.zDir.multiply(distance)
 
         # one would think that fusing faces into a compound and then extruding would work,
-        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc)
+        # but it doesn't-- the resulting compound appears to look right, ( right number of faces, etc)
         # but then cutting it from the main solid fails with BRep_NotDone.
         # the work around is to extrude each and then join the resulting solids, which seems to work
 
@@ -2955,7 +2955,7 @@ class Workplane(object):
             from warnings import warn
 
             warn(
-                "sweepAlongWires keyword argument is is depracated and will "
+                "sweepAlongWires keyword argument is is deprecated and will "
                 "be removed in the next version; use multisection instead",
                 DeprecationWarning,
             )
