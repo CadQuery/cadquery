@@ -19,11 +19,11 @@ env:
 
 matrix:
   include:
-  - name: "Python 3.6 - osx"
-    env: PYTHON_VERSION=3.6
+  - name: "Python 3.9 - osx"
+    env: PYTHON_VERSION=3.9
     os: osx
-  - name: "Python 3.6 - linux"
-    env: PYTHON_VERSION=3.6
+  - name: "Python 3.9 - linux"
+    env: PYTHON_VERSION=3.9
     os: linux
   - name: "Python 3.7 - osx"
     env: PYTHON_VERSION=3.7
