@@ -1545,8 +1545,10 @@ class Edge(Shape, Mixin1D):
     def makeSplineApprox(
         cls: Type["Edge"],
         listOfVector: List[Vector],
-        tol: float = 1e-6,
+        tol: float = 1e-3,
         smoothing: Optional[Tuple[float, float, float]] = None,
+        minDeg: int = 1,
+        maxDeg: int = 6,
     ) -> "Edge":
         """
         Approximate a spline through the provided points.
@@ -1556,6 +1558,8 @@ class Edge(Shape, Mixin1D):
           specified points are not too close to each other, and that tangent vectors are not too
           short. (In either case interpolation may fail.)
         :param smoothing: optional tuple of 3 weigths use for variational smoothing (default: None)
+        :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
+        :param maxDeg: maximum spline degree (default: 6)
         :return: an Edge
         """
         pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
@@ -1563,9 +1567,13 @@ class Edge(Shape, Mixin1D):
             pnts.SetValue(ix + 1, v.toPnt())
 
         if smoothing:
-            spline_builder = GeomAPI_PointsToBSpline(pnts, *smoothing, Tol3D=tol)
+            spline_builder = GeomAPI_PointsToBSpline(
+                pnts, *smoothing, DegMax=maxDeg, Tol3D=tol
+            )
         else:
-            spline_builder = GeomAPI_PointsToBSpline(pnts, Tol3D=tol)
+            spline_builder = GeomAPI_PointsToBSpline(
+                pnts, DegMin=minDeg, DegMax=maxDeg, Tol3D=tol
+            )
 
         if not spline_builder.IsDone():
             raise ValueError("B-spline approximation failed")
