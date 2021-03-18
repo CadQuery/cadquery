@@ -1,3 +1,5 @@
+image: Visual Studio 2019
+
 shallow_clone: true
 
 platform:
@@ -5,10 +7,10 @@ platform:
 
 environment:
     matrix:
-        - PYTHON_VERSION: 3.6
-          MINICONDA_DIRNAME: C:\Miniconda36-x64
         - PYTHON_VERSION: 3.7
           MINICONDA_DIRNAME: C:\Miniconda37-x64
+        - PYTHON_VERSION: 3.8
+          MINICONDA_DIRNAME: C:\Miniconda38-x64
 
     ANACONDA_TOKEN:
         secure: $(anaconda_token)
