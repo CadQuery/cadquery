@@ -384,7 +384,7 @@ class Plane(object):
         :param stdName: one of (XY|YZ|ZX|XZ|YX|ZY|front|back|left|right|top|bottom)
         :type stdName: string
         :param origin: the desired origin, specified in global coordinates
-        :type origin: 3-tuple of the origin of the new plane, in global coorindates.
+        :type origin: 3-tuple of the origin of the new plane, in global coordinates.
 
         Available named planes are as follows. Direction references refer to
         the global directions.
@@ -879,7 +879,7 @@ class Location(object):
 
     @overload
     def __init__(self, t: Vector) -> None:
-        """Location with translation t with respect to the orignal location."""
+        """Location with translation t with respect to the original location."""
         ...
 
     @overload
