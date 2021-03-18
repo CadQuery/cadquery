@@ -4387,3 +4387,19 @@ class TestCadQuery(BaseTest):
 
         with raises(ValueError):
             r.chamfer2D(0.25, [vs[0]])
+
+    def testSplineApprox(self):
+
+        from .naca import naca5305
+
+        pts = [Vector(e[0], e[1], 0) for e in naca5305]
+
+        e1 = Edge.makeSplineApprox(pts, 1e-6, maxDeg=6, smoothing=(1, 1, 1))
+        e2 = Edge.makeSplineApprox(pts, 1e-6, minDeg=2, maxDeg=6)
+
+        self.assertTrue(e1.isValid())
+        self.assertTrue(e2.isValid())
+        self.assertTrue(e1.Length() > e2.Length())
+
+        with raises(ValueError):
+            e4 = Edge.makeSplineApprox(pts, 1e-6, maxDeg=3, smoothing=(1, 1, 1.0))
