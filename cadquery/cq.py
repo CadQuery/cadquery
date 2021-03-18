@@ -3040,7 +3040,7 @@ class Workplane(object):
     ) -> T:
         """
         Unions all of the items on the stack of toUnion with the current solid.
-        If there is no current solid, the items in toUnion are unironed together.
+        If there is no current solid, the items in toUnion are unioned together.
 
         :param toUnion:
         :type toUnion: a solid object, or a CQ object having a solid,
