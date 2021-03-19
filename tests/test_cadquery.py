@@ -4391,6 +4391,7 @@ class TestCadQuery(BaseTest):
     def testSplineApprox(self):
 
         from .naca import naca5305
+        from math import pi, cos
 
         pts = [Vector(e[0], e[1], 0) for e in naca5305]
 
@@ -4403,3 +4404,24 @@ class TestCadQuery(BaseTest):
 
         with raises(ValueError):
             e4 = Edge.makeSplineApprox(pts, 1e-6, maxDeg=3, smoothing=(1, 1, 1.0))
+
+        N = 40
+        T = 20
+        A = 5
+
+        pts = [
+            [
+                Vector(i, j, A * cos(2 * pi * i / T) * cos(2 * pi * j / T))
+                for i in range(N + 1)
+            ]
+            for j in range(N + 1)
+        ]
+
+        f1 = Face.makeSplineApprox(pts, smoothing=(1, 1, 1), maxDeg=6)
+        f2 = Face.makeSplineApprox(pts)
+
+        self.assertTrue(f1.isValid())
+        self.assertTrue(f2.isValid())
+
+        with raises(ValueError):
+            f3 = Face.makeSplineApprox(pts, smoothing=(1, 1, 1), maxDeg=3)
