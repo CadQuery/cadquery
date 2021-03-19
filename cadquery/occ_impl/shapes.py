@@ -20,6 +20,8 @@ from .geom import Vector, BoundBox, Plane, Location, Matrix
 import OCP.TopAbs as ta  # Tolopolgy type enum
 import OCP.GeomAbs as ga  # Geometry type enum
 
+from OCP.Precision import Precision
+
 from OCP.gp import (
     gp_Vec,
     gp_Pnt,
@@ -36,7 +38,7 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP.TColgp import TColgp_HArray1OfPnt
+from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
 
 # Array of vectors (used for B-spline interpolation):
 from OCP.TColgp import TColgp_Array1OfVec
@@ -113,6 +115,7 @@ from OCP.GeomAPI import (
     GeomAPI_Interpolate,
     GeomAPI_ProjectPointOnSurf,
     GeomAPI_PointsToBSpline,
+    GeomAPI_PointsToBSplineSurface,
 )
 
 from OCP.BRepFill import BRepFill
@@ -1554,9 +1557,7 @@ class Edge(Shape, Mixin1D):
         Approximate a spline through the provided points.
 
         :param listOfVector: a list of Vectors that represent the points
-        :param tol: tolerance of the algorithm (consult OCC documentation). Used to check that the
-          specified points are not too close to each other, and that tangent vectors are not too
-          short. (In either case interpolation may fail.)
+        :param tol: tolerance of the algorithm (consult OCC documentation).
         :param smoothing: optional tuple of 3 weigths use for variational smoothing (default: None)
         :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
         :param maxDeg: maximum spline degree (default: 6)
@@ -2066,6 +2067,47 @@ class Face(Shape):
         face = face_builder.Shape()
 
         return cls(face).fix()
+
+    @classmethod
+    def makeSplineApprox(
+        cls: Type["Face"],
+        points: List[List[Vector]],
+        tol: float = 1e-2,
+        smoothing: Optional[Tuple[float, float, float]] = None,
+        minDeg: int = 1,
+        maxDeg: int = 3,
+    ) -> "Face":
+        """
+        Approximate a spline surface through the provided points.
+
+        :param points: a 2D list of Vectors that represent the points
+        :param tol: tolerance of the algorithm (consult OCC documentation). 
+        :param smoothing: optional tuple of 3 weigths use for variational smoothing (default: None)
+        :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
+        :param maxDeg: maximum spline degree (default: 6)
+        :return: an Face
+        """
+        points_ = TColgp_HArray2OfPnt(1, len(points), 1, len(points[0]))
+
+        for i, vi in enumerate(points):
+            for j, v in enumerate(vi):
+                points_.SetValue(i + 1, j + 1, v.toPnt())
+
+        if smoothing:
+            spline_builder = GeomAPI_PointsToBSplineSurface(
+                points_, *smoothing, DegMax=maxDeg, Tol3D=tol
+            )
+        else:
+            spline_builder = GeomAPI_PointsToBSplineSurface(
+                points_, DegMin=minDeg, DegMax=maxDeg, Tol3D=tol
+            )
+
+        if not spline_builder.IsDone():
+            raise ValueError("B-spline approximation failed")
+
+        spline_geom = spline_builder.Surface()
+
+        return cls(BRepBuilderAPI_MakeFace(spline_geom, Precision.Confusion_s()).Face())
 
     def fillet2D(self, radius: float, vertices: Iterable[Vertex]) -> "Face":
         """
