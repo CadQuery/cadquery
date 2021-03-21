@@ -4425,3 +4425,13 @@ class TestCadQuery(BaseTest):
 
         with raises(ValueError):
             f3 = Face.makeSplineApprox(pts, smoothing=(1, 1, 1), maxDeg=3)
+
+    def testParametricSurface(self):
+
+        from math import pi, cos
+
+        r = Workplane().parametricSurface(
+            lambda u, v: (u, v, cos(2 * pi * i) * cos(2 * pi * j))
+        )
+
+        self.assertTrue(r.faces().val().isValid())
