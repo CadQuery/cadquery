@@ -4431,7 +4431,7 @@ class TestCadQuery(BaseTest):
         from math import pi, cos
 
         r = Workplane().parametricSurface(
-            lambda u, v: (u, v, cos(2 * pi * i) * cos(2 * pi * j))
+            lambda u, v: (u, v, cos(2 * pi * u) * cos(2 * pi * v))
         )
 
         self.assertTrue(r.faces().val().isValid())
