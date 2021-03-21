@@ -1861,10 +1861,10 @@ class Workplane(object):
         makeWire: bool = True,
     ) -> T:
         """
-        Create a spline interpolated through the provided points.
+        Create a spline curve approximating the provided function.
 
-        :param func: function f(t) that will generate (x,y) pairs
-        :type func: float --> (float,float)
+        :param func: function f(t) that will generate (x,y,z) pairs
+        :type func: float --> (float,float,float)
         :param N: number of points for discretization
         :param start: starting value of the parameter t
         :param stop: final value of the parameter t
@@ -1887,6 +1887,47 @@ class Workplane(object):
             self._addPendingEdge(e)
 
         return self.newObject([rv_w if makeWire else e])
+
+    def parametricSurface(
+        self: T,
+        func: Callable[[float, float], VectorLike],
+        N: int = 20,
+        start: float = 0,
+        stop: float = 1,
+        tol: float = 1e-2,
+    ) -> T:
+        """
+        Create a spline surface approximating the provided function.
+
+        :param func: function f(u,v) that will generate (x,y,z) pairs
+        :type func: (float,float) --> (float,float,float)
+        :param N: number of points for discretization in one direction
+        :param start: starting value of the parameters u,v
+        :param stop: final value of the parameters u,v
+        :param tol: tolerance used by the approximation algorithm
+        :return: a Workplane object with the current point unchanged
+        
+        This method might be unstable and may require tuning of the tol parameter.
+
+        """
+
+        diff = stop - start
+        allPoints = []
+
+        for i in range(N):
+            allPoints.append(
+                self._toVectors(
+                    (
+                        func(start + diff * i / N, start + diff * j / N)
+                        for j in range(N + 1)
+                    ),
+                    False,
+                )
+            )
+
+        f = Face.makeSplineApprox(allPoints, tol=tol)
+
+        return self.newObject([f])
 
     def ellipseArc(
         self: T,
