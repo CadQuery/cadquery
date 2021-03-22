@@ -3291,6 +3291,11 @@ class TestCadQuery(BaseTest):
         self.assertTrue(res_closed.solids().val().isValid())
         self.assertEqual(len(res_closed.faces().vals()), 3)
 
+        res_edge = Workplane("XY").parametricCurve(func, makeWire=False)
+
+        self.assertEqual(len(res_edge.ctx.pendingEdges), 1)
+        self.assertEqual(len(res_edge.ctx.pendingWires), 0)
+
     def testMakeShellSolid(self):
 
         c0 = math.sqrt(2) / 4
