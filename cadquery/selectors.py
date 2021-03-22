@@ -274,16 +274,13 @@ class PerpendicularDirSelector(BaseDirSelector):
 
 class TypeSelector(Selector):
     """
-    Selects objects of the prescribed topological type.
+    Selects objects having the prescribed geometry type.
 
     Applicability:
-        Faces: Plane,Cylinder,Sphere
-        Edges: Line,Circle,Arc
+        Faces: PLANE, CYLINDER, CONE, SPHERE, TORUS, BEZIER, BSPLINE, REVOLUTION, EXTRUSION, OFFSET, OTHER
+        Edges: LINE, CIRCLE, ELLIPSE, HYPERBOLA, PARABOLA, BEZIER, BSPLINE, OFFSET, OTHER
 
-    You can use the shortcut selector %(PLANE|SPHERE|CONE) for faces, and
-    %(LINE|ARC|CIRCLE) for edges.
-
-    For example this::
+    You can use the string selector syntax. For example this::
 
         CQ(aCube).faces ( TypeSelector("PLANE") )
 
