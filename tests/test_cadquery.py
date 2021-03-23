@@ -4410,6 +4410,14 @@ class TestCadQuery(BaseTest):
         with raises(ValueError):
             e4 = Edge.makeSplineApprox(pts, 1e-6, maxDeg=3, smoothing=(1, 1, 1.0))
 
+        pts_closed = pts + [pts[0]]
+
+        e3 = Edge.makeSplineApprox(pts_closed)
+        w = Edge.makeSplineApprox(pts).close()
+
+        self.assertTrue(e3.IsClosed())
+        self.assertTrue(w.IsClosed())
+
         N = 40
         T = 20
         A = 5
