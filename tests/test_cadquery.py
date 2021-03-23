@@ -4400,6 +4400,8 @@ class TestCadQuery(BaseTest):
 
         pts = [Vector(e[0], e[1], 0) for e in naca5305]
 
+        # spline
+
         e1 = Edge.makeSplineApprox(pts, 1e-6, maxDeg=6, smoothing=(1, 1, 1))
         e2 = Edge.makeSplineApprox(pts, 1e-6, minDeg=2, maxDeg=6)
 
@@ -4417,6 +4419,24 @@ class TestCadQuery(BaseTest):
 
         self.assertTrue(e3.IsClosed())
         self.assertTrue(w.IsClosed())
+
+        # Workplane method
+
+        w1 = Workplane().splineApprox(pts)
+        w2 = Workplane().splineApprox(pts, forConstruction=True)
+        w3 = Workplane().splineApprox(pts, makeWire=True,)
+        w4 = Workplane().splineApprox(pts, makeWire=True, forConstruction=True)
+
+        self.assertEqual(w1.edges().size(), 1)
+        self.assertEqual(len(w1.ctx.pendingEdges), 1)
+        self.assertEqual(w2.edges().size(), 1)
+        self.assertEqual(len(w2.ctx.pendingEdges), 0)
+        self.assertEqual(w3.wires().size(), 1)
+        self.assertEqual(len(w3.ctx.pendingWires), 1)
+        self.assertEqual(w4.wires().size(), 1)
+        self.assertEqual(len(w4.ctx.pendingWires), 0)
+
+        # spline surface
 
         N = 40
         T = 20

@@ -1756,10 +1756,9 @@ class Workplane(object):
         makeWire: bool = False,
     ) -> T:
         """
-        Create a spline interpolated through the provided points.
+        Create a spline interpolated through the provided points (2D or 3D).
 
         :param listOfXYTuple: points to interpolate through
-        :type listOfXYTuple: list of 2-tuple
         :param tangents: vectors specifying the direction of the tangent to the
             curve at each of the specified interpolation points.
 
@@ -1839,6 +1838,52 @@ class Workplane(object):
             periodic=periodic,
             parameters=parameters,
             scale=scale,
+            **({"tol": tol} if tol else {}),
+        )
+
+        if makeWire:
+            rv_w = Wire.assembleEdges([e])
+            if not forConstruction:
+                self._addPendingWire(rv_w)
+        else:
+            if not forConstruction:
+                self._addPendingEdge(e)
+
+        return self.newObject([rv_w if makeWire else e])
+
+    def splineApprox(
+        self: T,
+        points: Iterable[VectorLike],
+        tol: Optional[float] = 1e-6,
+        minDeg: int = 1,
+        maxDeg: int = 6,
+        smoothing: Optional[Tuple[float, float, float]] = (1, 1, 1),
+        forConstruction: bool = False,
+        includeCurrent: bool = False,
+        makeWire: bool = False,
+    ) -> T:
+        """
+        Create a spline interpolated through the provided points (2D or 3D).
+
+        :param points: points to interpolate through
+        :param tol: tolerance of the algorithm (default: 1e-6)
+        :param minDeg: minimum spline degree (default: 1)
+        :param maxDeg: maximum spline degree (default: 6)
+        :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
+        :param includeCurrent: use current point as a starting point of the curve
+        :param makeWire: convert the resulting spline edge to a wire
+        :return: a Workplane object with the current point at the end of the spline
+
+        *WARNING*  for advanced users.
+        """
+
+        allPoints = self._toVectors(points, includeCurrent)
+
+        e = Edge.makeSplineApprox(
+            allPoints,
+            minDeg=minDeg,
+            maxDeg=maxDeg,
+            smoothing=smoothing,
             **({"tol": tol} if tol else {}),
         )
 
