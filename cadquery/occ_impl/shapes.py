@@ -1386,6 +1386,20 @@ class Edge(Shape, Mixin1D):
 
         return curve, BRepAdaptor_HCurve(curve)
 
+    def close(self) -> Union["Edge", "Wire"]:
+        """
+        Close an Edge
+        """
+        rv: Union[Wire, Edge]
+
+        if not self.IsClosed():
+            e = Edge.makeLine(self.endPoint(), self.startPoint())
+            rv = Wire.assembleEdges((self, e))
+        else:
+            rv = self
+
+        return rv
+
     @classmethod
     def makeCircle(
         cls: Type["Edge"],
