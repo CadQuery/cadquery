@@ -125,6 +125,8 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Fuse,
     BRepAlgoAPI_Cut,
     BRepAlgoAPI_BooleanOperation,
+    BRepAlgoAPI_Splitter,
+    BRepAlgoAPI_BuilderAlgo,
 )
 
 from OCP.Geom import (
@@ -945,7 +947,7 @@ class Shape(object):
         self,
         args: Iterable["Shape"],
         tools: Iterable["Shape"],
-        op: BRepAlgoAPI_BooleanOperation,
+        op: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
     ) -> "Shape":
         """
         Generic boolean operation
@@ -1005,6 +1007,15 @@ class Shape(object):
         intersect_op = BRepAlgoAPI_Common()
 
         return self._bool_op((self,), toIntersect, intersect_op)
+
+    def split(self, *splitters: "Shape") -> "Shape":
+        """
+        Split this shape with the positional arguments.
+        """
+
+        split_op = BRepAlgoAPI_Splitter()
+
+        return self._bool_op((self,), splitters, split_op)
 
     def mesh(self, tolerance: float, angularTolerance: float = 0.1):
         """
