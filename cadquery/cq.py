@@ -35,7 +35,7 @@ from typing import (
     Dict,
 )
 from typing_extensions import Literal
-
+from inspect import Parameter, Signature
 
 from .occ_impl.geom import Vector, Plane, Location
 from .occ_impl.shapes import (
@@ -264,7 +264,15 @@ class Workplane(object):
 
         return list(all.values())
 
+    @overload
     def split(self: T, keepTop: bool = False, keepBottom: bool = False) -> T:
+        ...
+
+    @overload
+    def split(self: T, splitter: Union[T, Shape]) -> T:
+        ...
+
+    def split(self: T, *args, **kwargs) -> T:
         """
         Splits a solid on the stack into two parts, optionally keeping the separate parts.
 
@@ -284,28 +292,64 @@ class Workplane(object):
             c = c.faces(">Y").workplane(-0.5).split(keepTop=True)
         """
 
-        if (not keepTop) and (not keepBottom):
-            raise ValueError("You have to keep at least one half")
+        # split using an object
+        if len(args) == 1 and isinstance(args[0], (Workplane, Shape)):
 
-        solid = self.findSolid()
+            arg = args[0]
 
-        maxDim = solid.BoundingBox().DiagonalLength * 10.0
-        topCutBox = self.rect(maxDim, maxDim)._extrude(maxDim)
-        bottomCutBox = self.rect(maxDim, maxDim)._extrude(-maxDim)
+            solid = self.findSolid()
+            tools = (
+                (arg,)
+                if isinstance(arg, Shape)
+                else [v for v in arg.vals() if isinstance(v, Shape)]
+            )
+            rv = [solid.split(*tools)]
 
-        top = solid.cut(bottomCutBox)
-        bottom = solid.cut(topCutBox)
-
-        if keepTop and keepBottom:
-            # Put both on the stack, leave original unchanged.
-            return self.newObject([top, bottom])
+        # split using the current wokrplane
         else:
-            # Put the one we are keeping on the stack, and also update the
-            # context solidto the one we kept.
-            if keepTop:
-                return self.newObject([top])
+
+            # boilerplate for arg/kwarg parsing
+            sig = Signature(
+                (
+                    Parameter(
+                        "keepTop", Parameter.POSITIONAL_OR_KEYWORD, default=False
+                    ),
+                    Parameter(
+                        "keepBottom", Parameter.POSITIONAL_OR_KEYWORD, default=False
+                    ),
+                )
+            )
+
+            bound_args = sig.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+
+            keepTop = bound_args.arguments["keepTop"]
+            keepBottom = bound_args.arguments["keepBottom"]
+
+            if (not keepTop) and (not keepBottom):
+                raise ValueError("You have to keep at least one half")
+
+            solid = self.findSolid()
+
+            maxDim = solid.BoundingBox().DiagonalLength * 10.0
+            topCutBox = self.rect(maxDim, maxDim)._extrude(maxDim)
+            bottomCutBox = self.rect(maxDim, maxDim)._extrude(-maxDim)
+
+            top = solid.cut(bottomCutBox)
+            bottom = solid.cut(topCutBox)
+
+            if keepTop and keepBottom:
+                # Put both on the stack, leave original unchanged.
+                rv = [top, bottom]
             else:
-                return self.newObject([bottom])
+                # Put the one we are keeping on the stack, and also update the
+                # context solidto the one we kept.
+                if keepTop:
+                    rv = [top]
+                else:
+                    rv = [bottom]
+
+        return self.newObject(rv)
 
     @deprecate()
     def combineSolids(
@@ -1903,6 +1947,10 @@ class Workplane(object):
         N: int = 400,
         start: float = 0,
         stop: float = 1,
+        tol: float = 1e-6,
+        minDeg: int = 1,
+        maxDeg: int = 6,
+        smoothing: Optional[Tuple[float, float, float]] = (1, 1, 1),
         makeWire: bool = True,
     ) -> T:
         """
@@ -1913,6 +1961,10 @@ class Workplane(object):
         :param N: number of points for discretization
         :param start: starting value of the parameter t
         :param stop: final value of the parameter t
+        :param tol: tolerance of the algorithm (default: 1e-3)
+        :param minDeg: minimum spline degree (default: 1)
+        :param maxDeg: maximum spline degree (default: 6)
+        :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
         :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point unchanged
 
@@ -1923,7 +1975,9 @@ class Workplane(object):
             (func(start + diff * t / N) for t in range(N + 1)), False
         )
 
-        e = Edge.makeSplineApprox(allPoints)
+        e = Edge.makeSplineApprox(
+            allPoints, tol=tol, smoothing=smoothing, minDeg=minDeg, maxDeg=maxDeg
+        )
 
         if makeWire:
             rv_w = Wire.assembleEdges([e])
@@ -1940,6 +1994,9 @@ class Workplane(object):
         start: float = 0,
         stop: float = 1,
         tol: float = 1e-2,
+        minDeg: int = 1,
+        maxDeg: int = 6,
+        smoothing: Optional[Tuple[float, float, float]] = (1, 1, 1),
     ) -> T:
         """
         Create a spline surface approximating the provided function.
@@ -1949,7 +2006,10 @@ class Workplane(object):
         :param N: number of points for discretization in one direction
         :param start: starting value of the parameters u,v
         :param stop: final value of the parameters u,v
-        :param tol: tolerance used by the approximation algorithm
+        :param tol: tolerance used by the approximation algorithm (default: 1e-3)
+        :param minDeg: minimum spline degree (default: 1)
+        :param maxDeg: maximum spline degree (default: 3)
+        :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
         :return: a Workplane object with the current point unchanged
         
         This method might be unstable and may require tuning of the tol parameter.
@@ -1970,7 +2030,9 @@ class Workplane(object):
                 )
             )
 
-        f = Face.makeSplineApprox(allPoints, tol=tol)
+        f = Face.makeSplineApprox(
+            allPoints, tol=tol, smoothing=smoothing, minDeg=minDeg, maxDeg=maxDeg
+        )
 
         return self.newObject([f])
 
