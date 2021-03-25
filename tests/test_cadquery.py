@@ -4463,8 +4463,13 @@ class TestCadQuery(BaseTest):
 
         from math import pi, cos
 
-        r = Workplane().parametricSurface(
-            lambda u, v: (u, v, cos(2 * pi * u) * cos(2 * pi * v))
+        r1 = Workplane().parametricSurface(
+            lambda u, v: (u, v, cos(pi * u) * cos(pi * v)), start=-1, stop=1
         )
 
-        self.assertTrue(r.faces().val().isValid())
+        self.assertTrue(r1.faces().val().isValid())
+
+        r2 = Workplane().box(1, 1, 3).split(r1)
+
+        self.assertTrue(r2.solids().val().isValid())
+        self.assertEqual(r2.solids().size(), 2)
