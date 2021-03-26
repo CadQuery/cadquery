@@ -2019,7 +2019,7 @@ class Workplane(object):
         diff = stop - start
         allPoints = []
 
-        for i in range(N):
+        for i in range(N + 1):
             allPoints.append(
                 self._toVectors(
                     (
