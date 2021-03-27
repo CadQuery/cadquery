@@ -14,7 +14,7 @@ from .occ_impl.solver import (
 )
 from .occ_impl.exporters.assembly import exportAssembly, exportCAF
 
-from .selectors import _grammar as _selector_grammar
+from .selectors import _expression_grammar as _selector_grammar
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
