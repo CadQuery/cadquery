@@ -2189,12 +2189,14 @@ class TestCadQuery(BaseTest):
         self.assertEqual(8, result.solids().item(0).faces().size())
 
     def testSplitError(self):
-        """
-        Test split produces the correct error when called with no solid to split.
-        """
+        # Test split produces the correct error when called with no solid to split.
         w = Workplane().hLine(1).vLine(1).close()
         with raises(ValueError):
             w.split(keepTop=True)
+
+        # Split should raise ValueError when called with no side kept
+        with raises(ValueError):
+            w.split(keepTop=False, keepBottom=False)
 
     def testBoxDefaults(self):
         """
