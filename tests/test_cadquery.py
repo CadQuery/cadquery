@@ -4479,11 +4479,7 @@ class TestCadQuery(BaseTest):
     def testEdgeClose(self):
 
         # test with edge
-        e0 = Edge.makeThreePointArc(
-            Vector(0, 0, 0),
-            Vector(1, 1, 0),
-            Vector(0, 2, 0)
-        )
+        e0 = Edge.makeThreePointArc(Vector(0, 0, 0), Vector(1, 1, 0), Vector(0, 2, 0))
         self.assertFalse(e0.IsClosed())
         w0 = e0.close()
         self.assertTrue(w0.IsClosed())
