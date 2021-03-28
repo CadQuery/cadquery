@@ -4475,3 +4475,22 @@ class TestCadQuery(BaseTest):
 
         self.assertTrue(r2.solids().val().isValid())
         self.assertEqual(r2.solids().size(), 2)
+
+    def testEdgeClose(self):
+
+        # test with edge
+        e0 = Edge.makeThreePointArc(
+            Vector(0, 0, 0),
+            Vector(1, 1, 0),
+            Vector(0, 2, 0)
+        )
+        self.assertFalse(e0.IsClosed())
+        w0 = e0.close()
+        self.assertTrue(w0.IsClosed())
+
+        # test with already closed edge
+        e1 = Edge.makeCircle(1)
+        self.assertTrue(e1.IsClosed())
+        e2 = e1.close()
+        self.assertTrue(e2.IsClosed())
+        self.assertEqual(type(e1), type(e2))
