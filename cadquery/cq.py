@@ -2020,15 +2020,10 @@ class Workplane(object):
         allPoints = []
 
         for i in range(N + 1):
-            allPoints.append(
-                self._toVectors(
-                    (
-                        func(start + diff * i / N, start + diff * j / N)
-                        for j in range(N + 1)
-                    ),
-                    False,
-                )
+            generator = (
+                func(start + diff * i / N, start + diff * j / N) for j in range(N + 1)
             )
+            allPoints.append(self._toVectors(generator, False))
 
         f = Face.makeSplineApprox(
             allPoints, tol=tol, smoothing=smoothing, minDeg=minDeg, maxDeg=maxDeg
