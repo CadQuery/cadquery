@@ -218,3 +218,10 @@ def test_empty_solve(nested_assy):
 
     with pytest.raises(ValueError):
         nested_assy.solve()
+
+
+def test_expression_grammar(nested_assy):
+
+    nested_assy.constrain(
+        "TOP@faces@>Z", "SECOND/BOTTOM@vertices@>X and >Y and >Z", "Point"
+    )
