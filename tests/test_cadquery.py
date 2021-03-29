@@ -4490,3 +4490,23 @@ class TestCadQuery(BaseTest):
         e2 = e1.close()
         self.assertTrue(e2.IsClosed())
         self.assertEqual(type(e1), type(e2))
+
+    def testSplitShape(self):
+        """
+        Testing the Shape.split method.
+        """
+        # split an edge with a vertex
+        e0 = Edge.makeCircle(1, (0, 0, 0), (0, 0, 1))
+        v0 = Vertex.makeVertex(0, 1, 0)
+        list_of_edges = e0.split(v0).Edges()
+        self.assertEqual(len(list_of_edges), 2)
+        self.assertTrue(Vector(0, 1, 0) in [e.endPoint() for e in list_of_edges])
+
+        # split a circle with multiple vertices
+        angles = [2 * math.pi * idx / 10 for idx in range(10)]
+        vecs = [Vector(math.sin(a), math.cos(a), 0) for a in angles]
+        vertices = [Vertex.makeVertex(*v.toTuple()) for v in vecs]
+        edges = e0.split(*vertices).Edges()
+        self.assertEqual(len(edges), len(vertices) + 1)
+        endpoints = [e.endPoint() for e in edges]
+        self.assertTrue(all([v in endpoints for v in vecs]))
