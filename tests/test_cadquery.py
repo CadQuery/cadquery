@@ -4476,7 +4476,7 @@ class TestCadQuery(BaseTest):
         self.assertTrue(r2.solids().val().isValid())
         self.assertEqual(r2.solids().size(), 2)
 
-    def testEdgeClose(self):
+    def testEdgeWireClose(self):
 
         # test with edge
         e0 = Edge.makeThreePointArc(Vector(0, 0, 0), Vector(1, 1, 0), Vector(0, 2, 0))
@@ -4490,6 +4490,12 @@ class TestCadQuery(BaseTest):
         e2 = e1.close()
         self.assertTrue(e2.IsClosed())
         self.assertEqual(type(e1), type(e2))
+
+        # test with already closed WIRE
+        w1 = Wire.makeCircle(1, Vector(), Vector(0, 0, 1))
+        self.assertTrue(w1.IsClosed())
+        w2 = w1.close()
+        self.assertTrue(w1 is w2)
 
     def testSplitShape(self):
         """

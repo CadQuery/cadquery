@@ -1404,8 +1404,7 @@ class Edge(Shape, Mixin1D):
         rv: Union[Wire, Edge]
 
         if not self.IsClosed():
-            e = Edge.makeLine(self.endPoint(), self.startPoint())
-            rv = Wire.assembleEdges((self, e))
+            rv = Wire.assembleEdges((self,)).close()
         else:
             rv = self
 
@@ -1672,6 +1671,19 @@ class Wire(Shape, Mixin1D):
         curve = self._geomAdaptor()
 
         return curve, BRepAdaptor_HCompCurve(curve)
+
+    def close(self) -> "Wire":
+        """
+        Close a Wire
+        """
+
+        if not self.IsClosed():
+            e = Edge.makeLine(self.endPoint(), self.startPoint())
+            rv = Wire.combine((self, e))[0]
+        else:
+            rv = self
+
+        return rv
 
     @classmethod
     def combine(
