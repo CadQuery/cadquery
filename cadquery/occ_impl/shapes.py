@@ -20,6 +20,8 @@ from .geom import Vector, BoundBox, Plane, Location, Matrix
 import OCP.TopAbs as ta  # Tolopolgy type enum
 import OCP.GeomAbs as ga  # Geometry type enum
 
+from OCP.Precision import Precision
+
 from OCP.gp import (
     gp_Vec,
     gp_Pnt,
@@ -36,7 +38,7 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP.TColgp import TColgp_HArray1OfPnt
+from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
 
 # Array of vectors (used for B-spline interpolation):
 from OCP.TColgp import TColgp_Array1OfVec
@@ -109,7 +111,12 @@ from OCP.TopoDS import (
 
 from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
 from OCP.GCE2d import GCE2d_MakeSegment
-from OCP.GeomAPI import GeomAPI_Interpolate, GeomAPI_ProjectPointOnSurf
+from OCP.GeomAPI import (
+    GeomAPI_Interpolate,
+    GeomAPI_ProjectPointOnSurf,
+    GeomAPI_PointsToBSpline,
+    GeomAPI_PointsToBSplineSurface,
+)
 
 from OCP.BRepFill import BRepFill
 
@@ -118,6 +125,8 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Fuse,
     BRepAlgoAPI_Cut,
     BRepAlgoAPI_BooleanOperation,
+    BRepAlgoAPI_Splitter,
+    BRepAlgoAPI_BuilderAlgo,
 )
 
 from OCP.Geom import (
@@ -938,7 +947,7 @@ class Shape(object):
         self,
         args: Iterable["Shape"],
         tools: Iterable["Shape"],
-        op: BRepAlgoAPI_BooleanOperation,
+        op: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
     ) -> "Shape":
         """
         Generic boolean operation
@@ -998,6 +1007,15 @@ class Shape(object):
         intersect_op = BRepAlgoAPI_Common()
 
         return self._bool_op((self,), toIntersect, intersect_op)
+
+    def split(self, *splitters: "Shape") -> "Shape":
+        """
+        Split this shape with the positional arguments.
+        """
+
+        split_op = BRepAlgoAPI_Splitter()
+
+        return self._bool_op((self,), splitters, split_op)
 
     def mesh(self, tolerance: float, angularTolerance: float = 0.1):
         """
@@ -1379,6 +1397,19 @@ class Edge(Shape, Mixin1D):
 
         return curve, BRepAdaptor_HCurve(curve)
 
+    def close(self) -> Union["Edge", "Wire"]:
+        """
+        Close an Edge
+        """
+        rv: Union[Wire, Edge]
+
+        if not self.IsClosed():
+            rv = Wire.assembleEdges((self,)).close()
+        else:
+            rv = self
+
+        return rv
+
     @classmethod
     def makeCircle(
         cls: Type["Edge"],
@@ -1538,6 +1569,45 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
 
     @classmethod
+    def makeSplineApprox(
+        cls: Type["Edge"],
+        listOfVector: List[Vector],
+        tol: float = 1e-3,
+        smoothing: Optional[Tuple[float, float, float]] = None,
+        minDeg: int = 1,
+        maxDeg: int = 6,
+    ) -> "Edge":
+        """
+        Approximate a spline through the provided points.
+
+        :param listOfVector: a list of Vectors that represent the points
+        :param tol: tolerance of the algorithm (consult OCC documentation).
+        :param smoothing: optional tuple of 3 weights use for variational smoothing (default: None)
+        :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
+        :param maxDeg: maximum spline degree (default: 6)
+        :return: an Edge
+        """
+        pnts = TColgp_HArray1OfPnt(1, len(listOfVector))
+        for ix, v in enumerate(listOfVector):
+            pnts.SetValue(ix + 1, v.toPnt())
+
+        if smoothing:
+            spline_builder = GeomAPI_PointsToBSpline(
+                pnts, *smoothing, DegMax=maxDeg, Tol3D=tol
+            )
+        else:
+            spline_builder = GeomAPI_PointsToBSpline(
+                pnts, DegMin=minDeg, DegMax=maxDeg, Tol3D=tol
+            )
+
+        if not spline_builder.IsDone():
+            raise ValueError("B-spline approximation failed")
+
+        spline_geom = spline_builder.Curve()
+
+        return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
+
+    @classmethod
     def makeThreePointArc(
         cls: Type["Edge"], v1: Vector, v2: Vector, v3: Vector
     ) -> "Edge":
@@ -1601,6 +1671,19 @@ class Wire(Shape, Mixin1D):
         curve = self._geomAdaptor()
 
         return curve, BRepAdaptor_HCompCurve(curve)
+
+    def close(self) -> "Wire":
+        """
+        Close a Wire
+        """
+
+        if not self.IsClosed():
+            e = Edge.makeLine(self.endPoint(), self.startPoint())
+            rv = Wire.combine((self, e))[0]
+        else:
+            rv = self
+
+        return rv
 
     @classmethod
     def combine(
@@ -2021,6 +2104,47 @@ class Face(Shape):
         face = face_builder.Shape()
 
         return cls(face).fix()
+
+    @classmethod
+    def makeSplineApprox(
+        cls: Type["Face"],
+        points: List[List[Vector]],
+        tol: float = 1e-2,
+        smoothing: Optional[Tuple[float, float, float]] = None,
+        minDeg: int = 1,
+        maxDeg: int = 3,
+    ) -> "Face":
+        """
+        Approximate a spline surface through the provided points.
+
+        :param points: a 2D list of Vectors that represent the points
+        :param tol: tolerance of the algorithm (consult OCC documentation). 
+        :param smoothing: optional tuple of 3 weights use for variational smoothing (default: None)
+        :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
+        :param maxDeg: maximum spline degree (default: 6)
+        :return: an Face
+        """
+        points_ = TColgp_HArray2OfPnt(1, len(points), 1, len(points[0]))
+
+        for i, vi in enumerate(points):
+            for j, v in enumerate(vi):
+                points_.SetValue(i + 1, j + 1, v.toPnt())
+
+        if smoothing:
+            spline_builder = GeomAPI_PointsToBSplineSurface(
+                points_, *smoothing, DegMax=maxDeg, Tol3D=tol
+            )
+        else:
+            spline_builder = GeomAPI_PointsToBSplineSurface(
+                points_, DegMin=minDeg, DegMax=maxDeg, Tol3D=tol
+            )
+
+        if not spline_builder.IsDone():
+            raise ValueError("B-spline approximation failed")
+
+        spline_geom = spline_builder.Surface()
+
+        return cls(BRepBuilderAPI_MakeFace(spline_geom, Precision.Confusion_s()).Face())
 
     def fillet2D(self, radius: float, vertices: Iterable[Vertex]) -> "Face":
         """
