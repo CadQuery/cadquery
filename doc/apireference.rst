@@ -52,6 +52,7 @@ All 2-d operations require a **Workplane** object to be created.
 	Workplane.move
 	Workplane.spline
 	Workplane.parametricCurve
+	Workplane.parametricSurface
 	Workplane.threePointArc
 	Workplane.sagittaArc
 	Workplane.radiusArc

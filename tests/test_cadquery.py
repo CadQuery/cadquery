@@ -2189,12 +2189,14 @@ class TestCadQuery(BaseTest):
         self.assertEqual(8, result.solids().item(0).faces().size())
 
     def testSplitError(self):
-        """
-        Test split produces the correct error when called with no solid to split.
-        """
+        # Test split produces the correct error when called with no solid to split.
         w = Workplane().hLine(1).vLine(1).close()
         with raises(ValueError):
             w.split(keepTop=True)
+
+        # Split should raise ValueError when called with no side kept
+        with raises(ValueError):
+            w.split(keepTop=False, keepBottom=False)
 
     def testBoxDefaults(self):
         """
@@ -3290,6 +3292,11 @@ class TestCadQuery(BaseTest):
         # closed profile will generate a valid solid with 3 faces
         self.assertTrue(res_closed.solids().val().isValid())
         self.assertEqual(len(res_closed.faces().vals()), 3)
+
+        res_edge = Workplane("XY").parametricCurve(func, makeWire=False)
+
+        self.assertEqual(len(res_edge.ctx.pendingEdges), 1)
+        self.assertEqual(len(res_edge.ctx.pendingWires), 0)
 
     def testMakeShellSolid(self):
 
@@ -4387,3 +4394,125 @@ class TestCadQuery(BaseTest):
 
         with raises(ValueError):
             r.chamfer2D(0.25, [vs[0]])
+
+    def testSplineApprox(self):
+
+        from .naca import naca5305
+        from math import pi, cos
+
+        pts = [Vector(e[0], e[1], 0) for e in naca5305]
+
+        # spline
+
+        e1 = Edge.makeSplineApprox(pts, 1e-6, maxDeg=6, smoothing=(1, 1, 1))
+        e2 = Edge.makeSplineApprox(pts, 1e-6, minDeg=2, maxDeg=6)
+
+        self.assertTrue(e1.isValid())
+        self.assertTrue(e2.isValid())
+        self.assertTrue(e1.Length() > e2.Length())
+
+        with raises(ValueError):
+            e4 = Edge.makeSplineApprox(pts, 1e-6, maxDeg=3, smoothing=(1, 1, 1.0))
+
+        pts_closed = pts + [pts[0]]
+
+        e3 = Edge.makeSplineApprox(pts_closed)
+        w = Edge.makeSplineApprox(pts).close()
+
+        self.assertTrue(e3.IsClosed())
+        self.assertTrue(w.IsClosed())
+
+        # Workplane method
+
+        w1 = Workplane().splineApprox(pts)
+        w2 = Workplane().splineApprox(pts, forConstruction=True)
+        w3 = Workplane().splineApprox(pts, makeWire=True)
+        w4 = Workplane().splineApprox(pts, makeWire=True, forConstruction=True)
+
+        self.assertEqual(w1.edges().size(), 1)
+        self.assertEqual(len(w1.ctx.pendingEdges), 1)
+        self.assertEqual(w2.edges().size(), 1)
+        self.assertEqual(len(w2.ctx.pendingEdges), 0)
+        self.assertEqual(w3.wires().size(), 1)
+        self.assertEqual(len(w3.ctx.pendingWires), 1)
+        self.assertEqual(w4.wires().size(), 1)
+        self.assertEqual(len(w4.ctx.pendingWires), 0)
+
+        # spline surface
+
+        N = 40
+        T = 20
+        A = 5
+
+        pts = [
+            [
+                Vector(i, j, A * cos(2 * pi * i / T) * cos(2 * pi * j / T))
+                for i in range(N + 1)
+            ]
+            for j in range(N + 1)
+        ]
+
+        f1 = Face.makeSplineApprox(pts, smoothing=(1, 1, 1), maxDeg=6)
+        f2 = Face.makeSplineApprox(pts)
+
+        self.assertTrue(f1.isValid())
+        self.assertTrue(f2.isValid())
+
+        with raises(ValueError):
+            f3 = Face.makeSplineApprox(pts, smoothing=(1, 1, 1), maxDeg=3)
+
+    def testParametricSurface(self):
+
+        from math import pi, cos
+
+        r1 = Workplane().parametricSurface(
+            lambda u, v: (u, v, cos(pi * u) * cos(pi * v)), start=-1, stop=1
+        )
+
+        self.assertTrue(r1.faces().val().isValid())
+
+        r2 = Workplane().box(1, 1, 3).split(r1)
+
+        self.assertTrue(r2.solids().val().isValid())
+        self.assertEqual(r2.solids().size(), 2)
+
+    def testEdgeWireClose(self):
+
+        # test with edge
+        e0 = Edge.makeThreePointArc(Vector(0, 0, 0), Vector(1, 1, 0), Vector(0, 2, 0))
+        self.assertFalse(e0.IsClosed())
+        w0 = e0.close()
+        self.assertTrue(w0.IsClosed())
+
+        # test with already closed edge
+        e1 = Edge.makeCircle(1)
+        self.assertTrue(e1.IsClosed())
+        e2 = e1.close()
+        self.assertTrue(e2.IsClosed())
+        self.assertEqual(type(e1), type(e2))
+
+        # test with already closed WIRE
+        w1 = Wire.makeCircle(1, Vector(), Vector(0, 0, 1))
+        self.assertTrue(w1.IsClosed())
+        w2 = w1.close()
+        self.assertTrue(w1 is w2)
+
+    def testSplitShape(self):
+        """
+        Testing the Shape.split method.
+        """
+        # split an edge with a vertex
+        e0 = Edge.makeCircle(1, (0, 0, 0), (0, 0, 1))
+        v0 = Vertex.makeVertex(0, 1, 0)
+        list_of_edges = e0.split(v0).Edges()
+        self.assertEqual(len(list_of_edges), 2)
+        self.assertTrue(Vector(0, 1, 0) in [e.endPoint() for e in list_of_edges])
+
+        # split a circle with multiple vertices
+        angles = [2 * math.pi * idx / 10 for idx in range(10)]
+        vecs = [Vector(math.sin(a), math.cos(a), 0) for a in angles]
+        vertices = [Vertex.makeVertex(*v.toTuple()) for v in vecs]
+        edges = e0.split(*vertices).Edges()
+        self.assertEqual(len(edges), len(vertices) + 1)
+        endpoints = [e.endPoint() for e in edges]
+        self.assertTrue(all([v in endpoints for v in vecs]))
