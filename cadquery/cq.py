@@ -343,7 +343,7 @@ class Workplane(object):
                 rv = [top, bottom]
             else:
                 # Put the one we are keeping on the stack, and also update the
-                # context solidto the one we kept.
+                # context solid to the one we kept.
                 if keepTop:
                     rv = [top]
                 else:

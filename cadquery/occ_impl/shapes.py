@@ -1582,7 +1582,7 @@ class Edge(Shape, Mixin1D):
 
         :param listOfVector: a list of Vectors that represent the points
         :param tol: tolerance of the algorithm (consult OCC documentation).
-        :param smoothing: optional tuple of 3 weigths use for variational smoothing (default: None)
+        :param smoothing: optional tuple of 3 weights use for variational smoothing (default: None)
         :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
         :param maxDeg: maximum spline degree (default: 6)
         :return: an Edge
@@ -2119,7 +2119,7 @@ class Face(Shape):
 
         :param points: a 2D list of Vectors that represent the points
         :param tol: tolerance of the algorithm (consult OCC documentation). 
-        :param smoothing: optional tuple of 3 weigths use for variational smoothing (default: None)
+        :param smoothing: optional tuple of 3 weights use for variational smoothing (default: None)
         :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
         :param maxDeg: maximum spline degree (default: 6)
         :return: an Face
