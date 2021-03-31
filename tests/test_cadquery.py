@@ -4426,7 +4426,7 @@ class TestCadQuery(BaseTest):
 
         w1 = Workplane().splineApprox(pts)
         w2 = Workplane().splineApprox(pts, forConstruction=True)
-        w3 = Workplane().splineApprox(pts, makeWire=True,)
+        w3 = Workplane().splineApprox(pts, makeWire=True)
         w4 = Workplane().splineApprox(pts, makeWire=True, forConstruction=True)
 
         self.assertEqual(w1.edges().size(), 1)
