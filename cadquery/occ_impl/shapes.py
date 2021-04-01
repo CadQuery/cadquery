@@ -2095,12 +2095,21 @@ class Face(Shape):
         Makes a planar face from one or more wires
         """
 
+        # check if wires are coplanar
+        ws = Compound.makeCompound([outerWire] + innerWires)
+        if not BRepLib_FindSurface(ws.wrapped, OnlyPlane=True).Found():
+            raise ValueError("Cannot build face(s): wires not planar")
+
         face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped, True)
 
         for w in innerWires:
             face_builder.Add(w.wrapped)
 
         face_builder.Build()
+
+        if not face_builder.IsDone():
+            raise ValueError(f"Cannot build face(s): {face_builder.Error()}")
+
         face = face_builder.Shape()
 
         return cls(face).fix()

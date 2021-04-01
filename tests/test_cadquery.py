@@ -3087,6 +3087,10 @@ class TestCadQuery(BaseTest):
             delta.toTuple(), (0.0, 0.0, 2.0 * h), decimal_places
         )
 
+        # check that non-conplanar extrusion raises
+        with self.assertRaises(ValueError):
+            Workplane().box(1, 1, 1).faces().circle(0.1).extrude(0.1)
+
     def testTaperedExtrudeCutBlind(self):
 
         h = 1.0
