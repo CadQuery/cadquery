@@ -43,6 +43,17 @@ def nested_assy():
     return assy
 
 
+@pytest.fixture
+def box_and_vertex():
+
+    assy = cq.Assembly()
+    box_wp = cq.Workplane().box(1, 2, 3)
+    assy.add(box_wp, name="box")
+    vertex_wp = cq.Workplane().newObject([cq.Vertex.makeVertex(0, 0, 0)])
+    assy.add(vertex_wp, name="vertex")
+    return assy
+
+
 def test_color():
 
     c1 = cq.Color("red")
@@ -225,3 +236,72 @@ def test_expression_grammar(nested_assy):
     nested_assy.constrain(
         "TOP@faces@>Z", "SECOND/BOTTOM@vertices@>X and >Y and >Z", "Point"
     )
+
+
+def test_InPlane_constraint(box_and_vertex):
+
+    # add first constraint
+    box_and_vertex.constrain(
+        "box",
+        box_and_vertex.children[0].obj.faces(">X").val(),
+        "vertex",
+        box_and_vertex.children[1].obj.val(),
+        "InPlane",
+        param=0,
+    )
+    box_and_vertex.solve()
+
+    x_pos = (
+        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().X()
+    )
+    assert x_pos == pytest.approx(0.5)
+
+    # add a second InPlane constraint
+    box_and_vertex.constrain("box@faces@>Y", "vertex", "InPlane", param=0)
+    box_and_vertex.solve()
+
+    # should still be on the >X face from the first constraint
+    x_pos = (
+        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().X()
+    )
+    assert x_pos == pytest.approx(0.5)
+
+    # now should additionally be on the >Y face
+    y_pos = (
+        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().Y()
+    )
+    assert y_pos == pytest.approx(1)
+
+    # add a third InPlane constraint
+    box_and_vertex.constrain("box@faces@>Z", "vertex", "InPlane", param=0)
+    box_and_vertex.solve()
+
+    # should now be on the >X and >Y and >Z corner
+    assert (
+        box_and_vertex.children[1]
+        .loc.wrapped.Transformation()
+        .TranslationPart()
+        .IsEqual(gp_XYZ(0.5, 1, 1.5), 1e-6)
+    )
+
+
+@pytest.mark.parametrize("param1", range(3))
+@pytest.mark.parametrize("param0", range(3))
+def test_InPlane_param(box_and_vertex, param0, param1):
+
+    box_and_vertex.constrain("box@faces@>Z", "vertex", "InPlane", param=param0)
+    box_and_vertex.constrain("box@faces@>X", "vertex", "InPlane", param=param1)
+    box_and_vertex.solve()
+
+    # note that pytest.approx(0) has a tolerance of 1.0e-12, so can't use that here
+    z_offset = abs(
+        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().Z()
+        - 1.5
+    )
+    assert z_offset - param0 < 1e-6
+
+    x_offset = abs(
+        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().X()
+        - 0.5
+    )
+    assert x_offset - param1 < 1e-6

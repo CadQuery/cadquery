@@ -5,7 +5,7 @@ from uuid import uuid1 as uuid
 
 from .cq import Workplane
 from .occ_impl.shapes import Shape, Face, Edge
-from .occ_impl.geom import Location, Vector
+from .occ_impl.geom import Location, Vector, Plane
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
     ConstraintSolver,
@@ -106,6 +106,14 @@ class Constraint(object):
 
         return rv
 
+    def _getPlane(self, arg: Shape) -> Plane:
+
+        # This is very duck typing. Might want to restrict types later to
+        # prevent confusion eg. making a plane from an spline Edge.
+        normal = self._getAxis(arg)
+        origin = arg.Center()
+        return Plane(origin, normal=normal)
+
     def toPOD(self) -> ConstraintPOD:
         """
         Convert the constraint to a representation used by the solver.
@@ -113,7 +121,7 @@ class Constraint(object):
 
         rv: List[Tuple[ConstraintMarker, ...]] = []
 
-        for arg, loc in zip(self.args, self.sublocs):
+        for idx, (arg, loc) in enumerate(zip(self.args, self.sublocs)):
 
             arg = arg.located(loc * arg.location())
 
@@ -123,6 +131,11 @@ class Constraint(object):
                 rv.append((arg.Center().toPnt(),))
             elif self.kind == "Plane":
                 rv.append((self._getAxis(arg).toDir(), arg.Center().toPnt()))
+            elif self.kind == "InPlane":
+                if idx == 0:
+                    rv.append((self._getPlane(arg).toPln(),))
+                else:
+                    rv.append((arg.Center().toPnt(),))
             else:
                 raise ValueError(f"Unknown constraint kind {self.kind}")
 

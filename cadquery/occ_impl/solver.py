@@ -4,7 +4,7 @@ from nptyping import NDArray as Array
 from numpy import array, eye, zeros, pi
 from scipy.optimize import minimize
 
-from OCP.gp import gp_Vec, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
+from OCP.gp import gp_Vec, gp_Pln, gp_Lin, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
 
 from .geom import Location
 
@@ -117,6 +117,18 @@ class ConstraintSolver(object):
                 DIR_SCALING * (val - m1.Transformed(t1).Angle(m2.Transformed(t2))) ** 2
             )
 
+        def pln_pnt_cost(
+            m1: gp_Pln,
+            m2: gp_Pnt,
+            t1: gp_Trsf,
+            t2: gp_Trsf,
+            val: Optional[float] = None,
+        ) -> float:
+
+            val = 0 if val is None else val
+
+            return (val - (m1.Transformed(t1).Distance(m2.Transformed(t2)))) ** 2
+
         def f(x):
             """
             Function to be minimized
@@ -140,6 +152,8 @@ class ConstraintSolver(object):
                         rv += pt_cost(m1, m2, t1, t2, d)
                     elif isinstance(m1, gp_Dir):
                         rv += dir_cost(m1, m2, t1, t2, d)
+                    elif isinstance(m1, gp_Pln):
+                        rv += pln_pnt_cost(m1, m2, t1, t2, d)
                     else:
                         raise NotImplementedError(f"{m1,m2}")
 
@@ -199,6 +213,22 @@ class ConstraintSolver(object):
 
                             if k2 not in self.locked:
                                 tmp2 = dir_cost(m1, m2, t1, t2j, d)
+                                rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
+
+                    elif isinstance(m1, gp_Pln):
+                        tmp = pln_pnt_cost(m1, m2, t1, t2, d)
+
+                        for j in range(NDOF):
+
+                            t1j = transforms_delta[k1 * NDOF + j]
+                            t2j = transforms_delta[k2 * NDOF + j]
+
+                            if k1 not in self.locked:
+                                tmp1 = pln_pnt_cost(m1, m2, t1j, t2, d)
+                                rv[k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
+
+                            if k2 not in self.locked:
+                                tmp2 = pln_pnt_cost(m1, m2, t1, t2j, d)
                                 rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
                     else:
                         raise NotImplementedError(f"{m1,m2}")
