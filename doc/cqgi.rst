@@ -141,6 +141,40 @@ See the CQGI API docs for more details.
 
 Future enhancements will include a safer sandbox to prevent malicious scripts.
 
+Automating export to STL
+-------------------------
+A common use-case for the CQGI is the automation of processing cad-query code into geometary, doing so via the CQGI rather than an export line in the script-itself lead to a much tidier enviroment; you may need to do this as part of an automated-workflow, batch-conversion, exporting to another software for assembly, or running stress simulations on resulting bodies.
+
+The below python script demonstrates how to open, process, and export and STL file from any valid cadquery script.
+
+      # Load CQGI
+      import cadquery.cqgi as cqgi
+      import cadquery as cq
+      
+      # load the cadquery script
+      model = cqgi.parse(open("example.py").read());
+      
+      # run the script and store the result (from the show_object call in the script)
+      build_result = model.build();
+      
+      # test to ensure the process worked.
+      if build_result.success:
+          count = 0;
+          # loop through all the shapes returned
+          for result in build_result.results:
+              # open the output file (count variable is used here such that the output would be:
+              #   example_output0.stl, example_output1.stl, etc for each returned shape
+              with open('example_output'+ str(count) + '.stl', 'w') as f:
+                  //write the result of exporting as an STL
+                  f.write(cq.exporters.toString(result.shape, 'STL', 10))
+              f.close();
+              //increment count for more shapes
+              count = count + 1;
+      else:
+          print( "BUILD FAILED: " + str(build_result.exception) + "\n");
+
+
+
 Important CQGI Methods
 -------------------------
 
