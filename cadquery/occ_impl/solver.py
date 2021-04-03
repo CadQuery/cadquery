@@ -118,6 +118,9 @@ class ConstraintSolver(object):
             )
 
         def f(x):
+            """
+            Function to be minimized
+            """
 
             constraints = self.constraints
             ne = self.ne

@@ -79,7 +79,7 @@ class Constraint(object):
     ):
         """
         Construct a constraint.
-        
+
         :param objects: object names refernced in the constraint
         :param args: subshapes (e.g. faces or edges) of the objects
         :param sublocs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
@@ -162,17 +162,17 @@ class Assembly(object):
         :param name: unique name of the root object (default: None, reasulting in an UUID being generated)
         :param color: color of the added object (default: None)
         :return: An Assembly object.
-        
-        
+
+
         To create an empty assembly use::
-            
+
             assy = Assembly(None)
-            
+
         To create one constraint a root object::
-            
+
             b = Workplane().box(1,1,1)
             assy = Assembly(b, Location(Vector(0,0,1)), name="root")
-            
+
         """
 
         self.obj = obj
@@ -211,12 +211,15 @@ class Assembly(object):
         color: Optional[Color] = None,
     ) -> "Assembly":
         """
-        add a subassembly to the current assembly.
-        
+        Add a subassembly to the current assembly.
+
         :param obj: subassembly to be added
-        :param loc: location of the root object (deafault: None, resulting in the location stored in the subassembly being used)
-        :param name: unique name of the root object (default: None, resulting in the name stored in the subassembly being used)
-        :param color: color of the added object (default: None, resulting in the color stored in the subassembly being used)
+        :param loc: location of the root object (deafault: None, resulting in the location stored in
+          the subassembly being used)
+        :param name: unique name of the root object (default: None, resulting in the name stored in
+          the subassembly being used)
+        :param color: color of the added object (default: None, resulting in the color stored in the
+          subassembly being used)
         """
         ...
 
@@ -229,18 +232,20 @@ class Assembly(object):
         color: Optional[Color] = None,
     ) -> "Assembly":
         """
-        add a subassembly to the current assembly with explicit location and name
-        
+        Add a subassembly to the current assembly with explicit location and name.
+
         :param obj: object to be added as a subassembly
-        :param loc: location of the root object (deafault: None, interpreted as identity transformation)
-        :param name: unique name of the root object (default: None, resulting in an UUID being generated)
+        :param loc: location of the root object (deafault: None, interpreted as identity
+          transformation)
+        :param name: unique name of the root object (default: None, resulting in an UUID being
+          generated)
         :param color: color of the added object (default: None)
         """
         ...
 
     def add(self, arg, **kwargs):
         """
-        add a subassembly to the current assembly.
+        Add a subassembly to the current assembly.
         """
 
         if isinstance(arg, Assembly):
@@ -272,16 +277,16 @@ class Assembly(object):
         """
         Execute a selector query on the assembly. 
         The query is expected to be in the following format:
-        
+
             name[?tag][@kind@args]
-            
+
         valid example include:
-        
+
             obj_name @ faces @ >Z
-            obj_name?tag1@faces@>Z          
+            obj_name?tag1@faces@>Z
             obj_name ? tag
             obj_name
-        
+
         """
 
         tmp: Workplane
@@ -311,7 +316,7 @@ class Assembly(object):
     def _subloc(self, name: str) -> Tuple[Location, str]:
         """
         Calculate relative location of an object in a subassembly.
-        
+
         Returns the relative posiitons as well as the name of the top assembly.
         """
 
