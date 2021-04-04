@@ -260,17 +260,13 @@ def test_InPlane_constraint(box_and_vertex):
     box_and_vertex.constrain("box@faces@>Y", "vertex", "InPlane", param=0)
     box_and_vertex.solve()
 
+    vertex_translation_part = (
+        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart()
+    )
     # should still be on the >X face from the first constraint
-    x_pos = (
-        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().X()
-    )
-    assert x_pos == pytest.approx(0.5)
-
+    assert vertex_translation_part.X() == pytest.approx(0.5)
     # now should additionally be on the >Y face
-    y_pos = (
-        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().Y()
-    )
-    assert y_pos == pytest.approx(1)
+    assert vertex_translation_part.Y() == pytest.approx(1)
 
     # add a third InPlane constraint
     box_and_vertex.constrain("box@faces@>Z", "vertex", "InPlane", param=0)
@@ -294,14 +290,10 @@ def test_InPlane_param(box_and_vertex, param0, param1):
     box_and_vertex.solve()
 
     # note that pytest.approx(0) has a tolerance of 1.0e-12, so can't use that here
-    z_offset = abs(
-        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().Z()
-        - 1.5
+    vertex_translation_part = (
+        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart()
     )
+    z_offset = abs(vertex_translation_part.Z() - 1.5)
     assert z_offset - param0 < 1e-6
-
-    x_offset = abs(
-        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().X()
-        - 0.5
-    )
+    x_offset = abs(vertex_translation_part.X() - 0.5)
     assert x_offset - param1 < 1e-6
