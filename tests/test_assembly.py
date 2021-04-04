@@ -281,6 +281,22 @@ def test_InPlane_constraint(box_and_vertex):
     )
 
 
+def test_InPlane_3_parts(box_and_vertex):
+
+    cylinder_height = 2
+    cylinder = cq.Workplane().circle(0.1).extrude(cylinder_height)
+    box_and_vertex.add(cylinder, name="cylinder")
+    box_and_vertex.constrain("box@faces@>Z", "cylinder@faces@<Z", "Plane")
+    box_and_vertex.constrain("cylinder@faces@>Z", "vertex", "InPlane")
+    box_and_vertex.constrain("box@faces@>X", "vertex", "InPlane")
+    box_and_vertex.solve()
+    vertex_translation_part = (
+        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart()
+    )
+    assert vertex_translation_part.Z() == pytest.approx(1.5 + cylinder_height)
+    assert vertex_translation_part.X() == pytest.approx(0.5)
+
+
 @pytest.mark.parametrize("param1", range(3))
 @pytest.mark.parametrize("param0", range(3))
 def test_InPlane_param(box_and_vertex, param0, param1):
