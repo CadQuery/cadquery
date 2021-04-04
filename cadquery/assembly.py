@@ -18,7 +18,7 @@ from .selectors import _expression_grammar as _selector_grammar
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-ConstraintKinds = Literal["Plane", "Point", "Axis"]
+ConstraintKinds = Literal["Plane", "Point", "Axis", "InPlane"]
 ExportLiterals = Literal["STEP", "XML"]
 
 PATH_DELIM = "/"

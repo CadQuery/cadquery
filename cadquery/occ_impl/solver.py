@@ -9,7 +9,7 @@ from OCP.gp import gp_Vec, gp_Pln, gp_Lin, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternio
 from .geom import Location
 
 DOF6 = Tuple[float, float, float, float, float, float]
-ConstraintMarker = Union[gp_Dir, gp_Pnt]
+ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt]
 Constraint = Tuple[
     Tuple[ConstraintMarker, ...], Tuple[Optional[ConstraintMarker], ...], Optional[Any]
 ]
