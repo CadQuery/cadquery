@@ -145,17 +145,17 @@ Automating export to STL
 -------------------------
 A common use-case for the CQGI is the automation of processing cad-query code into geometary, doing so via the CQGI rather than an export line in the script-itself lead to a much tidier enviroment; you may need to do this as part of an automated-workflow, batch-conversion, exporting to another software for assembly, or running stress simulations on resulting bodies.
 
-The below python script demonstrates how to open, process, and export and STL file from any valid cadquery script::
+The below python script demonstrates how to open, process, and export an STL file from any valid cadquery script::
 
       # Load CQGI
       import cadquery.cqgi as cqgi
       import cadquery as cq
       
       # load the cadquery script
-      model = cqgi.parse(open("example.py").read());
+      model = cqgi.parse(open("example.py").read())
       
       # run the script and store the result (from the show_object call in the script)
-      build_result = model.build();
+      build_result = model.build()
       
       # test to ensure the process worked.
       if build_result.success:
