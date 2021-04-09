@@ -173,8 +173,8 @@ class Assembly(object):
         """
         construct an assembly
 
-        :param obj: root object of the assembly (deafault: None)
-        :param loc: location of the root object (deafault: None, interpreted as identity transformation)
+        :param obj: root object of the assembly (default: None)
+        :param loc: location of the root object (default: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, reasulting in an UUID being generated)
         :param color: color of the added object (default: None)
         :return: An Assembly object.
@@ -230,7 +230,7 @@ class Assembly(object):
         Add a subassembly to the current assembly.
 
         :param obj: subassembly to be added
-        :param loc: location of the root object (deafault: None, resulting in the location stored in
+        :param loc: location of the root object (default: None, resulting in the location stored in
           the subassembly being used)
         :param name: unique name of the root object (default: None, resulting in the name stored in
           the subassembly being used)
@@ -251,7 +251,7 @@ class Assembly(object):
         Add a subassembly to the current assembly with explicit location and name.
 
         :param obj: object to be added as a subassembly
-        :param loc: location of the root object (deafault: None, interpreted as identity
+        :param loc: location of the root object (default: None, interpreted as identity
           transformation)
         :param name: unique name of the root object (default: None, resulting in an UUID being
           generated)
@@ -291,7 +291,7 @@ class Assembly(object):
 
     def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
         """
-        Execute a selector query on the assembly. 
+        Execute a selector query on the assembly.
         The query is expected to be in the following format:
 
             name[?tag][@kind@args]
@@ -443,9 +443,9 @@ class Assembly(object):
     ) -> "Assembly":
         """
         save as STEP or OCCT native XML file
-        
+
         :param path: filepath
-        :param exportType: export format (deafault: None, results in format being inferred form the path)
+        :param exportType: export format (default: None, results in format being inferred form the path)
         """
 
         if exportType is None:
