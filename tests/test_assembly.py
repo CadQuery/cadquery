@@ -298,22 +298,19 @@ def test_InPlane_3_parts(box_and_vertex):
     assert vertex_translation_part.X() == pytest.approx(0.5)
 
 
-@pytest.mark.parametrize("param1", range(3))
-@pytest.mark.parametrize("param0", range(3))
+@pytest.mark.parametrize("param1", [-1, 0, 2])
+@pytest.mark.parametrize("param0", [-2, 0, 0.01])
 def test_InPlane_param(box_and_vertex, param0, param1):
 
     box_and_vertex.constrain("box@faces@>Z", "vertex", "InPlane", param=param0)
     box_and_vertex.constrain("box@faces@>X", "vertex", "InPlane", param=param1)
     box_and_vertex.solve()
 
-    # note that pytest.approx(0) has a tolerance of 1.0e-12, so can't use that here
     vertex_translation_part = (
         box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart()
     )
-    z_offset = abs(vertex_translation_part.Z() - 1.5)
-    assert z_offset - param0 < 1e-6
-    x_offset = abs(vertex_translation_part.X() - 0.5)
-    assert x_offset - param1 < 1e-6
+    assert vertex_translation_part.Z() - 1.5 == pytest.approx(param0, abs=1e-6)
+    assert vertex_translation_part.X() - 0.5 == pytest.approx(param1, abs=1e-6)
 
 
 def test_constraint_getPlane():

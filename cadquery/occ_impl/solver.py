@@ -127,7 +127,10 @@ class ConstraintSolver(object):
 
             val = 0 if val is None else val
 
-            return (val - (m1.Transformed(t1).Distance(m2.Transformed(t2)))) ** 2
+            m1_located = m1.Transformed(t1)
+            # offset in the plane's normal direction by val:
+            m1_located.Translate(gp_Vec(m1_located.Axis().Direction()).Multiplied(val))
+            return m1_located.SquareDistance(m2.Transformed(t2))
 
         def f(x):
             """
