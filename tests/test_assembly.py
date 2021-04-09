@@ -1,5 +1,6 @@
 import pytest
 import os
+from itertools import product
 
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import exportAssembly, exportCAF
@@ -313,3 +314,84 @@ def test_InPlane_param(box_and_vertex, param0, param1):
     assert z_offset - param0 < 1e-6
     x_offset = abs(vertex_translation_part.X() - 0.5)
     assert x_offset - param1 < 1e-6
+
+
+def test_constraint_getPlane():
+    """
+    Test that _getPlane does the right thing with different arguments
+    """
+    ids = (0, 1)
+    sublocs = (cq.Location(), cq.Location())
+
+    def make_constraint(shape0):
+        return cq.Constraint(ids, (shape0, shape0), sublocs, "InPlane", 0)
+
+    def fail_this(shape0):
+        c0 = make_constraint(shape0)
+        with pytest.raises(ValueError):
+            c0._getPlane(c0.args[0])
+
+    def resulting_plane(shape0):
+        c0 = make_constraint(shape0)
+        return c0._getPlane(c0.args[0])
+
+    # point should fail
+    fail_this(cq.Vertex.makeVertex(0, 0, 0))
+
+    # line should fail
+    fail_this(cq.Edge.makeLine(cq.Vector(1, 0, 0), cq.Vector(0, 0, 0)))
+
+    # planar edge (circle) should succeed
+    origin = cq.Vector(1, 2, 3)
+    direction = cq.Vector(4, 5, 6).normalized()
+    p1 = resulting_plane(cq.Edge.makeCircle(1, pnt=origin, dir=direction))
+    assert p1.zDir == direction
+    assert p1.origin == origin
+
+    # planar edge (spline) should succeed
+    # it's a touch risky calling a spline a planar edge, but lets see if it's within tolerance
+    points0 = [cq.Vector(x) for x in [(-1, 0, 1), (0, 1, 1), (1, 0, 1), (0, -1, 1)]]
+    planar_spline = cq.Edge.makeSpline(points0, periodic=True)
+    p2 = resulting_plane(planar_spline)
+    assert p2.origin == planar_spline.Center()
+    assert p2.zDir == cq.Vector(0, 0, 1)
+
+    # non-planar edge should fail
+    points1 = [cq.Vector(x) for x in [(-1, 0, -1), (0, 1, 1), (1, 0, -1), (0, -1, 1)]]
+    nonplanar_spline = cq.Edge.makeSpline(points1, periodic=True)
+    fail_this(nonplanar_spline)
+
+    # planar wire should succeed
+    # make a triangle in the XZ plane
+    points2 = [cq.Vector(x) for x in [(-1, 0, -1), (0, 0, 1), (1, 0, -1)]]
+    points2.append(points2[0])
+    triangle = cq.Wire.makePolygon(points2)
+    p3 = resulting_plane(triangle)
+    assert p3.origin == triangle.Center()
+    assert p3.zDir == cq.Vector(0, 1, 0)
+
+    # non-planar wire should fail
+    points3 = [cq.Vector(x) for x in [(-1, 0, -1), (0, 1, 1), (1, 0, 0), (0, -1, 1)]]
+    wonky_shape = cq.Wire.makePolygon(points3)
+    fail_this(wonky_shape)
+
+    # all faces should succeed
+    for length, width in product([None, 10], [None, 11]):
+        f0 = cq.Face.makePlane(
+            length=length, width=width, basePnt=(1, 2, 3), dir=(1, 0, 0)
+        )
+        p4 = resulting_plane(f0)
+        if length and width:
+            assert p4.origin == cq.Vector(1, 2, 3)
+        assert p4.zDir == cq.Vector(1, 0, 0)
+
+    f1 = cq.Face.makeFromWires(triangle, [])
+    p5 = resulting_plane(f1)
+    # not sure why, but the origins only roughly line up
+    assert (p5.origin - triangle.Center()).Length < 0.1
+    assert p5.zDir == cq.Vector(0, 1, 0)
+
+    # shell... not sure?
+
+    # solid should fail
+    fail_this(cq.Solid.makeBox(1, 1, 1))

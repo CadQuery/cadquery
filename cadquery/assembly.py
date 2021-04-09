@@ -4,7 +4,7 @@ from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Face, Edge
+from .occ_impl.shapes import Shape, Face, Edge, Wire
 from .occ_impl.geom import Location, Vector, Plane
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
@@ -108,9 +108,12 @@ class Constraint(object):
 
     def _getPlane(self, arg: Shape) -> Plane:
 
-        # This is very duck typing. Might want to restrict types later to
-        # prevent confusion eg. making a plane from an spline Edge.
-        normal = self._getAxis(arg)
+        if isinstance(arg, Face):
+            normal = arg.normalAt()
+        elif isinstance(arg, (Edge, Wire)):
+            normal = arg.normal()
+        else:
+            raise ValueError(f"Can not get normal from {arg}.")
         origin = arg.Center()
         return Plane(origin, normal=normal)
 
