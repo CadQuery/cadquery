@@ -117,9 +117,9 @@ class ConstraintSolver(object):
                 DIR_SCALING * (val - m1.Transformed(t1).Angle(m2.Transformed(t2))) ** 2
             )
 
-        def pln_pnt_cost(
-            m1: gp_Pln,
-            m2: gp_Pnt,
+        def pnt_pln_cost(
+            m1: gp_Pnt,
+            m2: gp_Pln,
             t1: gp_Trsf,
             t2: gp_Trsf,
             val: Optional[float] = None,
@@ -127,10 +127,10 @@ class ConstraintSolver(object):
 
             val = 0 if val is None else val
 
-            m1_located = m1.Transformed(t1)
+            m2_located = m2.Transformed(t2)
             # offset in the plane's normal direction by val:
-            m1_located.Translate(gp_Vec(m1_located.Axis().Direction()).Multiplied(val))
-            return m1_located.SquareDistance(m2.Transformed(t2))
+            m2_located.Translate(gp_Vec(m2_located.Axis().Direction()).Multiplied(val))
+            return m2_located.SquareDistance(m1.Transformed(t1))
 
         def f(x):
             """
@@ -151,12 +151,12 @@ class ConstraintSolver(object):
                 t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
 
                 for m1, m2 in zip(ms1, ms2):
-                    if isinstance(m1, gp_Pnt):
+                    if isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pnt):
                         rv += pt_cost(m1, m2, t1, t2, d)
                     elif isinstance(m1, gp_Dir):
                         rv += dir_cost(m1, m2, t1, t2, d)
-                    elif isinstance(m1, gp_Pln):
-                        rv += pln_pnt_cost(m1, m2, t1, t2, d)
+                    elif isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pln):
+                        rv += pnt_pln_cost(m1, m2, t1, t2, d)
                     else:
                         raise NotImplementedError(f"{m1,m2}")
 
@@ -186,7 +186,7 @@ class ConstraintSolver(object):
                 t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
 
                 for m1, m2 in zip(ms1, ms2):
-                    if isinstance(m1, gp_Pnt):
+                    if isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pnt):
                         tmp = pt_cost(m1, m2, t1, t2, d)
 
                         for j in range(NDOF):
@@ -218,8 +218,8 @@ class ConstraintSolver(object):
                                 tmp2 = dir_cost(m1, m2, t1, t2j, d)
                                 rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
 
-                    elif isinstance(m1, gp_Pln):
-                        tmp = pln_pnt_cost(m1, m2, t1, t2, d)
+                    elif isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pln):
+                        tmp = pnt_pln_cost(m1, m2, t1, t2, d)
 
                         for j in range(NDOF):
 
@@ -227,11 +227,11 @@ class ConstraintSolver(object):
                             t2j = transforms_delta[k2 * NDOF + j]
 
                             if k1 not in self.locked:
-                                tmp1 = pln_pnt_cost(m1, m2, t1j, t2, d)
+                                tmp1 = pnt_pln_cost(m1, m2, t1j, t2, d)
                                 rv[k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
 
                             if k2 not in self.locked:
-                                tmp2 = pln_pnt_cost(m1, m2, t1, t2j, d)
+                                tmp2 = pnt_pln_cost(m1, m2, t1, t2j, d)
                                 rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
                     else:
                         raise NotImplementedError(f"{m1,m2}")

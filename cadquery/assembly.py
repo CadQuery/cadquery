@@ -18,7 +18,7 @@ from .selectors import _expression_grammar as _selector_grammar
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-ConstraintKinds = Literal["Plane", "Point", "Axis", "InPlane"]
+ConstraintKinds = Literal["Plane", "Point", "Axis", "PointInPlane"]
 ExportLiterals = Literal["STEP", "XML"]
 
 PATH_DELIM = "/"
@@ -134,11 +134,11 @@ class Constraint(object):
                 rv.append((arg.Center().toPnt(),))
             elif self.kind == "Plane":
                 rv.append((self._getAxis(arg).toDir(), arg.Center().toPnt()))
-            elif self.kind == "InPlane":
+            elif self.kind == "PointInPlane":
                 if idx == 0:
-                    rv.append((self._getPlane(arg).toPln(),))
-                else:
                     rv.append((arg.Center().toPnt(),))
+                else:
+                    rv.append((self._getPlane(arg).toPln(),))
             else:
                 raise ValueError(f"Unknown constraint kind {self.kind}")
 

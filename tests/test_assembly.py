@@ -47,9 +47,8 @@ def nested_assy():
 @pytest.fixture
 def box_and_vertex():
 
-    assy = cq.Assembly()
     box_wp = cq.Workplane().box(1, 2, 3)
-    assy.add(box_wp, name="box")
+    assy = cq.Assembly(box_wp, name="box")
     vertex_wp = cq.Workplane().newObject([cq.Vertex.makeVertex(0, 0, 0)])
     assy.add(vertex_wp, name="vertex")
     return assy
@@ -239,60 +238,60 @@ def test_expression_grammar(nested_assy):
     )
 
 
-def test_InPlane_constraint(box_and_vertex):
+def test_PointInPlane_constraint(box_and_vertex):
 
     # add first constraint
     box_and_vertex.constrain(
-        "box",
-        box_and_vertex.children[0].obj.faces(">X").val(),
         "vertex",
-        box_and_vertex.children[1].obj.val(),
-        "InPlane",
+        box_and_vertex.children[0].obj.val(),
+        "box",
+        box_and_vertex.obj.faces(">X").val(),
+        "PointInPlane",
         param=0,
     )
     box_and_vertex.solve()
 
     x_pos = (
-        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart().X()
+        box_and_vertex.children[0].loc.wrapped.Transformation().TranslationPart().X()
     )
     assert x_pos == pytest.approx(0.5)
 
-    # add a second InPlane constraint
-    box_and_vertex.constrain("box@faces@>Y", "vertex", "InPlane", param=0)
+    # add a second PointInPlane constraint
+    box_and_vertex.constrain("vertex", "box@faces@>Y", "PointInPlane", param=0)
     box_and_vertex.solve()
 
     vertex_translation_part = (
-        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart()
+        box_and_vertex.children[0].loc.wrapped.Transformation().TranslationPart()
     )
     # should still be on the >X face from the first constraint
     assert vertex_translation_part.X() == pytest.approx(0.5)
     # now should additionally be on the >Y face
     assert vertex_translation_part.Y() == pytest.approx(1)
 
-    # add a third InPlane constraint
-    box_and_vertex.constrain("box@faces@>Z", "vertex", "InPlane", param=0)
+    # add a third PointInPlane constraint
+    box_and_vertex.constrain("vertex", "box@faces@>Z", "PointInPlane", param=0)
     box_and_vertex.solve()
 
     # should now be on the >X and >Y and >Z corner
     assert (
-        box_and_vertex.children[1]
+        box_and_vertex.children[0]
         .loc.wrapped.Transformation()
         .TranslationPart()
         .IsEqual(gp_XYZ(0.5, 1, 1.5), 1e-6)
     )
 
 
-def test_InPlane_3_parts(box_and_vertex):
+def test_PointInPlane_3_parts(box_and_vertex):
 
     cylinder_height = 2
     cylinder = cq.Workplane().circle(0.1).extrude(cylinder_height)
     box_and_vertex.add(cylinder, name="cylinder")
     box_and_vertex.constrain("box@faces@>Z", "cylinder@faces@<Z", "Plane")
-    box_and_vertex.constrain("cylinder@faces@>Z", "vertex", "InPlane")
-    box_and_vertex.constrain("box@faces@>X", "vertex", "InPlane")
+    box_and_vertex.constrain("vertex", "cylinder@faces@>Z", "PointInPlane")
+    box_and_vertex.constrain("vertex", "box@faces@>X", "PointInPlane")
     box_and_vertex.solve()
     vertex_translation_part = (
-        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart()
+        box_and_vertex.children[0].loc.wrapped.Transformation().TranslationPart()
     )
     assert vertex_translation_part.Z() == pytest.approx(1.5 + cylinder_height)
     assert vertex_translation_part.X() == pytest.approx(0.5)
@@ -300,14 +299,14 @@ def test_InPlane_3_parts(box_and_vertex):
 
 @pytest.mark.parametrize("param1", [-1, 0, 2])
 @pytest.mark.parametrize("param0", [-2, 0, 0.01])
-def test_InPlane_param(box_and_vertex, param0, param1):
+def test_PointInPlane_param(box_and_vertex, param0, param1):
 
-    box_and_vertex.constrain("box@faces@>Z", "vertex", "InPlane", param=param0)
-    box_and_vertex.constrain("box@faces@>X", "vertex", "InPlane", param=param1)
+    box_and_vertex.constrain("vertex", "box@faces@>Z", "PointInPlane", param=param0)
+    box_and_vertex.constrain("vertex", "box@faces@>X", "PointInPlane", param=param1)
     box_and_vertex.solve()
 
     vertex_translation_part = (
-        box_and_vertex.children[1].loc.wrapped.Transformation().TranslationPart()
+        box_and_vertex.children[0].loc.wrapped.Transformation().TranslationPart()
     )
     assert vertex_translation_part.Z() - 1.5 == pytest.approx(param0, abs=1e-6)
     assert vertex_translation_part.X() - 0.5 == pytest.approx(param1, abs=1e-6)
@@ -321,7 +320,7 @@ def test_constraint_getPlane():
     sublocs = (cq.Location(), cq.Location())
 
     def make_constraint(shape0):
-        return cq.Constraint(ids, (shape0, shape0), sublocs, "InPlane", 0)
+        return cq.Constraint(ids, (shape0, shape0), sublocs, "PointInPlane", 0)
 
     def fail_this(shape0):
         c0 = make_constraint(shape0)
