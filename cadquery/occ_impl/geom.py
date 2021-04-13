@@ -929,7 +929,7 @@ class Location(object):
             elif isinstance(t, gp_Trsf):
                 T = t
             elif isinstance(t, tuple):
-                raise TypeError("Tuple is not a valid parameter. Use a a Vector or TopLoc_Location instead.")
+                raise TypeError("Tuple is not a valid parameter. Use a Vector instead.")
         elif len(args) == 2:
             t, v = args
             cs = gp_Ax3(v.toPnt(), t.zDir.toDir(), t.xDir.toDir())
