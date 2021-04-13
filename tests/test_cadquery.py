@@ -378,6 +378,27 @@ class TestCadQuery(BaseTest):
             assert before[direction] == approx(after[direction])
         assert plane.origin.toTuple() == origin
 
+    def testPlaneNoXDir(self):
+        """
+        Plane should pick an arbitrary x direction if None is passed in.
+        """
+        for z_dir in [(0, 0, 1), (1, 0, 0), (-1, 0, 0), Vector(-1, 0, 0)]:
+            result = Plane(origin=(1, 2, 3), xDir=None, normal=z_dir)
+            assert result.zDir == Vector(z_dir)
+            assert result.xDir.Length == approx(1)
+            assert result.origin == Vector(1, 2, 3)
+
+        # unspecified xDir should be the same as xDir=None
+        result2 = Plane(origin=(1, 2, 3), normal=z_dir)
+        assert result2 == result
+
+    def testPlaneToPln(self):
+        plane = Plane(origin=(1, 2, 3), xDir=(-1, 0, 0), normal=(0, 1, 0))
+        gppln = plane.toPln()
+        assert Vector(gppln.XAxis().Direction()) == Vector(-1, 0, 0)
+        assert Vector(gppln.YAxis().Direction()) == plane.yDir
+        assert Vector(gppln.Axis().Direction()) == plane.zDir
+
     def testRect(self):
         x = 10
         y = 11

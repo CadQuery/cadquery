@@ -4,12 +4,12 @@ from nptyping import NDArray as Array
 from numpy import array, eye, zeros, pi
 from scipy.optimize import minimize
 
-from OCP.gp import gp_Vec, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
+from OCP.gp import gp_Vec, gp_Pln, gp_Lin, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
 
 from .geom import Location
 
 DOF6 = Tuple[float, float, float, float, float, float]
-ConstraintMarker = Union[gp_Dir, gp_Pnt]
+ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt]
 Constraint = Tuple[
     Tuple[ConstraintMarker, ...], Tuple[Optional[ConstraintMarker], ...], Optional[Any]
 ]
@@ -117,7 +117,25 @@ class ConstraintSolver(object):
                 DIR_SCALING * (val - m1.Transformed(t1).Angle(m2.Transformed(t2))) ** 2
             )
 
+        def pnt_pln_cost(
+            m1: gp_Pnt,
+            m2: gp_Pln,
+            t1: gp_Trsf,
+            t2: gp_Trsf,
+            val: Optional[float] = None,
+        ) -> float:
+
+            val = 0 if val is None else val
+
+            m2_located = m2.Transformed(t2)
+            # offset in the plane's normal direction by val:
+            m2_located.Translate(gp_Vec(m2_located.Axis().Direction()).Multiplied(val))
+            return m2_located.SquareDistance(m1.Transformed(t1))
+
         def f(x):
+            """
+            Function to be minimized
+            """
 
             constraints = self.constraints
             ne = self.ne
@@ -133,10 +151,12 @@ class ConstraintSolver(object):
                 t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
 
                 for m1, m2 in zip(ms1, ms2):
-                    if isinstance(m1, gp_Pnt):
+                    if isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pnt):
                         rv += pt_cost(m1, m2, t1, t2, d)
                     elif isinstance(m1, gp_Dir):
                         rv += dir_cost(m1, m2, t1, t2, d)
+                    elif isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pln):
+                        rv += pnt_pln_cost(m1, m2, t1, t2, d)
                     else:
                         raise NotImplementedError(f"{m1,m2}")
 
@@ -166,7 +186,7 @@ class ConstraintSolver(object):
                 t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
 
                 for m1, m2 in zip(ms1, ms2):
-                    if isinstance(m1, gp_Pnt):
+                    if isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pnt):
                         tmp = pt_cost(m1, m2, t1, t2, d)
 
                         for j in range(NDOF):
@@ -196,6 +216,22 @@ class ConstraintSolver(object):
 
                             if k2 not in self.locked:
                                 tmp2 = dir_cost(m1, m2, t1, t2j, d)
+                                rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
+
+                    elif isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pln):
+                        tmp = pnt_pln_cost(m1, m2, t1, t2, d)
+
+                        for j in range(NDOF):
+
+                            t1j = transforms_delta[k1 * NDOF + j]
+                            t2j = transforms_delta[k2 * NDOF + j]
+
+                            if k1 not in self.locked:
+                                tmp1 = pnt_pln_cost(m1, m2, t1j, t2, d)
+                                rv[k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
+
+                            if k2 not in self.locked:
+                                tmp2 = pnt_pln_cost(m1, m2, t1, t2j, d)
                                 rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
                     else:
                         raise NotImplementedError(f"{m1,m2}")
