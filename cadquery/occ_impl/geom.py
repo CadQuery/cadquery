@@ -2,7 +2,18 @@ import math
 
 from typing import overload, Sequence, Union, Tuple, Type, Optional
 
-from OCP.gp import gp_Vec, gp_Ax1, gp_Ax3, gp_Pnt, gp_Dir, gp_Trsf, gp_GTrsf, gp, gp_XYZ
+from OCP.gp import (
+    gp_Vec,
+    gp_Ax1,
+    gp_Ax3,
+    gp_Pnt,
+    gp_Dir,
+    gp_Pln,
+    gp_Trsf,
+    gp_GTrsf,
+    gp_XYZ,
+    gp,
+)
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
@@ -500,30 +511,35 @@ class Plane(object):
         plane._setPlaneDir(xDir)
         return plane
 
-    def __init__(self, origin, xDir, normal):
-        """Create a Plane with an arbitrary orientation
+    def __init__(
+        self,
+        origin: Union[Tuple[float, float, float], Vector],
+        xDir: Optional[Union[Tuple[float, float, float], Vector]] = None,
+        normal: Union[Tuple[float, float, float], Vector] = (0, 0, 1),
+    ):
+        """
+        Create a Plane with an arbitrary orientation
 
-        TODO: project x and y vectors so they work even if not orthogonal
-        :param origin: the origin
-        :type origin: a three-tuple of the origin, in global coordinates
-        :param xDir: a vector representing the xDirection.
-        :type xDir: a three-tuple representing a vector, or a FreeCAD Vector
-        :param normal: the normal direction for the new plane
-        :type normal: a FreeCAD Vector
-        :raises: ValueError if the specified xDir is not orthogonal to the provided normal.
-        :return: a plane in the global space, with the xDirection of the plane in the specified direction.
+        :param origin: the origin in global coordinates
+        :param xDir: an optional vector representing the xDirection.
+        :param normal: the normal direction for the plane
+        :raises ValueError: if the specified xDir is not orthogonal to the provided normal
         """
         zDir = Vector(normal)
         if zDir.Length == 0.0:
             raise ValueError("normal should be non null")
 
-        xDir = Vector(xDir)
-        if xDir.Length == 0.0:
-            raise ValueError("xDir should be non null")
-
         self.zDir = zDir.normalized()
+
+        if xDir is None:
+            ax3 = gp_Ax3(Vector(origin).toPnt(), Vector(normal).toDir())
+            xDir = Vector(ax3.XDirection())
+        else:
+            xDir = Vector(xDir)
+            if xDir.Length == 0.0:
+                raise ValueError("xDir should be non null")
         self._setPlaneDir(xDir)
-        self.origin = origin
+        self.origin = Vector(origin)
 
     def _eq_iter(self, other):
         """Iterator to successively test equality"""
@@ -724,6 +740,10 @@ class Plane(object):
     def location(self) -> "Location":
 
         return Location(self)
+
+    def toPln(self) -> gp_Pln:
+
+        return gp_Pln(gp_Ax3(self.origin.toPnt(), self.zDir.toDir(), self.xDir.toDir()))
 
 
 class BoundBox(object):

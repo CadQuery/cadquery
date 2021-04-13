@@ -4,8 +4,8 @@ from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Face, Edge
-from .occ_impl.geom import Location, Vector
+from .occ_impl.shapes import Shape, Face, Edge, Wire
+from .occ_impl.geom import Location, Vector, Plane
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
     ConstraintSolver,
@@ -18,7 +18,7 @@ from .selectors import _expression_grammar as _selector_grammar
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-ConstraintKinds = Literal["Plane", "Point", "Axis"]
+ConstraintKinds = Literal["Plane", "Point", "Axis", "PointInPlane"]
 ExportLiterals = Literal["STEP", "XML"]
 
 PATH_DELIM = "/"
@@ -79,7 +79,7 @@ class Constraint(object):
     ):
         """
         Construct a constraint.
-        
+
         :param objects: object names refernced in the constraint
         :param args: subshapes (e.g. faces or edges) of the objects
         :param sublocs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
@@ -106,6 +106,17 @@ class Constraint(object):
 
         return rv
 
+    def _getPlane(self, arg: Shape) -> Plane:
+
+        if isinstance(arg, Face):
+            normal = arg.normalAt()
+        elif isinstance(arg, (Edge, Wire)):
+            normal = arg.normal()
+        else:
+            raise ValueError(f"Can not get normal from {arg}.")
+        origin = arg.Center()
+        return Plane(origin, normal=normal)
+
     def toPOD(self) -> ConstraintPOD:
         """
         Convert the constraint to a representation used by the solver.
@@ -113,7 +124,7 @@ class Constraint(object):
 
         rv: List[Tuple[ConstraintMarker, ...]] = []
 
-        for arg, loc in zip(self.args, self.sublocs):
+        for idx, (arg, loc) in enumerate(zip(self.args, self.sublocs)):
 
             arg = arg.located(loc * arg.location())
 
@@ -123,6 +134,11 @@ class Constraint(object):
                 rv.append((arg.Center().toPnt(),))
             elif self.kind == "Plane":
                 rv.append((self._getAxis(arg).toDir(), arg.Center().toPnt()))
+            elif self.kind == "PointInPlane":
+                if idx == 0:
+                    rv.append((arg.Center().toPnt(),))
+                else:
+                    rv.append((self._getPlane(arg).toPln(),))
             else:
                 raise ValueError(f"Unknown constraint kind {self.kind}")
 
@@ -157,22 +173,22 @@ class Assembly(object):
         """
         construct an assembly
 
-        :param obj: root object of the assembly (deafault: None)
-        :param loc: location of the root object (deafault: None, interpreted as identity transformation)
+        :param obj: root object of the assembly (default: None)
+        :param loc: location of the root object (default: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, reasulting in an UUID being generated)
         :param color: color of the added object (default: None)
         :return: An Assembly object.
-        
-        
+
+
         To create an empty assembly use::
-            
+
             assy = Assembly(None)
-            
+
         To create one constraint a root object::
-            
+
             b = Workplane().box(1,1,1)
             assy = Assembly(b, Location(Vector(0,0,1)), name="root")
-            
+
         """
 
         self.obj = obj
@@ -211,12 +227,15 @@ class Assembly(object):
         color: Optional[Color] = None,
     ) -> "Assembly":
         """
-        add a subassembly to the current assembly.
-        
+        Add a subassembly to the current assembly.
+
         :param obj: subassembly to be added
-        :param loc: location of the root object (deafault: None, resulting in the location stored in the subassembly being used)
-        :param name: unique name of the root object (default: None, resulting in the name stored in the subassembly being used)
-        :param color: color of the added object (default: None, resulting in the color stored in the subassembly being used)
+        :param loc: location of the root object (default: None, resulting in the location stored in
+          the subassembly being used)
+        :param name: unique name of the root object (default: None, resulting in the name stored in
+          the subassembly being used)
+        :param color: color of the added object (default: None, resulting in the color stored in the
+          subassembly being used)
         """
         ...
 
@@ -229,18 +248,20 @@ class Assembly(object):
         color: Optional[Color] = None,
     ) -> "Assembly":
         """
-        add a subassembly to the current assembly with explicit location and name
-        
+        Add a subassembly to the current assembly with explicit location and name.
+
         :param obj: object to be added as a subassembly
-        :param loc: location of the root object (deafault: None, interpreted as identity transformation)
-        :param name: unique name of the root object (default: None, resulting in an UUID being generated)
+        :param loc: location of the root object (default: None, interpreted as identity
+          transformation)
+        :param name: unique name of the root object (default: None, resulting in an UUID being
+          generated)
         :param color: color of the added object (default: None)
         """
         ...
 
     def add(self, arg, **kwargs):
         """
-        add a subassembly to the current assembly.
+        Add a subassembly to the current assembly.
         """
 
         if isinstance(arg, Assembly):
@@ -270,18 +291,18 @@ class Assembly(object):
 
     def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
         """
-        Execute a selector query on the assembly. 
+        Execute a selector query on the assembly.
         The query is expected to be in the following format:
-        
+
             name[?tag][@kind@args]
-            
+
         valid example include:
-        
+
             obj_name @ faces @ >Z
-            obj_name?tag1@faces@>Z          
+            obj_name?tag1@faces@>Z
             obj_name ? tag
             obj_name
-        
+
         """
 
         tmp: Workplane
@@ -311,7 +332,7 @@ class Assembly(object):
     def _subloc(self, name: str) -> Tuple[Location, str]:
         """
         Calculate relative location of an object in a subassembly.
-        
+
         Returns the relative posiitons as well as the name of the top assembly.
         """
 
@@ -422,9 +443,9 @@ class Assembly(object):
     ) -> "Assembly":
         """
         save as STEP or OCCT native XML file
-        
+
         :param path: filepath
-        :param exportType: export format (deafault: None, results in format being inferred form the path)
+        :param exportType: export format (default: None, results in format being inferred form the path)
         """
 
         if exportType is None:
