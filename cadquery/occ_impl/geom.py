@@ -948,6 +948,12 @@ class Location(object):
                 return
             elif isinstance(t, gp_Trsf):
                 T = t
+            elif isinstance(t, (tuple, list)):
+                raise TypeError(
+                    "A tuple or list is not a valid parameter, use a Vector instead."
+                )
+            else:
+                raise TypeError("Unexpected parameters")
         elif len(args) == 2:
             t, v = args
             cs = gp_Ax3(v.toPnt(), t.zDir.toDir(), t.xDir.toDir())
