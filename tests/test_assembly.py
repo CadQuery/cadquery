@@ -391,3 +391,42 @@ def test_constraint_getPlane():
 
     # solid should fail
     fail_this(cq.Solid.makeBox(1, 1, 1))
+
+
+def test_toCompound(simple_assy, nested_assy):
+
+    c0 = simple_assy.toCompound()
+    assert isinstance(c0, cq.Compound)
+    assert len(c0.Solids()) == 4
+
+    c1 = nested_assy.toCompound()
+    assert isinstance(c1, cq.Compound)
+    assert len(c1.Solids()) == 4
+
+    # check nested assy location appears in compound
+    # create four boxes, stack them ontop of each other, check highest face is in final compound
+    box0 = cq.Workplane().box(1, 1, 3, centered=(True, True, False))
+    box1 = cq.Workplane().box(1, 1, 4)
+    box2 = cq.Workplane().box(1, 1, 5)
+    box3 = cq.Workplane().box(1, 1, 6)
+    # top level assy
+    assy0 = cq.Assembly(box0, name="box0")
+    assy0.add(box1, name="box1")
+    assy0.constrain("box0@faces@>Z", "box1@faces@<Z", "Plane")
+    # subassy
+    assy1 = cq.Assembly()
+    assy1.add(box2, name="box2")
+    assy1.add(box3, name="box3")
+    assy1.constrain("box2@faces@>Z", "box3@faces@<Z", "Plane")
+    assy1.solve()
+    assy0.add(assy1, name="assy1")
+    assy0.constrain("box1@faces@>Z", "assy1/box2@faces@<Z", "Plane")
+    # before solving there should be no face with Center = (0, 0, 18)
+    c2 = assy0.toCompound()
+    assert not cq.Vector(0, 0, 18) in [x.Center() for x in c2.Faces()]
+    # after solving there should be a face with Center = (0, 0, 18)
+    assy0.solve()
+    c3 = assy0.toCompound()
+    assert cq.Vector(0, 0, 18) in [x.Center() for x in c3.Faces()]
+    # also check with bounding box
+    assert c3.BoundingBox().zlen == pytest.approx(18)
