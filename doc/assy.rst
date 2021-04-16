@@ -135,7 +135,7 @@ Next we want to instantiate all the components and add them to the assembly.
         .add(make_connector(), name="con_bl", color=cq.Color("black"))
         .add(make_connector(), name="con_br", color=cq.Color("black"))
         .add(
-            make_panel(W + SLOT_D, H + SLOT_D, PANEL_T),
+            make_panel(W + SLOT_D, H + SLOT_D, PANEL_T, SLOT_D),
             name="panel",
             color=cq.Color(0, 0, 1, 0.2),
         )
