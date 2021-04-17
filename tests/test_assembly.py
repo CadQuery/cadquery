@@ -404,7 +404,7 @@ def test_toCompound(simple_assy, nested_assy):
     assert len(c1.Solids()) == 4
 
     # check nested assy location appears in compound
-    # create four boxes, stack them ontop of each other, check highest face is in final compound
+    # create four boxes, stack them on top of each other, check highest face is in final compound
     box0 = cq.Workplane().box(1, 1, 3, centered=(True, True, False))
     box1 = cq.Workplane().box(1, 1, 4)
     box2 = cq.Workplane().box(1, 1, 5)
