@@ -899,7 +899,7 @@ class Shape(object):
 
         return Location(self.wrapped.Location())
 
-    def locate(self, loc: Location) -> "Shape":
+    def locate(self: T, loc: Location) -> T:
         """
         Apply a location in absolute sense to self
         """
@@ -918,7 +918,7 @@ class Shape(object):
 
         return r
 
-    def move(self, loc: Location) -> "Shape":
+    def move(self: T, loc: Location) -> T:
         """
         Apply a location in relative sense (i.e. update current location) to self
         """
