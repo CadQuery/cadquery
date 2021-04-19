@@ -509,14 +509,13 @@ class Assembly(object):
 
         return rv
 
-    def toCompound(self):
+    def toCompound(self) -> Compound:
         """
         Returns a Compound made from this Assembly (including all children) with the
         current Locations applied. Usually this method would only be used after solving.
         """
 
-        list_of_shapes = self.shapes
+        shapes = self.shapes
+        shapes.extend((child.toCompound() for child in self.children))
 
-        list_of_shapes.extend([child.toCompound() for child in self.children])
-
-        return Compound.makeCompound(list_of_shapes).located(self.loc)
+        return Compound.makeCompound(shapes).locate(self.loc)
