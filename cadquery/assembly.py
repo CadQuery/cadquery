@@ -4,7 +4,7 @@ from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Face, Edge, Wire
+from .occ_impl.shapes import Shape, Compound, Face, Edge, Wire
 from .occ_impl.geom import Location, Vector, Plane
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
@@ -508,3 +508,14 @@ class Assembly(object):
         rv[PATH_DELIM.join(parents + [self.name])] = self
 
         return rv
+
+    def toCompound(self) -> Compound:
+        """
+        Returns a Compound made from this Assembly (including all children) with the
+        current Locations applied. Usually this method would only be used after solving.
+        """
+
+        shapes = self.shapes
+        shapes.extend((child.toCompound() for child in self.children))
+
+        return Compound.makeCompound(shapes).locate(self.loc)
