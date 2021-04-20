@@ -18,7 +18,7 @@ CadQuery is an intuitive, easy-to-use Python library for building parametric 3D 
 
     * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 
-CadQuery 2.0 is based on
+CadQuery 2 is based on
 `OCP https://github.com/CadQuery/OCP`_,
 which is a set of Python bindings for the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
 
