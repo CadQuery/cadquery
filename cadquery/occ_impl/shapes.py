@@ -17,6 +17,8 @@ from typing_extensions import Literal, Protocol
 
 from io import BytesIO
 
+from vtk import vtkPolyData
+
 from .geom import Vector, BoundBox, Plane, Location, Matrix
 
 import OCP.TopAbs as ta  # Tolopolgy type enum
@@ -218,6 +220,9 @@ from OCP.GeomFill import (
     GeomFill_CorrectedFrenet,
     GeomFill_TrihedronLaw,
 )
+
+from OCP.IVtkOCC import IVtkOCC_Shape, IVtkOCC_ShapeMesher
+from OCP.IVtkVTK import IVtkVTK_ShapeData
 
 # for catching exceptions
 from OCP.Standard import Standard_NoSuchObject, Standard_Failure
@@ -1088,6 +1093,23 @@ class Shape(object):
             offset += poly.NbNodes()
 
         return vertices, triangles
+
+    def toVtkPolyData(
+        self, tolerance: float, angularTolerance: float = 0.1
+    ) -> vtkPolyData:
+        """
+        Convert shape to vtkPolyData
+        """
+
+        vtk_shape = IVtkOCC_Shape(self.wrapped)
+        shape_data = IVtkVTK_ShapeData()
+        shape_mesher = IVtkOCC_ShapeMesher(
+            tolerance, angularTolerance, theNbUIsos=0, theNbVIsos=0
+        )
+
+        shape_mesher.Build(vtk_shape, shape_data)
+
+        return shape_data.getVtkPolyData()
 
     def _repr_html_(self):
         """
