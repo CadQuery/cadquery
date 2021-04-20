@@ -15,6 +15,8 @@ from typing import (
 )
 from typing_extensions import Literal, Protocol
 
+from io import BytesIO
+
 from .geom import Vector, BoundBox, Plane, Location, Matrix
 
 import OCP.TopAbs as ta  # Tolopolgy type enum
@@ -448,23 +450,25 @@ class Shape(object):
 
         return writer.Write(fileName)
 
-    def exportBrep(self, fileName: str) -> bool:
+    def exportBrep(self, f: Union[str, BytesIO]) -> bool:
         """
         Export this shape to a BREP file
         """
 
-        return BRepTools.Write_s(self.wrapped, fileName)
+        rv = BRepTools.Write_s(self.wrapped, f)
+
+        return True if rv is None else rv
 
     @classmethod
-    def importBrep(cls, fileName: str) -> "Shape":
+    def importBrep(cls, f: Union[str, BytesIO]) -> "Shape":
         """
         Import shape from a BREP file
         """
         s = TopoDS_Shape()
         builder = BRep_Builder()
 
-        if not BRepTools.Read_s(s, fileName, builder):
-            raise ValueError("fCould not import {fileName}")
+        if not BRepTools.Read_s(s, f, builder):
+            raise ValueError(f"Could not import {f}")
 
         return cls.cast(s)
 
