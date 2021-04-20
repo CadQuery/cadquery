@@ -92,7 +92,7 @@ from OCP.BRepPrimAPI import (
 from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
 
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
-from OCP.BRep import BRep_Tool
+from OCP.BRep import BRep_Tool, BRep_Builder
 
 from OCP.TopoDS import (
     TopoDS,
@@ -454,6 +454,19 @@ class Shape(object):
         """
 
         return BRepTools.Write_s(self.wrapped, fileName)
+
+    @classmethod
+    def importBrep(cls, fileName: str) -> "Shape":
+        """
+        Import shape from a BREP file
+        """
+        s = TopoDS_Shape()
+        builder = BRep_Builder()
+
+        if not BRepTools.Read_s(s, fileName, builder):
+            raise ValueError("fCould not import {fileName}")
+
+        return cls.cast(s)
 
     def geomType(self) -> Geoms:
         """
