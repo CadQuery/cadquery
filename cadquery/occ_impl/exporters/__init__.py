@@ -7,6 +7,8 @@ from typing_extensions import Literal
 
 from OCP.VrmlAPI import VrmlAPI
 
+from vtk import vtkXMLPolyDataWriter
+
 from ...cq import Workplane
 from ...utils import deprecate
 from ..shapes import Shape
@@ -26,9 +28,10 @@ class ExportTypes:
     TJS = "TJS"
     DXF = "DXF"
     VRML = "VRML"
+    VTP = "VTP"
 
 
-ExportLiterals = Literal["STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML"]
+ExportLiterals = Literal["STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP"]
 
 
 def export(
@@ -106,6 +109,13 @@ def export(
     elif exportType == ExportTypes.VRML:
         shape.mesh(tolerance, angularTolerance)
         VrmlAPI.Write_s(shape.wrapped, fname)
+
+    elif exportType == ExportTypes.VTP:
+        writer = vtkXMLPolyDataWriter()
+        writer.SetDataModeToBinary()
+        writer.SetFileName(fname)
+        writer.SetInputData(shape.toVtkPolyData(tolerance, angularTolerance))
+        writer.Write()
 
     else:
         raise ValueError("Unknown export type")
