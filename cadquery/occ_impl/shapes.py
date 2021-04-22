@@ -17,7 +17,12 @@ from typing_extensions import Literal, Protocol
 
 from io import BytesIO
 
-from vtk import vtkPolyData
+from vtk import (
+    vtkPolyData,
+    vtkTriangleFilter,
+    vtkTriangleMeshPointNormals,
+    vtkPolyDataNormals,
+)
 
 from .geom import Vector, BoundBox, Plane, Location, Matrix
 
@@ -1109,7 +1114,32 @@ class Shape(object):
 
         shape_mesher.Build(vtk_shape, shape_data)
 
-        return shape_data.getVtkPolyData()
+        rv = shape_data.getVtkPolyData()
+
+        # convert to traingles and split edges
+        t_filter = vtkTriangleFilter()
+        t_filter.SetInputData(rv)
+        t_filter.Update()
+
+        rv = t_filter.GetOutput()
+
+        # compute normals
+        n_filter = vtkPolyDataNormals()
+        n_filter.SetComputePointNormals(True)
+        n_filter.SetComputeCellNormals(True)
+        n_filter.SetFeatureAngle(180)
+        n_filter.SetSplitting(True)
+        n_filter.SetConsistency(True)
+        n_filter.SetAutoOrientNormals(True)
+        n_filter.SetInputData(rv)
+        n_filter.Update()
+
+        rv = n_filter.GetOutput()
+
+        rv.GetPointData().SetActiveNormals("Normals")
+        rv.GetCellData().SetActiveNormals("Normals")
+
+        return rv
 
     def _repr_html_(self):
         """
