@@ -1128,16 +1128,10 @@ class Shape(object):
         n_filter.SetComputePointNormals(True)
         n_filter.SetComputeCellNormals(True)
         n_filter.SetFeatureAngle(180)
-        n_filter.SetSplitting(True)
-        n_filter.SetConsistency(True)
-        n_filter.SetAutoOrientNormals(True)
         n_filter.SetInputData(rv)
         n_filter.Update()
 
         rv = n_filter.GetOutput()
-
-        rv.GetPointData().SetActiveNormals("Normals")
-        rv.GetCellData().SetActiveNormals("Normals")
 
         return rv
 
