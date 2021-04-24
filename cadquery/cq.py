@@ -3997,7 +3997,7 @@ class Workplane(object):
     def offset2D(
         self: T,
         d: float,
-        kind: Literal["arc", "intersection", "tangent"] = "arc",
+        kind: Literal["arc", "intersection"] = "arc",
         forConstruction: bool = False,
     ) -> T:
         """

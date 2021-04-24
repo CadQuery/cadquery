@@ -1867,14 +1867,13 @@ class Wire(Shape, Mixin1D):
         return self.__class__(wire_builder.Wire())
 
     def offset2D(
-        self, d: float, kind: Literal["arc", "intersection", "tangent"] = "arc"
+        self, d: float, kind: Literal["arc", "intersection"] = "arc"
     ) -> List["Wire"]:
         """Offsets a planar wire"""
 
         kind_dict = {
             "arc": GeomAbs_JoinType.GeomAbs_Arc,
-            "intersection": GeomAbs_JoinType.GeomAbs_Intersection,
-            "tangent": GeomAbs_JoinType.GeomAbs_Tangent,
+            "intersection": GeomAbs_JoinType.GeomAbs_Intersection
         }
 
         offset = BRepOffsetAPI_MakeOffset()
