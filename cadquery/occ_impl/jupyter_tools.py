@@ -4,7 +4,7 @@ from .exporters.vtk import toString
 TEMPLATE = """// Initial setup
 
 const renderWindow = vtk.Rendering.Core.vtkRenderWindow.newInstance();
-const renderer = vtk.Rendering.Core.vtkRenderer.newInstance({{ background: [0.4, 0.6, 0.8 ] }});
+const renderer = vtk.Rendering.Core.vtkRenderer.newInstance({{ background: [1, 1, 1 ] }});
 renderWindow.addRenderer(renderer);
 
 // load the inline data
@@ -18,6 +18,7 @@ mapper.setInputConnection(reader.getOutputPort());
 
 const actor = vtk.Rendering.Core.vtkActor.newInstance();
 actor.setMapper(mapper);
+actor.getProperty().setColor([1,0.8,0])
 
 renderer.addActor(actor);
 renderer.resetCamera();
