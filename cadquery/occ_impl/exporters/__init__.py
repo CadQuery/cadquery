@@ -7,8 +7,6 @@ from typing_extensions import Literal
 
 from OCP.VrmlAPI import VrmlAPI
 
-from vtk import vtkXMLPolyDataWriter
-
 from ...cq import Workplane
 from ...utils import deprecate
 from ..shapes import Shape
@@ -17,6 +15,7 @@ from .svg import getSVG
 from .json import JsonMesh
 from .amf import AmfWriter
 from .dxf import exportDXF
+from .vtk import exportVTP
 from .utils import toCompound
 
 
@@ -111,11 +110,7 @@ def export(
         VrmlAPI.Write_s(shape.wrapped, fname)
 
     elif exportType == ExportTypes.VTP:
-        writer = vtkXMLPolyDataWriter()
-        writer.SetDataModeToBinary()
-        writer.SetFileName(fname)
-        writer.SetInputData(shape.toVtkPolyData(tolerance, angularTolerance))
-        writer.Write()
+        exportVTP(shape, fname, tolerance, angularTolerance)
 
     else:
         raise ValueError("Unknown export type")

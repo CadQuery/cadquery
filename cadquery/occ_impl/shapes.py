@@ -1100,7 +1100,7 @@ class Shape(object):
         return vertices, triangles
 
     def toVtkPolyData(
-        self, tolerance: float, angularTolerance: float = 0.1
+        self, tolerance: float, angularTolerance: float = 0.1, normals: bool = True
     ) -> vtkPolyData:
         """
         Convert shape to vtkPolyData
@@ -1124,25 +1124,26 @@ class Shape(object):
         rv = t_filter.GetOutput()
 
         # compute normals
-        n_filter = vtkPolyDataNormals()
-        n_filter.SetComputePointNormals(True)
-        n_filter.SetComputeCellNormals(True)
-        n_filter.SetFeatureAngle(180)
-        n_filter.SetInputData(rv)
-        n_filter.Update()
+        if normals:
+            n_filter = vtkPolyDataNormals()
+            n_filter.SetComputePointNormals(True)
+            n_filter.SetComputeCellNormals(True)
+            n_filter.SetFeatureAngle(360)
+            n_filter.SetInputData(rv)
+            n_filter.Update()
 
-        rv = n_filter.GetOutput()
+            rv = n_filter.GetOutput()
 
         return rv
 
-    def _repr_html_(self):
+    def _repr_javascript_(self):
         """
         Jupyter 3D representation support
         """
 
         from .jupyter_tools import display
 
-        return display(self)
+        return display(self)._repr_javascript_()
 
 
 class ShapeProtocol(Protocol):
