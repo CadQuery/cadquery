@@ -41,6 +41,22 @@ interactor.setView(openglRenderWindow);
 interactor.initialize();
 interactor.bindEvents(container);
 interactor.setInteractorStyle(vtk.Interaction.Style.vtkInteractorStyleTrackballCamera.newInstance());
+
+// Orientation marker
+const axes = vtk.Rendering.Core.vtkAnnotatedCubeActor.newInstance();
+axes.setXPlusFaceProperty({{text: '+X'}});
+axes.setXMinusFaceProperty({{text: '-X'}});
+axes.setYPlusFaceProperty({{text: '+Y'}});
+axes.setYMinusFaceProperty({{text: '-Y'}});
+axes.setZPlusFaceProperty({{text: '+Z'}});
+axes.setZMinusFaceProperty({{text: '-Z'}});
+
+const orientationWidget = vtk.Interaction.Widgets.vtkOrientationMarkerWidget.newInstance({{
+    actor: axes,
+    interactor: interactor }});
+orientationWidget.setEnabled(true);
+orientationWidget.setViewportCorner(vtk.Interaction.Widgets.vtkOrientationMarkerWidget.Corners.BOTTOM_LEFT);
+orientationWidget.setViewportSize(0.2);
 """
 
 
