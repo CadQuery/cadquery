@@ -1289,7 +1289,7 @@ class Workplane(object):
         value than `length` for a chamfer that is shorter on one side
         longer on the other side.
 
-        :param length: the length of the fillet, must be greater than zero
+        :param length: the length of the chamfer, must be greater than zero
         :param length2: optional parameter for asymmetrical chamfer
         :type length: positive float
         :type length2: positive float
