@@ -64,7 +64,11 @@ function render(data){{
 
     // Add output to the "element"
 
-    const container = element.get(0);
+    const container = element.get(0);//createElement('div');
+    console.log(container);
+    container.style.height = '500px';
+    container.style.width = '700px';
+    container.style.margin = 'auto';
     openglRenderWindow.setContainer(container);
     openglRenderWindow.setSize({w}, {h});
     
@@ -77,6 +81,7 @@ function render(data){{
     interactor.setInteractorStyle(vtk.Interaction.Style.vtkInteractorStyleTrackballCamera.newInstance());
 
     // Orientation marker
+
     const axes = vtk.Rendering.Core.vtkAnnotatedCubeActor.newInstance();
     axes.setXPlusFaceProperty({{text: '+X'}});
     axes.setXMinusFaceProperty({{text: '-X'}});
@@ -92,6 +97,9 @@ function render(data){{
     orientationWidget.setViewportCorner(vtk.Interaction.Widgets.vtkOrientationMarkerWidget.Corners.BOTTOM_LEFT);
     orientationWidget.setViewportSize(0.2);
     
+    // Disable keyboard events
+
+    interactor.handleKeyPress = (event) => {{}};
 
 }};
 
