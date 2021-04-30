@@ -40,7 +40,6 @@ function render(data){{
             actor.setMapper(mapper);
 
             // set color and position
-            console.log(rgba);
             actor.getProperty().setColor(rgba.slice(0,3));
             actor.getProperty().setOpacity(rgba[3]);
             
@@ -49,11 +48,9 @@ function render(data){{
             actor.rotateX(rot[0]*180/3.1416);
             
             actor.setPosition(trans);
-            
 
             renderer.addActor(actor);
-            
-            console.log(actor);
+
         }}
     );
     
@@ -64,11 +61,7 @@ function render(data){{
 
     // Add output to the "element"
 
-    const container = element.get(0);//createElement('div');
-    console.log(container);
-    container.style.height = '500px';
-    container.style.width = '700px';
-    container.style.margin = 'auto';
+    const container = element.append("<div/>").children("div:last-child").get(0);
     openglRenderWindow.setContainer(container);
     openglRenderWindow.setSize({w}, {h});
     
@@ -96,10 +89,6 @@ function render(data){{
     orientationWidget.setEnabled(true);
     orientationWidget.setViewportCorner(vtk.Interaction.Widgets.vtkOrientationMarkerWidget.Corners.BOTTOM_LEFT);
     orientationWidget.setViewportSize(0.2);
-    
-    // Disable keyboard events
-
-    interactor.handleKeyPress = (event) => {{}};
 
 }};
 
