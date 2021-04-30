@@ -16,7 +16,3 @@ class TestJupyter(BaseTest):
         js1 = shape._repr_javascript_()
         js2 = cube._repr_javascript_()
         js3 = assy._repr_javascript_()
-
-        assert js1.startswith('$.getScript("https://unpkg.com/vtk.js"')
-        assert js2.startswith('$.getScript("https://unpkg.com/vtk.js"')
-        assert js3.startswith('$.getScript("https://unpkg.com/vtk.js"')
