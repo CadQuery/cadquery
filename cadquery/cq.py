@@ -264,7 +264,7 @@ class Workplane(object):
 
         return list(all.values())
 
-    def _split(self: T, s: Union[Shape, List[Shape]]):
+    def _split(self: T, s: Union[Shape, List[Shape]]) -> Shape:
 
         solid = self.findSolid()
         tools = (s,) if isinstance(s, Shape) else s
