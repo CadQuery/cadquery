@@ -278,6 +278,10 @@ class Workplane(object):
     def split(self: T, splitter: Union[T, Shape]) -> T:
         ...
 
+    @overload
+    def split(self: T, shapes: List[Shape]) -> T:
+        ...
+
     def split(self: T, *args, **kwargs) -> T:
         """
         Splits a solid on the stack into two parts, optionally keeping the separate parts.
@@ -302,16 +306,16 @@ class Workplane(object):
         if len(args) == 1 and isinstance(args[0], Workplane):
 
             tools = [x for x in args[0].vals() if isinstance(x, Shape)]
-            rv = self._split(tools)
+            rv = [self._split(tools)]
 
-        elif len(args) == 1 and isinstance(args[0], Shape):
+        elif args and all(isinstance(x, Shape) for x in args):
 
-            rv = self._split(args[0])
+            rv = [self._split(tools)]
 
         elif len(args) == 1 and isinstance(args[0], Plane):
 
             splitter = Face.makePlane(basePnt=args[0].origin, dir=args[0].zDir)
-            rv = self._split(splitter)
+            rv = [self._split(splitter)]
 
         # split using the current workplane
         else:
