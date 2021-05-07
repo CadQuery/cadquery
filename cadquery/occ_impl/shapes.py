@@ -477,7 +477,9 @@ class Shape(object):
         s = TopoDS_Shape()
         builder = BRep_Builder()
 
-        if not BRepTools.Read_s(s, f, builder):
+        BRepTools.Read_s(s, f, builder)
+
+        if s.IsNull():
             raise ValueError(f"Could not import {f}")
 
         return cls.cast(s)
