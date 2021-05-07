@@ -1961,7 +1961,7 @@ class Workplane(object):
         :param N: number of points for discretization
         :param start: starting value of the parameter t
         :param stop: final value of the parameter t
-        :param tol: tolerance of the algorithm (default: 1e-3)
+        :param tol: tolerance of the algorithm (default: 1e-6)
         :param minDeg: minimum spline degree (default: 1)
         :param maxDeg: maximum spline degree (default: 6)
         :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
@@ -2626,7 +2626,7 @@ class Workplane(object):
 
         The first vertex is always oriented in the x direction.
 
-        :param nSides: number of sides, must be > 3
+        :param nSides: number of sides, must be >= 3
         :param diameter: the size of the circle the polygon is inscribed into
         :return: a polygon wire
         """
