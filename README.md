@@ -92,6 +92,13 @@ CadQuery supports Jupyter notebook out of the box using the jupyter-cadquery ext
 
 <img src="https://raw.githubusercontent.com/bernhard-42/jupyter-cadquery/master/screenshots/0_intro.png" alt="CadQuery Jupyter extension screenshot" width="800"/>
 
+### Docker
+
+A list of Docker images can be found [here](https://github.com/RubenRubens/cq-containers), and includes images for the following projects.
+* [Core CadQuery library](https://github.com/RubenRubens/cq-containers/tree/master/cq-conda), which allows users to run CadQuery Python scripts without a GUI.
+* [cq-cli](https://github.com/RubenRubens/cq-containers/tree/master/cq-cli), a command line utility which is used to export the results of a CadQuery script to an output format (i.e. STL, STEP).
+* [jupyter-cadquery](https://github.com/bernhard-42/jupyter-cadquery#b-using-a-docker-image), makes CadQuery accessible through Jupyter Labs and provides a web-based GUI. This is currently the only image that provides a GUI.
+
 ### Standalone Stable Version
 
 CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts. Use Anaconda/Miniconda to install CadQuery, and then add `import cadquery` to the top of your Python scripts. If the stable version of CadQuery is desired, the following command will install it. However, be aware that the stable version can fall significantly behind the current state of CadQuery, so in many cases the `master` installation method at the beginning of the Getting Started section is preferable.
