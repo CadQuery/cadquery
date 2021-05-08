@@ -10,7 +10,13 @@ from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
 
-from vtk import vtkActor, vtkPolyDataMapper as vtkMapper, vtkAssembly
+from vtk import (
+    vtkActor,
+    vtkPolyDataMapper as vtkMapper,
+    vtkAssembly,
+    vtkTransform,
+    vtkRenderer,
+)
 
 from .geom import Location
 from .shapes import Shape, Compound
@@ -171,18 +177,17 @@ def toCAF(
 
 def toVTK(
     assy: AssemblyProtocol,
+    renderer: vtkRenderer = vtkRenderer(),
+    loc: Location = Location(),
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
-) -> vtkAssembly:
+) -> vtkRenderer:
 
-    trans, rot = assy.loc.toTuple()
+    loc = loc * assy.loc
+    trans, rot = loc.toTuple()
 
     if assy.color:
         color = assy.color.toTuple()
-
-    rv = vtkAssembly()
-    rv.SetPosition(*trans)
-    rv.SetOrientation(*rot)
 
     if assy.shapes:
         data = Compound.makeCompound(assy.shapes).toVtkPolyData(tolerance)
@@ -192,15 +197,17 @@ def toVTK(
 
         actor = vtkActor()
         actor.SetMapper(mapper)
+        actor.SetPosition(*trans)
+        actor.SetOrientation(*rot)
         actor.GetProperty().SetColor(*color[:3])
         actor.GetProperty().SetOpacity(color[3])
 
-        rv.AddPart(actor)
+        renderer.AddActor(actor)
 
     for child in assy.children:
-        rv.AddPart(toVTK(child, color))
+        renderer = toVTK(child, renderer, loc, color, tolerance)
 
-    return rv
+    return renderer
 
 
 def toJSON(
