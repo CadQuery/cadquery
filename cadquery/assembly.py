@@ -519,3 +519,12 @@ class Assembly(object):
         shapes.extend((child.toCompound() for child in self.children))
 
         return Compound.makeCompound(shapes).locate(self.loc)
+
+    def _repr_javascript_(self):
+        """
+        Jupyter 3D representation support
+        """
+
+        from .occ_impl.jupyter_tools import display
+
+        return display(self)._repr_javascript_()

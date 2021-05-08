@@ -4541,3 +4541,27 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(edges), len(vertices) + 1)
         endpoints = [e.endPoint() for e in edges]
         self.assertTrue(all([v in endpoints for v in vecs]))
+
+    def testBrepImportExport(self):
+
+        # import/export to file
+        s = Workplane().box(1, 1, 1).val()
+
+        s.exportBrep("test.brep")
+        si = Shape.importBrep("test.brep")
+
+        self.assertTrue(si.isValid())
+        self.assertAlmostEqual(si.Volume(), 1)
+
+        # import/export to BytesIO
+        from io import BytesIO
+
+        bio = BytesIO()
+
+        s.exportBrep(bio)
+        bio.seek(0)
+
+        si = Shape.importBrep("test.brep")
+
+        self.assertTrue(si.isValid())
+        self.assertAlmostEqual(si.Volume(), 1)

@@ -4023,7 +4023,7 @@ class Workplane(object):
 
         return self.newObject(rv)
 
-    def _repr_html_(self) -> Any:
+    def _repr_javascript_(self) -> Any:
         """
         Special method for rendering current object in a jupyter notebook
         """
@@ -4031,7 +4031,9 @@ class Workplane(object):
         if type(self.val()) is Vector:
             return "&lt {} &gt".format(self.__repr__()[1:-1])
         else:
-            return Compound.makeCompound(_selectShapes(self.objects))._repr_html_()
+            return Compound.makeCompound(
+                _selectShapes(self.objects)
+            )._repr_javascript_()
 
 
 # alias for backward compatibility
