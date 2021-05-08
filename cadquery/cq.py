@@ -264,12 +264,22 @@ class Workplane(object):
 
         return list(all.values())
 
+    def _split(self: T, s: Union[Shape, List[Shape]]) -> Shape:
+
+        solid = self.findSolid()
+        tools = (s,) if isinstance(s, Shape) else s
+        return solid.split(*tools)
+
     @overload
     def split(self: T, keepTop: bool = False, keepBottom: bool = False) -> T:
         ...
 
     @overload
     def split(self: T, splitter: Union[T, Shape]) -> T:
+        ...
+
+    @overload
+    def split(self: T, shapes: List[Shape]) -> T:
         ...
 
     def split(self: T, *args, **kwargs) -> T:
@@ -293,19 +303,21 @@ class Workplane(object):
         """
 
         # split using an object
-        if len(args) == 1 and isinstance(args[0], (Workplane, Shape)):
+        if len(args) == 1 and isinstance(args[0], Workplane):
 
-            arg = args[0]
+            tools = [x for x in args[0].vals() if isinstance(x, Shape)]
+            rv = [self._split(tools)]
 
-            solid = self.findSolid()
-            tools = (
-                (arg,)
-                if isinstance(arg, Shape)
-                else [v for v in arg.vals() if isinstance(v, Shape)]
-            )
-            rv = [solid.split(*tools)]
+        elif args and all(isinstance(x, Shape) for x in args):
 
-        # split using the current wokrplane
+            rv = [self._split(tools)]
+
+        elif len(args) == 1 and isinstance(args[0], Plane):
+
+            splitter = Face.makePlane(basePnt=args[0].origin, dir=args[0].zDir)
+            rv = [self._split(splitter)]
+
+        # split using the current workplane
         else:
 
             # boilerplate for arg/kwarg parsing
@@ -329,25 +341,15 @@ class Workplane(object):
             if (not keepTop) and (not keepBottom):
                 raise ValueError("You have to keep at least one half")
 
-            solid = self.findSolid()
-
-            maxDim = solid.BoundingBox().DiagonalLength * 10.0
-            topCutBox = self.rect(maxDim, maxDim)._extrude(maxDim)
-            bottomCutBox = self.rect(maxDim, maxDim)._extrude(-maxDim)
-
-            top = solid.cut(bottomCutBox)
-            bottom = solid.cut(topCutBox)
-
-            if keepTop and keepBottom:
-                # Put both on the stack, leave original unchanged.
-                rv = [top, bottom]
-            else:
-                # Put the one we are keeping on the stack, and also update the
-                # context solid to the one we kept.
-                if keepTop:
-                    rv = [top]
-                else:
-                    rv = [bottom]
+            splitter = Face.makePlane(basePnt=self.plane.origin, dir=self.plane.zDir)
+            split_shapes = self._split(splitter)
+            rv = []
+            for s in split_shapes.Solids():
+                dist = self.plane.toLocalCoords(s.Center()).z
+                if keepTop and dist > 0:
+                    rv.append(s)
+                if keepBottom and dist < 0:
+                    rv.append(s)
 
         return self.newObject(rv)
 
