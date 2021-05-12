@@ -3050,7 +3050,9 @@ class Compound(Shape, Mixin3D):
 
         builder = Font_BRepTextBuilder()
         font_i = StdPrs_BRepFont(
-            NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, size
+            NCollection_Utf8String(font_t.FontName().ToCString()),
+            font_kind,
+            float(size),
         )
         text_flat = Shape(builder.Perform(font_i, NCollection_Utf8String(text)))
 
