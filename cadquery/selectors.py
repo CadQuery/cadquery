@@ -488,7 +488,7 @@ class AreaNthSelector(_NthSelector):
         - closed planar Wires - a temporary face is created to compute area
 
     Will ignore non-planar or non-closed wires.
-    
+
     Among other things can be used to select one of
     the nested coplanar wires or faces.
 
@@ -534,7 +534,7 @@ class AreaNthSelector(_NthSelector):
             return obj.Area()
         elif isinstance(obj, Wire):
             try:
-                return Face.makeFromWires(obj).Area()
+                return abs(Face.makeFromWires(obj).Area())
             except Exception as ex:
                 raise ValueError(
                     f"Can not compute area of the Wire: {ex}. AreaNthSelector supports only closed planar Wires."
