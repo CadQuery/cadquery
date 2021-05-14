@@ -156,7 +156,7 @@ from OCP.TopTools import TopTools_IndexedDataMapOfShapeListOfShape, TopTools_Lis
 
 from OCP.TopExp import TopExp
 
-from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid
+from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
 
 from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
@@ -2110,9 +2110,13 @@ class Face(Shape):
         if not face_builder.IsDone():
             raise ValueError(f"Cannot build face(s): {face_builder.Error()}")
 
-        face = face_builder.Shape()
+        face = face_builder.Face()
 
-        return cls(face).fix()
+        sf = ShapeFix_Face(face)
+        sf.FixOrientation()
+        sf.Perform()
+
+        return cls(sf.Result())
 
     @classmethod
     def makeSplineApprox(
@@ -2127,7 +2131,7 @@ class Face(Shape):
         Approximate a spline surface through the provided points.
 
         :param points: a 2D list of Vectors that represent the points
-        :param tol: tolerance of the algorithm (consult OCC documentation). 
+        :param tol: tolerance of the algorithm (consult OCC documentation).
         :param smoothing: optional tuple of 3 weights use for variational smoothing (default: None)
         :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
         :param maxDeg: maximum spline degree (default: 6)
