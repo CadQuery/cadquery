@@ -2100,7 +2100,12 @@ class Face(Shape):
         if not BRepLib_FindSurface(ws.wrapped, OnlyPlane=True).Found():
             raise ValueError("Cannot build face(s): wires not planar")
 
-        face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped, True)
+        # fix outer wire
+        sf = ShapeFix_Shape(outerWire.wrapped)
+        sf.Perform()
+        w = TopoDS.Wire_s(sf.Shape())
+
+        face_builder = BRepBuilderAPI_MakeFace(w, True)
 
         for w in innerWires:
             face_builder.Add(w.wrapped)
