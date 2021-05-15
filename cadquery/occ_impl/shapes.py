@@ -2103,9 +2103,9 @@ class Face(Shape):
         # fix outer wire
         sf_s = ShapeFix_Shape(outerWire.wrapped)
         sf_s.Perform()
-        w = TopoDS.Wire_s(sf_s.Shape())
+        wo = TopoDS.Wire_s(sf_s.Shape())
 
-        face_builder = BRepBuilderAPI_MakeFace(w, True)
+        face_builder = BRepBuilderAPI_MakeFace(wo, True)
 
         for w in innerWires:
             face_builder.Add(w.wrapped)
