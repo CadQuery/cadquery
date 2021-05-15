@@ -2101,9 +2101,9 @@ class Face(Shape):
             raise ValueError("Cannot build face(s): wires not planar")
 
         # fix outer wire
-        sf = ShapeFix_Shape(outerWire.wrapped)
-        sf.Perform()
-        w = TopoDS.Wire_s(sf.Shape())
+        sf_s = ShapeFix_Shape(outerWire.wrapped)
+        sf_s.Perform()
+        w = TopoDS.Wire_s(sf_s.Shape())
 
         face_builder = BRepBuilderAPI_MakeFace(w, True)
 
@@ -2117,11 +2117,11 @@ class Face(Shape):
 
         face = face_builder.Face()
 
-        sf = ShapeFix_Face(face)
-        sf.FixOrientation()
-        sf.Perform()
+        sf_f = ShapeFix_Face(face)
+        sf_f.FixOrientation()
+        sf_f.Perform()
 
-        return cls(sf.Result())
+        return cls(sf_f.Result())
 
     @classmethod
     def makeSplineApprox(
