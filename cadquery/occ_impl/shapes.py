@@ -156,7 +156,7 @@ from OCP.TopTools import TopTools_IndexedDataMapOfShapeListOfShape, TopTools_Lis
 
 from OCP.TopExp import TopExp
 
-from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid
+from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
 
 from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
@@ -2100,7 +2100,12 @@ class Face(Shape):
         if not BRepLib_FindSurface(ws.wrapped, OnlyPlane=True).Found():
             raise ValueError("Cannot build face(s): wires not planar")
 
-        face_builder = BRepBuilderAPI_MakeFace(outerWire.wrapped, True)
+        # fix outer wire
+        sf_s = ShapeFix_Shape(outerWire.wrapped)
+        sf_s.Perform()
+        wo = TopoDS.Wire_s(sf_s.Shape())
+
+        face_builder = BRepBuilderAPI_MakeFace(wo, True)
 
         for w in innerWires:
             face_builder.Add(w.wrapped)
@@ -2110,9 +2115,13 @@ class Face(Shape):
         if not face_builder.IsDone():
             raise ValueError(f"Cannot build face(s): {face_builder.Error()}")
 
-        face = face_builder.Shape()
+        face = face_builder.Face()
 
-        return cls(face).fix()
+        sf_f = ShapeFix_Face(face)
+        sf_f.FixOrientation()
+        sf_f.Perform()
+
+        return cls(sf_f.Result())
 
     @classmethod
     def makeSplineApprox(
@@ -2127,7 +2136,7 @@ class Face(Shape):
         Approximate a spline surface through the provided points.
 
         :param points: a 2D list of Vectors that represent the points
-        :param tol: tolerance of the algorithm (consult OCC documentation). 
+        :param tol: tolerance of the algorithm (consult OCC documentation).
         :param smoothing: optional tuple of 3 weights use for variational smoothing (default: None)
         :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
         :param maxDeg: maximum spline degree (default: 6)
