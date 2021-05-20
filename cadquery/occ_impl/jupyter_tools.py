@@ -66,12 +66,30 @@ function render(data){{
     openglRenderWindow.setSize({w}, {h});
     
     // Interaction setup
+    const interact_style = vtk.Interaction.Style.vtkInteractorStyleManipulator.newInstance();
+
+    const manips = {{
+        rot: vtk.Interaction.Manipulators.vtkMouseCameraTrackballRotateManipulator.newInstance(),
+        pan: vtk.Interaction.Manipulators.vtkMouseCameraTrackballPanManipulator.newInstance(),
+        zoom1: vtk.Interaction.Manipulators.vtkMouseCameraTrackballZoomManipulator.newInstance(),
+        zoom2: vtk.Interaction.Manipulators.vtkMouseCameraTrackballZoomManipulator.newInstance(),
+        roll: vtk.Interaction.Manipulators.vtkMouseCameraTrackballRollManipulator.newInstance(),
+    }};
+
+    manips.zoom1.setControl(true);
+    manips.zoom2.setScrollEnabled(true);
+    manips.roll.setShift(true);
+    manips.pan.setButton(2);
+
+    for (var k in manips){{
+        interact_style.addMouseManipulator(manips[k]);
+    }};
 
     const interactor = vtk.Rendering.Core.vtkRenderWindowInteractor.newInstance();
     interactor.setView(openglRenderWindow);
     interactor.initialize();
     interactor.bindEvents(container);
-    interactor.setInteractorStyle(vtk.Interaction.Style.vtkInteractorStyleTrackballCamera.newInstance());
+    interactor.setInteractorStyle(interact_style);
 
     // Orientation marker
 
@@ -92,7 +110,15 @@ function render(data){{
 
 }};
 
-render(data);
+new Promise(function(resolve, reject) {{
+        require.config({{
+        "paths": {{"vtk": "https://unpkg.com/vtk"}},
+    }}
+);
+    require(["vtk"], resolve, reject);
+}}).then(() => {{
+    render(data);
+}});
 """
 
 
@@ -116,4 +142,4 @@ def display(shape):
 
     code = TEMPLATE.format(data=dumps(payload), w=1000, h=500)
 
-    return Javascript(code, lib="https://unpkg.com/vtk.js")
+    return Javascript(code)
