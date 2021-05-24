@@ -60,8 +60,15 @@ function render(data){{
     renderWindow.addView(openglRenderWindow);
 
     // Add output to the "element"
-
-    const container = element.append("<div/>").children("div:last-child").get(0);
+    var container;
+    
+    if(typeof(element.appendChild) !== "undefined"){{
+        container = document.createElement("div");
+        element.appendChild(container);        
+    }}else{{
+        container = element.append("<div/>").children("div:last-child").get(0);
+    }};
+    
     openglRenderWindow.setContainer(container);
     openglRenderWindow.setSize({w}, {h});
     
@@ -110,13 +117,23 @@ function render(data){{
 
 }};
 
-new Promise(function(resolve, reject) {{
+new Promise(
+  function(resolve, reject)
+  {{
+    if (typeof(require) !== "undefined" ){{
         require.config({{
-        "paths": {{"vtk": "https://unpkg.com/vtk"}},
-    }}
-);
-    require(["vtk"], resolve, reject);
-}}).then(() => {{
+         "paths": {{"vtk": "https://unpkg.com/vtk"}},
+        }});
+        require(["vtk"], resolve, reject);
+    }} else if ( typeof(vtk) === "undefined" ){{
+        var script = document.createElement("script");
+    	script.onload = resolve;
+    	script.onerror = reject;
+    	script.src = "https://unpkg.com/vtk.js";
+    	document.head.appendChild(script);
+    }} else {{ resolve() }};
+ }}
+).then(() => {{
     render(data);
 }});
 """
