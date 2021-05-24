@@ -434,6 +434,27 @@ class TestCadQuery(BaseTest):
             )
             self.assertTupleAlmostEquals(v0, v1, 3)
 
+        # test negative lengths
+        r0 = Workplane().rect(-x, -y, centered=False)
+        self.assertTupleAlmostEquals(
+            (0, 0, 0), r0.vertices(">X and >Y").val().toTuple(), 3
+        )
+        self.assertTupleAlmostEquals(
+            (-x, -y, 0), r0.vertices("<X and <Y").val().toTuple(), 3
+        )
+        # test move plus negative length
+        r1 = Workplane().move(x, y).rect(-x, -y, centered=False)
+        self.assertTupleAlmostEquals(
+            (x, y, 0), r1.vertices(">X and >Y").val().toTuple(), 3
+        )
+        self.assertTupleAlmostEquals(
+            (0, 0, 0), r1.vertices("<X and <Y").val().toTuple(), 3
+        )
+        # negative length should have no effect with centered=True
+        v2 = Workplane().rect(x, y).vertices(">X and >Y").val().toTuple()
+        v3 = Workplane().rect(-x, -y).vertices(">X and >Y").val().toTuple()
+        self.assertTupleAlmostEquals(v2, v3, 3)
+
     def testLoft(self):
         """
         Test making a lofted solid
