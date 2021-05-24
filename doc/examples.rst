@@ -396,20 +396,22 @@ Creating Workplanes on Faces
 This example shows how to locate a new workplane on the face of a previously created feature.
 
 .. note::
-    Using workplanes in this way are a key feature of CadQuery.  Unlike typical 3d scripting language,
-    using work planes frees you from tracking the position of various features in variables, and
-    allows the model to adjust itself with removing redundant dimensions
+    Using workplanes in this way are a key feature of CadQuery.  Unlike typical 3d scripting
+    language, using work planes frees you from tracking the position of various features in
+    variables, and allows the model to adjust itself with removing redundant dimensions
 
-The :py:meth:`Workplane.faces()` method allows you to select the faces of a resulting solid. It accepts
-a selector string or object, that allows you to target a single face, and make a workplane oriented on that
-face.
+The :py:meth:`Workplane.faces()` method allows you to select the faces of a resulting solid. It
+accepts a selector string or object, that allows you to target a single face, and make a workplane
+oriented on that face.
 
-Keep in mind that the origin of new workplanes are located at the center of a face by default.
+Keep in mind that by default the origin of a new workplane is calculated by forming a plane from the
+selected face and projecting the previous origin onto that plane. This behaviour can be changed
+through the centerOption argument of :py:meth:`Workplane.workplane`.
 
 .. cadquery::
 
-    result = cq.Workplane("front").box(2,3, 0.5)            #make a basic prism
-    result = result.faces(">Z").workplane().hole(0.5)   #find the top-most face and make a hole
+    result = cq.Workplane("front").box(2,3, 0.5)  # make a basic prism
+    result = result.faces(">Z").workplane().hole(0.5)  # find the top-most face and make a hole
 
 .. topic:: Api References
 
@@ -426,18 +428,19 @@ Keep in mind that the origin of new workplanes are located at the center of a fa
 Locating a Workplane on a vertex
 ---------------------------------
 
-Normally, the :py:meth:`Workplane.workplane` method requires a face to be selected. But if a vertex is selected
-**immediately after a face**, :py:meth:`Workplane.workplane` will locate the workplane on the face, with the origin at the vertex instead
-of at the center of the face
+Normally, the :py:meth:`Workplane.workplane` method requires a face to be selected. But if a vertex
+is selected **immediately after a face**, :py:meth:`Workplane.workplane` with the centerOption
+argument set to CenterOfMass will locate the workplane on the face, with the origin at the vertex
+instead of at the center of the face
 
-The example also introduces :py:meth:`Workplane.cutThruAll`, which makes a cut through the entire part, no matter
-how deep the part is
+The example also introduces :py:meth:`Workplane.cutThruAll`, which makes a cut through the entire
+part, no matter how deep the part is.
 
 .. cadquery::
 
-    result = cq.Workplane("front").box(3,2, 0.5)                 #make a basic prism
-    result = result.faces(">Z").vertices("<XY").workplane(centerOption="CenterOfMass")  #select the lower left vertex and make a workplane
-    result = result.circle(1.0).cutThruAll()                 #cut the corner out
+    result = cq.Workplane("front").box(3,2, 0.5)  # make a basic prism
+    result = result.faces(">Z").vertices("<XY").workplane(centerOption="CenterOfMass")  # select the lower left vertex and make a workplane
+    result = result.circle(1.0).cutThruAll()  # cut the corner out
 
 .. topic:: Api References
 
