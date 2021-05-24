@@ -396,7 +396,7 @@ Creating Workplanes on Faces
 This example shows how to locate a new workplane on the face of a previously created feature.
 
 .. note::
-    Using workplanes in this way are a key feature of CadQuery.  Unlike typical 3d scripting
+    Using workplanes in this way are a key feature of CadQuery.  Unlike a typical 3d scripting
     language, using work planes frees you from tracking the position of various features in
     variables, and allows the model to adjust itself with removing redundant dimensions
 
