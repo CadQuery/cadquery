@@ -9,10 +9,11 @@ from .shapes import Shape
 from ..assembly import Assembly
 from .assembly import toJSON
 
-TEMPLATE = """
-var data = {data}
+DEFAULT_COLOR = [1, 0.8, 0, 1]
 
-function render(data){{
+TEMPLATE = """
+
+function render(data, parent_element){{
     
     // Initial setup
     const renderWindow = vtk.Rendering.Core.vtkRenderWindow.newInstance();
@@ -59,14 +60,14 @@ function render(data){{
     const openglRenderWindow = vtk.Rendering.OpenGL.vtkRenderWindow.newInstance();
     renderWindow.addView(openglRenderWindow);
 
-    // Add output to the "element"
+    // Add output to the "parent element"
     var container;
     
-    if(typeof(element.appendChild) !== "undefined"){{
+    if(typeof(parent_element.appendChild) !== "undefined"){{
         container = document.createElement("div");
-        element.appendChild(container);        
+        parent_element.appendChild(container);
     }}else{{
-        container = element.append("<div/>").children("div:last-child").get(0);
+        container = parent_element.append("<div/>").children("div:last-child").get(0);
     }};
     
     openglRenderWindow.setContainer(container);
@@ -134,7 +135,9 @@ new Promise(
     }} else {{ resolve() }};
  }}
 ).then(() => {{
-    render(data);
+    var parent_element = {element};
+    var data = {data};
+    render(data, parent_element);
 }});
 """
 
@@ -147,7 +150,7 @@ def display(shape):
         payload.append(
             dict(
                 shape=toString(shape),
-                color=[1, 0.8, 0, 1],
+                color=DEFAULT_COLOR,
                 position=[0, 0, 0],
                 orientation=[0, 0, 0],
             )
@@ -157,6 +160,6 @@ def display(shape):
     else:
         raise ValueError(f"Type {type(shape)} is not supported")
 
-    code = TEMPLATE.format(data=dumps(payload), w=1000, h=500)
+    code = TEMPLATE.format(data=dumps(payload), element="element", w=1000, h=500)
 
     return Javascript(code)
