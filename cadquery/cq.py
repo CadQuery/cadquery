@@ -2491,10 +2491,8 @@ class Workplane(object):
         """
         Make a rectangle for each item on the stack.
 
-        :param xLen: length in xDirection ( in workplane coordinates )
-        :type xLen: float > 0
-        :param yLen: length in yDirection ( in workplane coordinates )
-        :type yLen: float > 0
+        :param xLen: length in the x direction (in workplane coordinates)
+        :param yLen: length in the y direction (in workplane coordinates)
         :param centered: If True, the rectangle will be centered around the reference
           point. If False, the corner of the rectangle will be on the reference point and
           it will extend in the positive x and y directions. Can also use a 2-tuple to
@@ -2510,6 +2508,9 @@ class Workplane(object):
             s = Workplane().rect(4.0,4.0,forConstruction=True).vertices().circle(0.25)
 
         Creates 4 circles at the corners of a square centered on the origin.
+
+        Negative values for xLen and yLen are permitted, although they only have an effect when
+        centered is False.
 
         Future Enhancements:
             * project points not in the workplane plane onto the workplane plane
