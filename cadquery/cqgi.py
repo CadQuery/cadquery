@@ -123,6 +123,7 @@ class CQModel(object):
 
         end = time.perf_counter()
         result.buildTime = end - start
+        result.env = env
         return result
 
     def set_param_values(self, params):
