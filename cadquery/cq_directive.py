@@ -31,7 +31,7 @@ template_vtk = """
 
 .. raw:: html
 
-    <div class="cq" style="text-align:{txt_align}s;float:left;">
+    <div class="cq" style="text-align:{txt_align}s;float:left;border: 1px solid #ddd;">
        <script>
        {code}
        </script>
@@ -132,10 +132,15 @@ class cq_directive_vtk(Directive):
             result = cqgi.parse(plot_code).build()
 
             if result.success:
-                import logzero
+                if result.first_result:
+                    shape = result.first_result.shape
+                else:
+                    shape = result.env["result"]
 
-                logzero.logger.debug(result.env.keys())
-                assy = Assembly(result.env["result"], color=Color(*DEFAULT_COLOR))
+                if isinstance(shape, Assembly):
+                    assy = shape
+                else:
+                    assy = Assembly(shape, color=Color(*DEFAULT_COLOR))
             else:
                 raise result.exception
 
