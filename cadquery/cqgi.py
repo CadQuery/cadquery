@@ -330,8 +330,10 @@ class ScriptCallback(object):
         :param shape: a cadquery object
         :param options: a dictionary of options that will be made available to the executing environment
         """
+        options.update(kwargs)
+
         o = ShapeResult()
-        o.options = options.update(kwargs)
+        o.options = options
         o.shape = shape
         self.outputObjects.append(o)
 
