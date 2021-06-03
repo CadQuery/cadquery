@@ -3,7 +3,7 @@ import os.path
 from tempfile import TemporaryDirectory
 from shutil import make_archive
 
-from vtk import vtkJSONSceneExporter, vtkRenderer, vtkRenderWindow
+from vtk import vtkJSONSceneExporter, vtkRenderer, vtkRenderWindow, vtkVRMLExporter
 
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
@@ -68,6 +68,19 @@ def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
     return status == PCDM_StoreStatus.PCDM_SS_OK
 
 
+def _vtkRenderWindow(assy: AssemblyProtocol) -> vtkRenderWindow:
+
+    renderer = vtkRenderer()
+    renderWindow = vtkRenderWindow()
+    renderWindow.AddRenderer(renderer)
+    toVTK(assy, renderer)
+
+    renderer.ResetCamera()
+    renderer.SetBackground(1, 1, 1)
+
+    return renderWindow
+
+
 def exportVTKJS(assy: AssemblyProtocol, path: str):
 
     renderer = vtkRenderer()
@@ -85,3 +98,11 @@ def exportVTKJS(assy: AssemblyProtocol, path: str):
         exporter.SetRenderWindow(renderWindow)
         exporter.Write()
         make_archive(path, "zip", tmpdir)
+
+
+def exportVRML(assy: AssemblyProtocol, path: str):
+
+    exporter = vtkVRMLExporter()
+    exporter.SetFileName(path)
+    exporter.SetRenderWindow(_vtkRenderWindow(assy))
+    exporter.Write()
