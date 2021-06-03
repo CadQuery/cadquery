@@ -3,7 +3,12 @@ import os
 from itertools import product
 
 import cadquery as cq
-from cadquery.occ_impl.exporters.assembly import exportAssembly, exportCAF
+from cadquery.occ_impl.exporters.assembly import (
+    exportAssembly,
+    exportCAF,
+    exportVTKJS,
+    exportVRML,
+)
 
 from OCP.gp import gp_XYZ
 
@@ -113,6 +118,22 @@ def test_native_export(simple_assy):
 
     # only sanity check for now
     assert os.path.exists("assy.xml")
+
+
+def test_vtkjs_export(simple_assy):
+
+    exportVTKJS(simple_assy, "assy")
+
+    # only sanity check for now
+    assert os.path.exists("assy.zip")
+
+
+def test_vrml_export(simple_assy):
+
+    exportVRML(simple_assy, "assy.wrl")
+
+    # only sanity check for now
+    assert os.path.exists("assy.wrl")
 
 
 def test_save(simple_assy, nested_assy):
