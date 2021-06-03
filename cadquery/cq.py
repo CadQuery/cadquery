@@ -2978,14 +2978,17 @@ class Workplane(object):
 
     def extrude(
         self: T,
-        distance: float,
+        distance: Optional[float] = None,
         combine: bool = True,
         clean: bool = True,
         both: bool = False,
         taper: Optional[float] = None,
+        untilNextFace: bool = False,
+        untilLastFace: bool = False,
     ) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
+        You must define either :distance: , :untilNextFace: or :untilLastFace:
 
         :param distance: the distance to extrude, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
@@ -2993,6 +2996,8 @@ class Workplane(object):
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
         :param float taper: angle for optional tapered extrusion
+        :param boolean untilNextFace: extrude until next face
+        :param boolean untilLastFace: extrude until last face
         :return: a CQ object with the resulting solid selected.
 
         extrude always *adds* material to a part.
@@ -3009,12 +3014,25 @@ class Workplane(object):
             perpendicular to the plane extrude to surface. this is quite tricky since the surface
             selected may not be planar
         """
+        if untilNextFace:
+            upToFace = 0
+        elif untilLastFace:
+            upToFace = -1
+        else: 
+            upToFace = None
+
+        isUpToFace = untilNextFace or untilLastFace
+        if (isUpToFace and distance) or (not isUpToFace and not distance) :
+            raise ValueError("You must define either a 'distance' or an 'untilFace' and not both at the same time")
+
         r = self._extrude(
-            distance, both=both, taper=taper
+            distance, both=both, taper=taper, upToFace = upToFace
         )  # returns a Solid (or a compound if there were multiple)
 
-        if combine:
-            newS = self._combineWithBase(r)
+        if combine and not (untilNextFace or untilLastFace):
+            newS = self._combineWithBase(r)        
+        if not combine and (untilNextFace or untilLastFace):
+            raise ValueError("extrude uptoface algorithm needs to modify the context solid")
         else:
             newS = self.newObject([r])
         if clean:
@@ -3355,12 +3373,15 @@ class Workplane(object):
 
     def cutBlind(
         self: T,
-        distanceToCut: float,
+        distanceToCut: Optional[float] = None,
         clean: bool = True,
         taper: Optional[float] = None,
+        untilNextFace: bool = False,
+        untilLastFace: bool = False,
     ) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
+        You must define either :distance: , :untilNextFace: or :untilLastFace:
 
         Similar to extrude, except that a solid in the parent chain is required to remove material
         from. cutBlind always removes material from a part.
@@ -3370,6 +3391,8 @@ class Workplane(object):
             <0 means in the negative direction
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
+        :param boolean untilNextFace: cut material until next face
+        :param boolean untilLastFace: cut material last face
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
@@ -3378,14 +3401,26 @@ class Workplane(object):
         Future Enhancements:
             Cut Up to Surface
         """
+        if untilNextFace:
+            upToFace = 0
+        elif untilLastFace:
+            upToFace = -1
+        else: 
+            upToFace = None
+
+        isUpToFace = untilNextFace or untilLastFace
+        if (isUpToFace and distanceToCut) or (not isUpToFace and not distanceToCut) :
+            raise ValueError("You must define either a 'distanceToCut' or an 'untilFace' and not both at the same time")
+
         # first, make the object
-        toCut = self._extrude(distanceToCut, taper=taper)
+        toCut = self._extrude(distanceToCut, taper=taper, upToFace=upToFace, additive=False)
 
-        # now find a solid in the chain
-        solidRef = self.findSolid()
-
-        s = solidRef.cut(toCut)
-
+        if not (untilNextFace or untilLastFace):
+            # now find a solid in the chain
+            solidRef = self.findSolid()
+            s = solidRef.cut(toCut)
+        else:
+            s = toCut
         if clean:
             s = s.clean()
 
@@ -3441,13 +3476,16 @@ class Workplane(object):
         return self.newObject([r])
 
     def _extrude(
-        self, distance: float, both: bool = False, taper: Optional[float] = None
+        self, distance: Optional[float] = None, both: bool = False, taper: Optional[float] = None, upToFace: Optional[int] = None, additive: bool = True,
     ) -> Compound:
         """
         Make a prismatic solid from the existing set of pending wires.
 
         :param distance: distance to extrude
         :param boolean both: extrude in both directions symmetrically
+        :param upToFace: if specified extrude up to the :upToFace: face, 0 for the next, -1 for the last
+        :param additive: specify if extruding or cutting, required param for uptoface algorithm
+
         :return: OCCT solid(s), suitable for boolean operations.
 
         This method is a utility method, primarily for plugin and internal use.
@@ -3460,7 +3498,17 @@ class Workplane(object):
         wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
 
         # compute extrusion vector and extrude
-        eDir = self.plane.zDir.multiply(distance)
+        if upToFace is not None:
+            eDir = self.plane.zDir
+        elif distance is not None:
+            eDir = self.plane.zDir.multiply(distance)
+
+        
+
+        if additive:
+            direction = "AlongAxis"
+        else:
+            direction = "Opposite"
 
         # one would think that fusing faces into a compound and then extruding would work,
         # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc)
@@ -3474,11 +3522,19 @@ class Workplane(object):
 
         if taper:
             for ws in wireSets:
-                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
+                if upToFace is not None:
+                    uptoFaces = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir, direction=direction)
+                    thisObj = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=uptoFaces[upToFace], additive=additive)
+                else:
+                    thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
                 toFuse.append(thisObj)
         else:
             for ws in wireSets:
-                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
+                if upToFace is not None:
+                    uptoFaces = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir, direction=direction)
+                    thisObj = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, upToFace=uptoFaces[upToFace], additive=additive)
+                else:
+                    thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
                 toFuse.append(thisObj)
 
                 if both:

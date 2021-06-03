@@ -88,6 +88,7 @@ from OCP.BRepPrimAPI import (
     BRepPrimAPI_MakeRevol,
     BRepPrimAPI_MakeSphere,
 )
+from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
 from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
 
@@ -111,6 +112,7 @@ from OCP.TopoDS import (
 
 from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
 from OCP.GCE2d import GCE2d_MakeSegment
+from OCP.gce import gce_MakeLin, gce_MakeDir
 from OCP.GeomAPI import (
     GeomAPI_Interpolate,
     GeomAPI_ProjectPointOnSurf,
@@ -144,6 +146,7 @@ from OCP.BRepOffsetAPI import (
     BRepOffsetAPI_MakePipeShell,
     BRepOffsetAPI_MakeThickSolid,
     BRepOffsetAPI_MakeOffset,
+    BRepOffsetAPI_NormalProjection,
 )
 
 from OCP.BRepFilletAPI import (
@@ -1008,6 +1011,60 @@ class Shape(object):
 
         return self._bool_op((self,), toIntersect, intersect_op)
 
+    def facesIntersectedByLine(self, point: VectorLike, axis: VectorLike, tol: float = 1e-4, direction: Optional[str] = None ):
+        """
+        Computes the intersections between the provided line and the faces of the provided shape
+
+        :point: Base point for defining a line
+        :axis: Axis on which the line rest
+        :tol: Intersection tolerance
+        :direction: Valid values : "AlongAxis", "Opposite", if specified will ignore all faces that are not in the specified direction
+        including the face where the :point: lies if it is the case
+
+        :returns: A list of intersected face sorted by distance from :point:
+        """
+        point = gp_Pnt(*point.toTuple()) if isinstance(point, Vector) else gp_Pnt(*point)
+        axis = gp_Dir(Vector(axis).wrapped) if not isinstance(axis, Vector) else gp_Dir(axis.wrapped)
+
+        line = gce_MakeLin(point, axis).Value() 
+        shape = self.wrapped
+
+        intersectMaker = BRepIntCurveSurface_Inter()
+        intersectMaker.Init(shape, line,  tol)
+
+        faces = []
+        while intersectMaker.More():
+            interPt = intersectMaker.Pnt()
+            interDirMk = gce_MakeDir(point, interPt)
+
+            distance = point.SquareDistance(interPt)
+
+            # interDir is not done when `point` and `axis` have the same coord
+            if interDirMk.IsDone():            
+                interDir = interDirMk.Value()
+            else:
+                interDir = None
+
+            if direction == "AlongAxis":
+                if interDir is not None and not interDir.IsOpposite(axis, tol) and distance > tol: 
+                    faces.append((intersectMaker.Face(), distance))
+
+            elif direction == "Opposite":
+                if interDir is not None and interDir.IsOpposite(axis, tol) and distance > tol: 
+                    faces.append((intersectMaker.Face(), distance))
+
+            elif direction is not None:
+                raise ValueError("Unvalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'.")
+
+            else:
+                faces.append((intersectMaker.Face(), abs(distance)))
+            intersectMaker.Next()
+
+        faces.sort(key = lambda x: x[1])
+        faces = [face[0] for face in faces]
+        
+        return [Face(face) for face in faces]
+
     def split(self, *splitters: "Shape") -> "Shape":
         """
         Split this shape with the positional arguments.
@@ -1019,7 +1076,7 @@ class Shape(object):
 
     def mesh(self, tolerance: float, angularTolerance: float = 0.1):
         """
-        Generate traingulation if none exists.
+        Generate triangulation if none exists.
         """
 
         if not BRepTools.Triangulation_s(self.wrapped, tolerance):
@@ -2951,6 +3008,7 @@ class Solid(Shape, Mixin3D):
         profiles: List[Wire],
         depth: Optional[float] = None,
         taper: float = 0,
+        upToFace: Optional[Face] = None,
         thruAll: bool = True,
         additive: bool = True,
     ) -> "Solid":
@@ -2975,9 +3033,21 @@ class Solid(Shape, Mixin3D):
                 taper * DEG2RAD,
                 additive,
                 False,
-            )
+        )
+            if upToFace is not None:
+            #     # Since BRepFeat_MakeDPrism doesn't throw and error when extruding up to :face: where :wire: 
+            #     # can't be fully projected we add a check beforehand
+            #     proj = BRepOffsetAPI_NormalProjection(face.wrapped)
+            #     proj.Add(basis.wrapped)
+            #     proj.Build()
+            #     projectedProfile = proj.Projection()
+                
+            #     # This might not work if the limiting face isn't planar, in this case it needs rework
+            #     if Face.makeFromWires(Wire(projectedProfile)).Area < Face.makeFromWires(p).Area:
+            #         raise ValueError("The profile to extrude and it's projection on the limit face must be the same")
 
-            if thruAll or depth is None:
+                feat.Perform(upToFace.wrapped)
+            elif thruAll or depth is None:
                 feat.PerformThruAll()
             else:
                 feat.Perform(depth)
