@@ -120,7 +120,7 @@ def test_native_export(simple_assy):
     assert os.path.exists("assy.xml")
 
 
-def test_vtkjs_export(simple_assy):
+def test_vtkjs_export(nested_assy):
 
     exportVTKJS(simple_assy, "assy")
 
