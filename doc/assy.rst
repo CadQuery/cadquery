@@ -205,7 +205,8 @@ Final result
 
 Below is the complete code including the final solve step.
 
-.. code-block:: python
+.. cq_vtk::
+    :height: 600px
 
     import cadquery as cq
     
@@ -353,10 +354,6 @@ Below is the complete code including the final solve step.
     door.solve()
     
     show_object(door,name='door')
-
-This code generates the following assembly.
-    
-..  image:: _static/door_assy.png
 
 
 Data export
