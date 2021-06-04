@@ -8,6 +8,7 @@ import traceback
 from pathlib import Path
 from uuid import uuid1 as uuid
 from textwrap import indent
+from urllib import request
 
 from cadquery import exporters, Assembly, Compound, Color
 from cadquery import cqgi
@@ -31,7 +32,8 @@ template_vtk = """
 
 .. raw:: html
 
-    <div class="cq" style="text-align:{txt_align}s;float:left;border: 1px solid #ddd;">
+    <div class="cq-vtk"
+     style="text-align:{txt_align}s;float:left;border: 1px solid #ddd; width:{width}; height:{height}"">
        <script>
        {code}
        </script>
@@ -127,7 +129,7 @@ class cq_directive_vtk(Directive):
         # only consider inline snippets
         plot_code = "\n".join(content)
 
-        # convert to vtkjs
+        # collect the result
         try:
             result = cqgi.parse(plot_code).build()
 
@@ -156,16 +158,16 @@ class cq_directive_vtk(Directive):
         # add the output
         lines = []
 
-        txt_align = "left"
-        if "align" in options:
-            txt_align = options["align"]
         data = dumps(toJSON(assy))
         code = TEMPLATE.format(
-            data=data, element="document.currentScript.parentNode", w=1000, h=500
+            data=data, element="document.currentScript.parentNode", ratio="null"
         )
         lines.extend(
             template_vtk.format(
-                code=indent(code, "    "), txt_align=txt_align
+                code=indent(code, "    "),
+                txt_align=options.get("align", "left"),
+                width=options.get("width", "100%"),
+                height=options.get("height", "500px"),
             ).splitlines()
         )
 
@@ -186,4 +188,12 @@ def setup(app):
 
     app.add_directive("cq_plot", cq_directive)
     app.add_directive("cadquery", cq_directive_vtk)
-    app.add_js_file("https://unpkg.com/vtk.js")
+
+    # download and add vtk.js
+    build_path = Path(app.outdir)
+    out_path = build_path / "_static"
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    request.urlretrieve("https://unpkg.com/vtk.js", out_path / "vtk.js")
+
+    app.add_js_file("vtk.js")
