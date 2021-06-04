@@ -62,16 +62,26 @@ function render(data, parent_element){{
 
     // Add output to the "parent element"
     var container;
+    var dims;
     
     if(typeof(parent_element.appendChild) !== "undefined"){{
         container = document.createElement("div");
         parent_element.appendChild(container);
+        dims = parent_element.getBoundingClientRect();
     }}else{{
         container = parent_element.append("<div/>").children("div:last-child").get(0);
+        dims = parent_element.get(0).getBoundingClientRect();
     }};
-    
+
     openglRenderWindow.setContainer(container);
-    openglRenderWindow.setSize({w}, {h});
+    
+    // handle size
+    const ratio = {ratio};
+    if (ratio){{
+        openglRenderWindow.setSize(dims.width, dims.width*ratio);
+    }}else{{
+        openglRenderWindow.setSize(dims.width, dims.height);
+    }};
     
     // Interaction setup
     const interact_style = vtk.Interaction.Style.vtkInteractorStyleManipulator.newInstance();
@@ -160,6 +170,6 @@ def display(shape):
     else:
         raise ValueError(f"Type {type(shape)} is not supported")
 
-    code = TEMPLATE.format(data=dumps(payload), element="element", w=1000, h=500)
+    code = TEMPLATE.format(data=dumps(payload), element="element", ratio=0.5)
 
     return Javascript(code)
