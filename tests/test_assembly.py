@@ -122,7 +122,7 @@ def test_native_export(simple_assy):
 
 def test_vtkjs_export(nested_assy):
 
-    exportVTKJS(simple_assy, "assy")
+    exportVTKJS(nested_assy, "assy")
 
     # only sanity check for now
     assert os.path.exists("assy.zip")
