@@ -3031,8 +3031,8 @@ class Workplane(object):
 
         if combine and not (untilNextFace or untilLastFace):
             newS = self._combineWithBase(r)        
-        if not combine and (untilNextFace or untilLastFace):
-            raise ValueError("extrude uptoface algorithm needs to modify the context solid")
+        elif not combine and (untilNextFace or untilLastFace):
+            raise ValueError("extrude uptoface algorithm needs to modify the context solid (by combining)") 
         else:
             newS = self.newObject([r])
         if clean:

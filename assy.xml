@@ -1,0 +1,1094 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document format="XmlOcaf" xmlns="http://www.opencascade.org/OCAF/XML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opencascade.org/OCAF/XML">
+ <info date="2021-06-05" schemav="0" DocVersion="9" objnb="54">
+  <iitem>Copyright: Open Cascade, 2001-2002</iitem>
+  <iitem>REFERENCE_COUNTER: 0</iitem>
+  <iitem>MODIFICATION_COUNTER: 1</iitem>
+ </info>
+ <comments/>
+ <label tag="0">
+  <TDataStd_TreeNode id="1" treeid="efd212eb-6dfd-11d4-b9c8-0060b0ee281b" children="2 "/>
+  <label tag="1">
+   <XCAFDoc_DocumentTool id="3"/>
+   <TDataStd_TreeNode id="2" treeid="efd212eb-6dfd-11d4-b9c8-0060b0ee281b"/>
+   <label tag="1">
+    <TDataStd_Name id="4" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">Shapes</TDataStd_Name>
+    <XCAFDoc_ShapeTool id="5"/>
+    <TDF_TagSource id="6">7</TDF_TagSource>
+    <label tag="1">
+     <TNaming_NamedShape id="7" evolution="primitive" version="1">
+      <olds/>
+      <news>
+       <shape tshape="+110" index="1"/>
+      </news>
+     </TNaming_NamedShape>
+     <TDataStd_Name id="8" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">CQ assembly</TDataStd_Name>
+     <TDataStd_UAttribute id="9" guid="5b896b00-3adf-11d4-b9b7-0060b0ee281b"/>
+     <TDF_TagSource id="10">1</TDF_TagSource>
+     <label tag="1">
+      <TDataStd_TreeNode id="11" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>
+     </label>
+    </label>
+    <label tag="2">
+     <TNaming_NamedShape id="12" evolution="primitive" version="1">
+      <olds/>
+      <news>
+       <shape tshape="+70" index="1"/>
+      </news>
+     </TNaming_NamedShape>
+     <TDataStd_Name id="13" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab871eb3-c589-11eb-b839-309c23d9770a_part</TDataStd_Name>
+     <TDataStd_TreeNode id="14" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="15 "/>
+    </label>
+    <label tag="3">
+     <TNaming_NamedShape id="16" evolution="primitive" version="1">
+      <olds/>
+      <news>
+       <shape tshape="+71" index="1"/>
+      </news>
+     </TNaming_NamedShape>
+     <TDataStd_UAttribute id="17" guid="5b896b00-3adf-11d4-b9b7-0060b0ee281b"/>
+     <TDF_TagSource id="18">1</TDF_TagSource>
+     <TDataStd_Name id="19" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab871eb3-c589-11eb-b839-309c23d9770a</TDataStd_Name>
+     <TDataStd_TreeNode id="20" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="21 "/>
+     <label tag="1">
+      <TDataStd_TreeNode id="15" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>
+     </label>
+    </label>
+    <label tag="4">
+     <TNaming_NamedShape id="22" evolution="primitive" version="1">
+      <olds/>
+      <news>
+       <shape tshape="+107" index="1"/>
+      </news>
+     </TNaming_NamedShape>
+     <TDataStd_Name id="23" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab871eb4-c589-11eb-b7bb-309c23d9770a_part</TDataStd_Name>
+     <TDataStd_TreeNode id="24" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="25 "/>
+    </label>
+    <label tag="5">
+     <TNaming_NamedShape id="26" evolution="primitive" version="1">
+      <olds/>
+      <news>
+       <shape tshape="+108" index="1"/>
+      </news>
+     </TNaming_NamedShape>
+     <TDataStd_UAttribute id="27" guid="5b896b00-3adf-11d4-b9b7-0060b0ee281b"/>
+     <TDF_TagSource id="28">1</TDF_TagSource>
+     <TDataStd_Name id="29" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab871eb4-c589-11eb-b7bb-309c23d9770a</TDataStd_Name>
+     <TDataStd_TreeNode id="30" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="31 "/>
+     <label tag="1">
+      <TDataStd_TreeNode id="25" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>
+     </label>
+    </label>
+    <label tag="6">
+     <TNaming_NamedShape id="32" evolution="primitive" version="1">
+      <olds/>
+      <news>
+       <shape tshape="+35" index="1"/>
+      </news>
+     </TNaming_NamedShape>
+     <TDataStd_Name id="33" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab871eb2-c589-11eb-95c4-309c23d9770a_part</TDataStd_Name>
+     <TDataStd_TreeNode id="34" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="35 "/>
+    </label>
+    <label tag="7">
+     <TNaming_NamedShape id="36" evolution="primitive" version="1">
+      <olds/>
+      <news>
+       <shape tshape="+109" index="1"/>
+      </news>
+     </TNaming_NamedShape>
+     <TDataStd_UAttribute id="37" guid="5b896b00-3adf-11d4-b9b7-0060b0ee281b"/>
+     <TDF_TagSource id="38">3</TDF_TagSource>
+     <TDataStd_Name id="39" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab871eb2-c589-11eb-95c4-309c23d9770a</TDataStd_Name>
+     <TDataStd_TreeNode id="40" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="11 "/>
+     <label tag="1">
+      <TDataStd_TreeNode id="35" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>
+     </label>
+     <label tag="2">
+      <TDataStd_TreeNode id="21" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>
+     </label>
+     <label tag="3">
+      <TDataStd_TreeNode id="31" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>
+     </label>
+    </label>
+   </label>
+   <label tag="2">
+    <TDataStd_Name id="41" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">Colors</TDataStd_Name>
+    <XCAFDoc_ColorTool id="42"/>
+   </label>
+   <label tag="3">
+    <TDataStd_Name id="43" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">Layers</TDataStd_Name>
+    <XCAFDoc_LayerTool id="44"/>
+   </label>
+   <label tag="4">
+    <TDataStd_Name id="45" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">D&amp;GTs</TDataStd_Name>
+    <XCAFDoc_DimTolTool id="46"/>
+   </label>
+   <label tag="5">
+    <TDataStd_Name id="47" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">Materials</TDataStd_Name>
+    <XCAFDoc_MaterialTool id="48"/>
+   </label>
+   <label tag="7">
+    <TDataStd_Name id="49" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">Views</TDataStd_Name>
+    <XCAFDoc_ViewTool id="50"/>
+   </label>
+   <label tag="8">
+    <TDataStd_Name id="51" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">Clipping Planes</TDataStd_Name>
+    <XCAFDoc_ClippingPlaneTool id="52"/>
+   </label>
+   <label tag="9">
+    <TDataStd_Name id="53" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">Notes</TDataStd_Name>
+    <XCAFDoc_NotesTool id="54"/>
+   </label>
+  </label>
+ </label>
+ <shapes>
+CASCADE Topology V2, (c) Matra-Datavision
+Locations 8
+1
+              1               0               0               2 
+              0               1               0              -5 
+              0               0               1               0 
+1
+              1               0               0               1 
+              0               1               0               1 
+              0               0               1               0 
+1
+              1               0               0               0 
+              0               1               0               0 
+              0               0               1               0 
+1
+              1              -0               0              -0 
+              0               1               0               0 
+             -0               0               1              -0 
+2  3 1 4 1 0
+1
+              1               0               0               2 
+              0               1               0               3 
+              0               0               1               0 
+1
+              1              -0               0              -0 
+              0               1               0               0 
+             -0               0               1              -0 
+1
+              1              -0               0              -2 
+              0               1               0              -5 
+             -0               0               1              -0 
+Curve2ds 72
+1 0 0 1 0 
+1 0 0 1 0 
+1 1 0 0 -1 
+1 0 0 0 1 
+1 0 -1 1 0 
+1 0 0 1 0 
+1 0 0 0 -1 
+1 0 0 0 1 
+1 0 0 1 0 
+1 0 1 1 0 
+1 1 0 0 -1 
+1 1 0 0 1 
+1 0 -1 1 0 
+1 0 1 1 0 
+1 0 0 0 -1 
+1 1 0 0 1 
+1 0 0 0 1 
+1 0 0 1 0 
+1 1 0 0 1 
+1 0 0 1 0 
+1 0 0 0 1 
+1 0 1 1 0 
+1 1 0 0 1 
+1 0 1 1 0 
+1 0 0 1 0 
+1 0 0 1 0 
+1 2 0 0 -1 
+1 0 0 0 1 
+1 0 -1 1 0 
+1 0 0 1 0 
+1 0 0 0 -1 
+1 0 0 0 1 
+1 0 0 1 0 
+1 0 1 1 0 
+1 2 0 0 -1 
+1 1 0 0 1 
+1 0 -1 1 0 
+1 0 1 1 0 
+1 0 0 0 -1 
+1 1 0 0 1 
+1 0 0 0 1 
+1 0 0 1 0 
+1 2 0 0 1 
+1 0 0 1 0 
+1 0 0 0 1 
+1 0 1 1 0 
+1 2 0 0 1 
+1 0 1 1 0 
+1 0 0 1 0 
+1 0 0 1 0 
+1 3 0 0 -1 
+1 0 0 0 1 
+1 0 -1 1 0 
+1 0 0 1 0 
+1 0 0 0 -1 
+1 0 0 0 1 
+1 0 0 1 0 
+1 0 1 1 0 
+1 3 0 0 -1 
+1 1 0 0 1 
+1 0 -1 1 0 
+1 0 1 1 0 
+1 0 0 0 -1 
+1 1 0 0 1 
+1 0 0 0 1 
+1 0 0 1 0 
+1 3 0 0 1 
+1 0 0 1 0 
+1 0 0 0 1 
+1 0 1 1 0 
+1 3 0 0 1 
+1 0 1 1 0 
+Curves 36
+1 0 0 0 0 0 1 
+1 0 0 1 -0 1 0 
+1 0 1 0 0 0 1 
+1 0 0 0 -0 1 0 
+1 1 0 0 0 0 1 
+1 1 0 1 -0 1 0 
+1 1 1 0 0 0 1 
+1 1 0 0 -0 1 0 
+1 0 0 0 1 0 -0 
+1 0 0 1 1 0 -0 
+1 0 1 0 1 0 -0 
+1 0 1 1 1 0 -0 
+1 -0.5 -0.5 -1 0 0 1 
+1 -0.5 -0.5 1 -0 1 0 
+1 -0.5 0.5 -1 0 0 1 
+1 -0.5 -0.5 -1 -0 1 0 
+1 0.5 -0.5 -1 0 0 1 
+1 0.5 -0.5 1 -0 1 0 
+1 0.5 0.5 -1 0 0 1 
+1 0.5 -0.5 -1 -0 1 0 
+1 -0.5 -0.5 -1 1 0 -0 
+1 -0.5 -0.5 1 1 0 -0 
+1 -0.5 0.5 -1 1 0 -0 
+1 -0.5 0.5 1 1 0 -0 
+1 -0.5 -0.5 -1.5 0 0 1 
+1 -0.5 -0.5 1.5 -0 1 0 
+1 -0.5 0.5 -1.5 0 0 1 
+1 -0.5 -0.5 -1.5 -0 1 0 
+1 0.5 -0.5 -1.5 0 0 1 
+1 0.5 -0.5 1.5 -0 1 0 
+1 0.5 0.5 -1.5 0 0 1 
+1 0.5 -0.5 -1.5 -0 1 0 
+1 -0.5 -0.5 -1.5 1 0 -0 
+1 -0.5 -0.5 1.5 1 0 -0 
+1 -0.5 0.5 -1.5 1 0 -0 
+1 -0.5 0.5 1.5 1 0 -0 
+Polygon3D 0
+PolygonOnTriangulations 0
+Surfaces 18
+1 0 0 0 1 0 -0 0 0 1 0 -1 0 
+1 0 0 0 -0 1 0 0 0 1 1 0 -0 
+1 0 0 1 0 0 1 1 0 -0 -0 1 0 
+1 0 1 0 -0 1 0 0 0 1 1 0 -0 
+1 0 0 0 0 0 1 1 0 -0 -0 1 0 
+1 1 0 0 1 0 -0 0 0 1 0 -1 0 
+1 -0.5 -0.5 -1 1 0 -0 0 0 1 0 -1 0 
+1 -0.5 -0.5 -1 -0 1 0 0 0 1 1 0 -0 
+1 -0.5 -0.5 1 0 0 1 1 0 -0 -0 1 0 
+1 -0.5 0.5 -1 -0 1 0 0 0 1 1 0 -0 
+1 -0.5 -0.5 -1 0 0 1 1 0 -0 -0 1 0 
+1 0.5 -0.5 -1 1 0 -0 0 0 1 0 -1 0 
+1 -0.5 -0.5 -1.5 1 0 -0 0 0 1 0 -1 0 
+1 -0.5 -0.5 -1.5 -0 1 0 0 0 1 1 0 -0 
+1 -0.5 -0.5 1.5 0 0 1 1 0 -0 -0 1 0 
+1 -0.5 0.5 -1.5 -0 1 0 0 0 1 1 0 -0 
+1 -0.5 -0.5 -1.5 0 0 1 1 0 -0 -0 1 0 
+1 0.5 -0.5 -1.5 1 0 -0 0 0 1 0 -1 0 
+Triangulations 0
+
+TShapes 110
+Ve
+1e-07
+0 0 1
+0 0
+
+0101101
+*
+Ve
+1e-07
+0 0 0
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  1 0 0 1
+2  1 1 0 0 1
+0 0 1 0
+2  2 2 0 0 1
+0 0 1 0
+0
+
+0101000
+-110 0 +109 0 *
+Ve
+1e-07
+0 1 1
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  2 0 0 1
+2  3 1 0 0 1
+1 0 1 -1
+2  4 3 0 0 1
+0 0 0 1
+0
+
+0101000
+-107 0 +110 0 *
+Ve
+1e-07
+0 1 0
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  3 0 0 1
+2  5 1 0 0 1
+0 -1 1 -1
+2  6 4 0 0 1
+0 0 1 0
+0
+
+0101000
+-107 0 +105 0 *
+Ed
+ 1e-07 1 1 0
+1  4 0 0 1
+2  7 1 0 0 1
+0 0 0 -1
+2  8 5 0 0 1
+0 0 0 1
+0
+
+0101000
+-105 0 +109 0 *
+Wi
+
+0101100
+-108 0 -106 0 +104 0 +103 0 *
+Fa
+0  1e-07 1 0
+
+0111000
++102 0 *
+Ve
+1e-07
+1 0 1
+0 0
+
+0101101
+*
+Ve
+1e-07
+1 0 0
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  5 0 0 1
+2  9 6 0 0 1
+0 0 1 0
+2  10 2 0 0 1
+0 1 1 1
+0
+
+0101000
+-100 0 +99 0 *
+Ve
+1e-07
+1 1 1
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  6 0 0 1
+2  11 6 0 0 1
+1 0 1 -1
+2  12 3 0 0 1
+1 0 1 1
+0
+
+0101000
+-97 0 +100 0 *
+Ve
+1e-07
+1 1 0
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  7 0 0 1
+2  13 6 0 0 1
+0 -1 1 -1
+2  14 4 0 0 1
+0 1 1 1
+0
+
+0101000
+-97 0 +95 0 *
+Ed
+ 1e-07 1 1 0
+1  8 0 0 1
+2  15 6 0 0 1
+0 0 0 -1
+2  16 5 0 0 1
+1 0 1 1
+0
+
+0101000
+-95 0 +99 0 *
+Wi
+
+0101100
+-98 0 -96 0 +94 0 +93 0 *
+Fa
+0  1e-07 6 0
+
+0111000
++92 0 *
+Ed
+ 1e-07 1 1 0
+1  9 0 0 1
+2  17 2 0 0 1
+0 0 0 1
+2  18 5 0 0 1
+0 0 1 0
+0
+
+0101000
+-99 0 +109 0 *
+Ed
+ 1e-07 1 1 0
+1  10 0 0 1
+2  19 2 0 0 1
+1 0 1 1
+2  20 3 0 0 1
+0 0 1 0
+0
+
+0101000
+-100 0 +110 0 *
+Wi
+
+0101100
+-90 0 -98 0 +89 0 +108 0 *
+Fa
+0  1e-07 2 0
+
+0111000
++88 0 *
+Ed
+ 1e-07 1 1 0
+1  11 0 0 1
+2  21 4 0 0 1
+0 0 0 1
+2  22 5 0 0 1
+0 1 1 1
+0
+
+0101000
+-95 0 +105 0 *
+Ed
+ 1e-07 1 1 0
+1  12 0 0 1
+2  23 4 0 0 1
+1 0 1 1
+2  24 3 0 0 1
+0 1 1 1
+0
+
+0101000
+-97 0 +107 0 *
+Wi
+
+0101100
+-86 0 -94 0 +85 0 +104 0 *
+Fa
+0  1e-07 4 0
+
+0111000
++84 0 *
+Wi
+
+0101100
+-103 0 -86 0 +93 0 +90 0 *
+Fa
+0  1e-07 5 0
+
+0111000
++82 0 *
+Wi
+
+0101100
+-106 0 -85 0 +96 0 +89 0 *
+Fa
+0  1e-07 3 0
+
+0111000
++80 0 *
+Sh
+
+0101100
+-101 0 +91 0 -87 0 +83 0 -81 0 +79 0 *
+So
+
+0100000
++78 0 *
+Co
+
+0100000
++77 0 *
+Ve
+1e-07
+-0.5 -0.5 1
+0 0
+
+0101101
+*
+Ve
+1e-07
+-0.5 -0.5 -1
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  13 0 0 2
+2  25 7 0 0 2
+0 0 2 0
+2  26 8 0 0 2
+0 0 2 0
+0
+
+0101000
+-75 0 +74 0 *
+Ve
+1e-07
+-0.5 0.5 1
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  14 0 0 1
+2  27 7 0 0 1
+2 0 2 -1
+2  28 9 0 0 1
+0 0 0 1
+0
+
+0101000
+-72 0 +75 0 *
+Ve
+1e-07
+-0.5 0.5 -1
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  15 0 0 2
+2  29 7 0 0 2
+0 -1 2 -1
+2  30 10 0 0 2
+0 0 2 0
+0
+
+0101000
+-72 0 +70 0 *
+Ed
+ 1e-07 1 1 0
+1  16 0 0 1
+2  31 7 0 0 1
+0 0 0 -1
+2  32 11 0 0 1
+0 0 0 1
+0
+
+0101000
+-70 0 +74 0 *
+Wi
+
+0101100
+-73 0 -71 0 +69 0 +68 0 *
+Fa
+0  1e-07 7 0
+
+0111000
++67 0 *
+Ve
+1e-07
+0.5 -0.5 1
+0 0
+
+0101101
+*
+Ve
+1e-07
+0.5 -0.5 -1
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  17 0 0 2
+2  33 12 0 0 2
+0 0 2 0
+2  34 8 0 0 2
+0 1 2 1
+0
+
+0101000
+-65 0 +64 0 *
+Ve
+1e-07
+0.5 0.5 1
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  18 0 0 1
+2  35 12 0 0 1
+2 0 2 -1
+2  36 9 0 0 1
+1 0 1 1
+0
+
+0101000
+-62 0 +65 0 *
+Ve
+1e-07
+0.5 0.5 -1
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  19 0 0 2
+2  37 12 0 0 2
+0 -1 2 -1
+2  38 10 0 0 2
+0 1 2 1
+0
+
+0101000
+-62 0 +60 0 *
+Ed
+ 1e-07 1 1 0
+1  20 0 0 1
+2  39 12 0 0 1
+0 0 0 -1
+2  40 11 0 0 1
+1 0 1 1
+0
+
+0101000
+-60 0 +64 0 *
+Wi
+
+0101100
+-63 0 -61 0 +59 0 +58 0 *
+Fa
+0  1e-07 12 0
+
+0111000
++57 0 *
+Ed
+ 1e-07 1 1 0
+1  21 0 0 1
+2  41 8 0 0 1
+0 0 0 1
+2  42 11 0 0 1
+0 0 1 0
+0
+
+0101000
+-64 0 +74 0 *
+Ed
+ 1e-07 1 1 0
+1  22 0 0 1
+2  43 8 0 0 1
+2 0 2 1
+2  44 9 0 0 1
+0 0 1 0
+0
+
+0101000
+-65 0 +75 0 *
+Wi
+
+0101100
+-55 0 -63 0 +54 0 +73 0 *
+Fa
+0  1e-07 8 0
+
+0111000
++53 0 *
+Ed
+ 1e-07 1 1 0
+1  23 0 0 1
+2  45 10 0 0 1
+0 0 0 1
+2  46 11 0 0 1
+0 1 1 1
+0
+
+0101000
+-60 0 +70 0 *
+Ed
+ 1e-07 1 1 0
+1  24 0 0 1
+2  47 10 0 0 1
+2 0 2 1
+2  48 9 0 0 1
+0 1 1 1
+0
+
+0101000
+-62 0 +72 0 *
+Wi
+
+0101100
+-51 0 -59 0 +50 0 +69 0 *
+Fa
+0  1e-07 10 0
+
+0111000
++49 0 *
+Wi
+
+0101100
+-68 0 -51 0 +58 0 +55 0 *
+Fa
+0  1e-07 11 0
+
+0111000
++47 0 *
+Wi
+
+0101100
+-71 0 -50 0 +61 0 +54 0 *
+Fa
+0  1e-07 9 0
+
+0111000
++45 0 *
+Sh
+
+0101100
+-66 0 +56 0 -52 0 +48 0 -46 0 +44 0 *
+So
+
+0100000
++43 0 *
+Co
+
+0100000
++42 5 *
+Co
+
+0100000
++41 0 *
+Ve
+1e-07
+-0.5 -0.5 1.5
+0 0
+
+0101101
+*
+Ve
+1e-07
+-0.5 -0.5 -1.5
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  25 0 0 3
+2  49 13 0 0 3
+0 0 3 0
+2  50 14 0 0 3
+0 0 3 0
+0
+
+0101000
+-39 0 +38 0 *
+Ve
+1e-07
+-0.5 0.5 1.5
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  26 0 0 1
+2  51 13 0 0 1
+3 0 3 -1
+2  52 15 0 0 1
+0 0 0 1
+0
+
+0101000
+-36 0 +39 0 *
+Ve
+1e-07
+-0.5 0.5 -1.5
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  27 0 0 3
+2  53 13 0 0 3
+0 -1 3 -1
+2  54 16 0 0 3
+0 0 3 0
+0
+
+0101000
+-36 0 +34 0 *
+Ed
+ 1e-07 1 1 0
+1  28 0 0 1
+2  55 13 0 0 1
+0 0 0 -1
+2  56 17 0 0 1
+0 0 0 1
+0
+
+0101000
+-34 0 +38 0 *
+Wi
+
+0101100
+-37 0 -35 0 +33 0 +32 0 *
+Fa
+0  1e-07 13 0
+
+0111000
++31 0 *
+Ve
+1e-07
+0.5 -0.5 1.5
+0 0
+
+0101101
+*
+Ve
+1e-07
+0.5 -0.5 -1.5
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  29 0 0 3
+2  57 18 0 0 3
+0 0 3 0
+2  58 14 0 0 3
+0 1 3 1
+0
+
+0101000
+-29 0 +28 0 *
+Ve
+1e-07
+0.5 0.5 1.5
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  30 0 0 1
+2  59 18 0 0 1
+3 0 3 -1
+2  60 15 0 0 1
+1 0 1 1
+0
+
+0101000
+-26 0 +29 0 *
+Ve
+1e-07
+0.5 0.5 -1.5
+0 0
+
+0101101
+*
+Ed
+ 1e-07 1 1 0
+1  31 0 0 3
+2  61 18 0 0 3
+0 -1 3 -1
+2  62 16 0 0 3
+0 1 3 1
+0
+
+0101000
+-26 0 +24 0 *
+Ed
+ 1e-07 1 1 0
+1  32 0 0 1
+2  63 18 0 0 1
+0 0 0 -1
+2  64 17 0 0 1
+1 0 1 1
+0
+
+0101000
+-24 0 +28 0 *
+Wi
+
+0101100
+-27 0 -25 0 +23 0 +22 0 *
+Fa
+0  1e-07 18 0
+
+0111000
++21 0 *
+Ed
+ 1e-07 1 1 0
+1  33 0 0 1
+2  65 14 0 0 1
+0 0 0 1
+2  66 17 0 0 1
+0 0 1 0
+0
+
+0101000
+-28 0 +38 0 *
+Ed
+ 1e-07 1 1 0
+1  34 0 0 1
+2  67 14 0 0 1
+3 0 3 1
+2  68 15 0 0 1
+0 0 1 0
+0
+
+0101000
+-29 0 +39 0 *
+Wi
+
+0101100
+-19 0 -27 0 +18 0 +37 0 *
+Fa
+0  1e-07 14 0
+
+0111000
++17 0 *
+Ed
+ 1e-07 1 1 0
+1  35 0 0 1
+2  69 16 0 0 1
+0 0 0 1
+2  70 17 0 0 1
+0 1 1 1
+0
+
+0101000
+-24 0 +34 0 *
+Ed
+ 1e-07 1 1 0
+1  36 0 0 1
+2  71 16 0 0 1
+3 0 3 1
+2  72 15 0 0 1
+0 1 1 1
+0
+
+0101000
+-26 0 +36 0 *
+Wi
+
+0101100
+-15 0 -23 0 +14 0 +33 0 *
+Fa
+0  1e-07 16 0
+
+0111000
++13 0 *
+Wi
+
+0101100
+-32 0 -15 0 +22 0 +19 0 *
+Fa
+0  1e-07 17 0
+
+0111000
++11 0 *
+Wi
+
+0101100
+-35 0 -14 0 +25 0 +18 0 *
+Fa
+0  1e-07 15 0
+
+0111000
++9 0 *
+Sh
+
+0101100
+-30 0 +20 0 -16 0 +12 0 -10 0 +8 0 *
+So
+
+0100000
++7 0 *
+Co
+
+0100000
++6 7 +6 8 *
+Co
+
+0100000
++5 0 *
+Co
+
+0100000
++4 0 *
+Co
+
+0100000
++76 0 +40 2 +3 6 *
+Co
+
+1100000
++2 1 *
+
+</shapes>
+</document>

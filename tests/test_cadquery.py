@@ -3095,15 +3095,15 @@ class TestCadQuery(BaseTest):
 
         self.saveModel(result)
         
-    def testExtrudeUntilNextSurf(self):
+    def testExtrudeUntilFace(self):
         """
-        Test UntilNextSurf option of Workplane.extrude
+        Test untilNextFace and untilLastFace options of Workplane.extrude
         """
         #Basic test to see if it yields same results as regular extrude for similar use case
         wp_ref = Workplane("XY").box(10,10,10).center(20,0).box(10,10,10) \
             .faces(">X[1]").workplane().rect(1,1).extrude(10)
         wp = Workplane("XY").box(10,10,10).center(20,0).box(10,10,10) \
-            .faces(">X[1]").workplane().rect(1,1).extrude(untilNextSurf = True)
+            .faces(">X[1]").workplane().rect(1,1).extrude(untilNextFace = True)
 
         self.assertAlmostEquals(wp_ref.val().Volume(), wp.val().Volume())
     def testExtrude(self):
