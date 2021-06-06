@@ -21,6 +21,9 @@ from ..assembly import AssemblyProtocol, toCAF, toVTK
 
 
 def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
+    """
+    Export an assembly to a step a file.
+    """
 
     _, doc = toCAF(assy, True)
 
@@ -37,6 +40,9 @@ def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
 
 
 def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
+    """
+    Export an assembly to a OCAF xml file (internal OCCT format).
+    """
 
     folder, fname = os.path.split(path)
     name, ext = os.path.splitext(fname)
@@ -69,6 +75,9 @@ def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
 
 
 def _vtkRenderWindow(assy: AssemblyProtocol) -> vtkRenderWindow:
+    """
+    Convert an assembly to a vtkRenderWindow. Used by vtk based exporters.
+    """
 
     renderer = vtkRenderer()
     renderWindow = vtkRenderWindow()
@@ -82,6 +91,9 @@ def _vtkRenderWindow(assy: AssemblyProtocol) -> vtkRenderWindow:
 
 
 def exportVTKJS(assy: AssemblyProtocol, path: str):
+    """
+    Export an assembly to a zipped vtkjs. NB: .zip extensions is added to path.
+    """
 
     renderer = vtkRenderer()
     renderWindow = vtkRenderWindow()
@@ -101,6 +113,9 @@ def exportVTKJS(assy: AssemblyProtocol, path: str):
 
 
 def exportVRML(assy: AssemblyProtocol, path: str):
+    """
+    Export an assembly to a vrml file using vtk.
+    """
 
     exporter = vtkVRMLExporter()
     exporter.SetFileName(path)
