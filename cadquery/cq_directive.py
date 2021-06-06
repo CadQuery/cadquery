@@ -12,7 +12,12 @@ from urllib import request
 
 from cadquery import exporters, Assembly, Compound, Color
 from cadquery import cqgi
-from cadquery.occ_impl.jupyter_tools import toJSON, dumps, TEMPLATE, DEFAULT_COLOR
+from cadquery.occ_impl.jupyter_tools import (
+    toJSON,
+    dumps,
+    TEMPLATE_RENDER,
+    DEFAULT_COLOR,
+)
 from docutils.parsers.rst import directives, Directive
 
 template = """
@@ -36,6 +41,9 @@ template_vtk = """
      style="text-align:{txt_align}s;float:left;border: 1px solid #ddd; width:{width}; height:{height}"">
        <script>
        {code}
+       var parent_element = {element};
+       var data = {data};
+       render(data, parent_element);
        </script>
     </div>
     <div style="clear:both;">
@@ -159,12 +167,13 @@ class cq_directive_vtk(Directive):
         lines = []
 
         data = dumps(toJSON(assy))
-        code = TEMPLATE.format(
-            data=data, element="document.currentScript.parentNode", ratio="null"
-        )
+
         lines.extend(
             template_vtk.format(
-                code=indent(code, "    "),
+                code=indent(TEMPLATE_RENDER.format(), "    "),
+                data=data,
+                ratio="null",
+                element="document.currentScript.parentNode",
                 txt_align=options.get("align", "left"),
                 width=options.get("width", "100%"),
                 height=options.get("height", "500px"),

@@ -11,9 +11,9 @@ from .assembly import toJSON
 
 DEFAULT_COLOR = [1, 0.8, 0, 1]
 
-TEMPLATE = """
+TEMPLATE_RENDER = """
 
-function render(data, parent_element){{
+function render(data, parent_element, ratio){{
     
     // Initial setup
     const renderWindow = vtk.Rendering.Core.vtkRenderWindow.newInstance();
@@ -21,39 +21,37 @@ function render(data, parent_element){{
     renderWindow.addRenderer(renderer);
         
     // iterate over all children children
-    data.forEach(
-        function(el){{
-            var trans = el.position;
-            var rot = el.orientation;
-            var rgba = el.color;
-            var shape = el.shape;
-            
-            // load the inline data
-            var reader = vtk.IO.XML.vtkXMLPolyDataReader.newInstance();
-            const textEncoder = new TextEncoder();
-            reader.parseAsArrayBuffer(textEncoder.encode(shape));
+    for (var el of data){{ 
+        var trans = el.position;
+        var rot = el.orientation;
+        var rgba = el.color;
+        var shape = el.shape;
+        
+        // load the inline data
+        var reader = vtk.IO.XML.vtkXMLPolyDataReader.newInstance();
+        const textEncoder = new TextEncoder();
+        reader.parseAsArrayBuffer(textEncoder.encode(shape));
 
-            // setup actor,mapper and add
-            const mapper = vtk.Rendering.Core.vtkMapper.newInstance();
-            mapper.setInputConnection(reader.getOutputPort());
+        // setup actor,mapper and add
+        const mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+        mapper.setInputConnection(reader.getOutputPort());
 
-            const actor = vtk.Rendering.Core.vtkActor.newInstance();
-            actor.setMapper(mapper);
+        const actor = vtk.Rendering.Core.vtkActor.newInstance();
+        actor.setMapper(mapper);
 
-            // set color and position
-            actor.getProperty().setColor(rgba.slice(0,3));
-            actor.getProperty().setOpacity(rgba[3]);
-            
-            actor.rotateZ(rot[2]*180/3.1416);
-            actor.rotateY(rot[1]*180/3.1416);
-            actor.rotateX(rot[0]*180/3.1416);
-            
-            actor.setPosition(trans);
+        // set color and position
+        actor.getProperty().setColor(rgba.slice(0,3));
+        actor.getProperty().setOpacity(rgba[3]);
+        
+        actor.rotateZ(rot[2]*180/3.1416);
+        actor.rotateY(rot[1]*180/3.1416);
+        actor.rotateX(rot[0]*180/3.1416);
+        
+        actor.setPosition(trans);
 
-            renderer.addActor(actor);
+        renderer.addActor(actor);
 
-        }}
-    );
+    }};
     
     renderer.resetCamera();
     
@@ -76,7 +74,6 @@ function render(data, parent_element){{
     openglRenderWindow.setContainer(container);
     
     // handle size
-    const ratio = {ratio};
     if (ratio){{
         openglRenderWindow.setSize(dims.width, dims.width*ratio);
     }}else{{
@@ -127,6 +124,11 @@ function render(data, parent_element){{
     orientationWidget.setViewportSize(0.2);
 
 }};
+"""
+
+TEMPLATE = (
+    TEMPLATE_RENDER
+    + """
 
 new Promise(
   function(resolve, reject)
@@ -147,9 +149,10 @@ new Promise(
 ).then(() => {{
     var parent_element = {element};
     var data = {data};
-    render(data, parent_element);
+    render(data, parent_element, {ratio});
 }});
 """
+)
 
 
 def display(shape):
