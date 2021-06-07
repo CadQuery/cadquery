@@ -9,7 +9,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVTKJS,
     exportVRML,
 )
-
+from cadquery.occ_impl.assembly import toJSON
 from OCP.gp import gp_XYZ
 
 
@@ -45,6 +45,17 @@ def nested_assy():
     assy2.add(b3, loc=cq.Location(cq.Vector(0, 4, 0)), name="BOTTOM")
 
     assy.add(assy2, color=cq.Color("green"))
+
+    return assy
+
+
+@pytest.fixture
+def empty_top_assy():
+
+    b1 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b1, color=cq.Color("green"))
 
     return assy
 
@@ -134,6 +145,17 @@ def test_vrml_export(simple_assy):
 
     # only sanity check for now
     assert os.path.exists("assy.wrl")
+
+
+def test_toJSON(simple_assy, nested_assy, empty_top_assy):
+
+    r1 = toJSON(simple_assy)
+    r2 = toJSON(simple_assy)
+    r3 = toJSON(empty_top_assy)
+
+    assert len(r1) == 3
+    assert len(r2) == 3
+    assert len(r3) == 1
 
 
 def test_save(simple_assy, nested_assy):
