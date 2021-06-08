@@ -2,6 +2,7 @@ from tests import BaseTest
 from IPython.display import Javascript
 
 import cadquery as cq
+from cadquery.occ_impl.jupyter_tools import display
 
 
 class TestJupyter(BaseTest):
@@ -16,3 +17,12 @@ class TestJupyter(BaseTest):
         js1 = shape._repr_javascript_()
         js2 = cube._repr_javascript_()
         js3 = assy._repr_javascript_()
+
+        assert "function render" in js1
+        assert "function render" in js2
+        assert "function render" in js3
+
+    def test_display_error(self):
+
+        with self.assertRaises(ValueError):
+            display(cq.Vector())
