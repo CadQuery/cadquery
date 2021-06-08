@@ -1,5 +1,4 @@
 from tests import BaseTest
-from IPython.display import Javascript
 
 import cadquery as cq
 from cadquery.occ_impl.jupyter_tools import display
