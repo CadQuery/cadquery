@@ -260,6 +260,7 @@ class cq_directive_vtk(Directive):
         "height": directives.length_or_unitless,
         "width": directives.length_or_percentage_or_unitless,
         "align": directives.unchanged,
+        "select": directives.unchanged,
     }
 
     def run(self):
@@ -282,7 +283,7 @@ class cq_directive_vtk(Directive):
                 if result.first_result:
                     shape = result.first_result.shape
                 else:
-                    shape = result.env["result"]
+                    shape = result.env[options.get("select", "result")]
 
                 if isinstance(shape, Assembly):
                     assy = shape
