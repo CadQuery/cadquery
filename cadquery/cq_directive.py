@@ -8,7 +8,6 @@ import traceback
 from pathlib import Path
 from uuid import uuid1 as uuid
 from textwrap import indent
-from urllib import request
 
 from cadquery import exporters, Assembly, Compound, Color
 from cadquery import cqgi
@@ -33,6 +32,145 @@ template = """
 """
 template_content_indent = "      "
 
+rendering_code = """
+const RENDERERS = {};
+var ID =  0;
+
+const renderWindow = vtk.Rendering.Core.vtkRenderWindow.newInstance();
+const openglRenderWindow = vtk.Rendering.OpenGL.vtkRenderWindow.newInstance();
+renderWindow.addView(openglRenderWindow);
+
+const rootContainer = document.createElement('div');
+rootContainer.style.position = 'fixed';
+//rootContainer.style.zIndex = -1;
+rootContainer.style.left = 0;
+rootContainer.style.top = 0;
+rootContainer.style.pointerEvents = 'none';
+rootContainer.style.width = '100%';
+rootContainer.style.height = '100%';
+
+openglRenderWindow.setContainer(rootContainer);
+
+const interactor = vtk.Rendering.Core.vtkRenderWindowInteractor.newInstance();
+interactor.setView(openglRenderWindow);
+interactor.initialize();
+interactor.setInteractorStyle(vtk.Interaction.Style.vtkInteractorStyleTrackballCamera.newInstance());
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.body.appendChild(rootContainer);
+    interactor.bindEvents(document.body);
+});
+
+function updateViewPort(element, renderer) {
+  const { innerHeight, innerWidth } = window;
+  const { x, y, width, height } = element.getBoundingClientRect();
+  const viewport = [
+    x / innerWidth,
+    1 - (y + height) / innerHeight,
+    (x + width) / innerWidth,
+    1 - y / innerHeight,
+  ];
+  renderer.setViewport(...viewport);
+}
+
+function recomputeViewports() {
+  const rendererElems = document.querySelectorAll('.renderer');
+  for (let i = 0; i < rendererElems.length; i++) {
+    const elem = rendererElems[i];
+    const { id } = elem;
+    const renderer = RENDERERS[id];
+    updateViewPort(elem, renderer);
+  }
+  renderWindow.render();
+}
+
+function resize() {
+  rootContainer.style.width = `${window.innerWidth}px`;
+  openglRenderWindow.setSize(window.innerWidth, window.innerHeight);
+  recomputeViewports();
+}
+
+window.addEventListener('resize', resize);
+document.addEventListener('scroll', recomputeViewports);
+
+
+function enterCurrentRenderer(e) {
+  interactor.setCurrentRenderer(RENDERERS[e.target.id]);
+  console.log('enter');
+}
+
+function exitCurrentRenderer(e) {
+  interactor.setCurrentRenderer(null);
+  console.log('exit');
+}
+
+
+function applyStyle(element) {
+  element.classList.add('renderer');
+  element.style.width = '100%';
+  element.style.height = '100%';
+  element.style.display = 'inline-block';
+  element.style.boxSizing = 'border';
+  return element;
+}
+
+window.addEventListener('load', resize);
+
+function render(data, parent_element, ratio){
+    
+    // Initial setup
+    const renderer = vtk.Rendering.Core.vtkRenderer.newInstance({ background: [1, 1, 1 ] });
+        
+    // iterate over all children children
+    for (var el of data){
+        var trans = el.position;
+        var rot = el.orientation;
+        var rgba = el.color;
+        var shape = el.shape;
+        
+        // load the inline data
+        var reader = vtk.IO.XML.vtkXMLPolyDataReader.newInstance();
+        const textEncoder = new TextEncoder();
+        reader.parseAsArrayBuffer(textEncoder.encode(shape));
+
+        // setup actor,mapper and add
+        const mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+        mapper.setInputConnection(reader.getOutputPort());
+
+        const actor = vtk.Rendering.Core.vtkActor.newInstance();
+        actor.setMapper(mapper);
+
+        // set color and position
+        actor.getProperty().setColor(rgba.slice(0,3));
+        actor.getProperty().setOpacity(rgba[3]);
+        
+        actor.rotateZ(rot[2]*180/Math.PI);
+        actor.rotateY(rot[1]*180/Math.PI);
+        actor.rotateX(rot[0]*180/Math.PI);
+        
+        actor.setPosition(trans);
+
+        renderer.addActor(actor);
+
+    };
+    
+    //add the container
+    const container = applyStyle(document.createElement("div"));
+    parent_element.appendChild(container);
+    container.addEventListener('mouseenter', enterCurrentRenderer);
+    container.addEventListener('mouseleave', exitCurrentRenderer);
+    container.id = ID;
+    
+    renderWindow.addRenderer(renderer);
+    updateViewPort(container, renderer);
+    renderer.resetCamera();
+    
+    RENDERERS[ID] = renderer;
+    ID++;   
+};
+"""
+
+
 template_vtk = """
 
 .. raw:: html
@@ -40,7 +178,6 @@ template_vtk = """
     <div class="cq-vtk"
      style="text-align:{txt_align}s;float:left;border: 1px solid #ddd; width:{width}; height:{height}"">
        <script>
-       {code}
        var parent_element = {element};
        var data = {data};
        render(data, parent_element);
@@ -197,12 +334,8 @@ def setup(app):
 
     app.add_directive("cq_plot", cq_directive)
     app.add_directive("cq_vtk", cq_directive_vtk)
+    app.add_directive("cadquery", cq_directive_vtk)
 
-    # download and add vtk.js
-    build_path = Path(app.outdir)
-    out_path = build_path / "_static"
-    out_path.mkdir(parents=True, exist_ok=True)
-
-    request.urlretrieve("https://unpkg.com/vtk.js", out_path / "vtk.js")
-
+    # add vtk.js
     app.add_js_file("vtk.js")
+    app.add_js_file(None, body=rendering_code)
