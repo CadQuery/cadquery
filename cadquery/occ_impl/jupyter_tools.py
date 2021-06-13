@@ -43,9 +43,9 @@ function render(data, parent_element, ratio){{
         actor.getProperty().setColor(rgba.slice(0,3));
         actor.getProperty().setOpacity(rgba[3]);
         
-        actor.rotateZ(rot[2]*180/3.1416);
-        actor.rotateY(rot[1]*180/3.1416);
-        actor.rotateX(rot[0]*180/3.1416);
+        actor.rotateZ(rot[2]*180/Math.PI);
+        actor.rotateY(rot[1]*180/Math.PI);
+        actor.rotateX(rot[0]*180/Math.PI);
         
         actor.setPosition(trans);
 
