@@ -44,7 +44,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "cadquery.cq_directive",
-    "sphinxcadquery.sphinxcadquery",
 ]
 
 always_document_param_types = True
