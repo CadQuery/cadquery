@@ -114,11 +114,13 @@ document.addEventListener('scroll', recomputeViewports);
 
 
 function enterCurrentRenderer(e) {
+  interact_style.setEnabled(true);
   interactor.setCurrentRenderer(RENDERERS[e.target.id]);
 }
 
 function exitCurrentRenderer(e) {
   interactor.setCurrentRenderer(null);
+  interact_style.setEnabled(false);
 }
 
 
