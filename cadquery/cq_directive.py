@@ -51,10 +51,29 @@ rootContainer.style.height = '100%';
 
 openglRenderWindow.setContainer(rootContainer);
 
+const interact_style = vtk.Interaction.Style.vtkInteractorStyleManipulator.newInstance();
+
+const manips = {
+    rot: vtk.Interaction.Manipulators.vtkMouseCameraTrackballRotateManipulator.newInstance(),
+    pan: vtk.Interaction.Manipulators.vtkMouseCameraTrackballPanManipulator.newInstance(),
+    zoom1: vtk.Interaction.Manipulators.vtkMouseCameraTrackballZoomManipulator.newInstance(),
+    zoom2: vtk.Interaction.Manipulators.vtkMouseCameraTrackballZoomManipulator.newInstance(),
+    roll: vtk.Interaction.Manipulators.vtkMouseCameraTrackballRollManipulator.newInstance(),
+};
+
+manips.zoom1.setControl(true);
+manips.zoom2.setButton(3);
+manips.roll.setShift(true);
+manips.pan.setButton(2);
+
+for (var k in manips){{
+    interact_style.addMouseManipulator(manips[k]);
+}};
+
 const interactor = vtk.Rendering.Core.vtkRenderWindowInteractor.newInstance();
 interactor.setView(openglRenderWindow);
 interactor.initialize();
-interactor.setInteractorStyle(vtk.Interaction.Style.vtkInteractorStyleTrackballCamera.newInstance());
+interactor.setInteractorStyle(interact_style);
 
 document.addEventListener('DOMContentLoaded', function () {
     document.body.appendChild(rootContainer);
@@ -96,12 +115,10 @@ document.addEventListener('scroll', recomputeViewports);
 
 function enterCurrentRenderer(e) {
   interactor.setCurrentRenderer(RENDERERS[e.target.id]);
-  console.log('enter');
 }
 
 function exitCurrentRenderer(e) {
   interactor.setCurrentRenderer(null);
-  console.log('exit');
 }
 
 
