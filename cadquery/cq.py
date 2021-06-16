@@ -3018,30 +3018,25 @@ class Workplane(object):
             upToFace = 0
         elif untilLastFace:
             upToFace = -1
-        elif untilNextFace and untilLastFace: 
+        elif untilNextFace and untilLastFace:
             raise ValueError("Must specify only one limiting face")
         else:
             upToFace = None
 
         isUpToFace = untilNextFace or untilLastFace
-        if (isUpToFace and distance) or (not isUpToFace and not distance) :
-            raise ValueError("You must define either a 'distance' or an 'untilFace' and not both at the same time")
+        if (isUpToFace and distance) or (not isUpToFace and not distance):
+            raise ValueError(
+                "You must define either a 'distance' or an 'untilFace' and not both at the same time"
+            )
 
         r = self._extrude(
-            distance, both=both, taper=taper, upToFace = upToFace
+            distance, both=both, taper=taper, upToFace=upToFace
         )  # returns a Solid (or a compound if there were multiple)
 
-        # if combine and not (untilNextFace or untilLastFace):
-        #     newS = self._combineWithBase(r)        
-        # elif not combine and (untilNextFace or untilLastFace):
-        #     raise ValueError("extrude uptoface algorithm needs to modify the context solid (by combining)") 
-        # else:
-        #     newS = self.newObject([r])   
-        newS = self._combineWithBase(r) 
-        from jupyter_cadquery.viewer.client import show
-
-        show( newS,cad_width = 1500, height = 900, default_edgecolor = (0,0,0), axes=True, reset_camera = False)
-
+        if combine:
+            newS = self._combineWithBase(r)
+        else:
+            newS = self.newObject([r])
         if clean:
             newS = newS.clean()
         return newS
@@ -3410,17 +3405,21 @@ class Workplane(object):
             upToFace = 0
         elif untilLastFace:
             upToFace = -1
-        elif untilNextFace and untilLastFace: 
-            raise ValueError("Must specify only one limiting face") 
-        else: 
+        elif untilNextFace and untilLastFace:
+            raise ValueError("Must specify only one limiting face")
+        else:
             upToFace = None
 
         isUpToFace = untilNextFace or untilLastFace
-        if (isUpToFace and distanceToCut) or (not isUpToFace and not distanceToCut) :
-            raise ValueError("You must define either a 'distanceToCut' or an 'untilFace' and not both at the same time")
+        if (isUpToFace and distanceToCut) or (not isUpToFace and not distanceToCut):
+            raise ValueError(
+                "You must define either a 'distanceToCut' or an 'untilFace' and not both at the same time"
+            )
 
         # first, make the object
-        toCut = self._extrude(distanceToCut, taper=taper, upToFace=upToFace, additive=False)
+        toCut = self._extrude(
+            distanceToCut, taper=taper, upToFace=upToFace, additive=False
+        )
 
         if not (untilNextFace or untilLastFace):
             # now find a solid in the chain
@@ -3428,7 +3427,7 @@ class Workplane(object):
             s = solidRef.cut(toCut)
         else:
             s = toCut
-        
+
         if clean:
             s = s.clean()
 
@@ -3484,7 +3483,12 @@ class Workplane(object):
         return self.newObject([r])
 
     def _extrude(
-        self, distance: Optional[float] = None, both: bool = False, taper: Optional[float] = None, upToFace: Optional[int] = None, additive: bool = True,
+        self,
+        distance: Optional[float] = None,
+        both: bool = False,
+        taper: Optional[float] = None,
+        upToFace: Optional[int] = None,
+        additive: bool = True,
     ) -> Compound:
         """
         Make a prismatic solid from the existing set of pending wires.
@@ -3511,8 +3515,6 @@ class Workplane(object):
         elif distance is not None:
             eDir = self.plane.zDir.multiply(distance)
 
-        
-
         if additive:
             direction = "AlongAxis"
         else:
@@ -3527,40 +3529,53 @@ class Workplane(object):
         # multiple sets
 
         toFuse = []
-        taper = 0. if taper is None else taper        
+        taper = 0.0 if taper is None else taper
         baseSolid = None
-        for ws in wireSets:                       
-            if upToFace is not None:                
-                upToFaces = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir, direction=direction)     
-                if baseSolid is None:
-                    baseSolid = self.findSolid()   
+        for ws in wireSets:
+            if upToFace is not None:
+                upToFaces = self.findSolid().facesIntersectedByLine(
+                    ws[0].Center(), eDir, direction=direction
+                )
+
+                baseSolid = self.findSolid() if baseSolid is None else thisObj
 
                 if baseSolid.isInside(ws[0].Center()) and additive and upToFace == 0:
-                    upToFace = 1 # extrude until next face outside the solid     
-                    
-                thisObj = Solid.dprism(baseSolid, Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=upToFaces[upToFace], additive=additive)
+                    upToFace = 1  # extrude until next face outside the solid
+
+                thisObj = Solid.dprism(
+                    baseSolid,
+                    Face.makeFromWires(ws[0]),
+                    ws,
+                    taper=taper,
+                    upToFace=upToFaces[upToFace],
+                    additive=additive,
+                )
 
                 if both:
-                    upToFaces2 = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir.multiply(-1.0), direction=direction)   
-                    thisObj2 = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=upToFaces2[upToFace], additive=additive)
+                    upToFaces2 = self.findSolid().facesIntersectedByLine(
+                        ws[0].Center(), eDir.multiply(-1.0), direction=direction
+                    )
+                    thisObj2 = Solid.dprism(
+                        self.findSolid(),
+                        Face.makeFromWires(ws[0]),
+                        ws,
+                        taper=taper,
+                        upToFace=upToFaces2[upToFace],
+                        additive=additive,
+                    )
                     thisObj = Compound.makeCompound([thisObj, thisObj2])
-
-                if not additive:
-                    baseSolid = thisObj # since Solid.dprism removes material from a solid we need to provide the same cut solid 
-                    toFuse = [thisObj]  # for all the wire in the wireSet, hence this little trick
-                else:
-                    toFuse.append(thisObj)
-            else:        
-                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper = taper)
+                toFuse = [thisObj]
+            else:
+                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper=taper)
                 toFuse.append(thisObj)
 
                 if both:
-                    thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir.multiply(-1.0), taper = taper)
+                    thisObj = Solid.extrudeLinear(
+                        ws[0], ws[1:], eDir.multiply(-1.0), taper=taper
+                    )
                     toFuse.append(thisObj)
 
-    
         return Compound.makeCompound(toFuse)
-        
 
     def _revolve(
         self, angleDegrees: float, axisStart: VectorLike, axisEnd: VectorLike

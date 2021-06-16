@@ -1011,7 +1011,13 @@ class Shape(object):
 
         return self._bool_op((self,), toIntersect, intersect_op)
 
-    def facesIntersectedByLine(self, point: VectorLike, axis: VectorLike, tol: float = 1e-4, direction: Optional[str] = None ):
+    def facesIntersectedByLine(
+        self,
+        point: VectorLike,
+        axis: VectorLike,
+        tol: float = 1e-4,
+        direction: Optional[str] = None,
+    ):
         """
         Computes the intersections between the provided line and the faces of the provided shape
 
@@ -1023,14 +1029,20 @@ class Shape(object):
 
         :returns: A list of intersected face sorted by distance from :point:
         """
-        point = gp_Pnt(*point.toTuple()) if isinstance(point, Vector) else gp_Pnt(*point)
-        axis = gp_Dir(Vector(axis).wrapped) if not isinstance(axis, Vector) else gp_Dir(axis.wrapped)
+        point = (
+            gp_Pnt(*point.toTuple()) if isinstance(point, Vector) else gp_Pnt(*point)
+        )
+        axis = (
+            gp_Dir(Vector(axis).wrapped)
+            if not isinstance(axis, Vector)
+            else gp_Dir(axis.wrapped)
+        )
 
-        line = gce_MakeLin(point, axis).Value() 
+        line = gce_MakeLin(point, axis).Value()
         shape = self.wrapped
 
         intersectMaker = BRepIntCurveSurface_Inter()
-        intersectMaker.Init(shape, line,  tol)
+        intersectMaker.Init(shape, line, tol)
 
         faces = []
         while intersectMaker.More():
@@ -1040,29 +1052,41 @@ class Shape(object):
             distance = point.SquareDistance(interPt)
 
             # interDir is not done when `point` and `axis` have the same coord
-            if interDirMk.IsDone():            
+            if interDirMk.IsDone():
                 interDir = interDirMk.Value()
             else:
                 interDir = None
 
             if direction == "AlongAxis":
-                if interDir is not None and not interDir.IsOpposite(axis, tol) and distance > tol: 
+                if (
+                    interDir is not None
+                    and not interDir.IsOpposite(axis, tol)
+                    and distance > tol
+                ):
                     faces.append((intersectMaker.Face(), distance))
 
             elif direction == "Opposite":
-                if interDir is not None and interDir.IsOpposite(axis, tol) and distance > tol: 
+                if (
+                    interDir is not None
+                    and interDir.IsOpposite(axis, tol)
+                    and distance > tol
+                ):
                     faces.append((intersectMaker.Face(), distance))
 
             elif direction is not None:
-                raise ValueError("Unvalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'.")
+                raise ValueError(
+                    "Unvalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'."
+                )
 
             else:
-                faces.append((intersectMaker.Face(), abs(distance))) # will sort all intersected faces by distance whatever the direction is
+                faces.append(
+                    (intersectMaker.Face(), abs(distance))
+                )  # will sort all intersected faces by distance whatever the direction is
             intersectMaker.Next()
 
-        faces.sort(key = lambda x: x[1])
+        faces.sort(key=lambda x: x[1])
         faces = [face[0] for face in faces]
-        
+
         return [Face(face) for face in faces]
 
     def split(self, *splitters: "Shape") -> "Shape":
@@ -3035,7 +3059,7 @@ class Solid(Shape, Mixin3D):
                 taper * DEG2RAD,
                 additive,
                 False,
-        )
+            )
             # from jupyter_cadquery.viewer.client import show
             # show(upToFace, cad_width = 1500, height = 900, default_edgecolor = (0,0,0), axes=True, reset_camera = False)
             if upToFace is not None:
