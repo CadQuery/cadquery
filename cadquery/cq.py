@@ -3031,12 +3031,17 @@ class Workplane(object):
             distance, both=both, taper=taper, upToFace = upToFace
         )  # returns a Solid (or a compound if there were multiple)
 
-        if combine and not (untilNextFace or untilLastFace):
-            newS = self._combineWithBase(r)        
-        elif not combine and (untilNextFace or untilLastFace):
-            raise ValueError("extrude uptoface algorithm needs to modify the context solid (by combining)") 
-        else:
-            newS = self.newObject([r])
+        # if combine and not (untilNextFace or untilLastFace):
+        #     newS = self._combineWithBase(r)        
+        # elif not combine and (untilNextFace or untilLastFace):
+        #     raise ValueError("extrude uptoface algorithm needs to modify the context solid (by combining)") 
+        # else:
+        #     newS = self.newObject([r])   
+        newS = self._combineWithBase(r) 
+        from jupyter_cadquery.viewer.client import show
+
+        show( newS,cad_width = 1500, height = 900, default_edgecolor = (0,0,0), axes=True, reset_camera = False)
+
         if clean:
             newS = newS.clean()
         return newS
@@ -3423,6 +3428,7 @@ class Workplane(object):
             s = solidRef.cut(toCut)
         else:
             s = toCut
+        
         if clean:
             s = s.clean()
 
@@ -3521,22 +3527,29 @@ class Workplane(object):
         # multiple sets
 
         toFuse = []
-        taper = 0. if taper is None else taper
-
-        for ws in wireSets:            
+        taper = 0. if taper is None else taper        
+        baseSolid = None
+        for ws in wireSets:                       
             if upToFace is not None:                
-                upToFaces = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir, direction=direction)             
-                if self.findSolid().isInside(ws[0].Center()) and additive and upToFace == 0:
-                    upToFace = 1 # extrude until next face outside the solid     
+                upToFaces = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir, direction=direction)     
+                if baseSolid is None:
+                    baseSolid = self.findSolid()   
 
-                thisObj = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=upToFaces[upToFace], additive=additive)
-                
-                
+                if baseSolid.isInside(ws[0].Center()) and additive and upToFace == 0:
+                    upToFace = 1 # extrude until next face outside the solid     
+                    
+                thisObj = Solid.dprism(baseSolid, Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=upToFaces[upToFace], additive=additive)
+
                 if both:
                     upToFaces2 = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir.multiply(-1.0), direction=direction)   
                     thisObj2 = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=upToFaces2[upToFace], additive=additive)
                     thisObj = Compound.makeCompound([thisObj, thisObj2])
-                toFuse.append(thisObj)
+
+                if not additive:
+                    baseSolid = thisObj # since Solid.dprism removes material from a solid we need to provide the same cut solid 
+                    toFuse = [thisObj]  # for all the wire in the wireSet, hence this little trick
+                else:
+                    toFuse.append(thisObj)
             else:        
                 thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper = taper)
                 toFuse.append(thisObj)
@@ -3545,8 +3558,9 @@ class Workplane(object):
                     thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir.multiply(-1.0), taper = taper)
                     toFuse.append(thisObj)
 
-            toFuse.append(thisObj)
+    
         return Compound.makeCompound(toFuse)
+        
 
     def _revolve(
         self, angleDegrees: float, axisStart: VectorLike, axisEnd: VectorLike

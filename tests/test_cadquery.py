@@ -3102,15 +3102,15 @@ class TestCadQuery(BaseTest):
         #Basic test to see if it yields same results as regular extrude for similar use case
         #Also test if the extrusion worked well by counting the number of faces before and after extrusion
         wp_ref = Workplane("XY").box(10,10,10).center(20,0).box(10,10,10)
-        nb_faces_ref = len(wp_ref.val().Faces())
-        wp_ref = wp_ref.faces(">X[1]").workplane().rect(1,1).extrude(10)
+         
+        wp_ref_extrude = wp_ref.faces(">X[1]").workplane().rect(1,1).extrude(10)
 
         wp = Workplane("XY").box(10,10,10).center(20,0).box(10,10,10)
         nb_faces = wp.faces().size() 
         wp = wp_ref.faces(">X[1]").workplane().rect(1,1).extrude(untilNextFace = True)
-
-        self.assertAlmostEquals(wp_ref.val().Volume(), wp.val().Volume())
-        self.assertTrue(nb_faces_ref - nb_faces == 4)
+         
+        self.assertAlmostEquals(wp_ref_extrude.val().Volume(), wp.val().Volume())
+        self.assertTrue(wp.faces().size() - nb_faces == 4)
         
         # Test tapered option and both option
         wp = wp_ref.faces(">X[1]").workplane(centerOption="CenterOfMass", offset=5) \
@@ -3122,7 +3122,7 @@ class TestCadQuery(BaseTest):
         wp = wp_ref.faces(">X[1]").workplane(centerOption="CenterOfMass") \
             .polygon(5,3).extrude(untilNextFace=True, taper = 5)
             
-        self.assertTrue(wp.val().Volume < wp_both_volume)   
+        self.assertTrue(wp.val().Volume() < wp_both_volume)   
         self.assertTrue(wp.val().isValid())
 
         # Test extrude until with more that one wire in context
@@ -3130,12 +3130,10 @@ class TestCadQuery(BaseTest):
             .pushPoints([(0,0),(3,3)]).rect(2,3) \
             .extrude(untilNextFace=True)
 
-        nb_faces = wp.faces().size() 
-        self.assertTrue(nb_faces == 20)
+        self.assertTrue(wp.solids().size() == 1)
         self.assertTrue(wp.val().isValid())
 
         #Test until last surf
-
         wp_ref = wp_ref.workplane().move(10,0).box(5,5,5)
         wp = wp_ref.faces(">X[1]").workplane(centerOption="CenterOfMass").circle(2).extrude(untilLastFace=True)
 
@@ -3152,14 +3150,36 @@ class TestCadQuery(BaseTest):
         Test untilNextFace and untilLastFace options of Workplane.cutBlind()
         """
         #Basic test to see if it yields same results as regular cutBlind for similar use case
-        wp_ref = Workplane("XY").box(10,10,10).faces(">Z").workplane().rect(1,1).cutBlind(10)
-        wp = Workplane("XY").box(10,10,10).faces(">Z").workplane().rect(1,1).cutBlind(untilNextFace = True)
+        wp_ref = (Workplane("XY").box(40,10,2)
+            .pushPoints([(-20,0,5),(0,0,5),(20,0,5)])
+            .box(10,10,10))
 
-        self.assertAlmostEquals(wp_ref.val().Volume(), wp.val().Volume())
+        wp_ref_regular_cut = wp_ref.faces(">X[2]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind(-10)
+        wp = wp_ref.faces(">X[2]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind(untilNextFace = True)
+
+        self.assertAlmostEquals(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
+
+
+        wp_last = wp_ref.faces(">X[4]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind(untilLastFace = True)
+        wp_next = wp_ref.faces(">X[4]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind(untilNextFace = True)
+
+        self.assertTrue(wp_last.val().Volume() < wp_next.val().Volume())
+
+        #multiple wire cuts
+
+        wp = (wp_ref
+        .faces(">X[4]").workplane(centerOption="CenterOfMass", offset=0)
+        .rect(2.5,2.5,forConstruction=True)
+        .vertices()
+        .rect(1,1)
+        .cutBlind(untilLastFace=True)
+        )
+
+        self.assertTrue(wp.faces().size() == 50)
 
         with self.assertRaises(ValueError):
             Workplane("XY").box(10,10,10).center(20,0).box(10,10,10) \
-            .faces(">X[1]").workplane().rect(1,1).cutBlind(untilNextFace=True, untilLastFace=True)
+            .faces(">X[1]").workplane().rect(1,1).cutBlind(distanceToCut=10, untilLastFace=True)
 
     def testExtrude(self):
         """
