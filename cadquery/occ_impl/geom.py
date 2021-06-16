@@ -361,6 +361,35 @@ class Matrix:
         else:
             raise IndexError("Out of bounds access into 4x4 matrix: {!r}".format(rc))
 
+    def __repr__(self) -> str:
+        result = "Matrix([[" 
+        for r in range(4):
+            if r!=0:
+                result += "        ["
+            for c in range(4):
+                result += str(self.__getitem__((r,c)))
+                if c!=3:
+                    result += ", "
+                elif r!=3:
+                    result += "],\n"
+                else:
+                    result += "]])"
+        return result
+
+    def __str__(self) -> str:
+        result = "Matrix: [[" 
+        for r in range(4):
+            if r!=0:
+                result += "         ["
+            for c in range(4):
+                result += str(self.__getitem__((r,c)))
+                if c!=3:
+                    result += ", "
+                elif r!=3:
+                    result += "],\n"
+                else:
+                    result += "]]"
+        return result
 
 class Plane(object):
     """A 2D coordinate system in space
