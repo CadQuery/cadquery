@@ -3018,7 +3018,9 @@ class Workplane(object):
             upToFace = 0
         elif untilLastFace:
             upToFace = -1
-        else: 
+        elif untilNextFace and untilLastFace: 
+            raise ValueError("Must specify only one limiting face")
+        else:
             upToFace = None
 
         isUpToFace = untilNextFace or untilLastFace
@@ -3398,13 +3400,13 @@ class Workplane(object):
 
         see :py:meth:`cutThruAll` to cut material from the entire part
 
-        Future Enhancements:
-            Cut Up to Surface
         """
         if untilNextFace:
             upToFace = 0
         elif untilLastFace:
             upToFace = -1
+        elif untilNextFace and untilLastFace: 
+            raise ValueError("Must specify only one limiting face") 
         else: 
             upToFace = None
 
@@ -3482,7 +3484,7 @@ class Workplane(object):
         Make a prismatic solid from the existing set of pending wires.
 
         :param distance: distance to extrude
-        :param boolean both: extrude in both directions symmetrically
+        :param boolean both: extrude in both directions symetrically
         :param upToFace: if specified extrude up to the :upToFace: face, 0 for the next, -1 for the last
         :param additive: specify if extruding or cutting, required param for uptoface algorithm
 
@@ -3519,28 +3521,31 @@ class Workplane(object):
         # multiple sets
 
         toFuse = []
+        taper = 0. if taper is None else taper
 
-        if taper:
-            for ws in wireSets:
-                if upToFace is not None:
-                    uptoFaces = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir, direction=direction)
-                    thisObj = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=uptoFaces[upToFace], additive=additive)
-                else:
-                    thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
+        for ws in wireSets:            
+            if upToFace is not None:                
+                upToFaces = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir, direction=direction)             
+                if self.findSolid().isInside(ws[0].Center()) and additive and upToFace == 0:
+                    upToFace = 1 # extrude until next face outside the solid     
+
+                thisObj = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=upToFaces[upToFace], additive=additive)
+                
+                
+                if both:
+                    upToFaces2 = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir.multiply(-1.0), direction=direction)   
+                    thisObj2 = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, taper=taper, upToFace=upToFaces2[upToFace], additive=additive)
+                    thisObj = Compound.makeCompound([thisObj, thisObj2])
                 toFuse.append(thisObj)
-        else:
-            for ws in wireSets:
-                if upToFace is not None:
-                    uptoFaces = self.findSolid().facesIntersectedByLine(ws[0].Center(), eDir, direction=direction)
-                    thisObj = Solid.dprism(self.findSolid(), Face.makeFromWires(ws[0]), ws, upToFace=uptoFaces[upToFace], additive=additive)
-                else:
-                    thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
+            else:        
+                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper = taper)
                 toFuse.append(thisObj)
 
                 if both:
-                    thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir.multiply(-1.0))
+                    thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir.multiply(-1.0), taper = taper)
                     toFuse.append(thisObj)
 
+            toFuse.append(thisObj)
         return Compound.makeCompound(toFuse)
 
     def _revolve(

@@ -1057,7 +1057,7 @@ class Shape(object):
                 raise ValueError("Unvalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'.")
 
             else:
-                faces.append((intersectMaker.Face(), abs(distance)))
+                faces.append((intersectMaker.Face(), abs(distance))) # will sort all intersected faces by distance whatever the direction is
             intersectMaker.Next()
 
         faces.sort(key = lambda x: x[1])
@@ -3018,7 +3018,9 @@ class Solid(Shape, Mixin3D):
         :param basis: face to perfrom the operation on
         :param profiles: list of profiles
         :param depth: depth of the cut or extrusion
+        :param upToFace: a face to extrude until
         :param thruAll: cut thruAll
+        :additive: set the kind of operation (additive or subtractive)
         :return: a Solid object
         """
 
@@ -3034,18 +3036,9 @@ class Solid(Shape, Mixin3D):
                 additive,
                 False,
         )
+            # from jupyter_cadquery.viewer.client import show
+            # show(upToFace, cad_width = 1500, height = 900, default_edgecolor = (0,0,0), axes=True, reset_camera = False)
             if upToFace is not None:
-            #     # Since BRepFeat_MakeDPrism doesn't throw and error when extruding up to :face: where :wire: 
-            #     # can't be fully projected we add a check beforehand
-            #     proj = BRepOffsetAPI_NormalProjection(face.wrapped)
-            #     proj.Add(basis.wrapped)
-            #     proj.Build()
-            #     projectedProfile = proj.Projection()
-                
-            #     # This might not work if the limiting face isn't planar, in this case it needs rework
-            #     if Face.makeFromWires(Wire(projectedProfile)).Area < Face.makeFromWires(p).Area:
-            #         raise ValueError("The profile to extrude and it's projection on the limit face must be the same")
-
                 feat.Perform(upToFace.wrapped)
             elif thruAll or depth is None:
                 feat.PerformThruAll()
