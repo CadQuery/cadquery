@@ -27,6 +27,7 @@ test:
   requires:
     - pytest
     - docutils
+    - path
   source_files:
     - tests/
   commands:
