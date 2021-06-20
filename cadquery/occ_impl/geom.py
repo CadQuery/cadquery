@@ -977,6 +977,7 @@ class Location(object):
         return Location(self.wrapped * other.wrapped)
 
     def toTuple(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
+        """Convert the location to a translation, rotation tuple."""
 
         T = self.wrapped.Transformation()
         trans = T.TranslationPart()
