@@ -353,7 +353,6 @@ def setup(app):
     setup.confdir = app.confdir
 
     app.add_directive("cq_plot", cq_directive)
-    app.add_directive("cq_vtk", cq_directive_vtk)
     app.add_directive("cadquery", cq_directive_vtk)
 
     # add vtk.js

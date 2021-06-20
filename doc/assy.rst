@@ -205,7 +205,7 @@ Final result
 
 Below is the complete code including the final solve step.
 
-.. cq_vtk::
+.. cadquery::
     :height: 600px
 
     import cadquery as cq
