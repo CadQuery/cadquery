@@ -95,13 +95,7 @@ def exportVTKJS(assy: AssemblyProtocol, path: str):
     Export an assembly to a zipped vtkjs. NB: .zip extensions is added to path.
     """
 
-    renderer = vtkRenderer()
-    renderWindow = vtkRenderWindow()
-    renderWindow.AddRenderer(renderer)
-    toVTK(assy, renderer)
-
-    renderer.ResetCamera()
-    renderer.SetBackground(1, 1, 1)
+    renderWindow = _vtkRenderWindow(assy)
 
     with TemporaryDirectory() as tmpdir:
 
