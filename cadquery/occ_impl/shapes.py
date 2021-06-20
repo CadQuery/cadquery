@@ -20,7 +20,6 @@ from io import BytesIO
 from vtk import (
     vtkPolyData,
     vtkTriangleFilter,
-    vtkTriangleMeshPointNormals,
     vtkPolyDataNormals,
 )
 
@@ -65,7 +64,7 @@ from OCP.BRepAdaptor import (
     BRepAdaptor_HCurve,
     BRepAdaptor_HCompCurve,
 )
-from OCP.Adaptor3d import Adaptor3d_Curve, Adaptor3d_HCurve
+
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
@@ -85,7 +84,6 @@ from OCP.BRepBuilderAPI import (
 # properties used to store mass calculation result
 from OCP.GProp import GProp_GProps
 from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
-from OCP.BRepLProp import BRepLProp_CLProps  # local curve properties
 
 from OCP.BRepPrimAPI import (
     BRepPrimAPI_MakeBox,
@@ -135,7 +133,6 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Cut,
     BRepAlgoAPI_BooleanOperation,
     BRepAlgoAPI_Splitter,
-    BRepAlgoAPI_BuilderAlgo,
 )
 
 from OCP.Geom import (
