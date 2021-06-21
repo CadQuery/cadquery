@@ -362,34 +362,18 @@ class Matrix:
             raise IndexError("Out of bounds access into 4x4 matrix: {!r}".format(rc))
 
     def __repr__(self) -> str:
-        result = "Matrix([[" 
-        for r in range(4):
-            if r!=0:
-                result += "        ["
-            for c in range(4):
-                result += str(self.__getitem__((r,c)))
-                if c!=3:
-                    result += ", "
-                elif r!=3:
-                    result += "],\n"
-                else:
-                    result += "]])"
-        return result
+        """
+        Generate a valid python expression representing this Matrix
+        """
+        list = [ [self.__getitem__((r,c)) for c in range(4)] for r in range(4)]
+        return "Matrix("+"".join(str(list)).replace("],","],\n       ")+")"
 
     def __str__(self) -> str:
-        result = "Matrix: [[" 
-        for r in range(4):
-            if r!=0:
-                result += "         ["
-            for c in range(4):
-                result += str(self.__getitem__((r,c)))
-                if c!=3:
-                    result += ", "
-                elif r!=3:
-                    result += "],\n"
-                else:
-                    result += "]]"
-        return result
+        """
+        Generate an informal string representing this Matrix
+        """
+        list = [ [self.__getitem__((r,c)) for c in range(4)] for r in range(4)]
+        return "Matrix: "+"".join(str(list)).replace("],","],\n        ")
 
 class Plane(object):
     """A 2D coordinate system in space

@@ -341,9 +341,9 @@ class TestCadObjects(BaseTest):
             m["ab"]
 
         # test __repr__ and __str__ methods
-        m = Matrix(identity)
-        mRepr = "Matrix([[1.0, 0.0, 0.0, 0.0],\n        [0.0, 1.0, 0.0, 0.0],\n        [0.0, 0.0, 1.0, 0.0],\n        [0.0, 0.0, 0.0, 1.0]])"
-        mStr = "Matrix: [[1.0, 0.0, 0.0, 0.0],\n         [0.0, 1.0, 0.0, 0.0],\n         [0.0, 0.0, 1.0, 0.0],\n         [0.0, 0.0, 0.0, 1.0]]"
+        m = Matrix(vals4x4)
+        mRepr = "Matrix([[1.0, 0.0, 0.0, 1.0],\n        [0.0, 1.0, 0.0, 2.0],\n        [0.0, 0.0, 1.0, 3.0],\n        [0.0, 0.0, 0.0, 1.0]])"
+        mStr = "Matrix: [[1.0, 0.0, 0.0, 1.0],\n         [0.0, 1.0, 0.0, 2.0],\n         [0.0, 0.0, 1.0, 3.0],\n         [0.0, 0.0, 0.0, 1.0]]"
         self.assertEqual(repr(m),mRepr)
         self.assertEqual(str(m),mStr)
         self.assertEqual(str(eval(repr(m))),mStr)
