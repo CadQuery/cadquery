@@ -1,6 +1,8 @@
 [run]
 branch = True
-omit = cadquery/utils.py
+omit = 
+    cadquery/utils.py
+    cadquery/cq_directive.py
 
 [report]
 exclude_lines =

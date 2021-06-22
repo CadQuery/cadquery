@@ -20,6 +20,7 @@ dependencies:
   - typing_extensions
   - nptyping
   - scipy
+  - path
   - pip
   - pip:
     - "--editable=."

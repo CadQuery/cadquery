@@ -29,6 +29,7 @@ Export Formats
 * AMF
 * TJS
 * VRML
+* VTP
 
 Notes on the Formats
 #######################
@@ -38,6 +39,7 @@ Notes on the Formats
 * STL and AMF files are mesh-based formats which are typically used in additive manufacturing (i.e. 3D printing). AMF files support more features, but are not as universally supported as STL files.
 * TJS is short for ThreeJS, and is a JSON mesh format that is useful for displaying 3D models in web browsers. The TJS format is used to display embedded 3D examples within the CadQuery documentation.
 * VRML is a mesh-based format for representing interactive 3D objects in a web browser.
+* VTP is a mesh-based format used by the VTK library.
 
 Importing DXF
 ##############

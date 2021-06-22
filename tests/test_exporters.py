@@ -98,6 +98,15 @@ class TestExporters(BaseTest):
         # export again to trigger all paths in the code
         exporters.export(self._box(), "out.vrml")
 
+    def testVTP(self):
+
+        exporters.export(self._box(), "out.vtp")
+
+        with open("out.vtp") as f:
+            res = f.read(100)
+
+        assert res.startswith('<?xml version="1.0"?>\n<VTKFile')
+
     def testDXF(self):
 
         exporters.export(self._box().section(), "out.dxf")
