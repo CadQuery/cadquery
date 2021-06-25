@@ -2264,6 +2264,17 @@ class Face(Shape):
 
         return self.__class__(chamfer_builder.Shape()).fix()
 
+    def toPln(self) -> gp_Pln:
+        """
+        Convert this face to a gp_Pln.
+
+        Note the Location of the resulting plane may not equal the center of this face,
+        however the resulting plane will still contain the center of this face.
+        """
+
+        adaptor = BRepAdaptor_Surface(self.wrapped)
+        return adaptor.Plane()
+
 
 class Shell(Shape):
     """
