@@ -77,7 +77,6 @@ interactor.setInteractorStyle(interact_style);
 
 document.addEventListener('DOMContentLoaded', function () {
     document.body.appendChild(rootContainer);
-    interactor.bindEvents(document.body);
 });
 
 function updateViewPort(element, renderer) {
@@ -114,6 +113,7 @@ document.addEventListener('scroll', recomputeViewports);
 
 
 function enterCurrentRenderer(e) {
+  interactor.bindEvents(document.body);
   interact_style.setEnabled(true);
   interactor.setCurrentRenderer(RENDERERS[e.target.id]);
 }
@@ -121,6 +121,7 @@ function enterCurrentRenderer(e) {
 function exitCurrentRenderer(e) {
   interactor.setCurrentRenderer(null);
   interact_style.setEnabled(false);
+  interactor.unbindEvents();
 }
 
 
@@ -136,17 +137,17 @@ function applyStyle(element) {
 window.addEventListener('load', resize);
 
 function render(data, parent_element, ratio){
-    
+
     // Initial setup
     const renderer = vtk.Rendering.Core.vtkRenderer.newInstance({ background: [1, 1, 1 ] });
-        
+
     // iterate over all children children
     for (var el of data){
         var trans = el.position;
         var rot = el.orientation;
         var rgba = el.color;
         var shape = el.shape;
-        
+
         // load the inline data
         var reader = vtk.IO.XML.vtkXMLPolyDataReader.newInstance();
         const textEncoder = new TextEncoder();
@@ -162,30 +163,30 @@ function render(data, parent_element, ratio){
         // set color and position
         actor.getProperty().setColor(rgba.slice(0,3));
         actor.getProperty().setOpacity(rgba[3]);
-        
+
         actor.rotateZ(rot[2]*180/Math.PI);
         actor.rotateY(rot[1]*180/Math.PI);
         actor.rotateX(rot[0]*180/Math.PI);
-        
+
         actor.setPosition(trans);
 
         renderer.addActor(actor);
 
     };
-    
+
     //add the container
     const container = applyStyle(document.createElement("div"));
     parent_element.appendChild(container);
     container.addEventListener('mouseenter', enterCurrentRenderer);
     container.addEventListener('mouseleave', exitCurrentRenderer);
     container.id = ID;
-    
+
     renderWindow.addRenderer(renderer);
     updateViewPort(container, renderer);
     renderer.resetCamera();
-    
+
     RENDERERS[ID] = renderer;
-    ID++;   
+    ID++;
 };
 """
 
