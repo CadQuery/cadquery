@@ -12,14 +12,20 @@ from .occ_impl.solver import (
     ConstraintMarker,
     Constraint as ConstraintPOD,
 )
-from .occ_impl.exporters.assembly import exportAssembly, exportCAF
+from .occ_impl.exporters.assembly import (
+    exportAssembly,
+    exportCAF,
+    exportVTKJS,
+    exportVRML,
+    exportGLTF,
+)
 
 from .selectors import _expression_grammar as _selector_grammar
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
 ConstraintKinds = Literal["Plane", "Point", "Axis", "PointInPlane"]
-ExportLiterals = Literal["STEP", "XML"]
+ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML"]
 
 PATH_DELIM = "/"
 
@@ -450,7 +456,7 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML"):
+            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
@@ -459,6 +465,12 @@ class Assembly(object):
             exportAssembly(self, path)
         elif exportType == "XML":
             exportCAF(self, path)
+        elif exportType == "VRML":
+            exportVRML(self, path)
+        elif exportType == "GLTF":
+            exportGLTF(self, path)
+        elif exportType == "VTKJS":
+            exportVTKJS(self, path)
         else:
             raise ValueError(f"Unknown format: {exportType}")
 
