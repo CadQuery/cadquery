@@ -158,28 +158,37 @@ def test_toJSON(simple_assy, nested_assy, empty_top_assy):
     assert len(r3) == 1
 
 
-def test_save(simple_assy, nested_assy):
+def test_save(nested_assy):
 
-    simple_assy.save("simple.step")
-    assert os.path.exists("simple.step")
+    nested_assy.save("nested.step")
+    assert os.path.exists("nested.step")
 
-    simple_assy.save("simple.xml")
-    assert os.path.exists("simple.xml")
+    nested_assy.save("nested.xml")
+    assert os.path.exists("nested.xml")
 
-    simple_assy.save("simple.step")
-    assert os.path.exists("simple.step")
+    nested_assy.save("nested.step")
+    assert os.path.exists("nested.step")
 
-    simple_assy.save("simple.stp", "STEP")
-    assert os.path.exists("simple.stp")
+    nested_assy.save("nested.stp", "STEP")
+    assert os.path.exists("nested.stp")
 
-    simple_assy.save("simple.caf", "XML")
-    assert os.path.exists("simple.caf")
+    nested_assy.save("nested.caf", "XML")
+    assert os.path.exists("nested.caf")
+
+    nested_assy.save("nested.wrl", "VRML")
+    assert os.path.exists("nested.wrl")
+
+    nested_assy.save("nested.glb", "GLTF")
+    assert os.path.exists("nested.caf")
+
+    nested_assy.save("nested", "VTKJS")
+    assert os.path.exists("nested.zip")
 
     with pytest.raises(ValueError):
-        simple_assy.save("simple.dxf")
+        nested_assy.save("nested.dxf")
 
     with pytest.raises(ValueError):
-        simple_assy.save("simple.step", "DXF")
+        nested_assy.save("nested.step", "DXF")
 
 
 def test_constrain(simple_assy, nested_assy):
