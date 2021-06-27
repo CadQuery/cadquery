@@ -19,7 +19,7 @@ dependencies:
   - ipython
   - typing_extensions
   - nptyping
-  - scipy
+  - nlopt
   - path
   - pip
   - pip:
