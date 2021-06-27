@@ -3001,16 +3001,14 @@ class Workplane(object):
         The returned object is always a CQ object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
-        *  if combine is False, the new value is pushed onto the stack.
+        *  if combine is False, the new value is pushed onto the stack. Note that when extruding until a specified face, combine can be False
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
 
-        FutureEnhancement:
-            Support for non-prismatic extrusion ( IE, sweeping along a profile, not just
-            perpendicular to the plane extrude to surface. this is quite tricky since the surface
-            selected may not be planar
         """
         if isinstance(until, str):
+            if combine is False:
+                raise ValueError("combine can't be set to False when extruding until a face")
             if until.lower() == "next":
                 upToFace = 0
             elif until.lower() == "last":
