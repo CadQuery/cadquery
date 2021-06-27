@@ -163,6 +163,8 @@ class Assembly(object):
     objects: Dict[str, "Assembly"]
     constraints: List[Constraint]
 
+    _solve_result: Optional[Dict[str, Any]]
+
     def __init__(
         self,
         obj: AssemblyObjects = None,
@@ -200,6 +202,8 @@ class Assembly(object):
         self.children = []
         self.constraints = []
         self.objects = {self.name: self}
+
+        self._solve_result = None
 
     def _copy(self) -> "Assembly":
         """
@@ -430,7 +434,7 @@ class Assembly(object):
         solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
 
         # solve
-        locs_new = solver.solve()
+        locs_new, self._solve_result = solver.solve()
 
         # update positions
         for loc_new, n in zip(locs_new, ents):

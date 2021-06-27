@@ -1,10 +1,10 @@
-from typing import Tuple, Union, Any, Callable, List, Optional
+from typing import Tuple, Union, Any, Callable, List, Optional, Dict
 from nptyping import NDArray as Array
 
 from numpy import array, eye, zeros, pi
-from scipy.optimize import minimize
+import nlopt
 
-from OCP.gp import gp_Vec, gp_Pln, gp_Lin, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
+from OCP.gp import gp_Vec, gp_Pln, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
 
 from .geom import Location
 
@@ -240,22 +240,38 @@ class ConstraintSolver(object):
 
         return f, jac
 
-    def solve(self) -> List[Location]:
+    def solve(self) -> Tuple[List[Location], Dict[str, Any]]:
 
         x0 = array([el for el in self.entities]).ravel()
         f, jac = self._cost()
 
-        res = minimize(
-            f,
-            x0,
-            jac=jac,
-            method="BFGS",
-            options=dict(disp=True, gtol=1e-12, maxiter=1000),
+        def func(x, grad):
+
+            if grad.size > 0:
+                grad[:] = jac(x)
+
+            return f(x)
+
+        opt = nlopt.opt(nlopt.LD_CCSAQ, len(x0))
+        opt.set_min_objective(func)
+
+        opt.set_ftol_abs(0)
+        opt.set_ftol_rel(0)
+        opt.set_xtol_rel(1e-14)
+        opt.set_xtol_abs(0)
+        opt.set_maxeval(1000)
+
+        x = opt.optimize(x0)
+        result = {
+            "cost": opt.last_optimum_value(),
+            "iters": opt.get_numevals(),
+            "status": opt.get_stopval(),
+        }
+
+        return (
+            [
+                Location(self._build_transform(*x[NDOF * i : NDOF * (i + 1)]))
+                for i in range(self.ne)
+            ],
+            result,
         )
-
-        x = res.x
-
-        return [
-            Location(self._build_transform(*x[NDOF * i : NDOF * (i + 1)]))
-            for i in range(self.ne)
-        ]
