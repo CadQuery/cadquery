@@ -3107,20 +3107,20 @@ class TestCadQuery(BaseTest):
 
         wp = Workplane("XY").box(10,10,10).center(20,0).box(10,10,10)
         nb_faces = wp.faces().size() 
-        wp = wp_ref.faces(">X[1]").workplane().rect(1,1).extrude(untilNextFace = True)
+        wp = wp_ref.faces(">X[1]").workplane().rect(1,1).extrude("next")
          
         self.assertAlmostEquals(wp_ref_extrude.val().Volume(), wp.val().Volume())
         self.assertTrue(wp.faces().size() - nb_faces == 4)
         
         # Test tapered option and both option
         wp = wp_ref.faces(">X[1]").workplane(centerOption="CenterOfMass", offset=5) \
-            .polygon(5,3).extrude(untilNextFace=True, both=True)
+            .polygon(5,3).extrude("next", both=True)
         wp_both_volume = wp.val().Volume()    
         self.assertTrue(wp.val().isValid())
 
         #taper
         wp = wp_ref.faces(">X[1]").workplane(centerOption="CenterOfMass") \
-            .polygon(5,3).extrude(untilNextFace=True, taper = 5)
+            .polygon(5,3).extrude("next", taper = 5)
             
         self.assertTrue(wp.val().Volume() < wp_both_volume)   
         self.assertTrue(wp.val().isValid())
@@ -3128,20 +3128,20 @@ class TestCadQuery(BaseTest):
         # Test extrude until with more that one wire in context
         wp = wp_ref.faces(">X[1]").workplane(centerOption="CenterOfMass") \
             .pushPoints([(0,0),(3,3)]).rect(2,3) \
-            .extrude(untilNextFace=True)
+            .extrude("next")
 
         self.assertTrue(wp.solids().size() == 1)
         self.assertTrue(wp.val().isValid())
 
         #Test until last surf
         wp_ref = wp_ref.workplane().move(10,0).box(5,5,5)
-        wp = wp_ref.faces(">X[1]").workplane(centerOption="CenterOfMass").circle(2).extrude(untilLastFace=True)
+        wp = wp_ref.faces(">X[1]").workplane(centerOption="CenterOfMass").circle(2).extrude("last")
 
         self.assertTrue(wp.solids().size() == 1)
 
         with self.assertRaises(ValueError):
             Workplane("XY").box(10,10,10).center(20,0).box(10,10,10) \
-            .faces(">X[1]").workplane().rect(1,1).extrude(distance=10, untilLastFace=True)
+            .faces(">X[1]").workplane().rect(1,1).extrude("test")
 
 
 
@@ -3155,13 +3155,13 @@ class TestCadQuery(BaseTest):
             .box(10,10,10))
 
         wp_ref_regular_cut = wp_ref.faces(">X[2]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind(-10)
-        wp = wp_ref.faces(">X[2]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind(untilNextFace = True)
+        wp = wp_ref.faces(">X[2]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind("last")
 
         self.assertAlmostEquals(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
 
 
-        wp_last = wp_ref.faces(">X[4]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind(untilLastFace = True)
-        wp_next = wp_ref.faces(">X[4]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind(untilNextFace = True)
+        wp_last = wp_ref.faces(">X[4]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind("last")
+        wp_next = wp_ref.faces(">X[4]").workplane(centerOption="CenterOfMass").rect(2,2).cutBlind("next")
 
         self.assertTrue(wp_last.val().Volume() < wp_next.val().Volume())
 
@@ -3172,14 +3172,14 @@ class TestCadQuery(BaseTest):
         .rect(2.5,2.5,forConstruction=True)
         .vertices()
         .rect(1,1)
-        .cutBlind(untilLastFace=True)
+        .cutBlind("last")
         )
 
         self.assertTrue(wp.faces().size() == 50)
 
         with self.assertRaises(ValueError):
             Workplane("XY").box(10,10,10).center(20,0).box(10,10,10) \
-            .faces(">X[1]").workplane().rect(1,1).cutBlind(distanceToCut=10, untilLastFace=True)
+            .faces(">X[1]").workplane().rect(1,1).cutBlind("test") 
 
     def testExtrude(self):
         """

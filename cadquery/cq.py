@@ -2978,26 +2978,22 @@ class Workplane(object):
 
     def extrude(
         self: T,
-        distance: Optional[float] = None,
+        until: Union[float, Literal["next","last"]],
         combine: bool = True,
         clean: bool = True,
         both: bool = False,
         taper: Optional[float] = None,
-        untilNextFace: bool = False,
-        untilLastFace: bool = False,
     ) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
-        You must define either :distance: , :untilNextFace: or :untilLastFace:
-
-        :param distance: the distance to extrude, normal to the workplane plane
-        :type distance: float, negative means opposite the normal direction
+       
+        :param until: the distance to extrude, normal to the workplane plane
+        :type until: float, negative means opposite the normal direction
+        :type until: Literal, 'next' set the extrude until the next face orthogonal to the wire normal, 'last' sets the extrusion until the last face
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
         :param float taper: angle for optional tapered extrusion
-        :param boolean untilNextFace: extrude until next face
-        :param boolean untilLastFace: extrude until last face
         :return: a CQ object with the resulting solid selected.
 
         extrude always *adds* material to a part.
@@ -3014,23 +3010,20 @@ class Workplane(object):
             perpendicular to the plane extrude to surface. this is quite tricky since the surface
             selected may not be planar
         """
-        if untilNextFace:
-            upToFace = 0
-        elif untilLastFace:
-            upToFace = -1
-        elif untilNextFace and untilLastFace:
-            raise ValueError("Must specify only one limiting face")
+        if isinstance(until, str):
+            if until.lower() == "next":
+                upToFace = 0
+            elif until.lower() == "last":
+                upToFace = -1
+            else:
+                # FutureEnhancement :
+                # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
+                raise ValueError("Valid option for until face extrusion are 'next' and 'last'")
         else:
             upToFace = None
 
-        isUpToFace = untilNextFace or untilLastFace
-        if (isUpToFace and distance) or (not isUpToFace and not distance):
-            raise ValueError(
-                "You must define either a 'distance' or an 'untilFace' and not both at the same time"
-            )
-
         r = self._extrude(
-            distance, both=both, taper=taper, upToFace=upToFace
+            until, both=both, taper=taper, upToFace=upToFace
         )  # returns a Solid (or a compound if there were multiple)
 
         if combine:
@@ -3375,11 +3368,9 @@ class Workplane(object):
 
     def cutBlind(
         self: T,
-        distanceToCut: Optional[float] = None,
+        until: Union[float, Literal["next","last"]],
         clean: bool = True,
         taper: Optional[float] = None,
-        untilNextFace: bool = False,
-        untilLastFace: bool = False,
     ) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
@@ -3388,9 +3379,10 @@ class Workplane(object):
         Similar to extrude, except that a solid in the parent chain is required to remove material
         from. cutBlind always removes material from a part.
 
-        :param distanceToCut: distance to extrude before cutting
-        :type distanceToCut: float, >0 means in the positive direction of the workplane normal,
+        :param until: distance to extrude before cutting
+        :type until: float, >0 means in the positive direction of the workplane normal,
             <0 means in the negative direction
+        :type until: Literal, 'next' set the cut until the next face orthogonal to the wire normal, 'last' sets the extrusion until the last face
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
         :param boolean untilNextFace: cut material until next face
@@ -3401,27 +3393,24 @@ class Workplane(object):
         see :py:meth:`cutThruAll` to cut material from the entire part
 
         """
-        if untilNextFace:
-            upToFace = 0
-        elif untilLastFace:
-            upToFace = -1
-        elif untilNextFace and untilLastFace:
-            raise ValueError("Must specify only one limiting face")
+        if isinstance(until, str):
+            if until.lower() == "next":
+                upToFace = 0
+            elif until.lower() == "last":
+                upToFace = -1
+            else:
+                # FutureEnhancement :
+                # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
+                raise ValueError("Valid option for until face extrusion are 'next' and 'last'")
         else:
             upToFace = None
 
-        isUpToFace = untilNextFace or untilLastFace
-        if (isUpToFace and distanceToCut) or (not isUpToFace and not distanceToCut):
-            raise ValueError(
-                "You must define either a 'distanceToCut' or an 'untilFace' and not both at the same time"
-            )
-
         # first, make the object
         toCut = self._extrude(
-            distanceToCut, taper=taper, upToFace=upToFace, additive=False
+            until, taper=taper, upToFace=upToFace, additive=False
         )
 
-        if not (untilNextFace or untilLastFace):
+        if isinstance(until, (int, float)):
             # now find a solid in the chain
             solidRef = self.findSolid()
             s = solidRef.cut(toCut)
