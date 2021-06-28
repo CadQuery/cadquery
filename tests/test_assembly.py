@@ -179,7 +179,7 @@ def test_save(nested_assy):
     assert os.path.exists("nested.wrl")
 
     nested_assy.save("nested.glb", "GLTF")
-    assert os.path.exists("nested.caf")
+    assert os.path.exists("nested.glb")
 
     nested_assy.save("nested", "VTKJS")
     assert os.path.exists("nested.zip")
