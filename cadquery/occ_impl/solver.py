@@ -15,8 +15,10 @@ Constraint = Tuple[
 ]
 
 NDOF = 6
-DIR_SCALING = 1e4
-DIFF_EPS = 1e-9
+DIR_SCALING = 1e2
+DIFF_EPS = 1e-10
+TOL = 1e-12
+MAXITER = 2000
 
 
 class ConstraintSolver(object):
@@ -99,9 +101,7 @@ class ConstraintSolver(object):
 
             val = 0 if val is None else val
 
-            return (
-                val - (m1.Transformed(t1).XYZ() - m2.Transformed(t2).XYZ()).Modulus()
-            ) ** 2
+            return val - (m1.Transformed(t1).XYZ() - m2.Transformed(t2).XYZ()).Modulus()
 
         def dir_cost(
             m1: gp_Dir,
@@ -113,9 +113,7 @@ class ConstraintSolver(object):
 
             val = pi if val is None else val
 
-            return (
-                DIR_SCALING * (val - m1.Transformed(t1).Angle(m2.Transformed(t2))) ** 2
-            )
+            return DIR_SCALING * (val - m1.Transformed(t1).Angle(m2.Transformed(t2)))
 
         def pnt_pln_cost(
             m1: gp_Pnt,
@@ -130,7 +128,7 @@ class ConstraintSolver(object):
             m2_located = m2.Transformed(t2)
             # offset in the plane's normal direction by val:
             m2_located.Translate(gp_Vec(m2_located.Axis().Direction()).Multiplied(val))
-            return m2_located.SquareDistance(m1.Transformed(t1))
+            return m2_located.Distance(m1.Transformed(t1))
 
         def f(x):
             """
@@ -152,11 +150,11 @@ class ConstraintSolver(object):
 
                 for m1, m2 in zip(ms1, ms2):
                     if isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pnt):
-                        rv += pt_cost(m1, m2, t1, t2, d)
+                        rv += pt_cost(m1, m2, t1, t2, d) ** 2
                     elif isinstance(m1, gp_Dir):
-                        rv += dir_cost(m1, m2, t1, t2, d)
+                        rv += dir_cost(m1, m2, t1, t2, d) ** 2
                     elif isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pln):
-                        rv += pnt_pln_cost(m1, m2, t1, t2, d)
+                        rv += pnt_pln_cost(m1, m2, t1, t2, d) ** 2
                     else:
                         raise NotImplementedError(f"{m1,m2}")
 
@@ -196,11 +194,11 @@ class ConstraintSolver(object):
 
                             if k1 not in self.locked:
                                 tmp1 = pt_cost(m1, m2, t1j, t2, d)
-                                rv[k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
+                                rv[k1 * NDOF + j] += 2 * tmp * (tmp1 - tmp) / DIFF_EPS
 
                             if k2 not in self.locked:
                                 tmp2 = pt_cost(m1, m2, t1, t2j, d)
-                                rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
+                                rv[k2 * NDOF + j] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
 
                     elif isinstance(m1, gp_Dir):
                         tmp = dir_cost(m1, m2, t1, t2, d)
@@ -212,11 +210,11 @@ class ConstraintSolver(object):
 
                             if k1 not in self.locked:
                                 tmp1 = dir_cost(m1, m2, t1j, t2, d)
-                                rv[k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
+                                rv[k1 * NDOF + j] += 2 * tmp * (tmp1 - tmp) / DIFF_EPS
 
                             if k2 not in self.locked:
                                 tmp2 = dir_cost(m1, m2, t1, t2j, d)
-                                rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
+                                rv[k2 * NDOF + j] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
 
                     elif isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pln):
                         tmp = pnt_pln_cost(m1, m2, t1, t2, d)
@@ -228,11 +226,11 @@ class ConstraintSolver(object):
 
                             if k1 not in self.locked:
                                 tmp1 = pnt_pln_cost(m1, m2, t1j, t2, d)
-                                rv[k1 * NDOF + j] += (tmp1 - tmp) / DIFF_EPS
+                                rv[k1 * NDOF + j] += 2 * tmp * (tmp1 - tmp) / DIFF_EPS
 
                             if k2 not in self.locked:
                                 tmp2 = pnt_pln_cost(m1, m2, t1, t2j, d)
-                                rv[k2 * NDOF + j] += (tmp2 - tmp) / DIFF_EPS
+                                rv[k2 * NDOF + j] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
                     else:
                         raise NotImplementedError(f"{m1,m2}")
 
@@ -257,9 +255,9 @@ class ConstraintSolver(object):
 
         opt.set_ftol_abs(0)
         opt.set_ftol_rel(0)
-        opt.set_xtol_rel(1e-14)
+        opt.set_xtol_rel(TOL)
         opt.set_xtol_abs(0)
-        opt.set_maxeval(1000)
+        opt.set_maxeval(MAXITER)
 
         x = opt.optimize(x0)
         result = {
