@@ -3187,7 +3187,7 @@ class Compound(Shape, Mixin3D):
         args = tuple(self) + toFuse
 
         if len(args) <= 1:
-            rv: Shape = self
+            rv: Shape = args[0]
         else:
             rv = self._bool_op(args[:1], args[1:], fuse_op)
 
