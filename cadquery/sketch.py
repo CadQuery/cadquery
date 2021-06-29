@@ -1,6 +1,6 @@
 from typing import Union, Optional, List, Dict, Callable, overload, Tuple, Iterable, Any
 from typing_extensions import Literal
-from math import tan, sin, cos, pi
+from math import tan, sin, cos, pi, radians
 
 from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound
 from .occ_impl.geom import Location, Vector
@@ -103,10 +103,10 @@ class Sketch(object):
 
         v1 = Vector(-w / 2, -h / 2)
         v2 = Vector(w / 2, -h / 2)
-        v3 = Vector(-w / 2 + h / tan(a1), h / 2)
-        v4 = Vector(w / 2 - h / tan(a2 if a2 else a1), h / 2)
+        v3 = Vector(-w / 2 + h / tan(radians(a1)), h / 2)
+        v4 = Vector(w / 2 - h / tan(radians(a2) if a2 else radians(a1)), h / 2)
 
-        return self.polygon((v1, v2, v3, v4), angle, mode, tag)
+        return self.polygon((v1, v2, v4, v3, v1), angle, mode, tag)
 
     def slot(
         self,
@@ -142,7 +142,10 @@ class Sketch(object):
         tag: Optional[str] = None,
     ) -> "Sketch":
 
-        pts = [r * Vector(sin(i * 2 * pi / n), cos(i * 2 * pi / n)) for i in range(n)]
+        pts = [
+            Vector(r * sin(i * 2 * pi / n), r * cos(i * 2 * pi / n))
+            for i in range(n + 1)
+        ]
 
         return self.polygon(pts, angle, mode, tag)
 
