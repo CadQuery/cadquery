@@ -2,6 +2,8 @@ from typing import Union, Optional, List, Dict, Callable, overload, Tuple, Itera
 from typing_extensions import Literal
 from math import tan, sin, cos, pi, radians
 
+from .selectors import StringSyntaxSelector
+
 from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound
 from .occ_impl.geom import Location, Vector
 
@@ -13,24 +15,24 @@ class Sketch(object):
 
     parent: Any
 
-    faces: Compound
-    wires: List[Wire]
-    edges: List[Edge]
+    _faces: Compound
+    _wires: List[Wire]
+    _edges: List[Edge]
 
-    selection: List[Union[Shape, Location]]
+    _selection: List[Union[Shape, Location]]
 
-    tags: Dict[str, Shape]
+    _tags: Dict[str, Shape]
 
     def __init__(self, parent: Any = None):
 
         self.parent = parent
 
-        self.faces = Compound.makeCompound(())
-        self.wires = []
-        self.edges = []
+        self._faces = Compound.makeCompound(())
+        self._wires = []
+        self._edges = []
 
-        self.selection = []
-        self.tags = {}
+        self._selection = []
+        self._tags = {}
 
     # face construction
     def face(
@@ -175,7 +177,10 @@ class Sketch(object):
         ...
 
     def push(self, locs: Iterable[Location]) -> "Sketch":
-        ...
+
+        self._selection = list(locs)
+
+        return self
 
     def each(
         self,
@@ -186,8 +191,8 @@ class Sketch(object):
 
         res: Union[Face, "Sketch"] = []
 
-        if self.selection:
-            for el in self.selection:
+        if self._selection:
+            for el in self._selection:
                 if isinstance(el, Location):
                     loc = el
                 elif isinstance(el, Shape):
@@ -200,12 +205,12 @@ class Sketch(object):
             res.append(callback(Location()))
 
         if tag:
-            self.tags[tag] = res
+            self._tags[tag] = res
 
         if mode == "a":
-            self.faces = self.faces.fuse(*res)
+            self._faces = self._faces.fuse(*res)
         elif mode == "s":
-            self.faces = self.faces.cut(*res)
+            self._faces = self._faces.cut(*res)
         else:
             raise ValueError(f"Invalid mode: {mode}")
 
@@ -216,36 +221,72 @@ class Sketch(object):
     def offset(
         self, d: float, mode: Modes = "a", tag: Optional[str] = None
     ) -> "Sketch":
-        ...
+
+        rv = (el.offset2D(d) for el in self._selection if isinstance(el, Wire))
+
+        for el in rv:
+            self.face(el, mode=mode, tag=tag)
+
+        return self
 
     def fillet(self, d: float) -> "Sketch":
-        ...
+
+        self._faces = Compound.makeCompound(
+            el.fillet2D(d, self._selection) for el in self._faces
+        )
+
+        return self
 
     def chamfer(self, d: float) -> "Sketch":
-        ...
+
+        self._faces = Compound.makeCompound(
+            el.chamfer2D(d, self._selection) for el in self._faces
+        )
+
+        return self
 
     # selection
 
-    def faces(self, s: str) -> "Sketch":
-        ...
+    def _select(
+        self, s: Optional[str], kind: Literal["Faces", "Wires", "Edges", "Vertices"]
+    ) -> "Sketch":
 
-    def wires(self, s: str) -> "Sketch":
-        ...
+        rv = []
 
-    def edges(self, s: str) -> "Sketch":
-        ...
+        if self._selection:
+            for el in self._selection:
+                rv.extend(getattr(el, kind)())
+        else:
+            rv.extend(getattr(self._faces, kind)())
 
-    def vertices(self, s: str) -> "Sketch":
-        ...
+        self._selection = StringSyntaxSelector(s).filter(rv) if s else rv
+
+        return self
+
+    def faces(self, s: Optional[str] = None) -> "Sketch":
+
+        return self._select(s, "Faces")
+
+    def wires(self, s: Optional[str] = None) -> "Sketch":
+
+        return self._select(s, "Wires")
+
+    def edges(self, s: Optional[str] = None) -> "Sketch":
+
+        return self._select(s, "Edges")
+
+    def vertices(self, s: Optional[str] = None) -> "Sketch":
+
+        return self._select(s, "Vertices")
 
     def reset(self) -> "Sketch":
 
-        self.selection = []
+        self._selection = []
         return self
 
     def delete(self) -> "Sketch":
 
-        for obj in self.selection:
+        for obj in self._selection:
             if isinstance(obj, Face):
                 self.faces.remove(obj)
             elif isinstance(obj, Wire):
@@ -253,7 +294,7 @@ class Sketch(object):
             else:
                 self.edges.remove(obj)
 
-        self.selection = []
+        self._selection = []
 
         return self
 
