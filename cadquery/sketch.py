@@ -213,9 +213,11 @@ class Sketch(object):
 
         return self.push(Location(el.Center()) * l for l in locs for el in selection)
 
-    def distribute(self, n: int, rotate: bool = True) -> "Sketch":
+    def distribute(
+        self, n: int, start: float = 0, stop: float = 1, rotate: bool = True
+    ) -> "Sketch":
 
-        params = [i / (n - 1) for i in range(n)]
+        params = [start + i * (stop - start) / (n - 1) for i in range(n)]
 
         locs = []
         for el in self._selection:
@@ -242,7 +244,7 @@ class Sketch(object):
         tag: Optional[str] = None,
     ) -> "Sketch":
 
-        res: Union[Face, "Sketch"] = []
+        res: List[Union[Face, "Sketch"]] = []
 
         if self._selection:
             for el in self._selection:
@@ -264,6 +266,9 @@ class Sketch(object):
             self._faces = self._faces.fuse(*res)
         elif mode == "s":
             self._faces = self._faces.cut(*res)
+        elif mode == "c":
+            if not tag:
+                raise ValueError("No tag specified - the geometry will be unreachable")
         else:
             raise ValueError(f"Invalid mode: {mode}")
 
@@ -301,12 +306,18 @@ class Sketch(object):
     # selection
 
     def _select(
-        self, s: Optional[str], kind: Literal["Faces", "Wires", "Edges", "Vertices"]
+        self,
+        s: Optional[str],
+        kind: Literal["Faces", "Wires", "Edges", "Vertices"],
+        tag: Optional[str] = None,
     ) -> "Sketch":
 
         rv = []
 
-        if self._selection:
+        if tag:
+            for el in self._tags[tag]:
+                rv.extend(getattr(el, kind)())
+        elif self._selection:
             for el in self._selection:
                 rv.extend(getattr(el, kind)())
         else:
@@ -316,21 +327,21 @@ class Sketch(object):
 
         return self
 
-    def faces(self, s: Optional[str] = None) -> "Sketch":
+    def faces(self, s: Optional[str] = None, tag: Optional[str] = None) -> "Sketch":
 
-        return self._select(s, "Faces")
+        return self._select(s, "Faces", tag)
 
-    def wires(self, s: Optional[str] = None) -> "Sketch":
+    def wires(self, s: Optional[str] = None, tag: Optional[str] = None) -> "Sketch":
 
-        return self._select(s, "Wires")
+        return self._select(s, "Wires", tag)
 
-    def edges(self, s: Optional[str] = None) -> "Sketch":
+    def edges(self, s: Optional[str] = None, tag: Optional[str] = None) -> "Sketch":
 
-        return self._select(s, "Edges")
+        return self._select(s, "Edges", tag)
 
-    def vertices(self, s: Optional[str] = None) -> "Sketch":
+    def vertices(self, s: Optional[str] = None, tag: Optional[str] = None) -> "Sketch":
 
-        return self._select(s, "Vertices")
+        return self._select(s, "Vertices", tag)
 
     def reset(self) -> "Sketch":
 

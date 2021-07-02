@@ -1260,7 +1260,7 @@ class Mixin1D(object):
         curve = self._geomAdaptor()
 
         l = GCPnts_AbscissaPoint.Length_s(curve)
-        return GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
+        return GCPnts_AbscissaPoint(curve, l * d, curve.FirstParameter()).Parameter()
 
     def tangentAt(
         self: Mixin1DProtocol,
