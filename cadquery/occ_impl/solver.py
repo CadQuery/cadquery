@@ -266,10 +266,8 @@ class ConstraintSolver(object):
             "status": opt.last_optimize_result(),
         }
 
-        return (
-            [
-                Location(self._build_transform(*x[NDOF * i : NDOF * (i + 1)]))
-                for i in range(self.ne)
-            ],
-            result,
-        )
+        locs = [
+            Location(self._build_transform(*x[NDOF * i : NDOF * (i + 1)]))
+            for i in range(self.ne)
+        ]
+        return locs, result
