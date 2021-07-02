@@ -263,7 +263,7 @@ class ConstraintSolver(object):
         result = {
             "cost": opt.last_optimum_value(),
             "iters": opt.get_numevals(),
-            "status": opt.get_stopval(),
+            "status": opt.last_optimize_result(),
         }
 
         return (
