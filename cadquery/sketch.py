@@ -1,6 +1,7 @@
 from typing import Union, Optional, List, Dict, Callable, overload, Tuple, Iterable, Any
 from typing_extensions import Literal
 from math import tan, sin, cos, pi, radians
+from itertools import product
 
 from .selectors import StringSyntaxSelector
 
@@ -166,15 +167,67 @@ class Sketch(object):
     # distribute locations
 
     def rarray(self, xs: float, ys: float, nx: int, ny: int) -> "Sketch":
-        ...
+
+        locs = []
+
+        offset = Vector((nx - 1) * xs, (ny - 1) * ys) * 0.5
+        for i, j in product(range(nx), range(ny)):
+            locs.append(Location(Vector(i * xs, j * ys) - offset))
+
+        selection = self._selection if self._selection else (Vector(),)
+
+        return self.push(Location(el.Center()) * l for l in locs for el in selection)
 
     def parray(
         self, r: float, a1: float, a2: float, n: int, rotate: bool = True
     ) -> "Sketch":
-        ...
+
+        if n < 2:
+            raise ValueError(f"At least 2 elements required, requested {n}")
+
+        x = r * sin(radians(a1))
+        y = r * cos(radians(a1))
+
+        if rotate:
+            loc = Location(Vector(x, y), Vector(0, 0, 1), -a1)
+        else:
+            loc = Location(Vector(x, y))
+
+        locs = [loc]
+
+        angle = (a2 - a1) / (n - 1)
+
+        for i in range(1, n):
+            phi = a1 + (angle * i)
+            x = r * sin(radians(phi))
+            y = r * cos(radians(phi))
+
+            if rotate:
+                loc = Location(Vector(x, y), Vector(0, 0, 1), -phi)
+            else:
+                loc = Location(Vector(x, y))
+
+            locs.append(loc)
+
+        selection = self._selection if self._selection else (Vector(),)
+
+        return self.push(Location(el.Center()) * l for l in locs for el in selection)
 
     def distribute(self, n: int, rotate: bool = True) -> "Sketch":
-        ...
+
+        params = [i / (n - 1) for i in range(n)]
+
+        locs = []
+        for el in self._selection:
+            if isinstance(el, (Wire, Edge)):
+                if rotate:
+                    locs.extend(el.locations(params, planar=True))
+                else:
+                    locs.extend(Location(v) for v in el.positions(params))
+            else:
+                raise ValueError(f"Unsupported selection: {el}")
+
+        return self.push(locs)
 
     def push(self, locs: Iterable[Location]) -> "Sketch":
 

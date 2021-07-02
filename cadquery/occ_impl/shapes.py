@@ -1386,11 +1386,13 @@ class Mixin1D(object):
         d: float,
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
+        planar: bool = False,
     ) -> Location:
         """Generate a location along the underlying curve.
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
+        :param planar: planar mode
         :return: A Location object representing local coordinate system at the specified distance.
         """
 
@@ -1415,9 +1417,14 @@ class Mixin1D(object):
         pnt = curve.Value(param)
 
         T = gp_Trsf()
-        T.SetTransformation(
-            gp_Ax3(pnt, gp_Dir(tangent.XYZ()), gp_Dir(normal.XYZ())), gp_Ax3()
-        )
+        if planar:
+            T.SetTransformation(
+                gp_Ax3(pnt, gp_Dir(0, 0, 1), gp_Dir(normal.XYZ())), gp_Ax3()
+            )
+        else:
+            T.SetTransformation(
+                gp_Ax3(pnt, gp_Dir(tangent.XYZ()), gp_Dir(normal.XYZ())), gp_Ax3()
+            )
 
         return Location(TopLoc_Location(T))
 
@@ -1426,15 +1433,17 @@ class Mixin1D(object):
         ds: Iterable[float],
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
+        planar: bool = False,
     ) -> List[Location]:
         """Generate location along the curve
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
+        :param planar: planar mode
         :return: A list of Location objects representing local coordinate systems at the specified distances.
         """
 
-        return [self.locationAt(d, mode, frame) for d in ds]
+        return [self.locationAt(d, mode, frame, planar) for d in ds]
 
 
 class Edge(Shape, Mixin1D):
