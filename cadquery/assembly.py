@@ -135,9 +135,6 @@ class Constraint(object):
         else:
             center = arg.Center()
 
-        if center.Length > 1e98:
-            raise ValueError(f"{arg} has unrealistic Center of {center}")
-
         return center.toPnt()
 
     def toPOD(self) -> ConstraintPOD:
