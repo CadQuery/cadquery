@@ -2,6 +2,7 @@ import pytest
 import os
 from itertools import product
 
+import nlopt
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
     exportAssembly,
@@ -227,6 +228,10 @@ def test_constrain(simple_assy, nested_assy):
 
     simple_assy.solve()
 
+    assert simple_assy._solve_result["status"] == nlopt.XTOL_REACHED
+    assert simple_assy._solve_result["cost"] < 1e-9
+    assert simple_assy._solve_result["iters"] > 0
+
     assert (
         simple_assy.loc.wrapped.Transformation()
         .TranslationPart()
@@ -241,6 +246,10 @@ def test_constrain(simple_assy, nested_assy):
     )
 
     nested_assy.solve()
+
+    assert nested_assy._solve_result["status"] == nlopt.XTOL_REACHED
+    assert nested_assy._solve_result["cost"] < 1e-9
+    assert nested_assy._solve_result["iters"] > 0
 
     assert (
         nested_assy.children[0]
