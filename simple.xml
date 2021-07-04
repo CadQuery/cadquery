@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document format="XmlOcaf" xmlns="http://www.opencascade.org/OCAF/XML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opencascade.org/OCAF/XML">
- <info date="2021-06-05" schemav="0" DocVersion="9" objnb="54">
+ <info date="2021-07-04" schemav="0" DocVersion="9" objnb="54">
   <iitem>Copyright: Open Cascade, 2001-2002</iitem>
   <iitem>REFERENCE_COUNTER: 0</iitem>
   <iitem>MODIFICATION_COUNTER: 1</iitem>
@@ -36,7 +36,7 @@
        <shape tshape="+70" index="1"/>
       </news>
      </TNaming_NamedShape>
-     <TDataStd_Name id="13" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab8980eb-c589-11eb-a52c-309c23d9770a_part</TDataStd_Name>
+     <TDataStd_Name id="13" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">fe517959-dcdb-11eb-8937-309c23d9770a_part</TDataStd_Name>
      <TDataStd_TreeNode id="14" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="15 "/>
     </label>
     <label tag="3">
@@ -48,7 +48,7 @@
      </TNaming_NamedShape>
      <TDataStd_UAttribute id="17" guid="5b896b00-3adf-11d4-b9b7-0060b0ee281b"/>
      <TDF_TagSource id="18">1</TDF_TagSource>
-     <TDataStd_Name id="19" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab8980eb-c589-11eb-a52c-309c23d9770a</TDataStd_Name>
+     <TDataStd_Name id="19" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">fe517959-dcdb-11eb-8937-309c23d9770a</TDataStd_Name>
      <TDataStd_TreeNode id="20" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="21 "/>
      <label tag="1">
       <TDataStd_TreeNode id="15" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>
@@ -61,7 +61,7 @@
        <shape tshape="+107" index="1"/>
       </news>
      </TNaming_NamedShape>
-     <TDataStd_Name id="23" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab8980ec-c589-11eb-8236-309c23d9770a_part</TDataStd_Name>
+     <TDataStd_Name id="23" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">fe51795a-dcdb-11eb-acff-309c23d9770a_part</TDataStd_Name>
      <TDataStd_TreeNode id="24" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="25 "/>
     </label>
     <label tag="5">
@@ -73,7 +73,7 @@
      </TNaming_NamedShape>
      <TDataStd_UAttribute id="27" guid="5b896b00-3adf-11d4-b9b7-0060b0ee281b"/>
      <TDF_TagSource id="28">1</TDF_TagSource>
-     <TDataStd_Name id="29" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab8980ec-c589-11eb-8236-309c23d9770a</TDataStd_Name>
+     <TDataStd_Name id="29" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">fe51795a-dcdb-11eb-acff-309c23d9770a</TDataStd_Name>
      <TDataStd_TreeNode id="30" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="31 "/>
      <label tag="1">
       <TDataStd_TreeNode id="25" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>
@@ -86,7 +86,7 @@
        <shape tshape="+35" index="1"/>
       </news>
      </TNaming_NamedShape>
-     <TDataStd_Name id="33" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab8980ea-c589-11eb-a2ae-309c23d9770a_part</TDataStd_Name>
+     <TDataStd_Name id="33" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">fe517958-dcdb-11eb-a03f-309c23d9770a_part</TDataStd_Name>
      <TDataStd_TreeNode id="34" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="35 "/>
     </label>
     <label tag="7">
@@ -98,7 +98,7 @@
      </TNaming_NamedShape>
      <TDataStd_UAttribute id="37" guid="5b896b00-3adf-11d4-b9b7-0060b0ee281b"/>
      <TDF_TagSource id="38">3</TDF_TagSource>
-     <TDataStd_Name id="39" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">ab8980ea-c589-11eb-a2ae-309c23d9770a</TDataStd_Name>
+     <TDataStd_Name id="39" nameguid="2a96b608-ec8b-11d0-bee7-080009dc3333">fe517958-dcdb-11eb-a03f-309c23d9770a</TDataStd_Name>
      <TDataStd_TreeNode id="40" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b" children="11 "/>
      <label tag="1">
       <TDataStd_TreeNode id="35" treeid="5b896afe-3adf-11d4-b9b7-0060b0ee281b"/>

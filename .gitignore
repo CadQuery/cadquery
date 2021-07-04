@@ -9,3 +9,4 @@ target/*
 MANIFEST
 out.*
 res?.dxf
+*.xml

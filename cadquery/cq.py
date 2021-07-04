@@ -2978,7 +2978,7 @@ class Workplane(object):
 
     def extrude(
         self: T,
-        until: Union[float, Literal["next","last"], Face],
+        until: Union[float, Literal["next", "last"], Face],
         combine: bool = True,
         clean: bool = True,
         both: bool = False,
@@ -3009,7 +3009,9 @@ class Workplane(object):
         """
         if isinstance(until, str):
             if combine is False:
-                raise ValueError("combine can't be set to False when extruding until a face")
+                raise ValueError(
+                    "combine can't be set to False when extruding until a face"
+                )
             if until.lower() == "next":
                 upToFace = 0
             elif until.lower() == "last":
@@ -3017,7 +3019,9 @@ class Workplane(object):
             else:
                 # FutureEnhancement :
                 # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
-                raise ValueError("Valid option for until face extrusion are 'next' and 'last'")
+                raise ValueError(
+                    "Valid option for until face extrusion are 'next' and 'last'"
+                )
         elif isinstance(until, Face):
             upToFace = until
         else:
@@ -3369,7 +3373,7 @@ class Workplane(object):
 
     def cutBlind(
         self: T,
-        until: Union[float, Literal["next","last"], Face],
+        until: Union[float, Literal["next", "last"], Face],
         clean: bool = True,
         taper: Optional[float] = None,
     ) -> T:
@@ -3403,16 +3407,16 @@ class Workplane(object):
             else:
                 # FutureEnhancement :
                 # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
-                raise ValueError("Valid option for until face extrusion are 'next' and 'last'")
+                raise ValueError(
+                    "Valid option for until face extrusion are 'next' and 'last'"
+                )
         elif isinstance(until, Face):
             upToFace = until
         else:
             upToFace = None
 
         # first, make the object
-        toCut = self._extrude(
-            until, taper=taper, upToFace=upToFace, additive=False
-        )
+        toCut = self._extrude(until, taper=taper, upToFace=upToFace, additive=False)
 
         if isinstance(until, (int, float)):
             # now find a solid in the chain
@@ -3525,19 +3529,22 @@ class Workplane(object):
         taper = 0.0 if taper is None else taper
         baseSolid = None
         for ws in wireSets:
-            baseSolid = self.findSolid() if baseSolid is None else thisObj
-
             if upToFace is not None:
-                if isinstance(upToFace, int):                    
+                baseSolid = self.findSolid() if baseSolid is None else thisObj
+                if isinstance(upToFace, int):
                     facesList = self.findSolid().facesIntersectedByLine(
                         ws[0].Center(), eDir, direction=direction
                     )
                     limitFace = facesList[upToFace]
-                    if baseSolid.isInside(ws[0].Center()) and additive and upToFace == 0:
+                    if (
+                        baseSolid.isInside(ws[0].Center())
+                        and additive
+                        and upToFace == 0
+                    ):
                         upToFace = 1  # extrude until next face outside the solid
                 else:
                     limitFace = upToFace
-               
+
                 thisObj = Solid.dprism(
                     baseSolid,
                     Face.makeFromWires(ws[0]),
