@@ -2978,7 +2978,7 @@ class Workplane(object):
 
     def extrude(
         self: T,
-        until: Union[float, Literal["next","last"]],
+        until: Union[float, Literal["next","last"], Face],
         combine: bool = True,
         clean: bool = True,
         both: bool = False,
@@ -2990,6 +2990,7 @@ class Workplane(object):
         :param until: the distance to extrude, normal to the workplane plane
         :type until: float, negative means opposite the normal direction
         :type until: Literal, 'next' set the extrude until the next face orthogonal to the wire normal, 'last' sets the extrusion until the last face
+        :type until: Face, extrude until the provided face
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
@@ -3017,6 +3018,8 @@ class Workplane(object):
                 # FutureEnhancement :
                 # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
                 raise ValueError("Valid option for until face extrusion are 'next' and 'last'")
+        elif isinstance(until, Face):
+            upToFace = until
         else:
             upToFace = None
 
@@ -3366,7 +3369,7 @@ class Workplane(object):
 
     def cutBlind(
         self: T,
-        until: Union[float, Literal["next","last"]],
+        until: Union[float, Literal["next","last"], Face],
         clean: bool = True,
         taper: Optional[float] = None,
     ) -> T:
@@ -3381,6 +3384,7 @@ class Workplane(object):
         :type until: float, >0 means in the positive direction of the workplane normal,
             <0 means in the negative direction
         :type until: Literal, 'next' set the cut until the next face orthogonal to the wire normal, 'last' sets the extrusion until the last face
+        :type until: Face, cut until the provided face
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
         :param boolean untilNextFace: cut material until next face
@@ -3400,6 +3404,8 @@ class Workplane(object):
                 # FutureEnhancement :
                 # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
                 raise ValueError("Valid option for until face extrusion are 'next' and 'last'")
+        elif isinstance(until, Face):
+            upToFace = until
         else:
             upToFace = None
 
@@ -3474,7 +3480,7 @@ class Workplane(object):
         distance: Optional[float] = None,
         both: bool = False,
         taper: Optional[float] = None,
-        upToFace: Optional[int] = None,
+        upToFace: Optional[Union[int, Face]] = None,
         additive: bool = True,
     ) -> Compound:
         """
@@ -3519,35 +3525,39 @@ class Workplane(object):
         taper = 0.0 if taper is None else taper
         baseSolid = None
         for ws in wireSets:
+            baseSolid = self.findSolid() if baseSolid is None else thisObj
+
             if upToFace is not None:
-                upToFaces = self.findSolid().facesIntersectedByLine(
-                    ws[0].Center(), eDir, direction=direction
-                )
-
-                baseSolid = self.findSolid() if baseSolid is None else thisObj
-
-                if baseSolid.isInside(ws[0].Center()) and additive and upToFace == 0:
-                    upToFace = 1  # extrude until next face outside the solid
-
+                if isinstance(upToFace, int):                    
+                    facesList = self.findSolid().facesIntersectedByLine(
+                        ws[0].Center(), eDir, direction=direction
+                    )
+                    limitFace = facesList[upToFace]
+                    if baseSolid.isInside(ws[0].Center()) and additive and upToFace == 0:
+                        upToFace = 1  # extrude until next face outside the solid
+                else:
+                    limitFace = upToFace
+               
                 thisObj = Solid.dprism(
                     baseSolid,
                     Face.makeFromWires(ws[0]),
                     ws,
                     taper=taper,
-                    upToFace=upToFaces[upToFace],
+                    upToFace=limitFace,
                     additive=additive,
                 )
 
                 if both:
-                    upToFaces2 = self.findSolid().facesIntersectedByLine(
+                    facesList2 = self.findSolid().facesIntersectedByLine(
                         ws[0].Center(), eDir.multiply(-1.0), direction=direction
                     )
+                    limitFace2 = facesList2[upToFace]
                     thisObj2 = Solid.dprism(
                         self.findSolid(),
                         Face.makeFromWires(ws[0]),
                         ws,
                         taper=taper,
-                        upToFace=upToFaces2[upToFace],
+                        upToFace=limitFace2,
                         additive=additive,
                     )
                     thisObj = Compound.makeCompound([thisObj, thisObj2])

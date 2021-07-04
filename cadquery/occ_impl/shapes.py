@@ -3044,7 +3044,7 @@ class Solid(Shape, Mixin3D):
         :param depth: depth of the cut or extrusion
         :param upToFace: a face to extrude until
         :param thruAll: cut thruAll
-        :additive: set the kind of operation (additive or subtractive)
+        :param additive: set the kind of operation (additive or subtractive)
         :return: a Solid object
         """
 

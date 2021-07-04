@@ -3142,8 +3142,13 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError):
             Workplane("XY").box(10,10,10).center(20,0).box(10,10,10) \
             .faces(">X[1]").workplane().rect(1,1).extrude("test")
+    
+        #Test extrude until arbitrary face
+        arbitrary_face = Workplane("XZ", origin=(0,30,0)).transformed((20,0,0)).box(10,10,10).faces("<Y").val()
+        wp = Workplane().box(5,5,5).faces(">Y").workplane().circle(2).extrude(until=arbitrary_face)
+        extremity_face_area = wp.faces(">Y").val().Area()
 
-
+        self.assertAlmostEqual(extremity_face_area,13.372852288495501, 5)
 
     def testCutBlindUntilFace(self):
         """
@@ -3180,6 +3185,17 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError):
             Workplane("XY").box(10,10,10).center(20,0).box(10,10,10) \
             .faces(">X[1]").workplane().rect(1,1).cutBlind("test") 
+        
+        #Test extrusion to an arbitrary face
+
+        arbitrary_face = Workplane("XZ", origin=(0,5,0)).transformed((20,0,0)).box(10,10,10).faces("<Y").val()
+        wp = Workplane().box(5,5,5).faces(">Y").workplane().circle(2).cutBlind(until=arbitrary_face)
+        inner_face_area =  wp.faces("<<Y[3]").val().Area()
+
+        self.assertAlmostEqual(inner_face_area,13.372852288495503,5)
+
+
+
 
     def testExtrude(self):
         """
