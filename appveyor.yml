@@ -1,4 +1,7 @@
-image: Visual Studio 2019
+image:
+    - Visual Studio 2019
+    - Ubuntu
+    - macOS
 
 shallow_clone: true
 
@@ -7,21 +10,49 @@ platform:
 
 environment:
     matrix:
-        - PYTHON_VERSION: 3.7
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+          PYTHON_VERSION: 3.7
           MINICONDA_DIRNAME: C:\Miniconda37-x64
-        - PYTHON_VERSION: 3.8
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+          PYTHON_VERSION: 3.8
           MINICONDA_DIRNAME: C:\Miniconda38-x64
+        - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+          PYTHON_VERSION: 3.9
+          MINICONDA_DIRNAME: C:\Miniconda39-x64
+        - APPVEYOR_BUILD_WORKER_IMAGE: macOS
+          PYTHON_VERSION: 3.7
+        - APPVEYOR_BUILD_WORKER_IMAGE: macOS
+          PYTHON_VERSION: 3.8
+        - APPVEYOR_BUILD_WORKER_IMAGE: macOS
+          PYTHON_VERSION: 3.9
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+          PYTHON_VERSION: 3.7
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+          PYTHON_VERSION: 3.8
+        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+          PYTHON_VERSION: 3.9
 
     ANACONDA_TOKEN:
         secure: $(anaconda_token)
 
+init:
+    - cmd: set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
+    - sh: if [[ "$APPVEYOR_BUILD_WORKER_IMAGE" == "Ubuntu" ]]; then
+              OS=Linux ;
+          else
+              OS=MacOSX ;
+          fi ;
+          wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$OS-x86_64.sh -O miniconda.sh
+    - sh: bash miniconda.sh -b -p $HOME/miniconda;
+    - sh: export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
+
 install:
-    - set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
-    - conda config --set always_yes yes
+    - conda config --set always_yes yes --set changeps1 no;
     - conda update -q conda
     - conda env create -f environment.yml
     - activate cadquery
-    - conda install -c conda-forge -c defaults -c cadquery python=%PYTHON_VERSION%
+    - conda install -c conda-forge -c defaults -c cadquery=master python=%PYTHON_VERSION%
+    - sh: pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
 
 build: false
 
