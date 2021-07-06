@@ -53,6 +53,7 @@ install:
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
     - pip install pytest
     - pip install pytest-cov
+    - pip install path
 
 build: false
 
