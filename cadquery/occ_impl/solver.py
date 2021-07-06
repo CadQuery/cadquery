@@ -256,7 +256,7 @@ class ConstraintSolver(object):
         opt.set_ftol_abs(0)
         opt.set_ftol_rel(0)
         opt.set_xtol_rel(TOL)
-        opt.set_xtol_abs(0)
+        opt.set_xtol_abs(TOL * 1e-3)
         opt.set_maxeval(MAXITER)
 
         x = opt.optimize(x0)

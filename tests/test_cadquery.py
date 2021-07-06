@@ -4595,3 +4595,26 @@ class TestCadQuery(BaseTest):
 
         self.assertTrue(si.isValid())
         self.assertAlmostEqual(si.Volume(), 1)
+
+    def testFaceToPln(self):
+
+        origin = (1, 2, 3)
+        normal = (1, 1, 1)
+        f0 = Face.makePlane(length=None, width=None, basePnt=origin, dir=normal)
+        p0 = f0.toPln()
+
+        self.assertTrue(Vector(p0.Location()) == Vector(origin))
+        self.assertTrue(Vector(p0.Axis().Direction()) == Vector(normal).normalized())
+
+        origin1 = (0, 0, -3)
+        normal1 = (-1, 1, -1)
+        f1 = Face.makePlane(length=0.1, width=100, basePnt=origin1, dir=normal1)
+        p1 = f1.toPln()
+
+        self.assertTrue(Vector(p1.Location()) == Vector(origin1))
+        self.assertTrue(Vector(p1.Axis().Direction()) == Vector(normal1).normalized())
+
+        f2 = Workplane().box(1, 1, 10, centered=False).faces(">Z").val()
+        p2 = f2.toPln()
+        self.assertTrue(p2.Contains(f2.Center().toPnt(), 0.1))
+        self.assertTrue(Vector(p2.Axis().Direction()) == f2.normalAt())
