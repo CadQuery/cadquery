@@ -39,7 +39,7 @@ install:
     - conda update -q conda
     - conda env create -f environment.yml
     - activate cadquery
-    - conda install -c conda-forge -c defaults -c cadquery=master python=%PYTHON_VERSION%
+    - conda install -c conda-forge -c defaults -c cadquery cadquery=master python=%PYTHON_VERSION%
     - sh: pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
 
 build: false
