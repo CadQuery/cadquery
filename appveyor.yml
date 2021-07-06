@@ -54,6 +54,7 @@ install:
     - pip install pytest
     - pip install pytest-cov
     - pip install path
+    - pip install docutils
 
 build: false
 
