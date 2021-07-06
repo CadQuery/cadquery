@@ -12,7 +12,7 @@ environment:
           MINICONDA_DIRNAME: C:\Miniconda38-x64
           PYTHON_VERSION: 3.8
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-          MINICONDA_DIRNAME: C:\Miniconda39-x64
+          MINICONDA_DIRNAME: C:\Miniconda38-x64
           PYTHON_VERSION: 3.9
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
           PYTHON_VERSION: 3.7
@@ -46,12 +46,15 @@ install:
     - conda update -q conda
     - conda env create -f environment.yml
     - activate cadquery
-    - conda install -c conda-forge -c defaults -c cadquery cadquery=master python=%PYTHON_VERSION%
+    - cmd: conda install -c conda-forge -c defaults -c cadquery cadquery=master python=%PYTHON_VERSION%
+    - sh: conda install -c conda-forge -c defaults -c cadquery cadquery=master python=$PYTHON_VERSION
     - sh: pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
 
 build: false
 
 test_script:
+    - black . --diff --check
+    - mypy cadquery
     - pytest -v --cov
 
 on_success:
