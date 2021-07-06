@@ -11,26 +11,14 @@ platform:
 environment:
     matrix:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-          PYTHON_VERSION: 3.7
           MINICONDA_DIRNAME: C:\Miniconda37-x64
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-          PYTHON_VERSION: 3.8
           MINICONDA_DIRNAME: C:\Miniconda38-x64
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-          PYTHON_VERSION: 3.9
           MINICONDA_DIRNAME: C:\Miniconda39-x64
-        - APPVEYOR_BUILD_WORKER_IMAGE: macOS
-          PYTHON_VERSION: 3.7
-        - APPVEYOR_BUILD_WORKER_IMAGE: macOS
-          PYTHON_VERSION: 3.8
-        - APPVEYOR_BUILD_WORKER_IMAGE: macOS
-          PYTHON_VERSION: 3.9
-        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-          PYTHON_VERSION: 3.7
-        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-          PYTHON_VERSION: 3.8
-        - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-          PYTHON_VERSION: 3.9
+        - PYTHON_VERSION: 3.7
+        - PYTHON_VERSION: 3.8
+        - PYTHON_VERSION: 3.9
 
     ANACONDA_TOKEN:
         secure: $(anaconda_token)
