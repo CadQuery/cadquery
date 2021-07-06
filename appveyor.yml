@@ -48,6 +48,8 @@ install:
     - activate cadquery
     - cmd: conda install -c conda-forge -c defaults -c cadquery cadquery=master python=%PYTHON_VERSION%
     - sh: conda install -c conda-forge -c defaults -c cadquery cadquery=master python=$PYTHON_VERSION
+    - conda install black=19.10b0
+    - conda install mypy
     - sh: pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
 
 build: false
