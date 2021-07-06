@@ -47,7 +47,7 @@ init:
     - sh: export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
 
 install:
-    - conda config --set always_yes yes --set changeps1 no;
+    - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda env create -f environment.yml
     - activate cadquery
