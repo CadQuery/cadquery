@@ -3928,7 +3928,7 @@ class Workplane(object):
         :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :param font: font name
         :param fontPath: path to font file
-        :param kind: font type (default: regular)
+        :param kind: font type
         :param halign: horizontal alignment
         :param valign: vertical alignment
         :return: a CQ object with the resulting solid selected
