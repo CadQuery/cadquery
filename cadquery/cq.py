@@ -3926,7 +3926,7 @@ class Workplane(object):
         :param cut: True to cut the resulting solid from the parent solids if found
         :param combine: True to combine the resulting solid with parent solids if found
         :param clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param font: font name (default: Arial)
+        :param font: font name
         :param fontPath: path to font file
         :param kind: font type (default: regular)
         :param halign: horizontal alignment (default: center)
