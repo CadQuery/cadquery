@@ -340,7 +340,7 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(IndexError):
             m["ab"]
 
-        # test __repr__ and __str__ methods
+        # test __repr__ methods
         m = Matrix(vals4x4)
         mRepr = "Matrix([[1.0, 0.0, 0.0, 1.0],\n        [0.0, 1.0, 0.0, 2.0],\n        [0.0, 0.0, 1.0, 3.0],\n        [0.0, 0.0, 0.0, 1.0]])"
         self.assertEqual(repr(m),mRepr)
