@@ -2,9 +2,15 @@ import pytest
 import os
 from itertools import product
 
+import nlopt
 import cadquery as cq
-from cadquery.occ_impl.exporters.assembly import exportAssembly, exportCAF
-
+from cadquery.occ_impl.exporters.assembly import (
+    exportAssembly,
+    exportCAF,
+    exportVTKJS,
+    exportVRML,
+)
+from cadquery.occ_impl.assembly import toJSON
 from OCP.gp import gp_XYZ
 
 
@@ -45,6 +51,17 @@ def nested_assy():
 
 
 @pytest.fixture
+def empty_top_assy():
+
+    b1 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b1, color=cq.Color("green"))
+
+    return assy
+
+
+@pytest.fixture
 def box_and_vertex():
 
     box_wp = cq.Workplane().box(1, 2, 3)
@@ -52,6 +69,15 @@ def box_and_vertex():
     vertex_wp = cq.Workplane().newObject([cq.Vertex.makeVertex(0, 0, 0)])
     assy.add(vertex_wp, name="vertex")
     return assy
+
+
+def solve_result_check(solve_result: dict) -> bool:
+    checks = [
+        solve_result["status"] == nlopt.XTOL_REACHED,
+        solve_result["cost"] < 1e-9,
+        solve_result["iters"] > 0,
+    ]
+    return all(checks)
 
 
 def test_color():
@@ -113,6 +139,33 @@ def test_native_export(simple_assy):
 
     # only sanity check for now
     assert os.path.exists("assy.xml")
+
+
+def test_vtkjs_export(nested_assy):
+
+    exportVTKJS(nested_assy, "assy")
+
+    # only sanity check for now
+    assert os.path.exists("assy.zip")
+
+
+def test_vrml_export(simple_assy):
+
+    exportVRML(simple_assy, "assy.wrl")
+
+    # only sanity check for now
+    assert os.path.exists("assy.wrl")
+
+
+def test_toJSON(simple_assy, nested_assy, empty_top_assy):
+
+    r1 = toJSON(simple_assy)
+    r2 = toJSON(simple_assy)
+    r3 = toJSON(empty_top_assy)
+
+    assert len(r1) == 3
+    assert len(r2) == 3
+    assert len(r3) == 1
 
 
 def test_save(simple_assy, nested_assy):
@@ -184,6 +237,8 @@ def test_constrain(simple_assy, nested_assy):
 
     simple_assy.solve()
 
+    assert solve_result_check(simple_assy._solve_result)
+
     assert (
         simple_assy.loc.wrapped.Transformation()
         .TranslationPart()
@@ -198,6 +253,8 @@ def test_constrain(simple_assy, nested_assy):
     )
 
     nested_assy.solve()
+
+    assert solve_result_check(nested_assy._solve_result)
 
     assert (
         nested_assy.children[0]
@@ -250,6 +307,7 @@ def test_PointInPlane_constraint(box_and_vertex):
         param=0,
     )
     box_and_vertex.solve()
+    solve_result_check(box_and_vertex._solve_result)
 
     x_pos = (
         box_and_vertex.children[0].loc.wrapped.Transformation().TranslationPart().X()
@@ -259,6 +317,7 @@ def test_PointInPlane_constraint(box_and_vertex):
     # add a second PointInPlane constraint
     box_and_vertex.constrain("vertex", "box@faces@>Y", "PointInPlane", param=0)
     box_and_vertex.solve()
+    solve_result_check(box_and_vertex._solve_result)
 
     vertex_translation_part = (
         box_and_vertex.children[0].loc.wrapped.Transformation().TranslationPart()
@@ -271,6 +330,7 @@ def test_PointInPlane_constraint(box_and_vertex):
     # add a third PointInPlane constraint
     box_and_vertex.constrain("vertex", "box@faces@>Z", "PointInPlane", param=0)
     box_and_vertex.solve()
+    solve_result_check(box_and_vertex._solve_result)
 
     # should now be on the >X and >Y and >Z corner
     assert (
@@ -290,6 +350,7 @@ def test_PointInPlane_3_parts(box_and_vertex):
     box_and_vertex.constrain("vertex", "cylinder@faces@>Z", "PointInPlane")
     box_and_vertex.constrain("vertex", "box@faces@>X", "PointInPlane")
     box_and_vertex.solve()
+    solve_result_check(box_and_vertex._solve_result)
     vertex_translation_part = (
         box_and_vertex.children[0].loc.wrapped.Transformation().TranslationPart()
     )
@@ -304,6 +365,7 @@ def test_PointInPlane_param(box_and_vertex, param0, param1):
     box_and_vertex.constrain("vertex", "box@faces@>Z", "PointInPlane", param=param0)
     box_and_vertex.constrain("vertex", "box@faces@>X", "PointInPlane", param=param1)
     box_and_vertex.solve()
+    solve_result_check(box_and_vertex._solve_result)
 
     vertex_translation_part = (
         box_and_vertex.children[0].loc.wrapped.Transformation().TranslationPart()
@@ -312,9 +374,9 @@ def test_PointInPlane_param(box_and_vertex, param0, param1):
     assert vertex_translation_part.X() - 0.5 == pytest.approx(param1, abs=1e-6)
 
 
-def test_constraint_getPlane():
+def test_constraint_getPln():
     """
-    Test that _getPlane does the right thing with different arguments
+    Test that _getPln does the right thing with different arguments
     """
     ids = (0, 1)
     sublocs = (cq.Location(), cq.Location())
@@ -325,11 +387,19 @@ def test_constraint_getPlane():
     def fail_this(shape0):
         c0 = make_constraint(shape0)
         with pytest.raises(ValueError):
-            c0._getPlane(c0.args[0])
+            c0._getPln(c0.args[0])
+
+    def resulting_pln(shape0):
+        c0 = make_constraint(shape0)
+        return c0._getPln(c0.args[0])
 
     def resulting_plane(shape0):
-        c0 = make_constraint(shape0)
-        return c0._getPlane(c0.args[0])
+        p0 = resulting_pln(shape0)
+        return cq.Plane(
+            cq.Vector(p0.Location()),
+            cq.Vector(p0.XAxis().Direction()),
+            cq.Vector(p0.Axis().Direction()),
+        )
 
     # point should fail
     fail_this(cq.Vertex.makeVertex(0, 0, 0))
@@ -371,7 +441,7 @@ def test_constraint_getPlane():
     wonky_shape = cq.Wire.makePolygon(points3)
     fail_this(wonky_shape)
 
-    # all faces should succeed
+    # all makePlane faces should succeed
     for length, width in product([None, 10], [None, 11]):
         f0 = cq.Face.makePlane(
             length=length, width=width, basePnt=(1, 2, 3), dir=(1, 0, 0)
@@ -430,3 +500,36 @@ def test_toCompound(simple_assy, nested_assy):
     assert cq.Vector(0, 0, 18) in [x.Center() for x in c3.Faces()]
     # also check with bounding box
     assert c3.BoundingBox().zlen == pytest.approx(18)
+
+
+@pytest.mark.parametrize("origin", [(0, 0, 0), (10, -10, 10)])
+@pytest.mark.parametrize("normal", [(0, 0, 1), (-1, -1, 1)])
+def test_infinite_face_constraint_PointInPlane(origin, normal):
+    """
+    An OCCT infinite face has a center at (1e99, 1e99), but when a user uses it
+    in a constraint, the center should be basePnt.
+    """
+
+    f0 = cq.Face.makePlane(length=None, width=None, basePnt=origin, dir=normal)
+
+    c0 = cq.assembly.Constraint(
+        ("point", "plane"),
+        (cq.Vertex.makeVertex(10, 10, 10), f0),
+        sublocs=(cq.Location(), cq.Location()),
+        kind="PointInPlane",
+    )
+    p0 = c0._getPln(c0.args[1])  # a gp_Pln
+    derived_origin = cq.Vector(p0.Location())
+    assert derived_origin == cq.Vector(origin)
+
+
+@pytest.mark.parametrize("kind", ["Plane", "PointInPlane", "Point"])
+def test_infinite_face_constraint_Plane(kind):
+
+    assy = cq.Assembly(cq.Workplane().sphere(1), name="part0")
+    assy.add(cq.Workplane().sphere(1), name="part1")
+    assy.constrain(
+        "part0", cq.Face.makePlane(), "part1", cq.Face.makePlane(), kind,
+    )
+    assy.solve()
+    assert solve_result_check(assy._solve_result)

@@ -12,6 +12,7 @@ from OCP.gp import (
     gp_Trsf,
     gp_GTrsf,
     gp_XYZ,
+    gp_EulerSequence,
     gp,
 )
 from OCP.Bnd import Bnd_Box
@@ -981,3 +982,15 @@ class Location(object):
     def __mul__(self, other: "Location") -> "Location":
 
         return Location(self.wrapped * other.wrapped)
+
+    def toTuple(self) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
+        """Convert the location to a translation, rotation tuple."""
+
+        T = self.wrapped.Transformation()
+        trans = T.TranslationPart()
+        rot = T.GetRotation()
+
+        rv_trans = (trans.X(), trans.Y(), trans.Z())
+        rv_rot = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
+
+        return rv_trans, rv_rot

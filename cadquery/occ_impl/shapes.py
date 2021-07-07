@@ -15,6 +15,14 @@ from typing import (
 )
 from typing_extensions import Literal, Protocol
 
+from io import BytesIO
+
+from vtk import (
+    vtkPolyData,
+    vtkTriangleFilter,
+    vtkPolyDataNormals,
+)
+
 from .geom import Vector, BoundBox, Plane, Location, Matrix
 
 import OCP.TopAbs as ta  # Tolopolgy type enum
@@ -56,7 +64,7 @@ from OCP.BRepAdaptor import (
     BRepAdaptor_HCurve,
     BRepAdaptor_HCompCurve,
 )
-from OCP.Adaptor3d import Adaptor3d_Curve, Adaptor3d_HCurve
+
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
@@ -76,7 +84,6 @@ from OCP.BRepBuilderAPI import (
 # properties used to store mass calculation result
 from OCP.GProp import GProp_GProps
 from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
-from OCP.BRepLProp import BRepLProp_CLProps  # local curve properties
 
 from OCP.BRepPrimAPI import (
     BRepPrimAPI_MakeBox,
@@ -92,7 +99,7 @@ from OCP.BRepPrimAPI import (
 from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
 
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
-from OCP.BRep import BRep_Tool
+from OCP.BRep import BRep_Tool, BRep_Builder
 
 from OCP.TopoDS import (
     TopoDS,
@@ -126,7 +133,6 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Cut,
     BRepAlgoAPI_BooleanOperation,
     BRepAlgoAPI_Splitter,
-    BRepAlgoAPI_BuilderAlgo,
 )
 
 from OCP.Geom import (
@@ -216,6 +222,9 @@ from OCP.GeomFill import (
     GeomFill_CorrectedFrenet,
     GeomFill_TrihedronLaw,
 )
+
+from OCP.IVtkOCC import IVtkOCC_Shape, IVtkOCC_ShapeMesher
+from OCP.IVtkVTK import IVtkVTK_ShapeData
 
 # for catching exceptions
 from OCP.Standard import Standard_NoSuchObject, Standard_Failure
@@ -448,12 +457,29 @@ class Shape(object):
 
         return writer.Write(fileName)
 
-    def exportBrep(self, fileName: str) -> bool:
+    def exportBrep(self, f: Union[str, BytesIO]) -> bool:
         """
         Export this shape to a BREP file
         """
 
-        return BRepTools.Write_s(self.wrapped, fileName)
+        rv = BRepTools.Write_s(self.wrapped, f)
+
+        return True if rv is None else rv
+
+    @classmethod
+    def importBrep(cls, f: Union[str, BytesIO]) -> "Shape":
+        """
+        Import shape from a BREP file
+        """
+        s = TopoDS_Shape()
+        builder = BRep_Builder()
+
+        BRepTools.Read_s(s, f, builder)
+
+        if s.IsNull():
+            raise ValueError(f"Could not import {f}")
+
+        return cls.cast(s)
 
     def geomType(self) -> Geoms:
         """
@@ -1072,14 +1098,51 @@ class Shape(object):
 
         return vertices, triangles
 
-    def _repr_html_(self):
+    def toVtkPolyData(
+        self, tolerance: float, angularTolerance: float = 0.1, normals: bool = True
+    ) -> vtkPolyData:
+        """
+        Convert shape to vtkPolyData
+        """
+
+        vtk_shape = IVtkOCC_Shape(self.wrapped)
+        shape_data = IVtkVTK_ShapeData()
+        shape_mesher = IVtkOCC_ShapeMesher(
+            tolerance, angularTolerance, theNbUIsos=0, theNbVIsos=0
+        )
+
+        shape_mesher.Build(vtk_shape, shape_data)
+
+        rv = shape_data.getVtkPolyData()
+
+        # convert to traingles and split edges
+        t_filter = vtkTriangleFilter()
+        t_filter.SetInputData(rv)
+        t_filter.Update()
+
+        rv = t_filter.GetOutput()
+
+        # compute normals
+        if normals:
+            n_filter = vtkPolyDataNormals()
+            n_filter.SetComputePointNormals(True)
+            n_filter.SetComputeCellNormals(True)
+            n_filter.SetFeatureAngle(360)
+            n_filter.SetInputData(rv)
+            n_filter.Update()
+
+            rv = n_filter.GetOutput()
+
+        return rv
+
+    def _repr_javascript_(self):
         """
         Jupyter 3D representation support
         """
 
         from .jupyter_tools import display
 
-        return display(self)
+        return display(self)._repr_javascript_()
 
 
 class ShapeProtocol(Protocol):
@@ -2200,6 +2263,17 @@ class Face(Shape):
         chamfer_builder.Build()
 
         return self.__class__(chamfer_builder.Shape()).fix()
+
+    def toPln(self) -> gp_Pln:
+        """
+        Convert this face to a gp_Pln.
+
+        Note the Location of the resulting plane may not equal the center of this face,
+        however the resulting plane will still contain the center of this face.
+        """
+
+        adaptor = BRepAdaptor_Surface(self.wrapped)
+        return adaptor.Plane()
 
 
 class Shell(Shape):
