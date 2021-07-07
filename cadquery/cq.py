@@ -3933,7 +3933,7 @@ class Workplane(object):
         :param valign: vertical alignment
         :return: a CQ object with the resulting solid selected
 
-        The returned object is always a CQ object, and depends on whether combine is True, and
+        The returned object is always a Workplane object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
