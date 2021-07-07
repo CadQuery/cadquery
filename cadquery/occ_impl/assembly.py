@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple, Dict, overload, Optional
+from typing import Iterable, Tuple, Dict, overload, Optional, Any, List
 from typing_extensions import Protocol
 
 from OCP.TDocStd import TDocStd_Document
@@ -10,8 +10,11 @@ from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
 
+from vtk import vtkActor, vtkPolyDataMapper as vtkMapper, vtkRenderer
+
 from .geom import Location
 from .shapes import Shape, Compound
+from .exporters.vtk import toString
 
 
 class Color(object):
@@ -59,6 +62,15 @@ class Color(object):
             self.wrapped = Quantity_ColorRGBA(r, g, b, a)
         else:
             raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
+
+    def toTuple(self) -> Tuple[float, float, float, float]:
+        """
+        Convert Color to RGB tuple.
+        """
+        a = self.wrapped.Alpha()
+        rgb = self.wrapped.GetRGB()
+
+        return (rgb.Red(), rgb.Green(), rgb.Blue(), a)
 
 
 class AssemblyProtocol(Protocol):
@@ -155,3 +167,71 @@ def toCAF(
     tool.UpdateAssemblies()
 
     return top, doc
+
+
+def toVTK(
+    assy: AssemblyProtocol,
+    renderer: vtkRenderer = vtkRenderer(),
+    loc: Location = Location(),
+    color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
+    tolerance: float = 1e-3,
+) -> vtkRenderer:
+
+    loc = loc * assy.loc
+    trans, rot = loc.toTuple()
+
+    if assy.color:
+        color = assy.color.toTuple()
+
+    if assy.shapes:
+        data = Compound.makeCompound(assy.shapes).toVtkPolyData(tolerance)
+
+        mapper = vtkMapper()
+        mapper.SetInputData(data)
+
+        actor = vtkActor()
+        actor.SetMapper(mapper)
+        actor.SetPosition(*trans)
+        actor.SetOrientation(*rot)
+        actor.GetProperty().SetColor(*color[:3])
+        actor.GetProperty().SetOpacity(color[3])
+
+        renderer.AddActor(actor)
+
+    for child in assy.children:
+        renderer = toVTK(child, renderer, loc, color, tolerance)
+
+    return renderer
+
+
+def toJSON(
+    assy: AssemblyProtocol,
+    loc: Location = Location(),
+    color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
+    tolerance: float = 1e-3,
+) -> List[Dict[str, Any]]:
+
+    loc = loc * assy.loc
+    trans, rot = loc.toTuple()
+
+    if assy.color:
+        color = assy.color.toTuple()
+
+    rv = []
+
+    if assy.shapes:
+        val: Any = {}
+
+        data = toString(Compound.makeCompound(assy.shapes), tolerance)
+
+        val["shape"] = data
+        val["color"] = color
+        val["position"] = trans
+        val["orientation"] = rot
+
+        rv.append(val)
+
+    for child in assy.children:
+        rv.extend(toJSON(child, loc, color, tolerance))
+
+    return rv
