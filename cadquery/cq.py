@@ -3942,7 +3942,7 @@ class Workplane(object):
 
         Examples::
 
-            cq.Workplane().text("CadQuery",5,1)
+            cq.Workplane().text("CadQuery", 5, 1)
 
         Specify the font (name), and kind to use an installed system font::
 
