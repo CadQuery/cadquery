@@ -3930,7 +3930,7 @@ class Workplane(object):
         :param fontPath: path to font file
         :param kind: font type (default: regular)
         :param halign: horizontal alignment
-        :param valign: vertical alignment (default: center)
+        :param valign: vertical alignment
         :return: a CQ object with the resulting solid selected
 
         The returned object is always a CQ object, and depends on whether combine is True, and
