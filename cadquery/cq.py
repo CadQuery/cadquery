@@ -3919,8 +3919,6 @@ class Workplane(object):
         """
         Create a 3D text
 
-        :param self:
-        :type self: Workplane
         :param txt: text to be rendered
         :param fontsize: size of the font in model units
         :param distance: the distance to extrude or cut, normal to the workplane plane
