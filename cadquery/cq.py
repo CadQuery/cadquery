@@ -3950,7 +3950,7 @@ class Workplane(object):
 
         Specify fontPath to use a font from a given file::
 
-            cq.Workplane().text("CadQuery",5,1, fontPath="/opt/fonts/texgyrecursor-bold.otf")
+            cq.Workplane().text("CadQuery", 5, 1, fontPath="/opt/fonts/texgyrecursor-bold.otf")
 
         Cutting text into a solid::
 
