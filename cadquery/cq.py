@@ -3954,7 +3954,7 @@ class Workplane(object):
 
         Cutting text into a solid::
 
-            cq.Workplane().box(8,8,8).faces(">Z").workplane().text("Z", 5,-1.0)
+            cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, -1.0)
 
         """
         r = Compound.makeText(
