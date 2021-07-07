@@ -343,10 +343,8 @@ class TestCadObjects(BaseTest):
         # test __repr__ and __str__ methods
         m = Matrix(vals4x4)
         mRepr = "Matrix([[1.0, 0.0, 0.0, 1.0],\n        [0.0, 1.0, 0.0, 2.0],\n        [0.0, 0.0, 1.0, 3.0],\n        [0.0, 0.0, 0.0, 1.0]])"
-        mStr = "Matrix: [[1.0, 0.0, 0.0, 1.0],\n         [0.0, 1.0, 0.0, 2.0],\n         [0.0, 0.0, 1.0, 3.0],\n         [0.0, 0.0, 0.0, 1.0]]"
         self.assertEqual(repr(m),mRepr)
-        self.assertEqual(str(m),mStr)
-        self.assertEqual(str(eval(repr(m))),mStr)
+        self.assertEqual(str(eval(repr(m))),mRepr)
 
     def testTranslate(self):
         e = Edge.makeCircle(2, (1, 2, 3))

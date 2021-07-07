@@ -365,15 +365,9 @@ class Matrix:
         """
         Generate a valid python expression representing this Matrix
         """
-        matrix_str = ",\n        ".join(str(self.transposed_list()[i::4]) for i in range(4))
+        matrix_transposed = self.transposed_list()
+        matrix_str = ",\n        ".join(str(matrix_transposed[i::4]) for i in range(4))
         return f"Matrix([{matrix_str}])"
-
-    def __str__(self) -> str:
-        """
-        Generate an informal string representing this Matrix
-        """
-        matrix_str = ",\n         ".join(str(self.transposed_list()[i::4]) for i in range(4))
-        return f"Matrix: [{matrix_str}]"
 
 class Plane(object):
     """A 2D coordinate system in space
