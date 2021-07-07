@@ -3946,7 +3946,7 @@ class Workplane(object):
 
         Specify the font (name), and kind to use an installed system font::
 
-            cq.Workplane().text("CadQuery",5,1,font="Liberation Sans Narrow", kind="italic")
+            cq.Workplane().text("CadQuery", 5, 1, font="Liberation Sans Narrow", kind="italic")
 
         Specify fontPath to use a font from a given file::
 
