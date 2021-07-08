@@ -401,6 +401,18 @@ class Sketch(object):
     def assemble(self, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
         ...
 
+    # constraints
+    @overload
+    def constrain(self, tag: str, constraint: str, arg: Any) -> "Sketch":
+        ...
+
+    @overload
+    def constrain(self, tag1: str, tag2: str, constraint: str, arg: Any) -> "Sketch":
+        ...
+
+    def solve(self) -> "Sketch":
+        ...
+
     # misc
 
     def finalize(self) -> Any:
