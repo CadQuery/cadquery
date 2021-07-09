@@ -25,6 +25,8 @@ init:
 install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
+    - cmd: conda init cmd.exe
+    - sh: conda init bash
     - conda env create -f environment.yml
     - cmd: conda activate cadquery
     - sh: activate cadquery
