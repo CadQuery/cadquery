@@ -44,13 +44,15 @@ init:
 install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - pwsh: ((Get-Content -path environment.yml -Raw) -replace 'python>=3.6',"python=$PYTHON_VERSION") | Set-Content -Path environment.yml
-    - sh: sed -i 's/python>=3.6/python=$PYTHON_VERSION/g' environment.yml
+    # - pwsh: ((Get-Content -path environment.yml -Raw) -replace 'python>=3.6',"python=$PYTHON_VERSION") | Set-Content -Path environment.yml
+    # - sh: sed -i 's/python>=3.6/python=$PYTHON_VERSION/g' environment.yml
     - conda env create -f environment.yml
     - activate cadquery
     #- cmd: conda install -c conda-forge -c defaults -c cadquery python=%PYTHON_VERSION%
     #- sh: conda install -c conda-forge -c defaults -c cadquery python=$PYTHON_VERSION
     #- pip install black=19.10b0
+    - cmd: conda install python=%PYTHON_VERSION%
+    - sh: conda install python=$PYTHON_VERSION
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
     #- pip install mypy
     #- pip install pytest
