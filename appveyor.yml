@@ -44,17 +44,19 @@ init:
 install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - sed -i 's/  - pip:/  - mypy>0.9\n  - black=19.10b0\n  - pip:/' environment.yml
+    - sed -i 's/python>=3.6/python=$PYTHON_VERSION/g' environment.yml
     - conda env create -f environment.yml
     - activate cadquery
-    - cmd: conda install -c conda-forge -c defaults -c cadquery python=%PYTHON_VERSION%
-    - sh: conda install -c conda-forge -c defaults -c cadquery python=$PYTHON_VERSION
+    #- cmd: conda install -c conda-forge -c defaults -c cadquery python=%PYTHON_VERSION%
+    #- sh: conda install -c conda-forge -c defaults -c cadquery python=$PYTHON_VERSION
+    #- pip install black=19.10b0
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
-    - pip install pytest
-    - pip install pytest-cov
-    - pip install path
-    - pip install docutils
-    - pip install codecov
+    #- pip install mypy
+    #- pip install pytest
+    #- pip install pytest-cov
+    #- pip install path
+    #- pip install docutils
+    #- pip install codecov
 
 build: false
 
