@@ -44,7 +44,7 @@ init:
 install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - pwsh: ((Get-Content -path environment.yml -Raw) -replace 'python>=3.6',"python=$PYTHON_VERSION") | Set-Content -Path environment.yml
+    - pwsh: ((Get-Content -path environment.yml -Raw) -replace 'python>=3.6',"python=$env:PYTHON_VERSION") | Set-Content -Path environment.yml
     - sh: sed -i 's/python>=3.6/python=$PYTHON_VERSION/g' environment.yml
     - pwsh: type environment.yml
     - conda env create -f environment.yml
