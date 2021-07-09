@@ -27,9 +27,10 @@ install:
     - conda update -q conda
     - cmd: conda init cmd.exe
     - sh: conda init bash
+    - sh: source ~/miniconda3/etc/profile.d/conda.sh
     - conda env create -f environment.yml
     - cmd: conda activate cadquery
-    - sh: activate cadquery
+    - sh: conda activate cadquery
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
 
 build: false
