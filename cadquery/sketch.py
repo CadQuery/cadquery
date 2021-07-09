@@ -2,6 +2,7 @@ from typing import Union, Optional, List, Dict, Callable, overload, Tuple, Itera
 from typing_extensions import Literal
 from math import tan, sin, cos, pi, radians
 from itertools import product
+from multimethod import multimethod
 
 from .selectors import StringSyntaxSelector
 
@@ -34,6 +35,10 @@ class Sketch(object):
 
         self._selection = []
         self._tags = {}
+
+    def _tag(self, val: Shape, tag: str):
+
+        self._tags[tag] = val
 
     # face construction
     def face(
@@ -260,7 +265,7 @@ class Sketch(object):
             res.append(callback(Location()))
 
         if tag:
-            self._tags[tag] = res
+            self._tag(res, tag)
 
         if mode == "a":
             self._faces = self._faces.fuse(*res)
@@ -364,17 +369,59 @@ class Sketch(object):
 
     # edge based interface
 
-    @overload
+    def _startPoint(self) -> Vector:
+
+        if not self._edges:
+            raise ValueError("No free edges available")
+
+        e = self._edges[0]
+
+        return e.startPoint()
+
+    def _endPoint(self) -> Vector:
+
+        if not self._edges:
+            raise ValueError("No free edges available")
+
+        e = self._edges[-1]
+
+        return e.endPoint()
+
+    @multimethod
     def segment(self, p1: Point, p2: Point, tag: Optional[str] = None) -> "Sketch":
-        ...
 
-    @overload
+        val = Edge.makeLine(Vector(p1), Vector(p2))
+        self._edges.append(val)
+
+        if tag:
+            self._tag(val, tag)
+
+        return self
+
+    @segment.register
     def segment(self, p2: Point, tag: Optional[str] = None) -> "Sketch":
-        ...
 
-    @overload
+        p1 = self._endPoint()
+        val = Edge.makeLine(p1, Vector(p2))
+        self._edges.append(val)
+
+        if tag:
+            self._tag(val, tag)
+
+        return self
+
+    @segment.register
     def segment(self, l: float, a: float, tag: Optional[str] = None) -> "Sketch":
-        ...
+
+        p1 = self._endPoint()
+        d = Vector(l * cos(radians(a)), l * sin(radians(a)))
+        val = Edge.makeLine(p1, p1 + d)
+        self._edges.append(val)
+
+        if tag:
+            self._tag(val, tag)
+
+        return self
 
     @overload
     def arc(
@@ -396,7 +443,10 @@ class Sketch(object):
         ...
 
     def close(self, tag: Optional[str] = None) -> "Sketch":
-        ...
+
+        self.segment(self._endPoint(), self._startPoint(), tag)
+
+        return self
 
     def assemble(self, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
         ...
