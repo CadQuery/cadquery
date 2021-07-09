@@ -10,10 +10,8 @@ environment:
           CONDA_SHELL: powershell
         - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
           OS: Linux
-          CONDA_SHELL: bash
         - APPVEYOR_BUILD_WORKER_IMAGE: macOS
           OS: MacOSX
-          CONDA_SHELL: zsh
 
     ANACONDA_TOKEN:
         secure: $(anaconda_token)
@@ -31,7 +29,7 @@ install:
     - sh: conda init bash
     - sh: source ~/.bashrc
     - conda env create -f environment.yml
-    - conda activate cadquery
+    - /home/appveyor/miniconda/bin/activate cadquery
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
 
 build: false
