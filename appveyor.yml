@@ -27,7 +27,8 @@ init:
 install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - conda init $CONDA_SHELL
+    - cmd: conda init %CONDA_SHELL%
+    - sh: conda init $CONDA_SHELL
     - conda env create -f environment.yml
     - conda activate cadquery
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
