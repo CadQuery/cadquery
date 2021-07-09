@@ -25,11 +25,9 @@ init:
 install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - cmd: conda init
-    - sh: conda init bash
-    - sh: source ~/.bashrc
+    - cmd: conda activate cadquery
+    - sh: activate cadquery
     - conda env create -f environment.yml
-    - /home/appveyor/miniconda/bin/activate cadquery
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
 
 build: false
