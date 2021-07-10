@@ -21,15 +21,16 @@ init:
     - sh: curl -sL https://repo.anaconda.com/miniconda/Miniconda3-latest-$OS-x86_64.sh > miniconda.sh
     - sh: bash miniconda.sh -b -p $HOME/miniconda;
     - sh: export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
+    - sh: source $HOME/miniconda/bin/activate
 
 install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - cmd: conda init cmd.exe
-    - sh: conda init bash
+    # - sh: conda init bash
     - conda env create -f environment.yml
     - cmd: conda activate cadquery
-    - sh: activate cadquery
+    - sh: conda activate cadquery
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
 
 build: false
