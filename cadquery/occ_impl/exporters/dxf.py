@@ -14,7 +14,8 @@ CURVE_TOLERANCE = 1e-9
 def _dxf_line(e, msp, plane):
 
     msp.add_line(
-        e.startPoint().toTuple(), e.endPoint().toTuple(),
+        e.startPoint().toTuple(),
+        e.endPoint().toTuple(),
     )
 
 

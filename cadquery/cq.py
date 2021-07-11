@@ -2011,7 +2011,7 @@ class Workplane(object):
         :param maxDeg: maximum spline degree (default: 3)
         :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
         :return: a Workplane object with the current point unchanged
-        
+
         This method might be unstable and may require tuning of the tol parameter.
 
         """
@@ -2090,7 +2090,10 @@ class Workplane(object):
         return self.newObject([rv_w if makeWire else e])
 
     def threePointArc(
-        self: T, point1: VectorLike, point2: VectorLike, forConstruction: bool = False,
+        self: T,
+        point1: VectorLike,
+        point2: VectorLike,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point, through point1, and ending at point2
@@ -2119,7 +2122,10 @@ class Workplane(object):
         return self.newObject([arc])
 
     def sagittaArc(
-        self: T, endPoint: VectorLike, sag: float, forConstruction: bool = False,
+        self: T,
+        endPoint: VectorLike,
+        sag: float,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
@@ -2157,7 +2163,10 @@ class Workplane(object):
         return self.threePointArc(sagPoint, endPoint, forConstruction)
 
     def radiusArc(
-        self: T, endPoint: VectorLike, radius: float, forConstruction: bool = False,
+        self: T,
+        endPoint: VectorLike,
+        radius: float,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point to endPoint with an arc defined by the radius.
@@ -2881,7 +2890,10 @@ class Workplane(object):
     # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer wont work
     def hole(
-        self: T, diameter: float, depth: Optional[float] = None, clean: bool = True,
+        self: T,
+        diameter: float,
+        depth: Optional[float] = None,
+        clean: bool = True,
     ) -> T:
         """
         Makes a hole for each item on the stack.
@@ -2986,7 +2998,7 @@ class Workplane(object):
     ) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
-       
+
         :param until: the distance to extrude, normal to the workplane plane
         :type until: float, negative means opposite the normal direction
         :type until: Literal, 'next' set the extrude until the next face orthogonal to the wire normal, 'last' sets the extrusion until the last face
@@ -3187,7 +3199,10 @@ class Workplane(object):
         return self.newObject([r])
 
     def combine(
-        self: T, clean: bool = True, glue: bool = False, tol: Optional[float] = None,
+        self: T,
+        clean: bool = True,
+        glue: bool = False,
+        tol: Optional[float] = None,
     ) -> T:
         """
         Attempts to combine all of the items on the stack into a single item.
@@ -3327,7 +3342,9 @@ class Workplane(object):
         return self.cut(toUnion)
 
     def intersect(
-        self: T, toIntersect: Union["Workplane", Solid, Compound], clean: bool = True,
+        self: T,
+        toIntersect: Union["Workplane", Solid, Compound],
+        clean: bool = True,
     ) -> T:
         """
         Intersects the provided solid from the current solid.
@@ -3501,6 +3518,35 @@ class Workplane(object):
         It is the basis for cutBlind, extrude, cutThruAll, and all similar methods.
         """
 
+        def getFacesList(eDir, additive, both=False):
+            """
+            Utility function to make the code further below more clean and tidy
+            Performs some test and raise appropriate error when no Faces are found for extrusion
+            """
+            if additive:
+                direction = "AlongAxis"
+            else:
+                direction = "Opposite"
+
+            facesList = self.findSolid().facesIntersectedByLine(
+                ws[0].Center(), eDir, direction=direction
+            )
+            if len(facesList) == 0 and both:
+                raise ValueError(
+                    "Couldn't find a face to extrude/cut to for one of the two required directions of extrusion/cut."
+                )
+
+            if len(facesList) == 0:
+                # if we don't find faces in the workplane normal direction we try the other direction (as the user might have create a workplane with wrong orientation)
+                facesList = self.findSolid().facesIntersectedByLine(
+                    ws[0].Center(), eDir.multiply(-1.0), direction=direction
+                )
+                if len(facesList) == 0:
+                    raise ValueError(
+                        "Couldn't find a face to extrude/cut to. Check your workplane orientation."
+                    )
+            return facesList
+
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
 
@@ -3532,9 +3578,7 @@ class Workplane(object):
             if upToFace is not None:
                 baseSolid = self.findSolid() if baseSolid is None else thisObj
                 if isinstance(upToFace, int):
-                    facesList = self.findSolid().facesIntersectedByLine(
-                        ws[0].Center(), eDir, direction=direction
-                    )
+                    facesList = getFacesList(eDir, additive, both=both)
                     limitFace = facesList[upToFace]
                     if (
                         baseSolid.isInside(ws[0].Center())
@@ -3555,9 +3599,7 @@ class Workplane(object):
                 )
 
                 if both:
-                    facesList2 = self.findSolid().facesIntersectedByLine(
-                        ws[0].Center(), eDir.multiply(-1.0), direction=direction
-                    )
+                    facesList2 = getFacesList(eDir.multiply(-1.0), additive, both=both)
                     limitFace2 = facesList2[upToFace]
                     thisObj2 = Solid.dprism(
                         self.findSolid(),

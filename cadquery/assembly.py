@@ -148,8 +148,7 @@ class Constraint(object):
 
 
 class Assembly(object):
-    """Nested assembly of Workplane and Shape objects defining their relative positions.
-    """
+    """Nested assembly of Workplane and Shape objects defining their relative positions."""
 
     loc: Location
     name: str
