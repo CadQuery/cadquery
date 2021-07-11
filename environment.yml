@@ -12,6 +12,7 @@ dependencies:
   - sphinx_rtd_theme
   - sphinx-autodoc-typehints
   - black=19.10b0
+  - mypy
   - codecov
   - pytest
   - pytest-cov
