@@ -183,6 +183,7 @@ function render(data, parent_element, ratio){
 
     renderWindow.addRenderer(renderer);
     updateViewPort(container, renderer);
+    renderer.getActiveCamera().set({ position: [-1, -1, -0.7], viewUp: [0, 0, -1] });
     renderer.resetCamera();
 
     RENDERERS[ID] = renderer;
