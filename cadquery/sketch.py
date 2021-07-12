@@ -12,6 +12,16 @@ from .occ_impl.geom import Location, Vector
 Modes = Literal["a", "s"]
 Point = Union[Vector, Tuple[float, float]]
 
+ConstraintKinds = Literal["Fixed", "Coincident", "Angle", "Length"]
+
+
+class Constraint(object):
+
+    objects: Tuple[str, ...]
+    args: Tuple[Edge, ...]
+    kind: ConstraintKinds
+    param: Any
+
 
 class Sketch(object):
 
@@ -387,10 +397,11 @@ class Sketch(object):
 
         return e.endPoint()
 
-    @multimethod
-    def segment(self, p1: Point, p2: Point, tag: Optional[str] = None) -> "Sketch":
+    def edge(
+        self, val: Edge, tag: Optional[str] = None, forConstruction: bool = False
+    ) -> "Sketch":
 
-        val = Edge.makeLine(Vector(p1), Vector(p2))
+        val.forConstruction = forConstruction
         self._edges.append(val)
 
         if tag:
@@ -398,46 +409,86 @@ class Sketch(object):
 
         return self
 
+    @multimethod
+    def segment(
+        self,
+        p1: Point,
+        p2: Point,
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
+    ) -> "Sketch":
+
+        val = Edge.makeLine(Vector(p1), Vector(p2))
+
+        return self.edge(val, tag, forConstruction)
+
     @segment.register
-    def segment(self, p2: Point, tag: Optional[str] = None) -> "Sketch":
+    def segment(
+        self, p2: Point, tag: Optional[str] = None, forConstruction: bool = False
+    ) -> "Sketch":
 
         p1 = self._endPoint()
         val = Edge.makeLine(p1, Vector(p2))
-        self._edges.append(val)
 
-        if tag:
-            self._tag(val, tag)
-
-        return self
+        return self.edge(val, tag, forConstruction)
 
     @segment.register
-    def segment(self, l: float, a: float, tag: Optional[str] = None) -> "Sketch":
+    def segment(
+        self,
+        l: float,
+        a: float,
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
+    ) -> "Sketch":
 
         p1 = self._endPoint()
         d = Vector(l * cos(radians(a)), l * sin(radians(a)))
         val = Edge.makeLine(p1, p1 + d)
-        self._edges.append(val)
 
-        if tag:
-            self._tag(val, tag)
+        return self.edge(val, tag, forConstruction)
 
-        return self
-
-    @overload
+    @multimethod
     def arc(
-        self, p1: Point, p2: Point, r: float, tag: Optional[str] = None
+        self,
+        p1: Point,
+        p2: Point,
+        p3: Point,
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
     ) -> "Sketch":
-        ...
 
-    @overload
-    def arc(self, p2: Point, a: float, tag: Optional[str] = None) -> "Sketch":
-        ...
+        val = Edge.makeThreePointArc(Vector(p1), Vector(p3), Vector(p3))
 
-    @overload
+        return self.edge(val, tag, forConstruction)
+
+    @arc.register
     def arc(
-        self, c: Point, r: float, a1: float, a2: float, tag: Optional[str] = None
+        self,
+        p2: Point,
+        p3: Point,
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
     ) -> "Sketch":
-        ...
+
+        p1 = self._endPoint()
+        val = Edge.makeThreePointArc(Vector(p1), Vector(p3), Vector(p3))
+
+        return self.edge(val, tag, forConstruction)
+
+    @arc.register
+    def arc(
+        self,
+        c: Point,
+        r: float,
+        a1: float,
+        a2: float,
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
+    ) -> "Sketch":
+
+        val = Edge.makeCircle(r, Vector(c), angle1=a1, angle2=a2)
+
+        return self.edge(val, tag, forConstruction)
 
     def spline(self, pts: Iterable[Point], tag: Optional[str] = None) -> "Sketch":
         ...
@@ -449,7 +500,10 @@ class Sketch(object):
         return self
 
     def assemble(self, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
-        ...
+
+        return self.face(
+            (e for e in self._edges if not e.forConstruction), 0, mode, tag
+        )
 
     # constraints
     @overload
