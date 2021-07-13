@@ -6,7 +6,7 @@ from multimethod import multimethod
 
 from .selectors import StringSyntaxSelector
 
-from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound
+from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, edgesToWires
 from .occ_impl.geom import Location, Vector
 
 Modes = Literal["a", "s"]
@@ -62,7 +62,8 @@ class Sketch(object):
         if isinstance(b, Wire):
             res = Face.makeFromWires(b)
         elif isinstance(b, Iterable):
-            res = Face.makeFromWires(Wire.assembleEdges(b))
+            wires = edgesToWires(b)
+            res = Face.makeFromWires(*(wires[0], wires[1:]))
         else:
             raise ValueError(f"Unsupported argument {b}")
 
@@ -457,7 +458,7 @@ class Sketch(object):
         forConstruction: bool = False,
     ) -> "Sketch":
 
-        val = Edge.makeThreePointArc(Vector(p1), Vector(p3), Vector(p3))
+        val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
 
         return self.edge(val, tag, forConstruction)
 
