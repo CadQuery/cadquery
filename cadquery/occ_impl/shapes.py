@@ -373,6 +373,7 @@ class Shape(object):
     """
 
     wrapped: TopoDS_Shape
+    forConstruction: bool
 
     def __init__(self, obj: TopoDS_Shape):
         self.wrapped = downcast(obj)
@@ -3246,3 +3247,18 @@ def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
         rv.append([face.outerWire(),] + face.innerWires())
 
     return rv
+
+
+def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
+    """
+    Convert edges to a list of wires.
+    """
+
+    edges_in = TopTools_HSequenceOfShape()
+    wires_out = TopTools_HSequenceOfShape()
+
+    for e in edges:
+        edges_in.Append(e.wrapped)
+    ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
+
+    return [Shape.cast(el) for el in wires_out]
