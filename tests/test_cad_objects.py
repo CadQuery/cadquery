@@ -49,9 +49,9 @@ class TestCadObjects(BaseTest):
         self.assertTupleAlmostEquals((1, 2, 3), (v9.x, v9.y, v9.z), 4)
 
         with self.assertRaises(TypeError):
-            Vector('vector')
+            Vector("vector")
         with self.assertRaises(TypeError):
-            Vector(1,2,3,4)
+            Vector(1, 2, 3, 4)
 
     def testVertex(self):
         """
@@ -77,28 +77,40 @@ class TestCadObjects(BaseTest):
         bb2 = v0.BoundingBox().add(v.BoundingBox())
 
         bb3 = bb1.add(bb2)
-        self.assertTupleAlmostEquals((2,2,2),(bb3.xlen,bb3.ylen,bb3.zlen),7)
+        self.assertTupleAlmostEquals((2, 2, 2), (bb3.xlen, bb3.ylen, bb3.zlen), 7)
 
-        bb3 = bb2.add((3,3,3))
-        self.assertTupleAlmostEquals((3,3,3),(bb3.xlen,bb3.ylen,bb3.zlen),7)
+        bb3 = bb2.add((3, 3, 3))
+        self.assertTupleAlmostEquals((3, 3, 3), (bb3.xlen, bb3.ylen, bb3.zlen), 7)
 
-        bb3 = bb2.add(Vector(3,3,3))
-        self.assertTupleAlmostEquals((3,3,3),(bb3.xlen,bb3.ylen,bb3.zlen),7)
+        bb3 = bb2.add(Vector(3, 3, 3))
+        self.assertTupleAlmostEquals((3, 3, 3), (bb3.xlen, bb3.ylen, bb3.zlen), 7)
 
         # Test 2D bounding boxes
-        bb1 = Vertex.makeVertex(1,1,0).BoundingBox().add(Vertex.makeVertex(2,2,0).BoundingBox())
-        bb2 = Vertex.makeVertex(0,0,0).BoundingBox().add(Vertex.makeVertex(3,3,0).BoundingBox())
-        bb3 = Vertex.makeVertex(0,0,0).BoundingBox().add(Vertex.makeVertex(1.5,1.5,0).BoundingBox())
+        bb1 = (
+            Vertex.makeVertex(1, 1, 0)
+            .BoundingBox()
+            .add(Vertex.makeVertex(2, 2, 0).BoundingBox())
+        )
+        bb2 = (
+            Vertex.makeVertex(0, 0, 0)
+            .BoundingBox()
+            .add(Vertex.makeVertex(3, 3, 0).BoundingBox())
+        )
+        bb3 = (
+            Vertex.makeVertex(0, 0, 0)
+            .BoundingBox()
+            .add(Vertex.makeVertex(1.5, 1.5, 0).BoundingBox())
+        )
         # Test that bb2 contains bb1
-        self.assertEqual(bb2,BoundBox.findOutsideBox2D(bb1,bb2))
-        self.assertEqual(bb2,BoundBox.findOutsideBox2D(bb2,bb1))
+        self.assertEqual(bb2, BoundBox.findOutsideBox2D(bb1, bb2))
+        self.assertEqual(bb2, BoundBox.findOutsideBox2D(bb2, bb1))
         # Test that neither bounding box contains the other
-        self.assertIsNone(BoundBox.findOutsideBox2D(bb1,bb3))
+        self.assertIsNone(BoundBox.findOutsideBox2D(bb1, bb3))
 
         # Test creation of a bounding box from a shape - note the low accuracy comparison
         # as the box is a little larger than the shape
-        bb1 = BoundBox._fromTopoDS(Solid.makeCylinder(1,1).wrapped, optimal=False)
-        self.assertTupleAlmostEquals((2,2,1),(bb1.xlen,bb1.ylen,bb1.zlen),1)
+        bb1 = BoundBox._fromTopoDS(Solid.makeCylinder(1, 1).wrapped, optimal=False)
+        self.assertTupleAlmostEquals((2, 2, 1), (bb1.xlen, bb1.ylen, bb1.zlen), 1)
 
     def testEdgeWrapperCenter(self):
         e = self._make_circle()
@@ -311,7 +323,7 @@ class TestCadObjects(BaseTest):
         )
 
     def testVectorNotImplemented(self):
-        v = Vector(1,2,3)
+        v = Vector(1, 2, 3)
         with self.assertRaises(NotImplementedError):
             v.distanceToLine()
         with self.assertRaises(NotImplementedError):
@@ -320,9 +332,9 @@ class TestCadObjects(BaseTest):
             v.distanceToPlane()
 
     def testVectorSpecialMethods(self):
-        v = Vector(1,2,3)
-        self.assertEqual(repr(v),"Vector: (1.0, 2.0, 3.0)")
-        self.assertEqual(str(v),"Vector: (1.0, 2.0, 3.0)")
+        v = Vector(1, 2, 3)
+        self.assertEqual(repr(v), "Vector: (1.0, 2.0, 3.0)")
+        self.assertEqual(str(v), "Vector: (1.0, 2.0, 3.0)")
 
     def testMatrixCreationAndAccess(self):
         def matrix_vals(m):
@@ -370,7 +382,7 @@ class TestCadObjects(BaseTest):
             Matrix(invalid)
         # Test input with invalid type
         with self.assertRaises(TypeError):
-            Matrix('invalid')
+            Matrix("invalid")
         # Test input with invalid size / nested types
         with self.assertRaises(TypeError):
             Matrix([[1, 2, 3, 4], [1, 2, 3], [1, 2, 3, 4]])
@@ -393,61 +405,73 @@ class TestCadObjects(BaseTest):
         # test __repr__ methods
         m = Matrix(vals4x4)
         mRepr = "Matrix([[1.0, 0.0, 0.0, 1.0],\n        [0.0, 1.0, 0.0, 2.0],\n        [0.0, 0.0, 1.0, 3.0],\n        [0.0, 0.0, 0.0, 1.0]])"
-        self.assertEqual(repr(m),mRepr)
-        self.assertEqual(str(eval(repr(m))),mRepr)
+        self.assertEqual(repr(m), mRepr)
+        self.assertEqual(str(eval(repr(m))), mRepr)
 
     def testMatrixFunctionality(self):
         # Test rotate methods
-        def matrix_almost_equal(m,target_matrix):
-            for r,row in enumerate(target_matrix):
-                for c,target_value in enumerate(row):
-                    self.assertAlmostEqual(m[r,c], target_value)
+        def matrix_almost_equal(m, target_matrix):
+            for r, row in enumerate(target_matrix):
+                for c, target_value in enumerate(row):
+                    self.assertAlmostEqual(m[r, c], target_value)
 
-        root_3_over_2 = math.sqrt(3)/2
-        m_rotate_x_30 = [[1,0,0,0],[0,root_3_over_2,-1/2,0],[0,1/2,root_3_over_2,0],[0,0,0,1]]
+        root_3_over_2 = math.sqrt(3) / 2
+        m_rotate_x_30 = [
+            [1, 0, 0, 0],
+            [0, root_3_over_2, -1 / 2, 0],
+            [0, 1 / 2, root_3_over_2, 0],
+            [0, 0, 0, 1],
+        ]
         mx = Matrix()
-        mx.rotateX(30*DEG2RAD)
-        matrix_almost_equal(mx,m_rotate_x_30)
+        mx.rotateX(30 * DEG2RAD)
+        matrix_almost_equal(mx, m_rotate_x_30)
 
-        m_rotate_y_30 = [[root_3_over_2,0,1/2,0],[0,1,0,0],[-1/2,0,root_3_over_2,0],[0,0,0,1]]
+        m_rotate_y_30 = [
+            [root_3_over_2, 0, 1 / 2, 0],
+            [0, 1, 0, 0],
+            [-1 / 2, 0, root_3_over_2, 0],
+            [0, 0, 0, 1],
+        ]
         my = Matrix()
-        my.rotateY(30*DEG2RAD)
-        matrix_almost_equal(my,m_rotate_y_30)
+        my.rotateY(30 * DEG2RAD)
+        matrix_almost_equal(my, m_rotate_y_30)
 
-        m_rotate_z_30 = [[root_3_over_2,-1/2,0,0],[1/2,root_3_over_2,0,0],[0,0,1,0],[0,0,0,1]]
+        m_rotate_z_30 = [
+            [root_3_over_2, -1 / 2, 0, 0],
+            [1 / 2, root_3_over_2, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+        ]
         mz = Matrix()
-        mz.rotateZ(30*DEG2RAD)
-        matrix_almost_equal(mz,m_rotate_z_30)
+        mz.rotateZ(30 * DEG2RAD)
+        matrix_almost_equal(mz, m_rotate_z_30)
 
         # Test matrix multipy vector
-        v = Vector(1,0,0)
-        self.assertTupleAlmostEquals(mz.multiply(v).toTuple(), (root_3_over_2,1/2,0), 7)
+        v = Vector(1, 0, 0)
+        self.assertTupleAlmostEquals(
+            mz.multiply(v).toTuple(), (root_3_over_2, 1 / 2, 0), 7
+        )
 
         # Test matrix multipy matrix
         m_rotate_xy_30 = [
-            [root_3_over_2,0,1/2,0],
-            [1/4,root_3_over_2,-root_3_over_2/2,0],
-            [-root_3_over_2/2,1/2,3/4,0],
-            [0,0,0,1]
+            [root_3_over_2, 0, 1 / 2, 0],
+            [1 / 4, root_3_over_2, -root_3_over_2 / 2, 0],
+            [-root_3_over_2 / 2, 1 / 2, 3 / 4, 0],
+            [0, 0, 0, 1],
         ]
         mxy = mx.multiply(my)
-        matrix_almost_equal(mxy,m_rotate_xy_30)
+        matrix_almost_equal(mxy, m_rotate_xy_30)
 
         # Test matrix inverse
-        vals4x4 = [
-            [1, 2, 3, 4],
-            [5, 1, 6, 7],
-            [8, 9, 1, 10],
-            [0, 0, 0, 1]
-        ]
+        vals4x4 = [[1, 2, 3, 4], [5, 1, 6, 7], [8, 9, 1, 10], [0, 0, 0, 1]]
         vals4x4_invert = [
-            [-53/144, 25/144, 1/16, -53/144],
-            [43/144, -23/144, 1/16, -101/144],
-            [37/144, 7/144, -1/16, -107/144],
-            [0, 0, 0, 1]
+            [-53 / 144, 25 / 144, 1 / 16, -53 / 144],
+            [43 / 144, -23 / 144, 1 / 16, -101 / 144],
+            [37 / 144, 7 / 144, -1 / 16, -107 / 144],
+            [0, 0, 0, 1],
         ]
         m = Matrix(vals4x4).inverse()
-        matrix_almost_equal(m,vals4x4_invert)
+        matrix_almost_equal(m, vals4x4_invert)
 
     def testTranslate(self):
         e = Edge.makeCircle(2, (1, 2, 3))
@@ -506,7 +530,7 @@ class TestCadObjects(BaseTest):
     def testInvalidPlane(self):
         # Test plane creation error handling
         with self.assertRaises(ValueError):
-            Plane.named("XX", (0,0,0))
+            Plane.named("XX", (0, 0, 0))
         with self.assertRaises(ValueError):
             Plane(origin=(0, 0, 0), xDir=(0, 0, 0), normal=(0, 1, 1))
         with self.assertRaises(ValueError):
@@ -514,25 +538,43 @@ class TestCadObjects(BaseTest):
 
     def testPlaneMethods(self):
         # Test error checking
-        p = Plane(origin=(0,0,0),xDir=(1,0,0),normal=(0,1,0))
+        p = Plane(origin=(0, 0, 0), xDir=(1, 0, 0), normal=(0, 1, 0))
         with self.assertRaises(ValueError):
-            p.toLocalCoords('box')
+            p.toLocalCoords("box")
         with self.assertRaises(NotImplementedError):
-            p.mirrorInPlane([Solid.makeBox(1,1,1)],"Z")
+            p.mirrorInPlane([Solid.makeBox(1, 1, 1)], "Z")
 
         # Test translation to local coordinates
-        local_box = Workplane(p.toLocalCoords(Solid.makeBox(1,1,1)))
-        local_box_vertices = [ (v.X,v.Y,v.Z) for v in local_box.vertices().vals() ]
-        target_vertices = [(0,-1,0),(0,0,0),(0,-1,1),(0,0,1),(1,-1,0),(1,0,0),(1,-1,1),(1,0,1)]
-        for i,target_point in enumerate(target_vertices):
-            self.assertTupleAlmostEquals(target_point,local_box_vertices[i],7)
+        local_box = Workplane(p.toLocalCoords(Solid.makeBox(1, 1, 1)))
+        local_box_vertices = [(v.X, v.Y, v.Z) for v in local_box.vertices().vals()]
+        target_vertices = [
+            (0, -1, 0),
+            (0, 0, 0),
+            (0, -1, 1),
+            (0, 0, 1),
+            (1, -1, 0),
+            (1, 0, 0),
+            (1, -1, 1),
+            (1, 0, 1),
+        ]
+        for i, target_point in enumerate(target_vertices):
+            self.assertTupleAlmostEquals(target_point, local_box_vertices[i], 7)
 
         # Test mirrorInPlane
-        mirror_box = Workplane(p.mirrorInPlane([Solid.makeBox(1,1,1)],"Y")[0])
-        mirror_box_vertices = [ (v.X,v.Y,v.Z) for v in mirror_box.vertices().vals() ]
-        target_vertices = [(0,0,1),(0,0,0),(0,-1,1),(0,-1,0),(-1,0,1),(-1,0,0),(-1,-1,1),(-1,-1,0)]
-        for i,target_point in enumerate(target_vertices):
-            self.assertTupleAlmostEquals(target_point,mirror_box_vertices[i],7)
+        mirror_box = Workplane(p.mirrorInPlane([Solid.makeBox(1, 1, 1)], "Y")[0])
+        mirror_box_vertices = [(v.X, v.Y, v.Z) for v in mirror_box.vertices().vals()]
+        target_vertices = [
+            (0, 0, 1),
+            (0, 0, 0),
+            (0, -1, 1),
+            (0, -1, 0),
+            (-1, 0, 1),
+            (-1, 0, 0),
+            (-1, -1, 1),
+            (-1, -1, 0),
+        ]
+        for i, target_point in enumerate(target_vertices):
+            self.assertTupleAlmostEquals(target_point, mirror_box_vertices[i], 7)
 
     def testLocation(self):
 
@@ -560,14 +602,14 @@ class TestCadObjects(BaseTest):
 
         # Test creation from the OCP.gp.gp_Trsf object
         loc4 = Location(gp_Trsf())
-        self.assertTupleAlmostEquals(loc4.toTuple()[0],(0,0,0),7)
-        self.assertTupleAlmostEquals(loc4.toTuple()[1],(0,0,0),7)
+        self.assertTupleAlmostEquals(loc4.toTuple()[0], (0, 0, 0), 7)
+        self.assertTupleAlmostEquals(loc4.toTuple()[1], (0, 0, 0), 7)
 
         # Test error handling on creation
         with self.assertRaises(TypeError):
-            Location((0,0,1))
+            Location((0, 0, 1))
         with self.assertRaises(TypeError):
-            Location('xy_plane')
+            Location("xy_plane")
 
     def testEdgeWrapperRadius(self):
 

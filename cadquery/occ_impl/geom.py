@@ -370,6 +370,7 @@ class Matrix:
         matrix_str = ",\n        ".join(str(matrix_transposed[i::4]) for i in range(4))
         return f"Matrix([{matrix_str}])"
 
+
 class Plane(object):
     """A 2D coordinate system in space
 
