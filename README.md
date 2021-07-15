@@ -1,8 +1,7 @@
 ![CadQuery logo](./doc/_static/logo/cadquery_logo_dark.svg)
 # CadQuery
 
-[![Travis Build Status](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)](https://travis-ci.org/CadQuery/cadquery.svg?branch=master)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/cf4qg6kpyqmcje1h?svg=true)](https://ci.appveyor.com/api/projects/status/cf4qg6kpyqmcje1h?svg=true)
+[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/79ox42i6smelx7n8/branch/master?svg=true)](https://ci.appveyor.com/project/jmwright/cadquery-o18bh/branch/master)
 [![Build Status](https://dev.azure.com/cadquery/conda-packages/_apis/build/status/CadQuery.cadquery?branchName=master)](https://dev.azure.com/cadquery/conda-packages/_build/latest?definitionId=2&branchName=master)
 [![codecov](https://codecov.io/gh/CadQuery/cadquery/branch/master/graph/badge.svg)](https://codecov.io/gh/CadQuery/cadquery)
 [![Documentation Status](https://readthedocs.org/projects/cadquery/badge/?version=latest)](https://cadquery.readthedocs.io/en/latest/?badge=latest)
