@@ -257,13 +257,13 @@ Which produces the output:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c9b822760:
+    Workplane object at 0x2760:
       no parent
-      plane: Plane object at 0x7f5c9b822850:
+      plane: Plane object at 0x2850:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
       objects: []
-      modelling context: CQContext object at 0x7f5c9b822730:
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
         tags: {}
@@ -281,13 +281,13 @@ Which produces the output:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c368eaa90:
-      parent: Workplane object at 0x7f5c9b822760
-      plane: Plane object at 0x7f5c368f3850:
+    Workplane object at 0xaa90:
+      parent: Workplane object at 0x2760
+      plane: Plane object at 0x3850:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Solid object at 0x7f5c9b94bbe0>]
-      modelling context: CQContext object at 0x7f5c9b822730:
+      objects: [<cadquery.occ_impl.shapes.Solid object at 0xbbe0>]
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
         tags: {}
@@ -310,16 +310,16 @@ The string representation of ``part`` is now:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c368eaa90:
-      parent: Workplane object at 0x7f5c9b822760
-      plane: Plane object at 0x7f5c368f3850:
+    Workplane object at 0xaa90:
+      parent: Workplane object at 0x2760
+      plane: Plane object at 0x3850:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Solid object at 0x7f5c9b94bbe0>]
-      modelling context: CQContext object at 0x7f5c9b822730:
+      objects: [<cadquery.occ_impl.shapes.Solid object at 0xbbe0>]
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 The :attr:`~cadquery.cq.CQContext.tags` attribute of the modelling context is simply a dict
 associating the string name given by the :meth:`~cadquery.Workplane.tag` method to the
@@ -337,16 +337,16 @@ The output is:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c9b948c40:
-      parent: Workplane object at 0x7f5c368eaa90
-      plane: Plane object at 0x7f5c368eac40:
+    Workplane object at 0x8c40:
+      parent: Workplane object at 0xaa90
+      plane: Plane object at 0xac40:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Face object at 0x7f5c368f3c10>]
-      modelling context: CQContext object at 0x7f5c9b822730:
+      objects: [<cadquery.occ_impl.shapes.Face object at 0x3c10>]
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 Our selection method has taken the :class:`~cadquery.Solid` from the
 :attr:`~cadquery.Workplane.objects` list of the previous :class:`~cadquery.Workplane`, found the
@@ -365,16 +365,16 @@ The output is now:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c7f0b6880:
-      parent: Workplane object at 0x7f5c9b948c40
-      plane: Plane object at 0x7f5c368f38b0:
+    Workplane object at 0x6880:
+      parent: Workplane object at 0x8c40
+      plane: Plane object at 0x38b0:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c368eaca0>]
-      modelling context: CQContext object at 0x7f5c9b822730:
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>]
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 Modelling operations take their wires and edges from the modelling context's pending lists. In order
 to use the :meth:`~cadquery.Workplane.loft` command futher down the chain, we need to push this wire
@@ -386,16 +386,16 @@ Now we have:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c7f0b6880:
-      parent: Workplane object at 0x7f5c9b948c40
-      plane: Plane object at 0x7f5c368f38b0:
+    Workplane object at 0x6880:
+      parent: Workplane object at 0x8c40
+      plane: Plane object at 0x38b0:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c368eaca0>]
-      modelling context: CQContext object at 0x7f5c9b822730:
-        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c368eaca0>]
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>]
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 The :class:`~cadquery.Wire` object that was only in the :attr:`~cadquery.Workplane.objects`
 attribute before is now also in the modelling context's :attr:`~cadquery.cq.CQContext.pendingWires`.
@@ -411,16 +411,16 @@ Now the string representation of ``part`` looks like:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c7f5c3a00:
-      parent: Workplane object at 0x7f5c7f0b6880
-      plane: Plane object at 0x7f5c368eac70:
+    Workplane object at 0x3a00:
+      parent: Workplane object at 0x6880
+      plane: Plane object at 0xac70:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c7f5c35e0>]
-      modelling context: CQContext object at 0x7f5c9b822730:
-        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c368eaca0>]
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0x35e0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>]
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 It may look similar to the previous step, but the :class:`~cadquery.Wire` object in
 :attr:`~cadquery.Workplane.objects` is different. To get this wire into the pending wires list,
@@ -432,16 +432,16 @@ The result:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c7f5c3a00:
-      parent: Workplane object at 0x7f5c7f0b6880
-      plane: Plane object at 0x7f5c368eac70:
+    Workplane object at 0x3a00:
+      parent: Workplane object at 0x6880
+      plane: Plane object at 0xac70:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c7f5c35e0>]
-      modelling context: CQContext object at 0x7f5c9b822730:
-        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c368eaca0>, <cadquery.occ_impl.shapes.Wire object at 0x7f5c7f5c35e0>]
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0x35e0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>, <cadquery.occ_impl.shapes.Wire object at 0x7f5c7f5c35e0>]
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 The modelling context's :attr:`~cadquery.cq.CQContext.pendingWires` attribute now contains the two
 wires we want to loft between, and we simply call::
@@ -452,16 +452,16 @@ After the loft operation, our Workplane looks quite different:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c7f5c32b0:
-      parent: Workplane object at 0x7f5c7f5c3a00
-      plane: Plane object at 0x7f5c368f3d60:
+    Workplane object at 0x32b0:
+      parent: Workplane object at 0x3a00
+      plane: Plane object at 0x3d60:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Compound object at 0x7f5c368ead30>]
-      modelling context: CQContext object at 0x7f5c9b822730:
+      objects: [<cadquery.occ_impl.shapes.Compound object at 0xad30>]
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 In the :attr:`cq.Workplane.objects` attribute we now have one Compound object and the modelling
 context's :attr:`~cadquery.cq.CQContext.pendingWires` has been cleared by
@@ -488,16 +488,16 @@ Which results in:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c7f5c3f10:
-      parent: Workplane object at 0x7f5c7f5c32b0
-      plane: Plane object at 0x7f5c3690efa0:
+    Workplane object at 0x3f10:
+      parent: Workplane object at 0x32b0
+      plane: Plane object at 0xefa0:
         origin: (0.0, 0.0, 0.0)
         z direction: (0.0, 0.0, 1.0)
-      objects: [<cadquery.occ_impl.shapes.Face object at 0x7f5c368f3af0>]
-      modelling context: CQContext object at 0x7f5c9b822730:
+      objects: [<cadquery.occ_impl.shapes.Face object at 0x3af0>]
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 We have the desired :class:`~cadquery.Face` in the :attr:`~cadquery.Workplane.objects` attribute,
 but the :attr:`~cadquery.Workplane.plane` has not changed yet. To create the new plane we use the
@@ -509,16 +509,16 @@ Now:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c3690e700:
-      parent: Workplane object at 0x7f5c7f5c3f10
-      plane: Plane object at 0x7f5c3690e730:
+    Workplane object at 0xe700:
+      parent: Workplane object at 0x3f10
+      plane: Plane object at 0xe730:
         origin: (0.5, 0.0, 0.0)
         z direction: (1.0, 0.0, 0.0)
       objects: []
-      modelling context: CQContext object at 0x7f5c9b822730:
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 The :attr:`~cadquery.Workplane.objects` list has been cleared and the :class:`~cadquery.Plane`
 object has a local Z direction in the global X direction. Since the base of the plane is the side of
@@ -532,16 +532,16 @@ Now:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c3690e790:
-      parent: Workplane object at 0x7f5c3690e700
-      plane: Plane object at 0x7f5c368eaf40:
+    Workplane object at 0xe790:
+      parent: Workplane object at 0xe700
+      plane: Plane object at 0xaf40:
         origin: (0.5, 0.0, 0.0)
         z direction: (1.0, 0.0, 0.0)
-      objects: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c3690e610>]
-      modelling context: CQContext object at 0x7f5c9b822730:
-        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0x7f5c3690e610>]
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0xe610>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0xe610>]
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 The :meth:`~cadquery.Workplane.circle` method - like all 2D drawing methods - has placed the circle
 into both the :attr:`~cadquery.Workplane.objects` attribute (where it will be cleared during the
@@ -556,16 +556,16 @@ Now:
 
 .. code-block:: none
 
-    Workplane object at 0x7f5c368eafd0:
-      parent: Workplane object at 0x7f5c7f0b6df0
-      plane: Plane object at 0x7f5c368f3e80:
+    Workplane object at 0xafd0:
+      parent: Workplane object at 0x6df0
+      plane: Plane object at 0x3e80:
         origin: (0.5, 0.0, 0.0)
         z direction: (1.0, 0.0, 0.0)
-      objects: [<cadquery.occ_impl.shapes.Compound object at 0x7f5c368eaaf0>]
-      modelling context: CQContext object at 0x7f5c9b822730:
+      objects: [<cadquery.occ_impl.shapes.Compound object at 0xaaf0>]
+      modelling context: CQContext object at 0x2730:
         pendingWires: []
         pendingEdges: []
-        tags: {'base': <cadquery.cq.Workplane object at 0x7f5c368eaa90>}
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 The :meth:`~cadquery.Workplane.extrude` method has cleared all the pending wires and edges. The
 :attr:`~cadquery.Workplane.objects` attribute contains the final :class:`~cadquery.Compound` object
