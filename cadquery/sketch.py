@@ -1,5 +1,7 @@
-from typing import Union, Optional, List, Dict, Callable, overload, Tuple, Iterable, Any
+from typing import Union, Optional, List, Dict, Callable, Tuple, Iterable, Any
 from typing_extensions import Literal
+from enum import Enum
+from numbers import Real
 from math import tan, sin, cos, pi, radians
 from itertools import product
 from multimethod import multimethod
@@ -8,19 +10,36 @@ from .selectors import StringSyntaxSelector
 
 from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, edgesToWires
 from .occ_impl.geom import Location, Vector
+from .occ_impl.sketch_solver import (
+    SketchConstraintSolver,
+    ConstraintKind as ConstraintKindL,
+)
 
 Modes = Literal["a", "s"]
-Point = Union[Vector, Tuple[float, float]]
+Point = Union[Vector, Tuple[Real, Real]]
 
-ConstraintKinds = Literal["Fixed", "Coincident", "Angle", "Length"]
+ConstraintKind = Enum("ConstraintKind", {e: e for e in ConstraintKindL.__args__})
 
 
 class Constraint(object):
 
-    objects: Tuple[str, ...]
+    tags: Tuple[str, ...]
     args: Tuple[Edge, ...]
-    kind: ConstraintKinds
+    kind: ConstraintKind
     param: Any
+
+    def __init__(
+        self,
+        tags: Tuple[str, ...],
+        args: Tuple[Edge, ...],
+        kind: ConstraintKind,
+        param: Any = None,
+    ):
+
+        self.tags = tags
+        self.args = args
+        self.kind = kind
+        self.param = param
 
 
 class Sketch(object):
@@ -32,6 +51,7 @@ class Sketch(object):
     _edges: List[Edge]
 
     _selection: List[Union[Shape, Location]]
+    _constraints: List[Constraint]
 
     _tags: Dict[str, Shape]
 
@@ -44,6 +64,8 @@ class Sketch(object):
         self._edges = []
 
         self._selection = []
+        self._constraints = []
+
         self._tags = {}
 
     def _tag(self, val: Shape, tag: str):
@@ -507,16 +529,91 @@ class Sketch(object):
         )
 
     # constraints
-    @overload
-    def constrain(self, tag: str, constraint: str, arg: Any) -> "Sketch":
-        ...
+    @multimethod
+    def constrain(self, tag: str, constraint: ConstraintKind, arg: Any) -> "Sketch":
 
-    @overload
-    def constrain(self, tag1: str, tag2: str, constraint: str, arg: Any) -> "Sketch":
-        ...
+        self._constraints.append(
+            Constraint((tag,), (self._tags[tag],), constraint, arg)
+        )
+
+    @constrain.register
+    def constrain(
+        self, tag1: str, tag2: str, constraint: ConstraintKind, arg: Any
+    ) -> "Sketch":
+
+        self._constraints.append(
+            Constraint(
+                (tag1, tag2), (self._tags[tag1], self._tags[tag2]), constraint, arg
+            )
+        )
 
     def solve(self) -> "Sketch":
-        ...
+
+        entities = []  # list with all degrees of freedom
+        e2i = {}  # mapping from tags to indices of entities
+        geoms = []  # geometry types
+
+        # fill entities, e2i and geoms
+        for i, (k, v) in enumerate(
+            filter(lambda kv: isinstance(kv[1], Edge), self._tags.items())
+        ):
+
+            # dispatch on geom type
+            if v.geomType() == "LINE":
+                p1 = v.startPoint()
+                p2 = v.endPoint()
+                ent = (p1.x, p1.y, p2.x, p2.y)
+
+            elif v.geomType() == "CIRCLE":
+                p = v.arcCenter()
+                a1 = v.paramAt(0)
+                a2 = v.paramAt(1)
+                r = v.radius()
+                ent = (p.x, p.y, a1, a2, r)
+
+            else:
+                continue
+
+            entities.append(ent)
+            e2i[k] = i
+            geoms.append(v.geomType())
+
+        # build the POD constraint list
+        constraints = []
+        for c in self._constraints:
+            ix = (e2i[c.tags[0]], e2i[c.tags[1]] if len(c.tags) == 2 else None)
+            constraints.append(
+                (
+                    ix,
+                    c.kind.value,
+                    entities[ix[0]] if c.kind.value == "Fixed" else c.param,
+                )
+            )
+
+        # optimize
+        solver = SketchConstraintSolver(entities, constraints)
+        res = solver.solve()
+
+        # translate back the solution - update edges
+        for g, (k, i) in zip(geoms, e2i.items()):
+            r = res[i]
+
+            # dispatch on geom type
+            if g == "LINE":
+                p1 = Vector(r[0], r[1])
+                p2 = Vector(r[2], r[3])
+                e = Edge.makeLine(p1, p2)
+            elif g == "ARC":
+                p = Vector(r[0], r[1])
+                r = r[2]
+                a1 = r[3]
+                a2 = r[4]
+                e = Edge.makeCircle(r, p, angle1=a1, angle2=a2)
+
+            # overwrite the low level object
+            self._tags[k].wrapped = e.wrapped
+
+        return self
 
     # misc
 
