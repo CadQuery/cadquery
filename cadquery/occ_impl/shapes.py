@@ -1483,6 +1483,23 @@ class Edge(Shape, Mixin1D):
 
         return rv
 
+    def arcCenter(self) -> Vector:
+        """
+        Center of an underlying circle or ellipse geometry.
+        """
+
+        g = self.geomType()
+        a = self._geomAdaptor()
+
+        if g == "CIRCLE":
+            rv = Vector(a.Circle().Position())
+        elif g == "ELLIPSE":
+            rv = Vector(a.Ellipse().Position())
+        else:
+            raise ValueError(f"{g} has no arc center")
+
+        return rv
+
     @classmethod
     def makeCircle(
         cls: Type["Edge"],
