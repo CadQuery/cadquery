@@ -294,10 +294,19 @@ Which produces the output:
 
 The first thing to note is that this is a different :class:`~cadquery.Workplane` object to the
 previous one, and in the :attr:`~cadquery.Workplane.parent` attribute of this
-:class:`~cadquery.Workplane` is our previous :class:`~cadquery.Workplane`. Secondly, the modelling
-context object is the same as the one in the previous :class:`~cadquery.Workplane`, and this one
-modelling context will be shared between every :class:`Workplane` object in this chain. Thirdly, in
-our objects list is a single :class:`~cadquery.Solid` object, which is the box we just created.
+:class:`~cadquery.Workplane` is our previous :class:`~cadquery.Workplane`. Returning a new instance
+of :class:`~caduqery.Workplane` is the normal behaviour of most :class:`~cadquery.Workplane` methods
+(with some exceptions, as will be shown below) and this is how the `chaining`_ concept is
+implemented.
+
+Secondly, the modelling context object is the same as the one in the previous
+:class:`~cadquery.Workplane`, and this one modelling context at ``0x2730`` will be shared between
+every :class:`Workplane` object in this chain. If we instantiate a new :class:`~cadquery.Workplane`
+with ``part2 = cq.Workplane()``, then this ``part2`` would have a different instance of the
+:class:`~cadquery.cq.CQContext` attached to it.
+
+Thirdly, in our objects list is a single :class:`~cadquery.Solid` object, which is the box we just
+created.
 
 Often when creating models you will find yourself wanting to refer back to a specific
 :class:`~cadquery.Workplane` object, perhaps because it is easier to select the feature you want in this
@@ -325,9 +334,10 @@ The :attr:`~cadquery.cq.CQContext.tags` attribute of the modelling context is si
 associating the string name given by the :meth:`~cadquery.Workplane.tag` method to the
 :class:`~cadquery.Workplane`. Methods such as :meth:`~cadquery.Workplane.workplaneFromTagged` and
 selection methods like :meth:`~cadquery.Workplane.edges` can operate on a tagged
-:class:`~cadquery.Workplane`. Note that the :meth:`~cadquery.Workplane.tag` method is unusual for a
-:class:`~cadquery.Workplane` method in that it returns the same :class:`~cadquery.Workplane`, not a
-new one.
+:class:`~cadquery.Workplane`. Note that unlike the ``part = part.box(1, 1, 1)`` step where we went
+from ``Workplane object at 0x2760`` to ``Workplane object at 0xaa90``, the
+:meth:`~cadquery.Workplane.tag` method has returned the same object at ``0xaa90``. This is unusual
+for a :class:`~cadquery.Workplane` method.
 
 The next step is::
 
