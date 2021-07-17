@@ -56,7 +56,7 @@ class SketchConstraintSolver(object):
             v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
             v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
 
-            a = v2.Anlge(v1)
+            a = v2.Angle(v1)
 
             return a - val
 
