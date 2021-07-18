@@ -451,13 +451,7 @@ class TestCadObjects(BaseTest):
         self.assertAlmostEqual(w1.radius(), rad)
 
         # test value error from wire
-        w2 = Wire.makePolygon(
-            [
-                Vector(-1, 0, 0),
-                Vector(0, 1, 0),
-                Vector(1, -1, 0),
-            ]
-        )
+        w2 = Wire.makePolygon([Vector(-1, 0, 0), Vector(0, 1, 0), Vector(1, -1, 0),])
         with self.assertRaises(ValueError):
             w2.radius()
 

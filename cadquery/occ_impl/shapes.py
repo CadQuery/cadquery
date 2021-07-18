@@ -1227,9 +1227,7 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
         ...
 
     def positionAt(
-        self,
-        d: float,
-        mode: Literal["length", "parameter"] = "length",
+        self, d: float, mode: Literal["length", "parameter"] = "length",
     ) -> Vector:
         ...
 
@@ -2776,11 +2774,7 @@ class Solid(Shape, Mixin3D):
         """
         # make straight spine
         straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
-        straight_spine_w = Wire.combine(
-            [
-                straight_spine_e,
-            ]
-        )[0].wrapped
+        straight_spine_w = Wire.combine([straight_spine_e,])[0].wrapped
 
         # make an auxliliary spine
         pitch = 360.0 / angleDegrees * vecNormal.Length
@@ -2927,11 +2921,7 @@ class Solid(Shape, Mixin3D):
     def _toWire(p: Union[Edge, Wire]) -> Wire:
 
         if isinstance(p, Edge):
-            rv = Wire.assembleEdges(
-                [
-                    p,
-                ]
-            )
+            rv = Wire.assembleEdges([p,])
         else:
             rv = p
 
@@ -3012,11 +3002,7 @@ class Solid(Shape, Mixin3D):
         :return: a Solid object
         """
         if isinstance(path, Edge):
-            w = Wire.assembleEdges(
-                [
-                    path,
-                ]
-            ).wrapped
+            w = Wire.assembleEdges([path,]).wrapped
         else:
             w = path.wrapped
 
@@ -3270,11 +3256,6 @@ def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
 
     rv = []
     for face in faces.Faces():
-        rv.append(
-            [
-                face.outerWire(),
-            ]
-            + face.innerWires()
-        )
+        rv.append([face.outerWire(),] + face.innerWires())
 
     return rv
