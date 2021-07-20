@@ -41,6 +41,8 @@ class Constraint(object):
         self.kind = kind
         self.param = param
 
+        # validate the constraint?
+
 
 class Sketch(object):
 
@@ -591,7 +593,7 @@ class Sketch(object):
             )
 
         # optimize
-        solver = SketchConstraintSolver(entities, constraints)
+        solver = SketchConstraintSolver(entities, constraints, geoms)
         res = solver.solve()
 
         # translate back the solution - update edges

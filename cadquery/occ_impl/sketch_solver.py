@@ -1,6 +1,7 @@
 from typing import Tuple, Union, Any, Callable, List, Optional, Literal, Iterable
 from nptyping import NDArray as Array
 from itertools import accumulate, chain
+from math import sin, cos
 
 from numpy import array
 from numpy.linalg import norm
@@ -8,6 +9,7 @@ from scipy.optimize import minimize
 from OCP.gp import gp_Vec2d
 
 from .geom import Location
+from .shapes import Geoms
 
 
 SegmentDOF = Tuple[float, float, float, float]  # p1 p2
@@ -22,14 +24,21 @@ class SketchConstraintSolver(object):
 
     entities: List[DOF]
     constraints: List[Constraint]
+    geoms: List[Geoms]
     ne: int
     nc: int
     ixs: List[int]
 
-    def __init__(self, entities: Iterable[DOF], constraints: Iterable[Constraint]):
+    def __init__(
+        self,
+        entities: Iterable[DOF],
+        constraints: Iterable[Constraint],
+        geoms: Iterable[Geoms],
+    ):
 
         self.entities = list(entities)
         self.constraints = list(constraints)
+        self.geoms = list(geoms)
 
         self.ne = len(entities)
         self.nc = len(self.constraints)
@@ -43,26 +52,80 @@ class SketchConstraintSolver(object):
         Callable[[Array[(Any,), float]], float],
         Callable[[Array[(Any,), float]], Array[(Any,), float]],
     ]:
-        def fixed_cost(x, val):
+        def invalid_args(*t):
+
+            return ValueError("Invalid argument types {t}")
+
+        def arc_first(x):
+
+            return array((x[0] + x[2] * sin(x[3]), x[1] + x[2] * cos(x[3])))
+
+        def arc_last(x):
+
+            return array((x[0] + x[2] * sin(x[4]), x[1] + x[2] * cos(x[4])))
+
+        def arc_first_tangent(x):
+
+            return array((cos(x[3]), sin(x[3])))
+
+        def arc_last_tangent(x):
+
+            return array((cos(x[4]), sin(x[4])))
+
+        def fixed_cost(x, t, val):
 
             return norm(x - val)
 
-        def coincident_cost(x1, x2):
+        def coincident_cost(x1, t1, x2, t2, val):
 
-            return norm(x1[2:] - x2[:2])
+            if t1 == "LINE" and t2 == "LINE":
+                v1 = x1[2:]
+                v2 = x2[:2]
+            elif t1 == "LINE" and t2 == "CRICLE":
+                v1 = x1[2:]
+                v2 = arc_first(x2)
+            elif t1 == "CIRCLE" and t2 == "LINE":
+                v1 = arc_last(x1)
+                v2 = x2[:2]
+            elif t1 == "CIRCLE" and t2 == "CRICLE":
+                v1 = arc_last(x1)
+                v2 = arc_first(x1)
+            else:
+                raise invalid_args(t1, t2)
 
-        def angle_cost(x1, x2, val):
+            return norm(v1 - v2)
 
-            v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
-            v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
+        def angle_cost(x1, t1, x2, t2, val):
 
-            a = v2.Angle(v1)
+            if t1 == "LINE" and t2 == "LINE":
+                v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
+                v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
+            elif t1 == "LINE" and t2 == "CRICLE":
+                v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
+                v2 = arc_first_tangent(x2)
+            elif t1 == "CIRCLE" and t2 == "LINE":
+                v1 = arc_last_tangent(x1)
+                v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
+            elif t1 == "CIRCLE" and t2 == "CRICLE":
+                v1 = arc_last_tangent(x1)
+                v2 = arc_first_tangent(x2)
+            else:
+                raise invalid_args(t1, t2)
 
-            return a - val
+            return v2.Angle(v1) - val
 
-        def length_cost(x1, x2, val):
+        def length_cost(x, t, val):
 
-            return norm(x2 - x1) - val
+            rv = 0
+
+            if t == "LINE":
+                rv = norm(x[2:] - x[:2]) - val
+            elif t == "CIRCLE":
+                rv = norm(x[1] * (x[4] - x[3])) - val
+            else:
+                raise invalid_args(t)
+
+            return rv
 
         # dicitonary of individual constraint cost functions
         costs = dict(
@@ -73,13 +136,13 @@ class SketchConstraintSolver(object):
         )
 
         ixs = self.ixs
+        constraints = self.constraints
+        geoms = self.geoms
 
         def f(x):
             """
             Function to be minimized
             """
-
-            constraints = self.constraints
 
             rv = 0
 
@@ -88,11 +151,10 @@ class SketchConstraintSolver(object):
                 cost = costs[kind]
 
                 # build arguments for the specific constraint
-                args = (x[ixs[e1] : ixs[e1 + 1]],)
+                args = (x[ixs[e1] : ixs[e1 + 1]], geoms[e1])
                 if e2 is not None:
-                    args += (x[ixs[e2] : ixs[e2 + 1]],)
-                if val is not None:
-                    args += (val,)
+                    args += (x[ixs[e2] : ixs[e2 + 1]], geoms[e2])
+                args += (val,)
 
                 # evaluate
                 rv += cost(*args) ** 2
