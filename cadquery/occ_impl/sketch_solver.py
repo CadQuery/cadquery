@@ -16,7 +16,16 @@ SegmentDOF = Tuple[float, float, float, float]  # p1 p2
 ArcDOF = Tuple[float, float, float, float, float]  # p r a1 a2
 DOF = Union[SegmentDOF, ArcDOF]
 
-ConstraintKind = Literal["Fixed", "Coincident", "Angle", "Length"]
+ConstraintKind = Literal[
+    "Fixed",
+    "Coincident",
+    "Angle",
+    "Length",
+    "Distance",
+    "Radius",
+    "Orientation",
+    "ArcAngle",
+]
 Constraint = Tuple[Tuple[int, Optional[int]], ConstraintKind, Optional[Any]]
 
 
@@ -63,6 +72,20 @@ class SketchConstraintSolver(object):
         def arc_last(x):
 
             return array((x[0] + x[2] * sin(x[4]), x[1] + x[2] * cos(x[4])))
+
+        def arc_point(x, val):
+
+            if val is None:
+                rv = x[:2]
+            else:
+                a = x[3] + val * (x[4] - x[3])
+                rv = array((x[0] + x[2] * sin(a), x[1] + x[2] * cos(a)))
+
+            return rv
+
+        def line_point(x, val):
+
+            return x[:2] + val * x[2:]
 
         def arc_first_tangent(x):
 
@@ -127,12 +150,64 @@ class SketchConstraintSolver(object):
 
             return rv
 
+        def distance_cost(x1, t1, x2, t2, val):
+
+            val1, val2, d = val
+
+            if t1 == "LINE" and t2 == "LINE":
+                v1 = line_point(x1, val1)
+                v2 = line_point(x2, val2)
+            elif t1 == "LINE" and t2 == "CRICLE":
+                v1 = line_point(x1, val1)
+                v2 = arc_point(x2, val2)
+            elif t1 == "CIRCLE" and t2 == "LINE":
+                v1 = arc_point(x1, val1)
+                v2 = line_point(x2, val2)
+            elif t1 == "CIRCLE" and t2 == "CRICLE":
+                v1 = arc_point(x1, val1)
+                v2 = arc_point(x2, val2)
+            else:
+                raise invalid_args(t1, t2)
+
+            return norm(v1 - v2) - d
+
+        def radius_cost(x, t, val):
+
+            if t == "CIRCLE":
+                rv = x[2] - val
+            else:
+                raise invalid_args(t)
+
+            return rv
+
+        def orientation_cost(x, t, val):
+
+            if t == "LINE":
+                rv = gp_Vec2d(*(x[2:] - x[:2])).Angle(gp_Vec2d(*val))
+            else:
+                raise invalid_args(t)
+
+            return rv
+
+        def arc_angle_cost(x, t, val):
+
+            if t == "CIRCLE":
+                rv = norm(x[4] - x[3]) - val
+            else:
+                raise invalid_args(t)
+
+            return rv
+
         # dicitonary of individual constraint cost functions
         costs = dict(
             Fixed=fixed_cost,
             Coincident=coincident_cost,
             Angle=angle_cost,
             Length=length_cost,
+            Distance=distance_cost,
+            Radius=radius_cost,
+            Orientation=orientation_cost,
+            ArcAngle=arc_angle_cost,
         )
 
         ixs = self.ixs
