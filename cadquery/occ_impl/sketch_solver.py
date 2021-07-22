@@ -11,6 +11,7 @@ from OCP.gp import gp_Vec2d
 from .geom import Location
 from .shapes import Geoms
 
+NoneType = type(None)
 
 SegmentDOF = Tuple[float, float, float, float]  # p1 p2
 ArcDOF = Tuple[float, float, float, float, float]  # p r a1 a2
@@ -26,6 +27,18 @@ ConstraintKind = Literal[
     "Orientation",
     "ArcAngle",
 ]
+
+ConstraintInvariants = {  # (arity, geometry types, param type)
+    "Fixed": (1, ("CIRCLE", "LINE"), NoneType),
+    "Coincident": (2, ("CIRCLE", "LINE"), NoneType),
+    "Angle": (2, ("CIRCLE", "LINE"), float),
+    "Length": (1, ("CIRCLE", "LINE"), float),
+    "Distance": (2, ("CIRCLE", "LINE"), Tuple[float, float, float]),
+    "Radius": (1, ("CIRCLE",), float),
+    "Orientation": (1, ("LINE",), Tuple[float, float]),
+    "ArcAngle": (1, ("CIRCLE",), float),
+}
+
 Constraint = Tuple[Tuple[int, Optional[int]], ConstraintKind, Optional[Any]]
 
 

@@ -1,10 +1,10 @@
 from typing import Union, Optional, List, Dict, Callable, Tuple, Iterable, Any
 from typing_extensions import Literal
-from enum import Enum
 from numbers import Real
 from math import tan, sin, cos, pi, radians
 from itertools import product
 from multimethod import multimethod
+from typish import instance_of, get_type
 
 from .selectors import StringSyntaxSelector
 
@@ -12,13 +12,12 @@ from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, edgesToWires
 from .occ_impl.geom import Location, Vector
 from .occ_impl.sketch_solver import (
     SketchConstraintSolver,
-    ConstraintKind as ConstraintKindL,
+    ConstraintKind,
+    ConstraintInvariants,
 )
 
 Modes = Literal["a", "s"]
 Point = Union[Vector, Tuple[Real, Real]]
-
-ConstraintKind = Enum("ConstraintKind", {e: e for e in ConstraintKindL.__args__})
 
 
 class Constraint(object):
@@ -36,12 +35,32 @@ class Constraint(object):
         param: Any = None,
     ):
 
+        # validate based on the solver provided spec
+        if kind not in ConstraintInvariants:
+            raise ValueError(f"Unknown constraint {kind}.")
+
+        arity, types, param_type = ConstraintInvariants[kind]
+
+        if arity != len(tags):
+            raise ValueError(
+                f"Invalid number of entities for constraint {kind}. Provided {len(tags)}, required {arity}."
+            )
+
+        if any(e.geomType() not in types for e in args):
+            raise ValueError(
+                f"Unsupported geometry types {[e.geomType() for e in args]} for constraint {kind}."
+            )
+
+        if not instance_of(param, param_type):
+            raise ValueError(
+                f"Unsupported argument types {get_type(param)}, required {param_type}."
+            )
+
+        # if all is fine store everything
         self.tags = tags
         self.args = args
         self.kind = kind
         self.param = param
-
-        # validate the constraint?
 
 
 class Sketch(object):
@@ -585,11 +604,7 @@ class Sketch(object):
         for c in self._constraints:
             ix = (e2i[c.tags[0]], e2i[c.tags[1]] if len(c.tags) == 2 else None)
             constraints.append(
-                (
-                    ix,
-                    c.kind.value,
-                    entities[ix[0]] if c.kind.value == "Fixed" else c.param,
-                )
+                (ix, c.kind, entities[ix[0]] if c.kind == "Fixed" else c.param,)
             )
 
         # optimize
