@@ -2290,6 +2290,14 @@ class TestCadQuery(BaseTest):
         s3 = Workplane().polyline(pts).close().extrude(1).shell(-0.05)
         self.assertTrue(s3.val().isValid())
 
+        s4_shape = Workplane("XY").box(2, 2, 2).val()
+        # test that None and empty list both work and are equivalent
+        s4_shell_1 = s4_shape.shell(faceList=None, thickness=-0.1)
+        s4_shell_2 = s4_shape.shell(faceList=[], thickness=-0.1)
+        # this should be the same as the first shape
+        self.assertEqual(len(s4_shell_1.Faces()), s1.faces().size())
+        self.assertEqual(len(s4_shell_2.Faces()), s1.faces().size())
+
     def testOpenCornerShell(self):
         s = Workplane("XY").box(1, 1, 1)
         s1 = s.faces("+Z")
