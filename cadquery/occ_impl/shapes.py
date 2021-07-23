@@ -2351,7 +2351,7 @@ class Mixin3D(object):
 
     def shell(
         self: Any,
-        faceList: Iterable[Face],
+        faceList: Optional[Iterable[Face]],
         thickness: float,
         tolerance: float = 0.0001,
         kind: Literal["arc", "intersection"] = "arc",
@@ -2375,8 +2375,9 @@ class Mixin3D(object):
         occ_faces_list = TopTools_ListOfShape()
         shell_builder = BRepOffsetAPI_MakeThickSolid()
 
-        for f in faceList:
-            occ_faces_list.Append(f.wrapped)
+        if faceList:
+            for f in faceList:
+                occ_faces_list.Append(f.wrapped)
 
         shell_builder.MakeThickSolidByJoin(
             self.wrapped,
