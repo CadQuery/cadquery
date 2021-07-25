@@ -262,7 +262,7 @@ class TestCadObjects(BaseTest):
 
     def testVectorProject(self):
         """
-        Test method to project vector to plane.
+        Test line projection and plane projection methods of cq.Vector
         """
         decimal_places = 9
 
@@ -274,6 +274,22 @@ class TestCadObjects(BaseTest):
         point = Vector(10, 11, 12).projectToPlane(Plane(base, x_dir, normal))
         self.assertTupleAlmostEquals(
             point.toTuple(), (59 / 7, 55 / 7, 51 / 7), decimal_places
+        )
+
+        # test line projection
+        vec = Vector(10, 10, 10)
+        line = Vector(3, 4, 5)
+        angle = vec.getAngle(line)
+
+        vecLineProjection = vec.projectToLine(line)
+
+        self.assertTupleAlmostEquals(
+            vecLineProjection.normalized().toTuple(),
+            line.normalized().toTuple(),
+            decimal_places,
+        )
+        self.assertAlmostEqual(
+            vec.Length * math.cos(angle), vecLineProjection.Length, decimal_places
         )
 
     def testMatrixCreationAndAccess(self):
