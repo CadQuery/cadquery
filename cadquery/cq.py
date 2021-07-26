@@ -3013,23 +3013,21 @@ class Workplane(object):
                     "combine can't be set to False when extruding until a face"
                 )
             if until.lower() == "next":
-                upToFace = 0
+                limit = 0
             elif until.lower() == "last":
-                upToFace = -1
+                limit = -1
             else:
                 # FutureEnhancement :
                 # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
                 raise ValueError(
                     "Valid option for until face extrusion are 'next' and 'last'"
                 )
-        elif isinstance(until, Face):
-            upToFace = until
-        else:
-            upToFace = None
+            r = self._extrude(distance=None, both=both, taper=taper, upToFace=limit)
 
-        r = self._extrude(
-            until, both=both, taper=taper, upToFace=upToFace
-        )  # returns a Solid (or a compound if there were multiple)
+        elif isinstance(until, Face):
+            r = self._extrude(None, both=both, taper=taper, upToFace=until)
+        else:
+            r = self._extrude(until, both=both, taper=taper, upToFace=None)
 
         if combine:
             newS = self._combineWithBase(r)
@@ -3401,22 +3399,23 @@ class Workplane(object):
         """
         if isinstance(until, str):
             if until.lower() == "next":
-                upToFace = 0
+                limit = 0
             elif until.lower() == "last":
-                upToFace = -1
+                limit = -1
             else:
                 # FutureEnhancement :
                 # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
                 raise ValueError(
                     "Valid option for until face extrusion are 'next' and 'last'"
                 )
+            toCut = self._extrude(None, taper=taper, upToFace=limit, additive=False)
+
         elif isinstance(until, Face):
-            upToFace = until
+            toCut = self._extrude(None, taper=taper, upToFace=until, additive=False)
         else:
-            upToFace = None
+            toCut = self._extrude(until, taper=taper, upToFace=None, additive=False)
 
         # first, make the object
-        toCut = self._extrude(until, taper=taper, upToFace=upToFace, additive=False)
 
         if isinstance(until, (int, float)):
             # now find a solid in the chain
@@ -3553,10 +3552,12 @@ class Workplane(object):
 
         # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there are
         # multiple sets
+        thisObj: Union[Solid, Compound]
 
         toFuse = []
         taper = 0.0 if taper is None else taper
         baseSolid = None
+
         for ws in wireSets:
             if upToFace is not None:
                 baseSolid = self.findSolid() if baseSolid is None else thisObj

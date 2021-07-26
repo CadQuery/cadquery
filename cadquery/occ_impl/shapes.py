@@ -313,8 +313,8 @@ Geoms = Literal[
     "PLANE",
     "CYLINDER",
     "CONE",
-    "SPHERE",
     "TORUS",
+    "SPHERE",
     "BEZIER",
     "BSPLINE",
     "REVOLUTION",
@@ -1029,16 +1029,17 @@ class Shape(object):
 
         :returns: A list of intersected face sorted by distance from :point:
         """
-        point = (
+
+        oc_point = (
             gp_Pnt(*point.toTuple()) if isinstance(point, Vector) else gp_Pnt(*point)
         )
-        axis = (
+        oc_axis = (
             gp_Dir(Vector(axis).wrapped)
             if not isinstance(axis, Vector)
             else gp_Dir(axis.wrapped)
         )
 
-        line = gce_MakeLin(point, axis).Value()
+        line = gce_MakeLin(oc_point, oc_axis).Value()
         shape = self.wrapped
 
         intersectMaker = BRepIntCurveSurface_Inter()
@@ -1047,11 +1048,11 @@ class Shape(object):
         faces = []
         while intersectMaker.More():
             interPt = intersectMaker.Pnt()
-            interDirMk = gce_MakeDir(point, interPt)
+            interDirMk = gce_MakeDir(oc_point, interPt)
 
-            distance = point.SquareDistance(interPt)
+            distance = oc_point.SquareDistance(interPt)
 
-            # interDir is not done when `point` and `axis` have the same coord
+            # interDir is not done when `oc_point` and `oc_axis` have the same coord
             if interDirMk.IsDone():
                 interDir = interDirMk.Value()
             else:
@@ -1060,7 +1061,7 @@ class Shape(object):
             if direction == "AlongAxis":
                 if (
                     interDir is not None
-                    and not interDir.IsOpposite(axis, tol)
+                    and not interDir.IsOpposite(oc_axis, tol)
                     and distance > tol
                 ):
                     faces.append((intersectMaker.Face(), distance))
@@ -1068,7 +1069,7 @@ class Shape(object):
             elif direction == "Opposite":
                 if (
                     interDir is not None
-                    and interDir.IsOpposite(axis, tol)
+                    and interDir.IsOpposite(oc_axis, tol)
                     and distance > tol
                 ):
                     faces.append((intersectMaker.Face(), distance))
@@ -3027,7 +3028,7 @@ class Solid(Shape, Mixin3D):
         return cls(builder.Shape())
 
     def dprism(
-        self,
+        self: Union[TopoDS_Shape, TopoDS_Solid],
         basis: Optional[Face],
         profiles: List[Wire],
         depth: Optional[float] = None,
