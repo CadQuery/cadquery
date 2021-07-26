@@ -1045,7 +1045,7 @@ class Shape(object):
         intersectMaker = BRepIntCurveSurface_Inter()
         intersectMaker.Init(shape, line, tol)
 
-        faces_dist = [] # using a list instead of a dictionnary to be able to sort it
+        faces_dist = []  # using a list instead of a dictionnary to be able to sort it
         while intersectMaker.More():
             interPt = intersectMaker.Pnt()
             interDirMk = gce_MakeDir(oc_point, interPt)
@@ -3028,7 +3028,7 @@ class Solid(Shape, Mixin3D):
         return cls(builder.Shape())
 
     def dprism(
-        self: Union[Shape,"Solid"],
+        self: Union[Shape, "Solid"],
         basis: Optional[Face],
         profiles: List[Wire],
         depth: Optional[float] = None,
