@@ -244,6 +244,9 @@ class TestCadObjects(BaseTest):
         result = Vector(1, 2, 3) * 2
         self.assertEqual(Vector(2, 4, 6), result)
 
+        result = 3 * Vector(1, 2, 3)
+        self.assertEqual(Vector(3, 6, 9), result)
+
         result = Vector(2, 4, 6) / 2
         self.assertEqual(Vector(1, 2, 3), result)
 
