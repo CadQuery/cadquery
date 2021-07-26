@@ -10,3 +10,9 @@ MANIFEST
 out.*
 res?.dxf
 *.xml
+assy.xml
+nested.step
+simple.caf
+simple.step
+simple.stp
+simple.xml

@@ -1045,7 +1045,7 @@ class Shape(object):
         intersectMaker = BRepIntCurveSurface_Inter()
         intersectMaker.Init(shape, line, tol)
 
-        faces = []
+        faces_dist = [] # using a list instead of a dictionnary to be able to sort it
         while intersectMaker.More():
             interPt = intersectMaker.Pnt()
             interDirMk = gce_MakeDir(oc_point, interPt)
@@ -1054,7 +1054,7 @@ class Shape(object):
 
             # interDir is not done when `oc_point` and `oc_axis` have the same coord
             if interDirMk.IsDone():
-                interDir = interDirMk.Value()
+                interDir: Any = interDirMk.Value()
             else:
                 interDir = None
 
@@ -1064,7 +1064,7 @@ class Shape(object):
                     and not interDir.IsOpposite(oc_axis, tol)
                     and distance > tol
                 ):
-                    faces.append((intersectMaker.Face(), distance))
+                    faces_dist.append((intersectMaker.Face(), distance))
 
             elif direction == "Opposite":
                 if (
@@ -1072,7 +1072,7 @@ class Shape(object):
                     and interDir.IsOpposite(oc_axis, tol)
                     and distance > tol
                 ):
-                    faces.append((intersectMaker.Face(), distance))
+                    faces_dist.append((intersectMaker.Face(), distance))
 
             elif direction is not None:
                 raise ValueError(
@@ -1080,13 +1080,13 @@ class Shape(object):
                 )
 
             else:
-                faces.append(
+                faces_dist.append(
                     (intersectMaker.Face(), abs(distance))
                 )  # will sort all intersected faces by distance whatever the direction is
             intersectMaker.Next()
 
-        faces.sort(key=lambda x: x[1])
-        faces = [face[0] for face in faces]
+        faces_dist.sort(key=lambda x: x[1])
+        faces = [face[0] for face in faces_dist]
 
         return [Face(face) for face in faces]
 
@@ -3028,7 +3028,7 @@ class Solid(Shape, Mixin3D):
         return cls(builder.Shape())
 
     def dprism(
-        self: Union[TopoDS_Shape, TopoDS_Solid],
+        self: Union[Shape,"Solid"],
         basis: Optional[Face],
         profiles: List[Wire],
         depth: Optional[float] = None,
