@@ -2351,18 +2351,20 @@ class Mixin3D(object):
 
     def shell(
         self: Any,
-        faceList: Iterable[Face],
+        faceList: Optional[Iterable[Face]],
         thickness: float,
         tolerance: float = 0.0001,
         kind: Literal["arc", "intersection"] = "arc",
     ) -> Any:
         """
-            make a shelled solid of given  by removing the list of faces
+        Make a shelled solid of self.
 
-        :param faceList: list of face objects, which must be part of the solid.
-        :param thickness: floating point thickness. positive shells outwards, negative shells inwards
-        :param tolerance: modelling tolerance of the method, default=0.0001
-        :return: a shelled solid
+        :param faceList: List of faces to be removed, which must be part of the solid. Can
+          be an empty list.
+        :param thickness: Floating point thickness. Positive shells outwards, negative
+          shells inwards.
+        :param tolerance: Modelling tolerance of the method, default=0.0001.
+        :return: A shelled solid.
         """
 
         kind_dict = {
@@ -2371,45 +2373,39 @@ class Mixin3D(object):
         }
 
         occ_faces_list = TopTools_ListOfShape()
+        shell_builder = BRepOffsetAPI_MakeThickSolid()
 
         if faceList:
             for f in faceList:
                 occ_faces_list.Append(f.wrapped)
 
-            shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped,
-                occ_faces_list,
-                thickness,
-                tolerance,
-                Intersection=True,
-                Join=kind_dict[kind],
-            )
+        shell_builder.MakeThickSolidByJoin(
+            self.wrapped,
+            occ_faces_list,
+            thickness,
+            tolerance,
+            Intersection=True,
+            Join=kind_dict[kind],
+        )
+        shell_builder.Build()
 
-            shell_builder.Build()
-            rv = shell_builder.Shape()
+        if faceList:
+            rv = self.__class__(shell_builder.Shape())
 
         else:  # if no faces provided a watertight solid will be constructed
-            shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped,
-                occ_faces_list,
-                thickness,
-                tolerance,
-                Intersection=True,
-                Join=kind_dict[kind],
-            )
-
-            shell_builder.Build()
             s1 = self.__class__(shell_builder.Shape()).Shells()[0].wrapped
             s2 = self.Shells()[0].wrapped
 
             # s1 can be outer or inner shell depending on the thickness sign
             if thickness > 0:
-                rv = BRepBuilderAPI_MakeSolid(s1, s2).Shape()
+                sol = BRepBuilderAPI_MakeSolid(s1, s2)
             else:
-                rv = BRepBuilderAPI_MakeSolid(s2, s1).Shape()
+                sol = BRepBuilderAPI_MakeSolid(s2, s1)
 
-        # fix needed for the orientations
-        return self.__class__(rv) if faceList else self.__class__(rv).fix()
+            # fix needed for the orientations
+            rv = self.__class__(sol.Shape()).fix()
+
+        return rv
 
     def isInside(
         self: ShapeProtocol, point: VectorLike, tolerance: float = 1.0e-6
