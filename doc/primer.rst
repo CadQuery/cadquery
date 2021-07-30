@@ -387,7 +387,7 @@ The output is now:
         tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
 Modelling operations take their wires and edges from the modelling context's pending lists. In order
-to use the :meth:`~cadquery.Workplane.loft` command futher down the chain, we need to push this wire
+to use the :meth:`~cadquery.Workplane.loft` command further down the chain, we need to push this wire
 to the modelling context with::
 
     part = part.toPending()

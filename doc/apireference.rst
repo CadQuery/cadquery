@@ -167,7 +167,7 @@ Selectors
 ------------------------
 
 Objects that filter and select CAD objects. Selectors are used to select existing geometry
-as a basis for futher operations.
+as a basis for further operations.
 
 .. currentmodule:: cadquery.selectors
 .. autosummary::

@@ -698,7 +698,7 @@ class Workplane(object):
     def item(self: T, i: int) -> T:
         """
 
-        Return the ith item on the stack.
+        Return the nth item on the stack.
         :rtype: a CQ object
         """
         return self.newObject([self.objects[i]])
@@ -1087,7 +1087,7 @@ class Workplane(object):
         Future Enhancements:
             * A version of this method that returns a transformed copy, rather than modifying
               the originals
-            * This method doesnt expose a very good interface, because the axis of rotation
+            * This method doesn't expose a very good interface, because the axis of rotation
               could be inconsistent between multiple objects.  This is because the beginning
               of the axis is variable, while the end is fixed. This is fine when operating on
               one object, but is not cool for multiple.
@@ -1687,7 +1687,7 @@ class Workplane(object):
         self: T, distance: float, angle: float, forConstruction: bool = False
     ) -> T:
         """
-        Make a line from the current point to the given polar co-ordinates
+        Make a line from the current point to the given polar coordinates
 
         Useful if it is more convenient to specify the end location rather than
         the distance and angle from the current point
@@ -1817,7 +1817,7 @@ class Workplane(object):
             where a tangent constraint is specified.
         :param periodic: creation of periodic curves
         :param parameters: the value of the parameter at each interpolation point.
-            (The intepolated curve is represented as a vector-valued function of a
+            (The interpolated curve is represented as a vector-valued function of a
             scalar parameter.)
 
             If periodic == True, then len(parameters) must be
@@ -2767,7 +2767,7 @@ class Workplane(object):
 
         return self.newObject([s])
 
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def cboreHole(
         self: T,
         diameter: float,
@@ -2822,7 +2822,7 @@ class Workplane(object):
         return self.cutEach(lambda loc: r.moved(loc), True, clean)
 
     # TODO: almost all code duplicated!
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def cskHole(
         self: T,
         diameter: float,
@@ -2879,7 +2879,7 @@ class Workplane(object):
         return self.cutEach(lambda loc: res.moved(loc), True, clean)
 
     # TODO: almost all code duplicated!
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def hole(
         self: T, diameter: float, depth: Optional[float] = None, clean: bool = True,
     ) -> T:
@@ -3589,7 +3589,7 @@ class Workplane(object):
         maxSegments: int = 9,
     ) -> T:
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very ressources intensive depending on the complexity of the shape. In this case set combine=False.
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very resources intensive depending on the complexity of the shape. In this case set combine=False.
 
         :param surf_edges
         :type 1 surf_edges: list of [x,y,z] float ordered coordinates
