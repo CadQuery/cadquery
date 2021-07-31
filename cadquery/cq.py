@@ -698,7 +698,7 @@ class Workplane(object):
     def item(self: T, i: int) -> T:
         """
 
-        Return the nth item on the stack.
+        Return the ith item on the stack.
         :rtype: a CQ object
         """
         return self.newObject([self.objects[i]])
