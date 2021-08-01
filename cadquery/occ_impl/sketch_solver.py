@@ -1,4 +1,5 @@
-from typing import Tuple, Union, Any, Callable, List, Optional, Literal, Iterable
+from typing import Tuple, Union, Any, Callable, List, Optional, Iterable
+from typing_extensions import Literal
 from nptyping import NDArray as Array
 from itertools import accumulate, chain
 from math import sin, cos
