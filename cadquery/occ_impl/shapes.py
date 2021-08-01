@@ -1224,6 +1224,11 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
 
 
 class Mixin1D(object):
+    def _bounds(self: Mixin1DProtocol) -> Tuple[float, float]:
+
+        curve = self._geomAdaptor()
+        return curve.FirstParameter(), curve.LastParameter()
+
     def startPoint(self: Mixin1DProtocol) -> Vector:
         """
 
