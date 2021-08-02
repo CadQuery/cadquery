@@ -3007,6 +3007,7 @@ class Workplane(object):
            and the resulting solid becomes the new context solid.
 
         """
+        # Handle `until` multiple values
         if isinstance(until, str) and until in ("next", "last") and combine:
             if until == "next":
                 faceIndex = 0
