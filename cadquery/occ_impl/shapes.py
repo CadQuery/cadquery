@@ -1016,7 +1016,7 @@ class Shape(object):
         point: VectorLike,
         axis: VectorLike,
         tol: float = 1e-4,
-        direction: Optional[str] = None,
+        direction: Optional[Literal["AlongAxis", "Opposite"]] = None,
     ):
         """
         Computes the intersections between the provided line and the faces of the provided shape
@@ -1074,15 +1074,15 @@ class Shape(object):
                 ):
                     faces_dist.append((intersectMaker.Face(), distance))
 
-            elif direction is not None:
+            elif direction is None:
+                faces_dist.append(
+                    (intersectMaker.Face(), abs(distance))
+                )  # will sort all intersected faces by distance whatever the direction is
+            else:
                 raise ValueError(
                     "Unvalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'."
                 )
 
-            else:
-                faces_dist.append(
-                    (intersectMaker.Face(), abs(distance))
-                )  # will sort all intersected faces by distance whatever the direction is
             intersectMaker.Next()
 
         faces_dist.sort(key=lambda x: x[1])

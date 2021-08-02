@@ -3007,27 +3007,27 @@ class Workplane(object):
            and the resulting solid becomes the new context solid.
 
         """
-        if isinstance(until, str):
-            if combine is False:
-                raise ValueError(
-                    "combine can't be set to False when extruding until a face"
-                )
-            if until.lower() == "next":
-                limit = 0
-            elif until.lower() == "last":
-                limit = -1
-            else:
-                # FutureEnhancement :
-                # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
-                raise ValueError(
-                    "Valid option for until face extrusion are 'next' and 'last'"
-                )
-            r = self._extrude(distance=None, both=both, taper=taper, upToFace=limit)
+        if isinstance(until, str) and until in ("next", "last") and combine:
+            if until == "next":
+                faceIndex = 0
+            elif until == "last":
+                faceIndex = -1
+
+            r = self._extrude(distance=None, both=both, taper=taper, upToFace=faceIndex)
 
         elif isinstance(until, Face):
             r = self._extrude(None, both=both, taper=taper, upToFace=until)
-        else:
+        elif isinstance(until, (int, float)):
             r = self._extrude(until, both=both, taper=taper, upToFace=None)
+
+        elif isinstance(until, str) and combine is False:
+            raise ValueError(
+                "`combine` can't be set to False when extruding until a face"
+            )
+        else:
+            raise ValueError(
+                "Valid option for until face extrusion are 'next' and 'last'"
+            )
 
         if combine:
             newS = self._combineWithBase(r)
@@ -3397,33 +3397,26 @@ class Workplane(object):
         see :py:meth:`cutThruAll` to cut material from the entire part
 
         """
-        if isinstance(until, str):
-            if until.lower() == "next":
-                limit = 0
-            elif until.lower() == "last":
-                limit = -1
-            else:
-                # FutureEnhancement :
-                # We could specify a number to extrude to the specified face, like until = "3", would extrude until the 3rd face
-                raise ValueError(
-                    "Valid option for until face extrusion are 'next' and 'last'"
-                )
-            toCut = self._extrude(None, taper=taper, upToFace=limit, additive=False)
+        # Handling of `until` passed values
+        if isinstance(until, str) and until in ("next", "last"):
+            if until == "next":
+                faceIndex = 0
+            elif until == "last":
+                faceIndex = -1
+
+            s = self._extrude(None, taper=taper, upToFace=faceIndex, additive=False)
 
         elif isinstance(until, Face):
-            toCut = self._extrude(None, taper=taper, upToFace=until, additive=False)
-        else:
+            s = self._extrude(None, taper=taper, upToFace=until, additive=False)
+
+        elif isinstance(until, (int, float)):
             toCut = self._extrude(until, taper=taper, upToFace=None, additive=False)
-
-        # first, make the object
-
-        if isinstance(until, (int, float)):
-            # now find a solid in the chain
             solidRef = self.findSolid()
             s = solidRef.cut(toCut)
         else:
-            s = toCut
-
+            raise ValueError(
+                "Valid option for until face extrusion are 'next' and 'last'"
+            )
         if clean:
             s = s.clean()
 
