@@ -1497,9 +1497,9 @@ class Edge(Shape, Mixin1D):
         a = self._geomAdaptor()
 
         if g == "CIRCLE":
-            rv = Vector(a.Circle().Position())
+            rv = Vector(a.Circle().Position().Location())
         elif g == "ELLIPSE":
-            rv = Vector(a.Ellipse().Position())
+            rv = Vector(a.Ellipse().Position().Location())
         else:
             raise ValueError(f"{g} has no arc center")
 
