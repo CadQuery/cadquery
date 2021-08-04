@@ -4034,27 +4034,42 @@ class Workplane(object):
         """
         Create a 3D text
 
-        :param str txt: text to be rendered
-        :param distance: the distance to extrude, normal to the workplane plane
+        :param txt: text to be rendered
+        :param fontsize: size of the font in model units
+        :param distance: the distance to extrude or cut, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
-        :param float fontsize: size of the font
-        :param boolean cut: True to cut the resulting solid from the parent solids if found.
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param str font: fontname (default: Arial)
-        :param str kind: font type (default: Normal)
-        :param str halign: horizontal alignment (default: center)
-        :param str valign: vertical alignment (default: center)
-        :return: a CQ object with the resulting solid selected.
+        :param cut: True to cut the resulting solid from the parent solids if found
+        :param combine: True to combine the resulting solid with parent solids if found
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param font: font name
+        :param fontPath: path to font file
+        :param kind: font type
+        :param halign: horizontal alignment
+        :param valign: vertical alignment
+        :return: a CQ object with the resulting solid selected
 
-        extrude always *adds* material to a part.
-
-        The returned object is always a CQ object, and depends on whether combine is True, and
+        The returned object is always a Workplane object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
+
+        Examples::
+
+            cq.Workplane().text("CadQuery", 5, 1)
+
+        Specify the font (name), and kind to use an installed system font::
+
+            cq.Workplane().text("CadQuery", 5, 1, font="Liberation Sans Narrow", kind="italic")
+
+        Specify fontPath to use a font from a given file::
+
+            cq.Workplane().text("CadQuery", 5, 1, fontPath="/opt/fonts/texgyrecursor-bold.otf")
+
+        Cutting text into a solid::
+
+            cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, -1.0)
 
         """
         r = Compound.makeText(
@@ -4139,7 +4154,7 @@ class Workplane(object):
 
         return self.newObject(rv)
 
-    def _repr_html_(self) -> Any:
+    def _repr_javascript_(self) -> Any:
         """
         Special method for rendering current object in a jupyter notebook
         """
@@ -4147,7 +4162,9 @@ class Workplane(object):
         if type(self.val()) is Vector:
             return "&lt {} &gt".format(self.__repr__()[1:-1])
         else:
-            return Compound.makeCompound(_selectShapes(self.objects))._repr_html_()
+            return Compound.makeCompound(
+                _selectShapes(self.objects)
+            )._repr_javascript_()
 
 
 # alias for backward compatibility

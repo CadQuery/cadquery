@@ -5,7 +5,7 @@ Importing and Exporting Files
 ******************************
 
 Introduction
-============
+#############
 
 The purpose of this section is to explain how to import external file formats into CadQuery, and export files from 
 it as well. While the external file formats can be used to interchange CAD model data with other software, CadQuery 
@@ -14,13 +14,13 @@ parametric is CadQuery's own Python format. Below are lists of the import and ex
 supports.
 
 Import Formats
-###############
+---------------
 
 * DXF
 * STEP
 
 Export Formats
-###############
+---------------
 
 * DXF
 * SVG
@@ -29,15 +29,17 @@ Export Formats
 * AMF
 * TJS
 * VRML
+* VTP
 
 Notes on the Formats
-#######################
+---------------------
 
 * DXF is useful for importing complex 2D profiles that would be tedious to create using CadQuery's 2D operations. An example is that the 2D profiles of aluminum extrusion are often provided in DXF format. These can be imported and extruded to create the length of extrusion that is needed in a design.
 * STEP files are useful for interchanging model data with other CAD and analysis systems, such as FreeCAD. Many parts such as screws have STEP files available, which can be imported and used in CadQuery assemblies.
 * STL and AMF files are mesh-based formats which are typically used in additive manufacturing (i.e. 3D printing). AMF files support more features, but are not as universally supported as STL files.
 * TJS is short for ThreeJS, and is a JSON mesh format that is useful for displaying 3D models in web browsers. The TJS format is used to display embedded 3D examples within the CadQuery documentation.
 * VRML is a mesh-based format for representing interactive 3D objects in a web browser.
+* VTP is a mesh-based format used by the VTK library.
 
 Importing DXF
 ##############

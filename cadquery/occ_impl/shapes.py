@@ -15,6 +15,14 @@ from typing import (
 )
 from typing_extensions import Literal, Protocol
 
+from io import BytesIO
+
+from vtk import (
+    vtkPolyData,
+    vtkTriangleFilter,
+    vtkPolyDataNormals,
+)
+
 from .geom import Vector, BoundBox, Plane, Location, Matrix
 
 import OCP.TopAbs as ta  # Tolopolgy type enum
@@ -56,7 +64,7 @@ from OCP.BRepAdaptor import (
     BRepAdaptor_HCurve,
     BRepAdaptor_HCompCurve,
 )
-from OCP.Adaptor3d import Adaptor3d_Curve, Adaptor3d_HCurve
+
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
@@ -76,7 +84,6 @@ from OCP.BRepBuilderAPI import (
 # properties used to store mass calculation result
 from OCP.GProp import GProp_GProps
 from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
-from OCP.BRepLProp import BRepLProp_CLProps  # local curve properties
 
 from OCP.BRepPrimAPI import (
     BRepPrimAPI_MakeBox,
@@ -93,7 +100,7 @@ from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
 
 # used for getting underlying geoetry -- is this equvalent to brep adaptor?
-from OCP.BRep import BRep_Tool
+from OCP.BRep import BRep_Tool, BRep_Builder
 
 from OCP.TopoDS import (
     TopoDS,
@@ -128,7 +135,6 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Cut,
     BRepAlgoAPI_BooleanOperation,
     BRepAlgoAPI_Splitter,
-    BRepAlgoAPI_BuilderAlgo,
 )
 
 from OCP.Geom import (
@@ -219,6 +225,9 @@ from OCP.GeomFill import (
     GeomFill_CorrectedFrenet,
     GeomFill_TrihedronLaw,
 )
+
+from OCP.IVtkOCC import IVtkOCC_Shape, IVtkOCC_ShapeMesher
+from OCP.IVtkVTK import IVtkVTK_ShapeData
 
 # for catching exceptions
 from OCP.Standard import Standard_NoSuchObject, Standard_Failure
@@ -451,12 +460,29 @@ class Shape(object):
 
         return writer.Write(fileName)
 
-    def exportBrep(self, fileName: str) -> bool:
+    def exportBrep(self, f: Union[str, BytesIO]) -> bool:
         """
         Export this shape to a BREP file
         """
 
-        return BRepTools.Write_s(self.wrapped, fileName)
+        rv = BRepTools.Write_s(self.wrapped, f)
+
+        return True if rv is None else rv
+
+    @classmethod
+    def importBrep(cls, f: Union[str, BytesIO]) -> "Shape":
+        """
+        Import shape from a BREP file
+        """
+        s = TopoDS_Shape()
+        builder = BRep_Builder()
+
+        BRepTools.Read_s(s, f, builder)
+
+        if s.IsNull():
+            raise ValueError(f"Could not import {f}")
+
+        return cls.cast(s)
 
     def geomType(self) -> Geoms:
         """
@@ -1154,14 +1180,51 @@ class Shape(object):
 
         return vertices, triangles
 
-    def _repr_html_(self):
+    def toVtkPolyData(
+        self, tolerance: float, angularTolerance: float = 0.1, normals: bool = True
+    ) -> vtkPolyData:
+        """
+        Convert shape to vtkPolyData
+        """
+
+        vtk_shape = IVtkOCC_Shape(self.wrapped)
+        shape_data = IVtkVTK_ShapeData()
+        shape_mesher = IVtkOCC_ShapeMesher(
+            tolerance, angularTolerance, theNbUIsos=0, theNbVIsos=0
+        )
+
+        shape_mesher.Build(vtk_shape, shape_data)
+
+        rv = shape_data.getVtkPolyData()
+
+        # convert to traingles and split edges
+        t_filter = vtkTriangleFilter()
+        t_filter.SetInputData(rv)
+        t_filter.Update()
+
+        rv = t_filter.GetOutput()
+
+        # compute normals
+        if normals:
+            n_filter = vtkPolyDataNormals()
+            n_filter.SetComputePointNormals(True)
+            n_filter.SetComputeCellNormals(True)
+            n_filter.SetFeatureAngle(360)
+            n_filter.SetInputData(rv)
+            n_filter.Update()
+
+            rv = n_filter.GetOutput()
+
+        return rv
+
+    def _repr_javascript_(self):
         """
         Jupyter 3D representation support
         """
 
         from .jupyter_tools import display
 
-        return display(self)
+        return display(self)._repr_javascript_()
 
 
 class ShapeProtocol(Protocol):
@@ -2283,6 +2346,17 @@ class Face(Shape):
 
         return self.__class__(chamfer_builder.Shape()).fix()
 
+    def toPln(self) -> gp_Pln:
+        """
+        Convert this face to a gp_Pln.
+
+        Note the Location of the resulting plane may not equal the center of this face,
+        however the resulting plane will still contain the center of this face.
+        """
+
+        adaptor = BRepAdaptor_Surface(self.wrapped)
+        return adaptor.Plane()
+
 
 class Shell(Shape):
     """
@@ -2359,18 +2433,20 @@ class Mixin3D(object):
 
     def shell(
         self: Any,
-        faceList: Iterable[Face],
+        faceList: Optional[Iterable[Face]],
         thickness: float,
         tolerance: float = 0.0001,
         kind: Literal["arc", "intersection"] = "arc",
     ) -> Any:
         """
-            make a shelled solid of given  by removing the list of faces
+        Make a shelled solid of self.
 
-        :param faceList: list of face objects, which must be part of the solid.
-        :param thickness: floating point thickness. positive shells outwards, negative shells inwards
-        :param tolerance: modelling tolerance of the method, default=0.0001
-        :return: a shelled solid
+        :param faceList: List of faces to be removed, which must be part of the solid. Can
+          be an empty list.
+        :param thickness: Floating point thickness. Positive shells outwards, negative
+          shells inwards.
+        :param tolerance: Modelling tolerance of the method, default=0.0001.
+        :return: A shelled solid.
         """
 
         kind_dict = {
@@ -2379,45 +2455,39 @@ class Mixin3D(object):
         }
 
         occ_faces_list = TopTools_ListOfShape()
+        shell_builder = BRepOffsetAPI_MakeThickSolid()
 
         if faceList:
             for f in faceList:
                 occ_faces_list.Append(f.wrapped)
 
-            shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped,
-                occ_faces_list,
-                thickness,
-                tolerance,
-                Intersection=True,
-                Join=kind_dict[kind],
-            )
+        shell_builder.MakeThickSolidByJoin(
+            self.wrapped,
+            occ_faces_list,
+            thickness,
+            tolerance,
+            Intersection=True,
+            Join=kind_dict[kind],
+        )
+        shell_builder.Build()
 
-            shell_builder.Build()
-            rv = shell_builder.Shape()
+        if faceList:
+            rv = self.__class__(shell_builder.Shape())
 
         else:  # if no faces provided a watertight solid will be constructed
-            shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped,
-                occ_faces_list,
-                thickness,
-                tolerance,
-                Intersection=True,
-                Join=kind_dict[kind],
-            )
-
-            shell_builder.Build()
             s1 = self.__class__(shell_builder.Shape()).Shells()[0].wrapped
             s2 = self.Shells()[0].wrapped
 
             # s1 can be outer or inner shell depending on the thickness sign
             if thickness > 0:
-                rv = BRepBuilderAPI_MakeSolid(s1, s2).Shape()
+                sol = BRepBuilderAPI_MakeSolid(s1, s2)
             else:
-                rv = BRepBuilderAPI_MakeSolid(s2, s1).Shape()
+                sol = BRepBuilderAPI_MakeSolid(s2, s1)
 
-        # fix needed for the orientations
-        return self.__class__(rv) if faceList else self.__class__(rv).fix()
+            # fix needed for the orientations
+            rv = self.__class__(sol.Shape()).fix()
+
+        return rv
 
     def isInside(
         self: ShapeProtocol, point: VectorLike, tolerance: float = 1.0e-6

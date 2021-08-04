@@ -15,18 +15,19 @@ requirements:
     - setuptools
   run:
     - python {{ environ.get('PYTHON_VERSION') }}
-    - ocp 7.5
+    - ocp 7.5.2
     - pyparsing 2.*
     - ezdxf
     - ipython
     - typing_extensions
     - nptyping
-    - scipy
-    
+    - nlopt
+
 test:
   requires:
     - pytest
     - docutils
+    - path
   source_files:
     - tests/
   commands:
