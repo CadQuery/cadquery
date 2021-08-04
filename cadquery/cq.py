@@ -3399,7 +3399,7 @@ class Workplane(object):
 
         """
         # Handling of `until` passed values
-        s: Union[Compound,Solid,Shape]
+        s: Union[Compound, Solid, Shape]
         if isinstance(until, str) and until in ("next", "last"):
             if until == "next":
                 faceIndex = 0
