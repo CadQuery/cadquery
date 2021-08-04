@@ -27,11 +27,13 @@ hold a reference to an underlying curve that is a full circle, and each linear e
 for a line.  CadQuery shields you from these constructs.
 
 
-CQ, the CadQuery Object
+Workplane class
 ---------------------------
 
-The CadQuery object wraps a BREP feature, and provides functionality around it.  Typical examples include rotating,
-transforming, combining objects, and creating workplanes.
+The Workplane class contains the currently selected objects (a list of Shapes, Vectors or Locations
+in the :attr:`~cadquery.Workplane.objects` attribute), the modelling context (in the
+:attr:`~cadquery.Workplane.ctx` attribute), and CadQuery's fluent api methods. It is the main class
+that users will instantiate.
 
 See :ref:`apireference` to learn more.
 
@@ -103,8 +105,8 @@ to locate other features
 The Stack
 ---------------------------
 
-As you work in CadQuery, each operation returns a new CadQuery object with the result of that operations. Each CadQuery
-object has a list of objects, and a reference to its parent.
+As you work in CadQuery, each operation returns a new Workplane object with the result of that
+operations. Each Workplane object has a list of objects, and a reference to its parent.
 
 You can always go backwards to older operations by removing the current object from the stack.  For example::
 
@@ -123,13 +125,14 @@ You can browse stack access methods here: :ref:`stackMethods`.
 Chaining
 ---------------------------
 
-All CadQuery methods return another CadQuery object, so that you can chain the methods together fluently. Use
-the core CQ methods to get at the objects that were created.
+All Workplane methods return another Workplane object, so that you can chain the methods together
+fluently. Use the core Workplane methods to get at the objects that were created.
 
-Each time a new CadQuery object is produced during these chained calls, it has a ``parent`` attribute that points
-to the CadQuery object that created it. Several CadQuery methods search this parent chain, for example when searching
-for the context solid. You can also give a CadQuery object a tag, and further down your chain of CadQuery calls you
-can refer back to this particular object using its tag.
+Each time a new Workplane object is produced during these chained calls, it has a
+:attr:`~cadquery.Workplane.parent` attribute that points to the Workplane object that created it.
+Several CadQuery methods search this parent chain, for example when searching for the context solid.
+You can also give a Workplane object a tag, and further down your chain of calls you can refer back
+to this particular object using its tag.
 
 
 The Context Solid
@@ -163,6 +166,420 @@ Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a r
 iterates on each member of the stack.
 
 This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.cq.Workplane.each` is useful for this purpose.
+
+
+An Introspective Example
+------------------------
+
+.. note::
+    If you are just beginning with CadQuery then you can leave this example for later.  If you have
+    some experience with creating CadQuery models and now you want to read the CadQuery source to
+    better understand what your code does, then it is recommended you read this example first.
+
+To demonstrate the above concepts, we can define more detailed string representations for the
+:class:`~cadquery.Workplane`, :class:`~cadquery.Plane` and :class:`~cadquery.CQContext` classes and
+patch them in::
+
+    import cadquery as cq
+
+
+    def tidy_repr(obj):
+        """ Shortens a default repr string
+        """
+        return repr(obj).split('.')[-1].rstrip('>')
+
+
+    def _ctx_str(self):
+        return (
+            tidy_repr(self) + ":\n"
+            + f"    pendingWires: {self.pendingWires}\n"
+            + f"    pendingEdges: {self.pendingEdges}\n"
+            + f"    tags: {self.tags}"
+        )
+
+
+    cq.cq.CQContext.__str__ = _ctx_str
+
+
+    def _plane_str(self):
+        return (
+            tidy_repr(self) + ":\n"
+            + f"    origin: {self.origin.toTuple()}\n"
+            + f"    z direction: {self.zDir.toTuple()}"
+        )
+
+
+    cq.occ_impl.geom.Plane.__str__ = _plane_str
+
+
+    def _wp_str(self):
+        out = tidy_repr(self) + ":\n"
+        out += f"  parent: {tidy_repr(self.parent)}\n" if self.parent else "  no parent\n"
+        out += f"  plane: {self.plane}\n"
+        out += f"  objects: {self.objects}\n"
+        out += f"  modelling context: {self.ctx}"
+        return out
+
+
+    cq.Workplane.__str__ = _wp_str
+
+Now we can make a simple part and examine the :class:`~cadquery.Workplane` and
+:class:`~cadquery.cq.CQContext` objects at each step. The final part looks like:
+
+.. cadquery::
+    :select: part
+
+    part = (
+        cq.Workplane()
+        .box(1, 1, 1)
+        .tag("base")
+        .wires(">Z")
+        .toPending()
+        .translate((0.1, 0.1, 1.0))
+        .toPending()
+        .loft()
+        .faces(">>X", tag="base")
+        .workplane(centerOption="CenterOfMass")
+        .circle(0.2)
+        .extrude(1)
+    )
+
+.. note::
+    Some of the modelling process for this part is a bit contrived and not a great example of fluent
+    CadQuery techniques.
+
+The start of our chain of calls is::
+
+    part = cq.Workplane()
+    print(part)
+
+Which produces the output:
+
+.. code-block:: none
+
+    Workplane object at 0x2760:
+      no parent
+      plane: Plane object at 0x2850:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: []
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {}
+
+This is simply an empty :class:`~cadquery.Workplane`. Being the first :class:`~cadquery.Workplane`
+in the chain, it does not have a parent. The :attr:`~cadquery.Workplane.plane` attribute contains a
+:class:`~cadquery.Plane` object that describes the XY plane.
+
+Now we create a simple box. To keep things short, the ``print(part)`` line will not be shown for the
+rest of these code blocks::
+
+    part = part.box(1, 1, 1)
+
+Which produces the output:
+
+.. code-block:: none
+
+    Workplane object at 0xaa90:
+      parent: Workplane object at 0x2760
+      plane: Plane object at 0x3850:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Solid object at 0xbbe0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {}
+
+The first thing to note is that this is a different :class:`~cadquery.Workplane` object to the
+previous one, and in the :attr:`~cadquery.Workplane.parent` attribute of this
+:class:`~cadquery.Workplane` is our previous :class:`~cadquery.Workplane`. Returning a new instance
+of :class:`~caduqery.Workplane` is the normal behaviour of most :class:`~cadquery.Workplane` methods
+(with some exceptions, as will be shown below) and this is how the `chaining`_ concept is
+implemented.
+
+Secondly, the modelling context object is the same as the one in the previous
+:class:`~cadquery.Workplane`, and this one modelling context at ``0x2730`` will be shared between
+every :class:`Workplane` object in this chain. If we instantiate a new :class:`~cadquery.Workplane`
+with ``part2 = cq.Workplane()``, then this ``part2`` would have a different instance of the
+:class:`~cadquery.cq.CQContext` attached to it.
+
+Thirdly, in our objects list is a single :class:`~cadquery.Solid` object, which is the box we just
+created.
+
+Often when creating models you will find yourself wanting to refer back to a specific
+:class:`~cadquery.Workplane` object, perhaps because it is easier to select the feature you want in this
+earlier state, or because you want to reuse a plane. Tags offer a way to refer back to a previous
+:class:`~cadquery.Workplane`. We can tag the :class:`~cadquery.Workplane` that contains this basic box now::
+
+    part = part.tag("base")
+
+The string representation of ``part`` is now:
+
+.. code-block:: none
+
+    Workplane object at 0xaa90:
+      parent: Workplane object at 0x2760
+      plane: Plane object at 0x3850:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Solid object at 0xbbe0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+The :attr:`~cadquery.cq.CQContext.tags` attribute of the modelling context is simply a dict
+associating the string name given by the :meth:`~cadquery.Workplane.tag` method to the
+:class:`~cadquery.Workplane`. Methods such as :meth:`~cadquery.Workplane.workplaneFromTagged` and
+selection methods like :meth:`~cadquery.Workplane.edges` can operate on a tagged
+:class:`~cadquery.Workplane`. Note that unlike the ``part = part.box(1, 1, 1)`` step where we went
+from ``Workplane object at 0x2760`` to ``Workplane object at 0xaa90``, the
+:meth:`~cadquery.Workplane.tag` method has returned the same object at ``0xaa90``. This is unusual
+for a :class:`~cadquery.Workplane` method.
+
+The next step is::
+
+    part = part.faces(">>Z")
+
+The output is:
+
+.. code-block:: none
+
+    Workplane object at 0x8c40:
+      parent: Workplane object at 0xaa90
+      plane: Plane object at 0xac40:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Face object at 0x3c10>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+Our selection method has taken the :class:`~cadquery.Solid` from the
+:attr:`~cadquery.Workplane.objects` list of the previous :class:`~cadquery.Workplane`, found the
+face with it's center furthest in the Z direction, and placed that face into the
+:attr:`~cadquery.Workplane.objects` attribute. The :class:`~cadquery.Solid` representing the box we
+are modelling is gone, and when a :class:`~cadquery.Workplane` method needs to access that solid it
+searches through the parent chain for the nearest solid. This action can also be done by a user
+through the :meth:`~cadquery.Workplane.findSolid` method.
+
+Now we want to select the boundary of this :class:`~cadquery.Face` (a :class:`~cadquery.Wire`), so
+we use::
+
+    part = part.wires()
+
+The output is now:
+
+.. code-block:: none
+
+    Workplane object at 0x6880:
+      parent: Workplane object at 0x8c40
+      plane: Plane object at 0x38b0:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+Modelling operations take their wires and edges from the modelling context's pending lists. In order
+to use the :meth:`~cadquery.Workplane.loft` command futher down the chain, we need to push this wire
+to the modelling context with::
+
+    part = part.toPending()
+
+Now we have:
+
+.. code-block:: none
+
+    Workplane object at 0x6880:
+      parent: Workplane object at 0x8c40
+      plane: Plane object at 0x38b0:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>]
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+The :class:`~cadquery.Wire` object that was only in the :attr:`~cadquery.Workplane.objects`
+attribute before is now also in the modelling context's :attr:`~cadquery.cq.CQContext.pendingWires`.
+The :meth:`~cadquery.Workplane.toPending` method is also another of the unusual methods that return
+the same :class:`~cadquery.Workplane` object instead of a new one.
+
+To set up the other side of the :meth:`~cadquery.Workplane.loft` command further down the chain, we
+translate the wire in :attr:`~cadquery.Workplane.objects` by calling::
+
+    part = part.translate((0.1, 0.1, 1.0))
+
+Now the string representation of ``part`` looks like:
+
+.. code-block:: none
+
+    Workplane object at 0x3a00:
+      parent: Workplane object at 0x6880
+      plane: Plane object at 0xac70:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0x35e0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>]
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+It may look similar to the previous step, but the :class:`~cadquery.Wire` object in
+:attr:`~cadquery.Workplane.objects` is different. To get this wire into the pending wires list,
+again we use::
+
+    part = part.toPending()
+
+The result:
+
+.. code-block:: none
+
+    Workplane object at 0x3a00:
+      parent: Workplane object at 0x6880
+      plane: Plane object at 0xac70:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0x35e0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0xaca0>, <cadquery.occ_impl.shapes.Wire object at 0x7f5c7f5c35e0>]
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+The modelling context's :attr:`~cadquery.cq.CQContext.pendingWires` attribute now contains the two
+wires we want to loft between, and we simply call::
+
+    part = part.loft()
+
+After the loft operation, our Workplane looks quite different:
+
+.. code-block:: none
+
+    Workplane object at 0x32b0:
+      parent: Workplane object at 0x3a00
+      plane: Plane object at 0x3d60:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Compound object at 0xad30>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+In the :attr:`cq.Workplane.objects` attribute we now have one Compound object and the modelling
+context's :attr:`~cadquery.cq.CQContext.pendingWires` has been cleared by
+:meth:`~cadquery.Workplane.loft`.
+
+.. note::
+    To inspect the :class:`~cadquery.Compound` object further you can use
+    :meth:`~cadquery.Workplane.val` or :meth:`~cadquery.Workplane.findSolid` to get at the
+    :class:`~cadquery.Compound` object, then use :meth:`cadquery.Shape.Solids` to return a list
+    of the :class:`~cadquery.Solid` objects contained in the :class:`~cadquery.Compound`, which in
+    this example will be a single :class:`~cadquery.Solid` object. For example::
+
+        >>> a_compound = part.findSolid()
+        >>> a_list_of_solids = a_compound.Solids()
+        >>> len(a_list_of_solids)
+        1
+
+Now we will create a small cylinder protruding from a face on the original box. We need to set up a
+workplane to draw a circle on, so firstly we will select the correct face::
+
+    part = part.faces(">>X", tag="base")
+
+Which results in:
+
+.. code-block:: none
+
+    Workplane object at 0x3f10:
+      parent: Workplane object at 0x32b0
+      plane: Plane object at 0xefa0:
+        origin: (0.0, 0.0, 0.0)
+        z direction: (0.0, 0.0, 1.0)
+      objects: [<cadquery.occ_impl.shapes.Face object at 0x3af0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+We have the desired :class:`~cadquery.Face` in the :attr:`~cadquery.Workplane.objects` attribute,
+but the :attr:`~cadquery.Workplane.plane` has not changed yet. To create the new plane we use the
+:meth:`Workplane.workplane` method::
+
+    part = part.workplane()
+
+Now:
+
+.. code-block:: none
+
+    Workplane object at 0xe700:
+      parent: Workplane object at 0x3f10
+      plane: Plane object at 0xe730:
+        origin: (0.5, 0.0, 0.0)
+        z direction: (1.0, 0.0, 0.0)
+      objects: []
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+The :attr:`~cadquery.Workplane.objects` list has been cleared and the :class:`~cadquery.Plane`
+object has a local Z direction in the global X direction. Since the base of the plane is the side of
+the box, the origin is offset in the X direction.
+
+Onto this plane we can draw a circle::
+
+    part = part.circle(0.2)
+
+Now:
+
+.. code-block:: none
+
+    Workplane object at 0xe790:
+      parent: Workplane object at 0xe700
+      plane: Plane object at 0xaf40:
+        origin: (0.5, 0.0, 0.0)
+        z direction: (1.0, 0.0, 0.0)
+      objects: [<cadquery.occ_impl.shapes.Wire object at 0xe610>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: [<cadquery.occ_impl.shapes.Wire object at 0xe610>]
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+The :meth:`~cadquery.Workplane.circle` method - like all 2D drawing methods - has placed the circle
+into both the :attr:`~cadquery.Workplane.objects` attribute (where it will be cleared during the
+next modelling step), and the modelling context's pending wires (where it will persist until used by
+another :class:`~cadquery.Workplane` method).
+
+The next step is to extrude this circle and create a cylindrical protrusion::
+
+    part = part.extrude(1)
+
+Now:
+
+.. code-block:: none
+
+    Workplane object at 0xafd0:
+      parent: Workplane object at 0x6df0
+      plane: Plane object at 0x3e80:
+        origin: (0.5, 0.0, 0.0)
+        z direction: (1.0, 0.0, 0.0)
+      objects: [<cadquery.occ_impl.shapes.Compound object at 0xaaf0>]
+      modelling context: CQContext object at 0x2730:
+        pendingWires: []
+        pendingEdges: []
+        tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
+
+The :meth:`~cadquery.Workplane.extrude` method has cleared all the pending wires and edges. The
+:attr:`~cadquery.Workplane.objects` attribute contains the final :class:`~cadquery.Compound` object
+that is shown in the 3D view above.
 
 
 Assemblies

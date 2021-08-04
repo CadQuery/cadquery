@@ -1,2 +1,2 @@
 #!/bin/sh
-sphinx-build -b html doc target/docs
+(cd doc && sphinx-build -b html . ../target/docs)

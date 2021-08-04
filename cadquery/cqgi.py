@@ -117,12 +117,14 @@ class CQModel(object):
             exec(c, env)
             result.set_debug(collector.debugObjects)
             result.set_success_result(collector.outputObjects)
+            result.env = env
 
         except Exception as ex:
             result.set_failure_result(ex)
 
         end = time.perf_counter()
         result.buildTime = end - start
+
         return result
 
     def set_param_values(self, params):
@@ -322,12 +324,14 @@ class ScriptCallback(object):
         self.outputObjects = []
         self.debugObjects = []
 
-    def show_object(self, shape, options={}):
+    def show_object(self, shape, options={}, **kwargs):
         """
         return an object to the executing environment, with options
         :param shape: a cadquery object
         :param options: a dictionary of options that will be made available to the executing environment
         """
+        options.update(kwargs)
+
         o = ShapeResult()
         o.options = options
         o.shape = shape
