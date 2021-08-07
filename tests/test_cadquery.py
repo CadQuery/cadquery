@@ -1146,7 +1146,7 @@ class TestCadQuery(BaseTest):
             .sweep(path, multisection=True)
         )
 
-        # We can sweep thrue different shapes
+        # We can sweep through different shapes
         recttocircleSweep = (
             Workplane("YZ")
             .workplane(offset=-10.0)
@@ -1193,7 +1193,7 @@ class TestCadQuery(BaseTest):
 
         # Placement of different shapes should follow the path
         # cylinder r=1.5 along first line
-        # then sweep allong arc from r=1.5 to r=1.0
+        # then sweep along arc from r=1.5 to r=1.0
         # then cylinder r=1.0 along last line
         arcSweep = (
             Workplane("YZ")
@@ -1483,10 +1483,10 @@ class TestCadQuery(BaseTest):
         self.assertEqual(0, s.faces().size())
 
         t = r.faces(">Z").workplane().rect(0.25, 0.25).extrude(0.5, False)
-        # result has 6 faces, becuase it was not combined with the original
+        # result has 6 faces, because it was not combined with the original
         self.assertEqual(6, t.faces().size())
         self.assertEqual(6, r.faces().size())  # original is unmodified as well
-        # subseuent opertions use that context solid afterwards
+        # subseuent operations use that context solid afterwards
 
     def testSimpleWorkplane(self):
         """
@@ -2954,7 +2954,7 @@ class TestCadQuery(BaseTest):
             return cup
         """
 
-        # for some reason shell doesnt work on this simple shape. how disappointing!
+        # for some reason shell doesn't work on this simple shape. how disappointing!
         td = 50.0
         bd = 20.0
         h = 10.0
@@ -3427,7 +3427,7 @@ class TestCadQuery(BaseTest):
 
     def testWorkplaneCenterOptions(self):
         """
-        Test options for specifiying origin of workplane
+        Test options for specifying origin of workplane
         """
         decimal_places = 9
 
@@ -3544,7 +3544,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(r.objects), 2)
         self.assertTrue(isinstance(r.val(), Solid))
 
-        # find solid should return a compund of two solids
+        # find solid should return a compound of two solids
         s = r.findSolid()
         self.assertEqual(len(s.Solids()), 2)
         self.assertTrue(isinstance(s, Compound))

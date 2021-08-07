@@ -136,7 +136,7 @@ def _dxf_spline(el):
             knots.SetValue(i + 1, k)
             multiplicities.SetValue(i + 1, m)
 
-        # assemble wieghts if present:
+        # assemble weights if present:
         if el.weights:
             rational = True
 
@@ -144,7 +144,7 @@ def _dxf_spline(el):
             for i, w in enumerate(el.weights):
                 weights.SetValue(i + 1, w)
 
-        # assmeble conotrol points
+        # assemble control points
         pts = TColgp_Array1OfPnt(1, len(el.control_points))
         for i, p in enumerate(el.control_points):
             pts.SetValue(i + 1, gp_Pnt(*p))

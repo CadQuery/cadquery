@@ -26,7 +26,7 @@ ExportLiterals = Literal["STEP", "XML"]
 
 PATH_DELIM = "/"
 
-# enitity selector grammar definiiton
+# entity selector grammar definiiton
 def _define_grammar():
 
     from pyparsing import (
@@ -83,11 +83,11 @@ class Constraint(object):
         """
         Construct a constraint.
 
-        :param objects: object names refernced in the constraint
+        :param objects: object names referenced in the constraint
         :param args: subshapes (e.g. faces or edges) of the objects
         :param sublocs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
         :param kind: constraint kind
-        :param param: optional arbitrary paramter passed to the solver
+        :param param: optional arbitrary parameter passed to the solver
         """
 
         self.objects = objects
@@ -411,7 +411,7 @@ class Assembly(object):
         elif len(args) == 6:
             id1, s1, id2, s2, kind, param = args
         else:
-            raise ValueError(f"Incompatibile arguments: {args}")
+            raise ValueError(f"Incompatible arguments: {args}")
 
         loc1, id1_top = self._subloc(id1)
         loc2, id2_top = self._subloc(id2)

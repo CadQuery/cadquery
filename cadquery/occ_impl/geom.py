@@ -163,7 +163,7 @@ class Vector(object):
         """Return the vector itself
 
         The center of myself is myself.
-        Provided so that vectors, vertexes, and other shapes all support a
+        Provided so that vectors, vertices, and other shapes all support a
         common interface, when Center() is requested for all objects on the
         stack.
         """
@@ -693,7 +693,7 @@ class Plane(object):
         for w in listOfShapes:
             mirrored = w.transformShape(Matrix(T))
 
-            # attemp stitching of the wires
+            # attempt stitching of the wires
             resultWires.append(mirrored)
 
         return resultWires

@@ -586,7 +586,7 @@ class SumSelector(BinarySelector):
 
 class SubtractSelector(BinarySelector):
     """
-    Difference selector. Substract results of a selector from another
+    Difference selector. Subtract results of a selector from another
     selectors results.
     """
 
@@ -842,7 +842,7 @@ class StringSyntaxSelector(Selector):
 
     :return: objects that match the specified selector
 
-    ***Modfiers*** are ``('|','+','-','<','>','%')``
+    ***Modifiers*** are ``('|','+','-','<','>','%')``
 
         :\|:
             parallel to ( same as :py:class:`ParallelDirSelector` ). Can return multiple objects.
@@ -862,7 +862,7 @@ class StringSyntaxSelector(Selector):
     ***axisStrings*** are: ``X,Y,Z,XY,YZ,XZ`` or ``(x,y,z)`` which defines an arbitrary direction
 
     It is possible to combine simple selectors together using logical operations.
-    The following operations are suuported
+    The following operations are supported
 
         :and:
             Logical AND, e.g. >X and >Y
