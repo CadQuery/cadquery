@@ -1,6 +1,5 @@
 # system modules
 import math
-from typing import Optional
 import unittest
 from tests import BaseTest
 from OCP.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp, gp_XYZ, gp_Trsf
