@@ -6,6 +6,7 @@ from itertools import product
 from multimethod import multimethod
 from typish import instance_of, get_type
 
+from .hull import find_hull
 from .selectors import StringSyntaxSelector
 
 from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, edgesToWires
@@ -334,6 +335,13 @@ class Sketch(object):
         return self
 
     # modifiers
+    def hull(self, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
+
+        rv = find_hull(el for el in self._selection if isinstance(el, Edge))
+
+        self.face(el, mode=mode, tag=tag)
+
+        return self
 
     def offset(
         self, d: float, mode: Modes = "a", tag: Optional[str] = None

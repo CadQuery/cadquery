@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Iterable
 from math import pi, sin, cos, atan2, sqrt, inf, degrees
 from numpy import lexsort, argmin, argmax
 
@@ -86,7 +86,7 @@ def atan2p(x, y):
     return rv
 
 
-def convert_and_validate(edges: List[Edge]) -> Tuple[List[Arc], List[Point]]:
+def convert_and_validate(edges: Iterable[Edge]) -> Tuple[List[Arc], List[Point]]:
 
     arcs = set()
     points = set()
@@ -374,7 +374,7 @@ def finalize_hull(hull: List[Entity]) -> Wire:
     return Wire.assembleEdges(rv)
 
 
-def find_hull_simple(edges: List[Edge]) -> Wire:
+def find_hull(edges: Iterable[Edge]) -> Wire:
 
     # initialize the hull
     rv: List[Entity] = []
