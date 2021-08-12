@@ -362,6 +362,14 @@ class Matrix:
         else:
             raise IndexError("Out of bounds access into 4x4 matrix: {!r}".format(rc))
 
+    def __repr__(self) -> str:
+        """
+        Generate a valid python expression representing this Matrix
+        """
+        matrix_transposed = self.transposed_list()
+        matrix_str = ",\n        ".join(str(matrix_transposed[i::4]) for i in range(4))
+        return f"Matrix([{matrix_str}])"
+
 
 class Plane(object):
     """A 2D coordinate system in space
