@@ -339,7 +339,7 @@ class Sketch(object):
 
         rv = find_hull(el for el in self._selection if isinstance(el, Edge))
 
-        self.face(el, mode=mode, tag=tag)
+        self.face(rv, mode=mode, tag=tag)
 
         return self
 
