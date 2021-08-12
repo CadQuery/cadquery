@@ -181,7 +181,7 @@ def pt_pt(p1: Point, p2: Point) -> Tuple[float, Segment]:
 
     angle = 0
 
-    dx, dy = p2.y - p1.y, p2.x - p1.x
+    dx, dy = p2.x - p1.x, p2.y - p1.y
 
     if (dx, dy) != (0, 0):
         angle = atan2p(dx, dy)
@@ -212,7 +212,7 @@ def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
     x1, y1, x2, y2 = _pt_arc(p, a)
 
     angles = atan2p(x1 - x, y1 - y), atan2p(x2 - x, y2 - y)
-    points = Point(x1, y1), Point(x2.y2)
+    points = Point(x1, y1), Point(x2, y2)
     ix = argmin(angles)
 
     return angles[ix], Segment(p, points[ix])
