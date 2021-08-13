@@ -2,7 +2,7 @@ from typing import Union, Optional, List, Dict, Callable, Tuple, Iterable, Any
 from typing_extensions import Literal
 from numbers import Real
 from math import tan, sin, cos, pi, radians
-from itertools import product
+from itertools import product, chain
 from multimethod import multimethod
 from typish import instance_of, get_type
 
@@ -101,6 +101,7 @@ class Sketch(object):
         angle: float = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
+        ignore_selection: bool = False,
     ) -> "Sketch":
 
         if isinstance(b, Wire):
@@ -113,7 +114,7 @@ class Sketch(object):
 
         res = res.rotate(Vector(), Vector(0, 0, 1), angle)
 
-        return self.each(lambda l: res.located(l), mode, tag)
+        return self.each(lambda l: res.located(l), mode, tag, ignore_selection)
 
     def rect(
         self,
@@ -291,9 +292,9 @@ class Sketch(object):
 
         return self.push(locs)
 
-    def push(self, locs: Iterable[Location]) -> "Sketch":
+    def push(self, locs: Iterable[Union[Location, Point]]) -> "Sketch":
 
-        self._selection = list(locs)
+        self._selection = [l if isinstance(l, Location) else Location(l) for l in locs]
 
         return self
 
@@ -302,11 +303,12 @@ class Sketch(object):
         callback: Callable[[Location], Union[Face, "Sketch"]],
         mode: Modes = "a",
         tag: Optional[str] = None,
+        ignore_selection: bool = False,
     ) -> "Sketch":
 
         res: List[Union[Face, "Sketch"]] = []
 
-        if self._selection:
+        if self._selection and not ignore_selection:
             for el in self._selection:
                 if isinstance(el, Location):
                     loc = el
@@ -337,9 +339,18 @@ class Sketch(object):
     # modifiers
     def hull(self, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
 
-        rv = find_hull(el for el in self._selection if isinstance(el, Edge))
+        if self._selection:
+            rv = find_hull(el for el in self._selection if isinstance(el, Edge))
+        elif self._faces:
+            rv = find_hull(el for el in self._faces.Edges())
+        elif self._edges or self._wires:
+            rv = find_hull(
+                chain(self._edges, chain.from_iterable(w.Edges() for w in self._wires))
+            )
+        else:
+            raise ValueError("No objects available for hull construction")
 
-        self.face(rv, mode=mode, tag=tag)
+        self.face(rv, mode=mode, tag=tag, ignore_selection=bool(self._selection))
 
         return self
 
@@ -349,8 +360,8 @@ class Sketch(object):
 
         rv = (el.offset2D(d) for el in self._selection if isinstance(el, Wire))
 
-        for el in rv:
-            self.face(el, mode=mode, tag=tag)
+        for el in chain.from_iterable(rv):
+            self.face(el, mode=mode, tag=tag, ignore_selection=bool(self._selection))
 
         return self
 
@@ -386,11 +397,21 @@ class Sketch(object):
                 rv.extend(getattr(el, kind)())
         elif self._selection:
             for el in self._selection:
-                rv.extend(getattr(el, kind)())
+                if not isinstance(el, Location):
+                    rv.extend(getattr(el, kind)())
         else:
             rv.extend(getattr(self._faces, kind)())
 
         self._selection = StringSyntaxSelector(s).filter(rv) if s else rv
+
+        return self
+
+    def select(self, *tags: str):
+
+        self._selection = []
+
+        for tag in tags:
+            self._selection.extend(self._tags[tag])
 
         return self
 
