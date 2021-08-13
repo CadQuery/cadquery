@@ -17,7 +17,7 @@ from .occ_impl.sketch_solver import (
     ConstraintInvariants,
 )
 
-Modes = Literal["a", "s"]
+Modes = Literal["a", "s", "i"]
 Point = Union[Vector, Tuple[Real, Real]]
 
 
@@ -328,6 +328,8 @@ class Sketch(object):
             self._faces = self._faces.fuse(*res)
         elif mode == "s":
             self._faces = self._faces.cut(*res)
+        elif mode == "i":
+            self._faces = Compound.makeCompound(res).cut(self._faces)
         elif mode == "c":
             if not tag:
                 raise ValueError("No tag specified - the geometry will be unreachable")
