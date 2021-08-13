@@ -3194,6 +3194,13 @@ class Compound(Shape, Mixin3D):
             yield Shape.cast(it.Value())
             it.Next()
 
+    def __bool__(self) -> bool:
+        """
+        Check if empty.
+        """
+
+        return TopoDS_Iterator(self.wrapped).More()
+
     def cut(self, *toCut: Shape) -> "Shape":
         """
         Remove a shape from another one
