@@ -1146,7 +1146,7 @@ class TestCadQuery(BaseTest):
             .sweep(path, multisection=True)
         )
 
-        # We can sweep thrue different shapes
+        # We can sweep through different shapes
         recttocircleSweep = (
             Workplane("YZ")
             .workplane(offset=-10.0)
@@ -1193,7 +1193,7 @@ class TestCadQuery(BaseTest):
 
         # Placement of different shapes should follow the path
         # cylinder r=1.5 along first line
-        # then sweep allong arc from r=1.5 to r=1.0
+        # then sweep along arc from r=1.5 to r=1.0
         # then cylinder r=1.0 along last line
         arcSweep = (
             Workplane("YZ")
@@ -1483,10 +1483,10 @@ class TestCadQuery(BaseTest):
         self.assertEqual(0, s.faces().size())
 
         t = r.faces(">Z").workplane().rect(0.25, 0.25).extrude(0.5, False)
-        # result has 6 faces, becuase it was not combined with the original
+        # result has 6 faces, because it was not combined with the original
         self.assertEqual(6, t.faces().size())
         self.assertEqual(6, r.faces().size())  # original is unmodified as well
-        # subseuent opertions use that context solid afterwards
+        # subseuent operations use that context solid afterwards
 
     def testSimpleWorkplane(self):
         """
@@ -2290,6 +2290,14 @@ class TestCadQuery(BaseTest):
         s3 = Workplane().polyline(pts).close().extrude(1).shell(-0.05)
         self.assertTrue(s3.val().isValid())
 
+        s4_shape = Workplane("XY").box(2, 2, 2).val()
+        # test that None and empty list both work and are equivalent
+        s4_shell_1 = s4_shape.shell(faceList=None, thickness=-0.1)
+        s4_shell_2 = s4_shape.shell(faceList=[], thickness=-0.1)
+        # this should be the same as the first shape
+        self.assertEqual(len(s4_shell_1.Faces()), s1.faces().size())
+        self.assertEqual(len(s4_shell_2.Faces()), s1.faces().size())
+
     def testOpenCornerShell(self):
         s = Workplane("XY").box(1, 1, 1)
         s1 = s.faces("+Z")
@@ -2946,7 +2954,7 @@ class TestCadQuery(BaseTest):
             return cup
         """
 
-        # for some reason shell doesnt work on this simple shape. how disappointing!
+        # for some reason shell doesn't work on this simple shape. how disappointing!
         td = 50.0
         bd = 20.0
         h = 10.0
@@ -3419,7 +3427,7 @@ class TestCadQuery(BaseTest):
 
     def testWorkplaneCenterOptions(self):
         """
-        Test options for specifiying origin of workplane
+        Test options for specifying origin of workplane
         """
         decimal_places = 9
 
@@ -3536,7 +3544,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(r.objects), 2)
         self.assertTrue(isinstance(r.val(), Solid))
 
-        # find solid should return a compund of two solids
+        # find solid should return a compound of two solids
         s = r.findSolid()
         self.assertEqual(len(s.Solids()), 2)
         self.assertTrue(isinstance(s, Compound))
@@ -4595,3 +4603,26 @@ class TestCadQuery(BaseTest):
 
         self.assertTrue(si.isValid())
         self.assertAlmostEqual(si.Volume(), 1)
+
+    def testFaceToPln(self):
+
+        origin = (1, 2, 3)
+        normal = (1, 1, 1)
+        f0 = Face.makePlane(length=None, width=None, basePnt=origin, dir=normal)
+        p0 = f0.toPln()
+
+        self.assertTrue(Vector(p0.Location()) == Vector(origin))
+        self.assertTrue(Vector(p0.Axis().Direction()) == Vector(normal).normalized())
+
+        origin1 = (0, 0, -3)
+        normal1 = (-1, 1, -1)
+        f1 = Face.makePlane(length=0.1, width=100, basePnt=origin1, dir=normal1)
+        p1 = f1.toPln()
+
+        self.assertTrue(Vector(p1.Location()) == Vector(origin1))
+        self.assertTrue(Vector(p1.Axis().Direction()) == Vector(normal1).normalized())
+
+        f2 = Workplane().box(1, 1, 10, centered=False).faces(">Z").val()
+        p2 = f2.toPln()
+        self.assertTrue(p2.Contains(f2.Center().toPnt(), 0.1))
+        self.assertTrue(Vector(p2.Axis().Direction()) == f2.normalAt())

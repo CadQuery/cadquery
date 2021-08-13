@@ -193,7 +193,7 @@ like :py:meth:`Workplane.circle` and :py:meth:`Workplane.rect`, will operate on 
 Polygons
 -------------------------
 
-You can create polygons for each stack point if you would like. Useful in 3d printers whos firmware does not
+You can create polygons for each stack point if you would like. Useful in 3d printers whose firmware does not
 correct for small hole sizes.
 
 .. cadquery::
@@ -739,7 +739,7 @@ Here we fillet all of the edges of a simple plate.
 Tagging objects
 ----------------
 
-The :py:meth:`Workplane.tag` method can be used to tag a particular object in the chain with a string, so that it can be refered to later in the chain.
+The :py:meth:`Workplane.tag` method can be used to tag a particular object in the chain with a string, so that it can be referred to later in the chain.
 
 The :py:meth:`Workplane.workplaneFromTagged` method applies :py:meth:`Workplane.copyWorkplane` to a tagged object. For example, when extruding two different solids from a surface, after the first solid is extruded it can become difficult to reselect the original surface with CadQuery's other selectors.
 

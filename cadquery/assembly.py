@@ -15,6 +15,9 @@ from .occ_impl.solver import (
 from .occ_impl.exporters.assembly import exportAssembly, exportCAF
 
 from .selectors import _expression_grammar as _selector_grammar
+from OCP.BRepTools import BRepTools
+from OCP.gp import gp_Pln, gp_Pnt
+from OCP.Precision import Precision
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -23,7 +26,7 @@ ExportLiterals = Literal["STEP", "XML"]
 
 PATH_DELIM = "/"
 
-# enitity selector grammar definiiton
+# entity selector grammar definiiton
 def _define_grammar():
 
     from pyparsing import (
@@ -80,11 +83,11 @@ class Constraint(object):
         """
         Construct a constraint.
 
-        :param objects: object names refernced in the constraint
+        :param objects: object names referenced in the constraint
         :param args: subshapes (e.g. faces or edges) of the objects
         :param sublocs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
         :param kind: constraint kind
-        :param param: optional arbitrary paramter passed to the solver
+        :param param: optional arbitrary parameter passed to the solver
         """
 
         self.objects = objects
@@ -106,16 +109,33 @@ class Constraint(object):
 
         return rv
 
-    def _getPlane(self, arg: Shape) -> Plane:
+    def _getPln(self, arg: Shape) -> gp_Pln:
 
         if isinstance(arg, Face):
-            normal = arg.normalAt()
+            rv = gp_Pln(self._getPnt(arg), arg.normalAt().toDir())
         elif isinstance(arg, (Edge, Wire)):
             normal = arg.normal()
+            origin = arg.Center()
+            plane = Plane(origin, normal=normal)
+            rv = plane.toPln()
         else:
-            raise ValueError(f"Can not get normal from {arg}.")
-        origin = arg.Center()
-        return Plane(origin, normal=normal)
+            raise ValueError(f"Can not construct a plane for {arg}.")
+
+        return rv
+
+    def _getPnt(self, arg: Shape) -> gp_Pnt:
+
+        # check for infinite face
+        if isinstance(arg, Face) and any(
+            Precision.IsInfinite_s(x) for x in BRepTools.UVBounds_s(arg.wrapped)
+        ):
+            # fall back to gp_Pln center
+            pln = arg.toPln()
+            center = Vector(pln.Location())
+        else:
+            center = arg.Center()
+
+        return center.toPnt()
 
     def toPOD(self) -> ConstraintPOD:
         """
@@ -131,14 +151,14 @@ class Constraint(object):
             if self.kind == "Axis":
                 rv.append((self._getAxis(arg).toDir(),))
             elif self.kind == "Point":
-                rv.append((arg.Center().toPnt(),))
+                rv.append((self._getPnt(arg),))
             elif self.kind == "Plane":
-                rv.append((self._getAxis(arg).toDir(), arg.Center().toPnt()))
+                rv.append((self._getAxis(arg).toDir(), self._getPnt(arg)))
             elif self.kind == "PointInPlane":
                 if idx == 0:
-                    rv.append((arg.Center().toPnt(),))
+                    rv.append((self._getPnt(arg),))
                 else:
-                    rv.append((self._getPlane(arg).toPln(),))
+                    rv.append((self._getPln(arg),))
             else:
                 raise ValueError(f"Unknown constraint kind {self.kind}")
 
@@ -162,6 +182,8 @@ class Assembly(object):
 
     objects: Dict[str, "Assembly"]
     constraints: List[Constraint]
+
+    _solve_result: Optional[Dict[str, Any]]
 
     def __init__(
         self,
@@ -200,6 +222,8 @@ class Assembly(object):
         self.children = []
         self.constraints = []
         self.objects = {self.name: self}
+
+        self._solve_result = None
 
     def _copy(self) -> "Assembly":
         """
@@ -387,7 +411,7 @@ class Assembly(object):
         elif len(args) == 6:
             id1, s1, id2, s2, kind, param = args
         else:
-            raise ValueError(f"Incompatibile arguments: {args}")
+            raise ValueError(f"Incompatible arguments: {args}")
 
         loc1, id1_top = self._subloc(id1)
         loc2, id2_top = self._subloc(id2)
@@ -430,7 +454,7 @@ class Assembly(object):
         solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
 
         # solve
-        locs_new = solver.solve()
+        locs_new, self._solve_result = solver.solve()
 
         # update positions
         for loc_new, n in zip(locs_new, ents):

@@ -1087,7 +1087,7 @@ class Workplane(object):
         Future Enhancements:
             * A version of this method that returns a transformed copy, rather than modifying
               the originals
-            * This method doesnt expose a very good interface, because the axis of rotation
+            * This method doesn't expose a very good interface, because the axis of rotation
               could be inconsistent between multiple objects.  This is because the beginning
               of the axis is variable, while the end is fixed. This is fine when operating on
               one object, but is not cool for multiple.
@@ -1687,7 +1687,7 @@ class Workplane(object):
         self: T, distance: float, angle: float, forConstruction: bool = False
     ) -> T:
         """
-        Make a line from the current point to the given polar co-ordinates
+        Make a line from the current point to the given polar coordinates
 
         Useful if it is more convenient to specify the end location rather than
         the distance and angle from the current point
@@ -1817,7 +1817,7 @@ class Workplane(object):
             where a tangent constraint is specified.
         :param periodic: creation of periodic curves
         :param parameters: the value of the parameter at each interpolation point.
-            (The intepolated curve is represented as a vector-valued function of a
+            (The interpolated curve is represented as a vector-valued function of a
             scalar parameter.)
 
             If periodic == True, then len(parameters) must be
@@ -2767,7 +2767,7 @@ class Workplane(object):
 
         return self.newObject([s])
 
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def cboreHole(
         self: T,
         diameter: float,
@@ -2822,7 +2822,7 @@ class Workplane(object):
         return self.cutEach(lambda loc: r.moved(loc), True, clean)
 
     # TODO: almost all code duplicated!
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def cskHole(
         self: T,
         diameter: float,
@@ -2879,7 +2879,7 @@ class Workplane(object):
         return self.cutEach(lambda loc: res.moved(loc), True, clean)
 
     # TODO: almost all code duplicated!
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def hole(
         self: T, diameter: float, depth: Optional[float] = None, clean: bool = True,
     ) -> T:
@@ -3589,7 +3589,7 @@ class Workplane(object):
         maxSegments: int = 9,
     ) -> T:
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very ressources intensive depending on the complexity of the shape. In this case set combine=False.
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very resources intensive depending on the complexity of the shape. In this case set combine=False.
 
         :param surf_edges
         :type 1 surf_edges: list of [x,y,z] float ordered coordinates
@@ -3919,27 +3919,42 @@ class Workplane(object):
         """
         Create a 3D text
 
-        :param str txt: text to be rendered
-        :param distance: the distance to extrude, normal to the workplane plane
+        :param txt: text to be rendered
+        :param fontsize: size of the font in model units
+        :param distance: the distance to extrude or cut, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
-        :param float fontsize: size of the font
-        :param boolean cut: True to cut the resulting solid from the parent solids if found.
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param str font: fontname (default: Arial)
-        :param str kind: font type (default: Normal)
-        :param str halign: horizontal alignment (default: center)
-        :param str valign: vertical alignment (default: center)
-        :return: a CQ object with the resulting solid selected.
+        :param cut: True to cut the resulting solid from the parent solids if found
+        :param combine: True to combine the resulting solid with parent solids if found
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param font: font name
+        :param fontPath: path to font file
+        :param kind: font type
+        :param halign: horizontal alignment
+        :param valign: vertical alignment
+        :return: a CQ object with the resulting solid selected
 
-        extrude always *adds* material to a part.
-
-        The returned object is always a CQ object, and depends on whether combine is True, and
+        The returned object is always a Workplane object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
+
+        Examples::
+
+            cq.Workplane().text("CadQuery", 5, 1)
+
+        Specify the font (name), and kind to use an installed system font::
+
+            cq.Workplane().text("CadQuery", 5, 1, font="Liberation Sans Narrow", kind="italic")
+
+        Specify fontPath to use a font from a given file::
+
+            cq.Workplane().text("CadQuery", 5, 1, fontPath="/opt/fonts/texgyrecursor-bold.otf")
+
+        Cutting text into a solid::
+
+            cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, -1.0)
 
         """
         r = Compound.makeText(

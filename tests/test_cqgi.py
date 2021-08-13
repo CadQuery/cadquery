@@ -109,7 +109,7 @@ class TestCQGI(BaseTest):
     def test_that_invalid_syntax_in_script_fails_immediately(self):
         badscript = textwrap.dedent(
             """
-                this doesnt even compile
+                this doesn't even compile
             """
         )
 

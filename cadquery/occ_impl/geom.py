@@ -163,7 +163,7 @@ class Vector(object):
         """Return the vector itself
 
         The center of myself is myself.
-        Provided so that vectors, vertexes, and other shapes all support a
+        Provided so that vectors, vertices, and other shapes all support a
         common interface, when Center() is requested for all objects on the
         stack.
         """
@@ -361,6 +361,14 @@ class Matrix:
                 return [0.0, 0.0, 0.0, 1.0][c]
         else:
             raise IndexError("Out of bounds access into 4x4 matrix: {!r}".format(rc))
+
+    def __repr__(self) -> str:
+        """
+        Generate a valid python expression representing this Matrix
+        """
+        matrix_transposed = self.transposed_list()
+        matrix_str = ",\n        ".join(str(matrix_transposed[i::4]) for i in range(4))
+        return f"Matrix([{matrix_str}])"
 
 
 class Plane(object):
@@ -693,7 +701,7 @@ class Plane(object):
         for w in listOfShapes:
             mirrored = w.transformShape(Matrix(T))
 
-            # attemp stitching of the wires
+            # attempt stitching of the wires
             resultWires.append(mirrored)
 
         return resultWires
