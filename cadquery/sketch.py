@@ -75,7 +75,7 @@ class Sketch(object):
     _selection: List[Union[Shape, Location]]
     _constraints: List[Constraint]
 
-    _tags: Dict[str, Shape]
+    _tags: Dict[str, List[Union[Shape, Location]]]
 
     def __init__(self, parent: Any = None):
 
@@ -90,7 +90,7 @@ class Sketch(object):
 
         self._tags = {}
 
-    def _tag(self, val: Shape, tag: str):
+    def _tag(self, val: List[Union[Shape, Location]], tag: str):
 
         self._tags[tag] = val
 
@@ -292,9 +292,14 @@ class Sketch(object):
 
         return self.push(locs)
 
-    def push(self, locs: Iterable[Union[Location, Point]]) -> "Sketch":
+    def push(
+        self, locs: Iterable[Union[Location, Point]], tag: Optional[str] = None,
+    ) -> "Sketch":
 
         self._selection = [l if isinstance(l, Location) else Location(l) for l in locs]
+
+        if tag:
+            self._tag(self._selection[:], tag)
 
         return self
 
@@ -480,7 +485,7 @@ class Sketch(object):
         self._edges.append(val)
 
         if tag:
-            self._tag(val, tag)
+            self._tag([val], tag)
 
         return self
 
@@ -585,7 +590,7 @@ class Sketch(object):
     def constrain(self, tag: str, constraint: ConstraintKind, arg: Any) -> "Sketch":
 
         self._constraints.append(
-            Constraint((tag,), (self._tags[tag],), constraint, arg)
+            Constraint((tag,), (self._tags[tag][0],), constraint, arg)
         )
 
     @constrain.register
@@ -595,7 +600,10 @@ class Sketch(object):
 
         self._constraints.append(
             Constraint(
-                (tag1, tag2), (self._tags[tag1], self._tags[tag2]), constraint, arg
+                (tag1, tag2),
+                (self._tags[tag1][0], self._tags[tag2][0]),
+                constraint,
+                arg,
             )
         )
 
@@ -607,8 +615,10 @@ class Sketch(object):
 
         # fill entities, e2i and geoms
         for i, (k, v) in enumerate(
-            filter(lambda kv: isinstance(kv[1], Edge), self._tags.items())
+            filter(lambda kv: isinstance(kv[1][0], Edge), self._tags.items())
         ):
+
+            v = v[0]
 
             # dispatch on geom type
             if v.geomType() == "LINE":
@@ -659,7 +669,7 @@ class Sketch(object):
                 e = Edge.makeCircle(r, p, angle1=a1, angle2=a2)
 
             # overwrite the low level object
-            self._tags[k].wrapped = e.wrapped
+            self._tags[k][0].wrapped = e.wrapped
 
         return self
 
