@@ -80,7 +80,7 @@ Like OpenSCAD, CadQuery is an open-source, script based, parametric model genera
 Where does the name CadQuery come from?
 ========================================
 
-CadQuery is inspired by `jQuery <http://www.jquery.com>`_ , a popular framework that
+CadQuery is inspired by `jQuery <http://www.jquery.com>`_, a popular framework that
 revolutionized web development involving javascript.
 
 CadQuery is for 3D CAD what jQuery is for javascript.
