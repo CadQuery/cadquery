@@ -81,9 +81,9 @@ Where does the name CadQuery come from?
 ========================================
 
 CadQuery is inspired by `jQuery <http://www.jquery.com>`_, a popular framework that
-revolutionized web development involving javascript.
+revolutionized web development involving JavaScript.
 
-CadQuery is for 3D CAD what jQuery is for javascript.
+CadQuery is for 3D CAD what jQuery is for JavaScript.
 If you are familiar with how jQuery works, you will probably recognize several jQuery features that CadQuery uses:
 
     * A fluent API to create clean, easy to read code
