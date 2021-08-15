@@ -90,7 +90,7 @@ You can select Vertices, Edges, Faces, Solids, and Wires using selectors.
 
 Think of selectors as the equivalent of your hand and mouse, if you were to build an object using a conventional CAD system.
 
-You can learn more about selectors :ref:`selectors`
+See :ref:`selectors` to learn more.
 
 
 Construction Geometry
@@ -99,7 +99,7 @@ Construction geometry are features that are not part of the object, but are only
 A common example might be to define a rectangle, and then use the corners to define the location of a set of holes.
 
 Most CadQuery construction methods provide a ``forConstruction`` keyword, which creates a feature that will only be used
-to locate other features
+to locate other features.
 
 
 The Stack
