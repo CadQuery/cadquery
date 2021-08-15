@@ -262,7 +262,7 @@ needs a complex profile
         (0.5, 1.0),
         (0, 1.0)
     ]
-    r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts,includeCurrent=True).close()
+    r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts, includeCurrent=True).close()
     result = r.extrude(0.5)
 
 .. topic:: Api References
@@ -285,9 +285,9 @@ introduce horizontal and vertical lines, which make for slightly easier coding.
 
 .. cadquery::
 
-   r = cq.Workplane("front").hLine(1.0)                            # 1.0 is the distance, not coordinate
-   r = r.vLine(0.5).hLine(-0.25).vLine(-0.25).hLineTo(0.0)      # hLineTo allows using xCoordinate not distance
-   result =r.mirrorY().extrude(0.25 )                           # mirror the geometry and extrude
+   r = cq.Workplane("front").hLine(1.0)                       # 1.0 is the distance, not coordinate
+   r = r.vLine(0.5).hLine(-0.25).vLine(-0.25).hLineTo(0.0)    # hLineTo allows using xCoordinate not distance
+   result = r.mirrorY().extrude(0.25)                         # mirror the geometry and extrude
 
 .. topic:: Api References
 
@@ -308,34 +308,34 @@ Mirroring 3D Objects
 .. cadquery::
 
     result0 = (cadquery.Workplane("XY")
-               .moveTo(10,0)
-               .lineTo(5,0)
-               .threePointArc((3.9393,0.4393),(3.5,1.5))
-               .threePointArc((3.0607,2.5607),(2,3))
-               .lineTo(1.5,3)
-               .threePointArc((0.4393,3.4393),(0,4.5))
-               .lineTo(0,13.5)
-               .threePointArc((0.4393,14.5607),(1.5,15))
-               .lineTo(28,15)
-               .lineTo(28,13.5)
-               .lineTo(24,13.5)
-               .lineTo(24,11.5)
-               .lineTo(27,11.5)
-               .lineTo(27,10)
-               .lineTo(22,10)
-               .lineTo(22,13.2)
-               .lineTo(14.5,13.2)
-               .lineTo(14.5,10)
-               .lineTo(12.5,10 )
-               .lineTo(12.5,13.2)
-               .lineTo(5.5,13.2)
-               .lineTo(5.5,2)
-               .threePointArc((5.793,1.293),(6.5,1))
-               .lineTo(10,1)
+               .moveTo(10, 0)
+               .lineTo(5, 0)
+               .threePointArc((3.9393, 0.4393), (3.5, 1.5))
+               .threePointArc((3.0607, 2.5607), (2, 3))
+               .lineTo(1.5, 3)
+               .threePointArc((0.4393, 3.4393), (0, 4.5))
+               .lineTo(0, 13.5)
+               .threePointArc((0.4393, 14.5607), (1.5, 15))
+               .lineTo(28, 15)
+               .lineTo(28, 13.5)
+               .lineTo(24, 13.5)
+               .lineTo(24, 11.5)
+               .lineTo(27, 11.5)
+               .lineTo(27, 10)
+               .lineTo(22, 10)
+               .lineTo(22, 13.2)
+               .lineTo(14.5, 13.2)
+               .lineTo(14.5, 10)
+               .lineTo(12.5, 10)
+               .lineTo(12.5, 13.2)
+               .lineTo(5.5, 13.2)
+               .lineTo(5.5, 2)
+               .threePointArc((5.793, 1.293), (6.5, 1))
+               .lineTo(10, 1)
                .close())
     result = result0.extrude(100)
 
-    result = result.rotate((0, 0, 0),(1, 0, 0), 90)
+    result = result.rotate((0, 0, 0), (1, 0, 0), 90)
 
     result = result.translate(result.val().BoundingBox().center.multiply(-1))
 
@@ -465,9 +465,9 @@ This example uses an offset workplane to make a compound object, which is perfec
 
 .. cadquery::
 
-    result = cq.Workplane("front").box(3, 2, 0.5)                 #make a basic prism
-    result = result.faces("<X").workplane(offset=0.75)       #workplane is offset from the object surface
-    result = result.circle(1.0).extrude(0.5)                 #disc
+    result = cq.Workplane("front").box(3, 2, 0.5)         # make a basic prism
+    result = result.faces("<X").workplane(offset=0.75)    # workplane is offset from the object surface
+    result = result.circle(1.0).extrude(0.5)              # disc
 
 .. topic:: Api References
 
@@ -513,7 +513,7 @@ You can create a rotated work plane by specifying angles of rotation relative to
 
     result = (cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").workplane()
          .transformed(offset=cq.Vector(0, -1.5, 1.0),rotate=cq.Vector(60, 0, 0))
-         .rect(1.5,1.5,forConstruction=True).vertices().hole(0.25))
+         .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.25))
 
 .. topic:: Api References
 
@@ -536,7 +536,7 @@ In the example below, a rectangle is drawn, and its vertices are used to locate 
 .. cadquery::
 
     result = (cq.Workplane("front").box(2, 2, 0.5).faces(">Z").workplane()
-        .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.125 ))
+        .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.125))
 
 .. topic:: Api References
 
@@ -724,7 +724,7 @@ Here we fillet all of the edges of a simple plate.
 
 .. cadquery::
 
-    result = cq.Workplane("XY" ).box(3, 3, 0.5).edges("|Z").fillet(0.125)
+    result = cq.Workplane("XY").box(3, 3, 0.5).edges("|Z").fillet(0.125)
 
 .. topic:: Api References
 
@@ -791,11 +791,11 @@ with just a few lines of code.
 
 .. cadquery::
 
-        (length,height,bearing_diam, thickness,padding) = ( 30.0, 40.0, 22.0, 10.0, 8.0)
+        (length, height, bearing_diam, thickness, padding) = (30.0, 40.0, 22.0, 10.0, 8.0)
 
-        result = (cq.Workplane("XY").box(length,height,thickness).faces(">Z").workplane().hole(bearing_diam)
+        result = (cq.Workplane("XY").box(length, height, thickness).faces(">Z").workplane().hole(bearing_diam)
                 .faces(">Z").workplane()
-                .rect(length-padding,height-padding,forConstruction=True)
+                .rect(length-padding, height-padding, forConstruction=True)
                 .vertices().cboreHole(2.4, 4.4, 2.1))
 
 
@@ -806,9 +806,9 @@ You can split an object using a workplane, and retain either or both halves
 
 .. cadquery::
 
-        c = cq.Workplane("XY").box(1,1,1).faces(">Z").workplane().circle(0.25).cutThruAll()
+        c = cq.Workplane("XY").box(1, 1, 1).faces(">Z").workplane().circle(0.25).cutThruAll()
 
-        #now cut it in half sideways
+        # now cut it in half sideways
         result = c.faces(">Y").workplane(-0.5).split(keepTop=True)
 
 .. topic:: Api References
@@ -837,18 +837,18 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
 
 .. cadquery::
 
-    (L,w,t) = (20.0, 6.0, 3.0)
+    (L, w, t) = (20.0, 6.0, 3.0)
     s = cq.Workplane("XY")
 
     # Draw half the profile of the bottle and extrude it
     p = (s.center(-L/2.0, 0).vLine(w/2.0)
-        .threePointArc((L/2.0, w/2.0 + t),(L, w/2.0)).vLine(-w/2.0)
-        .mirrorX().extrude(30.0,True))
+        .threePointArc((L/2.0, w/2.0 + t), (L, w/2.0)).vLine(-w/2.0)
+        .mirrorX().extrude(30.0, True))
 
-    #make the neck
-    p = p.faces(">Z").workplane(centerOption="CenterOfMass").circle(3.0).extrude(2.0,True)
+    # Make the neck
+    p = p.faces(">Z").workplane(centerOption="CenterOfMass").circle(3.0).extrude(2.0, True)
 
-    #make a shell
+    # Make a shell
     result = p.faces(">Z").shell(0.3)
 
 .. topic:: Api References
@@ -871,30 +871,30 @@ A Parametric Enclosure
 .. cadquery::
     :height: 400px
 
-    #parameter definitions
-    p_outerWidth = 100.0 #Outer width of box enclosure
-    p_outerLength = 150.0 #Outer length of box enclosure
-    p_outerHeight = 50.0 #Outer height of box enclosure
+    # parameter definitions
+    p_outerWidth = 100.0 # Outer width of box enclosure
+    p_outerLength = 150.0 # Outer length of box enclosure
+    p_outerHeight = 50.0 # Outer height of box enclosure
 
-    p_thickness =  3.0 #Thickness of the box walls
-    p_sideRadius =  10.0 #Radius for the curves around the sides of the box
-    p_topAndBottomRadius =  2.0 #Radius for the curves on the top and bottom edges of the box
+    p_thickness = 3.0 # Thickness of the box walls
+    p_sideRadius = 10.0 # Radius for the curves around the sides of the box
+    p_topAndBottomRadius = 2.0 # Radius for the curves on the top and bottom edges of the box
 
-    p_screwpostInset = 12.0 #How far in from the edges the screw posts should be place.
-    p_screwpostID = 4.0 #Inner Diameter of the screw post holes, should be roughly screw diameter not including threads
-    p_screwpostOD = 10.0 #Outer Diameter of the screw posts.\nDetermines overall thickness of the posts
+    p_screwpostInset = 12.0 # How far in from the edges the screw posts should be place.
+    p_screwpostID = 4.0 # Inner Diameter of the screw post holes, should be roughly screw diameter not including threads
+    p_screwpostOD = 10.0 # Outer Diameter of the screw posts.\nDetermines overall thickness of the posts
 
-    p_boreDiameter = 8.0 #Diameter of the counterbore hole, if any
-    p_boreDepth = 1.0 #Depth of the counterbore hole, if
-    p_countersinkDiameter = 0.0 #Outer diameter of countersink.  Should roughly match the outer diameter of the screw head
-    p_countersinkAngle = 90.0 #Countersink angle (complete angle between opposite sides, not from center to one side)
-    p_flipLid = True #Whether to place the lid with the top facing down or not.
-    p_lipHeight =  1.0 #Height of lip on the underside of the lid.\nSits inside the box body for a snug fit.
+    p_boreDiameter = 8.0 # Diameter of the counterbore hole, if any
+    p_boreDepth = 1.0 # Depth of the counterbore hole, if
+    p_countersinkDiameter = 0.0 # Outer diameter of countersink. Should roughly match the outer diameter of the screw head
+    p_countersinkAngle = 90.0 # Countersink angle (complete angle between opposite sides, not from center to one side)
+    p_flipLid = True # Whether to place the lid with the top facing down or not.
+    p_lipHeight = 1.0 # Height of lip on the underside of the lid.\nSits inside the box body for a snug fit.
 
-    #outer shell
-    oshell = cq.Workplane("XY").rect(p_outerWidth,p_outerLength).extrude(p_outerHeight + p_lipHeight)
+    # outer shell
+    oshell = cq.Workplane("XY").rect(p_outerWidth, p_outerLength).extrude(p_outerHeight + p_lipHeight)
 
-    #weird geometry happens if we make the fillets in the wrong order
+    # weird geometry happens if we make the fillets in the wrong order
     if p_sideRadius > p_topAndBottomRadius:
         oshell = oshell.edges("|Z").fillet(p_sideRadius)
         oshell = oshell.edges("#Z").fillet(p_topAndBottomRadius)
@@ -902,49 +902,49 @@ A Parametric Enclosure
         oshell = oshell.edges("#Z").fillet(p_topAndBottomRadius)
         oshell = oshell.edges("|Z").fillet(p_sideRadius)
 
-    #inner shell
-    ishell = (oshell.faces("<Z").workplane(p_thickness,True)
-        .rect((p_outerWidth - 2.0* p_thickness),(p_outerLength - 2.0*p_thickness))
-        .extrude((p_outerHeight - 2.0*p_thickness),False) #set combine false to produce just the new boss
+    # inner shell
+    ishell = (oshell.faces("<Z").workplane(p_thickness, True)
+        .rect((p_outerWidth - 2.0*p_thickness), (p_outerLength - 2.0*p_thickness))
+        .extrude((p_outerHeight - 2.0*p_thickness), False) # set combine false to produce just the new boss
     )
     ishell = ishell.edges("|Z").fillet(p_sideRadius - p_thickness)
 
-    #make the box outer box
+    # make the box outer box
     box = oshell.cut(ishell)
 
-    #make the screw posts
+    # make the screw posts
     POSTWIDTH = (p_outerWidth - 2.0*p_screwpostInset)
-    POSTLENGTH = (p_outerLength  -2.0*p_screwpostInset)
+    POSTLENGTH = (p_outerLength - 2.0*p_screwpostInset)
 
     box = (box.faces(">Z").workplane(-p_thickness)
-        .rect(POSTWIDTH,POSTLENGTH,forConstruction=True)
+        .rect(POSTWIDTH, POSTLENGTH, forConstruction=True)
         .vertices().circle(p_screwpostOD/2.0).circle(p_screwpostID/2.0)
-        .extrude((-1.0)*(p_outerHeight + p_lipHeight -p_thickness ),True))
+        .extrude((-1.0)*(p_outerHeight + p_lipHeight - p_thickness),True))
 
-    #split lid into top and bottom parts
-    (lid,bottom) = box.faces(">Z").workplane(-p_thickness -p_lipHeight ).split(keepTop=True,keepBottom=True).all()  #splits into two solids
+    # split lid into top and bottom parts
+    (lid, bottom) = box.faces(">Z").workplane(-p_thickness - p_lipHeight).split(keepTop=True, keepBottom=True).all()  # splits into two solids
 
-    #translate the lid, and subtract the bottom from it to produce the lid inset
-    lowerLid = lid.translate((0,0,-p_lipHeight))
-    cutlip = lowerLid.cut(bottom).translate((p_outerWidth + p_thickness ,0,p_thickness - p_outerHeight + p_lipHeight))
+    # translate the lid, and subtract the bottom from it to produce the lid inset
+    lowerLid = lid.translate((0, 0, -p_lipHeight))
+    cutlip = lowerLid.cut(bottom).translate((p_outerWidth + p_thickness, 0, p_thickness - p_outerHeight + p_lipHeight))
 
-    #compute centers for counterbore/countersink or counterbore
-    topOfLidCenters = cutlip.faces(">Z").workplane().rect(POSTWIDTH,POSTLENGTH,forConstruction=True).vertices()
+    # compute centers for counterbore/countersink or counterbore
+    topOfLidCenters = cutlip.faces(">Z").workplane().rect(POSTWIDTH, POSTLENGTH, forConstruction=True).vertices()
 
-    #add holes of the desired type
+    # add holes of the desired type
     if p_boreDiameter > 0 and p_boreDepth > 0:
-        topOfLid = topOfLidCenters.cboreHole(p_screwpostID,p_boreDiameter,p_boreDepth,(2.0)*p_thickness)
+        topOfLid = topOfLidCenters.cboreHole(p_screwpostID, p_boreDiameter, p_boreDepth, 2.0*p_thickness)
     elif p_countersinkDiameter > 0 and p_countersinkAngle > 0:
-        topOfLid = topOfLidCenters.cskHole(p_screwpostID,p_countersinkDiameter,p_countersinkAngle,(2.0)*p_thickness)
+        topOfLid = topOfLidCenters.cskHole(p_screwpostID, p_countersinkDiameter, p_countersinkAngle, 2.0*p_thickness)
     else:
-        topOfLid= topOfLidCenters.hole(p_screwpostID,(2.0)*p_thickness)
+        topOfLid = topOfLidCenters.hole(p_screwpostID, 2.0*p_thickness)
 
-    #flip lid upside down if desired
+    # flip lid upside down if desired
     if p_flipLid:
-        topOfLid = topOfLid.rotateAboutCenter((1,0,0),180)
+        topOfLid = topOfLid.rotateAboutCenter((1, 0, 0), 180)
 
-    #return the combined result
-    result =topOfLid.union(bottom)
+    # return the combined result
+    result = topOfLid.union(bottom)
 
 
 .. topic:: Api References
