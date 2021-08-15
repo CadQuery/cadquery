@@ -118,7 +118,7 @@ closed curve.
 
 .. cadquery::
 
-    result = (cq.Workplane("front").lineTo(2.0, 0).lineTo(2.0, 1.0).threePointArc((1.0, 1.5),(0.0, 1.0))
+    result = (cq.Workplane("front").lineTo(2.0, 0).lineTo(2.0, 1.0).threePointArc((1.0, 1.5), (0.0, 1.0))
         .close().extrude(0.25))
 
 
@@ -144,10 +144,10 @@ A new work plane center can be established at any point.
 
 .. cadquery::
 
-    result = cq.Workplane("front").circle(3.0) #current point is the center of the circle, at (0,0)
-    result = result.center(1.5, 0.0).rect(0.5, 0.5) # new work center is  (1.5, 0.0)
+    result = cq.Workplane("front").circle(3.0) #current point is the center of the circle, at (0, 0)
+    result = result.center(1.5, 0.0).rect(0.5, 0.5) # new work center is (1.5, 0.0)
 
-    result = result.center(-1.5, 1.5).circle(0.25) # new work center is ( 0.0, 1.5).
+    result = result.center(-1.5, 1.5).circle(0.25) # new work center is (0.0, 1.5).
     # The new center is specified relative to the previous center, not global coordinates!
 
     result = result.extrude(0.25)
@@ -175,10 +175,10 @@ like :py:meth:`Workplane.circle` and :py:meth:`Workplane.rect`, will operate on 
 
 .. cadquery::
 
-   r = cq.Workplane("front").circle(2.0)                       # make base
-   r = r.pushPoints( [ (1.5, 0),(0, 1.5),(-1.5, 0),(0, -1.5) ] )     # now four points are on the stack
-   r = r.circle( 0.25 )                                      # circle will operate on all four points
-   result = r.extrude(0.125 )                               # make prism
+   r = cq.Workplane("front").circle(2.0)                           # make base
+   r = r.pushPoints([(1.5, 0), (0, 1.5), (-1.5, 0), (0, -1.5)])    # now four points are on the stack
+   r = r.circle(0.25)                                              # circle will operate on all four points
+   result = r.extrude(0.125)                                       # make prism
 
 .. topic:: Api References
 
@@ -198,7 +198,7 @@ correct for small hole sizes.
 
 .. cadquery::
 
-    result = (cq.Workplane("front").box(3.0, 4.0, 0.25).pushPoints ( [ ( 0,0.75 ),(0, -0.75) ])
+    result = (cq.Workplane("front").box(3.0, 4.0, 0.25).pushPoints([(0, 0.75), (0, -0.75)])
         .polygon(6, 1.0).cutThruAll())
 
 .. topic:: Api References
@@ -219,16 +219,16 @@ This example uses a polyline to create one half of an i-beam shape, which is mir
 
 .. cadquery::
 
-    (L,H,W,t) = ( 100.0, 20.0, 20.0, 1.0)
+    (L,H,W,t) = (100.0, 20.0, 20.0, 1.0)
     pts = [
-        (0,H/2.0),
-        (W/2.0,H/2.0),
-        (W/2.0,(H/2.0 - t)),
-        (t/2.0,(H/2.0-t)),
-        (t/2.0,(t - H/2.0)),
-        (W/2.0,(t -H/2.0)),
-        (W/2.0,H/-2.0),
-        (0,H/-2.0)
+        (0, H/2.0),
+        (W/2.0, H/2.0),
+        (W/2.0, (H/2.0 - t)),
+        (t/2.0, (H/2.0 - t)),
+        (t/2.0, (t - H/2.0)),
+        (W/2.0, (t - H/2.0)),
+        (W/2.0, H/-2.0),
+        (0, H/-2.0)
     ]
     result = cq.Workplane("front").polyline(pts).mirrorY().extrude(L)
 
