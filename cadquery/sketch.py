@@ -77,6 +77,8 @@ class Sketch(object):
 
     _tags: Dict[str, List[Union[Shape, Location]]]
 
+    _solve_status: Optional[Dict[str, Any]]
+
     def __init__(self, parent: Any = None):
 
         self.parent = parent
@@ -89,6 +91,8 @@ class Sketch(object):
         self._constraints = []
 
         self._tags = {}
+
+        self._solve_status = None
 
     def _tag(self, val: List[Union[Shape, Location]], tag: str):
 
@@ -650,7 +654,7 @@ class Sketch(object):
 
         # optimize
         solver = SketchConstraintSolver(entities, constraints, geoms)
-        res = solver.solve()
+        res, self._solve_status = solver.solve()
 
         # translate back the solution - update edges
         for g, (k, i) in zip(geoms, e2i.items()):
