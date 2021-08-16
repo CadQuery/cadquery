@@ -1,4 +1,4 @@
-from typing import Tuple, Union, Any, Callable, List, Optional, Iterable
+from typing import Tuple, Union, Any, Callable, List, Optional, Iterable, Dict
 from typing_extensions import Literal
 from nptyping import NDArray as Array
 from itertools import accumulate, chain
@@ -6,7 +6,8 @@ from math import sin, cos
 
 from numpy import array
 from numpy.linalg import norm
-from scipy.optimize import minimize
+import nlopt
+
 from OCP.gp import gp_Vec2d
 
 from .geom import Location
@@ -41,6 +42,10 @@ ConstraintInvariants = {  # (arity, geometry types, param type)
 }
 
 Constraint = Tuple[Tuple[int, Optional[int]], ConstraintKind, Optional[Any]]
+
+DIFF_EPS = 1e-10
+TOL = 1e-9
+MAXITER = 2000
 
 
 class SketchConstraintSolver(object):
@@ -125,7 +130,7 @@ class SketchConstraintSolver(object):
                 v1 = arc_last(x1)
                 v2 = x2[:2]
             elif t1 == "CIRCLE" and t2 == "CRICLE":
-                v1 = arc_last(x1)
+                v1 = arc_la1st(x1)
                 v2 = arc_first(x1)
             else:
                 raise invalid_args(t1, t2)
@@ -230,7 +235,7 @@ class SketchConstraintSolver(object):
 
         def f(x):
             """
-            Function to be minimized
+            Cost function to be minimized
             """
 
             rv = 0
@@ -243,23 +248,76 @@ class SketchConstraintSolver(object):
                 args = (x[ixs[e1] : ixs[e1 + 1]], geoms[e1])
                 if e2 is not None:
                     args += (x[ixs[e2] : ixs[e2 + 1]], geoms[e2])
-                args += (val,)
 
                 # evaluate
-                rv += cost(*args) ** 2
+                rv += cost(*args, val) ** 2
 
             return rv
 
-        return f
+        def grad(x, rv):
+            """
+            Gradient of the cost function
+            """
 
-    def solve(self) -> List[Location]:
+            rv[:] = 0
+
+            for i, ((e1, e2), kind, val) in enumerate(constraints):
+
+                cost = costs[kind]
+
+                # build arguments for the specific constraint
+                x1 = x[ixs[e1] : ixs[e1 + 1]]
+                args = (x1.copy(), geoms[e1])
+                if e2 is not None:
+                    x2 = x[ixs[e2] : ixs[e2 + 1]]
+                    args += (x2.copy(), geoms[e2])
+
+                # evaluate
+                tmp = cost(*args, val)
+
+                for j, k in enumerate(range(ixs[e1], ixs[e1 + 1])):
+                    args[0][j] += DIFF_EPS
+                    tmp1 = cost(*args, val)
+                    rv[k] += 2 * tmp * (tmp1 - tmp) / DIFF_EPS
+                    args[0][j] = x1[j]
+
+                if e2 is not None:
+                    for j, k in enumerate(range(ixs[e2], ixs[e2 + 1])):
+                        args[2][j] += DIFF_EPS
+                        tmp2 = cost(*args, val)
+                        rv[k] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
+                        args[2][j] = x2[j]
+
+        return f, grad
+
+    def solve(self) -> Tuple[List[Location], Dict[str, Any]]:
 
         x0 = array(list(chain.from_iterable(self.entities))).ravel()
-        f = self._cost()
+        f, grad = self._cost()
 
-        res = minimize(f, x0, method="BFGS")
+        def func(x, g):
 
-        x = res.x
+            if g.size > 0:
+                grad(x, g)
+
+            return f(x)
+
+        opt = nlopt.opt(nlopt.LD_SLSQP, len(x0))
+        opt.set_min_objective(func)
+
+        opt.set_ftol_abs(0)
+        opt.set_ftol_rel(0)
+        opt.set_xtol_rel(TOL)
+        opt.set_xtol_abs(TOL * 1e-3)
+        opt.set_maxeval(MAXITER)
+
+        x = opt.optimize(x0)
+        status = {
+            "cost": opt.last_optimum_value(),
+            "iters": opt.get_numevals(),
+            "status": opt.last_optimize_result(),
+        }
+
         ixs = self.ixs
 
-        return [x[i1:i2] for i1, i2 in zip(ixs, ixs[1:])]
+        return [x[i1:i2] for i1, i2 in zip(ixs, ixs[1:])], status
