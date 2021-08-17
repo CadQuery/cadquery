@@ -223,7 +223,7 @@ class Assembly(object):
         self.constraints = []
         self.objects = {self.name: self}
 
-        self._solve_result = None
+        self._solve_status = None
 
     def _copy(self) -> "Assembly":
         """
@@ -454,7 +454,7 @@ class Assembly(object):
         solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
 
         # solve
-        locs_new, self._solve_result = solver.solve()
+        locs_new, self._solve_status = solver.solve()
 
         # update positions
         for loc_new, n in zip(locs_new, ents):
