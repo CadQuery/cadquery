@@ -130,7 +130,7 @@ class SketchConstraintSolver(object):
                 v1 = arc_last(x1)
                 v2 = x2[:2]
             elif t1 == "CIRCLE" and t2 == "CRICLE":
-                v1 = arc_la1st(x1)
+                v1 = arc_last(x1)
                 v2 = arc_first(x1)
             else:
                 raise invalid_args(t1, t2)
