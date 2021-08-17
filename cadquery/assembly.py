@@ -183,7 +183,7 @@ class Assembly(object):
     objects: Dict[str, "Assembly"]
     constraints: List[Constraint]
 
-    _solve_result: Optional[Dict[str, Any]]
+    _solve_status: Optional[Dict[str, Any]]
 
     def __init__(
         self,
