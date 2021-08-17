@@ -17,6 +17,8 @@ from typing_extensions import Literal, Protocol
 
 from io import BytesIO
 
+from multimethod import multimethod
+
 from vtk import (
     vtkPolyData,
     vtkTriangleFilter,
@@ -2764,7 +2766,7 @@ class Solid(Shape, Mixin3D):
         extrude_builder.MakeSolid()
         return extrude_builder.Shape()
 
-    @classmethod
+    @multimethod
     def extrudeLinearWithRotation(
         cls: Type["Solid"],
         outerWire: Wire,
@@ -2822,6 +2824,20 @@ class Solid(Shape, Mixin3D):
         return cls(BRepAlgoAPI_Cut(outer_solid, inner_comp).Shape())
 
     @classmethod
+    @extrudeLinearWithRotation.register
+    def extrudeLinearWithRotation(
+        cls: Type["Solid"],
+        face: Face,
+        vecCenter: Vector,
+        vecNormal: Vector,
+        angleDegrees: float,
+    ) -> "Solid":
+
+        return cls.extrudeLinearWithRotation(
+            face.outerWire(), face.innerWires(), vecCenter, vecNormal, angleDegrees
+        )
+
+    @multimethod
     def extrudeLinear(
         cls: Type["Solid"],
         outerWire: Wire,
@@ -2854,11 +2870,22 @@ class Solid(Shape, Mixin3D):
 
         if taper == 0:
             face = Face.makeFromWires(outerWire, innerWires)
+        else:
+            face = Face.makeFromWires(outerWire)
+
+        return cls.extrudeLinear(face, vecNormal, taper)
+
+    @classmethod
+    @extrudeLinear.register
+    def extrudeLinear(
+        cls: Type["Solid"], face: Face, vecNormal: Vector, taper: float = 0,
+    ) -> "Solid":
+
+        if taper == 0:
             prism_builder: Any = BRepPrimAPI_MakePrism(
                 face.wrapped, vecNormal.wrapped, True
             )
         else:
-            face = Face.makeFromWires(outerWire)
             faceNormal = face.normalAt()
             d = 1 if vecNormal.getAngle(faceNormal) < 90 * DEG2RAD else -1
             prism_builder = LocOpe_DPrism(
@@ -2867,7 +2894,7 @@ class Solid(Shape, Mixin3D):
 
         return cls(prism_builder.Shape())
 
-    @classmethod
+    @multimethod
     def revolve(
         cls: Type["Solid"],
         outerWire: Wire,
@@ -2901,6 +2928,18 @@ class Solid(Shape, Mixin3D):
         reliable.
         """
         face = Face.makeFromWires(outerWire, innerWires)
+
+        return cls.revolve(face, angleDegrees, axisStart, axisEnd)
+
+    @classmethod
+    @revolve.register
+    def revolve(
+        cls: Type["Solid"],
+        face: Face,
+        angleDegrees: float,
+        axisStart: Vector,
+        axisEnd: Vector,
+    ) -> "Solid":
 
         v1 = Vector(axisStart)
         v2 = Vector(axisEnd)
@@ -2948,7 +2987,7 @@ class Solid(Shape, Mixin3D):
 
         return rv
 
-    @classmethod
+    @multimethod
     def sweep(
         cls: Type["Solid"],
         outerWire: Wire,
@@ -3006,9 +3045,31 @@ class Solid(Shape, Mixin3D):
         return rv
 
     @classmethod
+    @sweep.register
+    def sweep(
+        cls: Type["Solid"],
+        face: Face,
+        path: Union[Wire, Edge],
+        makeSolid: bool = True,
+        isFrenet: bool = False,
+        mode: Union[Vector, Wire, Edge, None] = None,
+        transitionMode: Literal["transformed", "round", "right"] = "transformed",
+    ) -> "Shape":
+
+        return cls.sweep(
+            face.outerWire(),
+            face.innerWires(),
+            path,
+            makeSolid,
+            isFrenet,
+            mode,
+            transitionMode,
+        )
+
+    @classmethod
     def sweep_multi(
         cls: Type["Solid"],
-        profiles: List[Wire],
+        profiles: List[Union[Wire, Face]],
         path: Union[Wire, Edge],
         makeSolid: bool = True,
         isFrenet: bool = False,
@@ -3038,7 +3099,8 @@ class Solid(Shape, Mixin3D):
             builder.SetMode(isFrenet)
 
         for p in profiles:
-            builder.Add(p.wrapped, translate, rotate)
+            w = p.wrapped if isinstance(p, Wire) else p.outerWire().wrapped
+            builder.Add(w, translate, rotate)
 
         builder.Build()
 
@@ -3047,6 +3109,7 @@ class Solid(Shape, Mixin3D):
 
         return cls(builder.Shape())
 
+    @multimethod
     def dprism(
         self,
         basis: Optional[Face],
@@ -3067,9 +3130,23 @@ class Solid(Shape, Mixin3D):
         """
 
         sorted_profiles = sortWiresByBuildOrder(profiles)
+        faces = [Face.makeFromWires(p[0], p[1:]) for p in sorted_profiles]
+
+        return self.dprism(basis, faces, depth, taper, thruAll, additive)
+
+    @dprism.register
+    def dprism(
+        self,
+        basis: Optional[Face],
+        faces: List[Face],
+        depth: Optional[float] = None,
+        taper: float = 0,
+        thruAll: bool = True,
+        additive: bool = True,
+    ) -> "Solid":
+
         shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
-        for p in sorted_profiles:
-            face = Face.makeFromWires(p[0], p[1:])
+        for face in faces:
             feat = BRepFeat_MakeDPrism(
                 shape,
                 face.wrapped,
