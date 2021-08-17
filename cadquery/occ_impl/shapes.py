@@ -937,12 +937,12 @@ class Shape(object):
 
         return self
 
-    def located(self, loc: Location) -> "Shape":
+    def located(self: T, loc: Location) -> T:
         """
         Apply a location in absolute sense to a copy of self
         """
 
-        r = Shape.cast(self.wrapped.Located(loc.wrapped))
+        r = self.__class__(self.wrapped.Located(loc.wrapped))
         r.forConstruction = self.forConstruction
 
         return r
@@ -956,12 +956,12 @@ class Shape(object):
 
         return self
 
-    def moved(self, loc: Location) -> "Shape":
+    def moved(self: T, loc: Location) -> T:
         """
         Apply a location in relative sense (i.e. update current location) to a copy of self
         """
 
-        r = Shape.cast(self.wrapped.Moved(loc.wrapped))
+        r = self.__class__(self.wrapped.Moved(loc.wrapped))
         r.forConstruction = self.forConstruction
 
         return r
@@ -3069,7 +3069,7 @@ class Solid(Shape, Mixin3D):
     @classmethod
     def sweep_multi(
         cls: Type["Solid"],
-        profiles: List[Union[Wire, Face]],
+        profiles: Iterable[Union[Wire, Face]],
         path: Union[Wire, Edge],
         makeSolid: bool = True,
         isFrenet: bool = False,
@@ -3374,4 +3374,4 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
         edges_in.Append(e.wrapped)
     ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
 
-    return [Shape.cast(el) for el in wires_out]
+    return [Wire(el) for el in wires_out]

@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union, Iterable
+from typing import List, Optional, Tuple, Union, Iterable, Set
 from math import pi, sin, cos, atan2, sqrt, inf, degrees
 from numpy import lexsort, argmin, argmax
 
@@ -88,8 +88,8 @@ def atan2p(x, y):
 
 def convert_and_validate(edges: Iterable[Edge]) -> Tuple[List[Arc], List[Point]]:
 
-    arcs = set()
-    points = set()
+    arcs: Set[Arc] = set()
+    points: Set[Point] = set()
 
     for e in edges:
         gt = e.geomType()
@@ -113,60 +113,51 @@ def convert_and_validate(edges: Iterable[Edge]) -> Tuple[List[Arc], List[Point]]
     return list(arcs), list(points)
 
 
-def select_lowest_point(points: Points) -> Optional[Tuple[Point, int]]:
+def select_lowest_point(points: Points) -> Tuple[Point, int]:
 
-    rv = None
+    x = []
+    y = []
 
-    if points:
-        x = []
-        y = []
+    for p in points:
+        x.append(p.x)
+        y.append(p.y)
 
-        for p in points:
+    # select the lowest point
+    ixs = lexsort((x, y))
+
+    return points[ixs[0]], ixs[0]
+
+
+def select_lowest_arc(arcs: Arcs) -> Tuple[Point, Arc]:
+
+    x = []
+    y = []
+
+    for a in arcs:
+
+        if a.a1 < 1.5 * pi and a.a2 > 1.5 * pi:
+            x.append(a.c.x)
+            y.append(a.c.y - a.r)
+        else:
+            p, _ = select_lowest_point([a.s, a.e])
             x.append(p.x)
             y.append(p.y)
 
-        # select the lowest point
-        ixs = lexsort((x, y))
+    ixs = lexsort((x, y))
 
-        rv = points[ixs[0]], ixs[0]
-
-    return rv
-
-
-def select_lowest_arc(arcs: Arcs) -> Optional[Tuple[Point, Arc]]:
-
-    rv = None
-
-    if arcs:
-
-        x = []
-        y = []
-
-        for a in arcs:
-
-            if a.a1 < 1.5 * pi and a.a2 > 1.5 * pi:
-                x.append(a.c.x)
-                y.append(a.c.y - a.r)
-            else:
-                p, _ = select_lowest_point([a.s, a.e])
-                x.append(p.x)
-                y.append(p.y)
-
-        ixs = lexsort((x, y))
-
-        rv = Point(x[ixs[0]], y[ixs[0]]), arcs[ixs[0]]
-
-    return rv
+    return Point(x[ixs[0]], y[ixs[0]]), arcs[ixs[0]]
 
 
 def select_lowest(arcs: Arcs, points: Points) -> Entity:
 
-    p_lowest = select_lowest_point(points)
-    a_lowest = select_lowest_arc(arcs)
+    rv: Entity
+
+    p_lowest = select_lowest_point(points) if points else None
+    a_lowest = select_lowest_arc(arcs) if arcs else None
 
     if p_lowest is None and a_lowest:
         rv = a_lowest[1]
-    elif p_lowest and a_lowest is None:
+    elif p_lowest is not None and a_lowest is None:
         rv = p_lowest[0]
     elif p_lowest and a_lowest:
         _, ix = select_lowest_point([p_lowest[0], a_lowest[0]])
@@ -213,7 +204,7 @@ def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
 
     angles = atan2p(x1 - x, y1 - y), atan2p(x2 - x, y2 - y)
     points = Point(x1, y1), Point(x2, y2)
-    ix = argmin(angles)
+    ix = int(argmin(angles))
 
     return angles[ix], Segment(p, points[ix])
 
@@ -226,7 +217,7 @@ def arc_pt(a: Arc, p: Point) -> Tuple[float, Segment]:
     angles = atan2p(x - x1, y - y1), atan2p(x - x2, y - y2)
     points = Point(x1, y1), Point(x2, y2)
 
-    ix = argmax(angles)
+    ix = int(argmax(angles))
 
     return angles[ix], Segment(points[ix], p)
 
@@ -288,15 +279,15 @@ def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
     x22 = xc2 + dx2 * r2
     y22 = yc2 + dy2 * r2
 
-    a1 = atan2p(x21 - x11, y21 - y11)
-    a2 = atan2p(x22 - x12, y22 - y12)
+    a1_out = atan2p(x21 - x11, y21 - y11)
+    a2_out = atan2p(x22 - x12, y22 - y12)
 
     # select the feasible angle
     a11 = (atan2p(x11 - xc1, y11 - yc1) + pi / 2) % (2 * pi)
     a21 = (atan2p(x12 - xc1, y12 - yc1) + pi / 2) % (2 * pi)
 
-    ix = argmin((abs(a11 - a1), abs(a21 - a2)))
-    angles = (a1, a2)
+    ix = int(argmin((abs(a11 - a1), abs(a21 - a2))))
+    angles = (a1_out, a2_out)
     segments = (
         Segment(Point(x11, y11), Point(x21, y21)),
         Segment(Point(x12, y12), Point(x22, y22)),
@@ -305,10 +296,10 @@ def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
     return angles[ix], segments[ix]
 
 
-def get_angle(current: Entity, e: Entity) -> float:
+def get_angle(current: Entity, e: Entity) -> Tuple[float, Segment]:
 
     if current is e:
-        return inf, None
+        return inf, Segment(Point(inf, inf), Point(inf, inf))
 
     if isinstance(current, Point):
         if isinstance(e, Point):
@@ -329,7 +320,7 @@ def update_hull(
     angles: List[float],
     segments: List[Segment],
     hull: Hull,
-) -> Tuple[Entity, bool]:
+) -> Tuple[Entity, float, bool]:
 
     next_e = entities[ix]
     connecting_seg = segments[ix]
@@ -342,7 +333,7 @@ def update_hull(
     return next_e, angles[ix], next_e is hull[0]
 
 
-def finalize_hull(hull: List[Entity]) -> Wire:
+def finalize_hull(hull: Hull) -> Wire:
 
     rv = []
 
@@ -377,7 +368,7 @@ def finalize_hull(hull: List[Entity]) -> Wire:
 def find_hull(edges: Iterable[Edge]) -> Wire:
 
     # initialize the hull
-    rv: List[Entity] = []
+    rv: Hull = []
 
     # split into arcs and points
     arcs, points = convert_and_validate(edges)
@@ -387,9 +378,12 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
     rv.append(start)
 
     # initialize
-    entities = arcs + points
+    entities: List[Entity] = []
+    entities.extend(arcs)
+    entities.extend(points)
+
     current_e = start
-    current_angle = 0
+    current_angle = 0.0
     finished = False
 
     # march around
@@ -403,7 +397,7 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
             angles.append(angle if angle >= current_angle else inf)
             segments.append(segment)
 
-        next_ix = argmin(angles)
+        next_ix = int(argmin(angles))
         current_e, current_angle, finished = update_hull(
             current_e, next_ix, entities, angles, segments, rv
         )
