@@ -2929,9 +2929,9 @@ class Workplane(object):
     ) -> T:
         """
         Extrudes a wire in the direction normal to the plane, but also twists by the specified
-        angle over the length of the extrusion
+        angle over the length of the extrusion.
 
-        The center point of the rotation will be the center of the workplane
+        The center point of the rotation will be the center of the workplane.
 
         See extrude for more details, since this method is the same except for the the addition
         of the angle. In fact, if angle=0, the result is the same as a linear extrude.
@@ -3267,7 +3267,7 @@ class Workplane(object):
         self: T, toCut: Union["Workplane", Solid, Compound], clean: bool = True
     ) -> T:
         """
-        Cuts the provided solid from the current solid, IE, perform a solid subtraction
+        Cuts the provided solid from the current solid, IE, perform a solid subtraction.
 
         :param toCut: object to cut
         :type toCut: a solid object, or a CQ object having a solid,
@@ -3742,7 +3742,7 @@ class Workplane(object):
         clean: bool = True,
     ) -> T:
         """
-        Returns a 3D sphere with the specified radius for each point on the stack
+        Returns a 3D sphere with the specified radius for each point on the stack.
 
         :param radius: The radius of the sphere
         :type radius: float > 0
@@ -3816,6 +3816,8 @@ class Workplane(object):
         clean: bool = True,
     ) -> T:
         """
+        Returns a 3D wedge with the specified dimensions for each point on the stack.
+
         :param dx: Distance along the X axis
         :param dy: Distance along the Y axis
         :param dz: Distance along the Z axis
@@ -3917,7 +3919,7 @@ class Workplane(object):
         valign: Literal["center", "top", "bottom"] = "center",
     ) -> T:
         """
-        Create a 3D text
+        Returns a 3D text.
 
         :param txt: text to be rendered
         :param fontsize: size of the font in model units
