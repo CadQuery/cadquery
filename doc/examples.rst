@@ -59,7 +59,9 @@ Plate with Hole
 A rectangular box, but with a hole added.
 
 "\>Z" selects the top most face of the resulting box. The hole is located in the center because the default origin
-of a working plane is at the center of the face. The default hole depth is through the entire part.
+of a working plane is the projected origin of the last Workplane, the last Worplane having origin at (0,0,0) the 
+projection is at the center of the face. The default hole depth is through the entire part.
+
 
 .. cadquery::
 
