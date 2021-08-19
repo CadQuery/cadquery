@@ -214,7 +214,7 @@ class ParallelDirSelector(BaseDirSelector):
 
         CQ(aCube).faces(ParallelDirSelector((0, 0, 1))
 
-    selects faces with a normals in the z direction, and is equivalent to::
+    selects faces with the normal parallel to the z direction, and is equivalent to::
 
         CQ(aCube).faces("|Z")
     """
@@ -237,7 +237,7 @@ class DirectionSelector(BaseDirSelector):
 
         CQ(aCube).faces(DirectionSelector((0, 0, 1))
 
-    selects faces with a normals in the z direction, and is equivalent to::
+    selects faces with the normal in the z direction, and is equivalent to::
 
         CQ(aCube).faces("+Z")
     """
@@ -261,7 +261,7 @@ class PerpendicularDirSelector(BaseDirSelector):
 
         CQ(aCube).faces(PerpendicularDirSelector((0, 0, 1))
 
-    selects faces with a normals perpendicular to the z direction, and is equivalent to::
+    selects faces with the normal perpendicular to the z direction, and is equivalent to::
 
         CQ(aCube).faces("#Z")
     """
