@@ -27,7 +27,7 @@ TOL = 1e-2
 class Vector(object):
     """Create a 3-dimensional vector
 
-        :param args: a 3-d vector, with x-y-z parts.
+        :param args: a 3D vector, with x-y-z parts.
 
         you can either provide:
             * nothing (in which case the null vector is return)
@@ -377,7 +377,7 @@ class Plane(object):
     A 2D coordinate system in space, with the x-y axes on the plane, and a
     particular point as the origin.
 
-    A plane allows the use of 2-d coordinates, which are later converted to
+    A plane allows the use of 2D coordinates, which are later converted to
     global, 3d coordinates when the operations are complete.
 
     Frequently, it is not necessary to create work planes, as they can be
@@ -587,7 +587,7 @@ class Plane(object):
         :param float y: offset in the y direction
         :return: void
 
-        The new coordinates are specified in terms of the current 2-d system.
+        The new coordinates are specified in terms of the current 2D system.
         As an example:
 
         p = Plane.XY()
@@ -609,9 +609,9 @@ class Plane(object):
 
 
         Most of the time, the z-coordinate returned will be zero, because most
-        operations based on a plane are all 2-d. Occasionally, though, 3-d
+        operations based on a plane are all 2D. Occasionally, though, 3D
         points outside of the current plane are transformed. One such example is
-        :py:meth:`Workplane.box`, where 3-d corners of a box are transformed to
+        :py:meth:`Workplane.box`, where 3D corners of a box are transformed to
         orient the box in space correctly.
 
         """

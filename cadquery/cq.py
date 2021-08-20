@@ -130,7 +130,7 @@ class CQContext(object):
 
 class Workplane(object):
     """
-    Defines a coordinate system in space, in which 2-d coordinates can be used.
+    Defines a coordinate system in space, in which 2D coordinates can be used.
 
     :param plane: the plane in which the workplane will be done
     :type plane: a Plane object, or a string in (XY|YZ|XZ|front|back|top|bottom|left|right)
@@ -501,7 +501,7 @@ class Workplane(object):
         origin: Optional[VectorLike] = None,
     ) -> T:
         """
-        Creates a new 2-D workplane, located relative to the first face on the stack.
+        Creates a new 2D workplane, located relative to the first face on the stack.
 
         :param offset:  offset for the work plane in the Z direction. Default
         :param invert:  invert the Z direction from that of the face.
@@ -518,7 +518,7 @@ class Workplane(object):
         item on the chain immediately before the vertex must be a
         face.
 
-        The result will be a 2-d working plane
+        The result will be a 2D working plane
         with a new coordinate system set up as follows:
 
            * The centerOption parameter sets how the center is defined.
@@ -1531,7 +1531,7 @@ class Workplane(object):
     def pushPoints(self: T, pntList: Iterable[Union[VectorLike, Location]]) -> T:
         """
         Pushes a list of points onto the stack as vertices.
-        The points are in the 2-d coordinate space of the workplane face
+        The points are in the 2D coordinate space of the workplane face
 
         :param pntList: a list of points to push onto the stack
         :type pntList: list of 2-tuples, in *local* coordinates
@@ -2356,11 +2356,11 @@ class Workplane(object):
         :param forConstruction: whether the wire should be used to make a solid, or if it is just
             for reference
 
-        This method is primarily of use to plugin developers making utilities for 2-d construction.
-        This method should be called when a user operation implies that 2-d construction is
+        This method is primarily of use to plugin developers making utilities for 2D construction.
+        This method should be called when a user operation implies that 2D construction is
         finished, and we are ready to begin working in 3d.
 
-        SEE '2-d construction concepts' for a more detailed explanation of how CadQuery handles
+        SEE '2D construction concepts' for a more detailed explanation of how CadQuery handles
         edges, wires, etc.
 
         Any non edges will still remain.
@@ -2693,11 +2693,11 @@ class Workplane(object):
 
     def close(self: T) -> T:
         """
-        End 2-d construction, and attempt to build a closed wire.
+        End 2D construction, and attempt to build a closed wire.
 
         :return: a CQ object with a completed wire on the stack, if possible.
 
-        After 2-d drafting with methods such as lineTo, threePointArc,
+        After 2D drafting with methods such as lineTo, threePointArc,
         tangentArcPoint and polyline, it is necessary to convert the edges
         produced by these into one or more wires.
 

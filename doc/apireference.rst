@@ -6,7 +6,7 @@ CadQuery API Reference
 
 The CadQuery API is made up of 2 main objects:
 
-* **Workplane** -- Wraps a topological entity and provides a 2-D modelling context.
+* **Workplane** -- Wraps a topological entity and provides a 2D modelling context.
 * **Selector** -- Filter and select things
 
 This page lists  methods of these objects grouped by **functional area**
@@ -29,12 +29,12 @@ Creating new workplanes and object chains
 
 .. _2dOperations:
 
-2-d Operations
+2D Operations
 -----------------
 
-Creating 2-d constructs that can be used to create 3 d features.
+Creating 2D constructs that can be used to create 3D features.
 
-All 2-d operations require a **Workplane** object to be created.
+All 2D operations require a **Workplane** object to be created.
 
 .. currentmodule:: cadquery
 
@@ -73,12 +73,12 @@ All 2-d operations require a **Workplane** object to be created.
 
 .. _3doperations:
 
-3-d Operations
+3D Operations
 -----------------
 
-Some 3-d operations also require an active 2-d workplane, but some do not.
+Some 3D operations also require an active 2D workplane, but some do not.
 
-3-d operations that require a 2-d workplane to be active:
+3D operations that require a 2D workplane to be active:
 
 .. autosummary::
 	Workplane.cboreHole
@@ -100,7 +100,7 @@ Some 3-d operations also require an active 2-d workplane, but some do not.
 	Workplane.text
 	
 
-3-d operations that do NOT require a 2-d workplane to be active:
+3D operations that do NOT require a 2D workplane to be active:
 
 .. autosummary::
 	Workplane.shell
