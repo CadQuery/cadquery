@@ -375,6 +375,45 @@ In the case of STEP colors are preserved but not transparency.
 ..  image:: _static/door_assy_freecad.png
 
 
+Assembly object locations
+-------------------------
+
+Objects can be added to an assembly with initial locations supplied, such as:
+
+.. cadquery::
+
+    import cadquery as cq
+
+    cone = cq.Solid.makeCone(1, 0, 2)
+
+    assy = cq.Assembly()
+    assy.add(
+        cone,
+        loc=cq.Location(
+            cq.Vector(0, 0, 0),
+            cq.Vector(1, 0, 0),
+            180,
+        ),
+        name="cone0",
+        color=cq.Color("green")
+    )
+    assy.add(cone, name="cone1", color=cq.Color("blue"))
+
+    show_object(assy)
+
+
+As an alternative to the user calculating locations, constraints and the method
+:meth:`~cadquery.Assembly.solve` can be used to position objects in an assembly.
+
+If initial locations and the method :meth:`~cadquery.Assembly.solve` are used the solver will
+overwrite these initial locations with it's solution, however initial locations can still affect the
+final solution. In an underconstrained system the solver may not move an object if it does not
+contribute to the cost function, or if multiple solutions exist (ie. multiple instances
+where the cost function is at a minimum) initial locations can cause the solver to converge on one
+particular solution. For very complicated assemblies setting approximately correct initial locations
+can also reduce the computational time requred.
+
+
 Constraints
 -----------
 
