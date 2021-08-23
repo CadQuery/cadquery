@@ -651,47 +651,26 @@ Plane
 
 The Plane constraint is simply a combination of both the Point and Axis constraints. It is a
 convienient shortcut for a commonly used combination of constraints. It can be used to shorten the
-previous example:
+previous example from the two constraints to just one:
 
-
-.. cadquery::
-
-    import cadquery as cq
-    from math import cos, sin, pi
-
-    # Create a sinusoidal surface:
-    surf = (
-        cq.Workplane()
-        .parametricSurface(
-            lambda u, v: (u, v, 5 * sin(pi * u / 10) * cos(pi * v / 10)),
-            N=40,
-            start=0,
-            stop=20,
-        )
-    )
-
-    # Create a cone with a small, flat tip:
-    cone = (
-        cq.Workplane()
-        .add(cq.Solid.makeCone(1, 0.1, 2))
-        # tag the tip for easy reference in the constraint:
-        .faces(">Z")
-        .tag("tip")
-        .end()
-    )
+.. code-block:: diff
 
     assy = cq.Assembly()
     assy.add(surf, name="surf", color=cq.Color("lightgray"))
     assy.add(cone, name="cone", color=cq.Color("green"))
-    # Replace the two constraints from the previous example with one:
-    assy.constrain("surf", "cone?tip", "Plane")
+    -# set the Face on the tip of the cone to point in
+    -# the opposite direction of the center of the surface:
+    -assy.constrain("surf", "cone?tip", "Axis")
+    -# to make the example clearer, move the cone to the center of the face:
+    -assy.constrain("surf", "cone?tip", "Point")
+    +assy.constrain("surf", "cone?tip", "Plane")
     assy.solve()
 
     show_object(assy)
 
 
 For the cost function of Plane, please see the Point and Axis sections. The ``param`` argument is
-copied into both constraints and should usually be left as the default value of ``None``.
+copied into both constraints and should be left as the default value of ``None``.
 
 
 PointInPlane
