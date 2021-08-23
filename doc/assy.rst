@@ -417,12 +417,18 @@ can also reduce the computational time requred.
 Constraints
 -----------
 
-When the method :meth:`~cadquery.Assembly.solve` is run, an optimization problem is set up. Each
-constraint provides a cost function that depends on the position and orientation (represented by a
-:class:`~cadquery.Location`) of the two objects specified when creating the
-:class:`~cadquery.Constraint`. The solver varies the location of the assembly's children and
-attempts to minimize the sum of all cost functions. Hence by reading the formulae of the cost
-functions below, you can understand exactly what each constraint does.
+Constraints are often a better representation of the real world relationship the user wants to
+model than directly supplying locations. In the above example the real world relationship is that
+the bottom face of each cone should touch, which can be modelled with a Plane constraint. When the
+user provides explicit locations (instead of constraints) then they are also reponsible for updating
+them when, for example, the location of ``cone1`` changes.
+
+When at least one constraint is supplied and the method :meth:`~cadquery.Assembly.solve` is run, an
+optimization problem is set up. Each constraint provides a cost function that depends on the
+position and orientation (represented by a :class:`~cadquery.Location`) of the two objects specified
+when creating the :class:`~cadquery.Constraint`. The solver varies the location of the assembly's
+children and attempts to minimize the sum of all cost functions. Hence by reading the formulae of
+the cost functions below, you can understand exactly what each constraint does.
 
 
 Point
