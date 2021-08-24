@@ -604,7 +604,8 @@ depending on the object's type.
 :class:`~cadquery.Edge` and :meth:`~cadquery.Shape.geomType` is not ``"CIRCLE"``:
   Using :meth:`~cadquery.Mixin1D.tangentAt`
 
-By far the most common use case is to define an Axis constraint from a face.
+Using any other type of object will raise a :exc:`ValueError`. By far the most common use case
+is to define an Axis constraint from a :class:`~cadquery.Face`.
 
 
 .. cadquery::
