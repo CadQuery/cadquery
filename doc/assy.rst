@@ -670,8 +670,12 @@ previous example from the two constraints to just one:
     show_object(assy)
 
 
+The result of this code is identical to the above two constraint example.
+
 For the cost function of Plane, please see the Point and Axis sections. The ``param`` argument is
-copied into both constraints and should be left as the default value of ``None``.
+copied into both constraints and should be left as the default value of ``None`` for a "mate" style
+constraint (two surfaces touching) or can be set to ``0`` for a through surface constraint (see
+desciption in the Axis constraint section).
 
 
 PointInPlane
