@@ -3800,6 +3800,64 @@ class Workplane(object):
         else:
             return self.union(spheres, clean=clean)
 
+    def cylinder(
+            self: T,
+            radius: float,
+            height: float,
+            centered: Union[bool, Tuple[bool, bool, bool]] = True,
+            combine: bool = True,
+            clean: bool = True,
+        ) -> T:
+
+        """
+        Returns a cylinder with the specified radius and height for each point on the stack
+
+        :param radius: The radius of the cylinder
+        :type radius: float > 0
+        :param height: The height of the cylinder
+        :type height: float > 0
+        :param centered: If True, the cylinder will be centered around the reference point. If False,
+            the corner of a bounding box around the cylinder will be on the reference point and it
+            will extend in the positive x, y and z directions. Can also use a 3-tuple to specify
+            centering along each axis.
+        :param combine: Whether the results should be combined with other solids on the stack
+            (and each other)
+        :type combine: true to combine shapes, false otherwise
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :return: A cylinder object for each point on the stack
+
+        One cylinder is created for each item on the current stack. If no items are on the stack, one
+        box using the current workplane center is created.
+
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all cylinders produced fused onto it otherwise,
+        the result is the combination of all the produced cylinders.
+
+        If combine is false, the result will be a list of the cylinders produced.
+        """
+
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
+
+        offset = Vector()
+        if not centered[0]:
+            offset += Vector(radius, 0, 0)
+        if not centered[1]:
+            offset += Vector(0, radius, 0)
+        if centered[2]:
+            offset += Vector(0, 0, -height/2)
+
+        c = self.circle(radius)._extrude(height).move(Location(offset))
+
+        # We want a cylinder for each point on the workplane
+        cylinders = self.eachpoint(lambda loc: c.moved(loc), True)
+
+        # If we don't need to combine everything, just return the created cylinders
+        if not combine:
+            return cylinders
+        else:
+            return self.union(cylinders, clean=clean)
+
     def wedge(
         self: T,
         dx: float,

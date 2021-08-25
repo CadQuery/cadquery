@@ -90,6 +90,7 @@ Some 3-d operations also require an active 2-d workplane, but some do not.
 	Workplane.cutThruAll
 	Workplane.box
 	Workplane.sphere
+	Workplane.cylinder
 	Workplane.union
 	Workplane.combine
 	Workplane.intersect
