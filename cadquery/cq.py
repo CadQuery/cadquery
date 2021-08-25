@@ -3802,8 +3802,8 @@ class Workplane(object):
 
     def cylinder(
         self: T,
-        radius: float,
         height: float,
+        radius: float,
         direct: Vector = Vector(0, 0, 1),
         angle: float = 360,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
@@ -3813,10 +3813,10 @@ class Workplane(object):
         """
         Returns a cylinder with the specified radius and height for each point on the stack
 
-        :param radius: The radius of the cylinder
-        :type radius: float > 0
         :param height: The height of the cylinder
         :type height: float > 0
+        :param radius: The radius of the cylinder
+        :type radius: float > 0
         :param direct: The direction axis for the creation of the cylinder
         :type direct: A three-tuple
         :param angle: The angle to sweep the cylinder arc through

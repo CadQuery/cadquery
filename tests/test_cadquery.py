@@ -2444,7 +2444,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(4, s.faces().size())
 
     def testCylinderDefaults(self):
-        s = Workplane("XY").cylinder(10, 20)
+        s = Workplane("XY").cylinder(20, 10)
         self.saveModel(s)
         self.assertEqual(1, s.size())
         self.assertEqual(1, s.solids().size())
@@ -2462,16 +2462,16 @@ class TestCadQuery(BaseTest):
         for (xopt, xval), (yopt, yval), (zopt, zval) in product(
             zip(b, expected_x), zip(b, expected_y), zip(b, expected_z)
         ):
-            s = Workplane("XY").cylinder(radius, height, centered=(xopt, yopt, zopt))
+            s = Workplane("XY").cylinder(height, radius, centered=(xopt, yopt, zopt))
             self.assertEqual(1, s.size())
             self.assertTupleAlmostEquals(
                 s.val().Center().toTuple(), (xval, yval, zval), 3
             )
         # check centered=True produces the same result as centered=(True, True, True)
         for val in b:
-            s0 = Workplane("XY").cylinder(radius, height, centered=val)
+            s0 = Workplane("XY").cylinder(height, radius, centered=val)
             self.assertEqual(s0.size(), 1)
-            s1 = Workplane("XY").cylinder(radius, height, centered=(val, val, val))
+            s1 = Workplane("XY").cylinder(height, radius, centered=(val, val, val))
             self.assertEqual(s1.size(), 1)
             self.assertTupleAlmostEquals(
                 s0.val().Center().toTuple(), s1.val().Center().toTuple(), 3
