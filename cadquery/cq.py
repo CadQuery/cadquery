@@ -3804,11 +3804,12 @@ class Workplane(object):
         self: T,
         radius: float,
         height: float,
+        direct: Vector = Vector(0, 0, 1),
+        angle: float = 360,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: bool = True,
         clean: bool = True,
     ) -> T:
-
         """
         Returns a cylinder with the specified radius and height for each point on the stack
 
@@ -3816,6 +3817,10 @@ class Workplane(object):
         :type radius: float > 0
         :param height: The height of the cylinder
         :type height: float > 0
+        :param direct: The direction axis for the creation of the cylinder
+        :type direct: A three-tuple
+        :param angle: The angle to sweep the cylinder arc through
+        :type angle: float > 0
         :param centered: If True, the cylinder will be centered around the reference point. If False,
             the corner of a bounding box around the cylinder will be on the reference point and it
             will extend in the positive x, y and z directions. Can also use a 3-tuple to specify
@@ -3845,12 +3850,12 @@ class Workplane(object):
         if not centered[1]:
             offset += Vector(0, radius, 0)
         if centered[2]:
-            offset += Vector(0, 0, -height/2)
+            offset += Vector(0, 0, -height / 2)
 
-        c = self.circle(radius)._extrude(height).move(Location(offset))
+        s = Solid.makeCylinder(radius, height, offset, direct, angle)
 
         # We want a cylinder for each point on the workplane
-        cylinders = self.eachpoint(lambda loc: c.moved(loc), True)
+        cylinders = self.eachpoint(lambda loc: s.moved(loc), True)
 
         # If we don't need to combine everything, just return the created cylinders
         if not combine:
