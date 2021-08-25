@@ -80,7 +80,6 @@ rotation/transform that return a copy
 
 primitive creation
     Need primitive creation for:
-        * cone
         * torus
         * wedge
 

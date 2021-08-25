@@ -3800,6 +3800,59 @@ class Workplane(object):
         else:
             return self.union(spheres, clean=clean)
 
+    def cone(
+        self: T,
+        height: float,
+        radius: float = 0,
+        radius1: float = None,
+        radius2: float = None,
+        direct: Vector = Vector(0, 0, 1),
+        angle: float = 360,
+        combine: bool = True,
+        clean: bool = True,
+    ) -> T:
+        """
+        Returns a cone with the specified radius and height for each point on the stack
+        A truncated cone can be created by specifying parameters radius1 and radius2 instead of radius.
+        :param height: The height of the cone
+        :type height: float > 0
+        :param radius: The radius of the cone
+        :type radius: float > 0
+        :param radius1: The radius of the bottom of the cone
+        :type radius1: float > 0
+        :param radius2: The radius of the top of the cone
+        :type radius2: float > 0
+        :param direct: The direction axis for the creation of the cone
+        :type direct: A three-tuple
+        :param angle: The angle to sweep the cone arc through
+        :type angle: float > 0
+        :param combine: Whether the results should be combined with other solids on the stack
+            (and each other)
+        :type combine: true to combine shapes, false otherwise
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :return: A cone object for each point on the stack
+        One cone is created for each item on the current stack. If no items are on the stack, one
+        cone is created using the current workplane center.
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all cones produced fused onto it otherwise,
+        the result is the combination of all the produced cones.
+        If combine is false, the result will be a list of the cones produced.
+        """
+
+        r1 = radius if radius1 is None or radius1 == 0 else radius1
+        r2 = 0 if radius2 is None else radius2
+        offset = Vector()
+        s = Solid.makeCone(r1, r2, height, offset, direct, angle)
+
+        # We want a cone for each point on the workplane
+        cones = self.eachpoint(lambda loc: s.moved(loc), True)
+
+        # If we don't need to combine everything, just return the created cones
+        if not combine:
+            return cones
+        else:
+            return self.union(cones, clean=clean)
+
     def cylinder(
         self: T,
         height: float,
