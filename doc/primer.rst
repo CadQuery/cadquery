@@ -295,7 +295,7 @@ Which produces the output:
 The first thing to note is that this is a different :class:`~cadquery.Workplane` object to the
 previous one, and in the :attr:`~cadquery.Workplane.parent` attribute of this
 :class:`~cadquery.Workplane` is our previous :class:`~cadquery.Workplane`. Returning a new instance
-of :class:`~caduqery.Workplane` is the normal behaviour of most :class:`~cadquery.Workplane` methods
+of :class:`~cadquery.Workplane` is the normal behaviour of most :class:`~cadquery.Workplane` methods
 (with some exceptions, as will be shown below) and this is how the `chaining`_ concept is
 implemented.
 

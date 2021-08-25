@@ -4,7 +4,7 @@
 CadQuery Class Summary
 *************************
 
-This page documents all of the methods and functions of the CadQuery classes, organized alphabatically.
+This page documents all of the methods and functions of the CadQuery classes, organized alphabetically.
 
 .. seealso::
 

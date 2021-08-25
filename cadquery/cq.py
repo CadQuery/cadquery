@@ -305,7 +305,7 @@ class Workplane(object):
             )
             rv = [solid.split(*tools)]
 
-        # split using the current wokrplane
+        # split using the current workplane
         else:
 
             # boilerplate for arg/kwarg parsing
@@ -1821,7 +1821,7 @@ class Workplane(object):
             scalar parameter.)
 
             If periodic == True, then len(parameters) must be
-            len(intepolation points) + 1, otherwise len(parameters) must be equal to
+            len(interpolation points) + 1, otherwise len(parameters) must be equal to
             len(interpolation points).
         :param scale: whether to scale the specified tangent vectors before
             interpolating.
@@ -2813,7 +2813,7 @@ class Workplane(object):
         # first make the hole
         hole = Solid.makeCylinder(
             diameter / 2.0, depth, center, boreDir
-        )  # local coordianates!
+        )  # local coordinates!
 
         # add the counter bore
         cbore = Solid.makeCylinder(cboreDiameter / 2.0, cboreDepth, Vector(), boreDir)
@@ -3463,7 +3463,7 @@ class Workplane(object):
         eDir = self.plane.zDir.multiply(distance)
 
         # one would think that fusing faces into a compound and then extruding would work,
-        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc)
+        # but it doesn't-- the resulting compound appears to look right, ( right number of faces, etc)
         # but then cutting it from the main solid fails with BRep_NotDone.
         # the work around is to extrude each and then join the resulting solids, which seems to work
 
@@ -3597,7 +3597,7 @@ class Workplane(object):
         :param surf_pts = [] (uses only edges if [])
         :type surf_pts: list of [x,y,z] float coordinates
         :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float (may be negative or positive depending on thicknening direction)
+        :type thickness: float (may be negative or positive depending on thickening direction)
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
         :type combine: true to combine shapes, false otherwise.
@@ -3608,8 +3608,8 @@ class Workplane(object):
         :type: NbPtsOnCur Integer >= 15
         :param NbIter = 2 (OCCT default)
         :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
+        :param anisotropy = False (OCCT default)
+        :type anisotropy: Boolean
         :param: Tol2d = 0.00001 (OCCT default)
         :type Tol2d: float > 0
         :param Tol3d = 0.0001 (OCCT default)

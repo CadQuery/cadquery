@@ -11,7 +11,7 @@ The CadQuery API is made up of 2 main objects:
 
 This page lists  methods of these objects grouped by **functional area**
 
-.. seealso::
+.. see also::
   This page lists api methods grouped by functional area.
   Use :ref:`classreference` to see methods alphabetically by class.
 
