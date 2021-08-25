@@ -3801,13 +3801,13 @@ class Workplane(object):
             return self.union(spheres, clean=clean)
 
     def cylinder(
-            self: T,
-            radius: float,
-            height: float,
-            centered: Union[bool, Tuple[bool, bool, bool]] = True,
-            combine: bool = True,
-            clean: bool = True,
-        ) -> T:
+        self: T,
+        radius: float,
+        height: float,
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
+        combine: bool = True,
+        clean: bool = True,
+    ) -> T:
 
         """
         Returns a cylinder with the specified radius and height for each point on the stack
