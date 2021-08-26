@@ -1212,7 +1212,7 @@ class Workplane(object):
 
         :param thickness: a positive float, representing the thickness of the desired shell.
             Negative values shell inwards, positive values shell outwards.
-        :param kind: kind of joints, intersetion or arc (default: arc).
+        :param kind: kind of joints, intersection or arc (default: arc).
         :raises ValueError: if the current stack contains objects that are not faces of a solid
              further up in the chain.
         :returns: a CQ object with the resulting shelled solid selected.
