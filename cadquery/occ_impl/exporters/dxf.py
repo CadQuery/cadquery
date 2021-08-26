@@ -81,11 +81,11 @@ def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
     poles = [(p.X(), p.Y(), p.Z()) for p in spline.Poles()]
 
     weights = list(spline.Weights()) if spline.IsRational() else None
+    if spline.IsClosed() and weights is not None:
+        weights = list(weights)
+        weights.extend(weights[: order - 1])
 
-    if spline.IsClosed():
-        dxf_spline = ezdxf.math.BSpline.closed_uniform_bspline(poles, order, weights)
-    else:
-        dxf_spline = ezdxf.math.BSpline(poles, order, knots, weights)
+    dxf_spline = ezdxf.math.BSpline(poles, order, knots, weights)
 
     msp.add_spline().apply_construction_tool(dxf_spline)
 
