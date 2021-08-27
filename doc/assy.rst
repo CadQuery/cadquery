@@ -654,14 +654,14 @@ The cost function is:
 
 .. math::
 
-    ( \operatorname{dist}( \vec{ c }, p_\text{ offset } ) ) ^2
+    \operatorname{dist}( \vec{ c }, p_\text{ offset } ) ^2
 
 
 Where:
 
 - :math:`\vec{ c }` is the center of the first argument,
-- :math:`p_\text{ offset }` is the plane created from the second object, offset in the plane's
-  normal direction by ``param``, and
+- :math:`p_\text{ offset }` is a plane created from the second object, offset in the plane's normal
+  direction by ``param``, and
 - :math:`\operatorname{dist}( \vec{ a }, b)` is the distance between point :math:`\vec{ a }` and
   plane :math:`b`.
 
