@@ -422,9 +422,9 @@ them when, for example, the location of ``cone1`` changes.
 When at least one constraint is supplied and the method :meth:`~cadquery.Assembly.solve` is run, an
 optimization problem is set up. Each constraint provides a cost function that depends on the
 position and orientation (represented by a :class:`~cadquery.Location`) of the two objects specified
-when creating the :class:`~cadquery.Constraint`. The solver varies the location of the assembly's
-children and attempts to minimize the sum of all cost functions. Hence by reading the formulae of
-the cost functions below, you can understand exactly what each constraint does.
+when creating the constraint. The solver varies the location of the assembly's children and attempts
+to minimize the sum of all cost functions. Hence by reading the formulae of the cost functions
+below, you can understand exactly what each constraint does.
 
 
 Point
