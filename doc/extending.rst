@@ -103,7 +103,7 @@ are designed to aid in plugin creation:
 
    * :py:meth:`cadquery.Workplane.wire` gathers up all of the edges that have been drawn ( eg, by line, vline, etc ), and
      attempts to combine them into a single wire, which is returned. This should be used when your plugin creates
-     2-d edges, and you know it is time to collect them into a single wire.
+     2D edges, and you know it is time to collect them into a single wire.
 
    * :py:meth:`cadquery.Workplane.plane` provides a reference to the workplane, which allows you to convert between workplane
      coordinates and global coordinates:

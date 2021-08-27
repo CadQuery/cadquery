@@ -112,9 +112,9 @@ Building Profiles using lines and arcs
 --------------------------------------
 
 Sometimes you need to build complex profiles using lines and arcs. This example builds a prismatic
-solid from 2-d operations.
+solid from 2D operations.
 
-2-d operations maintain a current point, which is initially at the origin. Use close() to finish a
+2D operations maintain a current point, which is initially at the origin. Use close() to finish a
 closed curve.
 
 
@@ -281,7 +281,7 @@ needs a complex profile
 Mirroring Symmetric Geometry
 -----------------------------
 
-You can mirror 2-d geometry when your shape is symmetric. In this example we also
+You can mirror 2D geometry when your shape is symmetric. In this example we also
 introduce horizontal and vertical lines, which make for slightly easier coding.
 
 
