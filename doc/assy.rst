@@ -375,8 +375,8 @@ In the case of STEP colors are preserved but not transparency.
 ..  image:: _static/door_assy_freecad.png
 
 
-Assembly object locations
--------------------------
+Object locations
+----------------
 
 Objects can be added to an assembly with initial locations supplied, such as:
 
