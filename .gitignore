@@ -9,4 +9,13 @@ target/*
 MANIFEST
 out.*
 res?.dxf
-tests/test.brep
+.~*
+assy.wrl
+assy.xml
+assy.zip
+nested.step
+simple.caf
+simple.step
+simple.stp
+simple.xml
+test.brep
