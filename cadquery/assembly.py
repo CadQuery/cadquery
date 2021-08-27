@@ -357,7 +357,7 @@ class Assembly(object):
         """
         Calculate relative location of an object in a subassembly.
 
-        Returns the relative posiitons as well as the name of the top assembly.
+        Returns the relative positions as well as the name of the top assembly.
         """
 
         rv = Location()
