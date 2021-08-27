@@ -389,11 +389,7 @@ Objects can be added to an assembly with initial locations supplied, such as:
     assy = cq.Assembly()
     assy.add(
         cone,
-        loc=cq.Location(
-            cq.Vector(0, 0, 0),
-            cq.Vector(1, 0, 0),
-            180,
-        ),
+        loc=cq.Location(cq.Vector(0, 0, 0), cq.Vector(1, 0, 0), 180),
         name="cone0",
         color=cq.Color("green")
     )
@@ -471,21 +467,13 @@ argument. Hence it will work with all subclasses of :class:`~caquery.occ_impl.Sh
     
     # position the red box on the center of the arc
     assy.add(box, name="box0", color=cq.Color("red"))
-    assy.constrain(
-        "line",
-        "box0",
-        "Point",
-    )
+    assy.constrain("line", "box0", "Point")
     
     # position the green box at a normalized distance of 0.8 along the arc
     position0 = line.positionAt(0.8)
     assy.add(box, name="box1", color=cq.Color("green"))
     assy.constrain(
-        "line",
-        cq.Vertex.makeVertex(*position0.toTuple()),
-        "box1",
-        box.val(),
-        "Point",
+        "line", cq.Vertex.makeVertex(*position0.toTuple()), "box1", box.val(), "Point",
     )
     
     # position the orange box 2 units in any direction from the green box
@@ -503,11 +491,7 @@ argument. Hence it will work with all subclasses of :class:`~caquery.occ_impl.Sh
     position1 = position0 + cq.Vector(2, 0, 0)
     assy.add(box, name="box3", color=cq.Color("blue"))
     assy.constrain(
-        "line",
-        cq.Vertex.makeVertex(*position1.toTuple()),
-        "box3",
-        box.val(),
-        "Point",
+        "line", cq.Vertex.makeVertex(*position1.toTuple()), "box3", box.val(), "Point",
     )
     
     assy.solve()
@@ -549,11 +533,7 @@ of two objects touch.
     assy = cq.Assembly()
     assy.add(cone, name="cone0", color=cq.Color("green"))
     assy.add(cone, name="cone1", color=cq.Color("blue"))
-    assy.constrain(
-        "cone0@faces@<Z",
-        "cone1@faces@<Z",
-        "Axis",
-    )
+    assy.constrain("cone0@faces@<Z", "cone1@faces@<Z", "Axis")
     
     assy.solve()
     show_object(assy)
@@ -574,19 +554,10 @@ This is often used when one object goes through another, such as a pin going int
     assy.add(plate, name="plate", color=cq.Color("green"))
     assy.add(cone, name="cone", color=cq.Color("blue"))
     # place the center of the flat face of the cone in the center of the upper face of the plate
-    assy.constrain(
-        "plate@faces@>Z",
-        "cone@faces@<Z",
-        "Point",
-    )
+    assy.constrain("plate@faces@>Z", "cone@faces@<Z", "Point")
     
     # set both the flat face of the cone and the upper face of the plate to point in the same direction
-    assy.constrain(
-        "plate@faces@>Z",
-        "cone@faces@<Z",
-        "Axis",
-        param=0,
-    )
+    assy.constrain("plate@faces@>Z", "cone@faces@<Z", "Axis", param=0)
     
     assy.solve()
     show_object(assy)
@@ -614,14 +585,11 @@ is to define an Axis constraint from a :class:`~cadquery.Face`.
     from math import cos, sin, pi
 
     # Create a sinusoidal surface:
-    surf = (
-        cq.Workplane()
-        .parametricSurface(
-            lambda u, v: (u, v, 5 * sin(pi * u / 10) * cos(pi * v / 10)),
-            N=40,
-            start=0,
-            stop=20,
-        )
+    surf = cq.Workplane().parametricSurface(
+        lambda u, v: (u, v, 5 * sin(pi * u / 10) * cos(pi * v / 10)),
+        N=40,
+        start=0,
+        stop=20,
     )
 
     # Create a cone with a small, flat tip:
@@ -700,6 +668,8 @@ Where:
     
 .. cadquery::
 
+    import cadquery as cq
+
     # Create an L-shaped object:
     bracket = (
         cq.Workplane("YZ")
@@ -726,18 +696,8 @@ Where:
     assy.add(box, name="box", color=cq.Color("green"))
 
     # lock bracket orientation:
-    assy.constrain(
-        "bracket@faces@>Z",
-        "box@faces@>Z",
-        "Axis",
-        param=0,
-    )
-    assy.constrain(
-        "bracket@faces@>X",
-        "box@faces@>X",
-        "Axis",
-        param=0,
-    )
+    assy.constrain("bracket@faces@>Z", "box@faces@>Z", "Axis", param=0)
+    assy.constrain("bracket@faces@>X", "box@faces@>X", "Axis", param=0)
 
     # constrain the bottom of the box to be on the plane defined by inner_horiz:
     assy.constrain("box@faces@<Z", "bracket?inner_horiz", "PointInPlane")
