@@ -54,15 +54,17 @@ def rst():
     lines = [
         ".. raw:: html",
         "",
-        '    <div class="color-grid" style="display:grid;grid-gap:10px;grid-template-columns:repeat(auto-fill, minmax(200px,1fr));">'
+        '    <div class="color-grid" style="display:grid;grid-gap:10px;grid-template-columns:repeat(auto-fill, minmax(200px,1fr));">',
     ]
     colors = get_colors()
     for name, c in colors.items():
-        lines += [TEMPLATE.format(
-            background_color=color_to_rgba_str(c),
-            text_color=calc_text_color(c),
-            color_name=name,
-        )]
+        lines += [
+            TEMPLATE.format(
+                background_color=color_to_rgba_str(c),
+                text_color=calc_text_color(c),
+                color_name=name,
+            )
+        ]
 
     lines.append("    </div>")
     return "\n".join(lines)
