@@ -12,9 +12,7 @@ from itertools import chain
 OCP_COLOR_LEADER, SEP = "Quantity_NOC", "_"
 
 TEMPLATE = """\
-    <div style="background-color:rgba({background_color});padding:10px;">
-      <p style="color:rgba({text_color});">{color_name}</p>
-    </div>\
+      <div style="background-color:rgba({background_color});padding:10px;border-radius:5px;color:rgba({text_color});">{color_name}</div>\
 """
 
 
@@ -53,7 +51,11 @@ def get_colors() -> Dict[str, cq.Color]:
 def rst():
     """ Produce the text for a Sphinx directive.
     """
-    lines = [".. raw:: html", ""]
+    lines = [
+        ".. raw:: html",
+        "",
+        '    <div class="color-grid" style="display:grid;grid-gap:10px;grid-template-columns:repeat(auto-fill, minmax(200px,1fr));">'
+    ]
     colors = get_colors()
     for name, c in colors.items():
         lines += [TEMPLATE.format(
@@ -61,6 +63,8 @@ def rst():
             text_color=calc_text_color(c),
             color_name=name,
         )]
+
+    lines.append("    </div>")
     return "\n".join(lines)
 
 
