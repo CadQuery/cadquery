@@ -2710,7 +2710,7 @@ class Workplane(object):
         endPoint = self._findFromPoint(True)
 
         if self.ctx.firstPoint is None:
-            raise ValueError("Not start point specified - cannot close")
+            raise ValueError("No start point specified - cannot close")
         else:
             startPoint = self.ctx.firstPoint
 
