@@ -27,16 +27,16 @@ TOL = 1e-2
 class Vector(object):
     """Create a 3-dimensional vector
 
-        :param args: a 3D vector, with x-y-z parts.
+    :param args: a 3D vector, with x-y-z parts.
 
-        you can either provide:
-            * nothing (in which case the null vector is return)
-            * a gp_Vec
-            * a vector ( in which case it is copied )
-            * a 3-tuple
-            * a 2-tuple (z assumed to be 0)
-            * three float values: x, y, and z
-            * two float values: x,y
+    you can either provide:
+        * nothing (in which case the null vector is return)
+        * a gp_Vec
+        * a vector ( in which case it is copied )
+        * a 3-tuple
+        * a 2-tuple (z assumed to be 0)
+        * three float values: x, y, and z
+        * two float values: x,y
     """
 
     _wrapped: gp_Vec
@@ -334,8 +334,7 @@ class Matrix:
         return Matrix(self.wrapped.Multiplied(other.wrapped))
 
     def transposed_list(self) -> Sequence[float]:
-        """Needed by the cqparts gltf exporter
-        """
+        """Needed by the cqparts gltf exporter"""
 
         trsf = self.wrapped
         data = [[trsf.Value(i, j) for j in range(1, 5)] for i in range(1, 4)] + [

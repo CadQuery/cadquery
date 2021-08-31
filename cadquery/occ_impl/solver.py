@@ -77,7 +77,10 @@ class ConstraintSolver(object):
 
         rv.SetRotation(
             gp_Quaternion(
-                2 * a / (m + 1), 2 * b / (m + 1), 2 * c / (m + 1), (1 - m) / (m + 1),
+                2 * a / (m + 1),
+                2 * b / (m + 1),
+                2 * c / (m + 1),
+                (1 - m) / (m + 1),
             )
         )
 
