@@ -2477,13 +2477,11 @@ class TestCadQuery(BaseTest):
             )
     def testConeDefaults(self):
         s = Workplane("XY").cone(40, 10)
-        self.saveModel(s)
         self.assertEqual(1, s.size())
         self.assertEqual(1, s.solids().size())
         self.assertEqual(2, s.faces().size())
         self.assertEqual(2, s.vertices().size())
         s1 = Workplane("XY").cone(40, radius1=10, radius2=5)
-        self.saveModel(s)
         self.assertEqual(1, s1.size())
         self.assertEqual(1, s1.solids().size())
         self.assertEqual(3, s1.faces().size())

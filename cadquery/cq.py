@@ -3831,11 +3831,14 @@ class Workplane(object):
         :type combine: true to combine shapes, false otherwise
         :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: A cone object for each point on the stack
+
         One cone is created for each item on the current stack. If no items are on the stack, one
         cone is created using the current workplane center.
+
         If combine is true, the result will be a single object on the stack. If a solid was found
         in the chain, the result is that solid with all cones produced fused onto it otherwise,
         the result is the combination of all the produced cones.
+
         If combine is false, the result will be a list of the cones produced.
         """
 
