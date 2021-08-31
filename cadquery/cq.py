@@ -3832,7 +3832,7 @@ class Workplane(object):
         :return: A cylinder object for each point on the stack
 
         One cylinder is created for each item on the current stack. If no items are on the stack, one
-        box using the current workplane center is created.
+        cylinder using the current workplane center is created.
 
         If combine is true, the result will be a single object on the stack. If a solid was found
         in the chain, the result is that solid with all cylinders produced fused onto it otherwise,

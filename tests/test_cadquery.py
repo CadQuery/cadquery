@@ -2445,7 +2445,6 @@ class TestCadQuery(BaseTest):
 
     def testCylinderDefaults(self):
         s = Workplane("XY").cylinder(20, 10)
-        self.saveModel(s)
         self.assertEqual(1, s.size())
         self.assertEqual(1, s.solids().size())
         self.assertEqual(3, s.faces().size())
