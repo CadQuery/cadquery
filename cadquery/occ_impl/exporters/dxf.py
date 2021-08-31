@@ -79,13 +79,13 @@ def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
     order = spline.Degree() + 1
     knots = list(spline.KnotSequence())
     poles = [(p.X(), p.Y(), p.Z()) for p in spline.Poles()]
-
     weights = list(spline.Weights()) if spline.IsRational() else None
 
-    if spline.IsClosed():
-        dxf_spline = ezdxf.math.BSplineClosed(poles, order, knots, weights)
-    else:
-        dxf_spline = ezdxf.math.BSpline(poles, order, knots, weights)
+    if spline.IsPeriodic():
+        pad = spline.NbKnots() - spline.LastUKnotIndex()
+        poles += poles[:pad]
+
+    dxf_spline = ezdxf.math.BSpline(poles, order, knots, weights)
 
     msp.add_spline().apply_construction_tool(dxf_spline)
 
