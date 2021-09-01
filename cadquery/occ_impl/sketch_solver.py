@@ -68,7 +68,7 @@ class SketchConstraintSolver(object):
         self.constraints = list(constraints)
         self.geoms = list(geoms)
 
-        self.ne = len(entities)
+        self.ne = len(self.entities)
         self.nc = len(self.constraints)
 
         # indices of x corresponding to the entities
@@ -78,7 +78,7 @@ class SketchConstraintSolver(object):
         self,
     ) -> Tuple[
         Callable[[Array[(Any,), float]], float],
-        Callable[[Array[(Any,), float]], Array[(Any,), float]],
+        Callable[[Array[(Any,), float], Array[(Any,), float]], None],
     ]:
         def invalid_args(*t):
 
@@ -218,7 +218,7 @@ class SketchConstraintSolver(object):
             return rv
 
         # dicitonary of individual constraint cost functions
-        costs = dict(
+        costs: Dict[str, Callable[..., float]] = dict(
             Fixed=fixed_cost,
             Coincident=coincident_cost,
             Angle=angle_cost,
@@ -233,28 +233,28 @@ class SketchConstraintSolver(object):
         constraints = self.constraints
         geoms = self.geoms
 
-        def f(x):
+        def f(x) -> float:
             """
             Cost function to be minimized
             """
 
-            rv = 0
+            rv = 0.0
 
             for i, ((e1, e2), kind, val) in enumerate(constraints):
 
                 cost = costs[kind]
 
                 # build arguments for the specific constraint
-                args = (x[ixs[e1] : ixs[e1 + 1]], geoms[e1])
+                args = [x[ixs[e1] : ixs[e1 + 1]], geoms[e1]]
                 if e2 is not None:
-                    args += (x[ixs[e2] : ixs[e2 + 1]], geoms[e2])
+                    args += [x[ixs[e2] : ixs[e2 + 1]], geoms[e2]]
 
                 # evaluate
                 rv += cost(*args, val) ** 2
 
             return rv
 
-        def grad(x, rv):
+        def grad(x, rv) -> None:
             """
             Gradient of the cost function
             """
@@ -267,10 +267,10 @@ class SketchConstraintSolver(object):
 
                 # build arguments for the specific constraint
                 x1 = x[ixs[e1] : ixs[e1 + 1]]
-                args = (x1.copy(), geoms[e1])
+                args = [x1.copy(), geoms[e1]]
                 if e2 is not None:
                     x2 = x[ixs[e2] : ixs[e2 + 1]]
-                    args += (x2.copy(), geoms[e2])
+                    args += [x2.copy(), geoms[e2]]
 
                 # evaluate
                 tmp = cost(*args, val)
