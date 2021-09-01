@@ -638,12 +638,20 @@ class TestCadQuery(BaseTest):
         self.assertTrue(path_closed.IsClosed())
 
         # attempt to build a valid face
-        w = Wire.assembleEdges([path_closed,])
+        w = Wire.assembleEdges(
+            [
+                path_closed,
+            ]
+        )
         f = Face.makeFromWires(w)
         self.assertTrue(f.isValid())
 
         # attempt to build an invalid face
-        w = Wire.assembleEdges([path,])
+        w = Wire.assembleEdges(
+            [
+                path,
+            ]
+        )
         f = Face.makeFromWires(w)
         self.assertFalse(f.isValid())
 
@@ -800,12 +808,16 @@ class TestCadQuery(BaseTest):
 
         with raises(ValueError):
             Workplane().spline(
-                points, periodic=False, parameters=[x for x in range(len(points) + 1)],
+                points,
+                periodic=False,
+                parameters=[x for x in range(len(points) + 1)],
             )
 
         with raises(ValueError):
             Workplane().spline(
-                points, periodic=True, parameters=[x for x in range(len(points))],
+                points,
+                periodic=True,
+                parameters=[x for x in range(len(points))],
             )
 
     def testRotatedEllipse(self):
@@ -995,7 +1007,15 @@ class TestCadQuery(BaseTest):
 
     def testMakeEllipse(self):
         el = Wire.makeEllipse(
-            1, 2, Vector(0, 0, 0), Vector(0, 0, 1), Vector(1, 0, 0), 0, 90, 45, True,
+            1,
+            2,
+            Vector(0, 0, 0),
+            Vector(0, 0, 1),
+            Vector(1, 0, 0),
+            0,
+            90,
+            45,
+            True,
         )
 
         self.assertTrue(el.IsClosed())
@@ -3289,6 +3309,7 @@ class TestCadQuery(BaseTest):
         inner_face_area = wp.faces("<<Y[3]").val().Area()
 
         self.assertAlmostEqual(inner_face_area, 13.372852288495503, 5)
+
     def testExtrude(self):
         """
         Test extrude
@@ -3513,7 +3534,13 @@ class TestCadQuery(BaseTest):
             box.faces(">Z")
             .workplane()
             .text(
-                "CQ 2.0", 10, -1, cut=True, halign="left", valign="bottom", font="Sans",
+                "CQ 2.0",
+                10,
+                -1,
+                cut=True,
+                halign="left",
+                valign="bottom",
+                font="Sans",
             )
         )
 
