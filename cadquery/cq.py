@@ -3394,8 +3394,6 @@ class Workplane(object):
         :type until: Face, cut until the provided face
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
-        :param boolean untilNextFace: cut material until next face
-        :param boolean untilLastFace: cut material last face
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
@@ -3423,7 +3421,7 @@ class Workplane(object):
             s = solidRef.cut(toCut)
         else:
             raise ValueError(
-                "Valid option for until face extrusion are 'next' and 'last'"
+                "Valid options for until face extrusion are 'next' and 'last'"
             )
         if clean:
             s = s.clean()
