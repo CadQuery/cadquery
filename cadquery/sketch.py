@@ -1,4 +1,4 @@
-from typing import Union, Optional, List, Dict, Callable, Tuple, Iterable, Any
+from typing import Union, Optional, List, Dict, Callable, Tuple, Iterable, Any, Sequence
 from typing_extensions import Literal
 from numbers import Real
 from math import tan, sin, cos, pi, radians
@@ -18,7 +18,7 @@ from .occ_impl.sketch_solver import (
 )
 
 Modes = Literal["a", "s", "i"]
-Point = Union[Vector, Tuple[Real, Real]]
+Point = Union[Vector, Tuple[float, float]]
 
 
 class Constraint(object):
@@ -239,7 +239,10 @@ class Sketch(object):
         for i, j in product(range(nx), range(ny)):
             locs.append(Location(Vector(i * xs, j * ys) - offset))
 
-        selection = self._selection if self._selection else (Vector(),)
+        if self._selection:
+            selection: Sequence[Union[Shape, Location, Vector]] = self._selection
+        else:
+            selection = [Vector()]
 
         return self.push(Location(el.Center()) * l for l in locs for el in selection)
 
