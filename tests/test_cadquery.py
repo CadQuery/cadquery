@@ -2443,6 +2443,39 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, s.solids().size())
         self.assertEqual(4, s.faces().size())
 
+    def testCylinderDefaults(self):
+        s = Workplane("XY").cylinder(20, 10)
+        self.assertEqual(1, s.size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(3, s.faces().size())
+        self.assertEqual(2, s.vertices().size())
+        self.assertTupleAlmostEquals(s.val().Center().toTuple(), (0, 0, 0), 3)
+
+    def testCylinderCentering(self):
+        radius = 10
+        height = 40
+        b = (True, False)
+        expected_x = (0, radius)
+        expected_y = (0, radius)
+        expected_z = (0, height / 2)
+        for (xopt, xval), (yopt, yval), (zopt, zval) in product(
+            zip(b, expected_x), zip(b, expected_y), zip(b, expected_z)
+        ):
+            s = Workplane("XY").cylinder(height, radius, centered=(xopt, yopt, zopt))
+            self.assertEqual(1, s.size())
+            self.assertTupleAlmostEquals(
+                s.val().Center().toTuple(), (xval, yval, zval), 3
+            )
+        # check centered=True produces the same result as centered=(True, True, True)
+        for val in b:
+            s0 = Workplane("XY").cylinder(height, radius, centered=val)
+            self.assertEqual(s0.size(), 1)
+            s1 = Workplane("XY").cylinder(height, radius, centered=(val, val, val))
+            self.assertEqual(s1.size(), 1)
+            self.assertTupleAlmostEquals(
+                s0.val().Center().toTuple(), s1.val().Center().toTuple(), 3
+            )
+
     def testWedgeDefaults(self):
         s = Workplane("XY").wedge(10, 10, 10, 5, 5, 5, 5)
         self.saveModel(s)
