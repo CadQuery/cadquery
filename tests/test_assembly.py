@@ -529,11 +529,7 @@ def test_infinite_face_constraint_Plane(kind):
     assy = cq.Assembly(cq.Workplane().sphere(1), name="part0")
     assy.add(cq.Workplane().sphere(1), name="part1")
     assy.constrain(
-        "part0",
-        cq.Face.makePlane(),
-        "part1",
-        cq.Face.makePlane(),
-        kind,
+        "part0", cq.Face.makePlane(), "part1", cq.Face.makePlane(), kind,
     )
     assy.solve()
     assert solve_result_check(assy._solve_result)
