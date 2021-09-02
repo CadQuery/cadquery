@@ -1221,6 +1221,7 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
         d: float,
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
+        planar: bool = False,
     ) -> Location:
         ...
 
