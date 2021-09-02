@@ -3193,6 +3193,14 @@ class Compound(Shape, Mixin3D):
 
         return comp
 
+    def remove(self, shape: Shape):
+        """
+        Remove the specified shape.
+        """
+
+        comp_builder = TopoDS_Builder()
+        comp_builder.Remove(self.wrapped, shape.wrapped)
+
     @classmethod
     def makeCompound(
         cls: Type["Compound"], listOfShapes: Iterable[Shape]
@@ -3285,18 +3293,18 @@ class Compound(Shape, Mixin3D):
 
         return TopoDS_Iterator(self.wrapped).More()
 
-    def cut(self, *toCut: Shape) -> "Shape":
+    def cut(self, *toCut: Shape) -> "Compound":
         """
         Remove a shape from another one
         """
 
         cut_op = BRepAlgoAPI_Cut()
 
-        return self._bool_op(self, toCut, cut_op)
+        return tcast(Compound, self._bool_op(self, toCut, cut_op))
 
     def fuse(
         self, *toFuse: Shape, glue: bool = False, tol: Optional[float] = None
-    ) -> "Shape":
+    ) -> "Compound":
         """
         Fuse shapes together
         """
@@ -3317,16 +3325,16 @@ class Compound(Shape, Mixin3D):
         # fuse_op.RefineEdges()
         # fuse_op.FuseEdges()
 
-        return rv
+        return tcast(Compound, rv)
 
-    def intersect(self, *toIntersect: Shape) -> "Shape":
+    def intersect(self, *toIntersect: Shape) -> "Compound":
         """
         Construct shape intersection
         """
 
         intersect_op = BRepAlgoAPI_Common()
 
-        return self._bool_op(self, toIntersect, intersect_op)
+        return tcast(Compound, self._bool_op(self, toIntersect, intersect_op))
 
 
 def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
