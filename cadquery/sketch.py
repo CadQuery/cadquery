@@ -1,4 +1,15 @@
-from typing import Union, Optional, List, Dict, Callable, Tuple, Iterable, Any, Sequence
+from typing import (
+    Union,
+    Optional,
+    List,
+    Dict,
+    Callable,
+    Tuple,
+    Iterable,
+    Any,
+    Sequence,
+    cast as tcast,
+)
 from typing_extensions import Literal
 from numbers import Real
 from math import tan, sin, cos, pi, radians
@@ -15,6 +26,7 @@ from .occ_impl.sketch_solver import (
     SketchConstraintSolver,
     ConstraintKind,
     ConstraintInvariants,
+    DOF,
 )
 
 Modes = Literal["a", "s", "i"]
@@ -75,7 +87,7 @@ class Sketch(object):
     _selection: List[Union[Shape, Location]]
     _constraints: List[Constraint]
 
-    _tags: Dict[str, List[Union[Shape, Location]]]
+    _tags: Dict[str, Sequence[Union[Shape, Location]]]
 
     _solve_status: Optional[Dict[str, Any]]
 
@@ -94,7 +106,7 @@ class Sketch(object):
 
         self._solve_status = None
 
-    def _tag(self, val: List[Union[Shape, Location]], tag: str):
+    def _tag(self, val: Sequence[Union[Shape, Location]], tag: str):
 
         self._tags[tag] = val
 
@@ -244,7 +256,11 @@ class Sketch(object):
         else:
             selection = [Vector()]
 
-        return self.push(Location(el.Center()) * l for l in locs for el in selection)
+        return self.push(
+            (el * l if isinstance(el, Location) else Location(el.Center())) * l
+            for l in locs
+            for el in selection
+        )
 
     def parray(
         self, r: float, a1: float, a2: float, n: int, rotate: bool = True
@@ -277,9 +293,16 @@ class Sketch(object):
 
             locs.append(loc)
 
-        selection = self._selection if self._selection else (Vector(),)
+        if self._selection:
+            selection: Sequence[Union[Shape, Location, Vector]] = self._selection
+        else:
+            selection = [Vector()]
 
-        return self.push(Location(el.Center()) * l for l in locs for el in selection)
+        return self.push(
+            (el * l if isinstance(el, Location) else Location(el.Center())) * l
+            for l in locs
+            for el in selection
+        )
 
     def distribute(
         self, n: int, start: float = 0, stop: float = 1, rotate: bool = True
@@ -303,7 +326,9 @@ class Sketch(object):
         self, locs: Iterable[Union[Location, Point]], tag: Optional[str] = None,
     ) -> "Sketch":
 
-        self._selection = [l if isinstance(l, Location) else Location(l) for l in locs]
+        self._selection = [
+            l if isinstance(l, Location) else Location(Vector(l)) for l in locs
+        ]
 
         if tag:
             self._tag(self._selection[:], tag)
@@ -318,7 +343,7 @@ class Sketch(object):
         ignore_selection: bool = False,
     ) -> "Sketch":
 
-        res: List[Union[Face, "Sketch"]] = []
+        res: List[Face] = []
 
         if self._selection and not ignore_selection:
             for el in self._selection:
@@ -329,9 +354,17 @@ class Sketch(object):
                 else:
                     raise ValueError(f"Invalid selection: {el}")
 
-                res.append(callback(loc))
+                tmp = callback(loc)
+                if isinstance(tmp, Sketch):
+                    res.extend(tmp._faces.Faces())
+                else:
+                    res.append(tmp)
         else:
-            res.append(callback(Location()))
+            tmp = callback(Location())
+            if isinstance(tmp, Sketch):
+                res.extend(tmp._faces.Faces())
+            else:
+                res.append(tmp)
 
         if tag:
             self._tag(res, tag)
@@ -458,11 +491,11 @@ class Sketch(object):
 
         for obj in self._selection:
             if isinstance(obj, Face):
-                self.faces.remove(obj)
+                self._faces.remove(obj)
             elif isinstance(obj, Wire):
-                self.wires.remove(obj)
-            else:
-                self.edges.remove(obj)
+                self._wires.remove(obj)
+            elif isinstance(obj, Edge):
+                self._edges.remove(obj)
 
         self._selection = []
 
@@ -629,20 +662,20 @@ class Sketch(object):
             filter(lambda kv: isinstance(kv[1][0], Edge), self._tags.items())
         ):
 
-            v0 = v[0]
+            v0 = tcast(Edge, v[0])
 
             # dispatch on geom type
             if v0.geomType() == "LINE":
                 p1 = v0.startPoint()
                 p2 = v0.endPoint()
-                ent = (p1.x, p1.y, p2.x, p2.y)
+                ent: DOF = (p1.x, p1.y, p2.x, p2.y)
 
             elif v0.geomType() == "CIRCLE":
                 p = v0.arcCenter()
                 a1 = v0.paramAt(0)
                 a2 = v0.paramAt(1)
-                r = v0.radius()
-                ent = (p.x, p.y, a1, a2, r)
+                radius = v0.radius()
+                ent = (p.x, p.y, a1, a2, radius)
 
             else:
                 continue

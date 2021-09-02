@@ -1,4 +1,4 @@
-from typing import Tuple, Union, Any, Callable, List, Optional, Iterable, Dict
+from typing import Tuple, Union, Any, Callable, List, Optional, Iterable, Dict, Sequence
 from typing_extensions import Literal
 from nptyping import NDArray as Array
 from itertools import accumulate, chain
@@ -290,7 +290,7 @@ class SketchConstraintSolver(object):
 
         return f, grad
 
-    def solve(self) -> Tuple[List[Location], Dict[str, Any]]:
+    def solve(self) -> Tuple[Sequence[Sequence[float]], Dict[str, Any]]:
 
         x0 = array(list(chain.from_iterable(self.entities))).ravel()
         f, grad = self._cost()
