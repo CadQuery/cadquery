@@ -2487,7 +2487,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, s1.solids().size())
         self.assertEqual(3, s1.faces().size())
         self.assertEqual(2, s1.vertices().size())
-        s2 = Workplane("XY").cone(40, radius1=10, radius2=5, combine=True)
+        s2 = Workplane("XY").cone(40, radius1=10, radius2=5, combine=False)
         self.assertEqual(1, s2.size())
         self.assertEqual(1, s2.solids().size())
         self.assertEqual(3, s2.faces().size())
