@@ -44,7 +44,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "cadquery.cq_directive",
-    "sphinx.ext.mathjax"
+    "sphinx.ext.mathjax",
 ]
 
 always_document_param_types = True
