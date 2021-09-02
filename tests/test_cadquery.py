@@ -2475,6 +2475,7 @@ class TestCadQuery(BaseTest):
             self.assertTupleAlmostEquals(
                 s0.val().Center().toTuple(), s1.val().Center().toTuple(), 3
             )
+
     def testConeDefaults(self):
         s = Workplane("XY").cone(40, 10)
         self.assertEqual(1, s.size())
