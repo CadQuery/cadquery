@@ -30,7 +30,7 @@ from .occ_impl.sketch_solver import (
 )
 
 Modes = Literal["a", "s", "i"]
-Point = Union[Vector, Tuple[float, float]]
+Point = Union[Vector, Tuple[float, float], Tuple[int, float], Tuple[float, int]]
 
 
 class Constraint(object):
