@@ -286,7 +286,7 @@ def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
     a11 = (atan2p(x11 - xc1, y11 - yc1) + pi / 2) % (2 * pi)
     a21 = (atan2p(x12 - xc1, y12 - yc1) + pi / 2) % (2 * pi)
 
-    ix = int(argmin((abs(a11 - a1), abs(a21 - a2))))
+    ix = int(argmin((abs(a11 - a1_out), abs(a21 - a2_out))))
     angles = (a1_out, a2_out)
     segments = (
         Segment(Point(x11, y11), Point(x21, y21)),
