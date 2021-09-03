@@ -10,7 +10,6 @@ import nlopt
 
 from OCP.gp import gp_Vec2d
 
-from .geom import Location
 from .shapes import Geoms
 
 NoneType = type(None)
@@ -123,13 +122,13 @@ class SketchConstraintSolver(object):
             if t1 == "LINE" and t2 == "LINE":
                 v1 = x1[2:]
                 v2 = x2[:2]
-            elif t1 == "LINE" and t2 == "CRICLE":
+            elif t1 == "LINE" and t2 == "CIRCLE":
                 v1 = x1[2:]
                 v2 = arc_first(x2)
             elif t1 == "CIRCLE" and t2 == "LINE":
                 v1 = arc_last(x1)
                 v2 = x2[:2]
-            elif t1 == "CIRCLE" and t2 == "CRICLE":
+            elif t1 == "CIRCLE" and t2 == "CIRCLE":
                 v1 = arc_last(x1)
                 v2 = arc_first(x1)
             else:
@@ -142,13 +141,13 @@ class SketchConstraintSolver(object):
             if t1 == "LINE" and t2 == "LINE":
                 v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
                 v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
-            elif t1 == "LINE" and t2 == "CRICLE":
+            elif t1 == "LINE" and t2 == "CIRCLE":
                 v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
                 v2 = arc_first_tangent(x2)
             elif t1 == "CIRCLE" and t2 == "LINE":
                 v1 = arc_last_tangent(x1)
                 v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
-            elif t1 == "CIRCLE" and t2 == "CRICLE":
+            elif t1 == "CIRCLE" and t2 == "CIRCLE":
                 v1 = arc_last_tangent(x1)
                 v2 = arc_first_tangent(x2)
             else:
@@ -176,13 +175,13 @@ class SketchConstraintSolver(object):
             if t1 == "LINE" and t2 == "LINE":
                 v1 = line_point(x1, val1)
                 v2 = line_point(x2, val2)
-            elif t1 == "LINE" and t2 == "CRICLE":
+            elif t1 == "LINE" and t2 == "CIRCLE":
                 v1 = line_point(x1, val1)
                 v2 = arc_point(x2, val2)
             elif t1 == "CIRCLE" and t2 == "LINE":
                 v1 = arc_point(x1, val1)
                 v2 = line_point(x2, val2)
-            elif t1 == "CIRCLE" and t2 == "CRICLE":
+            elif t1 == "CIRCLE" and t2 == "CIRCLE":
                 v1 = arc_point(x1, val1)
                 v2 = arc_point(x2, val2)
             else:
