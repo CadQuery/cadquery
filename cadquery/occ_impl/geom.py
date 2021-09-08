@@ -155,6 +155,9 @@ class Vector(object):
     def __truediv__(self, denom: float) -> "Vector":
         return self.multiply(1.0 / denom)
 
+    def __rmul__(self, scale: float) -> "Vector":
+        return self.multiply(scale)
+
     def normalized(self) -> "Vector":
         """Return a normalized version of this vector"""
         return Vector(self.wrapped.Normalized())
@@ -175,8 +178,18 @@ class Vector(object):
     def distanceToLine(self):
         raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
 
-    def projectToLine(self):
-        raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
+    def projectToLine(self, line: "Vector") -> "Vector":
+        """
+        Returns a new vector equal to the projection of this Vector onto the line
+        represented by Vector <line>
+
+        :param args: Vector
+
+        Returns the projected vector.
+        """
+        lineLength = line.Length
+
+        return line * (self.dot(line) / (lineLength * lineLength))
 
     def distanceToPlane(self):
         raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
