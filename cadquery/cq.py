@@ -3816,12 +3816,12 @@ class Workplane(object):
         A truncated cone can be created by specifying parameters radius1 and radius2 instead of radius.
         :param height: The height of the cone
         :type height: float > 0
-        :param radius: The radius of the cone
-        :type radius: float > 0
         :param radius1: The radius of the bottom of the cone
         :type radius1: float > 0
         :param radius2: The radius of the top of the cone
         :type radius2: float > 0
+        :param radius: The radius of the cone
+        :type radius: float > 0
         :param direct: The direction axis for the creation of the cone
         :type direct: A three-tuple
         :param angle: The angle to sweep the cone arc through
