@@ -18,7 +18,7 @@ are appreciated.
 If you want to discuss something in a more casual environment, we have other options under [Getting help in the README.md](https://github.com/CadQuery/cadquery#getting-help). There are also additional examples in the [cadquery-contrib repository](https://github.com/CadQuery/cadquery-contrib).
 -->
 
-<!-- We are all volunteers here, you can help us help you by making this question quick to answer. Minimal examples, trimmed of all unreleated code are appreciated. It also helps if you provide code that can be cut and pasted into CQ-Editor. ie. instead of:
+<!-- We are all volunteers here, you can help us help you by making this question quick to answer. Minimal examples, trimmed of all unrelated code are appreciated. It also helps if you provide code that can be cut and pasted into CQ-Editor. ie. instead of:
 
 > I have a box, how to I fillet a top corner?
 

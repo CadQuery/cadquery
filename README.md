@@ -15,8 +15,8 @@ CadQuery is an intuitive, easy-to-use Python module for building parametric 3D C
 CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCAD, CadQuery is an open-source, script based, parametric model generator. However, CadQuery stands out in many ways and has several key advantages:
 
 1. The scripts use a standard programming language, Python, and thus can benefit from the associated infrastructure. This includes many standard libraries and IDEs.
-2. CadQuery's CAD kernel Open CASCADE Technology (OCCT) is much more powerful than CGAL. Features supported natively by OCCT include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
-3. Ability to import/export STEP and the ability to begin with a STEP model, created in a CAD package, and then add parametric features. This is possible in OpenSCAD using STL, but STL is a lossy format.
+2. CadQuery's CAD kernel Open CASCADE Technology ([OCCT](https://en.wikipedia.org/wiki/Open_Cascade_Technology)) is much more powerful than the [CGAL](https://en.wikipedia.org/wiki/CGAL) used by OpenSCAD. Features supported natively by OCCT include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
+3. Ability to import/export [STEP](https://en.wikipedia.org/wiki/ISO_10303) and the ability to begin with a STEP model, created in a CAD package, and then add parametric features. This is possible in OpenSCAD using STL, but STL is a lossy format.
 4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
 5. CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
 
@@ -25,7 +25,7 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 * Create parametric models that can be very easily customized by end users.
 * Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL, VRML and AMF.
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser.
-* Offer advanced modeling capabilities such as fillets, curvelinear extrudes, parametric curves and lofts.
+* Offer advanced modeling capabilities such as fillets, curvilinear extrudes, parametric curves and lofts.
 * Build nested assemblies out of individual parts and other assemblies.
 
 ### Why this fork
@@ -175,7 +175,7 @@ If you are going to contribute code, make sure to follow this steps:
   start working on your changes
 - Create a conda development environment with something like:
   - `conda env create -n cq-dev -f environment.yml`
-- Activate the new conda enviornment:
+- Activate the new conda environment:
   - `conda activate cq-dev`
 - If desired, install the master branch of cq-editor (Note; a release version may not be compatible with the master branch of cadquery):
   - `conda install -c cadquery -c conda-forge cq-editor=master`
