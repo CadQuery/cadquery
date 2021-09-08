@@ -1052,7 +1052,7 @@ class Shape(object):
         :direction: Valid values : "AlongAxis", "Opposite", if specified will ignore all faces that are not in the specified direction
         including the face where the :point: lies if it is the case
 
-        :returns: A list of intersected face sorted by distance from :point:
+        :returns: A list of intersected faces sorted by distance from :point:
         """
 
         oc_point = (

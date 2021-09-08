@@ -3189,7 +3189,7 @@ class TestCadQuery(BaseTest):
 
         self.assertAlmostEqual(extremity_face_area, 13.372852288495501, 5)
 
-        # Test that a ValueError is raised if no faces can't be found to extrude until
+        # Test that a ValueError is raised if no face can be found to extrude until
         with self.assertRaises(ValueError):
             wp = (
                 Workplane()
@@ -3200,14 +3200,34 @@ class TestCadQuery(BaseTest):
                 .circle(2)
                 .extrude(until="next")
             )
-            wp_both = (
+
+        # Test that a ValueError for:
+        # Extrusion in both direction while having a face to extrude only in one 
+        with self.assertRaises(ValueError):
+            wp = (
                 Workplane()
                 .box(5, 5, 5)
                 .faces(">X")
                 .workplane(offset=10)
+                .transformed((90, 0, 0))
                 .circle(2)
-                .extrude(until="next", both=True)
+                .extrude(until="next")
             )
+
+        # Check that a ValueError is raised if the user want to use `until` with a face and `combine` = False
+        # This isn't possible as the result of the extrude operation automatically combine the result with the base solid
+
+        with self.assertRaises(ValueError):
+            wp = (
+                Workplane()
+                .box(5, 5, 5)
+                .faces(">X")
+                .workplane(offset=10)
+                .transformed((90, 0, 0))
+                .circle(2)
+                .extrude(until="next", combine=False)
+            )
+
 
     def testCutBlindUntilFace(self):
         """
@@ -3289,6 +3309,11 @@ class TestCadQuery(BaseTest):
         inner_face_area = wp.faces("<<Y[3]").val().Area()
 
         self.assertAlmostEqual(inner_face_area, 13.372852288495503, 5)
+
+
+    def testFaceIntersectedByLine(self):        
+        with self.assertRaises(ValueError):
+            Workplane().box(5,5,5).val().facesIntersectedByLine((0,0,0),(0,0,1), direction = "Z")
 
     def testExtrude(self):
         """

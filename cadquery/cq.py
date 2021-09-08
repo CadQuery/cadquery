@@ -3514,11 +3514,11 @@ class Workplane(object):
             )
             if len(facesList) == 0 and both:
                 raise ValueError(
-                    "Couldn't find a face to extrude/cut to for one of the two required directions of extrusion/cut."
+                    "Couldn't find a face to extrude/cut to for at least one of the two required directions of extrusion/cut."
                 )
 
             if len(facesList) == 0:
-                # if we don't find faces in the workplane normal direction we try the other direction (as the user might have create a workplane with wrong orientation)
+                # if we don't find faces in the workplane normal direction we try the other direction (as the user might have created a workplane with wrong orientation)
                 facesList = self.findSolid().facesIntersectedByLine(
                     ws[0].Center(), eDir.multiply(-1.0), direction=direction
                 )
@@ -3594,6 +3594,9 @@ class Workplane(object):
                     )
                     thisObj = Compound.makeCompound([thisObj, thisObj2])
                 toFuse = [thisObj]
+            elif taper != 0.0:
+                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper=taper)
+                toFuse.append(thisObj)
             else:
                 thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper=taper)
                 toFuse.append(thisObj)
