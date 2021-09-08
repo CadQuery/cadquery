@@ -3803,9 +3803,9 @@ class Workplane(object):
     def cone(
         self: T,
         height: float,
-        radius: float = 0,
         radius1: float = None,
         radius2: float = None,
+        radius: float = 0,
         direct: Vector = Vector(0, 0, 1),
         angle: float = 360,
         combine: bool = True,
