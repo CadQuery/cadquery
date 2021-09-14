@@ -183,7 +183,7 @@ class Assembly(object):
     objects: Dict[str, "Assembly"]
     constraints: List[Constraint]
 
-    _solve_status: Optional[Dict[str, Any]]
+    _solve_result: Optional[Dict[str, Any]]
 
     def __init__(
         self,
@@ -223,7 +223,7 @@ class Assembly(object):
         self.constraints = []
         self.objects = {self.name: self}
 
-        self._solve_status = None
+        self._solve_result = None
 
     def _copy(self) -> "Assembly":
         """
@@ -357,7 +357,7 @@ class Assembly(object):
         """
         Calculate relative location of an object in a subassembly.
 
-        Returns the relative posiitons as well as the name of the top assembly.
+        Returns the relative positions as well as the name of the top assembly.
         """
 
         rv = Location()
@@ -454,7 +454,7 @@ class Assembly(object):
         solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
 
         # solve
-        locs_new, self._solve_status = solver.solve()
+        locs_new, self._solve_result = solver.solve()
 
         # update positions
         for loc_new, n in zip(locs_new, ents):
