@@ -130,7 +130,7 @@ class CQContext(object):
 
 class Workplane(object):
     """
-    Defines a coordinate system in space, in which 2-d coordinates can be used.
+    Defines a coordinate system in space, in which 2D coordinates can be used.
 
     :param plane: the plane in which the workplane will be done
     :type plane: a Plane object, or a string in (XY|YZ|XZ|front|back|top|bottom|left|right)
@@ -305,7 +305,7 @@ class Workplane(object):
             )
             rv = [solid.split(*tools)]
 
-        # split using the current wokrplane
+        # split using the current workplane
         else:
 
             # boilerplate for arg/kwarg parsing
@@ -501,7 +501,7 @@ class Workplane(object):
         origin: Optional[VectorLike] = None,
     ) -> T:
         """
-        Creates a new 2-D workplane, located relative to the first face on the stack.
+        Creates a new 2D workplane, located relative to the first face on the stack.
 
         :param offset:  offset for the work plane in the Z direction. Default
         :param invert:  invert the Z direction from that of the face.
@@ -518,7 +518,7 @@ class Workplane(object):
         item on the chain immediately before the vertex must be a
         face.
 
-        The result will be a 2-d working plane
+        The result will be a 2D working plane
         with a new coordinate system set up as follows:
 
            * The centerOption parameter sets how the center is defined.
@@ -1212,7 +1212,7 @@ class Workplane(object):
 
         :param thickness: a positive float, representing the thickness of the desired shell.
             Negative values shell inwards, positive values shell outwards.
-        :param kind: kind of joints, intersetion or arc (default: arc).
+        :param kind: kind of joints, intersection or arc (default: arc).
         :raises ValueError: if the current stack contains objects that are not faces of a solid
              further up in the chain.
         :returns: a CQ object with the resulting shelled solid selected.
@@ -1531,7 +1531,7 @@ class Workplane(object):
     def pushPoints(self: T, pntList: Iterable[Union[VectorLike, Location]]) -> T:
         """
         Pushes a list of points onto the stack as vertices.
-        The points are in the 2-d coordinate space of the workplane face
+        The points are in the 2D coordinate space of the workplane face
 
         :param pntList: a list of points to push onto the stack
         :type pntList: list of 2-tuples, in *local* coordinates
@@ -1821,7 +1821,7 @@ class Workplane(object):
             scalar parameter.)
 
             If periodic == True, then len(parameters) must be
-            len(intepolation points) + 1, otherwise len(parameters) must be equal to
+            len(interpolation points) + 1, otherwise len(parameters) must be equal to
             len(interpolation points).
         :param scale: whether to scale the specified tangent vectors before
             interpolating.
@@ -2356,11 +2356,11 @@ class Workplane(object):
         :param forConstruction: whether the wire should be used to make a solid, or if it is just
             for reference
 
-        This method is primarily of use to plugin developers making utilities for 2-d construction.
-        This method should be called when a user operation implies that 2-d construction is
+        This method is primarily of use to plugin developers making utilities for 2D construction.
+        This method should be called when a user operation implies that 2D construction is
         finished, and we are ready to begin working in 3d.
 
-        SEE '2-d construction concepts' for a more detailed explanation of how CadQuery handles
+        SEE '2D construction concepts' for a more detailed explanation of how CadQuery handles
         edges, wires, etc.
 
         Any non edges will still remain.
@@ -2693,11 +2693,11 @@ class Workplane(object):
 
     def close(self: T) -> T:
         """
-        End 2-d construction, and attempt to build a closed wire.
+        End 2D construction, and attempt to build a closed wire.
 
         :return: a CQ object with a completed wire on the stack, if possible.
 
-        After 2-d drafting with methods such as lineTo, threePointArc,
+        After 2D drafting with methods such as lineTo, threePointArc,
         tangentArcPoint and polyline, it is necessary to convert the edges
         produced by these into one or more wires.
 
@@ -2710,7 +2710,7 @@ class Workplane(object):
         endPoint = self._findFromPoint(True)
 
         if self.ctx.firstPoint is None:
-            raise ValueError("Not start point specified - cannot close")
+            raise ValueError("No start point specified - cannot close")
         else:
             startPoint = self.ctx.firstPoint
 
@@ -2813,7 +2813,7 @@ class Workplane(object):
         # first make the hole
         hole = Solid.makeCylinder(
             diameter / 2.0, depth, center, boreDir
-        )  # local coordianates!
+        )  # local coordinates!
 
         # add the counter bore
         cbore = Solid.makeCylinder(cboreDiameter / 2.0, cboreDepth, Vector(), boreDir)
@@ -3463,7 +3463,7 @@ class Workplane(object):
         eDir = self.plane.zDir.multiply(distance)
 
         # one would think that fusing faces into a compound and then extruding would work,
-        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc)
+        # but it doesn't-- the resulting compound appears to look right, ( right number of faces, etc)
         # but then cutting it from the main solid fails with BRep_NotDone.
         # the work around is to extrude each and then join the resulting solids, which seems to work
 
@@ -3597,7 +3597,7 @@ class Workplane(object):
         :param surf_pts = [] (uses only edges if [])
         :type surf_pts: list of [x,y,z] float coordinates
         :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float (may be negative or positive depending on thicknening direction)
+        :type thickness: float (may be negative or positive depending on thickening direction)
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
         :type combine: true to combine shapes, false otherwise.
@@ -3608,8 +3608,8 @@ class Workplane(object):
         :type: NbPtsOnCur Integer >= 15
         :param NbIter = 2 (OCCT default)
         :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
+        :param anisotropy = False (OCCT default)
+        :type anisotropy: Boolean
         :param: Tol2d = 0.00001 (OCCT default)
         :type Tol2d: float > 0
         :param Tol3d = 0.0001 (OCCT default)
@@ -3799,6 +3799,69 @@ class Workplane(object):
             return spheres
         else:
             return self.union(spheres, clean=clean)
+
+    def cylinder(
+        self: T,
+        height: float,
+        radius: float,
+        direct: Vector = Vector(0, 0, 1),
+        angle: float = 360,
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
+        combine: bool = True,
+        clean: bool = True,
+    ) -> T:
+        """
+        Returns a cylinder with the specified radius and height for each point on the stack
+
+        :param height: The height of the cylinder
+        :type height: float > 0
+        :param radius: The radius of the cylinder
+        :type radius: float > 0
+        :param direct: The direction axis for the creation of the cylinder
+        :type direct: A three-tuple
+        :param angle: The angle to sweep the cylinder arc through
+        :type angle: float > 0
+        :param centered: If True, the cylinder will be centered around the reference point. If False,
+            the corner of a bounding box around the cylinder will be on the reference point and it
+            will extend in the positive x, y and z directions. Can also use a 3-tuple to specify
+            centering along each axis.
+        :param combine: Whether the results should be combined with other solids on the stack
+            (and each other)
+        :type combine: true to combine shapes, false otherwise
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :return: A cylinder object for each point on the stack
+
+        One cylinder is created for each item on the current stack. If no items are on the stack, one
+        cylinder is created using the current workplane center.
+
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all cylinders produced fused onto it otherwise,
+        the result is the combination of all the produced cylinders.
+
+        If combine is false, the result will be a list of the cylinders produced.
+        """
+
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
+
+        offset = Vector()
+        if not centered[0]:
+            offset += Vector(radius, 0, 0)
+        if not centered[1]:
+            offset += Vector(0, radius, 0)
+        if centered[2]:
+            offset += Vector(0, 0, -height / 2)
+
+        s = Solid.makeCylinder(radius, height, offset, direct, angle)
+
+        # We want a cylinder for each point on the workplane
+        cylinders = self.eachpoint(lambda loc: s.moved(loc), True)
+
+        # If we don't need to combine everything, just return the created cylinders
+        if not combine:
+            return cylinders
+        else:
+            return self.union(cylinders, clean=clean)
 
     def wedge(
         self: T,

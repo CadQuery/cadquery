@@ -29,7 +29,7 @@ implement more constraints
     in plane, on axis, parallel to vector
 
 
-2-d operations
+2D operations
 -------------------
 
 arc construction using relative measures
@@ -47,10 +47,10 @@ trimming
 construction lines
     especially centerlines
 
-2-d fillets
+2D fillets
     for a rectangle, or for consecutive selected lines
 
-2-d chamfers
+2D chamfers
     based on rectangles, polygons, polylines, or adjacent selected lines
 
 mirror around centerline
@@ -72,7 +72,7 @@ feature snap
 polyline edges
     allow polyline to be combined with other edges/curves
 
-3-d operations
+3D operations
 ---------------------
 
 rotation/transform that return a copy
@@ -81,7 +81,6 @@ rotation/transform that return a copy
 primitive creation
     Need primitive creation for:
         * cone
-        * cylinder
         * torus
         * wedge
 

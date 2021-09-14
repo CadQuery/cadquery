@@ -289,6 +289,9 @@ class TestCadObjects(BaseTest):
         result = Vector(1, 2, 3) * 2
         self.assertEqual(Vector(2, 4, 6), result)
 
+        result = 3 * Vector(1, 2, 3)
+        self.assertEqual(Vector(3, 6, 9), result)
+
         result = Vector(2, 4, 6) / 2
         self.assertEqual(Vector(1, 2, 3), result)
 
@@ -307,7 +310,7 @@ class TestCadObjects(BaseTest):
 
     def testVectorProject(self):
         """
-        Test method to project vector to plane.
+        Test line projection and plane projection methods of cq.Vector
         """
         decimal_places = 9
 
@@ -321,12 +324,26 @@ class TestCadObjects(BaseTest):
             point.toTuple(), (59 / 7, 55 / 7, 51 / 7), decimal_places
         )
 
+        # test line projection
+        vec = Vector(10, 10, 10)
+        line = Vector(3, 4, 5)
+        angle = vec.getAngle(line)
+
+        vecLineProjection = vec.projectToLine(line)
+
+        self.assertTupleAlmostEquals(
+            vecLineProjection.normalized().toTuple(),
+            line.normalized().toTuple(),
+            decimal_places,
+        )
+        self.assertAlmostEqual(
+            vec.Length * math.cos(angle), vecLineProjection.Length, decimal_places
+        )
+
     def testVectorNotImplemented(self):
         v = Vector(1, 2, 3)
         with self.assertRaises(NotImplementedError):
             v.distanceToLine()
-        with self.assertRaises(NotImplementedError):
-            v.projectToLine()
         with self.assertRaises(NotImplementedError):
             v.distanceToPlane()
 

@@ -223,7 +223,7 @@ def getSVG(shape, opts=None):
     hidden = list(map(Shape, hidden))
     (hiddenPaths, visiblePaths) = getPaths(visible, hidden)
 
-    # get bounding box -- these are all in 2-d space
+    # get bounding box -- these are all in 2D space
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
     # width pixels for x, height pixels for y

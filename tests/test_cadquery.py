@@ -55,7 +55,7 @@ TEST_RESULT_TEMPLATE = """
 """
 
 # clean up any summary file that is in the output directory.
-# i know, this sux, but there is no other way to do this in 2.6, as we cannot do class fixutres till 2.7
+# i know, this sux, but there is no other way to do this in 2.6, as we cannot do class fixtures till 2.7
 writeStringToFile(SUMMARY_TEMPLATE, SUMMARY_FILE)
 
 
@@ -63,7 +63,7 @@ class TestCadQuery(BaseTest):
     def tearDown(self):
         """
         Update summary with data from this test.
-        This is a really hackey way of doing it-- we get a startup event from module load,
+        This is a really hacky way of doing it-- we get a startup event from module load,
         but there is no way in unittest to get a single shutdown event-- except for stuff in 2.7 and above
 
         So what we do here is to read the existing file, stick in more content, and leave it
@@ -187,7 +187,7 @@ class TestCadQuery(BaseTest):
         """
         Tests a plugin to make regular polygons around points on the stack
 
-        Demonstratings using eachpoint to allow working in local coordinates
+        Demonstrations using eachpoint to allow working in local coordinates
         to create geometry
         """
 
@@ -716,7 +716,7 @@ class TestCadQuery(BaseTest):
             .consolidateWires()
         )
 
-        # Test point equivalence for parameter, and pamater multiplied by 10:
+        # Test point equivalence for parameter, and parameter multiplied by 10:
         test_point1 = spline1.edges().val().positionAt(1.5, mode="parameter")
         test_point2 = spline2.edges().val().positionAt(15, mode="parameter")
         expected_test_point = Vector(1.625, 0.625, 0.0)
@@ -880,7 +880,7 @@ class TestCadQuery(BaseTest):
         start = ellipseArc3.vertices().objects[0]
         end = ellipseArc3.vertices().objects[1]
 
-        # swap start and end points for coparison due to different sense
+        # swap start and end points for comparison due to different sense
         self.assertTupleAlmostEquals(
             (start.X, start.Y), (p0[0] + ex_rot, p0[1] + ey_rot), 3
         )
@@ -909,7 +909,7 @@ class TestCadQuery(BaseTest):
         start = ellipseArc4.vertices().objects[0]
         end = ellipseArc4.vertices().objects[1]
 
-        # swap start and end points for coparison due to different sense
+        # swap start and end points for comparison due to different sense
         self.assertTupleAlmostEquals(
             (start.X, start.Y), (p0[0] + ex_rot - ex_rot, p0[1] + ey_rot - ey_rot), 3
         )
@@ -1486,7 +1486,7 @@ class TestCadQuery(BaseTest):
         # result has 6 faces, because it was not combined with the original
         self.assertEqual(6, t.faces().size())
         self.assertEqual(6, r.faces().size())  # original is unmodified as well
-        # subseuent operations use that context solid afterwards
+        # subsequent operations use that context solid afterwards
 
     def testSimpleWorkplane(self):
         """
@@ -1794,7 +1794,7 @@ class TestCadQuery(BaseTest):
         self.saveModel(t)
 
     def testBasicLines(self):
-        "Make a triangluar boss"
+        "Make a triangular boss"
         global OUTDIR
         s = Workplane(Plane.XY())
 
@@ -2443,6 +2443,39 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, s.solids().size())
         self.assertEqual(4, s.faces().size())
 
+    def testCylinderDefaults(self):
+        s = Workplane("XY").cylinder(20, 10)
+        self.assertEqual(1, s.size())
+        self.assertEqual(1, s.solids().size())
+        self.assertEqual(3, s.faces().size())
+        self.assertEqual(2, s.vertices().size())
+        self.assertTupleAlmostEquals(s.val().Center().toTuple(), (0, 0, 0), 3)
+
+    def testCylinderCentering(self):
+        radius = 10
+        height = 40
+        b = (True, False)
+        expected_x = (0, radius)
+        expected_y = (0, radius)
+        expected_z = (0, height / 2)
+        for (xopt, xval), (yopt, yval), (zopt, zval) in product(
+            zip(b, expected_x), zip(b, expected_y), zip(b, expected_z)
+        ):
+            s = Workplane("XY").cylinder(height, radius, centered=(xopt, yopt, zopt))
+            self.assertEqual(1, s.size())
+            self.assertTupleAlmostEquals(
+                s.val().Center().toTuple(), (xval, yval, zval), 3
+            )
+        # check centered=True produces the same result as centered=(True, True, True)
+        for val in b:
+            s0 = Workplane("XY").cylinder(height, radius, centered=val)
+            self.assertEqual(s0.size(), 1)
+            s1 = Workplane("XY").cylinder(height, radius, centered=(val, val, val))
+            self.assertEqual(s1.size(), 1)
+            self.assertTupleAlmostEquals(
+                s0.val().Center().toTuple(), s1.val().Center().toTuple(), 3
+            )
+
     def testWedgeDefaults(self):
         s = Workplane("XY").wedge(10, 10, 10, 5, 5, 5, 5)
         self.saveModel(s)
@@ -2990,7 +3023,7 @@ class TestCadQuery(BaseTest):
 
         # How far in from the edges the screwposts should be place.
         p_screwpostInset = 12.0
-        # nner Diameter of the screwpost holes, should be roughly screw diameter not including threads
+        # Inner Diameter of the screwpost holes, should be roughly screw diameter not including threads
         p_screwpostID = 4.0
         # Outer Diameter of the screwposts.\nDetermines overall thickness of the posts
         p_screwpostOD = 10.0
@@ -3682,7 +3715,7 @@ class TestCadQuery(BaseTest):
     def testWorkplaneFromTagged(self):
 
         # create a flat, wide base. Extrude one object 4 units high, another
-        # object ontop of it 6 units high. Go back to base plane. Extrude an
+        # object on top of it 6 units high. Go back to base plane. Extrude an
         # object 11 units high. Assert that top face is 11 units high.
         result = (
             Workplane("XY")
@@ -3763,7 +3796,7 @@ class TestCadQuery(BaseTest):
 
     def test_interpPlate(self):
         """
-        Tests the interpPlate() functionnalites
+        Tests the interpPlate() functionalities
         Numerical values of Areas and Volumes were obtained with the Area() and Volume() functions on a Linux machine under Debian 10 with python 3.7.
         """
 

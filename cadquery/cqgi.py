@@ -153,7 +153,7 @@ class ShapeResult(object):
 class BuildResult(object):
     """
     The result of executing a CadQuery script.
-    The success property contains whether the exeuction was successful.
+    The success property contains whether the execution was successful.
 
     If successful, the results property contains a list of all results,
     and the first_result property contains the first result.

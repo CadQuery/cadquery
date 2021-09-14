@@ -90,7 +90,7 @@ You can select Vertices, Edges, Faces, Solids, and Wires using selectors.
 
 Think of selectors as the equivalent of your hand and mouse, if you were to build an object using a conventional CAD system.
 
-You can learn more about selectors :ref:`selectors`
+See :ref:`selectors` to learn more.
 
 
 Construction Geometry
@@ -99,7 +99,7 @@ Construction geometry are features that are not part of the object, but are only
 A common example might be to define a rectangle, and then use the corners to define the location of a set of holes.
 
 Most CadQuery construction methods provide a ``forConstruction`` keyword, which creates a feature that will only be used
-to locate other features
+to locate other features.
 
 
 The Stack
@@ -295,7 +295,7 @@ Which produces the output:
 The first thing to note is that this is a different :class:`~cadquery.Workplane` object to the
 previous one, and in the :attr:`~cadquery.Workplane.parent` attribute of this
 :class:`~cadquery.Workplane` is our previous :class:`~cadquery.Workplane`. Returning a new instance
-of :class:`~caduqery.Workplane` is the normal behaviour of most :class:`~cadquery.Workplane` methods
+of :class:`~cadquery.Workplane` is the normal behaviour of most :class:`~cadquery.Workplane` methods
 (with some exceptions, as will be shown below) and this is how the `chaining`_ concept is
 implemented.
 
@@ -560,14 +560,14 @@ another :class:`~cadquery.Workplane` method).
 
 The next step is to extrude this circle and create a cylindrical protrusion::
 
-    part = part.extrude(1)
+    part = part.extrude(1, clean=False)
 
 Now:
 
 .. code-block:: none
 
     Workplane object at 0xafd0:
-      parent: Workplane object at 0x6df0
+      parent: Workplane object at 0xe790
       plane: Plane object at 0x3e80:
         origin: (0.5, 0.0, 0.0)
         z direction: (1.0, 0.0, 0.0)
@@ -580,6 +580,16 @@ Now:
 The :meth:`~cadquery.Workplane.extrude` method has cleared all the pending wires and edges. The
 :attr:`~cadquery.Workplane.objects` attribute contains the final :class:`~cadquery.Compound` object
 that is shown in the 3D view above.
+
+
+.. note::
+  The :meth:`~cadquery.Workplane.extrude` has an argument for ``clean`` which defaults to ``True``.
+  This extrudes the pending wires (creating a new :class:`~cadquery.Workplane` object), then runs
+  the :meth:`~cadquery.Workplane.clean` method to refine the result, creating another
+  :class:`~cadquery.Workplane`. If you were to run the example with the default
+  ``clean=True`` then you would see an intermediate
+  :class:`~cadquery.Workplane` object in :attr:`~cadquery.Workplane.parent`
+  rather than the object from the previous step.
 
 
 Assemblies
