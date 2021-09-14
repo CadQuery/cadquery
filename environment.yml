@@ -26,3 +26,4 @@ dependencies:
   - pip:
     - "--editable=."
     - sphinxcadquery
+    - multimethod
