@@ -105,7 +105,7 @@ class TestCadQuery(BaseTest):
 
         import OCP
 
-        self.assertEqual(type(r), OCP.TopoDS.TopoDS_Compound)
+        self.assertEqual(type(r), OCP.TopoDS.TopoDS_Solid)
 
     def testToSVG(self):
         """
