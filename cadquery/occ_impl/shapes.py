@@ -2550,7 +2550,7 @@ class Mixin3D(object):
 
             shape = feat.Shape()
 
-        return self.__class__(shape)
+        return tcast(T, self.__class__(shape))
 
 
 class Solid(Shape, Mixin3D):
