@@ -3097,7 +3097,7 @@ class Solid(Shape, Mixin3D):
         return cls(builder.Shape())
 
     def dprism(
-        self: Union[Shape, "Solid"],
+        self,
         basis: Optional[Face],
         profiles: List[Wire],
         depth: Optional[float] = None,
