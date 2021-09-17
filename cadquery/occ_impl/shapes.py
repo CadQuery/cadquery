@@ -2377,7 +2377,9 @@ class Shell(Shape):
 
         return cls(s)
 
+
 TS = TypeVar("TS", bound=ShapeProtocol)
+
 
 class Mixin3D(object):
     def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
