@@ -1,1 +1,1 @@
-CadQuery implementation based on PythonOCC
+CadQuery implementation based on OCP
