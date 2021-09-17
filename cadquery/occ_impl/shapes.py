@@ -2377,6 +2377,7 @@ class Shell(Shape):
 
         return cls(s)
 
+TS = TypeVar("TS", bound=ShapeProtocol)
 
 class Mixin3D(object):
     def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
@@ -2507,8 +2508,8 @@ class Mixin3D(object):
 
         return solid_classifier.State() == ta.TopAbs_IN or solid_classifier.IsOnAFace()
 
-    def dprism(  # type: ignore[misc]
-        self: T,
+    def dprism(
+        self: TS,
         basis: Optional[Face],
         profiles: List[Wire],
         depth: Optional[float] = None,
@@ -2516,7 +2517,7 @@ class Mixin3D(object):
         upToFace: Optional[Face] = None,
         thruAll: bool = True,
         additive: bool = True,
-    ) -> T:
+    ) -> TS:
         """
         Make a prismatic feature (additive or subtractive)
 
