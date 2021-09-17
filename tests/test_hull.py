@@ -1,3 +1,5 @@
+import pytest
+
 import cadquery as cq
 from cadquery import hull
 
@@ -19,3 +21,12 @@ def test_hull():
     assert len(h.Vertices()) == 11
     assert h.IsClosed()
     assert h.isValid()
+
+
+def test_validation():
+
+    with pytest.raises(ValueError):
+
+        e1 = cq.Edge.makeEllipse(2, 1)
+        c1 = cq.Edge.makeCircle(0.5, (-1.5, 0.5, 0))
+        hull.find_hull([c1, e1])
