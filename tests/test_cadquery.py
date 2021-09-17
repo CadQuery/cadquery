@@ -3211,8 +3211,13 @@ class TestCadQuery(BaseTest):
                 .workplane(offset=10)
                 .transformed((90, 0, 0))
                 .circle(2)
-                .extrude(until="next")
+                .extrude(until="next", both=True)
             )
+
+        # Test that a ValueError for:
+        # Extrusion in both direction while having no faces to extrude
+        with self.assertRaises(ValueError):
+            wp = Workplane().circle(2).extrude(until="next", both=True)
 
         # Check that a ValueError is raised if the user want to use `until` with a face and `combine` = False
         # This isn't possible as the result of the extrude operation automatically combine the result with the base solid
