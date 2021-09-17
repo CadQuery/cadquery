@@ -2507,7 +2507,7 @@ class Mixin3D(object):
 
         return solid_classifier.State() == ta.TopAbs_IN or solid_classifier.IsOnAFace()
 
-    def dprism(
+    def dprism(  # type: ignore[misc]
         self: T,
         basis: Optional[Face],
         profiles: List[Wire],
@@ -2550,7 +2550,7 @@ class Mixin3D(object):
 
             shape = feat.Shape()
 
-        return tcast(T, self.__class__(shape))
+        return self.__class__(shape)
 
 
 class Solid(Shape, Mixin3D):
