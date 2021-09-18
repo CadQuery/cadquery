@@ -1044,7 +1044,7 @@ class Shape(object):
         direction: Optional[Literal["AlongAxis", "Opposite"]] = None,
     ):
         """
-        Computes the intersections between the provided line and the faces of the provided shape
+        Computes the intersections between the provided line and the faces of this Shape
 
         :point: Base point for defining a line
         :axis: Axis on which the line rest
