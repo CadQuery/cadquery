@@ -3499,16 +3499,11 @@ class Workplane(object):
         It is the basis for cutBlind, extrude, cutThruAll, and all similar methods.
         """
 
-        def getFacesList(eDir, additive, both=False):
+        def getFacesList(eDir, direction, both=False):
             """
             Utility function to make the code further below more clean and tidy
             Performs some test and raise appropriate error when no Faces are found for extrusion
             """
-            if additive:
-                direction = "AlongAxis"
-            else:
-                direction = "Opposite"
-
             facesList = self.findSolid().facesIntersectedByLine(
                 ws[0].Center(), eDir, direction=direction
             )
