@@ -1070,7 +1070,7 @@ class Shape(object):
         intersectMaker = BRepIntCurveSurface_Inter()
         intersectMaker.Init(shape, line, tol)
 
-        faces_dist = []  # using a list instead of a dictionnary to be able to sort it
+        faces_dist = []  # using a list instead of a dictionary to be able to sort it
         while intersectMaker.More():
             interPt = intersectMaker.Pnt()
             interDirMk = gce_MakeDir(oc_point, interPt)
