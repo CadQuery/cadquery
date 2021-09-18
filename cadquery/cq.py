@@ -3031,7 +3031,7 @@ class Workplane(object):
             )
         else:
             raise ValueError(
-                "Valid option for until face extrusion are 'next' and 'last'"
+                f"Do not know how to handle until argument of type {type(until)}"
             )
 
         if combine:
