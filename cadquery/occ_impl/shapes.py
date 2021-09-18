@@ -1105,7 +1105,7 @@ class Shape(object):
                 )  # will sort all intersected faces by distance whatever the direction is
             else:
                 raise ValueError(
-                    "Unvalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'."
+                    "Invalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'."
                 )
 
             intersectMaker.Next()
