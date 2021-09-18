@@ -3421,7 +3421,7 @@ class Workplane(object):
             s = solidRef.cut(toCut)
         else:
             raise ValueError(
-                "Valid options for until face extrusion are 'next' and 'last'"
+                f"Do not know how to handle until argument of type {type(until)}"
             )
         if clean:
             s = s.clean()
