@@ -12,7 +12,7 @@ from typing import (
 )
 from typing_extensions import Literal
 from numbers import Real
-from math import tan, sin, cos, pi, radians
+from math import tan, sin, cos, pi, radians, degrees
 from itertools import product, chain
 from multimethod import multimethod
 from typish import instance_of, get_type
@@ -695,22 +695,23 @@ class Sketch(object):
         # optimize
         solver = SketchConstraintSolver(entities, constraints, geoms)
         res, self._solve_status = solver.solve()
+        self._solve_status["x"] = res
 
         # translate back the solution - update edges
         for g, (k, i) in zip(geoms, e2i.items()):
-            r = res[i]
+            el = res[i]
 
             # dispatch on geom type
             if g == "LINE":
-                p1 = Vector(r[0], r[1])
-                p2 = Vector(r[2], r[3])
+                p1 = Vector(el[0], el[1])
+                p2 = Vector(el[2], el[3])
                 e = Edge.makeLine(p1, p2)
-            elif g == "ARC":
-                p = Vector(r[0], r[1])
-                r = r[2]
-                a1 = r[3]
-                a2 = r[4]
-                e = Edge.makeCircle(r, p, angle1=a1, angle2=a2)
+            elif g == "CIRCLE":
+                p = Vector(el[0], el[1])
+                r = el[2]
+                a1 = el[3]
+                a2 = el[4]
+                e = Edge.makeCircle(r, p, angle1=degrees(a2), angle2=degrees(a1))
 
             # overwrite the low level object
             self._tags[k][0].wrapped = e.wrapped

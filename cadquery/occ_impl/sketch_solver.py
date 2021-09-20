@@ -4,7 +4,7 @@ from nptyping import NDArray as Array
 from itertools import accumulate, chain
 from math import sin, cos
 
-from numpy import array
+from numpy import array, full, inf
 from numpy.linalg import norm
 import nlopt
 
@@ -70,6 +70,8 @@ class SketchConstraintSolver(object):
         self.ne = len(self.entities)
         self.nc = len(self.constraints)
 
+        # validate and transfrom constraints
+
         # indices of x corresponding to the entities
         self.ixs = [0] + list(accumulate(len(e) for e in self.entities))
 
@@ -78,6 +80,8 @@ class SketchConstraintSolver(object):
     ) -> Tuple[
         Callable[[Array[(Any,), float]], float],
         Callable[[Array[(Any,), float], Array[(Any,), float]], None],
+        Array[(Any,), float],
+        Array[(Any,), float],
     ]:
         def invalid_args(*t):
 
@@ -85,11 +89,11 @@ class SketchConstraintSolver(object):
 
         def arc_first(x):
 
-            return array((x[0] + x[2] * sin(x[3]), x[1] + x[2] * cos(x[3])))
+            return array((x[0] + x[2] * cos(x[3]), x[1] + x[2] * sin(x[3])))
 
         def arc_last(x):
 
-            return array((x[0] + x[2] * sin(x[4]), x[1] + x[2] * cos(x[4])))
+            return array((x[0] + x[2] * cos(x[4]), x[1] + x[2] * sin(x[4])))
 
         def arc_point(x, val):
 
@@ -97,7 +101,7 @@ class SketchConstraintSolver(object):
                 rv = x[:2]
             else:
                 a = x[3] + val * (x[4] - x[3])
-                rv = array((x[0] + x[2] * sin(a), x[1] + x[2] * cos(a)))
+                rv = array((x[0] + x[2] * cos(a), x[1] + x[2] * sin(a)))
 
             return rv
 
@@ -107,11 +111,11 @@ class SketchConstraintSolver(object):
 
         def arc_first_tangent(x):
 
-            return array((cos(x[3]), sin(x[3])))
+            return gp_Vec2d(-sin(x[3]), -cos(x[3]))
 
         def arc_last_tangent(x):
 
-            return array((cos(x[4]), sin(x[4])))
+            return gp_Vec2d(sin(x[4]), cos(x[4]))
 
         def fixed_cost(x, t, val):
 
@@ -130,7 +134,7 @@ class SketchConstraintSolver(object):
                 v2 = x2[:2]
             elif t1 == "CIRCLE" and t2 == "CIRCLE":
                 v1 = arc_last(x1)
-                v2 = arc_first(x1)
+                v2 = arc_first(x2)
             else:
                 raise invalid_args(t1, t2)
 
@@ -287,12 +291,20 @@ class SketchConstraintSolver(object):
                         rv[k] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
                         args[2][j] = x2[j]
 
-        return f, grad
+        # generate lower and upper bounds for optimization
+        lb = full(ixs[-1], -inf)
+        ub = full(ixs[-1], +inf)
+
+        for i, g in enumerate(geoms):
+            if g == "CIRCLE":
+                lb[i + 2] = 0
+
+        return f, grad, lb, ub
 
     def solve(self) -> Tuple[Sequence[Sequence[float]], Dict[str, Any]]:
 
         x0 = array(list(chain.from_iterable(self.entities))).ravel()
-        f, grad = self._cost()
+        f, grad, lb, ub = self._cost()
 
         def func(x, g):
 
@@ -303,6 +315,8 @@ class SketchConstraintSolver(object):
 
         opt = nlopt.opt(nlopt.LD_SLSQP, len(x0))
         opt.set_min_objective(func)
+        opt.set_lower_bounds(lb)
+        opt.set_upper_bounds(ub)
 
         opt.set_ftol_abs(0)
         opt.set_ftol_rel(0)
