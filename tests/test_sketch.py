@@ -32,3 +32,29 @@ def test_constraints():
     s1.assemble()
 
     assert s1._faces.isValid()
+
+    s2 = (
+        Sketch()
+        .arc((0.0, 0.0), (-0.5, 0.5), (0.0, 1.0), "a1")
+        .arc((0.0, 1.0), (0.5, 1.5), (1.0, 1.0), "a2")
+        .segment((1.0, 0.0), "s1")
+        .close("s2")
+    )
+
+    s2.constrain("s2", "Fixed", None)
+    s2.constrain("s1", "s2", "Coincident", None)
+    s2.constrain("a2", "s1", "Coincident", None)
+    s2.constrain("s2", "a1", "Coincident", None)
+    s2.constrain("a1", "a2", "Coincident", None)
+    s2.constrain("s1", "s2", "Angle", pi / 2)
+    s2.constrain("s2", "a1", "Angle", pi / 2)
+    s2.constrain("a1", "a2", "Angle", -pi / 2)
+    s2.constrain("a2", "s1", "Angle", pi / 2)
+
+    s2.solve()
+
+    assert s1._solve_status["status"] == 4
+
+    s2.assemble()
+
+    assert s1._faces.isValid()
