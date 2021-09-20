@@ -3550,7 +3550,7 @@ class Workplane(object):
             if upToFace is not None:
                 baseSolid = self.findSolid() if baseSolid is None else thisObj
                 if isinstance(upToFace, int):
-                    facesList = getFacesList(eDir, additive, both=both)
+                    facesList = getFacesList(eDir, direction, both=both)
                     limitFace = facesList[upToFace]
                     if (
                         baseSolid.isInside(ws[0].Center())
@@ -3571,7 +3571,7 @@ class Workplane(object):
                 )
 
                 if both:
-                    facesList2 = getFacesList(eDir.multiply(-1.0), additive, both=both)
+                    facesList2 = getFacesList(eDir.multiply(-1.0), direction, both=both)
                     limitFace2 = facesList2[upToFace]
                     thisObj2 = Solid.dprism(
                         self.findSolid(),
