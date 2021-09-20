@@ -2988,9 +2988,7 @@ class Workplane(object):
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
         :param until: the distance to extrude, normal to the workplane plane
-        :type until: float, negative means opposite the normal direction
-        :type until: Literal, 'next' set the extrude until the next face orthogonal to the wire normal, 'last' sets the extrusion until the last face
-        :type until: Face, extrude until the provided face
+        :param until: The distance to extrude, normal to the workplane plane. When a float is passed, the extrusion extends this far and a negative value is in the opposite direction to the normal of the plane. The string "next" extrudes until the next face orthogonal to the wire normal. "last" extrudes to the last face. If a object of type Face is passed then the extrusion will extend until this face.
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
@@ -3387,11 +3385,7 @@ class Workplane(object):
         Similar to extrude, except that a solid in the parent chain is required to remove material
         from. cutBlind always removes material from a part.
 
-        :param until: distance to extrude before cutting
-        :type until: float, >0 means in the positive direction of the workplane normal,
-            <0 means in the negative direction
-        :type until: Literal, 'next' set the cut until the next face orthogonal to the wire normal, 'last' sets the extrusion until the last face
-        :type until: Face, cut until the provided face
+        :param until: The distance to cut to, normal to the workplane plane. When a negative float is passed the cut extends this far in the opposite direction to the normal of the plane (i.e in the solid). The string "next" cuts until the next face orthogonal to the wire normal. "last" cuts to the last face. If a object of type Face is passed then the cut will extend until this face.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
         :raises ValueError: if there is no solid to subtract from in the chain
