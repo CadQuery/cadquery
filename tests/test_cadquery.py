@@ -3320,6 +3320,19 @@ class TestCadQuery(BaseTest):
                 (0, 0, 0), (0, 0, 1), direction="Z"
             )
 
+        pts = [(-10,0),(-5,0),(0,0),(5,0),(10,0)]
+        shape = Workplane().box(20,10,5).faces(">Z").workplane().pushPoints(pts).box(1,10,10)
+        faces = shape.val().facesIntersectedByLine((0,0,7.5), (1,0,0))
+        mx_face = shape.faces("<X").val()
+        px_face = shape.faces(">X").val()
+
+        self.assertTrue(len(faces) == 10)
+        #extremum faces are last or before last face
+        self.assertTrue(mx_face in faces[-2:])
+        self.assertTrue(px_face in faces[-2:])
+
+
+
     def testExtrude(self):
         """
         Test extrude
