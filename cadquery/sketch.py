@@ -11,7 +11,6 @@ from typing import (
     cast as tcast,
 )
 from typing_extensions import Literal
-from numbers import Real
 from math import tan, sin, cos, pi, radians, degrees
 from itertools import product, chain
 from multimethod import multimethod
@@ -30,7 +29,8 @@ from .occ_impl.sketch_solver import (
 )
 
 Modes = Literal["a", "s", "i"]
-Point = Union[Vector, Tuple[float, float], Tuple[int, float], Tuple[float, int]]
+Real = Union[float, int]
+Point = Union[Vector, Tuple[Real, Real]]
 
 
 class Constraint(object):
@@ -114,7 +114,7 @@ class Sketch(object):
     def face(
         self,
         b: Union[Wire, Iterable[Edge]],
-        angle: float = 0,
+        angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
         ignore_selection: bool = False,
@@ -134,9 +134,9 @@ class Sketch(object):
 
     def rect(
         self,
-        w: float,
-        h: float,
-        angle: float = 0,
+        w: Real,
+        h: Real,
+        angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
     ) -> "Sketch":
@@ -145,9 +145,7 @@ class Sketch(object):
 
         return self.each(lambda l: res.located(l), mode, tag)
 
-    def circle(
-        self, r: float, mode: Modes = "a", tag: Optional[str] = None
-    ) -> "Sketch":
+    def circle(self, r: Real, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
 
         res = Face.makeFromWires(Wire.makeCircle(r, Vector(), Vector(0, 0, 1)))
 
@@ -155,9 +153,9 @@ class Sketch(object):
 
     def ellipse(
         self,
-        a1: float,
-        a2: float,
-        angle: float = 0,
+        a1: Real,
+        a2: Real,
+        angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
     ) -> "Sketch":
@@ -172,11 +170,11 @@ class Sketch(object):
 
     def trapezoid(
         self,
-        w: float,
-        h: float,
-        a1: float,
+        w: Real,
+        h: Real,
+        a1: Real,
         a2: Optional[float] = None,
-        angle: float = 0,
+        angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
     ) -> "Sketch":
@@ -190,9 +188,9 @@ class Sketch(object):
 
     def slot(
         self,
-        w: float,
-        h: float,
-        angle: float = 0,
+        w: Real,
+        h: Real,
+        angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
     ) -> "Sketch":
@@ -215,9 +213,9 @@ class Sketch(object):
 
     def regularPolygon(
         self,
-        r: float,
+        r: Real,
         n: int,
-        angle: float = 0,
+        angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
     ) -> "Sketch":
@@ -232,7 +230,7 @@ class Sketch(object):
     def polygon(
         self,
         pts: Iterable[Point],
-        angle: float = 0,
+        angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
     ) -> "Sketch":
@@ -243,7 +241,7 @@ class Sketch(object):
 
     # distribute locations
 
-    def rarray(self, xs: float, ys: float, nx: int, ny: int) -> "Sketch":
+    def rarray(self, xs: Real, ys: Real, nx: int, ny: int) -> "Sketch":
 
         locs = []
 
@@ -263,7 +261,7 @@ class Sketch(object):
         )
 
     def parray(
-        self, r: float, a1: float, a2: float, n: int, rotate: bool = True
+        self, r: Real, a1: Real, a2: Real, n: int, rotate: bool = True
     ) -> "Sketch":
 
         if n < 2:
@@ -305,7 +303,7 @@ class Sketch(object):
         )
 
     def distribute(
-        self, n: int, start: float = 0, stop: float = 1, rotate: bool = True
+        self, n: int, start: Real = 0, stop: Real = 1, rotate: bool = True
     ) -> "Sketch":
 
         params = [start + i * (stop - start) / (n - 1) for i in range(n)]
@@ -401,9 +399,7 @@ class Sketch(object):
 
         return self
 
-    def offset(
-        self, d: float, mode: Modes = "a", tag: Optional[str] = None
-    ) -> "Sketch":
+    def offset(self, d: Real, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
 
         rv = (el.offset2D(d) for el in self._selection if isinstance(el, Wire))
 
@@ -412,7 +408,7 @@ class Sketch(object):
 
         return self
 
-    def fillet(self, d: float) -> "Sketch":
+    def fillet(self, d: Real) -> "Sketch":
 
         self._faces = Compound.makeCompound(
             el.fillet2D(d, (el for el in self._selection if isinstance(el, Vertex)))
@@ -422,7 +418,7 @@ class Sketch(object):
 
         return self
 
-    def chamfer(self, d: float) -> "Sketch":
+    def chamfer(self, d: Real) -> "Sketch":
 
         self._faces = Compound.makeCompound(
             el.chamfer2D(d, (el for el in self._selection if isinstance(el, Vertex)))
@@ -565,8 +561,8 @@ class Sketch(object):
     @segment.register
     def segment(
         self,
-        l: float,
-        a: float,
+        l: Real,
+        a: Real,
         tag: Optional[str] = None,
         forConstruction: bool = False,
     ) -> "Sketch":
@@ -609,9 +605,9 @@ class Sketch(object):
     def arc(
         self,
         c: Point,
-        r: float,
-        a1: float,
-        a2: float,
+        r: Real,
+        a1: Real,
+        a2: Real,
         tag: Optional[str] = None,
         forConstruction: bool = False,
     ) -> "Sketch":
