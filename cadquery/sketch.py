@@ -432,6 +432,12 @@ class Sketch(object):
 
         return self
 
+    def clean(self) -> "Sketch":
+
+        self._faces = self._faces.clean()
+
+        return self
+
     # selection
 
     def _select(
@@ -614,8 +620,33 @@ class Sketch(object):
 
         return self.edge(val, tag, forConstruction)
 
-    def spline(self, pts: Iterable[Point], tag: Optional[str] = None) -> "Sketch":
-        ...
+    @multimethod
+    def spline(
+        self,
+        pts: Iterable[Point],
+        tangents: Optional[Iterable[Point]],
+        periodic: bool,
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
+    ) -> "Sketch":
+
+        val = Edge.makeSpline(
+            [Vector(*p) for p in pts],
+            [Vector(*t) for t in tangents] if tangents else None,
+            periodic,
+        )
+
+        return self.edge(val, tag, forConstruction)
+
+    @spline.register
+    def spline(
+        self,
+        pts: Iterable[Point],
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
+    ) -> "Sketch":
+
+        return self.spline(pts, None, False, tag, forConstruction)
 
     def close(self, tag: Optional[str] = None) -> "Sketch":
 
