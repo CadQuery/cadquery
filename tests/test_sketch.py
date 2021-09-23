@@ -75,7 +75,51 @@ def test_modes():
 
 def test_distribute():
 
-    pass
+    s1 = Sketch().rarray(2, 2, 3, 3).rect(1, 1)
+
+    assert s1._faces.Area() == approx(9)
+    assert len(s1._faces.Faces()) == 9
+
+    s2 = Sketch().parray(2, 0, 90, 3).rect(1, 1)
+
+    assert s2._faces.Area() == approx(3)
+    assert len(s2._faces.Faces()) == 3
+
+    with raises(ValueError):
+        Sketch().rarray(2, 2, 3, 0).rect(1, 1)
+
+    with raises(ValueError):
+        Sketch().parray(2, 0, 90, 0).rect(1, 1)
+
+    s3 = Sketch().circle(4, mode="c", tag="c").edges(tag="c").distribute(3).rect(1, 1)
+
+    assert s2._faces.Area() == approx(3)
+    assert len(s3._faces.Faces()) == 3
+    assert len(s3.reset().vertices("<X")._selection) == 2
+
+    for f in s3._faces.Faces():
+        assert f.Center().Length == approx(4)
+
+    s4 = (
+        Sketch()
+        .circle(4, mode="c", tag="c")
+        .edges(tag="c")
+        .distribute(3, rotate=False)
+        .rect(1, 1)
+    )
+
+    assert s4._faces.Area() == approx(3)
+    assert len(s4._faces.Faces()) == 3
+    assert len(s4.reset().vertices("<X")._selection) == 4
+
+    for f in s4._faces.Faces():
+        assert f.Center().Length == approx(4)
+
+    with raises(ValueError):
+        Sketch().rect(2, 2).faces().distribute(5)
+
+    with raises(ValueError):
+        Sketch().rect(2, 2).distribute(5)
 
 
 def test_modifiers():
