@@ -1,7 +1,91 @@
 from cadquery.sketch import Sketch, Vector
 
 from pytest import approx, raises
-from math import pi
+from math import pi, sqrt
+
+
+def test_face_interface():
+
+    s1 = Sketch().rect(1, 2, 45)
+
+    assert s1._faces.Area() == approx(2)
+    assert s1.vertices(">X")._selection[0].toTuple()[0] == approx(1.5 / sqrt(2))
+
+    s2 = Sketch().circle(1)
+
+    assert s2._faces.Area() == approx(pi)
+
+    s3 = Sketch().ellipse(2, 0.5)
+
+    assert s3._faces.Area() == approx(pi)
+
+    s4 = Sketch().trapezoid(2, 0.5, 45)
+
+    assert s4._faces.Area() == approx(0.75)
+
+    s4 = Sketch().trapezoid(2, 0.5, 45)
+
+    assert s4._faces.Area() == approx(0.75)
+
+    s5 = Sketch().slot(3, 2)
+
+    assert s5._faces.Area() == approx(6 + pi)
+    assert s5.edges(">Y")._selection[0].Length() == approx(3)
+
+    s6 = Sketch().regularPolygon(1, 5)
+
+    assert len(s6.vertices()._selection) == 5
+    assert s6.vertices(">Y")._selection[0].toTuple()[1] == approx(1)
+
+    s7 = Sketch().polygon([(0, 0), (0, 1), (1, 0)])
+
+    assert len(s7.vertices()._selection) == 3
+    assert s7._faces.Area() == approx(0.5)
+
+
+def test_modes():
+
+    s1 = Sketch().rect(2, 2).rect(1, 1, mode="a")
+
+    assert s1._faces.Area() == approx(4)
+    assert len(s1._faces.Faces()) == 2
+
+    s2 = Sketch().rect(2, 2).rect(1, 1, mode="s")
+
+    assert s2._faces.Area() == approx(4 - 1)
+    assert len(s2._faces.Faces()) == 1
+
+    s3 = Sketch().rect(2, 2).rect(1, 1, mode="i")
+
+    assert s3._faces.Area() == approx(1)
+    assert len(s3._faces.Faces()) == 1
+
+    s4 = Sketch().rect(2, 2).rect(1, 1, mode="c", tag="t")
+
+    assert s4._faces.Area() == approx(4)
+    assert len(s4._faces.Faces()) == 1
+    assert s4._tags["t"][0].Area() == approx(1)
+
+    with raises(ValueError):
+        Sketch().rect(2, 2).rect(1, 1, mode="c")
+
+    with raises(ValueError):
+        Sketch().rect(2, 2).rect(1, 1, mode="dummy")
+
+
+def test_distribute():
+
+    pass
+
+
+def test_modifiers():
+
+    pass
+
+
+def test_edge_interface():
+
+    pass
 
 
 def test_assemble():
@@ -9,6 +93,23 @@ def test_assemble():
     s1 = Sketch()
     s1.segment((0.0, 0), (0.0, 2.0))
     s1.segment(Vector(4.0, -1)).close().arc((0.7, 0.6), 0.4, 0.0, 360.0).assemble()
+
+
+def test_constraint_validation():
+
+    with raises(ValueError):
+        Sketch().segment(1.0, 1.0, "s").constrain("s", "Dummy", None)
+
+    with raises(ValueError):
+        Sketch().segment(1.0, 1.0, "s").constrain("s", "s", "Fixed", None)
+
+    with raises(ValueError):
+        Sketch().spline([(1.0, 1.0), (2.0, 1.0), (0.0, 0.0)], "s").constrain(
+            "s", "Fixed", None
+        )
+
+    with raises(ValueError):
+        Sketch().segment(1.0, 1.0, "s").constrain("s", "Fixed", 1)
 
 
 def test_constraint_solver():
@@ -122,20 +223,3 @@ def test_constraint_solver():
     midpoint = (seg2.startPoint() + seg2.endPoint()) / 2
 
     (midpoint - seg1.startPoint()).Length == approx(2)
-
-
-def test_constraint_validation():
-
-    with raises(ValueError):
-        Sketch().segment(1.0, 1.0, "s").constrain("s", "Dummy", None)
-
-    with raises(ValueError):
-        Sketch().segment(1.0, 1.0, "s").constrain("s", "s", "Fixed", None)
-
-    with raises(ValueError):
-        Sketch().spline([(1.0, 1.0), (2.0, 1.0), (0.0, 0.0)], "s").constrain(
-            "s", "Fixed", None
-        )
-
-    with raises(ValueError):
-        Sketch().segment(1.0, 1.0, "s").constrain("s", "Fixed", 1)
