@@ -243,6 +243,9 @@ class Sketch(object):
 
     def rarray(self, xs: Real, ys: Real, nx: int, ny: int) -> "Sketch":
 
+        if nx < 1 or ny < 1:
+            raise ValueError(f"At least 1 elements required, requested {nx}, {ny}")
+
         locs = []
 
         offset = Vector((nx - 1) * xs, (ny - 1) * ys) * 0.5
@@ -264,8 +267,8 @@ class Sketch(object):
         self, r: Real, a1: Real, a2: Real, n: int, rotate: bool = True
     ) -> "Sketch":
 
-        if n < 2:
-            raise ValueError(f"At least 2 elements required, requested {n}")
+        if n < 1:
+            raise ValueError(f"At least 1 elements required, requested {n}")
 
         x = r * sin(radians(a1))
         y = r * cos(radians(a1))
@@ -306,7 +309,10 @@ class Sketch(object):
         self, n: int, start: Real = 0, stop: Real = 1, rotate: bool = True
     ) -> "Sketch":
 
-        params = [start + i * (stop - start) / (n - 1) for i in range(n)]
+        if not self._selection:
+            raise ValueError("Nothing selected to distirbute over")
+
+        params = [start + i * (stop - start) / n for i in range(n + 1)]
 
         locs = []
         for el in self._selection:
@@ -372,7 +378,7 @@ class Sketch(object):
         elif mode == "s":
             self._faces = self._faces.cut(*res)
         elif mode == "i":
-            self._faces = Compound.makeCompound(res).cut(self._faces)
+            self._faces = self._faces.intersect(*res)
         elif mode == "c":
             if not tag:
                 raise ValueError("No tag specified - the geometry will be unreachable")
