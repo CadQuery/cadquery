@@ -3018,15 +3018,17 @@ class Workplane(object):
 
             r = self._extrude(distance=None, both=both, taper=taper, upToFace=faceIndex)
 
-        elif isinstance(until, Face):
+        elif isinstance(until, Face) and combine:
             r = self._extrude(None, both=both, taper=taper, upToFace=until)
+
         elif isinstance(until, (int, float)):
             r = self._extrude(until, both=both, taper=taper, upToFace=None)
 
-        elif isinstance(until, str) and combine is False:
+        elif isinstance(until, (str, Face)) and combine is False:
             raise ValueError(
                 "`combine` can't be set to False when extruding until a face"
             )
+
         else:
             raise ValueError(
                 f"Do not know how to handle until argument of type {type(until)}"

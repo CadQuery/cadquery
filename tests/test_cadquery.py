@@ -3233,6 +3233,22 @@ class TestCadQuery(BaseTest):
                 .extrude(until="next", combine=False)
             )
 
+        # Same as previous test, but use an object of type Face
+        with self.assertRaises(ValueError):
+            wp = (
+                Workplane()
+                .box(5, 5, 5)
+                .faces(">X")
+            )
+            face0 = wp.val()
+            wp = (
+                wp
+                .workplane(offset=10)
+                .transformed((90, 0, 0))
+                .circle(2)
+                .extrude(until=face0, combine=False)
+            )
+
         # Test extrude up to next face when workplane is inside a solid (which should still extrude
         # past solid surface and up to next face)
         # make an I-beam shape
