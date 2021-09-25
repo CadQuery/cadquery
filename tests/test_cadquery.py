@@ -3233,6 +3233,29 @@ class TestCadQuery(BaseTest):
                 .extrude(until="next", combine=False)
             )
 
+        # Test extrude up to next face when workplane is inside a solid (which should still extrude
+        # past solid surface and up to next face)
+        # make an I-beam shape
+        part = (
+            Workplane()
+            .tag("base")
+            .box(10, 1, 1, centered=True)
+            .faces(">Z")
+            .workplane()
+            .box(1, 1, 10, centered=(True, True, False))
+            .faces(">Z")
+            .workplane()
+            .box(10, 1, 1, centered=(True, True, False))
+            # make an extrusion that starts inside the existing solid
+            .workplaneFromTagged("base")
+            .center(3, 0)
+            .circle(0.4)
+            # "next" should extrude to the top of the I-beam, not the bottom (0.5 units away)
+            .extrude("next")
+        )
+        part_section = part.faces("<Z").workplane().section(-5)
+        self.assertEqual(part_section.faces().size(), 2)
+
     def testCutBlindUntilFace(self):
         """
         Test untilNextFace and untilLastFace options of Workplane.cutBlind()

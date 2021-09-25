@@ -3553,13 +3553,14 @@ class Workplane(object):
                 baseSolid = self.findSolid() if baseSolid is None else thisObj
                 if isinstance(upToFace, int):
                     facesList = getFacesList(eDir, direction, both=both)
-                    limitFace = facesList[upToFace]
                     if (
                         baseSolid.isInside(ws[0].Center())
                         and additive
                         and upToFace == 0
                     ):
                         upToFace = 1  # extrude until next face outside the solid
+
+                    limitFace = facesList[upToFace]
                 else:
                     limitFace = upToFace
 
