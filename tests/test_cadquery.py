@@ -3235,15 +3235,10 @@ class TestCadQuery(BaseTest):
 
         # Same as previous test, but use an object of type Face
         with self.assertRaises(ValueError):
-            wp = (
-                Workplane()
-                .box(5, 5, 5)
-                .faces(">X")
-            )
+            wp = Workplane().box(5, 5, 5).faces(">X")
             face0 = wp.val()
             wp = (
-                wp
-                .workplane(offset=10)
+                wp.workplane(offset=10)
                 .transformed((90, 0, 0))
                 .circle(2)
                 .extrude(until=face0, combine=False)
