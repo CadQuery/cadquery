@@ -3005,7 +3005,7 @@ class Workplane(object):
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack. Note that when extruding
-          until a specified face, combine can be False
+          until a specified face, combine can not be False
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
         """
