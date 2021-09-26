@@ -382,9 +382,9 @@ class NoOutputError(Exception):
 
 class ScriptExecutionError(Exception):
     """
-        Represents a script syntax error.
-        Useful for helping clients pinpoint issues with the script
-        interactively
+    Represents a script syntax error.
+    Useful for helping clients pinpoint issues with the script
+    interactively
     """
 
     def __init__(self, line=None, message=None):
@@ -448,8 +448,8 @@ class ParameterDescriptionFinder(ast.NodeTransformer):
 
     def visit_Call(self, node):
         """
-       Called when we see a function call. Is it describe_parameter?
-       """
+        Called when we see a function call. Is it describe_parameter?
+        """
         try:
             if node.func.id == "describe_parameter":
                 # looks like we have a call to our function.

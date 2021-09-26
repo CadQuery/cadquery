@@ -2011,7 +2011,7 @@ class Workplane(object):
         :param maxDeg: maximum spline degree (default: 3)
         :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
         :return: a Workplane object with the current point unchanged
-        
+
         This method might be unstable and may require tuning of the tol parameter.
 
         """
@@ -2978,7 +2978,7 @@ class Workplane(object):
 
     def extrude(
         self: T,
-        distance: float,
+        until: Union[float, Literal["next", "last"], Face],
         combine: bool = True,
         clean: bool = True,
         both: bool = False,
@@ -2987,8 +2987,12 @@ class Workplane(object):
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
-        :param distance: the distance to extrude, normal to the workplane plane
-        :type distance: float, negative means opposite the normal direction
+        :param until: the distance to extrude, normal to the workplane plane
+        :param until: The distance to extrude, normal to the workplane plane. When a float is
+          passed, the extrusion extends this far and a negative value is in the opposite direction
+          to the normal of the plane. The string "next" extrudes until the next face orthogonal to
+          the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
+          the extrusion will extend until this face.
         :param boolean combine: True to combine the resulting solid with parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
@@ -3000,18 +3004,35 @@ class Workplane(object):
         The returned object is always a CQ object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
-        *  if combine is False, the new value is pushed onto the stack.
+        *  if combine is False, the new value is pushed onto the stack. Note that when extruding
+          until a specified face, combine can not be False
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
-
-        FutureEnhancement:
-            Support for non-prismatic extrusion ( IE, sweeping along a profile, not just
-            perpendicular to the plane extrude to surface. this is quite tricky since the surface
-            selected may not be planar
         """
-        r = self._extrude(
-            distance, both=both, taper=taper
-        )  # returns a Solid (or a compound if there were multiple)
+        # Handle `until` multiple values
+        if isinstance(until, str) and until in ("next", "last") and combine:
+            if until == "next":
+                faceIndex = 0
+            elif until == "last":
+                faceIndex = -1
+
+            r = self._extrude(distance=None, both=both, taper=taper, upToFace=faceIndex)
+
+        elif isinstance(until, Face) and combine:
+            r = self._extrude(None, both=both, taper=taper, upToFace=until)
+
+        elif isinstance(until, (int, float)):
+            r = self._extrude(until, both=both, taper=taper, upToFace=None)
+
+        elif isinstance(until, (str, Face)) and combine is False:
+            raise ValueError(
+                "`combine` can't be set to False when extruding until a face"
+            )
+
+        else:
+            raise ValueError(
+                f"Do not know how to handle until argument of type {type(until)}"
+            )
 
         if combine:
             newS = self._combineWithBase(r)
@@ -3355,37 +3376,50 @@ class Workplane(object):
 
     def cutBlind(
         self: T,
-        distanceToCut: float,
+        until: Union[float, Literal["next", "last"], Face],
         clean: bool = True,
         taper: Optional[float] = None,
     ) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
+        You must define either :distance: , :untilNextFace: or :untilLastFace:
 
         Similar to extrude, except that a solid in the parent chain is required to remove material
         from. cutBlind always removes material from a part.
 
-        :param distanceToCut: distance to extrude before cutting
-        :type distanceToCut: float, >0 means in the positive direction of the workplane normal,
-            <0 means in the negative direction
+        :param until: The distance to cut to, normal to the workplane plane. When a negative float
+          is passed the cut extends this far in the opposite direction to the normal of the plane
+          (i.e in the solid). The string "next" cuts until the next face orthogonal to the wire
+          normal.  "last" cuts to the last face. If a object of type Face is passed then the cut
+          will extend until this face.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
         see :py:meth:`cutThruAll` to cut material from the entire part
-
-        Future Enhancements:
-            Cut Up to Surface
         """
-        # first, make the object
-        toCut = self._extrude(distanceToCut, taper=taper)
+        # Handling of `until` passed values
+        s: Union[Compound, Solid, Shape]
+        if isinstance(until, str) and until in ("next", "last"):
+            if until == "next":
+                faceIndex = 0
+            elif until == "last":
+                faceIndex = -1
 
-        # now find a solid in the chain
-        solidRef = self.findSolid()
+            s = self._extrude(None, taper=taper, upToFace=faceIndex, additive=False)
 
-        s = solidRef.cut(toCut)
+        elif isinstance(until, Face):
+            s = self._extrude(None, taper=taper, upToFace=until, additive=False)
 
+        elif isinstance(until, (int, float)):
+            toCut = self._extrude(until, taper=taper, upToFace=None, additive=False)
+            solidRef = self.findSolid()
+            s = solidRef.cut(toCut)
+        else:
+            raise ValueError(
+                f"Do not know how to handle until argument of type {type(until)}"
+            )
         if clean:
             s = s.clean()
 
@@ -3441,18 +3475,51 @@ class Workplane(object):
         return self.newObject([r])
 
     def _extrude(
-        self, distance: float, both: bool = False, taper: Optional[float] = None
+        self,
+        distance: Optional[float] = None,
+        both: bool = False,
+        taper: Optional[float] = None,
+        upToFace: Optional[Union[int, Face]] = None,
+        additive: bool = True,
     ) -> Compound:
         """
         Make a prismatic solid from the existing set of pending wires.
 
         :param distance: distance to extrude
-        :param boolean both: extrude in both directions symmetrically
+        :param boolean both: extrude in both directions symetrically
+        :param upToFace: if specified extrude up to the :upToFace: face, 0 for the next, -1 for the last
+        :param additive: specify if extruding or cutting, required param for uptoface algorithm
+
         :return: OCCT solid(s), suitable for boolean operations.
 
         This method is a utility method, primarily for plugin and internal use.
         It is the basis for cutBlind, extrude, cutThruAll, and all similar methods.
         """
+
+        def getFacesList(eDir, direction, both=False):
+            """
+            Utility function to make the code further below more clean and tidy
+            Performs some test and raise appropriate error when no Faces are found for extrusion
+            """
+            facesList = self.findSolid().facesIntersectedByLine(
+                ws[0].Center(), eDir, direction=direction
+            )
+            if len(facesList) == 0 and both:
+                raise ValueError(
+                    "Couldn't find a face to extrude/cut to for at least one of the two required directions of extrusion/cut."
+                )
+
+            if len(facesList) == 0:
+                # if we don't find faces in the workplane normal direction we try the other
+                # direction (as the user might have created a workplane with wrong orientation)
+                facesList = self.findSolid().facesIntersectedByLine(
+                    ws[0].Center(), eDir.multiply(-1.0), direction=direction
+                )
+                if len(facesList) == 0:
+                    raise ValueError(
+                        "Couldn't find a face to extrude/cut to. Check your workplane orientation."
+                    )
+            return facesList
 
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
@@ -3460,29 +3527,78 @@ class Workplane(object):
         wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
 
         # compute extrusion vector and extrude
-        eDir = self.plane.zDir.multiply(distance)
+        if upToFace is not None:
+            eDir = self.plane.zDir
+        elif distance is not None:
+            eDir = self.plane.zDir.multiply(distance)
+
+        if additive:
+            direction = "AlongAxis"
+        else:
+            direction = "Opposite"
 
         # one would think that fusing faces into a compound and then extruding would work,
-        # but it doesn't-- the resulting compound appears to look right, ( right number of faces, etc)
+        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc)
         # but then cutting it from the main solid fails with BRep_NotDone.
         # the work around is to extrude each and then join the resulting solids, which seems to work
 
         # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there are
         # multiple sets
+        thisObj: Union[Solid, Compound]
 
         toFuse = []
+        taper = 0.0 if taper is None else taper
+        baseSolid = None
 
-        if taper:
-            for ws in wireSets:
-                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
+        for ws in wireSets:
+            if upToFace is not None:
+                baseSolid = self.findSolid() if baseSolid is None else thisObj
+                if isinstance(upToFace, int):
+                    facesList = getFacesList(eDir, direction, both=both)
+                    if (
+                        baseSolid.isInside(ws[0].Center())
+                        and additive
+                        and upToFace == 0
+                    ):
+                        upToFace = 1  # extrude until next face outside the solid
+
+                    limitFace = facesList[upToFace]
+                else:
+                    limitFace = upToFace
+
+                thisObj = Solid.dprism(
+                    baseSolid,
+                    Face.makeFromWires(ws[0]),
+                    ws,
+                    taper=taper,
+                    upToFace=limitFace,
+                    additive=additive,
+                )
+
+                if both:
+                    facesList2 = getFacesList(eDir.multiply(-1.0), direction, both=both)
+                    limitFace2 = facesList2[upToFace]
+                    thisObj2 = Solid.dprism(
+                        self.findSolid(),
+                        Face.makeFromWires(ws[0]),
+                        ws,
+                        taper=taper,
+                        upToFace=limitFace2,
+                        additive=additive,
+                    )
+                    thisObj = Compound.makeCompound([thisObj, thisObj2])
+                toFuse = [thisObj]
+            elif taper != 0.0:
+                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper=taper)
                 toFuse.append(thisObj)
-        else:
-            for ws in wireSets:
-                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
+            else:
+                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper=taper)
                 toFuse.append(thisObj)
 
                 if both:
-                    thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir.multiply(-1.0))
+                    thisObj = Solid.extrudeLinear(
+                        ws[0], ws[1:], eDir.multiply(-1.0), taper=taper
+                    )
                     toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)

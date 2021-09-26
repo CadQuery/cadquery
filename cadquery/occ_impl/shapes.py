@@ -97,6 +97,7 @@ from OCP.BRepPrimAPI import (
     BRepPrimAPI_MakeRevol,
     BRepPrimAPI_MakeSphere,
 )
+from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
 from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
 
@@ -120,6 +121,7 @@ from OCP.TopoDS import (
 
 from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
 from OCP.GCE2d import GCE2d_MakeSegment
+from OCP.gce import gce_MakeLin, gce_MakeDir
 from OCP.GeomAPI import (
     GeomAPI_Interpolate,
     GeomAPI_ProjectPointOnSurf,
@@ -1036,6 +1038,85 @@ class Shape(object):
         intersect_op = BRepAlgoAPI_Common()
 
         return self._bool_op((self,), toIntersect, intersect_op)
+
+    def facesIntersectedByLine(
+        self,
+        point: VectorLike,
+        axis: VectorLike,
+        tol: float = 1e-4,
+        direction: Optional[Literal["AlongAxis", "Opposite"]] = None,
+    ):
+        """
+        Computes the intersections between the provided line and the faces of this Shape
+
+        :point: Base point for defining a line
+        :axis: Axis on which the line rest
+        :tol: Intersection tolerance
+        :direction: Valid values : "AlongAxis", "Opposite", if specified will ignore all faces that are not in the specified direction
+        including the face where the :point: lies if it is the case
+
+        :returns: A list of intersected faces sorted by distance from :point:
+        """
+
+        oc_point = (
+            gp_Pnt(*point.toTuple()) if isinstance(point, Vector) else gp_Pnt(*point)
+        )
+        oc_axis = (
+            gp_Dir(Vector(axis).wrapped)
+            if not isinstance(axis, Vector)
+            else gp_Dir(axis.wrapped)
+        )
+
+        line = gce_MakeLin(oc_point, oc_axis).Value()
+        shape = self.wrapped
+
+        intersectMaker = BRepIntCurveSurface_Inter()
+        intersectMaker.Init(shape, line, tol)
+
+        faces_dist = []  # using a list instead of a dictionary to be able to sort it
+        while intersectMaker.More():
+            interPt = intersectMaker.Pnt()
+            interDirMk = gce_MakeDir(oc_point, interPt)
+
+            distance = oc_point.SquareDistance(interPt)
+
+            # interDir is not done when `oc_point` and `oc_axis` have the same coord
+            if interDirMk.IsDone():
+                interDir: Any = interDirMk.Value()
+            else:
+                interDir = None
+
+            if direction == "AlongAxis":
+                if (
+                    interDir is not None
+                    and not interDir.IsOpposite(oc_axis, tol)
+                    and distance > tol
+                ):
+                    faces_dist.append((intersectMaker.Face(), distance))
+
+            elif direction == "Opposite":
+                if (
+                    interDir is not None
+                    and interDir.IsOpposite(oc_axis, tol)
+                    and distance > tol
+                ):
+                    faces_dist.append((intersectMaker.Face(), distance))
+
+            elif direction is None:
+                faces_dist.append(
+                    (intersectMaker.Face(), abs(distance))
+                )  # will sort all intersected faces by distance whatever the direction is
+            else:
+                raise ValueError(
+                    "Invalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'."
+                )
+
+            intersectMaker.Next()
+
+        faces_dist.sort(key=lambda x: x[1])
+        faces = [face[0] for face in faces_dist]
+
+        return [Face(face) for face in faces]
 
     def split(self, *splitters: "Shape") -> "Shape":
         """
@@ -2320,6 +2401,9 @@ class Shell(Shape):
         return cls(s)
 
 
+TS = TypeVar("TS", bound=ShapeProtocol)
+
+
 class Mixin3D(object):
     def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
         """
@@ -2448,6 +2532,51 @@ class Mixin3D(object):
         solid_classifier.Perform(gp_Pnt(*point), tolerance)
 
         return solid_classifier.State() == ta.TopAbs_IN or solid_classifier.IsOnAFace()
+
+    def dprism(
+        self: TS,
+        basis: Optional[Face],
+        profiles: List[Wire],
+        depth: Optional[float] = None,
+        taper: float = 0,
+        upToFace: Optional[Face] = None,
+        thruAll: bool = True,
+        additive: bool = True,
+    ) -> TS:
+        """
+        Make a prismatic feature (additive or subtractive)
+
+        :param basis: face to perfrom the operation on
+        :param profiles: list of profiles
+        :param depth: depth of the cut or extrusion
+        :param upToFace: a face to extrude until
+        :param thruAll: cut thruAll
+        :param additive: set the kind of operation (additive or subtractive)
+        :return: a Solid object
+        """
+
+        sorted_profiles = sortWiresByBuildOrder(profiles)
+        shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
+        for p in sorted_profiles:
+            face = Face.makeFromWires(p[0], p[1:])
+            feat = BRepFeat_MakeDPrism(
+                shape,
+                face.wrapped,
+                basis.wrapped if basis else TopoDS_Face(),
+                taper * DEG2RAD,
+                additive,
+                False,
+            )
+            if upToFace is not None:
+                feat.Perform(upToFace.wrapped)
+            elif thruAll or depth is None:
+                feat.PerformThruAll()
+            else:
+                feat.Perform(depth)
+
+            shape = feat.Shape()
+
+        return self.__class__(shape)
 
 
 class Solid(Shape, Mixin3D):
