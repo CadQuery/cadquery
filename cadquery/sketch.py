@@ -414,22 +414,35 @@ class Sketch(object):
 
         return self
 
+    def _matchFacesToVertices(self) -> Dict[Face, List[Vertex]]:
+
+        rv = {}
+
+        for f in self._faces.Faces():
+
+            f_vertices = f.Vertices()
+            rv[f] = [
+                v for v in self._selection if isinstance(v, Vertex) and v in f_vertices
+            ]
+
+        return rv
+
     def fillet(self, d: Real) -> "Sketch":
 
+        f2v = self._matchFacesToVertices()
+
         self._faces = Compound.makeCompound(
-            el.fillet2D(d, (el for el in self._selection if isinstance(el, Vertex)))
-            for el in self._faces
-            if isinstance(el, (Face, Wire))
+            k.fillet2D(d, v) if v else k for k, v in f2v.items()
         )
 
         return self
 
     def chamfer(self, d: Real) -> "Sketch":
 
+        f2v = self._matchFacesToVertices()
+
         self._faces = Compound.makeCompound(
-            el.chamfer2D(d, (el for el in self._selection if isinstance(el, Vertex)))
-            for el in self._faces
-            if isinstance(el, (Face, Wire))
+            k.chamfer2D(d, v) if v else k for k, v in f2v.items() if v
         )
 
         return self
