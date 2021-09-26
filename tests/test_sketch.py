@@ -134,6 +134,37 @@ def test_modifiers():
     assert len(s2._faces.Faces()) == 2
     assert len(s2._faces.Edges()) == 10
 
+    s3 = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset().hull()
+
+    assert len(s3._faces.Faces()) == 3
+    assert s3._faces.Area() == approx(5)
+
+    s4 = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset().hull()
+
+    assert len(s4._faces.Faces()) == 3
+    assert s4._faces.Area() == approx(5)
+
+    s5 = (
+        Sketch()
+        .push([(-2, 0), (0, 0), (2, 0)])
+        .rect(1, 1)
+        .reset()
+        .faces("not >X")
+        .edges()
+        .hull()
+    )
+
+    assert len(s5._faces.Faces()) == 4
+    assert s5._faces.Area() == approx(4)
+
+    s6 = Sketch().segment((0, 0), (0, 1)).segment((1, 0), (2, 0)).hull()
+
+    assert len(s6._faces.Faces()) == 1
+    assert s6._faces.Area() == approx(1)
+
+    with raises(ValueError):
+        Sketch().rect(1, 1).vertices().hull()
+
 
 def test_edge_interface():
 
