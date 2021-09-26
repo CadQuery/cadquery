@@ -54,7 +54,7 @@ class TestCadObjects(BaseTest):
 
     def testVertex(self):
         """
-            Tests basic vertex functions
+        Tests basic vertex functions
         """
         v = Vertex.makeVertex(1, 1, 1)
         self.assertEqual(1, v.X)

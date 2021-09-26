@@ -3136,6 +3136,275 @@ class TestCadQuery(BaseTest):
 
         self.saveModel(result)
 
+    def testExtrudeUntilFace(self):
+        """
+        Test untilNextFace and untilLastFace options of Workplane.extrude()
+        """
+        # Basic test to see if it yields same results as regular extrude for similar use case
+        # Also test if the extrusion worked well by counting the number of faces before and after extrusion
+        wp_ref = Workplane("XY").box(10, 10, 10).center(20, 0).box(10, 10, 10)
+
+        wp_ref_extrude = wp_ref.faces(">X[1]").workplane().rect(1, 1).extrude(10)
+
+        wp = Workplane("XY").box(10, 10, 10).center(20, 0).box(10, 10, 10)
+        nb_faces = wp.faces().size()
+        wp = wp_ref.faces(">X[1]").workplane().rect(1, 1).extrude("next")
+
+        self.assertAlmostEquals(wp_ref_extrude.val().Volume(), wp.val().Volume())
+        self.assertTrue(wp.faces().size() - nb_faces == 4)
+
+        # Test tapered option and both option
+        wp = (
+            wp_ref.faces(">X[1]")
+            .workplane(centerOption="CenterOfMass", offset=5)
+            .polygon(5, 3)
+            .extrude("next", both=True)
+        )
+        wp_both_volume = wp.val().Volume()
+        self.assertTrue(wp.val().isValid())
+
+        # taper
+        wp = (
+            wp_ref.faces(">X[1]")
+            .workplane(centerOption="CenterOfMass")
+            .polygon(5, 3)
+            .extrude("next", taper=5)
+        )
+
+        self.assertTrue(wp.val().Volume() < wp_both_volume)
+        self.assertTrue(wp.val().isValid())
+
+        # Test extrude until with more that one wire in context
+        wp = (
+            wp_ref.faces(">X[1]")
+            .workplane(centerOption="CenterOfMass")
+            .pushPoints([(0, 0), (3, 3)])
+            .rect(2, 3)
+            .extrude("next")
+        )
+
+        self.assertTrue(wp.solids().size() == 1)
+        self.assertTrue(wp.val().isValid())
+
+        # Test until last surf
+        wp_ref = wp_ref.workplane().move(10, 0).box(5, 5, 5)
+        wp = (
+            wp_ref.faces(">X[1]")
+            .workplane(centerOption="CenterOfMass")
+            .circle(2)
+            .extrude("last")
+        )
+
+        self.assertTrue(wp.solids().size() == 1)
+
+        with self.assertRaises(ValueError):
+            Workplane("XY").box(10, 10, 10).center(20, 0).box(10, 10, 10).faces(
+                ">X[1]"
+            ).workplane().rect(1, 1).extrude("test")
+
+        # Test extrude until arbitrary face
+        arbitrary_face = (
+            Workplane("XZ", origin=(0, 30, 0))
+            .transformed((20, 0, 0))
+            .box(10, 10, 10)
+            .faces("<Y")
+            .val()
+        )
+        wp = (
+            Workplane()
+            .box(5, 5, 5)
+            .faces(">Y")
+            .workplane()
+            .circle(2)
+            .extrude(until=arbitrary_face)
+        )
+        extremity_face_area = wp.faces(">Y").val().Area()
+
+        self.assertAlmostEqual(extremity_face_area, 13.372852288495501, 5)
+
+        # Test that a ValueError is raised if no face can be found to extrude until
+        with self.assertRaises(ValueError):
+            wp = (
+                Workplane()
+                .box(5, 5, 5)
+                .faces(">X")
+                .workplane(offset=10)
+                .transformed((90, 0, 0))
+                .circle(2)
+                .extrude(until="next")
+            )
+
+        # Test that a ValueError for:
+        # Extrusion in both direction while having a face to extrude only in one
+        with self.assertRaises(ValueError):
+            wp = (
+                Workplane()
+                .box(5, 5, 5)
+                .faces(">X")
+                .workplane(offset=10)
+                .transformed((90, 0, 0))
+                .circle(2)
+                .extrude(until="next", both=True)
+            )
+
+        # Test that a ValueError for:
+        # Extrusion in both direction while having no faces to extrude
+        with self.assertRaises(ValueError):
+            wp = Workplane().circle(2).extrude(until="next", both=True)
+
+        # Check that a ValueError is raised if the user want to use `until` with a face and `combine` = False
+        # This isn't possible as the result of the extrude operation automatically combine the result with the base solid
+
+        with self.assertRaises(ValueError):
+            wp = (
+                Workplane()
+                .box(5, 5, 5)
+                .faces(">X")
+                .workplane(offset=10)
+                .transformed((90, 0, 0))
+                .circle(2)
+                .extrude(until="next", combine=False)
+            )
+
+        # Same as previous test, but use an object of type Face
+        with self.assertRaises(ValueError):
+            wp = Workplane().box(5, 5, 5).faces(">X")
+            face0 = wp.val()
+            wp = (
+                wp.workplane(offset=10)
+                .transformed((90, 0, 0))
+                .circle(2)
+                .extrude(until=face0, combine=False)
+            )
+
+        # Test extrude up to next face when workplane is inside a solid (which should still extrude
+        # past solid surface and up to next face)
+        # make an I-beam shape
+        part = (
+            Workplane()
+            .tag("base")
+            .box(10, 1, 1, centered=True)
+            .faces(">Z")
+            .workplane()
+            .box(1, 1, 10, centered=(True, True, False))
+            .faces(">Z")
+            .workplane()
+            .box(10, 1, 1, centered=(True, True, False))
+            # make an extrusion that starts inside the existing solid
+            .workplaneFromTagged("base")
+            .center(3, 0)
+            .circle(0.4)
+            # "next" should extrude to the top of the I-beam, not the bottom (0.5 units away)
+            .extrude("next")
+        )
+        part_section = part.faces("<Z").workplane().section(-5)
+        self.assertEqual(part_section.faces().size(), 2)
+
+    def testCutBlindUntilFace(self):
+        """
+        Test untilNextFace and untilLastFace options of Workplane.cutBlind()
+        """
+        # Basic test to see if it yields same results as regular cutBlind for similar use case
+        wp_ref = (
+            Workplane("XY")
+            .box(40, 10, 2)
+            .pushPoints([(-20, 0, 5), (0, 0, 5), (20, 0, 5)])
+            .box(10, 10, 10)
+        )
+
+        wp_ref_regular_cut = (
+            wp_ref.faces(">X[2]")
+            .workplane(centerOption="CenterOfMass")
+            .rect(2, 2)
+            .cutBlind(-10)
+        )
+        wp = (
+            wp_ref.faces(">X[2]")
+            .workplane(centerOption="CenterOfMass")
+            .rect(2, 2)
+            .cutBlind("last")
+        )
+
+        self.assertAlmostEquals(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
+
+        wp_last = (
+            wp_ref.faces(">X[4]")
+            .workplane(centerOption="CenterOfMass")
+            .rect(2, 2)
+            .cutBlind("last")
+        )
+        wp_next = (
+            wp_ref.faces(">X[4]")
+            .workplane(centerOption="CenterOfMass")
+            .rect(2, 2)
+            .cutBlind("next")
+        )
+
+        self.assertTrue(wp_last.val().Volume() < wp_next.val().Volume())
+
+        # multiple wire cuts
+
+        wp = (
+            wp_ref.faces(">X[4]")
+            .workplane(centerOption="CenterOfMass", offset=0)
+            .rect(2.5, 2.5, forConstruction=True)
+            .vertices()
+            .rect(1, 1)
+            .cutBlind("last")
+        )
+
+        self.assertTrue(wp.faces().size() == 50)
+
+        with self.assertRaises(ValueError):
+            Workplane("XY").box(10, 10, 10).center(20, 0).box(10, 10, 10).faces(
+                ">X[1]"
+            ).workplane().rect(1, 1).cutBlind("test")
+
+        # Test extrusion to an arbitrary face
+
+        arbitrary_face = (
+            Workplane("XZ", origin=(0, 5, 0))
+            .transformed((20, 0, 0))
+            .box(10, 10, 10)
+            .faces("<Y")
+            .val()
+        )
+        wp = (
+            Workplane()
+            .box(5, 5, 5)
+            .faces(">Y")
+            .workplane()
+            .circle(2)
+            .cutBlind(until=arbitrary_face)
+        )
+        inner_face_area = wp.faces("<<Y[3]").val().Area()
+
+        self.assertAlmostEqual(inner_face_area, 13.372852288495503, 5)
+
+    def testFaceIntersectedByLine(self):
+        with self.assertRaises(ValueError):
+            Workplane().box(5, 5, 5).val().facesIntersectedByLine(
+                (0, 0, 0), (0, 0, 1), direction="Z"
+            )
+
+        pts = [(-10, 0), (-5, 0), (0, 0), (5, 0), (10, 0)]
+        shape = (
+            Workplane()
+            .box(20, 10, 5)
+            .faces(">Z")
+            .workplane()
+            .pushPoints(pts)
+            .box(1, 10, 10)
+        )
+        faces = shape.val().facesIntersectedByLine((0, 0, 7.5), (1, 0, 0))
+        mx_face = shape.faces("<X").val()
+        px_face = shape.faces(">X").val()
+
+        self.assertTrue(len(faces) == 10)
+        # extremum faces are last or before last face
+        self.assertTrue(mx_face in faces[-2:])
+        self.assertTrue(px_face in faces[-2:])
+
     def testExtrude(self):
         """
         Test extrude
