@@ -124,7 +124,15 @@ def test_distribute():
 
 def test_modifiers():
 
-    pass
+    s1 = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset().vertices("<X").fillet(0.1)
+
+    assert len(s1._faces.Faces()) == 2
+    assert len(s1._faces.Edges()) == 10
+
+    s2 = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset().vertices(">X").fillet(0.1)
+
+    assert len(s2._faces.Faces()) == 2
+    assert len(s2._faces.Edges()) == 10
 
 
 def test_edge_interface():
