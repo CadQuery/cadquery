@@ -170,10 +170,33 @@ def test_modifiers():
     assert len(s7._faces.Faces()) == 2
     assert len(s7._faces.Edges()) == 4 + 4 + 4
 
+    s7.clean()
+
+    assert len(s7._faces.Faces()) == 1
+    assert len(s7._faces.Edges()) == 4 + 4
+
     s8 = Sketch().rect(2, 2).wires().offset(-0.5, mode="s")
 
     assert len(s8._faces.Faces()) == 1
     assert len(s8._faces.Edges()) == 4 + 4
+
+
+def test_delete():
+
+    s1 = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset()
+
+    assert len(s1._faces.Faces()) == 2
+
+    s1.faces("<X").delete()
+
+    assert len(s1._faces.Faces()) == 1
+
+    s2 = Sketch().segment((0, 0), (1, 0)).segment((0, 1), tag="e").close()
+    assert len(s2._edges) == 3
+
+    s2.edges("<X").delete()
+
+    assert len(s2._edges) == 2
 
 
 def test_selectors():
@@ -186,7 +209,11 @@ def test_selectors():
 
     assert len(s._selection) == 8
 
-    s.reset().edges()
+    s.reset()
+
+    assert len(s._selection) == 0
+
+    s.edges()
 
     assert len(s._selection) == 8
 
@@ -203,6 +230,14 @@ def test_selectors():
     assert len(s._selection) == 4
 
     s.reset().edges("<X or >X")
+
+    assert len(s._selection) == 2
+
+    s.tag("test").reset()
+
+    assert len(s._selection) == 0
+
+    s.select("test")
 
     assert len(s._selection) == 2
 
