@@ -168,12 +168,43 @@ def test_modifiers():
     s7 = Sketch().rect(2, 2).wires().offset(1)
 
     assert len(s7._faces.Faces()) == 2
-    assert len(s7._faces.Wires()) == 4 + 4 + 4
+    assert len(s7._faces.Edges()) == 4 + 4 + 4
 
     s8 = Sketch().rect(2, 2).wires().offset(-0.5, mode="s")
 
     assert len(s8._faces.Faces()) == 1
-    assert len(s8._faces.Wires()) == 4 + 4
+    assert len(s8._faces.Edges()) == 4 + 4
+
+
+def test_selectors():
+
+    s = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset()
+
+    assert len(s._selection) == 0
+
+    s.vertices()
+
+    assert len(s._selection) == 8
+
+    s.reset().edges()
+
+    assert len(s._selection) == 8
+
+    s.reset().wires()
+
+    assert len(s._selection) == 2
+
+    s.reset().faces()
+
+    assert len(s._selection) == 2
+
+    s.reset().vertices("<Y")
+
+    assert len(s._selection) == 4
+
+    s.reset().edges("<X or >X")
+
+    assert len(s._selection) == 2
 
 
 def test_edge_interface():
