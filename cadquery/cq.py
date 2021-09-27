@@ -2611,30 +2611,44 @@ class Workplane(object):
         return self.eachpoint(lambda loc: e.moved(loc), True)
 
     def polygon(
-        self: T, nSides: int, diameter: float, forConstruction: bool = False
+        self: T,
+        nSides: int,
+        diameter: float,
+        forConstruction: bool = False,
+        circumscribed: bool = False,
     ) -> T:
         """
-        Creates a polygon inscribed in a circle of the specified diameter for each point on
-        the stack
+        Make a polygon for each item on the stack.
 
-        The first vertex is always oriented in the x direction.
+        By default, each polygon is created by inscribing it in a circle of the
+        specified diameter, such that the first vertex is oriented in the x direction.
+        Alternatively, each polygon can be created by circumscribing it around
+        a circle of the specified diameter, such that the midpoint of the first edge
+        is oriented in the x direction. Circumscribed polygons are thus rotated by
+        pi/nSides radians relative to the inscribed polygon. This ensures the extent
+        of the polygon along the positive x-axis is always known.
+        This has the advantage of not requiring additional formulae for purposes such as
+        tiling on the x-axis (at least for even sided polygons).
 
         :param nSides: number of sides, must be >= 3
-        :param diameter: the size of the circle the polygon is inscribed into
+        :param diameter: the diameter of the circle for constructing the polygon
+        :param circumscribed: circumscribe the polygon about a circle
+        :type circumscribed: true to create the polygon by circumscribing it about a circle,
+            false to create the polygon by inscribing it in a circle
         :return: a polygon wire
         """
 
         # pnt is a vector in local coordinates
         angle = 2.0 * math.pi / nSides
+        radius = diameter / 2.0
+        if circumscribed:
+            radius /= math.cos(angle / 2.0)
         pnts = []
         for i in range(nSides + 1):
-            pnts.append(
-                Vector(
-                    (diameter / 2.0 * math.cos(angle * i)),
-                    (diameter / 2.0 * math.sin(angle * i)),
-                    0,
-                )
-            )
+            o = angle * i
+            if circumscribed:
+                o += angle / 2.0
+            pnts.append(Vector(radius * math.cos(o), radius * math.sin(o), 0,))
         p = Wire.makePolygon(pnts, forConstruction)
 
         return self.eachpoint(lambda loc: p.moved(loc), True)
