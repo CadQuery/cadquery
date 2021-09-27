@@ -121,6 +121,16 @@ def test_distribute():
     with raises(ValueError):
         Sketch().rect(2, 2).distribute(5)
 
+    s5 = Sketch().push([(0, 0), (1, 1)]).rarray(2, 2, 3, 3).rect(0.5, 0.5)
+
+    assert s5._faces.Area() == approx(18 * 0.25)
+    assert len(s5._faces.Faces()) == 18
+
+    s6 = Sketch().push([(0, 0), (1, 1)]).parray(2, 0, 90, 3).rect(0.5, 0.5)
+
+    assert s6._faces.Area() == approx(6 * 0.25)
+    assert len(s6._faces.Faces()) == 6
+
 
 def test_modifiers():
 
@@ -272,6 +282,14 @@ def test_assemble():
     s1 = Sketch()
     s1.segment((0.0, 0), (0.0, 2.0))
     s1.segment(Vector(4.0, -1)).close().arc((0.7, 0.6), 0.4, 0.0, 360.0).assemble()
+
+
+def test_finalize():
+
+    parent = object()
+    s = Sketch(parent).rect(2, 2).circle(0.5, mode="s")
+
+    assert s.finalize() is parent
 
 
 def test_constraint_validation():
