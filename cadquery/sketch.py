@@ -473,12 +473,20 @@ class Sketch(object):
                     rv.extend(getattr(el, kind)())
         else:
             rv.extend(getattr(self._faces, kind)())
+            for el in self._edges:
+                rv.extend(getattr(el, kind)())
 
         self._selection = StringSyntaxSelector(s).filter(rv) if s else rv
 
         return self
 
-    def select(self, *tags: str):
+    def tag(self, tag: str) -> "Sketch":
+
+        self._tags[tag] = list(self._selection)
+
+        return self
+
+    def select(self, *tags: str) -> "Sketch":
 
         self._selection = []
 
