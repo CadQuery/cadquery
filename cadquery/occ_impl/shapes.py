@@ -2533,32 +2533,47 @@ class Mixin3D(object):
 
         return solid_classifier.State() == ta.TopAbs_IN or solid_classifier.IsOnAFace()
 
+    @multimethod
     def dprism(
         self: TS,
         basis: Optional[Face],
         profiles: List[Wire],
-        depth: Optional[float] = None,
-        taper: float = 0,
+        depth: Optional[Real] = None,
+        taper: Real = 0,
         upToFace: Optional[Face] = None,
         thruAll: bool = True,
         additive: bool = True,
-    ) -> TS:
+    ) -> "Solid":
         """
         Make a prismatic feature (additive or subtractive)
 
-        :param basis: face to perfrom the operation on
+        :param basis: face to perform the operation on
         :param profiles: list of profiles
         :param depth: depth of the cut or extrusion
         :param upToFace: a face to extrude until
         :param thruAll: cut thruAll
-        :param additive: set the kind of operation (additive or subtractive)
         :return: a Solid object
         """
 
         sorted_profiles = sortWiresByBuildOrder(profiles)
+        faces = [Face.makeFromWires(p[0], p[1:]) for p in sorted_profiles]
+
+        return self.dprism(basis, faces, depth, taper, upToFace, thruAll, additive)
+
+    @dprism.register
+    def dprism(
+        self: TS,
+        basis: Optional[Face],
+        faces: List[Face],
+        depth: Optional[Real] = None,
+        taper: Real = 0,
+        upToFace: Optional[Face] = None,
+        thruAll: bool = True,
+        additive: bool = True,
+    ) -> "Solid":
+
         shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
-        for p in sorted_profiles:
-            face = Face.makeFromWires(p[0], p[1:])
+        for face in faces:
             feat = BRepFeat_MakeDPrism(
                 shape,
                 face.wrapped,
@@ -2567,6 +2582,7 @@ class Mixin3D(object):
                 additive,
                 False,
             )
+
             if upToFace is not None:
                 feat.Perform(upToFace.wrapped)
             elif thruAll or depth is None:
@@ -3214,62 +3230,6 @@ class Solid(Shape, Mixin3D):
             builder.MakeSolid()
 
         return cls(builder.Shape())
-
-    @multimethod
-    def dprism(
-        self,
-        basis: Optional[Face],
-        profiles: List[Wire],
-        depth: Optional[Real] = None,
-        taper: Real = 0,
-        thruAll: bool = True,
-        additive: bool = True,
-    ) -> "Solid":
-        """
-        Make a prismatic feature (additive or subtractive)
-
-        :param basis: face to perform the operation on
-        :param profiles: list of profiles
-        :param depth: depth of the cut or extrusion
-        :param thruAll: cut thruAll
-        :return: a Solid object
-        """
-
-        sorted_profiles = sortWiresByBuildOrder(profiles)
-        faces = [Face.makeFromWires(p[0], p[1:]) for p in sorted_profiles]
-
-        return self.dprism(basis, faces, depth, taper, thruAll, additive)
-
-    @dprism.register
-    def dprism(
-        self,
-        basis: Optional[Face],
-        faces: List[Face],
-        depth: Optional[Real] = None,
-        taper: Real = 0,
-        thruAll: bool = True,
-        additive: bool = True,
-    ) -> "Solid":
-
-        shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
-        for face in faces:
-            feat = BRepFeat_MakeDPrism(
-                shape,
-                face.wrapped,
-                basis.wrapped if basis else TopoDS_Face(),
-                taper * DEG2RAD,
-                additive,
-                False,
-            )
-
-            if thruAll or depth is None:
-                feat.PerformThruAll()
-            else:
-                feat.Perform(depth)
-
-            shape = feat.Shape()
-
-        return Solid(shape)
 
 
 class CompSolid(Shape, Mixin3D):
