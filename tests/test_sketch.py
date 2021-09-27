@@ -209,7 +209,27 @@ def test_selectors():
 
 def test_edge_interface():
 
-    pass
+    s1 = (
+        Sketch()
+        .segment((0, 0), (1, 0))
+        .segment((1, 1))
+        .segment(1, 180)
+        .close()
+        .assemble()
+    )
+
+    assert len(s1._faces.Faces()) == 1
+    assert s1._faces.Area() == approx(1)
+
+    s2 = Sketch().arc((0, 0), (1, 1), (0, 2)).close().assemble()
+
+    assert len(s2._faces.Faces()) == 1
+    assert s2._faces.Area() == approx(pi / 2)
+
+    s3 = Sketch().arc((0, 0), (1, 1), (0, 2)).arc((-1, 1), (0, 0)).assemble()
+
+    assert len(s3._faces.Faces()) == 1
+    assert s3._faces.Area() == approx(pi)
 
 
 def test_assemble():
