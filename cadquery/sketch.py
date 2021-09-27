@@ -616,7 +616,7 @@ class Sketch(object):
     ) -> "Sketch":
 
         p1 = self._endPoint()
-        val = Edge.makeThreePointArc(Vector(p1), Vector(p3), Vector(p3))
+        val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
 
         return self.edge(val, tag, forConstruction)
 
