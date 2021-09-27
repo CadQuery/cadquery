@@ -442,7 +442,7 @@ class Sketch(object):
         f2v = self._matchFacesToVertices()
 
         self._faces = Compound.makeCompound(
-            k.chamfer2D(d, v) if v else k for k, v in f2v.items() if v
+            k.chamfer2D(d, v) if v else k for k, v in f2v.items()
         )
 
         return self
