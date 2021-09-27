@@ -129,7 +129,7 @@ def test_modifiers():
     assert len(s1._faces.Faces()) == 2
     assert len(s1._faces.Edges()) == 10
 
-    s2 = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset().vertices(">X").fillet(0.1)
+    s2 = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset().vertices(">X").chamfer(0.1)
 
     assert len(s2._faces.Faces()) == 2
     assert len(s2._faces.Edges()) == 10
@@ -164,6 +164,16 @@ def test_modifiers():
 
     with raises(ValueError):
         Sketch().rect(1, 1).vertices().hull()
+
+    s7 = Sketch().rect(2, 2).wires().offset(1)
+
+    assert len(s7._faces.Faces()) == 2
+    assert len(s7._faces.Wires()) == 4 + 4 + 4
+
+    s8 = Sketch().rect(2, 2).wires().offset(-0.5, mode="s")
+
+    assert len(s8._faces.Faces()) == 1
+    assert len(s8._faces.Wires()) == 4 + 4
 
 
 def test_edge_interface():
