@@ -353,10 +353,8 @@ class Sketch(object):
             for el in self._selection:
                 if isinstance(el, Location):
                     loc = el
-                elif isinstance(el, Shape):
-                    loc = Location(el.Center())
                 else:
-                    raise ValueError(f"Invalid selection: {el}")
+                    loc = Location(el.Center())
 
                 tmp = callback(loc)
                 if isinstance(tmp, Sketch):
