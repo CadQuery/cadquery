@@ -42,6 +42,9 @@ def test_face_interface():
     assert len(s7.vertices()._selection) == 3
     assert s7._faces.Area() == approx(0.5)
 
+    with raises(ValueError):
+        Sketch().face(Sketch())
+
 
 def test_modes():
 
@@ -131,6 +134,19 @@ def test_distribute():
     assert s6._faces.Area() == approx(6 * 0.25)
     assert len(s6._faces.Faces()) == 6
 
+    s7 = Sketch().parray(2, 0, 90, 3, False).rect(0.5, 0.5).reset().vertices(">(1,1,0)")
+
+    assert len(s7._selection) == 1
+
+    s8 = Sketch().push([(0, 0), (0, 1)]).parray(2, 0, 90, 3).rect(0.5, 0.5)
+    s8.reset().faces(">(1,1,0)")
+
+    assert s8._selection[0].Center().Length == approx(3)
+
+    s9 = Sketch().push([(0, 1)], tag="loc")
+
+    assert len(s9._tags["loc"]) == 1
+
 
 def test_modifiers():
 
@@ -174,6 +190,9 @@ def test_modifiers():
 
     with raises(ValueError):
         Sketch().rect(1, 1).vertices().hull()
+
+    with raises(ValueError):
+        Sketch().hull()
 
     s7 = Sketch().rect(2, 2).wires().offset(1)
 
@@ -290,6 +309,15 @@ def test_finalize():
     s = Sketch(parent).rect(2, 2).circle(0.5, mode="s")
 
     assert s.finalize() is parent
+
+
+def test_misc():
+
+    with raises(ValueError):
+        Sketch()._startPoint()
+
+    with raises(ValueError):
+        Sketch()._endPoint()
 
 
 def test_constraint_validation():
