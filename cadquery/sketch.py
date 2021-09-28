@@ -300,7 +300,7 @@ class Sketch(object):
             selection = [Vector()]
 
         return self.push(
-            (el * l if isinstance(el, Location) else Location(el.Center())) * l
+            (l * el if isinstance(el, Location) else l * Location(el.Center()))
             for l in locs
             for el in selection
         )
