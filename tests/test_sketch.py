@@ -148,6 +148,21 @@ def test_distribute():
     assert len(s9._tags["loc"]) == 1
 
 
+def test_each():
+
+    s1 = Sketch().each(lambda l: Sketch().push([l]).rect(1, 1))
+
+    assert len(s1._faces.Faces()) == 1
+
+    s2 = (
+        Sketch()
+        .push([(0, 0), (2, 2)])
+        .each(lambda l: Sketch().push([l]).rect(1, 1), ignore_selection=True)
+    )
+
+    assert len(s2._faces.Faces()) == 1
+
+
 def test_modifiers():
 
     s1 = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset().vertices("<X").fillet(0.1)
