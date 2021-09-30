@@ -2993,7 +2993,7 @@ class Workplane(object):
           to the normal of the plane. The string "next" extrudes until the next face orthogonal to
           the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
           the extrusion will extend until this face.
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean combine: True to combine the resulting solid with parent solids if found. (Cannot be set to False when `until` is not set as a float)
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
         :param float taper: angle for optional tapered extrusion
