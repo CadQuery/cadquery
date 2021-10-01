@@ -630,7 +630,7 @@ you have to extrude to. In such cases you can use `next`, `last` or even give a 
 
 .. cadquery::
 
-    bridge =( cq.Workplane(origin = (20,0,0))
+    bridge = (cq.Workplane(origin = (20,0,0))
         .circle(2)
         .revolve(180, (-20,0,0),(-20,-1,0))
         .center(-20,0)
@@ -657,20 +657,18 @@ The same behaviour is available with `cutBlind` and as you can see it is also po
                                 .rotateAboutCenter((0,0,1),next(angles))
                                 .val().located(loc)
                                 )
-        )
+        )    
+    )
 
-    
-)
-
-face_windows = skycrappers.faces("<<X[8]").val()
-skycrappers = (skycrappers
-    .transformed((0,-90,0))
-    .moveTo(15,0)
-    .rect(3,3, forConstruction=True)
-    .vertices()
-    .circle(1)    
-    .cutBlind(face_windows)
-)
+    face_windows = skycrappers.faces("<<X[8]").val()
+    skycrappers = (skycrappers
+        .transformed((0,-90,0))
+        .moveTo(15,0)
+        .rect(3,3, forConstruction=True)
+        .vertices()
+        .circle(1)    
+        .cutBlind(face_windows)
+    )
 
 .. topic:: Api References
 
