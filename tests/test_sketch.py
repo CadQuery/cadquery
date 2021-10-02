@@ -463,3 +463,29 @@ def test_constraint_solver():
     midpoint = (seg2.startPoint() + seg2.endPoint()) / 2
 
     (midpoint - seg1.startPoint()).Length == approx(2)
+
+    s5 = (
+        Sketch()
+        .segment((0, 0), (0, 3.0), "s1")
+        .arc((0.0, 0), (1.5, 1.5), (0.0, 3), "a1")
+        .arc((0.0, 0), (-1.0, 1.5), (0.0, 3), "a2")
+    )
+
+    s5.constrain("s1", "Fixed", None)
+    s5.constrain("s1", "a1", "Distance", (0.5, 0.5, 3.0))
+    s5.constrain("s1", "a1", "Distance", (0.0, 1.0, 0.0))
+    s5.constrain("a1", "s1", "Distance", (0.0, 1.0, 0.0))
+    s5.constrain("s1", "a2", "Coincident", None)
+    s5.constrain("a2", "s1", "Coincident", None)
+    s5.constrain("a1", "a2", "Distance", (0.5, 0.5, 10.5))
+
+    s5.solve()
+
+    assert s5._solve_status["status"] == 4
+
+    mid0 = s5._edges[0].positionAt(0.5)
+    mid1 = s5._edges[1].positionAt(0.5)
+    mid2 = s5._edges[2].positionAt(0.5)
+
+    assert (mid1 - mid0).Length == approx(3)
+    assert (mid1 - mid2).Length == approx(10.5)
