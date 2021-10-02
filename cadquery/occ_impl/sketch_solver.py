@@ -2,9 +2,9 @@ from typing import Tuple, Union, Any, Callable, List, Optional, Iterable, Dict, 
 from typing_extensions import Literal
 from nptyping import NDArray as Array
 from itertools import accumulate, chain
-from math import sin, cos
+from math import sin, cos, pi
 
-from numpy import array, full, inf
+from numpy import array, full, inf, sign
 from numpy.linalg import norm
 import nlopt
 
@@ -15,7 +15,7 @@ from .shapes import Geoms
 NoneType = type(None)
 
 SegmentDOF = Tuple[float, float, float, float]  # p1 p2
-ArcDOF = Tuple[float, float, float, float, float]  # p r a1 a2
+ArcDOF = Tuple[float, float, float, float, float]  # p r a da
 DOF = Union[SegmentDOF, ArcDOF]
 
 ConstraintKind = Literal[
@@ -44,7 +44,172 @@ Constraint = Tuple[Tuple[int, Optional[int]], ConstraintKind, Optional[Any]]
 
 DIFF_EPS = 1e-10
 TOL = 1e-9
-MAXITER = 2000
+MAXITER = 0
+
+
+def invalid_args(*t):
+
+    return ValueError("Invalid argument types {t}")
+
+
+def arc_first(x):
+
+    return array((x[0] + x[2] * sin(x[3]), x[1] + x[2] * cos(x[3])))
+
+
+def arc_last(x):
+
+    return array((x[0] + x[2] * sin(x[3] + x[4]), x[1] + x[2] * cos(x[3] + x[4])))
+
+
+def arc_point(x, val):
+
+    if val is None:
+        rv = x[:2]
+    else:
+        a = x[3] + val * x[4]
+        rv = array((x[0] + x[2] * sin(a), x[1] + x[2] * cos(a)))
+
+    return rv
+
+
+def line_point(x, val):
+
+    return x[:2] + val * x[2:]
+
+
+def arc_first_tangent(x):
+
+    return gp_Vec2d(sign(x[4]) * cos(x[3]), -sign(x[4]) * sin(x[3]))
+
+
+def arc_last_tangent(x):
+
+    return gp_Vec2d(sign(x[4]) * cos(x[3] + x[4]), -sign(x[4]) * sin(x[3] + x[4]))
+
+
+def fixed_cost(x, t, val):
+
+    return norm(x - val)
+
+
+def coincident_cost(x1, t1, x2, t2, val):
+
+    if t1 == "LINE" and t2 == "LINE":
+        v1 = x1[2:]
+        v2 = x2[:2]
+    elif t1 == "LINE" and t2 == "CIRCLE":
+        v1 = x1[2:]
+        v2 = arc_first(x2)
+    elif t1 == "CIRCLE" and t2 == "LINE":
+        v1 = arc_last(x1)
+        v2 = x2[:2]
+    elif t1 == "CIRCLE" and t2 == "CIRCLE":
+        v1 = arc_last(x1)
+        v2 = arc_first(x2)
+    else:
+        raise invalid_args(t1, t2)
+
+    return norm(v1 - v2)
+
+
+def angle_cost(x1, t1, x2, t2, val):
+
+    if t1 == "LINE" and t2 == "LINE":
+        v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
+        v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
+    elif t1 == "LINE" and t2 == "CIRCLE":
+        v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
+        v2 = arc_first_tangent(x2)
+    elif t1 == "CIRCLE" and t2 == "LINE":
+        v1 = arc_last_tangent(x1)
+        v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
+    elif t1 == "CIRCLE" and t2 == "CIRCLE":
+        v1 = arc_last_tangent(x1)
+        v2 = arc_first_tangent(x2)
+    else:
+        raise invalid_args(t1, t2)
+
+    return v2.Angle(v1) - val
+
+
+def length_cost(x, t, val):
+
+    rv = 0
+
+    if t == "LINE":
+        rv = norm(x[2:] - x[:2]) - val
+    elif t == "CIRCLE":
+        rv = norm(x[2] * (x[4] - x[3])) - val
+    else:
+        raise invalid_args(t)
+
+    return rv
+
+
+def distance_cost(x1, t1, x2, t2, val):
+
+    val1, val2, d = val
+
+    if t1 == "LINE" and t2 == "LINE":
+        v1 = line_point(x1, val1)
+        v2 = line_point(x2, val2)
+    elif t1 == "LINE" and t2 == "CIRCLE":
+        v1 = line_point(x1, val1)
+        v2 = arc_point(x2, val2)
+    elif t1 == "CIRCLE" and t2 == "LINE":
+        v1 = arc_point(x1, val1)
+        v2 = line_point(x2, val2)
+    elif t1 == "CIRCLE" and t2 == "CIRCLE":
+        v1 = arc_point(x1, val1)
+        v2 = arc_point(x2, val2)
+    else:
+        raise invalid_args(t1, t2)
+
+    return norm(v1 - v2) - d
+
+
+def radius_cost(x, t, val):
+
+    if t == "CIRCLE":
+        rv = x[2] - val
+    else:
+        raise invalid_args(t)
+
+    return rv
+
+
+def orientation_cost(x, t, val):
+
+    if t == "LINE":
+        rv = gp_Vec2d(*(x[2:] - x[:2])).Angle(gp_Vec2d(*val))
+    else:
+        raise invalid_args(t)
+
+    return rv
+
+
+def arc_angle_cost(x, t, val):
+
+    if t == "CIRCLE":
+        rv = norm(x[4] - x[3]) - val
+    else:
+        raise invalid_args(t)
+
+    return rv
+
+
+# dicitonary of individual constraint cost functions
+costs: Dict[str, Callable[..., float]] = dict(
+    Fixed=fixed_cost,
+    Coincident=coincident_cost,
+    Angle=angle_cost,
+    Length=length_cost,
+    Distance=distance_cost,
+    Radius=radius_cost,
+    Orientation=orientation_cost,
+    ArcAngle=arc_angle_cost,
+)
 
 
 class SketchConstraintSolver(object):
@@ -83,154 +248,6 @@ class SketchConstraintSolver(object):
         Array[(Any,), float],
         Array[(Any,), float],
     ]:
-        def invalid_args(*t):
-
-            return ValueError("Invalid argument types {t}")
-
-        def arc_first(x):
-
-            return array((x[0] + x[2] * cos(x[3]), x[1] + x[2] * sin(x[3])))
-
-        def arc_last(x):
-
-            return array((x[0] + x[2] * cos(x[4]), x[1] + x[2] * sin(x[4])))
-
-        def arc_point(x, val):
-
-            if val is None:
-                rv = x[:2]
-            else:
-                a = x[3] + val * (x[4] - x[3])
-                rv = array((x[0] + x[2] * cos(a), x[1] + x[2] * sin(a)))
-
-            return rv
-
-        def line_point(x, val):
-
-            return x[:2] + val * x[2:]
-
-        def arc_first_tangent(x):
-
-            return gp_Vec2d(-sin(x[3]), -cos(x[3]))
-
-        def arc_last_tangent(x):
-
-            return gp_Vec2d(sin(x[4]), cos(x[4]))
-
-        def fixed_cost(x, t, val):
-
-            return norm(x - val)
-
-        def coincident_cost(x1, t1, x2, t2, val):
-
-            if t1 == "LINE" and t2 == "LINE":
-                v1 = x1[2:]
-                v2 = x2[:2]
-            elif t1 == "LINE" and t2 == "CIRCLE":
-                v1 = x1[2:]
-                v2 = arc_first(x2)
-            elif t1 == "CIRCLE" and t2 == "LINE":
-                v1 = arc_last(x1)
-                v2 = x2[:2]
-            elif t1 == "CIRCLE" and t2 == "CIRCLE":
-                v1 = arc_last(x1)
-                v2 = arc_first(x2)
-            else:
-                raise invalid_args(t1, t2)
-
-            return norm(v1 - v2)
-
-        def angle_cost(x1, t1, x2, t2, val):
-
-            if t1 == "LINE" and t2 == "LINE":
-                v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
-                v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
-            elif t1 == "LINE" and t2 == "CIRCLE":
-                v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
-                v2 = arc_first_tangent(x2)
-            elif t1 == "CIRCLE" and t2 == "LINE":
-                v1 = arc_last_tangent(x1)
-                v2 = gp_Vec2d(*(x2[2:] - x2[:2]))
-            elif t1 == "CIRCLE" and t2 == "CIRCLE":
-                v1 = arc_last_tangent(x1)
-                v2 = arc_first_tangent(x2)
-            else:
-                raise invalid_args(t1, t2)
-
-            return v2.Angle(v1) - val
-
-        def length_cost(x, t, val):
-
-            rv = 0
-
-            if t == "LINE":
-                rv = norm(x[2:] - x[:2]) - val
-            elif t == "CIRCLE":
-                rv = norm(x[2] * (x[4] - x[3])) - val
-            else:
-                raise invalid_args(t)
-
-            return rv
-
-        def distance_cost(x1, t1, x2, t2, val):
-
-            val1, val2, d = val
-
-            if t1 == "LINE" and t2 == "LINE":
-                v1 = line_point(x1, val1)
-                v2 = line_point(x2, val2)
-            elif t1 == "LINE" and t2 == "CIRCLE":
-                v1 = line_point(x1, val1)
-                v2 = arc_point(x2, val2)
-            elif t1 == "CIRCLE" and t2 == "LINE":
-                v1 = arc_point(x1, val1)
-                v2 = line_point(x2, val2)
-            elif t1 == "CIRCLE" and t2 == "CIRCLE":
-                v1 = arc_point(x1, val1)
-                v2 = arc_point(x2, val2)
-            else:
-                raise invalid_args(t1, t2)
-
-            return norm(v1 - v2) - d
-
-        def radius_cost(x, t, val):
-
-            if t == "CIRCLE":
-                rv = x[2] - val
-            else:
-                raise invalid_args(t)
-
-            return rv
-
-        def orientation_cost(x, t, val):
-
-            if t == "LINE":
-                rv = gp_Vec2d(*(x[2:] - x[:2])).Angle(gp_Vec2d(*val))
-            else:
-                raise invalid_args(t)
-
-            return rv
-
-        def arc_angle_cost(x, t, val):
-
-            if t == "CIRCLE":
-                rv = norm(x[4] - x[3]) - val
-            else:
-                raise invalid_args(t)
-
-            return rv
-
-        # dicitonary of individual constraint cost functions
-        costs: Dict[str, Callable[..., float]] = dict(
-            Fixed=fixed_cost,
-            Coincident=coincident_cost,
-            Angle=angle_cost,
-            Length=length_cost,
-            Distance=distance_cost,
-            Radius=radius_cost,
-            Orientation=orientation_cost,
-            ArcAngle=arc_angle_cost,
-        )
 
         ixs = self.ixs
         constraints = self.constraints
@@ -297,7 +314,7 @@ class SketchConstraintSolver(object):
 
         for i, g in enumerate(geoms):
             if g == "CIRCLE":
-                lb[i + 2] = 0
+                lb[ixs[i] + 2] = 0  # lower bound for radius
 
         return f, grad, lb, ub
 
@@ -326,6 +343,7 @@ class SketchConstraintSolver(object):
 
         x = opt.optimize(x0)
         status = {
+            "entities": self.entities,
             "cost": opt.last_optimum_value(),
             "iters": opt.get_numevals(),
             "status": opt.last_optimize_result(),
