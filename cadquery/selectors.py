@@ -267,9 +267,7 @@ class PerpendicularDirSelector(BaseDirSelector):
     """
 
     def test(self, vec: Vector) -> bool:
-        angle = self.direction.getAngle(vec)
-        r = (abs(angle) < self.tolerance) or (abs(angle - math.pi) < self.tolerance)
-        return not r
+        return abs(self.direction.getAngle(vec) - math.pi / 2) < self.tolerance
 
 
 class TypeSelector(Selector):
