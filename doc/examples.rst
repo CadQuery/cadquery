@@ -630,7 +630,7 @@ you have to extrude to. In such cases you can use `next`, `last` or even give a 
 
 .. cadquery::
 
-    bridge = (cq.Workplane(origin = (20,0,0))
+    result = (cq.Workplane(origin = (20,0,0))
         .circle(2)
         .revolve(180, (-20,0,0),(-20,-1,0))
         .center(-20,0)
@@ -661,7 +661,7 @@ The same behaviour is available with `cutBlind` and as you can see it is also po
     )
 
     face_windows = skycrappers.faces("<<X[8]").val()
-    skycrappers = (skycrappers
+    result = (skycrappers
         .transformed((0,-90,0))
         .moveTo(15,0)
         .rect(3,3, forConstruction=True)
