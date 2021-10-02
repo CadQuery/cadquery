@@ -643,10 +643,10 @@ The same behaviour is available with `cutBlind` and as you can see it is also po
 
 .. cadquery::
 
-    tall_tower_locations = [(-16,1),(-8,0),(7,0.2),(17,-1.2)]
+    skycrappers_locations = [(-16,1),(-8,0),(7,0.2),(17,-1.2)]
     angles = iter([15,0,-8,10])
     skycrappers = (cq.Workplane()
-        .pushPoints(tall_tower_locations)
+        .pushPoints(skycrappers_locations)
         .eachpoint(lambda loc: (cq.Workplane()
                                 .rect(5,16)
                                 .workplane(offset=10)
@@ -660,14 +660,13 @@ The same behaviour is available with `cutBlind` and as you can see it is also po
         )    
     )
 
-    face_windows = skycrappers.faces("<<X[8]").val()
     result = (skycrappers
         .transformed((0,-90,0))
         .moveTo(15,0)
         .rect(3,3, forConstruction=True)
         .vertices()
         .circle(1)    
-        .cutBlind(face_windows)
+        .cutBlind("last")
     )
 
 .. topic:: Api References
@@ -685,12 +684,55 @@ The same behaviour is available with `cutBlind` and as you can see it is also po
         * :py:meth:`Workplane.transformed`
         * :py:meth:`Workplane.moveTo`
         * :py:meth:`Workplane.circle`
+      
+Here is a typical situation where extruding and cuting until a given surface is very handy. It allows us to extrude or cut until a curved surface without overlapping issues.
+
+.. cadquery::
+    
+    import cadquery as cq
+
+    sphere = cq.Workplane().sphere(5)
+    base = (cq.Workplane(origin=(0,0,-2))
+        .box(12,12,10)
+        .cut(sphere)
+        .edges("|Z")
+        .fillet(2)
+    )
+    sphere_face = base.faces(">>X[2] and (not |Z) and (not |Y)").val()
+    base = (base
+        .faces("<Z")
+        .workplane()
+        .circle(2)
+        .extrude(10)
+    )
+
+    shaft = (cq.Workplane()
+        .sphere(4.5)
+        .circle(1.5)
+        .extrude(20)
+    )
+
+    spherical_joint = (base.union(shaft)
+        .faces(">X")
+        .workplane(centerOption="CenterOfMass")
+        .move(0,4)
+        .slot2D(10,2,90)
+        .cutBlind(sphere_face)    
+        .workplane(offset=10)
+        .move(0,2)
+        .circle(0.9)
+        .extrude("next")
+    )
+
+    result = spherical_joint
 
 .. warning::
 
     * If the wire you want to extrude cannot be fully projected on the target surface, the result will be unpredictable.
     * Furthermore the algorithm in charge of finding the candidates faces do it's search by counting all the faces intersected by a line created from your wire center along your extrusion direction.
     * So make sure your wire can be projected on your target face to avoid unexpected behaviour. 
+  
+
 
 Making Counter-bored and Counter-sunk Holes
 ----------------------------------------------
