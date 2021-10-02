@@ -11,7 +11,7 @@ from typing import (
     cast as tcast,
 )
 from typing_extensions import Literal
-from math import tan, sin, cos, pi, radians, degrees
+from math import tan, sin, cos, pi, radians
 from itertools import product, chain
 from multimethod import multimethod
 from typish import instance_of, get_type
@@ -26,6 +26,9 @@ from .occ_impl.sketch_solver import (
     ConstraintKind,
     ConstraintInvariants,
     DOF,
+    arc_first,
+    arc_last,
+    arc_point,
 )
 
 Modes = Literal["a", "s", "i"]
@@ -724,10 +727,19 @@ class Sketch(object):
 
             elif v0.geomType() == "CIRCLE":
                 p = v0.arcCenter()
-                a1 = v0.paramAt(0)
-                a2 = v0.paramAt(1)
+                p1 = v0.startPoint() - p
+                p2 = v0.endPoint() - p
+                pm = v0.positionAt(0.5) - p
+
+                a1 = Vector(0, 1).getSignedAngle(p1)
+                a2 = p1.getSignedAngle(p2)
+                a3 = p1.getSignedAngle(pm)
+                if a3 > 0 and a2 < 0:
+                    a2 += 2 * pi
+                elif a3 < 0 and a2 > 0:
+                    a2 -= 2 * pi
                 radius = v0.radius()
-                ent = (p.x, p.y, a1, a2, radius)
+                ent = (p.x, p.y, radius, a1, a2)
 
             else:
                 continue
@@ -759,11 +771,10 @@ class Sketch(object):
                 p2 = Vector(el[2], el[3])
                 e = Edge.makeLine(p1, p2)
             elif g == "CIRCLE":
-                p = Vector(el[0], el[1])
-                r = el[2]
-                a1 = el[3]
-                a2 = el[4]
-                e = Edge.makeCircle(r, p, angle1=degrees(a2), angle2=degrees(a1))
+                p1 = Vector(*arc_first(el))
+                p2 = Vector(*arc_point(el, 0.5))
+                p3 = Vector(*arc_last(el))
+                e = Edge.makeThreePointArc(p1, p2, p3)
 
             # overwrite the low level object
             self._tags[k][0].wrapped = e.wrapped
