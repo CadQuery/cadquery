@@ -34,7 +34,7 @@ ConstraintInvariants = {  # (arity, geometry types, param type)
     "Coincident": (2, ("CIRCLE", "LINE"), NoneType),
     "Angle": (2, ("CIRCLE", "LINE"), float),
     "Length": (1, ("CIRCLE", "LINE"), float),
-    "Distance": (2, ("CIRCLE", "LINE"), Tuple[float, float, float]),
+    "Distance": (2, ("CIRCLE", "LINE"), Tuple[Optional[float], Optional[float], float]),
     "Radius": (1, ("CIRCLE",), float),
     "Orientation": (1, ("LINE",), Tuple[float, float]),
     "ArcAngle": (1, ("CIRCLE",), float),

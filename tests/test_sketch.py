@@ -489,3 +489,23 @@ def test_constraint_solver():
 
     assert (mid1 - mid0).Length == approx(3)
     assert (mid1 - mid2).Length == approx(10.5)
+
+    s6 = (
+        Sketch()
+        .segment((0, 0), (0, 3.0), "s1")
+        .arc((0.0, 0), (5.5, 5.5), (0.0, 3), "a1")
+    )
+
+    s6.constrain("s1", "Fixed", None)
+    s6.constrain("s1", "a1", "Coincident", None)
+    s6.constrain("a1", "s1", "Coincident", None)
+    s6.constrain("a1", "s1", "Distance", (None, 0.5, 0.0))
+
+    s6.solve()
+
+    assert s6._solve_status["status"] == 4
+
+    mid0 = s6._edges[0].positionAt(0.5)
+    mid1 = s6._edges[1].positionAt(0.5)
+
+    assert (mid1 - mid0).Length == approx(1.5)
