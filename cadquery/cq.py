@@ -46,6 +46,7 @@ from .occ_impl.shapes import (
     Solid,
     Compound,
     sortWiresByBuildOrder,
+    wiresToFaces,
 )
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
@@ -59,7 +60,9 @@ from .selectors import (
     StringSyntaxSelector,
 )
 
-CQObject = Union[Vector, Location, Shape]
+from .sketch import Sketch
+
+CQObject = Union[Vector, Location, Shape, Sketch]
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
 
 T = TypeVar("T", bound="Workplane")
@@ -489,7 +492,9 @@ class Workplane(object):
         :rtype TopoDS_Shape or a subclass
         """
 
-        return self.val().wrapped
+        v = self.val()
+
+        return v._faces if isinstance(v, Sketch) else v.wrapped
 
     def workplane(
         self: T,
@@ -2467,6 +2472,8 @@ class Workplane(object):
             for o in self.objects:
                 if isinstance(o, (Vector, Shape)):
                     pnts.append(loc.inverse * Location(plane, o.Center()))
+                elif isinstance(o, Sketch):
+                    pnts.append(loc.inverse * Location(plane, o._faces.Center()))
                 else:
                     pnts.append(o)
 
@@ -3481,7 +3488,7 @@ class Workplane(object):
         taper: Optional[float] = None,
         upToFace: Optional[Union[int, Face]] = None,
         additive: bool = True,
-    ) -> Compound:
+    ) -> Union[Solid, Compound]:
         """
         Make a prismatic solid from the existing set of pending wires.
 
@@ -3496,13 +3503,13 @@ class Workplane(object):
         It is the basis for cutBlind, extrude, cutThruAll, and all similar methods.
         """
 
-        def getFacesList(eDir, direction, both=False):
+        def getFacesList(face, eDir, direction, both=False):
             """
             Utility function to make the code further below more clean and tidy
             Performs some test and raise appropriate error when no Faces are found for extrusion
             """
             facesList = self.findSolid().facesIntersectedByLine(
-                ws[0].Center(), eDir, direction=direction
+                face.Center(), eDir, direction=direction
             )
             if len(facesList) == 0 and both:
                 raise ValueError(
@@ -3513,7 +3520,7 @@ class Workplane(object):
                 # if we don't find faces in the workplane normal direction we try the other
                 # direction (as the user might have created a workplane with wrong orientation)
                 facesList = self.findSolid().facesIntersectedByLine(
-                    ws[0].Center(), eDir.multiply(-1.0), direction=direction
+                    face.Center(), eDir.multiply(-1.0), direction=direction
                 )
                 if len(facesList) == 0:
                     raise ValueError(
@@ -3521,10 +3528,15 @@ class Workplane(object):
                     )
             return facesList
 
-        # group wires together into faces based on which ones are inside the others
-        # result is a list of lists
+        # process sketches or pending wires
+        faces = []
 
-        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
+        for el in self.objects:
+            if isinstance(el, Sketch):
+                faces.extend(el._faces.Faces())
+
+        if not faces:
+            faces.extend(wiresToFaces(self.ctx.popPendingWires()))
 
         # compute extrusion vector and extrude
         if upToFace is not None:
@@ -3544,19 +3556,21 @@ class Workplane(object):
 
         # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there are
         # multiple sets
-        thisObj: Union[Solid, Compound]
 
         toFuse = []
         taper = 0.0 if taper is None else taper
-        baseSolid = None
 
-        for ws in wireSets:
-            if upToFace is not None:
-                baseSolid = self.findSolid() if baseSolid is None else thisObj
+        if upToFace:
+            res = self.findSolid()
+
+            for face in faces:
+                if taper and face.innerWires():
+                    raise ValueError("Inner wires not allowed with tapered extrusion")
+
                 if isinstance(upToFace, int):
-                    facesList = getFacesList(eDir, direction, both=both)
+                    facesList = getFacesList(face, eDir, direction, both=both)
                     if (
-                        baseSolid.isInside(ws[0].Center())
+                        res.isInside(face.outerWire().Center())
                         and additive
                         and upToFace == 0
                     ):
@@ -3566,42 +3580,29 @@ class Workplane(object):
                 else:
                     limitFace = upToFace
 
-                thisObj = Solid.dprism(
-                    baseSolid,
-                    Face.makeFromWires(ws[0]),
-                    ws,
-                    taper=taper,
-                    upToFace=limitFace,
-                    additive=additive,
+                res = Solid.dprism(
+                    res, face, taper=taper, upToFace=limitFace, additive=additive,
                 )
 
                 if both:
-                    facesList2 = getFacesList(eDir.multiply(-1.0), direction, both=both)
-                    limitFace2 = facesList2[upToFace]
-                    thisObj2 = Solid.dprism(
-                        self.findSolid(),
-                        Face.makeFromWires(ws[0]),
-                        ws,
-                        taper=taper,
-                        upToFace=limitFace2,
-                        additive=additive,
+                    facesList2 = getFacesList(
+                        face, eDir.multiply(-1.0), direction, both=both
                     )
-                    thisObj = Compound.makeCompound([thisObj, thisObj2])
-                toFuse = [thisObj]
-            elif taper != 0.0:
-                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper=taper)
-                toFuse.append(thisObj)
-            else:
-                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper=taper)
-                toFuse.append(thisObj)
+                    limitFace2 = facesList2[upToFace]
+                    res = Solid.dprism(
+                        res, face, taper=taper, upToFace=limitFace2, additive=additive,
+                    )
+
+        else:
+            for face in faces:
+                res = Solid.extrudeLinear(face, eDir, taper=taper)
+                toFuse.append(res)
 
                 if both:
-                    thisObj = Solid.extrudeLinear(
-                        ws[0], ws[1:], eDir.multiply(-1.0), taper=taper
-                    )
-                    toFuse.append(thisObj)
+                    res = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
+                    toFuse.append(res)
 
-        return Compound.makeCompound(toFuse)
+        return res if upToFace else Compound.makeCompound(toFuse)
 
     def _revolve(
         self, angleDegrees: float, axisStart: VectorLike, axisEnd: VectorLike
