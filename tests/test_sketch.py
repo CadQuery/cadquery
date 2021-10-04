@@ -439,7 +439,7 @@ def test_constraint_solver():
     )
 
     s4.constrain("s2", "Fixed", None)
-    s4.constrain("s1", "Orientation", (-1.0, -1.0))
+    s4.constrain("s1", "Orientation", (-1.0, -1))
     s4.constrain("s1", "s2", "Distance", (0.0, 0.5, 2.0))
     s4.constrain("s2", "a1", "Coincident", None)
     s4.constrain("a1", "s1", "Coincident", None)
@@ -472,7 +472,7 @@ def test_constraint_solver():
     )
 
     s5.constrain("s1", "Fixed", None)
-    s5.constrain("s1", "a1", "Distance", (0.5, 0.5, 3.0))
+    s5.constrain("s1", "a1", "Distance", (0.5, 0.5, 3))
     s5.constrain("s1", "a1", "Distance", (0.0, 1.0, 0.0))
     s5.constrain("a1", "s1", "Distance", (0.0, 1.0, 0.0))
     s5.constrain("s1", "a2", "Coincident", None)
@@ -499,7 +499,7 @@ def test_constraint_solver():
     s6.constrain("s1", "Fixed", None)
     s6.constrain("s1", "a1", "Coincident", None)
     s6.constrain("a1", "s1", "Coincident", None)
-    s6.constrain("a1", "s1", "Distance", (None, 0.5, 0.0))
+    s6.constrain("a1", "s1", "Distance", (None, 0.5, 0))
 
     s6.solve()
 
