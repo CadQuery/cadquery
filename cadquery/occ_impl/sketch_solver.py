@@ -11,6 +11,7 @@ import nlopt
 from OCP.gp import gp_Vec2d
 
 from .shapes import Geoms
+from ..types import Real
 
 NoneType = type(None)
 
@@ -32,12 +33,12 @@ ConstraintKind = Literal[
 ConstraintInvariants = {  # (arity, geometry types, param type)
     "Fixed": (1, ("CIRCLE", "LINE"), NoneType),
     "Coincident": (2, ("CIRCLE", "LINE"), NoneType),
-    "Angle": (2, ("CIRCLE", "LINE"), float),
-    "Length": (1, ("CIRCLE", "LINE"), float),
-    "Distance": (2, ("CIRCLE", "LINE"), Tuple[Optional[float], Optional[float], float]),
-    "Radius": (1, ("CIRCLE",), float),
-    "Orientation": (1, ("LINE",), Tuple[float, float]),
-    "ArcAngle": (1, ("CIRCLE",), float),
+    "Angle": (2, ("CIRCLE", "LINE"), Real),
+    "Length": (1, ("CIRCLE", "LINE"), Real),
+    "Distance": (2, ("CIRCLE", "LINE"), Tuple[Optional[Real], Optional[Real], Real]),
+    "Radius": (1, ("CIRCLE",), Real),
+    "Orientation": (1, ("LINE",), Tuple[Real, Real]),
+    "ArcAngle": (1, ("CIRCLE",), Real),
 }
 
 Constraint = Tuple[Tuple[int, Optional[int]], ConstraintKind, Optional[Any]]

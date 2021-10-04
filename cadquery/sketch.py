@@ -18,6 +18,7 @@ from typish import instance_of, get_type
 
 from .hull import find_hull
 from .selectors import StringSyntaxSelector
+from .types import Real
 
 from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, Vertex, edgesToWires
 from .occ_impl.geom import Location, Vector
@@ -32,7 +33,6 @@ from .occ_impl.sketch_solver import (
 )
 
 Modes = Literal["a", "s", "i"]
-Real = Union[float, int]
 Point = Union[Vector, Tuple[Real, Real]]
 
 
