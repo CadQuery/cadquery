@@ -1597,6 +1597,7 @@ class Edge(Shape, Mixin1D):
         dir: VectorLike = Vector(0, 0, 1),
         angle1: float = 360.0,
         angle2: float = 360,
+        orientation=True,
     ) -> "Edge":
         pnt = Vector(pnt)
         dir = Vector(dir)
@@ -1607,7 +1608,7 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_gp).Edge())
         else:  # arc case
             circle_geom = GC_MakeArcOfCircle(
-                circle_gp, angle1 * DEG2RAD, angle2 * DEG2RAD, True
+                circle_gp, angle1 * DEG2RAD, angle2 * DEG2RAD, orientation
             ).Value()
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
@@ -3432,6 +3433,13 @@ def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
         rv.append([face.outerWire(),] + face.innerWires())
 
     return rv
+
+
+def wiresToFaces(wireList: List[Wire]) -> List[Face]:
+    """Convert wires to a list of faces.
+    """
+
+    return Face.makeFromWires(wireList[0], wireList[1:]).Faces()
 
 
 def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
