@@ -4209,6 +4209,25 @@ class Workplane(object):
 
         return self.newObject(rv)
 
+    def sketch(self) -> Sketch:
+
+        parent = self.newObject([])
+        plane = self.plane
+        obj = self.val()
+
+        if isinstance(obj, (Vector, Shape)):
+            center = obj.Center()
+            loc = Location(plane, center)
+        elif isinstance(obj, Location):
+            loc = obj
+        else:
+            loc = self.plane.location
+
+        rv = Sketch(parent=parent, loc=loc)
+        parent.objects.append(rv)
+
+        return rv
+
     def _repr_javascript_(self) -> Any:
         """
         Special method for rendering current object in a jupyter notebook
