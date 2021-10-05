@@ -3544,23 +3544,12 @@ class Workplane(object):
         elif distance is not None:
             eDir = self.plane.zDir.multiply(distance)
 
-        if additive:
-            direction = "AlongAxis"
-        else:
-            direction = "Opposite"
-
-        # one would think that fusing faces into a compound and then extruding would work,
-        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc)
-        # but then cutting it from the main solid fails with BRep_NotDone.
-        # the work around is to extrude each and then join the resulting solids, which seems to work
-
-        # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there are
-        # multiple sets
-
-        toFuse = []
+        direction = "AlongAxis" if additive else "Opposite"
         taper = 0.0 if taper is None else taper
 
-        if upToFace:
+        toFuse = []
+
+        if upToFace is not None:
             res = self.findSolid()
 
             for face in faces:
@@ -3580,8 +3569,8 @@ class Workplane(object):
                 else:
                     limitFace = upToFace
 
-                res = Solid.dprism(
-                    res, face, taper=taper, upToFace=limitFace, additive=additive,
+                res = res.dprism(
+                    None, [face], taper=taper, upToFace=limitFace, additive=additive,
                 )
 
                 if both:
@@ -3589,8 +3578,12 @@ class Workplane(object):
                         face, eDir.multiply(-1.0), direction, both=both
                     )
                     limitFace2 = facesList2[upToFace]
-                    res = Solid.dprism(
-                        res, face, taper=taper, upToFace=limitFace2, additive=additive,
+                    res = res.dprism(
+                        None,
+                        [face],
+                        taper=taper,
+                        upToFace=limitFace2,
+                        additive=additive,
                     )
 
         else:
@@ -3602,7 +3595,7 @@ class Workplane(object):
                     res = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
                     toFuse.append(res)
 
-        return res if upToFace else Compound.makeCompound(toFuse)
+        return res if upToFace is not None else Compound.makeCompound(toFuse)
 
     def _revolve(
         self, angleDegrees: float, axisStart: VectorLike, axisEnd: VectorLike
