@@ -6,6 +6,7 @@ from typing import (
     Callable,
     Tuple,
     Iterable,
+    Iterator,
     Any,
     Sequence,
     cast as tcast,
@@ -111,9 +112,9 @@ class Sketch(object):
 
         self._solve_status = None
 
-    def __iter__(self) -> Iterable[Face]:
+    def __iter__(self) -> Iterator[Face]:
 
-        return (f for f in self._faces.moved(self.loc).Faces())
+        return iter(f for f in self._faces.moved(self.loc).Faces())
 
     def _tag(self, val: Sequence[Union[Shape, Location]], tag: str):
 

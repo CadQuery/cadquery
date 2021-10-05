@@ -3481,7 +3481,7 @@ class Workplane(object):
         Convert pending wires or sketches to faces for subsequent operation
         """
 
-        rv = []
+        rv: List[Face] = []
 
         for el in self.objects:
             if isinstance(el, Sketch):
