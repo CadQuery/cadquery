@@ -2952,9 +2952,7 @@ class Workplane(object):
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
         """
-        # group wires together into faces based on which ones are inside the others
-        # result is a list of lists
-        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
+        faces = self._getFaces()
 
         # compute extrusion vector and extrude
         eDir = self.plane.zDir.multiply(distance)
@@ -2967,9 +2965,9 @@ class Workplane(object):
         # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there
         # are multiple sets
         shapes: List[Shape] = []
-        for ws in wireSets:
+        for f in faces:
             thisObj = Solid.extrudeLinearWithRotation(
-                ws[0], ws[1:], self.plane.origin, eDir, angleDegrees
+                f, self.plane.origin, eDir, angleDegrees
             )
             shapes.append(thisObj)
 
@@ -3447,19 +3445,16 @@ class Workplane(object):
 
         see :py:meth:`cutBlind` to cut material to a limited depth
         """
-        wires = self.ctx.popPendingWires()
         solidRef = self.findSolid()
 
-        rv = []
-        for solid in solidRef.Solids():
-            s = solid.dprism(None, wires, thruAll=True, additive=False, taper=-taper)
+        s = solidRef.dprism(
+            None, self._getFaces(), thruAll=True, additive=False, taper=-taper
+        )
 
-            if clean:
-                s = s.clean()
+        if clean:
+            s = s.clean()
 
-            rv.append(s)
-
-        return self.newObject(rv)
+        return self.newObject([s])
 
     def loft(
         self: T, filled: bool = True, ruled: bool = False, combine: bool = True
@@ -3480,6 +3475,22 @@ class Workplane(object):
                 r = parentSolid.fuse(r)
 
         return self.newObject([r])
+
+    def _getFaces(self) -> List[Face]:
+        """
+        Convert pending wires or sketches to faces for subsequent operation
+        """
+
+        rv = []
+
+        for el in self.objects:
+            if isinstance(el, Sketch):
+                rv.extend(el)
+
+        if not rv:
+            rv.extend(wiresToFaces(self.ctx.popPendingWires()))
+
+        return rv
 
     def _extrude(
         self,
@@ -3529,14 +3540,7 @@ class Workplane(object):
             return facesList
 
         # process sketches or pending wires
-        faces = []
-
-        for el in self.objects:
-            if isinstance(el, Sketch):
-                faces.extend(el._faces.Faces())
-
-        if not faces:
-            faces.extend(wiresToFaces(self.ctx.popPendingWires()))
+        faces = self._getFaces()
 
         # compute extrusion vector and extrude
         if upToFace is not None:
@@ -3613,15 +3617,11 @@ class Workplane(object):
 
         This method is a utility method, primarily for plugin and internal use.
         """
-        # Get the wires to be revolved
-        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
 
-        # Revolve the wires, make a compound out of them and then fuse them
+        # Revolve, make a compound out of them and then fuse them
         toFuse = []
-        for ws in wireSets:
-            thisObj = Solid.revolve(
-                ws[0], ws[1:], angleDegrees, Vector(axisStart), Vector(axisEnd)
-            )
+        for f in self._getFaces():
+            thisObj = Solid.revolve(f, angleDegrees, Vector(axisStart), Vector(axisEnd))
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
@@ -3667,11 +3667,8 @@ class Workplane(object):
             mode = wire
 
         if not multisection:
-            wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
-            for ws in wireSets:
-                thisObj = Solid.sweep(
-                    ws[0], ws[1:], p, makeSolid, isFrenet, mode, transition
-                )
+            for f in self._getFaces():
+                thisObj = Solid.sweep(f, p, makeSolid, isFrenet, mode, transition)
                 toFuse.append(thisObj)
         else:
             sections = self.ctx.popPendingWires()
