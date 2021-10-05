@@ -4928,3 +4928,20 @@ class TestCadQuery(BaseTest):
         p2 = f2.toPln()
         self.assertTrue(p2.Contains(f2.Center().toPnt(), 0.1))
         self.assertTrue(Vector(p2.Axis().Direction()) == f2.normalAt())
+
+    def testSketch(self):
+
+        r = (
+            Workplane()
+            .box(10, 10, 1)
+            .faces(">Z")
+            .sketch()
+            .slot(2, 1)
+            .slot(2, 1, angle=90)
+            .clean()
+            .finalize()
+            .extrude(1)
+        )
+
+        self.assertTrue(r.val().isValid())
+        self.assertEqual(len(r.faces().vals()), 19)
