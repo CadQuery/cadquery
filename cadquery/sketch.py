@@ -82,6 +82,7 @@ class Constraint(object):
 class Sketch(object):
 
     parent: Any
+    loc: Location
 
     _faces: Compound
     _wires: List[Wire]
@@ -94,9 +95,10 @@ class Sketch(object):
 
     _solve_status: Optional[Dict[str, Any]]
 
-    def __init__(self, parent: Any = None):
+    def __init__(self, parent: Any = None, loc: Location = Location()):
 
         self.parent = parent
+        self.loc = loc
 
         self._faces = Compound.makeCompound(())
         self._wires = []
@@ -108,6 +110,10 @@ class Sketch(object):
         self._tags = {}
 
         self._solve_status = None
+
+    def __iter__(self) -> Iterable[Face]:
+
+        return (f for f in self._faces.moved(self.loc).Faces())
 
     def _tag(self, val: Sequence[Union[Shape, Location]], tag: str):
 
