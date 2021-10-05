@@ -43,7 +43,7 @@ def test_face_interface():
     assert s7._faces.Area() == approx(0.5)
 
     with raises(ValueError):
-        Sketch().face(Sketch())
+        Sketch().face(Sketch().rect(1, 1)._faces)
 
 
 def test_modes():
