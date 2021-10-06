@@ -4931,7 +4931,7 @@ class TestCadQuery(BaseTest):
 
     def testSketch(self):
 
-        r = (
+        r1 = (
             Workplane()
             .box(10, 10, 1)
             .faces(">Z")
@@ -4943,5 +4943,36 @@ class TestCadQuery(BaseTest):
             .extrude(1)
         )
 
-        self.assertTrue(r.val().isValid())
-        self.assertEqual(len(r.faces().vals()), 19)
+        self.assertTrue(r1.val().isValid())
+        self.assertEqual(len(r1.faces().vals()), 19)
+
+        r2 = (
+            Workplane()
+            .sketch()
+            .circle(2)
+            .wires()
+            .offset(0.1, mode="s")
+            .finalize()
+            .sketch()
+            .rect(1, 1)
+            .finalize()
+            .extrude(1, taper=5)
+        )
+
+        self.assertTrue(r2.val().isValid())
+        self.assertEqual(len(r2.faces().vals()), 6)
+
+        r3 = (
+            Workplane()
+            .pushPoints((Location(Vector(1, 1, 0)),))
+            .sketch()
+            .circle(2)
+            .wires()
+            .offset(-0.1, mode="s")
+            .finalize()
+            .extrude(1)
+        )
+
+        self.assertTrue(r3.val().isValid())
+        self.assertEqual(len(r3.faces().vals()), 4)
+        self.assertTupleAlmostEquals(r3.val().Center().toTuple(), (1, 1, 0.5), 6)
