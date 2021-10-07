@@ -3443,6 +3443,10 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError):
             Workplane().box(1, 1, 1).faces().circle(0.1).extrude(0.1)
 
+        # check that extruding nested geometry raises
+        with self.assertRaises(ValueError):
+            Workplane().rect(2, 2).rect(1, 1).extrude(2, taper=4)
+
     def testTaperedExtrudeCutBlind(self):
 
         h = 1.0
@@ -4928,6 +4932,26 @@ class TestCadQuery(BaseTest):
         p2 = f2.toPln()
         self.assertTrue(p2.Contains(f2.Center().toPnt(), 0.1))
         self.assertTrue(Vector(p2.Axis().Direction()) == f2.normalAt())
+
+    def testEachpoint(self):
+
+        r1 = (
+            Workplane(origin=(0, 0, 1))
+            .add(
+                [
+                    Vector(),
+                    Location(Vector(0, 0, -1,)),
+                    Sketch().rect(1, 1),
+                    Face.makePlane(1, 1),
+                ]
+            )
+            .eachpoint(lambda l: Face.makePlane(1, 1).locate(l))
+        )
+
+        self.assertTrue(len(r1.objects) == 4)
+
+        for v in r1.vals():
+            self.assertTupleAlmostEquals(v.Center().toTuple(), (0, 0, 0), 6)
 
     def testSketch(self):
 
