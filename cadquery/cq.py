@@ -3542,6 +3542,11 @@ class Workplane(object):
         # process sketches or pending wires
         faces = self._getFaces()
 
+        # check for nested geometry and tapered extrusion
+        for face in faces:
+            if taper and face.innerWires():
+                raise ValueError("Inner wires not allowed with tapered extrusion")
+
         # compute extrusion vector and extrude
         if upToFace is not None:
             eDir = self.plane.zDir
@@ -3555,11 +3560,7 @@ class Workplane(object):
 
         if upToFace is not None:
             res = self.findSolid()
-
             for face in faces:
-                if taper and face.innerWires():
-                    raise ValueError("Inner wires not allowed with tapered extrusion")
-
                 if isinstance(upToFace, int):
                     facesList = getFacesList(face, eDir, direction, both=both)
                     if (
