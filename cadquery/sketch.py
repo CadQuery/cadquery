@@ -641,13 +641,20 @@ class Sketch(object):
         self,
         c: Point,
         r: Real,
-        a1: Real,
-        a2: Real,
+        a: Real,
+        da: Real,
         tag: Optional[str] = None,
         forConstruction: bool = False,
     ) -> "Sketch":
 
-        val = Edge.makeCircle(r, Vector(c), angle1=a1, angle2=a2)
+        if abs(da) >= 360:
+            val = Edge.makeCircle(r, Vector(c), angle1=a, angle2=a, orientation=da > 0)
+        else:
+            p0 = Vector(c)
+            p1 = p0 + r * Vector(cos(radians(a)), sin(radians(a)))
+            p2 = p0 + r * Vector(cos(radians(a + da / 2)), sin(radians(a + da / 2)))
+            p3 = p0 + r * Vector(cos(radians(a + da)), sin(radians(a + da)))
+            val = Edge.makeThreePointArc(p1, p2, p3)
 
         return self.edge(val, tag, forConstruction)
 
