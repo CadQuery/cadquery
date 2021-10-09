@@ -310,6 +310,20 @@ def test_edge_interface():
     assert len(s3._faces.Faces()) == 1
     assert s3._faces.Area() == approx(pi)
 
+    s4 = Sketch().arc((0, 0), 1, 0, 90)
+
+    assert len(s4.vertices()._selection) == 2
+    assert s4.vertices(">Y")._selection[0].Center().y == approx(1)
+
+    s5 = Sketch().arc((0, 0), 1, 0, -90)
+
+    assert len(s5.vertices()._selection) == 2
+    assert s5.vertices(">Y")._selection[0].Center().y == approx(0)
+
+    s6 = Sketch().arc((0, 0), 1, 90, 360)
+
+    assert len(s5.vertices()._selection) == 1
+
 
 def test_assemble():
 
