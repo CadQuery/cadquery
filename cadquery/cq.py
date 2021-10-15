@@ -4211,20 +4211,29 @@ class Workplane(object):
         return self.newObject(rv)
 
     def sketch(self) -> Sketch:
+        """
+        Initialize and return a sketch
+
+        :return: Sketch object with the current wokrplane as a parent.
+        """
 
         parent = self.newObject([])
         plane = self.plane
         obj = self.val()
+        locs: Iterable[Location]
 
         if isinstance(obj, (Vector, Shape)):
-            center = obj.Center()
-            loc = Location(plane, center)
+            locs = (
+                Location(plane, obj.Center())
+                for obj in self.objects
+                if isinstance(obj, (Vector, Shape))
+            )
         elif isinstance(obj, Location):
-            loc = obj
+            locs = (obj for obj in self.objects if isinstance(obj, Location))
         else:
-            loc = self.plane.location
+            locs = (self.plane.location,)
 
-        rv = Sketch(parent=parent, loc=loc)
+        rv = Sketch(parent=parent, locs=locs)
         parent.objects.append(rv)
 
         return rv
