@@ -9,6 +9,7 @@ from typing import (
     Iterator,
     Any,
     Sequence,
+    TypeVar,
     cast as tcast,
 )
 from typing_extensions import Literal
@@ -35,6 +36,8 @@ from .occ_impl.sketch_solver import (
 
 Modes = Literal["a", "s", "i"]
 Point = Union[Vector, Tuple[Real, Real]]
+
+T = TypeVar("T", bound="Sketch")
 
 
 class Constraint(object):
@@ -796,6 +799,16 @@ class Sketch(object):
         return self
 
     # misc
+
+    def located(self: T, loc: Location) -> T:
+        """
+        Create a partial copy of the sketch with a new location.
+        """
+
+        rv = self.__class__(locs=(loc,))
+        rv._faces = self._faces.copy()
+
+        return rv
 
     def finalize(self) -> Any:
 

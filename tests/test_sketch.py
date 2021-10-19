@@ -1,4 +1,4 @@
-from cadquery.sketch import Sketch, Vector
+from cadquery.sketch import Sketch, Vector, Location
 
 from pytest import approx, raises
 from math import pi, sqrt
@@ -347,6 +347,19 @@ def test_misc():
 
     with raises(ValueError):
         Sketch()._endPoint()
+
+
+def test_located():
+
+    s1 = Sketch().segment((0, 0), (1, 0)).segment((1, 1)).close().assemble()
+
+    assert len(s1._edges) == 3
+    assert len(s1._faces.Faces()) == 1
+
+    s2 = s1.located(loc=Location())
+
+    assert len(s2._edges) == 0
+    assert len(s2._faces.Faces()) == 1
 
 
 def test_constraint_validation():
