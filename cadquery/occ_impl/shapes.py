@@ -877,12 +877,12 @@ class Shape(object):
 
         return self._apply_transform(T)
 
-    def copy(self) -> "Shape":
+    def copy(self: T) -> T:
         """
         Creates a new object that is a copy of this object.
         """
 
-        return Shape.cast(BRepBuilderAPI_Copy(self.wrapped).Shape())
+        return self.__class__(BRepBuilderAPI_Copy(self.wrapped).Shape())
 
     def transformShape(self, tMatrix: Matrix) -> "Shape":
         """
