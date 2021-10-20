@@ -14,29 +14,7 @@ resources:
       name: CadQuery/conda-packages
       endpoint: CadQuery
 
-jobs:
-- template: conda-build.yml@templates
-  parameters:
-    name: Linux_37
-    vmImage: 'ubuntu-18.04'
-    py_maj: 3
-    py_min: 7
-
-- template: conda-build.yml@templates
-  parameters:
-    name: macOS_37
-    vmImage: 'macOS-10.15'
-    py_maj: 3
-    py_min: 7
-
-- template: conda-build.yml@templates
-  parameters:
-    name: Windows_37
-    vmImage: 'vs2017-win2016'
-    py_maj: 3
-    py_min: 7
-    conda_bld: 3.18
-    
+jobs:  
 - template: conda-build.yml@templates
   parameters:
     name: Linux_38
