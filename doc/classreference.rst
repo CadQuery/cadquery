@@ -17,10 +17,10 @@ Core Classes
 
 .. autosummary::
 
-     CQ
-     Workplane
-     Assembly
-     Constraint
+    Sketch
+    Workplane
+    Assembly
+    Constraint
 
 Topological Classes
 ----------------------
