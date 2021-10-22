@@ -145,17 +145,22 @@ class Sketch(object):
         Construct a face from a wire or edges.
         """
 
+        res: Union[Face, Sketch]
+
         if isinstance(b, Wire):
             res = Face.makeFromWires(b)
         elif isinstance(b, Iterable):
             wires = edgesToWires(b)
             res = Face.makeFromWires(*(wires[0], wires[1:]))
+        elif isinstance(b, Sketch):
+            res = b
         else:
             raise ValueError(f"Unsupported argument {b}")
 
-        res = res.rotate(Vector(), Vector(0, 0, 1), angle)
+        if angle != 0:
+            res = res.moved(Location(Vector(), Vector(0, 0, 1), angle))
 
-        return self.each(lambda l: res.located(l), mode, tag, ignore_selection)
+        return self.each(lambda l: res.moved(l), mode, tag, ignore_selection)
 
     def rect(
         self,
@@ -910,6 +915,16 @@ class Sketch(object):
         return self
 
     # misc
+
+    def moved(self: T, loc: Location) -> T:
+        """
+        Create a partial copy of the sketch with moved _faces.
+        """
+
+        rv = self.__class__()
+        rv._faces = self._faces.moved(loc)
+
+        return rv
 
     def located(self: T, loc: Location) -> T:
         """
