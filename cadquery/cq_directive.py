@@ -9,7 +9,7 @@ from pathlib import Path
 from uuid import uuid1 as uuid
 from textwrap import indent
 
-from cadquery import exporters, Assembly, Compound, Color
+from cadquery import exporters, Assembly, Compound, Color, Sketch
 from cadquery import cqgi
 from cadquery.occ_impl.jupyter_tools import (
     toJSON,
@@ -308,6 +308,8 @@ class cq_directive_vtk(Directive):
 
                 if isinstance(shape, Assembly):
                     assy = shape
+                elif isinstance(shape, Sketch):
+                    assy = Assembly(shape._faces, color=Color(*DEFAULT_COLOR))
                 else:
                     assy = Assembly(shape, color=Color(*DEFAULT_COLOR))
             else:
