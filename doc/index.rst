@@ -38,6 +38,7 @@ Table Of Contents
     quickstart.rst
     designprinciples.rst
     primer.rst
+    sketch.rst
     assy.rst
     fileformat.rst
     examples.rst
