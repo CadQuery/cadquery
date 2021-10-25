@@ -322,7 +322,7 @@ def test_edge_interface():
 
     s6 = Sketch().arc((0, 0), 1, 90, 360)
 
-    assert len(s5.vertices()._selection) == 1
+    assert len(s6.vertices()._selection) == 1
 
 
 def test_assemble():
@@ -391,8 +391,8 @@ def test_constraint_solver():
     s1.constrain("s1", "s2", "Coincident", None)
     s1.constrain("s2", "s3", "Coincident", None)
     s1.constrain("s3", "s1", "Coincident", None)
-    s1.constrain("s3", "s1", "Angle", pi / 2)
-    s1.constrain("s2", "s3", "Angle", pi - pi / 4)
+    s1.constrain("s3", "s1", "Angle", 90)
+    s1.constrain("s2", "s3", "Angle", 180 - 45)
 
     s1.solve()
 
@@ -415,10 +415,10 @@ def test_constraint_solver():
     s2.constrain("a2", "s1", "Coincident", None)
     s2.constrain("s2", "a1", "Coincident", None)
     s2.constrain("a1", "a2", "Coincident", None)
-    s2.constrain("s1", "s2", "Angle", pi / 2)
-    s2.constrain("s2", "a1", "Angle", pi / 2)
-    s2.constrain("a1", "a2", "Angle", -pi / 2)
-    s2.constrain("a2", "s1", "Angle", pi / 2)
+    s2.constrain("s1", "s2", "Angle", 90)
+    s2.constrain("s2", "a1", "Angle", 90)
+    s2.constrain("a1", "a2", "Angle", -90)
+    s2.constrain("a2", "s1", "Angle", 90)
     s2.constrain("s1", "Length", 0.5)
     s2.constrain("a1", "Length", 1.0)
 
@@ -441,7 +441,7 @@ def test_constraint_solver():
     )
 
     s3.constrain("s2", "Fixed", None)
-    s3.constrain("a1", "ArcAngle", pi / 3)
+    s3.constrain("a1", "ArcAngle", 60)
     s3.constrain("a1", "Radius", 1.0)
     s3.constrain("s2", "a1", "Coincident", None)
     s3.constrain("a1", "s1", "Coincident", None)
