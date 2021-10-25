@@ -38,6 +38,7 @@ Modes = Literal["a", "s", "i"]
 Point = Union[Vector, Tuple[Real, Real]]
 
 T = TypeVar("T", bound="Sketch")
+SketchVal = Union[Shape, Location]
 
 
 class Constraint(object):
@@ -59,7 +60,7 @@ class Constraint(object):
         if kind not in ConstraintInvariants:
             raise ValueError(f"Unknown constraint {kind}.")
 
-        arity, types, param_type = ConstraintInvariants[kind]
+        arity, types, param_type, converter = ConstraintInvariants[kind]
 
         if arity != len(tags):
             raise ValueError(
@@ -76,11 +77,11 @@ class Constraint(object):
                 f"Unsupported argument types {get_type(param)}, required {param_type}."
             )
 
-        # if all is fine store everything
+        # if all is fine store everything and possibly convert the params
         self.tags = tags
         self.args = args
         self.kind = kind
-        self.param = param
+        self.param = tcast(Any, converter)(param) if converter else param
 
 
 class Sketch(object):
@@ -95,10 +96,10 @@ class Sketch(object):
     _wires: List[Wire]
     _edges: List[Edge]
 
-    _selection: List[Union[Shape, Location]]
+    _selection: List[SketchVal]
     _constraints: List[Constraint]
 
-    _tags: Dict[str, Sequence[Union[Shape, Location]]]
+    _tags: Dict[str, Sequence[SketchVal]]
 
     _solve_status: Optional[Dict[str, Any]]
 
@@ -534,6 +535,12 @@ class Sketch(object):
 
     # selection
 
+    def _unique(self, vals: List[SketchVal]) -> List[SketchVal]:
+
+        tmp = {hash(v): v for v in vals}
+
+        return list(tmp.values())
+
     def _select(
         self,
         s: Optional[str],
@@ -555,7 +562,7 @@ class Sketch(object):
             for el in self._edges:
                 rv.extend(getattr(el, kind)())
 
-        self._selection = StringSyntaxSelector(s).filter(rv) if s else rv
+        self._selection = self._unique(StringSyntaxSelector(s).filter(rv) if s else rv)
 
         return self
 
@@ -822,6 +829,8 @@ class Sketch(object):
             Constraint((tag,), (self._tags[tag][0],), constraint, arg)
         )
 
+        return self
+
     @constrain.register
     def constrain(
         self, tag1: str, tag2: str, constraint: ConstraintKind, arg: Any
@@ -835,6 +844,8 @@ class Sketch(object):
                 arg,
             )
         )
+
+        return self
 
     def solve(self) -> "Sketch":
         """
