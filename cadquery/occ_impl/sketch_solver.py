@@ -2,7 +2,7 @@ from typing import Tuple, Union, Any, Callable, List, Optional, Iterable, Dict, 
 from typing_extensions import Literal
 from nptyping import NDArray as Array
 from itertools import accumulate, chain
-from math import sin, cos, pi
+from math import sin, cos, radians
 
 from numpy import array, full, inf, sign
 from numpy.linalg import norm
@@ -30,15 +30,20 @@ ConstraintKind = Literal[
     "ArcAngle",
 ]
 
-ConstraintInvariants = {  # (arity, geometry types, param type)
-    "Fixed": (1, ("CIRCLE", "LINE"), NoneType),
-    "Coincident": (2, ("CIRCLE", "LINE"), NoneType),
-    "Angle": (2, ("CIRCLE", "LINE"), Real),
-    "Length": (1, ("CIRCLE", "LINE"), Real),
-    "Distance": (2, ("CIRCLE", "LINE"), Tuple[Optional[Real], Optional[Real], Real]),
-    "Radius": (1, ("CIRCLE",), Real),
-    "Orientation": (1, ("LINE",), Tuple[Real, Real]),
-    "ArcAngle": (1, ("CIRCLE",), Real),
+ConstraintInvariants = {  # (arity, geometry types, param type, conversion func)
+    "Fixed": (1, ("CIRCLE", "LINE"), NoneType, None),
+    "Coincident": (2, ("CIRCLE", "LINE"), NoneType, None),
+    "Angle": (2, ("CIRCLE", "LINE"), Real, radians),
+    "Length": (1, ("CIRCLE", "LINE"), Real, None),
+    "Distance": (
+        2,
+        ("CIRCLE", "LINE"),
+        Tuple[Optional[Real], Optional[Real], Real],
+        None,
+    ),
+    "Radius": (1, ("CIRCLE",), Real, None),
+    "Orientation": (1, ("LINE",), Tuple[Real, Real], None),
+    "ArcAngle": (1, ("CIRCLE",), Real, radians),
 }
 
 Constraint = Tuple[Tuple[int, Optional[int]], ConstraintKind, Optional[Any]]
