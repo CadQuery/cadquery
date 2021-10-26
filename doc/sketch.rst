@@ -7,6 +7,7 @@ Sketch
 Sketch tutorial
 ---------------
 
+
 The purpose of this section is to demonstrate how to construct sketches using different
  approaches.
 
@@ -61,10 +62,10 @@ If needed one can construct sketches by placing individual edges.
         .vertices()
         .chamfer(0.2)
     )
-    
+
 Once the construction is finished it has to be converted to the face-based representation
 using `assemble`. Afterwards, face based operations can be applied.
-    
+
 Convex hull
 ===========
 
@@ -81,7 +82,7 @@ and circles.
         .segment((0.,2),(-1,3.))
         .hull()
        )
-    
+
 Constraint-based sketches
 ========================
 
@@ -107,7 +108,7 @@ far only line segments and arcs can be used in such a use case.
 
     result.solve()
     result.assemble()
-    
+
 Following constraints are implemented.
 
 * `Fixed`
@@ -132,4 +133,49 @@ in one fluent chain of calls as shown below.
 
 Note that the sketch is placed on all locations that are on the top of the stack.
 
-Placing predefined sketches can be accomplished as follows.
+Constructing sketches in-place can be accomplished as follows.
+
+.. cadquery::
+    :height: 600px
+
+    import cadquery as cq
+
+    result = (
+        cq.Workplane()
+        .box(5,5,1)
+        .faces('>Z')
+        .sketch()
+        .regularPolygon(2,3,tag='outer')
+        .regularPolygon(1.5,3,mode='s')
+        .vertices(tag='outer')
+        .fillet(.2)
+        .finalize()
+        .extrude(2)
+    )
+
+Sketch API is available after the `sketch` call and original `workplane`.
+
+When multiple elements are selected before constructing the sketch, multiple sketches will be created.
+
+.. cadquery::
+    :height: 600px
+
+    result = (
+        cq.Workplane()
+        .box(5,5,1)
+        .faces('>Z')
+        .workplane()
+        .rarray(2,2,2,2)
+        .rect(1.5,1.5)
+        .extrude(.5)
+        .faces('>Z')
+        .sketch()
+        .circle(0.4)
+        .wires()
+        .distribute(6)
+        .circle(0.1,mode='a')
+        .clean()
+        .finalize()
+        .cutBlind(-0.5,taper=10)
+    )
+
