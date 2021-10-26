@@ -4210,16 +4210,14 @@ class Workplane(object):
 
         return self.newObject(rv)
 
-    def sketch(self) -> Sketch:
+    def _locs(self: T) -> Iterable[Location]:
         """
-        Initialize and return a sketch
+        Convert items on the stack into locations.
 
-        :return: Sketch object with the current wokrplane as a parent.
         """
 
-        parent = self.newObject([])
         plane = self.plane
-        obj = self.val()
+        obj = self.val() if self.objects else None
         locs: Iterable[Location]
 
         if isinstance(obj, (Vector, Shape)):
@@ -4233,10 +4231,33 @@ class Workplane(object):
         else:
             locs = (self.plane.location,)
 
-        rv = Sketch(parent=parent, locs=locs)
+        return locs
+
+    def sketch(self: T) -> Sketch:
+        """
+        Initialize and return a sketch
+
+        :return: Sketch object with the current wokrplane as a parent.
+        """
+
+        parent = self.newObject([])
+
+        rv = Sketch(parent=parent, locs=self._locs())
         parent.objects.append(rv)
 
         return rv
+
+    def placeSketch(self: T, s: Sketch) -> T:
+        """
+        Place the provided  sketch based on the current items on the stack.
+
+        :return: Wokrplane object with the sketch added.
+        """
+
+        s_new = s.copy()
+        s_new.locs = list(self._locs())
+
+        return self.newObject([s_new])
 
     def _repr_javascript_(self) -> Any:
         """
