@@ -150,7 +150,7 @@ Constructing sketches in-place can be accomplished as follows.
         .vertices(tag='outer')
         .fillet(.2)
         .finalize()
-        .extrude(2)
+        .extrude(.5)
     )
 
 Sketch API is available after the `sketch` call and original `workplane`.
@@ -198,7 +198,7 @@ Sometimes it is desired to reuse existing sketches and place them as-is on a wor
 
     result = (
         cq.Workplane()
-        .box(5,5,.5)
+        .box(5,5,5)
         .faces('>X')
         .workplane()
         .transformed((0,0,-90))
@@ -206,4 +206,3 @@ Sometimes it is desired to reuse existing sketches and place them as-is on a wor
         .cutThruAll()
         )
 
-    show_object(result)
