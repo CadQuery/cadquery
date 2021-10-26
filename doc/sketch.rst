@@ -21,7 +21,7 @@ combining them using boolean operations.
     :height: 600px
 
     import cadquery as cq
-    
+
     from cadquery import *
 
     result = (
@@ -50,7 +50,7 @@ If needed one can construct sketches by placing individual edges.
     :height: 600px
 
     import cadquery as cq
-    
+
     result = (
         cq.Sketch()
         .segment((0.,0),(0.,2.))
@@ -93,7 +93,7 @@ far only line segments and arcs can be used in such a use case.
     :height: 600px
 
     import cadquery as cq
-    
+
     result = (
         cq.Sketch()
         .segment((0,0), (0,3.),"s1")
@@ -160,6 +160,8 @@ When multiple elements are selected before constructing the sketch, multiple ske
 .. cadquery::
     :height: 600px
 
+    import cadquery as cq
+
     result = (
         cq.Workplane()
         .box(5,5,1)
@@ -179,3 +181,29 @@ When multiple elements are selected before constructing the sketch, multiple ske
         .cutBlind(-0.5,taper=10)
     )
 
+Sometimes it is desired to reuse existing sketches and place them as-is on a workplane.
+
+
+.. cadquery::
+    :height: 600px
+
+    import cadquery as cq
+
+    s = (
+         cq.Sketch()
+         .trapezoid(3,1,110)
+         .vertices()
+         .fillet(0.2)
+         )
+
+    result = (
+        cq.Workplane()
+        .box(5,5,.5)
+        .faces('>X')
+        .workplane()
+        .transformed((0,0,-90))
+        .placeSketch(s)
+        .cutThruAll()
+        )
+
+    show_object(result)
