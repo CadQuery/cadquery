@@ -927,6 +927,16 @@ class Sketch(object):
 
     # misc
 
+    def copy(self: T) -> T:
+        """
+        Create a partial copy of the sketch.
+        """
+
+        rv = self.__class__()
+        rv._faces = self._faces.copy()
+
+        return rv
+
     def moved(self: T, loc: Location) -> T:
         """
         Create a partial copy of the sketch with moved _faces.
