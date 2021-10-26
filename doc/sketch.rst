@@ -7,14 +7,14 @@ Sketch
 Sketch tutorial
 ---------------
 
-The purpose of this section is to demonstrate how to consturct sketches using different
+The purpose of this section is to demonstrate how to construct sketches using different
  approaches.
 
 Face-based API
 ==============
 
 The main approach for constructing sketches is based on constructing faces and 
-combianing them using boolean operations.
+combining them using boolean operations.
 
 .. cadquery::
     :height: 600px
@@ -63,12 +63,12 @@ If needed one can construct sketches by placing individual edges.
     )
     
 Once the construction is finished it has to be converted to the face-based representation
-using `assemble`. Afterwards, face based operatins can be applied.
+using `assemble`. Afterwards, face based operations can be applied.
     
 Convex hull
 ===========
 
-For certain special use-cases convec hull can be constructed from stratight segements
+For certain special use-cases convex hull can be constructed from straight segments
 and circles.
 
 .. cadquery::
@@ -85,7 +85,7 @@ and circles.
 Constraint-based sketches
 ========================
 
-Finally, if deried, geometric constraints can be used to construct sketches. So
+Finally, if desired, geometric constraints can be used to construct sketches. So
 far only line segments and arcs can be used in such a use case.
 
 .. cadquery::
@@ -126,8 +126,8 @@ Once created, a sketch can be used to construct various features on a workplane.
 Supported operations include `extrude`, `twistExtrude`, `revolve`, `sweep`, `cutBlind`
 and `cutThruAll`.
 
-Sketches can be created as seperate entities and reused, but also crated ad-hoc
-in one flunet chain of calls as shown below.
+Sketches can be created as separate entities and reused, but also crated ad-hoc
+in one fluent chain of calls as shown below.
 
 
 Note that the sketch is placed on all locations that are on the top of the stack.
