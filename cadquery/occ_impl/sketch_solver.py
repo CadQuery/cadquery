@@ -21,6 +21,7 @@ DOF = Union[SegmentDOF, ArcDOF]
 
 ConstraintKind = Literal[
     "Fixed",
+    "FixedPoint",
     "Coincident",
     "Angle",
     "Length",
@@ -32,6 +33,7 @@ ConstraintKind = Literal[
 
 ConstraintInvariants = {  # (arity, geometry types, param type, conversion func)
     "Fixed": (1, ("CIRCLE", "LINE"), NoneType, None),
+    "FixedPoint": (1, ("CIRCLE", "LINE"), Optional[Real], None),
     "Coincident": (2, ("CIRCLE", "LINE"), NoneType, None),
     "Angle": (2, ("CIRCLE", "LINE"), Real, radians),
     "Length": (1, ("CIRCLE", "LINE"), Real, None),
@@ -94,12 +96,24 @@ def arc_last_tangent(x):
     return gp_Vec2d(sign(x[4]) * cos(x[3] + x[4]), -sign(x[4]) * sin(x[3] + x[4]))
 
 
-def fixed_cost(x, t, val):
+def fixed_cost(x, t, x0, val):
 
-    return norm(x - val)
+    return norm(x - x0)
 
 
-def coincident_cost(x1, t1, x2, t2, val):
+def fixed_point_cost(x, t, x0, val):
+
+    if t == "LINE":
+        rv = norm(line_point(x, val) - line_point(x0, val))
+    elif t == "CIRCLE":
+        rv = norm(arc_point(x, val) - arc_point(x0, val))
+    else:
+        raise invalid_args(t)
+
+    return rv
+
+
+def coincident_cost(x1, t1, x10, x2, t2, x20, val):
 
     if t1 == "LINE" and t2 == "LINE":
         v1 = x1[2:]
@@ -119,7 +133,7 @@ def coincident_cost(x1, t1, x2, t2, val):
     return norm(v1 - v2)
 
 
-def angle_cost(x1, t1, x2, t2, val):
+def angle_cost(x1, t1, x10, x2, t2, x20, val):
 
     if t1 == "LINE" and t2 == "LINE":
         v1 = gp_Vec2d(*(x1[2:] - x1[:2]))
@@ -139,7 +153,7 @@ def angle_cost(x1, t1, x2, t2, val):
     return v2.Angle(v1) - val
 
 
-def length_cost(x, t, val):
+def length_cost(x, t, x0, val):
 
     rv = 0
 
@@ -153,7 +167,7 @@ def length_cost(x, t, val):
     return rv
 
 
-def distance_cost(x1, t1, x2, t2, val):
+def distance_cost(x1, t1, x10, x2, t2, x20, val):
 
     val1, val2, d = val
 
@@ -175,7 +189,7 @@ def distance_cost(x1, t1, x2, t2, val):
     return norm(v1 - v2) - d
 
 
-def radius_cost(x, t, val):
+def radius_cost(x, t, x0, val):
 
     if t == "CIRCLE":
         rv = x[2] - val
@@ -185,7 +199,7 @@ def radius_cost(x, t, val):
     return rv
 
 
-def orientation_cost(x, t, val):
+def orientation_cost(x, t, x0, val):
 
     if t == "LINE":
         rv = gp_Vec2d(*(x[2:] - x[:2])).Angle(gp_Vec2d(*val))
@@ -195,7 +209,7 @@ def orientation_cost(x, t, val):
     return rv
 
 
-def arc_angle_cost(x, t, val):
+def arc_angle_cost(x, t, x0, val):
 
     if t == "CIRCLE":
         rv = norm(x[4] - x[3]) - val
@@ -208,6 +222,7 @@ def arc_angle_cost(x, t, val):
 # dicitonary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
     Fixed=fixed_cost,
+    FixedPoint=fixed_point_cost,
     Coincident=coincident_cost,
     Angle=angle_cost,
     Length=length_cost,
@@ -247,7 +262,7 @@ class SketchConstraintSolver(object):
         self.ixs = [0] + list(accumulate(len(e) for e in self.entities))
 
     def _cost(
-        self,
+        self, x0: Array[(Any,), float]
     ) -> Tuple[
         Callable[[Array[(Any,), float]], float],
         Callable[[Array[(Any,), float], Array[(Any,), float]], None],
@@ -258,6 +273,9 @@ class SketchConstraintSolver(object):
         ixs = self.ixs
         constraints = self.constraints
         geoms = self.geoms
+
+        # split initial values per entity
+        x0s = [x0[ixs[e] : ixs[e + 1]] for e in range(self.ne)]
 
         def f(x) -> float:
             """
@@ -271,9 +289,9 @@ class SketchConstraintSolver(object):
                 cost = costs[kind]
 
                 # build arguments for the specific constraint
-                args = [x[ixs[e1] : ixs[e1 + 1]], geoms[e1]]
+                args = [x[ixs[e1] : ixs[e1 + 1]], geoms[e1], x0s[e1]]
                 if e2 is not None:
-                    args += [x[ixs[e2] : ixs[e2 + 1]], geoms[e2]]
+                    args += [x[ixs[e2] : ixs[e2 + 1]], geoms[e2], x0s[e2]]
 
                 # evaluate
                 rv += cost(*args, val) ** 2
@@ -293,10 +311,10 @@ class SketchConstraintSolver(object):
 
                 # build arguments for the specific constraint
                 x1 = x[ixs[e1] : ixs[e1 + 1]]
-                args = [x1.copy(), geoms[e1]]
+                args = [x1.copy(), geoms[e1], x0s[e1]]
                 if e2 is not None:
                     x2 = x[ixs[e2] : ixs[e2 + 1]]
-                    args += [x2.copy(), geoms[e2]]
+                    args += [x2.copy(), geoms[e2], x0s[e2]]
 
                 # evaluate
                 tmp = cost(*args, val)
@@ -309,10 +327,10 @@ class SketchConstraintSolver(object):
 
                 if e2 is not None:
                     for j, k in enumerate(range(ixs[e2], ixs[e2 + 1])):
-                        args[2][j] += DIFF_EPS
+                        args[3][j] += DIFF_EPS
                         tmp2 = cost(*args, val)
                         rv[k] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
-                        args[2][j] = x2[j]
+                        args[3][j] = x2[j]
 
         # generate lower and upper bounds for optimization
         lb = full(ixs[-1], -inf)
@@ -327,7 +345,7 @@ class SketchConstraintSolver(object):
     def solve(self) -> Tuple[Sequence[Sequence[float]], Dict[str, Any]]:
 
         x0 = array(list(chain.from_iterable(self.entities))).ravel()
-        f, grad, lb, ub = self._cost()
+        f, grad, lb, ub = self._cost(x0)
 
         def func(x, g):
 
