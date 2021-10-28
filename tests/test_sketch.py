@@ -536,3 +536,23 @@ def test_constraint_solver():
     mid1 = s6._edges[1].positionAt(0.5)
 
     assert (mid1 - mid0).Length == approx(1.5)
+
+    s7 = (
+        Sketch()
+        .segment((0, 0), (0, 3.0), "s1")
+        .arc((0.0, 0), (5.5, 5.5), (0.0, 4), "a1")
+    )
+
+    s7.constrain("s1", "FixedPoint", 0)
+    s7.constrain("a1", "FixedPoint", None)
+    s7.constrain("a1", "FixedPoint", 1)
+    s7.constrain("a1", "s1", "Distance", (0, 0, 0))
+    s7.constrain("a1", "s1", "Distance", (1, 1, 0))
+
+    s7.solve()
+
+    assert s7._solve_status["status"] == 4
+
+    s7.assemble()
+
+    assert s7._faces.isValid()
