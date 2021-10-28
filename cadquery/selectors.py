@@ -834,7 +834,9 @@ def _makeExpressionGrammar(atom, wp):
     return expr
 
 
+
 _expression_grammar = _makeExpressionGrammar(_grammar)
+
 
 
 class StringSyntaxSelector(Selector):
@@ -842,10 +844,15 @@ class StringSyntaxSelector(Selector):
     Filter lists objects using a simple string syntax. All of the filters available in the string syntax
     are also available ( usually with more functionality ) through the creation of full-fledged
     selector objects. see :py:class:`Selector` and its subclasses
+
     Filtering works differently depending on the type of object list being filtered.
+
     :param selectorString: A two-part selector string, [selector][axis]
+
     :return: objects that match the specified selector
+
     ***Modifiers*** are ``('|','+','-','<','>','%')``
+
         :\|:
             parallel to ( same as :py:class:`ParallelDirSelector` ). Can return multiple objects.
         :#:
@@ -860,9 +867,12 @@ class StringSyntaxSelector(Selector):
             minimize (same as :py:class:`DirectionMinMaxSelector` with directionMax=False )
         :%:
             curve/surface type (same as :py:class:`TypeSelector`)
+
     ***axisStrings*** are: ``X,Y,Z,XY,YZ,XZ`` or ``(x,y,z)`` which defines an arbitrary direction
+
     It is possible to combine simple selectors together using logical operations.
     The following operations are supported
+
         :and:
             Logical AND, e.g. >X and >Y
         :or:
@@ -871,9 +881,12 @@ class StringSyntaxSelector(Selector):
             Logical NOT, e.g. not #XY
         :exc(ept):
             Set difference (equivalent to AND NOT): \|X exc >Z
+
     Finally, it is also possible to use even more complex expressions with nesting
     and arbitrary number of terms, e.g.
+
         (not >X[0] and #XY) or >XY[0]
+
     Selectors are a complex topic: see :ref:`selector_reference` for more information
     """
 
