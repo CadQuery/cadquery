@@ -628,12 +628,15 @@ def _makeGrammar():
     )
 
     # direction definition
-    simple_dir = oneOf(["X", "Y", "Z", "XY", "XZ", "YZ"])
+    simple_dir = oneOf(
+        ["X", "Y", "Z", "XY", "XZ", "YZ", "x", "y", "z", "xy", "xz", "yz"]
+    )
     direction = simple_dir("simple_dir") | vector("vector_dir")
 
     # CQ type definition
     cqtype = oneOf(
-        set(geom_LUT_EDGE.values()) | set(geom_LUT_FACE.values()), caseless=True,
+        set(geom_LUT_EDGE.values()) | set(geom_LUT_FACE.values()),
+        caseless=True,
     )
     cqtype = cqtype.setParseAction(upcaseTokens)
 
@@ -678,7 +681,7 @@ class _SimpleStringSyntaxSelector(Selector):
     selector object
     """
 
-    def __init__(self, parseResults):
+    def __init__(self, parseResults, wp):
 
         # define all token to object mappings
         self.axes = {
@@ -688,6 +691,12 @@ class _SimpleStringSyntaxSelector(Selector):
             "XY": Vector(1, 1, 0),
             "YZ": Vector(0, 1, 1),
             "XZ": Vector(1, 0, 1),
+            "x": wp.plane.xDir,
+            "y": wp.plane.yDir,
+            "z": wp.plane.zDir,
+            "xy": wp.plane.xDir + wp.plane.yDir,
+            "yz": wp.plane.yDir + wp.plane.zDir,
+            "xz": wp.plane.xDir + wp.plane.zDir,
         }
 
         self.namedViews = {
@@ -773,7 +782,7 @@ class _SimpleStringSyntaxSelector(Selector):
         return self.mySelector.filter(objectList)
 
 
-def _makeExpressionGrammar(atom):
+def _makeExpressionGrammar(atom, wp):
     """
     Define the complex string selector grammar using PyParsing (which supports
     logical operations and nesting)
@@ -786,7 +795,7 @@ def _makeExpressionGrammar(atom):
     not_op = Literal("not")
 
     def atom_callback(res):
-        return _SimpleStringSyntaxSelector(res)
+        return _SimpleStringSyntaxSelector(res, wp)
 
     # construct a simple selector from every matched
     atom.setParseAction(atom_callback)
@@ -833,15 +842,10 @@ class StringSyntaxSelector(Selector):
     Filter lists objects using a simple string syntax. All of the filters available in the string syntax
     are also available ( usually with more functionality ) through the creation of full-fledged
     selector objects. see :py:class:`Selector` and its subclasses
-
     Filtering works differently depending on the type of object list being filtered.
-
     :param selectorString: A two-part selector string, [selector][axis]
-
     :return: objects that match the specified selector
-
     ***Modifiers*** are ``('|','+','-','<','>','%')``
-
         :\|:
             parallel to ( same as :py:class:`ParallelDirSelector` ). Can return multiple objects.
         :#:
@@ -856,12 +860,9 @@ class StringSyntaxSelector(Selector):
             minimize (same as :py:class:`DirectionMinMaxSelector` with directionMax=False )
         :%:
             curve/surface type (same as :py:class:`TypeSelector`)
-
     ***axisStrings*** are: ``X,Y,Z,XY,YZ,XZ`` or ``(x,y,z)`` which defines an arbitrary direction
-
     It is possible to combine simple selectors together using logical operations.
     The following operations are supported
-
         :and:
             Logical AND, e.g. >X and >Y
         :or:
@@ -870,21 +871,21 @@ class StringSyntaxSelector(Selector):
             Logical NOT, e.g. not #XY
         :exc(ept):
             Set difference (equivalent to AND NOT): \|X exc >Z
-
     Finally, it is also possible to use even more complex expressions with nesting
     and arbitrary number of terms, e.g.
-
         (not >X[0] and #XY) or >XY[0]
-
     Selectors are a complex topic: see :ref:`selector_reference` for more information
     """
 
-    def __init__(self, selectorString):
+    def __init__(self, selectorString, wp):
         """
         Feed the input string through the parser and construct an relevant complex selector object
         """
         self.selectorString = selectorString
-        parse_result = _expression_grammar.parseString(selectorString, parseAll=True)
+        self.workplane = wp
+        parse_result = _makeExpressionGrammar(_grammar, wp).parseString(
+            selectorString, parseAll=True
+        )
         self.mySelector = parse_result.asList()[0]
 
     def filter(self, objectList):
