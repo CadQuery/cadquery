@@ -1,12 +1,11 @@
 .. _sketchtutorial:
 
-**********
+******
 Sketch
-**********
+******
 
 Sketch tutorial
 ---------------
-
 
 The purpose of this section is to demonstrate how to construct sketches using different
  approaches.
@@ -112,6 +111,7 @@ far only line segments and arcs can be used in such a use case.
 Following constraints are implemented.
 
 * `Fixed`
+* `FixedPoint`
 * `Coincident`
 * `Angle`
 * `Length`

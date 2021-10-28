@@ -896,9 +896,7 @@ class Sketch(object):
         constraints = []
         for c in self._constraints:
             ix = (e2i[c.tags[0]], e2i[c.tags[1]] if len(c.tags) == 2 else None)
-            constraints.append(
-                (ix, c.kind, c.param)
-            )
+            constraints.append((ix, c.kind, c.param))
 
         # optimize
         solver = SketchConstraintSolver(entities, constraints, geoms)
