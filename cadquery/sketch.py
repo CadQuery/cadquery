@@ -19,7 +19,7 @@ from multimethod import multimethod
 from typish import instance_of, get_type
 
 from .hull import find_hull
-from .selectors import StringSyntaxSelector
+from .selectors import StringSyntaxSelector, Selector
 from .types import Real
 
 from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, Vertex, edgesToWires
@@ -563,7 +563,7 @@ class Sketch(object):
 
     def _select(
         self: T,
-        s: Optional[str],
+        s: Optional[Union[str, Selector]],
         kind: Literal["Faces", "Wires", "Edges", "Vertices"],
         tag: Optional[str] = None,
     ) -> T:
@@ -582,7 +582,14 @@ class Sketch(object):
             for el in self._edges:
                 rv.extend(getattr(el, kind)())
 
-        self._selection = self._unique(StringSyntaxSelector(s).filter(rv) if s else rv)
+        if s and isinstance(s, Selector):
+            filtered = s.filter(rv)
+        elif s and isinstance(s, str):
+            filtered = StringSyntaxSelector(s).filter(rv)
+        else:
+            filtered = rv
+
+        self._selection = self._unique(filtered)
 
         return self
 
@@ -607,28 +614,36 @@ class Sketch(object):
 
         return self
 
-    def faces(self: T, s: Optional[str] = None, tag: Optional[str] = None) -> T:
+    def faces(
+        self: T, s: Optional[Union[str, Selector]] = None, tag: Optional[str] = None
+    ) -> T:
         """
         Select faces.
         """
 
         return self._select(s, "Faces", tag)
 
-    def wires(self: T, s: Optional[str] = None, tag: Optional[str] = None) -> T:
+    def wires(
+        self: T, s: Optional[Union[str, Selector]] = None, tag: Optional[str] = None
+    ) -> T:
         """
         Select wires.
         """
 
         return self._select(s, "Wires", tag)
 
-    def edges(self: T, s: Optional[str] = None, tag: Optional[str] = None) -> T:
+    def edges(
+        self: T, s: Optional[Union[str, Selector]] = None, tag: Optional[str] = None
+    ) -> T:
         """
         Select edges.
         """
 
         return self._select(s, "Edges", tag)
 
-    def vertices(self: T, s: Optional[str] = None, tag: Optional[str] = None) -> T:
+    def vertices(
+        self: T, s: Optional[Union[str, Selector]] = None, tag: Optional[str] = None
+    ) -> T:
         """
         Select vertices.
         """
