@@ -1,7 +1,11 @@
+import os
+
 from cadquery.sketch import Sketch, Vector, Location
 
 from pytest import approx, raises
 from math import pi, sqrt
+
+testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
 
 
 def test_face_interface():
@@ -556,3 +560,20 @@ def test_constraint_solver():
     s7.assemble()
 
     assert s7._faces.isValid()
+
+
+def test_dxf_import():
+
+    filename = os.path.join(testdataDir, "gear.dxf")
+
+    s1 = Sketch().importDXF(filename, tol=1e-3)
+
+    assert s1._faces.isValid()
+
+    s2 = Sketch().importDXF(filename, tol=1e-3).circle(5, mode="s")
+
+    assert s2._faces.isValid()
+
+    s3 = Sketch().circle(20).importDXF(filename, tol=1e-3, mode="s")
+
+    assert s3._faces.isValid()
