@@ -31,13 +31,13 @@ from .occ_impl.shapes import (
     geom_LUT_FACE,
 )
 from pyparsing import (
+    pyparsing_common,
     Literal,
     Word,
     nums,
     Optional,
     Combine,
     oneOf,
-    upcaseTokens,
     CaselessLiteral,
     Group,
     infixNotation,
@@ -635,7 +635,7 @@ def _makeGrammar():
     cqtype = oneOf(
         set(geom_LUT_EDGE.values()) | set(geom_LUT_FACE.values()), caseless=True,
     )
-    cqtype = cqtype.setParseAction(upcaseTokens)
+    cqtype = cqtype.setParseAction(pyparsing_common.upcaseTokens)
 
     # type operator
     type_op = Literal("%")
