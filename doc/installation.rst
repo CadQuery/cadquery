@@ -16,11 +16,11 @@ Command Line Installation
 
 CadQuery development moves very quickly, so you will need to choose whether you want the latest features or an older, probably more stable, version of CadQuery.
 
-To get the latest features (recommended), once you have Anaconda or Miniconda installed, activate the environment you want to use and type::
+To get the latest features (recommended), once you have Anaconda or Miniconda installed, activate the [conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) you want to use and type::
 
         conda install -c cadquery -c conda-forge cadquery=master
 
-If you want an older, more stable version of CadQuery, once you have Anaconda or Miniconda installed, activate the environment you want to use and type::
+If you want an older, more stable version of CadQuery, once you have Anaconda or Miniconda installed, activate the [conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) you want to use and type::
 
         conda install -c conda-forge -c cadquery cadquery=2
 
