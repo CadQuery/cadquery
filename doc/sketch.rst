@@ -8,7 +8,7 @@ Sketch tutorial
 ---------------
 
 The purpose of this section is to demonstrate how to construct sketches using different
- approaches.
+approaches.
 
 Face-based API
 ==============
@@ -83,7 +83,7 @@ and circles.
        )
 
 Constraint-based sketches
-========================
+=========================
 
 Finally, if desired, geometric constraints can be used to construct sketches. So
 far only line segments and arcs can be used in such a use case.
