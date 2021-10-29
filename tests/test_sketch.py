@@ -1,6 +1,7 @@
 import os
 
 from cadquery.sketch import Sketch, Vector, Location
+from cadquery.selectors import LengthNthSelector
 
 from pytest import approx, raises
 from math import pi, sqrt
@@ -249,13 +250,13 @@ def test_delete():
 
 def test_selectors():
 
-    s = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).reset()
+    s = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).rect(0.5, 0.5, mode="s").reset()
 
     assert len(s._selection) == 0
 
     s.vertices()
 
-    assert len(s._selection) == 8
+    assert len(s._selection) == 16
 
     s.reset()
 
@@ -263,11 +264,11 @@ def test_selectors():
 
     s.edges()
 
-    assert len(s._selection) == 8
+    assert len(s._selection) == 16
 
     s.reset().wires()
 
-    assert len(s._selection) == 2
+    assert len(s._selection) == 4
 
     s.reset().faces()
 
@@ -286,6 +287,14 @@ def test_selectors():
     assert len(s._selection) == 0
 
     s.select("test")
+
+    assert len(s._selection) == 2
+
+    s.reset().wires()
+
+    assert len(s._selection) == 4
+
+    s.reset().wires(LengthNthSelector(1))
 
     assert len(s._selection) == 2
 
