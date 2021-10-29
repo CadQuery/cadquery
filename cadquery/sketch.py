@@ -24,6 +24,7 @@ from .types import Real
 
 from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, Vertex, edgesToWires
 from .occ_impl.geom import Location, Vector
+from .occ_impl.importers.dxf import _importDXF
 from .occ_impl.sketch_solver import (
     SketchConstraintSolver,
     ConstraintKind,
@@ -103,7 +104,7 @@ class Sketch(object):
 
     _solve_status: Optional[Dict[str, Any]]
 
-    def __init__(self, parent: Any = None, locs: Iterable[Location] = (Location(),)):
+    def __init__(self: T, parent: Any = None, locs: Iterable[Location] = (Location(),)):
         """
         Construct an empty sketch.
         """
@@ -129,32 +130,32 @@ class Sketch(object):
 
         return iter(f for l in self.locs for f in self._faces.moved(l).Faces())
 
-    def _tag(self, val: Sequence[Union[Shape, Location]], tag: str):
+    def _tag(self: T, val: Sequence[Union[Shape, Location]], tag: str):
 
         self._tags[tag] = val
 
     # face construction
     def face(
-        self,
-        b: Union[Wire, Iterable[Edge]],
+        self: T,
+        b: Union[Wire, Iterable[Edge], Compound, T],
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
         ignore_selection: bool = False,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct a face from a wire or edges.
         """
 
-        res: Union[Face, Sketch]
+        res: Union[Face, Sketch, Compound]
 
         if isinstance(b, Wire):
             res = Face.makeFromWires(b)
-        elif isinstance(b, Iterable):
-            wires = edgesToWires(b)
-            res = Face.makeFromWires(*(wires[0], wires[1:]))
-        elif isinstance(b, Sketch):
+        elif isinstance(b, (Sketch, Compound)):
             res = b
+        elif isinstance(b, Iterable):
+            wires = edgesToWires(tcast(Iterable[Edge], b))
+            res = Face.makeFromWires(*(wires[0], wires[1:]))
         else:
             raise ValueError(f"Unsupported argument {b}")
 
@@ -163,14 +164,31 @@ class Sketch(object):
 
         return self.each(lambda l: res.moved(l), mode, tag, ignore_selection)
 
+    def importDXF(
+        self: T,
+        filename: str,
+        tol: float = 1e-6,
+        exclude: List[str] = [],
+        angle: Real = 0,
+        mode: Modes = "a",
+        tag: Optional[str] = None,
+    ) -> T:
+        """
+        Import a DXF file and construct face(s)
+        """
+
+        res = Compound.makeCompound(_importDXF(filename, tol, exclude))
+
+        return self.face(res, angle, mode, tag)
+
     def rect(
-        self,
+        self: T,
         w: Real,
         h: Real,
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct a rectangular face.
         """
@@ -179,7 +197,7 @@ class Sketch(object):
 
         return self.each(lambda l: res.located(l), mode, tag)
 
-    def circle(self, r: Real, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
+    def circle(self: T, r: Real, mode: Modes = "a", tag: Optional[str] = None) -> T:
         """
         Construct a circular face.
         """
@@ -189,13 +207,13 @@ class Sketch(object):
         return self.each(lambda l: res.located(l), mode, tag)
 
     def ellipse(
-        self,
+        self: T,
         a1: Real,
         a2: Real,
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct an elliptical face.
         """
@@ -209,7 +227,7 @@ class Sketch(object):
         return self.each(lambda l: res.located(l), mode, tag)
 
     def trapezoid(
-        self,
+        self: T,
         w: Real,
         h: Real,
         a1: Real,
@@ -217,7 +235,7 @@ class Sketch(object):
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct a trapezoidal face.
         """
@@ -230,13 +248,13 @@ class Sketch(object):
         return self.polygon((v1, v2, v4, v3, v1), angle, mode, tag)
 
     def slot(
-        self,
+        self: T,
         w: Real,
         h: Real,
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct a slot-shaped face.
         """
@@ -258,13 +276,13 @@ class Sketch(object):
         return self.face(wire, angle, mode, tag)
 
     def regularPolygon(
-        self,
+        self: T,
         r: Real,
         n: int,
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct a regular polygonal face.
         """
@@ -277,12 +295,12 @@ class Sketch(object):
         return self.polygon(pts, angle, mode, tag)
 
     def polygon(
-        self,
+        self: T,
         pts: Iterable[Point],
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct a polygonal face.
         """
@@ -293,7 +311,7 @@ class Sketch(object):
 
     # distribute locations
 
-    def rarray(self, xs: Real, ys: Real, nx: int, ny: int) -> "Sketch":
+    def rarray(self: T, xs: Real, ys: Real, nx: int, ny: int) -> T:
         """
         Generate a rectangular array of locations.
         """
@@ -318,9 +336,7 @@ class Sketch(object):
             for el in selection
         )
 
-    def parray(
-        self, r: Real, a1: Real, a2: Real, n: int, rotate: bool = True
-    ) -> "Sketch":
+    def parray(self: T, r: Real, a1: Real, a2: Real, n: int, rotate: bool = True) -> T:
         """
         Generate a polar array of locations.
         """
@@ -364,8 +380,8 @@ class Sketch(object):
         )
 
     def distribute(
-        self, n: int, start: Real = 0, stop: Real = 1, rotate: bool = True
-    ) -> "Sketch":
+        self: T, n: int, start: Real = 0, stop: Real = 1, rotate: bool = True
+    ) -> T:
         """
         Distribute locations along selected edghes or wires.
         """
@@ -388,8 +404,8 @@ class Sketch(object):
         return self.push(locs)
 
     def push(
-        self, locs: Iterable[Union[Location, Point]], tag: Optional[str] = None,
-    ) -> "Sketch":
+        self: T, locs: Iterable[Union[Location, Point]], tag: Optional[str] = None,
+    ) -> T:
         """
         Set current selection to given locations or points.
         """
@@ -404,17 +420,18 @@ class Sketch(object):
         return self
 
     def each(
-        self,
-        callback: Callable[[Location], Union[Face, "Sketch"]],
+        self: T,
+        callback: Callable[[Location], Union[Face, "Sketch", Compound]],
         mode: Modes = "a",
         tag: Optional[str] = None,
         ignore_selection: bool = False,
-    ) -> "Sketch":
+    ) -> T:
         """
         Apply a callback on all applicable entities.
         """
 
         res: List[Face] = []
+        locs: List[Location] = []
 
         if self._selection and not ignore_selection:
             for el in self._selection:
@@ -423,15 +440,18 @@ class Sketch(object):
                 else:
                     loc = Location(el.Center())
 
-                tmp = callback(loc)
-                if isinstance(tmp, Sketch):
-                    res.extend(tmp._faces.Faces())
-                else:
-                    res.append(tmp)
+                locs.append(loc)
+
         else:
-            tmp = callback(Location())
+            locs.append(Location())
+
+        for loc in locs:
+            tmp = callback(loc)
+
             if isinstance(tmp, Sketch):
                 res.extend(tmp._faces.Faces())
+            elif isinstance(tmp, Compound):
+                res.extend(tmp.Faces())
             else:
                 res.append(tmp)
 
@@ -453,7 +473,7 @@ class Sketch(object):
         return self
 
     # modifiers
-    def hull(self, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
+    def hull(self: T, mode: Modes = "a", tag: Optional[str] = None) -> T:
         """
         Generate a convex hull from current selection or all objects.
         """
@@ -473,7 +493,7 @@ class Sketch(object):
 
         return self
 
-    def offset(self, d: Real, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
+    def offset(self: T, d: Real, mode: Modes = "a", tag: Optional[str] = None) -> T:
         """
         Offset selected wires or edges.
         """
@@ -498,7 +518,7 @@ class Sketch(object):
 
         return rv
 
-    def fillet(self, d: Real) -> "Sketch":
+    def fillet(self: T, d: Real) -> T:
         """
         Add a fillet based on current selection.
         """
@@ -511,7 +531,7 @@ class Sketch(object):
 
         return self
 
-    def chamfer(self, d: Real) -> "Sketch":
+    def chamfer(self: T, d: Real) -> T:
         """
         Add a chamfer based on current selection.
         """
@@ -524,7 +544,7 @@ class Sketch(object):
 
         return self
 
-    def clean(self) -> "Sketch":
+    def clean(self: T) -> T:
         """
         Remove internal wires.
         """
@@ -535,18 +555,18 @@ class Sketch(object):
 
     # selection
 
-    def _unique(self, vals: List[SketchVal]) -> List[SketchVal]:
+    def _unique(self: T, vals: List[SketchVal]) -> List[SketchVal]:
 
         tmp = {hash(v): v for v in vals}
 
         return list(tmp.values())
 
     def _select(
-        self,
+        self: T,
         s: Optional[str],
         kind: Literal["Faces", "Wires", "Edges", "Vertices"],
         tag: Optional[str] = None,
-    ) -> "Sketch":
+    ) -> T:
 
         rv = []
 
@@ -566,7 +586,7 @@ class Sketch(object):
 
         return self
 
-    def tag(self, tag: str) -> "Sketch":
+    def tag(self: T, tag: str) -> T:
         """
         Tag current selection.
         """
@@ -575,7 +595,7 @@ class Sketch(object):
 
         return self
 
-    def select(self, *tags: str) -> "Sketch":
+    def select(self: T, *tags: str) -> T:
         """
         Select based on tags.
         """
@@ -587,35 +607,35 @@ class Sketch(object):
 
         return self
 
-    def faces(self, s: Optional[str] = None, tag: Optional[str] = None) -> "Sketch":
+    def faces(self: T, s: Optional[str] = None, tag: Optional[str] = None) -> T:
         """
         Select faces.
         """
 
         return self._select(s, "Faces", tag)
 
-    def wires(self, s: Optional[str] = None, tag: Optional[str] = None) -> "Sketch":
+    def wires(self: T, s: Optional[str] = None, tag: Optional[str] = None) -> T:
         """
         Select wires.
         """
 
         return self._select(s, "Wires", tag)
 
-    def edges(self, s: Optional[str] = None, tag: Optional[str] = None) -> "Sketch":
+    def edges(self: T, s: Optional[str] = None, tag: Optional[str] = None) -> T:
         """
         Select edges.
         """
 
         return self._select(s, "Edges", tag)
 
-    def vertices(self, s: Optional[str] = None, tag: Optional[str] = None) -> "Sketch":
+    def vertices(self: T, s: Optional[str] = None, tag: Optional[str] = None) -> T:
         """
         Select vertices.
         """
 
         return self._select(s, "Vertices", tag)
 
-    def reset(self) -> "Sketch":
+    def reset(self: T) -> T:
         """
         Reset current selection.
         """
@@ -623,7 +643,7 @@ class Sketch(object):
         self._selection = []
         return self
 
-    def delete(self) -> "Sketch":
+    def delete(self: T) -> T:
         """
         Delete selected object.
         """
@@ -661,8 +681,8 @@ class Sketch(object):
         return e.endPoint()
 
     def edge(
-        self, val: Edge, tag: Optional[str] = None, forConstruction: bool = False
-    ) -> "Sketch":
+        self: T, val: Edge, tag: Optional[str] = None, forConstruction: bool = False
+    ) -> T:
         """
         Add an edge to the sketch.
         """
@@ -677,12 +697,12 @@ class Sketch(object):
 
     @multimethod
     def segment(
-        self,
+        self: T,
         p1: Point,
         p2: Point,
         tag: Optional[str] = None,
         forConstruction: bool = False,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct a segment.
         """
@@ -693,8 +713,8 @@ class Sketch(object):
 
     @segment.register
     def segment(
-        self, p2: Point, tag: Optional[str] = None, forConstruction: bool = False
-    ) -> "Sketch":
+        self: T, p2: Point, tag: Optional[str] = None, forConstruction: bool = False
+    ) -> T:
 
         p1 = self._endPoint()
         val = Edge.makeLine(p1, Vector(p2))
@@ -703,12 +723,12 @@ class Sketch(object):
 
     @segment.register
     def segment(
-        self,
+        self: T,
         l: Real,
         a: Real,
         tag: Optional[str] = None,
         forConstruction: bool = False,
-    ) -> "Sketch":
+    ) -> T:
 
         p1 = self._endPoint()
         d = Vector(l * cos(radians(a)), l * sin(radians(a)))
@@ -718,13 +738,13 @@ class Sketch(object):
 
     @multimethod
     def arc(
-        self,
+        self: T,
         p1: Point,
         p2: Point,
         p3: Point,
         tag: Optional[str] = None,
         forConstruction: bool = False,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct an arc.
         """
@@ -735,12 +755,12 @@ class Sketch(object):
 
     @arc.register
     def arc(
-        self,
+        self: T,
         p2: Point,
         p3: Point,
         tag: Optional[str] = None,
         forConstruction: bool = False,
-    ) -> "Sketch":
+    ) -> T:
 
         p1 = self._endPoint()
         val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
@@ -749,14 +769,14 @@ class Sketch(object):
 
     @arc.register
     def arc(
-        self,
+        self: T,
         c: Point,
         r: Real,
         a: Real,
         da: Real,
         tag: Optional[str] = None,
         forConstruction: bool = False,
-    ) -> "Sketch":
+    ) -> T:
 
         if abs(da) >= 360:
             val = Edge.makeCircle(r, Vector(c), angle1=a, angle2=a, orientation=da > 0)
@@ -771,13 +791,13 @@ class Sketch(object):
 
     @multimethod
     def spline(
-        self,
+        self: T,
         pts: Iterable[Point],
         tangents: Optional[Iterable[Point]],
         periodic: bool,
         tag: Optional[str] = None,
         forConstruction: bool = False,
-    ) -> "Sketch":
+    ) -> T:
         """
         Construct a spline edge.
         """
@@ -792,15 +812,15 @@ class Sketch(object):
 
     @spline.register
     def spline(
-        self,
+        self: T,
         pts: Iterable[Point],
         tag: Optional[str] = None,
         forConstruction: bool = False,
-    ) -> "Sketch":
+    ) -> T:
 
         return self.spline(pts, None, False, tag, forConstruction)
 
-    def close(self, tag: Optional[str] = None) -> "Sketch":
+    def close(self: T, tag: Optional[str] = None) -> T:
         """
         Connect last edge to the first one.
         """
@@ -809,7 +829,7 @@ class Sketch(object):
 
         return self
 
-    def assemble(self, mode: Modes = "a", tag: Optional[str] = None) -> "Sketch":
+    def assemble(self: T, mode: Modes = "a", tag: Optional[str] = None) -> T:
         """
         Assemble edges into faces.
         """
@@ -820,7 +840,7 @@ class Sketch(object):
 
     # constraints
     @multimethod
-    def constrain(self, tag: str, constraint: ConstraintKind, arg: Any) -> "Sketch":
+    def constrain(self: T, tag: str, constraint: ConstraintKind, arg: Any) -> T:
         """
         Add a constraint.
         """
@@ -833,8 +853,8 @@ class Sketch(object):
 
     @constrain.register
     def constrain(
-        self, tag1: str, tag2: str, constraint: ConstraintKind, arg: Any
-    ) -> "Sketch":
+        self: T, tag1: str, tag2: str, constraint: ConstraintKind, arg: Any
+    ) -> T:
 
         self._constraints.append(
             Constraint(
@@ -847,7 +867,7 @@ class Sketch(object):
 
         return self
 
-    def solve(self) -> "Sketch":
+    def solve(self: T) -> T:
         """
         Solve current constraints and update edge positions.
         """
