@@ -673,22 +673,6 @@ same is true for :meth:`~cadquery.Workplane.extrude`).
         .cutBlind("last")
     )
 
-.. topic:: Api References
-
-    .. hlist::
-        :columns: 3
-
-        * :py:meth:`Workplane.cutBlind` **!**
-        * :py:meth:`Workplane.rect`
-        * :py:meth:`Workplane.ellipse`
-        * :py:meth:`Workplane.workplane`
-        * :py:meth:`Workplane.slot2D`
-        * :py:meth:`Workplane.loft`
-        * :py:meth:`Workplane.rotateAboutCenter`
-        * :py:meth:`Workplane.transformed`
-        * :py:meth:`Workplane.moveTo`
-        * :py:meth:`Workplane.circle`
-      
 Here is a typical situation where extruding and cuting until a given surface is very handy. It allows us to extrude or cut until a curved surface without overlapping issues.
 
 .. cadquery::
@@ -732,10 +716,27 @@ Here is a typical situation where extruding and cuting until a given surface is 
 
 .. warning::
 
-    * If the wire you want to extrude cannot be fully projected on the target surface, the result will be unpredictable.
-    * Furthermore the algorithm in charge of finding the candidates faces do it's search by counting all the faces intersected by a line created from your wire center along your extrusion direction.
-    * So make sure your wire can be projected on your target face to avoid unexpected behaviour. 
-  
+    If the wire you want to extrude cannot be fully projected on the target surface, the result will
+    be unpredictable. Furthermore the algorithm in charge of finding the candidates faces do it's
+    search by counting all the faces intersected by a line created from your wire center along your
+    extrusion direction. So make sure your wire can be projected on your target face to avoid
+    unexpected behaviour.
+
+.. topic:: Api References
+
+    .. hlist::
+        :columns: 3
+
+        * :py:meth:`Workplane.cutBlind` **!**
+        * :py:meth:`Workplane.rect`
+        * :py:meth:`Workplane.ellipse`
+        * :py:meth:`Workplane.workplane`
+        * :py:meth:`Workplane.slot2D`
+        * :py:meth:`Workplane.loft`
+        * :py:meth:`Workplane.rotateAboutCenter`
+        * :py:meth:`Workplane.transformed`
+        * :py:meth:`Workplane.moveTo`
+        * :py:meth:`Workplane.circle`
 
 
 Making Counter-bored and Counter-sunk Holes
