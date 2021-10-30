@@ -2993,7 +2993,7 @@ class Workplane(object):
           to the normal of the plane. The string "next" extrudes until the next face orthogonal to
           the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
           the extrusion will extend until this face.
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean combine: True to combine the resulting solid with parent solids if found. (Cannot be set to False when `until` is not set as a float)
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
         :param float taper: angle for optional tapered extrusion
@@ -3070,6 +3070,12 @@ class Workplane(object):
         *  if combine is False, the new value is pushed onto the stack.
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
+
+        .. note::
+            Keep in mind that `axisStart` and `axisEnd` are defined relative to the current Workplane center position.
+            So if for example you want to revolve a circle centered at (10,0,0) around the Y axis, be sure to either :py:meth:`move` (or :py:meth:`moveTo`)
+            the current Workplane position or specify `axisStart` and `axisEnd` with the correct vector position.
+            In this example (0,0,0), (0,1,0) as axis coords would fail.
         """
         # Make sure we account for users specifying angles larger than 360 degrees
         angleDegrees %= 360.0
