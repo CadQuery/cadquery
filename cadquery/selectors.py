@@ -31,13 +31,13 @@ from .occ_impl.shapes import (
     geom_LUT_FACE,
 )
 from pyparsing import (
+    pyparsing_common,
     Literal,
     Word,
     nums,
     Optional,
     Combine,
     oneOf,
-    upcaseTokens,
     CaselessLiteral,
     Group,
     infixNotation,
@@ -267,9 +267,7 @@ class PerpendicularDirSelector(BaseDirSelector):
     """
 
     def test(self, vec: Vector) -> bool:
-        angle = self.direction.getAngle(vec)
-        r = (abs(angle) < self.tolerance) or (abs(angle - math.pi) < self.tolerance)
-        return not r
+        return abs(self.direction.getAngle(vec) - math.pi / 2) < self.tolerance
 
 
 class TypeSelector(Selector):
@@ -637,7 +635,7 @@ def _makeGrammar():
     cqtype = oneOf(
         set(geom_LUT_EDGE.values()) | set(geom_LUT_FACE.values()), caseless=True,
     )
-    cqtype = cqtype.setParseAction(upcaseTokens)
+    cqtype = cqtype.setParseAction(pyparsing_common.upcaseTokens)
 
     # type operator
     type_op = Literal("%")

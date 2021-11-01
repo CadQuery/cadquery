@@ -4601,6 +4601,19 @@ class TestCadQuery(BaseTest):
         self.assertTupleAlmostEquals(p0.toTuple(), p2.toTuple(), 6)
         self.assertTupleAlmostEquals(p1.toTuple(), (0, 1, 0), 6)
 
+        # test with arc of circle
+        e = Edge.makeCircle(1, (0, 0, 0), (0, 0, 1), 90, 180)
+        p0 = e.positionAt(0.0)
+        p1 = e.positionAt(1.0)
+        assert p0.toTuple() == approx((0.0, 1.0, 0.0))
+        assert p1.toTuple() == approx((-1.0, 0.0, 0.0))
+
+        w = Wire.assembleEdges([e])
+        p0 = w.positionAt(0.0)
+        p1 = w.positionAt(1.0)
+        assert p0.toTuple() == approx((0.0, 1.0, 0.0))
+        assert p1.toTuple() == approx((-1.0, 0.0, 0.0))
+
     def testTangengAt(self):
 
         pts = [(0, 0), (-1, 1), (-2, 0), (-1, 0)]

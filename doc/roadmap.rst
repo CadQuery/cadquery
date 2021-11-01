@@ -83,6 +83,3 @@ primitive creation
         * cone
         * torus
         * wedge
-
-extrude/cut up to surface
-    allow a cut or extrude to terminate at another surface, rather than either through all or a fixed distance

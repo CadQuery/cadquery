@@ -16,7 +16,8 @@ requirements:
   run:
     - python {{ environ.get('PYTHON_VERSION') }}
     - ocp 7.5.2
-    - pyparsing 2.*
+    - hdf5 1.10.6 *1114
+    - pyparsing >=2.1.9
     - ezdxf
     - ipython
     - typing_extensions
