@@ -503,15 +503,15 @@ class Workplane(object):
         """
         Creates a new 2D workplane, located relative to the first face on the stack.
 
-        :param offset:  offset for the work plane in the Z direction. Default
-        :param invert:  invert the Z direction from that of the face.
+        :param offset:  offset for the workplane in it's normal direction . Default
+        :param invert:  invert the normal direction from that of the face.
         :param centerOption: how local origin of workplane is determined.
         :param origin: origin for plane center, requires 'ProjectedOrigin' centerOption.
         :type offset: float or None=0.0
         :type invert: boolean or None=False
         :type centerOption: string or None='ProjectedOrigin'
         :type origin: Vector or None
-        :rtype: Workplane object ( which is a subclass of CQ )
+        :rtype: Workplane object 
 
         The first element on the stack must be a face, a set of
         co-planar faces or a vertex.  If a vertex, then the parent
@@ -527,7 +527,7 @@ class Workplane(object):
              face(s) or vertex (vertices). 'ProjectedOrigin' uses by default the current origin
              or the optional origin parameter (if specified) and projects it onto the plane
              defined by the selected face(s).
-           * The Z direction will be normal to the plane of the face,computed
+           * The Z direction will be the normal of the face,computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
              the global x-y plane, the x direction of the workplane will co-incide with the
@@ -537,14 +537,6 @@ class Workplane(object):
         of the face ( IE, offset=0).  Occasionally, it is useful to define a face offset from
         an existing surface, and even more rarely to define a workplane based on a face that is
         not planar.
-
-        To create a workplane without first having a face, use the Workplane() method.
-
-        Future Enhancements:
-          * Allow creating workplane from planar wires
-          * Allow creating workplane based on an arbitrary point on a face, not just the center.
-            For now you can work around by creating a workplane and then offsetting the center
-            afterwards.
         """
 
         def _isCoPlanar(f0, f1):
