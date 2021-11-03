@@ -50,6 +50,22 @@ def nested_assy():
 
 
 @pytest.fixture
+def nested_assy_sphere():
+
+    b1 = cq.Workplane().box(1, 1, 1).faces("<Z").tag("top_face").end()
+    b2 = cq.Workplane().box(1, 1, 1).faces("<Z").tag("bottom_face").end()
+    b3 = cq.Workplane().pushPoints([(-2, 0), (2, 0)]).tag("pts").sphere(1).tag("boxes")
+
+    assy = cq.Assembly(b1, loc=cq.Location(cq.Vector(0, 0, 0)), name="TOP")
+    assy2 = cq.Assembly(b2, loc=cq.Location(cq.Vector(0, 4, 0)), name="SECOND")
+    assy2.add(b3, loc=cq.Location(cq.Vector(0, 4, 0)), name="BOTTOM")
+
+    assy.add(assy2, color=cq.Color("green"))
+
+    return assy
+
+
+@pytest.fixture
 def empty_top_assy():
 
     b1 = cq.Workplane().box(1, 1, 1)
@@ -158,7 +174,7 @@ def test_toJSON(simple_assy, nested_assy, empty_top_assy):
     assert len(r3) == 1
 
 
-def test_save(nested_assy):
+def test_save(nested_assy, nested_assy_sphere):
 
     nested_assy.save("nested.step")
     assert os.path.exists("nested.step")
@@ -178,11 +194,15 @@ def test_save(nested_assy):
     nested_assy.save("nested.wrl", "VRML")
     assert os.path.exists("nested.wrl")
 
-    nested_assy.save("nested.glb", "GLTF")
+    nested_assy_sphere.save("nested.glb", "GLTF")
     assert os.path.exists("nested.glb")
+    assert os.path.getsize("nested.glb") > 50 * 1024
 
     nested_assy.save("nested", "VTKJS")
     assert os.path.exists("nested.zip")
+
+
+def test_save_raises(nested_assy):
 
     with pytest.raises(ValueError):
         nested_assy.save("nested.dxf")
