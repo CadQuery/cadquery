@@ -35,7 +35,7 @@ class UNITS:
 def importShape(importType, fileName, *args, **kwargs):
     """
     Imports a file based on the type (STEP, STL, etc)
-    
+
     :param importType: The type of file that we're importing
     :param fileName: THe name of the file that we're importing
     """
@@ -53,7 +53,7 @@ def importShape(importType, fileName, *args, **kwargs):
 def importStep(fileName):
     """
     Accepts a file name and loads the STEP file into a cadquery Workplane
-    
+
     :param fileName: The path and name of the STEP file to be imported
     """
 
@@ -136,7 +136,7 @@ def _dxf_spline(el):
             knots.SetValue(i + 1, k)
             multiplicities.SetValue(i + 1, m)
 
-        # assemble wieghts if present:
+        # assemble weights if present:
         if el.weights:
             rational = True
 
@@ -144,7 +144,7 @@ def _dxf_spline(el):
             for i, w in enumerate(el.weights):
                 weights.SetValue(i + 1, w)
 
-        # assmeble conotrol points
+        # assemble control points
         pts = TColgp_Array1OfPnt(1, len(el.control_points))
         for i, p in enumerate(el.control_points):
             pts.SetValue(i + 1, gp_Pnt(*p))
@@ -217,7 +217,7 @@ def _dxf_convert(elements, tol):
 def importDXF(filename, tol=1e-6, exclude=[]):
     """
     Loads a DXF file into a cadquery Workplane.
-    
+
     :param fileName: The path and name of the DXF file to be imported
     :param tol: The tolerance used for merging edges into wires (default: 1e-6)
     :param exclude: a list of layer names not to import (default: [])

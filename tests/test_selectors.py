@@ -563,7 +563,7 @@ class TestCQSelectors(BaseTest):
             ((0.4, -0.1, -0.1), (0.6, 0.1, 0.1), (0.5, 0.0, 0.0)),
             ((-0.1, -0.1, 0.4), (0.1, 0.1, 0.6), (0.0, 0.0, 0.5)),
             ((0.9, 0.9, 0.4), (1.1, 1.1, 0.6), (1.0, 1.0, 0.5)),
-            ((0.4, 0.9, 0.9), (0.6, 1.1, 1.1,), (0.5, 1.0, 1.0)),
+            ((0.4, 0.9, 0.9), (0.6, 1.1, 1.1,), (0.5, 1.0, 1.0),),
         ]
 
         for d in test_data_edges:
@@ -801,7 +801,7 @@ class TestCQSelectors(BaseTest):
 
     def testLengthNthSelector_UnitEdgeAndWire(self):
         """
-        Checks that key() method of LengthNthSelector 
+        Checks that key() method of LengthNthSelector
         calculates lengths of unit edge correctly
         """
         unit_edge = Edge.makeLine(Vector(0, 0, 0), Vector(0, 0, 1))

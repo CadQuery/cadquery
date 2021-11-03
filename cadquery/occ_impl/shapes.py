@@ -95,10 +95,11 @@ from OCP.BRepPrimAPI import (
     BRepPrimAPI_MakeRevol,
     BRepPrimAPI_MakeSphere,
 )
+from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
 from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
 
-# used for getting underlying geoetry -- is this equvalent to brep adaptor?
+# used for getting underlying geoetry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
 
 from OCP.TopoDS import (
@@ -118,6 +119,7 @@ from OCP.TopoDS import (
 
 from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
 from OCP.GCE2d import GCE2d_MakeSegment
+from OCP.gce import gce_MakeLin, gce_MakeDir
 from OCP.GeomAPI import (
     GeomAPI_Interpolate,
     GeomAPI_ProjectPointOnSurf,
@@ -420,7 +422,7 @@ class Shape(object):
         }
 
         t = shapetype(obj)
-        # NB downcast is nedded to handly TopoDS_Shape types
+        # NB downcast is needed to handly TopoDS_Shape types
         tr = constructor_LUT[t](downcast(obj))
         tr.forConstruction = forConstruction
 
@@ -1034,6 +1036,85 @@ class Shape(object):
 
         return self._bool_op((self,), toIntersect, intersect_op)
 
+    def facesIntersectedByLine(
+        self,
+        point: VectorLike,
+        axis: VectorLike,
+        tol: float = 1e-4,
+        direction: Optional[Literal["AlongAxis", "Opposite"]] = None,
+    ):
+        """
+        Computes the intersections between the provided line and the faces of this Shape
+
+        :point: Base point for defining a line
+        :axis: Axis on which the line rest
+        :tol: Intersection tolerance
+        :direction: Valid values : "AlongAxis", "Opposite", if specified will ignore all faces that are not in the specified direction
+        including the face where the :point: lies if it is the case
+
+        :returns: A list of intersected faces sorted by distance from :point:
+        """
+
+        oc_point = (
+            gp_Pnt(*point.toTuple()) if isinstance(point, Vector) else gp_Pnt(*point)
+        )
+        oc_axis = (
+            gp_Dir(Vector(axis).wrapped)
+            if not isinstance(axis, Vector)
+            else gp_Dir(axis.wrapped)
+        )
+
+        line = gce_MakeLin(oc_point, oc_axis).Value()
+        shape = self.wrapped
+
+        intersectMaker = BRepIntCurveSurface_Inter()
+        intersectMaker.Init(shape, line, tol)
+
+        faces_dist = []  # using a list instead of a dictionary to be able to sort it
+        while intersectMaker.More():
+            interPt = intersectMaker.Pnt()
+            interDirMk = gce_MakeDir(oc_point, interPt)
+
+            distance = oc_point.SquareDistance(interPt)
+
+            # interDir is not done when `oc_point` and `oc_axis` have the same coord
+            if interDirMk.IsDone():
+                interDir: Any = interDirMk.Value()
+            else:
+                interDir = None
+
+            if direction == "AlongAxis":
+                if (
+                    interDir is not None
+                    and not interDir.IsOpposite(oc_axis, tol)
+                    and distance > tol
+                ):
+                    faces_dist.append((intersectMaker.Face(), distance))
+
+            elif direction == "Opposite":
+                if (
+                    interDir is not None
+                    and interDir.IsOpposite(oc_axis, tol)
+                    and distance > tol
+                ):
+                    faces_dist.append((intersectMaker.Face(), distance))
+
+            elif direction is None:
+                faces_dist.append(
+                    (intersectMaker.Face(), abs(distance))
+                )  # will sort all intersected faces by distance whatever the direction is
+            else:
+                raise ValueError(
+                    "Invalid direction specification.\nValid specification are 'AlongAxis' and 'Opposite'."
+                )
+
+            intersectMaker.Next()
+
+        faces_dist.sort(key=lambda x: x[1])
+        faces = [face[0] for face in faces_dist]
+
+        return [Face(face) for face in faces]
+
     def split(self, *splitters: "Shape") -> "Shape":
         """
         Split this shape with the positional arguments.
@@ -1045,7 +1126,7 @@ class Shape(object):
 
     def mesh(self, tolerance: float, angularTolerance: float = 0.1):
         """
-        Generate traingulation if none exists.
+        Generate triangulation if none exists.
         """
 
         if not BRepTools.Triangulation_s(self.wrapped, tolerance):
@@ -1115,7 +1196,7 @@ class Shape(object):
 
         rv = shape_data.getVtkPolyData()
 
-        # convert to traingles and split edges
+        # convert to triangles and split edges
         t_filter = vtkTriangleFilter()
         t_filter.SetInputData(rv)
         t_filter.Update()
@@ -1260,7 +1341,7 @@ class Mixin1D(object):
         curve = self._geomAdaptor()
 
         l = GCPnts_AbscissaPoint.Length_s(curve)
-        return GCPnts_AbscissaPoint(curve, l * d, 0).Parameter()
+        return GCPnts_AbscissaPoint(curve, l * d, curve.FirstParameter()).Parameter()
 
     def tangentAt(
         self: Mixin1DProtocol,
@@ -1353,7 +1434,7 @@ class Mixin1D(object):
         d: float,
         mode: Literal["length", "parameter"] = "length",
     ) -> Vector:
-        """Generate a postion along the underlying curve.
+        """Generate a position along the underlying curve.
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
         :return: A Vector on the underlying curve located at the specified d value.
@@ -1567,8 +1648,8 @@ class Edge(Shape, Mixin1D):
 
         :param listOfVector: a list of Vectors that represent the points
         :param tangents: tuple of Vectors specifying start and finish tangent
-        :param periodic: creation of peridic curves
-        :param parameters: the value of the parameter at each interpolation point. (The intepolated
+        :param periodic: creation of periodic curves
+        :param parameters: the value of the parameter at each interpolation point. (The interpolated
           curve is represented as a vector-valued function of a scalar parameter.) If periodic ==
           True, then len(parameters) must be len(intepolation points) + 1, otherwise len(parameters)
           must be equal to len(interpolation points).
@@ -1899,7 +1980,7 @@ class Wire(Shape, Mixin1D):
                 gp_Ax3(center.toPnt(), dir.toDir()), angle * DEG2RAD, radius
             )
 
-        # 2. construct an semgent in the u,v domain
+        # 2. construct an segment in the u,v domain
         if lefthand:
             geom_line = Geom2d_Line(gp_Pnt2d(0.0, 0.0), gp_Dir2d(-2 * pi, pitch))
         else:
@@ -2264,6 +2345,17 @@ class Face(Shape):
 
         return self.__class__(chamfer_builder.Shape()).fix()
 
+    def toPln(self) -> gp_Pln:
+        """
+        Convert this face to a gp_Pln.
+
+        Note the Location of the resulting plane may not equal the center of this face,
+        however the resulting plane will still contain the center of this face.
+        """
+
+        adaptor = BRepAdaptor_Surface(self.wrapped)
+        return adaptor.Plane()
+
 
 class Shell(Shape):
     """
@@ -2284,6 +2376,9 @@ class Shell(Shape):
         s = shell_builder.SewedShape()
 
         return cls(s)
+
+
+TS = TypeVar("TS", bound=ShapeProtocol)
 
 
 class Mixin3D(object):
@@ -2340,18 +2435,20 @@ class Mixin3D(object):
 
     def shell(
         self: Any,
-        faceList: Iterable[Face],
+        faceList: Optional[Iterable[Face]],
         thickness: float,
         tolerance: float = 0.0001,
         kind: Literal["arc", "intersection"] = "arc",
     ) -> Any:
         """
-            make a shelled solid of given  by removing the list of faces
+        Make a shelled solid of self.
 
-        :param faceList: list of face objects, which must be part of the solid.
-        :param thickness: floating point thickness. positive shells outwards, negative shells inwards
-        :param tolerance: modelling tolerance of the method, default=0.0001
-        :return: a shelled solid
+        :param faceList: List of faces to be removed, which must be part of the solid. Can
+          be an empty list.
+        :param thickness: Floating point thickness. Positive shells outwards, negative
+          shells inwards.
+        :param tolerance: Modelling tolerance of the method, default=0.0001.
+        :return: A shelled solid.
         """
 
         kind_dict = {
@@ -2360,45 +2457,39 @@ class Mixin3D(object):
         }
 
         occ_faces_list = TopTools_ListOfShape()
+        shell_builder = BRepOffsetAPI_MakeThickSolid()
 
         if faceList:
             for f in faceList:
                 occ_faces_list.Append(f.wrapped)
 
-            shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped,
-                occ_faces_list,
-                thickness,
-                tolerance,
-                Intersection=True,
-                Join=kind_dict[kind],
-            )
+        shell_builder.MakeThickSolidByJoin(
+            self.wrapped,
+            occ_faces_list,
+            thickness,
+            tolerance,
+            Intersection=True,
+            Join=kind_dict[kind],
+        )
+        shell_builder.Build()
 
-            shell_builder.Build()
-            rv = shell_builder.Shape()
+        if faceList:
+            rv = self.__class__(shell_builder.Shape())
 
         else:  # if no faces provided a watertight solid will be constructed
-            shell_builder = BRepOffsetAPI_MakeThickSolid(
-                self.wrapped,
-                occ_faces_list,
-                thickness,
-                tolerance,
-                Intersection=True,
-                Join=kind_dict[kind],
-            )
-
-            shell_builder.Build()
             s1 = self.__class__(shell_builder.Shape()).Shells()[0].wrapped
             s2 = self.Shells()[0].wrapped
 
             # s1 can be outer or inner shell depending on the thickness sign
             if thickness > 0:
-                rv = BRepBuilderAPI_MakeSolid(s1, s2).Shape()
+                sol = BRepBuilderAPI_MakeSolid(s1, s2)
             else:
-                rv = BRepBuilderAPI_MakeSolid(s2, s1).Shape()
+                sol = BRepBuilderAPI_MakeSolid(s2, s1)
 
-        # fix needed for the orientations
-        return self.__class__(rv) if faceList else self.__class__(rv).fix()
+            # fix needed for the orientations
+            rv = self.__class__(sol.Shape()).fix()
+
+        return rv
 
     def isInside(
         self: ShapeProtocol, point: VectorLike, tolerance: float = 1.0e-6
@@ -2408,7 +2499,7 @@ class Mixin3D(object):
         object within the specified tolerance.
 
         :param point: tuple or Vector representing 3D point to be tested
-        :param tolerance: tolerence for inside determination, default=1.0e-6
+        :param tolerance: tolerance for inside determination, default=1.0e-6
         :return: bool indicating whether or not point is within solid
         """
         if isinstance(point, Vector):
@@ -2418,6 +2509,51 @@ class Mixin3D(object):
         solid_classifier.Perform(gp_Pnt(*point), tolerance)
 
         return solid_classifier.State() == ta.TopAbs_IN or solid_classifier.IsOnAFace()
+
+    def dprism(
+        self: TS,
+        basis: Optional[Face],
+        profiles: List[Wire],
+        depth: Optional[float] = None,
+        taper: float = 0,
+        upToFace: Optional[Face] = None,
+        thruAll: bool = True,
+        additive: bool = True,
+    ) -> TS:
+        """
+        Make a prismatic feature (additive or subtractive)
+
+        :param basis: face to perfrom the operation on
+        :param profiles: list of profiles
+        :param depth: depth of the cut or extrusion
+        :param upToFace: a face to extrude until
+        :param thruAll: cut thruAll
+        :param additive: set the kind of operation (additive or subtractive)
+        :return: a Solid object
+        """
+
+        sorted_profiles = sortWiresByBuildOrder(profiles)
+        shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
+        for p in sorted_profiles:
+            face = Face.makeFromWires(p[0], p[1:])
+            feat = BRepFeat_MakeDPrism(
+                shape,
+                face.wrapped,
+                basis.wrapped if basis else TopoDS_Face(),
+                taper * DEG2RAD,
+                additive,
+                False,
+            )
+            if upToFace is not None:
+                feat.Perform(upToFace.wrapped)
+            elif thruAll or depth is None:
+                feat.PerformThruAll()
+            else:
+                feat.Perform(depth)
+
+            shape = feat.Shape()
+
+        return self.__class__(shape)
 
 
 class Solid(Shape, Mixin3D):
@@ -2758,7 +2894,7 @@ class Solid(Shape, Mixin3D):
         straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
         straight_spine_w = Wire.combine([straight_spine_e,])[0].wrapped
 
-        # make an auxliliary spine
+        # make an auxiliary spine
         pitch = 360.0 / angleDegrees * vecNormal.Length
         radius = 1
         aux_spine_w = Wire.makeHelix(
@@ -2776,7 +2912,7 @@ class Solid(Shape, Mixin3D):
             for w in innerWires
         ]
 
-        # combine the inner solids into compund
+        # combine the inner solids into compound
         inner_comp = Compound._makeCompound(inner_solids)
 
         # subtract from the outer solid
@@ -2926,7 +3062,7 @@ class Solid(Shape, Mixin3D):
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
         :param path: The wire to sweep the face resulting from the wires over
-        :param boolean makeSolid: return Solid or Shell (defualt True)
+        :param boolean makeSolid: return Solid or Shell (default True)
         :param boolean isFrenet: Frenet mode (default False)
         :param mode: additional sweep mode parameters.
         :param transitionMode:
@@ -3007,47 +3143,6 @@ class Solid(Shape, Mixin3D):
             builder.MakeSolid()
 
         return cls(builder.Shape())
-
-    def dprism(
-        self,
-        basis: Optional[Face],
-        profiles: List[Wire],
-        depth: Optional[float] = None,
-        taper: float = 0,
-        thruAll: bool = True,
-        additive: bool = True,
-    ) -> "Solid":
-        """
-        Make a prismatic feature (additive or subtractive)
-
-        :param basis: face to perfrom the operation on
-        :param profiles: list of profiles
-        :param depth: depth of the cut or extrusion
-        :param thruAll: cut thruAll
-        :return: a Solid object
-        """
-
-        sorted_profiles = sortWiresByBuildOrder(profiles)
-        shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
-        for p in sorted_profiles:
-            face = Face.makeFromWires(p[0], p[1:])
-            feat = BRepFeat_MakeDPrism(
-                shape,
-                face.wrapped,
-                basis.wrapped if basis else TopoDS_Face(),
-                taper * DEG2RAD,
-                additive,
-                False,
-            )
-
-            if thruAll or depth is None:
-                feat.PerformThruAll()
-            else:
-                feat.Perform(depth)
-
-            shape = feat.Shape()
-
-        return Solid(shape)
 
 
 class CompSolid(Shape, Mixin3D):

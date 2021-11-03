@@ -130,7 +130,7 @@ class CQContext(object):
 
 class Workplane(object):
     """
-    Defines a coordinate system in space, in which 2-d coordinates can be used.
+    Defines a coordinate system in space, in which 2D coordinates can be used.
 
     :param plane: the plane in which the workplane will be done
     :type plane: a Plane object, or a string in (XY|YZ|XZ|front|back|top|bottom|left|right)
@@ -305,7 +305,7 @@ class Workplane(object):
             )
             rv = [solid.split(*tools)]
 
-        # split using the current wokrplane
+        # split using the current workplane
         else:
 
             # boilerplate for arg/kwarg parsing
@@ -501,7 +501,7 @@ class Workplane(object):
         origin: Optional[VectorLike] = None,
     ) -> T:
         """
-        Creates a new 2-D workplane, located relative to the first face on the stack.
+        Creates a new 2D workplane, located relative to the first face on the stack.
 
         :param offset:  offset for the work plane in the Z direction. Default
         :param invert:  invert the Z direction from that of the face.
@@ -518,7 +518,7 @@ class Workplane(object):
         item on the chain immediately before the vertex must be a
         face.
 
-        The result will be a 2-d working plane
+        The result will be a 2D working plane
         with a new coordinate system set up as follows:
 
            * The centerOption parameter sets how the center is defined.
@@ -1087,7 +1087,7 @@ class Workplane(object):
         Future Enhancements:
             * A version of this method that returns a transformed copy, rather than modifying
               the originals
-            * This method doesnt expose a very good interface, because the axis of rotation
+            * This method doesn't expose a very good interface, because the axis of rotation
               could be inconsistent between multiple objects.  This is because the beginning
               of the axis is variable, while the end is fixed. This is fine when operating on
               one object, but is not cool for multiple.
@@ -1212,7 +1212,7 @@ class Workplane(object):
 
         :param thickness: a positive float, representing the thickness of the desired shell.
             Negative values shell inwards, positive values shell outwards.
-        :param kind: kind of joints, intersetion or arc (default: arc).
+        :param kind: kind of joints, intersection or arc (default: arc).
         :raises ValueError: if the current stack contains objects that are not faces of a solid
              further up in the chain.
         :returns: a CQ object with the resulting shelled solid selected.
@@ -1531,7 +1531,7 @@ class Workplane(object):
     def pushPoints(self: T, pntList: Iterable[Union[VectorLike, Location]]) -> T:
         """
         Pushes a list of points onto the stack as vertices.
-        The points are in the 2-d coordinate space of the workplane face
+        The points are in the 2D coordinate space of the workplane face
 
         :param pntList: a list of points to push onto the stack
         :type pntList: list of 2-tuples, in *local* coordinates
@@ -1687,7 +1687,7 @@ class Workplane(object):
         self: T, distance: float, angle: float, forConstruction: bool = False
     ) -> T:
         """
-        Make a line from the current point to the given polar co-ordinates
+        Make a line from the current point to the given polar coordinates
 
         Useful if it is more convenient to specify the end location rather than
         the distance and angle from the current point
@@ -1817,11 +1817,11 @@ class Workplane(object):
             where a tangent constraint is specified.
         :param periodic: creation of periodic curves
         :param parameters: the value of the parameter at each interpolation point.
-            (The intepolated curve is represented as a vector-valued function of a
+            (The interpolated curve is represented as a vector-valued function of a
             scalar parameter.)
 
             If periodic == True, then len(parameters) must be
-            len(intepolation points) + 1, otherwise len(parameters) must be equal to
+            len(interpolation points) + 1, otherwise len(parameters) must be equal to
             len(interpolation points).
         :param scale: whether to scale the specified tangent vectors before
             interpolating.
@@ -2011,7 +2011,7 @@ class Workplane(object):
         :param maxDeg: maximum spline degree (default: 3)
         :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
         :return: a Workplane object with the current point unchanged
-        
+
         This method might be unstable and may require tuning of the tol parameter.
 
         """
@@ -2356,11 +2356,11 @@ class Workplane(object):
         :param forConstruction: whether the wire should be used to make a solid, or if it is just
             for reference
 
-        This method is primarily of use to plugin developers making utilities for 2-d construction.
-        This method should be called when a user operation implies that 2-d construction is
+        This method is primarily of use to plugin developers making utilities for 2D construction.
+        This method should be called when a user operation implies that 2D construction is
         finished, and we are ready to begin working in 3d.
 
-        SEE '2-d construction concepts' for a more detailed explanation of how CadQuery handles
+        SEE '2D construction concepts' for a more detailed explanation of how CadQuery handles
         edges, wires, etc.
 
         Any non edges will still remain.
@@ -2693,11 +2693,11 @@ class Workplane(object):
 
     def close(self: T) -> T:
         """
-        End 2-d construction, and attempt to build a closed wire.
+        End 2D construction, and attempt to build a closed wire.
 
         :return: a CQ object with a completed wire on the stack, if possible.
 
-        After 2-d drafting with methods such as lineTo, threePointArc,
+        After 2D drafting with methods such as lineTo, threePointArc,
         tangentArcPoint and polyline, it is necessary to convert the edges
         produced by these into one or more wires.
 
@@ -2710,7 +2710,7 @@ class Workplane(object):
         endPoint = self._findFromPoint(True)
 
         if self.ctx.firstPoint is None:
-            raise ValueError("Not start point specified - cannot close")
+            raise ValueError("No start point specified - cannot close")
         else:
             startPoint = self.ctx.firstPoint
 
@@ -2767,7 +2767,7 @@ class Workplane(object):
 
         return self.newObject([s])
 
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def cboreHole(
         self: T,
         diameter: float,
@@ -2813,7 +2813,7 @@ class Workplane(object):
         # first make the hole
         hole = Solid.makeCylinder(
             diameter / 2.0, depth, center, boreDir
-        )  # local coordianates!
+        )  # local coordinates!
 
         # add the counter bore
         cbore = Solid.makeCylinder(cboreDiameter / 2.0, cboreDepth, Vector(), boreDir)
@@ -2822,7 +2822,7 @@ class Workplane(object):
         return self.cutEach(lambda loc: r.moved(loc), True, clean)
 
     # TODO: almost all code duplicated!
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def cskHole(
         self: T,
         diameter: float,
@@ -2879,7 +2879,7 @@ class Workplane(object):
         return self.cutEach(lambda loc: res.moved(loc), True, clean)
 
     # TODO: almost all code duplicated!
-    # but parameter list is different so a simple function pointer wont work
+    # but parameter list is different so a simple function pointer won't work
     def hole(
         self: T, diameter: float, depth: Optional[float] = None, clean: bool = True,
     ) -> T:
@@ -2978,7 +2978,7 @@ class Workplane(object):
 
     def extrude(
         self: T,
-        distance: float,
+        until: Union[float, Literal["next", "last"], Face],
         combine: bool = True,
         clean: bool = True,
         both: bool = False,
@@ -2987,9 +2987,13 @@ class Workplane(object):
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
-        :param distance: the distance to extrude, normal to the workplane plane
-        :type distance: float, negative means opposite the normal direction
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param until: the distance to extrude, normal to the workplane plane
+        :param until: The distance to extrude, normal to the workplane plane. When a float is
+          passed, the extrusion extends this far and a negative value is in the opposite direction
+          to the normal of the plane. The string "next" extrudes until the next face orthogonal to
+          the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
+          the extrusion will extend until this face.
+        :param boolean combine: True to combine the resulting solid with parent solids if found. (Cannot be set to False when `until` is not set as a float)
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
         :param float taper: angle for optional tapered extrusion
@@ -3000,18 +3004,35 @@ class Workplane(object):
         The returned object is always a CQ object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
-        *  if combine is False, the new value is pushed onto the stack.
+        *  if combine is False, the new value is pushed onto the stack. Note that when extruding
+          until a specified face, combine can not be False
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
-
-        FutureEnhancement:
-            Support for non-prismatic extrusion ( IE, sweeping along a profile, not just
-            perpendicular to the plane extrude to surface. this is quite tricky since the surface
-            selected may not be planar
         """
-        r = self._extrude(
-            distance, both=both, taper=taper
-        )  # returns a Solid (or a compound if there were multiple)
+        # Handle `until` multiple values
+        if isinstance(until, str) and until in ("next", "last") and combine:
+            if until == "next":
+                faceIndex = 0
+            elif until == "last":
+                faceIndex = -1
+
+            r = self._extrude(distance=None, both=both, taper=taper, upToFace=faceIndex)
+
+        elif isinstance(until, Face) and combine:
+            r = self._extrude(None, both=both, taper=taper, upToFace=until)
+
+        elif isinstance(until, (int, float)):
+            r = self._extrude(until, both=both, taper=taper, upToFace=None)
+
+        elif isinstance(until, (str, Face)) and combine is False:
+            raise ValueError(
+                "`combine` can't be set to False when extruding until a face"
+            )
+
+        else:
+            raise ValueError(
+                f"Do not know how to handle until argument of type {type(until)}"
+            )
 
         if combine:
             newS = self._combineWithBase(r)
@@ -3049,6 +3070,12 @@ class Workplane(object):
         *  if combine is False, the new value is pushed onto the stack.
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
+
+        .. note::
+            Keep in mind that `axisStart` and `axisEnd` are defined relative to the current Workplane center position.
+            So if for example you want to revolve a circle centered at (10,0,0) around the Y axis, be sure to either :py:meth:`move` (or :py:meth:`moveTo`)
+            the current Workplane position or specify `axisStart` and `axisEnd` with the correct vector position.
+            In this example (0,0,0), (0,1,0) as axis coords would fail.
         """
         # Make sure we account for users specifying angles larger than 360 degrees
         angleDegrees %= 360.0
@@ -3355,37 +3382,50 @@ class Workplane(object):
 
     def cutBlind(
         self: T,
-        distanceToCut: float,
+        until: Union[float, Literal["next", "last"], Face],
         clean: bool = True,
         taper: Optional[float] = None,
     ) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
+        You must define either :distance: , :untilNextFace: or :untilLastFace:
 
         Similar to extrude, except that a solid in the parent chain is required to remove material
         from. cutBlind always removes material from a part.
 
-        :param distanceToCut: distance to extrude before cutting
-        :type distanceToCut: float, >0 means in the positive direction of the workplane normal,
-            <0 means in the negative direction
+        :param until: The distance to cut to, normal to the workplane plane. When a negative float
+          is passed the cut extends this far in the opposite direction to the normal of the plane
+          (i.e in the solid). The string "next" cuts until the next face orthogonal to the wire
+          normal.  "last" cuts to the last face. If a object of type Face is passed then the cut
+          will extend until this face.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param float taper: angle for optional tapered extrusion
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
         see :py:meth:`cutThruAll` to cut material from the entire part
-
-        Future Enhancements:
-            Cut Up to Surface
         """
-        # first, make the object
-        toCut = self._extrude(distanceToCut, taper=taper)
+        # Handling of `until` passed values
+        s: Union[Compound, Solid, Shape]
+        if isinstance(until, str) and until in ("next", "last"):
+            if until == "next":
+                faceIndex = 0
+            elif until == "last":
+                faceIndex = -1
 
-        # now find a solid in the chain
-        solidRef = self.findSolid()
+            s = self._extrude(None, taper=taper, upToFace=faceIndex, additive=False)
 
-        s = solidRef.cut(toCut)
+        elif isinstance(until, Face):
+            s = self._extrude(None, taper=taper, upToFace=until, additive=False)
 
+        elif isinstance(until, (int, float)):
+            toCut = self._extrude(until, taper=taper, upToFace=None, additive=False)
+            solidRef = self.findSolid()
+            s = solidRef.cut(toCut)
+        else:
+            raise ValueError(
+                f"Do not know how to handle until argument of type {type(until)}"
+            )
         if clean:
             s = s.clean()
 
@@ -3441,18 +3481,51 @@ class Workplane(object):
         return self.newObject([r])
 
     def _extrude(
-        self, distance: float, both: bool = False, taper: Optional[float] = None
+        self,
+        distance: Optional[float] = None,
+        both: bool = False,
+        taper: Optional[float] = None,
+        upToFace: Optional[Union[int, Face]] = None,
+        additive: bool = True,
     ) -> Compound:
         """
         Make a prismatic solid from the existing set of pending wires.
 
         :param distance: distance to extrude
-        :param boolean both: extrude in both directions symmetrically
+        :param boolean both: extrude in both directions symetrically
+        :param upToFace: if specified extrude up to the :upToFace: face, 0 for the next, -1 for the last
+        :param additive: specify if extruding or cutting, required param for uptoface algorithm
+
         :return: OCCT solid(s), suitable for boolean operations.
 
         This method is a utility method, primarily for plugin and internal use.
         It is the basis for cutBlind, extrude, cutThruAll, and all similar methods.
         """
+
+        def getFacesList(eDir, direction, both=False):
+            """
+            Utility function to make the code further below more clean and tidy
+            Performs some test and raise appropriate error when no Faces are found for extrusion
+            """
+            facesList = self.findSolid().facesIntersectedByLine(
+                ws[0].Center(), eDir, direction=direction
+            )
+            if len(facesList) == 0 and both:
+                raise ValueError(
+                    "Couldn't find a face to extrude/cut to for at least one of the two required directions of extrusion/cut."
+                )
+
+            if len(facesList) == 0:
+                # if we don't find faces in the workplane normal direction we try the other
+                # direction (as the user might have created a workplane with wrong orientation)
+                facesList = self.findSolid().facesIntersectedByLine(
+                    ws[0].Center(), eDir.multiply(-1.0), direction=direction
+                )
+                if len(facesList) == 0:
+                    raise ValueError(
+                        "Couldn't find a face to extrude/cut to. Check your workplane orientation."
+                    )
+            return facesList
 
         # group wires together into faces based on which ones are inside the others
         # result is a list of lists
@@ -3460,7 +3533,15 @@ class Workplane(object):
         wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
 
         # compute extrusion vector and extrude
-        eDir = self.plane.zDir.multiply(distance)
+        if upToFace is not None:
+            eDir = self.plane.zDir
+        elif distance is not None:
+            eDir = self.plane.zDir.multiply(distance)
+
+        if additive:
+            direction = "AlongAxis"
+        else:
+            direction = "Opposite"
 
         # one would think that fusing faces into a compound and then extruding would work,
         # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc)
@@ -3469,20 +3550,61 @@ class Workplane(object):
 
         # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there are
         # multiple sets
+        thisObj: Union[Solid, Compound]
 
         toFuse = []
+        taper = 0.0 if taper is None else taper
+        baseSolid = None
 
-        if taper:
-            for ws in wireSets:
-                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper)
+        for ws in wireSets:
+            if upToFace is not None:
+                baseSolid = self.findSolid() if baseSolid is None else thisObj
+                if isinstance(upToFace, int):
+                    facesList = getFacesList(eDir, direction, both=both)
+                    if (
+                        baseSolid.isInside(ws[0].Center())
+                        and additive
+                        and upToFace == 0
+                    ):
+                        upToFace = 1  # extrude until next face outside the solid
+
+                    limitFace = facesList[upToFace]
+                else:
+                    limitFace = upToFace
+
+                thisObj = Solid.dprism(
+                    baseSolid,
+                    Face.makeFromWires(ws[0]),
+                    ws,
+                    taper=taper,
+                    upToFace=limitFace,
+                    additive=additive,
+                )
+
+                if both:
+                    facesList2 = getFacesList(eDir.multiply(-1.0), direction, both=both)
+                    limitFace2 = facesList2[upToFace]
+                    thisObj2 = Solid.dprism(
+                        self.findSolid(),
+                        Face.makeFromWires(ws[0]),
+                        ws,
+                        taper=taper,
+                        upToFace=limitFace2,
+                        additive=additive,
+                    )
+                    thisObj = Compound.makeCompound([thisObj, thisObj2])
+                toFuse = [thisObj]
+            elif taper != 0.0:
+                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper=taper)
                 toFuse.append(thisObj)
-        else:
-            for ws in wireSets:
-                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir)
+            else:
+                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper=taper)
                 toFuse.append(thisObj)
 
                 if both:
-                    thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir.multiply(-1.0))
+                    thisObj = Solid.extrudeLinear(
+                        ws[0], ws[1:], eDir.multiply(-1.0), taper=taper
+                    )
                     toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
@@ -3589,7 +3711,7 @@ class Workplane(object):
         maxSegments: int = 9,
     ) -> T:
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very ressources intensive depending on the complexity of the shape. In this case set combine=False.
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very resources intensive depending on the complexity of the shape. In this case set combine=False.
 
         :param surf_edges
         :type 1 surf_edges: list of [x,y,z] float ordered coordinates
@@ -3597,7 +3719,7 @@ class Workplane(object):
         :param surf_pts = [] (uses only edges if [])
         :type surf_pts: list of [x,y,z] float coordinates
         :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float (may be negative or positive depending on thicknening direction)
+        :type thickness: float (may be negative or positive depending on thickening direction)
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
         :type combine: true to combine shapes, false otherwise.
@@ -3608,8 +3730,8 @@ class Workplane(object):
         :type: NbPtsOnCur Integer >= 15
         :param NbIter = 2 (OCCT default)
         :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
+        :param anisotropy = False (OCCT default)
+        :type anisotropy: Boolean
         :param: Tol2d = 0.00001 (OCCT default)
         :type Tol2d: float > 0
         :param Tol3d = 0.0001 (OCCT default)
@@ -3800,6 +3922,69 @@ class Workplane(object):
         else:
             return self.union(spheres, clean=clean)
 
+    def cylinder(
+        self: T,
+        height: float,
+        radius: float,
+        direct: Vector = Vector(0, 0, 1),
+        angle: float = 360,
+        centered: Union[bool, Tuple[bool, bool, bool]] = True,
+        combine: bool = True,
+        clean: bool = True,
+    ) -> T:
+        """
+        Returns a cylinder with the specified radius and height for each point on the stack
+
+        :param height: The height of the cylinder
+        :type height: float > 0
+        :param radius: The radius of the cylinder
+        :type radius: float > 0
+        :param direct: The direction axis for the creation of the cylinder
+        :type direct: A three-tuple
+        :param angle: The angle to sweep the cylinder arc through
+        :type angle: float > 0
+        :param centered: If True, the cylinder will be centered around the reference point. If False,
+            the corner of a bounding box around the cylinder will be on the reference point and it
+            will extend in the positive x, y and z directions. Can also use a 3-tuple to specify
+            centering along each axis.
+        :param combine: Whether the results should be combined with other solids on the stack
+            (and each other)
+        :type combine: true to combine shapes, false otherwise
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :return: A cylinder object for each point on the stack
+
+        One cylinder is created for each item on the current stack. If no items are on the stack, one
+        cylinder is created using the current workplane center.
+
+        If combine is true, the result will be a single object on the stack. If a solid was found
+        in the chain, the result is that solid with all cylinders produced fused onto it otherwise,
+        the result is the combination of all the produced cylinders.
+
+        If combine is false, the result will be a list of the cylinders produced.
+        """
+
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
+
+        offset = Vector()
+        if not centered[0]:
+            offset += Vector(radius, 0, 0)
+        if not centered[1]:
+            offset += Vector(0, radius, 0)
+        if centered[2]:
+            offset += Vector(0, 0, -height / 2)
+
+        s = Solid.makeCylinder(radius, height, offset, direct, angle)
+
+        # We want a cylinder for each point on the workplane
+        cylinders = self.eachpoint(lambda loc: s.moved(loc), True)
+
+        # If we don't need to combine everything, just return the created cylinders
+        if not combine:
+            return cylinders
+        else:
+            return self.union(cylinders, clean=clean)
+
     def wedge(
         self: T,
         dx: float,
@@ -3919,27 +4104,42 @@ class Workplane(object):
         """
         Create a 3D text
 
-        :param str txt: text to be rendered
-        :param distance: the distance to extrude, normal to the workplane plane
+        :param txt: text to be rendered
+        :param fontsize: size of the font in model units
+        :param distance: the distance to extrude or cut, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
-        :param float fontsize: size of the font
-        :param boolean cut: True to cut the resulting solid from the parent solids if found.
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param str font: fontname (default: Arial)
-        :param str kind: font type (default: Normal)
-        :param str halign: horizontal alignment (default: center)
-        :param str valign: vertical alignment (default: center)
-        :return: a CQ object with the resulting solid selected.
+        :param cut: True to cut the resulting solid from the parent solids if found
+        :param combine: True to combine the resulting solid with parent solids if found
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param font: font name
+        :param fontPath: path to font file
+        :param kind: font type
+        :param halign: horizontal alignment
+        :param valign: vertical alignment
+        :return: a CQ object with the resulting solid selected
 
-        extrude always *adds* material to a part.
-
-        The returned object is always a CQ object, and depends on whether combine is True, and
+        The returned object is always a Workplane object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
+
+        Examples::
+
+            cq.Workplane().text("CadQuery", 5, 1)
+
+        Specify the font (name), and kind to use an installed system font::
+
+            cq.Workplane().text("CadQuery", 5, 1, font="Liberation Sans Narrow", kind="italic")
+
+        Specify fontPath to use a font from a given file::
+
+            cq.Workplane().text("CadQuery", 5, 1, fontPath="/opt/fonts/texgyrecursor-bold.otf")
+
+        Cutting text into a solid::
+
+            cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, -1.0)
 
         """
         r = Compound.makeText(

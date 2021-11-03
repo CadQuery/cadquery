@@ -15,7 +15,7 @@ defaultSweep = (
     .sweep(path, multisection=True)
 )
 
-# We can sweep thrue different shapes
+# We can sweep through different shapes
 recttocircleSweep = (
     cq.Workplane("YZ")
     .workplane(offset=-10.0)
@@ -63,7 +63,7 @@ path = (
 
 # Placement of different shapes should follow the path
 # cylinder r=1.5 along first line
-# then sweep allong arc from r=1.5 to r=1.0
+# then sweep along arc from r=1.5 to r=1.0
 # then cylinder r=1.0 along last line
 arcSweep = (
     cq.Workplane("YZ")
