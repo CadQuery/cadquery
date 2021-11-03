@@ -2,6 +2,7 @@ import os.path
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
+from itertools import chain
 
 from vtk import vtkJSONSceneExporter, vtkRenderer, vtkRenderWindow, vtkVRMLExporter
 
@@ -120,10 +121,21 @@ def exportVRML(assy: AssemblyProtocol, path: str):
     exporter.Write()
 
 
-def exportGLTF(assy: AssemblyProtocol, path: str, binary: bool = True):
+def exportGLTF(
+    assy: AssemblyProtocol,
+    path: str,
+    binary: bool = True,
+    tolerance: float = 0.1,
+    angularTolerance: float = 0.1,
+):
     """
     Export an assembly to a gltf file.
     """
+
+    # mesh all the shapes
+    for _, el in assy.traverse():
+        for s in el.shapes:
+            s.mesh(tolerance, angularTolerance)
 
     _, doc = toCAF(assy, True)
 

@@ -445,13 +445,19 @@ class Assembly(object):
         return self
 
     def save(
-        self, path: str, exportType: Optional[ExportLiterals] = None
+        self,
+        path: str,
+        exportType: Optional[ExportLiterals] = None,
+        tolerance: float = 0.1,
+        angularTolerance: float = 0.1,
     ) -> "Assembly":
         """
         save as STEP or OCCT native XML file
 
         :param path: filepath
         :param exportType: export format (default: None, results in format being inferred form the path)
+        :param tolerance: the deflection tolerance, in model units. Only used for GLTF. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Only used for GLTF. Default 0.1.
         """
 
         if exportType is None:
@@ -468,7 +474,7 @@ class Assembly(object):
         elif exportType == "VRML":
             exportVRML(self, path)
         elif exportType == "GLTF":
-            exportGLTF(self, path)
+            exportGLTF(self, path, True, tolerance, angularTolerance)
         elif exportType == "VTKJS":
             exportVTKJS(self, path)
         else:
