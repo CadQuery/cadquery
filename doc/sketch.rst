@@ -127,7 +127,7 @@ Once created, a sketch can be used to construct various features on a workplane.
 Supported operations include `extrude`, `twistExtrude`, `revolve`, `sweep`, `cutBlind`
 and `cutThruAll`.
 
-Sketches can be created as separate entities and reused, but also crated ad-hoc
+Sketches can be created as separate entities and reused, but also created ad-hoc
 in one fluent chain of calls as shown below.
 
 
