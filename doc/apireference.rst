@@ -28,7 +28,7 @@ Creating new sketches.
 .. autosummary::
     Sketch
     Sketch.importDXF
-    Wokrplane.sketch
+    Workplane.sketch
     Sketch.finalize
     Sketch.copy
     Sketch.located
