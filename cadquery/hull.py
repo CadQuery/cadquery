@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union, Iterable, Set
+from typing import List, Tuple, Union, Iterable, Set
 from math import pi, sin, cos, atan2, sqrt, inf, degrees
 from numpy import lexsort, argmin, argmax
 
@@ -8,7 +8,6 @@ from .occ_impl.geom import Vector
 
 """
 Convex hull for line segments and circular arcs based on
-
 Yue, Y., Murray, J. L., Corney, J. R., & Clark, D. E. R. (1999).
 Convex hull of a planar set of straight and circular line segments. Engineering Computations.
 
