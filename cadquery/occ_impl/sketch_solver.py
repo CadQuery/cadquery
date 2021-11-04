@@ -256,7 +256,7 @@ class SketchConstraintSolver(object):
         self.ne = len(self.entities)
         self.nc = len(self.constraints)
 
-        # validate and transfrom constraints
+        # validate and transform constraints
 
         # indices of x corresponding to the entities
         self.ixs = [0] + list(accumulate(len(e) for e in self.entities))
