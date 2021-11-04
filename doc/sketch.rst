@@ -32,7 +32,6 @@ combining them using boolean operations.
         .vertices()
         .fillet(.25)
         .reset()
-        .reset()
         .rarray(.6,1,5,1).slot(1.5,0.4,mode='s',angle=90)
     )
 
@@ -105,20 +104,58 @@ far only line segments and arcs can be used in such a use case.
         .assemble()
     )
 
-    result.solve()
-    result.assemble()
-
 Following constraints are implemented.
 
-* `Fixed`
-* `FixedPoint`
-* `Coincident`
-* `Angle`
-* `Length`
-* `Distance`
-* `Radius`
-* `Orientation`
-* `ArcAngle`
+.. list-table::
+    :widths: 25 25 25 25
+    :header-rows: 1
+
+    * - Name
+      - Arity
+      - Supported entity types
+      - Arguments
+      - Description
+    * - FixedPoint
+      - 1
+      - All
+      - `None for arc center or `0..1` for point on segment/arc`
+      - Specified point is fixed
+    * - Coincident
+      - 2
+      - All
+      - `None`
+      - Specified points coincide
+    * - Angle
+      - 2
+      - All
+      - `angle`
+      - Angle between the tangents of the two entities is fixed
+    * - Length
+      - 1
+      - All
+      - `length`
+      - Specified entity has fixed length
+    * - Distance
+      - 2
+      - All
+      - `None or 0..1, None or 0..1, distance`
+      - Distance between two points is fixed
+    * - Radius
+      - 1
+      - Arc
+      - Radius
+      - Specified entity has a fixed radius
+    * - Orientation
+      - 1
+      - Segment
+      - `x,y`
+      - Specified entity is parallel to `(x,y)`
+    * - ArcAngle
+      - 1
+      - Arc
+      - `angle`
+      - Specified entity is fixed angular span
+
 
 Workplane integration
 ---------------------
