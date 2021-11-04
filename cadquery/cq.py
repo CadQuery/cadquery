@@ -4243,7 +4243,7 @@ class Workplane(object):
         """
         Initialize and return a sketch
 
-        :return: Sketch object with the current wokrplane as a parent.
+        :return: Sketch object with the current workplane as a parent.
         """
 
         parent = self.newObject([])
