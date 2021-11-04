@@ -219,7 +219,7 @@ def arc_angle_cost(x, t, x0, val):
     return rv
 
 
-# dicitonary of individual constraint cost functions
+# dictionary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
     Fixed=fixed_cost,
     FixedPoint=fixed_point_cost,
