@@ -43,7 +43,7 @@ class does not implement history and all modifications happen in-place.
 Edge-based API
 ==============
 
-If needed one can construct sketches by placing individual edges.
+If needed, one can construct sketches by placing individual edges.
 
 .. cadquery::
     :height: 600px
