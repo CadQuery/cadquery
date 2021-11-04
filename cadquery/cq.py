@@ -4253,17 +4253,22 @@ class Workplane(object):
 
         return rv
 
-    def placeSketch(self: T, s: Sketch) -> T:
+    def placeSketch(self: T, *sketches: Sketch) -> T:
         """
-        Place the provided sketch based on the current items on the stack.
+        Place the provided sketch(es) based on the current items on the stack.
 
         :return: Workplane object with the sketch added.
         """
 
-        s_new = s.copy()
-        s_new.locs = list(self._locs())
+        rv = []
 
-        return self.newObject([s_new])
+        for s in sketches:
+            s_new = s.copy()
+            s_new.locs = list(self._locs())
+
+            rv.append(s_new)
+
+        return self.newObject(rv)
 
     def _repr_javascript_(self) -> Any:
         """
