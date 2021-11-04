@@ -3436,7 +3436,8 @@ def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
 
 
 def wiresToFaces(wireList: List[Wire]) -> List[Face]:
-    """Convert wires to a list of faces.
+    """
+    Convert wires to a list of faces.
     """
 
     return Face.makeFromWires(wireList[0], wireList[1:]).Faces()
