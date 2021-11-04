@@ -4255,7 +4255,7 @@ class Workplane(object):
 
     def placeSketch(self: T, s: Sketch) -> T:
         """
-        Place the provided  sketch based on the current items on the stack.
+        Place the provided sketch based on the current items on the stack.
 
         :return: Wokrplane object with the sketch added.
         """
