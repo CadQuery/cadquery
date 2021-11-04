@@ -4257,7 +4257,7 @@ class Workplane(object):
         """
         Place the provided sketch based on the current items on the stack.
 
-        :return: Wokrplane object with the sketch added.
+        :return: Workplane object with the sketch added.
         """
 
         s_new = s.copy()
