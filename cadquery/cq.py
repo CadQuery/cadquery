@@ -3469,7 +3469,14 @@ class Workplane(object):
         Make a lofted solid, through the set of wires.
         :return: a CQ object containing the created loft
         """
-        wiresToLoft = self.ctx.popPendingWires()
+
+        if self.ctx.pendingWires:
+            wiresToLoft = self.ctx.popPendingWires()
+        else:
+            wiresToLoft = [f.outerWire() for f in self._getFaces()]
+
+        if not wiresToLoft:
+            raise ValueError("Nothing to loft")
 
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 

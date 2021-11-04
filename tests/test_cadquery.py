@@ -5013,3 +5013,9 @@ class TestCadQuery(BaseTest):
         self.assertTrue(r3.val().isValid())
         self.assertEqual(len(r3.faces().vals()), 4)
         self.assertTupleAlmostEquals(r3.val().Center().toTuple(), (1, 1, 0.5), 6)
+
+        s = Sketch().trapezoid(3, 1, 120)
+
+        r4 = Workplane().placeSketch(s, s.moved(Location(Vector(0, 0, 3)))).loft()
+
+        self.assertEqual(len(r4.solids().vals()), 1)
