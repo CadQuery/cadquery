@@ -107,12 +107,12 @@ far only line segments and arcs can be used in such a use case.
 Following constraints are implemented.
 
 .. list-table::
-    :widths: 25 25 25 25
+    :widths: 15 10 15 30 30
     :header-rows: 1
 
     * - Name
       - Arity
-      - Supported entity types
+      - Entities
       - Arguments
       - Description
     * - FixedPoint
@@ -143,7 +143,7 @@ Following constraints are implemented.
     * - Radius
       - 1
       - Arc
-      - Radius
+      - `radius`
       - Specified entity has a fixed radius
     * - Orientation
       - 1
