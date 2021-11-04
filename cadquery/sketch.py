@@ -383,7 +383,7 @@ class Sketch(object):
         self: T, n: int, start: Real = 0, stop: Real = 1, rotate: bool = True
     ) -> T:
         """
-        Distribute locations along selected edghes or wires.
+        Distribute locations along selected edges or wires.
         """
 
         if not self._selection:
