@@ -8,9 +8,8 @@ dependencies:
   - ipython
   - ocp=7.5.1
   - pyparsing>=2.1.9
-  - sphinx=3.2.1
+  - sphinx=4.2.0
   - sphinx_rtd_theme
-  - sphinx-autodoc-typehints
   - black=19.10b0
   - mypy
   - codecov

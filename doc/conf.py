@@ -40,14 +40,14 @@ def setup(app):
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "cadquery.cq_directive",
     "sphinx.ext.mathjax",
 ]
 
-always_document_param_types = True
+autodoc_typehints = "both"
+autodoc_typehints_description_target = "all"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
