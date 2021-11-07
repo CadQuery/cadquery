@@ -121,7 +121,7 @@ Following constraints are implemented.
     * - Coincident
       - 2
       - All
-      - `None`
+      - None
       - Specified points coincide
     * - Angle
       - 2
