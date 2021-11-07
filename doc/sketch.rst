@@ -116,7 +116,7 @@ Following constraints are implemented.
     * - FixedPoint
       - 1
       - All
-      - `None for arc center or `0..1` for point on segment/arc`
+      - `None` for arc center or `0..1` for point on segment/arc
       - Specified point is fixed
     * - Coincident
       - 2
