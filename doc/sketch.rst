@@ -159,8 +159,10 @@ Workplane integration
 ---------------------
 
 Once created, a sketch can be used to construct various features on a workplane.
-Supported operations include `extrude`, `twistExtrude`, `revolve`, `sweep`, `cutBlind`
-and `cutThruAll`.
+Supported operations include :meth:`~cadquery.Workplane.extrude`,
+:meth:`~cadquery.Workplane.twistExtrude`, :meth:`~cadquery.Workplane.revolve`,
+:meth:`~cadquery.Workplane.sweep`, :meth:`~cadquery.Workplane.cutBlind`
+and :meth:`~cadquery.Workplane.cutThruAll`.
 
 Sketches can be created as separate entities and reused, but also created ad-hoc
 in one fluent chain of calls as shown below.
@@ -188,7 +190,7 @@ Constructing sketches in-place can be accomplished as follows.
         .extrude(.5)
     )
 
-Sketch API is available after the `sketch` call and original `workplane`.
+Sketch API is available after the :meth:`~cadquery.Workplane.sketch` call and original `workplane`.
 
 When multiple elements are selected before constructing the sketch, multiple sketches will be created.
 
