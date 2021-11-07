@@ -102,7 +102,7 @@ far only line segments and arcs can be used in such a use case.
         .assemble()
     )
 
-Following constraints are implemented.
+Following constraints are implemented. Arguments are passed in as one tuple in :meth:`~cadquery.Sketch.constrain`. In this table, `0..1` refers to a float between 0 and 1 where 0 would create a constraint relative to the start of the element, and 1 the end.
 
 .. list-table::
     :widths: 15 10 15 30 30
