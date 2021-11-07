@@ -10,7 +10,11 @@ from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
 
-from vtk import vtkActor, vtkPolyDataMapper as vtkMapper, vtkRenderer
+from vtkmodules.vtkRenderingCore import (
+    vtkActor,
+    vtkPolyDataMapper as vtkMapper,
+    vtkRenderer,
+)
 
 from .geom import Location
 from .shapes import Shape, Compound
