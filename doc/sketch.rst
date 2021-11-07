@@ -26,13 +26,13 @@ combining them using boolean operations.
     result = (
        cq.Sketch()
        .trapezoid(4,3,90)
-        .vertices()
-        .circle(.5,mode='s')
-        .reset()
-        .vertices()
-        .fillet(.25)
-        .reset()
-        .rarray(.6,1,5,1).slot(1.5,0.4,mode='s',angle=90)
+       .vertices()
+       .circle(.5,mode='s')
+       .reset()
+       .vertices()
+       .fillet(.25)
+       .reset()
+       .rarray(.6,1,5,1).slot(1.5,0.4,mode='s',angle=90)
     )
 
 Note that selectors are implemented, but selection has to be explicitly reset. Sketch
