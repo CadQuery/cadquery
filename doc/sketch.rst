@@ -21,8 +21,6 @@ combining them using boolean operations.
 
     import cadquery as cq
 
-    from cadquery import *
-
     result = (
        cq.Sketch()
        .trapezoid(4,3,90)
