@@ -60,7 +60,7 @@ If needed, one can construct sketches by placing individual edges.
     )
 
 Once the construction is finished it has to be converted to the face-based representation
-using `assemble`. Afterwards, face based operations can be applied.
+using :meth:`~cadquery.Sketch.assemble`. Afterwards, face based operations can be applied.
 
 Convex hull
 ===========
