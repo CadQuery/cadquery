@@ -1,4 +1,4 @@
-from vtk import vtkXMLPolyDataWriter
+from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter
 from ..shapes import Shape
 
 

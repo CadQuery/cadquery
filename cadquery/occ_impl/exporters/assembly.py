@@ -3,7 +3,8 @@ import os.path
 from tempfile import TemporaryDirectory
 from shutil import make_archive
 
-from vtk import vtkJSONSceneExporter, vtkRenderer, vtkRenderWindow, vtkVRMLExporter
+from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
+from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
 
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
