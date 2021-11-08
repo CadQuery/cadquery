@@ -161,8 +161,7 @@ Workplane integration
 Once created, a sketch can be used to construct various features on a workplane.
 Supported operations include :meth:`~cadquery.Workplane.extrude`,
 :meth:`~cadquery.Workplane.twistExtrude`, :meth:`~cadquery.Workplane.revolve`,
-:meth:`~cadquery.Workplane.sweep`, :meth:`~cadquery.Workplane.cutBlind`
-and :meth:`~cadquery.Workplane.cutThruAll`.
+:meth:`~cadquery.Workplane.sweep`, :meth:`~cadquery.Workplane.cutBlind`, :meth:`~cadquery.Workplane.cutThruAll` and :meth:`~cadquery.Workplane.loft`.
 
 Sketches can be created as separate entities and reused, but also created ad-hoc
 in one fluent chain of calls as shown below.
@@ -243,3 +242,31 @@ Sometimes it is desired to reuse existing sketches and place them as-is on a wor
         .cutThruAll()
         )
 
+Reusing of existing sketches is needed when using :meth:`~cadquery.Workplane.loft`.
+
+.. cadquery::
+    :height: 600px
+
+    from cadquery import Workplane, Sketch, Vector, Location
+
+    s1 = (
+         Sketch()
+         .trapezoid(3,1,110)
+         .vertices()
+         .fillet(0.2)
+         )
+
+    s2 = (
+         Sketch()
+         .rect(2,1)
+         .vertices()
+         .fillet(0.2)
+         )
+
+    result = (
+        Workplane()
+        .placeSketch(s1, s2.moved(Location(Vector(0, 0, 3))))
+        .loft()
+        )
+
+When lofting only outer wires are taken into account.
