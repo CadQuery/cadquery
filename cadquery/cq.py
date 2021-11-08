@@ -503,7 +503,7 @@ class Workplane(object):
         """
         Creates a new 2D workplane, located relative to the first face on the stack.
 
-        :param offset:  offset for the workplane in it's normal direction . Default
+        :param offset:  offset for the workplane in its normal direction . Default
         :param invert:  invert the normal direction from that of the face.
         :param centerOption: how local origin of workplane is determined.
         :param origin: origin for plane center, requires 'ProjectedOrigin' centerOption.
