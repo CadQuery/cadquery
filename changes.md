@@ -1,6 +1,53 @@
 Changes
 =======
 
+master
+------
+   ### Breaking changes
+   * Renamed the argument for `Workplane.extrude` from `distance` to `until` and `Workplane.cutBlind`'s `distanceToCut` also to `until`. This is only a breaking change if you use the named parameters, i.e. `extrude(distance = 10.0)` or `cutBlind(distanceToCut)` instead of using positional them as positional parameters.
+   * Fixed a bug in `Mixin1DProtocol.tangentAt()` where `paramAt()` was being called twice. This should only break scripts that relied on the incorrect behavior. [#641](https://github.com/CadQuery/cadquery/pull/641)
+
+   ### Other changes
+   * Documentation updates [#648](https://github.com/CadQuery/cadquery/pull/648) [#654](https://github.com/CadQuery/cadquery/pull/654) [#656](https://github.com/CadQuery/cadquery/pull/656) [#659](https://github.com/CadQuery/cadquery/pull/659) [#668](https://github.com/CadQuery/cadquery/pull/668) [#689](https://github.com/CadQuery/cadquery/pull/689) [#695](https://github.com/CadQuery/cadquery/pull/695) [#699](https://github.com/CadQuery/cadquery/pull/699) [#711](https://github.com/CadQuery/cadquery/pull/711) [#727](https://github.com/CadQuery/cadquery/pull/727) [#733](https://github.com/CadQuery/cadquery/pull/733) [#734](https://github.com/CadQuery/cadquery/pull/734) [#737](https://github.com/CadQuery/cadquery/pull/737) [#738](https://github.com/CadQuery/cadquery/pull/738) [#748](https://github.com/CadQuery/cadquery/pull/748) [#757](https://github.com/CadQuery/cadquery/pull/757) [#774](https://github.com/CadQuery/cadquery/pull/774) [#775](https://github.com/CadQuery/cadquery/pull/775) [#805](https://github.com/CadQuery/cadquery/pull/805) [#813](https://github.com/CadQuery/cadquery/pull/813) [#837](https://github.com/CadQuery/cadquery/pull/837) [#839](https://github.com/CadQuery/cadquery/pull/839) [#843](https://github.com/CadQuery/cadquery/pull/843) [#845](https://github.com/CadQuery/cadquery/pull/845) [#846](https://github.com/CadQuery/cadquery/pull/846) [#847](https://github.com/CadQuery/cadquery/pull/847) [#848](https://github.com/CadQuery/cadquery/pull/848) [#852](https://github.com/CadQuery/cadquery/pull/852) [#863](https://github.com/CadQuery/cadquery/pull/863) [#866](https://github.com/CadQuery/cadquery/pull/866) [#867](https://github.com/CadQuery/cadquery/pull/867) [#887](https://github.com/CadQuery/cadquery/pull/887)
+   * Added better documentation on the internals of CadQuery [#821](https://github.com/CadQuery/cadquery/pull/821)
+   * Added documentation for assembly constraints [#850](https://github.com/CadQuery/cadquery/pull/850)
+   * Bugfix for center option of functions such as box and rect [#617](https://github.com/CadQuery/cadquery/pull/617)
+   * Fixes for DXF import [#630](https://github.com/CadQuery/cadquery/pull/630)
+   * Updated to OCCT 7.5 [#633](https://github.com/CadQuery/cadquery/pull/633) [#818](https://github.com/CadQuery/cadquery/pull/818)
+   * Added ability to specify arbitrary tangents in `spline()` [#636](https://github.com/CadQuery/cadquery/pull/636)
+   * Added `forConstruction` option to `offset2D()` [#639](https://github.com/CadQuery/cadquery/pull/639)
+   * Fixed errors related to `findSolid()` returning `None` [#655](https://github.com/CadQuery/cadquery/pull/655)
+   * Simplified the API interface for `findSolid()` [#662](https://github.com/CadQuery/cadquery/pull/662)
+   * Updated for Python 3.9 [#672](https://github.com/CadQuery/cadquery/pull/672)
+   * Improved inheritance handling for Workplane fluent methods [#677](https://github.com/CadQuery/cadquery/pull/677)
+   * Improved interface to pop pending wires and edges off the stack [#678](https://github.com/CadQuery/cadquery/pull/678)
+   * Added deprecation warning for `Workplane.findFace()` [#679](https://github.com/CadQuery/cadquery/pull/679)
+   * Wrapped `TopoDS_CompSolid` from the OCCT/OCP layer so that it could be used in the fluent API. [#681](https://github.com/CadQuery/cadquery/pull/681)
+   * Added 2D fillet and chamfer functions [#683](https://github.com/CadQuery/cadquery/pull/683)
+   * Created GitHub issue templates [#687](https://github.com/CadQuery/cadquery/pull/687)
+   * Added `AreaNthSelector` and length selector [#688](https://github.com/CadQuery/cadquery/pull/688)
+   * Implemented makeSplineApprox for edges and faces [#694](https://github.com/CadQuery/cadquery/pull/694)
+   * Started using expression grammar for assembly selectors [#704](https://github.com/CadQuery/cadquery/pull/704)
+   * Added a coplanar check on wires before allowing operations like `extrude()` [#710](https://github.com/CadQuery/cadquery/pull/710)
+   * Added an InPlane constraint for assemblies [#712](https://github.com/CadQuery/cadquery/pull/712)
+   * Raise a `TypeError` now when the Location parameter is a tuple [#723](https://github.com/CadQuery/cadquery/pull/723)
+   * Added `Assembly.toCompound()` to enable proper assembly export to formats like STL [#726](https://github.com/CadQuery/cadquery/pull/726)
+   * Implemented BRep import and vtkPolyData export [#735](https://github.com/CadQuery/cadquery/pull/735) [#865](https://github.com/CadQuery/cadquery/pull/865)
+   * Started converting text sizes to float instead of integer [#764](https://github.com/CadQuery/cadquery/pull/764)
+   * Improved performance of `makeFromWires()` [#768](https://github.com/CadQuery/cadquery/pull/768)
+   * Added `__repr__` and `__str__` methods to `Matrix` class to improve print output.
+   * Fixed ability to handle assembly constraints for infinite faces [#797](https://github.com/CadQuery/cadquery/pull/797)
+   * Fixed an issue with the assembly solver that would cause it to hang in some cases [#806](https://github.com/CadQuery/cadquery/pull/806)
+   * Fixed the default camera position for VTK.js [#822](https://github.com/CadQuery/cadquery/pull/822)
+   * Removed deprecated OCCT `BRepOffsetAPI_MakeThickSolid` reference from `Mixin3d.shell`. [#829](https://github.com/CadQuery/cadquery/pull/829)
+   * Implemented `projectToLine()` method for `Vector` [](https://github.com/CadQuery/cadquery/pull/835)
+   * Added a 3D `cylinder` primitive [#858](https://github.com/CadQuery/cadquery/pull/858)
+   * Fixed a typo in the error message of `close()` [#871](https://github.com/CadQuery/cadquery/pull/871)
+   * Added `extrude` and `cutBlind` until variations, which allows having an operation continue until the next face is reached. See the breaking change involved above. [#875](https://github.com/CadQuery/cadquery/pull/875) [#894](https://github.com/CadQuery/cadquery/pull/894)
+   * Fixed bug that made the selectors `#Z` and `not |Z` work the same [#882](https://github.com/CadQuery/cadquery/pull/882)
+   * Updated `paramAt` to handle trimmed curves [#901](https://github.com/CadQuery/cadquery/pull/901)
+   * Update to support pyparsing 3 [#907](https://github.com/CadQuery/cadquery/pull/907)
+
 2.1 (stable release)
 ------
    ### Breaking changes

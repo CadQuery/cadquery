@@ -19,11 +19,8 @@ from io import BytesIO
 
 from multimethod import multimethod
 
-from vtk import (
-    vtkPolyData,
-    vtkTriangleFilter,
-    vtkPolyDataNormals,
-)
+from vtkmodules.vtkCommonDataModel import vtkPolyData
+from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 from .geom import Vector, BoundBox, Plane, Location, Matrix
 
