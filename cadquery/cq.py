@@ -3125,7 +3125,7 @@ class Workplane(object):
 
     def sweep(
         self: T,
-        path: "Workplane",
+        path: Union["Workplane", Wire, Edge],
         multisection: bool = False,
         sweepAlongWires: Optional[bool] = None,
         makeSolid: bool = True,
@@ -3161,8 +3161,15 @@ class Workplane(object):
             )
 
         r = self._sweep(
-            path.wire(), multisection, makeSolid, isFrenet, transition, normal, auxSpine
+            path.wire() if isinstance(path, Workplane) else path,
+            multisection,
+            makeSolid,
+            isFrenet,
+            transition,
+            normal,
+            auxSpine,
         )  # returns a Solid (or a compound if there were multiple)
+
         newS: T
         if combine:
             newS = self._combineWithBase(r)
@@ -3648,7 +3655,7 @@ class Workplane(object):
 
     def _sweep(
         self,
-        path: "Workplane",
+        path: Union["Workplane", Wire, Edge],
         multisection: bool = False,
         makeSolid: bool = True,
         isFrenet: bool = False,
@@ -3673,7 +3680,7 @@ class Workplane(object):
 
         toFuse = []
 
-        p = path.val()
+        p = path.val() if isinstance(path, Workplane) else path
         if not isinstance(p, (Wire, Edge)):
             raise ValueError("Wire or Edge instance required")
 
