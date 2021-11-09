@@ -4941,3 +4941,41 @@ class TestCadQuery(BaseTest):
         p2 = f2.toPln()
         self.assertTrue(p2.Contains(f2.Center().toPnt(), 0.1))
         self.assertTrue(Vector(p2.Axis().Direction()) == f2.normalAt())
+
+    def testCircumscribedPolygon(self):
+        """
+        Test that circumscribed polygons result in the correct shapes
+        """
+
+        def circumradius(n, a):
+            return a / math.cos(math.pi / n)
+
+        a = 1
+        # Test triangle
+        vs = Workplane("XY").polygon(3, 2 * a, circumscribed=True).vertices().vals()
+        self.assertEqual(3, len(vs))
+        R = circumradius(3, a)
+        self.assertEqual(
+            vs[0].toTuple(), approx((a, a * math.tan(math.radians(60)), 0))
+        )
+        self.assertEqual(vs[1].toTuple(), approx((-R, 0, 0)))
+        self.assertEqual(
+            vs[2].toTuple(), approx((a, -a * math.tan(math.radians(60)), 0))
+        )
+
+        # Test square
+        vs = Workplane("XY").polygon(4, 2 * a, circumscribed=True).vertices().vals()
+        self.assertEqual(4, len(vs))
+        R = circumradius(4, a)
+        self.assertEqual(
+            vs[0].toTuple(), approx((a, a * math.tan(math.radians(45)), 0))
+        )
+        self.assertEqual(
+            vs[1].toTuple(), approx((-a, a * math.tan(math.radians(45)), 0))
+        )
+        self.assertEqual(
+            vs[2].toTuple(), approx((-a, -a * math.tan(math.radians(45)), 0))
+        )
+        self.assertEqual(
+            vs[3].toTuple(), approx((a, -a * math.tan(math.radians(45)), 0))
+        )
