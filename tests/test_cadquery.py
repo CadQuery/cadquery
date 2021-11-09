@@ -1015,6 +1015,11 @@ class TestCadQuery(BaseTest):
         self.assertEqual(3, result.faces().size())
         self.assertEqual(3, result.edges().size())
 
+        # Test Wire path
+        result = Workplane("XY").circle(1.0).sweep(path.val())
+        self.assertEqual(3, result.faces().size())
+        self.assertEqual(3, result.edges().size())
+
         # Test with makeSolid False
         result = Workplane("XY").circle(1.0).sweep(path, makeSolid=False)
         self.assertEqual(1, result.faces().size())
