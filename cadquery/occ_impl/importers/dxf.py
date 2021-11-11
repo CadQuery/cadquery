@@ -1,13 +1,13 @@
 from collections import OrderedDict
 from math import pi
+from typing import List
 
-from .. import cq
-from .geom import Vector
-from .shapes import Shape, Edge, Face, sortWiresByBuildOrder, DEG2RAD
+from ... import cq
+from ..geom import Vector
+from ..shapes import Shape, Edge, Face, sortWiresByBuildOrder
 
 import ezdxf
 
-from OCP.STEPControl import STEPControl_Reader
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.TopTools import TopTools_HSequenceOfShape
 from OCP.gp import gp_Pnt
@@ -17,64 +17,7 @@ from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 
-import OCP.IFSelect
-
 RAD2DEG = 360.0 / (2 * pi)
-
-
-class ImportTypes:
-    STEP = "STEP"
-    DXF = "DXF"
-
-
-class UNITS:
-    MM = "mm"
-    IN = "in"
-
-
-def importShape(importType, fileName, *args, **kwargs):
-    """
-    Imports a file based on the type (STEP, STL, etc)
-
-    :param importType: The type of file that we're importing
-    :param fileName: THe name of the file that we're importing
-    """
-
-    # Check to see what type of file we're working with
-    if importType == ImportTypes.STEP:
-        return importStep(fileName, *args, **kwargs)
-    elif importType == ImportTypes.DXF:
-        return importDXF(fileName, *args, **kwargs)
-    else:
-        raise RuntimeError("Unsupported import type: {!r}".format(importType))
-
-
-# Loads a STEP file into a CQ.Workplane object
-def importStep(fileName):
-    """
-    Accepts a file name and loads the STEP file into a cadquery Workplane
-
-    :param fileName: The path and name of the STEP file to be imported
-    """
-
-    # Now read and return the shape
-    reader = STEPControl_Reader()
-    readStatus = reader.ReadFile(fileName)
-    if readStatus != OCP.IFSelect.IFSelect_RetDone:
-        raise ValueError("STEP File could not be loaded")
-    for i in range(reader.NbRootsForTransfer()):
-        reader.TransferRoot(i + 1)
-
-    occ_shapes = []
-    for i in range(reader.NbShapes()):
-        occ_shapes.append(reader.Shape(i + 1))
-
-    # Make sure that we extract all the solids
-    solids = []
-    for shape in occ_shapes:
-        solids.append(Shape.cast(shape))
-
-    return cq.Workplane("XY").newObject(solids)
 
 
 def _dxf_line(el):
@@ -140,7 +83,7 @@ def _dxf_spline(el):
         if el.weights:
             rational = True
 
-            weights = OCP.TColStd.TColStd_Array1OfReal(1, len(el.weights))
+            weights = TColStd_Array1OfReal(1, len(el.weights))
             for i, w in enumerate(el.weights):
                 weights.SetValue(i + 1, w)
 
@@ -214,9 +157,9 @@ def _dxf_convert(elements, tol):
     return rv
 
 
-def importDXF(filename, tol=1e-6, exclude=[]):
+def _importDXF(filename: str, tol: float = 1e-6, exclude: List[str] = []) -> List[Face]:
     """
-    Loads a DXF file into a cadquery Workplane.
+    Loads a DXF file into a list of faces.
 
     :param fileName: The path and name of the DXF file to be imported
     :param tol: The tolerance used for merging edges into wires (default: 1e-6)
@@ -236,4 +179,4 @@ def importDXF(filename, tol=1e-6, exclude=[]):
             for wire_set in wire_sets:
                 faces.append(Face.makeFromWires(wire_set[0], wire_set[1:]))
 
-    return cq.Workplane("XY").newObject(faces)
+    return faces

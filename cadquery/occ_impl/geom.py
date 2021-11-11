@@ -175,6 +175,9 @@ class Vector(object):
     def getAngle(self, v: "Vector") -> float:
         return self.wrapped.Angle(v.wrapped)
 
+    def getSignedAngle(self, v: "Vector") -> float:
+        return self.wrapped.AngleWithRef(v.wrapped, gp_Vec(0, 0, -1))
+
     def distanceToLine(self):
         raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
 

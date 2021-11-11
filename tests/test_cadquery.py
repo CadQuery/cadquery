@@ -105,7 +105,7 @@ class TestCadQuery(BaseTest):
 
         import OCP
 
-        self.assertEqual(type(r), OCP.TopoDS.TopoDS_Compound)
+        self.assertEqual(type(r), OCP.TopoDS.TopoDS_Solid)
 
     def testToSVG(self):
         """
@@ -3443,6 +3443,10 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError):
             Workplane().box(1, 1, 1).faces().circle(0.1).extrude(0.1)
 
+        # check that extruding nested geometry raises
+        with self.assertRaises(ValueError):
+            Workplane().rect(2, 2).rect(1, 1).extrude(2, taper=4)
+
     def testTaperedExtrudeCutBlind(self):
 
         h = 1.0
@@ -4941,6 +4945,80 @@ class TestCadQuery(BaseTest):
         p2 = f2.toPln()
         self.assertTrue(p2.Contains(f2.Center().toPnt(), 0.1))
         self.assertTrue(Vector(p2.Axis().Direction()) == f2.normalAt())
+
+    def testEachpoint(self):
+
+        r1 = (
+            Workplane(origin=(0, 0, 1))
+            .add(
+                [
+                    Vector(),
+                    Location(Vector(0, 0, -1,)),
+                    Sketch().rect(1, 1),
+                    Face.makePlane(1, 1),
+                ]
+            )
+            .eachpoint(lambda l: Face.makePlane(1, 1).locate(l))
+        )
+
+        self.assertTrue(len(r1.objects) == 4)
+
+        for v in r1.vals():
+            self.assertTupleAlmostEquals(v.Center().toTuple(), (0, 0, 0), 6)
+
+    def testSketch(self):
+
+        r1 = (
+            Workplane()
+            .box(10, 10, 1)
+            .faces(">Z")
+            .sketch()
+            .slot(2, 1)
+            .slot(2, 1, angle=90)
+            .clean()
+            .finalize()
+            .extrude(1)
+        )
+
+        self.assertTrue(r1.val().isValid())
+        self.assertEqual(len(r1.faces().vals()), 19)
+
+        r2 = (
+            Workplane()
+            .sketch()
+            .circle(2)
+            .wires()
+            .offset(0.1, mode="s")
+            .finalize()
+            .sketch()
+            .rect(1, 1)
+            .finalize()
+            .extrude(1, taper=5)
+        )
+
+        self.assertTrue(r2.val().isValid())
+        self.assertEqual(len(r2.faces().vals()), 6)
+
+        r3 = (
+            Workplane()
+            .pushPoints((Location(Vector(1, 1, 0)),))
+            .sketch()
+            .circle(2)
+            .wires()
+            .offset(-0.1, mode="s")
+            .finalize()
+            .extrude(1)
+        )
+
+        self.assertTrue(r3.val().isValid())
+        self.assertEqual(len(r3.faces().vals()), 4)
+        self.assertTupleAlmostEquals(r3.val().Center().toTuple(), (1, 1, 0.5), 6)
+
+        s = Sketch().trapezoid(3, 1, 120)
+
+        r4 = Workplane().placeSketch(s, s.moved(Location(Vector(0, 0, 3)))).loft()
+
+        self.assertEqual(len(r4.solids().vals()), 1)
 
     def testCircumscribedPolygon(self):
         """

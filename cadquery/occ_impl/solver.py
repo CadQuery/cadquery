@@ -89,7 +89,7 @@ class ConstraintSolver(object):
         self,
     ) -> Tuple[
         Callable[[Array[(Any,), float]], float],
-        Callable[[Array[(Any,), float]], Array[(Any,), float]],
+        Callable[[Array[(Any,), float], Array[(Any,), float]], None],
     ]:
         def pt_cost(
             m1: gp_Pnt,
@@ -160,14 +160,14 @@ class ConstraintSolver(object):
 
             return rv
 
-        def jac(x):
+        def grad(x, rv):
 
             constraints = self.constraints
             ne = self.ne
 
             delta = DIFF_EPS * eye(NDOF)
 
-            rv = zeros(NDOF * ne)
+            rv[:] = 0
 
             transforms = [
                 self._build_transform(*x[NDOF * i : NDOF * (i + 1)]) for i in range(ne)
@@ -234,19 +234,17 @@ class ConstraintSolver(object):
                     else:
                         raise NotImplementedError(f"{m1,m2}")
 
-            return rv
-
-        return f, jac
+        return f, grad
 
     def solve(self) -> Tuple[List[Location], Dict[str, Any]]:
 
         x0 = array([el for el in self.entities]).ravel()
-        f, jac = self._cost()
+        f, grad = self._cost()
 
-        def func(x, grad):
+        def func(x, g):
 
-            if grad.size > 0:
-                grad[:] = jac(x)
+            if g.size > 0:
+                grad(x, g)
 
             return f(x)
 
