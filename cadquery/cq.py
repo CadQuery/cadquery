@@ -4229,25 +4229,21 @@ class Workplane(object):
 
         return self.newObject(rv)
 
-    def _locs(self: T) -> Iterable[Location]:
+    def _locs(self: T) -> List[Location]:
         """
         Convert items on the stack into locations.
         """
 
         plane = self.plane
-        obj = self.val() if self.objects else None
-        locs: Iterable[Location]
+        locs: List[Location] = []
 
-        if isinstance(obj, (Vector, Shape)):
-            locs = (
-                Location(plane, obj.Center())
-                for obj in self.objects
-                if isinstance(obj, (Vector, Shape))
-            )
-        elif isinstance(obj, Location):
-            locs = (obj for obj in self.objects if isinstance(obj, Location))
-        else:
-            locs = (self.plane.location,)
+        for obj in self.objects:
+            if isinstance(obj, (Vector, Shape)):
+                locs.append(Location(plane, obj.Center()))
+            elif isinstance(obj, Location):
+                locs.append(obj)
+        if not locs:
+            locs.append(self.plane.location)
 
         return locs
 
@@ -4276,7 +4272,7 @@ class Workplane(object):
 
         for s in sketches:
             s_new = s.copy()
-            s_new.locs = list(self._locs())
+            s_new.locs = self._locs()
 
             rv.append(s_new)
 
