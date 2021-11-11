@@ -4232,7 +4232,6 @@ class Workplane(object):
     def _locs(self: T) -> Iterable[Location]:
         """
         Convert items on the stack into locations.
-
         """
 
         plane = self.plane
