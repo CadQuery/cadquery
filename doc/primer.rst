@@ -254,7 +254,7 @@ The OCCT API
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Finally we are discussing about the OCCT API. The OCCT API is the lowest level of CadQuery. The direct API is built upon the OCCT API, where the OCCT API in CadQuery is available through OCP.
-OCP are the Python bindings of the OCCT C++ libraries CadQuery uses. This means you have access to all the OCCT C++ libraries in Python and in CadQuery.
+OCP are the Python bindings of the OCCT C++ libraries CadQuery uses. This means you have access to (almost) all the OCCT C++ libraries in Python and in CadQuery.
 Working with the OCCT API will give you the maximum flexibility and control over you designs, it is however very verbose and difficult to use. You will need to have a strong 
 knowledge of the different C++ libraries to be able to achieve what you want. To obtain this knowledge the most obvious ways are :
 
