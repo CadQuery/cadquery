@@ -184,29 +184,31 @@ def test_toJSON(simple_assy, nested_assy, empty_top_assy):
     assert len(r3) == 1
 
 
-def test_save(nested_assy, nested_assy_sphere):
+@pytest.mark.parametrize(
+    "extension, args",
+    [
+        ("step", ()),
+        ("xml", ()),
+        ("stp", ("STEP",)),
+        ("caf", ("XML",)),
+        ("wrl", ("VRML",)),
+    ],
+)
+def test_save(extension, args, nested_assy, nested_assy_sphere):
 
-    nested_assy.save("nested.step")
-    assert os.path.exists("nested.step")
+    filename = "nested." + extension
+    nested_assy.save(filename, *args)
+    assert os.path.exists(filename)
 
-    nested_assy.save("nested.xml")
-    assert os.path.exists("nested.xml")
 
-    nested_assy.save("nested.step")
-    assert os.path.exists("nested.step")
-
-    nested_assy.save("nested.stp", "STEP")
-    assert os.path.exists("nested.stp")
-
-    nested_assy.save("nested.caf", "XML")
-    assert os.path.exists("nested.caf")
-
-    nested_assy.save("nested.wrl", "VRML")
-    assert os.path.exists("nested.wrl")
+def test_save_gltf(nested_assy_sphere):
 
     nested_assy_sphere.save("nested.glb", "GLTF")
     assert os.path.exists("nested.glb")
     assert os.path.getsize("nested.glb") > 50 * 1024
+
+
+def test_save_vtkjs(nested_assy):
 
     nested_assy.save("nested", "VTKJS")
     assert os.path.exists("nested.zip")
