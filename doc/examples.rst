@@ -643,10 +643,10 @@ same is true for :meth:`~cadquery.Workplane.extrude`).
 
 .. cadquery::
 
-    skycrappers_locations = [(-16,1),(-8,0),(7,0.2),(17,-1.2)]
+    skyscrapers_locations = [(-16,1),(-8,0),(7,0.2),(17,-1.2)]
     angles = iter([15,0,-8,10])
-    skycrappers = (cq.Workplane()
-        .pushPoints(skycrappers_locations)
+    skyscrapers = (cq.Workplane()
+        .pushPoints(skyscrapers_locations)
         .eachpoint(lambda loc: (cq.Workplane()
                                 .rect(5,16)
                                 .workplane(offset=10)
@@ -660,7 +660,7 @@ same is true for :meth:`~cadquery.Workplane.extrude`).
         )    
     )
 
-    result = (skycrappers
+    result = (skyscrapers
         .transformed((0,-90,0))
         .moveTo(15,0)
         .rect(3,3, forConstruction=True)
@@ -713,8 +713,8 @@ Here is a typical situation where extruding and cuting until a given surface is 
 .. warning::
 
     If the wire you want to extrude cannot be fully projected on the target surface, the result will
-    be unpredictable. Furthermore the algorithm in charge of finding the candidates faces do it's
-    search by counting all the faces intersected by a line created from your wire center along your
+    be unpredictable. Furthermore, the algorithm in charge of finding the candidate faces does its search by counting all the faces intersected
+    by a line created from your wire center along your
     extrusion direction. So make sure your wire can be projected on your target face to avoid
     unexpected behaviour.
 
