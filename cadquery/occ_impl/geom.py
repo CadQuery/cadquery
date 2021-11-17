@@ -27,16 +27,16 @@ TOL = 1e-2
 class Vector(object):
     """Create a 3-dimensional vector
 
-        :param args: a 3-d vector, with x-y-z parts.
+    :param args: a 3D vector, with x-y-z parts.
 
-        you can either provide:
-            * nothing (in which case the null vector is return)
-            * a gp_Vec
-            * a vector ( in which case it is copied )
-            * a 3-tuple
-            * a 2-tuple (z assumed to be 0)
-            * three float values: x, y, and z
-            * two float values: x,y
+    you can either provide:
+        * nothing (in which case the null vector is return)
+        * a gp_Vec
+        * a vector ( in which case it is copied )
+        * a 3-tuple
+        * a 2-tuple (z assumed to be 0)
+        * three float values: x, y, and z
+        * two float values: x,y
     """
 
     _wrapped: gp_Vec
@@ -155,6 +155,9 @@ class Vector(object):
     def __truediv__(self, denom: float) -> "Vector":
         return self.multiply(1.0 / denom)
 
+    def __rmul__(self, scale: float) -> "Vector":
+        return self.multiply(scale)
+
     def normalized(self) -> "Vector":
         """Return a normalized version of this vector"""
         return Vector(self.wrapped.Normalized())
@@ -172,11 +175,24 @@ class Vector(object):
     def getAngle(self, v: "Vector") -> float:
         return self.wrapped.Angle(v.wrapped)
 
+    def getSignedAngle(self, v: "Vector") -> float:
+        return self.wrapped.AngleWithRef(v.wrapped, gp_Vec(0, 0, -1))
+
     def distanceToLine(self):
         raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
 
-    def projectToLine(self):
-        raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
+    def projectToLine(self, line: "Vector") -> "Vector":
+        """
+        Returns a new vector equal to the projection of this Vector onto the line
+        represented by Vector <line>
+
+        :param args: Vector
+
+        Returns the projected vector.
+        """
+        lineLength = line.Length
+
+        return line * (self.dot(line) / (lineLength * lineLength))
 
     def distanceToPlane(self):
         raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
@@ -334,8 +350,7 @@ class Matrix:
         return Matrix(self.wrapped.Multiplied(other.wrapped))
 
     def transposed_list(self) -> Sequence[float]:
-        """Needed by the cqparts gltf exporter
-        """
+        """Needed by the cqparts gltf exporter"""
 
         trsf = self.wrapped
         data = [[trsf.Value(i, j) for j in range(1, 5)] for i in range(1, 4)] + [
@@ -377,7 +392,7 @@ class Plane(object):
     A 2D coordinate system in space, with the x-y axes on the plane, and a
     particular point as the origin.
 
-    A plane allows the use of 2-d coordinates, which are later converted to
+    A plane allows the use of 2D coordinates, which are later converted to
     global, 3d coordinates when the operations are complete.
 
     Frequently, it is not necessary to create work planes, as they can be
@@ -587,7 +602,7 @@ class Plane(object):
         :param float y: offset in the y direction
         :return: void
 
-        The new coordinates are specified in terms of the current 2-d system.
+        The new coordinates are specified in terms of the current 2D system.
         As an example:
 
         p = Plane.XY()
@@ -609,9 +624,9 @@ class Plane(object):
 
 
         Most of the time, the z-coordinate returned will be zero, because most
-        operations based on a plane are all 2-d. Occasionally, though, 3-d
+        operations based on a plane are all 2D. Occasionally, though, 3D
         points outside of the current plane are transformed. One such example is
-        :py:meth:`Workplane.box`, where 3-d corners of a box are transformed to
+        :py:meth:`Workplane.box`, where 3D corners of a box are transformed to
         orient the box in space correctly.
 
         """

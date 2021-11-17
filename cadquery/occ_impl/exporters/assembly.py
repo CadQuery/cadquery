@@ -2,8 +2,10 @@ import os.path
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
+from itertools import chain
 
-from vtk import vtkJSONSceneExporter, vtkRenderer, vtkRenderWindow, vtkVRMLExporter
+from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
+from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
 
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
@@ -16,6 +18,9 @@ from OCP.XmlDrivers import (
 )
 from OCP.TCollection import TCollection_ExtendedString, TCollection_AsciiString
 from OCP.PCDM import PCDM_StoreStatus
+from OCP.RWGltf import RWGltf_CafWriter
+from OCP.TColStd import TColStd_IndexedDataMapOfStringString
+from OCP.Message import Message_ProgressRange
 
 from ..assembly import AssemblyProtocol, toCAF, toVTK
 
@@ -115,3 +120,27 @@ def exportVRML(assy: AssemblyProtocol, path: str):
     exporter.SetFileName(path)
     exporter.SetRenderWindow(_vtkRenderWindow(assy))
     exporter.Write()
+
+
+def exportGLTF(
+    assy: AssemblyProtocol,
+    path: str,
+    binary: bool = True,
+    tolerance: float = 0.1,
+    angularTolerance: float = 0.1,
+):
+    """
+    Export an assembly to a gltf file.
+    """
+
+    # mesh all the shapes
+    for _, el in assy.traverse():
+        for s in el.shapes:
+            s.mesh(tolerance, angularTolerance)
+
+    _, doc = toCAF(assy, True)
+
+    writer = RWGltf_CafWriter(TCollection_AsciiString(path), binary)
+    return writer.Perform(
+        doc, TColStd_IndexedDataMapOfStringString(), Message_ProgressRange()
+    )

@@ -9,7 +9,7 @@ from pathlib import Path
 from uuid import uuid1 as uuid
 from textwrap import indent
 
-from cadquery import exporters, Assembly, Compound, Color
+from cadquery import exporters, Assembly, Compound, Color, Sketch
 from cadquery import cqgi
 from cadquery.occ_impl.jupyter_tools import (
     toJSON,
@@ -156,6 +156,8 @@ function render(data, parent_element, ratio){
         // setup actor,mapper and add
         const mapper = vtk.Rendering.Core.vtkMapper.newInstance();
         mapper.setInputConnection(reader.getOutputPort());
+        mapper.setResolveCoincidentTopologyToPolygonOffset();
+        mapper.setResolveCoincidentTopologyPolygonOffsetParameters(0.5,100);
 
         const actor = vtk.Rendering.Core.vtkActor.newInstance();
         actor.setMapper(mapper);
@@ -308,6 +310,8 @@ class cq_directive_vtk(Directive):
 
                 if isinstance(shape, Assembly):
                     assy = shape
+                elif isinstance(shape, Sketch):
+                    assy = Assembly(shape._faces, color=Color(*DEFAULT_COLOR))
                 else:
                     assy = Assembly(shape, color=Color(*DEFAULT_COLOR))
             else:

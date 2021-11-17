@@ -7,7 +7,7 @@ dependencies:
   - python>=3.6
   - ipython
   - ocp=7.5.1
-  - pyparsing
+  - pyparsing>=2.1.9
   - sphinx=3.2.1
   - sphinx_rtd_theme
   - sphinx-autodoc-typehints
@@ -26,3 +26,4 @@ dependencies:
   - pip:
     - "--editable=."
     - sphinxcadquery
+    - multimethod

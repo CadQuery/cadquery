@@ -76,16 +76,23 @@ def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
         curve, adaptor.FirstParameter(), adaptor.LastParameter(), CURVE_TOLERANCE
     )
 
+    # need to apply the transform on the geometry level
+    spline.Transform(plane.fG.wrapped.Trsf())
+
     order = spline.Degree() + 1
     knots = list(spline.KnotSequence())
     poles = [(p.X(), p.Y(), p.Z()) for p in spline.Poles()]
+    weights = (
+        [spline.Weight(i) for i in range(1, spline.NbPoles() + 1)]
+        if spline.IsRational()
+        else None
+    )
 
-    weights = list(spline.Weights()) if spline.IsRational() else None
+    if spline.IsPeriodic():
+        pad = spline.NbKnots() - spline.LastUKnotIndex()
+        poles += poles[:pad]
 
-    if spline.IsClosed():
-        dxf_spline = ezdxf.math.BSplineClosed(poles, order, knots, weights)
-    else:
-        dxf_spline = ezdxf.math.BSpline(poles, order, knots, weights)
+    dxf_spline = ezdxf.math.BSpline(poles, order, knots, weights)
 
     msp.add_spline().apply_construction_tool(dxf_spline)
 

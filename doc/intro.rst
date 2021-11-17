@@ -19,7 +19,7 @@ CadQuery is an intuitive, easy-to-use Python library for building parametric 3D 
     * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 
 CadQuery 2 is based on
-`OCP https://github.com/CadQuery/OCP`_,
+`OCP <https://github.com/CadQuery/OCP>`_,
 which is a set of Python bindings for the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
 
 Using CadQuery, you can build fully parametric models with a very small amount of code. For example, this simple script
@@ -80,10 +80,10 @@ Like OpenSCAD, CadQuery is an open-source, script based, parametric model genera
 Where does the name CadQuery come from?
 ========================================
 
-CadQuery is inspired by `jQuery <http://www.jquery.com>`_ , a popular framework that
-revolutionized web development involving javascript.
+CadQuery is inspired by `jQuery <http://www.jquery.com>`_, a popular framework that
+revolutionized web development involving JavaScript.
 
-CadQuery is for 3D CAD what jQuery is for javascript.
+CadQuery is for 3D CAD what jQuery is for JavaScript.
 If you are familiar with how jQuery works, you will probably recognize several jQuery features that CadQuery uses:
 
     * A fluent API to create clean, easy to read code

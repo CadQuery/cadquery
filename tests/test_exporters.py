@@ -9,6 +9,8 @@ import io
 from cadquery import *
 from cadquery import exporters, importers
 from tests import BaseTest
+from OCP.GeomConvert import GeomConvert
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 
 class TestExporters(BaseTest):
@@ -167,6 +169,43 @@ class TestExporters(BaseTest):
 
         self.assertAlmostEqual(s4.val().Area(), s4_i.val().Area(), 6)
         self.assertAlmostEqual(s4.edges().size(), s4_i.edges().size())
+
+        # test periodic spline
+        w = Workplane().spline([(1, 1), (2, 2), (3, 2), (3, 1)], periodic=True)
+        exporters.dxf.exportDXF(w, "res5.dxf")
+
+        w_i = importers.importDXF("res5.dxf")
+
+        self.assertAlmostEqual(w.val().Length(), w_i.wires().val().Length(), 6)
+
+        # test rational spline
+        c = Edge.makeCircle(1)
+        adaptor = c._geomAdaptor()
+        curve = GeomConvert.CurveToBSplineCurve_s(adaptor.Curve().Curve())
+
+        e = Workplane().add(Edge(BRepBuilderAPI_MakeEdge(curve).Shape()))
+        exporters.dxf.exportDXF(e, "res6.dxf")
+
+        e_i = importers.importDXF("res6.dxf")
+
+        self.assertAlmostEqual(e.val().Length(), e_i.wires().val().Length(), 6)
+
+        # test non-planar section
+        s5 = (
+            Workplane()
+            .spline([(0, 0), (1, 0), (1, 1), (0, 1)])
+            .close()
+            .extrude(1, both=True)
+            .translate((-3, -4, 0))
+        )
+
+        s5.plane = Plane(origin=(0, 0.1, 0.5), normal=(0.05, 0.05, 1))
+        s5 = s5.section()
+        exporters.dxf.exportDXF(s5, "res7.dxf")
+
+        s5_i = importers.importDXF("res7.dxf")
+
+        self.assertAlmostEqual(s5.val().Area(), s5_i.val().Area(), 4)
 
     def testTypeHandling(self):
 

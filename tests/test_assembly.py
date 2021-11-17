@@ -51,6 +51,22 @@ def nested_assy():
 
 
 @pytest.fixture
+def nested_assy_sphere():
+
+    b1 = cq.Workplane().box(1, 1, 1).faces("<Z").tag("top_face").end()
+    b2 = cq.Workplane().box(1, 1, 1).faces("<Z").tag("bottom_face").end()
+    b3 = cq.Workplane().pushPoints([(-2, 0), (2, 0)]).tag("pts").sphere(1).tag("boxes")
+
+    assy = cq.Assembly(b1, loc=cq.Location(cq.Vector(0, 0, 0)), name="TOP")
+    assy2 = cq.Assembly(b2, loc=cq.Location(cq.Vector(0, 4, 0)), name="SECOND")
+    assy2.add(b3, loc=cq.Location(cq.Vector(0, 4, 0)), name="BOTTOM")
+
+    assy.add(assy2, color=cq.Color("green"))
+
+    return assy
+
+
+@pytest.fixture
 def empty_top_assy():
 
     b1 = cq.Workplane().box(1, 1, 1)
@@ -168,28 +184,43 @@ def test_toJSON(simple_assy, nested_assy, empty_top_assy):
     assert len(r3) == 1
 
 
-def test_save(simple_assy, nested_assy):
+@pytest.mark.parametrize(
+    "extension, args",
+    [
+        ("step", ()),
+        ("xml", ()),
+        ("stp", ("STEP",)),
+        ("caf", ("XML",)),
+        ("wrl", ("VRML",)),
+    ],
+)
+def test_save(extension, args, nested_assy, nested_assy_sphere):
 
-    simple_assy.save("simple.step")
-    assert os.path.exists("simple.step")
+    filename = "nested." + extension
+    nested_assy.save(filename, *args)
+    assert os.path.exists(filename)
 
-    simple_assy.save("simple.xml")
-    assert os.path.exists("simple.xml")
 
-    simple_assy.save("simple.step")
-    assert os.path.exists("simple.step")
+def test_save_gltf(nested_assy_sphere):
 
-    simple_assy.save("simple.stp", "STEP")
-    assert os.path.exists("simple.stp")
+    nested_assy_sphere.save("nested.glb", "GLTF")
+    assert os.path.exists("nested.glb")
+    assert os.path.getsize("nested.glb") > 50 * 1024
 
-    simple_assy.save("simple.caf", "XML")
-    assert os.path.exists("simple.caf")
+
+def test_save_vtkjs(nested_assy):
+
+    nested_assy.save("nested", "VTKJS")
+    assert os.path.exists("nested.zip")
+
+
+def test_save_raises(nested_assy):
 
     with pytest.raises(ValueError):
-        simple_assy.save("simple.dxf")
+        nested_assy.save("nested.dxf")
 
     with pytest.raises(ValueError):
-        simple_assy.save("simple.step", "DXF")
+        nested_assy.save("nested.step", "DXF")
 
 
 def test_constrain(simple_assy, nested_assy):
