@@ -25,16 +25,37 @@ combining them using boolean operations.
        cq.Sketch()
        .trapezoid(4,3,90)
        .vertices()
-       .circle(.5,mode='s')
+       .circle(.5, mode='s')
        .reset()
        .vertices()
        .fillet(.25)
        .reset()
-       .rarray(.6,1,5,1).slot(1.5,0.4,mode='s',angle=90)
+       .rarray(.6,1,5,1).slot(1.5,0.4, mode='s', angle=90)
     )
 
 Note that selectors are implemented, but selection has to be explicitly reset. Sketch
 class does not implement history and all modifications happen in-place.
+
+Modes
+^^^^^
+
+Every operation from the face API accepts a mode parameter to defines how to combine the created object with existing ones. It can be fused (``mode='a'``), cut (``mode='s'``), intersected (``mode='i'``) or just stored for construction (``mode='c'``). In the last case, it is mandatory to specify a ``tag`` in order to be bale to refer to the object later on. By default faces are fused together. Note the usage of the subtractive and additive modes in the example above. The additional two are demonstrated below.
+
+.. cadquery::
+    :height: 600px
+
+    result = (
+       cq.Sketch()
+       .rect(1, 2, mode='c', tag='base')
+       .vertices(tag='base')
+       .circle(.7)
+       .reset()
+       .edges('|Y', tag='base')
+       .ellipse(1.2, 1, mode='i')
+       .reset()
+       .rect(2, 2, mode='i')
+       .clean()
+    )
 
 
 Edge-based API
@@ -61,6 +82,7 @@ If needed, one can construct sketches by placing individual edges.
 
 Once the construction is finished it has to be converted to the face-based representation
 using :meth:`~cadquery.Sketch.assemble`. Afterwards, face based operations can be applied.
+
 
 Convex hull
 ===========
@@ -269,4 +291,4 @@ Reusing of existing sketches is needed when using :meth:`~cadquery.Workplane.lof
         .loft()
         )
 
-When lofting only outer wires are taken into account.
+When lofting only outer wires are taken into account and inner wires are silently ignored.
