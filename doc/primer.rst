@@ -72,7 +72,7 @@ See :ref:`2dOperations` to learn more.
 3D Construction
 ---------------------------
 
-You can construct 3D primitives such as boxes, wedges, and spheres directly. You can also sweep, extrude,
+You can construct 3D primitives such as boxes, wedges, cylinders and spheres directly. You can also sweep, extrude,
 and loft 2D geometry to form 3D features.  Of course the basic primitive operations are also available.
 
 See :ref:`3doperations` to learn more.
