@@ -39,7 +39,7 @@ class does not implement history and all modifications happen in-place.
 Modes
 ^^^^^
 
-Every operation from the face API accepts a mode parameter to defines how to combine the created object with existing ones. It can be fused (``mode='a'``), cut (``mode='s'``), intersected (``mode='i'``) or just stored for construction (``mode='c'``). In the last case, it is mandatory to specify a ``tag`` in order to be bale to refer to the object later on. By default faces are fused together. Note the usage of the subtractive and additive modes in the example above. The additional two are demonstrated below.
+Every operation from the face API accepts a mode parameter to defines how to combine the created object with existing ones. It can be fused (``mode='a'``), cut (``mode='s'``), intersected (``mode='i'``) or just stored for construction (``mode='c'``). In the last case, it is mandatory to specify a ``tag`` in order to be able to refer to the object later on. By default faces are fused together. Note the usage of the subtractive and additive modes in the example above. The additional two are demonstrated below.
 
 .. cadquery::
     :height: 600px
