@@ -35,7 +35,7 @@ from .occ_impl.sketch_solver import (
     arc_point,
 )
 
-Modes = Literal["a", "s", "i"]
+Modes = Literal["a", "s", "i", "c"]  # add, subtract, intersect, construct
 Point = Union[Vector, Tuple[Real, Real]]
 
 T = TypeVar("T", bound="Sketch")
