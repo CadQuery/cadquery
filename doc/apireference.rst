@@ -169,6 +169,7 @@ Some 3D operations also require an active 2D workplane, but some do not.
 	Workplane.cutThruAll
 	Workplane.box
 	Workplane.sphere
+	Workplane.wedge
 	Workplane.cylinder
 	Workplane.union
 	Workplane.combine
