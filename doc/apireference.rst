@@ -4,10 +4,12 @@
 CadQuery API Reference
 ***********************
 
-The CadQuery API is made up of 2 main objects:
+The CadQuery API is made up of 4 main objects:
 
+* **Sketch** -- Construct 2D sketches
 * **Workplane** -- Wraps a topological entity and provides a 2D modelling context.
 * **Selector** -- Filter and select things
+* **Assembly** -- Combine objects into assemblies.
 
 This page lists  methods of these objects grouped by **functional area**
 
@@ -16,8 +18,85 @@ This page lists  methods of these objects grouped by **functional area**
   Use :ref:`classreference` to see methods alphabetically by class.
 
 
-Initialization
+Sketch initialization
+---------------------
+
+.. currentmodule:: cadquery
+
+Creating new sketches.
+
+.. autosummary::
+    Sketch
+    Sketch.importDXF
+    Workplane.sketch
+    Sketch.finalize
+    Sketch.copy
+    Sketch.located
+    Sketch.moved
+
+Sketch selection
 ----------------
+
+.. currentmodule:: cadquery
+
+Selecting, tagging and manipulating elements.
+
+.. autosummary::
+    Sketch.tag
+    Sketch.select
+    Sketch.reset
+    Sketch.delete
+    Sketch.faces
+    Sketch.edges
+    Sketch.vertices
+
+Sketching with faces
+--------------------
+
+.. currentmodule:: cadquery
+
+Sketching using the face-based API.
+
+.. autosummary::
+    Sketch.face
+    Sketch.rect
+    Sketch.circle
+    Sketch.ellipse
+    Sketch.trapezoid
+    Sketch.slot
+    Sketch.regularPolygon
+    Sketch.polygon
+    Sketch.rarray
+    Sketch.parray
+    Sketch.distribute
+    Sketch.each
+    Sketch.push
+    Sketch.hull
+    Sketch.offset
+    Sketch.fillet
+    Sketch.chamfer
+    Sketch.clean
+
+Sketching with edges and constraints
+------------------------------------
+
+.. currentmodule:: cadquery
+
+Sketching using the edge-based API.
+
+.. autosummary::
+    Sketch.edge
+    Sketch.segment
+    Sketch.arc
+    Sketch.spline
+    Sketch.close
+    Sketch.assemble
+    Sketch.constrain
+    Sketch.solve
+
+
+Initialization
+--------------
 
 .. currentmodule:: cadquery
 
@@ -30,7 +109,7 @@ Creating new workplanes and object chains
 .. _2dOperations:
 
 2D Operations
------------------
+-------------
 
 Creating 2D constructs that can be used to create 3D features.
 
@@ -90,6 +169,7 @@ Some 3D operations also require an active 2D workplane, but some do not.
 	Workplane.cutThruAll
 	Workplane.box
 	Workplane.sphere
+	Workplane.wedge
 	Workplane.cylinder
 	Workplane.union
 	Workplane.combine
@@ -173,25 +253,25 @@ as a basis for further operations.
 .. currentmodule:: cadquery.selectors
 .. autosummary::
 
-        NearestToPointSelector
-        BoxSelector
-        BaseDirSelector
-        ParallelDirSelector
-        DirectionSelector
-        DirectionNthSelector
-		LengthNthSelector
-		AreaNthSelector
-        RadiusNthSelector
-        PerpendicularDirSelector
-        TypeSelector
-        DirectionMinMaxSelector
-        CenterNthSelector
-        BinarySelector
-        AndSelector
-        SumSelector
-        SubtractSelector
-        InverseSelector
-        StringSyntaxSelector
+    NearestToPointSelector
+    BoxSelector
+    BaseDirSelector
+    ParallelDirSelector
+    DirectionSelector
+    DirectionNthSelector
+	LengthNthSelector
+	AreaNthSelector
+    RadiusNthSelector
+    PerpendicularDirSelector
+    TypeSelector
+    DirectionMinMaxSelector
+    CenterNthSelector
+    BinarySelector
+    AndSelector
+    SumSelector
+    SubtractSelector
+    InverseSelector
+    StringSyntaxSelector
 
 .. _assembly:
         
@@ -203,10 +283,10 @@ Workplane and Shape objects can be connected together into assemblies
 .. currentmodule:: cadquery
 .. autosummary::
 
-        Assembly
-        Assembly.add
-        Assembly.save
-        Assembly.constrain
-        Assembly.solve
-        Constraint
-        Color
+    Assembly
+    Assembly.add
+    Assembly.save
+    Assembly.constrain
+    Assembly.solve
+    Constraint
+    Color

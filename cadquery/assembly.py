@@ -12,7 +12,13 @@ from .occ_impl.solver import (
     ConstraintMarker,
     Constraint as ConstraintPOD,
 )
-from .occ_impl.exporters.assembly import exportAssembly, exportCAF
+from .occ_impl.exporters.assembly import (
+    exportAssembly,
+    exportCAF,
+    exportVTKJS,
+    exportVRML,
+    exportGLTF,
+)
 
 from .selectors import _expression_grammar as _selector_grammar
 from OCP.BRepTools import BRepTools
@@ -22,7 +28,7 @@ from OCP.Precision import Precision
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
 ConstraintKinds = Literal["Plane", "Point", "Axis", "PointInPlane"]
-ExportLiterals = Literal["STEP", "XML"]
+ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML"]
 
 PATH_DELIM = "/"
 
@@ -462,18 +468,24 @@ class Assembly(object):
         return self
 
     def save(
-        self, path: str, exportType: Optional[ExportLiterals] = None
+        self,
+        path: str,
+        exportType: Optional[ExportLiterals] = None,
+        tolerance: float = 0.1,
+        angularTolerance: float = 0.1,
     ) -> "Assembly":
         """
         save as STEP or OCCT native XML file
 
         :param path: filepath
         :param exportType: export format (default: None, results in format being inferred form the path)
+        :param tolerance: the deflection tolerance, in model units. Only used for GLTF. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Only used for GLTF. Default 0.1.
         """
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML"):
+            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
@@ -482,6 +494,12 @@ class Assembly(object):
             exportAssembly(self, path)
         elif exportType == "XML":
             exportCAF(self, path)
+        elif exportType == "VRML":
+            exportVRML(self, path)
+        elif exportType == "GLTF":
+            exportGLTF(self, path, True, tolerance, angularTolerance)
+        elif exportType == "VTKJS":
+            exportVTKJS(self, path)
         else:
             raise ValueError(f"Unknown format: {exportType}")
 

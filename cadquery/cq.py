@@ -46,6 +46,7 @@ from .occ_impl.shapes import (
     Solid,
     Compound,
     sortWiresByBuildOrder,
+    wiresToFaces,
 )
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
@@ -59,7 +60,9 @@ from .selectors import (
     StringSyntaxSelector,
 )
 
-CQObject = Union[Vector, Location, Shape]
+from .sketch import Sketch
+
+CQObject = Union[Vector, Location, Shape, Sketch]
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
 
 T = TypeVar("T", bound="Workplane")
@@ -489,7 +492,9 @@ class Workplane(object):
         :rtype TopoDS_Shape or a subclass
         """
 
-        return self.val().wrapped
+        v = self.val()
+
+        return v._faces if isinstance(v, Sketch) else v.wrapped
 
     def workplane(
         self: T,
@@ -503,15 +508,15 @@ class Workplane(object):
         """
         Creates a new 2D workplane, located relative to the first face on the stack.
 
-        :param offset:  offset for the work plane in the Z direction. Default
-        :param invert:  invert the Z direction from that of the face.
+        :param offset:  offset for the workplane in its normal direction . Default
+        :param invert:  invert the normal direction from that of the face.
         :param centerOption: how local origin of workplane is determined.
         :param origin: origin for plane center, requires 'ProjectedOrigin' centerOption.
         :type offset: float or None=0.0
         :type invert: boolean or None=False
         :type centerOption: string or None='ProjectedOrigin'
         :type origin: Vector or None
-        :rtype: Workplane object ( which is a subclass of CQ )
+        :rtype: Workplane object 
 
         The first element on the stack must be a face, a set of
         co-planar faces or a vertex.  If a vertex, then the parent
@@ -527,7 +532,7 @@ class Workplane(object):
              face(s) or vertex (vertices). 'ProjectedOrigin' uses by default the current origin
              or the optional origin parameter (if specified) and projects it onto the plane
              defined by the selected face(s).
-           * The Z direction will be normal to the plane of the face,computed
+           * The Z direction will be the normal of the face,computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
              the global x-y plane, the x direction of the workplane will co-incide with the
@@ -537,14 +542,6 @@ class Workplane(object):
         of the face ( IE, offset=0).  Occasionally, it is useful to define a face offset from
         an existing surface, and even more rarely to define a workplane based on a face that is
         not planar.
-
-        To create a workplane without first having a face, use the Workplane() method.
-
-        Future Enhancements:
-          * Allow creating workplane from planar wires
-          * Allow creating workplane based on an arbitrary point on a face, not just the center.
-            For now you can work around by creating a workplane and then offsetting the center
-            afterwards.
         """
 
         def _isCoPlanar(f0, f1):
@@ -2467,6 +2464,8 @@ class Workplane(object):
             for o in self.objects:
                 if isinstance(o, (Vector, Shape)):
                     pnts.append(loc.inverse * Location(plane, o.Center()))
+                elif isinstance(o, Sketch):
+                    pnts.append(loc.inverse * Location(plane, o._faces.Center()))
                 else:
                     pnts.append(o)
 
@@ -2619,30 +2618,44 @@ class Workplane(object):
         return self.eachpoint(lambda loc: e.moved(loc), True)
 
     def polygon(
-        self: T, nSides: int, diameter: float, forConstruction: bool = False
+        self: T,
+        nSides: int,
+        diameter: float,
+        forConstruction: bool = False,
+        circumscribed: bool = False,
     ) -> T:
         """
-        Creates a polygon inscribed in a circle of the specified diameter for each point on
-        the stack
+        Make a polygon for each item on the stack.
 
-        The first vertex is always oriented in the x direction.
+        By default, each polygon is created by inscribing it in a circle of the
+        specified diameter, such that the first vertex is oriented in the x direction.
+        Alternatively, each polygon can be created by circumscribing it around
+        a circle of the specified diameter, such that the midpoint of the first edge
+        is oriented in the x direction. Circumscribed polygons are thus rotated by
+        pi/nSides radians relative to the inscribed polygon. This ensures the extent
+        of the polygon along the positive x-axis is always known.
+        This has the advantage of not requiring additional formulae for purposes such as
+        tiling on the x-axis (at least for even sided polygons).
 
         :param nSides: number of sides, must be >= 3
-        :param diameter: the size of the circle the polygon is inscribed into
+        :param diameter: the diameter of the circle for constructing the polygon
+        :param circumscribed: circumscribe the polygon about a circle
+        :type circumscribed: true to create the polygon by circumscribing it about a circle,
+            false to create the polygon by inscribing it in a circle
         :return: a polygon wire
         """
 
         # pnt is a vector in local coordinates
         angle = 2.0 * math.pi / nSides
+        radius = diameter / 2.0
+        if circumscribed:
+            radius /= math.cos(angle / 2.0)
         pnts = []
         for i in range(nSides + 1):
-            pnts.append(
-                Vector(
-                    (diameter / 2.0 * math.cos(angle * i)),
-                    (diameter / 2.0 * math.sin(angle * i)),
-                    0,
-                )
-            )
+            o = angle * i
+            if circumscribed:
+                o += angle / 2.0
+            pnts.append(Vector(radius * math.cos(o), radius * math.sin(o), 0,))
         p = Wire.makePolygon(pnts, forConstruction)
 
         return self.eachpoint(lambda loc: p.moved(loc), True)
@@ -2929,9 +2942,9 @@ class Workplane(object):
     ) -> T:
         """
         Extrudes a wire in the direction normal to the plane, but also twists by the specified
-        angle over the length of the extrusion
+        angle over the length of the extrusion.
 
-        The center point of the rotation will be the center of the workplane
+        The center point of the rotation will be the center of the workplane.
 
         See extrude for more details, since this method is the same except for the the addition
         of the angle. In fact, if angle=0, the result is the same as a linear extrude.
@@ -2945,9 +2958,7 @@ class Workplane(object):
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
         """
-        # group wires together into faces based on which ones are inside the others
-        # result is a list of lists
-        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
+        faces = self._getFaces()
 
         # compute extrusion vector and extrude
         eDir = self.plane.zDir.multiply(distance)
@@ -2960,9 +2971,9 @@ class Workplane(object):
         # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there
         # are multiple sets
         shapes: List[Shape] = []
-        for ws in wireSets:
+        for f in faces:
             thisObj = Solid.extrudeLinearWithRotation(
-                ws[0], ws[1:], self.plane.origin, eDir, angleDegrees
+                f, self.plane.origin, eDir, angleDegrees
             )
             shapes.append(thisObj)
 
@@ -3114,7 +3125,7 @@ class Workplane(object):
 
     def sweep(
         self: T,
-        path: "Workplane",
+        path: Union["Workplane", Wire, Edge],
         multisection: bool = False,
         sweepAlongWires: Optional[bool] = None,
         makeSolid: bool = True,
@@ -3150,8 +3161,15 @@ class Workplane(object):
             )
 
         r = self._sweep(
-            path.wire(), multisection, makeSolid, isFrenet, transition, normal, auxSpine
+            path.wire() if isinstance(path, Workplane) else path,
+            multisection,
+            makeSolid,
+            isFrenet,
+            transition,
+            normal,
+            auxSpine,
         )  # returns a Solid (or a compound if there were multiple)
+
         newS: T
         if combine:
             newS = self._combineWithBase(r)
@@ -3294,7 +3312,7 @@ class Workplane(object):
         self: T, toCut: Union["Workplane", Solid, Compound], clean: bool = True
     ) -> T:
         """
-        Cuts the provided solid from the current solid, IE, perform a solid subtraction
+        Cuts the provided solid from the current solid, IE, perform a solid subtraction.
 
         :param toCut: object to cut
         :type toCut: a solid object, or a CQ object having a solid,
@@ -3446,19 +3464,16 @@ class Workplane(object):
 
         see :py:meth:`cutBlind` to cut material to a limited depth
         """
-        wires = self.ctx.popPendingWires()
         solidRef = self.findSolid()
 
-        rv = []
-        for solid in solidRef.Solids():
-            s = solid.dprism(None, wires, thruAll=True, additive=False, taper=-taper)
+        s = solidRef.dprism(
+            None, self._getFaces(), thruAll=True, additive=False, taper=-taper
+        )
 
-            if clean:
-                s = s.clean()
+        if clean:
+            s = s.clean()
 
-            rv.append(s)
-
-        return self.newObject(rv)
+        return self.newObject([s])
 
     def loft(
         self: T, filled: bool = True, ruled: bool = False, combine: bool = True
@@ -3467,7 +3482,14 @@ class Workplane(object):
         Make a lofted solid, through the set of wires.
         :return: a CQ object containing the created loft
         """
-        wiresToLoft = self.ctx.popPendingWires()
+
+        if self.ctx.pendingWires:
+            wiresToLoft = self.ctx.popPendingWires()
+        else:
+            wiresToLoft = [f.outerWire() for f in self._getFaces()]
+
+        if not wiresToLoft:
+            raise ValueError("Nothing to loft")
 
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
@@ -3480,6 +3502,22 @@ class Workplane(object):
 
         return self.newObject([r])
 
+    def _getFaces(self) -> List[Face]:
+        """
+        Convert pending wires or sketches to faces for subsequent operation
+        """
+
+        rv: List[Face] = []
+
+        for el in self.objects:
+            if isinstance(el, Sketch):
+                rv.extend(el)
+
+        if not rv:
+            rv.extend(wiresToFaces(self.ctx.popPendingWires()))
+
+        return rv
+
     def _extrude(
         self,
         distance: Optional[float] = None,
@@ -3487,7 +3525,7 @@ class Workplane(object):
         taper: Optional[float] = None,
         upToFace: Optional[Union[int, Face]] = None,
         additive: bool = True,
-    ) -> Compound:
+    ) -> Union[Solid, Compound]:
         """
         Make a prismatic solid from the existing set of pending wires.
 
@@ -3502,13 +3540,13 @@ class Workplane(object):
         It is the basis for cutBlind, extrude, cutThruAll, and all similar methods.
         """
 
-        def getFacesList(eDir, direction, both=False):
+        def getFacesList(face, eDir, direction, both=False):
             """
             Utility function to make the code further below more clean and tidy
             Performs some test and raise appropriate error when no Faces are found for extrusion
             """
             facesList = self.findSolid().facesIntersectedByLine(
-                ws[0].Center(), eDir, direction=direction
+                face.Center(), eDir, direction=direction
             )
             if len(facesList) == 0 and both:
                 raise ValueError(
@@ -3519,7 +3557,7 @@ class Workplane(object):
                 # if we don't find faces in the workplane normal direction we try the other
                 # direction (as the user might have created a workplane with wrong orientation)
                 facesList = self.findSolid().facesIntersectedByLine(
-                    ws[0].Center(), eDir.multiply(-1.0), direction=direction
+                    face.Center(), eDir.multiply(-1.0), direction=direction
                 )
                 if len(facesList) == 0:
                     raise ValueError(
@@ -3527,10 +3565,13 @@ class Workplane(object):
                     )
             return facesList
 
-        # group wires together into faces based on which ones are inside the others
-        # result is a list of lists
+        # process sketches or pending wires
+        faces = self._getFaces()
 
-        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
+        # check for nested geometry and tapered extrusion
+        for face in faces:
+            if taper and face.innerWires():
+                raise ValueError("Inner wires not allowed with tapered extrusion")
 
         # compute extrusion vector and extrude
         if upToFace is not None:
@@ -3538,31 +3579,18 @@ class Workplane(object):
         elif distance is not None:
             eDir = self.plane.zDir.multiply(distance)
 
-        if additive:
-            direction = "AlongAxis"
-        else:
-            direction = "Opposite"
-
-        # one would think that fusing faces into a compound and then extruding would work,
-        # but it doesnt-- the resulting compound appears to look right, ( right number of faces, etc)
-        # but then cutting it from the main solid fails with BRep_NotDone.
-        # the work around is to extrude each and then join the resulting solids, which seems to work
-
-        # underlying cad kernel can only handle simple bosses-- we'll aggregate them if there are
-        # multiple sets
-        thisObj: Union[Solid, Compound]
+        direction = "AlongAxis" if additive else "Opposite"
+        taper = 0.0 if taper is None else taper
 
         toFuse = []
-        taper = 0.0 if taper is None else taper
-        baseSolid = None
 
-        for ws in wireSets:
-            if upToFace is not None:
-                baseSolid = self.findSolid() if baseSolid is None else thisObj
+        if upToFace is not None:
+            res = self.findSolid()
+            for face in faces:
                 if isinstance(upToFace, int):
-                    facesList = getFacesList(eDir, direction, both=both)
+                    facesList = getFacesList(face, eDir, direction, both=both)
                     if (
-                        baseSolid.isInside(ws[0].Center())
+                        res.isInside(face.outerWire().Center())
                         and additive
                         and upToFace == 0
                     ):
@@ -3572,42 +3600,33 @@ class Workplane(object):
                 else:
                     limitFace = upToFace
 
-                thisObj = Solid.dprism(
-                    baseSolid,
-                    Face.makeFromWires(ws[0]),
-                    ws,
-                    taper=taper,
-                    upToFace=limitFace,
-                    additive=additive,
+                res = res.dprism(
+                    None, [face], taper=taper, upToFace=limitFace, additive=additive,
                 )
 
                 if both:
-                    facesList2 = getFacesList(eDir.multiply(-1.0), direction, both=both)
+                    facesList2 = getFacesList(
+                        face, eDir.multiply(-1.0), direction, both=both
+                    )
                     limitFace2 = facesList2[upToFace]
-                    thisObj2 = Solid.dprism(
-                        self.findSolid(),
-                        Face.makeFromWires(ws[0]),
-                        ws,
+                    res = res.dprism(
+                        None,
+                        [face],
                         taper=taper,
                         upToFace=limitFace2,
                         additive=additive,
                     )
-                    thisObj = Compound.makeCompound([thisObj, thisObj2])
-                toFuse = [thisObj]
-            elif taper != 0.0:
-                thisObj = Solid.extrudeLinear(ws[0], [], eDir, taper=taper)
-                toFuse.append(thisObj)
-            else:
-                thisObj = Solid.extrudeLinear(ws[0], ws[1:], eDir, taper=taper)
-                toFuse.append(thisObj)
+
+        else:
+            for face in faces:
+                res = Solid.extrudeLinear(face, eDir, taper=taper)
+                toFuse.append(res)
 
                 if both:
-                    thisObj = Solid.extrudeLinear(
-                        ws[0], ws[1:], eDir.multiply(-1.0), taper=taper
-                    )
-                    toFuse.append(thisObj)
+                    res = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
+                    toFuse.append(res)
 
-        return Compound.makeCompound(toFuse)
+        return res if upToFace is not None else Compound.makeCompound(toFuse)
 
     def _revolve(
         self, angleDegrees: float, axisStart: VectorLike, axisEnd: VectorLike
@@ -3625,22 +3644,18 @@ class Workplane(object):
 
         This method is a utility method, primarily for plugin and internal use.
         """
-        # Get the wires to be revolved
-        wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
 
-        # Revolve the wires, make a compound out of them and then fuse them
+        # Revolve, make a compound out of them and then fuse them
         toFuse = []
-        for ws in wireSets:
-            thisObj = Solid.revolve(
-                ws[0], ws[1:], angleDegrees, Vector(axisStart), Vector(axisEnd)
-            )
+        for f in self._getFaces():
+            thisObj = Solid.revolve(f, angleDegrees, Vector(axisStart), Vector(axisEnd))
             toFuse.append(thisObj)
 
         return Compound.makeCompound(toFuse)
 
     def _sweep(
         self,
-        path: "Workplane",
+        path: Union["Workplane", Wire, Edge],
         multisection: bool = False,
         makeSolid: bool = True,
         isFrenet: bool = False,
@@ -3665,7 +3680,7 @@ class Workplane(object):
 
         toFuse = []
 
-        p = path.val()
+        p = path.val() if isinstance(path, Workplane) else path
         if not isinstance(p, (Wire, Edge)):
             raise ValueError("Wire or Edge instance required")
 
@@ -3679,11 +3694,8 @@ class Workplane(object):
             mode = wire
 
         if not multisection:
-            wireSets = sortWiresByBuildOrder(self.ctx.popPendingWires())
-            for ws in wireSets:
-                thisObj = Solid.sweep(
-                    ws[0], ws[1:], p, makeSolid, isFrenet, mode, transition
-                )
+            for f in self._getFaces():
+                thisObj = Solid.sweep(f, p, makeSolid, isFrenet, mode, transition)
                 toFuse.append(thisObj)
         else:
             sections = self.ctx.popPendingWires()
@@ -3864,7 +3876,7 @@ class Workplane(object):
         clean: bool = True,
     ) -> T:
         """
-        Returns a 3D sphere with the specified radius for each point on the stack
+        Returns a 3D sphere with the specified radius for each point on the stack.
 
         :param radius: The radius of the sphere
         :type radius: float > 0
@@ -4001,6 +4013,8 @@ class Workplane(object):
         clean: bool = True,
     ) -> T:
         """
+        Returns a 3D wedge with the specified dimensions for each point on the stack.
+
         :param dx: Distance along the X axis
         :param dy: Distance along the Y axis
         :param dz: Distance along the Z axis
@@ -4102,7 +4116,7 @@ class Workplane(object):
         valign: Literal["center", "top", "bottom"] = "center",
     ) -> T:
         """
-        Create a 3D text
+        Returns a 3D text.
 
         :param txt: text to be rendered
         :param fontsize: size of the font in model units
@@ -4221,6 +4235,55 @@ class Workplane(object):
             self.ctx.pendingWires = []
         else:
             self.ctx.pendingWires = rv
+
+        return self.newObject(rv)
+
+    def _locs(self: T) -> List[Location]:
+        """
+        Convert items on the stack into locations.
+        """
+
+        plane = self.plane
+        locs: List[Location] = []
+
+        for obj in self.objects:
+            if isinstance(obj, (Vector, Shape)):
+                locs.append(Location(plane, obj.Center()))
+            elif isinstance(obj, Location):
+                locs.append(obj)
+        if not locs:
+            locs.append(self.plane.location)
+
+        return locs
+
+    def sketch(self: T) -> Sketch:
+        """
+        Initialize and return a sketch
+
+        :return: Sketch object with the current workplane as a parent.
+        """
+
+        parent = self.newObject([])
+
+        rv = Sketch(parent=parent, locs=self._locs())
+        parent.objects.append(rv)
+
+        return rv
+
+    def placeSketch(self: T, *sketches: Sketch) -> T:
+        """
+        Place the provided sketch(es) based on the current items on the stack.
+
+        :return: Workplane object with the sketch added.
+        """
+
+        rv = []
+
+        for s in sketches:
+            s_new = s.copy()
+            s_new.locs = self._locs()
+
+            rv.append(s_new)
 
         return self.newObject(rv)
 

@@ -17,11 +17,10 @@ from typing_extensions import Literal, Protocol
 
 from io import BytesIO
 
-from vtk import (
-    vtkPolyData,
-    vtkTriangleFilter,
-    vtkPolyDataNormals,
-)
+from multimethod import multimethod
+
+from vtkmodules.vtkCommonDataModel import vtkPolyData
+from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 from .geom import Vector, BoundBox, Plane, Location, Matrix
 
@@ -234,6 +233,8 @@ from OCP.Standard import Standard_NoSuchObject, Standard_Failure
 from math import pi, sqrt
 import warnings
 
+Real = Union[float, int]
+
 TOLERANCE = 1e-6
 DEG2RAD = 2 * pi / 360.0
 HASH_CODE_MAX = 2147483647  # max 32bit signed int, required by OCC.Core.HashCode
@@ -375,6 +376,7 @@ class Shape(object):
     """
 
     wrapped: TopoDS_Shape
+    forConstruction: bool
 
     def __init__(self, obj: TopoDS_Shape):
         self.wrapped = downcast(obj)
@@ -402,9 +404,7 @@ class Shape(object):
         return self
 
     @classmethod
-    def cast(
-        cls: Type["Shape"], obj: TopoDS_Shape, forConstruction: bool = False
-    ) -> "Shape":
+    def cast(cls, obj: TopoDS_Shape, forConstruction: bool = False) -> "Shape":
         "Returns the right type of wrapper, given a OCCT object"
 
         tr = None
@@ -874,12 +874,12 @@ class Shape(object):
 
         return self._apply_transform(T)
 
-    def copy(self) -> "Shape":
+    def copy(self: T) -> T:
         """
         Creates a new object that is a copy of this object.
         """
 
-        return Shape.cast(BRepBuilderAPI_Copy(self.wrapped).Shape())
+        return self.__class__(BRepBuilderAPI_Copy(self.wrapped).Shape())
 
     def transformShape(self, tMatrix: Matrix) -> "Shape":
         """
@@ -936,12 +936,12 @@ class Shape(object):
 
         return self
 
-    def located(self, loc: Location) -> "Shape":
+    def located(self: T, loc: Location) -> T:
         """
         Apply a location in absolute sense to a copy of self
         """
 
-        r = Shape.cast(self.wrapped.Located(loc.wrapped))
+        r = self.__class__(self.wrapped.Located(loc.wrapped))
         r.forConstruction = self.forConstruction
 
         return r
@@ -955,12 +955,12 @@ class Shape(object):
 
         return self
 
-    def moved(self, loc: Location) -> "Shape":
+    def moved(self: T, loc: Location) -> T:
         """
         Apply a location in relative sense (i.e. update current location) to a copy of self
         """
 
-        r = Shape.cast(self.wrapped.Moved(loc.wrapped))
+        r = self.__class__(self.wrapped.Moved(loc.wrapped))
         r.forConstruction = self.forConstruction
 
         return r
@@ -1269,7 +1269,7 @@ class Vertex(Shape):
         return Vector(self.toTuple())
 
     @classmethod
-    def makeVertex(cls: Type["Vertex"], x: float, y: float, z: float) -> "Vertex":
+    def makeVertex(cls, x: float, y: float, z: float) -> "Vertex":
 
         return cls(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
@@ -1299,11 +1299,17 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
         d: float,
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
+        planar: bool = False,
     ) -> Location:
         ...
 
 
 class Mixin1D(object):
+    def _bounds(self: Mixin1DProtocol) -> Tuple[float, float]:
+
+        curve = self._geomAdaptor()
+        return curve.FirstParameter(), curve.LastParameter()
+
     def startPoint(self: Mixin1DProtocol) -> Vector:
         """
 
@@ -1467,11 +1473,13 @@ class Mixin1D(object):
         d: float,
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
+        planar: bool = False,
     ) -> Location:
         """Generate a location along the underlying curve.
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
+        :param planar: planar mode
         :return: A Location object representing local coordinate system at the specified distance.
         """
 
@@ -1496,9 +1504,14 @@ class Mixin1D(object):
         pnt = curve.Value(param)
 
         T = gp_Trsf()
-        T.SetTransformation(
-            gp_Ax3(pnt, gp_Dir(tangent.XYZ()), gp_Dir(normal.XYZ())), gp_Ax3()
-        )
+        if planar:
+            T.SetTransformation(
+                gp_Ax3(pnt, gp_Dir(0, 0, 1), gp_Dir(normal.XYZ())), gp_Ax3()
+            )
+        else:
+            T.SetTransformation(
+                gp_Ax3(pnt, gp_Dir(tangent.XYZ()), gp_Dir(normal.XYZ())), gp_Ax3()
+            )
 
         return Location(TopLoc_Location(T))
 
@@ -1507,15 +1520,17 @@ class Mixin1D(object):
         ds: Iterable[float],
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
+        planar: bool = False,
     ) -> List[Location]:
         """Generate location along the curve
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
+        :param planar: planar mode
         :return: A list of Location objects representing local coordinate systems at the specified distances.
         """
 
-        return [self.locationAt(d, mode, frame) for d in ds]
+        return [self.locationAt(d, mode, frame, planar) for d in ds]
 
 
 class Edge(Shape, Mixin1D):
@@ -1554,14 +1569,32 @@ class Edge(Shape, Mixin1D):
 
         return rv
 
+    def arcCenter(self) -> Vector:
+        """
+        Center of an underlying circle or ellipse geometry.
+        """
+
+        g = self.geomType()
+        a = self._geomAdaptor()
+
+        if g == "CIRCLE":
+            rv = Vector(a.Circle().Position().Location())
+        elif g == "ELLIPSE":
+            rv = Vector(a.Ellipse().Position().Location())
+        else:
+            raise ValueError(f"{g} has no arc center")
+
+        return rv
+
     @classmethod
     def makeCircle(
-        cls: Type["Edge"],
+        cls,
         radius: float,
         pnt: VectorLike = Vector(0, 0, 0),
         dir: VectorLike = Vector(0, 0, 1),
         angle1: float = 360.0,
         angle2: float = 360,
+        orientation=True,
     ) -> "Edge":
         pnt = Vector(pnt)
         dir = Vector(dir)
@@ -1572,13 +1605,13 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_gp).Edge())
         else:  # arc case
             circle_geom = GC_MakeArcOfCircle(
-                circle_gp, angle1 * DEG2RAD, angle2 * DEG2RAD, True
+                circle_gp, angle1 * DEG2RAD, angle2 * DEG2RAD, orientation
             ).Value()
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
     def makeEllipse(
-        cls: Type["Edge"],
+        cls,
         x_radius: float,
         y_radius: float,
         pnt: VectorLike = Vector(0, 0, 0),
@@ -1635,7 +1668,7 @@ class Edge(Shape, Mixin1D):
 
     @classmethod
     def makeSpline(
-        cls: Type["Edge"],
+        cls,
         listOfVector: List[Vector],
         tangents: Optional[Sequence[Vector]] = None,
         periodic: bool = False,
@@ -1714,7 +1747,7 @@ class Edge(Shape, Mixin1D):
 
     @classmethod
     def makeSplineApprox(
-        cls: Type["Edge"],
+        cls,
         listOfVector: List[Vector],
         tol: float = 1e-3,
         smoothing: Optional[Tuple[float, float, float]] = None,
@@ -1752,9 +1785,7 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
 
     @classmethod
-    def makeThreePointArc(
-        cls: Type["Edge"], v1: Vector, v2: Vector, v3: Vector
-    ) -> "Edge":
+    def makeThreePointArc(cls, v1: Vector, v2: Vector, v3: Vector) -> "Edge":
         """
         Makes a three point arc through the provided points
         :param cls:
@@ -1768,7 +1799,7 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeTangentArc(cls: Type["Edge"], v1: Vector, v2: Vector, v3: Vector) -> "Edge":
+    def makeTangentArc(cls, v1: Vector, v2: Vector, v3: Vector) -> "Edge":
         """
         Makes a tangent arc from point v1, in the direction of v2 and ends at
         v3.
@@ -1783,7 +1814,7 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeLine(cls: Type["Edge"], v1: Vector, v2: Vector) -> "Edge":
+    def makeLine(cls, v1: Vector, v2: Vector) -> "Edge":
         """
         Create a line between two points
         :param v1: Vector that represents the first point
@@ -1831,7 +1862,7 @@ class Wire(Shape, Mixin1D):
 
     @classmethod
     def combine(
-        cls: Type["Wire"], listOfWires: Iterable[Union["Wire", Edge]], tol: float = 1e-9
+        cls, listOfWires: Iterable[Union["Wire", Edge]], tol: float = 1e-9
     ) -> List["Wire"]:
         """
         Attempt to combine a list of wires and edges into a new wire.
@@ -1852,7 +1883,7 @@ class Wire(Shape, Mixin1D):
         return [cls(el) for el in wires_out]
 
     @classmethod
-    def assembleEdges(cls: Type["Wire"], listOfEdges: Iterable[Edge]) -> "Wire":
+    def assembleEdges(cls, listOfEdges: Iterable[Edge]) -> "Wire":
         """
         Attempts to build a wire that consists of the edges in the provided list
         :param cls:
@@ -1881,9 +1912,7 @@ class Wire(Shape, Mixin1D):
         return cls(wire_builder.Wire())
 
     @classmethod
-    def makeCircle(
-        cls: Type["Wire"], radius: float, center: Vector, normal: Vector
-    ) -> "Wire":
+    def makeCircle(cls, radius: float, center: Vector, normal: Vector) -> "Wire":
         """
         Makes a Circle centered at the provided point, having normal in the provided direction
         :param radius: floating point radius of the circle, must be > 0
@@ -1898,7 +1927,7 @@ class Wire(Shape, Mixin1D):
 
     @classmethod
     def makeEllipse(
-        cls: Type["Wire"],
+        cls,
         x_radius: float,
         y_radius: float,
         center: Vector,
@@ -1938,9 +1967,7 @@ class Wire(Shape, Mixin1D):
 
     @classmethod
     def makePolygon(
-        cls: Type["Wire"],
-        listOfVertices: Iterable[Vector],
-        forConstruction: bool = False,
+        cls, listOfVertices: Iterable[Vector], forConstruction: bool = False,
     ) -> "Wire":
         # convert list of tuples into Vectors.
         wire_builder = BRepBuilderAPI_MakePolygon()
@@ -1955,7 +1982,7 @@ class Wire(Shape, Mixin1D):
 
     @classmethod
     def makeHelix(
-        cls: Type["Wire"],
+        cls,
         pitch: float,
         height: float,
         radius: float,
@@ -2117,7 +2144,7 @@ class Face(Shape):
 
     @classmethod
     def makeNSidedSurface(
-        cls: Type["Face"],
+        cls,
         edges: Iterable[Edge],
         points: Iterable[gp_Pnt],
         continuity: GeomAbs_Shape = GeomAbs_C0,
@@ -2184,7 +2211,7 @@ class Face(Shape):
 
     @classmethod
     def makePlane(
-        cls: Type["Face"],
+        cls,
         length: Optional[float] = None,
         width: Optional[float] = None,
         basePnt: VectorLike = (0, 0, 0),
@@ -2206,16 +2233,12 @@ class Face(Shape):
 
     @overload
     @classmethod
-    def makeRuledSurface(
-        cls: Type["Face"], edgeOrWire1: Edge, edgeOrWire2: Edge
-    ) -> "Face":
+    def makeRuledSurface(cls, edgeOrWire1: Edge, edgeOrWire2: Edge) -> "Face":
         ...
 
     @overload
     @classmethod
-    def makeRuledSurface(
-        cls: Type["Face"], edgeOrWire1: Wire, edgeOrWire2: Wire
-    ) -> "Face":
+    def makeRuledSurface(cls, edgeOrWire1: Wire, edgeOrWire2: Wire) -> "Face":
         ...
 
     @classmethod
@@ -2232,9 +2255,7 @@ class Face(Shape):
             return cls.cast(BRepFill.Face_s(edgeOrWire1.wrapped, edgeOrWire2.wrapped))
 
     @classmethod
-    def makeFromWires(
-        cls: Type["Face"], outerWire: Wire, innerWires: List[Wire] = []
-    ) -> "Face":
+    def makeFromWires(cls, outerWire: Wire, innerWires: List[Wire] = []) -> "Face":
         """
         Makes a planar face from one or more wires
         """
@@ -2269,7 +2290,7 @@ class Face(Shape):
 
     @classmethod
     def makeSplineApprox(
-        cls: Type["Face"],
+        cls,
         points: List[List[Vector]],
         tol: float = 1e-2,
         smoothing: Optional[Tuple[float, float, float]] = None,
@@ -2365,7 +2386,7 @@ class Shell(Shape):
     wrapped: TopoDS_Shell
 
     @classmethod
-    def makeShell(cls: Type["Shell"], listOfFaces: Iterable[Face]) -> "Shell":
+    def makeShell(cls, listOfFaces: Iterable[Face]) -> "Shell":
 
         shell_builder = BRepBuilderAPI_Sewing()
 
@@ -2510,32 +2531,47 @@ class Mixin3D(object):
 
         return solid_classifier.State() == ta.TopAbs_IN or solid_classifier.IsOnAFace()
 
+    @multimethod
     def dprism(
         self: TS,
         basis: Optional[Face],
         profiles: List[Wire],
-        depth: Optional[float] = None,
-        taper: float = 0,
+        depth: Optional[Real] = None,
+        taper: Real = 0,
         upToFace: Optional[Face] = None,
         thruAll: bool = True,
         additive: bool = True,
-    ) -> TS:
+    ) -> "Solid":
         """
         Make a prismatic feature (additive or subtractive)
 
-        :param basis: face to perfrom the operation on
+        :param basis: face to perform the operation on
         :param profiles: list of profiles
         :param depth: depth of the cut or extrusion
         :param upToFace: a face to extrude until
         :param thruAll: cut thruAll
-        :param additive: set the kind of operation (additive or subtractive)
         :return: a Solid object
         """
 
         sorted_profiles = sortWiresByBuildOrder(profiles)
+        faces = [Face.makeFromWires(p[0], p[1:]) for p in sorted_profiles]
+
+        return self.dprism(basis, faces, depth, taper, upToFace, thruAll, additive)
+
+    @dprism.register
+    def dprism(
+        self: TS,
+        basis: Optional[Face],
+        faces: List[Face],
+        depth: Optional[Real] = None,
+        taper: Real = 0,
+        upToFace: Optional[Face] = None,
+        thruAll: bool = True,
+        additive: bool = True,
+    ) -> "Solid":
+
         shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
-        for p in sorted_profiles:
-            face = Face.makeFromWires(p[0], p[1:])
+        for face in faces:
             feat = BRepFeat_MakeDPrism(
                 shape,
                 face.wrapped,
@@ -2544,6 +2580,7 @@ class Mixin3D(object):
                 additive,
                 False,
             )
+
             if upToFace is not None:
                 feat.Perform(upToFace.wrapped)
             elif thruAll or depth is None:
@@ -2565,7 +2602,7 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def interpPlate(
-        cls: Type["Solid"],
+        cls,
         surf_edges,
         surf_pts,
         thickness,
@@ -2684,13 +2721,13 @@ class Solid(Shape, Mixin3D):
         return False
 
     @classmethod
-    def makeSolid(cls: Type["Solid"], shell: Shell) -> "Solid":
+    def makeSolid(cls, shell: Shell) -> "Solid":
 
         return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
 
     @classmethod
     def makeBox(
-        cls: Type["Solid"],
+        cls,
         length: float,
         width: float,
         height: float,
@@ -2709,7 +2746,7 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def makeCone(
-        cls: Type["Solid"],
+        cls,
         radius1: float,
         radius2: float,
         height: float,
@@ -2734,7 +2771,7 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def makeCylinder(
-        cls: Type["Solid"],
+        cls,
         radius: float,
         height: float,
         pnt: Vector = Vector(0, 0, 0),
@@ -2754,7 +2791,7 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def makeTorus(
-        cls: Type["Solid"],
+        cls,
         radius1: float,
         radius2: float,
         pnt: Vector = Vector(0, 0, 0),
@@ -2779,9 +2816,7 @@ class Solid(Shape, Mixin3D):
         )
 
     @classmethod
-    def makeLoft(
-        cls: Type["Solid"], listOfWire: List[Wire], ruled: bool = False
-    ) -> "Solid":
+    def makeLoft(cls, listOfWire: List[Wire], ruled: bool = False) -> "Solid":
         """
         makes a loft from a list of wires
         The wires will be converted into faces when possible-- it is presumed that nobody ever actually
@@ -2801,7 +2836,7 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def makeWedge(
-        cls: Type["Solid"],
+        cls,
         dx: float,
         dy: float,
         dz: float,
@@ -2825,7 +2860,7 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def makeSphere(
-        cls: Type["Solid"],
+        cls,
         radius: float,
         pnt: Vector = Vector(0, 0, 0),
         dir: Vector = Vector(0, 0, 1),
@@ -2849,7 +2884,7 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def _extrudeAuxSpine(
-        cls: Type["Solid"], wire: TopoDS_Wire, spine: TopoDS_Wire, auxSpine: TopoDS_Wire
+        cls, wire: TopoDS_Wire, spine: TopoDS_Wire, auxSpine: TopoDS_Wire
     ) -> TopoDS_Shape:
         """
         Helper function for extrudeLinearWithRotation
@@ -2861,14 +2896,14 @@ class Solid(Shape, Mixin3D):
         extrude_builder.MakeSolid()
         return extrude_builder.Shape()
 
-    @classmethod
+    @multimethod
     def extrudeLinearWithRotation(
-        cls: Type["Solid"],
+        cls,
         outerWire: Wire,
         innerWires: List[Wire],
         vecCenter: Vector,
         vecNormal: Vector,
-        angleDegrees: float,
+        angleDegrees: Real,
     ) -> "Solid":
         """
         Creates a 'twisted prism' by extruding, while simultaneously rotating around the extrusion vector.
@@ -2919,12 +2954,22 @@ class Solid(Shape, Mixin3D):
         return cls(BRepAlgoAPI_Cut(outer_solid, inner_comp).Shape())
 
     @classmethod
+    @extrudeLinearWithRotation.register
+    def extrudeLinearWithRotation(
+        cls, face: Face, vecCenter: Vector, vecNormal: Vector, angleDegrees: Real,
+    ) -> "Solid":
+
+        return cls.extrudeLinearWithRotation(
+            face.outerWire(), face.innerWires(), vecCenter, vecNormal, angleDegrees
+        )
+
+    @multimethod
     def extrudeLinear(
-        cls: Type["Solid"],
+        cls,
         outerWire: Wire,
         innerWires: List[Wire],
         vecNormal: Vector,
-        taper: float = 0,
+        taper: Real = 0,
     ) -> "Solid":
         """
         Attempt to extrude the list of wires  into a prismatic solid in the provided direction
@@ -2951,11 +2996,20 @@ class Solid(Shape, Mixin3D):
 
         if taper == 0:
             face = Face.makeFromWires(outerWire, innerWires)
+        else:
+            face = Face.makeFromWires(outerWire)
+
+        return cls.extrudeLinear(face, vecNormal, taper)
+
+    @classmethod
+    @extrudeLinear.register
+    def extrudeLinear(cls, face: Face, vecNormal: Vector, taper: Real = 0,) -> "Solid":
+
+        if taper == 0:
             prism_builder: Any = BRepPrimAPI_MakePrism(
                 face.wrapped, vecNormal.wrapped, True
             )
         else:
-            face = Face.makeFromWires(outerWire)
             faceNormal = face.normalAt()
             d = 1 if vecNormal.getAngle(faceNormal) < 90 * DEG2RAD else -1
             prism_builder = LocOpe_DPrism(
@@ -2964,12 +3018,12 @@ class Solid(Shape, Mixin3D):
 
         return cls(prism_builder.Shape())
 
-    @classmethod
+    @multimethod
     def revolve(
-        cls: Type["Solid"],
+        cls,
         outerWire: Wire,
         innerWires: List[Wire],
-        angleDegrees: float,
+        angleDegrees: Real,
         axisStart: Vector,
         axisEnd: Vector,
     ) -> "Solid":
@@ -2998,6 +3052,14 @@ class Solid(Shape, Mixin3D):
         reliable.
         """
         face = Face.makeFromWires(outerWire, innerWires)
+
+        return cls.revolve(face, angleDegrees, axisStart, axisEnd)
+
+    @classmethod
+    @revolve.register
+    def revolve(
+        cls, face: Face, angleDegrees: Real, axisStart: Vector, axisEnd: Vector,
+    ) -> "Solid":
 
         v1 = Vector(axisStart)
         v2 = Vector(axisEnd)
@@ -3045,9 +3107,9 @@ class Solid(Shape, Mixin3D):
 
         return rv
 
-    @classmethod
+    @multimethod
     def sweep(
-        cls: Type["Solid"],
+        cls,
         outerWire: Wire,
         innerWires: List[Wire],
         path: Union[Wire, Edge],
@@ -3103,9 +3165,31 @@ class Solid(Shape, Mixin3D):
         return rv
 
     @classmethod
+    @sweep.register
+    def sweep(
+        cls,
+        face: Face,
+        path: Union[Wire, Edge],
+        makeSolid: bool = True,
+        isFrenet: bool = False,
+        mode: Union[Vector, Wire, Edge, None] = None,
+        transitionMode: Literal["transformed", "round", "right"] = "transformed",
+    ) -> "Shape":
+
+        return cls.sweep(
+            face.outerWire(),
+            face.innerWires(),
+            path,
+            makeSolid,
+            isFrenet,
+            mode,
+            transitionMode,
+        )
+
+    @classmethod
     def sweep_multi(
-        cls: Type["Solid"],
-        profiles: List[Wire],
+        cls,
+        profiles: Iterable[Union[Wire, Face]],
         path: Union[Wire, Edge],
         makeSolid: bool = True,
         isFrenet: bool = False,
@@ -3135,7 +3219,8 @@ class Solid(Shape, Mixin3D):
             builder.SetMode(isFrenet)
 
         for p in profiles:
-            builder.Add(p.wrapped, translate, rotate)
+            w = p.wrapped if isinstance(p, Wire) else p.outerWire().wrapped
+            builder.Add(w, translate, rotate)
 
         builder.Build()
 
@@ -3172,10 +3257,16 @@ class Compound(Shape, Mixin3D):
 
         return comp
 
+    def remove(self, shape: Shape):
+        """
+        Remove the specified shape.
+        """
+
+        comp_builder = TopoDS_Builder()
+        comp_builder.Remove(self.wrapped, shape.wrapped)
+
     @classmethod
-    def makeCompound(
-        cls: Type["Compound"], listOfShapes: Iterable[Shape]
-    ) -> "Compound":
+    def makeCompound(cls, listOfShapes: Iterable[Shape]) -> "Compound":
         """
         Create a compound out of a list of shapes
         """
@@ -3184,7 +3275,7 @@ class Compound(Shape, Mixin3D):
 
     @classmethod
     def makeText(
-        cls: Type["Compound"],
+        cls,
         text: str,
         size: float,
         height: float,
@@ -3257,18 +3348,25 @@ class Compound(Shape, Mixin3D):
             yield Shape.cast(it.Value())
             it.Next()
 
-    def cut(self, *toCut: Shape) -> "Shape":
+    def __bool__(self) -> bool:
+        """
+        Check if empty.
+        """
+
+        return TopoDS_Iterator(self.wrapped).More()
+
+    def cut(self, *toCut: Shape) -> "Compound":
         """
         Remove a shape from another one
         """
 
         cut_op = BRepAlgoAPI_Cut()
 
-        return self._bool_op(self, toCut, cut_op)
+        return tcast(Compound, self._bool_op(self, toCut, cut_op))
 
     def fuse(
         self, *toFuse: Shape, glue: bool = False, tol: Optional[float] = None
-    ) -> "Shape":
+    ) -> "Compound":
         """
         Fuse shapes together
         """
@@ -3282,23 +3380,23 @@ class Compound(Shape, Mixin3D):
         args = tuple(self) + toFuse
 
         if len(args) <= 1:
-            rv: Shape = self
+            rv: Shape = args[0]
         else:
             rv = self._bool_op(args[:1], args[1:], fuse_op)
 
         # fuse_op.RefineEdges()
         # fuse_op.FuseEdges()
 
-        return rv
+        return tcast(Compound, rv)
 
-    def intersect(self, *toIntersect: Shape) -> "Shape":
+    def intersect(self, *toIntersect: Shape) -> "Compound":
         """
         Construct shape intersection
         """
 
         intersect_op = BRepAlgoAPI_Common()
 
-        return self._bool_op(self, toIntersect, intersect_op)
+        return tcast(Compound, self._bool_op(self, toIntersect, intersect_op))
 
 
 def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
@@ -3332,3 +3430,26 @@ def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
         rv.append([face.outerWire(),] + face.innerWires())
 
     return rv
+
+
+def wiresToFaces(wireList: List[Wire]) -> List[Face]:
+    """
+    Convert wires to a list of faces.
+    """
+
+    return Face.makeFromWires(wireList[0], wireList[1:]).Faces()
+
+
+def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
+    """
+    Convert edges to a list of wires.
+    """
+
+    edges_in = TopTools_HSequenceOfShape()
+    wires_out = TopTools_HSequenceOfShape()
+
+    for e in edges:
+        edges_in.Append(e.wrapped)
+    ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
+
+    return [Wire(el) for el in wires_out]
