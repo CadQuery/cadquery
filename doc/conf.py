@@ -305,7 +305,7 @@ def process_docstring_insert_self(app, what, name, obj, options, lines):
                 lines.insert(i, ":param self:")
                 break
 
+
 def setup(app):
 
     app.connect("autodoc-process-docstring", process_docstring_insert_self)
-
