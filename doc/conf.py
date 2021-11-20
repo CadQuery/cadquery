@@ -288,3 +288,24 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 # texinfo_show_urls = 'footnote'
+
+
+def process_docstring_insert_self(app, what, name, obj, options, lines):
+    """
+    Insert self in front of documented params for instance methods
+    """
+
+    if (
+        what == "method"
+        and getattr(obj, "__self__", None) is None
+        and "self" in obj.__annotations__
+    ):
+        for i, dstr in enumerate(lines):
+            if dstr.startswith(":param"):
+                lines.insert(i, ":param self:")
+                break
+
+def setup(app):
+
+    app.connect("autodoc-process-docstring", process_docstring_insert_self)
+
