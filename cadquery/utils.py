@@ -2,6 +2,8 @@ from functools import wraps
 from inspect import signature
 from warnings import warn
 
+from multimethod import multimethod, DispatchError
+
 
 class deprecate_kwarg:
     def __init__(self, name, new_value):
@@ -36,3 +38,12 @@ class deprecate:
             return f(*args, **kwargs)
 
         return wrapped
+
+
+class cqmultimethod(multimethod):
+    def __call__(self, *args, **kwargs):
+
+        try:
+            return super().__call__(*args, **kwargs)
+        except DispatchError:
+            return next(iter(self.values()))(*args, **kwargs)
