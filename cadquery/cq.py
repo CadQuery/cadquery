@@ -45,18 +45,15 @@ from .occ_impl.shapes import (
     Face,
     Solid,
     Compound,
-    sortWiresByBuildOrder,
     wiresToFaces,
 )
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
 
-from .utils import deprecate_kwarg, deprecate
+from .utils import deprecate
 
 from .selectors import (
     Selector,
-    PerpendicularDirSelector,
-    NearestToPointSelector,
     StringSyntaxSelector,
 )
 
