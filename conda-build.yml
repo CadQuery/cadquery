@@ -58,6 +58,7 @@ jobs:
 
   - bash: |
       source activate build_env && \
+      export PACKAGE_VERSION=$(python setup.py --version) && \
       cd ${{ parameters.location }} && \
       conda build -c conda-forge -c cadquery . && \
       anaconda -v -t $TOKEN upload -u cadquery --force `conda build --output -c conda-forge -c cadquery .` && \
@@ -67,11 +68,11 @@ jobs:
     condition: ne(variables['Build.Reason'], 'PullRequest')
     env:
       PYTHON_VERSION: ${{ parameters.py_maj }}.${{ parameters.py_min }}
-      PACKAGE_VERSION: $(Build.SourceBranchName)
       TOKEN: $(anaconda.TOKEN)
 
   - bash: |
       source activate build_env && \
+      export PACKAGE_VERSION=$(python setup.py --version) && \
       cd ${{ parameters.location }} && \
       conda build -c conda-forge -c cadquery . && \
       cd ..
@@ -80,5 +81,4 @@ jobs:
     condition: eq(variables['Build.Reason'], 'PullRequest')
     env:
       PYTHON_VERSION: ${{ parameters.py_maj }}.${{ parameters.py_min }}
-      PACKAGE_VERSION: $(Build.SourceBranchName)
       TOKEN: $(anaconda.TOKEN)
