@@ -11,19 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-from setuptools import setup, find_packages
-
-
-# if we are building in travis, use the build number as the sub-minor version
-version = "2.1"
-if "TRAVIS_TAG" in os.environ.keys():
-    version = os.environ["TRAVIS_TAG"]
-
+from setuptools import find_packages, setup
 
 setup(
     name="cadquery",
-    version=version,
+    use_scm_version=True,
     url="https://github.com/dcowden/cadquery",
     license="Apache Public License 2.0",
     author="David Cowden",

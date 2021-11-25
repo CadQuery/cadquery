@@ -13,6 +13,7 @@ requirements:
   build:
     - python {{ environ.get('PYTHON_VERSION') }}
     - setuptools
+    - setuptools-scm
   run:
     - python {{ environ.get('PYTHON_VERSION') }}
     - ocp 7.5.2
