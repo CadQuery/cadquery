@@ -1,0 +1,84 @@
+parameters:
+  name: 'Conda build job'
+  vmImage: 'Ubuntu-16.04'
+  py_maj: '3'
+  py_min: '6'
+  location: 'conda'
+  conda_bld: '3.16.3'
+
+jobs:
+- job: ${{ parameters.name }}_${{ parameters.py_maj }}_${{ parameters.py_min }}
+  timeoutInMinutes: 360
+
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+
+  steps:
+
+  #activate conda
+  - ${{ if or(contains(parameters.vmImage, 'macOS'),contains(parameters.vmImage, 'Ubuntu')) }}:
+    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+      displayName: 'Add conda to PATH'
+  - ${{ if contains(parameters.vmImage, 'win') }}:
+    - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+      displayName: 'Add conda to PATH'
+
+  # this step is needed for OCC to find fonts
+  - ${{ if eq(parameters.vmImage, 'Ubuntu-16.04') }}:
+    - bash: |
+        sudo apt-get -q -y install gsfonts xfonts-utils && \
+        sudo mkfontscale /usr/share/fonts/type1/gsfonts/ && \
+        sudo mkfontdir /usr/share/fonts/type1/gsfonts/
+
+  # Ubunut install opengl items
+  - ${{ if contains(parameters.vmImage, 'Ubuntu') }}:
+    - bash: |
+        sudo apt-get update && \
+        sudo apt-get -q -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+      displayName: 'Install OpenGL headers'
+
+  # macOS ownership workaround
+  - ${{ if contains(parameters.vmImage, 'macOS') }}:
+    - bash: |
+        sudo chown -R $USER $CONDA && \
+        curl -o MacOSX10.9.sdk.tar.xz -L https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX10.9.sdk.tar.xz && \
+        tar xf MacOSX10.9.sdk.tar.xz && \
+        sudo mv -v MacOSX10.9.sdk /opt/
+      displayName: 'MacOS ownership workaround + 10.9 SDK installation'
+
+  - bash: |
+        conda config --set anaconda_upload yes --set always_yes yes && \
+        conda update -q conda && \
+        conda info && \
+        conda list
+    displayName: 'Conda config and info'
+
+  - bash: conda create --yes --quiet --name build_env -c conda-forge conda-build=${{ parameters.conda_bld }} conda-verify libarchive python=3.7 anaconda-client
+    displayName: Create Anaconda environment
+
+  - bash: |
+      source activate build_env && \
+      cd ${{ parameters.location }} && \
+      conda build -c conda-forge -c cadquery . && \
+      anaconda -v -t $TOKEN upload -u cadquery --force `conda build --output -c conda-forge -c cadquery .` && \
+      cd ..
+    displayName: 'Run conda build'
+    failOnStderr: false
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+    env:
+      PYTHON_VERSION: ${{ parameters.py_maj }}.${{ parameters.py_min }}
+      PACKAGE_VERSION: $(Build.SourceBranchName)
+      TOKEN: $(anaconda.TOKEN)
+
+  - bash: |
+      source activate build_env && \
+      cd ${{ parameters.location }} && \
+      conda build -c conda-forge -c cadquery . && \
+      cd ..
+    displayName: 'Run conda build without upload'
+    failOnStderr: false
+    condition: eq(variables['Build.Reason'], 'PullRequest')
+    env:
+      PYTHON_VERSION: ${{ parameters.py_maj }}.${{ parameters.py_min }}
+      PACKAGE_VERSION: $(Build.SourceBranchName)
+      TOKEN: $(anaconda.TOKEN)

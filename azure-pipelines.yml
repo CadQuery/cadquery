@@ -7,15 +7,8 @@ trigger:
 pr:
 - master
 
-resources:
-  repositories:
-    - repository: templates
-      type: github
-      name: CadQuery/conda-packages
-      endpoint: CadQuery
-
-jobs:  
-- template: conda-build.yml@templates
+jobs:
+- template: conda-build.yml
   parameters:
     name: Linux_38
     vmImage: 'ubuntu-18.04'
@@ -23,7 +16,7 @@ jobs:
     py_min: 8
     conda_bld: 3.21.6
 
-- template: conda-build.yml@templates
+- template: conda-build.yml
   parameters:
     name: macOS_38
     vmImage: 'macOS-10.15'
@@ -31,7 +24,7 @@ jobs:
     py_min: 8
     conda_bld: 3.21.6
 
-- template: conda-build.yml@templates
+- template: conda-build.yml
   parameters:
     name: Windows_38
     vmImage: 'vs2017-win2016'
@@ -39,7 +32,7 @@ jobs:
     py_min: 8
     conda_bld: 3.21.6
 
-- template: conda-build.yml@templates
+- template: conda-build.yml
   parameters:
     name: Linux_39
     vmImage: 'ubuntu-18.04'
@@ -47,7 +40,7 @@ jobs:
     py_min: 9
     conda_bld: 3.21.6
 
-- template: conda-build.yml@templates
+- template: conda-build.yml
   parameters:
     name: macOS_39
     vmImage: 'macOS-10.15'
@@ -55,7 +48,7 @@ jobs:
     py_min: 9
     conda_bld: 3.21.6
 
-- template: conda-build.yml@templates
+- template: conda-build.yml
   parameters:
     name: Windows_39
     vmImage: 'vs2017-win2016'
