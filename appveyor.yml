@@ -1,4 +1,4 @@
-shallow_clone: true
+shallow_clone: false
 
 platform:
     - x64
