@@ -61,13 +61,15 @@ jobs:
       export PACKAGE_VERSION=$(python setup.py --version) && \
       cd ${{ parameters.location }} && \
       conda build -c conda-forge -c cadquery . && \
-      anaconda -v -t $TOKEN upload -u cadquery --force `conda build --output -c conda-forge -c cadquery .` && \
+      [[ "$GIT_REF" =~ ^refs/tags/ ]] || export LABEL="--label dev" && \
+      anaconda -v -t $TOKEN upload -u cadquery $LABEL --force `conda build --output -c conda-forge -c cadquery .` && \
       cd ..
     displayName: 'Run conda build'
     failOnStderr: false
     condition: ne(variables['Build.Reason'], 'PullRequest')
     env:
       PYTHON_VERSION: ${{ parameters.py_maj }}.${{ parameters.py_min }}
+      GIT_REF: $(Build.SourceBranch)
       TOKEN: $(anaconda.TOKEN)
 
   - bash: |
