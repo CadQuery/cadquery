@@ -27,10 +27,6 @@ import cadquery
 # sys.path.insert(0, os.path.abspath('.'))
 
 
-def setup(app):
-    app.add_css_file("tables.css")
-
-
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -308,4 +304,5 @@ def process_docstring_insert_self(app, what, name, obj, options, lines):
 
 def setup(app):
 
+    app.add_css_file("tables.css")
     app.connect("autodoc-process-docstring", process_docstring_insert_self)
