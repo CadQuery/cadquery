@@ -196,7 +196,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-        metadata: Optional[dict] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         construct an assembly
@@ -224,7 +224,7 @@ class Assembly(object):
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
         self.color = color if color else None
-        self.metadata = metadata if metadata else None
+        self.metadata = metadata if metadata else {}
         self.parent = None
 
         self.children = []
