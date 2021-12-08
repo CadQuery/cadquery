@@ -33,7 +33,7 @@ test:
   source_files:
     - tests/
   commands:
-    - cd /lib/x86_64-linux-gnu/ && ls -l && ldd libm.so.6
+    - LD_DEBUG=libs python -c"import OCP"
     - pytest -v
 
 about:
