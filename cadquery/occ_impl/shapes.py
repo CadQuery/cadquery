@@ -59,9 +59,7 @@ from OCP.TColStd import TColStd_HArray1OfReal
 from OCP.BRepAdaptor import (
     BRepAdaptor_Curve,
     BRepAdaptor_CompCurve,
-    BRepAdaptor_Surface,
-    BRepAdaptor_HCurve,
-    BRepAdaptor_HCompCurve,
+    BRepAdaptor_Surface
 )
 
 from OCP.BRepBuilderAPI import (
@@ -229,6 +227,10 @@ from OCP.IVtkVTK import IVtkVTK_ShapeData
 
 # for catching exceptions
 from OCP.Standard import Standard_NoSuchObject, Standard_Failure
+
+from OCP.Prs3d import Prs3d_IsoAspect
+from OCP.Quantity import Quantity_Color
+from OCP.Aspect import Aspect_TOL_SOLID
 
 from math import pi, sqrt
 import warnings
@@ -1156,7 +1158,7 @@ class Shape(object):
             # add vertices
             vertices += [
                 Vector(v.X(), v.Y(), v.Z())
-                for v in (v.Transformed(Trsf) for v in poly.Nodes())
+                for v in (poly.Node(i).Transformed(Trsf) for i in range(1, poly.NbNodes()))
             ]
 
             # add triangles
@@ -1180,7 +1182,7 @@ class Shape(object):
         return vertices, triangles
 
     def toVtkPolyData(
-        self, tolerance: float, angularTolerance: float = 0.1, normals: bool = True
+        self, tolerance: Optional[float] = None, angularTolerance: Optional[float] = None
     ) -> vtkPolyData:
         """
         Convert shape to vtkPolyData
@@ -1188,10 +1190,18 @@ class Shape(object):
 
         vtk_shape = IVtkOCC_Shape(self.wrapped)
         shape_data = IVtkVTK_ShapeData()
-        shape_mesher = IVtkOCC_ShapeMesher(
-            tolerance, angularTolerance, theNbUIsos=0, theNbVIsos=0
-        )
-
+        shape_mesher = IVtkOCC_ShapeMesher()
+        
+        drawer = vtk_shape.Attributes()
+        drawer.SetUIsoAspect(Prs3d_IsoAspect(Quantity_Color(), Aspect_TOL_SOLID, 1, 0))
+        drawer.SetVIsoAspect(Prs3d_IsoAspect(Quantity_Color(), Aspect_TOL_SOLID, 1, 0))
+        
+        if tolerance:
+            drawer.SetDeviationCoefficient(tolerance)
+            
+        if angularTolerance:
+            drawer.SetDeviationAngle(angularTolerance)
+        
         shape_mesher.Build(vtk_shape, shape_data)
 
         rv = shape_data.getVtkPolyData()
@@ -1202,17 +1212,6 @@ class Shape(object):
         t_filter.Update()
 
         rv = t_filter.GetOutput()
-
-        # compute normals
-        if normals:
-            n_filter = vtkPolyDataNormals()
-            n_filter.SetComputePointNormals(True)
-            n_filter.SetComputeCellNormals(True)
-            n_filter.SetFeatureAngle(360)
-            n_filter.SetInputData(rv)
-            n_filter.Update()
-
-            rv = n_filter.GetOutput()
 
         return rv
 
@@ -1278,13 +1277,6 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         ...
 
-    def _geomAdaptorH(
-        self,
-    ) -> Tuple[
-        Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve],
-        Union[BRepAdaptor_HCurve, BRepAdaptor_HCompCurve],
-    ]:
-        ...
 
     def paramAt(self, d: float) -> float:
         ...
@@ -1483,7 +1475,7 @@ class Mixin1D(object):
         :return: A Location object representing local coordinate system at the specified distance.
         """
 
-        curve, curveh = self._geomAdaptorH()
+        curve = self._geomAdaptor()
 
         if mode == "length":
             param = self.paramAt(d)
@@ -1496,7 +1488,7 @@ class Mixin1D(object):
         else:
             law = GeomFill_CorrectedFrenet()
 
-        law.SetCurve(curveh)
+        law.SetCurve(curve)
 
         tangent, normal, binormal = gp_Vec(), gp_Vec(), gp_Vec()
 
@@ -1546,15 +1538,6 @@ class Edge(Shape, Mixin1D):
         """
 
         return BRepAdaptor_Curve(self.wrapped)
-
-    def _geomAdaptorH(self) -> Tuple[BRepAdaptor_Curve, BRepAdaptor_HCurve]:
-        """
-        Return the underlying geometry
-        """
-
-        curve = self._geomAdaptor()
-
-        return curve, BRepAdaptor_HCurve(curve)
 
     def close(self) -> Union["Edge", "Wire"]:
         """
@@ -1837,15 +1820,6 @@ class Wire(Shape, Mixin1D):
         """
 
         return BRepAdaptor_CompCurve(self.wrapped)
-
-    def _geomAdaptorH(self) -> Tuple[BRepAdaptor_CompCurve, BRepAdaptor_HCompCurve]:
-        """
-        Return the underlying geometry
-        """
-
-        curve = self._geomAdaptor()
-
-        return curve, BRepAdaptor_HCompCurve(curve)
 
     def close(self) -> "Wire":
         """
