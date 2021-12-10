@@ -18,7 +18,7 @@ jobs:
 - template: conda-build.yml@templates
   parameters:
     name: Linux_38
-    vmImage: 'ubuntu-20.04'
+    vmImage: 'ubuntu-18.04'
     py_maj: 3
     py_min: 8
     conda_bld: 3.21.6
@@ -42,7 +42,7 @@ jobs:
 - template: conda-build.yml@templates
   parameters:
     name: Linux_39
-    vmImage: 'ubuntu-20.04'
+    vmImage: 'ubuntu-18.04'
     py_maj: 3
     py_min: 9
     conda_bld: 3.21.6
