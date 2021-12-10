@@ -196,14 +196,16 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         construct an assembly
 
         :param obj: root object of the assembly (default: None)
         :param loc: location of the root object (default: None, interpreted as identity transformation)
-        :param name: unique name of the root object (default: None, reasulting in an UUID being generated)
+        :param name: unique name of the root object (default: None, resulting in an UUID being generated)
         :param color: color of the added object (default: None)
+        :param metadata: a store for user-defined metadata (default: None)
         :return: An Assembly object.
 
 
@@ -222,6 +224,7 @@ class Assembly(object):
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
         self.color = color if color else None
+        self.metadata = metadata if metadata else {}
         self.parent = None
 
         self.children = []
@@ -235,7 +238,7 @@ class Assembly(object):
         Make a deep copy of an assembly
         """
 
-        rv = self.__class__(self.obj, self.loc, self.name, self.color)
+        rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
 
         for ch in self.children:
             ch_copy = ch._copy()

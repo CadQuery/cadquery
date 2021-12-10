@@ -87,6 +87,35 @@ def box_and_vertex():
     return assy
 
 
+@pytest.fixture
+def metadata_assy():
+
+    b1 = cq.Solid.makeBox(1, 1, 1)
+    b2 = cq.Workplane().box(1, 1, 2)
+
+    assy = cq.Assembly(
+        b1,
+        loc=cq.Location(cq.Vector(2, -5, 0)),
+        name="base",
+        metadata={"b1": "base-data"},
+    )
+    sub_assy = cq.Assembly(
+        b2, loc=cq.Location(cq.Vector(1, 1, 1)), name="sub", metadata={"b2": "sub-data"}
+    )
+    assy.add(sub_assy)
+    return assy
+
+
+def test_metadata(metadata_assy):
+    """Verify the metadata is present in both the base and sub assemblies"""
+    assert metadata_assy.metadata["b1"] == "base-data"
+    # The metadata should be able to be modified
+    metadata_assy.metadata["b2"] = 0
+    assert len(metadata_assy.metadata) == 2
+    # Test that metadata was copied by _copy() during the processing of adding the subassembly
+    assert metadata_assy.children[0].metadata["b2"] == "sub-data"
+
+
 def solve_result_check(solve_result: dict) -> bool:
     checks = [
         solve_result["status"] == nlopt.XTOL_REACHED,
