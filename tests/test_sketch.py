@@ -468,8 +468,8 @@ def test_constraint_solver():
 
     assert s3._faces.isValid()
 
-    s3._tags["a1"][0].radius() == approx(1)
-    s3._tags["a1"][0].Length() == approx(pi / 3)
+    assert s3._tags["a1"][0].radius() == approx(1)
+    assert s3._tags["a1"][0].Length() == approx(pi / 3)
 
     s4 = (
         Sketch()
