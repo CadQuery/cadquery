@@ -307,7 +307,8 @@ class Workplane(object):
                 else [v for v in arg.vals() if isinstance(v, Shape)]
             )
             rv = [solid.split(*tools)]
-            self._mergeTags(arg)
+            if isinstance(arg, Workplane):
+                self._mergeTags(arg)
 
         # split using the current workplane
         else:
@@ -486,7 +487,7 @@ class Workplane(object):
 
         return rv
 
-    def _mergeTags(self, obj: T) -> T:
+    def _mergeTags(self, obj: T) -> "Workplane":
         """
         Merge tags
 
