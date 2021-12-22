@@ -3155,7 +3155,7 @@ class TestCadQuery(BaseTest):
         nb_faces = wp.faces().size()
         wp = wp_ref.faces(">X[1]").workplane().rect(1, 1).extrude("next")
 
-        self.assertAlmostEquals(wp_ref_extrude.val().Volume(), wp.val().Volume())
+        self.assertAlmostEqual(wp_ref_extrude.val().Volume(), wp.val().Volume())
         self.assertTrue(wp.faces().size() - nb_faces == 4)
 
         # Test tapered option and both option
@@ -3330,7 +3330,7 @@ class TestCadQuery(BaseTest):
             .cutBlind("last")
         )
 
-        self.assertAlmostEquals(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
+        self.assertAlmostEqual(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
 
         wp_last = (
             wp_ref.faces(">X[4]")
@@ -5062,3 +5062,65 @@ class TestCadQuery(BaseTest):
         self.assertEqual(
             vs[3].toTuple(), approx((a, -a * math.tan(math.radians(45)), 0))
         )
+
+    def test_MergeTags(self):
+
+        a = Workplane().box(1, 1, 1)
+        b = (
+            Workplane(origin=(1, 0, 0))
+            .box(1, 1, 1)
+            .vertices(">X and >Y and >Z")
+            .tag("box_vertex")
+            .end(2)
+        )
+        a = a.add(b)
+        assert a.vertices(tag="box_vertex").val().Center().toTuple() == approx(
+            (1.5, 0.5, 0.5)
+        )
+
+        a = Workplane().box(4, 4, 4)
+        b = Workplane(origin=(0, 0, 1)).box(2, 2, 2).faces("<Z").tag("box2_face").end()
+        a = a.cut(b)
+        assert a.val().Volume() == approx(4 ** 3 - 2 ** 3)
+        a = a.faces(tag="box2_face").wires().toPending().extrude(4)
+        assert a.val().Volume() == approx(4 ** 3 + 2 ** 3)
+
+        a = Workplane().sphere(2)
+        b = Workplane().cylinder(4, 1).tag("cyl")
+        a = a.intersect(b)
+        assert len(a.solids(tag="cyl").val().Solids()) == 1
+
+        a = Workplane().box(4, 4, 4)
+        b = (
+            Workplane()
+            .box(2, 5, 5, centered=(False, True, True))
+            .faces(">X")
+            .workplane()
+            .tag("splitter")
+            .end(2)
+        )
+        a = a.split(b)
+        a = a.solids("<X")
+        assert a.val().Volume() == approx((4 ** 3) / 2.0)
+        a = a.workplaneFromTagged("splitter").rect(4, 4).extrude(until="next")
+        assert a.val().Volume() == approx((4 ** 3))
+
+        a = Workplane().box(4, 4, 4)
+        b = Workplane(origin=(0, 0, 3)).box(2, 2, 2).faces(">Z").tag("box2_face").end()
+        a = a.union(b)
+        a = a.faces(tag="box2_face").workplane(offset=0.5).box(1, 1, 1)
+        assert a.val().Volume() == approx(4 ** 3 + 2 ** 3 + 1)
+
+        # tag name conflict; keep tag from left side of boolean
+        a = Workplane().box(1, 1, 1).faces(">Z").workplane().tag("zface").end(2)
+        b = (
+            Workplane(origin=(1, 0, 0))
+            .box(1, 1, 2)
+            .faces(">Z")
+            .workplane()
+            .tag("zface")
+            .end(2)
+        )
+        a = a.union(b)
+        a = a.workplaneFromTagged("zface").circle(0.2)
+        assert a.edges("%CIRCLE").val().Center().toTuple() == approx((0, 0, 0.5))
