@@ -487,7 +487,7 @@ class Workplane(object):
 
         return rv
 
-    def _mergeTags(self, obj: T) -> "Workplane":
+    def _mergeTags(self: T, obj: T) -> T:
         """
         Merge tags
 
