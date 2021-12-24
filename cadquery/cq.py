@@ -307,6 +307,8 @@ class Workplane(object):
                 else [v for v in arg.vals() if isinstance(v, Shape)]
             )
             rv = [solid.split(*tools)]
+            if isinstance(arg, Workplane):
+                self._mergeTags(arg)
 
         # split using the current workplane
         else:
@@ -456,6 +458,7 @@ class Workplane(object):
             self.objects.extend(obj)
         elif isinstance(obj, Workplane):
             self.objects.extend(obj.objects)
+            self._mergeTags(obj)
         else:
             self.objects.append(obj)
         return self
@@ -471,19 +474,30 @@ class Workplane(object):
 
     def _getTagged(self, name: str) -> "Workplane":
         """
-        Search the parent chain for a an object with tag == name.
+        Search the parent chain for an object with tag == name.
 
         :param name: the tag to search for
-        :type name: string
-        :returns: the CQ object with tag == name
+        :returns: the Workplane object with tag == name
         :raises: ValueError if no object tagged name
         """
         rv = self.ctx.tags.get(name)
 
         if rv is None:
-            raise ValueError(f"No CQ object named {name} in chain")
+            raise ValueError(f"No Workplane object named {name} in chain")
 
         return rv
+
+    def _mergeTags(self: T, obj: "Workplane") -> T:
+        """
+        Merge tags
+
+        This is automatically called when performing boolean ops.
+        """
+
+        if self.ctx != obj.ctx:
+            self.ctx.tags = {**obj.ctx.tags, **self.ctx.tags}
+
+        return self
 
     def toOCC(self) -> Any:
         """
@@ -3250,22 +3264,23 @@ class Workplane(object):
         If there is no current solid, the items in toUnion are unioned together.
 
         :param toUnion:
-        :type toUnion: a solid object, or a CQ object having a solid,
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape (default True)
-        :param boolean glue: use a faster gluing mode for non-overlapping shapes (default False)
-        :param float tol: tolerance value for fuzzy bool operation mode (default None)
+        :type toUnion: a solid object, or a Workplane object having a solid,
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape (default True)
+        :param glue: use a faster gluing mode for non-overlapping shapes (default False)
+        :param tol: tolerance value for fuzzy bool operation mode (default None)
         :raises: ValueError if there is no solid to add to in the chain
-        :return: a CQ object with the resulting object selected
+        :return: a Workplane object with the resulting object selected
         """
 
         # first collect all of the items together
         newS: List[Shape]
-        if isinstance(toUnion, CQ):
+        if isinstance(toUnion, Workplane):
             newS = cast(List[Shape], toUnion.solids().vals())
             if len(newS) < 1:
                 raise ValueError(
-                    "CQ object  must have at least one solid on the stack to union!"
+                    "Workplane object must have at least one solid on the stack to union!"
                 )
+            self._mergeTags(toUnion)
         elif isinstance(toUnion, (Solid, Compound)):
             newS = [toUnion]
         else:
@@ -3315,10 +3330,10 @@ class Workplane(object):
         Cuts the provided solid from the current solid, IE, perform a solid subtraction.
 
         :param toCut: object to cut
-        :type toCut: a solid object, or a CQ object having a solid,
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :type toCut: a solid object, or a Workplane object having a solid,
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises ValueError: if there is no solid to subtract from in the chain
-        :return: a CQ object with the resulting object selected
+        :return: a Workplane object with the resulting object selected
         """
 
         # look for parents to cut from
@@ -3326,8 +3341,9 @@ class Workplane(object):
 
         solidToCut: Sequence[Shape]
 
-        if isinstance(toCut, CQ):
+        if isinstance(toCut, Workplane):
             solidToCut = _selectShapes(toCut.vals())
+            self._mergeTags(toCut)
         elif isinstance(toCut, (Solid, Compound)):
             solidToCut = (toCut,)
         else:
@@ -3360,10 +3376,10 @@ class Workplane(object):
         Intersects the provided solid from the current solid.
 
         :param toIntersect: object to intersect
-        :type toIntersect: a solid object, or a CQ object having a solid,
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :type toIntersect: a solid object, or a Workplane object having a solid,
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :raises ValueError: if there is no solid to intersect with in the chain
-        :return: a CQ object with the resulting object selected
+        :return: a Workplane object with the resulting object selected
         """
 
         # look for parents to intersect with
@@ -3371,8 +3387,9 @@ class Workplane(object):
 
         solidToIntersect: Sequence[Shape]
 
-        if isinstance(toIntersect, CQ):
+        if isinstance(toIntersect, Workplane):
             solidToIntersect = _selectShapes(toIntersect.vals())
+            self._mergeTags(toIntersect)
         elif isinstance(toIntersect, (Solid, Compound)):
             solidToIntersect = (toIntersect,)
         else:
