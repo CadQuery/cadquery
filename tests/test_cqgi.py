@@ -113,13 +113,13 @@ class TestCQGI(BaseTest):
             """
         )
 
-        xcptn = None
+        exception = None
         try:
             cqgi.CQModel(badscript)
         except Exception as e:
-            xcptn = e
+            exception = e
 
-        self.assertIsInstance(xcptn, SyntaxError)
+        self.assertIsInstance(exception, SyntaxError)
 
     def test_that_two_results_are_returned(self):
         script = textwrap.dedent(
