@@ -193,7 +193,7 @@ class Sketch(object):
         Construct a rectangular face.
         """
 
-        res = Face.makePlane(w, h).rotate(Vector(), Vector(0, 0, 1), angle)
+        res = Face.makePlane(h, w).rotate(Vector(), Vector(0, 0, 1), angle)
 
         return self.each(lambda l: res.located(l), mode, tag)
 
