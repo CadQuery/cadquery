@@ -113,10 +113,13 @@ class TestCQGI(BaseTest):
             """
         )
 
-        with self.assertRaises(Exception) as context:
-            model = cqgi.CQModel(badscript)
+        exception = None
+        try:
+            cqgi.CQModel(badscript)
+        except Exception as e:
+            exception = e
 
-        self.assertTrue("invalid syntax" in context.exception.args)
+        self.assertIsInstance(exception, SyntaxError)
 
     def test_that_two_results_are_returned(self):
         script = textwrap.dedent(
