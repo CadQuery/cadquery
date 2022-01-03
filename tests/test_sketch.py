@@ -344,6 +344,12 @@ def test_assemble():
     s1.segment((0.0, 0), (0.0, 2.0))
     s1.segment(Vector(4.0, -1)).close().arc((0.7, 0.6), 0.4, 0.0, 360.0).assemble()
 
+    s2 = Sketch()
+    s2.segment((0, 0), (1, 0))
+    s2.segment((2, 0), (3, 0))
+    with raises(ValueError):
+        s2.assemble()
+
 
 def test_finalize():
 

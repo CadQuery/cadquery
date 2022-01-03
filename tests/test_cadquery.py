@@ -4782,6 +4782,56 @@ class TestCadQuery(BaseTest):
         with raises(ValueError):
             r.chamfer2D(0.25, [vs[0]])
 
+    def test_Face_makeFromWires(self):
+
+        w0 = Wire.assembleEdges(
+            [
+                Edge.makeLine(Vector(), Vector(0, 1)),
+                Edge.makeLine(Vector(0, 1), Vector(1, 1)),
+                Edge.makeLine(Vector(1, 1), Vector(1, 0)),
+                Edge.makeLine(Vector(1, 0), Vector(0, 0)),
+            ]
+        )
+        w1 = Wire.assembleEdges(
+            [
+                Edge.makeLine(Vector(0.25, 0.25), Vector(0.25, 0.75)),
+                Edge.makeLine(Vector(0.25, 0.75), Vector(0.75, 0.75)),
+                Edge.makeLine(Vector(0.75, 0.75), Vector(0.75, 0.25)),
+                Edge.makeLine(Vector(0.75, 0.25), Vector(0.25, 0.25)),
+            ]
+        )
+        f = Face.makeFromWires(w0, [w1])
+        assert f.isValid()
+
+        with raises(ValueError):
+            w0 = Wire.assembleEdges([Edge.makeLine(Vector(), Vector(0, 1)),])
+            w1 = Wire.assembleEdges([Edge.makeLine(Vector(0, 1), Vector(1, 1)),])
+            f = Face.makeFromWires(w0, [w1])
+
+        with raises(ValueError):
+            w0 = Wire.assembleEdges([Edge.makeLine(Vector(), Vector(0, 1)),])
+            w1 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(), Vector(1, 1)),
+                    Edge.makeLine(Vector(1, 1), Vector(2, 0)),
+                    Edge.makeLine(Vector(2, 0), Vector(0, 0)),
+                ]
+            )
+            f = Face.makeFromWires(w0, [w1])
+
+        with raises(ValueError):
+            w0 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(), Vector(1, 1)),
+                    Edge.makeLine(Vector(1, 1), Vector(2, 0)),
+                    Edge.makeLine(Vector(2, 0), Vector(0, 0)),
+                ]
+            )
+            w1 = Wire.assembleEdges(
+                [Edge.makeLine(Vector(0.1, 0.1), Vector(0.2, 0.2)),]
+            )
+            f = Face.makeFromWires(w0, [w1])
+
     def testSplineApprox(self):
 
         from .naca import naca5305
