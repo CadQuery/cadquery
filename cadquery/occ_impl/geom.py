@@ -583,7 +583,7 @@ class Plane(object):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return f"Plane(origin={str(self.origin)}, xDir={str(self.xDir)}, normal={str(self.zDir)})"
+        return f"Plane(origin={str(self.origin.toTuple())}, xDir={str(self.xDir.toTuple())}, normal={str(self.zDir.toTuple())})"
          
 
     @property
