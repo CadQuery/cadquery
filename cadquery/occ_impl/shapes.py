@@ -2260,6 +2260,9 @@ class Face(Shape):
         Makes a planar face from one or more wires
         """
 
+        if innerWires and not outerWire.IsClosed():
+            raise ValueError("Cannot build face(s): outer wire is not closed")
+
         # check if wires are coplanar
         ws = Compound.makeCompound([outerWire] + innerWires)
         if not BRepLib_FindSurface(ws.wrapped, OnlyPlane=True).Found():
@@ -2273,6 +2276,8 @@ class Face(Shape):
         face_builder = BRepBuilderAPI_MakeFace(wo, True)
 
         for w in innerWires:
+            if not w.IsClosed():
+                raise ValueError("Cannot build face(s): inner wire is not closed")
             face_builder.Add(w.wrapped)
 
         face_builder.Build()

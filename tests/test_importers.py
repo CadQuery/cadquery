@@ -84,8 +84,9 @@ class TestImporters(BaseTest):
 
         filename = os.path.join(testdataDir, "gear.dxf")
 
-        obj = importers.importDXF(filename)
-        self.assertFalse(obj.val().isValid())
+        with self.assertRaises(ValueError):
+            # tol >~ 2e-4 required for closed wires
+            obj = importers.importDXF(filename)
 
         obj = importers.importDXF(filename, tol=1e-3)
         self.assertTrue(obj.val().isValid())
