@@ -3085,7 +3085,7 @@ class Workplane(object):
         :param axisEnd: the end point of the axis of rotation
         :type axisEnd: tuple, a two tuple
         :param combine: True to combine the resulting solid with parent solids if found.
-        :type combine: boolean, combine with parent solid
+        :type combine: boolean or string, defines how the result of the operation is combined with the base solid
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
 
@@ -3129,7 +3129,9 @@ class Workplane(object):
 
         # returns a Solid (or a compound if there were multiple)
         r = self._revolve(angleDegrees, axisStart, axisEnd)
-        if combine:
+        if isinstance(combine, str) and combine == "cut":
+            newS = self._cutFromBase(r)
+        elif isinstance(combine, bool) and combine:
             newS = self._combineWithBase(r)
         else:
             newS = self.newObject([r])
@@ -3492,12 +3494,10 @@ class Workplane(object):
 
         return self.newObject([s])
 
-    def loft(
-        self: T, filled: bool = True, ruled: bool = False, combine: bool = True
-    ) -> T:
+    def loft(self: T, ruled: bool = False, combine: Union[bool, str] = True) -> T:
         """
         Make a lofted solid, through the set of wires.
-        :return: a CQ object containing the created loft
+        :return: a Workplane object containing the created loft
         """
 
         if self.ctx.pendingWires:
@@ -3510,14 +3510,13 @@ class Workplane(object):
 
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
-        if combine:
-            parentSolid = self._findType(
-                (Solid, Compound), searchStack=False, searchParents=True
-            )
-            if parentSolid is not None:
-                r = parentSolid.fuse(r)
+        if isinstance(combine, str) and combine == "cut":
+            r = self._cutFromBase(r)
 
-        return self.newObject([r])
+        elif isinstance(combine, bool) and combine:
+            r = self._combineWithBase(r)
+
+        return r
 
     def _getFaces(self) -> List[Face]:
         """

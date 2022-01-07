@@ -467,6 +467,19 @@ class TestCadQuery(BaseTest):
         # the resulting loft had a split on the side, not sure why really, i expected only 3 faces
         self.assertEqual(7, s.faces().size())
 
+        # test loft with combine="cut"
+        box = Workplane().box(10, 10, 10).solids()
+        cut = (
+            box.faces(">Z")
+            .workplane()
+            .circle(2)
+            .workplane(invert=True, offset=12)
+            .rect(3, 2)
+            .loft(combine="cut")
+        )
+
+        self.assertGreater(box.val().Volume(), cut.val().Volume())
+
     def testLoftRaisesValueError(self):
         s0 = Workplane().hLine(1)  # no wires
         with raises(ValueError):
@@ -615,6 +628,17 @@ class TestCadQuery(BaseTest):
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
         self.assertEqual(2, result.edges().size())
+
+    def testRevolveCut(self):
+        box = Workplane().box(10, 10, 10)
+        cut = (
+            box.transformed((90, 0, 0))
+            .move(5, 0)
+            .rect(3, 4, centered=False)
+            .revolve(360, (0, 0, 0), (0, 1, 0), combine="cut")
+        )
+
+        self.assertGreater(box.val().Volume(), cut.val().Volume())
 
     def testRevolveErrors(self):
         """
