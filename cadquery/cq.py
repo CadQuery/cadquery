@@ -2951,7 +2951,7 @@ class Workplane(object):
         self: T,
         distance: float,
         angleDegrees: float,
-        combine: bool = True,
+        combine: Union[bool, str] = True,
         clean: bool = True,
     ) -> T:
         """
@@ -2968,7 +2968,7 @@ class Workplane(object):
 
         :param distance: the distance to extrude normal to the workplane
         :param angle: angle (in degrees) to rotate through the extrusion
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid with the parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
         """
@@ -2993,7 +2993,9 @@ class Workplane(object):
 
         r = Compound.makeCompound(shapes).fuse()
 
-        if combine:
+        if isinstance(combine, str) and combine == "cut":
+            newS = self._cutFromBase(r)
+        elif isinstance(combine, bool) and combine:
             newS = self._combineWithBase(r)
         else:
             newS = self.newObject([r])
@@ -3072,7 +3074,7 @@ class Workplane(object):
         angleDegrees: float = 360.0,
         axisStart: Optional[VectorLike] = None,
         axisEnd: Optional[VectorLike] = None,
-        combine: bool = True,
+        combine: Union[bool, str] = True,
         clean: bool = True,
     ) -> T:
         """
@@ -3146,7 +3148,7 @@ class Workplane(object):
         sweepAlongWires: Optional[bool] = None,
         makeSolid: bool = True,
         isFrenet: bool = False,
-        combine: bool = True,
+        combine: Union[bool, str] = True,
         clean: bool = True,
         transition: Literal["right", "round", "transformed"] = "right",
         normal: Optional[VectorLike] = None,
@@ -3157,7 +3159,7 @@ class Workplane(object):
 
         :param path: A wire along which the pending wires will be swept
         :param boolean multiSection: False to create multiple swept from wires on the chain along path. True to create only one solid swept along path with shape following the list of wires on the chain
-        :param boolean combine: True to combine the resulting solid with parent solids if found.
+        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid with the parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param transition: handling of profile orientation at C1 path discontinuities. Possible values are {'transformed','round', 'right'} (default: 'right').
         :param normal: optional fixed normal for extrusion
@@ -3187,7 +3189,9 @@ class Workplane(object):
         )  # returns a Solid (or a compound if there were multiple)
 
         newS: T
-        if combine:
+        if isinstance(combine, str) and combine == "cut":
+            newS = self._cutFromBase(r)
+        elif isinstance(combine, bool) and combine:
             newS = self._combineWithBase(r)
         else:
             newS = self.newObject([r])

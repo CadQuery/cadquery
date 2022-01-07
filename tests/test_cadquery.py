@@ -1155,6 +1155,17 @@ class TestCadQuery(BaseTest):
                 .sweep(path, auxSpine=Workplane().box(1, 1, 1))
             )
 
+        # test sweep with combine="cut"
+        box = Workplane().box(10, 10, 10, centered=False)
+        path = Workplane("YZ").lineTo(10, 10)
+        cut = (
+            box.vertices(">Z and >X and >Y")
+            .workplane(centerOption="CenterOfMass")
+            .circle(1.5)
+            .sweep(path, combine="cut")
+        )
+        self.assertGreater(box.val().Volume(), cut.val().Volume())
+
     def testMultisectionSweep(self):
         """
         Tests the operation of sweeping along a list of wire(s) along a path
@@ -1278,6 +1289,19 @@ class TestCadQuery(BaseTest):
         r = profile.twistExtrude(10, 45, False)
 
         self.assertEqual(6, r.faces().size())
+
+    def testTwistExtrudeCombineCut(self):
+        """
+        Tests extrusion while twisting through an angle, removing the solid from the base solid
+        """
+        box = Workplane().box(10, 10, 10)
+        cut = (
+            box.faces(">Z")
+            .workplane(invert=True)
+            .rect(1.5, 5)
+            .twistExtrude(10, 90, combine="cut")
+        )
+        self.assertGreater(box.val().Volume(), cut.val().Volume())
 
     def testTwistExtrudeCombine(self):
         """
