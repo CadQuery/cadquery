@@ -17,12 +17,12 @@ from typing_extensions import Literal, Protocol
 
 from io import BytesIO
 
-from multimethod import multimethod
-
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 from .geom import Vector, BoundBox, Plane, Location, Matrix
+
+from ..utils import cqmultimethod as multimethod
 
 import OCP.TopAbs as ta  # Tolopolgy type enum
 import OCP.GeomAbs as ga  # Geometry type enum
