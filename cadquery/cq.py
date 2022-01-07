@@ -3519,7 +3519,7 @@ class Workplane(object):
 
         elif isinstance(combine, bool) and combine:
             newS = self._combineWithBase(r)
-        
+
         else:
             newS = self.newObject([r])
 
