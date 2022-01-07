@@ -3515,12 +3515,15 @@ class Workplane(object):
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
         if isinstance(combine, str) and combine == "cut":
-            r = self._cutFromBase(r)
+            newS = self._cutFromBase(r)
 
         elif isinstance(combine, bool) and combine:
-            r = self._combineWithBase(r)
+            newS = self._combineWithBase(r)
+        
+        else:
+            newS = self.newObject([r])
 
-        return r
+        return newS
 
     def _getFaces(self) -> List[Face]:
         """
