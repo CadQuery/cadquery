@@ -356,7 +356,7 @@ Multimethods
 ------------
 
 CadQuery uses `Multimethod <https://coady.github.io/multimethod/>`_ to allow a call to a method to
-be dispatched depending on the types of the arguments. An example is :method:`~cadquery.Sketch.arc`,
+be dispatched depending on the types of the arguments. An example is :meth:`~cadquery.Sketch.arc`,
 where ``a_sketch.arc((1, 2), (2, 3))`` would be dispatched to one method but ``a_sketch.arc((1, 2),
 (2, 3), (3, 4))`` would be dispatched to a different method. For multimethods to work, you should
 not use keyword arguments to specify positional parameters. For example, you **should not** write
