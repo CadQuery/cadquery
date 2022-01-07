@@ -5177,4 +5177,7 @@ class TestCadQuery(BaseTest):
 
     def test_plane_repr(self):
         wp = Workplane("XY")
-        assert repr(wp.plane) == "Plane(origin=(0.0, 0.0, 0.0), xDir=(1.0, 0.0, 0.0), normal=(0.0, 0.0, 1.0))"
+        assert (
+            repr(wp.plane)
+            == "Plane(origin=(0.0, 0.0, 0.0), xDir=(1.0, 0.0, 0.0), normal=(0.0, 0.0, 1.0))"
+        )
