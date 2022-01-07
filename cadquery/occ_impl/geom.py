@@ -584,7 +584,6 @@ class Plane(object):
 
     def __repr__(self):
         return f"Plane(origin={str(self.origin.toTuple())}, xDir={str(self.xDir.toTuple())}, normal={str(self.zDir.toTuple())})"
-         
 
     @property
     def origin(self) -> Vector:
