@@ -5174,3 +5174,10 @@ class TestCadQuery(BaseTest):
         a = a.union(b)
         a = a.workplaneFromTagged("zface").circle(0.2)
         assert a.edges("%CIRCLE").val().Center().toTuple() == approx((0, 0, 0.5))
+
+    def test_plane_repr(self):
+        wp = Workplane("XY")
+        assert (
+            repr(wp.plane)
+            == "Plane(origin=(0.0, 0.0, 0.0), xDir=(1.0, 0.0, 0.0), normal=(0.0, 0.0, 1.0))"
+        )
