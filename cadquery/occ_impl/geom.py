@@ -175,8 +175,17 @@ class Vector(object):
     def getAngle(self, v: "Vector") -> float:
         return self.wrapped.Angle(v.wrapped)
 
-    def getSignedAngle(self, v: "Vector") -> float:
-        return self.wrapped.AngleWithRef(v.wrapped, gp_Vec(0, 0, -1))
+    def getSignedAngle(self, v: "Vector", normal: "Vector" = None) -> float:
+        """
+        Return the signed angle in RADIANS between two vectors with the given normal
+        based on this math:
+            angle = atan2((Va x Vb) . Vn, Va . Vb)
+        """
+        if normal is None:
+            gp_normal = gp_Vec(0, 0, -1)
+        else:
+            gp_normal = normal.wrapped
+        return self.wrapped.AngleWithRef(v.wrapped, gp_normal)
 
     def distanceToLine(self):
         raise NotImplementedError("Have not needed this yet, but OCCT supports it!")
@@ -639,6 +648,15 @@ class Plane(object):
             return obj.transform(self.fG)
         elif isinstance(obj, Shape):
             return obj.transformShape(self.fG)
+        elif isinstance(obj, BoundBox):
+            global_bottom_left = Vector(obj.xmin, obj.ymin, obj.zmin)
+            global_top_right = Vector(obj.xmax, obj.ymax, obj.zmax)
+            local_bottom_left = global_bottom_left.transform(self.fG)
+            local_top_right = global_top_right.transform(self.fG)
+            local_bbox = Bnd_Box(
+                gp_Pnt(*local_bottom_left.toTuple()), gp_Pnt(*local_top_right.toTuple())
+            )
+            return BoundBox(local_bbox)
         else:
             raise ValueError(
                 "Don't know how to convert type {} to local coordinates".format(

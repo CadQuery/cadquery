@@ -52,10 +52,7 @@ from .occ_impl.exporters.svg import getSVG, exportSVG
 
 from .utils import deprecate
 
-from .selectors import (
-    Selector,
-    StringSyntaxSelector,
-)
+from .selectors import Selector, StringSyntaxSelector, DirectionMinMaxSelector
 
 from .sketch import Sketch
 
@@ -527,7 +524,7 @@ class Workplane(object):
         :type invert: boolean or None=False
         :type centerOption: string or None='ProjectedOrigin'
         :type origin: Vector or None
-        :rtype: Workplane object 
+        :rtype: Workplane object
 
         The first element on the stack must be a face, a set of
         co-planar faces or a vertex.  If a vertex, then the parent
@@ -2098,7 +2095,10 @@ class Workplane(object):
         return self.newObject([rv_w if makeWire else e])
 
     def threePointArc(
-        self: T, point1: VectorLike, point2: VectorLike, forConstruction: bool = False,
+        self: T,
+        point1: VectorLike,
+        point2: VectorLike,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point, through point1, and ending at point2
@@ -2127,7 +2127,10 @@ class Workplane(object):
         return self.newObject([arc])
 
     def sagittaArc(
-        self: T, endPoint: VectorLike, sag: float, forConstruction: bool = False,
+        self: T,
+        endPoint: VectorLike,
+        sag: float,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
@@ -2165,7 +2168,10 @@ class Workplane(object):
         return self.threePointArc(sagPoint, endPoint, forConstruction)
 
     def radiusArc(
-        self: T, endPoint: VectorLike, radius: float, forConstruction: bool = False,
+        self: T,
+        endPoint: VectorLike,
+        radius: float,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point to endPoint with an arc defined by the radius.
@@ -2666,7 +2672,13 @@ class Workplane(object):
             o = angle * i
             if circumscribed:
                 o += angle / 2.0
-            pnts.append(Vector(radius * math.cos(o), radius * math.sin(o), 0,))
+            pnts.append(
+                Vector(
+                    radius * math.cos(o),
+                    radius * math.sin(o),
+                    0,
+                )
+            )
         p = Wire.makePolygon(pnts, forConstruction)
 
         return self.eachpoint(lambda loc: p.moved(loc), True)
@@ -2905,7 +2917,10 @@ class Workplane(object):
     # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer won't work
     def hole(
-        self: T, diameter: float, depth: Optional[float] = None, clean: bool = True,
+        self: T,
+        diameter: float,
+        depth: Optional[float] = None,
+        clean: bool = True,
     ) -> T:
         """
         Makes a hole for each item on the stack.
@@ -3225,7 +3240,10 @@ class Workplane(object):
         return self.newObject([r])
 
     def combine(
-        self: T, clean: bool = True, glue: bool = False, tol: Optional[float] = None,
+        self: T,
+        clean: bool = True,
+        glue: bool = False,
+        tol: Optional[float] = None,
     ) -> T:
         """
         Attempts to combine all of the items on the stack into a single item.
@@ -3367,7 +3385,9 @@ class Workplane(object):
         return self.cut(toUnion)
 
     def intersect(
-        self: T, toIntersect: Union["Workplane", Solid, Compound], clean: bool = True,
+        self: T,
+        toIntersect: Union["Workplane", Solid, Compound],
+        clean: bool = True,
     ) -> T:
         """
         Intersects the provided solid from the current solid.
@@ -3615,7 +3635,11 @@ class Workplane(object):
                     limitFace = upToFace
 
                 res = res.dprism(
-                    None, [face], taper=taper, upToFace=limitFace, additive=additive,
+                    None,
+                    [face],
+                    taper=taper,
+                    upToFace=limitFace,
+                    additive=additive,
                 )
 
                 if both:
@@ -4191,6 +4215,139 @@ class Workplane(object):
         if clean:
             newS = newS.clean()
         return newS
+
+    def textOnPath(
+        self: T,
+        txt: str,
+        fontsize: float,
+        distance: float,
+        start: float = 0.0,
+        cut: bool = True,
+        combine: bool = False,
+        clean: bool = True,
+        font: str = "Arial",
+        fontPath: Optional[str] = None,
+        kind: Literal["regular", "bold", "italic"] = "regular",
+    ) -> T:
+        """
+        Returns 3D text with the baseline following a path previous defined in the workplane.
+
+        :param txt: text to be rendered
+        :param fontsize: size of the font in model units
+        :param distance: the distance to extrude or cut, normal to the workplane plane
+        :type distance: float, negative means opposite the normal direction
+        :param start: the relative location on path to start the text
+        :type start: float, values must be between 0.0 and 1.0
+        :param cut: True to cut the resulting solid from the parent solids if found
+        :param combine: True to combine the resulting solid with parent solids if found
+        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param font: font name
+        :param fontPath: path to font file
+        :param kind: font type
+        :return: a CQ object with the resulting solid selected
+
+        The returned object is always a Workplane object, and depends on whether combine is True, and
+        whether a context solid is already defined:
+
+        *  if combine is False, the new value is pushed onto the stack.
+        *  if combine is true, the value is combined with the context solid if it exists,
+        and the resulting solid becomes the new context solid.
+
+        Examples::
+
+            fox = (
+                cq.Workplane("XZ")
+                .threePointArc((50, 30), (100, 0))
+                .textOnPath(
+                    txt="The quick brown fox jumped over the lazy dog",
+                    fontsize=5,
+                    distance=1,
+                    start=0.1,
+                )
+            )
+
+            clover = (
+                cq.Workplane("front")
+                .moveTo(0, 10)
+                .radiusArc((10, 0), 7.5)
+                .radiusArc((0, -10), 7.5)
+                .radiusArc((-10, 0), 7.5)
+                .radiusArc((0, 10), 7.5)
+                .consolidateWires()
+                .textOnPath(
+                    txt=".x" * 102,
+                    fontsize=1,
+                    distance=1,
+                )
+            )
+        """
+
+        def position_face(orig_face: Face) -> Face:
+            """
+            Reposition a face to the provided path
+
+            Local coordinates are used to calculate the position of the face
+            relative to the path. Global coordinates to position the face.
+            """
+            bbox = self.plane.toLocalCoords(orig_face.BoundingBox())
+            face_bottom_center = Vector((bbox.xmin + bbox.xmax) / 2, 0, 0)
+            relative_position_on_wire = start + face_bottom_center.x / path_length
+            wire_tangent = path.tangentAt(relative_position_on_wire)
+            wire_angle = math.degrees(
+                self.plane.xDir.getSignedAngle(wire_tangent, self.plane.zDir)
+            )
+            wire_position = path.positionAt(relative_position_on_wire)
+            global_face_bottom_center = self.plane.toWorldCoords(face_bottom_center)
+            return orig_face.translate(
+                wire_position - global_face_bottom_center
+            ).rotate(
+                wire_position,
+                wire_position + self.plane.zDir,
+                wire_angle,
+            )
+
+        # The top edge or wire on the stack defines the path
+        if not self.ctx.pendingWires and not self.ctx.pendingEdges:
+            raise Exception("A pending edge or wire must be present to define the path")
+        if self.ctx.pendingEdges:
+            path = self.ctx.pendingEdges.pop()
+        else:
+            path = self.ctx.pendingWires.pop()
+
+        # Create text on the current workplane
+        raw_text = Compound.makeText(
+            txt,
+            fontsize,
+            distance,
+            font=font,
+            fontPath=fontPath,
+            kind=kind,
+            halign="left",
+            valign="bottom",
+            position=self.plane,
+        )
+        # Extract just the faces on the workplane
+        text_faces = (
+            Workplane(raw_text)
+            .faces(DirectionMinMaxSelector(self.plane.zDir, False))
+            .vals()
+        )
+        path_length = path.Length()
+
+        # Reposition all of the text faces and re-create 3D text
+        faces_on_path = [position_face(f) for f in text_faces]
+        result = Compound.makeCompound(
+            [Solid.extrudeLinear(f, self.plane.zDir) for f in faces_on_path]
+        )
+        if cut:
+            new_solid = self._cutFromBase(result)
+        elif combine:
+            new_solid = self._combineWithBase(result)
+        else:
+            new_solid = self.newObject([result])
+        if clean:
+            new_solid = new_solid.clean()
+        return new_solid
 
     def section(self: T, height: float = 0.0) -> T:
         """
