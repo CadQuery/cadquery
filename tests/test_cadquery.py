@@ -638,12 +638,20 @@ class TestCadQuery(BaseTest):
         self.assertTrue(path_closed.IsClosed())
 
         # attempt to build a valid face
-        w = Wire.assembleEdges([path_closed,])
+        w = Wire.assembleEdges(
+            [
+                path_closed,
+            ]
+        )
         f = Face.makeFromWires(w)
         self.assertTrue(f.isValid())
 
         # attempt to build an invalid face
-        w = Wire.assembleEdges([path,])
+        w = Wire.assembleEdges(
+            [
+                path,
+            ]
+        )
         f = Face.makeFromWires(w)
         self.assertFalse(f.isValid())
 
@@ -800,12 +808,16 @@ class TestCadQuery(BaseTest):
 
         with raises(ValueError):
             Workplane().spline(
-                points, periodic=False, parameters=[x for x in range(len(points) + 1)],
+                points,
+                periodic=False,
+                parameters=[x for x in range(len(points) + 1)],
             )
 
         with raises(ValueError):
             Workplane().spline(
-                points, periodic=True, parameters=[x for x in range(len(points))],
+                points,
+                periodic=True,
+                parameters=[x for x in range(len(points))],
             )
 
     def testRotatedEllipse(self):
@@ -995,7 +1007,15 @@ class TestCadQuery(BaseTest):
 
     def testMakeEllipse(self):
         el = Wire.makeEllipse(
-            1, 2, Vector(0, 0, 0), Vector(0, 0, 1), Vector(1, 0, 0), 0, 90, 45, True,
+            1,
+            2,
+            Vector(0, 0, 0),
+            Vector(0, 0, 1),
+            Vector(1, 0, 0),
+            0,
+            90,
+            45,
+            True,
         )
 
         self.assertTrue(el.IsClosed())
@@ -2058,9 +2078,58 @@ class TestCadQuery(BaseTest):
         self.assertEqual(1, r.wires().size())
         self.assertEqual(32, r.edges().size())
 
-    # TODO: Re-work testIbeam test below now that chaining works
-    # TODO: Add toLocalCoords and toWorldCoords tests
+    def testToLocalWorldCoords(self):
+        """Tests the toLocalCoords and toGlocalCoords methods"""
 
+        # Test vector translation
+        v1 = Vector(1, 2, 0)
+        p1 = Plane.named("XZ")
+        self.assertTupleAlmostEquals(
+            p1.toLocalCoords(v1).toTuple(), (v1.x, v1.z, -v1.y), 3
+        )
+
+        # Test shape translation
+        box1 = Workplane("XY").box(2, 4, 8)
+        box1_max_v = box1.vertices(">X and >Y and >Z").val()  # (1.0, 2.0, 4.0)
+        box2_max_v = (
+            Workplane(p1)
+            .add(p1.toLocalCoords(box1.solids().val()))
+            .vertices(">X and >Y and >Z")
+            .val()
+        )  # (1.0, 4.0, 2.0)
+        self.assertTupleAlmostEquals(
+            (box1_max_v.X, box1_max_v.Y, box1_max_v.Z),
+            (box2_max_v.X, box2_max_v.Z, box2_max_v.Y),
+            3,
+        )
+
+        # Test bounding box translation
+        bb1 = box1.solids().val().BoundingBox()
+        bb2 = p1.toLocalCoords(bb1)
+        self.assertTupleAlmostEquals((bb2.xmax, bb2.ymax, bb2.zmax), (1, 4, -2), 3)
+
+        # Test for unsupported type (Location unsupported)
+        with raises(ValueError):
+            p1.toLocalCoords(Location(Vector(1, 1, 1)))
+
+        # Test vector translation back to world coordinates
+        v2 = (
+            Workplane(p1).lineTo(1, 2, 4).vertices(">X and >Y and >Z").val().toTuple()
+        )  # (1.0, 2.0, 4.0)
+        v3 = p1.toWorldCoords(v2)  # (1.0, 4.0, -2.0)
+        self.assertTupleAlmostEquals(v2, (v3.x, v3.z, -v3.y), 3)
+
+    def testGetSignedAngle(self):
+        """Verify getSignedAngle calculations with and without a provided normal"""
+        a = math.pi / 3
+        v1 = Vector(1, 0, 0)
+        v2 = Vector(math.cos(a), -math.sin(a), 0)
+        d1 = v1.getSignedAngle(v2)
+        d2 = v1.getSignedAngle(v2, Vector(0, 0, 1))
+        self.assertAlmostEqual(d1, a)
+        self.assertAlmostEqual(d2, -a)
+
+    # TODO: Re-work testIbeam test below now that chaining works
     def testIbeam(self):
         """
         Make an ibeam. demonstrates fancy mirroring
@@ -3638,9 +3707,70 @@ class TestCadQuery(BaseTest):
             box.faces(">Z")
             .workplane()
             .text(
-                "CQ 2.0", 10, -1, cut=True, halign="left", valign="bottom", font="Sans",
+                "CQ 2.0",
+                10,
+                -1,
+                cut=True,
+                halign="left",
+                valign="bottom",
+                font="Sans",
             )
         )
+
+    def testTextOnPath(self):
+        global testdataDir
+
+        # Verify a wire path on a object with cut
+        box = Workplane("XY").box(4, 4, 0.5)
+        obj1 = (
+            box.faces(">Z")
+            .workplane()
+            .circle(1.5)
+            .textOnPath(
+                "text on a circle", fontsize=0.5, distance=-0.05, cut=True, clean=False
+            )
+        )
+        # combined object should have smaller volume
+        self.assertGreater(box.val().Volume(), obj1.val().Volume())
+
+        # Verify a wire path on a object with combine
+        obj2 = (
+            box.faces(">Z")
+            .workplane()
+            .circle(1.5)
+            .textOnPath(
+                "text on a circle",
+                fontsize=0.5,
+                distance=0.05,
+                font="Sans",
+                cut=False,
+                combine=True,
+            )
+        )
+        # combined object should have bigger volume
+        self.assertLess(box.val().Volume(), obj2.val().Volume())
+
+        # verify that the number of top faces & solids is correct (NB: this is font specific)
+        self.assertEqual(len(obj2.faces(">Z").vals()), 14)
+
+        # verify that the fox jumps over the dog
+        dog = Workplane("XY", origin=(50, 0, 0)).box(30, 30, 30, centered=True)
+        fox = (
+            Workplane("XZ")
+            .threePointArc((50, 30), (100, 0))
+            .textOnPath(
+                txt="The quick brown fox jumped over the lazy dog",
+                fontsize=5,
+                distance=1,
+                start=0.1,
+                cut=False,
+            )
+        )
+        self.assertEqual(fox.val().intersect(dog.val()).Volume(), 0)
+
+        # Verify that an edge or wire must be present
+        with self.assertRaises(Exception):
+            Workplane("XY").textOnPath("error", 5, 1, 1)
 
     def testParametricCurve(self):
 
@@ -4804,12 +4934,24 @@ class TestCadQuery(BaseTest):
         assert f.isValid()
 
         with raises(ValueError):
-            w0 = Wire.assembleEdges([Edge.makeLine(Vector(), Vector(0, 1)),])
-            w1 = Wire.assembleEdges([Edge.makeLine(Vector(0, 1), Vector(1, 1)),])
+            w0 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(), Vector(0, 1)),
+                ]
+            )
+            w1 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(0, 1), Vector(1, 1)),
+                ]
+            )
             f = Face.makeFromWires(w0, [w1])
 
         with raises(ValueError):
-            w0 = Wire.assembleEdges([Edge.makeLine(Vector(), Vector(0, 1)),])
+            w0 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(), Vector(0, 1)),
+                ]
+            )
             w1 = Wire.assembleEdges(
                 [
                     Edge.makeLine(Vector(), Vector(1, 1)),
@@ -4828,7 +4970,9 @@ class TestCadQuery(BaseTest):
                 ]
             )
             w1 = Wire.assembleEdges(
-                [Edge.makeLine(Vector(0.1, 0.1), Vector(0.2, 0.2)),]
+                [
+                    Edge.makeLine(Vector(0.1, 0.1), Vector(0.2, 0.2)),
+                ]
             )
             f = Face.makeFromWires(w0, [w1])
 
@@ -5008,7 +5152,13 @@ class TestCadQuery(BaseTest):
             .add(
                 [
                     Vector(),
-                    Location(Vector(0, 0, -1,)),
+                    Location(
+                        Vector(
+                            0,
+                            0,
+                            -1,
+                        )
+                    ),
                     Sketch().rect(1, 1),
                     Face.makePlane(1, 1),
                 ]
