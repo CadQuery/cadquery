@@ -5250,16 +5250,16 @@ class TestCadQuery(BaseTest):
     def test_combineWithBase(self):
         # Test the helper mehod _combinewith
 
-        box = Workplane().box(10,10,10)
+        box = Workplane().box(10, 10, 10)
         sphere = box.faces(">Z").sphere(2)
         new_box = box._combineWithBase(sphere.val())
 
-        self.assertGreater(new_box.val().Volume(), box.val().Volume()) 
+        self.assertGreater(new_box.val().Volume(), box.val().Volume())
 
     def test_cutFromBase(self):
         # Test the helper method _cutFromBase
 
-        box = Workplane().box(10,10,10)
+        box = Workplane().box(10, 10, 10)
         sphere = Workplane().sphere(2)
         hoolow_box = box._cutFromBase(sphere.val())
 
