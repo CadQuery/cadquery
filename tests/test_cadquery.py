@@ -5246,3 +5246,21 @@ class TestCadQuery(BaseTest):
         a = a.union(b)
         a = a.workplaneFromTagged("zface").circle(0.2)
         assert a.edges("%CIRCLE").val().Center().toTuple() == approx((0, 0, 0.5))
+
+    def test_combineWithBase(self):
+        # Test the helper mehod _combinewith
+
+        box = Workplane().box(10,10,10)
+        sphere = box.faces(">Z").sphere(2)
+        new_box = box._combineWithBase(sphere.val())
+
+        self.assertGreater(new_box.val().Volume(), box.val().Volume()) 
+
+    def test_cutFromBase(self):
+        # Test the helper method _cutFromBase
+
+        box = Workplane().box(10,10,10)
+        sphere = Workplane().sphere(2)
+        hoolow_box = box._cutFromBase(sphere.val())
+
+        self.assertGreater(box.val().Volume(), hoolow_box.val().Volume())
