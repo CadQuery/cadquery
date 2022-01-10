@@ -468,7 +468,7 @@ class TestCadQuery(BaseTest):
         self.assertEqual(7, s.faces().size())
 
         # test loft with combine="cut"
-        box = Workplane().box(10, 10, 10).solids()
+        box = Workplane().box(10, 10, 10)
         cut = (
             box.faces(">Z")
             .workplane()
@@ -479,6 +479,19 @@ class TestCadQuery(BaseTest):
         )
 
         self.assertGreater(box.val().Volume(), cut.val().Volume())
+
+        # test loft with combine=True
+        box = Workplane().box(10, 10, 10)
+        add = (
+            box.faces(">Z")
+            .workplane()
+            .circle(2)
+            .workplane(offset=12)
+            .rect(3, 2)
+            .loft(combine=True)
+        )
+
+        self.assertGreater(add.val().Volume(),box.val().Volume())
 
     def testLoftRaisesValueError(self):
         s0 = Workplane().hLine(1)  # no wires
@@ -1165,6 +1178,17 @@ class TestCadQuery(BaseTest):
             .sweep(path, combine="cut")
         )
         self.assertGreater(box.val().Volume(), cut.val().Volume())
+
+        #test sweep with combine = True
+        box = Workplane().box(10, 10, 10, centered=False)
+        path = Workplane("YZ").lineTo(10, 10)
+        add = (
+            box.vertices(">Z and >X and >Y")
+            .workplane(centerOption="CenterOfMass")
+            .circle(1.5)
+            .sweep(path, combine=True)
+        )
+        self.assertGreater(add.val().Volume(),box.val().Volume())
 
     def testMultisectionSweep(self):
         """
