@@ -3524,6 +3524,11 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError):
             Workplane().rect(2, 2).rect(1, 1).extrude(2, taper=4)
 
+        # Test extrude with combine="cut"
+        box = Workplane().box(5,5,5)
+        r = box.faces(">Z").workplane(invert=True).circle(0.5).extrude(4, combine="cut")
+        self.assertGreater(box.val().Volume(), r.val().Volume())
+
     def testTaperedExtrudeCutBlind(self):
 
         h = 1.0
@@ -5092,6 +5097,16 @@ class TestCadQuery(BaseTest):
 
         for v in r1.vals():
             self.assertTupleAlmostEquals(v.Center().toTuple(), (0, 0, 0), 6)
+
+        # test eachpoint with combine = True
+        box = Workplane().box(2, 1, 1).val()
+        ref = Workplane().box(5, 5, 5)
+        r = ref.vertices().eachpoint(lambda loc: box.moved(loc), combine=True)
+        self.assertGreater(r.val().Volume(), ref.val().Volume())
+
+        # test eachpoint with combine = "cut"
+        r = ref.vertices().eachpoint(lambda loc: box.moved(loc), combine="cut")
+        self.assertGreater(ref.val().Volume(), r.val().Volume())
 
     def testSketch(self):
 

@@ -51,7 +51,7 @@ from .occ_impl.shapes import (
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
 
-from .utils import deprecate_kwarg, deprecate
+from .utils import deprecate_kwarg, deprecate, deprecate_kwarg_name
 
 from .selectors import (
     Selector,
@@ -2394,6 +2394,8 @@ class Workplane(object):
         self: T,
         callback: Callable[[CQObject], Shape],
         useLocalCoordinates: bool = False,
+        combine: Union[bool, str] = True,
+        clean: bool = True,
     ) -> T:
         """
         Runs the provided function on each value in the stack, and collects the return values into
@@ -2404,6 +2406,9 @@ class Workplane(object):
         :param callBackFunction: the function to call for each item on the current stack.
         :param useLocalCoordinates: should  values be converted from local coordinates first?
         :type useLocalCoordinates: boolean
+        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+
 
         The callback function must accept one argument, which is the item on the stack, and return
         one object, which is collected. If the function returns None, nothing is added to the stack.
@@ -2439,7 +2444,6 @@ class Workplane(object):
             if isinstance(r, Wire):
                 if not r.forConstruction:
                     self._addPendingWire(r)
-
             results.append(r)
 
         return self.newObject(results)
@@ -2448,6 +2452,7 @@ class Workplane(object):
         self: T,
         callback: Callable[[Location], Shape],
         useLocalCoordinates: bool = False,
+        combine: Union[bool, str] = False,
     ) -> T:
         """
         Same as each(), except each item on the stack is converted into a point before it
@@ -2457,6 +2462,8 @@ class Workplane(object):
 
         :param useLocalCoordinates: should points be in local or global coordinates
         :type useLocalCoordinates: boolean
+        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+
 
         The resulting object has a point on the stack for each object on the original stack.
         Vertices and points remain a point.  Faces, Wires, Solids, Edges, and Shells are converted
@@ -2491,6 +2498,10 @@ class Workplane(object):
         for r in res:
             if isinstance(r, Wire) and not r.forConstruction:
                 self._addPendingWire(r)
+
+        if combine:
+            compound = Compound.makeCompound(res)
+            res = [self._combineWithBase(compound, combine).val()]
 
         return self.newObject(res)
 
@@ -3001,7 +3012,7 @@ class Workplane(object):
     def extrude(
         self: T,
         until: Union[float, Literal["next", "last"], Face],
-        combine: bool = True,
+        combine: Union[bool,str] = True,
         clean: bool = True,
         both: bool = False,
         taper: Optional[float] = None,
@@ -3015,7 +3026,7 @@ class Workplane(object):
           to the normal of the plane. The string "next" extrudes until the next face orthogonal to
           the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
           the extrusion will extend until this face.
-        :param boolean combine: True to combine the resulting solid with parent solids if found. (Cannot be set to False when `until` is not set as a float)
+        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
         :param float taper: angle for optional tapered extrusion
@@ -3038,7 +3049,7 @@ class Workplane(object):
             elif until == "last":
                 faceIndex = -1
 
-            r = self._extrude(distance=None, both=both, taper=taper, upToFace=faceIndex)
+            r = self._extrude(None, both=both, taper=taper, upToFace=faceIndex)
 
         elif isinstance(until, Face) and combine:
             r = self._extrude(None, both=both, taper=taper, upToFace=until)
@@ -3192,12 +3203,11 @@ class Workplane(object):
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-
         if isinstance(combine_mode, str) and combine_mode == "cut":
             newS = self._cutFromBase(obj)
         elif isinstance(combine_mode, bool) and combine_mode:
             newS = self._fuseWithBase(obj)
-        elif not combine_mode:
+        else:
             newS = self.newObject([obj])
 
         return newS
@@ -3226,9 +3236,8 @@ class Workplane(object):
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-        baseSolid = self._findType(
-            (Solid, Compound), searchStack=True, searchParents=True
-        )
+        baseSolid = self._findType((Solid, Compound), True, True)
+
         r = obj
         if baseSolid is not None:
             r = baseSolid.cut(obj)
@@ -4119,6 +4128,7 @@ class Workplane(object):
 
         return self.newObject(cleanObjects)
 
+    @deprecate_kwarg_name("cut", "combine='cut'")
     def text(
         self: T,
         txt: str,
@@ -4126,7 +4136,7 @@ class Workplane(object):
         distance: float,
         cut: bool = True,
         combine: bool = False,
-        clean: bool = True,
+        clean: Union[bool, str] = True,
         font: str = "Arial",
         fontPath: Optional[str] = None,
         kind: Literal["regular", "bold", "italic"] = "regular",
@@ -4141,7 +4151,7 @@ class Workplane(object):
         :param distance: the distance to extrude or cut, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
         :param cut: True to cut the resulting solid from the parent solids if found
-        :param combine: True to combine the resulting solid with parent solids if found
+        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
         :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :param font: font name
         :param fontPath: path to font file
@@ -4186,15 +4196,10 @@ class Workplane(object):
             position=self.plane,
         )
 
-        combine_mode:Union[bool, str]
         if cut:
-            combine_mode = "cut"
-        elif combine:
-            combine_mode = True
-        else:
-            combine_mode = False
+            combine = "cut"
 
-        newS = self._combineWithBase(r, combine_mode)
+        newS = self._combineWithBase(r, combine)
 
         if clean:
             newS = newS.clean()
