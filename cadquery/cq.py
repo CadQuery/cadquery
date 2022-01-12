@@ -3012,7 +3012,7 @@ class Workplane(object):
     def extrude(
         self: T,
         until: Union[float, Literal["next", "last"], Face],
-        combine: Union[bool,str] = True,
+        combine: Union[bool, str] = True,
         clean: bool = True,
         both: bool = False,
         taper: Optional[float] = None,
