@@ -51,7 +51,7 @@ from .occ_impl.shapes import (
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
 
-from .utils import deprecate_kwarg, deprecate, deprecate_kwarg_name
+from .utils import deprecate, deprecate_kwarg_name
 
 from .selectors import (
     Selector,

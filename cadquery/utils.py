@@ -25,18 +25,6 @@ class deprecate_kwarg:
 
         return wrapped
 
-
-class deprecate:
-    def __call__(self, f):
-        @wraps(f)
-        def wrapped(*args, **kwargs):
-
-            warn(f"{f.__name__} will be removed in the next release.", FutureWarning)
-
-            return f(*args, **kwargs)
-
-        return wrapped
-
 class deprecate_kwarg_name:
     def __init__(self, name, new_name):
 
@@ -58,3 +46,15 @@ class deprecate_kwarg_name:
             return f(*args, **kwargs)
 
         return wrapped
+        
+class deprecate:
+    def __call__(self, f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+
+            warn(f"{f.__name__} will be removed in the next release.", FutureWarning)
+
+            return f(*args, **kwargs)
+
+        return wrapped
+
