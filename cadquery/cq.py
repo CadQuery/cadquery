@@ -2993,12 +2993,7 @@ class Workplane(object):
 
         r = Compound.makeCompound(shapes).fuse()
 
-        if isinstance(combine, str) and combine == "cut":
-            newS = self._cutFromBase(r)
-        elif isinstance(combine, bool) and combine:
-            newS = self._combineWithBase(r)
-        else:
-            newS = self.newObject([r])
+        newS = self._combineWithBase(r, combine)
         if clean:
             newS = newS.clean()
         return newS
@@ -3061,10 +3056,8 @@ class Workplane(object):
                 f"Do not know how to handle until argument of type {type(until)}"
             )
 
-        if combine:
-            newS = self._combineWithBase(r)
-        else:
-            newS = self.newObject([r])
+        newS = self._combineWithBase(r, combine)
+
         if clean:
             newS = newS.clean()
         return newS
@@ -3131,12 +3124,7 @@ class Workplane(object):
 
         # returns a Solid (or a compound if there were multiple)
         r = self._revolve(angleDegrees, axisStart, axisEnd)
-        if isinstance(combine, str) and combine == "cut":
-            newS = self._cutFromBase(r)
-        elif isinstance(combine, bool) and combine:
-            newS = self._combineWithBase(r)
-        else:
-            newS = self.newObject([r])
+        newS = self._combineWithBase(r, combine)
         if clean:
             newS = newS.clean()
         return newS
@@ -3189,19 +3177,34 @@ class Workplane(object):
         )  # returns a Solid (or a compound if there were multiple)
 
         newS: T
-        if isinstance(combine, str) and combine == "cut":
-            newS = self._cutFromBase(r)
-        elif isinstance(combine, bool) and combine:
-            newS = self._combineWithBase(r)
-        else:
-            newS = self.newObject([r])
+        newS = self._combineWithBase(r, combine)
         if clean:
             newS = newS.clean()
         return newS
 
-    def _combineWithBase(self: T, obj: Shape) -> T:
+    def _combineWithBase(
+        self: T, obj: Shape, combine_mode: Union[bool, str] = True
+    ) -> T:
         """
         Combines the provided object with the base solid, if one can be found.
+        :param obj: The object to be combined with the context solid
+        :param combine_mode: The mode to combine with the base solid (True, False or "cut")
+        :return: a new object that represents the result of combining the base object with obj,
+           or obj if one could not be found
+        """
+
+        if isinstance(combine_mode, str) and combine_mode == "cut":
+            newS = self._cutFromBase(obj)
+        elif isinstance(combine_mode, bool) and combine_mode:
+            newS = self._fuseWithBase(obj)
+        elif not combine_mode:
+            newS = self.newObject([obj])
+
+        return newS
+
+    def _fuseWithBase(self: T, obj: Shape) -> T:
+        """
+        Fuse the provided object with the base solid, if one can be found.
         :param obj:
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
@@ -3214,7 +3217,6 @@ class Workplane(object):
             r = baseSolid.fuse(obj)
         elif isinstance(obj, Compound):
             r = obj.fuse()
-
         return self.newObject([r])
 
     def _cutFromBase(self: T, obj: Shape) -> T:
@@ -3514,14 +3516,7 @@ class Workplane(object):
 
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
-        if isinstance(combine, str) and combine == "cut":
-            newS = self._cutFromBase(r)
-
-        elif isinstance(combine, bool) and combine:
-            newS = self._combineWithBase(r)
-
-        else:
-            newS = self.newObject([r])
+        newS = self._combineWithBase(r, combine)
 
         return newS
 
@@ -4192,11 +4187,14 @@ class Workplane(object):
         )
 
         if cut:
-            newS = self._cutFromBase(r)
+            combine_mode = "cut"
         elif combine:
-            newS = self._combineWithBase(r)
+            combine_mode = True
         else:
-            newS = self.newObject([r])
+            combine_mode = False
+
+        newS = self._combineWithBase(r, combine_mode)
+
         if clean:
             newS = newS.clean()
         return newS
