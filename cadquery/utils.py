@@ -58,3 +58,10 @@ class deprecate:
 
         return wrapped
 
+class cqmultimethod(multimethod):
+    def __call__(self, *args, **kwargs):
+
+        try:
+            return super().__call__(*args, **kwargs)
+        except DispatchError:
+            return next(iter(self.values()))(*args, **kwargs)
