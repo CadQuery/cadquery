@@ -4186,6 +4186,7 @@ class Workplane(object):
             position=self.plane,
         )
 
+        combine_mode:Union[bool, str]
         if cut:
             combine_mode = "cut"
         elif combine:
