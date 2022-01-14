@@ -3525,7 +3525,7 @@ class TestCadQuery(BaseTest):
             Workplane().rect(2, 2).rect(1, 1).extrude(2, taper=4)
 
         # Test extrude with combine="cut"
-        box = Workplane().box(5,5,5)
+        box = Workplane().box(5, 5, 5)
         r = box.faces(">Z").workplane(invert=True).circle(0.5).extrude(4, combine="cut")
         self.assertGreater(box.val().Volume(), r.val().Volume())
 
