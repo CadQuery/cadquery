@@ -70,4 +70,3 @@ class deprecate_kwarg_name:
             return f(*args, **kwargs)
 
         return wrapped
-        

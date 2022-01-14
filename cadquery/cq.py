@@ -3041,7 +3041,7 @@ class Workplane(object):
            and the resulting solid becomes the new context solid.
         """
         if combine == "cut":
-            self.cutBlind(until,clean,taper)
+            return self.cutBlind(until, clean, taper)
         else:
             # Handle `until` multiple values
             if isinstance(until, str) and until in ("next", "last") and combine:
