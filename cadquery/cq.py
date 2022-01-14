@@ -37,6 +37,7 @@ from typing import (
 from typing_extensions import Literal
 from inspect import Parameter, Signature
 
+
 from .occ_impl.geom import Vector, Plane, Location
 from .occ_impl.shapes import (
     Shape,
@@ -45,7 +46,6 @@ from .occ_impl.shapes import (
     Face,
     Solid,
     Compound,
-    sortWiresByBuildOrder,
     wiresToFaces,
 )
 
@@ -55,8 +55,6 @@ from .utils import deprecate, deprecate_kwarg_name
 
 from .selectors import (
     Selector,
-    PerpendicularDirSelector,
-    NearestToPointSelector,
     StringSyntaxSelector,
 )
 
@@ -3042,36 +3040,39 @@ class Workplane(object):
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
         """
-        # Handle `until` multiple values
-        if isinstance(until, str) and until in ("next", "last") and combine:
-            if until == "next":
-                faceIndex = 0
-            elif until == "last":
-                faceIndex = -1
-
-            r = self._extrude(None, both=both, taper=taper, upToFace=faceIndex)
-
-        elif isinstance(until, Face) and combine:
-            r = self._extrude(None, both=both, taper=taper, upToFace=until)
-
-        elif isinstance(until, (int, float)):
-            r = self._extrude(until, both=both, taper=taper, upToFace=None)
-
-        elif isinstance(until, (str, Face)) and combine is False:
-            raise ValueError(
-                "`combine` can't be set to False when extruding until a face"
-            )
-
+        if combine == "cut":
+            self.cutBlind(until,clean,taper)
         else:
-            raise ValueError(
-                f"Do not know how to handle until argument of type {type(until)}"
-            )
+            # Handle `until` multiple values
+            if isinstance(until, str) and until in ("next", "last") and combine:
+                if until == "next":
+                    faceIndex = 0
+                elif until == "last":
+                    faceIndex = -1
 
-        newS = self._combineWithBase(r, combine)
+                r = self._extrude(None, both=both, taper=taper, upToFace=faceIndex)
 
-        if clean:
-            newS = newS.clean()
-        return newS
+            elif isinstance(until, Face) and combine:
+                r = self._extrude(None, both=both, taper=taper, upToFace=until)
+
+            elif isinstance(until, (int, float)):
+                r = self._extrude(until, both=both, taper=taper, upToFace=None)
+
+            elif isinstance(until, (str, Face)) and combine is False:
+                raise ValueError(
+                    "`combine` can't be set to False when extruding until a face"
+                )
+
+            else:
+                raise ValueError(
+                    f"Do not know how to handle until argument of type {type(until)}"
+                )
+
+            newS = self._combineWithBase(r, combine)
+
+            if clean:
+                newS = newS.clean()
+            return newS
 
     def revolve(
         self: T,
