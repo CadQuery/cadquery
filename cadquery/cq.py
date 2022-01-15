@@ -20,6 +20,7 @@
 import math
 from copy import copy
 from itertools import chain
+import re
 from typing import (
     overload,
     Sequence,
@@ -2499,9 +2500,10 @@ class Workplane(object):
 
         if combine:
             compound = Compound.makeCompound(res)
-            res = [self._combineWithBase(compound, combine).val()]
+            return self._combineWithBase(compound, combine)
 
-        return self.newObject(res)
+        else:
+            return self.newObject(res)
 
     def rect(
         self: T,
@@ -4136,7 +4138,7 @@ class Workplane(object):
         fontsize: float,
         distance: float,
         cut: bool = True,
-        combine: bool = False,
+        combine: Union[bool, str] = False,
         clean: Union[bool, str] = True,
         font: str = "Arial",
         fontPath: Optional[str] = None,
