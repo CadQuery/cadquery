@@ -20,7 +20,6 @@
 import math
 from copy import copy
 from itertools import chain
-import re
 from typing import (
     overload,
     Sequence,
