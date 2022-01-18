@@ -160,7 +160,7 @@ def length_cost(x, t, x0, val):
     if t == "LINE":
         rv = norm(x[2:] - x[:2]) - val
     elif t == "CIRCLE":
-        rv = norm(x[2] * (x[4] - x[3])) - val
+        rv = norm(x[2] * x[4]) - val
     else:
         raise invalid_args(t)
 
