@@ -4,7 +4,7 @@ from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
 
 from pytest import approx, raises
-from math import pi, sqrt
+from math import pi, sqrt, sin, cos
 
 testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
 
@@ -410,8 +410,8 @@ def test_constraint_solver():
     s1.constrain("s1", "s2", "Coincident", None)
     s1.constrain("s2", "s3", "Coincident", None)
     s1.constrain("s3", "s1", "Coincident", None)
-    s1.constrain("s3", "s1", "Angle", 90)
-    s1.constrain("s2", "s3", "Angle", 180 - 45)
+    s1.constrain("s3", "s1", "Angle", -90)
+    s1.constrain("s2", "s3", "Angle", -180 + 45)
 
     s1.solve()
 
@@ -434,10 +434,10 @@ def test_constraint_solver():
     s2.constrain("a2", "s1", "Coincident", None)
     s2.constrain("s2", "a1", "Coincident", None)
     s2.constrain("a1", "a2", "Coincident", None)
-    s2.constrain("s1", "s2", "Angle", 90)
-    s2.constrain("s2", "a1", "Angle", 90)
-    s2.constrain("a1", "a2", "Angle", -90)
-    s2.constrain("a2", "s1", "Angle", 90)
+    s2.constrain("s1", "s2", "Angle", -90)
+    s2.constrain("s2", "a1", "Angle", -90)
+    s2.constrain("a1", "a2", "Angle", 90)
+    s2.constrain("a2", "s1", "Angle", -90)
     s2.constrain("s1", "Length", 0.5)
     s2.constrain("a1", "Length", 1.0)
 
@@ -449,8 +449,14 @@ def test_constraint_solver():
 
     assert s2._faces.isValid()
 
-    s2._tags["s1"][0].Length() == approx(0.5)
-    s2._tags["a1"][0].Length() == approx(1.0)
+    s1 = s2._tags["s1"][0]
+    a1 = s2._tags["a1"][0]
+    a2 = s2._tags["a2"][0]
+    assert s1.Length() == approx(0.5)
+    assert a1.Length() == approx(1.0)
+    assert a1.endPoint().toTuple() == approx(a2.startPoint().toTuple())
+    assert a2.endPoint().toTuple() == approx((1.0, 0.5, 0))
+    assert s1.startPoint().toTuple() == approx((1.0, 0.5, 0))
 
     s3 = (
         Sketch()
@@ -575,6 +581,21 @@ def test_constraint_solver():
     s7.assemble()
 
     assert s7._faces.isValid()
+
+    s8 = Sketch().arc((0, 0), 1, 30, 120, "a1")
+
+    s8.constrain("a1", "FixedPoint", 0)
+    s8.constrain("a1", "ArcAngle", 120)
+
+    s8.solve()
+
+    assert s8._solve_status["status"] == 4
+
+    a1 = s8._tags["a1"][0]
+    assert a1.Length() == approx(2 * pi / 3)
+    assert a1.startPoint().toTuple() == approx((cos(pi / 6), sin(pi / 6), 0))
+    assert a1.positionAt(0.5).toTuple() == approx((0, 1, 0))
+    assert a1.endPoint().toTuple() == approx((-cos(pi / 6), sin(pi / 6), 0))
 
 
 def test_dxf_import():

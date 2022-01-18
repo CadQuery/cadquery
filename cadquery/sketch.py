@@ -910,9 +910,9 @@ class Sketch(object):
                 p2 = v0.endPoint() - p
                 pm = v0.positionAt(0.5) - p
 
-                a1 = Vector(0, 1).getSignedAngle(p1)
-                a2 = p1.getSignedAngle(p2)
-                a3 = p1.getSignedAngle(pm)
+                a1 = -Vector(1, 0).getSignedAngle(p1)
+                a2 = -p1.getSignedAngle(p2)
+                a3 = -p1.getSignedAngle(pm)
                 if a3 > 0 and a2 < 0:
                     a2 += 2 * pi
                 elif a3 < 0 and a2 > 0:

@@ -115,7 +115,7 @@ far only line segments and arcs can be used in such a use case.
     result = (
         cq.Sketch()
         .segment((0,0), (0,3.),"s1")
-        .arc((0.,3.), (1.5,1.5), (0.,0.),"a1")
+        .arc((0.,3.), (-1.5,1.5), (0.,0.),"a1")
         .constrain("s1","Fixed",None)
         .constrain("s1", "a1","Coincident",None)
         .constrain("a1", "s1","Coincident",None)

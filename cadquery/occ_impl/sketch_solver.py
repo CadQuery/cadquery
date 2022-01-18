@@ -62,12 +62,12 @@ def invalid_args(*t):
 
 def arc_first(x):
 
-    return array((x[0] + x[2] * sin(x[3]), x[1] + x[2] * cos(x[3])))
+    return array((x[0] + x[2] * cos(x[3]), x[1] + x[2] * sin(x[3])))
 
 
 def arc_last(x):
 
-    return array((x[0] + x[2] * sin(x[3] + x[4]), x[1] + x[2] * cos(x[3] + x[4])))
+    return array((x[0] + x[2] * cos(x[3] + x[4]), x[1] + x[2] * sin(x[3] + x[4])))
 
 
 def arc_point(x, val):
@@ -76,7 +76,7 @@ def arc_point(x, val):
         rv = x[:2]
     else:
         a = x[3] + val * x[4]
-        rv = array((x[0] + x[2] * sin(a), x[1] + x[2] * cos(a)))
+        rv = array((x[0] + x[2] * cos(a), x[1] + x[2] * sin(a)))
 
     return rv
 
@@ -88,12 +88,12 @@ def line_point(x, val):
 
 def arc_first_tangent(x):
 
-    return gp_Vec2d(sign(x[4]) * cos(x[3]), -sign(x[4]) * sin(x[3]))
+    return gp_Vec2d(-sign(x[4]) * sin(x[3]), sign(x[4]) * cos(x[3]))
 
 
 def arc_last_tangent(x):
 
-    return gp_Vec2d(sign(x[4]) * cos(x[3] + x[4]), -sign(x[4]) * sin(x[3] + x[4]))
+    return gp_Vec2d(-sign(x[4]) * sin(x[3] + x[4]), sign(x[4]) * cos(x[3] + x[4]))
 
 
 def fixed_cost(x, t, x0, val):
@@ -150,7 +150,13 @@ def angle_cost(x1, t1, x10, x2, t2, x20, val):
     else:
         raise invalid_args(t1, t2)
 
-    return v2.Angle(v1) - val
+    a = v1.Angle(v2)
+    rv = a - val
+    if v1.IsOpposite(v2, TOL / 2):
+        if a < 0:
+            rv = rv + 2 * pi
+
+    return rv
 
 
 def length_cost(x, t, x0, val):
@@ -160,7 +166,7 @@ def length_cost(x, t, x0, val):
     if t == "LINE":
         rv = norm(x[2:] - x[:2]) - val
     elif t == "CIRCLE":
-        rv = norm(x[2] * (x[4] - x[3])) - val
+        rv = norm(x[2] * x[4]) - val
     else:
         raise invalid_args(t)
 
