@@ -3208,7 +3208,10 @@ class Workplane(object):
             newS = self.newObject(obj if not isinstance(obj, Shape) else [obj])
 
         if clean:
-            newS = newS.clean()
+            # NB: not calling self.clean() to not pollute the parents
+            newS.objects = [
+                obj.clean() if isinstance(obj, Shape) else obj for obj in newS.objects
+            ]
 
         return newS
 
