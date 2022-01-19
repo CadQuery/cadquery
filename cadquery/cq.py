@@ -3147,7 +3147,7 @@ class Workplane(object):
 
         :param path: A wire along which the pending wires will be swept
         :param boolean multiSection: False to create multiple swept from wires on the chain along path. True to create only one solid swept along path with shape following the list of wires on the chain
-        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid with the parent solids if found.
+        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param transition: handling of profile orientation at C1 path discontinuities. Possible values are {'transformed','round', 'right'} (default: 'right').
         :param normal: optional fixed normal for extrusion
