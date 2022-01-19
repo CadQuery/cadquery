@@ -62,6 +62,7 @@ from .sketch import Sketch
 
 CQObject = Union[Vector, Location, Shape, Sketch]
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
+CombineMode = Union[bool, Literal["cut", "a", "s"]]  # a : additive, s: subtractive
 
 T = TypeVar("T", bound="Workplane")
 """A type variable used to make the return type of a method the same as the
@@ -2392,7 +2393,7 @@ class Workplane(object):
         self: T,
         callback: Callable[[CQObject], Shape],
         useLocalCoordinates: bool = False,
-        combine: Union[bool, str] = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -2444,13 +2445,14 @@ class Workplane(object):
                     self._addPendingWire(r)
             results.append(r)
 
-        return self.newObject(results)
+        return self._combineWithBase(results, combine, clean)
 
     def eachpoint(
         self: T,
         callback: Callable[[Location], Shape],
         useLocalCoordinates: bool = False,
-        combine: Union[bool, str] = False,
+        combine: CombineMode = False,
+        clean: bool = True,
     ) -> T:
         """
         Same as each(), except each item on the stack is converted into a point before it
@@ -2461,6 +2463,7 @@ class Workplane(object):
         :param useLocalCoordinates: should points be in local or global coordinates
         :type useLocalCoordinates: boolean
         :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
 
         The resulting object has a point on the stack for each object on the original stack.
@@ -2497,12 +2500,7 @@ class Workplane(object):
             if isinstance(r, Wire) and not r.forConstruction:
                 self._addPendingWire(r)
 
-        if combine:
-            compound = Compound.makeCompound(res)
-            return self._combineWithBase(compound, combine)
-
-        else:
-            return self.newObject(res)
+        return self._combineWithBase(res, combine, clean)
 
     def rect(
         self: T,
@@ -2961,7 +2959,7 @@ class Workplane(object):
         self: T,
         distance: float,
         angleDegrees: float,
-        combine: Union[bool, str] = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -3003,15 +3001,12 @@ class Workplane(object):
 
         r = Compound.makeCompound(shapes).fuse()
 
-        newS = self._combineWithBase(r, combine)
-        if clean:
-            newS = newS.clean()
-        return newS
+        return self._combineWithBase(r, combine, clean)
 
     def extrude(
         self: T,
         until: Union[float, Literal["next", "last"], Face],
-        combine: Union[bool, str] = True,
+        combine: CombineMode = True,
         clean: bool = True,
         both: bool = False,
         taper: Optional[float] = None,
@@ -3041,46 +3036,40 @@ class Workplane(object):
         *  if combine is true, the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
         """
-        if combine == "cut":
-            return self.cutBlind(until, clean, taper)
+
+        # Handle `until` multiple values
+        if isinstance(until, str) and until in ("next", "last") and combine:
+            if until == "next":
+                faceIndex = 0
+            elif until == "last":
+                faceIndex = -1
+
+            r = self._extrude(None, both=both, taper=taper, upToFace=faceIndex)
+
+        elif isinstance(until, Face) and combine:
+            r = self._extrude(None, both=both, taper=taper, upToFace=until)
+
+        elif isinstance(until, (int, float)):
+            r = self._extrude(until, both=both, taper=taper, upToFace=None)
+
+        elif isinstance(until, (str, Face)) and combine is False:
+            raise ValueError(
+                "`combine` can't be set to False when extruding until a face"
+            )
+
         else:
-            # Handle `until` multiple values
-            if isinstance(until, str) and until in ("next", "last") and combine:
-                if until == "next":
-                    faceIndex = 0
-                elif until == "last":
-                    faceIndex = -1
+            raise ValueError(
+                f"Do not know how to handle until argument of type {type(until)}"
+            )
 
-                r = self._extrude(None, both=both, taper=taper, upToFace=faceIndex)
-
-            elif isinstance(until, Face) and combine:
-                r = self._extrude(None, both=both, taper=taper, upToFace=until)
-
-            elif isinstance(until, (int, float)):
-                r = self._extrude(until, both=both, taper=taper, upToFace=None)
-
-            elif isinstance(until, (str, Face)) and combine is False:
-                raise ValueError(
-                    "`combine` can't be set to False when extruding until a face"
-                )
-
-            else:
-                raise ValueError(
-                    f"Do not know how to handle until argument of type {type(until)}"
-                )
-
-            newS = self._combineWithBase(r, combine)
-
-            if clean:
-                newS = newS.clean()
-            return newS
+        return self._combineWithBase(r, combine, clean)
 
     def revolve(
         self: T,
         angleDegrees: float = 360.0,
         axisStart: Optional[VectorLike] = None,
         axisEnd: Optional[VectorLike] = None,
-        combine: Union[bool, str] = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -3137,10 +3126,8 @@ class Workplane(object):
 
         # returns a Solid (or a compound if there were multiple)
         r = self._revolve(angleDegrees, axisStart, axisEnd)
-        newS = self._combineWithBase(r, combine)
-        if clean:
-            newS = newS.clean()
-        return newS
+
+        return self._combineWithBase(r, combine, clean)
 
     def sweep(
         self: T,
@@ -3149,7 +3136,7 @@ class Workplane(object):
         sweepAlongWires: Optional[bool] = None,
         makeSolid: bool = True,
         isFrenet: bool = False,
-        combine: Union[bool, str] = True,
+        combine: CombineMode = True,
         clean: bool = True,
         transition: Literal["right", "round", "transformed"] = "right",
         normal: Optional[VectorLike] = None,
@@ -3189,28 +3176,39 @@ class Workplane(object):
             auxSpine,
         )  # returns a Solid (or a compound if there were multiple)
 
-        newS: T
-        newS = self._combineWithBase(r, combine)
-        if clean:
-            newS = newS.clean()
-        return newS
+        return self._combineWithBase(r, combine, clean)
 
     def _combineWithBase(
-        self: T, obj: Shape, combine_mode: Union[bool, str] = True
+        self: T,
+        obj: Union[Shape, Iterable[Shape]],
+        mode: CombineMode = True,
+        clean: bool = False,
     ) -> T:
         """
         Combines the provided object with the base solid, if one can be found.
         :param obj: The object to be combined with the context solid
-        :param combine_mode: The mode to combine with the base solid (True, False or "cut")
+        :param mode: The mode to combine with the base solid (True, False or "cut")
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-        if isinstance(combine_mode, str) and combine_mode == "cut":
-            newS = self._cutFromBase(obj)
-        elif isinstance(combine_mode, bool) and combine_mode:
-            newS = self._fuseWithBase(obj)
+
+        if mode:
+            # since we are going to do something convert the iterable if needed
+            if not isinstance(obj, Shape):
+                obj = Compound.makeCompound(obj)
+
+            # dispatch on the mode
+            if mode in ("cut", "s"):
+                newS = self._cutFromBase(obj)
+            elif mode in (True, "a"):
+                newS = self._fuseWithBase(obj)
+
         else:
-            newS = self.newObject([obj])
+            # do not combine branch
+            newS = self.newObject(obj if not isinstance(obj, Shape) else [obj])
+
+        if clean:
+            newS = newS.clean()
 
         return newS
 
@@ -3511,7 +3509,9 @@ class Workplane(object):
 
         return self.newObject([s])
 
-    def loft(self: T, ruled: bool = False, combine: Union[bool, str] = True) -> T:
+    def loft(
+        self: T, ruled: bool = False, combine: CombineMode = True, clean: bool = True
+    ) -> T:
         """
         Make a lofted solid, through the set of wires.
         :return: a Workplane object containing the created loft
@@ -3527,7 +3527,7 @@ class Workplane(object):
 
         r: Shape = Solid.makeLoft(wiresToLoft, ruled)
 
-        newS = self._combineWithBase(r, combine)
+        newS = self._combineWithBase(r, combine, clean)
 
         return newS
 
@@ -4137,8 +4137,8 @@ class Workplane(object):
         fontsize: float,
         distance: float,
         cut: bool = True,
-        combine: Union[bool, str] = False,
-        clean: Union[bool, str] = True,
+        combine: CombineMode = False,
+        clean: bool = True,
         font: str = "Arial",
         fontPath: Optional[str] = None,
         kind: Literal["regular", "bold", "italic"] = "regular",
@@ -4201,11 +4201,7 @@ class Workplane(object):
         if cut:
             combine = "cut"
 
-        newS = self._combineWithBase(r, combine)
-
-        if clean:
-            newS = newS.clean()
-        return newS
+        return self._combineWithBase(r, combine, clean)
 
     def section(self: T, height: float = 0.0) -> T:
         """
