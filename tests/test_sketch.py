@@ -449,8 +449,8 @@ def test_constraint_solver():
 
     assert s2._faces.isValid()
 
-    s2._tags["s1"][0].Length() == approx(0.5)
-    s2._tags["a1"][0].Length() == approx(1.0)
+    assert s2._tags["s1"][0].Length() == approx(0.5)
+    assert s2._tags["a1"][0].Length() == approx(1.0)
 
     s3 = (
         Sketch()
