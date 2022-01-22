@@ -3037,8 +3037,12 @@ class Workplane(object):
            and the resulting solid becomes the new context solid.
         """
 
+        # If subtractive mode is requested, use cutBlind
+        if combine in ("cut", "s"):
+            return self.cutBlind(until, clean, taper)
+
         # Handle `until` multiple values
-        if isinstance(until, str) and until in ("next", "last") and combine:
+        elif until in ("next", "last") and combine in (True, "a"):
             if until == "next":
                 faceIndex = 0
             elif until == "last":
