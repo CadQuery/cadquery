@@ -3187,7 +3187,7 @@ class Workplane(object):
         """
         Combines the provided object with the base solid, if one can be found.
         :param obj: The object to be combined with the context solid
-        :param mode: The mode to combine with the base solid (True, False or "cut")
+        :param mode: The mode to combine with the base solid (True, False, "cut", "a" or "s")
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
