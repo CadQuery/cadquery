@@ -966,10 +966,12 @@ class Shape(object):
         return r
 
     def __hash__(self) -> int:
+
         return self.hashCode()
 
     def __eq__(self, other) -> bool:
-        return self.isSame(other)
+
+        return self.isSame(other) if isinstance(other, Shape) else False
 
     def _bool_op(
         self,
