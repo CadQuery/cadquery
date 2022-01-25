@@ -2405,7 +2405,7 @@ class Workplane(object):
         :param callBackFunction: the function to call for each item on the current stack.
         :param useLocalCoordinates: should  values be converted from local coordinates first?
         :type useLocalCoordinates: boolean
-        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
 
@@ -2462,7 +2462,7 @@ class Workplane(object):
 
         :param useLocalCoordinates: should points be in local or global coordinates
         :type useLocalCoordinates: boolean
-        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
 
@@ -2976,7 +2976,7 @@ class Workplane(object):
 
         :param distance: the distance to extrude normal to the workplane
         :param angle: angle (in degrees) to rotate through the extrusion
-        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
         """
@@ -3014,19 +3014,16 @@ class Workplane(object):
         """
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
-        :param until: the distance to extrude, normal to the workplane plane
         :param until: The distance to extrude, normal to the workplane plane. When a float is
           passed, the extrusion extends this far and a negative value is in the opposite direction
           to the normal of the plane. The string "next" extrudes until the next face orthogonal to
           the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
-          the extrusion will extend until this face.
-        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+          the extrusion will extend until this face. **Note that the Workplane must contain a Solid for extruding to a given face.**        
+        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
         :param float taper: angle for optional tapered extrusion
         :return: a CQ object with the resulting solid selected.
-
-        extrude always *adds* material to a part.
 
         The returned object is always a CQ object, and depends on whether combine is True, and
         whether a context solid is already defined:
@@ -3085,8 +3082,7 @@ class Workplane(object):
         :type axisStart: tuple, a two tuple
         :param axisEnd: the end point of the axis of rotation
         :type axisEnd: tuple, a two tuple
-        :param combine: True to combine the resulting solid with parent solids if found.
-        :type combine: boolean or string, defines how the result of the operation is combined with the base solid
+        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
 
@@ -3151,7 +3147,7 @@ class Workplane(object):
 
         :param path: A wire along which the pending wires will be swept
         :param boolean multiSection: False to create multiple swept from wires on the chain along path. True to create only one solid swept along path with shape following the list of wires on the chain
-        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param transition: handling of profile orientation at C1 path discontinuities. Possible values are {'transformed','round', 'right'} (default: 'right').
         :param normal: optional fixed normal for extrusion
@@ -3521,7 +3517,13 @@ class Workplane(object):
     ) -> T:
         """
         Make a lofted solid, through the set of wires.
+
+        :param boolean ruled: When set to `True` connects each section linearly and without continuity
+        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
+        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+
         :return: a Workplane object containing the created loft
+        
         """
 
         if self.ctx.pendingWires:
@@ -4160,7 +4162,7 @@ class Workplane(object):
         :param distance: the distance to extrude or cut, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
         :param cut: True to cut the resulting solid from the parent solids if found
-        :param boolean or string combine: True to combine the resulting solid with parent solids if found, "cut" to remove the resulting solid from the parent solids if found.
+        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param clean: call :py:meth:`clean` afterwards to have a clean shape
         :param font: font name
         :param fontPath: path to font file
