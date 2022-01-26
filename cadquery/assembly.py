@@ -10,7 +10,7 @@ from .occ_impl.assembly import Color
 from .occ_impl.solver import (
     ConstraintSolver,
     ConstraintMarker,
-    Constraint as ConstraintPOD,
+    ConstraintSpec as Constraint,
 )
 from .occ_impl.exporters.assembly import (
     exportAssembly,
@@ -21,9 +21,6 @@ from .occ_impl.exporters.assembly import (
 )
 
 from .selectors import _expression_grammar as _selector_grammar
-from OCP.BRepTools import BRepTools
-from OCP.gp import gp_Pln, gp_Pnt
-from OCP.Precision import Precision
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -65,112 +62,6 @@ def _define_grammar():
 
 
 _grammar = _define_grammar()
-
-
-class Constraint(object):
-    """
-    Geometrical constraint between two shapes of an assembly.
-    """
-
-    objects: Tuple[str, ...]
-    args: Tuple[Shape, ...]
-    sublocs: Tuple[Location, ...]
-    kind: ConstraintKinds
-    param: Any
-
-    def __init__(
-        self,
-        objects: Tuple[str, ...],
-        args: Tuple[Shape, ...],
-        sublocs: Tuple[Location, ...],
-        kind: ConstraintKinds,
-        param: Any = None,
-    ):
-        """
-        Construct a constraint.
-
-        :param objects: object names referenced in the constraint
-        :param args: subshapes (e.g. faces or edges) of the objects
-        :param sublocs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
-        :param kind: constraint kind
-        :param param: optional arbitrary parameter passed to the solver
-        """
-
-        self.objects = objects
-        self.args = args
-        self.sublocs = sublocs
-        self.kind = kind
-        self.param = param
-
-    def _getAxis(self, arg: Shape) -> Vector:
-
-        if isinstance(arg, Face):
-            rv = arg.normalAt()
-        elif isinstance(arg, Edge) and arg.geomType() != "CIRCLE":
-            rv = arg.tangentAt()
-        elif isinstance(arg, Edge) and arg.geomType() == "CIRCLE":
-            rv = arg.normal()
-        else:
-            raise ValueError(f"Cannot construct Axis for {arg}")
-
-        return rv
-
-    def _getPln(self, arg: Shape) -> gp_Pln:
-
-        if isinstance(arg, Face):
-            rv = gp_Pln(self._getPnt(arg), arg.normalAt().toDir())
-        elif isinstance(arg, (Edge, Wire)):
-            normal = arg.normal()
-            origin = arg.Center()
-            plane = Plane(origin, normal=normal)
-            rv = plane.toPln()
-        else:
-            raise ValueError(f"Can not construct a plane for {arg}.")
-
-        return rv
-
-    def _getPnt(self, arg: Shape) -> gp_Pnt:
-
-        # check for infinite face
-        if isinstance(arg, Face) and any(
-            Precision.IsInfinite_s(x) for x in BRepTools.UVBounds_s(arg.wrapped)
-        ):
-            # fall back to gp_Pln center
-            pln = arg.toPln()
-            center = Vector(pln.Location())
-        else:
-            center = arg.Center()
-
-        return center.toPnt()
-
-    def toPOD(self) -> ConstraintPOD:
-        """
-        Convert the constraint to a representation used by the solver.
-        """
-
-        rv: List[Tuple[ConstraintMarker, ...]] = []
-
-        for idx, (arg, loc) in enumerate(zip(self.args, self.sublocs)):
-
-            arg = arg.located(loc * arg.location())
-
-            if self.kind == "Axis":
-                rv.append((self._getAxis(arg).toDir(),))
-            elif self.kind == "Point":
-                rv.append((self._getPnt(arg),))
-            elif self.kind == "Plane":
-                rv.append((self._getAxis(arg).toDir(), self._getPnt(arg)))
-            elif self.kind == "PointInPlane":
-                if idx == 0:
-                    rv.append((self._getPnt(arg),))
-                else:
-                    rv.append((self._getPln(arg),))
-            else:
-                raise ValueError(f"Unknown constraint kind {self.kind}")
-
-        rv.append(self.param)
-
-        return cast(ConstraintPOD, tuple(rv))
 
 
 class Assembly(object):
