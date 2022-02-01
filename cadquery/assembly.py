@@ -4,12 +4,11 @@ from typing_extensions import Literal
 from uuid import uuid1 as uuid
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound, Face, Edge, Wire
-from .occ_impl.geom import Location, Vector, Plane
+from .occ_impl.shapes import Shape, Compound
+from .occ_impl.geom import Location
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
     ConstraintSolver,
-    ConstraintMarker,
     ConstraintSpec as Constraint,
 )
 from .occ_impl.exporters.assembly import (
@@ -343,7 +342,11 @@ class Assembly(object):
         # construct the constraint mapping
         constraints = []
         for c in self.constraints:
-            constraints.append(((ents[c.objects[0]], ents[c.objects[1]]), c.toPOD()))
+            ixs = tuple(ents[obj] for obj in c.objects)
+            pods = c.toPODs()
+
+            for pod in pods:
+                constraints.append((ixs, pod))
 
         # check if any constraints were specified
         if not constraints:

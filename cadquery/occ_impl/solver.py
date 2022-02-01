@@ -4,16 +4,14 @@ from typing import (
     Union,
     Any,
     Callable,
-    List,
     Optional,
     Dict,
     Literal,
-    cast,
 )
 from nptyping import NDArray as Array
 from math import radians
 
-from numpy import array, eye, zeros, pi
+from numpy import array, eye, pi
 import nlopt
 
 from OCP.gp import gp_Vec, gp_Pln, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
@@ -24,7 +22,7 @@ from .geom import Location, Vector, Plane
 from .shapes import Shape, Face, Edge, Wire
 from ..types import Real
 
-#%% type definitions
+# type definitions
 
 NoneType = type(None)
 
@@ -42,18 +40,12 @@ ConstraintInvariants = {
 }
 
 # translation table for compound constraints {name : (name, ...)}
-CompoundConstraints = {"Plane": ["Point", "Axis"]}
+CompoundConstraints: Dict[ConstraintKind, Tuple[ConstraintKind, ...]] = {
+    "Plane": ("Axis", "Point")
+}
 
 Constraint = Tuple[
-    Tuple[
-        Union[Tuple[ConstraintMarker, ConstraintMarker], Tuple[ConstraintMarker]], ...
-    ],
-    ConstraintKind,
-    Optional[Any],
-]
-
-Constraint = Tuple[
-    Tuple[ConstraintMarker, ...], Tuple[Optional[ConstraintMarker], ...], Optional[Any]
+    Tuple[ConstraintMarker, ...], ConstraintKind, Optional[Any],
 ]
 
 NDOF = 6
@@ -62,7 +54,7 @@ DIFF_EPS = 1e-10
 TOL = 1e-12
 MAXITER = 2000
 
-#%% high-level constraint class - to be used by clients
+# high-level constraint class - to be used by clients
 
 
 class ConstraintSpec(object):
@@ -141,56 +133,55 @@ class ConstraintSpec(object):
 
         return center.toPnt()
 
-    def toPOD(self) -> Constraint:
+    def toPODs(self) -> Tuple[Constraint, ...]:
         """
         Convert the constraint to a representation used by the solver.
+
+        NB: Compound constraints are decomposed into simple ones.
         """
+
+        # apply sublocation
+        args = tuple(
+            arg.located(loc * arg.location())
+            for arg, loc in zip(self.args, self.sublocs)
+        )
+
+        markers: List[Tuple[ConstraintMarker, ...]]
 
         # convert to marker objects
         if self.kind == "Axis":
-            args = (
-                self._getAxis(self.args[0]).toDir(),
-                self._getAxis(self.args[1]).toDir(),
-            )
+            markers = [
+                (self._getAxis(args[0]).toDir(), self._getAxis(args[1]).toDir(),)
+            ]
 
         elif self.kind == "Point":
-            args = (self._getPnt(self.args[0]), self._getPnt(self.args[1]))
+            markers = [(self._getPnt(args[0]), self._getPnt(args[1]))]
 
         elif self.kind == "Plane":
-            args = (
-                (
-                    self._getAxis(self.args[0]).toDir(),
-                    self._getAxis(self.args[1]).toDir(),
-                ),
-                (self._getPnt(self.args[0]), self._getPnt(self.args[1])),
-            )
+            markers = [
+                (self._getAxis(args[0]).toDir(), self._getAxis(args[1]).toDir(),),
+                (self._getPnt(args[0]), self._getPnt(args[1])),
+            ]
 
         elif self.kind == "PointInPlane":
-            args = (self._getPnt(self.args[0]), self._getPln(self.args[1]))
+            markers = [(self._getPnt(args[0]), self._getPln(args[1]))]
 
         else:
             raise ValueError(f"Unknown constraint kind {self.kind}")
 
-        # apply sublocation
-        for ix, loc in enumerate(self.sublocs):
-            args[ix] = args[ix].located(loc * args[ix].location())
+        # specify kinds of the simple constraint
+        if self.kind in CompoundConstraints:
+            kinds = CompoundConstraints[self.kind]
+            params = (self.param,) * len(kinds)
+        else:
+            kinds = (self.kind,)
+            params = (self.param,)
 
-        return (args, self.kind, self.param)
-
-    def toSimplePOD(self, c: Constraint) -> List[Constraint]:
-        """
-        Convert a complex constraint into listo of simple ones
-        """
-
-        kind = c[1]
-
-        if kind not in CompoundConstraints:
-            raise ValueError(f"{kind} is not a compound constraint")
-
-        return [((m,), k, a) for m, k, a in zip(c[0], CompoundConstraints[kind], c[1])]
+        # builds the tuple and return
+        return tuple((m, k, p) for m, k, p in zip(markers, kinds, params))
 
 
-#%% Cost functions of simple constraints
+# Cost functions of simple constraints
 
 
 def point_cost(
@@ -228,13 +219,13 @@ costs: Dict[str, Callable[..., float]] = dict(
     Point=point_cost, Axis=axis_cost, PointInPlane=point_in_plane_cost
 )
 
-#%% Actual solver class
+# Actual solver class
 
 
 class ConstraintSolver(object):
 
     entities: List[DOF6]
-    constraints: List[Tuple[Tuple[int, Optional[int]], Constraint]]
+    constraints: List[Tuple[Tuple[int, ...], Constraint]]
     locked: List[int]
     ne: int
     nc: int
@@ -242,7 +233,7 @@ class ConstraintSolver(object):
     def __init__(
         self,
         entities: List[Location],
-        constraints: List[Tuple[Tuple[int, int], Constraint]],
+        constraints: List[Tuple[Tuple[int, ...], Constraint]],
         locked: List[int] = [],
     ):
 
@@ -291,13 +282,15 @@ class ConstraintSolver(object):
         Callable[[Array[(Any,), float]], float],
         Callable[[Array[(Any,), float], Array[(Any,), float]], None],
     ]:
+
+        constraints = self.constraints
+        ne = self.ne
+        delta = DIFF_EPS * eye(NDOF)
+
         def f(x):
             """
             Function to be minimized
             """
-
-            constraints = self.constraints
-            ne = self.ne
 
             rv = 0
 
@@ -305,28 +298,17 @@ class ConstraintSolver(object):
                 self._build_transform(*x[NDOF * i : NDOF * (i + 1)]) for i in range(ne)
             ]
 
-            for i, ((k1, k2), (ms1, ms2, d)) in enumerate(constraints):
-                t1 = transforms[k1] if k1 not in self.locked else gp_Trsf()
-                t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
+            for ks, (ms, kind, params) in constraints:
+                ts = tuple(
+                    transforms[k] if k not in self.locked else gp_Trsf() for k in ks
+                )
+                cost = costs[kind]
 
-                for m1, m2 in zip(ms1, ms2):
-                    if isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pnt):
-                        rv += point_cost(m1, m2, t1, t2, d) ** 2
-                    elif isinstance(m1, gp_Dir):
-                        rv += axis_cost(m1, m2, t1, t2, d) ** 2
-                    elif isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pln):
-                        rv += point_in_plane_cost(m1, m2, t1, t2, d) ** 2
-                    else:
-                        raise NotImplementedError(f"{m1,m2}")
+                rv += cost(*ms, *ts, params) ** 2
 
             return rv
 
         def grad(x, rv):
-
-            constraints = self.constraints
-            ne = self.ne
-
-            delta = DIFF_EPS * eye(NDOF)
 
             rv[:] = 0
 
@@ -340,60 +322,25 @@ class ConstraintSolver(object):
                 for j in range(NDOF)
             ]
 
-            for i, ((k1, k2), (ms1, ms2, d)) in enumerate(constraints):
-                t1 = transforms[k1] if k1 not in self.locked else gp_Trsf()
-                t2 = transforms[k2] if k2 not in self.locked else gp_Trsf()
+            for ks, (ms, kind, params) in constraints:
+                ts = tuple(
+                    transforms[k] if k not in self.locked else gp_Trsf() for k in ks
+                )
+                cost = costs[kind]
 
-                for m1, m2 in zip(ms1, ms2):
-                    if isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pnt):
-                        tmp = point_cost(m1, m2, t1, t2, d)
+                tmp_0 = cost(*ms, *ts, params)
 
-                        for j in range(NDOF):
+                for ix, k in enumerate(ks):
+                    if k in self.locked:
+                        continue
 
-                            t1j = transforms_delta[k1 * NDOF + j]
-                            t2j = transforms_delta[k2 * NDOF + j]
+                    for j in range(NDOF):
+                        tkj = transforms_delta[k * NDOF + j]
 
-                            if k1 not in self.locked:
-                                tmp1 = point_cost(m1, m2, t1j, t2, d)
-                                rv[k1 * NDOF + j] += 2 * tmp * (tmp1 - tmp) / DIFF_EPS
+                        ts_kj = ts[:ix] + (tkj,) + ts[ix + 1 :]
+                        tmp_kj = cost(*ms, *ts_kj, params)
 
-                            if k2 not in self.locked:
-                                tmp2 = point_cost(m1, m2, t1, t2j, d)
-                                rv[k2 * NDOF + j] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
-
-                    elif isinstance(m1, gp_Dir):
-                        tmp = axis_cost(m1, m2, t1, t2, d)
-
-                        for j in range(NDOF):
-
-                            t1j = transforms_delta[k1 * NDOF + j]
-                            t2j = transforms_delta[k2 * NDOF + j]
-
-                            if k1 not in self.locked:
-                                tmp1 = axis_cost(m1, m2, t1j, t2, d)
-                                rv[k1 * NDOF + j] += 2 * tmp * (tmp1 - tmp) / DIFF_EPS
-
-                            if k2 not in self.locked:
-                                tmp2 = axis_cost(m1, m2, t1, t2j, d)
-                                rv[k2 * NDOF + j] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
-
-                    elif isinstance(m1, gp_Pnt) and isinstance(m2, gp_Pln):
-                        tmp = point_in_plane_cost(m1, m2, t1, t2, d)
-
-                        for j in range(NDOF):
-
-                            t1j = transforms_delta[k1 * NDOF + j]
-                            t2j = transforms_delta[k2 * NDOF + j]
-
-                            if k1 not in self.locked:
-                                tmp1 = point_in_plane_cost(m1, m2, t1j, t2, d)
-                                rv[k1 * NDOF + j] += 2 * tmp * (tmp1 - tmp) / DIFF_EPS
-
-                            if k2 not in self.locked:
-                                tmp2 = point_in_plane_cost(m1, m2, t1, t2j, d)
-                                rv[k2 * NDOF + j] += 2 * tmp * (tmp2 - tmp) / DIFF_EPS
-                    else:
-                        raise NotImplementedError(f"{m1,m2}")
+                        rv[k * NDOF + j] += 2 * tmp_0 * (tmp_kj - tmp_0) / DIFF_EPS
 
         return f, grad
 
