@@ -7,14 +7,16 @@ from typing import (
     Optional,
     Dict,
     Literal,
+    cast as tcast,
+    Type,
 )
 from nptyping import NDArray as Array
 from math import radians
-
+from typish import instance_of, get_type
 from numpy import array, eye, pi
 import nlopt
 
-from OCP.gp import gp_Vec, gp_Pln, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion
+from OCP.gp import gp_Vec, gp_Pln, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion, gp_XYZ
 from OCP.BRepTools import BRepTools
 from OCP.Precision import Precision
 
@@ -29,14 +31,14 @@ NoneType = type(None)
 DOF6 = Tuple[float, float, float, float, float, float]
 ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt]
 
-ConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane"]
+ConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane", "FixedPoint"]
 
 # (arity, marker types, param type, conversion func)
 ConstraintInvariants = {
     "Point": (2, (gp_Pnt, gp_Pnt), Real, None),
     "Axis": (2, (gp_Dir, gp_Dir), Real, radians),
     "PointInPlane": (2, (gp_Pnt, gp_Pln), Real, radians),
-    "Plane": ["Point", "Axis"],
+    "FixedPoint": (1, (gp_Pnt,), Tuple[Real, Real, Real], None),
 }
 
 # translation table for compound constraints {name : (name, ...)}
@@ -86,11 +88,50 @@ class ConstraintSpec(object):
         :param param: optional arbitrary parameter passed to the solver
         """
 
+        # validate
+        if not instance_of(kind, ConstraintKind):
+            raise ValueError(f"Unknown constraint {kind}.")
+
+        kinds = CompoundConstraints.get(kind)
+        for k in kinds if kinds else (kind,):
+            self._validate(args, k, param)
+
+        # store
         self.objects = objects
         self.args = args
         self.sublocs = sublocs
         self.kind = kind
         self.param = param
+
+    def _validate(self, args: Tuple[Shape, ...], kind: ConstraintKind, param: Any):
+
+        arity, marker_types, param_type, converter = ConstraintInvariants[kind]
+
+        # check arity
+        if arity != len(args):
+            raise ValueError(
+                f"Invalid number of entities for constraint {kind}. Provided {len(args)}, required {arity}."
+            )
+
+        # check arguments
+        arg_check: Dict[Type[ConstraintMarker], Callable[[Shape], Any]] = {
+            gp_Pnt: self._getPnt,
+            gp_Dir: self._getAxis,
+            gp_Pln: self._getPln,
+        }
+
+        for a, t in zip(args, tcast(Tuple[Type[ConstraintMarker], ...], marker_types)):
+            arg_check[t](a)
+            try:
+                arg_check[t](a)
+            except ValueError:
+                raise ValueError(f"Unsupported entitiy {a} for constraint {kind}.")
+
+        # check parameter
+        if not instance_of(param, param_type) and param is not None:
+            raise ValueError(
+                f"Unsupported argument types {get_type(param)}, required {param_type}."
+            )
 
     def _getAxis(self, arg: Shape) -> Vector:
 
@@ -166,6 +207,9 @@ class ConstraintSpec(object):
         elif self.kind == "PointInPlane":
             markers = [(self._getPnt(args[0]), self._getPln(args[1]))]
 
+        elif self.kind == "FixedPoint":
+            markers = [(self._getPnt(args[0]),)]
+
         else:
             raise ValueError(f"Unknown constraint kind {self.kind}")
 
@@ -214,9 +258,17 @@ def point_in_plane_cost(
     return m2_located.Distance(m1.Transformed(t1))
 
 
+def fixed_point_cost(m1: gp_Pnt, t1: gp_Trsf, val: Tuple[float, float, float]):
+
+    return (m1.Transformed(t1).XYZ() - gp_XYZ(*val)).Modulus()
+
+
 # dictionary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
-    Point=point_cost, Axis=axis_cost, PointInPlane=point_in_plane_cost
+    Point=point_cost,
+    Axis=axis_cost,
+    PointInPlane=point_in_plane_cost,
+    FixedPoint=fixed_point_cost,
 )
 
 # Actual solver class
