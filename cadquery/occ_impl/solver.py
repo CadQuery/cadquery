@@ -31,6 +31,8 @@ NoneType = type(None)
 DOF6 = Tuple[float, float, float, float, float, float]
 ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt]
 
+UnaryConstraintKind = Literal["FixedPoint"]
+BinaryConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane"]
 ConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane", "FixedPoint"]
 
 # (arity, marker types, param type, conversion func)
@@ -197,6 +199,9 @@ class ConstraintSpec(object):
 
         elif self.kind == "Point":
             markers = [(self._getPnt(args[0]), self._getPnt(args[1]))]
+
+        elif self.kind == "FixedPoint":
+            markers = [(self._getPnt(args[0]),)]
 
         elif self.kind == "Plane":
             markers = [

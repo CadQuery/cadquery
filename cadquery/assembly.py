@@ -1,6 +1,7 @@
 from functools import reduce
 from typing import Union, Optional, List, Dict, Any, overload, Tuple, Iterator, cast
 from typing_extensions import Literal
+from typish import instance_of
 from uuid import uuid1 as uuid
 
 from .cq import Workplane
@@ -10,6 +11,8 @@ from .occ_impl.assembly import Color
 from .occ_impl.solver import (
     ConstraintSolver,
     ConstraintSpec as Constraint,
+    UnaryConstraintKind,
+    BinaryConstraintKind,
 )
 from .occ_impl.exporters.assembly import (
     exportAssembly,
@@ -281,6 +284,12 @@ class Assembly(object):
 
     @overload
     def constrain(
+        self, q1: str, kind: ConstraintKinds, param: Any = None
+    ) -> "Assembly":
+        ...
+
+    @overload
+    def constrain(
         self,
         id1: str,
         s1: Shape,
@@ -291,12 +300,25 @@ class Assembly(object):
     ) -> "Assembly":
         ...
 
+    @overload
+    def constrain(
+        self, id1: str, s1: Shape, kind: ConstraintKinds, param: Any = None,
+    ) -> "Assembly":
+        ...
+
     def constrain(self, *args, param=None):
         """
         Define a new constraint.
         """
 
-        if len(args) == 3:
+        # dispatch on arguments
+        if len(args) == 2:
+            q1, kind = args
+            id1, s1 = self._query(q1)
+        elif len(args) == 3 and instance_of(args[1], UnaryConstraintKind):
+            q1, kind, param = args
+            id1, s1 = self._query(q1)
+        elif len(args) == 3:
             q1, q2, kind = args
             id1, s1 = self._query(q1)
             id2, s2 = self._query(q2)
@@ -311,11 +333,18 @@ class Assembly(object):
         else:
             raise ValueError(f"Incompatible arguments: {args}")
 
-        loc1, id1_top = self._subloc(id1)
-        loc2, id2_top = self._subloc(id2)
-        self.constraints.append(
-            Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
-        )
+        # handle unary and binary constraints
+        if instance_of(kind, UnaryConstraintKind):
+            loc1, id1_top = self._subloc(id1)
+            c = Constraint((id1_top,), (s1,), (loc1,), kind, param)
+        elif instance_of(kind, BinaryConstraintKind):
+            loc1, id1_top = self._subloc(id1)
+            loc2, id2_top = self._subloc(id2)
+            c = Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
+        else:
+            raise ValueError(f"Unknonw constraint: {kind}")
+
+        self.constraints.append(c)
 
         return self
 
