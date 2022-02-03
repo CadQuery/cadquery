@@ -327,7 +327,7 @@ def test_constrain(simple_assy, nested_assy):
 def test_constrain_with_tags(nested_assy):
 
     nested_assy.add(None, name="dummy")
-    nested_assy.constrain("TOP?top_face", "SECOND/BOTTOM", "Plane")
+    nested_assy.constrain("TOP?top_face", "SECOND/BOTTOM", "Point")
 
     assert len(nested_assy.constraints) == 1
 
@@ -445,9 +445,8 @@ def test_constraint_getPln():
         return cq.Constraint(ids, (shape0, shape0), sublocs, "PointInPlane", 0)
 
     def fail_this(shape0):
-        c0 = make_constraint(shape0)
         with pytest.raises(ValueError):
-            c0._getPln(c0.args[0])
+            make_constraint(shape0)
 
     def resulting_pln(shape0):
         c0 = make_constraint(shape0)
