@@ -29,18 +29,22 @@ from ..types import Real
 NoneType = type(None)
 
 DOF6 = Tuple[float, float, float, float, float, float]
-ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt]
+ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt, None]
 
-UnaryConstraintKind = Literal["FixedPoint"]
+UnaryConstraintKind = Literal["Fixed", "FixedPoint", "FixedAxis"]
 BinaryConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane"]
-ConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane", "FixedPoint"]
+ConstraintKind = Literal[
+    "Plane", "Point", "Axis", "PointInPlane", "Fixed", "FixedPoint", "FixedAxis"
+]
 
 # (arity, marker types, param type, conversion func)
 ConstraintInvariants = {
     "Point": (2, (gp_Pnt, gp_Pnt), Real, None),
     "Axis": (2, (gp_Dir, gp_Dir), Real, radians),
     "PointInPlane": (2, (gp_Pnt, gp_Pln), Real, radians),
+    "Fixed": (1, (None,), Type[None], None),
     "FixedPoint": (1, (gp_Pnt,), Tuple[Real, Real, Real], None),
+    "FixedAxis": (1, (gp_Dir,), Tuple[Real, Real, Real], None),
 }
 
 # translation table for compound constraints {name : (name, ...)}
@@ -116,14 +120,14 @@ class ConstraintSpec(object):
             )
 
         # check arguments
-        arg_check: Dict[Type[ConstraintMarker], Callable[[Shape], Any]] = {
+        arg_check: Dict[Any, Callable[[Shape], Any]] = {
             gp_Pnt: self._getPnt,
             gp_Dir: self._getAxis,
             gp_Pln: self._getPln,
+            None: lambda x: True,  # dummy check for None marker
         }
 
         for a, t in zip(args, tcast(Tuple[Type[ConstraintMarker], ...], marker_types)):
-            arg_check[t](a)
             try:
                 arg_check[t](a)
             except ValueError:
@@ -135,7 +139,7 @@ class ConstraintSpec(object):
                 f"Unsupported argument types {get_type(param)}, required {param_type}."
             )
 
-    def _getAxis(self, arg: Shape) -> Vector:
+    def _getAxis(self, arg: Shape) -> gp_Dir:
 
         if isinstance(arg, Face):
             rv = arg.normalAt()
@@ -146,7 +150,7 @@ class ConstraintSpec(object):
         else:
             raise ValueError(f"Cannot construct Axis for {arg}")
 
-        return rv
+        return rv.toDir()
 
     def _getPln(self, arg: Shape) -> gp_Pln:
 
@@ -193,9 +197,7 @@ class ConstraintSpec(object):
 
         # convert to marker objects
         if self.kind == "Axis":
-            markers = [
-                (self._getAxis(args[0]).toDir(), self._getAxis(args[1]).toDir(),)
-            ]
+            markers = [(self._getAxis(args[0]), self._getAxis(args[1]),)]
 
         elif self.kind == "Point":
             markers = [(self._getPnt(args[0]), self._getPnt(args[1]))]
@@ -205,15 +207,21 @@ class ConstraintSpec(object):
 
         elif self.kind == "Plane":
             markers = [
-                (self._getAxis(args[0]).toDir(), self._getAxis(args[1]).toDir(),),
+                (self._getAxis(args[0]), self._getAxis(args[1]),),
                 (self._getPnt(args[0]), self._getPnt(args[1])),
             ]
 
         elif self.kind == "PointInPlane":
             markers = [(self._getPnt(args[0]), self._getPln(args[1]))]
 
+        elif self.kind == "Fixed":
+            markers = [(None,)]
+
         elif self.kind == "FixedPoint":
             markers = [(self._getPnt(args[0]),)]
+
+        elif self.kind == "FixedAxis":
+            markers = [(self._getAxis(args[0]),)]
 
         else:
             raise ValueError(f"Unknown constraint kind {self.kind}")
@@ -263,9 +271,19 @@ def point_in_plane_cost(
     return m2_located.Distance(m1.Transformed(t1))
 
 
+def fixed_cost(m1: Type[None], t1: gp_Trsf, val: Optional[Type[None]] = None):
+
+    return 0
+
+
 def fixed_point_cost(m1: gp_Pnt, t1: gp_Trsf, val: Tuple[float, float, float]):
 
     return (m1.Transformed(t1).XYZ() - gp_XYZ(*val)).Modulus()
+
+
+def fixed_axis_cost(m1: gp_Dir, t1: gp_Trsf, val: Tuple[float, float, float]):
+
+    return DIR_SCALING * (m1.Transformed(t1).Angle(gp_Dir(*val)))
 
 
 # dictionary of individual constraint cost functions
@@ -273,7 +291,9 @@ costs: Dict[str, Callable[..., float]] = dict(
     Point=point_cost,
     Axis=axis_cost,
     PointInPlane=point_in_plane_cost,
+    Fixed=fixed_cost,
     FixedPoint=fixed_point_cost,
+    FixedAxis=fixed_axis_cost,
 )
 
 # Actual solver class
