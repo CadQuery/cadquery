@@ -131,7 +131,7 @@ class ConstraintSpec(object):
             try:
                 arg_check[t](a)
             except ValueError:
-                raise ValueError(f"Unsupported entitiy {a} for constraint {kind}.")
+                raise ValueError(f"Unsupported entity {a} for constraint {kind}.")
 
         # check parameter
         if not instance_of(param, param_type) and param is not None:
