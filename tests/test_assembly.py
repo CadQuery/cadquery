@@ -622,3 +622,12 @@ def test_unary_constraints(simple_assy2):
     assert w.solids(">Z").val().Center().Length == pytest.approx(0)
     assert w.solids("<Z").val().Center().z == pytest.approx(-3)
     assert w.solids("<Z").edges(">Z").size() == 1
+
+
+def test_validation(simple_assy2):
+
+    with pytest.raises(ValueError):
+        simple_assy2.constrain("b1", "Fixed?")
+
+    with pytest.raises(ValueError):
+        cq.assembly.Constraint((), (), (), "Fixed?")
