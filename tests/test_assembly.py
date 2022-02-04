@@ -106,6 +106,19 @@ def metadata_assy():
     return assy
 
 
+@pytest.fixture
+def simple_assy2():
+
+    b1 = cq.Workplane().box(1, 1, 1)
+    b2 = cq.Workplane().box(2, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b1, name="b1")
+    assy.add(b2, loc=cq.Location(cq.Vector(0, 0, 4)), name="b2")
+
+    return assy
+
+
 def test_metadata(metadata_assy):
     """Verify the metadata is present in both the base and sub assemblies"""
     assert metadata_assy.metadata["b1"] == "base-data"
@@ -592,3 +605,20 @@ def test_infinite_face_constraint_Plane(kind):
     )
     assy.solve()
     assert solve_result_check(assy._solve_result)
+
+
+def test_unary_constraints(simple_assy2):
+
+    assy = simple_assy2
+
+    assy.constrain("b1", "Fixed")
+    assy.constrain("b2", "FixedPoint", (0, 0, -3))
+    assy.constrain("b2@faces@>Z", "FixedAxis", (0, 1, 1))
+
+    assy.solve()
+
+    w = cq.Workplane().add(assy.toCompound())
+
+    assert w.solids(">Z").val().Center().Length == pytest.approx(0)
+    assert w.solids("<Z").val().Center().z == pytest.approx(-3)
+    assert w.solids("<Z").edges(">Z").size() == 1
