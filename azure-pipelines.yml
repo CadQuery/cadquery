@@ -26,7 +26,7 @@ jobs:
 - ${{ each minor in parameters.minor }}:
   - template: conda-build.yml@templates
     parameters:
-      name: Linux_3_${{minor}}
+      name: Linux
       vmImage: 'ubuntu-18.04'
       py_maj: 3
       py_min: ${{minor}}
@@ -34,7 +34,7 @@ jobs:
 
   - template: conda-build.yml@templates
     parameters:
-      name: macOS_3_${{minor}}
+      name: macOS
       vmImage: 'macOS-10.15'
       py_maj: 3
       py_min: ${{minor}}
@@ -42,7 +42,7 @@ jobs:
 
   - template: conda-build.yml@templates
     parameters:
-      name: Windows_3_${{minor}}
+      name: Windows
       vmImage: 'vs2017-win2016'
       py_maj: 3
       py_min: ${{minor}}
