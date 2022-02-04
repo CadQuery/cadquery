@@ -353,18 +353,22 @@ class Assembly(object):
         Solve the constraints.
         """
 
-        # get all entities and number them
+        # Get all entities and number them. First entity is marked as locked
         ents = {}
 
         i = 0
-        lock_ix = 0
+        locked = []
         for c in self.constraints:
             for name in c.objects:
                 if name not in ents:
                     ents[name] = i
-                    if name == self.name:
-                        lock_ix = i
+                    if c.kind == "Fixed" or name == self.name:
+                        locked.append(i)
                     i += 1
+
+        # Lock the first occuring entity if needed.
+        if not locked:
+            locked.append(0)
 
         locs = [self.objects[n].loc for n in ents]
 
@@ -382,7 +386,7 @@ class Assembly(object):
             raise ValueError("At least one constraint required")
 
         # instantiate the solver
-        solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
+        solver = ConstraintSolver(locs, constraints, locked=locked)
 
         # solve
         locs_new, self._solve_result = solver.solve()
