@@ -1111,7 +1111,7 @@ class Workplane(object):
             endPt = startPt + endVec
             return obj.rotate(startPt, endPt, angleDegrees)
 
-        return self.each(_rot, False)
+        return self.each(_rot, False, False)
 
     def rotate(
         self: T,
