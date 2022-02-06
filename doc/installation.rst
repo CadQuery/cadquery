@@ -5,7 +5,7 @@ Installing CadQuery
 
 CadQuery 2 is based on
 `OCP <https://github.com/CadQuery/OCP>`_,
-which is a set of Python bindings for the open-source ` OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
+which is a set of Python bindings for the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
 
 Conda
 ----------------------------------------------
