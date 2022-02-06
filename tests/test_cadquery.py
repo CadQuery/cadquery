@@ -305,6 +305,13 @@ class TestCadQuery(BaseTest):
         self.assertEqual(-0.5, endPoint[1])
         self.assertEqual(2.5, endPoint[2])
 
+    def testRotateAboutCenter(self):
+        r = Workplane().box(1, 1, 1).rotateAboutCenter((1, 0, 0), 20)
+        assert len(r.edges("|X").vals()) == 4
+        assert r.faces(">X").vertices("<Y").val().Center().toTuple() == approx(
+            (0.5, -0.6408563820557885, 0.2988362387301199)
+        )
+
     def testPlaneRotateZNormal(self):
         """
         Rotation of a plane in the Z direction should never alter its normal.
