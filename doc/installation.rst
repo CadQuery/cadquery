@@ -21,7 +21,7 @@ In principle any conda distrubtion will work, but it is probably best to install
 On Windows one can install locally as follows::
 
         :: Install
-        curl.exe -o miniforge.exe https://superuser.com
+        curl -L -o miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
         start /wait "" miniforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegistry=1 /NoScripts=1 /S /D=%USERPROFILE%\Miniforge3
 
         :: Activate
