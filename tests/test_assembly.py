@@ -631,3 +631,22 @@ def test_validation(simple_assy2):
 
     with pytest.raises(ValueError):
         cq.assembly.Constraint((), (), (), "Fixed?")
+
+
+def test_point_on_line(simple_assy2):
+
+    assy = simple_assy2
+
+    assy.constrain("b1", "Fixed")
+    assy.constrain("b2@faces@>Z", "FixedAxis", (0, 2, 1))
+    assy.constrain("b2@faces@>X", "FixedAxis", (1, 0, 0))
+    assy.constrain("b2@faces@>X", "b1@edges@>>Z and >>Y", "PointOnLine")
+
+    assy = assy.solve()
+
+    w = cq.Workplane().add(assy.toCompound())
+
+    assert w.solids("<Z").val().Center().Length == pytest.approx(0)
+    assert w.solids(">Z").val().Center().z == pytest.approx(0.5)
+    assert w.solids(">Z").val().Center().y == pytest.approx(0.5)
+    assert w.solids(">Z").val().Center().x == pytest.approx(0.0)
