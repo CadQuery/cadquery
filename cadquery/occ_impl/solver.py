@@ -16,7 +16,16 @@ from typish import instance_of, get_type
 from numpy import array, eye, pi
 import nlopt
 
-from OCP.gp import gp_Vec, gp_Pln, gp_Dir, gp_Pnt, gp_Trsf, gp_Quaternion, gp_XYZ
+from OCP.gp import (
+    gp_Vec,
+    gp_Pln,
+    gp_Dir,
+    gp_Pnt,
+    gp_Trsf,
+    gp_Quaternion,
+    gp_XYZ,
+    gp_Lin,
+)
 from OCP.BRepTools import BRepTools
 from OCP.Precision import Precision
 
@@ -29,19 +38,27 @@ from ..types import Real
 NoneType = type(None)
 
 DOF6 = Tuple[float, float, float, float, float, float]
-ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt, None]
+ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt, gp_Lin, None]
 
 UnaryConstraintKind = Literal["Fixed", "FixedPoint", "FixedAxis"]
-BinaryConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane"]
+BinaryConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane", "PointOnLine"]
 ConstraintKind = Literal[
-    "Plane", "Point", "Axis", "PointInPlane", "Fixed", "FixedPoint", "FixedAxis"
+    "Plane",
+    "Point",
+    "Axis",
+    "PointInPlane",
+    "Fixed",
+    "FixedPoint",
+    "FixedAxis",
+    "PointOnLine",
 ]
 
 # (arity, marker types, param type, conversion func)
 ConstraintInvariants = {
     "Point": (2, (gp_Pnt, gp_Pnt), Real, None),
     "Axis": (2, (gp_Dir, gp_Dir), Real, radians),
-    "PointInPlane": (2, (gp_Pnt, gp_Pln), Real, radians),
+    "PointInPlane": (2, (gp_Pnt, gp_Pln), Real, None),
+    "PointOnLine": (2, (gp_Pnt, gp_Lin), Real, None),
     "Fixed": (1, (None,), Type[None], None),
     "FixedPoint": (1, (gp_Pnt,), Tuple[Real, Real, Real], None),
     "FixedAxis": (1, (gp_Dir,), Tuple[Real, Real, Real], None),
@@ -124,6 +141,7 @@ class ConstraintSpec(object):
             gp_Pnt: self._getPnt,
             gp_Dir: self._getAxis,
             gp_Pln: self._getPln,
+            gp_Lin: self._getLin,
             None: lambda x: True,  # dummy check for None marker
         }
 
@@ -180,6 +198,16 @@ class ConstraintSpec(object):
 
         return center.toPnt()
 
+    def _getLin(self, arg: Shape) -> gp_Lin:
+
+        if isinstance(arg, (Edge, Wire)):
+            center = arg.Center()
+            tangent = arg.tangentAt()
+        else:
+            raise ValueError(f"Can not construct a plane for {arg}.")
+
+        return gp_Lin(center.toPnt(), tangent.toDir())
+
     def toPODs(self) -> Tuple[Constraint, ...]:
         """
         Convert the constraint to a representation used by the solver.
@@ -213,6 +241,9 @@ class ConstraintSpec(object):
 
         elif self.kind == "PointInPlane":
             markers = [(self._getPnt(args[0]), self._getPln(args[1]))]
+
+        elif self.kind == "PointOnLine":
+            markers = [(self._getPnt(args[0]), self._getLin(args[1]))]
 
         elif self.kind == "Fixed":
             markers = [(None,)]
@@ -271,6 +302,17 @@ def point_in_plane_cost(
     return m2_located.Distance(m1.Transformed(t1))
 
 
+def point_on_line_cost(
+    m1: gp_Pnt, m2: gp_Lin, t1: gp_Trsf, t2: gp_Trsf, val: Optional[float] = None,
+) -> float:
+
+    val = 0 if val is None else val
+
+    m2_located = m2.Transformed(t2)
+
+    return val - m2_located.Distance(m1.Transformed(t1))
+
+
 def fixed_cost(m1: Type[None], t1: gp_Trsf, val: Optional[Type[None]] = None):
 
     return 0
@@ -291,6 +333,7 @@ costs: Dict[str, Callable[..., float]] = dict(
     Point=point_cost,
     Axis=axis_cost,
     PointInPlane=point_in_plane_cost,
+    PointOnLine=point_on_line_cost,
     Fixed=fixed_cost,
     FixedPoint=fixed_point_cost,
     FixedAxis=fixed_axis_cost,
