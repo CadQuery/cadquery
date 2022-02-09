@@ -624,6 +624,23 @@ def test_unary_constraints(simple_assy2):
     assert w.solids("<Z").edges(">Z").size() == 1
 
 
+def test_fixed_rotation(simple_assy2):
+
+    assy = simple_assy2
+
+    assy.constrain("b1", "Fixed")
+    assy.constrain("b2", "FixedPoint", (0, 0, -3))
+    assy.constrain("b2@faces@>Z", "FixedRotation", (45, 0, 0))
+
+    assy.solve()
+
+    w = cq.Workplane().add(assy.toCompound())
+
+    assert w.solids(">Z").val().Center().Length == pytest.approx(0)
+    assert w.solids("<Z").val().Center().z == pytest.approx(-3)
+    assert w.solids("<Z").edges(">Z").size() == 1
+
+
 def test_validation(simple_assy2):
 
     with pytest.raises(ValueError):
