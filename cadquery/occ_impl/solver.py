@@ -25,6 +25,7 @@ from OCP.gp import (
     gp_Quaternion,
     gp_XYZ,
     gp_Lin,
+    gp_Extrinsic_XYZ,
 )
 from OCP.BRepTools import BRepTools
 from OCP.Precision import Precision
@@ -40,7 +41,9 @@ NoneType = type(None)
 DOF6 = Tuple[float, float, float, float, float, float]
 ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt, gp_Lin, None]
 
-UnaryConstraintKind = Literal["Fixed", "FixedPoint", "FixedAxis"]
+UnaryConstraintKind = Literal[
+    "Fixed", "FixedPoint", "FixedAxis", "FixedRotation", "FixedRotationAxis"
+]
 BinaryConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane", "PointOnLine"]
 ConstraintKind = Literal[
     "Plane",
@@ -51,24 +54,44 @@ ConstraintKind = Literal[
     "FixedPoint",
     "FixedAxis",
     "PointOnLine",
+    "FixedRotation",
+    "FixedRotationAxis",
 ]
 
 # (arity, marker types, param type, conversion func)
 ConstraintInvariants = {
     "Point": (2, (gp_Pnt, gp_Pnt), Real, None),
-    "Axis": (2, (gp_Dir, gp_Dir), Real, radians),
+    "Axis": (
+        2,
+        (gp_Dir, gp_Dir),
+        Real,
+        lambda x: radians(x) if x is not None else None,
+    ),
     "PointInPlane": (2, (gp_Pnt, gp_Pln), Real, None),
     "PointOnLine": (2, (gp_Pnt, gp_Lin), Real, None),
     "Fixed": (1, (None,), Type[None], None),
     "FixedPoint": (1, (gp_Pnt,), Tuple[Real, Real, Real], None),
     "FixedAxis": (1, (gp_Dir,), Tuple[Real, Real, Real], None),
+    "FixedRotationAxis": (
+        1,
+        (None,),
+        Tuple[int, Real],
+        lambda x: (x[0], radians(x[1])),
+    ),
 }
 
-# translation table for compound constraints {name : (name, ...)}
-CompoundConstraints: Dict[ConstraintKind, Tuple[ConstraintKind, ...]] = {
-    "Plane": ("Axis", "Point")
+# translation table for compound constraints {name : (name, ...), converter}
+CompoundConstraints: Dict[
+    ConstraintKind, Tuple[Tuple[ConstraintKind, ...], Callable[[Any], Tuple[Any, ...]]]
+] = {
+    "Plane": (("Axis", "Point"), lambda x: (x, 0)),
+    "FixedRotation": (
+        ("FixedRotationAxis", "FixedRotationAxis", "FixedRotationAxis"),
+        lambda x: tuple(enumerate(map(radians, x))),
+    ),
 }
 
+# constraint POD type
 Constraint = Tuple[
     Tuple[ConstraintMarker, ...], ConstraintKind, Optional[Any],
 ]
@@ -115,9 +138,16 @@ class ConstraintSpec(object):
         if not instance_of(kind, ConstraintKind):
             raise ValueError(f"Unknown constraint {kind}.")
 
-        kinds = CompoundConstraints.get(kind)
-        for k in kinds if kinds else (kind,):
-            self._validate(args, k, param)
+        if kind in CompoundConstraints:
+            kinds, convert_compound = CompoundConstraints[kind]
+            for k, p in zip(kinds, convert_compound(param)):
+                self._validate(args, k, p)
+        else:
+            self._validate(args, kind, param)
+
+            # convert here for simple constraints
+            convert = ConstraintInvariants[kind][-1]
+            param = convert(param) if convert else param
 
         # store
         self.objects = objects
@@ -156,6 +186,13 @@ class ConstraintSpec(object):
             raise ValueError(
                 f"Unsupported argument types {get_type(param)}, required {param_type}."
             )
+
+        # check parameter conversion
+        try:
+            if param is not None and converter:
+                converter(param)
+        except Exception as e:
+            raise ValueError(f"Exception {e} occured in the parameter conversion")
 
     def _getAxis(self, arg: Shape) -> gp_Dir:
 
@@ -254,19 +291,25 @@ class ConstraintSpec(object):
         elif self.kind == "FixedAxis":
             markers = [(self._getAxis(args[0]),)]
 
+        elif self.kind == "FixedRotation":
+            markers = [(None,), (None,), (None,)]
+
+        elif self.kind == "FixedRotationAxis":
+            markers = [(None,)]
+
         else:
             raise ValueError(f"Unknown constraint kind {self.kind}")
 
         # specify kinds of the simple constraint
         if self.kind in CompoundConstraints:
-            kinds = CompoundConstraints[self.kind]
-            params = (self.param,) * len(kinds)
+            kinds, converter = CompoundConstraints[self.kind]
+            params = converter(self.param,)
         else:
             kinds = (self.kind,)
             params = (self.param,)
 
         # builds the tuple and return
-        return tuple((m, k, p) for m, k, p in zip(markers, kinds, params))
+        return tuple(zip(markers, kinds, params))
 
 
 # Cost functions of simple constraints
@@ -328,6 +371,14 @@ def fixed_axis_cost(m1: gp_Dir, t1: gp_Trsf, val: Tuple[float, float, float]):
     return DIR_SCALING * (m1.Transformed(t1).Angle(gp_Dir(*val)))
 
 
+def fixed_rotation_axis_cost(m1: gp_Dir, t1: gp_Trsf, val: Tuple[int, float]):
+
+    ix, v0 = val
+    v = t1.GetRotation().GetEulerAngles(gp_Extrinsic_XYZ)[ix]
+
+    return v - v0
+
+
 # dictionary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
     Point=point_cost,
@@ -337,6 +388,7 @@ costs: Dict[str, Callable[..., float]] = dict(
     Fixed=fixed_cost,
     FixedPoint=fixed_point_cost,
     FixedAxis=fixed_axis_cost,
+    FixedRotationAxis=fixed_rotation_axis_cost,
 )
 
 # Actual solver class
