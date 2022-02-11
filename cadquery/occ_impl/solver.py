@@ -25,7 +25,7 @@ from OCP.gp import (
     gp_Quaternion,
     gp_XYZ,
     gp_Lin,
-    gp_Extrinsic_XYZ,
+    gp_Intrinsic_XYZ,
 )
 from OCP.BRepTools import BRepTools
 from OCP.Precision import Precision
@@ -374,7 +374,7 @@ def fixed_axis_cost(m1: gp_Dir, t1: gp_Trsf, val: Tuple[float, float, float]):
 def fixed_rotation_axis_cost(m1: gp_Dir, t1: gp_Trsf, val: Tuple[int, float]):
 
     ix, v0 = val
-    v = t1.GetRotation().GetEulerAngles(gp_Extrinsic_XYZ)[ix]
+    v = t1.GetRotation().GetEulerAngles(gp_Intrinsic_XYZ)[ix]
 
     return v - v0
 
