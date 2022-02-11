@@ -755,6 +755,132 @@ Where:
     show_object(assy)
 
 
+FixedPoint
+==========
+
+FixedPoint fixes the position of the given argument to be equal to the given point specified via the parameter of the constraint. This constraint locks all translational degrees of freedom of the argument.
+The cost function is:
+
+.. math::
+
+   \left\lVert \vec{ c } - \vec{param} \right\rVert ^2
+
+
+Where:
+
+- :math:`\vec{ c }` is the center of the argument,
+- :math:`param` is the parameter of the constraint - tuple specifying the target position,
+- :math:`\operatorname{dist}( \vec{ a }, b)` is the distance between point :math:`\vec{ a }` and
+  line :math:`b`.
+
+
+.. cadquery::
+
+    import cadquery as cq
+
+    b1 = cq.Workplane().box(1,1,1)
+    b2 = cq.Workplane().sphere(0.15)
+
+    assy = (
+        cq.Assembly()
+        .add(b1,name='b1')
+        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+    )
+
+    # fix the position of b1
+    assy.constrain('b1','Fixed')
+    # b2 on one of the edges of b1
+    assy.constrain('b2','b1@edges@>>Z and >>Y','PointOnLine')
+    # b2 on another of the edges of b1
+    assy.constrain('b2','b1@edges@>>Z and >>X','PointOnLine')
+    # effectively b2 will be constrained to be on the intersection of the two edges
+
+    assy.solve()
+    show_object(assy)
+
+
+FixedRotation
+=============
+
+FixedRotation fixes the rotation of the given argument to be equal to the given point specified via the parameter of the constraint. This constraint locks all rotational degrees of freedom of the argument.
+The cost function is:
+
+.. math::
+
+   \left\lVert \vec{ R } - \vec{param} \right\rVert ^2
+
+
+Where:
+
+- :math:`\vec{ R }` vector of the rotation angles of the rotation applied to the argument,
+- :math:`param` is the parameter of the constraint - tuple specifying the target rotation.
+
+
+.. cadquery::
+
+    import cadquery as cq
+
+    b1 = cq.Workplane().box(1,1,1)
+    b2 = cq.Workplane().rect(0.1, 0.1).extrude(1,taper=-15)
+
+    assy = (
+        cq.Assembly()
+        .add(b1,name='b1')
+        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+    )
+
+    # fix the position of b1
+    assy.constrain('b1','Fixed')
+    # fix b2 bottom face position (but not rotation)
+    assy.constrain('b2@faces@<Z','FixedPoint',(0,0,0.5))
+    # fix b2 rotational degrees of freedom too
+    assy.constrain('b2','FixedRotation',(45,0,45))
+
+    assy.solve()
+    show_object(assy)
+
+
+FixedAxis
+=========
+
+FixedAxis fixes the orientation of the given argument's normal or tangent to be equal to the orientation  of the vector specified via the parameter of the constraint. This constraint locks two rotational degrees of freedom of the argument.
+The cost function is:
+
+.. math::
+
+   ( \vec{ a } \angle \vec{ param } ) ^2
+
+
+Where:
+
+- :math:`\vec{ a }` normal or tangent vector of the argument,
+- :math:`param` is the parameter of the constraint - tuple specifying the target direction.
+
+
+.. cadquery::
+
+    import cadquery as cq
+
+    b1 = cq.Workplane().box(1,1,1)
+    b2 = cq.Workplane().rect(0.1, 0.1).extrude(1,taper=-15)
+
+    assy = (
+        cq.Assembly()
+        .add(b1,name='b1')
+        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+    )
+
+    # fix the position of b1
+    assy.constrain('b1','Fixed')
+    # fix b2 bottom face position (but not rotation)
+    assy.constrain('b2@faces@<Z','FixedPoint',(0,0,0.5))
+    # fix b2 some rotational degrees of freedom too
+    assy.constrain('b2@faces@>Z','FixedAxis',(1,0,2))
+
+    assy.solve()
+    show_object(assy)
+
+
 Assembly colors
 ---------------
 
