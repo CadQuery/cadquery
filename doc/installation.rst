@@ -7,20 +7,38 @@ CadQuery 2 is based on
 `OCP <https://github.com/CadQuery/OCP>`_,
 which is a set of Python bindings for the open-source `OpenCascade <http://www.opencascade.com/>`_ modelling kernel.
 
-Anaconda or Miniconda (Python 3.x editions), Python 3.x
+Conda
 ----------------------------------------------
-CadQuery requires OCP and Python version 3.x
+In principle any conda distrubtion will work, but it is probably best to install `Miniforge <https://github.com/conda-forge/miniforge>`_ to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation. In Linux/MacOS, the local directory installation method looks something like this::
+
+        # Install the script to ~/miniforge
+        wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
+        bash miniforge.sh -b -p $HOME/miniforge
+
+        # To activate and use Miniconda
+        source $HOME/miniconda/bin/activate
+
+On Windows one can install locally as follows::
+
+        :: Install
+        curl -L -o miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
+        start /wait "" miniforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegistry=1 /NoScripts=1 /S /D=%USERPROFILE%\Miniforge3
+
+        :: Activate
+        cmd /K ""%USERPROFILE%/Miniforge3/Scripts/activate.bat" "%USERPROFILE%/Miniforge3""
+
+It might be worthwhile to consider using ``/NoScipts=0`` to add an activation shortcut.
 
 Command Line Installation
 ------------------------------------------
 
 CadQuery development moves very quickly, so you will need to choose whether you want the latest features or an older, probably more stable, version of CadQuery.
 
-To get the latest features (recommended), once you have Anaconda or Miniconda installed, activate the [conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) you want to use and type::
+To get the latest features (recommended), once you have Anaconda or Miniconda installed, activate the `conda environment <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_ you want to use and type::
 
         conda install -c cadquery -c conda-forge cadquery=master
 
-If you want an older, more stable version of CadQuery, once you have Anaconda or Miniconda installed, activate the [conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) you want to use and type::
+If you want an older, more stable version of CadQuery, once you have Anaconda or Miniconda installed, activate the `conda environment <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_ you want to use and type::
 
         conda install -c conda-forge -c cadquery cadquery=2
 
