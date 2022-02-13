@@ -16,7 +16,7 @@ In principle any conda distrubtion will work, but it is probably best to install
         bash miniforge.sh -b -p $HOME/miniforge
 
         # To activate and use Miniconda
-        source $HOME/miniconda/bin/activate
+        source $HOME/miniforge/bin/activate
 
 On Windows one can install locally as follows::
 
@@ -27,7 +27,7 @@ On Windows one can install locally as follows::
         :: Activate
         cmd /K ""%USERPROFILE%/Miniforge3/Scripts/activate.bat" "%USERPROFILE%/Miniforge3""
 
-It might be worthwhile to consider using ``/NoScipts=0`` to add an activation shortcut.
+It might be worthwhile to consider using ``/NoScripts=0`` to have an activation shortcut added to the start menu.
 
 Command Line Installation
 ------------------------------------------

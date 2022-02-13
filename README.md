@@ -67,7 +67,7 @@ wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge
 bash miniforge.sh -b -p $HOME/miniforge
 
 # To activate and use Miniconda
-source $HOME/miniconda/bin/activate
+source $HOME/miniforge/bin/activate
 ```
 On Windows one can install locally as follows:
 ```
@@ -78,7 +78,7 @@ start /wait "" miniforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegis
 :: Activate
 cmd /K ""%USERPROFILE%/Miniforge3/Scripts/activate.bat" "%USERPROFILE%/Miniforge3""
 ```
-You might want to consider using `/NoScipts=0` to add an activation shortcut.
+You might want to consider using `/NoScripts=0` to have an activation shortcut added to the start menu.
 
 ### CQ-editor GUI
 
