@@ -366,12 +366,19 @@ class Assembly(object):
                 if c.kind == "Fixed" or name == self.name:
                     locked.append(ents[name])
 
-
         # Lock the first occuring entity if needed.
         if not locked:
-            unary_objects = [c.objects[0] for c in self.constraints if instance_of(c.kind, UnaryConstraintKind)]
-            binary_objects = [c.objects[0] for c in self.constraints if instance_of(c.kind, BinaryConstraintKind)]
-            for b in binary_objects: 
+            unary_objects = [
+                c.objects[0]
+                for c in self.constraints
+                if instance_of(c.kind, UnaryConstraintKind)
+            ]
+            binary_objects = [
+                c.objects[0]
+                for c in self.constraints
+                if instance_of(c.kind, BinaryConstraintKind)
+            ]
+            for b in binary_objects:
                 if b not in unary_objects:
                     locked.append(ents[b])
                     break
