@@ -217,7 +217,7 @@ class ConstraintSpec(object):
             plane = Plane(origin, normal=normal)
             rv = plane.toPln()
         else:
-            raise ValueError(f"Can not construct a plane for {arg}.")
+            raise ValueError(f"Cannot construct a plane for {arg}.")
 
         return rv
 
@@ -241,7 +241,7 @@ class ConstraintSpec(object):
             center = arg.Center()
             tangent = arg.tangentAt()
         else:
-            raise ValueError(f"Can not construct a plane for {arg}.")
+            raise ValueError(f"Cannot construct a plane for {arg}.")
 
         return gp_Lin(center.toPnt(), tangent.toDir())
 
