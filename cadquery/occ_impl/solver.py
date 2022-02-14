@@ -267,9 +267,6 @@ class ConstraintSpec(object):
         elif self.kind == "Point":
             markers = [(self._getPnt(args[0]), self._getPnt(args[1]))]
 
-        elif self.kind == "FixedPoint":
-            markers = [(self._getPnt(args[0]),)]
-
         elif self.kind == "Plane":
             markers = [
                 (self._getAxis(args[0]), self._getAxis(args[1]),),

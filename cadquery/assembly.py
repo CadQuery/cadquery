@@ -342,7 +342,7 @@ class Assembly(object):
             loc2, id2_top = self._subloc(id2)
             c = Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
         else:
-            raise ValueError(f"Unknonw constraint: {kind}")
+            raise ValueError(f"Unknown constraint: {kind}")
 
         self.constraints.append(c)
 

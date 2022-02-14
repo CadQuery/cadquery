@@ -802,7 +802,9 @@ Where:
 FixedRotation
 =============
 
-FixedRotation fixes the rotation of the given argument to be equal to the given point specified via the parameter of the constraint. This constraint locks all rotational degrees of freedom of the argument.
+FixedRotation fixes the rotation of the given argument to be equal to the value specified via the parameter of the constraint. The argument is rotated about it's origin firstly by the Z angle, then Y and finally X.
+
+This constraint locks all rotational degrees of freedom of the argument.
 The cost function is:
 
 .. math::
