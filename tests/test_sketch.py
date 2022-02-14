@@ -133,6 +133,9 @@ def test_distribute():
 
     assert s5._faces.Area() == approx(18 * 0.25)
     assert len(s5._faces.Faces()) == 18
+    assert s5.reset().vertices(">(1,1,0)")._selection[0].toTuple() == approx(
+        (3.25, 3.25, 0)
+    )
 
     s6 = Sketch().push([(0, 0), (1, 1)]).parray(2, 0, 90, 3).rect(0.5, 0.5)
 
