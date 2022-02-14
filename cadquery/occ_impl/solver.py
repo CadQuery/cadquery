@@ -84,7 +84,7 @@ ConstraintInvariants = {
 CompoundConstraints: Dict[
     ConstraintKind, Tuple[Tuple[ConstraintKind, ...], Callable[[Any], Tuple[Any, ...]]]
 ] = {
-    "Plane": (("Axis", "Point"), lambda x: (x, 0)),
+    "Plane": (("Axis", "Point"), lambda x: (radians(x) if x is not None else None, 0)),
     "FixedRotation": (
         ("FixedRotationAxis", "FixedRotationAxis", "FixedRotationAxis"),
         lambda x: tuple(enumerate(map(radians, x))),
