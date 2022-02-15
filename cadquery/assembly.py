@@ -1,16 +1,18 @@
 from functools import reduce
 from typing import Union, Optional, List, Dict, Any, overload, Tuple, Iterator, cast
 from typing_extensions import Literal
+from typish import instance_of
 from uuid import uuid1 as uuid
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound, Face, Edge, Wire
-from .occ_impl.geom import Location, Vector, Plane
+from .occ_impl.shapes import Shape, Compound
+from .occ_impl.geom import Location
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
     ConstraintSolver,
-    ConstraintMarker,
-    Constraint as ConstraintPOD,
+    ConstraintSpec as Constraint,
+    UnaryConstraintKind,
+    BinaryConstraintKind,
 )
 from .occ_impl.exporters.assembly import (
     exportAssembly,
@@ -21,9 +23,6 @@ from .occ_impl.exporters.assembly import (
 )
 
 from .selectors import _expression_grammar as _selector_grammar
-from OCP.BRepTools import BRepTools
-from OCP.gp import gp_Pln, gp_Pnt
-from OCP.Precision import Precision
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -65,112 +64,6 @@ def _define_grammar():
 
 
 _grammar = _define_grammar()
-
-
-class Constraint(object):
-    """
-    Geometrical constraint between two shapes of an assembly.
-    """
-
-    objects: Tuple[str, ...]
-    args: Tuple[Shape, ...]
-    sublocs: Tuple[Location, ...]
-    kind: ConstraintKinds
-    param: Any
-
-    def __init__(
-        self,
-        objects: Tuple[str, ...],
-        args: Tuple[Shape, ...],
-        sublocs: Tuple[Location, ...],
-        kind: ConstraintKinds,
-        param: Any = None,
-    ):
-        """
-        Construct a constraint.
-
-        :param objects: object names referenced in the constraint
-        :param args: subshapes (e.g. faces or edges) of the objects
-        :param sublocs: locations of the objects (only relevant if the objects are nested in a sub-assembly)
-        :param kind: constraint kind
-        :param param: optional arbitrary parameter passed to the solver
-        """
-
-        self.objects = objects
-        self.args = args
-        self.sublocs = sublocs
-        self.kind = kind
-        self.param = param
-
-    def _getAxis(self, arg: Shape) -> Vector:
-
-        if isinstance(arg, Face):
-            rv = arg.normalAt()
-        elif isinstance(arg, Edge) and arg.geomType() != "CIRCLE":
-            rv = arg.tangentAt()
-        elif isinstance(arg, Edge) and arg.geomType() == "CIRCLE":
-            rv = arg.normal()
-        else:
-            raise ValueError(f"Cannot construct Axis for {arg}")
-
-        return rv
-
-    def _getPln(self, arg: Shape) -> gp_Pln:
-
-        if isinstance(arg, Face):
-            rv = gp_Pln(self._getPnt(arg), arg.normalAt().toDir())
-        elif isinstance(arg, (Edge, Wire)):
-            normal = arg.normal()
-            origin = arg.Center()
-            plane = Plane(origin, normal=normal)
-            rv = plane.toPln()
-        else:
-            raise ValueError(f"Can not construct a plane for {arg}.")
-
-        return rv
-
-    def _getPnt(self, arg: Shape) -> gp_Pnt:
-
-        # check for infinite face
-        if isinstance(arg, Face) and any(
-            Precision.IsInfinite_s(x) for x in BRepTools.UVBounds_s(arg.wrapped)
-        ):
-            # fall back to gp_Pln center
-            pln = arg.toPln()
-            center = Vector(pln.Location())
-        else:
-            center = arg.Center()
-
-        return center.toPnt()
-
-    def toPOD(self) -> ConstraintPOD:
-        """
-        Convert the constraint to a representation used by the solver.
-        """
-
-        rv: List[Tuple[ConstraintMarker, ...]] = []
-
-        for idx, (arg, loc) in enumerate(zip(self.args, self.sublocs)):
-
-            arg = arg.located(loc * arg.location())
-
-            if self.kind == "Axis":
-                rv.append((self._getAxis(arg).toDir(),))
-            elif self.kind == "Point":
-                rv.append((self._getPnt(arg),))
-            elif self.kind == "Plane":
-                rv.append((self._getAxis(arg).toDir(), self._getPnt(arg)))
-            elif self.kind == "PointInPlane":
-                if idx == 0:
-                    rv.append((self._getPnt(arg),))
-                else:
-                    rv.append((self._getPln(arg),))
-            else:
-                raise ValueError(f"Unknown constraint kind {self.kind}")
-
-        rv.append(self.param)
-
-        return cast(ConstraintPOD, tuple(rv))
 
 
 class Assembly(object):
@@ -391,6 +284,12 @@ class Assembly(object):
 
     @overload
     def constrain(
+        self, q1: str, kind: ConstraintKinds, param: Any = None
+    ) -> "Assembly":
+        ...
+
+    @overload
+    def constrain(
         self,
         id1: str,
         s1: Shape,
@@ -401,12 +300,25 @@ class Assembly(object):
     ) -> "Assembly":
         ...
 
+    @overload
+    def constrain(
+        self, id1: str, s1: Shape, kind: ConstraintKinds, param: Any = None,
+    ) -> "Assembly":
+        ...
+
     def constrain(self, *args, param=None):
         """
         Define a new constraint.
         """
 
-        if len(args) == 3:
+        # dispatch on arguments
+        if len(args) == 2:
+            q1, kind = args
+            id1, s1 = self._query(q1)
+        elif len(args) == 3 and instance_of(args[1], UnaryConstraintKind):
+            q1, kind, param = args
+            id1, s1 = self._query(q1)
+        elif len(args) == 3:
             q1, q2, kind = args
             id1, s1 = self._query(q1)
             id2, s2 = self._query(q2)
@@ -421,11 +333,18 @@ class Assembly(object):
         else:
             raise ValueError(f"Incompatible arguments: {args}")
 
-        loc1, id1_top = self._subloc(id1)
-        loc2, id2_top = self._subloc(id2)
-        self.constraints.append(
-            Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
-        )
+        # handle unary and binary constraints
+        if instance_of(kind, UnaryConstraintKind):
+            loc1, id1_top = self._subloc(id1)
+            c = Constraint((id1_top,), (s1,), (loc1,), kind, param)
+        elif instance_of(kind, BinaryConstraintKind):
+            loc1, id1_top = self._subloc(id1)
+            loc2, id2_top = self._subloc(id2)
+            c = Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
+        else:
+            raise ValueError(f"Unknown constraint: {kind}")
+
+        self.constraints.append(c)
 
         return self
 
@@ -434,32 +353,53 @@ class Assembly(object):
         Solve the constraints.
         """
 
-        # get all entities and number them
+        # Get all entities and number them. First entity is marked as locked
         ents = {}
 
         i = 0
-        lock_ix = 0
+        locked = []
         for c in self.constraints:
             for name in c.objects:
                 if name not in ents:
                     ents[name] = i
-                    if name == self.name:
-                        lock_ix = i
                     i += 1
+                if c.kind == "Fixed" or name == self.name:
+                    locked.append(ents[name])
+
+        # Lock the first occuring entity if needed.
+        if not locked:
+            unary_objects = [
+                c.objects[0]
+                for c in self.constraints
+                if instance_of(c.kind, UnaryConstraintKind)
+            ]
+            binary_objects = [
+                c.objects[0]
+                for c in self.constraints
+                if instance_of(c.kind, BinaryConstraintKind)
+            ]
+            for b in binary_objects:
+                if b not in unary_objects:
+                    locked.append(ents[b])
+                    break
 
         locs = [self.objects[n].loc for n in ents]
 
         # construct the constraint mapping
         constraints = []
         for c in self.constraints:
-            constraints.append(((ents[c.objects[0]], ents[c.objects[1]]), c.toPOD()))
+            ixs = tuple(ents[obj] for obj in c.objects)
+            pods = c.toPODs()
+
+            for pod in pods:
+                constraints.append((ixs, pod))
 
         # check if any constraints were specified
         if not constraints:
             raise ValueError("At least one constraint required")
 
         # instantiate the solver
-        solver = ConstraintSolver(locs, constraints, locked=[lock_ix])
+        solver = ConstraintSolver(locs, constraints, locked=locked)
 
         # solve
         locs_new, self._solve_result = solver.solve()
