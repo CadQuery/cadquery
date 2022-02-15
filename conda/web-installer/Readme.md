@@ -15,5 +15,11 @@ This installer will not add the installed directory to the Path or try to overri
 
 To run
 ```
+conda install jinja2 constructor
 build.py <installer version> <github tag version>
+```
+
+For Example
+```
+build.py 2.2 master
 ```
