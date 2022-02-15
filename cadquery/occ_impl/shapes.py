@@ -966,10 +966,12 @@ class Shape(object):
         return r
 
     def __hash__(self) -> int:
+
         return self.hashCode()
 
     def __eq__(self, other) -> bool:
-        return self.isSame(other)
+
+        return self.isSame(other) if isinstance(other, Shape) else False
 
     def _bool_op(
         self,
@@ -1897,8 +1899,10 @@ class Wire(Shape, Mixin1D):
         """
         wire_builder = BRepBuilderAPI_MakeWire()
 
+        occ_edges_list = TopTools_ListOfShape()
         for e in listOfEdges:
-            wire_builder.Add(e.wrapped)
+            occ_edges_list.Append(e.wrapped)
+        wire_builder.Add(occ_edges_list)
 
         wire_builder.Build()
 
