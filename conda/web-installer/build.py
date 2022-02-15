@@ -15,7 +15,7 @@ def usage():
 
 def write_file(destpath, contents):
     with open(destpath, "w") as destfile:
-        destfile.write(contents)    
+        destfile.write(contents)
 
 
 def run_cmd(cmdarray, workingdir, captureout=False):
@@ -38,7 +38,7 @@ def generate_templates(installer_version, tag_version):
     template = env.get_template("construct.yaml.jinja2")
     output = template.render(installer_version=installer_version)
     write_file("construct.yaml", output)
-    
+
     template = env.get_template("post-install.bat.jinja2")
     output = template.render(tag_version=tag_version)
     write_file("post-install.bat", output)
@@ -51,10 +51,10 @@ def generate_templates(installer_version, tag_version):
 def run_constructor():
     print("Running constructor")
     scriptdir = os.path.dirname(os.path.realpath(__file__))
-    builddir = os.path.join(scriptdir, 'build')
+    builddir = os.path.join(scriptdir, "build")
     if not os.path.exists(builddir):
         os.makedirs(builddir)
-    run_cmd(['constructor', scriptdir], builddir)
+    run_cmd(["constructor", scriptdir], builddir)
 
 
 def main():
