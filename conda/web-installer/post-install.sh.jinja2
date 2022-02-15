@@ -4,7 +4,7 @@ echo Entering Conda Environment
 source $PREFIX/bin/activate
 
 echo Updating conda
-conda update -y -n base conda
+conda update -q conda
 
 echo Cleaning Packages
 conda clean -a -y
