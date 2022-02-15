@@ -1,6 +1,12 @@
 echo Entering Conda Environment
 call %PREFIX%\condabin\activate.bat
 
+echo Updating conda
+call conda update -y -n base conda
+
+echo Cleaning Packages
+call conda clean -a -y
+
 echo Installing CadQuery
 call conda install -y cadquery={{ tag_version }}
 
