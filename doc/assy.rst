@@ -640,8 +640,7 @@ previous example from the two constraints to just one:
 
 The result of this code is identical to the above two constraint example.
 
-For the cost function of Plane, please see the Point and Axis sections. The ``param`` argument is
-copied into both constraints and should be left as the default value of ``None`` for a "mate" style
+For the cost function of Plane, please see the Point and Axis sections. The ``param`` argument is applied to Axis and should be left as the default value for a "mate" style
 constraint (two surfaces touching) or can be set to ``0`` for a through surface constraint (see
 description in the Axis constraint section).
 
@@ -802,7 +801,9 @@ Where:
 FixedRotation
 =============
 
-FixedRotation fixes the rotation of the given argument to be equal to the given point specified via the parameter of the constraint. This constraint locks all rotational degrees of freedom of the argument.
+FixedRotation fixes the rotation of the given argument to be equal to the value specified via the parameter of the constraint. The argument is rotated about it's origin firstly by the Z angle, then Y and finally X.
+
+This constraint locks all rotational degrees of freedom of the argument.
 The cost function is:
 
 .. math::
@@ -843,7 +844,7 @@ Where:
 FixedAxis
 =========
 
-FixedAxis fixes the orientation of the given argument's normal or tangent to be equal to the orientation  of the vector specified via the parameter of the constraint. This constraint locks two rotational degrees of freedom of the argument.
+FixedAxis fixes the orientation of the given argument's normal or tangent to be equal to the orientation of the vector specified via the parameter of the constraint. This constraint locks two rotational degrees of freedom of the argument.
 The cost function is:
 
 .. math::

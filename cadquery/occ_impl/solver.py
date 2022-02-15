@@ -84,7 +84,7 @@ ConstraintInvariants = {
 CompoundConstraints: Dict[
     ConstraintKind, Tuple[Tuple[ConstraintKind, ...], Callable[[Any], Tuple[Any, ...]]]
 ] = {
-    "Plane": (("Axis", "Point"), lambda x: (x, 0)),
+    "Plane": (("Axis", "Point"), lambda x: (radians(x) if x is not None else None, 0)),
     "FixedRotation": (
         ("FixedRotationAxis", "FixedRotationAxis", "FixedRotationAxis"),
         lambda x: tuple(enumerate(map(radians, x))),
@@ -217,7 +217,7 @@ class ConstraintSpec(object):
             plane = Plane(origin, normal=normal)
             rv = plane.toPln()
         else:
-            raise ValueError(f"Can not construct a plane for {arg}.")
+            raise ValueError(f"Cannot construct a plane for {arg}.")
 
         return rv
 
@@ -241,7 +241,7 @@ class ConstraintSpec(object):
             center = arg.Center()
             tangent = arg.tangentAt()
         else:
-            raise ValueError(f"Can not construct a plane for {arg}.")
+            raise ValueError(f"Cannot construct a plane for {arg}.")
 
         return gp_Lin(center.toPnt(), tangent.toDir())
 
@@ -266,9 +266,6 @@ class ConstraintSpec(object):
 
         elif self.kind == "Point":
             markers = [(self._getPnt(args[0]), self._getPnt(args[1]))]
-
-        elif self.kind == "FixedPoint":
-            markers = [(self._getPnt(args[0]),)]
 
         elif self.kind == "Plane":
             markers = [

@@ -43,7 +43,7 @@ jobs:
   - template: conda-build.yml@templates
     parameters:
       name: Windows
-      vmImage: 'vs2017-win2016'
+      vmImage: 'windows-latest'
       py_maj: 3
       py_min: ${{minor}}
       conda_bld: 3.21.6

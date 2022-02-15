@@ -1899,8 +1899,10 @@ class Wire(Shape, Mixin1D):
         """
         wire_builder = BRepBuilderAPI_MakeWire()
 
+        occ_edges_list = TopTools_ListOfShape()
         for e in listOfEdges:
-            wire_builder.Add(e.wrapped)
+            occ_edges_list.Append(e.wrapped)
+        wire_builder.Add(occ_edges_list)
 
         wire_builder.Build()
 

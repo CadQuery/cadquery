@@ -342,7 +342,7 @@ class Assembly(object):
             loc2, id2_top = self._subloc(id2)
             c = Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
         else:
-            raise ValueError(f"Unknonw constraint: {kind}")
+            raise ValueError(f"Unknown constraint: {kind}")
 
         self.constraints.append(c)
 
@@ -362,9 +362,26 @@ class Assembly(object):
             for name in c.objects:
                 if name not in ents:
                     ents[name] = i
-                    if c.kind == "Fixed" or name == self.name:
-                        locked.append(i)
                     i += 1
+                if c.kind == "Fixed" or name == self.name:
+                    locked.append(ents[name])
+
+        # Lock the first occuring entity if needed.
+        if not locked:
+            unary_objects = [
+                c.objects[0]
+                for c in self.constraints
+                if instance_of(c.kind, UnaryConstraintKind)
+            ]
+            binary_objects = [
+                c.objects[0]
+                for c in self.constraints
+                if instance_of(c.kind, BinaryConstraintKind)
+            ]
+            for b in binary_objects:
+                if b not in unary_objects:
+                    locked.append(ents[b])
+                    break
 
         # Lock the first occuring entity if needed.
         if not locked:
