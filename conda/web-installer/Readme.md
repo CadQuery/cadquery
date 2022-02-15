@@ -13,13 +13,26 @@ The installer
 We need to install cadquery post install due to the file sizes involved with the install of opencascade (around 2Gb)
 This installer will not add the installed directory to the Path or try to override the default python (with the default options selected).
 
+## Running the constructor
+
 To run
 ```
 conda install jinja2 constructor
-build.py <installer version> <github tag version>
+python build.py <installer version> <github tag version>
 ```
 
 For Example
 ```
 build.py 2.2 master
 ```
+
+## Activation
+
+To Activate the environment
+```
+# Under Windows
+condabin\activate.bat
+# Under Linux
+source ~/cadquery/bin/activate
+```
+

@@ -39,10 +39,9 @@ def generate_templates(installer_version, tag_version):
     output = template.render(tag_version=tag_version)
     write_file('post-install.bat', output)
 
-    # TODO
-    #template = env.get_template("post-install.sh.jinja2")
-    #output = template.render(tag_version=tag_version)
-    #write_file('post-install.sh', output)
+    template = env.get_template("post-install.sh.jinja2")
+    output = template.render(tag_version=tag_version)
+    write_file('post-install.sh', output)
 
 
 def run_constructor():

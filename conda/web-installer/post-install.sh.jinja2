@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo Entering Conda Environment
+source $PREFIX/bin/activate
+
+echo Installing CadQuery
+conda install -y cadquery={{ tag_version }}
+
+echo Cleaning Packages
+conda clean -a -y
+
+echo To activate run
+echo source ~/cadquery/bin/activate
+
