@@ -44,7 +44,7 @@ It is currently possible to use CadQuery for your own projects in 3 different wa
     * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
     * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
 
-The easiest way to install CadQuery and its dependencies is using conda, which is included as part of an Anaconda/Miniconda installation. See the next section for an alternative to a full install of Anaconda that may be preferable to some users. The steps to install cadquery are as follows:
+The easiest way to install CadQuery and its dependencies is using conda, which is included as part of a [miniforge](https://github.com/conda-forge/miniforge) installation (other distributions can be used as well). See the next section for more details regarding conda. The steps to install cadquery are as follows:
 ```
 # Set up a new environment
 conda create -n cadquery
@@ -58,17 +58,27 @@ conda install -c conda-forge -c cadquery cadquery=master
 
 For those who are interested, the [OCP repository](https://github.com/CadQuery/OCP) contains the current OCCT wrapper used by CQ.
 
-### Alternative Anaconda Installation Method
+### Conda Installation
 
-For those unfamiliar (or uncomfortable) with Anaconda, it is probably best to install Miniconda to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniconda can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation. In Linux, the local directory installation method looks something like this:
+For those unfamiliar (or uncomfortable) with conda, it is probably best to install Miniforge to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation. In Linux, the local directory installation method looks something like this:
 ```
-# Install the script to ~/miniconda
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-bash miniconda.sh -b -p $HOME/miniconda
+# Install the script to ~/miniforge
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
+bash miniforge.sh -b -p $HOME/miniforge
 
 # To activate and use Miniconda
-source $HOME/miniconda/bin/activate
+source $HOME/miniforge/bin/activate
 ```
+On Windows one can install locally as follows:
+```
+:: Install
+curl -L -o miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
+start /wait "" miniforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegistry=1 /NoScripts=1 /S /D=%USERPROFILE%\Miniforge3
+
+:: Activate
+cmd /K ""%USERPROFILE%/Miniforge3/Scripts/activate.bat" "%USERPROFILE%/Miniforge3""
+```
+You might want to consider using `/NoScripts=0` to have an activation shortcut added to the start menu.
 
 ### CQ-editor GUI
 

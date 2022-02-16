@@ -8,10 +8,10 @@ CadQuery QuickStart
 
 Want a quick glimpse of what CadQuery can do?  This quickstart will demonstrate the basics of CadQuery using a simple example
 
-Prerequisites: Anaconda/Miniconda + CQ-editor running from an environment
+Prerequisites: conda + CQ-editor running from an environment
 ==============================================================
 
-If you have not already done so, follow the :ref:`installation`, to install Anaconda/Miniconda and CQ-editor.
+If you have not already done so, follow the :ref:`installation`, to install conda and CQ-editor.
 
 After installation, run CQ-editor:
 

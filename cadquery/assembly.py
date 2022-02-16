@@ -383,6 +383,10 @@ class Assembly(object):
                     locked.append(ents[b])
                     break
 
+        # Lock the first occuring entity if needed.
+        if not locked:
+            locked.append(0)
+
         locs = [self.objects[n].loc for n in ents]
 
         # construct the constraint mapping
