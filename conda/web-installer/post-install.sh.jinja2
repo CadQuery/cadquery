@@ -3,18 +3,11 @@
 echo Entering Conda Environment
 source $PREFIX/bin/activate
 
-echo Updating conda
-conda update -q conda
-
-echo Cleaning Packages
-conda clean -a -y
-
 echo Installing CadQuery
-conda install -y cadquery={{ tag_version }}
+conda install -c conda-forge -c cadquery -y cadquery={{ tag_version }}
 
 echo Cleaning Packages
 conda clean -a -y
 
 echo To activate run
 echo source ~/cadquery/bin/activate
-
