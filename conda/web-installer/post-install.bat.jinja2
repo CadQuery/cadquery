@@ -4,6 +4,10 @@ call %PREFIX%\condabin\activate.bat
 echo Installing CadQuery
 call conda install -c conda-forge -c cadquery -y cadquery={{ tag_version }}
 
+echo Installing jupyter-cadquery
+pip install jupyter-cadquery==3.0.0rc3 matplotlib
+call conda install -y pywin32
+
 echo Cleaning Packages
 call conda clean -a -y
 call conda deactivate

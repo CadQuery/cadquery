@@ -22,7 +22,8 @@ conda_default_channels:
 specs:
   - python 3.10*
   - conda
-# Occt is to o big to bundle so install during post_install instead
+  - ipykernel
+# Occt is too big to bundle so install during post_install instead
 #  - cadquery
 
 post_install: post-install.sh           # [unix]
