@@ -1,5 +1,4 @@
 from typing import (
-    Type,
     Optional,
     Tuple,
     Union,
@@ -19,6 +18,7 @@ from io import BytesIO
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
+
 
 from .geom import Vector, BoundBox, Plane, Location, Matrix
 
@@ -2150,7 +2150,7 @@ class Face(Shape):
     def makeNSidedSurface(
         cls,
         edges: Iterable[Edge],
-        points: Iterable[gp_Pnt],
+        constraints: Iterable[Union[Edge, VectorLike, gp_Pnt]],
         continuity: GeomAbs_Shape = GeomAbs_C0,
         degree: int = 3,
         nbPtsOnCur: int = 15,
@@ -2165,8 +2165,8 @@ class Face(Shape):
     ) -> "Face":
         """
         Returns a surface enclosed by a closed polygon defined by 'edges' and going through 'points'.
-        :param points
-        :type points: list of gp_Pnt
+        :param constraints
+        :type points: list of constraints (points or edges)
         :param edges
         :type edges: list of Edge
         :param continuity=GeomAbs_C0
@@ -2205,12 +2205,24 @@ class Face(Shape):
             maxDeg,
             maxSegments,
         )
+
         for edge in edges:
             n_sided.Add(edge.wrapped, continuity)
-        for pt in points:
-            n_sided.Add(pt)
+
+        for c in constraints:
+            if isinstance(c, gp_Pnt):
+                n_sided.Add(c)
+            elif isinstance(c, Vector):
+                n_sided.Add(c.toPnt())
+            elif isinstance(c, Edge):
+                n_sided.Add(c.wrapped, GeomAbs_C0, False)
+            else:
+                raise ValueError(f"Invalid constraint {c}")
+
         n_sided.Build()
+
         face = n_sided.Shape()
+
         return Face(face).fix()
 
     @classmethod
@@ -2385,6 +2397,28 @@ class Face(Shape):
 
         adaptor = BRepAdaptor_Surface(self.wrapped)
         return adaptor.Plane()
+
+    def thicken(self, thickness: float) -> "Solid":
+        """
+        Return a thickened face
+        """
+
+        builder = BRepOffset_MakeOffset()
+
+        builder.Initialize(
+            self.wrapped,
+            thickness,
+            1.0e-6,
+            BRepOffset_Skin,
+            False,
+            False,
+            GeomAbs_Intersection,
+            True,
+        )  # The last True is important to make solid
+
+        builder.MakeOffsetShape()
+
+        return Solid(builder.Shape())
 
 
 class Shell(Shape):
@@ -2701,19 +2735,8 @@ class Solid(Shape, Mixin3D):
         if (
             abs(thickness) > 0
         ):  # abs() because negative values are allowed to set direction of thickening
-            solid = BRepOffset_MakeOffset()
-            solid.Initialize(
-                face.wrapped,
-                thickness,
-                1.0e-5,
-                BRepOffset_Skin,
-                False,
-                False,
-                GeomAbs_Intersection,
-                True,
-            )  # The last True is important to make solid
-            solid.MakeOffsetShape()
-            return cls(solid.Shape())
+            return face.thicken(thickness)
+
         else:  # Return 2D surface only
             return face
 
