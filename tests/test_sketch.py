@@ -189,6 +189,24 @@ def test_distribute():
         (-0.5352148612481344, -4.475046932971669, 0.0)
     )
 
+    s13 = (
+        Sketch()
+        .push([(-4, 1)])
+        .circle(0.1)
+        .reset()
+        .faces()
+        .parray(2, 10, 50, 3)
+        .rect(1.0, 0.5, 40, "a", "rects")
+    )
+
+    assert len(s13._faces.Faces()) == 4
+
+    s13.reset().vertices(">(-1,0,0)", tag="rects")
+
+    assert s13._selection[0].toTuple() == approx(
+        (-3.3330260270865173, 3.1810426396582487, 0.0)
+    )
+
 
 def test_each():
 

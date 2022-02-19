@@ -362,7 +362,7 @@ class Sketch(object):
         if self._selection:
             selection: Sequence[Union[Shape, Location, Vector]] = self._selection
         else:
-            selection = [Location()]
+            selection = [Vector()]
 
         return self.push(
             (
@@ -373,7 +373,10 @@ class Sketch(object):
                 )
             )
             for i, l in enumerate(locs)
-            for el in selection
+            for el in [
+                el if isinstance(el, Location) else Location(el.Center())
+                for el in selection
+            ]
         )
 
     def distribute(
@@ -384,7 +387,7 @@ class Sketch(object):
         """
 
         if not self._selection:
-            raise ValueError("Nothing selected to distirbute over")
+            raise ValueError("Nothing selected to distribute over")
 
         params = [start + i * (stop - start) / n for i in range(n + 1)]
 
