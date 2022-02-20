@@ -2149,8 +2149,8 @@ class Face(Shape):
     @classmethod
     def makeNSidedSurface(
         cls,
-        edges: Iterable[Edge],
-        constraints: Iterable[Union[Edge, VectorLike, gp_Pnt]],
+        edges: Iterable[Union[Edge, Wire]],
+        constraints: Iterable[Union[Edge, Wire, VectorLike, gp_Pnt]],
         continuity: GeomAbs_Shape = GeomAbs_C0,
         degree: int = 3,
         nbPtsOnCur: int = 15,
@@ -2206,9 +2206,15 @@ class Face(Shape):
             maxSegments,
         )
 
-        for edge in edges:
-            n_sided.Add(edge.wrapped, continuity)
+        # outer edges
+        for el in edges:
+            if isinstance(el, Edge):
+                n_sided.Add(el.wrapped, continuity)
+            else:
+                for el_edge in el.Edges():
+                    n_sided.Add(el_edge.wrapped, continuity)
 
+        # (inner) constraints
         for c in constraints:
             if isinstance(c, gp_Pnt):
                 n_sided.Add(c)
@@ -2216,9 +2222,13 @@ class Face(Shape):
                 n_sided.Add(c.toPnt())
             elif isinstance(c, Edge):
                 n_sided.Add(c.wrapped, GeomAbs_C0, False)
+            elif isinstance(c, Wire):
+                for e in c.Edges():
+                    n_sided.Add(e.wrapped, GeomAbs_C0, False)
             else:
                 raise ValueError(f"Invalid constraint {c}")
 
+        # build, fix and return
         n_sided.Build()
 
         face = n_sided.Shape()
