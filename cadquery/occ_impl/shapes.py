@@ -205,7 +205,7 @@ from OCP.GeomAbs import (
     GeomAbs_JoinType,
 )
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
-from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
+from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
 
 from OCP.BOPAlgo import BOPAlgo_GlueEnum
 
@@ -224,14 +224,19 @@ from OCP.GeomFill import (
     GeomFill_TrihedronLaw,
 )
 
+from OCP.BRepProj import BRepProj_Projection
+from OCP.BRepExtrema import BRepExtrema_DistShapeShape
+
 from OCP.IVtkOCC import IVtkOCC_Shape, IVtkOCC_ShapeMesher
 from OCP.IVtkVTK import IVtkVTK_ShapeData
 
 # for catching exceptions
 from OCP.Standard import Standard_NoSuchObject, Standard_Failure
 
-from math import pi, sqrt
+from math import pi, sqrt, inf
 import warnings
+
+from ..utils import deprecate
 
 Real = Union[float, int]
 
@@ -1534,6 +1539,36 @@ class Mixin1D(object):
 
         return [self.locationAt(d, mode, frame, planar) for d in ds]
 
+    def project(
+        self: Mixin1DProtocol, face: "Face", d: Vector, closest: bool = True
+    ) -> "Shape":
+        """Project onto a face along the specified direction"""
+
+        bldr = BRepProj_Projection(self.wrapped, face.wrapped, d.toDir())
+        shapes = Compound(bldr.Shape())
+
+        # select the closest projection if requested
+        rv: Shape
+
+        if closest:
+            dist_calc = BRepExtrema_DistShapeShape()
+            dist_calc.LoadS1(face.wrapped)
+
+            min_dist = inf
+
+            for ix, el in enumerate(shapes):
+                dist_calc.LoadS2(el.wrapped)
+                dist_calc.Perform()
+                dist = dist_calc.Value()
+
+                if dist < min_dist:
+                    min_dist = dist
+                    rv = el
+        else:
+            rv = shapes
+
+        return rv
+
 
 class Edge(Shape, Mixin1D):
     """
@@ -2419,7 +2454,7 @@ class Face(Shape):
             self.wrapped,
             thickness,
             1.0e-6,
-            BRepOffset_Skin,
+            BRepOffset_Mode.BRepOffset_Skin,
             False,
             False,
             GeomAbs_Intersection,
@@ -2654,6 +2689,7 @@ class Solid(Shape, Mixin3D):
     wrapped: TopoDS_Solid
 
     @classmethod
+    @deprecate()
     def interpPlate(
         cls,
         surf_edges,
