@@ -1131,6 +1131,27 @@ class Shape(object):
 
         return self._bool_op((self,), splitters, split_op)
 
+    def distance(self, other: "Shape") -> float:
+        """
+        Minimal distance between two shapes
+        """
+
+        return BRepExtrema_DistShapeShape(self.wrapped, other.wrapped).Value()
+
+    def distances(self, *others: "Shape") -> Iterator[float]:
+        """
+        Minimal distances to between self and other shapes
+        """
+
+        dist_calc = BRepExtrema_DistShapeShape()
+        dist_calc.LoadS1(self.wrapped)
+
+        for s in others:
+            dist_calc.LoadS2(s.wrapped)
+            dist_calc.Perform()
+
+            yield dist_calc.Value()
+
     def mesh(self, tolerance: float, angularTolerance: float = 0.1):
         """
         Generate triangulation if none exists.
@@ -1309,6 +1330,9 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
         planar: bool = False,
     ) -> Location:
         ...
+
+
+T1D = TypeVar("T1D", bound=Mixin1DProtocol)
 
 
 class Mixin1D(object):
@@ -1540,32 +1564,36 @@ class Mixin1D(object):
         return [self.locationAt(d, mode, frame, planar) for d in ds]
 
     def project(
-        self: Mixin1DProtocol, face: "Face", d: Vector, closest: bool = True
-    ) -> "Shape":
-        """Project onto a face along the specified direction"""
+        self: T1D, face: "Face", d: Vector, closest: bool = True
+    ) -> Union[T1D, List[T1D]]:
+        """
+        Project onto a face along the specified direction
+        """
 
         bldr = BRepProj_Projection(self.wrapped, face.wrapped, d.toDir())
         shapes = Compound(bldr.Shape())
 
         # select the closest projection if requested
-        rv: Shape
+        rv: Union[T1D, List[T1D]]
 
         if closest:
+
             dist_calc = BRepExtrema_DistShapeShape()
-            dist_calc.LoadS1(face.wrapped)
+            dist_calc.LoadS1(self.wrapped)
 
             min_dist = inf
 
-            for ix, el in enumerate(shapes):
+            for el in shapes:
                 dist_calc.LoadS2(el.wrapped)
                 dist_calc.Perform()
                 dist = dist_calc.Value()
 
                 if dist < min_dist:
                     min_dist = dist
-                    rv = el
+                    rv = tcast(T1D, el)
+
         else:
-            rv = shapes
+            rv = list(*shapes)
 
         return rv
 
@@ -2464,6 +2492,23 @@ class Face(Shape):
         builder.MakeOffsetShape()
 
         return Solid(builder.Shape())
+
+    @classmethod
+    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> "Face":
+
+        bldr = BRepBuilderAPI_MakeFace(f._geomAdaptor(), outer.wrapped)
+
+        for w in inner:
+            bldr.Add(TopoDS.Wire_s(w.wrapped.Reversed()))
+
+        return cls(bldr.Face()).fix()
+
+    def project(self, other: "Face", d: Vector) -> "Face":
+
+        outer_p = tcast(Wire, self.outerWire().project(other, d))
+        inner_p = (tcast(Wire, w.project(other, d)) for w in self.innerWires())
+
+        return self.constructOn(other, outer_p, *inner_p)
 
 
 class Shell(Shape):
@@ -3408,11 +3453,15 @@ class Compound(Shape, Mixin3D):
 
         text_flat = text_flat.translate(t)
 
-        vecNormal = text_flat.Faces()[0].normalAt() * height
+        if height != 0:
+            vecNormal = text_flat.Faces()[0].normalAt() * height
 
-        text_3d = BRepPrimAPI_MakePrism(text_flat.wrapped, vecNormal.wrapped)
+            text_3d = BRepPrimAPI_MakePrism(text_flat.wrapped, vecNormal.wrapped)
+            rv = cls(text_3d.Shape()).transformShape(position.rG)
+        else:
+            rv = text_flat.transformShape(position.rG)
 
-        return cls(text_3d.Shape()).transformShape(position.rG)
+        return rv
 
     def __iter__(self) -> Iterator[Shape]:
         """
