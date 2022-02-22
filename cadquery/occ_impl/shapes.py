@@ -1564,13 +1564,13 @@ class Mixin1D(object):
         return [self.locationAt(d, mode, frame, planar) for d in ds]
 
     def project(
-        self: T1D, face: "Face", d: Vector, closest: bool = True
+        self: T1D, face: "Face", d: VectorLike, closest: bool = True
     ) -> Union[T1D, List[T1D]]:
         """
         Project onto a face along the specified direction
         """
 
-        bldr = BRepProj_Projection(self.wrapped, face.wrapped, d.toDir())
+        bldr = BRepProj_Projection(self.wrapped, face.wrapped, Vector(d).toDir())
         shapes = Compound(bldr.Shape())
 
         # select the closest projection if requested
@@ -2503,7 +2503,7 @@ class Face(Shape):
 
         return cls(bldr.Face()).fix()
 
-    def project(self, other: "Face", d: Vector) -> "Face":
+    def project(self, other: "Face", d: VectorLike) -> "Face":
 
         outer_p = tcast(Wire, self.outerWire().project(other, d))
         inner_p = (tcast(Wire, w.project(other, d)) for w in self.innerWires())
