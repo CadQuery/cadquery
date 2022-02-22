@@ -20,7 +20,7 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 
-from .geom import Vector, BoundBox, Plane, Location, Matrix
+from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
 
 from ..utils import cqmultimethod as multimethod
 
@@ -341,7 +341,7 @@ Geoms = Literal[
     "HYPERBOLA",
     "PARABOLA",
 ]
-VectorLike = Union[Vector, Tuple[float, float, float]]
+
 T = TypeVar("T", bound="Shape")
 
 
@@ -830,7 +830,7 @@ class Shape(object):
         return self.__class__(BRepBuilderAPI_Transform(self.wrapped, Tr, True).Shape())
 
     def rotate(
-        self: T, startVector: Vector, endVector: Vector, angleDegrees: float
+        self: T, startVector: VectorLike, endVector: VectorLike, angleDegrees: float
     ) -> T:
         """
         Rotates a shape around an axis.
@@ -850,22 +850,22 @@ class Shape(object):
 
         Tr = gp_Trsf()
         Tr.SetRotation(
-            gp_Ax1(startVector.toPnt(), (endVector - startVector).toDir()),
+            gp_Ax1(
+                Vector(startVector).toPnt(),
+                (Vector(endVector) - Vector(startVector)).toDir(),
+            ),
             angleDegrees * DEG2RAD,
         )
 
         return self._apply_transform(Tr)
 
-    def translate(self: T, vector: Vector) -> T:
+    def translate(self: T, vector: VectorLike) -> T:
         """
         Translates this shape through a transformation.
         """
 
-        if type(vector) == tuple:
-            vector = Vector(vector)
-
         T = gp_Trsf()
-        T.SetTranslation(vector.wrapped)
+        T.SetTranslation(Vector(vector).wrapped)
 
         return self._apply_transform(T)
 
@@ -1850,7 +1850,9 @@ class Edge(Shape, Mixin1D):
         return cls(BRepBuilderAPI_MakeEdge(spline_geom).Edge())
 
     @classmethod
-    def makeThreePointArc(cls, v1: Vector, v2: Vector, v3: Vector) -> "Edge":
+    def makeThreePointArc(
+        cls, v1: VectorLike, v2: VectorLike, v3: VectorLike
+    ) -> "Edge":
         """
         Makes a three point arc through the provided points
         :param cls:
@@ -1859,12 +1861,14 @@ class Edge(Shape, Mixin1D):
         :param v3: end vector
         :return: an edge object through the three points
         """
-        circle_geom = GC_MakeArcOfCircle(v1.toPnt(), v2.toPnt(), v3.toPnt()).Value()
+        circle_geom = GC_MakeArcOfCircle(
+            Vector(v1).toPnt(), Vector(v2).toPnt(), Vector(v3).toPnt()
+        ).Value()
 
         return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeTangentArc(cls, v1: Vector, v2: Vector, v3: Vector) -> "Edge":
+    def makeTangentArc(cls, v1: VectorLike, v2: VectorLike, v3: VectorLike) -> "Edge":
         """
         Makes a tangent arc from point v1, in the direction of v2 and ends at
         v3.
@@ -1874,19 +1878,23 @@ class Edge(Shape, Mixin1D):
         :param v3: end vector
         :return: an edge
         """
-        circle_geom = GC_MakeArcOfCircle(v1.toPnt(), v2.wrapped, v3.toPnt()).Value()
+        circle_geom = GC_MakeArcOfCircle(
+            Vector(v1).toPnt(), Vector(v2).wrapped, Vector(v3).toPnt()
+        ).Value()
 
         return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
     @classmethod
-    def makeLine(cls, v1: Vector, v2: Vector) -> "Edge":
+    def makeLine(cls, v1: VectorLike, v2: VectorLike) -> "Edge":
         """
         Create a line between two points
         :param v1: Vector that represents the first point
         :param v2: Vector that represents the second point
         :return: A linear edge between the two provided points
         """
-        return cls(BRepBuilderAPI_MakeEdge(v1.toPnt(), v2.toPnt()).Edge())
+        return cls(
+            BRepBuilderAPI_MakeEdge(Vector(v1).toPnt(), Vector(v2).toPnt()).Edge()
+        )
 
 
 class Wire(Shape, Mixin1D):
@@ -1979,7 +1987,9 @@ class Wire(Shape, Mixin1D):
         return cls(wire_builder.Wire())
 
     @classmethod
-    def makeCircle(cls, radius: float, center: Vector, normal: Vector) -> "Wire":
+    def makeCircle(
+        cls, radius: float, center: VectorLike, normal: VectorLike
+    ) -> "Wire":
         """
         Makes a Circle centered at the provided point, having normal in the provided direction
         :param radius: floating point radius of the circle, must be > 0
@@ -1997,9 +2007,9 @@ class Wire(Shape, Mixin1D):
         cls,
         x_radius: float,
         y_radius: float,
-        center: Vector,
-        normal: Vector,
-        xDir: Vector,
+        center: VectorLike,
+        normal: VectorLike,
+        xDir: VectorLike,
         angle1: float = 360.0,
         angle2: float = 360.0,
         rotation_angle: float = 0.0,
@@ -2028,7 +2038,7 @@ class Wire(Shape, Mixin1D):
             w = cls.assembleEdges([ellipse_edge])
 
         if rotation_angle != 0.0:
-            w = w.rotate(center, center + normal, rotation_angle)
+            w = w.rotate(center, Vector(center) + Vector(normal), rotation_angle)
 
         return w
 
@@ -2053,8 +2063,8 @@ class Wire(Shape, Mixin1D):
         pitch: float,
         height: float,
         radius: float,
-        center: Vector = Vector(0, 0, 0),
-        dir: Vector = Vector(0, 0, 1),
+        center: VectorLike = Vector(0, 0, 0),
+        dir: VectorLike = Vector(0, 0, 1),
         angle: float = 360.0,
         lefthand: bool = False,
     ) -> "Wire":
@@ -2067,11 +2077,13 @@ class Wire(Shape, Mixin1D):
         # 1. build underlying cylindrical/conical surface
         if angle == 360.0:
             geom_surf: Geom_Surface = Geom_CylindricalSurface(
-                gp_Ax3(center.toPnt(), dir.toDir()), radius
+                gp_Ax3(Vector(center).toPnt(), Vector(dir).toDir()), radius
             )
         else:
             geom_surf = Geom_ConicalSurface(
-                gp_Ax3(center.toPnt(), dir.toDir()), angle * DEG2RAD, radius
+                gp_Ax3(Vector(center).toPnt(), Vector(dir).toDir()),
+                angle * DEG2RAD,
+                radius,
             )
 
         # 2. construct an segment in the u,v domain
@@ -2854,8 +2866,8 @@ class Solid(Shape, Mixin3D):
         length: float,
         width: float,
         height: float,
-        pnt: Vector = Vector(0, 0, 0),
-        dir: Vector = Vector(0, 0, 1),
+        pnt: VectorLike = Vector(0, 0, 0),
+        dir: VectorLike = Vector(0, 0, 1),
     ) -> "Solid":
         """
         makeBox(length,width,height,[pnt,dir]) -- Make a box located in pnt with the dimensions (length,width,height)
@@ -2863,7 +2875,7 @@ class Solid(Shape, Mixin3D):
         """
         return cls(
             BRepPrimAPI_MakeBox(
-                gp_Ax2(pnt.toPnt(), dir.toDir()), length, width, height
+                gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()), length, width, height
             ).Shape()
         )
 
@@ -2873,8 +2885,8 @@ class Solid(Shape, Mixin3D):
         radius1: float,
         radius2: float,
         height: float,
-        pnt: Vector = Vector(0, 0, 0),
-        dir: Vector = Vector(0, 0, 1),
+        pnt: VectorLike = Vector(0, 0, 0),
+        dir: VectorLike = Vector(0, 0, 1),
         angleDegrees: float = 360,
     ) -> "Solid":
         """
@@ -2884,7 +2896,7 @@ class Solid(Shape, Mixin3D):
         """
         return cls(
             BRepPrimAPI_MakeCone(
-                gp_Ax2(pnt.toPnt(), dir.toDir()),
+                gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius1,
                 radius2,
                 height,
@@ -2897,8 +2909,8 @@ class Solid(Shape, Mixin3D):
         cls,
         radius: float,
         height: float,
-        pnt: Vector = Vector(0, 0, 0),
-        dir: Vector = Vector(0, 0, 1),
+        pnt: VectorLike = Vector(0, 0, 0),
+        dir: VectorLike = Vector(0, 0, 1),
         angleDegrees: float = 360,
     ) -> "Solid":
         """
@@ -2908,7 +2920,10 @@ class Solid(Shape, Mixin3D):
         """
         return cls(
             BRepPrimAPI_MakeCylinder(
-                gp_Ax2(pnt.toPnt(), dir.toDir()), radius, height, angleDegrees * DEG2RAD
+                gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
+                radius,
+                height,
+                angleDegrees * DEG2RAD,
             ).Shape()
         )
 
@@ -2917,8 +2932,8 @@ class Solid(Shape, Mixin3D):
         cls,
         radius1: float,
         radius2: float,
-        pnt: Vector = Vector(0, 0, 0),
-        dir: Vector = Vector(0, 0, 1),
+        pnt: VectorLike = Vector(0, 0, 0),
+        dir: VectorLike = Vector(0, 0, 1),
         angleDegrees1: float = 0,
         angleDegrees2: float = 360,
     ) -> "Solid":
@@ -2930,7 +2945,7 @@ class Solid(Shape, Mixin3D):
         """
         return cls(
             BRepPrimAPI_MakeTorus(
-                gp_Ax2(pnt.toPnt(), dir.toDir()),
+                gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius1,
                 radius2,
                 angleDegrees1 * DEG2RAD,
@@ -2967,8 +2982,8 @@ class Solid(Shape, Mixin3D):
         zmin: float,
         xmax: float,
         zmax: float,
-        pnt: Vector = Vector(0, 0, 0),
-        dir: Vector = Vector(0, 0, 1),
+        pnt: VectorLike = Vector(0, 0, 0),
+        dir: VectorLike = Vector(0, 0, 1),
     ) -> "Solid":
         """
         Make a wedge located in pnt
@@ -2977,7 +2992,14 @@ class Solid(Shape, Mixin3D):
 
         return cls(
             BRepPrimAPI_MakeWedge(
-                gp_Ax2(pnt.toPnt(), dir.toDir()), dx, dy, dz, xmin, zmin, xmax, zmax
+                gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
+                dx,
+                dy,
+                dz,
+                xmin,
+                zmin,
+                xmax,
+                zmax,
             ).Solid()
         )
 
@@ -2985,8 +3007,8 @@ class Solid(Shape, Mixin3D):
     def makeSphere(
         cls,
         radius: float,
-        pnt: Vector = Vector(0, 0, 0),
-        dir: Vector = Vector(0, 0, 1),
+        pnt: VectorLike = Vector(0, 0, 0),
+        dir: VectorLike = Vector(0, 0, 1),
         angleDegrees1: float = 0,
         angleDegrees2: float = 90,
         angleDegrees3: float = 360,
@@ -2997,7 +3019,7 @@ class Solid(Shape, Mixin3D):
         """
         return cls(
             BRepPrimAPI_MakeSphere(
-                gp_Ax2(pnt.toPnt(), dir.toDir()),
+                gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius,
                 angleDegrees1 * DEG2RAD,
                 angleDegrees2 * DEG2RAD,
@@ -3024,8 +3046,8 @@ class Solid(Shape, Mixin3D):
         cls,
         outerWire: Wire,
         innerWires: List[Wire],
-        vecCenter: Vector,
-        vecNormal: Vector,
+        vecCenter: VectorLike,
+        vecNormal: VectorLike,
         angleDegrees: Real,
     ) -> "Solid":
         """
@@ -3079,7 +3101,11 @@ class Solid(Shape, Mixin3D):
     @classmethod
     @extrudeLinearWithRotation.register
     def extrudeLinearWithRotation(
-        cls, face: Face, vecCenter: Vector, vecNormal: Vector, angleDegrees: Real,
+        cls,
+        face: Face,
+        vecCenter: VectorLike,
+        vecNormal: VectorLike,
+        angleDegrees: Real,
     ) -> "Solid":
 
         return cls.extrudeLinearWithRotation(
@@ -3091,7 +3117,7 @@ class Solid(Shape, Mixin3D):
         cls,
         outerWire: Wire,
         innerWires: List[Wire],
-        vecNormal: Vector,
+        vecNormal: VectorLike,
         taper: Real = 0,
     ) -> "Solid":
         """
@@ -3126,7 +3152,9 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     @extrudeLinear.register
-    def extrudeLinear(cls, face: Face, vecNormal: Vector, taper: Real = 0,) -> "Solid":
+    def extrudeLinear(
+        cls, face: Face, vecNormal: VectorLike, taper: Real = 0,
+    ) -> "Solid":
 
         if taper == 0:
             prism_builder: Any = BRepPrimAPI_MakePrism(
@@ -3147,8 +3175,8 @@ class Solid(Shape, Mixin3D):
         outerWire: Wire,
         innerWires: List[Wire],
         angleDegrees: Real,
-        axisStart: Vector,
-        axisEnd: Vector,
+        axisStart: VectorLike,
+        axisEnd: VectorLike,
     ) -> "Solid":
         """
         Attempt to revolve the list of wires into a solid in the provided direction
@@ -3181,7 +3209,7 @@ class Solid(Shape, Mixin3D):
     @classmethod
     @revolve.register
     def revolve(
-        cls, face: Face, angleDegrees: Real, axisStart: Vector, axisEnd: Vector,
+        cls, face: Face, angleDegrees: Real, axisStart: VectorLike, axisEnd: VectorLike,
     ) -> "Solid":
 
         v1 = Vector(axisStart)
