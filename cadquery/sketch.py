@@ -369,7 +369,7 @@ class Sketch(object):
                 l
                 * el
                 * Location(
-                    Vector(0, 0), Vector(0, 0, 1), (a1 + (angle * i)) * int(rotate)
+                    Vector(0, 0), Vector(0, 0, 1), (a1 + (angle * i)) if rotate else 0
                 )
             )
             for i, l in enumerate(locs)
