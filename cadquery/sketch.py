@@ -346,7 +346,7 @@ class Sketch(object):
 
         locs = []
 
-        if abs(remainder(da, 360)) < 1e-3:
+        if abs(remainder(da, 360)) < 1e-6:
             angle = da / n
         else:
             angle = da / (n - 1) if n > 1 else a1
