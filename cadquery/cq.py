@@ -37,11 +37,14 @@ from typing import (
 from typing_extensions import Literal
 from inspect import Parameter, Signature
 
+from cadquery.occ_impl.topo_explorer import ConnectedShapesExplorer
+
 
 from .occ_impl.geom import Vector, Plane, Location
-from .occ_impl.shapes import (
+from cadquery.occ_impl.shapes import (
     Shape,
     Edge,
+    Shapes,
     Wire,
     Face,
     Solid,
@@ -1054,6 +1057,27 @@ class Workplane(object):
         a union, cut, split, or fillet.  Compounds can contain multiple edges, wires, or solids.
         """
         return self._selectObjects("Compounds", selector, tag)
+
+    def connected(self, shape_type: Shapes, include_child_shape=False):
+        """
+        Returns a new Workplane with shapes of type `shape_type` that are connected to the previous Workplane objects
+        Example:
+        code::
+            box = Workplane().box(10,10,10).faces(">Z").connected("Edge") 
+            print(len(box.val()))
+            >>> 4 # It selects the 4 edges orthogonal to the face
+        
+        Note that by default it doesn't include searched shapes from the selected child shape, if you wanted
+        the 4 edges orthogonal to the face as well as the 4 edges from the face set `include_child_shape` to True
+        """
+
+        if len(self.objects) > 1:
+            raise NotImplementedError("Only one object workplane supported yet")
+        explorer = ConnectedShapesExplorer(self.findSolid(), self.val())
+
+        objs = explorer.search(shape_type, include_child_shape)
+
+        return self.newObject(objs)
 
     def toSvg(self, opts: Any = None) -> str:
         """
