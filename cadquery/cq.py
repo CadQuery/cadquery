@@ -3744,10 +3744,12 @@ class Workplane(object):
 
     def interpPlate(
         self: T,
-        surf_edges: Union[Sequence[VectorLike], Sequence[Edge]],
+        surf_edges: Union[
+            Sequence[VectorLike], Sequence[Union[Edge, Wire]], "Workplane"
+        ],
         surf_pts: Sequence[VectorLike] = [],
         thickness: float = 0,
-        combine: bool = False,
+        combine: CombineMode = False,
         clean: bool = True,
         degree: int = 3,
         nbPtsOnCur: int = 15,
@@ -3796,34 +3798,41 @@ class Workplane(object):
         :type MaxSegments: Integer >= 2 (?)
         """
 
-        # If thickness is 0, only a 2D surface will be returned.
-        if thickness == 0:
-            combine = False
+        # convert points to edges if needed
+        edges: List[Union[Edge, Wire]] = []
+        points = []
+
+        if isinstance(surf_edges, Workplane):
+            edges.extend(cast(Edge, el) for el in surf_edges.edges().objects)
+        else:
+            for el in surf_edges:
+                if isinstance(el, (Edge, Wire)):
+                    edges.append(el)
+                elif isinstance(el, Workplane):
+                    edges.extend(cast(Wire, el) for el in el.wires().objects)
+                else:
+                    points.append(el)
 
         # Creates interpolated plate
-        p = Solid.interpPlate(
-            surf_edges,
+        f: Face = Face.makeNSidedSurface(
+            edges if not points else [Wire.makePolygon(points).close()],
             surf_pts,
-            thickness,
-            degree,
-            nbPtsOnCur,
-            nbIter,
-            anisotropy,
-            tol2d,
-            tol3d,
-            tolAng,
-            tolCurv,
-            maxDeg,
-            maxSegments,
+            degree=degree,
+            nbPtsOnCur=nbPtsOnCur,
+            nbIter=nbIter,
+            anisotropy=anisotropy,
+            tol2d=tol2d,
+            tol3d=tol3d,
+            tolAng=tolAng,
+            tolCurv=tolCurv,
+            maxDeg=maxDeg,
+            maxSegments=maxSegments,
         )
 
-        plates = self.eachpoint(lambda loc: p.moved(loc), True)
+        # thicken if needed
+        s = f.thicken(thickness) if thickness > 0 else f
 
-        # if combination is not desired, just return the created boxes
-        if not combine:
-            return plates
-        else:
-            return self.union(plates, clean=clean)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
 
     def box(
         self: T,
@@ -3831,7 +3840,7 @@ class Workplane(object):
         width: float,
         height: float,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
-        combine: bool = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -3893,14 +3902,7 @@ class Workplane(object):
 
         box = Solid.makeBox(length, width, height, offset)
 
-        boxes = self.eachpoint(lambda loc: box.moved(loc), True)
-
-        # if combination is not desired, just return the created boxes
-        if not combine:
-            return boxes
-        else:
-            # combine everything
-            return self.union(boxes, clean=clean)
+        return self.eachpoint(lambda loc: box.moved(loc), True, combine)
 
     def sphere(
         self: T,
@@ -3910,7 +3912,7 @@ class Workplane(object):
         angle2: float = 90,
         angle3: float = 360,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
-        combine: bool = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -3964,13 +3966,7 @@ class Workplane(object):
         s = Solid.makeSphere(radius, offset, direct, angle1, angle2, angle3)
 
         # We want a sphere for each point on the workplane
-        spheres = self.eachpoint(lambda loc: s.moved(loc), True)
-
-        # If we don't need to combine everything, just return the created spheres
-        if not combine:
-            return spheres
-        else:
-            return self.union(spheres, clean=clean)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
 
     def cylinder(
         self: T,
@@ -3979,7 +3975,7 @@ class Workplane(object):
         direct: Vector = Vector(0, 0, 1),
         angle: float = 360,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
-        combine: bool = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -4027,13 +4023,7 @@ class Workplane(object):
         s = Solid.makeCylinder(radius, height, offset, direct, angle)
 
         # We want a cylinder for each point on the workplane
-        cylinders = self.eachpoint(lambda loc: s.moved(loc), True)
-
-        # If we don't need to combine everything, just return the created cylinders
-        if not combine:
-            return cylinders
-        else:
-            return self.union(cylinders, clean=clean)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
 
     def wedge(
         self: T,
@@ -4047,7 +4037,7 @@ class Workplane(object):
         pnt: VectorLike = Vector(0, 0, 0),
         dir: VectorLike = Vector(0, 0, 1),
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
-        combine: bool = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -4103,13 +4093,7 @@ class Workplane(object):
         w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, offset, dir)
 
         # We want a wedge for each point on the workplane
-        wedges = self.eachpoint(lambda loc: w.moved(loc), True)
-
-        # If we don't need to combine everything, just return the created wedges
-        if not combine:
-            return wedges
-        else:
-            return self.union(wedges, clean=clean)
+        return self.eachpoint(lambda loc: w.moved(loc), True, combine)
 
     def clean(self: T) -> T:
         """

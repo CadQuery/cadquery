@@ -2044,13 +2044,13 @@ class Wire(Shape, Mixin1D):
 
     @classmethod
     def makePolygon(
-        cls, listOfVertices: Iterable[Vector], forConstruction: bool = False,
+        cls, listOfVertices: Iterable[VectorLike], forConstruction: bool = False,
     ) -> "Wire":
         # convert list of tuples into Vectors.
         wire_builder = BRepBuilderAPI_MakePolygon()
 
         for v in listOfVertices:
-            wire_builder.Add(v.toPnt())
+            wire_builder.Add(Vector(v).toPnt())
 
         w = cls(wire_builder.Wire())
         w.forConstruction = forConstruction
@@ -2295,6 +2295,8 @@ class Face(Shape):
                 n_sided.Add(c)
             elif isinstance(c, Vector):
                 n_sided.Add(c.toPnt())
+            elif isinstance(c, tuple):
+                n_sided.Add(Vector(c).toPnt())
             elif isinstance(c, Edge):
                 n_sided.Add(c.wrapped, GeomAbs_C0, False)
             elif isinstance(c, Wire):
@@ -3158,7 +3160,7 @@ class Solid(Shape, Mixin3D):
 
         if taper == 0:
             prism_builder: Any = BRepPrimAPI_MakePrism(
-                face.wrapped, vecNormal.wrapped, True
+                face.wrapped, Vector(vecNormal).wrapped, True
             )
         else:
             faceNormal = face.normalAt()

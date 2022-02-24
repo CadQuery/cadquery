@@ -23,7 +23,7 @@ from OCP.TopLoc import TopLoc_Location
 
 TOL = 1e-2
 
-VectorLike = Union["Vector", Tuple[float, float, float]]
+VectorLike = Union["Vector", Tuple[float, float], Tuple[float, float, float]]
 
 
 class Vector(object):
