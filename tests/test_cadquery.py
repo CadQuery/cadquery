@@ -4165,12 +4165,12 @@ class TestCadQuery(BaseTest):
         # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
         thickness = 0
         edge_points = [
-            [0.0, 0.0, 0.0],
-            [0.0, 10.0, 0.0],
-            [0.0, 10.0, 10.0],
-            [0.0, 0.0, 10.0],
+            (0.0, 0.0, 0.0),
+            (0.0, 10.0, 0.0),
+            (0.0, 10.0, 10.0),
+            (0.0, 0.0, 10.0),
         ]
-        surface_points = [[5.0, 5.0, 5.0]]
+        surface_points = [(5.0, 5.0, 5.0)]
         plate_0 = Workplane("XY").interpPlate(edge_points, surface_points, thickness)
         self.assertTrue(plate_0.val().isValid())
         self.assertAlmostEqual(plate_0.val().Area(), 141.218823892, 1)
@@ -4178,11 +4178,11 @@ class TestCadQuery(BaseTest):
         # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
         thickness = 0.1
         edge_points = [
-            [-7.0, -7.0, 0.0],
-            [-3.0, -10.0, 3.0],
-            [7.0, -7.0, 0.0],
-            [7.0, 7.0, 0.0],
-            [-7.0, 7.0, 0.0],
+            (-7.0, -7.0, 0.0),
+            (-3.0, -10.0, 3.0),
+            (7.0, -7.0, 0.0),
+            (7.0, 7.0, 0.0),
+            (-7.0, 7.0, 0.0),
         ]
         edge_wire = Workplane("XY").polyline(
             [(-7.0, -7.0), (7.0, -7.0), (7.0, 7.0), (-7.0, 7.0)]
@@ -4195,7 +4195,7 @@ class TestCadQuery(BaseTest):
             .transformed(offset=Vector(0, 0, -7), rotate=Vector(45, 0, 0))
             .spline([(-7.0, 0.0), (3, -3), (7.0, 0.0)])
         )
-        surface_points = [[-3.0, -3.0, -3.0], [3.0, 3.0, 3.0]]
+        surface_points = [(-3.0, -3.0, -3.0), (3.0, 3.0, 3.0)]
         plate_1 = Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_1.val().isValid())
         self.assertAlmostEqual(plate_1.val().Volume(), 26.124970206, 2)
@@ -4206,17 +4206,17 @@ class TestCadQuery(BaseTest):
         fn = 6
         thickness = 0.1
         edge_points = [
-            [r1 * math.cos(i * math.pi / fn), r1 * math.sin(i * math.pi / fn)]
+            (r1 * math.cos(i * math.pi / fn), r1 * math.sin(i * math.pi / fn))
             if i % 2 == 0
-            else [r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn)]
+            else (r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn))
             for i in range(2 * fn + 1)
         ]
         edge_wire = Workplane("XY").polyline(edge_points)
         r2 = 4.5
         surface_points = [
-            [r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn), 1.0]
+            (r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn), 1.0)
             for i in range(2 * fn)
-        ] + [[0.0, 0.0, -2.0]]
+        ] + [(0.0, 0.0, -2.0)]
         plate_2 = Workplane("XY").interpPlate(
             edge_wire,
             surface_points,
@@ -4265,20 +4265,20 @@ class TestCadQuery(BaseTest):
         thickness = 0.1
         fn = 6
         edge_points = [
-            [
+            (
                 r1 * math.cos(i * 2 * math.pi / fn + 30 * math.pi / 180),
                 r1 * math.sin(i * 2 * math.pi / fn + 30 * math.pi / 180),
-            ]
+            )
             for i in range(fn + 1)
         ]
         surface_points = [
-            [
+            (
                 r1 / 4 * math.cos(i * 2 * math.pi / fn + 30 * math.pi / 180),
                 r1 / 4 * math.sin(i * 2 * math.pi / fn + 30 * math.pi / 180),
                 0.75,
-            ]
+            )
             for i in range(fn + 1)
-        ] + [[0, 0, 2]]
+        ] + [(0, 0, 2)]
         edge_wire = Workplane("XY").polyline(edge_points)
         plate_3 = (
             Workplane("XY")
@@ -4327,7 +4327,7 @@ class TestCadQuery(BaseTest):
                 .workplane(offset=-offset_list[i + 1])
                 .spline(edge_points[i + 1])
             )
-        surface_points = [[0, 0, 0]]
+        surface_points = [(0, 0, 0)]
         plate_4 = Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_4.val().isValid())
         self.assertAlmostEqual(plate_4.val().Volume(), 7.760559490, 2)
