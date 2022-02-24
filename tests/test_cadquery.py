@@ -5293,3 +5293,49 @@ class TestCadQuery(BaseTest):
             repr(wp.plane)
             == "Plane(origin=(0.0, 0.0, 0.0), xDir=(1.0, 0.0, 0.0), normal=(0.0, 0.0, 1.0))"
         )
+
+    def test_distance(self):
+
+        w1 = Face.makePlane(2, 2).Wires()[0]
+        w2 = Face.makePlane(1, 1).Wires()[0]
+        w3 = Face.makePlane(3, 3).Wires()[0]
+
+        d12 = w1.distance(w2)
+
+        assert d12 == approx(0.5)
+
+        d12, d13 = w1.distances(w2, w3)
+
+        assert d12 == approx(0.5)
+        assert d13 == approx(0.5)
+
+    def test_project(self):
+
+        # project a single letter
+        t = Compound.makeText("T", 5, 0).Faces()[0]
+        f = Workplane("XZ", origin=(0, 0, -7)).sphere(6).faces("not %PLANE").val()
+
+        res = t.project(f, (0, 0, -1))
+
+        assert res.isValid()
+        assert len(res.Edges()) == 8
+        assert t.distance(res) == approx(1)
+
+        # extrude it
+        res_ex = Solid.extrudeLinear(t.project(f, (0, 0, -1)), (0.0, 0.0, 0.5))
+
+        assert res_ex.isValid()
+        assert len(res_ex.Faces()) == 10
+
+        # project a wire
+        w = t.outerWire()
+
+        res_w = w.project(f, (0, 0, -1))
+
+        assert len(res_w.Edges()) == 8
+        assert res_w.isValid()
+
+        res_w1, res_w2 = w.project(f, (0, 0, -1), False)
+
+        assert len(res_w1.Edges()) == 8
+        assert len(res_w2.Edges()) == 8

@@ -1593,7 +1593,7 @@ class Mixin1D(object):
                     rv = tcast(T1D, el)
 
         else:
-            rv = list(*shapes)
+            rv = [tcast(T1D, el) for el in shapes]
 
         return rv
 
