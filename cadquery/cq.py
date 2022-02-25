@@ -3808,8 +3808,6 @@ class Workplane(object):
             for el in surf_edges:
                 if isinstance(el, (Edge, Wire)):
                     edges.append(el)
-                elif isinstance(el, Workplane):
-                    edges.extend(cast(Wire, el) for el in el.wires().objects)
                 else:
                     points.append(el)
 

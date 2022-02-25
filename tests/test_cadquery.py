@@ -4332,6 +4332,21 @@ class TestCadQuery(BaseTest):
         self.assertTrue(plate_4.val().isValid())
         self.assertAlmostEqual(plate_4.val().Volume(), 7.760559490, 2)
 
+        # inner edge/wire constraint
+        inner_e1 = (
+            Workplane(origin=(0, 0, 1)).moveTo(-0.5, 0).lineTo(0.5, 0.0).edges().vals()
+        )
+        inner_e2 = (
+            Workplane(origin=(0, 0, 1)).moveTo(0, -0.2).lineTo(0, 0.2).edges().vals()
+        )
+        inner_w = Workplane(origin=(0, 0, 1)).ellipse(0.5, 0.2).vals()
+
+        plate_5 = Workplane().interpPlate(
+            Workplane().slot2D(2, 1), inner_e1 + inner_e2 + inner_w
+        )
+
+        assert plate_5.val().isValid()
+
     def testTangentArcToPoint(self):
 
         # create a simple shape with tangents of straight edges and see if it has the correct area
