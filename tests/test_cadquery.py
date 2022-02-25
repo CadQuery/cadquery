@@ -5339,3 +5339,46 @@ class TestCadQuery(BaseTest):
 
         assert len(res_w1.Edges()) == 8
         assert len(res_w2.Edges()) == 8
+
+        # project a single letter with openings
+        o = Compound.makeText("O", 5, 0).Faces()[0]
+        f = Workplane("XZ", origin=(0, 0, -7)).sphere(6).faces("not %PLANE").val()
+
+        res_o = o.project(f, (0, 0, -1))
+
+        assert res_o.isValid()
+
+        # extrude it
+        res_o_ex = Solid.extrudeLinear(o.project(f, (0, 0, -1)), (0.0, 0.0, 0.5))
+
+        assert res_o_ex.isValid()
+
+    def test_makeNSidedSurface(self):
+
+        # inner edge/wire constraint
+        outer_w = Workplane().slot2D(2, 1).wires().vals()
+
+        inner_e1 = (
+            Workplane(origin=(0, 0, 1)).moveTo(-0.5, 0).lineTo(0.5, 0.0).edges().vals()
+        )
+        inner_e2 = (
+            Workplane(origin=(0, 0, 1)).moveTo(0, -0.2).lineTo(0, 0.2).edges().vals()
+        )
+        inner_w = Workplane(origin=(0, 0, 1)).ellipse(0.5, 0.2).vals()
+
+        f1 = Face.makeNSidedSurface(outer_w, inner_e1 + inner_e2 + inner_w)
+
+        assert f1.isValid()
+        assert len(f1.Edges()) == 4
+
+        # inner points
+        f2 = Face.makeNSidedSurface(
+            outer_w, [Vector(-0.4, 0, 1).toPnt(), Vector(0.4, 0, 1)]
+        )
+
+        assert f2.isValid()
+        assert len(f2.Edges()) == 4
+
+        # exception on invalid constraint
+        with raises(ValueError):
+            Face.makeNSidedSurface(outer_w, [[0, 0, 1]])
