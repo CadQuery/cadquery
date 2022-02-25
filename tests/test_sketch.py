@@ -145,15 +145,67 @@ def test_distribute():
     s7 = Sketch().parray(2, 0, 90, 3, False).rect(0.5, 0.5).reset().vertices(">(1,1,0)")
 
     assert len(s7._selection) == 1
+    assert s7._selection[0].toTuple() == approx(
+        (1.6642135623730951, 1.664213562373095, 0.0)
+    )
 
     s8 = Sketch().push([(0, 0), (0, 1)]).parray(2, 0, 90, 3).rect(0.5, 0.5)
-    s8.reset().faces(">(1,1,0)")
+    s8.reset().faces(">(0,1,0)")
 
     assert s8._selection[0].Center().Length == approx(3)
 
     s9 = Sketch().push([(0, 1)], tag="loc")
 
     assert len(s9._tags["loc"]) == 1
+
+    s10 = Sketch().push([(-4, 1), (0, 0), (4, -1)]).parray(2, 10, 50, 3).rect(1.0, 0.5)
+    s10.reset().vertices(">(-1,0,0)")
+
+    assert s10._selection[0].toTuple() == approx(
+        (-3.46650635094611, 2.424038105676658, 0.0)
+    )
+
+    s10.reset().vertices(">(1,0,0)")
+
+    assert s10._selection[0].toTuple() == approx(
+        (6.505431426947252, -0.8120814940857262, 0.0)
+    )
+
+    s11 = Sketch().parray(1, 135, 0, 1).circle(0.1)
+    s11.reset().faces()
+
+    assert len(s11._selection) == 1
+    assert s11._selection[0].Center().toTuple() == approx(
+        (-0.7071067811865475, 0.7071067811865476, 0.0)
+    )
+
+    s12 = Sketch().parray(4, 20, 360, 6).rect(1.0, 0.5)
+
+    assert len(s12._faces.Faces()) == 6
+
+    s12.reset().vertices(">(0,-1,0)")
+
+    assert s12._selection[0].toTuple() == approx(
+        (-0.5352148612481344, -4.475046932971669, 0.0)
+    )
+
+    s13 = (
+        Sketch()
+        .push([(-4, 1)])
+        .circle(0.1)
+        .reset()
+        .faces()
+        .parray(2, 10, 50, 3)
+        .rect(1.0, 0.5, 40, "a", "rects")
+    )
+
+    assert len(s13._faces.Faces()) == 4
+
+    s13.reset().vertices(">(-1,0,0)", tag="rects")
+
+    assert s13._selection[0].toTuple() == approx(
+        (-3.3330260270865173, 3.1810426396582487, 0.0)
+    )
 
 
 def test_each():
