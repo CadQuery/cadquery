@@ -21,9 +21,11 @@ from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
 
+from ..types import Real
+
 TOL = 1e-2
 
-VectorLike = Union["Vector", Tuple[float, float], Tuple[float, float, float]]
+VectorLike = Union["Vector", Tuple[Real, Real], Tuple[Real, Real, Real]]
 
 
 class Vector(object):
