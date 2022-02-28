@@ -386,18 +386,39 @@ class Sketch(object):
         Distribute locations along selected edges or wires.
         """
 
+        if n < 1:
+            raise ValueError(f"At least 1 element required, requested {n}")
+
         if not self._selection:
             raise ValueError("Nothing selected to distribute over")
 
-        params = [start + i * (stop - start) / n for i in range(n + 1)]
+        if 1 - abs(stop - start) < 1e-6:
+            trimmed = False
+        else:
+            trimmed = True
+
+        def params(closed: bool = True, trimmed: bool = True):
+            if closed and not trimmed:
+                rv = [start + i * (stop - start) / n for i in range(n)]
+            else:
+                rv = [
+                    start + i * (stop - start) / (n - 1) if n - 1 > 0 else start
+                    for i in range(n)
+                ]
+            return rv
 
         locs = []
         for el in self._selection:
             if isinstance(el, (Wire, Edge)):
                 if rotate:
-                    locs.extend(el.locations(params, planar=True))
+                    locs.extend(
+                        el.locations(params(el.IsClosed(), trimmed), planar=True)
+                    )
                 else:
-                    locs.extend(Location(v) for v in el.positions(params))
+                    locs.extend(
+                        Location(v)
+                        for v in el.positions(params(el.IsClosed(), trimmed))
+                    )
             else:
                 raise ValueError(f"Unsupported selection: {el}")
 
