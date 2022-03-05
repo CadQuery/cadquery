@@ -63,6 +63,7 @@ from .sketch import Sketch
 CQObject = Union[Vector, Location, Shape, Sketch]
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
 CombineMode = Union[bool, Literal["cut", "a", "s"]]  # a : additive, s: subtractive
+TOL = 1e-6
 
 T = TypeVar("T", bound="Workplane")
 """A type variable used to make the return type of a method the same as the
@@ -1505,28 +1506,29 @@ class Workplane(object):
 
         # Calculate angle between elements
         if fill:
-            if abs(math.remainder(angle, 360)) < 1e-6:
+            if abs(math.remainder(angle, 360)) < TOL:
                 angle = angle / count
             else:
                 # Inclusive start and end
                 angle = angle / (count - 1) if count > 1 else startAngle
 
-        def locs():
-            # Add elements
-            for i in range(0, count):
-                phi_deg = startAngle + (angle * i)
-                phi = math.radians(phi_deg)
-                x = radius * math.cos(phi)
-                y = radius * math.sin(phi)
+        locs = []
 
-                if rotate:
-                    loc = Location(Vector(x, y), Vector(0, 0, 1), phi_deg)
-                else:
-                    loc = Location(Vector(x, y))
+        # Add elements
+        for i in range(0, count):
+            phi_deg = startAngle + (angle * i)
+            phi = math.radians(phi_deg)
+            x = radius * math.cos(phi)
+            y = radius * math.sin(phi)
 
-                yield loc
+            if rotate:
+                loc = Location(Vector(x, y), Vector(0, 0, 1), phi_deg)
+            else:
+                loc = Location(Vector(x, y))
 
-        return self.pushPoints(locs())
+            locs.append(loc)
+
+        return self.pushPoints(locs)
 
     def pushPoints(self: T, pntList: Iterable[Union[VectorLike, Location]]) -> T:
         """
