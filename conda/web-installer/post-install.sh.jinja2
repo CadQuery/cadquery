@@ -6,9 +6,6 @@ source $PREFIX/bin/activate
 echo Installing CadQuery
 conda install -c conda-forge -c cadquery -y cadquery={{ tag_version }}
 
-echo Installing jupyter-cadquery
-pip install jupyter-cadquery==3.0.0rc3 matplotlib
-
 echo Cleaning Packages
 conda clean -a -y
 
