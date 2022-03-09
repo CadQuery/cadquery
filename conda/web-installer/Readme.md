@@ -32,7 +32,8 @@ To Activate the environment
 ```
 # Under Windows
 condabin\activate.bat
-# Under Linux
+
+# Under Linux / MacOS
 source ~/cadquery/bin/activate
 ```
 
