@@ -373,7 +373,7 @@ def fixed_rotation_axis_cost(m1: gp_Dir, t1: gp_Trsf, val: Tuple[int, float]):
     ix, v0 = val
     v = t1.GetRotation().GetEulerAngles(gp_Intrinsic_XYZ)[ix]
 
-    return v - v0
+    return DIR_SCALING * (v - v0)
 
 
 # dictionary of individual constraint cost functions
