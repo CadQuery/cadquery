@@ -640,6 +640,30 @@ def test_fixed_rotation(simple_assy2):
     assert w.solids("<Z").val().Center().z == pytest.approx(-3)
     assert w.solids("<Z").edges(">Z").size() == 1
 
+    # more realistic fixed rotation check
+    def make_beam(size, length, draft_angle=0):
+        beam = (
+            cq.Workplane("YX")
+            .sketch()
+            .trapezoid(length, size, draft_angle)
+            .finalize()
+            .extrude(size)
+        )
+        return beam
+
+    frame = (
+        cq.Assembly()
+        .add(make_beam(length=800, size=60, draft_angle=45), name="one")
+        .add(make_beam(length=200, size=60, draft_angle=45), name="two")
+        .constrain("one", "Fixed")
+        .constrain("two", "FixedRotation", (0, 0, 90))
+        .constrain("one@faces@<Y", "two@faces@>Y", "Point")
+    )
+
+    frame.solve()
+
+    assert frame._solve_result["cost"] == pytest.approx(0)
+
 
 def test_validation(simple_assy2):
 
