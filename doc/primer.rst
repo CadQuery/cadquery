@@ -8,7 +8,7 @@ CadQuery Concepts
 3D BREP Topology Concepts
 ---------------------------
 Before talking about CadQuery, it makes sense to talk a little about 3D CAD topology. CadQuery is based upon the
-OpenCascade kernel, which uses Boundary Representations ( BREP ) for objects.  This just means that objects
+OpenCascade kernel, which uses Boundary Representations (BREP) for objects.  This just means that objects
 are defined by their enclosing surfaces.
 
 When working in a BREP system, these fundamental constructs exist to define a shape (working up the food chain):
