@@ -37,6 +37,7 @@ from .occ_impl.sketch_solver import (
 
 Modes = Literal["a", "s", "i", "c"]  # add, subtract, intersect, construct
 Point = Union[Vector, Tuple[Real, Real]]
+TOL = 1e-6
 
 T = TypeVar("T", bound="Sketch")
 SketchVal = Union[Shape, Location]
@@ -346,7 +347,7 @@ class Sketch(object):
 
         locs = []
 
-        if abs(remainder(da, 360)) < 1e-6:
+        if abs(remainder(da, 360)) < TOL:
             angle = da / n
         else:
             angle = da / (n - 1) if n > 1 else a1
@@ -392,32 +393,35 @@ class Sketch(object):
         if not self._selection:
             raise ValueError("Nothing selected to distribute over")
 
-        if 1 - abs(stop - start) < 1e-6:
+        if 1 - abs(stop - start) < TOL:
             trimmed = False
         else:
             trimmed = True
 
-        def params(closed: bool = True, trimmed: bool = True):
-            if closed and not trimmed:
-                rv = [start + i * (stop - start) / n for i in range(n)]
-            else:
-                rv = [
-                    start + i * (stop - start) / (n - 1) if n - 1 > 0 else start
-                    for i in range(n)
-                ]
-            return rv
+        params = [
+            [start + i * (stop - start) / n for i in range(n)],
+            [
+                start + i * (stop - start) / (n - 1) if n - 1 > 0 else start
+                for i in range(n)
+            ],
+        ]
 
         locs = []
         for el in self._selection:
             if isinstance(el, (Wire, Edge)):
                 if rotate:
                     locs.extend(
-                        el.locations(params(el.IsClosed(), trimmed), planar=True)
+                        el.locations(
+                            params[0 if el.IsClosed() and not trimmed else 1],
+                            planar=True,
+                        )
                     )
                 else:
                     locs.extend(
                         Location(v)
-                        for v in el.positions(params(el.IsClosed(), trimmed))
+                        for v in el.positions(
+                            params[0 if el.IsClosed() and not trimmed else 1]
+                        )
                     )
             else:
                 raise ValueError(f"Unsupported selection: {el}")
