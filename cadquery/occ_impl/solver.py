@@ -391,7 +391,8 @@ class ConstraintSolver(object):
         self.ne = len(entities)
         self.locked = locked
         self.locked_rotation = {
-            k: tuple(map(radians, a)) for k, a in locked_rotation.items()
+            k: tuple(map(radians, a)) if a is not None else None
+            for k, a in locked_rotation.items()
         }
         self.nc = len(self.constraints)
 
