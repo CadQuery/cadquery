@@ -25,7 +25,7 @@ from OCP.gp import (
     gp_Quaternion,
     gp_XYZ,
     gp_Lin,
-    gp_Intrinsic_XYZ,
+    gp_Extrinsic_XYZ,
 )
 from OCP.BRepTools import BRepTools
 from OCP.Precision import Precision
@@ -41,9 +41,7 @@ NoneType = type(None)
 DOF6 = Tuple[float, float, float, float, float, float]
 ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt, gp_Lin, None]
 
-UnaryConstraintKind = Literal[
-    "Fixed", "FixedPoint", "FixedAxis", "FixedRotation", "FixedRotationAxis"
-]
+UnaryConstraintKind = Literal["Fixed", "FixedPoint", "FixedAxis", "FixedRotation"]
 BinaryConstraintKind = Literal["Plane", "Point", "Axis", "PointInPlane", "PointOnLine"]
 ConstraintKind = Literal[
     "Plane",
@@ -55,7 +53,6 @@ ConstraintKind = Literal[
     "FixedAxis",
     "PointOnLine",
     "FixedRotation",
-    "FixedRotationAxis",
 ]
 
 # (arity, marker types, param type, conversion func)
@@ -70,14 +67,9 @@ ConstraintInvariants = {
     "PointInPlane": (2, (gp_Pnt, gp_Pln), Real, None),
     "PointOnLine": (2, (gp_Pnt, gp_Lin), Real, None),
     "Fixed": (1, (None,), Type[None], None),
+    "FixedRotation": (1, (None,), Tuple[Real, Real, Real], None),
     "FixedPoint": (1, (gp_Pnt,), Tuple[Real, Real, Real], None),
     "FixedAxis": (1, (gp_Dir,), Tuple[Real, Real, Real], None),
-    "FixedRotationAxis": (
-        1,
-        (None,),
-        Tuple[int, Real],
-        lambda x: (x[0], radians(x[1])),
-    ),
 }
 
 # translation table for compound constraints {name : (name, ...), converter}
@@ -85,10 +77,6 @@ CompoundConstraints: Dict[
     ConstraintKind, Tuple[Tuple[ConstraintKind, ...], Callable[[Any], Tuple[Any, ...]]]
 ] = {
     "Plane": (("Axis", "Point"), lambda x: (radians(x) if x is not None else None, 0)),
-    "FixedRotation": (
-        ("FixedRotationAxis", "FixedRotationAxis", "FixedRotationAxis"),
-        lambda x: tuple(enumerate(map(radians, x))),
-    ),
 }
 
 # constraint POD type
@@ -282,17 +270,14 @@ class ConstraintSpec(object):
         elif self.kind == "Fixed":
             markers = [(None,)]
 
+        elif self.kind == "FixedRotation":
+            markers = [(None,)]
+
         elif self.kind == "FixedPoint":
             markers = [(self._getPnt(args[0]),)]
 
         elif self.kind == "FixedAxis":
             markers = [(self._getAxis(args[0]),)]
-
-        elif self.kind == "FixedRotation":
-            markers = [(None,), (None,), (None,)]
-
-        elif self.kind == "FixedRotationAxis":
-            markers = [(None,)]
 
         else:
             raise ValueError(f"Unknown constraint kind {self.kind}")
@@ -368,14 +353,6 @@ def fixed_axis_cost(m1: gp_Dir, t1: gp_Trsf, val: Tuple[float, float, float]):
     return DIR_SCALING * (m1.Transformed(t1).Angle(gp_Dir(*val)))
 
 
-def fixed_rotation_axis_cost(m1: gp_Dir, t1: gp_Trsf, val: Tuple[int, float]):
-
-    ix, v0 = val
-    v = t1.GetRotation().GetEulerAngles(gp_Intrinsic_XYZ)[ix]
-
-    return v - v0
-
-
 # dictionary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
     Point=point_cost,
@@ -383,9 +360,9 @@ costs: Dict[str, Callable[..., float]] = dict(
     PointInPlane=point_in_plane_cost,
     PointOnLine=point_on_line_cost,
     Fixed=fixed_cost,
+    FixedRotation=fixed_cost,
     FixedPoint=fixed_point_cost,
     FixedAxis=fixed_axis_cost,
-    FixedRotationAxis=fixed_rotation_axis_cost,
 )
 
 # Actual solver class
@@ -404,6 +381,7 @@ class ConstraintSolver(object):
         entities: List[Location],
         constraints: List[Tuple[Tuple[int, ...], Constraint]],
         locked: List[int] = [],
+        locked_rotation: Dict[int, Any] = {},
     ):
 
         self.entities = [self._locToDOF6(loc) for loc in entities]
@@ -412,6 +390,9 @@ class ConstraintSolver(object):
         # additional book-keeping
         self.ne = len(entities)
         self.locked = locked
+        self.locked_rotation = {
+            k: tuple(map(radians, a)) for k, a in locked_rotation.items()
+        }
         self.nc = len(self.constraints)
 
     @staticmethod
@@ -445,6 +426,17 @@ class ConstraintSolver(object):
 
         return rv
 
+    def _fixed_rotation(self, k: int, transform: gp_Trsf) -> gp_Trsf:
+
+        q = gp_Quaternion()
+        angles = self.locked_rotation[k]
+        if angles is not None:
+            q.SetEulerAngles(gp_Extrinsic_XYZ, *angles)
+
+        transform.SetRotationPart(q)
+
+        return transform
+
     def _cost(
         self,
     ) -> Tuple[
@@ -469,7 +461,12 @@ class ConstraintSolver(object):
 
             for ks, (ms, kind, params) in constraints:
                 ts = tuple(
-                    transforms[k] if k not in self.locked else gp_Trsf() for k in ks
+                    gp_Trsf()
+                    if k in self.locked
+                    else self._fixed_rotation(k, transforms[k])
+                    if k in self.locked_rotation.keys()
+                    else transforms[k]
+                    for k in ks
                 )
                 cost = costs[kind]
 
@@ -493,7 +490,12 @@ class ConstraintSolver(object):
 
             for ks, (ms, kind, params) in constraints:
                 ts = tuple(
-                    transforms[k] if k not in self.locked else gp_Trsf() for k in ks
+                    gp_Trsf()
+                    if k in self.locked
+                    else self._fixed_rotation(k, transforms[k])
+                    if k in self.locked_rotation.keys()
+                    else transforms[k]
+                    for k in ks
                 )
                 cost = costs[kind]
 
@@ -505,6 +507,8 @@ class ConstraintSolver(object):
 
                     for j in range(NDOF):
                         tkj = transforms_delta[k * NDOF + j]
+                        if k in self.locked_rotation.keys():
+                            tkj = self._fixed_rotation(k, tkj)
 
                         ts_kj = ts[:ix] + (tkj,) + ts[ix + 1 :]
                         tmp_kj = cost(*ms, *ts_kj, params)
@@ -541,8 +545,14 @@ class ConstraintSolver(object):
             "status": opt.last_optimize_result(),
         }
 
+        transforms = [
+            self._build_transform(*x[NDOF * i : NDOF * (i + 1)]) for i in range(self.ne)
+        ]
+
         locs = [
-            Location(self._build_transform(*x[NDOF * i : NDOF * (i + 1)]))
+            Location(transforms[i])
+            if i not in self.locked_rotation.keys()
+            else Location(self._fixed_rotation(i, transforms[i]))
             for i in range(self.ne)
         ]
         return locs, result

@@ -630,7 +630,7 @@ def test_fixed_rotation(simple_assy2):
 
     assy.constrain("b1", "Fixed")
     assy.constrain("b2", "FixedPoint", (0, 0, -3))
-    assy.constrain("b2@faces@>Z", "FixedRotation", (45, 0, 0))
+    assy.constrain("b2", "FixedRotation", (45, 0, 0))
 
     assy.solve()
 
@@ -639,6 +639,52 @@ def test_fixed_rotation(simple_assy2):
     assert w.solids(">Z").val().Center().Length == pytest.approx(0)
     assert w.solids("<Z").val().Center().z == pytest.approx(-3)
     assert w.solids("<Z").edges(">Z").size() == 1
+    assert w.solids("<Z").edges(">Z").vertices(">X").val().toTuple() == pytest.approx(
+        (1, 0, -2.2928932187770275), abs=1e-9
+    )
+    assert assy._solve_result["cost"] == pytest.approx(0)
+
+    assy = simple_assy2
+
+    assy.constrain("b1", "Fixed")
+    assy.constrain("b2", "FixedPoint", (0, 0, -3))
+    assy.constrain("b2", "FixedRotation", (45, -180, 90))
+
+    assy.solve()
+
+    w = cq.Workplane().add(assy.toCompound())
+
+    assert w.solids(">Z").val().Center().Length == pytest.approx(0)
+    assert w.solids("<Z").val().Center().z == pytest.approx(-3)
+    assert w.solids("<Z").edges(">Z").size() == 1
+    assert w.solids("<Z").edges(">Z").vertices(">Y").val().toTuple() == pytest.approx(
+        (0, 1, -2.2928932187770275), abs=1e-9
+    )
+    assert assy._solve_result["cost"] == pytest.approx(0)
+
+    # more realistic fixed rotation check
+    def make_beam(size, length, draft_angle=0):
+        beam = (
+            cq.Workplane("YX")
+            .sketch()
+            .trapezoid(length, size, draft_angle)
+            .finalize()
+            .extrude(size)
+        )
+        return beam
+
+    frame = (
+        cq.Assembly()
+        .add(make_beam(length=800, size=60, draft_angle=45), name="one")
+        .add(make_beam(length=200, size=60, draft_angle=45), name="two")
+        .constrain("one", "Fixed")
+        .constrain("two", "FixedRotation", (0, 0, 90))
+        .constrain("one@faces@<Y", "two@faces@>Y", "Point")
+    )
+
+    frame.solve()
+
+    assert frame._solve_result["cost"] == pytest.approx(0)
 
 
 def test_validation(simple_assy2):

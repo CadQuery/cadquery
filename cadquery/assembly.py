@@ -358,6 +358,7 @@ class Assembly(object):
 
         i = 0
         locked = []
+        locked_rotation = {}
         for c in self.constraints:
             for name in c.objects:
                 if name not in ents:
@@ -365,6 +366,8 @@ class Assembly(object):
                     i += 1
                 if c.kind == "Fixed" or name == self.name:
                     locked.append(ents[name])
+                if c.kind == "FixedRotation":
+                    locked_rotation[ents[name]] = c.param
 
         # Lock the first occuring entity if needed.
         if not locked:
@@ -402,8 +405,19 @@ class Assembly(object):
         if not constraints:
             raise ValueError("At least one constraint required")
 
+        if not [
+            kind
+            for ks, (ms, kind, params) in constraints
+            if kind not in ["Fixed", "FixedRotation"]
+        ]:
+            raise ValueError(
+                "At least one constraint required not in Fixed, or FixedRotation"
+            )
+
         # instantiate the solver
-        solver = ConstraintSolver(locs, constraints, locked=locked)
+        solver = ConstraintSolver(
+            locs, constraints, locked=locked, locked_rotation=locked_rotation
+        )
 
         # solve
         locs_new, self._solve_result = solver.solve()
