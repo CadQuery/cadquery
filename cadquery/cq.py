@@ -63,6 +63,7 @@ from .sketch import Sketch
 CQObject = Union[Vector, Location, Shape, Sketch]
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
 CombineMode = Union[bool, Literal["cut", "a", "s"]]  # a : additive, s: subtractive
+TOL = 1e-6
 
 T = TypeVar("T", bound="Workplane")
 """A type variable used to make the return type of a method the same as the
@@ -1486,51 +1487,42 @@ class Workplane(object):
         rotate: bool = True,
     ) -> T:
         """
-        Creates an polar array of points and pushes them onto the stack.
-        The 0 degree reference angle is located along the local X-axis.
+        Creates a polar array of points and pushes them onto the stack.
+        The zero degree reference angle is located along the local X-axis.
 
         :param radius: Radius of the array.
-        :param startAngle: Starting angle (degrees) of array. 0 degrees is
-            situated along local X-axis.
+        :param startAngle: Starting angle (degrees) of array. Zero degrees is
+            situated along the local X-axis.
         :param angle: The angle (degrees) to fill with elements. A positive
             value will fill in the counter-clockwise direction. If fill is
-            false, angle is the angle between elements.
-        :param count: Number of elements in array. ( > 0 )
+            False, angle is the angle between elements.
+        :param count: Number of elements in array. (count >= 1)
         :param fill: Interpret the angle as total if True (default: True).
         :param rotate: Rotate every item (default: True).
         """
 
-        if count <= 0:
-            raise ValueError("No elements in array")
-
-        # First element at start angle, convert to cartesian coords
-        x = radius * math.sin(math.radians(startAngle))
-        y = radius * math.cos(math.radians(startAngle))
-
-        if rotate:
-            loc = Location(Vector(x, y), Vector(0, 0, 1), -startAngle)
-        else:
-            loc = Location(Vector(x, y))
-
-        locs = [loc]
+        if count < 1:
+            raise ValueError(f"At least 1 element required, requested {count}")
 
         # Calculate angle between elements
         if fill:
-            if angle % 360 == 0:
+            if abs(math.remainder(angle, 360)) < TOL:
                 angle = angle / count
-            elif count > 1:
+            else:
                 # Inclusive start and end
-                angle = angle / (count - 1)
+                angle = angle / (count - 1) if count > 1 else startAngle
 
-        # Add additional elements
-        for i in range(1, count):
+        locs = []
+
+        # Add elements
+        for i in range(0, count):
             phi_deg = startAngle + (angle * i)
             phi = math.radians(phi_deg)
-            x = radius * math.sin(phi)
-            y = radius * math.cos(phi)
+            x = radius * math.cos(phi)
+            y = radius * math.sin(phi)
 
             if rotate:
-                loc = Location(Vector(x, y), Vector(0, 0, 1), -phi_deg)
+                loc = Location(Vector(x, y), Vector(0, 0, 1), phi_deg)
             else:
                 loc = Location(Vector(x, y))
 
