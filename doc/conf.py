@@ -44,6 +44,7 @@ extensions = [
 
 autodoc_typehints = "both"
 autodoc_typehints_description_target = "all"
+autodoc_typehints_format = "short"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
