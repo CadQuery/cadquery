@@ -398,13 +398,13 @@ class Sketch(object):
         else:
             trimmed = True
 
-        params = [
-            [start + i * (stop - start) / n for i in range(n)],
-            [
+        params = (
+            (start + i * (stop - start) / n for i in range(n)),
+            (
                 start + i * (stop - start) / (n - 1) if n - 1 > 0 else start
                 for i in range(n)
-            ],
-        ]
+            ),
+        )
 
         locs = []
         for el in self._selection:
