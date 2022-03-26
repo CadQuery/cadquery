@@ -305,6 +305,13 @@ class TestCadQuery(BaseTest):
         self.assertEqual(-0.5, endPoint[1])
         self.assertEqual(2.5, endPoint[2])
 
+    def testRotateAboutCenter(self):
+        r = Workplane().box(1, 1, 1).rotateAboutCenter((1, 0, 0), 20)
+        assert len(r.edges("|X").vals()) == 4
+        assert r.faces(">X").vertices("<Y").val().Center().toTuple() == approx(
+            (0.5, -0.6408563820557885, 0.2988362387301199)
+        )
+
     def testPlaneRotateZNormal(self):
         """
         Rotation of a plane in the Z direction should never alter its normal.
@@ -467,6 +474,32 @@ class TestCadQuery(BaseTest):
         # the resulting loft had a split on the side, not sure why really, i expected only 3 faces
         self.assertEqual(7, s.faces().size())
 
+        # test loft with combine="cut"
+        box = Workplane().box(10, 10, 10)
+        cut = (
+            box.faces(">Z")
+            .workplane()
+            .circle(2)
+            .workplane(invert=True, offset=12)
+            .rect(3, 2)
+            .loft(combine="cut")
+        )
+
+        self.assertGreater(box.val().Volume(), cut.val().Volume())
+
+        # test loft with combine=True
+        box = Workplane().box(10, 10, 10)
+        add = (
+            box.faces(">Z")
+            .workplane()
+            .circle(2)
+            .workplane(offset=12)
+            .rect(3, 2)
+            .loft(combine=True)
+        )
+
+        self.assertGreater(add.val().Volume(), box.val().Volume())
+
     def testLoftRaisesValueError(self):
         s0 = Workplane().hLine(1)  # no wires
         with raises(ValueError):
@@ -615,6 +648,17 @@ class TestCadQuery(BaseTest):
         self.assertEqual(2, result.faces().size())
         self.assertEqual(2, result.vertices().size())
         self.assertEqual(2, result.edges().size())
+
+    def testRevolveCut(self):
+        box = Workplane().box(10, 10, 10)
+        cut = (
+            box.transformed((90, 0, 0))
+            .move(5, 0)
+            .rect(3, 4, centered=False)
+            .revolve(360, (0, 0, 0), (0, 1, 0), combine="cut")
+        )
+
+        self.assertGreater(box.val().Volume(), cut.val().Volume())
 
     def testRevolveErrors(self):
         """
@@ -1131,6 +1175,28 @@ class TestCadQuery(BaseTest):
                 .sweep(path, auxSpine=Workplane().box(1, 1, 1))
             )
 
+        # test sweep with combine="cut"
+        box = Workplane().box(10, 10, 10, centered=False)
+        path = Workplane("YZ").lineTo(10, 10)
+        cut = (
+            box.vertices(">Z and >X and >Y")
+            .workplane(centerOption="CenterOfMass")
+            .circle(1.5)
+            .sweep(path, combine="cut")
+        )
+        self.assertGreater(box.val().Volume(), cut.val().Volume())
+
+        # test sweep with combine = True
+        box = Workplane().box(10, 10, 10, centered=False)
+        path = Workplane("YZ").lineTo(10, 10)
+        add = (
+            box.vertices(">Z and >X and >Y")
+            .workplane(centerOption="CenterOfMass")
+            .circle(1.5)
+            .sweep(path, combine=True)
+        )
+        self.assertGreater(add.val().Volume(), box.val().Volume())
+
     def testMultisectionSweep(self):
         """
         Tests the operation of sweeping along a list of wire(s) along a path
@@ -1255,6 +1321,19 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(6, r.faces().size())
 
+    def testTwistExtrudeCombineCut(self):
+        """
+        Tests extrusion while twisting through an angle, removing the solid from the base solid
+        """
+        box = Workplane().box(10, 10, 10)
+        cut = (
+            box.faces(">Z")
+            .workplane(invert=True)
+            .rect(1.5, 5)
+            .twistExtrude(10, 90, combine="cut")
+        )
+        self.assertGreater(box.val().Volume(), cut.val().Volume())
+
     def testTwistExtrudeCombine(self):
         """
         Tests extrusion while twisting through an angle, combining with other solids.
@@ -1313,12 +1392,6 @@ class TestCadQuery(BaseTest):
     def testPolarArray(self):
         radius = 10
 
-        # Test for proper number of elements
-        s = Workplane("XY").polarArray(radius, 0, 180, 1)
-        self.assertEqual(1, s.size())
-        s = Workplane("XY").polarArray(radius, 0, 180, 6)
-        self.assertEqual(6, s.size())
-
         to_x = lambda l: l.wrapped.Transformation().TranslationPart().X()
         to_y = lambda l: l.wrapped.Transformation().TranslationPart().Y()
         to_angle = (
@@ -1329,23 +1402,27 @@ class TestCadQuery(BaseTest):
 
         # Test for proper placement when fill == True
         s = Workplane("XY").polarArray(radius, 0, 180, 3)
-        self.assertAlmostEqual(0, to_y(s.objects[1]))
-        self.assertAlmostEqual(radius, to_x(s.objects[1]))
+        self.assertEqual(3, s.size())
+        self.assertAlmostEqual(radius, to_x(s.objects[0]))
+        self.assertAlmostEqual(0, to_y(s.objects[0]))
 
         # Test for proper placement when angle to fill is multiple of 360 deg
         s = Workplane("XY").polarArray(radius, 0, 360, 4)
-        self.assertAlmostEqual(0, to_y(s.objects[1]))
-        self.assertAlmostEqual(radius, to_x(s.objects[1]))
+        self.assertEqual(4, s.size())
+        self.assertAlmostEqual(radius, to_x(s.objects[0]))
+        self.assertAlmostEqual(0, to_y(s.objects[0]))
 
         # Test for proper placement when fill == False
         s = Workplane("XY").polarArray(radius, 0, 90, 3, fill=False)
-        self.assertAlmostEqual(0, to_y(s.objects[1]))
-        self.assertAlmostEqual(radius, to_x(s.objects[1]))
+        self.assertEqual(3, s.size())
+        self.assertAlmostEqual(-radius, to_x(s.objects[2]))
+        self.assertAlmostEqual(0, to_y(s.objects[2]))
 
         # Test for proper operation of startAngle
         s = Workplane("XY").polarArray(radius, 90, 180, 3)
-        self.assertAlmostEqual(radius, to_x(s.objects[0]))
-        self.assertAlmostEqual(0, to_y(s.objects[0]))
+        self.assertEqual(3, s.size())
+        self.assertAlmostEqual(0, to_x(s.objects[0]))
+        self.assertAlmostEqual(radius, to_y(s.objects[0]))
 
         # Test for local rotation
         s = Workplane().polarArray(radius, 0, 180, 3)
@@ -1355,6 +1432,21 @@ class TestCadQuery(BaseTest):
         s = Workplane().polarArray(radius, 0, 180, 3, rotate=False)
         self.assertAlmostEqual(0, to_angle(s.objects[0]))
         self.assertAlmostEqual(0, to_angle(s.objects[1]))
+
+        with raises(ValueError):
+            Workplane().polarArray(radius, 20, 180, 0)
+
+        s = Workplane().polarArray(radius, 20, 0, 1)
+        assert s.size() == 1
+        assert Workplane().polarLine(radius, 20).val().positionAt(
+            1
+        ).toTuple() == approx(s.val().toTuple()[0])
+
+        s = Workplane().center(2, -4).polarArray(2, 10, 50, 3).rect(1.0, 0.5).extrude(1)
+        assert s.solids().size() == 3
+        assert s.vertices(">Y and >Z").val().toTuple() == approx(
+            (3.0334936490538906, -1.7099364905389036, 1.0)
+        )
 
     def testNestedCircle(self):
         s = (
@@ -1923,6 +2015,15 @@ class TestCadQuery(BaseTest):
         # a single wire, 5 edges
         self.assertEqual(1, r.wires().size())
         self.assertEqual(5, r.wires().edges().size())
+
+        r = Workplane().polarLineTo(1, 20)
+        assert r.val().positionAt(1).toTuple() == approx(
+            (0.9396926207859084, 0.3420201433256687, 0.0)
+        )
+        r = Workplane().move(1, 1).polarLine(1, 20)
+        assert r.val().positionAt(1).toTuple() == approx(
+            (1.9396926207859084, 1.3420201433256687, 0.0)
+        )
 
     def testLargestDimension(self):
         """
@@ -3155,7 +3256,7 @@ class TestCadQuery(BaseTest):
         nb_faces = wp.faces().size()
         wp = wp_ref.faces(">X[1]").workplane().rect(1, 1).extrude("next")
 
-        self.assertAlmostEquals(wp_ref_extrude.val().Volume(), wp.val().Volume())
+        self.assertAlmostEqual(wp_ref_extrude.val().Volume(), wp.val().Volume())
         self.assertTrue(wp.faces().size() - nb_faces == 4)
 
         # Test tapered option and both option
@@ -3330,7 +3431,7 @@ class TestCadQuery(BaseTest):
             .cutBlind("last")
         )
 
-        self.assertAlmostEquals(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
+        self.assertAlmostEqual(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
 
         wp_last = (
             wp_ref.faces(">X[4]")
@@ -3451,6 +3552,11 @@ class TestCadQuery(BaseTest):
         # check that extruding nested geometry raises
         with self.assertRaises(ValueError):
             Workplane().rect(2, 2).rect(1, 1).extrude(2, taper=4)
+
+        # Test extrude with combine="cut"
+        box = Workplane().box(5, 5, 5)
+        r = box.faces(">Z").workplane(invert=True).circle(0.5).extrude(4, combine="cut")
+        self.assertGreater(box.val().Volume(), r.val().Volume())
 
     def testTaperedExtrudeCutBlind(self):
 
@@ -4782,6 +4888,56 @@ class TestCadQuery(BaseTest):
         with raises(ValueError):
             r.chamfer2D(0.25, [vs[0]])
 
+    def test_Face_makeFromWires(self):
+
+        w0 = Wire.assembleEdges(
+            [
+                Edge.makeLine(Vector(), Vector(0, 1)),
+                Edge.makeLine(Vector(0, 1), Vector(1, 1)),
+                Edge.makeLine(Vector(1, 1), Vector(1, 0)),
+                Edge.makeLine(Vector(1, 0), Vector(0, 0)),
+            ]
+        )
+        w1 = Wire.assembleEdges(
+            [
+                Edge.makeLine(Vector(0.25, 0.25), Vector(0.25, 0.75)),
+                Edge.makeLine(Vector(0.25, 0.75), Vector(0.75, 0.75)),
+                Edge.makeLine(Vector(0.75, 0.75), Vector(0.75, 0.25)),
+                Edge.makeLine(Vector(0.75, 0.25), Vector(0.25, 0.25)),
+            ]
+        )
+        f = Face.makeFromWires(w0, [w1])
+        assert f.isValid()
+
+        with raises(ValueError):
+            w0 = Wire.assembleEdges([Edge.makeLine(Vector(), Vector(0, 1)),])
+            w1 = Wire.assembleEdges([Edge.makeLine(Vector(0, 1), Vector(1, 1)),])
+            f = Face.makeFromWires(w0, [w1])
+
+        with raises(ValueError):
+            w0 = Wire.assembleEdges([Edge.makeLine(Vector(), Vector(0, 1)),])
+            w1 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(), Vector(1, 1)),
+                    Edge.makeLine(Vector(1, 1), Vector(2, 0)),
+                    Edge.makeLine(Vector(2, 0), Vector(0, 0)),
+                ]
+            )
+            f = Face.makeFromWires(w0, [w1])
+
+        with raises(ValueError):
+            w0 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(), Vector(1, 1)),
+                    Edge.makeLine(Vector(1, 1), Vector(2, 0)),
+                    Edge.makeLine(Vector(2, 0), Vector(0, 0)),
+                ]
+            )
+            w1 = Wire.assembleEdges(
+                [Edge.makeLine(Vector(0.1, 0.1), Vector(0.2, 0.2)),]
+            )
+            f = Face.makeFromWires(w0, [w1])
+
     def testSplineApprox(self):
 
         from .naca import naca5305
@@ -4971,6 +5127,16 @@ class TestCadQuery(BaseTest):
         for v in r1.vals():
             self.assertTupleAlmostEquals(v.Center().toTuple(), (0, 0, 0), 6)
 
+        # test eachpoint with combine = True
+        box = Workplane().box(2, 1, 1).val()
+        ref = Workplane().box(5, 5, 5)
+        r = ref.vertices().eachpoint(lambda loc: box.moved(loc), combine=True)
+        self.assertGreater(r.val().Volume(), ref.val().Volume())
+
+        # test eachpoint with combine = "cut"
+        r = ref.vertices().eachpoint(lambda loc: box.moved(loc), combine="cut")
+        self.assertGreater(ref.val().Volume(), r.val().Volume())
+
     def testSketch(self):
 
         r1 = (
@@ -5061,4 +5227,91 @@ class TestCadQuery(BaseTest):
         )
         self.assertEqual(
             vs[3].toTuple(), approx((a, -a * math.tan(math.radians(45)), 0))
+        )
+
+    def test_combineWithBase(self):
+        # Test the helper mehod _combinewith
+
+        box = Workplane().box(10, 10, 10)
+        sphere = box.faces(">Z").sphere(2)
+        new_box = box._combineWithBase(sphere.val())
+
+        self.assertGreater(new_box.val().Volume(), box.val().Volume())
+
+    def test_cutFromBase(self):
+        # Test the helper method _cutFromBase
+
+        box = Workplane().box(10, 10, 10)
+        sphere = Workplane().sphere(2)
+        hoolow_box = box._cutFromBase(sphere.val())
+
+        self.assertGreater(box.val().Volume(), hoolow_box.val().Volume())
+
+    def test_MergeTags(self):
+
+        a = Workplane().box(1, 1, 1)
+        b = (
+            Workplane(origin=(1, 0, 0))
+            .box(1, 1, 1)
+            .vertices(">X and >Y and >Z")
+            .tag("box_vertex")
+            .end(2)
+        )
+        a = a.add(b)
+        assert a.vertices(tag="box_vertex").val().Center().toTuple() == approx(
+            (1.5, 0.5, 0.5)
+        )
+
+        a = Workplane().box(4, 4, 4)
+        b = Workplane(origin=(0, 0, 1)).box(2, 2, 2).faces("<Z").tag("box2_face").end()
+        a = a.cut(b)
+        assert a.val().Volume() == approx(4 ** 3 - 2 ** 3)
+        a = a.faces(tag="box2_face").wires().toPending().extrude(4)
+        assert a.val().Volume() == approx(4 ** 3 + 2 ** 3)
+
+        a = Workplane().sphere(2)
+        b = Workplane().cylinder(4, 1).tag("cyl")
+        a = a.intersect(b)
+        assert len(a.solids(tag="cyl").val().Solids()) == 1
+
+        a = Workplane().box(4, 4, 4)
+        b = (
+            Workplane()
+            .box(2, 5, 5, centered=(False, True, True))
+            .faces(">X")
+            .workplane()
+            .tag("splitter")
+            .end(2)
+        )
+        a = a.split(b)
+        a = a.solids("<X")
+        assert a.val().Volume() == approx((4 ** 3) / 2.0)
+        a = a.workplaneFromTagged("splitter").rect(4, 4).extrude(until="next")
+        assert a.val().Volume() == approx((4 ** 3))
+
+        a = Workplane().box(4, 4, 4)
+        b = Workplane(origin=(0, 0, 3)).box(2, 2, 2).faces(">Z").tag("box2_face").end()
+        a = a.union(b)
+        a = a.faces(tag="box2_face").workplane(offset=0.5).box(1, 1, 1)
+        assert a.val().Volume() == approx(4 ** 3 + 2 ** 3 + 1)
+
+        # tag name conflict; keep tag from left side of boolean
+        a = Workplane().box(1, 1, 1).faces(">Z").workplane().tag("zface").end(2)
+        b = (
+            Workplane(origin=(1, 0, 0))
+            .box(1, 1, 2)
+            .faces(">Z")
+            .workplane()
+            .tag("zface")
+            .end(2)
+        )
+        a = a.union(b)
+        a = a.workplaneFromTagged("zface").circle(0.2)
+        assert a.edges("%CIRCLE").val().Center().toTuple() == approx((0, 0, 0.5))
+
+    def test_plane_repr(self):
+        wp = Workplane("XY")
+        assert (
+            repr(wp.plane)
+            == "Plane(origin=(0.0, 0.0, 0.0), xDir=(1.0, 0.0, 0.0), normal=(0.0, 0.0, 1.0))"
         )

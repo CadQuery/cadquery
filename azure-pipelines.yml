@@ -14,51 +14,36 @@ resources:
       name: CadQuery/conda-packages
       endpoint: CadQuery
 
-jobs:  
-- template: conda-build.yml@templates
-  parameters:
-    name: Linux_38
-    vmImage: 'ubuntu-18.04'
-    py_maj: 3
-    py_min: 8
-    conda_bld: 3.21.6
+parameters:
+  - name: minor
+    type: object
+    default:
+      - 8
+      - 9
+      - 10
 
-- template: conda-build.yml@templates
-  parameters:
-    name: macOS_38
-    vmImage: 'macOS-10.15'
-    py_maj: 3
-    py_min: 8
-    conda_bld: 3.21.6
+jobs:
+- ${{ each minor in parameters.minor }}:
+  - template: conda-build.yml@templates
+    parameters:
+      name: Linux
+      vmImage: 'ubuntu-18.04'
+      py_maj: 3
+      py_min: ${{minor}}
+      conda_bld: 3.21.6
 
-- template: conda-build.yml@templates
-  parameters:
-    name: Windows_38
-    vmImage: 'vs2017-win2016'
-    py_maj: 3
-    py_min: 8
-    conda_bld: 3.21.6
+  - template: conda-build.yml@templates
+    parameters:
+      name: macOS
+      vmImage: 'macOS-10.15'
+      py_maj: 3
+      py_min: ${{minor}}
+      conda_bld: 3.21.6
 
-- template: conda-build.yml@templates
-  parameters:
-    name: Linux_39
-    vmImage: 'ubuntu-18.04'
-    py_maj: 3
-    py_min: 9
-    conda_bld: 3.21.6
-
-- template: conda-build.yml@templates
-  parameters:
-    name: macOS_39
-    vmImage: 'macOS-10.15'
-    py_maj: 3
-    py_min: 9
-    conda_bld: 3.21.6
-
-- template: conda-build.yml@templates
-  parameters:
-    name: Windows_39
-    vmImage: 'vs2017-win2016'
-    py_maj: 3
-    py_min: 9
-    conda_bld: 3.21.6
+  - template: conda-build.yml@templates
+    parameters:
+      name: Windows
+      vmImage: 'windows-latest'
+      py_maj: 3
+      py_min: ${{minor}}
+      conda_bld: 3.21.6

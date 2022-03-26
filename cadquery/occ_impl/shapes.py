@@ -17,12 +17,12 @@ from typing_extensions import Literal, Protocol
 
 from io import BytesIO
 
-from multimethod import multimethod
-
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 from .geom import Vector, BoundBox, Plane, Location, Matrix
+
+from ..utils import cqmultimethod as multimethod
 
 import OCP.TopAbs as ta  # Tolopolgy type enum
 import OCP.GeomAbs as ga  # Geometry type enum
@@ -966,10 +966,12 @@ class Shape(object):
         return r
 
     def __hash__(self) -> int:
+
         return self.hashCode()
 
     def __eq__(self, other) -> bool:
-        return self.isSame(other)
+
+        return self.isSame(other) if isinstance(other, Shape) else False
 
     def _bool_op(
         self,
@@ -1897,8 +1899,10 @@ class Wire(Shape, Mixin1D):
         """
         wire_builder = BRepBuilderAPI_MakeWire()
 
+        occ_edges_list = TopTools_ListOfShape()
         for e in listOfEdges:
-            wire_builder.Add(e.wrapped)
+            occ_edges_list.Append(e.wrapped)
+        wire_builder.Add(occ_edges_list)
 
         wire_builder.Build()
 
@@ -2260,6 +2264,9 @@ class Face(Shape):
         Makes a planar face from one or more wires
         """
 
+        if innerWires and not outerWire.IsClosed():
+            raise ValueError("Cannot build face(s): outer wire is not closed")
+
         # check if wires are coplanar
         ws = Compound.makeCompound([outerWire] + innerWires)
         if not BRepLib_FindSurface(ws.wrapped, OnlyPlane=True).Found():
@@ -2273,6 +2280,8 @@ class Face(Shape):
         face_builder = BRepBuilderAPI_MakeFace(wo, True)
 
         for w in innerWires:
+            if not w.IsClosed():
+                raise ValueError("Cannot build face(s): inner wire is not closed")
             face_builder.Add(w.wrapped)
 
         face_builder.Build()

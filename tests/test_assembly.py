@@ -87,6 +87,48 @@ def box_and_vertex():
     return assy
 
 
+@pytest.fixture
+def metadata_assy():
+
+    b1 = cq.Solid.makeBox(1, 1, 1)
+    b2 = cq.Workplane().box(1, 1, 2)
+
+    assy = cq.Assembly(
+        b1,
+        loc=cq.Location(cq.Vector(2, -5, 0)),
+        name="base",
+        metadata={"b1": "base-data"},
+    )
+    sub_assy = cq.Assembly(
+        b2, loc=cq.Location(cq.Vector(1, 1, 1)), name="sub", metadata={"b2": "sub-data"}
+    )
+    assy.add(sub_assy)
+    return assy
+
+
+@pytest.fixture
+def simple_assy2():
+
+    b1 = cq.Workplane().box(1, 1, 1)
+    b2 = cq.Workplane().box(2, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b1, name="b1")
+    assy.add(b2, loc=cq.Location(cq.Vector(0, 0, 4)), name="b2")
+
+    return assy
+
+
+def test_metadata(metadata_assy):
+    """Verify the metadata is present in both the base and sub assemblies"""
+    assert metadata_assy.metadata["b1"] == "base-data"
+    # The metadata should be able to be modified
+    metadata_assy.metadata["b2"] = 0
+    assert len(metadata_assy.metadata) == 2
+    # Test that metadata was copied by _copy() during the processing of adding the subassembly
+    assert metadata_assy.children[0].metadata["b2"] == "sub-data"
+
+
 def solve_result_check(solve_result: dict) -> bool:
     checks = [
         solve_result["status"] == nlopt.XTOL_REACHED,
@@ -298,7 +340,7 @@ def test_constrain(simple_assy, nested_assy):
 def test_constrain_with_tags(nested_assy):
 
     nested_assy.add(None, name="dummy")
-    nested_assy.constrain("TOP?top_face", "SECOND/BOTTOM", "Plane")
+    nested_assy.constrain("TOP?top_face", "SECOND/BOTTOM", "Point")
 
     assert len(nested_assy.constraints) == 1
 
@@ -416,9 +458,8 @@ def test_constraint_getPln():
         return cq.Constraint(ids, (shape0, shape0), sublocs, "PointInPlane", 0)
 
     def fail_this(shape0):
-        c0 = make_constraint(shape0)
         with pytest.raises(ValueError):
-            c0._getPln(c0.args[0])
+            make_constraint(shape0)
 
     def resulting_pln(shape0):
         c0 = make_constraint(shape0)
@@ -564,3 +605,65 @@ def test_infinite_face_constraint_Plane(kind):
     )
     assy.solve()
     assert solve_result_check(assy._solve_result)
+
+
+def test_unary_constraints(simple_assy2):
+
+    assy = simple_assy2
+
+    assy.constrain("b1", "Fixed")
+    assy.constrain("b2", "FixedPoint", (0, 0, -3))
+    assy.constrain("b2@faces@>Z", "FixedAxis", (0, 1, 1))
+
+    assy.solve()
+
+    w = cq.Workplane().add(assy.toCompound())
+
+    assert w.solids(">Z").val().Center().Length == pytest.approx(0)
+    assert w.solids("<Z").val().Center().z == pytest.approx(-3)
+    assert w.solids("<Z").edges(">Z").size() == 1
+
+
+def test_fixed_rotation(simple_assy2):
+
+    assy = simple_assy2
+
+    assy.constrain("b1", "Fixed")
+    assy.constrain("b2", "FixedPoint", (0, 0, -3))
+    assy.constrain("b2@faces@>Z", "FixedRotation", (45, 0, 0))
+
+    assy.solve()
+
+    w = cq.Workplane().add(assy.toCompound())
+
+    assert w.solids(">Z").val().Center().Length == pytest.approx(0)
+    assert w.solids("<Z").val().Center().z == pytest.approx(-3)
+    assert w.solids("<Z").edges(">Z").size() == 1
+
+
+def test_validation(simple_assy2):
+
+    with pytest.raises(ValueError):
+        simple_assy2.constrain("b1", "Fixed?")
+
+    with pytest.raises(ValueError):
+        cq.assembly.Constraint((), (), (), "Fixed?")
+
+
+def test_point_on_line(simple_assy2):
+
+    assy = simple_assy2
+
+    assy.constrain("b1", "Fixed")
+    assy.constrain("b2@faces@>Z", "FixedAxis", (0, 2, 1))
+    assy.constrain("b2@faces@>X", "FixedAxis", (1, 0, 0))
+    assy.constrain("b2@faces@>X", "b1@edges@>>Z and >>Y", "PointOnLine")
+
+    assy = assy.solve()
+
+    w = cq.Workplane().add(assy.toCompound())
+
+    assert w.solids("<Z").val().Center().Length == pytest.approx(0)
+    assert w.solids(">Z").val().Center().z == pytest.approx(0.5)
+    assert w.solids(">Z").val().Center().y == pytest.approx(0.5)
+    assert w.solids(">Z").val().Center().x == pytest.approx(0.0)

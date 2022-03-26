@@ -8,7 +8,7 @@ CadQuery Concepts
 3D BREP Topology Concepts
 ---------------------------
 Before talking about CadQuery, it makes sense to talk a little about 3D CAD topology. CadQuery is based upon the
-OpenCascade kernel, which uses Boundary Representations ( BREP ) for objects.  This just means that objects
+OpenCascade kernel, which uses Boundary Representations (BREP) for objects.  This just means that objects
 are defined by their enclosing surfaces.
 
 When working in a BREP system, these fundamental constructs exist to define a shape (working up the food chain):
@@ -351,6 +351,19 @@ If you want to cast an OCCT object into a Direct API one you can just pass it as
 
 .. note::
   You can cast into the direct API the types found `here <https://dev.opencascade.org/doc/refman/html/class_topo_d_s___shape.html>`_
+
+Multimethods
+------------
+
+CadQuery uses `Multimethod <https://coady.github.io/multimethod/>`_ to allow a call to a method to
+be dispatched depending on the types of the arguments. An example is :meth:`~cadquery.Sketch.arc`,
+where ``a_sketch.arc((1, 2), (2, 3))`` would be dispatched to one method but ``a_sketch.arc((1, 2),
+(2, 3), (3, 4))`` would be dispatched to a different method. For multimethods to work, you should
+not use keyword arguments to specify positional parameters. For example, you **should not** write
+``a_sketch.arc(p1=(1, 2), p2=(2, 3), p3=(3, 4))``, instead you should use the previous example.
+Note CadQuery makes an attempt to fall back on the first registered multimethod in the event of a
+dispatch error, but it is still best practise to not use keyword arguments to specify positional
+arguments in CadQuery.
 
 An Introspective Example
 ------------------------
