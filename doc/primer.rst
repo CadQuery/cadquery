@@ -1,6 +1,7 @@
 .. _3d_cad_primer:
 
 .. _cadquery_concepts:
+
 CadQuery Concepts
 ===================================
 
@@ -274,7 +275,7 @@ knowledge of the different C++ libraries to be able to achieve what you want. To
   The package name of any class is written at the top of the documentation page. Often it's written in the class name itself as a prefix.
 
 Going back and forth between the APIs
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 While the 3 APIs provide 3 different layer of complexity and functionality you can mix the 3 layers as you wish.
 Below is presented the different ways you can interact with the different API layers.

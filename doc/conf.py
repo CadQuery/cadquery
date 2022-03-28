@@ -27,10 +27,6 @@ import cadquery
 # sys.path.insert(0, os.path.abspath('.'))
 
 
-def setup(app):
-    app.add_css_file("tables.css")
-
-
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -40,14 +36,15 @@ def setup(app):
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "cadquery.cq_directive",
     "sphinx.ext.mathjax",
 ]
 
-always_document_param_types = True
+autodoc_typehints = "both"
+autodoc_typehints_description_target = "all"
+autodoc_typehints_format = "short"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -288,3 +285,25 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 # texinfo_show_urls = 'footnote'
+
+
+def process_docstring_insert_self(app, what, name, obj, options, lines):
+    """
+    Insert self in front of documented params for instance methods
+    """
+
+    if (
+        what == "method"
+        and getattr(obj, "__self__", None) is None
+        and "self" in obj.__annotations__
+    ):
+        for i, dstr in enumerate(lines):
+            if dstr.startswith(":param"):
+                lines.insert(i, ":param self:")
+                break
+
+
+def setup(app):
+
+    app.add_css_file("tables.css")
+    app.connect("autodoc-process-docstring", process_docstring_insert_self)
