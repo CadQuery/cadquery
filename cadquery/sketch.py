@@ -398,31 +398,27 @@ class Sketch(object):
         else:
             trimmed = True
 
-        params = (
-            (start + i * (stop - start) / n for i in range(n)),
-            (
-                start + i * (stop - start) / (n - 1) if n - 1 > 0 else start
-                for i in range(n)
-            ),
-        )
+        # closed edge or wire parameters
+        params_closed = [start + i * (stop - start) / n for i in range(n)]
+
+        # open or trimmed edge or wire parameters
+        params_open = [
+            start + i * (stop - start) / (n - 1) if n - 1 > 0 else start
+            for i in range(n)
+        ]
 
         locs = []
         for el in self._selection:
             if isinstance(el, (Wire, Edge)):
-                if rotate:
-                    locs.extend(
-                        el.locations(
-                            params[0 if el.IsClosed() and not trimmed else 1],
-                            planar=True,
-                        )
-                    )
+                if el.IsClosed() and not trimmed:
+                    params = params_closed
                 else:
-                    locs.extend(
-                        Location(v)
-                        for v in el.positions(
-                            params[0 if el.IsClosed() and not trimmed else 1]
-                        )
-                    )
+                    params = params_open
+
+                if rotate:
+                    locs.extend(el.locations(params, planar=True,))
+                else:
+                    locs.extend(Location(v) for v in el.positions(params))
             else:
                 raise ValueError(f"Unsupported selection: {el}")
 

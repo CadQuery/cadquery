@@ -154,6 +154,29 @@ def test_distribute():
         (3.358757210636101, -3.005203820042827, 0.0)
     )
 
+    s5 = (
+        Sketch()
+        .arc((0, 2), 4, 0, 90)
+        .arc((0, -2), 4, 0, -90)
+        .edges()
+        .distribute(4, 0, 1)
+        .circle(0.5)
+    )
+
+    assert len(s5._selection) == approx(8)
+
+    s5.reset().faces(">X").faces(">Y")
+
+    assert s5._selection[0].Center().toTuple() == approx((4.0, 2.0, 0.0))
+
+    s5.reset().faces(">X").faces("<Y")
+
+    assert s5._selection[0].Center().toTuple() == approx((4.0, -2.0, 0.0))
+
+    s5.reset().faces(">Y")
+
+    assert s5._selection[0].Center().toTuple() == approx((0.0, 6.0, 0.0))
+
 
 def test_rarray():
 
