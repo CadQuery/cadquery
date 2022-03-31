@@ -6,11 +6,12 @@ channels:
 dependencies:
   - python>=3.6
   - ipython
-  - ocp=7.5.1
+  - ocp=7.5.3
   - pyparsing>=2.1.9
   - sphinx=4.4.0
   - sphinx_rtd_theme
   - black=19.10b0
+  - click=8.0.4
   - mypy
   - codecov
   - pytest
