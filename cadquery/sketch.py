@@ -37,6 +37,7 @@ from .occ_impl.sketch_solver import (
 
 Modes = Literal["a", "s", "i", "c"]  # add, subtract, intersect, construct
 Point = Union[Vector, Tuple[Real, Real]]
+TOL = 1e-6
 
 T = TypeVar("T", bound="Sketch")
 SketchVal = Union[Shape, Location]
@@ -346,7 +347,7 @@ class Sketch(object):
 
         locs = []
 
-        if abs(remainder(da, 360)) < 1e-6:
+        if abs(remainder(da, 360)) < TOL:
             angle = da / n
         else:
             angle = da / (n - 1) if n > 1 else a1
@@ -386,16 +387,36 @@ class Sketch(object):
         Distribute locations along selected edges or wires.
         """
 
+        if n < 1:
+            raise ValueError(f"At least 1 element required, requested {n}")
+
         if not self._selection:
             raise ValueError("Nothing selected to distribute over")
 
-        params = [start + i * (stop - start) / n for i in range(n + 1)]
+        if 1 - abs(stop - start) < TOL:
+            trimmed = False
+        else:
+            trimmed = True
+
+        # closed edge or wire parameters
+        params_closed = [start + i * (stop - start) / n for i in range(n)]
+
+        # open or trimmed edge or wire parameters
+        params_open = [
+            start + i * (stop - start) / (n - 1) if n - 1 > 0 else start
+            for i in range(n)
+        ]
 
         locs = []
         for el in self._selection:
             if isinstance(el, (Wire, Edge)):
+                if el.IsClosed() and not trimmed:
+                    params = params_closed
+                else:
+                    params = params_open
+
                 if rotate:
-                    locs.extend(el.locations(params, planar=True))
+                    locs.extend(el.locations(params, planar=True,))
                 else:
                     locs.extend(Location(v) for v in el.positions(params))
             else:
