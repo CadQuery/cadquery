@@ -546,14 +546,14 @@ class Workplane(object):
              face(s) or vertex (vertices). 'ProjectedOrigin' uses by default the current origin
              or the optional origin parameter (if specified) and projects it onto the plane
              defined by the selected face(s).
-           * The Z direction will be the normal of the face,computed
+           * The Z direction will be the normal of the face, computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
              the global x-y plane, the x direction of the workplane will co-incide with the
              global x direction.
 
         Most commonly, the selected face will be planar, and the workplane lies in the same plane
-        of the face ( IE, offset=0).  Occasionally, it is useful to define a face offset from
+        of the face ( IE, offset=0). Occasionally, it is useful to define a face offset from
         an existing surface, and even more rarely to define a workplane based on a face that is
         not planar.
         """
