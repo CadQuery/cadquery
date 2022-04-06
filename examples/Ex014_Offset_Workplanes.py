@@ -8,7 +8,7 @@ import cadquery as cq
 result = cq.Workplane("front").box(3, 2, 0.5)
 
 # 3.  The lowest face in the X direction is selected with the <X selector.
-# 4. A new wokrplane is created
+# 4. A new workplane is created
 # 4a.The workplane is offset from the object surface so that it is not touching
 #    the original box.
 result = result.faces("<X").workplane(offset=0.75)

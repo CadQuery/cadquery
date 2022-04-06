@@ -43,9 +43,9 @@ def export(
 ):
 
     """
-    Export Wokrplane or Shape to file. Multiple entities are converted to compound.
+    Export Workplane or Shape to file. Multiple entities are converted to compound.
 
-    :param w:  Shape or Wokrplane to be exported.
+    :param w:  Shape or Workplane to be exported.
     :param fname: output filename.
     :param exportType: the exportFormat to use. If None will be inferred from the extension. Default: None.
     :param tolerance: the deflection tolerance, in model units. Default 0.1.
