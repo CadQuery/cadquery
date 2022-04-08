@@ -782,7 +782,7 @@ class Sketch(object):
         forConstruction: bool = False,
     ) -> T:
         """
-        Construct an arc.
+        Construct an arc starting at p1, through p2, ending at p3
         """
 
         val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
