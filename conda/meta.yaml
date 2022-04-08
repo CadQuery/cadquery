@@ -20,7 +20,7 @@ requirements:
     - ezdxf
     - ipython
     - typing_extensions
-    - nptyping
+    - nptyping <2
     - nlopt
     - multimethod 1.6
 
