@@ -131,9 +131,9 @@ def test_metadata(metadata_assy):
 
 def solve_result_check(solve_result: dict) -> bool:
     checks = [
-        solve_result["status"] == nlopt.XTOL_REACHED,
-        solve_result["cost"] < 1e-9,
-        solve_result["iters"] > 0,
+        solve_result["success"] == True,
+        solve_result["iterations"]["inf_pr"][-1] < 1e-9,
+        solve_result["iter_count"] > 0,
     ]
     return all(checks)
 
