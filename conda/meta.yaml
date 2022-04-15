@@ -23,6 +23,7 @@ requirements:
     - nptyping
     - nlopt
     - multimethod 1.6
+    - casadi
 
 test:
   requires:

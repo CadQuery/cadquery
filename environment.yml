@@ -22,6 +22,7 @@ dependencies:
   - nptyping
   - nlopt
   - path
+  - casadi
   - pip
   - pip:
     - "--editable=."
