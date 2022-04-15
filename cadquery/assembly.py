@@ -409,8 +409,19 @@ class Assembly(object):
         locs_new, self._solve_result = solver.solve()
 
         # update positions
+
+        # find the inverse root loc
+        loc_root_inv = Location()
+
+        if self.obj:
+            for loc_new, n in zip(locs_new, ents):
+                if n == self.name:
+                    loc_root_inv = loc_new.inverse
+                    break
+
+        # update the positions
         for loc_new, n in zip(locs_new, ents):
-            self.objects[n].loc = loc_new
+            self.objects[n].loc = loc_root_inv * loc_new
 
         return self
 
