@@ -11,6 +11,7 @@ from typing import (
     Type,
 )
 from nptyping import NDArray as Array
+from nptyping import Float
 from math import radians
 from typish import instance_of, get_type
 from numpy import array, eye, pi
@@ -448,8 +449,8 @@ class ConstraintSolver(object):
     def _cost(
         self,
     ) -> Tuple[
-        Callable[[Array[(Any,), float]], float],
-        Callable[[Array[(Any,), float], Array[(Any,), float]], None],
+        Callable[[Array[Any, Float]], float],
+        Callable[[Array[Any, Float], Array[Any, Float]], None],
     ]:
 
         constraints = self.constraints
