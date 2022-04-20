@@ -1,5 +1,7 @@
 .. _examples:
 
+.. currentmodule:: cadquery
+
 *********************************
 CadQuery Examples
 *********************************
