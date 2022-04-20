@@ -149,7 +149,7 @@ All 2D operations require a **Workplane** object to be created.
 	Workplane.polarArray
 	Workplane.slot2D
 	Workplane.offset2D
-    Workplane.placeSketch
+	Workplane.placeSketch
 
 .. _3doperations:
 
