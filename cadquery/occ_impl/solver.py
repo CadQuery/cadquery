@@ -38,7 +38,7 @@ from ..types import Real
 
 NoneType = type(None)
 
-DOF6 = Tuple[Tuple[float, float, float], Tuple[float, float, float, float]]
+DOF6 = Tuple[Tuple[float, float, float], Tuple[float, float, float]]
 ConstraintMarker = Union[gp_Pln, gp_Dir, gp_Pnt, gp_Lin, None]
 
 UnaryConstraintKind = Literal["Fixed", "FixedPoint", "FixedAxis", "FixedRotation"]
@@ -90,7 +90,7 @@ Constraint = Tuple[
 ]
 
 NDOF_V = 3
-NDOF_Q = 4
+NDOF_Q = 3
 NDOF = 6
 DIR_SCALING = 1e2
 DIFF_EPS = 1e-10
@@ -305,10 +305,19 @@ class ConstraintSpec(object):
 
 
 # Cost functions of simple constraints
+def Quaternion(R):
+
+    m = ca.sumsqr(R)
+
+    u = 2 * R / (1 + m)
+    s = (1 - m) / (1 + m)
+
+    return s, u
+
+
 def Rotate(v, R):
 
-    u = R[1:]
-    s = R[0]
+    s, u = Quaternion(R)
 
     return 2 * ca.dot(u, v) * u + (s ** 2 - ca.dot(u, u)) * v + 2 * s * ca.cross(u, v)
 
@@ -331,6 +340,7 @@ def point_cost(
     T2,
     R2,
     val: Optional[float] = None,
+    scale: float = 1,
 ) -> float:
 
     val = 0 if val is None else val
@@ -338,13 +348,18 @@ def point_cost(
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
     m2_dm = ca.DM((m2.X(), m2.Y(), m2.Z()))
 
-    return (
-        ca.sumsqr(
+    dummy = problem.variable(NDOF_V)
+
+    problem.subject_to(
+        (
             Transform(m1_dm, T1_0 + T1, R1_0 + R1)
             - Transform(m2_dm, T2_0 + T2, R2_0 + R2)
         )
-        - val ** 2
+        / scale
+        == dummy
     )
+
+    return ca.sumsqr(dummy)
 
 
 def axis_cost(
@@ -360,6 +375,7 @@ def axis_cost(
     T2,
     R2,
     val: Optional[float] = None,
+    scale: float = 1,
 ) -> float:
 
     val = pi if val is None else val
@@ -369,7 +385,11 @@ def axis_cost(
 
     d1, d2 = (Rotate(m1_dm, R1_0 + R1), Rotate(m2_dm, R2_0 + R2))
 
-    return (ca.dot(d1, d2) - ca.cos(val)) ** 2
+    dummy = problem.variable()
+
+    problem.subject_to(ca.dot(d1, d2) - ca.cos(val) == dummy)
+
+    return dummy
 
 
 def point_in_plane_cost(
@@ -385,6 +405,7 @@ def point_in_plane_cost(
     T2,
     R2,
     val: Optional[float] = None,
+    scale: float = 1,
 ) -> float:
 
     val = 0 if val is None else val
@@ -400,8 +421,11 @@ def point_in_plane_cost(
     return ca.sumsqr(
         ca.dot(
             Rotate(m2_dir_dm, R2_0 + R2),
-            Transform(m2_pnt_dm, T2_0 + T2, R2_0 + R2)
-            - Transform(m1_dm, T1_0 + T1, R1_0 + R1),
+            (
+                Transform(m2_pnt_dm, T2_0 + T2, R2_0 + R2)
+                - Transform(m1_dm, T1_0 + T1, R1_0 + R1)
+            )
+            / scale,
         )
     )
 
@@ -419,6 +443,7 @@ def point_on_line_cost(
     T2,
     R2,
     val: Optional[float] = None,
+    scale: float = 1,
 ) -> float:
 
     val = 0 if val is None else val
@@ -436,49 +461,89 @@ def point_on_line_cost(
     )
     n = Rotate(m2_dir_dm, R2_0 + R2)
 
-    return ca.sumsqr(d - d * ca.dot(d, n)) - val ** 2
+    return ca.sumsqr((d - n * ca.dot(d, n)) / scale)
 
 
+# dummy cost, fixed constraint is handled on variable level
 def fixed_cost(
-    problem, m1: Type[None], T1_0, R1_0, T1, R1, val: Optional[Type[None]] = None
+    problem,
+    m1: Type[None],
+    T1_0,
+    R1_0,
+    T1,
+    R1,
+    val: Optional[Type[None]] = None,
+    scale: float = 1,
 ):
-
-    problem.subject_to(ca.vertcat(T1, R1) == 0)
 
     return None
 
 
 def fixed_point_cost(
-    problem, m1: gp_Pnt, T1_0, R1_0, T1, R1, val: Tuple[float, float, float]
+    problem,
+    m1: gp_Pnt,
+    T1_0,
+    R1_0,
+    T1,
+    R1,
+    val: Tuple[float, float, float],
+    scale: float = 1,
 ):
 
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
 
-    problem.subject_to(Transform(m1_dm, T1_0 + T1, R1_0 + R1) == ca.DM(val))
+    dummy = problem.variable(NDOF_V)
 
-    return None
+    problem.subject_to(
+        (Transform(m1_dm, T1_0 + T1, R1_0 + R1) - ca.DM(val)) / scale == dummy
+    )
+
+    return ca.sumsqr(dummy)
 
 
 def fixed_axis_cost(
-    problem, m1: gp_Dir, T1_0, R1_0, T1, R1, val: Tuple[float, float, float]
+    problem,
+    m1: gp_Dir,
+    T1_0,
+    R1_0,
+    T1,
+    R1,
+    val: Tuple[float, float, float],
+    scale: float = 1,
 ):
 
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
+    m_val = ca.DM(val) / ca.norm_2(ca.DM(val))
 
-    problem.subject_to(Rotate(m1_dm, R1_0 + R1) == ca.DM(val))
+    dummy = problem.variable(NDOF_V)
 
-    return None
+    problem.subject_to(Rotate(m1_dm, R1_0 + R1) - m_val == dummy)
+
+    return ca.sumsqr(dummy)
 
 
 def fixed_rotation_cost(
-    problem, m1: Type[None], T1_0, R1_0, T1, R1, val: Tuple[float, float, float]
+    problem,
+    m1: Type[None],
+    T1_0,
+    R1_0,
+    T1,
+    R1,
+    val: Tuple[float, float, float],
+    scale: float = 1,
 ):
 
     q = gp_Quaternion()
     q.SetEulerAngles(gp_Intrinsic_XYZ, *val)
     q_dm = ca.DM((q.W(), q.X(), q.Y(), q.Z()))
 
-    return (1 - ca.dot(R1_0 + R1, q_dm) ** 2) ** 2
+    dummy = problem.variable()
+
+    problem.subject_to(
+        (1 - ca.dot(ca.vertcat(*Quaternion(R1_0 + R1)), q_dm) ** 2) == dummy
+    )
+
+    return dummy
 
 
 # dictionary of individual constraint cost functions
@@ -493,6 +558,17 @@ costs: Dict[str, Callable[..., float]] = dict(
     FixedRotation=fixed_rotation_cost,
 )
 
+scaling: Dict[str, bool] = dict(
+    Point=True,
+    Axis=False,
+    PointInPlane=True,
+    PointOnLine=True,
+    Fixed=False,
+    FixedPoint=True,
+    FixedAxis=False,
+    FixedRotation=False,
+)
+
 # Actual solver class
 
 
@@ -505,17 +581,23 @@ class ConstraintSolver(object):
     locked: List[int]
     ne: int
     nc: int
+    scale: float
 
     def __init__(
         self,
         entities: List[Location],
         constraints: List[Tuple[Tuple[int, ...], Constraint]],
         locked: List[int] = [],
+        scale: float = 1,
     ):
 
+        self.scale = scale
         self.opti = opti = ca.Opti()
         self.variables = [
-            (opti.variable(NDOF_V), opti.variable(NDOF_Q)) for _ in entities
+            (scale * opti.variable(NDOF_V), opti.variable(NDOF_Q))
+            if i not in locked
+            else (opti.parameter(NDOF_V), opti.parameter(NDOF_Q))
+            for i, _ in enumerate(entities)
         ]
         self.start_points = [
             (opti.parameter(NDOF_V), opti.parameter(NDOF_Q)) for _ in entities
@@ -530,13 +612,12 @@ class ConstraintSolver(object):
             opti.set_value(T0, T0val)
             opti.set_value(R0, R0val)
 
-            opti.set_initial(T, (0, 0, 0))
-            opti.set_initial(R, (0, 0, 0, 0))
-
-            opti.subject_to(ca.sumsqr(R + R0) == 1)
-
             if i in locked:
-                opti.subject_to(ca.vertcat(T, R) == 0)
+                opti.set_value(T, (0, 0, 0))
+                opti.set_value(R, (0, 0, 0))
+            else:
+                opti.set_initial(T, (0, 0, 0))
+                opti.set_initial(R, (0, 0, 0))
 
         self.constraints = constraints
 
@@ -551,7 +632,12 @@ class ConstraintSolver(object):
         v = Tr.TranslationPart()
         q = Tr.GetRotation()
 
-        return (v.X(), v.Y(), v.Z()), (q.W(), q.X(), q.Y(), q.Z())
+        alpha_2 = (1 - q.W()) / (1 + q.W())
+        a = (alpha_2 + 1) * q.X() / 2
+        b = (alpha_2 + 1) * q.Y() / 2
+        c = (alpha_2 + 1) * q.Z() / 2
+
+        return (v.X(), v.Y(), v.Z()), (a, b, c)
 
     def _build_transform(self, T: ca.MX, R: ca.MX) -> gp_Trsf:
 
@@ -559,9 +645,14 @@ class ConstraintSolver(object):
 
         rv = gp_Trsf()
 
-        R_val = opti.value(R)
+        a, b, c = opti.value(R)
+        m = a ** 2 + b ** 2 + c ** 2
 
-        rv.SetRotation(gp_Quaternion(R_val[1], R_val[2], R_val[3], R_val[0]))
+        rv.SetRotation(
+            gp_Quaternion(
+                2 * a / (m + 1), 2 * b / (m + 1), 2 * c / (m + 1), (1 - m) / (m + 1),
+            )
+        )
         rv.SetTranslationPart(gp_Vec(*opti.value(T)))
 
         return rv
@@ -574,7 +665,13 @@ class ConstraintSolver(object):
         variables = self.variables
         start_points = self.start_points
 
-        # add the constraints
+        # construct a penalty term
+        penalty = 0.0
+
+        for T, R in variables:
+            penalty += ca.sumsqr(ca.vertcat(T / self.scale, R))
+
+        # construct the objective
         objective = 0.0
         for ks, (ms, kind, params) in constraints:
 
@@ -586,24 +683,38 @@ class ConstraintSolver(object):
                 s_ks.extend(start_points[k])
                 v_ks.extend(variables[k])
 
-            c = costs[kind](opti, *ms, *s_ks, *v_ks, params)
+            c = costs[kind](
+                opti,
+                *ms,
+                *s_ks,
+                *v_ks,
+                params,
+                scale=self.scale if scaling[kind] else 1,
+            )
 
             if c is not None:
                 objective += c
 
-        opti.minimize(objective)
+        opti.minimize(objective + 0 * penalty)
 
         # solve
         opti.solver(
             "ipopt",
             {},
             {
-                "acceptable_obj_change_tol": 1e-9,
-                "tol": 1e-12,
+                "acceptable_tol": 1e-12,
+                "tol": 1e-14,
                 "hessian_approximation": "exact",
+                "nlp_scaling_method": "none",
+                "honor_original_bounds": "yes",
+                "least_square_init_primal": "no",
+                "least_square_init_duals": "no",
+                "bound_relax_factor": 0,
+                "print_level": 0,
+                "print_timing_statistics": "no",
             },
         )
-        sol = opti.solve()
+        sol = opti.solve_limited()
 
         result = sol.stats()
 

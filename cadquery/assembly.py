@@ -357,13 +357,14 @@ class Assembly(object):
         ents = {}
 
         i = 0
-        locked = []
+        locked: List[int] = []
+
         for c in self.constraints:
             for name in c.objects:
                 if name not in ents:
                     ents[name] = i
                     i += 1
-                if c.kind == "Fixed" or name == self.name:
+                if (c.kind == "Fixed" or name == self.name) and not locked:
                     locked.append(ents[name])
 
         # Lock the first occuring entity if needed.
@@ -403,7 +404,8 @@ class Assembly(object):
             raise ValueError("At least one constraint required")
 
         # instantiate the solver
-        solver = ConstraintSolver(locs, constraints, locked=locked)
+        scale = self.toCompound().BoundingBox().DiagonalLength
+        solver = ConstraintSolver(locs, constraints, locked=locked, scale=scale)
 
         # solve
         locs_new, self._solve_result = solver.solve()
@@ -421,7 +423,8 @@ class Assembly(object):
 
         # update the positions
         for loc_new, n in zip(locs_new, ents):
-            self.objects[n].loc = loc_root_inv * loc_new
+            if n != self.name:
+                self.objects[n].loc = loc_root_inv * loc_new
 
         return self
 
