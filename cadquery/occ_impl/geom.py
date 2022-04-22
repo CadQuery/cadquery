@@ -790,6 +790,9 @@ class BoundBox(object):
     zmax: float
     zlen: float
 
+    center: Vector
+    DiagonalLength: float
+
     def __init__(self, bb: Bnd_Box) -> None:
         self.wrapped = bb
         XMin, YMin, ZMin, XMax, YMax, ZMax = bb.Get()
