@@ -170,6 +170,7 @@ class Sketch(object):
         filename: str,
         tol: float = 1e-6,
         exclude: List[str] = [],
+        include: List[str] = [],
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
@@ -178,7 +179,7 @@ class Sketch(object):
         Import a DXF file and construct face(s)
         """
 
-        res = Compound.makeCompound(_importDXF(filename, tol, exclude))
+        res = Compound.makeCompound(_importDXF(filename, tol, exclude, include))
 
         return self.face(res, angle, mode, tag)
 

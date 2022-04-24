@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from math import pi
-from typing import List
+from typing import List, Optional
 
 from ... import cq
 from ..geom import Vector
@@ -157,23 +157,33 @@ def _dxf_convert(elements, tol):
     return rv
 
 
-def _importDXF(filename: str, tol: float = 1e-6, exclude: List[str] = []) -> List[Face]:
+def _importDXF(filename: str, tol: float = 1e-6, exclude: Optional[List[str]] = None, include: Optional[List[str]] = None) -> List[Face]:
     """
     Loads a DXF file into a list of faces.
 
     :param fileName: The path and name of the DXF file to be imported
     :param tol: The tolerance used for merging edges into wires (default: 1e-6)
     :param exclude: a list of layer names not to import (default: [])
+    :param include: a list of layer names to import (default: [])
     """
+
+    if exclude and include:
+        raise ValueError("Using the include and exclude kwargs at the same time is not allowed.")
 
     # normalize layer names to conform the DXF spec
     exclude_lwr = [ex.lower() for ex in exclude]
+    include_lwr = [inc.lower() for inc in include]
 
     dxf = ezdxf.readfile(filename)
     faces = []
 
     for name, layer in dxf.modelspace().groupby(dxfattrib="layer").items():
-        res = _dxf_convert(layer, tol) if name.lower() not in exclude_lwr else None
+        if include:
+            # operating in include mode
+            res = _dxf_convert(layer, tol) if name.lower() in include_lwr else None
+        else:
+            # operating in exclude mode
+            res = _dxf_convert(layer, tol) if name.lower() not in exclude_lwr else None
         if res:
             wire_sets = sortWiresByBuildOrder(res)
             for wire_set in wire_sets:
