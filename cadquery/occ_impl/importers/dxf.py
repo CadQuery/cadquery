@@ -157,7 +157,12 @@ def _dxf_convert(elements, tol):
     return rv
 
 
-def _importDXF(filename: str, tol: float = 1e-6, exclude: Optional[List[str]] = None, include: Optional[List[str]] = None) -> List[Face]:
+def _importDXF(
+    filename: str,
+    tol: float = 1e-6,
+    exclude: Optional[List[str]] = None,
+    include: Optional[List[str]] = None,
+) -> List[Face]:
     """
     Loads a DXF file into a list of faces.
 
@@ -168,7 +173,9 @@ def _importDXF(filename: str, tol: float = 1e-6, exclude: Optional[List[str]] = 
     """
 
     if exclude and include:
-        raise ValueError("Using the include and exclude kwargs at the same time is not allowed.")
+        raise ValueError(
+            "Using the include and exclude kwargs at the same time is not allowed."
+        )
 
     # normalize layer names to conform the DXF spec
     exclude_lwr = [ex.lower() for ex in exclude]
