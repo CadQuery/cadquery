@@ -693,15 +693,14 @@ class ConstraintSolver(object):
         # solve
         opti.solver(
             "ipopt",
-            {},
+            {"print_time": False},
             {
-                "acceptable_tol": 1e-12,
+                "acceptable_obj_change_tol": 1e-12,
+                "acceptable_iter": 1,
                 "tol": 1e-14,
-                "hessian_approximation": "limited-memory",
+                "hessian_approximation": "exact",
                 "nlp_scaling_method": "none",
                 "honor_original_bounds": "yes",
-                "least_square_init_primal": "no",
-                "least_square_init_duals": "no",
                 "bound_relax_factor": 0,
                 "print_level": 5,
                 "print_timing_statistics": "no",
