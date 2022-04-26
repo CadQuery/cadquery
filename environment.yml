@@ -19,7 +19,7 @@ dependencies:
   - ezdxf
   - ipython
   - typing_extensions
-  - nptyping
+  - nptyping>=2.0.0
   - nlopt
   - path
   - casadi
