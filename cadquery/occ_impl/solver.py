@@ -348,16 +348,9 @@ def point_cost(
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
     m2_dm = ca.DM((m2.X(), m2.Y(), m2.Z()))
 
-    dummy = problem.variable(NDOF_V)
-
-    problem.subject_to(
-        (
-            Transform(m1_dm, T1_0 + T1, R1_0 + R1)
-            - Transform(m2_dm, T2_0 + T2, R2_0 + R2)
-        )
-        / scale
-        == dummy
-    )
+    dummy = (
+        Transform(m1_dm, T1_0 + T1, R1_0 + R1) - Transform(m2_dm, T2_0 + T2, R2_0 + R2)
+    ) / scale
 
     return ca.sumsqr(dummy)
 
@@ -386,19 +379,16 @@ def axis_cost(
     d1, d2 = (Rotate(m1_dm, R1_0 + R1), Rotate(m2_dm, R2_0 + R2))
 
     if val == 0:
-        dummy = problem.variable(NDOF_V)
-        problem.subject_to(d1 - d2 == dummy)
+        dummy = d1 - d2
 
         return ca.sumsqr(dummy)
 
     elif val == pi:
-        dummy = problem.variable(NDOF_V)
-        problem.subject_to(d1 + d2 == dummy)
+        dummy = d1 + d2
 
         return ca.sumsqr(dummy)
 
-    dummy = problem.variable()
-    problem.subject_to(ca.dot(d1, d2) - ca.cos(val) == 0)
+    dummy = ca.dot(d1, d2) - ca.cos(val)
 
     return dummy ** 2
 
@@ -429,18 +419,13 @@ def point_in_plane_cost(
     m2_dir_dm = ca.DM((m2_dir.X(), m2_dir.Y(), m2_dir.Z()))
     m2_pnt_dm = ca.DM((m2_pnt.X(), m2_pnt.Y(), m2_pnt.Z()))
 
-    dummy = problem.variable()
-
-    problem.subject_to(
+    dummy = (
         ca.dot(
             Rotate(m2_dir_dm, R2_0 + R2),
-            (
-                Transform(m2_pnt_dm, T2_0 + T2, R2_0 + R2)
-                - Transform(m1_dm, T1_0 + T1, R1_0 + R1)
-            )
-            / scale,
+            Transform(m2_pnt_dm, T2_0 + T2, R2_0 + R2)
+            - Transform(m1_dm, T1_0 + T1, R1_0 + R1),
         )
-        == dummy
+        / scale
     )
 
     return dummy ** 2
@@ -477,9 +462,7 @@ def point_on_line_cost(
     )
     n = Rotate(m2_dir_dm, R2_0 + R2)
 
-    dummy = problem.variable(NDOF_V)
-
-    problem.subject_to((d - n * ca.dot(d, n)) / scale == dummy)
+    dummy = (d - n * ca.dot(d, n)) / scale
 
     return ca.sumsqr(dummy)
 
@@ -512,11 +495,7 @@ def fixed_point_cost(
 
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
 
-    dummy = problem.variable(NDOF_V)
-
-    problem.subject_to(
-        (Transform(m1_dm, T1_0 + T1, R1_0 + R1) - ca.DM(val)) / scale == dummy
-    )
+    dummy = (Transform(m1_dm, T1_0 + T1, R1_0 + R1) - ca.DM(val)) / scale
 
     return ca.sumsqr(dummy)
 
@@ -535,9 +514,7 @@ def fixed_axis_cost(
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
     m_val = ca.DM(val) / ca.norm_2(ca.DM(val))
 
-    dummy = problem.variable(NDOF_V)
-
-    problem.subject_to(Rotate(m1_dm, R1_0 + R1) - m_val == dummy)
+    dummy = Rotate(m1_dm, R1_0 + R1) - m_val
 
     return ca.sumsqr(dummy)
 
@@ -557,11 +534,7 @@ def fixed_rotation_cost(
     q.SetEulerAngles(gp_Intrinsic_XYZ, *val)
     q_dm = ca.DM((q.W(), q.X(), q.Y(), q.Z()))
 
-    dummy = problem.variable()
-
-    problem.subject_to(
-        (1 - ca.dot(ca.vertcat(*Quaternion(R1_0 + R1)), q_dm) ** 2) == dummy
-    )
+    dummy = 1 - ca.dot(ca.vertcat(*Quaternion(R1_0 + R1)), q_dm) ** 2
 
     return dummy
 
@@ -724,7 +697,7 @@ class ConstraintSolver(object):
             {
                 "acceptable_tol": 1e-12,
                 "tol": 1e-14,
-                "hessian_approximation": "exact",
+                "hessian_approximation": "limited-memory",
                 "nlp_scaling_method": "none",
                 "honor_original_bounds": "yes",
                 "least_square_init_primal": "no",
@@ -738,6 +711,7 @@ class ConstraintSolver(object):
         sol = opti.solve_limited()
 
         result = sol.stats()
+        result["opti"] = opti
 
         locs = [
             Location(self._build_transform(T + T0, R + R0))
