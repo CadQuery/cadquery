@@ -385,11 +385,22 @@ def axis_cost(
 
     d1, d2 = (Rotate(m1_dm, R1_0 + R1), Rotate(m2_dm, R2_0 + R2))
 
+    if val == 0:
+        dummy = problem.variable(NDOF_V)
+        problem.subject_to(d1 - d2 == dummy)
+
+        return ca.sumsqr(dummy)
+
+    elif val == pi:
+        dummy = problem.variable(NDOF_V)
+        problem.subject_to(d1 + d2 == dummy)
+
+        return ca.sumsqr(dummy)
+
     dummy = problem.variable()
+    problem.subject_to(ca.dot(d1, d2) - ca.cos(val) == 0)
 
-    problem.subject_to(ca.dot(d1, d2) - ca.cos(val) == dummy)
-
-    return dummy
+    return dummy ** 2
 
 
 def point_in_plane_cost(
@@ -418,7 +429,9 @@ def point_in_plane_cost(
     m2_dir_dm = ca.DM((m2_dir.X(), m2_dir.Y(), m2_dir.Z()))
     m2_pnt_dm = ca.DM((m2_pnt.X(), m2_pnt.Y(), m2_pnt.Z()))
 
-    return ca.sumsqr(
+    dummy = problem.variable()
+
+    problem.subject_to(
         ca.dot(
             Rotate(m2_dir_dm, R2_0 + R2),
             (
@@ -427,7 +440,10 @@ def point_in_plane_cost(
             )
             / scale,
         )
+        == dummy
     )
+
+    return dummy ** 2
 
 
 def point_on_line_cost(
@@ -461,7 +477,11 @@ def point_on_line_cost(
     )
     n = Rotate(m2_dir_dm, R2_0 + R2)
 
-    return ca.sumsqr((d - n * ca.dot(d, n)) / scale)
+    dummy = problem.variable(NDOF_V)
+
+    problem.subject_to((d - n * ca.dot(d, n)) / scale == dummy)
+
+    return ca.sumsqr(dummy)
 
 
 # dummy cost, fixed constraint is handled on variable level
@@ -616,8 +636,8 @@ class ConstraintSolver(object):
                 opti.set_value(T, (0, 0, 0))
                 opti.set_value(R, (0, 0, 0))
             else:
-                opti.set_initial(T, (0, 0, 0))
-                opti.set_initial(R, (0, 0, 0))
+                opti.set_initial(T, (0.0, 0.0, 0.0))
+                opti.set_initial(R, (1e-2, 1e-2, 1e-2))
 
         self.constraints = constraints
 
@@ -695,7 +715,7 @@ class ConstraintSolver(object):
             if c is not None:
                 objective += c
 
-        opti.minimize(objective + 0 * penalty)
+        opti.minimize(objective + 1e-16 * penalty)
 
         # solve
         opti.solver(
@@ -710,8 +730,9 @@ class ConstraintSolver(object):
                 "least_square_init_primal": "no",
                 "least_square_init_duals": "no",
                 "bound_relax_factor": 0,
-                "print_level": 0,
+                "print_level": 5,
                 "print_timing_statistics": "no",
+                "linear_solver": "mumps",
             },
         )
         sol = opti.solve_limited()
