@@ -79,7 +79,7 @@ def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
     return status == PCDM_StoreStatus.PCDM_SS_OK
 
 
-def _vtkRenderWindow(assy: AssemblyProtocol, tolerance: float, angularTolerance: float) -> vtkRenderWindow:
+def _vtkRenderWindow(assy: AssemblyProtocol, tolerance: float=1e-3, angularTolerance: float=0.1) -> vtkRenderWindow:
     """
     Convert an assembly to a vtkRenderWindow. Used by vtk based exporters.
     """
@@ -111,7 +111,7 @@ def exportVTKJS(assy: AssemblyProtocol, path: str):
         make_archive(path, "zip", tmpdir)
 
 
-def exportVRML(assy: AssemblyProtocol, path: str, tolerance: float, angularTolerance: float):
+def exportVRML(assy: AssemblyProtocol, path: str, tolerance: float=1e-3, angularTolerance: float=0.1):
     """
     Export an assembly to a vrml file using vtk.
     """
