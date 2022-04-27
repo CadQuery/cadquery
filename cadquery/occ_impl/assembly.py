@@ -179,7 +179,7 @@ def toVTK(
     loc: Location = Location(),
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
-    angularTolerance: float = 0.1
+    angularTolerance: float = 0.1,
 ) -> vtkRenderer:
 
     loc = loc * assy.loc
@@ -189,7 +189,9 @@ def toVTK(
         color = assy.color.toTuple()
 
     if assy.shapes:
-        data = Compound.makeCompound(assy.shapes).toVtkPolyData(tolerance, angularTolerance)
+        data = Compound.makeCompound(assy.shapes).toVtkPolyData(
+            tolerance, angularTolerance
+        )
 
         mapper = vtkMapper()
         mapper.SetInputData(data)
