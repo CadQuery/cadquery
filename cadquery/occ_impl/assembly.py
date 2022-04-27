@@ -204,7 +204,7 @@ def toVTK(
         renderer.AddActor(actor)
 
     for child in assy.children:
-        renderer = toVTK(child, renderer, loc, color, tolerance)
+        renderer = toVTK(child, renderer, loc, color, tolerance, angularTolerance)
 
     return renderer
 
