@@ -442,7 +442,7 @@ class Assembly(object):
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":
-            exportVRML(self, path)
+            exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF":
             exportGLTF(self, path, True, tolerance, angularTolerance)
         elif exportType == "VTKJS":
