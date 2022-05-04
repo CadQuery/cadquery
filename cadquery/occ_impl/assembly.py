@@ -1,5 +1,6 @@
 from typing import Iterable, Tuple, Dict, overload, Optional, Any, List
 from typing_extensions import Protocol
+from math import degrees
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
@@ -199,7 +200,7 @@ def toVTK(
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
-        actor.SetOrientation(*rot)
+        actor.SetOrientation(*map(degrees, rot))
         actor.GetProperty().SetColor(*color[:3])
         actor.GetProperty().SetOpacity(color[3])
 

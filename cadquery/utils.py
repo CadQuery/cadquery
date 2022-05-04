@@ -63,7 +63,7 @@ class deprecate_kwarg_name:
 
             if f_sig_params[self.name]:
                 warn(
-                    f"Kwarg <{self.name}> will be removed. Plase use <{self.new_name}>",
+                    f"Kwarg <{self.name}> will be removed. Please use <{self.new_name}>",
                     FutureWarning,
                 )
 
