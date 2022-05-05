@@ -452,7 +452,7 @@ class Workplane(object):
         then it is added.
 
         Used in rare cases when you need to combine the results of several CQ
-        results into a single Workplane object. Shelling is one common example.
+        results into a single Workplane object.
         """
         if isinstance(obj, list):
             self.objects.extend(obj)
@@ -1233,16 +1233,11 @@ class Workplane(object):
 
             Workplane().box(1,1,1).faces("+Z").shell(0.2)
 
-        Shelling is one of the cases where you may need to use the add method to select several
-        faces. For example, this example creates a 3-walled corner, by removing three faces
-        of a cube::
+        You can also select multiple faces at once. Here is an example that creates a three walled
+        cube using string selectors.
 
-            s = Workplane().box(1,1,1)
-            s1 = s.faces("+Z")
-            s1.add(s.faces("+Y")).add(s.faces("+X"))
-            self.saveModel(s1.shell(0.2))
+            Workplane().box(10,10,10).faces(">Z or >X or <Y").shell(1)
 
-        This fairly yucky syntax for selecting multiple faces is planned for improvement
 
         **Note**:  When sharp edges are shelled inwards, they remain sharp corners, but **outward**
         shells are automatically filleted, because an outward offset from a corner generates
