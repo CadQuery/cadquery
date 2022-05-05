@@ -1221,9 +1221,9 @@ class Workplane(object):
 
         To shell, first create a solid, and *in the same chain* select the faces you wish to remove.
 
-        :param thickness: a positive float, representing the thickness of the desired shell.
+        :param thickness: thickness of the desired shell.
             Negative values shell inwards, positive values shell outwards.
-        :param kind: kind of joints, intersection or arc (default: arc).
+        :param kind: kind of join, arc or intersection (default: arc).
         :raises ValueError: if the current stack contains objects that are not faces of a solid
              further up in the chain.
         :returns: a CQ object with the resulting shelled solid selected.
@@ -1231,21 +1231,16 @@ class Workplane(object):
         This example will create a hollowed out unit cube, where the top most face is open,
         and all other walls are 0.2 units thick::
 
-            Workplane().box(1,1,1).faces("+Z").shell(0.2)
+            Workplane().box(1, 1, 1).faces("+Z").shell(0.2)
 
-        You can also select multiple faces at once. Here is an example that creates a three walled
-        cube using string selectors.
+        You can also select multiple faces at once. Here is an example that creates a three-walled
+        corner, by removing three faces of a cube::
 
-            Workplane().box(10,10,10).faces(">Z or >X or <Y").shell(1)
-
+            Workplane().box(10, 10, 10).faces(">Z or >X or <Y").shell(1)
 
         **Note**:  When sharp edges are shelled inwards, they remain sharp corners, but **outward**
-        shells are automatically filleted, because an outward offset from a corner generates
-        a radius.
-
-
-        Future Enhancements:
-            Better selectors to make it easier to select multiple faces
+        shells are automatically filleted (unless kind="intersection"), because an outward offset
+        from a corner generates a radius.
         """
         solidRef = self.findSolid()
 
