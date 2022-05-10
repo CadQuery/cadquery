@@ -24,7 +24,7 @@ from OCP.gp import (
     gp_Trsf,
     gp_Quaternion,
     gp_Lin,
-    gp_Intrinsic_XYZ,
+    gp_Extrinsic_XYZ,
 )
 
 from OCP.BRepTools import BRepTools
@@ -531,7 +531,7 @@ def fixed_rotation_cost(
 ):
 
     q = gp_Quaternion()
-    q.SetEulerAngles(gp_Intrinsic_XYZ, *val)
+    q.SetEulerAngles(gp_Extrinsic_XYZ, *val)
     q_dm = ca.DM((q.W(), q.X(), q.Y(), q.Z()))
 
     dummy = 1 - ca.dot(ca.vertcat(*Quaternion(R1_0 + R1)), q_dm) ** 2
