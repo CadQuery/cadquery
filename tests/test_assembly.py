@@ -640,13 +640,20 @@ def test_fixed_rotation(simple_assy2):
     assert w.solids("<Z").edges(">Z").size() == 1
 
 
-def test_validation(simple_assy2):
+def test_constraint_validation(simple_assy2):
 
     with pytest.raises(ValueError):
         simple_assy2.constrain("b1", "Fixed?")
 
     with pytest.raises(ValueError):
         cq.assembly.Constraint((), (), (), "Fixed?")
+
+
+def test_single_unary_constraint(simple_assy2):
+
+    with pytest.raises(ValueError):
+        simple_assy2.constrain("b1", "FixedRotation", (45, 0, 45))
+        simple_assy2.solve()
 
 
 def test_point_on_line(simple_assy2):

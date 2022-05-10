@@ -403,6 +403,10 @@ class Assembly(object):
         if not constraints:
             raise ValueError("At least one constraint required")
 
+        # check if at least two entities are present
+        if len(ents) < 2:
+            raise ValueError("At least two entities need to be constrained")
+
         # instantiate the solver
         scale = self.toCompound().BoundingBox().DiagonalLength
         solver = ConstraintSolver(locs, constraints, locked=locked, scale=scale)
