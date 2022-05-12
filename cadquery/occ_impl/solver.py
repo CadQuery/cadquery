@@ -352,7 +352,10 @@ def point_cost(
         Transform(m1_dm, T1_0 + T1, R1_0 + R1) - Transform(m2_dm, T2_0 + T2, R2_0 + R2)
     ) / scale
 
-    return ca.sumsqr(dummy)
+    if val == 0:
+        return ca.sumsqr(dummy)
+
+    return (ca.sumsqr(dummy) - (val / scale) ** 2) ** 2
 
 
 def axis_cost(
