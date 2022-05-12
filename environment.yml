@@ -7,6 +7,7 @@ dependencies:
   - python>=3.6
   - ipython
   - ocp=7.5.3
+  - vtk=9.0.1
   - pyparsing>=2.1.9
   - sphinx=4.4.0
   - sphinx_rtd_theme

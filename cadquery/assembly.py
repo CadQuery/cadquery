@@ -444,8 +444,8 @@ class Assembly(object):
 
         :param path: filepath
         :param exportType: export format (default: None, results in format being inferred form the path)
-        :param tolerance: the deflection tolerance, in model units. Only used for GLTF. Default 0.1.
-        :param angularTolerance: the angular tolerance, in radians. Only used for GLTF. Default 0.1.
+        :param tolerance: the deflection tolerance, in model units. Only used for GLTF, VRML. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Only used for GLTF, VRML. Default 0.1.
         """
 
         if exportType is None:
@@ -460,7 +460,7 @@ class Assembly(object):
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":
-            exportVRML(self, path)
+            exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF":
             exportGLTF(self, path, True, tolerance, angularTolerance)
         elif exportType == "VTKJS":
