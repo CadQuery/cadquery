@@ -230,6 +230,8 @@ from OCP.IVtkVTK import IVtkVTK_ShapeData
 # for catching exceptions
 from OCP.Standard import Standard_NoSuchObject, Standard_Failure
 
+from OCP.Interface import Interface_Static
+
 from math import pi, sqrt
 import warnings
 
@@ -449,12 +451,37 @@ class Shape(object):
 
         return writer.Write(self.wrapped, fileName)
 
-    def exportStep(self, fileName: str) -> IFSelect_ReturnStatus:
+    def exportStep(self, fileName: str, **kwargs) -> IFSelect_ReturnStatus:
         """
         Export this shape to a STEP file
+
+        kwargs is used to provide optional keyword arguments to configure the exporter.
+        The current parameters are as follows:
+
+        :param write_pcurves: Enables or disables P-Curve entities written to STEP file
+        :type write_pcurves: boolean
+        :param precision_mode: Sets the precision mode of the OCCT STEP exporter
+        :type precision_mode: int
+
+        The default behaviour of the OCCT STEP file writer is to add redundant
+        P-Curve entities to the STEP file.  This can often double the size of the
+        resulting STEP file.  Turning off P-Curves can save file size and almost
+        never impacts the quality of the STEP file.
+
+        The precision mode parameter coresponds to the OCCT STEP file precision
+        for writing geometric data.  The default value of 1 for maximum precision
+        is used by can be changed if desired.
         """
 
+        # Handle the extra settings for the STEP export
+        pcurves = 1
+        if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
+            pcurves = 0
+        precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 1
+
         writer = STEPControl_Writer()
+        Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
+        Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
         return writer.Write(fileName)

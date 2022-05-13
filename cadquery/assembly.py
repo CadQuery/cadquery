@@ -420,6 +420,7 @@ class Assembly(object):
         exportType: Optional[ExportLiterals] = None,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
+        **kwargs,
     ) -> "Assembly":
         """
         save as STEP or OCCT native XML file
@@ -438,7 +439,7 @@ class Assembly(object):
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path)
+            exportAssembly(self, path, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":
