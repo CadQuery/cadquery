@@ -364,7 +364,9 @@ class Assembly(object):
                 if name not in ents:
                     ents[name] = i
                     i += 1
-                if (c.kind == "Fixed" or name == self.name) and not locked:
+                if (c.kind == "Fixed" or name == self.name) and ents[
+                    name
+                ] not in locked:
                     locked.append(ents[name])
 
         # Lock the first occuring entity if needed.

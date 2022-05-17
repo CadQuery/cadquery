@@ -467,7 +467,10 @@ def point_on_line_cost(
 
     dummy = (d - n * ca.dot(d, n)) / scale
 
-    return ca.sumsqr(dummy)
+    if val == 0:
+        return ca.sumsqr(dummy)
+
+    return (ca.sumsqr(dummy) - val) ** 2
 
 
 # dummy cost, fixed constraint is handled on variable level
@@ -571,8 +574,8 @@ scaling: Dict[str, bool] = dict(
 class ConstraintSolver(object):
 
     opti: ca.Opti
-    variables: List[Tuple[ca.MX, ca.MX]]  # variables
-    starting_points: List[Tuple[ca.MX, ca.MX]]  # variables
+    variables: List[Tuple[ca.MX, ca.MX]]
+    starting_points: List[Tuple[ca.MX, ca.MX]]
     constraints: List[Tuple[Tuple[int, ...], Constraint]]
     locked: List[int]
     ne: int
@@ -622,7 +625,8 @@ class ConstraintSolver(object):
         self.locked = locked
         self.nc = len(self.constraints)
 
-    def _locToDOF6(self, loc: Location) -> DOF6:
+    @staticmethod
+    def _locToDOF6(loc: Location) -> DOF6:
 
         Tr = loc.wrapped.Transformation()
         v = Tr.TranslationPart()
@@ -713,7 +717,7 @@ class ConstraintSolver(object):
         sol = opti.solve_limited()
 
         result = sol.stats()
-        result["opti"] = opti
+        result["opti"] = opti  # this might be removed in the future
 
         locs = [
             Location(self._build_transform(T + T0, R + R0))
