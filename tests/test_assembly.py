@@ -178,17 +178,29 @@ def test_assembly(simple_assy, nested_assy):
     assert kvs[-1][0] == "TOP"
 
 
-def test_step_export(nested_assy):
+def test_step_export(nested_assy, tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    nested_path = os.path.join(tmpdir, "nested.step")
+    nested_options_path = os.path.join(tmpdir, "nested_options.step")
 
-    exportAssembly(nested_assy, "nested.step")
+    exportAssembly(nested_assy, nested_path)
+    exportAssembly(
+        nested_assy, nested_options_path, write_pcurves=False, precision_mode=0
+    )
 
-    w = cq.importers.importStep("nested.step")
+    w = cq.importers.importStep(nested_path)
+    o = cq.importers.importStep(nested_options_path)
     assert w.solids().size() == 4
+    assert o.solids().size() == 4
 
     # check that locations were applied correctly
     c = cq.Compound.makeCompound(w.solids().vals()).Center()
     c.toTuple()
     assert pytest.approx(c.toTuple()) == (0, 4, 0)
+    c2 = cq.Compound.makeCompound(o.solids().vals()).Center()
+    c2.toTuple()
+    assert pytest.approx(c2.toTuple()) == (0, 4, 0)
 
 
 def test_native_export(simple_assy):
