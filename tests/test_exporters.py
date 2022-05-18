@@ -2,7 +2,7 @@
     Tests basic workplane functionality
 """
 # core modules
-import sys
+import os
 import io
 from pathlib import Path
 import re
@@ -13,6 +13,27 @@ from cadquery import exporters, importers
 from tests import BaseTest
 from OCP.GeomConvert import GeomConvert
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+
+
+def test_step_options(tmp_path_factory):
+    """
+    Exports a box using the options to decrease STEP file size and
+    then imports that STEP to validate it.
+    """
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    box_path = os.path.join(tmpdir, "out.step")
+
+    # Simple object to export
+    box = Workplane().box(1, 1, 1)
+
+    # Export the STEP with the size-saving options and then import it back in
+    box.val().exportStep(box_path, write_pcurves=False, precision_mode=0)
+    w = importers.importStep(box_path)
+
+    # Make sure there was a valid box in the exported file
+    assert w.solids().size() == 1
+    assert w.faces().size() == 6
 
 
 class TestExporters(BaseTest):
