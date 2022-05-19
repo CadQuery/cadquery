@@ -1,5 +1,7 @@
 version: 2
-python:
-  setup_py_install: false
+
 conda:
   environment: environment.yml
+
+python:
+  version: 3.8
