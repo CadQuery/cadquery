@@ -27,16 +27,19 @@ setup(
     long_description=open("README.md").read(),
     packages=find_packages(exclude=("tests",)),
     python_requires=">=3.8,<3.11",
-    install_requires=["cadquery-ocp", "ezdxf", "multimethod", "nlopt", "nptyping>=2", "typish", "casadi", "path"],
-    extras_require = {
-        "dev": [
-            "docutils",
-            "ipython",
-            "pytest",
-        ],
-        "ipython": [
-            "ipython",
-        ]
+    install_requires=[
+        "cadquery-ocp",
+        "ezdxf",
+        "multimethod",
+        "nlopt",
+        "nptyping>=2",
+        "typish",
+        "casadi",
+        "path",
+    ],
+    extras_require={
+        "dev": ["docutils", "ipython", "pytest", "black==19.10b0", "click==8.0.4",],
+        "ipython": ["ipython",],
     },
     include_package_data=True,
     zip_safe=False,
