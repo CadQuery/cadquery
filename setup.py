@@ -14,17 +14,20 @@
 import os
 from setuptools import setup, find_packages
 
+version = "2.1"
+
 setup(
     name="cadquery",
     version=version,
-    url="https://github.com/dcowden/cadquery",
+    url="https://github.com/CadQuery/cadquery",
     license="Apache Public License 2.0",
     author="David Cowden",
     author_email="dave.cowden@gmail.com",
     description="CadQuery is a parametric  scripting language for creating and traversing CAD models",
     long_description=open("README.md").read(),
     packages=find_packages(exclude=("tests",)),
-    install_requires=["cadquery-ocp", "ezdxf", "multimethod", "nlopt", "nptyping", "typish", "casadi", "path"],
+    python_requires=">=3.8,<3.11",
+    install_requires=["cadquery-ocp", "ezdxf", "multimethod", "nlopt", "nptyping>=2", "typish", "casadi", "path"],
     extras_require = {
         "dev": [
             "docutils",
