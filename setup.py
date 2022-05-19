@@ -14,13 +14,6 @@
 import os
 from setuptools import setup, find_packages
 
-
-# if we are building in travis, use the build number as the sub-minor version
-version = "2.1"
-if "TRAVIS_TAG" in os.environ.keys():
-    version = os.environ["TRAVIS_TAG"]
-
-
 setup(
     name="cadquery",
     version=version,
@@ -31,6 +24,17 @@ setup(
     description="CadQuery is a parametric  scripting language for creating and traversing CAD models",
     long_description=open("README.md").read(),
     packages=find_packages(exclude=("tests",)),
+    install_requires=["cadquery-ocp", "ezdxf", "multimethod", "nlopt", "nptyping", "typish", "casadi", "path"],
+    extras_require = {
+        "dev": [
+            "docutils",
+            "ipython",
+            "pytest",
+        ],
+        "ipython": [
+            "ipython",
+        ]
+    },
     include_package_data=True,
     zip_safe=False,
     platforms="any",
