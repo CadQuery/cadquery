@@ -24,7 +24,7 @@ dependencies:
   - nlopt
   - path
   - casadi
-  - pip
+  - pip>=22
   - pip:
     - "--editable=."
     - sphinxcadquery
