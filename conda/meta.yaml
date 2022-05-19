@@ -24,6 +24,7 @@ requirements:
     - nptyping >=2.0.0
     - nlopt
     - multimethod 1.6
+    - casadi
 
 test:
   requires:
