@@ -23,7 +23,8 @@ dependencies:
   - nptyping>=2.0.0
   - nlopt
   - path
-  - pip>=22
+  - casadi
+  - pip
   - pip:
     - "--editable=."
     - sphinxcadquery
