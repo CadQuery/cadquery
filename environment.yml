@@ -25,6 +25,6 @@ dependencies:
   - path
   - pip
   - pip:
-    - "--editable=."
     - sphinxcadquery
     - multimethod
+    # - "--editable=."
