@@ -16,11 +16,14 @@ from setuptools import setup, find_packages
 
 version = "2.1"
 
-is_rtd = os.environ['READTHEDOCS']
+reqs = []
+
+is_rtd = False
+if "READTHEDOCS" in os.environ:
+    is_rtd = os.environ['READTHEDOCS']
+
 print(is_rtd)
-if is_rtd:
-    reqs = []
-else:
+if not is_rtd:
     reqs = [
         "cadquery-ocp",
         "ezdxf",
