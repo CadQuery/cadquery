@@ -18,12 +18,16 @@ version = "2.1"
 
 reqs = []
 
+# ReadTheDocs and AppVeyor will break if we do not handle the separately
 is_rtd = False
+is_appveyor = False
 if "READTHEDOCS" in os.environ:
-    is_rtd = os.environ['READTHEDOCS']
+    is_rtd = os.environ["READTHEDOCS"]
+if "APPVEYOR" in os.environ:
+    is_appveyor = os.environ["APPVEYOR"]
 
-print(is_rtd)
-if not is_rtd:
+# Only include the installation dependencies if we are not running on RTD or AppVeyor
+if not is_rtd and not is_appveyor:
     reqs = [
         "cadquery-ocp",
         "ezdxf",
