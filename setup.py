@@ -41,7 +41,8 @@ if not is_rtd and not is_appveyor:
 
 setup(
     name="cadquery",
-    version=version,
+    # version=version,
+    use_scm_version=True,
     url="https://github.com/CadQuery/cadquery",
     license="Apache Public License 2.0",
     author="David Cowden",
@@ -50,6 +51,7 @@ setup(
     long_description=open("README.md").read(),
     packages=find_packages(exclude=("tests",)),
     python_requires=">=3.8,<3.11",
+    setup_requires=["setuptools_scm"],
     install_requires=reqs,
     extras_require={
         "dev": ["docutils", "ipython", "pytest", "black==19.10b0", "click==8.0.4",],
