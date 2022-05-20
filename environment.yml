@@ -26,6 +26,6 @@ dependencies:
   - casadi
   - pip
   - pip:
-    - "--editable=."
+    - "--no-deps --editable=."
     - sphinxcadquery
     - multimethod
