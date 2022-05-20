@@ -29,8 +29,7 @@ if "APPVEYOR" in os.environ:
     is_appveyor = os.environ["APPVEYOR"]
 if "System.TeamProjectId" in os.environ:
     is_azure = True
-print("System.TeamProjectId" in os.environ)
-print("TF_BUILD" in os.environ)
+print(os.environ)
 
 # Only include the installation dependencies if we are not running on RTD or AppVeyor
 if not is_rtd and not is_appveyor and not is_azure:
