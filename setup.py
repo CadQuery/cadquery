@@ -22,13 +22,16 @@ setup_reqs = []
 # ReadTheDocs and AppVeyor will break if we do not handle the separately
 is_rtd = False
 is_appveyor = False
+is_azure = False
 if "READTHEDOCS" in os.environ:
     is_rtd = os.environ["READTHEDOCS"]
 if "APPVEYOR" in os.environ:
     is_appveyor = os.environ["APPVEYOR"]
+if "TF_BUILD" in os.environ:
+    is_azure = os.environ["TF_BUILD"]
 
 # Only include the installation dependencies if we are not running on RTD or AppVeyor
-if not is_rtd and not is_appveyor:
+if not is_rtd and not is_appveyor and not is_azure:
     reqs = [
         "cadquery-ocp",
         "ezdxf",
