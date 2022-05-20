@@ -16,6 +16,22 @@ from setuptools import setup, find_packages
 
 version = "2.1"
 
+is_rtd = os.environ['READTHEDOCS']
+print(is_rtd)
+if is_rtd:
+    reqs = []
+else:
+    reqs = [
+        "cadquery-ocp",
+        "ezdxf",
+        "multimethod",
+        "nlopt",
+        "nptyping>=2",
+        "typish",
+        "casadi",
+        "path",
+    ]
+
 setup(
     name="cadquery",
     version=version,
@@ -27,16 +43,7 @@ setup(
     long_description=open("README.md").read(),
     packages=find_packages(exclude=("tests",)),
     python_requires=">=3.8,<3.11",
-    install_requires=[
-        "cadquery-ocp",
-        "ezdxf",
-        "multimethod",
-        "nlopt",
-        "nptyping>=2",
-        "typish",
-        "casadi",
-        "path",
-    ],
+    install_requires=reqs,
     extras_require={
         "dev": ["docutils", "ipython", "pytest", "black==19.10b0", "click==8.0.4",],
         "ipython": ["ipython",],
