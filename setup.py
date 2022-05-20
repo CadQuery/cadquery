@@ -17,6 +17,7 @@ from setuptools import setup, find_packages
 version = "2.1"
 
 reqs = []
+setup_reqs = []
 
 # ReadTheDocs and AppVeyor will break if we do not handle the separately
 is_rtd = False
@@ -39,6 +40,8 @@ if not is_rtd and not is_appveyor:
         "path",
     ]
 
+    setup_reqs = ["setuptools_scm"]
+
 setup(
     name="cadquery",
     # version=version,
@@ -51,7 +54,7 @@ setup(
     long_description=open("README.md").read(),
     packages=find_packages(exclude=("tests",)),
     python_requires=">=3.8,<3.11",
-    setup_requires=["setuptools_scm"],
+    setup_requires=setup_reqs,
     install_requires=reqs,
     extras_require={
         "dev": ["docutils", "ipython", "pytest", "black==19.10b0", "click==8.0.4",],
