@@ -27,7 +27,7 @@ if "READTHEDOCS" in os.environ:
     is_rtd = os.environ["READTHEDOCS"]
 if "APPVEYOR" in os.environ:
     is_appveyor = os.environ["APPVEYOR"]
-if "System.TeamProjectId" in os.environ:
+if "CONDA_PY" in os.environ:
     is_azure = True
 print(os.environ)
 
