@@ -100,7 +100,10 @@ def export(
             raise ValueError("Only Workplanes can be exported as DXF")
 
     elif exportType == ExportTypes.STEP:
-        shape.exportStep(fname)
+        if opt:
+            shape.exportStep(fname, **opt)
+        else:
+            shape.exportStep(fname)
 
     elif exportType == ExportTypes.STL:
         shape.exportStl(fname, tolerance, angularTolerance)
