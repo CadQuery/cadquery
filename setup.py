@@ -14,8 +14,6 @@
 import os
 from setuptools import setup, find_packages
 
-version = "2.1"
-
 reqs = []
 setup_reqs = []
 
@@ -41,7 +39,6 @@ if not is_rtd and not is_appveyor and not is_azure:
 
 setup(
     name="cadquery",
-    # version=version,
     use_scm_version=True,
     url="https://github.com/CadQuery/cadquery",
     license="Apache Public License 2.0",

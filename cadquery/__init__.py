@@ -1,7 +1,7 @@
 from importlib.metadata import version, PackageNotFoundError
 
 try:
-    version__ = version("cadquery")
+    __version__ = version("cadquery")
 except PackageNotFoundError:
     # package is not installed
     pass
