@@ -4,7 +4,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.6
+  - python>=3.8
   - ipython
   - ocp=7.5.3
   - vtk=9.0.1
@@ -26,6 +26,7 @@ dependencies:
   - casadi
   - pip
   - pip:
+    - "--install-option=\"--no-deps\""
     - "--editable=."
     - sphinxcadquery
     - multimethod
