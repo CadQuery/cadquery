@@ -58,7 +58,7 @@ Once a current version of pip is installed, CadQuery can be installed using the 
 ```
 pip install cadquery==2.2.0b0
 ```
-Notice that the version number is pinned to a beta version. This is because CadQuery has only recently returned to PyPi, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`. However, if the version number pin is not used for now, a 1.x version of CadQuery will be installed, which is extremely out of date.
+Notice that the version number is pinned to a beta version. This is because CadQuery has only recently returned to PyPI, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`. However, if the version number pin is not used for now, a 1.x version of CadQuery will be installed, which is extremely out of date.
 
 It is also possible to install the very latest changes directly from CadQuery's GitHub repository, with the understanding that sometimes breaking changes can occur. To install from the git repository, run the following command line.
 ```
