@@ -44,7 +44,37 @@ It is currently possible to use CadQuery for your own projects in 3 different wa
     * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
     * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
 
-The easiest way to install CadQuery and its dependencies is using conda, which is included as part of a [miniforge](https://github.com/conda-forge/miniforge) installation (other distributions can be used as well). See the next section for more details regarding conda. The steps to install cadquery are as follows:
+There are two ways to install CadQuery and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system.
+
+### CadQuery Installation Via Pip
+
+CadQuery has a complex set of dependencies including OCP, which is our set of bindings to the OpenCASCADE CAD kernel. OCP is distributed as binary wheels for Linux, MacOS and Windows. However, there are some limitations. Only Python 3.8 through 3.10 are currently supported, and some older Linux distributions such as Ubuntu 18.04 are not supported. If the pip installation method does not work for your system, you can try the conda installation method outlined in the next two sections.
+
+It is highly recommended that a virtual environment is used when installing CadQuery, although it is not strictly required. Installing CadQuery via pip requires a up-to-date version of pip, which can be obtained with the following command line (or a slight variation thereof).
+```
+python3 -m pip install --upgrade pip
+```
+Once a current version of pip is installed, CadQuery can be installed using the following command line.
+```
+pip install cadquery==2.2.0b0
+```
+Notice that the version number is pinned to a beta version. This is because CadQuery has only recently returned to PyPi, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`. However, if the version number pin is not used for now, a 1.x version of CadQuery will be installed, which is extremely out of date.
+
+You should now have a working CadQuery installation, but developers or users who want to use CadQuery with IPython/Jupyter or to set up a developer environment can read the rest of this section.
+
+If you are installing CadQuery to use with IPython/Jupyter, you may want to run the following command line to install the extra dependencies.
+```
+pip install cadquery[ipython]==2.2.0b0
+```
+
+If you want to create a developer setup to contribute to CadQuery, the following command line will install all the development dependencies that are needed.
+```
+pip install cadquery[dev]==2.2.0b0
+```
+
+### CadQuery Installation Via Conda
+
+conda is included as part of a [miniforge](https://github.com/conda-forge/miniforge) installation (other distributions can be used as well). See the next section for more details regarding conda. The steps to install cadquery are as follows:
 ```
 # Set up a new environment
 conda create -n cadquery

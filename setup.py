@@ -46,6 +46,7 @@ setup(
     author_email="dave.cowden@gmail.com",
     description="CadQuery is a parametric  scripting language for creating and traversing CAD models",
     long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),
     python_requires=">=3.8,<3.11",
     setup_requires=setup_reqs,
