@@ -440,14 +440,17 @@ class Assembly(object):
         exportType: Optional[ExportLiterals] = None,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
+        **kwargs,
     ) -> "Assembly":
         """
-        save as STEP or OCCT native XML file
+        Save assembly to a file.
 
-        :param path: filepath
+        :param path: Path and filename for writing.
         :param exportType: export format (default: None, results in format being inferred form the path)
         :param tolerance: the deflection tolerance, in model units. Only used for GLTF, VRML. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Only used for GLTF, VRML. Default 0.1.
+        :param **kwargs: Additional keyword arguments.  Only used for STEP.
+            See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         """
 
         if exportType is None:
@@ -458,7 +461,7 @@ class Assembly(object):
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path)
+            exportAssembly(self, path, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":
