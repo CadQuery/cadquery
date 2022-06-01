@@ -451,8 +451,8 @@ When creating a Point constraint, the ``param`` argument can be used to specify 
 between the two centers. This offset does not have a direction associated with it, if you want to
 specify an offset in a specific direction then you should use a dummy :class:`~cadquery.Vertex`.
 
-The Point constraint uses the :meth:`~cadquery.occ_impl.Shape.Center` to find the center of the
-argument. Hence it will work with all subclasses of :class:`~caquery.occ_impl.Shape`.
+The Point constraint uses the :meth:`~cadquery.Shape.Center` to find the center of the
+argument. Hence it will work with all subclasses of :class:`~cadquery.Shape`.
 
 .. cadquery::
 
