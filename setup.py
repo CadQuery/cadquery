@@ -29,7 +29,7 @@ if not is_rtd and not is_appveyor and not is_azure:
         "ezdxf",
         "multimethod",
         "nlopt",
-        "nptyping>=2",
+        "nptyping==2.0.1",
         "typish",
         "casadi",
         "path",
