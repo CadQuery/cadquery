@@ -21,7 +21,7 @@ requirements:
     - ezdxf
     - ipython
     - typing_extensions
-    - nptyping 2.0.0
+    - nptyping 2.0.1
     - nlopt
     - multimethod 1.6
     - casadi
