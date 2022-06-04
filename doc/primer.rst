@@ -166,7 +166,7 @@ For example, this::
 Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a rectangular face, and the ``circle()`` method
 iterates on each member of the stack.
 
-This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.cq.Workplane.each` is useful for this purpose.
+This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.Workplane.each` is useful for this purpose.
 
 CadQuery API layers
 ---------------------------
@@ -283,6 +283,8 @@ Below is presented the different ways you can interact with the different API la
 -------------------------
 Fluent API <=> Direct API
 -------------------------
+
+.. currentmodule:: cadquery
 
 Here are all the possibilities you have to get an object from the Direct API (i.e a topological object).
 

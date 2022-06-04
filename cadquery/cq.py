@@ -2784,6 +2784,7 @@ class Workplane(object):
 
         return self.newObject([s])
 
+    # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer won't work
     def cboreHole(
         self: T,
@@ -2811,9 +2812,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().cboreHole(0.125, 0.25,0.125,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .cboreHole(0.125, 0.25, 0.125, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 
@@ -2866,9 +2873,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().cskHole(0.125, 0.25,82,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .cskHole(0.125, 0.25, 82, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 
@@ -2914,9 +2927,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().hole(0.125, 0.25,82,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .hole(0.125, 0.25, 82, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 
