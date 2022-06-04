@@ -63,6 +63,7 @@ from .sketch import Sketch
 CQObject = Union[Vector, Location, Shape, Sketch]
 VectorLike = Union[Tuple[float, float], Tuple[float, float, float], Vector]
 CombineMode = Union[bool, Literal["cut", "a", "s"]]  # a : additive, s: subtractive
+TOL = 1e-6
 
 T = TypeVar("T", bound="Workplane")
 """A type variable used to make the return type of a method the same as the
@@ -451,7 +452,7 @@ class Workplane(object):
         then it is added.
 
         Used in rare cases when you need to combine the results of several CQ
-        results into a single Workplane object. Shelling is one common example.
+        results into a single Workplane object.
         """
         if isinstance(obj, list):
             self.objects.extend(obj)
@@ -545,14 +546,14 @@ class Workplane(object):
              face(s) or vertex (vertices). 'ProjectedOrigin' uses by default the current origin
              or the optional origin parameter (if specified) and projects it onto the plane
              defined by the selected face(s).
-           * The Z direction will be the normal of the face,computed
+           * The Z direction will be the normal of the face, computed
              at the center point.
            * The X direction will be parallel to the x-y plane. If the workplane is  parallel to
              the global x-y plane, the x direction of the workplane will co-incide with the
              global x direction.
 
         Most commonly, the selected face will be planar, and the workplane lies in the same plane
-        of the face ( IE, offset=0).  Occasionally, it is useful to define a face offset from
+        of the face ( IE, offset=0). Occasionally, it is useful to define a face offset from
         an existing surface, and even more rarely to define a workplane based on a face that is
         not planar.
         """
@@ -1220,9 +1221,9 @@ class Workplane(object):
 
         To shell, first create a solid, and *in the same chain* select the faces you wish to remove.
 
-        :param thickness: a positive float, representing the thickness of the desired shell.
+        :param thickness: thickness of the desired shell.
             Negative values shell inwards, positive values shell outwards.
-        :param kind: kind of joints, intersection or arc (default: arc).
+        :param kind: kind of join, arc or intersection (default: arc).
         :raises ValueError: if the current stack contains objects that are not faces of a solid
              further up in the chain.
         :returns: a CQ object with the resulting shelled solid selected.
@@ -1230,26 +1231,16 @@ class Workplane(object):
         This example will create a hollowed out unit cube, where the top most face is open,
         and all other walls are 0.2 units thick::
 
-            Workplane().box(1,1,1).faces("+Z").shell(0.2)
+            Workplane().box(1, 1, 1).faces("+Z").shell(0.2)
 
-        Shelling is one of the cases where you may need to use the add method to select several
-        faces. For example, this example creates a 3-walled corner, by removing three faces
-        of a cube::
+        You can also select multiple faces at once. Here is an example that creates a three-walled
+        corner, by removing three faces of a cube::
 
-            s = Workplane().box(1,1,1)
-            s1 = s.faces("+Z")
-            s1.add(s.faces("+Y")).add(s.faces("+X"))
-            self.saveModel(s1.shell(0.2))
-
-        This fairly yucky syntax for selecting multiple faces is planned for improvement
+            Workplane().box(10, 10, 10).faces(">Z or >X or <Y").shell(1)
 
         **Note**:  When sharp edges are shelled inwards, they remain sharp corners, but **outward**
-        shells are automatically filleted, because an outward offset from a corner generates
-        a radius.
-
-
-        Future Enhancements:
-            Better selectors to make it easier to select multiple faces
+        shells are automatically filleted (unless kind="intersection"), because an outward offset
+        from a corner generates a radius.
         """
         solidRef = self.findSolid()
 
@@ -1486,51 +1477,42 @@ class Workplane(object):
         rotate: bool = True,
     ) -> T:
         """
-        Creates an polar array of points and pushes them onto the stack.
-        The 0 degree reference angle is located along the local X-axis.
+        Creates a polar array of points and pushes them onto the stack.
+        The zero degree reference angle is located along the local X-axis.
 
         :param radius: Radius of the array.
-        :param startAngle: Starting angle (degrees) of array. 0 degrees is
-            situated along local X-axis.
+        :param startAngle: Starting angle (degrees) of array. Zero degrees is
+            situated along the local X-axis.
         :param angle: The angle (degrees) to fill with elements. A positive
             value will fill in the counter-clockwise direction. If fill is
-            false, angle is the angle between elements.
-        :param count: Number of elements in array. ( > 0 )
+            False, angle is the angle between elements.
+        :param count: Number of elements in array. (count >= 1)
         :param fill: Interpret the angle as total if True (default: True).
         :param rotate: Rotate every item (default: True).
         """
 
-        if count <= 0:
-            raise ValueError("No elements in array")
-
-        # First element at start angle, convert to cartesian coords
-        x = radius * math.sin(math.radians(startAngle))
-        y = radius * math.cos(math.radians(startAngle))
-
-        if rotate:
-            loc = Location(Vector(x, y), Vector(0, 0, 1), -startAngle)
-        else:
-            loc = Location(Vector(x, y))
-
-        locs = [loc]
+        if count < 1:
+            raise ValueError(f"At least 1 element required, requested {count}")
 
         # Calculate angle between elements
         if fill:
-            if angle % 360 == 0:
+            if abs(math.remainder(angle, 360)) < TOL:
                 angle = angle / count
-            elif count > 1:
+            else:
                 # Inclusive start and end
-                angle = angle / (count - 1)
+                angle = angle / (count - 1) if count > 1 else startAngle
 
-        # Add additional elements
-        for i in range(1, count):
+        locs = []
+
+        # Add elements
+        for i in range(0, count):
             phi_deg = startAngle + (angle * i)
             phi = math.radians(phi_deg)
-            x = radius * math.sin(phi)
-            y = radius * math.cos(phi)
+            x = radius * math.cos(phi)
+            y = radius * math.sin(phi)
 
             if rotate:
-                loc = Location(Vector(x, y), Vector(0, 0, 1), -phi_deg)
+                loc = Location(Vector(x, y), Vector(0, 0, 1), phi_deg)
             else:
                 loc = Location(Vector(x, y))
 
@@ -2802,6 +2784,7 @@ class Workplane(object):
 
         return self.newObject([s])
 
+    # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer won't work
     def cboreHole(
         self: T,
@@ -2829,9 +2812,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().cboreHole(0.125, 0.25,0.125,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .cboreHole(0.125, 0.25, 0.125, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 
@@ -2884,9 +2873,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().cskHole(0.125, 0.25,82,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .cskHole(0.125, 0.25, 82, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 
@@ -2932,9 +2927,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().hole(0.125, 0.25,82,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .hole(0.125, 0.25, 82, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 

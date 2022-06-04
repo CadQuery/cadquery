@@ -13,7 +13,7 @@ from typing import (
     cast as tcast,
 )
 from typing_extensions import Literal
-from math import tan, sin, cos, pi, radians
+from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
 from multimethod import multimethod
 from typish import instance_of, get_type
@@ -37,6 +37,7 @@ from .occ_impl.sketch_solver import (
 
 Modes = Literal["a", "s", "i", "c"]  # add, subtract, intersect, construct
 Point = Union[Vector, Tuple[Real, Real]]
+TOL = 1e-6
 
 T = TypeVar("T", bound="Sketch")
 SketchVal = Union[Shape, Location]
@@ -336,36 +337,27 @@ class Sketch(object):
             for el in selection
         )
 
-    def parray(self: T, r: Real, a1: Real, a2: Real, n: int, rotate: bool = True) -> T:
+    def parray(self: T, r: Real, a1: Real, da: Real, n: int, rotate: bool = True) -> T:
         """
         Generate a polar array of locations.
         """
 
         if n < 1:
-            raise ValueError(f"At least 1 elements required, requested {n}")
+            raise ValueError(f"At least 1 element required, requested {n}")
 
-        x = r * sin(radians(a1))
-        y = r * cos(radians(a1))
+        locs = []
 
-        if rotate:
-            loc = Location(Vector(x, y), Vector(0, 0, 1), -a1)
+        if abs(remainder(da, 360)) < TOL:
+            angle = da / n
         else:
-            loc = Location(Vector(x, y))
+            angle = da / (n - 1) if n > 1 else a1
 
-        locs = [loc]
-
-        angle = (a2 - a1) / (n - 1)
-
-        for i in range(1, n):
+        for i in range(0, n):
             phi = a1 + (angle * i)
-            x = r * sin(radians(phi))
-            y = r * cos(radians(phi))
+            x = r * cos(radians(phi))
+            y = r * sin(radians(phi))
 
-            if rotate:
-                loc = Location(Vector(x, y), Vector(0, 0, 1), -phi)
-            else:
-                loc = Location(Vector(x, y))
-
+            loc = Location(Vector(x, y))
             locs.append(loc)
 
         if self._selection:
@@ -374,9 +366,18 @@ class Sketch(object):
             selection = [Vector()]
 
         return self.push(
-            (l * el if isinstance(el, Location) else l * Location(el.Center()))
-            for l in locs
-            for el in selection
+            (
+                l
+                * el
+                * Location(
+                    Vector(0, 0), Vector(0, 0, 1), (a1 + (angle * i)) if rotate else 0
+                )
+            )
+            for i, l in enumerate(locs)
+            for el in [
+                el if isinstance(el, Location) else Location(el.Center())
+                for el in selection
+            ]
         )
 
     def distribute(
@@ -386,16 +387,36 @@ class Sketch(object):
         Distribute locations along selected edges or wires.
         """
 
-        if not self._selection:
-            raise ValueError("Nothing selected to distirbute over")
+        if n < 1:
+            raise ValueError(f"At least 1 element required, requested {n}")
 
-        params = [start + i * (stop - start) / n for i in range(n + 1)]
+        if not self._selection:
+            raise ValueError("Nothing selected to distribute over")
+
+        if 1 - abs(stop - start) < TOL:
+            trimmed = False
+        else:
+            trimmed = True
+
+        # closed edge or wire parameters
+        params_closed = [start + i * (stop - start) / n for i in range(n)]
+
+        # open or trimmed edge or wire parameters
+        params_open = [
+            start + i * (stop - start) / (n - 1) if n - 1 > 0 else start
+            for i in range(n)
+        ]
 
         locs = []
         for el in self._selection:
             if isinstance(el, (Wire, Edge)):
+                if el.IsClosed() and not trimmed:
+                    params = params_closed
+                else:
+                    params = params_open
+
                 if rotate:
-                    locs.extend(el.locations(params, planar=True))
+                    locs.extend(el.locations(params, planar=True,))
                 else:
                     locs.extend(Location(v) for v in el.positions(params))
             else:
@@ -761,7 +782,7 @@ class Sketch(object):
         forConstruction: bool = False,
     ) -> T:
         """
-        Construct an arc.
+        Construct an arc starting at p1, through p2, ending at p3
         """
 
         val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))

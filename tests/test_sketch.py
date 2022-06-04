@@ -83,32 +83,29 @@ def test_modes():
 
 def test_distribute():
 
-    s1 = Sketch().rarray(2, 2, 3, 3).rect(1, 1)
-
-    assert s1._faces.Area() == approx(9)
-    assert len(s1._faces.Faces()) == 9
-
-    s2 = Sketch().parray(2, 0, 90, 3).rect(1, 1)
-
-    assert s2._faces.Area() == approx(3)
-    assert len(s2._faces.Faces()) == 3
+    with raises(ValueError):
+        Sketch().rect(2, 2).faces().distribute(5)
 
     with raises(ValueError):
-        Sketch().rarray(2, 2, 3, 0).rect(1, 1)
+        Sketch().rect(2, 2).distribute(5)
 
     with raises(ValueError):
-        Sketch().parray(2, 0, 90, 0).rect(1, 1)
+        Sketch().circle(1).wires().distribute(0, 0, 1)
 
-    s3 = Sketch().circle(4, mode="c", tag="c").edges(tag="c").distribute(3).rect(1, 1)
+    s1 = Sketch().circle(4, mode="c", tag="c").edges(tag="c").distribute(3)
 
-    assert s2._faces.Area() == approx(3)
-    assert len(s3._faces.Faces()) == 3
-    assert len(s3.reset().vertices("<X")._selection) == 2
+    assert len(s1._selection) == approx(3)
 
-    for f in s3._faces.Faces():
+    s1.rect(1, 1)
+
+    assert s1._faces.Area() == approx(3)
+    assert len(s1._faces.Faces()) == 3
+    assert len(s1.reset().vertices("<X")._selection) == 2
+
+    for f in s1._faces.Faces():
         assert f.Center().Length == approx(4)
 
-    s4 = (
+    s2 = (
         Sketch()
         .circle(4, mode="c", tag="c")
         .edges(tag="c")
@@ -116,44 +113,169 @@ def test_distribute():
         .rect(1, 1)
     )
 
-    assert s4._faces.Area() == approx(3)
-    assert len(s4._faces.Faces()) == 3
-    assert len(s4.reset().vertices("<X")._selection) == 4
+    assert s2._faces.Area() == approx(3)
+    assert len(s2._faces.Faces()) == 3
+    assert len(s2.reset().vertices("<X")._selection) == 4
 
-    for f in s4._faces.Faces():
+    for f in s2._faces.Faces():
         assert f.Center().Length == approx(4)
 
-    with raises(ValueError):
-        Sketch().rect(2, 2).faces().distribute(5)
+    s3 = (
+        Sketch().circle(4, mode="c", tag="c").edges(tag="c").distribute(3, 0.625, 0.875)
+    )
+
+    assert len(s3._selection) == approx(3)
+
+    s3.rect(1, 0.5).reset().vertices("<X")
+
+    assert s3._selection[0].toTuple() == approx(
+        (-3.358757210636101, -3.005203820042827, 0.0)
+    )
+
+    s3.reset().vertices(">X")
+
+    assert s3._selection[0].toTuple() == approx(
+        (3.358757210636101, -3.005203820042827, 0.0)
+    )
+
+    s4 = Sketch().arc((0, 0), 4, 180, 180).edges().distribute(3, 0.25, 0.75)
+
+    assert len(s4._selection) == approx(3)
+
+    s4.rect(1, 0.5).reset().faces("<X").vertices("<X")
+
+    assert s4._selection[0].toTuple() == approx(
+        (-3.358757210636101, -3.005203820042827, 0.0)
+    )
+
+    s4.reset().faces(">X").vertices(">X")
+
+    assert s4._selection[0].toTuple() == approx(
+        (3.358757210636101, -3.005203820042827, 0.0)
+    )
+
+    s5 = (
+        Sketch()
+        .arc((0, 2), 4, 0, 90)
+        .arc((0, -2), 4, 0, -90)
+        .edges()
+        .distribute(4, 0, 1)
+        .circle(0.5)
+    )
+
+    assert len(s5._selection) == approx(8)
+
+    s5.reset().faces(">X").faces(">Y")
+
+    assert s5._selection[0].Center().toTuple() == approx((4.0, 2.0, 0.0))
+
+    s5.reset().faces(">X").faces("<Y")
+
+    assert s5._selection[0].Center().toTuple() == approx((4.0, -2.0, 0.0))
+
+    s5.reset().faces(">Y")
+
+    assert s5._selection[0].Center().toTuple() == approx((0.0, 6.0, 0.0))
+
+
+def test_rarray():
 
     with raises(ValueError):
-        Sketch().rect(2, 2).distribute(5)
+        Sketch().rarray(2, 2, 3, 0).rect(1, 1)
 
-    s5 = Sketch().push([(0, 0), (1, 1)]).rarray(2, 2, 3, 3).rect(0.5, 0.5)
+    s1 = Sketch().rarray(2, 2, 3, 3).rect(1, 1)
 
-    assert s5._faces.Area() == approx(18 * 0.25)
-    assert len(s5._faces.Faces()) == 18
-    assert s5.reset().vertices(">(1,1,0)")._selection[0].toTuple() == approx(
+    assert s1._faces.Area() == approx(9)
+    assert len(s1._faces.Faces()) == 9
+
+    s2 = Sketch().push([(0, 0), (1, 1)]).rarray(2, 2, 3, 3).rect(0.5, 0.5)
+
+    assert s2._faces.Area() == approx(18 * 0.25)
+    assert len(s2._faces.Faces()) == 18
+    assert s2.reset().vertices(">(1,1,0)")._selection[0].toTuple() == approx(
         (3.25, 3.25, 0)
     )
 
-    s6 = Sketch().push([(0, 0), (1, 1)]).parray(2, 0, 90, 3).rect(0.5, 0.5)
 
-    assert s6._faces.Area() == approx(6 * 0.25)
-    assert len(s6._faces.Faces()) == 6
+def test_parray():
 
-    s7 = Sketch().parray(2, 0, 90, 3, False).rect(0.5, 0.5).reset().vertices(">(1,1,0)")
+    with raises(ValueError):
+        Sketch().parray(2, 0, 90, 0).rect(1, 1)
+
+    s1 = Sketch().parray(2, 0, 90, 3).rect(1, 1)
+
+    assert s1._faces.Area() == approx(3)
+    assert len(s1._faces.Faces()) == 3
+
+    s2 = Sketch().push([(0, 0), (1, 1)]).parray(2, 0, 90, 3).rect(0.5, 0.5)
+
+    assert s2._faces.Area() == approx(6 * 0.25)
+    assert len(s2._faces.Faces()) == 6
+
+    s3 = Sketch().parray(2, 0, 90, 3, False).rect(0.5, 0.5).reset().vertices(">(1,1,0)")
+
+    assert len(s3._selection) == 1
+    assert s3._selection[0].toTuple() == approx(
+        (1.6642135623730951, 1.664213562373095, 0.0)
+    )
+
+    s4 = Sketch().push([(0, 0), (0, 1)]).parray(2, 0, 90, 3).rect(0.5, 0.5)
+    s4.reset().faces(">(0,1,0)")
+
+    assert s4._selection[0].Center().Length == approx(3)
+
+    s5 = Sketch().push([(0, 1)], tag="loc")
+
+    assert len(s5._tags["loc"]) == 1
+
+    s6 = Sketch().push([(-4, 1), (0, 0), (4, -1)]).parray(2, 10, 50, 3).rect(1.0, 0.5)
+    s6.reset().vertices(">(-1,0,0)")
+
+    assert s6._selection[0].toTuple() == approx(
+        (-3.46650635094611, 2.424038105676658, 0.0)
+    )
+
+    s6.reset().vertices(">(1,0,0)")
+
+    assert s6._selection[0].toTuple() == approx(
+        (6.505431426947252, -0.8120814940857262, 0.0)
+    )
+
+    s7 = Sketch().parray(1, 135, 0, 1).circle(0.1)
+    s7.reset().faces()
 
     assert len(s7._selection) == 1
+    assert s7._selection[0].Center().toTuple() == approx(
+        (-0.7071067811865475, 0.7071067811865476, 0.0)
+    )
 
-    s8 = Sketch().push([(0, 0), (0, 1)]).parray(2, 0, 90, 3).rect(0.5, 0.5)
-    s8.reset().faces(">(1,1,0)")
+    s8 = Sketch().parray(4, 20, 360, 6).rect(1.0, 0.5)
 
-    assert s8._selection[0].Center().Length == approx(3)
+    assert len(s8._faces.Faces()) == 6
 
-    s9 = Sketch().push([(0, 1)], tag="loc")
+    s8.reset().vertices(">(0,-1,0)")
 
-    assert len(s9._tags["loc"]) == 1
+    assert s8._selection[0].toTuple() == approx(
+        (-0.5352148612481344, -4.475046932971669, 0.0)
+    )
+
+    s9 = (
+        Sketch()
+        .push([(-4, 1)])
+        .circle(0.1)
+        .reset()
+        .faces()
+        .parray(2, 10, 50, 3)
+        .rect(1.0, 0.5, 40, "a", "rects")
+    )
+
+    assert len(s9._faces.Faces()) == 4
+
+    s9.reset().vertices(">(-1,0,0)", tag="rects")
+
+    assert s9._selection[0].toTuple() == approx(
+        (-3.3330260270865173, 3.1810426396582487, 0.0)
+    )
 
 
 def test_each():

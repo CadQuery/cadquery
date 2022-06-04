@@ -1,6 +1,7 @@
 .. _3d_cad_primer:
 
 .. _cadquery_concepts:
+
 CadQuery Concepts
 ===================================
 
@@ -8,7 +9,7 @@ CadQuery Concepts
 3D BREP Topology Concepts
 ---------------------------
 Before talking about CadQuery, it makes sense to talk a little about 3D CAD topology. CadQuery is based upon the
-OpenCascade kernel, which uses Boundary Representations ( BREP ) for objects.  This just means that objects
+OpenCascade kernel, which uses Boundary Representations (BREP) for objects.  This just means that objects
 are defined by their enclosing surfaces.
 
 When working in a BREP system, these fundamental constructs exist to define a shape (working up the food chain):
@@ -165,7 +166,7 @@ For example, this::
 Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a rectangular face, and the ``circle()`` method
 iterates on each member of the stack.
 
-This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.cq.Workplane.each` is useful for this purpose.
+This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.Workplane.each` is useful for this purpose.
 
 CadQuery API layers
 ---------------------------
@@ -247,7 +248,7 @@ For example we can create a circular face like so ::
   The topological class inherits :class:`~cadquery.Mixin3D` or :class:`~cadquery.Mixin1D` which provide aditional methods that are shared between the classes that inherits them.
 
 The direct API as its name suggests doesn't provide a parent/children data structure, instead each method call directly returns an object of the specified topological type.
-It is more verbose than the fluent API and more tedious to work with, but as it offer more flexibility (you can work with faces, which is something you can't do in the fluent API)
+It is more verbose than the fluent API and more tedious to work with, but as it offers more flexibility (you can work with faces, which is something you can't do in the fluent API)
 it is sometimes more convenient than the fluent API.
 
 The OCCT API
@@ -274,7 +275,7 @@ knowledge of the different C++ libraries to be able to achieve what you want. To
   The package name of any class is written at the top of the documentation page. Often it's written in the class name itself as a prefix.
 
 Going back and forth between the APIs
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 While the 3 APIs provide 3 different layer of complexity and functionality you can mix the 3 layers as you wish.
 Below is presented the different ways you can interact with the different API layers.
@@ -282,6 +283,8 @@ Below is presented the different ways you can interact with the different API la
 -------------------------
 Fluent API <=> Direct API
 -------------------------
+
+.. currentmodule:: cadquery
 
 Here are all the possibilities you have to get an object from the Direct API (i.e a topological object).
 

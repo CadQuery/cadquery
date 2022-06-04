@@ -357,13 +357,16 @@ class Assembly(object):
         ents = {}
 
         i = 0
-        locked = []
+        locked: List[int] = []
+
         for c in self.constraints:
             for name in c.objects:
                 if name not in ents:
                     ents[name] = i
                     i += 1
-                if c.kind == "Fixed" or name == self.name:
+                if (c.kind == "Fixed" or name == self.name) and ents[
+                    name
+                ] not in locked:
                     locked.append(ents[name])
 
         # Lock the first occuring entity if needed.
@@ -402,15 +405,32 @@ class Assembly(object):
         if not constraints:
             raise ValueError("At least one constraint required")
 
+        # check if at least two entities are present
+        if len(ents) < 2:
+            raise ValueError("At least two entities need to be constrained")
+
         # instantiate the solver
-        solver = ConstraintSolver(locs, constraints, locked=locked)
+        scale = self.toCompound().BoundingBox().DiagonalLength
+        solver = ConstraintSolver(locs, constraints, locked=locked, scale=scale)
 
         # solve
         locs_new, self._solve_result = solver.solve()
 
         # update positions
+
+        # find the inverse root loc
+        loc_root_inv = Location()
+
+        if self.obj:
+            for loc_new, n in zip(locs_new, ents):
+                if n == self.name:
+                    loc_root_inv = loc_new.inverse
+                    break
+
+        # update the positions
         for loc_new, n in zip(locs_new, ents):
-            self.objects[n].loc = loc_new
+            if n != self.name:
+                self.objects[n].loc = loc_root_inv * loc_new
 
         return self
 
@@ -420,14 +440,17 @@ class Assembly(object):
         exportType: Optional[ExportLiterals] = None,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
+        **kwargs,
     ) -> "Assembly":
         """
-        save as STEP or OCCT native XML file
+        Save assembly to a file.
 
-        :param path: filepath
+        :param path: Path and filename for writing.
         :param exportType: export format (default: None, results in format being inferred form the path)
-        :param tolerance: the deflection tolerance, in model units. Only used for GLTF. Default 0.1.
-        :param angularTolerance: the angular tolerance, in radians. Only used for GLTF. Default 0.1.
+        :param tolerance: the deflection tolerance, in model units. Only used for GLTF, VRML. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Only used for GLTF, VRML. Default 0.1.
+        :param **kwargs: Additional keyword arguments.  Only used for STEP.
+            See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         """
 
         if exportType is None:
@@ -438,11 +461,11 @@ class Assembly(object):
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path)
+            exportAssembly(self, path, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":
-            exportVRML(self, path)
+            exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF":
             exportGLTF(self, path, True, tolerance, angularTolerance)
         elif exportType == "VTKJS":

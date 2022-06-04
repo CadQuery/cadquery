@@ -1,0 +1,9 @@
+echo Entering Conda Environment
+call %PREFIX%\condabin\activate.bat
+
+echo Installing CadQuery
+call conda install -c conda-forge -c cadquery -y cadquery={{ tag_version }}
+
+echo Cleaning Packages
+call conda clean -a -y
+call conda deactivate

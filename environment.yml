@@ -4,14 +4,15 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.6
+  - python>=3.8
   - ipython
-  - ocp=7.5.1
+  - ocp=7.5.3
+  - vtk=9.0.1
   - pyparsing>=2.1.9
-  - sphinx=3.2.1
+  - sphinx=4.4.0
   - sphinx_rtd_theme
-  - sphinx-autodoc-typehints
   - black=19.10b0
+  - click=8.0.4
   - mypy
   - codecov
   - pytest
@@ -19,11 +20,13 @@ dependencies:
   - ezdxf
   - ipython
   - typing_extensions
-  - nptyping
+  - nptyping=2.0.1
   - nlopt
   - path
+  - casadi
   - pip
   - pip:
+    - "--install-option=\"--no-deps\""
     - "--editable=."
     - sphinxcadquery
     - multimethod

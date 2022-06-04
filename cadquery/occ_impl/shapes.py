@@ -233,7 +233,10 @@ from OCP.IVtkVTK import IVtkVTK_ShapeData
 # for catching exceptions
 from OCP.Standard import Standard_NoSuchObject, Standard_Failure
 
+from OCP.Interface import Interface_Static
+
 from math import pi, sqrt, inf
+
 import warnings
 
 from ..utils import deprecate
@@ -454,12 +457,31 @@ class Shape(object):
 
         return writer.Write(self.wrapped, fileName)
 
-    def exportStep(self, fileName: str) -> IFSelect_ReturnStatus:
+    def exportStep(self, fileName: str, **kwargs) -> IFSelect_ReturnStatus:
         """
-        Export this shape to a STEP file
+        Export this shape to a STEP file.
+
+        kwargs is used to provide optional keyword arguments to configure the exporter.
+
+        :param fileName: Path and filename for writing.
+        :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
+
+            If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
+        :type write_pcurves: boolean
+        :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
+            See OCCT documentation.
+        :type precision_mode: int
         """
 
+        # Handle the extra settings for the STEP export
+        pcurves = 1
+        if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
+            pcurves = 0
+        precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
+
         writer = STEPControl_Writer()
+        Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
+        Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
         return writer.Write(fileName)
