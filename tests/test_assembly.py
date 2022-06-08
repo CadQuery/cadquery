@@ -247,6 +247,7 @@ def test_toJSON(simple_assy, nested_assy, empty_top_assy):
         ("stp", ("STEP",)),
         ("caf", ("XML",)),
         ("wrl", ("VRML",)),
+        ("stl", ("STL",)),
     ],
 )
 def test_save(extension, args, nested_assy, nested_assy_sphere):
