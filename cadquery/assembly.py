@@ -27,7 +27,7 @@ from .selectors import _expression_grammar as _selector_grammar
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
 ConstraintKinds = Literal["Plane", "Point", "Axis", "PointInPlane"]
-ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML"]
+ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
@@ -455,7 +455,7 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF"):
+            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
@@ -470,6 +470,8 @@ class Assembly(object):
             exportGLTF(self, path, True, tolerance, angularTolerance)
         elif exportType == "VTKJS":
             exportVTKJS(self, path)
+        elif exportType == "STL":
+            self.toCompound().exportStl(path, tolerance, angularTolerance)
         else:
             raise ValueError(f"Unknown format: {exportType}")
 
