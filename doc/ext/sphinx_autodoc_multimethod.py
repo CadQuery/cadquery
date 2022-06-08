@@ -299,7 +299,7 @@ class MethodDocumenter(SphinxMethodDocumenter):
 def setup(app):
 
     app.connect("autodoc-process-docstring", process_docstring_multimethod)
-    app.add_directive("autosummary", MultimethodAutosummary)
+    app.add_directive("autosummary", MultimethodAutosummary, override=True)
     app.add_autodocumenter(MethodDocumenter, override=True)
 
     return {"parallel_read_safe": True, "parallel_write_safe": True}
