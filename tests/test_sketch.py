@@ -422,6 +422,13 @@ def test_selectors():
     s.reset().wires(LengthNthSelector(1))
 
     assert len(s._selection) == 2
+    assert len(s.vals()) == 2
+
+    s.reset().vertices("<X and <Y").val()
+    assert s.val().toTuple() == approx((-2.5, -0.5, 0.0))
+
+    s.reset().vertices(">>X[1] and <Y").val()
+    assert s.val().toTuple()[0] == approx((0, 0, 0))
 
 
 def test_edge_interface():

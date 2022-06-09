@@ -1013,7 +1013,21 @@ class Sketch(object):
 
     def finalize(self) -> Any:
         """
-        Finish sketch construction and return the parent
+        Finish sketch construction and return the parent.
         """
 
         return self.parent
+
+    def val(self: T) -> SketchVal:
+        """
+        Return the first selected item or Location().
+        """
+
+        return self._selection[0] if self._selection else Location()
+
+    def vals(self: T) -> List[SketchVal]:
+        """
+        Return the list of selected items.
+        """
+
+        return self._selection
