@@ -106,9 +106,11 @@ class TestExporters(BaseTest):
 
     def test3MF(self):
 
-        self._exportBox(exporters.ExportTypes.THREEMF, ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"])
+        self._exportBox(
+            exporters.ExportTypes.THREEMF,
+            ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"],
+        )
         exporters.export(self._box(), "out.3mf")
-
 
     def testTJS(self):
         self._exportBox(

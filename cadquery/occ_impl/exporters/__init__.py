@@ -19,6 +19,7 @@ from .dxf import exportDXF
 from .vtk import exportVTP
 from .utils import toCompound
 
+
 class ExportTypes:
     STL = "STL"
     STEP = "STEP"
