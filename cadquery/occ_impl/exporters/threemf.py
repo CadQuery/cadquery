@@ -43,8 +43,8 @@ class ThreeMFWriter(object):
         )
 
         # TODO: Add meta data
-        meta = ET.SubElement(model, "metadata", name="Copyright")
-        meta.text = "Copyright (c) 2015 3MF Consortium. All rights reserved."
+        meta = ET.SubElement(model, "metadata", name="Application")
+        meta.text = "CadQuery 3MF Exporter"
 
         resources = ET.SubElement(model, "resources")
 

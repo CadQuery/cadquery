@@ -19,7 +19,6 @@ from .dxf import exportDXF
 from .vtk import exportVTP
 from .utils import toCompound
 
-# TODO: ENUM 
 class ExportTypes:
     STL = "STL"
     STEP = "STEP"
