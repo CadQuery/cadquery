@@ -48,7 +48,6 @@ class ThreeMFWriter(object):
 
         resources = ET.SubElement(model, "resources")
 
-        # TODO: repeat for all solids
         object = ET.SubElement(resources, "object", id="0", type="model")
         mesh = ET.SubElement(object, "mesh")
 
