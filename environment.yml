@@ -30,3 +30,4 @@ dependencies:
     - "--editable=."
     - sphinxcadquery
     - multimethod
+    - pyecma376_2

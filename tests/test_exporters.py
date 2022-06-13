@@ -45,7 +45,7 @@ class TestExporters(BaseTest):
         """
         p = Workplane("XY").box(1, 2, 3)
 
-        if eType == exporters.ExportTypes.AMF:
+        if eType in (exporters.ExportTypes.AMF, exporters.ExportTypes.THREEMF):
             s = io.BytesIO()
         else:
             s = io.StringIO()
@@ -103,6 +103,12 @@ class TestExporters(BaseTest):
         self._exportBox(exporters.ExportTypes.STEP, ["FILE_SCHEMA"])
 
         exporters.export(self._box(), "out.step")
+
+    def test3MF(self):
+
+        self._exportBox(exporters.ExportTypes.THREEMF, ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"])
+        exporters.export(self._box(), "out.3mf")
+
 
     def testTJS(self):
         self._exportBox(
