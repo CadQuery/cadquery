@@ -25,6 +25,7 @@ requirements:
     - nlopt
     - multimethod 1.6
     - casadi
+    - pyecma376_2
 
 test:
   requires:
