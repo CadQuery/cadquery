@@ -1,7 +1,14 @@
 from os import PathLike
 import xml.etree.cElementTree as ET
 from typing import IO
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
+
+try:
+    import zlib
+
+    COMPRESSION = ZIP_DEFLATED
+except:
+    COMPRESSION = ZIP_STORED
 
 
 class CONTENT_TYPES(object):
@@ -23,7 +30,7 @@ class ThreeMFWriter(object):
         self.tessellation = tessellation
 
     def write3mf(self, outfile: PathLike | str | IO[bytes]):
-        with ZipFile(outfile, "w") as zf:
+        with ZipFile(outfile, "w", COMPRESSION) as zf:
             zf.writestr("_rels/.rels", self._write_relationships())
             zf.writestr("[Content_Types].xml", self._write_content_types())
             zf.writestr("3D/3dmodel.model", self._write_3d())
