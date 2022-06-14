@@ -1,8 +1,19 @@
 from os import PathLike
 import xml.etree.cElementTree as ET
-from typing import IO, BinaryIO
+from typing import IO
+from zipfile import ZipFile
 
-from pyecma376_2 import package_model, zip_package
+
+class CONTENT_TYPES(object):
+    MODEL = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
+    RELATION = "application/vnd.openxmlformats-package.relationships+xml"
+
+
+class SCHEMAS(object):
+    CONTENT_TYPES = "http://schemas.openxmlformats.org/package/2006/content-types"
+    RELATION = "http://schemas.openxmlformats.org/package/2006/relationships"
+    CORE = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
+    MODEL = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
 
 
 class ThreeMFWriter(object):
@@ -11,35 +22,15 @@ class ThreeMFWriter(object):
         self.unit = "millimeter"
         self.tessellation = tessellation
 
-    def write3mf(self, outfile: PathLike | str | IO):
-        with zip_package.ZipPackageWriter(outfile) as writer:
+    def write3mf(self, outfile: PathLike | str | IO[bytes]):
+        with ZipFile(outfile, "w") as zf:
+            zf.writestr("_rels/.rels", self._write_relationships())
+            zf.writestr("[Content_Types].xml", self._write_content_types())
+            zf.writestr("3D/3dmodel.model", self._write_3d())
 
-            with writer.open_part(
-                "/3D/3dmodel.model",
-                "application/vnd.ms-package.3dmanufacturing-3dmodel+xml",
-            ) as part_io:
-                self._write_3d(part_io)
-
-            # Write the packages root relationships
-            writer.write_relationships(
-                [
-                    package_model.OPCRelationship(
-                        "rel-1",
-                        "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel",
-                        "/3D/3dmodel.model",
-                        package_model.OPCTargetMode.INTERNAL,
-                    ),
-                ]
-            )
-
-    def _write_3d(self, out: BinaryIO):
+    def _write_3d(self) -> str:
         model = ET.Element(
-            "model",
-            {
-                "xml:lang": "en-US",
-                "xmlns": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02",
-            },
-            unit=self.unit,
+            "model", {"xml:lang": "en-US", "xmlns": SCHEMAS.CORE,}, unit=self.unit,
         )
 
         # TODO: Add meta data
@@ -64,5 +55,38 @@ class ThreeMFWriter(object):
         build = ET.SubElement(model, "build")
         ET.SubElement(build, "item", objectid="0")
 
-        ET.ElementTree(model).write(out, xml_declaration=True, encoding="utf-8")
-        return out
+        return ET.tostring(model, xml_declaration=True, encoding="utf-8")
+
+    def _write_content_types(self) -> str:
+
+        root = ET.Element("Types")
+        root.set("xmlns", SCHEMAS.CONTENT_TYPES)
+        ET.SubElement(
+            root,
+            "Override",
+            PartName="/3D/3dmodel.model",
+            ContentType=CONTENT_TYPES.MODEL,
+        )
+        ET.SubElement(
+            root,
+            "Override",
+            PartName="/_rels/.rels",
+            ContentType=CONTENT_TYPES.RELATION,
+        )
+
+        return ET.tostring(root, xml_declaration=True, encoding="utf-8")
+
+    def _write_relationships(self) -> str:
+
+        root = ET.Element("Relationships")
+        root.set("xmlns", SCHEMAS.RELATION)
+        ET.SubElement(
+            root,
+            "Relationship",
+            Target="/3D/3dmodel.model",
+            Id="rel-1",
+            Type=SCHEMAS.MODEL,
+            TargetMode="Internal",
+        )
+
+        return ET.tostring(root, xml_declaration=True, encoding="utf-8")

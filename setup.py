@@ -28,7 +28,6 @@ if not is_rtd and not is_appveyor and not is_azure:
         "cadquery-ocp",
         "ezdxf",
         "multimethod",
-        "pyecma376-2",
         "nlopt",
         "nptyping==2.0.1",
         "typish",
