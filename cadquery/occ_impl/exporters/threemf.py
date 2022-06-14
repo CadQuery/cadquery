@@ -1,6 +1,6 @@
 from os import PathLike
 import xml.etree.cElementTree as ET
-from typing import IO
+from typing import IO, Union
 from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
 
 try:
@@ -29,7 +29,7 @@ class ThreeMFWriter(object):
         self.unit = "millimeter"
         self.tessellation = tessellation
 
-    def write3mf(self, outfile: PathLike | str | IO[bytes]):
+    def write3mf(self, outfile: Union[PathLike, str, IO[bytes]]):
         with ZipFile(outfile, "w", COMPRESSION) as zf:
             zf.writestr("_rels/.rels", self._write_relationships())
             zf.writestr("[Content_Types].xml", self._write_content_types())
