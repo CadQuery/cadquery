@@ -6,13 +6,6 @@ from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
 
 from ...cq import Compound, Shape, Vector
 
-try:
-    import zlib
-
-    COMPRESSION = ZIP_DEFLATED
-except:
-    COMPRESSION = ZIP_STORED
-
 
 class CONTENT_TYPES(object):
     MODEL = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
@@ -59,7 +52,14 @@ class ThreeMFWriter(object):
         Write to the given file. 
         """
 
-        with ZipFile(outfile, "w", COMPRESSION) as zf:
+        try:
+            import zlib
+
+            compression = ZIP_DEFLATED
+        except ImportError:
+            compression = ZIP_STORED
+
+        with ZipFile(outfile, "w", compression) as zf:
             zf.writestr("_rels/.rels", self._write_relationships())
             zf.writestr("[Content_Types].xml", self._write_content_types())
             zf.writestr("3D/3dmodel.model", self._write_3d())
