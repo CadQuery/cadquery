@@ -64,6 +64,9 @@ class TestExporters(BaseTest):
 
         return Workplane().box(1, 1, 1)
 
+    def _compound(self):
+        return Compound.makeCompound((self._box().val(), self._box().val()))
+
     def testSTL(self):
         self._exportBox(exporters.ExportTypes.STL, ["facet normal"])
 
@@ -105,12 +108,12 @@ class TestExporters(BaseTest):
         exporters.export(self._box(), "out.step")
 
     def test3MF(self):
-
         self._exportBox(
             exporters.ExportTypes.THREEMF,
             ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"],
         )
-        exporters.export(self._box(), "out.3mf")
+        exporters.export(self._box(), "out1.3mf")
+        exporters.export(self._compound(), "out2.3mf")
 
     def testTJS(self):
         self._exportBox(
