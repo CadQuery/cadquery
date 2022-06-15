@@ -98,8 +98,7 @@ def export(
             aw.writeAmf(f)
 
     elif exportType == ExportTypes.THREEMF:
-        tess = shape.tessellate(tolerance, angularTolerance)
-        tmfw = ThreeMFWriter(tess)
+        tmfw = ThreeMFWriter(shape, tolerance, angularTolerance, **opt or {})
         with open(fname, "wb") as f:
             tmfw.write3mf(f)
 
@@ -186,8 +185,7 @@ def exportShape(
         aw = AmfWriter(tess)
         aw.writeAmf(fileLike)
     elif exportType == ExportTypes.THREEMF:
-        tess = tessellate(shape, angularTolerance)
-        tmfw = ThreeMFWriter(tess)
+        tmfw = ThreeMFWriter(shape, tolerance, angularTolerance)
         tmfw.write3mf(fileLike)
     else:
 
