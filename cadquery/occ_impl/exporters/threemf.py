@@ -1,7 +1,7 @@
 from datetime import datetime
 from os import PathLike
 import xml.etree.cElementTree as ET
-from typing import IO, List, Literal, Tuple, TypeAlias, Union
+from typing import IO, List, Literal, Tuple, Union
 from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
 
 from ...cq import Compound, Shape, Vector
@@ -26,7 +26,7 @@ class SCHEMAS(object):
     MODEL = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
 
 
-Unit: TypeAlias = Literal["micron", "millimeter", "centimeter", "meter", "inch", "foot"]
+Unit = Literal["micron", "millimeter", "centimeter", "meter", "inch", "foot"]
 
 
 class ThreeMFWriter(object):
