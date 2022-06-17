@@ -106,7 +106,12 @@ def export(
             shape.exportStep(fname)
 
     elif exportType == ExportTypes.STL:
-        shape.exportStl(fname, tolerance, angularTolerance)
+        if hasascii := [
+            opt.get(k) for k in ["ascii", "ASCII"] if opt is not None and k in opt
+        ]:
+            shape.exportStl(fname, tolerance, angularTolerance, hasascii.pop())
+        else:
+            shape.exportStl(fname, tolerance, angularTolerance)
 
     elif exportType == ExportTypes.VRML:
         shape.mesh(tolerance, angularTolerance)

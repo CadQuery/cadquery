@@ -24,7 +24,7 @@ from .geom import Vector, BoundBox, Plane, Location, Matrix
 
 from ..utils import cqmultimethod as multimethod
 
-import OCP.TopAbs as ta  # Tolopolgy type enum
+import OCP.TopAbs as ta  # Topology type enum
 import OCP.GeomAbs as ga  # Geometry type enum
 
 from OCP.Precision import Precision
@@ -96,9 +96,9 @@ from OCP.BRepPrimAPI import (
 )
 from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
-from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
+from OCP.TopExp import TopExp_Explorer  # Topology explorer
 
-# used for getting underlying geoetry -- is this equivalent to brep adaptor?
+# used for getting underlying geometry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
 
 from OCP.TopoDS import (
@@ -424,30 +424,37 @@ class Shape(object):
         }
 
         t = shapetype(obj)
-        # NB downcast is needed to handly TopoDS_Shape types
+        # NB downcast is needed to handle TopoDS_Shape types
         tr = constructor_LUT[t](downcast(obj))
         tr.forConstruction = forConstruction
 
         return tr
 
     def exportStl(
-        self, fileName: str, tolerance: float = 1e-3, angularTolerance: float = 0.1
+        self,
+        fileName: str,
+        tolerance: float = 1e-3,
+        angularTolerance: float = 0.1,
+        ascii: bool = True,
     ) -> bool:
         """
         Exports a shape to a specified STL file.
 
         :param fileName: The path and file name to write the STL output to.
-        :type fileName: fileName
-        :param tolerance: A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
-        :type tolerance: float
-        :param angularTolerance: - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
-        :type angularTolerance: float
+        :param tolerance: A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is a good starting point for a range of cases.
+        :param angularTolerance: Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
+        :param ascii: Export the file as ASCII (True) or binary (False) STL format.
         """
 
         mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
         mesh.Perform()
 
         writer = StlAPI_Writer()
+
+        if ascii:
+            writer.ASCIIMode = True
+        else:
+            writer.ASCIIMode = False
 
         return writer.Write(self.wrapped, fileName)
 
@@ -1273,7 +1280,7 @@ class Vertex(Shape):
 
     def __init__(self, obj: TopoDS_Shape, forConstruction: bool = False):
         """
-        Create a vertex from a FreeCAD Vertex
+        Create a vertex
         """
         super(Vertex, self).__init__(obj)
 
@@ -2186,32 +2193,21 @@ class Face(Shape):
     ) -> "Face":
         """
         Returns a surface enclosed by a closed polygon defined by 'edges' and going through 'points'.
-        :param points
-        :type points: list of gp_Pnt
-        :param edges
-        :type edges: list of Edge
-        :param continuity=GeomAbs_C0
-        :type continuity: OCC.Core.GeomAbs continuity condition
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
+
+        :param edges: list of Edge
+        :param points: list of gp_Pnt
+        :param continuity: OCC.Core.GeomAbs continuity condition
+        :param degree: >=2
+        :param nbPtsOnCur: number of points on curve >= 15
+        :param nbIter: number of iterations >= 2
+        :param anisotropie: bool Anisotropie
+        :param tol2d: 2D tolerance >0
+        :param tol3d: 3D tolerance >0
+        :param tolAng: angular tolerance
+        :param tolCurv: tolerance for curvature >0
+        :param maxDeg: highest polynomial degree >= 2
+        :param maxSegments: greatest number of segments >= 2
+        :return: Face
         """
 
         n_sided = BRepOffsetAPI_MakeFilling(
@@ -2269,7 +2265,7 @@ class Face(Shape):
     @classmethod
     def makeRuledSurface(cls, edgeOrWire1, edgeOrWire2):
         """
-        'makeRuledSurface(Edge|Wire,Edge|Wire) -- Make a ruled surface
+        makeRuledSurface(Edge|Wire,Edge|Wire) -- Make a ruled surface
         Create a ruled surface out of two edges or wires. If wires are used then
         these must have the same number of edges
         """
@@ -2648,35 +2644,23 @@ class Solid(Shape, Mixin3D):
         maxSegments=9,
     ) -> Union["Solid", Face]:
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points, and going through 'surf_pts' points.
 
-        :param surf_edges
-        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
-        :type 2 surf_edges: list of ordered or unordered CadQuery wires
-        :param surf_pts = [] (uses only edges if [])
-        :type surf_pts: list of [x,y,z] float coordinates
-        :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float (may be negative or positive depending on thickening direction)
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
+        :param surf_edges:
+            list of [x,y,z] float ordered coordinates
+            or list of ordered or unordered wires
+        :param surf_pts: list of [x,y,z] float coordinates (uses only edges if [])
+        :param thickness: thickness may be negative or positive depending on direction, (returns 2D surface if 0)
+        :param degree: >=2
+        :param nbPtsOnCur: number of points on curve >= 15
+        :param nbIter: number of iterations >= 2
+        :param anisotropie: bool Anisotropie
+        :param tol2d: 2D tolerance >0
+        :param tol3d: 3D tolerance >0
+        :param tolAng: angular tolerance
+        :param tolCurv: tolerance for curvature >0
+        :param maxDeg: highest polynomial degree >= 2
+        :param maxSegments: greatest number of segments >= 2
         """
 
         # POINTS CONSTRAINTS: list of (x,y,z) points, optional.
@@ -2766,7 +2750,7 @@ class Solid(Shape, Mixin3D):
     ) -> "Solid":
         """
         makeBox(length,width,height,[pnt,dir]) -- Make a box located in pnt with the dimensions (length,width,height)
-        By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)'
+        By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
         """
         return cls(
             BRepPrimAPI_MakeBox(
@@ -2787,7 +2771,7 @@ class Solid(Shape, Mixin3D):
         """
         Make a cone with given radii and height
         By default pnt=Vector(0,0,0),
-        dir=Vector(0,0,1) and angle=360'
+        dir=Vector(0,0,1) and angle=360
         """
         return cls(
             BRepPrimAPI_MakeCone(
@@ -2811,7 +2795,7 @@ class Solid(Shape, Mixin3D):
         """
         makeCylinder(radius,height,[pnt,dir,angle]) --
         Make a cylinder with a given radius and height
-        By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360'
+        By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360
         """
         return cls(
             BRepPrimAPI_MakeCylinder(
@@ -2833,7 +2817,7 @@ class Solid(Shape, Mixin3D):
         makeTorus(radius1,radius2,[pnt,dir,angle1,angle2,angle]) --
         Make a torus with a given radii and angles
         By default pnt=Vector(0,0,0),dir=Vector(0,0,1),angle1=0
-        ,angle1=360 and angle=360'
+        ,angle1=360 and angle=360
         """
         return cls(
             BRepPrimAPI_MakeTorus(
@@ -3002,7 +2986,7 @@ class Solid(Shape, Mixin3D):
         taper: Real = 0,
     ) -> "Solid":
         """
-        Attempt to extrude the list of wires  into a prismatic solid in the provided direction
+        Attempt to extrude the list of wires into a prismatic solid in the provided direction
 
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
@@ -3149,14 +3133,14 @@ class Solid(Shape, Mixin3D):
         transitionMode: Literal["transformed", "round", "right"] = "transformed",
     ) -> "Shape":
         """
-        Attempt to sweep the list of wires  into a prismatic solid along the provided path
+        Attempt to sweep the list of wires into a prismatic solid along the provided path
 
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
         :param path: The wire to sweep the face resulting from the wires over
-        :param boolean makeSolid: return Solid or Shell (default True)
-        :param boolean isFrenet: Frenet mode (default False)
-        :param mode: additional sweep mode parameters.
+        :param makeSolid: return Solid or Shell (default True)
+        :param isFrenet: Frenet mode (default False)
+        :param mode: additional sweep mode parameters
         :param transitionMode:
             handling of profile orientation at C1 path discontinuities.
             Possible values are {'transformed','round', 'right'} (default: 'right').

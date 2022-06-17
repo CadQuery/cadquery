@@ -6,6 +6,7 @@ import os
 import io
 from pathlib import Path
 import re
+import pytest
 
 # my modules
 from cadquery import *
@@ -15,13 +16,22 @@ from OCP.GeomConvert import GeomConvert
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 
-def test_step_options(tmp_path_factory):
+@pytest.fixture(scope="module")
+def tmpdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("out")
+
+
+@pytest.fixture()
+def box123():
+    return Workplane().box(1, 2, 3)
+
+
+def test_step_options(tmpdir):
     """
     Exports a box using the options to decrease STEP file size and
     then imports that STEP to validate it.
     """
     # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
     box_path = os.path.join(tmpdir, "out.step")
 
     # Simple object to export
@@ -63,11 +73,6 @@ class TestExporters(BaseTest):
     def _box(self):
 
         return Workplane().box(1, 1, 1)
-
-    def testSTL(self):
-        self._exportBox(exporters.ExportTypes.STL, ["facet normal"])
-
-        exporters.export(self._box(), "out.stl")
 
     def testSVG(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
@@ -239,8 +244,53 @@ class TestExporters(BaseTest):
             exporters.export(self._box(), "out.stl", "STP")
 
 
-def test_assy_vtk_rotation(tmp_path_factory):
-    tmpdir = tmp_path_factory.mktemp("out")
+@pytest.mark.parametrize(
+    "id, opt, matchval",
+    [
+        (0, None, b"solid \n facet normal"),
+        (1, {"unknown_opt": 1}, b"solid \n facet normal"),
+        (2, {"unknown_opt": 1, "ascii": True}, b"solid \n facet normal"),
+        (3, {"ascii": True}, b"solid \n facet normal"),
+        (4, {"ascii": False}, b"STL Exported by OpenCASCADE"),
+        (5, {"ASCII": False}, b"STL Exported by OpenCASCADE"),
+        (6, {"ASCII": False, "ascii": True}, b"STL Exported by OpenCASCADE"),
+        (7, {"unknown_opt": 1, "ascii": False}, b"STL Exported by OpenCASCADE"),
+    ],
+)
+def test_stl(tmpdir, box123, id, opt, matchval):
+    """
+    :param tmpdir: temporary directory fixutre 
+    :param box123: box fixture
+    :param id: The index or id; output filename is <test name>_<id>.stl
+    :param opt: The export opt dict
+    :param matchval: Check that the file starts with the specified value
+    """
+
+    fpath = tmpdir.joinpath(f"stl_{id}.stl").resolve()
+    assert not fpath.exists()
+
+    # matchval must be specified
+    assert matchval
+
+    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
+    with open(fpath, "rb") as f:
+        r = f.read(len(matchval))
+        assert r == matchval
+
+
+def test_stl_simple(tmpdir, box123):
+
+    fpath = tmpdir.joinpath("stl_simple.stl").resolve()
+    assert not fpath.exists()
+
+    matchval = b"solid \n facet normal"
+    exporters.export(box123, str(fpath))
+    with open(fpath, "rb") as f:
+        r = f.read(len(matchval))
+        assert r == matchval
+
+
+def test_assy_vtk_rotation(tmpdir):
 
     v0 = Vertex.makeVertex(1, 0, 0)
 
