@@ -24,7 +24,7 @@ import cadquery
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-# sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("./ext"))
 
 
 # -- General configuration -----------------------------------------------------
@@ -40,6 +40,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "cadquery.cq_directive",
     "sphinx.ext.mathjax",
+    "sphinx_autodoc_multimethod",
 ]
 
 autodoc_typehints = "both"
