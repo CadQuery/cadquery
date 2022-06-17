@@ -10,7 +10,7 @@ MANIFEST
 out.*
 res?.dxf
 .~*
-*.swp
+.*.swp
 assy.wrl
 assy.xml
 assy.zip
