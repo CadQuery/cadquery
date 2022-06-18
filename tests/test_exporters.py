@@ -74,6 +74,10 @@ class TestExporters(BaseTest):
 
         return Workplane().box(1, 1, 1)
 
+    def testSTL(self):
+        # New STL tests have been added; Keep this to test deprecated exportShape
+        self._exportBox(exporters.ExportTypes.STL, ["facet normal"])
+
     def testSVG(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
@@ -244,22 +248,68 @@ class TestExporters(BaseTest):
             exporters.export(self._box(), "out.stl", "STP")
 
 
+def test_stl_simple(tmpdir, box123):
+
+    fpath = tmpdir.joinpath("stl_simple.stl").resolve()
+    assert not fpath.exists()
+
+    matchval = "facet normal"
+    foundmatch = False
+    exporters.export(box123, str(fpath))
+
+    with open(fpath, "r") as f:
+        for line in f:
+            if line.find(matchval) > -1:
+                foundmatch = True
+                break
+
+    assert foundmatch
+
+
+@pytest.mark.parametrize(
+    "id, opt, matchvals",
+    [
+        (0, None, ["solid", "facet normal"]),
+        (1, {"unknown_opt": 1}, ["solid", "facet normal"]),
+        (2, {"unknown_opt": 1, "ascii": True}, ["solid", "facet normal"]),
+        (3, {"ascii": True}, ["solid", "facet normal"]),
+    ],
+)
+def test_stl_ascii(tmpdir, box123, id, opt, matchvals):
+    """
+    :param tmpdir: temporary directory fixture
+    :param box123: box fixture
+    :param id: The index or id; output filename is <test name>_<id>.stl
+    :param opt: The export opt dict
+    :param matchval: List of strings to match at start of file
+    """
+
+    fpath = tmpdir.joinpath(f"stl_ascii_{id}.stl").resolve()
+    assert not fpath.exists()
+
+    assert matchvals
+
+    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
+
+    with open(fpath, "r") as f:
+        for i, line in enumerate(f):
+            if i > len(matchvals) - 1:
+                break
+            assert line.find(matchvals[i]) > -1
+
+
 @pytest.mark.parametrize(
     "id, opt, matchval",
     [
-        (0, None, b"solid \n facet normal"),
-        (1, {"unknown_opt": 1}, b"solid \n facet normal"),
-        (2, {"unknown_opt": 1, "ascii": True}, b"solid \n facet normal"),
-        (3, {"ascii": True}, b"solid \n facet normal"),
-        (4, {"ascii": False}, b"STL Exported by OpenCASCADE"),
-        (5, {"ASCII": False}, b"STL Exported by OpenCASCADE"),
-        (6, {"ASCII": False, "ascii": True}, b"STL Exported by OpenCASCADE"),
-        (7, {"unknown_opt": 1, "ascii": False}, b"STL Exported by OpenCASCADE"),
+        (0, {"ascii": False}, b"STL Exported by OpenCASCADE"),
+        (1, {"ASCII": False}, b"STL Exported by OpenCASCADE"),
+        (2, {"ASCII": False, "ascii": True}, b"STL Exported by OpenCASCADE"),
+        (3, {"unknown_opt": 1, "ascii": False}, b"STL Exported by OpenCASCADE"),
     ],
 )
-def test_stl(tmpdir, box123, id, opt, matchval):
+def test_stl_binary(tmpdir, box123, id, opt, matchval):
     """
-    :param tmpdir: temporary directory fixutre 
+    :param tmpdir: temporary directory fixture
     :param box123: box fixture
     :param id: The index or id; output filename is <test name>_<id>.stl
     :param opt: The export opt dict
@@ -269,22 +319,10 @@ def test_stl(tmpdir, box123, id, opt, matchval):
     fpath = tmpdir.joinpath(f"stl_{id}.stl").resolve()
     assert not fpath.exists()
 
-    # matchval must be specified
     assert matchval
 
     exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
-    with open(fpath, "rb") as f:
-        r = f.read(len(matchval))
-        assert r == matchval
 
-
-def test_stl_simple(tmpdir, box123):
-
-    fpath = tmpdir.joinpath("stl_simple.stl").resolve()
-    assert not fpath.exists()
-
-    matchval = b"solid \n facet normal"
-    exporters.export(box123, str(fpath))
     with open(fpath, "rb") as f:
         r = f.read(len(matchval))
         assert r == matchval
