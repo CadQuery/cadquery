@@ -3762,7 +3762,9 @@ class Workplane(object):
         maxSegments: int = 9,
     ) -> T:
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very resources intensive depending on the complexity of the shape. In this case set combine=False.
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going
+        through 'surf_pts' points.  Using pushPoints directly with interpPlate and combine=True, can be 
+        very resources intensive depending on the complexity of the shape. In this case set combine=False.
 
         :param surf_edges
         :type 1 surf_edges: list of [x,y,z] float ordered coordinates
