@@ -438,7 +438,7 @@ class Shape(object):
 
         :param fileName: The path and file name to write the STL output to.
         :type fileName: fileName
-        :param tolerance: A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
+        :param tolerance: A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.001, which is good starting point for a range of cases.
         :type tolerance: float
         :param angularTolerance: - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
         :type angularTolerance: float
