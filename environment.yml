@@ -29,4 +29,4 @@ dependencies:
     - "--install-option=\"--no-deps\""
     - "--editable=."
     - sphinxcadquery
-    - multimethod
+    - multimethod>=1.7,<2.0
