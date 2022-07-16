@@ -166,7 +166,7 @@ For example, this::
 Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a rectangular face, and the ``circle()`` method
 iterates on each member of the stack.
 
-This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.cq.Workplane.each` is useful for this purpose.
+This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.Workplane.each` is useful for this purpose.
 
 CadQuery API layers
 ---------------------------
@@ -248,7 +248,7 @@ For example we can create a circular face like so ::
   The topological class inherits :class:`~cadquery.Mixin3D` or :class:`~cadquery.Mixin1D` which provide aditional methods that are shared between the classes that inherits them.
 
 The direct API as its name suggests doesn't provide a parent/children data structure, instead each method call directly returns an object of the specified topological type.
-It is more verbose than the fluent API and more tedious to work with, but as it offer more flexibility (you can work with faces, which is something you can't do in the fluent API)
+It is more verbose than the fluent API and more tedious to work with, but as it offers more flexibility (you can work with faces, which is something you can't do in the fluent API)
 it is sometimes more convenient than the fluent API.
 
 The OCCT API
@@ -283,6 +283,8 @@ Below is presented the different ways you can interact with the different API la
 -------------------------
 Fluent API <=> Direct API
 -------------------------
+
+.. currentmodule:: cadquery
 
 Here are all the possibilities you have to get an object from the Direct API (i.e a topological object).
 

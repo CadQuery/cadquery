@@ -16,13 +16,15 @@ requirements:
   run:
     - python {{ environ.get('PYTHON_VERSION') }}
     - ocp 7.5.3
+    - vtk =9.0.1
     - pyparsing >=2.1.9
     - ezdxf
     - ipython
     - typing_extensions
-    - nptyping >=2.0.0
+    - nptyping 2.0.1
     - nlopt
-    - multimethod 1.6
+    - multimethod >=1.7,<2.0
+    - casadi
 
 test:
   requires:

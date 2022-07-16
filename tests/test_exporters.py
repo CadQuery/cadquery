@@ -2,8 +2,10 @@
     Tests basic workplane functionality
 """
 # core modules
-import sys
+import os
 import io
+from pathlib import Path
+import re
 
 # my modules
 from cadquery import *
@@ -11,6 +13,27 @@ from cadquery import exporters, importers
 from tests import BaseTest
 from OCP.GeomConvert import GeomConvert
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+
+
+def test_step_options(tmp_path_factory):
+    """
+    Exports a box using the options to decrease STEP file size and
+    then imports that STEP to validate it.
+    """
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    box_path = os.path.join(tmpdir, "out.step")
+
+    # Simple object to export
+    box = Workplane().box(1, 1, 1)
+
+    # Export the STEP with the size-saving options and then import it back in
+    box.val().exportStep(box_path, write_pcurves=False, precision_mode=0)
+    w = importers.importStep(box_path)
+
+    # Make sure there was a valid box in the exported file
+    assert w.solids().size() == 1
+    assert w.faces().size() == 6
 
 
 class TestExporters(BaseTest):
@@ -214,3 +237,29 @@ class TestExporters(BaseTest):
 
         with self.assertRaises(ValueError):
             exporters.export(self._box(), "out.stl", "STP")
+
+
+def test_assy_vtk_rotation(tmp_path_factory):
+    tmpdir = tmp_path_factory.mktemp("out")
+
+    v0 = Vertex.makeVertex(1, 0, 0)
+
+    assy = Assembly()
+    assy.add(
+        v0, name="v0", loc=Location(Vector(0, 0, 0), Vector(1, 0, 0), 90),
+    )
+
+    fwrl = Path(tmpdir, "v0.wrl")
+    assert not fwrl.exists()
+    assy.save(str(fwrl), "VRML")
+    assert fwrl.exists()
+
+    matched_rot = False
+    with open(fwrl) as f:
+        pat_rot = re.compile("""rotation 1 0 0 1.5707963267""")
+        for line in f:
+            if m := re.search(pat_rot, line):
+                matched_rot = True
+                break
+
+    assert matched_rot

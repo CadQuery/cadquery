@@ -452,7 +452,7 @@ class Workplane(object):
         then it is added.
 
         Used in rare cases when you need to combine the results of several CQ
-        results into a single Workplane object. Shelling is one common example.
+        results into a single Workplane object.
         """
         if isinstance(obj, list):
             self.objects.extend(obj)
@@ -1221,9 +1221,9 @@ class Workplane(object):
 
         To shell, first create a solid, and *in the same chain* select the faces you wish to remove.
 
-        :param thickness: a positive float, representing the thickness of the desired shell.
+        :param thickness: thickness of the desired shell.
             Negative values shell inwards, positive values shell outwards.
-        :param kind: kind of joints, intersection or arc (default: arc).
+        :param kind: kind of join, arc or intersection (default: arc).
         :raises ValueError: if the current stack contains objects that are not faces of a solid
              further up in the chain.
         :returns: a CQ object with the resulting shelled solid selected.
@@ -1231,26 +1231,16 @@ class Workplane(object):
         This example will create a hollowed out unit cube, where the top most face is open,
         and all other walls are 0.2 units thick::
 
-            Workplane().box(1,1,1).faces("+Z").shell(0.2)
+            Workplane().box(1, 1, 1).faces("+Z").shell(0.2)
 
-        Shelling is one of the cases where you may need to use the add method to select several
-        faces. For example, this example creates a 3-walled corner, by removing three faces
-        of a cube::
+        You can also select multiple faces at once. Here is an example that creates a three-walled
+        corner, by removing three faces of a cube::
 
-            s = Workplane().box(1,1,1)
-            s1 = s.faces("+Z")
-            s1.add(s.faces("+Y")).add(s.faces("+X"))
-            self.saveModel(s1.shell(0.2))
-
-        This fairly yucky syntax for selecting multiple faces is planned for improvement
+            Workplane().box(10, 10, 10).faces(">Z or >X or <Y").shell(1)
 
         **Note**:  When sharp edges are shelled inwards, they remain sharp corners, but **outward**
-        shells are automatically filleted, because an outward offset from a corner generates
-        a radius.
-
-
-        Future Enhancements:
-            Better selectors to make it easier to select multiple faces
+        shells are automatically filleted (unless kind="intersection"), because an outward offset
+        from a corner generates a radius.
         """
         solidRef = self.findSolid()
 
@@ -2794,6 +2784,7 @@ class Workplane(object):
 
         return self.newObject([s])
 
+    # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer won't work
     def cboreHole(
         self: T,
@@ -2821,9 +2812,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().cboreHole(0.125, 0.25,0.125,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .cboreHole(0.125, 0.25, 0.125, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 
@@ -2876,9 +2873,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().cskHole(0.125, 0.25,82,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .cskHole(0.125, 0.25, 82, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 
@@ -2924,9 +2927,15 @@ class Workplane(object):
         One hole is created for each item on the stack.  A very common use case is to use a
         construction rectangle to define the centers of a set of holes, like so::
 
-                s = Workplane(Plane.XY()).box(2,4,0.5).faces(">Z").workplane()\
-                    .rect(1.5,3.5,forConstruction=True)\
-                    .vertices().hole(0.125, 0.25,82,depth=None)
+            s = (
+                Workplane()
+                .box(2, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(1.5, 3.5, forConstruction=True)
+                .vertices()
+                .hole(0.125, 0.25, 82, depth=None)
+            )
 
         This sample creates a plate with a set of holes at the corners.
 
@@ -3736,10 +3745,12 @@ class Workplane(object):
 
     def interpPlate(
         self: T,
-        surf_edges: Union[Sequence[VectorLike], Sequence[Edge]],
+        surf_edges: Union[
+            Sequence[VectorLike], Sequence[Union[Edge, Wire]], "Workplane"
+        ],
         surf_pts: Sequence[VectorLike] = [],
         thickness: float = 0,
-        combine: bool = False,
+        combine: CombineMode = False,
         clean: bool = True,
         degree: int = 3,
         nbPtsOnCur: int = 15,
@@ -3753,7 +3764,9 @@ class Workplane(object):
         maxSegments: int = 9,
     ) -> T:
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.  Using pushpoints directly with interpPlate and combine=True, can be very resources intensive depending on the complexity of the shape. In this case set combine=False.
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going
+        through 'surf_pts' points.  Using pushPoints directly with interpPlate and combine=True, can be 
+        very resources intensive depending on the complexity of the shape. In this case set combine=False.
 
         :param surf_edges
         :type 1 surf_edges: list of [x,y,z] float ordered coordinates
@@ -3788,34 +3801,39 @@ class Workplane(object):
         :type MaxSegments: Integer >= 2 (?)
         """
 
-        # If thickness is 0, only a 2D surface will be returned.
-        if thickness == 0:
-            combine = False
+        # convert points to edges if needed
+        edges: List[Union[Edge, Wire]] = []
+        points = []
+
+        if isinstance(surf_edges, Workplane):
+            edges.extend(cast(Edge, el) for el in surf_edges.edges().objects)
+        else:
+            for el in surf_edges:
+                if isinstance(el, (Edge, Wire)):
+                    edges.append(el)
+                else:
+                    points.append(el)
 
         # Creates interpolated plate
-        p = Solid.interpPlate(
-            surf_edges,
+        f: Face = Face.makeNSidedSurface(
+            edges if not points else [Wire.makePolygon(points).close()],
             surf_pts,
-            thickness,
-            degree,
-            nbPtsOnCur,
-            nbIter,
-            anisotropy,
-            tol2d,
-            tol3d,
-            tolAng,
-            tolCurv,
-            maxDeg,
-            maxSegments,
+            degree=degree,
+            nbPtsOnCur=nbPtsOnCur,
+            nbIter=nbIter,
+            anisotropy=anisotropy,
+            tol2d=tol2d,
+            tol3d=tol3d,
+            tolAng=tolAng,
+            tolCurv=tolCurv,
+            maxDeg=maxDeg,
+            maxSegments=maxSegments,
         )
 
-        plates = self.eachpoint(lambda loc: p.moved(loc), True)
+        # thicken if needed
+        s = f.thicken(thickness) if thickness > 0 else f
 
-        # if combination is not desired, just return the created boxes
-        if not combine:
-            return plates
-        else:
-            return self.union(plates, clean=clean)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
 
     def box(
         self: T,
@@ -3823,7 +3841,7 @@ class Workplane(object):
         width: float,
         height: float,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
-        combine: bool = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -3885,14 +3903,7 @@ class Workplane(object):
 
         box = Solid.makeBox(length, width, height, offset)
 
-        boxes = self.eachpoint(lambda loc: box.moved(loc), True)
-
-        # if combination is not desired, just return the created boxes
-        if not combine:
-            return boxes
-        else:
-            # combine everything
-            return self.union(boxes, clean=clean)
+        return self.eachpoint(lambda loc: box.moved(loc), True, combine)
 
     def sphere(
         self: T,
@@ -3902,7 +3913,7 @@ class Workplane(object):
         angle2: float = 90,
         angle3: float = 360,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
-        combine: bool = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -3956,13 +3967,7 @@ class Workplane(object):
         s = Solid.makeSphere(radius, offset, direct, angle1, angle2, angle3)
 
         # We want a sphere for each point on the workplane
-        spheres = self.eachpoint(lambda loc: s.moved(loc), True)
-
-        # If we don't need to combine everything, just return the created spheres
-        if not combine:
-            return spheres
-        else:
-            return self.union(spheres, clean=clean)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
 
     def cylinder(
         self: T,
@@ -3971,7 +3976,7 @@ class Workplane(object):
         direct: Vector = Vector(0, 0, 1),
         angle: float = 360,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
-        combine: bool = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -4019,13 +4024,7 @@ class Workplane(object):
         s = Solid.makeCylinder(radius, height, offset, direct, angle)
 
         # We want a cylinder for each point on the workplane
-        cylinders = self.eachpoint(lambda loc: s.moved(loc), True)
-
-        # If we don't need to combine everything, just return the created cylinders
-        if not combine:
-            return cylinders
-        else:
-            return self.union(cylinders, clean=clean)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
 
     def wedge(
         self: T,
@@ -4039,7 +4038,7 @@ class Workplane(object):
         pnt: VectorLike = Vector(0, 0, 0),
         dir: VectorLike = Vector(0, 0, 1),
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
-        combine: bool = True,
+        combine: CombineMode = True,
         clean: bool = True,
     ) -> T:
         """
@@ -4095,13 +4094,7 @@ class Workplane(object):
         w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, offset, dir)
 
         # We want a wedge for each point on the workplane
-        wedges = self.eachpoint(lambda loc: w.moved(loc), True)
-
-        # If we don't need to combine everything, just return the created wedges
-        if not combine:
-            return wedges
-        else:
-            return self.union(wedges, clean=clean)
+        return self.eachpoint(lambda loc: w.moved(loc), True, combine)
 
     def clean(self: T) -> T:
         """

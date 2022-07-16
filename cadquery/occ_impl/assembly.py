@@ -1,5 +1,6 @@
 from typing import Iterable, Tuple, Dict, overload, Optional, Any, List
 from typing_extensions import Protocol
+from math import degrees
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
@@ -179,6 +180,7 @@ def toVTK(
     loc: Location = Location(),
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
+    angularTolerance: float = 0.1,
 ) -> vtkRenderer:
 
     loc = loc * assy.loc
@@ -188,7 +190,9 @@ def toVTK(
         color = assy.color.toTuple()
 
     if assy.shapes:
-        data = Compound.makeCompound(assy.shapes).toVtkPolyData(tolerance)
+        data = Compound.makeCompound(assy.shapes).toVtkPolyData(
+            tolerance, angularTolerance
+        )
 
         mapper = vtkMapper()
         mapper.SetInputData(data)
@@ -196,14 +200,14 @@ def toVTK(
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
-        actor.SetOrientation(*rot)
+        actor.SetOrientation(*map(degrees, rot))
         actor.GetProperty().SetColor(*color[:3])
         actor.GetProperty().SetOpacity(color[3])
 
         renderer.AddActor(actor)
 
     for child in assy.children:
-        renderer = toVTK(child, renderer, loc, color, tolerance)
+        renderer = toVTK(child, renderer, loc, color, tolerance, angularTolerance)
 
     return renderer
 

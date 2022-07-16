@@ -1,8 +1,8 @@
 import pytest
 import os
 from itertools import product
+from math import degrees
 
-import nlopt
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
     exportAssembly,
@@ -84,6 +84,7 @@ def box_and_vertex():
     assy = cq.Assembly(box_wp, name="box")
     vertex_wp = cq.Workplane().newObject([cq.Vertex.makeVertex(0, 0, 0)])
     assy.add(vertex_wp, name="vertex")
+
     return assy
 
 
@@ -103,6 +104,7 @@ def metadata_assy():
         b2, loc=cq.Location(cq.Vector(1, 1, 1)), name="sub", metadata={"b2": "sub-data"}
     )
     assy.add(sub_assy)
+
     return assy
 
 
@@ -131,9 +133,8 @@ def test_metadata(metadata_assy):
 
 def solve_result_check(solve_result: dict) -> bool:
     checks = [
-        solve_result["status"] == nlopt.XTOL_REACHED,
-        solve_result["cost"] < 1e-9,
-        solve_result["iters"] > 0,
+        solve_result["success"] == True,
+        solve_result["iterations"]["inf_pr"][-1] < 1e-9,
     ]
     return all(checks)
 
@@ -178,17 +179,29 @@ def test_assembly(simple_assy, nested_assy):
     assert kvs[-1][0] == "TOP"
 
 
-def test_step_export(nested_assy):
+def test_step_export(nested_assy, tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    nested_path = os.path.join(tmpdir, "nested.step")
+    nested_options_path = os.path.join(tmpdir, "nested_options.step")
 
-    exportAssembly(nested_assy, "nested.step")
+    exportAssembly(nested_assy, nested_path)
+    exportAssembly(
+        nested_assy, nested_options_path, write_pcurves=False, precision_mode=0
+    )
 
-    w = cq.importers.importStep("nested.step")
+    w = cq.importers.importStep(nested_path)
+    o = cq.importers.importStep(nested_options_path)
     assert w.solids().size() == 4
+    assert o.solids().size() == 4
 
     # check that locations were applied correctly
     c = cq.Compound.makeCompound(w.solids().vals()).Center()
     c.toTuple()
     assert pytest.approx(c.toTuple()) == (0, 4, 0)
+    c2 = cq.Compound.makeCompound(o.solids().vals()).Center()
+    c2.toTuple()
+    assert pytest.approx(c2.toTuple()) == (0, 4, 0)
 
 
 def test_native_export(simple_assy):
@@ -641,13 +654,20 @@ def test_fixed_rotation(simple_assy2):
     assert w.solids("<Z").edges(">Z").size() == 1
 
 
-def test_validation(simple_assy2):
+def test_constraint_validation(simple_assy2):
 
     with pytest.raises(ValueError):
         simple_assy2.constrain("b1", "Fixed?")
 
     with pytest.raises(ValueError):
         cq.assembly.Constraint((), (), (), "Fixed?")
+
+
+def test_single_unary_constraint(simple_assy2):
+
+    with pytest.raises(ValueError):
+        simple_assy2.constrain("b1", "FixedRotation", (45, 0, 45))
+        simple_assy2.solve()
 
 
 def test_point_on_line(simple_assy2):
@@ -667,3 +687,30 @@ def test_point_on_line(simple_assy2):
     assert w.solids(">Z").val().Center().z == pytest.approx(0.5)
     assert w.solids(">Z").val().Center().y == pytest.approx(0.5)
     assert w.solids(">Z").val().Center().x == pytest.approx(0.0)
+
+
+def test_axis_constraint(simple_assy2):
+
+    assy = simple_assy2
+
+    assy.constrain("b1@faces@>Z", "b2@faces@>Z", "Axis", 0)
+    assy.constrain("b1@faces@>X", "b2@faces@>X", "Axis", 45)
+
+    assy.solve()
+
+    q2 = assy.children[1].loc.wrapped.Transformation().GetRotation()
+
+    assert degrees(q2.GetRotationAngle()) == pytest.approx(45)
+
+
+def test_point_constraint(simple_assy2):
+
+    assy = simple_assy2
+
+    assy.constrain("b1", "b2", "Point", 1)
+
+    assy.solve()
+
+    t2 = assy.children[1].loc.wrapped.Transformation().TranslationPart()
+
+    assert t2.Modulus() == pytest.approx(1)

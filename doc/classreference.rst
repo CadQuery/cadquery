@@ -95,3 +95,7 @@ Class Details
 .. automodule:: cadquery.selectors
    :show-inheritance: 
    :members:
+
+.. automodule:: cadquery.occ_impl.exporters.assembly
+   :show-inheritance:
+   :members:

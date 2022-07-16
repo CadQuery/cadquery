@@ -4,7 +4,7 @@
 CadQuery QuickStart
 ***********************
 
-.. module:: cadquery
+.. currentmodule:: cadquery
 
 Want a quick glimpse of what CadQuery can do?  This quickstart will demonstrate the basics of CadQuery using a simple example
 
