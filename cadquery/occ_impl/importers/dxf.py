@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from math import pi
-from typing import List, Optional
+from typing import List
 
 from ... import cq
 from ..geom import Vector
@@ -164,31 +164,35 @@ def _importDXF(
     Loads a DXF file into a list of faces.
 
     :param fileName: The path and name of the DXF file to be imported
-    :param tol: The tolerance used for merging edges into wires (default: 1e-6)
-    :param exclude: a list of layer names not to import (default: [])
-    :param include: a list of layer names to import (default: [])
+    :param tol: The tolerance used for merging edges into wires
+    :param exclude: a list of layer names not to import
+    :param include: a list of layer names to import
     """
 
     if exclude and include:
-        raise ValueError(
-            "Using the include and exclude kwargs at the same time is not allowed."
-        )
-
-    # normalize layer names to conform the DXF spec
-    exclude_lwr = [ex.lower() for ex in exclude]
-    include_lwr = [inc.lower() for inc in include]
+        raise ValueError("you may specify either 'include' or 'exclude' but not both")
 
     dxf = ezdxf.readfile(filename)
     faces = []
 
-    for name, layer in dxf.modelspace().groupby(dxfattrib="layer").items():
-        if include:
-            # operating in include mode
-            res = _dxf_convert(layer, tol) if name.lower() in include_lwr else None
-        else:
-            # operating in exclude mode
-            res = _dxf_convert(layer, tol) if name.lower() not in exclude_lwr else None
-        if res:
+    layers = dxf.modelspace().groupby(dxfattrib="layer")
+
+    # normalize layer names to conform the DXF spec
+    names = set([name.lower() for name in layers.keys()])
+
+    if include:
+        selected = names & set([name.lower() for name in include])
+    elif exclude:
+        selected = names - set([name.lower() for name in exclude])
+    else:
+        selected = names
+
+    if not selected:
+        raise ValueError("no DXF layers selected")
+
+    for name, layer in layers.items():
+        if name.lower() in selected:
+            res = _dxf_convert(layers[name], tol)
             wire_sets = sortWiresByBuildOrder(res)
             for wire_set in wire_sets:
                 faces.append(Face.makeFromWires(wire_set[0], wire_set[1:]))
