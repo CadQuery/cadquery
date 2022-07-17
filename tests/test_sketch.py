@@ -717,3 +717,11 @@ def test_dxf_import():
     s3 = Sketch().circle(20).importDXF(filename, tol=1e-3, mode="s")
 
     assert s3._faces.isValid()
+
+    s4 = Sketch().importDXF(filename, tol=1e-3, include=["0"])
+
+    assert s4._faces.isValid()
+
+    s5 = Sketch().importDXF(filename, tol=1e-3, exclude=["1"])
+
+    assert s5._faces.isValid()

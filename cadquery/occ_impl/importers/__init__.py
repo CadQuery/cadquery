@@ -67,15 +67,19 @@ def importStep(fileName):
     return cq.Workplane("XY").newObject(solids)
 
 
-def importDXF(filename, tol=1e-6, exclude=[]):
+def importDXF(filename, tol=1e-6, exclude=[], include=[]):
     """
-    Loads a DXF file into a cadquery Workplane.
+    Loads a DXF file into a Workplane.
+
+    All layers are imported by default.  Provide a layer include or exclude list
+     to select layers.  Layer names are handled as case-insensitive.
 
     :param fileName: The path and name of the DXF file to be imported
-    :param tol: The tolerance used for merging edges into wires (default: 1e-6)
-    :param exclude: a list of layer names not to import (default: [])
+    :param tol: The tolerance used for merging edges into wires
+    :param exclude: a list of layer names not to import
+    :param include: a list of layer names to import
     """
 
-    faces = _importDXF(filename, tol, exclude)
+    faces = _importDXF(filename, tol, exclude, include)
 
     return cq.Workplane("XY").newObject(faces)
