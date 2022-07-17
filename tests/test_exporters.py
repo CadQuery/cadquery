@@ -91,6 +91,7 @@ class TestExporters(BaseTest):
                 "strokeColor": (255, 0, 0),
                 "hiddenColor": (0, 0, 255),
                 "showHidden": True,
+                "focus": 4,
             },
         )
 

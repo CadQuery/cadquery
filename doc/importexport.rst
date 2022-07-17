@@ -93,6 +93,7 @@ options are as follows.
 * *strokeColor* - Color of the line that visible edges are drawn with.
 * *hiddenColor* - Color of the line that hidden edges are drawn with.
 * *showHidden* - Whether or not to show hidden lines.
+* *focus* - If specified, creates a perspective SVG with the projector at the distance specified.
 
 The options are passed to the exporter in a dictionary, and can be left out to force the SVG to be created with default options. 
 Below are examples with and without options set.
@@ -144,6 +145,37 @@ The following is an example of using options to alter the resulting SVG output b
 Which results in the following image:
 
 ..  image:: _static/importexport/box_custom_options.svg
+
+The following is an example of using the above options but making it a perspective SVG.
+
+.. code-block:: python
+
+    import cadquery as cq
+    from cadquery import exporters
+
+    result = cq.Workplane().box(10, 10, 10)
+
+    exporters.export(
+                result,
+                '/path/to/file/box_custom_options.svg',
+                opt={
+                    "width": 300,
+                    "height": 300,
+                    "marginLeft": 10,
+                    "marginTop": 10,
+                    "showAxes": False,
+                    "projectionDir": (0.5, 0.5, 0.5),
+                    "strokeWidth": 0.25,
+                    "strokeColor": (255, 0, 0),
+                    "hiddenColor": (0, 0, 255),
+                    "showHidden": True,
+                    "focus": 25
+                },
+            )
+
+Which results in the following image:
+
+.. image:: _static/importexport/box_custom_options_perspective.svg
 
 Exporting STL
 ##############

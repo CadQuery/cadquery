@@ -144,6 +144,8 @@ def getSVG(shape, opts=None):
         strokeColor: Color of the line that visible edges are drawn with.
         hiddenColor: Color of the line that hidden edges are drawn with.
         showHidden: Whether or not to show hidden lines.
+        focus: If specified, creates a perspective SVG with the projector
+               at the distance specified.
     """
 
     # Available options and their defaults
@@ -158,6 +160,7 @@ def getSVG(shape, opts=None):
         "strokeColor": (0, 0, 0),  # RGB 0-255
         "hiddenColor": (160, 160, 160),  # RGB 0-255
         "showHidden": True,
+        "focus": None,
     }
 
     if opts:
@@ -176,11 +179,19 @@ def getSVG(shape, opts=None):
     strokeColor = tuple(d["strokeColor"])
     hiddenColor = tuple(d["hiddenColor"])
     showHidden = bool(d["showHidden"])
+    focus = None
+    if d["focus"] is not None:
+        focus = float(d["focus"])
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
 
-    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir)))
+    coordinateSystem = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
+
+    if focus is not None:
+        projector = HLRAlgo_Projector(coordinateSystem, focus)
+    else:
+        projector = HLRAlgo_Projector(coordinateSystem)
 
     hlr.Projector(projector)
     hlr.Update()
