@@ -594,6 +594,12 @@ class TestCadObjects(BaseTest):
 
     def testLocation(self):
 
+        # Tuple
+        loc0 = Location((0, 0, 1))
+
+        T = loc0.wrapped.Transformation().TranslationPart()
+        self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 1), 6)
+
         # Vector
         loc1 = Location(Vector(0, 0, 1))
 
@@ -621,9 +627,34 @@ class TestCadObjects(BaseTest):
         self.assertTupleAlmostEquals(loc4.toTuple()[0], (0, 0, 0), 7)
         self.assertTupleAlmostEquals(loc4.toTuple()[1], (0, 0, 0), 7)
 
+        # Test composition
+        loc4 = Location((0, 0, 0), Vector(0, 0, 1), 15)
+
+        loc5 = loc1 * loc4
+        loc6 = loc4 * loc4
+        loc7 = loc4 ** 2
+
+        T = loc5.wrapped.Transformation().TranslationPart()
+        self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 1), 6)
+
+        angle5 = (
+            loc5.wrapped.Transformation().GetRotation().GetRotationAngle() * RAD2DEG
+        )
+        self.assertAlmostEqual(15, angle5)
+
+        angle6 = (
+            loc6.wrapped.Transformation().GetRotation().GetRotationAngle() * RAD2DEG
+        )
+        self.assertAlmostEqual(30, angle6)
+
+        angle7 = (
+            loc7.wrapped.Transformation().GetRotation().GetRotationAngle() * RAD2DEG
+        )
+        self.assertAlmostEqual(30, angle7)
+
         # Test error handling on creation
         with self.assertRaises(TypeError):
-            Location((0, 0, 1))
+            Location([0, 0, 1])
         with self.assertRaises(TypeError):
             Location("xy_plane")
 
