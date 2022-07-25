@@ -11,7 +11,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import sys, os, re
 import os.path
 
 # print "working path is %s" % os.getcwd()
@@ -59,8 +59,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"CadQuery"
-copyright = u"Parametric Products Intellectual Holdings LLC, All Rights Reserved"
+project = "CadQuery"
+copyright = "Parametric Products Intellectual Holdings LLC, All Rights Reserved"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -227,7 +227,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "CadQuery.tex", u"CadQuery Documentation", u"David Cowden", "manual"),
+    ("index", "CadQuery.tex", "CadQuery Documentation", "David Cowden", "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -255,7 +255,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "cadquery", u"CadQuery Documentation", [u"David Cowden"], 1)]
+man_pages = [("index", "cadquery", "CadQuery Documentation", ["David Cowden"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -270,8 +270,8 @@ texinfo_documents = [
     (
         "index",
         "CadQuery",
-        u"CadQuery Documentation",
-        u"David Cowden",
+        "CadQuery Documentation",
+        "David Cowden",
         "CadQuery",
         "A Fluent CAD api",
         "Miscellaneous",
@@ -288,6 +288,9 @@ texinfo_documents = [
 # texinfo_show_urls = 'footnote'
 
 
+patparam = re.compile(r"(\W*):\W*param.*")
+
+
 def process_docstring_insert_self(app, what, name, obj, options, lines):
     """
     Insert self in front of documented params for instance methods
@@ -295,12 +298,15 @@ def process_docstring_insert_self(app, what, name, obj, options, lines):
 
     if (
         what == "method"
+        and app.config.autodoc_typehints in ("both", "description")
+        and app.config.autodoc_typehints_description_target in ("all")
         and getattr(obj, "__self__", None) is None
         and "self" in obj.__annotations__
     ):
-        for i, dstr in enumerate(lines):
-            if dstr.startswith(":param"):
-                lines.insert(i, ":param self:")
+        for i, line in enumerate(lines):
+            if m := patparam.match(line):
+                indent = m.group(1)
+                lines.insert(i, f"{indent}:param self:")
                 break
 
 
