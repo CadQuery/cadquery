@@ -1075,13 +1075,13 @@ class Shape(object):
         """
         Computes the intersections between the provided line and the faces of this Shape
 
-        :point: Base point for defining a line
-        :axis: Axis on which the line rest
-        :tol: Intersection tolerance
-        :direction: Valid values : "AlongAxis", "Opposite", if specified will ignore all faces that are not in the specified direction
-        including the face where the :point: lies if it is the case
-
-        :returns: A list of intersected faces sorted by distance from :point:
+        :param point: Base point for defining a line
+        :param axis: Axis on which the line rest
+        :param tol: Intersection tolerance
+        :param direction: Valid values: "AlongAxis", "Opposite";
+            if specified, will ignore all faces that are not in the specified direction
+            including the face where the point lies if it is the case
+        :returns: A list of intersected faces sorted by distance from point
         """
 
         oc_point = (
@@ -1300,7 +1300,7 @@ class Vertex(Shape):
 
     def __init__(self, obj: TopoDS_Shape, forConstruction: bool = False):
         """
-        Create a vertex from a FreeCAD Vertex
+        Create a vertex
         """
         super(Vertex, self).__init__(obj)
 
@@ -1494,6 +1494,7 @@ class Mixin1D(object):
         mode: Literal["length", "parameter"] = "length",
     ) -> Vector:
         """Generate a position along the underlying curve.
+
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
         :return: A Vector on the underlying curve located at the specified d value.
@@ -1514,6 +1515,7 @@ class Mixin1D(object):
         mode: Literal["length", "parameter"] = "length",
     ) -> List[Vector]:
         """Generate positions along the underlying curve
+
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
         :return: A list of Vector objects.
@@ -1529,6 +1531,7 @@ class Mixin1D(object):
         planar: bool = False,
     ) -> Location:
         """Generate a location along the underlying curve.
+
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
@@ -1576,6 +1579,7 @@ class Mixin1D(object):
         planar: bool = False,
     ) -> List[Location]:
         """Generate location along the curve
+
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
@@ -1877,6 +1881,7 @@ class Edge(Shape, Mixin1D):
     ) -> "Edge":
         """
         Makes a three point arc through the provided points
+
         :param cls:
         :param v1: start vector
         :param v2: middle vector
@@ -1892,8 +1897,8 @@ class Edge(Shape, Mixin1D):
     @classmethod
     def makeTangentArc(cls, v1: VectorLike, v2: VectorLike, v3: VectorLike) -> "Edge":
         """
-        Makes a tangent arc from point v1, in the direction of v2 and ends at
-        v3.
+        Makes a tangent arc from point v1, in the direction of v2 and ends at v3.
+
         :param cls:
         :param v1: start vector
         :param v2: tangent vector
@@ -1910,6 +1915,7 @@ class Edge(Shape, Mixin1D):
     def makeLine(cls, v1: VectorLike, v2: VectorLike) -> "Edge":
         """
         Create a line between two points
+
         :param v1: Vector that represents the first point
         :param v2: Vector that represents the second point
         :return: A linear edge between the two provided points
@@ -2203,7 +2209,7 @@ class Face(Shape):
         """
         Computes the normal vector at the desired location on the face.
 
-        :returns: a  vector representing the direction
+        :returns: a vector representing the direction
         :param locationVector: the location to compute the normal at. If none, the center of the face is used.
         :type locationVector: a vector that lies on the surface.
         """
@@ -2261,33 +2267,23 @@ class Face(Shape):
         maxSegments: int = 9,
     ) -> "Face":
         """
-        Returns a surface enclosed by a closed polygon defined by 'edges' and going through 'points'.
-        :param constraints
-        :type points: list of constraints (points or edges)
-        :param edges
-        :type edges: list of Edge
-        :param continuity=GeomAbs_C0
-        :type continuity: OCC.Core.GeomAbs continuity condition
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
+        Returns a surface enclosed by a closed polygon defined by 'edges' and 'constraints'.
+
+        :param edges: edges
+        :type edges: list of edges or wires
+        :param constraints: constraints
+        :type constraints: list of points or edges
+        :param continuity: OCC.Core.GeomAbs continuity condition
+        :param degree: >=2
+        :param nbPtsOnCur: number of points on curve >= 15
+        :param nbIter: number of iterations >= 2
+        :param anisotropy: bool Anisotropy
+        :param tol2d: 2D tolerance >0
+        :param tol3d: 3D tolerance >0
+        :param tolAng: angular tolerance
+        :param tolCurv: tolerance for curvature >0
+        :param maxDeg: highest polynomial degree >= 2
+        :param maxSegments: greatest number of segments >= 2
         """
 
         n_sided = BRepOffsetAPI_MakeFilling(
@@ -2369,7 +2365,7 @@ class Face(Shape):
     @classmethod
     def makeRuledSurface(cls, edgeOrWire1, edgeOrWire2):
         """
-        'makeRuledSurface(Edge|Wire,Edge|Wire) -- Make a ruled surface
+        makeRuledSurface(Edge|Wire,Edge|Wire) -- Make a ruled surface
         Create a ruled surface out of two edges or wires. If wires are used then
         these must have the same number of edges
         """
@@ -2435,7 +2431,7 @@ class Face(Shape):
         :param smoothing: optional tuple of 3 weights use for variational smoothing (default: None)
         :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
         :param maxDeg: maximum spline degree (default: 6)
-        :return: an Face
+        :return: Face
         """
         points_ = TColgp_HArray2OfPnt(1, len(points), 1, len(points[0]))
 
@@ -2575,6 +2571,7 @@ class Mixin3D(object):
     def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
         """
         Fillets the specified edges of this solid.
+
         :param radius: float > 0, the radius of the fillet
         :param edgeList:  a list of Edge objects, which must belong to this solid
         :return: Filleted solid
@@ -2593,6 +2590,7 @@ class Mixin3D(object):
     ) -> Any:
         """
         Chamfers the specified edges of this solid.
+
         :param length: length > 0, the length (length) of the chamfer
         :param length2: length2 > 0, optional parameter for asymmetrical chamfer. Should be `None` if not required.
         :param edgeList:  a list of Edge objects, which must belong to this solid
@@ -2788,35 +2786,23 @@ class Solid(Shape, Mixin3D):
         maxSegments=9,
     ) -> Union["Solid", Face]:
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points, and going through 'surf_pts' points.
 
-        :param surf_edges
-        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
-        :type 2 surf_edges: list of ordered or unordered CadQuery wires
-        :param surf_pts = [] (uses only edges if [])
-        :type surf_pts: list of [x,y,z] float coordinates
-        :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float (may be negative or positive depending on thickening direction)
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
+        :param surf_edges:
+            list of [x,y,z] float ordered coordinates
+            or list of ordered or unordered wires
+        :param surf_pts: list of [x,y,z] float coordinates (uses only edges if [])
+        :param thickness: thickness may be negative or positive depending on direction, (returns 2D surface if 0)
+        :param degree: >=2
+        :param nbPtsOnCur: number of points on curve >= 15
+        :param nbIter: number of iterations >= 2
+        :param anisotropy: bool Anisotropy
+        :param tol2d: 2D tolerance >0
+        :param tol3d: 3D tolerance >0
+        :param tolAng: angular tolerance
+        :param tolCurv: tolerance for curvature >0
+        :param maxDeg: highest polynomial degree >= 2
+        :param maxSegments: greatest number of segments >= 2
         """
 
         # POINTS CONSTRAINTS: list of (x,y,z) points, optional.
@@ -2895,7 +2881,7 @@ class Solid(Shape, Mixin3D):
     ) -> "Solid":
         """
         makeBox(length,width,height,[pnt,dir]) -- Make a box located in pnt with the dimensions (length,width,height)
-        By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)'
+        By default pnt=Vector(0,0,0) and dir=Vector(0,0,1)
         """
         return cls(
             BRepPrimAPI_MakeBox(
@@ -2916,7 +2902,7 @@ class Solid(Shape, Mixin3D):
         """
         Make a cone with given radii and height
         By default pnt=Vector(0,0,0),
-        dir=Vector(0,0,1) and angle=360'
+        dir=Vector(0,0,1) and angle=360
         """
         return cls(
             BRepPrimAPI_MakeCone(
@@ -2940,7 +2926,7 @@ class Solid(Shape, Mixin3D):
         """
         makeCylinder(radius,height,[pnt,dir,angle]) --
         Make a cylinder with a given radius and height
-        By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360'
+        By default pnt=Vector(0,0,0),dir=Vector(0,0,1) and angle=360
         """
         return cls(
             BRepPrimAPI_MakeCylinder(
@@ -2965,7 +2951,7 @@ class Solid(Shape, Mixin3D):
         makeTorus(radius1,radius2,[pnt,dir,angle1,angle2,angle]) --
         Make a torus with a given radii and angles
         By default pnt=Vector(0,0,0),dir=Vector(0,0,1),angle1=0
-        ,angle1=360 and angle=360'
+        ,angle1=360 and angle=360
         """
         return cls(
             BRepPrimAPI_MakeTorus(
@@ -3081,18 +3067,19 @@ class Solid(Shape, Mixin3D):
         construction methods used here are different enough that they should be separate.
 
         At a high level, the steps followed are:
+
         (1) accept a set of wires
         (2) create another set of wires like this one, but which are transformed and rotated
         (3) create a ruledSurface between the sets of wires
         (4) create a shell and compute the resulting object
 
-        :param outerWire: the outermost wire, a cad.Wire
-        :param innerWires: a list of inner wires, a list of cad.Wire
+        :param outerWire: the outermost wire
+        :param innerWires: a list of inner wires
         :param vecCenter: the center point about which to rotate.  the axis of rotation is defined by
-               vecNormal, located at vecCenter. ( a cad.Vector )
-        :param vecNormal: a vector along which to extrude the wires ( a cad.Vector )
+            vecNormal, located at vecCenter.
+        :param vecNormal: a vector along which to extrude the wires
         :param angleDegrees: the angle to rotate through while extruding
-        :return: a cad.Solid object
+        :return: a Solid object
         """
         # make straight spine
         straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
@@ -3145,7 +3132,7 @@ class Solid(Shape, Mixin3D):
         taper: Real = 0,
     ) -> "Solid":
         """
-        Attempt to extrude the list of wires  into a prismatic solid in the provided direction
+        Attempt to extrude the list of wires into a prismatic solid in the provided direction
 
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
@@ -3294,14 +3281,14 @@ class Solid(Shape, Mixin3D):
         transitionMode: Literal["transformed", "round", "right"] = "transformed",
     ) -> "Shape":
         """
-        Attempt to sweep the list of wires  into a prismatic solid along the provided path
+        Attempt to sweep the list of wires into a prismatic solid along the provided path
 
         :param outerWire: the outermost wire
         :param innerWires: a list of inner wires
         :param path: The wire to sweep the face resulting from the wires over
-        :param boolean makeSolid: return Solid or Shell (default True)
-        :param boolean isFrenet: Frenet mode (default False)
-        :param mode: additional sweep mode parameters.
+        :param makeSolid: return Solid or Shell (default True)
+        :param isFrenet: Frenet mode (default False)
+        :param mode: additional sweep mode parameters
         :param transitionMode:
             handling of profile orientation at C1 path discontinuities.
             Possible values are {'transformed','round', 'right'} (default: 'right').
