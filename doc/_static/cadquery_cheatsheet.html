@@ -1,11 +1,22 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html>
+<html lang="en">
   <head>
     <title>CadQuery Cheatsheet</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style type="text/css">
+    body {
+      margin: 0;
+      text-align: center;
+    }
+    #header {
+      background-color: #ddd; padding: 2px;
+      margin-bottom: 10px;
+    }
+    #section-container {
+      display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-around; row-gap: 10px;
+    }
     .section {
       margin: 0.5em;
       padding: 0px 0.5em 0.5em;
@@ -16,14 +27,13 @@
     .section-subtitle {
       margin-bottom: 4px;
     }
-    h2 a, h2 a:visited, .section a,.section a:visited {
+    a, a:visited {
       color: #1f4b8f;
       font-weight: bold;
       text-decoration: none;
-
     }
-    .column {
-      float: left;
+    table {
+      width: 100%;
     }
     tr {
       background-color: #FFFFFF;
@@ -32,35 +42,36 @@
       text-align: center;
       width: 5em;
     }
+    h1 {
+      margin: 10px;
+    }
     h2 {
       display: inline;
     }
     </style>
   </head>
-  <body style="text-align: center">
-    <div style="background-color: #ddd; padding: 2px;">
-      <h1><img src="https://cadquery.readthedocs.io/en/latest/_static/cadquery_logo_dark.svg" height=30> Cheatsheet</h1>
-      <i>A Quick Guide To The Most Commonly Used Functions! 
-      <br/>
-      <sub>For the full API ref <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html" target="_blank">click here!</a></sub></i>
+  <body>
+    <div id="header">
+      <h1><img src="https://cadquery.readthedocs.io/en/latest/_static/cadquery_logo_dark.svg" alt="CadQuery Logo" height=30> Cheatsheet</h1>
+      <i>
+        A Quick Guide To The Most Commonly Used Functions! 
+        <br/>
+        <sub>
+          For the full API reference <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html">click here</a>.
+          For examples <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/examples.html">click here</a>.
+        </sub>
+      </i>
     </div>
-    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-around; row-gap: 10px;">
-      <div class="section" hidden>
-        <h2>Documentation</h2>
-        <ul style="background-color:#ffffff;margin-bottom:0px;margin-top:0px;">
-          <li><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/">CadQuery Documentation</a></li>
-          <li><a target="_blank" href="https://github.com/CadQuery/cadquery/blob/master/README.md">CadQuery Readme</a></li>
-          <li><a target="_blank" href="https://github.com/CadQuery/cadquery/tree/master/examples">CadQuery Examples</a></li>
-          <li><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html">CadQuery API Reference</a></li>
-        </ul>
-      </div>
+    <div id="section-container">
       <div class="section">
         <h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#id1">3D Construction</a></h2>
-          <table style="width:100%;">
+          <table>
             <thead>
-              <th>Primitives</th>
-              <th>Additive</th>
-              <th>Subtractive</th>
+              <tr>
+                <th>Primitives</th>
+                <th>Additive</th>
+                <th>Subtractive</th>
+              </tr>
             </thead>
             <tr>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.box">Workplane.box</a><br>(length, width, height)</td>
@@ -68,7 +79,7 @@
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cut">Workplane.cut</a><br>(toCut)</td>
             </tr>
             <tr>
-              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.sphere">Workplane.sphere</a><br>(radius)</li></td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.sphere">Workplane.sphere</a><br>(radius)</td>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.sweep">Workplane.sweep</a><br>(path)</td>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cutThruAll">Workplane.cutThruAll</a><br>(until)</td>
             </tr>
@@ -86,7 +97,7 @@
       </div>
       <div class="section">
           <h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#d-operations">2D Construction</a></h2>
-          <table style="width:100%;">
+          <table>
             <tr>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.rect">Workplane.rect</a><br>(xLen, yLen)</td>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.circle">Workplane.circle</a><br>(radius)</td>
@@ -103,7 +114,7 @@
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.polarLine">Workplane.polarLine</a><br>(distance, angle)</td>
             </tr>
             <tr>
-              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vLine">Workplane.vLine</a><br>(distance)</li></td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vLine">Workplane.vLine</a><br>(distance)</td>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.hLine">Workplane.hLine</a><br>(distance)</td>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.polyline">Workplane.polyline</a><br>(listOfXYTuple)</td>
             </tr>
@@ -111,7 +122,7 @@
       </div>
       <div class="section">
           <h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#sketch-initialization">Sketching</a></h2>
-          <table style="width:100%;">
+          <table>
             <tr>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.rect">Sketch.rect</a><br>(w, h)</td>
               <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.circle">Sketch.circle</a><br>(r)</td>
@@ -131,7 +142,7 @@
       </div>
       <div class="section" style="min-width: 300px;" hidden>
         <h2>BREP Terminology</h2><br />
-        <table style="width:100%;">
+        <table>
           <tr>
             <td style="width:10%;"><strong>vertex</strong></td>
             <td style="width:90%;">A single point in space</td>
@@ -166,7 +177,7 @@
         <h2>Selector String Modifiers</h2><br />
         <div class="section-subtitle">See <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/selectors.html">CadQuery String Selectors</a> for more information.<br />
         Axis Strings are: X, Y, Z, XY, YZ, XZ</div>
-        <table style="width:100%;">
+        <table>
           <tr>
             <th style="width:10%;">Modifier</th>
             <th style="width:90%;">Description</th>
@@ -204,7 +215,7 @@
       <div class="section">
         <h2>Selector Methods</h2><br />
         <div class="section-subtitle">CadQuery selector strings and classes allow filtering to select objects.</div>
-        <table style="width:100%;">
+        <table>
           <tr>
             <th style="width:40%;">Selector Methods</th>
             <th style="width:60%;">Selector Classes
@@ -234,7 +245,7 @@
       <div class="section">
         <h2>Named Planes</h2><br />
         <div class="section-subtitle">Direction references refer to the global directions.</div>
-        <table style="width:100%;">
+        <table>
           <tr>
             <th style="width:25%;">Name</th>
             <th style="width:25%;">xDir</th>
@@ -300,7 +311,7 @@
 
       <div class="section" hidden>
         <h2>Core Classes</h2><br />
-        <table style="width:100%;">
+        <table>
           <tr>
             <th style="width:40%;">Class</th>
             <th style="width:60%;">Description</th>
@@ -326,7 +337,7 @@
           All types of filters work on faces. In most cases, the selector refers to the direction of the normal vector of the face.
           If a face is not planar, selectors are evaluated at the center of mass of the face. This can lead to results that are quite unexpected.
         </div>
-        <table style="width:100%;">
+        <table>
           <tr>
             <th style="width:10%;">Selector</th>
             <th style="width:40%;">Selector Class</th>
@@ -383,7 +394,7 @@
           Some filter types are not supported for edges. The selector usually refers to the direction of the edge.
           Non-linear edges are not selected for any selectors except type (%). Non-linear edges are never returned when these filters are applied.
         </div>
-        <table style="width:100%;">
+        <table>
           <tr>
             <th style="width:10%;">Selector</th>
             <th style="width:40%;">Selector Class</th>
@@ -437,7 +448,7 @@
       <div class="section" style="max-width: 600px">
         <h2>Examples of Filtering Vertices</h2><br />
         <div class="section-subtitle">Only a few of the filter types apply to vertices. The location of the vertex is the subject of the filter.</div>
-        <table style="width:100%;">
+        <table>
           <tr>
             <th style="width:10%;">Selector</th>
             <th style="width:40%;">Selector Class</th>
