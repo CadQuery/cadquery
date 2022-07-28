@@ -9,10 +9,20 @@
       margin: 0.5em;
       padding: 0px 0.5em 0.5em;
       background-color: #EBEBEB;
+      min-width: 300px;
+      max-width: 30vw;
+    }
+     {
+
+    }
+    h2 a, h2 a:visited, .section a,.section a:visited {
+      color: #1f4b8f;
+      font-weight: bold;
+      text-decoration: none;
+
     }
     .column {
       float: left;
-      width: 375px;
     }
     tr {
       background-color: #FFFFFF;
@@ -26,9 +36,15 @@
     }
     </style>
   </head>
-  <body>
-    <div class="column" style="width:475px;">
-      <div class="section">
+  <body style="text-align: center">
+    <div style="background-color: #ddd; padding: 2px;">
+      <h1><img src="https://cadquery.readthedocs.io/en/latest/_static/cadquery_logo_dark.svg" height=30> Cheatsheet</h1>
+      <i>A Quick Guide To The Most Commonly Used Functions! 
+      <br/>
+      <sub>For the full API ref <a href="https://cadquery.readthedocs.io/en/latest/apireference.html" target="_blank">click here!</a></sub></i>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-around;">
+      <div class="section" hidden>
         <h2>Documentation</h2>
         <ul style="background-color:#ffffff;margin-bottom:0px;margin-top:0px;">
           <li><a href="https://cadquery.readthedocs.io/en/latest/">CadQuery Documentation</a></li>
@@ -38,6 +54,81 @@
         </ul>
       </div>
       <div class="section">
+        <h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#id1">3D Construction</a></h2>
+          <table style="width:100%;">
+            <thead>
+              <th>Primitives</th>
+              <th>Additive</th>
+              <th>Subtractive</th>
+            </thead>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.box">Workplane.box</a><br>(length, width, height)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.extrude">Workplane.extrude</a><br>(until)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cut">Workplane.cut</a><br>(toCut)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.sphere">Workplane.sphere</a><br>(radius)</li></td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.sweep">Workplane.sweep</a><br>(path)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cutThruAll">Workplane.cutThruAll</a><br>(until)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cylinder">Workplane.sphere</a><br>(height, radius)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.loft">Workplane.loft</a><br>(ruled, combine, clean)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.extrude">Workplane.hole</a><br>(diameter, depth)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.text">Workplane.text</a><br>(txt, fontsize, distance)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.revolve">Workplane.revolve</a><br>(angleDegrees)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.extrude">Workplane.intersect</a><br>(toIntersect)</td>
+            </tr> 
+          </table>
+      </div>
+      <div class="section">
+          <h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#d-operations">2D Construction</a></h2>
+          <table style="width:100%;">
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.rect">Workplane.rect</a><br>(xLen, yLen)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.circle">Workplane.circle</a><br>(radius)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.ellipse">Workplane.ellipse</a><br>(x_radius, y_radius)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.center">Workplane.center</a><br>(x, y)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.moveTo">Workplane.moveTo</a><br>(x, y)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.move">Workplane.move</a><br>(xDist, yDist)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.lineTo">Workplane.lineTo</a><br>(x, y)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.line">Workplane.line</a><br>(xDist, yDist)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.polarLine">Workplane.polarLine</a><br>(distance, angle)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vLine">Workplane.vLine</a><br>(distance)</li></td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.hLine">Workplane.hLine</a><br>(distance)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.polyline">Workplane.polyline</a><br>(listOfXYTuple)</td>
+            </tr>
+          </table>
+      </div>
+      <div class="section">
+          <h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#sketch-initialization">Sketching</a></h2>
+          <table style="width:100%;">
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.rect">Sketch.rect</a><br>(w, h)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.circle">Sketch.circle</a><br>(r)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.ellipse">Sketch.ellipse</a><br>(a1, a2)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.trapezoid">Sketch.trapezoid</a><br>(w, h, a1)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.regularPolygon">Sketch.regularPolygon</a><br>(r, n)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.polygon">Sketch.polygon</a><br>(pts)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.fillet">Sketch.fillet</a><br>(d)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.chamfer">Sketch.chamfer</a><br>(d)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.clean">Sketch.clean</a><br>()</td>
+            </tr>
+          </table>
+      </div>
+      <div class="section" style="min-width: 300px;" hidden>
         <h2>BREP Terminology</h2><br />
         <table style="width:100%;">
           <tr>
@@ -72,7 +163,7 @@
       </div>
       <div class="section">
         <h2>Named Planes</h2><br />
-        Available named planes are as follows. Direction references refer to the global directions.
+        <i></i>Direction references refer to the global directions.</i>
         <table style="width:100%;">
           <tr>
             <th style="width:25%;">Name</th>
@@ -136,7 +227,7 @@
           </tr>
         </table>
       </div>
-      <div class="section">
+      <div class="section" hidden>
         <h2>Core Classes</h2><br />
         <table style="width:100%;">
           <tr>
@@ -154,75 +245,6 @@
           <tr>
             <td>Workplane(inPlane[origin, obj])</td>
             <td>Defines a coordinate system in space, in which 2D coordinates can be used.</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    <div class="column" style="width:600px;">
-      <div class="section">
-        <h2>Selector Methods</h2><br />
-        CadQuery selector strings allow filtering various types of object lists.
-        Most commonly, Edges, Faces, and Vertices are used, but all objects types can be filtered.<br />
-        <table style="width:100%;">
-          <tr>
-            <th style="width:40%;">Selector Method</th>
-            <th style="width:60%;">Description</th>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.faces">CQ.faces(selector=None)</a></td>
-            <td>Select the faces of objects on the stack, optionally filtering the selection.</td>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.edges">CQ.edges(selector=None)</a></td>
-            <td>Select the edges of objects on the stack, optionally filtering the selection.</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vertices">CQ.vertices(selector=None)</a></td>
-            <td>Select the vertices of objects on the stack, optionally filtering the selection.</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.solids">CQ.solids(selector=None)</a></td>
-            <td>Select the solids of objects on the stack, optionally filtering the selection.</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.shells">CQ.shells(selector=None)</a></td>
-            <td>Select the shells of objects on the stack, optionally filtering the selection.</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Selector Classes</h2><br />
-        <table style="width:100%;">
-          <tr>
-            <th style="width:40%;">Class</th>
-            <th style="width:60%;">Description</th>
-          </tr>
-          <tr>
-            <td>NearestToPointSelector(pnt)</td>
-            <td>Selects object nearest the provided point.</td>
-          </tr>
-          <tr>
-            <td>ParallelDirSelector(vector[tolerance])</td>
-            <td>Selects objects parallel with the provided direction.</td>
-          </tr>
-          <tr>
-            <td>DirectionSelector(vector[tolerance])</td>
-            <td>Selects objects aligned with the provided direction.</td>
-          </tr>
-          <tr>
-            <td>PerpendicularDirSelector(vector[tolerance])</td>
-            <td>Selects objects perpendicular with the provided direction.</td>
-          </tr>
-          <tr>
-            <td>TypeSelector(typeString)</td>
-            <td>Selects objects of the prescribed topological type.</td>
-          </tr>
-          <tr>
-            <td>DirectionMinMaxSelector(vector[directionMax])</td>
-            <td>Selects objects closest or farthest in the specified direction.</td>
-          </tr>
-          <tr>
-            <td>StringSyntaxSelector(selectorString)</td>
-            <td>Filter lists objects using a simple string syntax.</td>
           </tr>
         </table>
       </div>
@@ -262,6 +284,37 @@
           <tr>
             <td>&#37;</td>
             <td>Curve/surface type (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.TypeSelector">TypeSelector</a>)</td>
+          </tr>
+        </table>
+      </div>
+      <div class="section">
+        <h2>Selector Methods</h2><br />
+        CadQuery selector strings allow filtering various types of object lists.
+        Most commonly, Edges, Faces, and Vertices are used, but all objects types can be filtered.<br />
+        <table style="width:100%;">
+          <tr>
+            <th style="width:40%;">Selector Methods</th>
+            <th style="width:60%;">Selector Classes
+            </th>
+          </tr>
+          <tr>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.faces">CQ.faces</a>(selector)</td>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.NearestToPointSelector">NearestToPointSelector</a>(pnt)</td>
+          <tr>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.edges">CQ.edges</a>(selector)</td>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.ParallelDirSelector">ParallelDirSelector</a>(vector)</td>
+          </tr>
+          <tr>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vertices">CQ.vertices</a>(selector)</td>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.DirectionSelector">DirectionSelector</a>(vector)</td>
+          </tr>
+          <tr>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.solids">CQ.solids</a>(selector)</td>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.DirectionMinMaxSelector">DirectionMinMaxSelector</a>(vector)</td>
+          </tr>
+          <tr>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.shells">CQ.shells</a>(selector)</td>
+            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.TypeSelector">TypeSelector</a>(typeString)</td>
           </tr>
         </table>
       </div>
