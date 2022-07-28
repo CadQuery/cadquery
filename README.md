@@ -38,13 +38,27 @@ To learn more about designing with CadQuery, visit the [documentation](https://c
 
 To get started playing around with CadQuery and see it's capabilities, take a look at the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor). This easy-to-use IDE is a great way to get started desiging with CadQuery.
 
+There are currently 4 different ways to use CadQuery for designing your next project:
 * Using the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor)
 * From a [Jupyter notebook](https://github.com/bernhard-42/jupyter-cadquery)
+* Using a [VSCode extension](https://marketplace.visualstudio.com/items?itemName=roipoussiere.cadquery)
 * As a standalone library
     * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
     * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
 
-There are two ways to install CadQuery and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system.
+There are two ways to install the CadQuery library and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system.
+
+### CQ-editor GUI
+
+CQ-editor is an IDE that allows users to edit CadQuery model scripts in a GUI environment. It includes features such as:
+
+* A graphical debugger that allows you to step through your scripts.
+* A CadQuery stack inspector.
+* Export to various formats, including STEP and STL, directly from the menu.
+
+The installation instructions for CQ-editor can be found [here](https://github.com/CadQuery/CQ-editor#installation).
+
+<img src="https://raw.githubusercontent.com/CadQuery/CQ-editor/master/screenshots/screenshot3.png" alt="CQ editor screenshot" width="800"/>
 
 ### CadQuery Installation Via Pip
 
@@ -114,18 +128,6 @@ start /wait "" miniforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegis
 cmd /K ""%USERPROFILE%/Miniforge3/Scripts/activate.bat" "%USERPROFILE%/Miniforge3""
 ```
 You might want to consider using `/NoScripts=0` to have an activation shortcut added to the start menu.
-
-### CQ-editor GUI
-
-CQ-editor is an IDE that allows users to edit CadQuery model scripts in a GUI environment. It includes features such as:
-
-* A graphical debugger that allows you to step through your scripts.
-* A CadQuery stack inspector.
-* Export to various formats, including STEP and STL, directly from the menu.
-
-The installation instructions for CQ-editor can be found [here](https://github.com/CadQuery/CQ-editor#installation).
-
-<img src="https://raw.githubusercontent.com/CadQuery/CQ-editor/master/screenshots/screenshot3.png" alt="CQ editor screenshot" width="800"/>
 
 ### Jupyter
 
