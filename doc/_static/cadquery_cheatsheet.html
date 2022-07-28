@@ -3,6 +3,7 @@
   <head>
     <title>CadQuery Cheatsheet</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style type="text/css">
     .section {
@@ -10,10 +11,10 @@
       padding: 0px 0.5em 0.5em;
       background-color: #EBEBEB;
       min-width: 300px;
-      max-width: 30vw;
+      max-width: min(50vw, 100%);
     }
-     {
-
+    .section-subtitle {
+      margin-bottom: 4px;
     }
     h2 a, h2 a:visited, .section a,.section a:visited {
       color: #1f4b8f;
@@ -41,16 +42,16 @@
       <h1><img src="https://cadquery.readthedocs.io/en/latest/_static/cadquery_logo_dark.svg" height=30> Cheatsheet</h1>
       <i>A Quick Guide To The Most Commonly Used Functions! 
       <br/>
-      <sub>For the full API ref <a href="https://cadquery.readthedocs.io/en/latest/apireference.html" target="_blank">click here!</a></sub></i>
+      <sub>For the full API ref <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html" target="_blank">click here!</a></sub></i>
     </div>
-    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-around;">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-around; row-gap: 10px;">
       <div class="section" hidden>
         <h2>Documentation</h2>
         <ul style="background-color:#ffffff;margin-bottom:0px;margin-top:0px;">
-          <li><a href="https://cadquery.readthedocs.io/en/latest/">CadQuery Documentation</a></li>
-          <li><a href="https://github.com/CadQuery/cadquery/blob/master/README.md">CadQuery Readme</a></li>
-          <li><a href="https://github.com/CadQuery/cadquery/tree/master/examples">CadQuery Examples</a></li>
-          <li><a href="https://cadquery.readthedocs.io/en/latest/apireference.html">CadQuery API Reference</a></li>
+          <li><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/">CadQuery Documentation</a></li>
+          <li><a target="_blank" href="https://github.com/CadQuery/cadquery/blob/master/README.md">CadQuery Readme</a></li>
+          <li><a target="_blank" href="https://github.com/CadQuery/cadquery/tree/master/examples">CadQuery Examples</a></li>
+          <li><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html">CadQuery API Reference</a></li>
         </ul>
       </div>
       <div class="section">
@@ -162,8 +163,77 @@
         </table>
       </div>
       <div class="section">
+        <h2>Selector String Modifiers</h2><br />
+        <div class="section-subtitle">See <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/selectors.html">CadQuery String Selectors</a> for more information.<br />
+        Axis Strings are: X, Y, Z, XY, YZ, XZ</div>
+        <table style="width:100%;">
+          <tr>
+            <th style="width:10%;">Modifier</th>
+            <th style="width:90%;">Description</th>
+          </tr>
+          <tr>
+            <td>&#124;</td>
+            <td>Parallel to = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.ParallelDirSelector">ParallelDirSelector</a></td>
+          </tr>
+          <tr>
+            <td>&#35;</td>
+            <td>Perpendicular to = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.PerpendicularDirSelector">PerpendicularDirSelector</a></td>
+          </tr>
+          <tr>
+            <td>&#43;</td>
+            <td>Positive direction = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionSelector">DirectionSelector</a></td>
+          </tr>
+          <tr>
+            <td>&#45;</td>
+            <td>Negative direction = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionSelector">DirectionSelector</a></td>
+          </tr>
+          <tr>
+            <td>&gt;</td>
+            <td>Max = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a>(directionMax=True)</td>
+          </tr>
+          <tr>
+            <td>&lt;</td>
+            <td>Min = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a>(directionMax=False)</td>
+          </tr>
+          <tr>
+            <td>&#37;</td>
+            <td>Curve/surface type = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.TypeSelector">TypeSelector</a></td>
+          </tr>
+        </table>
+      </div>
+      <div class="section">
+        <h2>Selector Methods</h2><br />
+        <div class="section-subtitle">CadQuery selector strings and classes allow filtering to select objects.</div>
+        <table style="width:100%;">
+          <tr>
+            <th style="width:40%;">Selector Methods</th>
+            <th style="width:60%;">Selector Classes
+            </th>
+          </tr>
+          <tr>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.faces">CQ.faces</a>(selector)</td>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.NearestToPointSelector">NearestToPointSelector</a>(pnt)</td>
+          <tr>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.edges">CQ.edges</a>(selector)</td>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.ParallelDirSelector">ParallelDirSelector</a>(vector)</td>
+          </tr>
+          <tr>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vertices">CQ.vertices</a>(selector)</td>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.DirectionSelector">DirectionSelector</a>(vector)</td>
+          </tr>
+          <tr>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.solids">CQ.solids</a>(selector)</td>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.DirectionMinMaxSelector">DirectionMinMaxSelector</a>(vector)</td>
+          </tr>
+          <tr>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.shells">CQ.shells</a>(selector)</td>
+            <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.TypeSelector">TypeSelector</a>(typeString)</td>
+          </tr>
+        </table>
+      </div>
+      <div class="section">
         <h2>Named Planes</h2><br />
-        <i></i>Direction references refer to the global directions.</i>
+        <div class="section-subtitle">Direction references refer to the global directions.</div>
         <table style="width:100%;">
           <tr>
             <th style="width:25%;">Name</th>
@@ -227,6 +297,7 @@
           </tr>
         </table>
       </div>
+
       <div class="section" hidden>
         <h2>Core Classes</h2><br />
         <table style="width:100%;">
@@ -248,80 +319,13 @@
           </tr>
         </table>
       </div>
-      <div class="section">
-        <h2>Selector String Modifiers</h2><br />
-        Selectors are a complex topic: see <a href="https://cadquery.readthedocs.io/en/latest/selectors.html">CadQuery String Selectors</a> for more information.<br />
-        Axis Strings are: X, Y, Z, XY, YZ, XZ
-        <table style="width:100%;">
-          <tr>
-            <th style="width:10%;">Modifier</th>
-            <th style="width:90%;">Description</th>
-          </tr>
-          <tr>
-            <td>&#124;</td>
-            <td>Parallel to (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.ParallelDirSelector">ParallelDirSelector</a>). Can return multiple objects.</td>
-          </tr>
-          <tr>
-            <td>&#35;</td>
-            <td>Perpendicular to (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.PerpendicularDirSelector">PerpendicularDirSelector</a>)</td>
-          </tr>
-          <tr>
-            <td>&#43;</td>
-            <td>Positive direction (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionSelector">DirectionSelector</a>)</td>
-          </tr>
-          <tr>
-            <td>&#45;</td>
-            <td>Negative direction (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionSelector">DirectionSelector</a>)</td>
-          </tr>
-          <tr>
-            <td>&gt;</td>
-            <td>Maximize (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a> with directionMax=True)</td>
-          </tr>
-          <tr>
-            <td>&lt;</td>
-            <td>Minimize (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a> with directionMax=False)</td>
-          </tr>
-          <tr>
-            <td>&#37;</td>
-            <td>Curve/surface type (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.TypeSelector">TypeSelector</a>)</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Selector Methods</h2><br />
-        CadQuery selector strings allow filtering various types of object lists.
-        Most commonly, Edges, Faces, and Vertices are used, but all objects types can be filtered.<br />
-        <table style="width:100%;">
-          <tr>
-            <th style="width:40%;">Selector Methods</th>
-            <th style="width:60%;">Selector Classes
-            </th>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.faces">CQ.faces</a>(selector)</td>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.NearestToPointSelector">NearestToPointSelector</a>(pnt)</td>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.edges">CQ.edges</a>(selector)</td>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.ParallelDirSelector">ParallelDirSelector</a>(vector)</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vertices">CQ.vertices</a>(selector)</td>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.DirectionSelector">DirectionSelector</a>(vector)</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.solids">CQ.solids</a>(selector)</td>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.DirectionMinMaxSelector">DirectionMinMaxSelector</a>(vector)</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.shells">CQ.shells</a>(selector)</td>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.TypeSelector">TypeSelector</a>(typeString)</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
+
+      <div class="section" style="max-width: 600px">
         <h2>Examples of Filtering Faces</h2><br />
-        All types of filters work on faces. In most cases, the selector refers to the direction of the normal vector of the face.
-        If a face is not planar, selectors are evaluated at the center of mass of the face. This can lead to results that are quite unexpected.
+        <div class="section-subtitle">
+          All types of filters work on faces. In most cases, the selector refers to the direction of the normal vector of the face.
+          If a face is not planar, selectors are evaluated at the center of mass of the face. This can lead to results that are quite unexpected.
+        </div>
         <table style="width:100%;">
           <tr>
             <th style="width:10%;">Selector</th>
@@ -373,10 +377,12 @@
           </tr>
         </table>
       </div>
-      <div class="section">
+      <div class="section" style="max-width: 600px">
         <h2>Examples of Filtering Edges</h2><br />
-        Some filter types are not supported for edges. The selector usually refers to the direction of the edge.
-        Non-linear edges are not selected for any selectors except type (%). Non-linear edges are never returned when these filters are applied.
+        <div class="section-subtitle">
+          Some filter types are not supported for edges. The selector usually refers to the direction of the edge.
+          Non-linear edges are not selected for any selectors except type (%). Non-linear edges are never returned when these filters are applied.
+        </div>
         <table style="width:100%;">
           <tr>
             <th style="width:10%;">Selector</th>
@@ -428,27 +434,34 @@
           </tr>
         </table>
       </div>
-      <div class="section">
+      <div class="section" style="max-width: 600px">
         <h2>Examples of Filtering Vertices</h2><br />
-        Only a few of the filter types apply to vertices. The location of the vertex is the subject of the filter.
+        <div class="section-subtitle">Only a few of the filter types apply to vertices. The location of the vertex is the subject of the filter.</div>
         <table style="width:100%;">
           <tr>
             <th style="width:10%;">Selector</th>
             <th style="width:40%;">Selector Class</th>
             <th style="width:40%;">Selects</th>
-            <th style="width:10%;"># Objects Returned</th>
           </tr>
           <tr>
             <td>&gt;Y</td>
             <td>DirectionMinMaxSelector</td>
-            <td>Vertices farthest in the positive y dir</td>
-            <td>0 or 1</td>
+            <td>Vertices farthest in the +Y dir</td>
           </tr>
           <tr>
             <td>&lt;Y</td>
             <td>DirectionMinMaxSelector</td>
-            <td>Vertices farthest in the negative y dir</td>
-            <td>0 or 1</td>
+            <td>Vertices farthest in the -Y dir</td>
+          </tr>
+          <tr>
+            <td>&gt;&gt;Y[-2]</td>
+            <td>CenterNthSelector</td>
+            <td>2nd farthest vertex in the +Y dir</td>
+          </tr>
+          <tr>
+            <td>&lt;&lt;Y[0]</td>
+            <td>CenterNthSelector</td>
+            <td>1st closest vertex in the Y dir</td>
           </tr>
         </table>
       </div>
