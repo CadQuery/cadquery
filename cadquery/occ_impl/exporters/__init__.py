@@ -110,7 +110,7 @@ def export(
             useascii = opt.get("ascii", False) or opt.get("ASCII", False)
         else:
             useascii = False
-        
+
         shape.exportStl(fname, tolerance, angularTolerance, useascii)
 
     elif exportType == ExportTypes.VRML:
