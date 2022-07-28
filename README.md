@@ -34,8 +34,7 @@ The original version of CadQuery was built on the FreeCAD API. This was great be
 
 ## Getting started
 
-To quickly play around with CadQuery and see it's capabilities, see the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor) manual.  
-If you want to use CadQuery for your own project, keep reading: 
+To learn more about designing with CadQuery, visit the [documentation](https://cadquery.readthedocs.io/en/latest/intro.html), [examples](https://cadquery.readthedocs.io/en/latest/examples.html), and [cheatsheet](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html).
 
 It is currently possible to use CadQuery for your own projects in 3 different ways:
 * Using the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor)
