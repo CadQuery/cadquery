@@ -140,6 +140,38 @@
             </tr>
           </table>
       </div>
+      <div style="display: flex; flex-direction: column;">
+        <div class="section">
+            <h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#file-management-and-export">Import/Export</a></h2>
+            <table>
+              <tr>
+                <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/importexport.html#cadquery.importers.importDXF">importers.importDXF</a><br>(path, tol)</td>
+                <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/importexport.html#importing-step">importers.importStep</a><br>("path")</td>
+              </tr>
+              <tr>
+                <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/importexport.html#exporting-stl">exporters.export</a><br>(solid, "path/solid.***")</td>
+                <td>Where *** can be: svg, step, stl, amf, vrml, json</td>
+              </tr>
+            </table>
+        </div>
+        <div class="section">
+          <h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#assemblies">Assemblies</a></h2>
+          <table>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Assembly">Assembly(</a><br>(obj)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Assembly.add">Assembly.add</a><br>(obj)</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/assy.html#constraints">Assembly.constrain</a><br>(***)</td>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Assembly.solve">Assembly.solve</a><br>()</td>
+            </tr>
+            <tr>
+              <td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Assembly.save">Assembly.save</a><br>("path/assembly.***")</td>
+              <td>Where *** can be: step, xml, gltf, vtkjs, vrml</td>
+            </tr>
+          </table>
+        </div>
+      </div>
       <div class="section" style="min-width: 300px;" hidden>
         <h2>BREP Terminology</h2><br />
         <table>
