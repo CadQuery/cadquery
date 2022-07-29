@@ -17,7 +17,7 @@
     }
     #section-container {
       display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-around; row-gap: 10px;
-      overflow-y: scroll;
+      overflow: scroll;
       width: 100%
     }
     .section {
@@ -26,6 +26,7 @@
       background-color: #EBEBEB;
       min-width: 340px;
       max-width: min(50vw, 100%);
+      overflow-x: scroll;
     }
     .section-subtitle {
       margin-bottom: 4px;
@@ -52,9 +53,12 @@
     h2 {
       display: inline;
     }
-    @media only screen and (max-width: 600px) {
+    @media only screen and (max-width: 1000px) {
       body{
-        font-size: 70%
+        font-size: 75%
+      }
+      .section {
+        max-width: 96%;
       }
     }
     </style>
