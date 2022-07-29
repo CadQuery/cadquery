@@ -7,6 +7,7 @@
 
     <style type="text/css">
     body {
+      width: 100vw;
       margin: 0;
       text-align: center;
     }
@@ -16,12 +17,14 @@
     }
     #section-container {
       display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-around; row-gap: 10px;
+      overflow-y: scroll;
+      width: 100%
     }
     .section {
       margin: 0.5em;
       padding: 0px 0.5em 0.5em;
       background-color: #EBEBEB;
-      min-width: 300px;
+      min-width: 340px;
       max-width: min(50vw, 100%);
     }
     .section-subtitle {
@@ -48,6 +51,11 @@
     }
     h2 {
       display: inline;
+    }
+    @media only screen and (max-width: 600px) {
+      body{
+        font-size: 70%
+      }
     }
     </style>
   </head>
