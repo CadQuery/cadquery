@@ -107,7 +107,7 @@ def export(
 
     elif exportType == ExportTypes.STL:
         if opt:
-            useascii = opt.get("ascii", True) or opt.get("ASCII", True)
+            useascii = opt.get("ascii", True) and opt.get("ASCII", True)
         else:
             useascii = True
 
