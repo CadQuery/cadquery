@@ -27,51 +27,26 @@ def get_first(obj):
     return next(iter(obj))
 
 
-patself = re.compile(r"\W*:\W*param\W+self.*")
-patparam = re.compile(r"\W*:\W*param.*")
+patindent = re.compile(r"(\W*)")
 
 
 def process_docstring_multimethod(app, what, name, obj, options, lines):
     """multimethod docstring customization
 
-    * formatting and remove extraneous signatures
-    * insert self in front of param field list for instance methods if type hinted
+    Remove extraneous signatures and combine docstrings if docstring also defined
+    in registered methods.  Requires sphinx-build -E if rebuilding docs.
     """
+
+    methods = []
 
     if what == "method" and isinstance(obj, multimethod):
         # instance or static method
 
-        insert_first_param = False
-        if (
-            app.config.autodoc_typehints in ("both", "description")
-            and app.config.autodoc_typehints_description_target in ("all")
-            and get_first(get_type_hints(get_first(obj.values()))) == "self"
-        ):
-            insert_first_param = True
-
-        lines_replace = []
-
         # handle functools.singledispatch style register (multiple names)
-        methods = set(m.__name__ for m in obj.values())
-        patsig = re.compile(rf"\W*[{'|'.join(methods)}]+\(.*\).*")
-
-        iparam = None
-        for i, line in enumerate(lines):
-            if patsig.match(line):
-                lines_replace.append("")
-                continue
-            if insert_first_param and patself.match(line):
-                # exists explicitly in field list
-                insert_first_param = False
-            elif insert_first_param and not iparam and patparam.match(line):
-                iparam = i
-            lines_replace.append(line.lstrip())
-
-        if insert_first_param and iparam:
-            lines_replace.insert(iparam, ":param self:")
-
-        del lines[:]
-        lines.extend(lines_replace)
+        if obj.pending:
+            methods = set(m.__name__ for m in obj.pending)
+        else:
+            methods = set(m.__name__ for m in obj.values())
 
     elif what == "method" and inspect.isclassmethod(obj) and hasattr(obj, "pending"):
 
@@ -80,14 +55,23 @@ def process_docstring_multimethod(app, what, name, obj, options, lines):
         else:
             methods = set(m.__name__ for m in obj.__func__.values())
 
+    if methods:
         lines_replace = []
         patsig = re.compile(rf"\W*[{'|'.join(methods)}]+\(.*\).*")
 
+        indent = -1
         for line in lines:
+            if indent < 0:
+                # fix indent when multiple docstrings defined
+                if m := patindent.match(line):
+                    indent = len(m.group(1))
+                else:
+                    indent = 0
+
             if patsig.match(line):
                 lines_replace.append("")
             else:
-                lines_replace.append(line.lstrip())
+                lines_replace.append(line[indent:])
 
         del lines[:]
         lines.extend(lines_replace)
@@ -243,12 +227,16 @@ class MethodDocumenter(SphinxMethodDocumenter):
                         sigs.append(documenter.format_signature())
         # -- multimethod customization
         elif isinstance(meth, multimethod):
-            sigs = self.append_signature_multiple_dispatch(meth.values())
+            if meth.pending:
+                methods = meth.pending
+            else:
+                methods = set(meth.values())
+            sigs = self.append_signature_multiple_dispatch(methods)
         elif inspect.isclassmethod(self.object) and hasattr(self.object, "pending"):
             if self.object.pending:
                 methods = self.object.pending
             else:
-                methods = self.object.__func__.values()
+                methods = set(self.object.__func__.values())
             sigs = self.append_signature_multiple_dispatch(methods)
         elif inspect.isstaticmethod(meth) and isinstance(self.object, multimethod):
             sigs = []
