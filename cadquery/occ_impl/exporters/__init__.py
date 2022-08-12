@@ -107,9 +107,9 @@ def export(
 
     elif exportType == ExportTypes.STL:
         if opt:
-            useascii = opt.get("ascii", True) and opt.get("ASCII", True)
+            useascii = opt.get("ascii", False) or opt.get("ASCII", False)
         else:
-            useascii = True
+            useascii = False
 
         shape.exportStl(fname, tolerance, angularTolerance, useascii)
 
@@ -192,7 +192,7 @@ def exportShape(
         if exportType == ExportTypes.STEP:
             shape.exportStep(outFileName)
         elif exportType == ExportTypes.STL:
-            shape.exportStl(outFileName, tolerance, angularTolerance)
+            shape.exportStl(outFileName, tolerance, angularTolerance, True)
         else:
             raise ValueError("No idea how i got here")
 

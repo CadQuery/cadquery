@@ -441,7 +441,7 @@ class Shape(object):
         fileName: str,
         tolerance: float = 1e-3,
         angularTolerance: float = 0.1,
-        ascii: bool = True,
+        ascii: bool = False,
     ) -> bool:
         """
         Exports a shape to a specified STL file.
@@ -452,7 +452,7 @@ class Shape(object):
             Setting the value too high can result in meshes with a level of detail that is too low. 
             Default is 1e-3, which is a good starting point for a range of cases.
         :param angularTolerance: Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
-        :param ascii: Export the file as ASCII (True) or binary (False) STL format.
+        :param ascii: Export the file as ASCII (True) or binary (False) STL format.  Default is binary.
         """
 
         mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)

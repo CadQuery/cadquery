@@ -248,31 +248,13 @@ class TestExporters(BaseTest):
             exporters.export(self._box(), "out.stl", "STP")
 
 
-def test_stl_simple(tmpdir, box123):
-
-    fpath = tmpdir.joinpath("stl_simple.stl").resolve()
-    assert not fpath.exists()
-
-    matchval = "facet normal"
-    foundmatch = False
-    exporters.export(box123, str(fpath))
-
-    with open(fpath, "r") as f:
-        for line in f:
-            if line.find(matchval) > -1:
-                foundmatch = True
-                break
-
-    assert foundmatch
-
-
 @pytest.mark.parametrize(
     "id, opt, matchvals",
     [
-        (0, None, ["solid", "facet normal"]),
-        (1, {"unknown_opt": 1}, ["solid", "facet normal"]),
+        (0, {"ascii": True}, ["solid", "facet normal"]),
+        (1, {"ASCII": True}, ["solid", "facet normal"]),
         (2, {"unknown_opt": 1, "ascii": True}, ["solid", "facet normal"]),
-        (3, {"ascii": True}, ["solid", "facet normal"]),
+        (3, {"ASCII": False, "ascii": True}, ["solid", "facet normal"]),
     ],
 )
 def test_stl_ascii(tmpdir, box123, id, opt, matchvals):
@@ -301,10 +283,11 @@ def test_stl_ascii(tmpdir, box123, id, opt, matchvals):
 @pytest.mark.parametrize(
     "id, opt, matchval",
     [
-        (0, {"ascii": False}, b"STL Exported by OpenCASCADE"),
-        (1, {"ASCII": False}, b"STL Exported by OpenCASCADE"),
-        (2, {"ASCII": False, "ascii": True}, b"STL Exported by OpenCASCADE"),
-        (3, {"unknown_opt": 1, "ascii": False}, b"STL Exported by OpenCASCADE"),
+        (0, None, b"STL Exported by OpenCASCADE"),
+        (1, {"ascii": False}, b"STL Exported by OpenCASCADE"),
+        (2, {"ASCII": False}, b"STL Exported by OpenCASCADE"),
+        (3, {"unknown_opt": 1}, b"STL Exported by OpenCASCADE"),
+        (4, {"unknown_opt": 1, "ascii": False}, b"STL Exported by OpenCASCADE"),
     ],
 )
 def test_stl_binary(tmpdir, box123, id, opt, matchval):
@@ -316,7 +299,7 @@ def test_stl_binary(tmpdir, box123, id, opt, matchval):
     :param matchval: Check that the file starts with the specified value
     """
 
-    fpath = tmpdir.joinpath(f"stl_{id}.stl").resolve()
+    fpath = tmpdir.joinpath(f"stl_binary_{id}.stl").resolve()
     assert not fpath.exists()
 
     assert matchval
