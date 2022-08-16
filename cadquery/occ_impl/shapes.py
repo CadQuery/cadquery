@@ -24,7 +24,7 @@ from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
 
 from ..utils import cqmultimethod as multimethod
 
-import OCP.TopAbs as ta  # Tolopolgy type enum
+import OCP.TopAbs as ta  # Topology type enum
 import OCP.GeomAbs as ga  # Geometry type enum
 
 from OCP.Precision import Precision
@@ -96,9 +96,9 @@ from OCP.BRepPrimAPI import (
 )
 from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
-from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
+from OCP.TopExp import TopExp_Explorer  # Topology explorer
 
-# used for getting underlying geoetry -- is this equivalent to brep adaptor?
+# used for getting underlying geometry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
 
 from OCP.TopoDS import (
@@ -430,30 +430,40 @@ class Shape(object):
         }
 
         t = shapetype(obj)
-        # NB downcast is needed to handly TopoDS_Shape types
+        # NB downcast is needed to handle TopoDS_Shape types
         tr = constructor_LUT[t](downcast(obj))
         tr.forConstruction = forConstruction
 
         return tr
 
     def exportStl(
-        self, fileName: str, tolerance: float = 1e-3, angularTolerance: float = 0.1
+        self,
+        fileName: str,
+        tolerance: float = 1e-3,
+        angularTolerance: float = 0.1,
+        ascii: bool = False,
     ) -> bool:
         """
         Exports a shape to a specified STL file.
 
         :param fileName: The path and file name to write the STL output to.
-        :type fileName: fileName
-        :param tolerance: A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
-        :type tolerance: float
-        :param angularTolerance: - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
-        :type angularTolerance: float
+        :param tolerance: A linear deflection setting which limits the distance between a curve and its tessellation.
+            Setting this value too low will result in large meshes that can consume computing resources.
+            Setting the value too high can result in meshes with a level of detail that is too low. 
+            Default is 1e-3, which is a good starting point for a range of cases.
+        :param angularTolerance: Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
+        :param ascii: Export the file as ASCII (True) or binary (False) STL format.  Default is binary.
         """
 
         mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
         mesh.Perform()
 
         writer = StlAPI_Writer()
+
+        if ascii:
+            writer.ASCIIMode = True
+        else:
+            writer.ASCIIMode = False
 
         return writer.Write(self.wrapped, fileName)
 
