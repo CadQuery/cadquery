@@ -44,7 +44,7 @@ It is currently possible to use CadQuery for your own projects in 3 different wa
     * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
     * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
 
-There are two ways to install CadQuery and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system.
+There are two ways to install CadQuery and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system. Note that conda is the better supported option.
 
 ### CadQuery Installation Via Pip
 
@@ -56,9 +56,9 @@ python3 -m pip install --upgrade pip
 ```
 Once a current version of pip is installed, CadQuery can be installed using the following command line.
 ```
-pip install cadquery==2.2.0b0
+pip install --pre cadquery
 ```
-Notice that the version number is pinned to a beta version. This is because CadQuery has only recently returned to PyPI, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`. However, if the version number pin is not used for now, a 1.x version of CadQuery will be installed, which is extremely out of date.
+NB: CadQuery has only recently returned to PyPI, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`.
 
 It is also possible to install the very latest changes directly from CadQuery's GitHub repository, with the understanding that sometimes breaking changes can occur. To install from the git repository, run the following command line.
 ```
