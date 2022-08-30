@@ -4187,12 +4187,12 @@ class TestCadQuery(BaseTest):
         # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
         thickness = 0
         edge_points = [
-            [0.0, 0.0, 0.0],
-            [0.0, 10.0, 0.0],
-            [0.0, 10.0, 10.0],
-            [0.0, 0.0, 10.0],
+            (0.0, 0.0, 0.0),
+            (0.0, 10.0, 0.0),
+            (0.0, 10.0, 10.0),
+            (0.0, 0.0, 10.0),
         ]
-        surface_points = [[5.0, 5.0, 5.0]]
+        surface_points = [(5.0, 5.0, 5.0)]
         plate_0 = Workplane("XY").interpPlate(edge_points, surface_points, thickness)
         self.assertTrue(plate_0.val().isValid())
         self.assertAlmostEqual(plate_0.val().Area(), 141.218823892, 1)
@@ -4200,11 +4200,11 @@ class TestCadQuery(BaseTest):
         # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
         thickness = 0.1
         edge_points = [
-            [-7.0, -7.0, 0.0],
-            [-3.0, -10.0, 3.0],
-            [7.0, -7.0, 0.0],
-            [7.0, 7.0, 0.0],
-            [-7.0, 7.0, 0.0],
+            (-7.0, -7.0, 0.0),
+            (-3.0, -10.0, 3.0),
+            (7.0, -7.0, 0.0),
+            (7.0, 7.0, 0.0),
+            (-7.0, 7.0, 0.0),
         ]
         edge_wire = Workplane("XY").polyline(
             [(-7.0, -7.0), (7.0, -7.0), (7.0, 7.0), (-7.0, 7.0)]
@@ -4217,7 +4217,7 @@ class TestCadQuery(BaseTest):
             .transformed(offset=Vector(0, 0, -7), rotate=Vector(45, 0, 0))
             .spline([(-7.0, 0.0), (3, -3), (7.0, 0.0)])
         )
-        surface_points = [[-3.0, -3.0, -3.0], [3.0, 3.0, 3.0]]
+        surface_points = [(-3.0, -3.0, -3.0), (3.0, 3.0, 3.0)]
         plate_1 = Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_1.val().isValid())
         self.assertAlmostEqual(plate_1.val().Volume(), 26.124970206, 2)
@@ -4228,17 +4228,17 @@ class TestCadQuery(BaseTest):
         fn = 6
         thickness = 0.1
         edge_points = [
-            [r1 * math.cos(i * math.pi / fn), r1 * math.sin(i * math.pi / fn)]
+            (r1 * math.cos(i * math.pi / fn), r1 * math.sin(i * math.pi / fn))
             if i % 2 == 0
-            else [r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn)]
+            else (r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn))
             for i in range(2 * fn + 1)
         ]
         edge_wire = Workplane("XY").polyline(edge_points)
         r2 = 4.5
         surface_points = [
-            [r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn), 1.0]
+            (r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn), 1.0)
             for i in range(2 * fn)
-        ] + [[0.0, 0.0, -2.0]]
+        ] + [(0.0, 0.0, -2.0)]
         plate_2 = Workplane("XY").interpPlate(
             edge_wire,
             surface_points,
@@ -4287,20 +4287,20 @@ class TestCadQuery(BaseTest):
         thickness = 0.1
         fn = 6
         edge_points = [
-            [
+            (
                 r1 * math.cos(i * 2 * math.pi / fn + 30 * math.pi / 180),
                 r1 * math.sin(i * 2 * math.pi / fn + 30 * math.pi / 180),
-            ]
+            )
             for i in range(fn + 1)
         ]
         surface_points = [
-            [
+            (
                 r1 / 4 * math.cos(i * 2 * math.pi / fn + 30 * math.pi / 180),
                 r1 / 4 * math.sin(i * 2 * math.pi / fn + 30 * math.pi / 180),
                 0.75,
-            ]
+            )
             for i in range(fn + 1)
-        ] + [[0, 0, 2]]
+        ] + [(0, 0, 2)]
         edge_wire = Workplane("XY").polyline(edge_points)
         plate_3 = (
             Workplane("XY")
@@ -4349,10 +4349,21 @@ class TestCadQuery(BaseTest):
                 .workplane(offset=-offset_list[i + 1])
                 .spline(edge_points[i + 1])
             )
-        surface_points = [[0, 0, 0]]
+        surface_points = [(0, 0, 0)]
         plate_4 = Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
         self.assertTrue(plate_4.val().isValid())
         self.assertAlmostEqual(plate_4.val().Volume(), 7.760559490, 2)
+
+        plate_5 = Workplane().interpPlate(Workplane().slot2D(2, 1).vals())
+
+        assert plate_5.val().isValid()
+
+        plate_6 = Solid.interpPlate(
+            [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], [], thickness=1
+        )
+
+        assert plate_6.isValid()
+        self.assertAlmostEqual(plate_6.Volume(), 1, 2)
 
     def testTangentArcToPoint(self):
 
@@ -5315,3 +5326,92 @@ class TestCadQuery(BaseTest):
             repr(wp.plane)
             == "Plane(origin=(0.0, 0.0, 0.0), xDir=(1.0, 0.0, 0.0), normal=(0.0, 0.0, 1.0))"
         )
+
+    def test_distance(self):
+
+        w1 = Face.makePlane(2, 2).Wires()[0]
+        w2 = Face.makePlane(1, 1).Wires()[0]
+        w3 = Face.makePlane(3, 3).Wires()[0]
+
+        d12 = w1.distance(w2)
+
+        assert d12 == approx(0.5)
+
+        d12, d13 = w1.distances(w2, w3)
+
+        assert d12 == approx(0.5)
+        assert d13 == approx(0.5)
+
+    def test_project(self):
+
+        # project a single letter
+        t = Compound.makeText("T", 5, 0).Faces()[0]
+        f = Workplane("XZ", origin=(0, 0, -7)).sphere(6).faces("not %PLANE").val()
+
+        res = t.project(f, (0, 0, -1))
+
+        assert res.isValid()
+        assert len(res.Edges()) == 8
+        assert t.distance(res) == approx(1)
+
+        # extrude it
+        res_ex = Solid.extrudeLinear(t.project(f, (0, 0, -1)), (0.0, 0.0, 0.5))
+
+        assert res_ex.isValid()
+        assert len(res_ex.Faces()) == 10
+
+        # project a wire
+        w = t.outerWire()
+
+        res_w = w.project(f, (0, 0, -1))
+
+        assert len(res_w.Edges()) == 8
+        assert res_w.isValid()
+
+        res_w1, res_w2 = w.project(f, (0, 0, -1), False)
+
+        assert len(res_w1.Edges()) == 8
+        assert len(res_w2.Edges()) == 8
+
+        # project a single letter with openings
+        o = Compound.makeText("O", 5, 0).Faces()[0]
+        f = Workplane("XZ", origin=(0, 0, -7)).sphere(6).faces("not %PLANE").val()
+
+        res_o = o.project(f, (0, 0, -1))
+
+        assert res_o.isValid()
+
+        # extrude it
+        res_o_ex = Solid.extrudeLinear(o.project(f, (0, 0, -1)), (0.0, 0.0, 0.5))
+
+        assert res_o_ex.isValid()
+
+    def test_makeNSidedSurface(self):
+
+        # inner edge/wire constraint
+        outer_w = Workplane().slot2D(2, 1).wires().vals()
+
+        inner_e1 = (
+            Workplane(origin=(0, 0, 1)).moveTo(-0.5, 0).lineTo(0.5, 0.0).edges().vals()
+        )
+        inner_e2 = (
+            Workplane(origin=(0, 0, 1)).moveTo(0, -0.2).lineTo(0, 0.2).edges().vals()
+        )
+        inner_w = Workplane(origin=(0, 0, 1)).ellipse(0.5, 0.2).vals()
+
+        f1 = Face.makeNSidedSurface(outer_w, inner_e1 + inner_e2 + inner_w)
+
+        assert f1.isValid()
+        assert len(f1.Edges()) == 4
+
+        # inner points
+        f2 = Face.makeNSidedSurface(
+            outer_w, [Vector(-0.4, 0, 1).toPnt(), Vector(0.4, 0, 1)]
+        )
+
+        assert f2.isValid()
+        assert len(f2.Edges()) == 4
+
+        # exception on invalid constraint
+        with raises(ValueError):
+            Face.makeNSidedSurface(outer_w, [[0, 0, 1]])

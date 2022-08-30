@@ -170,6 +170,7 @@ class Sketch(object):
         filename: str,
         tol: float = 1e-6,
         exclude: List[str] = [],
+        include: List[str] = [],
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
@@ -178,7 +179,7 @@ class Sketch(object):
         Import a DXF file and construct face(s)
         """
 
-        res = Compound.makeCompound(_importDXF(filename, tol, exclude))
+        res = Compound.makeCompound(_importDXF(filename, tol, exclude, include))
 
         return self.face(res, angle, mode, tag)
 
@@ -782,7 +783,7 @@ class Sketch(object):
         forConstruction: bool = False,
     ) -> T:
         """
-        Construct an arc starting at p1, through p2, ending at p3
+        Construct an arc.
         """
 
         val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
