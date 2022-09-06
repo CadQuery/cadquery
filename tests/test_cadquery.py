@@ -2883,13 +2883,15 @@ class TestCadQuery(BaseTest):
 
         s = (
             Workplane()
-            .box(3, 3, 0.2)
-            .pushPoints([(0, 0, -1.1)])
+            .pushPoints([(-0.5, -0.2), (0.5, 0.2)])
+            .rect(2, 2)
+            .extrude(0.2, clean=False)
+            .pushPoints([(0, 0, -1)])
             .interpPlate(
-                [Edge.makeCircle(2)], [(0, 0.0, 1.0)], 0.2, combine=True, clean=True
+                [Edge.makeCircle(2)], [(0, 0, 1)], 0.2, combine=True, clean=True
             )
         )
-        assert len(s.edges().vals()) == 17
+        assert len(s.edges().vals()) < 40
 
         s = Workplane().box(0.5, 4, 4).sphere(1, clean=True)
         assert len(s.edges().vals()) == 14
@@ -2948,13 +2950,15 @@ class TestCadQuery(BaseTest):
 
         s = (
             Workplane()
-            .box(3, 3, 0.2)
-            .pushPoints([(0, 0, -1.1)])
+            .pushPoints([(-0.5, -0.2), (0.5, 0.2)])
+            .rect(2, 2)
+            .extrude(0.2, clean=False)
+            .pushPoints([(0, 0, -1)])
             .interpPlate(
-                [Edge.makeCircle(2)], [(0, 0.0, 1.0)], 0.2, combine=True, clean=False
+                [Edge.makeCircle(2)], [(0, 0, 1)], 0.2, combine=True, clean=False
             )
         )
-        assert len(s.edges().vals()) == 18
+        assert len(s.edges().vals()) > 45
 
         s = Workplane().box(0.5, 4, 4).sphere(1, clean=False)
         assert len(s.edges().vals()) == 16
