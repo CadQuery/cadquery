@@ -6,6 +6,7 @@ import os
 import io
 from pathlib import Path
 import re
+import sys
 import pytest
 
 # my modules
@@ -55,7 +56,7 @@ class TestExporters(BaseTest):
         """
         p = Workplane("XY").box(1, 2, 3)
 
-        if eType == exporters.ExportTypes.AMF:
+        if eType in (exporters.ExportTypes.AMF, exporters.ExportTypes.THREEMF):
             s = io.BytesIO()
         else:
             s = io.StringIO()
@@ -112,6 +113,21 @@ class TestExporters(BaseTest):
         self._exportBox(exporters.ExportTypes.STEP, ["FILE_SCHEMA"])
 
         exporters.export(self._box(), "out.step")
+
+    def test3MF(self):
+        self._exportBox(
+            exporters.ExportTypes.THREEMF,
+            ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"],
+        )
+        exporters.export(self._box(), "out1.3mf")  # Compound
+        exporters.export(self._box().val(), "out2.3mf")  # Solid
+
+        # No zlib support
+        import zlib
+
+        sys.modules["zlib"] = None
+        exporters.export(self._box(), "out3.3mf")
+        sys.modules["zlib"] = zlib
 
     def testTJS(self):
         self._exportBox(
