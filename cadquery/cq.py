@@ -3833,7 +3833,7 @@ class Workplane(object):
         # thicken if needed
         s = f.thicken(thickness) if thickness > 0 else f
 
-        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
 
     def box(
         self: T,
@@ -3903,7 +3903,7 @@ class Workplane(object):
 
         box = Solid.makeBox(length, width, height, offset)
 
-        return self.eachpoint(lambda loc: box.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: box.moved(loc), True, combine, clean)
 
     def sphere(
         self: T,
@@ -3967,7 +3967,7 @@ class Workplane(object):
         s = Solid.makeSphere(radius, offset, direct, angle1, angle2, angle3)
 
         # We want a sphere for each point on the workplane
-        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
 
     def cylinder(
         self: T,
@@ -4024,7 +4024,7 @@ class Workplane(object):
         s = Solid.makeCylinder(radius, height, offset, direct, angle)
 
         # We want a cylinder for each point on the workplane
-        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
 
     def wedge(
         self: T,
@@ -4094,7 +4094,7 @@ class Workplane(object):
         w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, offset, dir)
 
         # We want a wedge for each point on the workplane
-        return self.eachpoint(lambda loc: w.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: w.moved(loc), True, combine, clean)
 
     def clean(self: T) -> T:
         """

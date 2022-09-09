@@ -2867,6 +2867,38 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(14, s.faces().size())
 
+        s = Workplane().sphere(1).box(0.5, 4, 4, clean=True)
+        assert len(s.edges().vals()) == 14
+
+        s = (
+            Workplane()
+            .box(1, 1, 1)
+            .faces("<Z")
+            .workplane()
+            .cylinder(
+                2, 0.2, centered=(True, True, False), direct=(0, 0, -1), clean=True
+            )
+        )
+        assert len(s.edges().vals()) == 15
+
+        s = (
+            Workplane()
+            .pushPoints([(-0.5, -0.2), (0.5, 0.2)])
+            .rect(2, 2)
+            .extrude(0.2, clean=False)
+            .pushPoints([(0, 0, -1)])
+            .interpPlate(
+                [Edge.makeCircle(2)], [(0, 0, 1)], 0.2, combine=True, clean=True
+            )
+        )
+        assert len(s.edges().vals()) < 40
+
+        s = Workplane().box(0.5, 4, 4).sphere(1, clean=True)
+        assert len(s.edges().vals()) == 14
+
+        s = Workplane().sphere(1).wedge(0.5, 4, 4, 0, 0, 0.5, 4, clean=True)
+        assert len(s.edges().vals()) == 14
+
     def testNoClean(self):
         """
         Test the case when clean is disabled.
@@ -2901,6 +2933,38 @@ class TestCadQuery(BaseTest):
         )
 
         self.assertEqual(12, s.faces().size())
+
+        s = Workplane().sphere(1).box(0.5, 4, 4, clean=False)
+        assert len(s.edges().vals()) == 16
+
+        s = (
+            Workplane()
+            .box(1, 1, 1)
+            .faces("<Z")
+            .workplane()
+            .cylinder(
+                2, 0.2, centered=(True, True, False), direct=(0, 0, -1), clean=False
+            )
+        )
+        assert len(s.edges().vals()) == 16
+
+        s = (
+            Workplane()
+            .pushPoints([(-0.5, -0.2), (0.5, 0.2)])
+            .rect(2, 2)
+            .extrude(0.2, clean=False)
+            .pushPoints([(0, 0, -1)])
+            .interpPlate(
+                [Edge.makeCircle(2)], [(0, 0, 1)], 0.2, combine=True, clean=False
+            )
+        )
+        assert len(s.edges().vals()) > 45
+
+        s = Workplane().box(0.5, 4, 4).sphere(1, clean=False)
+        assert len(s.edges().vals()) == 16
+
+        s = Workplane().sphere(1).wedge(0.5, 4, 4, 0, 0, 0.5, 4, clean=False)
+        assert len(s.edges().vals()) == 16
 
     def testExplicitClean(self):
         """
