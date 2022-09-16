@@ -18,12 +18,12 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 2. CadQuery's CAD kernel Open CASCADE Technology ([OCCT](https://en.wikipedia.org/wiki/Open_Cascade_Technology)) is much more powerful than the [CGAL](https://en.wikipedia.org/wiki/CGAL) used by OpenSCAD. Features supported natively by OCCT include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
 3. Ability to import/export [STEP](https://en.wikipedia.org/wiki/ISO_10303) and the ability to begin with a STEP model, created in a CAD package, and then add parametric features. This is possible in OpenSCAD using STL, but STL is a lossy format.
 4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
-5. CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
+5. CadQuery scripts can build STL, STEP, AMF and 3MF faster than OpenSCAD.
 
 ### Key features
 * Build 3D models with scripts that are as close as possible to how you would describe the object to a human.
 * Create parametric models that can be very easily customized by end users.
-* Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL, VRML and AMF.
+* Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL, VRML, AMF and 3MF.
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser.
 * Offer advanced modeling capabilities such as fillets, curvilinear extrudes, parametric curves and lofts.
 * Build nested assemblies out of individual parts and other assemblies.
@@ -44,7 +44,42 @@ It is currently possible to use CadQuery for your own projects in 3 different wa
     * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
     * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
 
-The easiest way to install CadQuery and its dependencies is using conda, which is included as part of an Anaconda/Miniconda installation. See the next section for an alternative to a full install of Anaconda that may be preferable to some users. The steps to install cadquery are as follows:
+There are two ways to install CadQuery and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system. Note that conda is the better supported option.
+
+### CadQuery Installation Via Pip
+
+CadQuery has a complex set of dependencies including OCP, which is our set of bindings to the OpenCASCADE CAD kernel. OCP is distributed as binary wheels for Linux, MacOS and Windows. However, there are some limitations. Only Python 3.8 through 3.10 are currently supported, and some older Linux distributions such as Ubuntu 18.04 are not supported. If the pip installation method does not work for your system, you can try the conda installation method outlined in the next two sections.
+
+It is highly recommended that a virtual environment is used when installing CadQuery, although it is not strictly required. Installing CadQuery via pip requires a up-to-date version of pip, which can be obtained with the following command line (or a slight variation thereof).
+```
+python3 -m pip install --upgrade pip
+```
+Once a current version of pip is installed, CadQuery can be installed using the following command line.
+```
+pip install --pre cadquery
+```
+NB: CadQuery has only recently returned to PyPI, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`.
+
+It is also possible to install the very latest changes directly from CadQuery's GitHub repository, with the understanding that sometimes breaking changes can occur. To install from the git repository, run the following command line.
+```
+pip install git+https://github.com/CadQuery/cadquery.git
+```
+
+You should now have a working CadQuery installation, but developers or users who want to use CadQuery with IPython/Jupyter or to set up a developer environment can read the rest of this section.
+
+If you are installing CadQuery to use with IPython/Jupyter, you may want to run the following command line to install the extra dependencies.
+```
+pip install cadquery[ipython]==2.2.0b0
+```
+
+If you want to create a developer setup to contribute to CadQuery, the following command line will install all the development dependencies that are needed.
+```
+pip install cadquery[dev]==2.2.0b0
+```
+
+### CadQuery Installation Via Conda
+
+conda is included as part of a [miniforge](https://github.com/conda-forge/miniforge) installation (other distributions can be used as well). See the next section for more details regarding conda. The steps to install cadquery are as follows:
 ```
 # Set up a new environment
 conda create -n cadquery
@@ -58,17 +93,27 @@ conda install -c conda-forge -c cadquery cadquery=master
 
 For those who are interested, the [OCP repository](https://github.com/CadQuery/OCP) contains the current OCCT wrapper used by CQ.
 
-### Alternative Anaconda Installation Method
+### Conda Installation
 
-For those unfamiliar (or uncomfortable) with Anaconda, it is probably best to install Miniconda to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniconda can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation. In Linux, the local directory installation method looks something like this:
+For those unfamiliar (or uncomfortable) with conda, it is probably best to install Miniforge to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation. In Linux, the local directory installation method looks something like this:
 ```
-# Install the script to ~/miniconda
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-bash miniconda.sh -b -p $HOME/miniconda
+# Install the script to ~/miniforge
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
+bash miniforge.sh -b -p $HOME/miniforge
 
 # To activate and use Miniconda
-source $HOME/miniconda/bin/activate
+source $HOME/miniforge/bin/activate
 ```
+On Windows one can install locally as follows:
+```
+:: Install
+curl -L -o miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
+start /wait "" miniforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegistry=1 /NoScripts=1 /S /D=%USERPROFILE%\Miniforge3
+
+:: Activate
+cmd /K ""%USERPROFILE%/Miniforge3/Scripts/activate.bat" "%USERPROFILE%/Miniforge3""
+```
+You might want to consider using `/NoScripts=0` to have an activation shortcut added to the start menu.
 
 ### CQ-editor GUI
 
@@ -112,7 +157,7 @@ You can find the full CadQuery documentation at [cadquery.readthedocs.io](https:
 
 We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) to make it easy to get help from other CadQuery users. We want you to feel welcome and encourage you to join the group and introduce yourself. We would also love to hear what you are doing with CadQuery.
 
-There is a [Discord channel](https://discord.gg/qz3uAdF) as well. A big thanks goes to the Elmer team for hosting us.
+There is a [Discord server](https://discord.gg/Bj9AQPsCfx) as well. You can ask for help in the _general_ channel.
 
 ## Projects using CadQuery
 

@@ -1,5 +1,7 @@
 .. _examples:
 
+.. currentmodule:: cadquery
+
 *********************************
 CadQuery Examples
 *********************************
@@ -1043,8 +1045,9 @@ A Parametric Enclosure
     lowerLid = lid.translate((0, 0, -p_lipHeight))
     cutlip = lowerLid.cut(bottom).translate((p_outerWidth + p_thickness, 0, p_thickness - p_outerHeight + p_lipHeight))
 
-    # compute centers for counterbore/countersink or counterbore
-    topOfLidCenters = cutlip.faces(">Z").workplane().rect(POSTWIDTH, POSTLENGTH, forConstruction=True).vertices()
+    # compute centers for screw holes
+    topOfLidCenters = (cutlip.faces(">Z").workplane(centerOption="CenterOfMass")
+        .rect(POSTWIDTH, POSTLENGTH, forConstruction=True).vertices())
 
     # add holes of the desired type
     if p_boreDiameter > 0 and p_boreDepth > 0:

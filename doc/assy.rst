@@ -451,8 +451,8 @@ When creating a Point constraint, the ``param`` argument can be used to specify 
 between the two centers. This offset does not have a direction associated with it, if you want to
 specify an offset in a specific direction then you should use a dummy :class:`~cadquery.Vertex`.
 
-The Point constraint uses the :meth:`~cadquery.occ_impl.Shape.Center` to find the center of the
-argument. Hence it will work with all subclasses of :class:`~caquery.occ_impl.Shape`.
+The Point constraint uses the :meth:`~cadquery.Shape.Center` to find the center of the
+argument. Hence it will work with all subclasses of :class:`~cadquery.Shape`.
 
 .. cadquery::
 
@@ -619,7 +619,7 @@ Plane
 =====
 
 The Plane constraint is simply a combination of both the Point and Axis constraints. It is a
-convienient shortcut for a commonly used combination of constraints. It can be used to shorten the
+convenient shortcut for a commonly used combination of constraints. It can be used to shorten the
 previous example from the two constraints to just one:
 
 .. code-block:: diff
@@ -640,10 +640,9 @@ previous example from the two constraints to just one:
 
 The result of this code is identical to the above two constraint example.
 
-For the cost function of Plane, please see the Point and Axis sections. The ``param`` argument is
-copied into both constraints and should be left as the default value of ``None`` for a "mate" style
+For the cost function of Plane, please see the Point and Axis sections. The ``param`` argument is applied to Axis and should be left as the default value for a "mate" style
 constraint (two surfaces touching) or can be set to ``0`` for a through surface constraint (see
-desciption in the Axis constraint section).
+description in the Axis constraint section).
 
 
 PointInPlane
@@ -709,6 +708,178 @@ Where:
     assy.solve()
     show_object(assy)
 
+
+PointOnLine
+===========
+
+PointOnLine positions the center of the first object on the line defined by the second object.
+The cost function is:
+
+.. math::
+
+   ( param - \operatorname{dist}(\vec{ c }, l ) )^2
+
+
+Where:
+
+- :math:`\vec{ c }` is the center of the first argument,
+- :math:`l` is a line created from the second object
+- :math:`param` is the parameter of the constraint, which defaults to 0,
+- :math:`\operatorname{dist}( \vec{ a }, b)` is the distance between point :math:`\vec{ a }` and
+  line :math:`b`.
+
+
+.. cadquery::
+
+    import cadquery as cq
+
+    b1 = cq.Workplane().box(1,1,1)
+    b2 = cq.Workplane().sphere(0.15)
+
+    assy = (
+        cq.Assembly()
+        .add(b1,name='b1')
+        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+    )
+
+    # fix the position of b1
+    assy.constrain('b1','Fixed')
+    # b2 on one of the edges of b1
+    assy.constrain('b2','b1@edges@>>Z and >>Y','PointOnLine')
+    # b2 on another of the edges of b1
+    assy.constrain('b2','b1@edges@>>Z and >>X','PointOnLine')
+    # effectively b2 will be constrained to be on the intersection of the two edges
+
+    assy.solve()
+    show_object(assy)
+
+
+FixedPoint
+==========
+
+FixedPoint fixes the position of the given argument to be equal to the given point specified via the parameter of the constraint. This constraint locks all translational degrees of freedom of the argument.
+The cost function is:
+
+.. math::
+
+   \left\lVert \vec{ c } - \vec{param} \right\rVert ^2
+
+
+Where:
+
+- :math:`\vec{ c }` is the center of the argument,
+- :math:`param` is the parameter of the constraint - tuple specifying the target position,
+- :math:`\operatorname{dist}( \vec{ a }, b)` is the distance between point :math:`\vec{ a }` and
+  line :math:`b`.
+
+
+.. cadquery::
+
+    import cadquery as cq
+
+    b1 = cq.Workplane().box(1,1,1)
+    b2 = cq.Workplane().sphere(0.15)
+
+    assy = (
+        cq.Assembly()
+        .add(b1,name='b1')
+        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+    )
+
+    # fix the position of b1
+    assy.constrain('b1','Fixed')
+    # b2 on one of the edges of b1
+    assy.constrain('b2','b1@edges@>>Z and >>Y','PointOnLine')
+    # b2 on another of the edges of b1
+    assy.constrain('b2','b1@edges@>>Z and >>X','PointOnLine')
+    # effectively b2 will be constrained to be on the intersection of the two edges
+
+    assy.solve()
+    show_object(assy)
+
+
+FixedRotation
+=============
+
+FixedRotation fixes the rotation of the given argument to be equal to the value specified via the parameter of the constraint. The argument is rotated about it's origin firstly by the Z angle, then Y and finally X.
+
+This constraint locks all rotational degrees of freedom of the argument.
+The cost function is:
+
+.. math::
+
+   \left\lVert \vec{ R } - \vec{param} \right\rVert ^2
+
+
+Where:
+
+- :math:`\vec{ R }` vector of the rotation angles of the rotation applied to the argument,
+- :math:`param` is the parameter of the constraint - tuple specifying the target rotation.
+
+
+.. cadquery::
+
+    import cadquery as cq
+
+    b1 = cq.Workplane().box(1,1,1)
+    b2 = cq.Workplane().rect(0.1, 0.1).extrude(1,taper=-15)
+
+    assy = (
+        cq.Assembly()
+        .add(b1,name='b1')
+        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+    )
+
+    # fix the position of b1
+    assy.constrain('b1','Fixed')
+    # fix b2 bottom face position (but not rotation)
+    assy.constrain('b2@faces@<Z','FixedPoint',(0,0,0.5))
+    # fix b2 rotational degrees of freedom too
+    assy.constrain('b2','FixedRotation',(45,0,45))
+
+    assy.solve()
+    show_object(assy)
+
+
+FixedAxis
+=========
+
+FixedAxis fixes the orientation of the given argument's normal or tangent to be equal to the orientation of the vector specified via the parameter of the constraint. This constraint locks two rotational degrees of freedom of the argument.
+The cost function is:
+
+.. math::
+
+   ( \vec{ a } \angle \vec{ param } ) ^2
+
+
+Where:
+
+- :math:`\vec{ a }` normal or tangent vector of the argument,
+- :math:`param` is the parameter of the constraint - tuple specifying the target direction.
+
+
+.. cadquery::
+
+    import cadquery as cq
+
+    b1 = cq.Workplane().box(1,1,1)
+    b2 = cq.Workplane().rect(0.1, 0.1).extrude(1,taper=-15)
+
+    assy = (
+        cq.Assembly()
+        .add(b1,name='b1')
+        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+    )
+
+    # fix the position of b1
+    assy.constrain('b1','Fixed')
+    # fix b2 bottom face position (but not rotation)
+    assy.constrain('b2@faces@<Z','FixedPoint',(0,0,0.5))
+    # fix b2 some rotational degrees of freedom too
+    assy.constrain('b2@faces@>Z','FixedAxis',(1,0,2))
+
+    assy.solve()
+    show_object(assy)
 
 
 Assembly colors

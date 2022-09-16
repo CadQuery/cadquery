@@ -1,6 +1,7 @@
 from typing import Tuple, Union, Any, Callable, List, Optional, Iterable, Dict, Sequence
 from typing_extensions import Literal
 from nptyping import NDArray as Array
+from nptyping import Float
 from itertools import accumulate, chain
 from math import sin, cos, radians
 
@@ -160,7 +161,7 @@ def length_cost(x, t, x0, val):
     if t == "LINE":
         rv = norm(x[2:] - x[:2]) - val
     elif t == "CIRCLE":
-        rv = norm(x[2] * (x[4] - x[3])) - val
+        rv = norm(x[2] * x[4]) - val
     else:
         raise invalid_args(t)
 
@@ -212,7 +213,7 @@ def orientation_cost(x, t, x0, val):
 def arc_angle_cost(x, t, x0, val):
 
     if t == "CIRCLE":
-        rv = norm(x[4] - x[3]) - val
+        rv = x[4] - val
     else:
         raise invalid_args(t)
 
@@ -262,12 +263,12 @@ class SketchConstraintSolver(object):
         self.ixs = [0] + list(accumulate(len(e) for e in self.entities))
 
     def _cost(
-        self, x0: Array[(Any,), float]
+        self, x0: Array[Any, Float]
     ) -> Tuple[
-        Callable[[Array[(Any,), float]], float],
-        Callable[[Array[(Any,), float], Array[(Any,), float]], None],
-        Array[(Any,), float],
-        Array[(Any,), float],
+        Callable[[Array[Any, Float]], float],
+        Callable[[Array[Any, Float], Array[Any, Float]], None],
+        Array[Any, Float],
+        Array[Any, Float],
     ]:
 
         ixs = self.ixs

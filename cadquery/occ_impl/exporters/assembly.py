@@ -21,14 +21,33 @@ from OCP.PCDM import PCDM_StoreStatus
 from OCP.RWGltf import RWGltf_CafWriter
 from OCP.TColStd import TColStd_IndexedDataMapOfStringString
 from OCP.Message import Message_ProgressRange
+from OCP.Interface import Interface_Static
 
 from ..assembly import AssemblyProtocol, toCAF, toVTK
 
 
-def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
+def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     """
-    Export an assembly to a step a file.
+    Export an assembly to a STEP file.
+
+    kwargs is used to provide optional keyword arguments to configure the exporter.
+
+    :param assy: assembly
+    :param path: Path and filename for writing
+    :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
+
+        If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
+    :type write_pcurves: boolean
+    :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
+        See OCCT documentation.
+    :type precision_mode: int
     """
+
+    # Handle the extra settings for the STEP export
+    pcurves = 1
+    if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
+        pcurves = 0
+    precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
 
     _, doc = toCAF(assy, True)
 
@@ -37,6 +56,8 @@ def exportAssembly(assy: AssemblyProtocol, path: str) -> bool:
     writer.SetColorMode(True)
     writer.SetLayerMode(True)
     writer.SetNameMode(True)
+    Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
+    Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)
@@ -79,7 +100,9 @@ def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
     return status == PCDM_StoreStatus.PCDM_SS_OK
 
 
-def _vtkRenderWindow(assy: AssemblyProtocol) -> vtkRenderWindow:
+def _vtkRenderWindow(
+    assy: AssemblyProtocol, tolerance: float = 1e-3, angularTolerance: float = 0.1
+) -> vtkRenderWindow:
     """
     Convert an assembly to a vtkRenderWindow. Used by vtk based exporters.
     """
@@ -87,7 +110,7 @@ def _vtkRenderWindow(assy: AssemblyProtocol) -> vtkRenderWindow:
     renderer = vtkRenderer()
     renderWindow = vtkRenderWindow()
     renderWindow.AddRenderer(renderer)
-    toVTK(assy, renderer)
+    toVTK(assy, renderer, tolerance=tolerance, angularTolerance=angularTolerance)
 
     renderer.ResetCamera()
     renderer.SetBackground(1, 1, 1)
@@ -111,14 +134,19 @@ def exportVTKJS(assy: AssemblyProtocol, path: str):
         make_archive(path, "zip", tmpdir)
 
 
-def exportVRML(assy: AssemblyProtocol, path: str):
+def exportVRML(
+    assy: AssemblyProtocol,
+    path: str,
+    tolerance: float = 1e-3,
+    angularTolerance: float = 0.1,
+):
     """
     Export an assembly to a vrml file using vtk.
     """
 
     exporter = vtkVRMLExporter()
     exporter.SetFileName(path)
-    exporter.SetRenderWindow(_vtkRenderWindow(assy))
+    exporter.SetRenderWindow(_vtkRenderWindow(assy, tolerance, angularTolerance))
     exporter.Write()
 
 

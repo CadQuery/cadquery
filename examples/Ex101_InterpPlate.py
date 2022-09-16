@@ -4,8 +4,8 @@ import cadquery as cq
 # TEST_1
 # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.
 thickness = 0
-edge_points = [[0.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 10.0, 10.0], [0.0, 0.0, 10.0]]
-surface_points = [[5.0, 5.0, 5.0]]
+edge_points = [(0.0, 0.0, 0.0), (0.0, 10.0, 0.0), (0.0, 10.0, 10.0), (0.0, 0.0, 10.0)]
+surface_points = [(5.0, 5.0, 5.0)]
 plate_0 = cq.Workplane("XY").interpPlate(edge_points, surface_points, thickness)
 print("plate_0.val().Volume() = ", plate_0.val().Volume())
 plate_0 = plate_0.translate((0, 6 * 12, 0))
@@ -15,11 +15,11 @@ show_object(plate_0)
 # Plate with 5 sides and 2 bumps, one side is not co-planar with the other sides
 thickness = 0.1
 edge_points = [
-    [-7.0, -7.0, 0.0],
-    [-3.0, -10.0, 3.0],
-    [7.0, -7.0, 0.0],
-    [7.0, 7.0, 0.0],
-    [-7.0, 7.0, 0.0],
+    (-7.0, -7.0, 0.0),
+    (-3.0, -10.0, 3.0),
+    (7.0, -7.0, 0.0),
+    (7.0, 7.0, 0.0),
+    (-7.0, 7.0, 0.0),
 ]
 edge_wire = cq.Workplane("XY").polyline(
     [(-7.0, -7.0), (7.0, -7.0), (7.0, 7.0), (-7.0, 7.0)]
@@ -32,7 +32,7 @@ edge_wire = edge_wire.add(
     .transformed(offset=cq.Vector(0, 0, -7), rotate=cq.Vector(45, 0, 0))
     .spline([(-7.0, 0.0), (3, -3), (7.0, 0.0)])
 )
-surface_points = [[-3.0, -3.0, -3.0], [3.0, 3.0, 3.0]]
+surface_points = [(-3.0, -3.0, -3.0), (3.0, 3.0, 3.0)]
 plate_1 = cq.Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
 # plate_1 = cq.Workplane("XY").interpPlate(edge_points, surface_points, thickness) # list of (x,y,z) points instead of wires for edges
 print("plate_1.val().Volume() = ", plate_1.val().Volume())
@@ -45,16 +45,16 @@ r2 = 10.0
 fn = 6
 thickness = 0.1
 edge_points = [
-    [r1 * cos(i * pi / fn), r1 * sin(i * pi / fn)]
+    (r1 * cos(i * pi / fn), r1 * sin(i * pi / fn))
     if i % 2 == 0
-    else [r2 * cos(i * pi / fn), r2 * sin(i * pi / fn)]
+    else (r2 * cos(i * pi / fn), r2 * sin(i * pi / fn))
     for i in range(2 * fn + 1)
 ]
 edge_wire = cq.Workplane("XY").polyline(edge_points)
 r2 = 4.5
 surface_points = [
-    [r2 * cos(i * pi / fn), r2 * sin(i * pi / fn), 1.0] for i in range(2 * fn)
-] + [[0.0, 0.0, -2.0]]
+    (r2 * cos(i * pi / fn), r2 * sin(i * pi / fn), 1.0) for i in range(2 * fn)
+] + [(0.0, 0.0, -2.0)]
 plate_2 = cq.Workplane("XY").interpPlate(
     edge_wire,
     surface_points,
@@ -106,20 +106,20 @@ pts = [
 thickness = 0.1
 fn = 6
 edge_points = [
-    [
+    (
         r1 * cos(i * 2 * pi / fn + 30 * pi / 180),
         r1 * sin(i * 2 * pi / fn + 30 * pi / 180),
-    ]
+    )
     for i in range(fn + 1)
 ]
 surface_points = [
-    [
+    (
         r1 / 4 * cos(i * 2 * pi / fn + 30 * pi / 180),
         r1 / 4 * sin(i * 2 * pi / fn + 30 * pi / 180),
         0.75,
-    ]
+    )
     for i in range(fn + 1)
-] + [[0, 0, 2]]
+] + [(0, 0, 2)]
 edge_wire = cq.Workplane("XY").polyline(edge_points)
 plate_3 = (
     cq.Workplane("XY")
@@ -168,7 +168,7 @@ for i in range(len(edge_points) - 1):
         .workplane(offset=-offset_list[i + 1])
         .spline(edge_points[i + 1])
     )
-surface_points = [[0, 0, 0]]
+surface_points = [(0, 0, 0)]
 plate_4 = cq.Workplane("XY").interpPlate(edge_wire, surface_points, thickness)
 print("plate_4.val().Volume() = ", plate_4.val().Volume())
 plate_4 = plate_4.translate((0, 5 * 12, 0))

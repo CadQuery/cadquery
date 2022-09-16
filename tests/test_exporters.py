@@ -2,8 +2,12 @@
     Tests basic workplane functionality
 """
 # core modules
-import sys
+import os
 import io
+from pathlib import Path
+import re
+import sys
+import pytest
 
 # my modules
 from cadquery import *
@@ -11,6 +15,36 @@ from cadquery import exporters, importers
 from tests import BaseTest
 from OCP.GeomConvert import GeomConvert
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+
+
+@pytest.fixture(scope="module")
+def tmpdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("out")
+
+
+@pytest.fixture()
+def box123():
+    return Workplane().box(1, 2, 3)
+
+
+def test_step_options(tmpdir):
+    """
+    Exports a box using the options to decrease STEP file size and
+    then imports that STEP to validate it.
+    """
+    # Use a temporary directory
+    box_path = os.path.join(tmpdir, "out.step")
+
+    # Simple object to export
+    box = Workplane().box(1, 1, 1)
+
+    # Export the STEP with the size-saving options and then import it back in
+    box.val().exportStep(box_path, write_pcurves=False, precision_mode=0)
+    w = importers.importStep(box_path)
+
+    # Make sure there was a valid box in the exported file
+    assert w.solids().size() == 1
+    assert w.faces().size() == 6
 
 
 class TestExporters(BaseTest):
@@ -22,7 +56,7 @@ class TestExporters(BaseTest):
         """
         p = Workplane("XY").box(1, 2, 3)
 
-        if eType == exporters.ExportTypes.AMF:
+        if eType in (exporters.ExportTypes.AMF, exporters.ExportTypes.THREEMF):
             s = io.BytesIO()
         else:
             s = io.StringIO()
@@ -42,9 +76,8 @@ class TestExporters(BaseTest):
         return Workplane().box(1, 1, 1)
 
     def testSTL(self):
+        # New STL tests have been added; Keep this to test deprecated exportShape
         self._exportBox(exporters.ExportTypes.STL, ["facet normal"])
-
-        exporters.export(self._box(), "out.stl")
 
     def testSVG(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
@@ -80,6 +113,21 @@ class TestExporters(BaseTest):
         self._exportBox(exporters.ExportTypes.STEP, ["FILE_SCHEMA"])
 
         exporters.export(self._box(), "out.step")
+
+    def test3MF(self):
+        self._exportBox(
+            exporters.ExportTypes.THREEMF,
+            ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"],
+        )
+        exporters.export(self._box(), "out1.3mf")  # Compound
+        exporters.export(self._box().val(), "out2.3mf")  # Solid
+
+        # No zlib support
+        import zlib
+
+        sys.modules["zlib"] = None
+        exporters.export(self._box(), "out3.3mf")
+        sys.modules["zlib"] = zlib
 
     def testTJS(self):
         self._exportBox(
@@ -214,3 +262,91 @@ class TestExporters(BaseTest):
 
         with self.assertRaises(ValueError):
             exporters.export(self._box(), "out.stl", "STP")
+
+
+@pytest.mark.parametrize(
+    "id, opt, matchvals",
+    [
+        (0, {"ascii": True}, ["solid", "facet normal"]),
+        (1, {"ASCII": True}, ["solid", "facet normal"]),
+        (2, {"unknown_opt": 1, "ascii": True}, ["solid", "facet normal"]),
+        (3, {"ASCII": False, "ascii": True}, ["solid", "facet normal"]),
+    ],
+)
+def test_stl_ascii(tmpdir, box123, id, opt, matchvals):
+    """
+    :param tmpdir: temporary directory fixture
+    :param box123: box fixture
+    :param id: The index or id; output filename is <test name>_<id>.stl
+    :param opt: The export opt dict
+    :param matchval: List of strings to match at start of file
+    """
+
+    fpath = tmpdir.joinpath(f"stl_ascii_{id}.stl").resolve()
+    assert not fpath.exists()
+
+    assert matchvals
+
+    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
+
+    with open(fpath, "r") as f:
+        for i, line in enumerate(f):
+            if i > len(matchvals) - 1:
+                break
+            assert line.find(matchvals[i]) > -1
+
+
+@pytest.mark.parametrize(
+    "id, opt, matchval",
+    [
+        (0, None, b"STL Exported by OpenCASCADE"),
+        (1, {"ascii": False}, b"STL Exported by OpenCASCADE"),
+        (2, {"ASCII": False}, b"STL Exported by OpenCASCADE"),
+        (3, {"unknown_opt": 1}, b"STL Exported by OpenCASCADE"),
+        (4, {"unknown_opt": 1, "ascii": False}, b"STL Exported by OpenCASCADE"),
+    ],
+)
+def test_stl_binary(tmpdir, box123, id, opt, matchval):
+    """
+    :param tmpdir: temporary directory fixture
+    :param box123: box fixture
+    :param id: The index or id; output filename is <test name>_<id>.stl
+    :param opt: The export opt dict
+    :param matchval: Check that the file starts with the specified value
+    """
+
+    fpath = tmpdir.joinpath(f"stl_binary_{id}.stl").resolve()
+    assert not fpath.exists()
+
+    assert matchval
+
+    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
+
+    with open(fpath, "rb") as f:
+        r = f.read(len(matchval))
+        assert r == matchval
+
+
+def test_assy_vtk_rotation(tmpdir):
+
+    v0 = Vertex.makeVertex(1, 0, 0)
+
+    assy = Assembly()
+    assy.add(
+        v0, name="v0", loc=Location(Vector(0, 0, 0), Vector(1, 0, 0), 90),
+    )
+
+    fwrl = Path(tmpdir, "v0.wrl")
+    assert not fwrl.exists()
+    assy.save(str(fwrl), "VRML")
+    assert fwrl.exists()
+
+    matched_rot = False
+    with open(fwrl) as f:
+        pat_rot = re.compile("""rotation 1 0 0 1.5707963267""")
+        for line in f:
+            if m := re.search(pat_rot, line):
+                matched_rot = True
+                break
+
+    assert matched_rot

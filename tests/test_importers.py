@@ -7,6 +7,7 @@ import os
 
 from cadquery import importers, Workplane
 from tests import BaseTest
+from pytest import approx, raises
 
 # where unit test output will be saved
 OUTDIR = tempfile.gettempdir()
@@ -84,8 +85,9 @@ class TestImporters(BaseTest):
 
         filename = os.path.join(testdataDir, "gear.dxf")
 
-        obj = importers.importDXF(filename)
-        self.assertFalse(obj.val().isValid())
+        with self.assertRaises(ValueError):
+            # tol >~ 2e-4 required for closed wires
+            obj = importers.importDXF(filename)
 
         obj = importers.importDXF(filename, tol=1e-3)
         self.assertTrue(obj.val().isValid())
@@ -136,6 +138,26 @@ class TestImporters(BaseTest):
         self.assertTrue(obj.val().isValid())
         self.assertEqual(obj.faces().size(), 2)
         self.assertEqual(obj.wires().size(), 2)
+
+        obj = importers.importDXF(filename, include=["Layer2"])
+        assert obj.vertices("<XY").val().toTuple() == approx(
+            (104.2871791623584, 0.0038725018551133, 0.0)
+        )
+
+        obj = importers.importDXF(filename, include=["Layer2", "Layer3"])
+        assert obj.vertices("<XY").val().toTuple() == approx(
+            (104.2871791623584, 0.0038725018551133, 0.0)
+        )
+        assert obj.vertices(">XY").val().toTuple() == approx(
+            (257.6544359816229, 93.62447646419444, 0.0)
+        )
+
+        with raises(ValueError):
+            importers.importDXF(filename, include=["Layer1"], exclude=["Layer3"])
+
+        with raises(ValueError):
+            # Layer4 does not exist
+            importers.importDXF(filename, include=["Layer4"])
 
         # test dxf extrusion into the third dimension
         extrusion_value = 15.0

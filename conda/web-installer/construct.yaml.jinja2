@@ -1,0 +1,29 @@
+name: cadquery
+version: {{ installer_version }}
+installer_type: all
+
+license_file: ../../LICENSE
+
+# Don't add to the system Path
+initialize_by_default: false
+# Don't set as the default python
+register_python_default: false
+
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+  - conda-forge
+  - cadquery
+
+write_condarc: true
+conda_default_channels:
+  - conda-forge
+  - cadquery
+
+specs:
+  - python 3.10*
+  - conda
+# Occt is too big to bundle so install during post_install instead
+#  - cadquery
+
+post_install: post-install.sh           # [unix]
+post_install: post-install.bat          # [win]
