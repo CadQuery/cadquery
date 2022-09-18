@@ -138,28 +138,31 @@ def toCAF(
     # add leafs and subassemblies
     subassys: Dict[str, Tuple[TDF_Label, Location]] = {}
     for k, v in assy.traverse():
-        # leaf part
-        lab = tool.NewShape()
-        tool.SetShape(lab, Compound.makeCompound(v.shapes).wrapped)
-        setName(lab, f"{k}_part", tool)
-
         # assy part
         subassy = tool.NewShape()
-        tool.AddComponent(subassy, lab, TopLoc_Location())
         setName(subassy, k, tool)
 
-        # handle colors - this logic is needed for proper STEP export
-        color = v.color
-        tmp = v
-        if coloredSTEP:
-            while not color and tmp.parent:
-                tmp = tmp.parent
-                color = tmp.color
-            if color:
-                setColor(lab, color, ctool)
-        else:
-            if color:
-                setColor(subassy, color, ctool)
+        if len(v.shapes) > 0:
+            # leaf part
+            lab = tool.NewShape()
+            tool.SetShape(lab, Compound.makeCompound(v.shapes).wrapped)
+            setName(lab, f"{k}_part", tool)
+
+            tool.AddComponent(subassy, lab, TopLoc_Location())
+            setName(subassy, k, tool)
+
+            # handle colors - this logic is needed for proper STEP export
+            color = v.color
+            tmp = v
+            if coloredSTEP:
+                while not color and tmp.parent:
+                    tmp = tmp.parent
+                    color = tmp.color
+                if color:
+                    setColor(lab, color, ctool)
+            else:
+                if color:
+                    setColor(subassy, color, ctool)
 
         subassys[k] = (subassy, v.loc)
 
