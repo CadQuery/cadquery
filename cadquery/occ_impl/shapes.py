@@ -2521,7 +2521,7 @@ class Face(Shape):
         bldr = BRepBuilderAPI_MakeFace(f._geomAdaptor(), outer.wrapped)
 
         for w in inner:
-            bldr.Add(TopoDS.Wire_s(w.wrapped.Reversed()))
+            bldr.Add(TopoDS.Wire_s(w.wrapped))
 
         return cls(bldr.Face()).fix()
 
