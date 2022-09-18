@@ -1246,6 +1246,7 @@ class Shape(object):
         self,
         tolerance: Optional[float] = None,
         angularTolerance: Optional[float] = None,
+        normals: bool = True,
     ) -> vtkPolyData:
         """
         Convert shape to vtkPolyData
@@ -1275,6 +1276,17 @@ class Shape(object):
         t_filter.Update()
 
         rv = t_filter.GetOutput()
+
+        # compute normals
+        if normals:
+            n_filter = vtkPolyDataNormals()
+            n_filter.SetComputePointNormals(True)
+            n_filter.SetComputeCellNormals(True)
+            n_filter.SetFeatureAngle(360)
+            n_filter.SetInputData(rv)
+            n_filter.Update()
+
+            rv = n_filter.GetOutput()
 
         return rv
 
