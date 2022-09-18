@@ -58,7 +58,7 @@ from OCP.TColStd import TColStd_HArray1OfReal
 from OCP.BRepAdaptor import (
     BRepAdaptor_Curve,
     BRepAdaptor_CompCurve,
-    BRepAdaptor_Surface
+    BRepAdaptor_Surface,
 )
 
 from OCP.BRepBuilderAPI import (
@@ -1217,7 +1217,9 @@ class Shape(object):
             # add vertices
             vertices += [
                 Vector(v.X(), v.Y(), v.Z())
-                for v in (poly.Node(i).Transformed(Trsf) for i in range(1, poly.NbNodes()))
+                for v in (
+                    poly.Node(i).Transformed(Trsf) for i in range(1, poly.NbNodes())
+                )
             ]
 
             # add triangles
@@ -1241,7 +1243,9 @@ class Shape(object):
         return vertices, triangles
 
     def toVtkPolyData(
-        self, tolerance: Optional[float] = None, angularTolerance: Optional[float] = None
+        self,
+        tolerance: Optional[float] = None,
+        angularTolerance: Optional[float] = None,
     ) -> vtkPolyData:
         """
         Convert shape to vtkPolyData
@@ -1335,7 +1339,6 @@ class Vertex(Shape):
 class Mixin1DProtocol(ShapeProtocol, Protocol):
     def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         ...
-
 
     def paramAt(self, d: float) -> float:
         ...
