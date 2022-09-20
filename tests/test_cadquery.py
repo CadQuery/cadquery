@@ -4,7 +4,6 @@
 """
 # system modules
 import math, os.path, time, tempfile
-from random import choice
 from random import random
 from random import randrange
 from itertools import product
@@ -14,7 +13,6 @@ from pytest import approx, raises
 # my modules
 
 from cadquery import *
-from cadquery import exporters
 from cadquery import occ_impl
 from tests import (
     BaseTest,
@@ -5479,3 +5477,13 @@ class TestCadQuery(BaseTest):
         # exception on invalid constraint
         with raises(ValueError):
             Face.makeNSidedSurface(outer_w, [[0, 0, 1]])
+
+    def test_toVtk(self):
+
+        from vtkmodules.vtkCommonDataModel import vtkPolyData
+
+        f = Face.makePlane(2, 2)
+        vtk = f.toVtkPolyData(normals=False)
+
+        assert isinstance(vtk, vtkPolyData)
+        assert vtk.GetNumberOfPolys() == 2
