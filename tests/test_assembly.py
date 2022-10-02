@@ -10,8 +10,13 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVTKJS,
     exportVRML,
 )
-from cadquery.occ_impl.assembly import toJSON
+from cadquery.occ_impl.assembly import toJSON, toCAF
 from OCP.gp import gp_XYZ
+from OCP.XCAFPrs import (
+    XCAFPrs_DocumentExplorer,
+    XCAFPrs_DocumentExplorerFlags_OnlyLeafNodes,
+    XCAFPrs_Style,
+)
 
 
 @pytest.fixture
@@ -177,6 +182,26 @@ def test_assembly(simple_assy, nested_assy):
     assert kvs[0][0] == "BOTTOM"
     assert len(kvs[0][1].shapes[0].Solids()) == 2
     assert kvs[-1][0] == "TOP"
+
+
+def count_leaf_nodes(assy):
+    _, doc = toCAF(assy)
+    expl = XCAFPrs_DocumentExplorer(
+        doc, XCAFPrs_DocumentExplorerFlags_OnlyLeafNodes, XCAFPrs_Style()
+    )
+    count = 0
+    while expl.More():
+        count += 1
+        expl.Next()
+    return count
+
+
+def test_assembly_leaf(simple_assy, nested_assy, empty_top_assy):
+    """ Verify leaf node count is correct; do not add leaf for empty root object """
+
+    assert count_leaf_nodes(simple_assy) == 3
+    assert count_leaf_nodes(nested_assy) == 3
+    assert count_leaf_nodes(empty_top_assy) == 1
 
 
 def test_step_export(nested_assy, tmp_path_factory):
