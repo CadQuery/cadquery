@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple, Dict, overload, Optional, Any, List
+from typing import Iterable, Sequence, Tuple, Dict, overload, Optional, Any, List
 from typing_extensions import Protocol
 from math import degrees
 
@@ -96,7 +96,7 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
-    def shapes(self) -> Iterable[Shape]:
+    def shapes(self) -> Sequence[Shape]:
         ...
 
     @property
