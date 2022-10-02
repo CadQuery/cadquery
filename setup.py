@@ -25,7 +25,7 @@ is_azure = "CONDA_PY" in os.environ
 # Only include the installation dependencies if we are not running on RTD or AppVeyor
 if not is_rtd and not is_appveyor and not is_azure:
     reqs = [
-        "cadquery-ocp>=7.5,<7.6",
+        "cadquery-ocp>=7.6,<7.7",
         "ezdxf",
         "multimethod>=1.7,<2.0",
         "nlopt",
