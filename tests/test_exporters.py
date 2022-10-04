@@ -350,3 +350,9 @@ def test_assy_vtk_rotation(tmpdir):
                 break
 
     assert matched_rot
+
+def test_tessellate(box123):
+
+    verts, triangles = box123.val().tessellate(1e-6)
+    assert len(verts) == 24
+    assert len(triangles) == 12
