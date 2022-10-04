@@ -1246,7 +1246,7 @@ class Shape(object):
         self,
         tolerance: Optional[float] = None,
         angularTolerance: Optional[float] = None,
-        normals: bool = True,
+        normals: bool = False,
     ) -> vtkPolyData:
         """
         Convert shape to vtkPolyData
