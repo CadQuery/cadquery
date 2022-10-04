@@ -1,4 +1,4 @@
-from typing import Iterable, Sequence, Tuple, Dict, overload, Optional, Any, List
+from typing import Iterable, Tuple, Dict, overload, Optional, Any, List
 from typing_extensions import Protocol
 from math import degrees
 
@@ -96,7 +96,7 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
-    def shapes(self) -> Sequence[Shape]:
+    def shapes(self) -> Iterable[Shape]:
         ...
 
     @property
@@ -142,7 +142,7 @@ def toCAF(
         subassy = tool.NewShape()
         setName(subassy, k, tool)
 
-        if len(v.shapes) > 0:
+        if v.shapes:
             # leaf part
             lab = tool.NewShape()
             tool.SetShape(lab, Compound.makeCompound(v.shapes).wrapped)
