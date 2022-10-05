@@ -43,6 +43,7 @@ Table Of Contents
     fileformat.rst
     examples.rst
     apireference.rst
+    API Cheatsheet <https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html>
     selectors.rst
     classreference.rst
     importexport.rst
