@@ -530,7 +530,7 @@ class Workplane(object):
         :type invert: boolean or None=False
         :type centerOption: string or None='ProjectedOrigin'
         :type origin: Vector or None
-        :rtype: Workplane object 
+        :rtype: Workplane object
 
         The first element on the stack must be a face, a set of
         co-planar faces or a vertex.  If a vertex, then the parent
@@ -3019,7 +3019,7 @@ class Workplane(object):
           passed, the extrusion extends this far and a negative value is in the opposite direction
           to the normal of the plane. The string "next" extrudes until the next face orthogonal to
           the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
-          the extrusion will extend until this face. **Note that the Workplane must contain a Solid for extruding to a given face.**        
+          the extrusion will extend until this face. **Note that the Workplane must contain a Solid for extruding to a given face.**
         :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
@@ -3524,7 +3524,7 @@ class Workplane(object):
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
 
         :return: a Workplane object containing the created loft
-        
+
         """
 
         if self.ctx.pendingWires:
@@ -3765,7 +3765,7 @@ class Workplane(object):
     ) -> T:
         """
         Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going
-        through 'surf_pts' points.  Using pushPoints directly with interpPlate and combine=True, can be 
+        through 'surf_pts' points.  Using pushPoints directly with interpPlate and combine=True, can be
         very resources intensive depending on the complexity of the shape. In this case set combine=False.
 
         :param surf_edges
@@ -3833,7 +3833,7 @@ class Workplane(object):
         # thicken if needed
         s = f.thicken(thickness) if thickness > 0 else f
 
-        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
 
     def box(
         self: T,
@@ -3903,7 +3903,7 @@ class Workplane(object):
 
         box = Solid.makeBox(length, width, height, offset)
 
-        return self.eachpoint(lambda loc: box.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: box.moved(loc), True, combine, clean)
 
     def sphere(
         self: T,
@@ -3967,7 +3967,7 @@ class Workplane(object):
         s = Solid.makeSphere(radius, offset, direct, angle1, angle2, angle3)
 
         # We want a sphere for each point on the workplane
-        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
 
     def cylinder(
         self: T,
@@ -4024,7 +4024,7 @@ class Workplane(object):
         s = Solid.makeCylinder(radius, height, offset, direct, angle)
 
         # We want a cylinder for each point on the workplane
-        return self.eachpoint(lambda loc: s.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
 
     def wedge(
         self: T,
@@ -4094,7 +4094,7 @@ class Workplane(object):
         w = Solid.makeWedge(dx, dy, dz, xmin, zmin, xmax, zmax, offset, dir)
 
         # We want a wedge for each point on the workplane
-        return self.eachpoint(lambda loc: w.moved(loc), True, combine)
+        return self.eachpoint(lambda loc: w.moved(loc), True, combine, clean)
 
     def clean(self: T) -> T:
         """

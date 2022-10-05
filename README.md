@@ -25,12 +25,12 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 2. CadQuery's CAD kernel Open CASCADE Technology ([OCCT](https://en.wikipedia.org/wiki/Open_Cascade_Technology)) is much more powerful than the [CGAL](https://en.wikipedia.org/wiki/CGAL) used by OpenSCAD. Features supported natively by OCCT include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
 3. Ability to import/export [STEP](https://en.wikipedia.org/wiki/ISO_10303) and the ability to begin with a STEP model, created in a CAD package, and then add parametric features. This is possible in OpenSCAD using STL, but STL is a lossy format.
 4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
-5. CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
+5. CadQuery scripts can build STL, STEP, AMF and 3MF faster than OpenSCAD.
 
 ### Key features
 * Build 3D models with scripts that are as close as possible to how you would describe the object to a human.
 * Create parametric models that can be very easily customized by end users.
-* Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL, VRML and AMF.
+* Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL, VRML, AMF and 3MF.
 * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser.
 * Offer advanced modeling capabilities such as fillets, curvilinear extrudes, parametric curves and lofts.
 * Build nested assemblies out of individual parts and other assemblies.
@@ -53,19 +53,8 @@ There are currently 4 different ways to use CadQuery for designing your next pro
     * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
     * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
 
-There are two ways to install the CadQuery library and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system.
 
-### CQ-editor GUI
-
-CQ-editor is an IDE that allows users to edit CadQuery model scripts in a GUI environment. It includes features such as:
-
-* A graphical debugger that allows you to step through your scripts.
-* A CadQuery stack inspector.
-* Export to various formats, including STEP and STL, directly from the menu.
-
-The installation instructions for CQ-editor can be found [here](https://github.com/CadQuery/CQ-editor#installation).
-
-<img src="https://raw.githubusercontent.com/CadQuery/CQ-editor/master/screenshots/screenshot3.png" alt="CQ editor screenshot" width="800"/>
+There are two ways to install CadQuery and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system. Note that conda is the better supported option.
 
 ### CadQuery Installation Via Pip
 
@@ -77,9 +66,9 @@ python3 -m pip install --upgrade pip
 ```
 Once a current version of pip is installed, CadQuery can be installed using the following command line.
 ```
-pip install cadquery==2.2.0b0
+pip install --pre cadquery
 ```
-Notice that the version number is pinned to a beta version. This is because CadQuery has only recently returned to PyPI, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`. However, if the version number pin is not used for now, a 1.x version of CadQuery will be installed, which is extremely out of date.
+NB: CadQuery has only recently returned to PyPI, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`.
 
 It is also possible to install the very latest changes directly from CadQuery's GitHub repository, with the understanding that sometimes breaking changes can occur. To install from the git repository, run the following command line.
 ```

@@ -10,7 +10,7 @@ CadQuery is an intuitive, easy-to-use Python library for building parametric 3D 
 
     * Create parametric models that can be very easily customized by end users
 
-    * Output high quality CAD formats like STEP and AMF in addition to traditional STL
+    * Output high quality CAD formats like STEP, AMF and 3MF in addition to traditional STL
 
     * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 

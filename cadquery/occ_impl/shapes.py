@@ -19,12 +19,11 @@ from io import BytesIO
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
-
 from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
 
 from ..utils import cqmultimethod as multimethod
 
-import OCP.TopAbs as ta  # Tolopolgy type enum
+import OCP.TopAbs as ta  # Topology type enum
 import OCP.GeomAbs as ga  # Geometry type enum
 
 from OCP.Precision import Precision
@@ -60,8 +59,6 @@ from OCP.BRepAdaptor import (
     BRepAdaptor_Curve,
     BRepAdaptor_CompCurve,
     BRepAdaptor_Surface,
-    BRepAdaptor_HCurve,
-    BRepAdaptor_HCompCurve,
 )
 
 from OCP.BRepBuilderAPI import (
@@ -96,9 +93,9 @@ from OCP.BRepPrimAPI import (
 )
 from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
-from OCP.TopExp import TopExp_Explorer  # Toplogy explorer
+from OCP.TopExp import TopExp_Explorer  # Topology explorer
 
-# used for getting underlying geoetry -- is this equivalent to brep adaptor?
+# used for getting underlying geometry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
 
 from OCP.TopoDS import (
@@ -232,6 +229,10 @@ from OCP.IVtkVTK import IVtkVTK_ShapeData
 
 # for catching exceptions
 from OCP.Standard import Standard_NoSuchObject, Standard_Failure
+
+from OCP.Prs3d import Prs3d_IsoAspect
+from OCP.Quantity import Quantity_Color
+from OCP.Aspect import Aspect_TOL_SOLID
 
 from OCP.Interface import Interface_Static
 
@@ -430,30 +431,40 @@ class Shape(object):
         }
 
         t = shapetype(obj)
-        # NB downcast is needed to handly TopoDS_Shape types
+        # NB downcast is needed to handle TopoDS_Shape types
         tr = constructor_LUT[t](downcast(obj))
         tr.forConstruction = forConstruction
 
         return tr
 
     def exportStl(
-        self, fileName: str, tolerance: float = 1e-3, angularTolerance: float = 0.1
+        self,
+        fileName: str,
+        tolerance: float = 1e-3,
+        angularTolerance: float = 0.1,
+        ascii: bool = False,
     ) -> bool:
         """
         Exports a shape to a specified STL file.
 
         :param fileName: The path and file name to write the STL output to.
-        :type fileName: fileName
-        :param tolerance: A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
-        :type tolerance: float
-        :param angularTolerance: - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
-        :type angularTolerance: float
+        :param tolerance: A linear deflection setting which limits the distance between a curve and its tessellation.
+            Setting this value too low will result in large meshes that can consume computing resources.
+            Setting the value too high can result in meshes with a level of detail that is too low.
+            Default is 1e-3, which is a good starting point for a range of cases.
+        :param angularTolerance: Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
+        :param ascii: Export the file as ASCII (True) or binary (False) STL format.  Default is binary.
         """
 
         mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
         mesh.Perform()
 
         writer = StlAPI_Writer()
+
+        if ascii:
+            writer.ASCIIMode = True
+        else:
+            writer.ASCIIMode = False
 
         return writer.Write(self.wrapped, fileName)
 
@@ -1206,7 +1217,9 @@ class Shape(object):
             # add vertices
             vertices += [
                 Vector(v.X(), v.Y(), v.Z())
-                for v in (v.Transformed(Trsf) for v in poly.Nodes())
+                for v in (
+                    poly.Node(i).Transformed(Trsf) for i in range(1, poly.NbNodes() + 1)
+                )
             ]
 
             # add triangles
@@ -1230,7 +1243,10 @@ class Shape(object):
         return vertices, triangles
 
     def toVtkPolyData(
-        self, tolerance: float, angularTolerance: float = 0.1, normals: bool = True
+        self,
+        tolerance: Optional[float] = None,
+        angularTolerance: Optional[float] = None,
+        normals: bool = True,
     ) -> vtkPolyData:
         """
         Convert shape to vtkPolyData
@@ -1238,9 +1254,17 @@ class Shape(object):
 
         vtk_shape = IVtkOCC_Shape(self.wrapped)
         shape_data = IVtkVTK_ShapeData()
-        shape_mesher = IVtkOCC_ShapeMesher(
-            tolerance, angularTolerance, theNbUIsos=0, theNbVIsos=0
-        )
+        shape_mesher = IVtkOCC_ShapeMesher()
+
+        drawer = vtk_shape.Attributes()
+        drawer.SetUIsoAspect(Prs3d_IsoAspect(Quantity_Color(), Aspect_TOL_SOLID, 1, 0))
+        drawer.SetVIsoAspect(Prs3d_IsoAspect(Quantity_Color(), Aspect_TOL_SOLID, 1, 0))
+
+        if tolerance:
+            drawer.SetDeviationCoefficient(tolerance)
+
+        if angularTolerance:
+            drawer.SetDeviationAngle(angularTolerance)
 
         shape_mesher.Build(vtk_shape, shape_data)
 
@@ -1326,14 +1350,6 @@ class Vertex(Shape):
 
 class Mixin1DProtocol(ShapeProtocol, Protocol):
     def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
-        ...
-
-    def _geomAdaptorH(
-        self,
-    ) -> Tuple[
-        Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve],
-        Union[BRepAdaptor_HCurve, BRepAdaptor_HCompCurve],
-    ]:
         ...
 
     def paramAt(self, d: float) -> float:
@@ -1536,7 +1552,7 @@ class Mixin1D(object):
         :return: A Location object representing local coordinate system at the specified distance.
         """
 
-        curve, curveh = self._geomAdaptorH()
+        curve = self._geomAdaptor()
 
         if mode == "length":
             param = self.paramAt(d)
@@ -1549,7 +1565,7 @@ class Mixin1D(object):
         else:
             law = GeomFill_CorrectedFrenet()
 
-        law.SetCurve(curveh)
+        law.SetCurve(curve)
 
         tangent, normal, binormal = gp_Vec(), gp_Vec(), gp_Vec()
 
@@ -1633,15 +1649,6 @@ class Edge(Shape, Mixin1D):
         """
 
         return BRepAdaptor_Curve(self.wrapped)
-
-    def _geomAdaptorH(self) -> Tuple[BRepAdaptor_Curve, BRepAdaptor_HCurve]:
-        """
-        Return the underlying geometry
-        """
-
-        curve = self._geomAdaptor()
-
-        return curve, BRepAdaptor_HCurve(curve)
 
     def close(self) -> Union["Edge", "Wire"]:
         """
@@ -1932,15 +1939,6 @@ class Wire(Shape, Mixin1D):
         """
 
         return BRepAdaptor_CompCurve(self.wrapped)
-
-    def _geomAdaptorH(self) -> Tuple[BRepAdaptor_CompCurve, BRepAdaptor_HCompCurve]:
-        """
-        Return the underlying geometry
-        """
-
-        curve = self._geomAdaptor()
-
-        return curve, BRepAdaptor_HCompCurve(curve)
 
     def close(self) -> "Wire":
         """
@@ -2535,7 +2533,7 @@ class Face(Shape):
         bldr = BRepBuilderAPI_MakeFace(f._geomAdaptor(), outer.wrapped)
 
         for w in inner:
-            bldr.Add(TopoDS.Wire_s(w.wrapped.Reversed()))
+            bldr.Add(TopoDS.Wire_s(w.wrapped))
 
         return cls(bldr.Face()).fix()
 

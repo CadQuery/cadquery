@@ -28,7 +28,7 @@ install:
     - cmd: conda init cmd.exe
     - conda env create -f environment.yml
     - conda activate cadquery
-    - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.5.1
+    - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.6.3
 
 build: false
 
