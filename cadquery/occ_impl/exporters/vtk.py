@@ -18,7 +18,7 @@ def toString(
 
     writer = vtkXMLPolyDataWriter()
     writer.SetWriteToOutputString(True)
-    writer.SetInputData(shape.toVtkPolyData(tolerance, angularTolerance))
+    writer.SetInputData(shape.toVtkPolyData(tolerance, angularTolerance, True))
     writer.Write()
 
     return writer.GetOutputString()
