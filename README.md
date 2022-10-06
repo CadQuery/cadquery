@@ -125,6 +125,18 @@ cmd /K ""%USERPROFILE%/Miniforge3/Scripts/activate.bat" "%USERPROFILE%/Miniforge
 ```
 You might want to consider using `/NoScripts=0` to have an activation shortcut added to the start menu.
 
+### CQ-editor GUI
+
+CQ-editor is an IDE that allows users to edit CadQuery model scripts in a GUI environment. It includes features such as:
+
+* A graphical debugger that allows you to step through your scripts.
+* A CadQuery stack inspector.
+* Export to various formats, including STEP and STL, directly from the menu.
+
+The installation instructions for CQ-editor can be found [here](https://github.com/CadQuery/CQ-editor#installation).
+
+<img src="https://raw.githubusercontent.com/CadQuery/CQ-editor/master/screenshots/screenshot3.png" alt="CQ editor screenshot" width="800"/>
+
 ### Jupyter
 
 CadQuery supports Jupyter notebook out of the box using the jupyter-cadquery extension created by @bernhard-42:
