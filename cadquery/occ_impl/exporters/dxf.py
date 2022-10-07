@@ -120,10 +120,10 @@ def exportDXF(w: Workplane, fname: str):
     dxf = ezdxf.new()
     msp = dxf.modelspace()
 
-    for w in shape.Wires():
-        for e in w.Edges():
+    for wire in shape.Wires():
+        for edge in wire.Edges():
 
-            conv = DXF_CONVERTERS.get(e.geomType(), _dxf_spline)
-            conv(e, msp, plane)
+            conv = DXF_CONVERTERS.get(edge.geomType(), _dxf_spline)
+            conv(edge, msp, plane)
 
     dxf.saveas(fname)
