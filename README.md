@@ -8,6 +8,13 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4498634.svg)](https://doi.org/10.5281/zenodo.4498634)
 
 
+---
+
+### Quick Links
+[***Documentation***](https://cadquery.readthedocs.io/en/latest/) | [***Cheatsheet***](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html) | [***Discord***](https://discord.com/invite/Bj9AQPsCfx) | [***Google Group***](https://groups.google.com/g/cadquery) | [***GUI Editor***](https://github.com/CadQuery/CQ-editor)
+
+---
+
 ## What is CadQuery
 
 CadQuery is an intuitive, easy-to-use Python module for building parametric 3D CAD models. Using CadQuery, you can write short, simple scripts that produce high quality CAD models. It is easy to make many different objects using a single script that can be customized.
@@ -34,15 +41,18 @@ The original version of CadQuery was built on the FreeCAD API. This was great be
 
 ## Getting started
 
-To quickly play around with CadQuery and see it's capabilities, see the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor) manual.  
-If you want to use CadQuery for your own project, keep reading: 
+To learn more about designing with CadQuery, visit the [documentation](https://cadquery.readthedocs.io/en/latest/intro.html), [examples](https://cadquery.readthedocs.io/en/latest/examples.html), and [cheatsheet](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html).
 
-It is currently possible to use CadQuery for your own projects in 3 different ways:
+To get started playing around with CadQuery and see it's capabilities, take a look at the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor). This easy-to-use IDE is a great way to get started desiging with CadQuery.
+
+There are currently 4 different ways to use CadQuery for designing your next project:
 * Using the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor)
 * From a [Jupyter notebook](https://github.com/bernhard-42/jupyter-cadquery)
+* Using a [VSCode extension](https://marketplace.visualstudio.com/items?itemName=roipoussiere.cadquery)
 * As a standalone library
     * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
     * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
+
 
 There are two ways to install CadQuery and its dependencies. One is using conda, and the other is using pip. Pip is shown first below, followed by two sections on installing CadQuery via conda, and a non-intrusive way to install conda on a system. Note that conda is the better supported option.
 
