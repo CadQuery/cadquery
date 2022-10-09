@@ -45,7 +45,7 @@ Let's see how we do.
 Start With A single, simple Plate
 ======================================
 
-Lets start with a simple model that makes nothing but a rectangular block, but
+Let's start with a simple model that makes nothing but a rectangular block, but
 with place-holders for the dimensions. Paste this into the code editor:
 
 .. code-block:: python
