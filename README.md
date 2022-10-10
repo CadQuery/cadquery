@@ -79,12 +79,12 @@ You should now have a working CadQuery installation, but developers or users who
 
 If you are installing CadQuery to use with IPython/Jupyter, you may want to run the following command line to install the extra dependencies.
 ```
-pip install cadquery[ipython]==2.2.0b0
+pip install cadquery[ipython]==2.2.0b2
 ```
 
 If you want to create a developer setup to contribute to CadQuery, the following command line will install all the development dependencies that are needed.
 ```
-pip install cadquery[dev]==2.2.0b0
+pip install cadquery[dev]==2.2.0b2
 ```
 
 ### CadQuery Installation Via Conda
