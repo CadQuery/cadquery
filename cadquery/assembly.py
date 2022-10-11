@@ -300,11 +300,7 @@ class Assembly(object):
 
     @overload
     def constrain(
-        self,
-        id1: str,
-        s1: Shape,
-        kind: ConstraintKind,
-        param: Any = None,
+        self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
     ) -> "Assembly":
         ...
 
