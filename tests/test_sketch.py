@@ -422,6 +422,13 @@ def test_selectors():
     s.reset().wires(LengthNthSelector(1))
 
     assert len(s._selection) == 2
+    assert len(s.vals()) == 2
+
+    s.reset().vertices("<X and <Y").val()
+    assert s.val().toTuple() == approx((-2.5, -0.5, 0.0))
+
+    s.reset().vertices(">>X[1] and <Y").val()
+    assert s.val().toTuple()[0] == approx((0, 0, 0))
 
 
 def test_edge_interface():
@@ -717,3 +724,11 @@ def test_dxf_import():
     s3 = Sketch().circle(20).importDXF(filename, tol=1e-3, mode="s")
 
     assert s3._faces.isValid()
+
+    s4 = Sketch().importDXF(filename, tol=1e-3, include=["0"])
+
+    assert s4._faces.isValid()
+
+    s5 = Sketch().importDXF(filename, tol=1e-3, exclude=["1"])
+
+    assert s5._faces.isValid()

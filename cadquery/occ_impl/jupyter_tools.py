@@ -36,7 +36,7 @@ function render(data, parent_element, ratio){{
         const mapper = vtk.Rendering.Core.vtkMapper.newInstance();
         mapper.setInputConnection(reader.getOutputPort());
         mapper.setResolveCoincidentTopologyToPolygonOffset();
-        mapper.setResolveCoincidentTopologyPolygonOffsetParameters(0.5,100);
+        mapper.setResolveCoincidentTopologyPolygonOffsetParameters(0.9,20);
 
         const actor = vtk.Rendering.Core.vtkActor.newInstance();
         actor.setMapper(mapper);

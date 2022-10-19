@@ -9,7 +9,7 @@ which is a set of Python bindings for the open-source `OpenCascade <http://www.o
 
 Conda
 ----------------------------------------------
-In principle any conda distrubtion will work, but it is probably best to install `Miniforge <https://github.com/conda-forge/miniforge>`_ to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation. In Linux/MacOS, the local directory installation method looks something like this::
+In principle, any conda distribution will work, but it is probably best to install `Miniforge <https://github.com/conda-forge/miniforge>`_ to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation. In Linux/MacOS, the local directory installation method looks something like this::
 
         # Install the script to ~/miniforge
         wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh

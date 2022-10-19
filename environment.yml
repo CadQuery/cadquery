@@ -6,10 +6,9 @@ channels:
 dependencies:
   - python>=3.8
   - ipython
-  - ocp=7.5.3
-  - vtk=9.0.1
+  - ocp=7.6.*
   - pyparsing>=2.1.9
-  - sphinx=4.4.0
+  - sphinx=5.0.1
   - sphinx_rtd_theme
   - black=19.10b0
   - click=8.0.4
@@ -29,4 +28,4 @@ dependencies:
     - "--install-option=\"--no-deps\""
     - "--editable=."
     - sphinxcadquery
-    - multimethod
+    - multimethod>=1.7,<2.0

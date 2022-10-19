@@ -30,13 +30,14 @@ Export Formats
 * TJS
 * VRML
 * VTP
+* 3MF
 
 Notes on the Formats
 ---------------------
 
 * DXF is useful for importing complex 2D profiles that would be tedious to create using CadQuery's 2D operations. An example is that the 2D profiles of aluminum extrusion are often provided in DXF format. These can be imported and extruded to create the length of extrusion that is needed in a design.
 * STEP files are useful for interchanging model data with other CAD and analysis systems, such as FreeCAD. Many parts such as screws have STEP files available, which can be imported and used in CadQuery assemblies.
-* STL and AMF files are mesh-based formats which are typically used in additive manufacturing (i.e. 3D printing). AMF files support more features, but are not as universally supported as STL files.
+* STL, AMF and 3MF files are mesh-based formats which are typically used in additive manufacturing (i.e. 3D printing). AMF and 3MF files support more features, but are not as universally supported as STL files.
 * TJS is short for ThreeJS, and is a JSON mesh format that is useful for displaying 3D models in web browsers. The TJS format is used to display embedded 3D examples within the CadQuery documentation.
 * VRML is a mesh-based format for representing interactive 3D objects in a web browser.
 * VTP is a mesh-based format used by the VTK library.
@@ -165,17 +166,17 @@ optimum values that will produce an acceptable mesh.
 
     exporters.export(result, '/path/to/file/mesh.stl')
 
-Exporting AMF
-##############
+Exporting AMF and 3MF
+######################
 
-The AMF exporter is capable of adjusting the quality of the resulting mesh, and accepts the following parameters.
+The AMF and 3MF exporters are capable of adjusting the quality of the resulting mesh, and accept the following parameters.
 
 * ``fileName`` - The path and file name to write the AMF output to.
 * ``tolerance`` - A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
 * ``angularTolerance`` - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
 
 For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the 
-optimum values that will produce an acceptable mesh. Note that parameters for AMF color and material are absent.
+optimum values that will produce an acceptable mesh. Note that parameters for color and material are absent.
 
 .. code-block:: python
 

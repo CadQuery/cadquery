@@ -170,6 +170,7 @@ class Sketch(object):
         filename: str,
         tol: float = 1e-6,
         exclude: List[str] = [],
+        include: List[str] = [],
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
@@ -178,7 +179,7 @@ class Sketch(object):
         Import a DXF file and construct face(s)
         """
 
-        res = Compound.makeCompound(_importDXF(filename, tol, exclude))
+        res = Compound.makeCompound(_importDXF(filename, tol, exclude, include))
 
         return self.face(res, angle, mode, tag)
 
@@ -782,7 +783,7 @@ class Sketch(object):
         forConstruction: bool = False,
     ) -> T:
         """
-        Construct an arc starting at p1, through p2, ending at p3
+        Construct an arc.
         """
 
         val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
@@ -1013,7 +1014,21 @@ class Sketch(object):
 
     def finalize(self) -> Any:
         """
-        Finish sketch construction and return the parent
+        Finish sketch construction and return the parent.
         """
 
         return self.parent
+
+    def val(self: T) -> SketchVal:
+        """
+        Return the first selected item or Location().
+        """
+
+        return self._selection[0] if self._selection else Location()
+
+    def vals(self: T) -> List[SketchVal]:
+        """
+        Return the list of selected items.
+        """
+
+        return self._selection

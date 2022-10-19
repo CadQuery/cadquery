@@ -14,6 +14,7 @@ from ..shapes import Shape
 from .svg import getSVG
 from .json import JsonMesh
 from .amf import AmfWriter
+from .threemf import ThreeMFWriter
 from .dxf import exportDXF
 from .vtk import exportVTP
 from .utils import toCompound
@@ -28,9 +29,12 @@ class ExportTypes:
     DXF = "DXF"
     VRML = "VRML"
     VTP = "VTP"
+    THREEMF = "3MF"
 
 
-ExportLiterals = Literal["STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP"]
+ExportLiterals = Literal[
+    "STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP", "3MF"
+]
 
 
 def export(
@@ -93,6 +97,11 @@ def export(
         with open(fname, "wb") as f:
             aw.writeAmf(f)
 
+    elif exportType == ExportTypes.THREEMF:
+        tmfw = ThreeMFWriter(shape, tolerance, angularTolerance, **opt or {})
+        with open(fname, "wb") as f:
+            tmfw.write3mf(f)
+
     elif exportType == ExportTypes.DXF:
         if isinstance(w, Workplane):
             exportDXF(w, fname)
@@ -106,7 +115,12 @@ def export(
             shape.exportStep(fname)
 
     elif exportType == ExportTypes.STL:
-        shape.exportStl(fname, tolerance, angularTolerance)
+        if opt:
+            useascii = opt.get("ascii", False) or opt.get("ASCII", False)
+        else:
+            useascii = False
+
+        shape.exportStl(fname, tolerance, angularTolerance, useascii)
 
     elif exportType == ExportTypes.VRML:
         shape.mesh(tolerance, angularTolerance)
@@ -175,6 +189,9 @@ def exportShape(
         tess = tessellate(shape, angularTolerance)
         aw = AmfWriter(tess)
         aw.writeAmf(fileLike)
+    elif exportType == ExportTypes.THREEMF:
+        tmfw = ThreeMFWriter(shape, tolerance, angularTolerance)
+        tmfw.write3mf(fileLike)
     else:
 
         # all these types required writing to a file and then
@@ -187,7 +204,7 @@ def exportShape(
         if exportType == ExportTypes.STEP:
             shape.exportStep(outFileName)
         elif exportType == ExportTypes.STL:
-            shape.exportStl(outFileName, tolerance, angularTolerance)
+            shape.exportStl(outFileName, tolerance, angularTolerance, True)
         else:
             raise ValueError("No idea how i got here")
 

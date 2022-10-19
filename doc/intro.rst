@@ -14,7 +14,7 @@ CadQuery is an intuitive, easy-to-use Python library for building parametric 3D 
 
     * Create parametric models that can be very easily customized by end users
 
-    * Output high quality CAD formats like STEP and AMF in addition to traditional STL
+    * Output high quality CAD formats like STEP, AMF and 3MF in addition to traditional STL
 
     * Provide a non-proprietary, plain text model format that can be edited and executed with only a web browser
 
@@ -54,7 +54,7 @@ its use in a variety of engineering and scientific applications that create 3D m
 If you'd like a GUI, you have a couple of options:
 
    * The Qt-based GUI `CQ-editor <https://github.com/CadQuery/CQ-editor>`_
-   * As an Jupyter extension `jupyter-cadquery <https://github.com/bernhard-42/jupyter-cadquery>`_
+   * As a Jupyter extension `jupyter-cadquery <https://github.com/bernhard-42/jupyter-cadquery>`_
 
 
 Why CadQuery instead of OpenSCAD?
@@ -75,7 +75,7 @@ Like OpenSCAD, CadQuery is an open-source, script based, parametric model genera
     4. **Less Code and easier scripting**  CadQuery scripts require less code to create most objects, because it is possible to locate
        features based on the position of other features, workplanes, vertices, etc.
 
-    5. **Better Performance**  CadQuery scripts can build STL, STEP, and AMF faster than OpenSCAD.
+    5. **Better Performance**  CadQuery scripts can build STL, STEP, AMF and 3MF faster than OpenSCAD.
 
 Where does the name CadQuery come from?
 ========================================

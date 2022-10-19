@@ -1,404 +1,656 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html>
-  <head>
-    <title>CadQuery Cheatsheet</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<html lang="en">
+	<head>
+		<title>CadQuery Cheatsheet</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <style type="text/css">
-    .section {
-      margin: 0.5em;
-      padding: 0px 0.5em 0.5em;
-      background-color: #EBEBEB;
-    }
-    .column {
-      float: left;
-      width: 375px;
-    }
-    tr {
-      background-color: #FFFFFF;
-    }
-    td {
-      text-align: center;
-      width: 5em;
-    }
-    h2 {
-      display: inline;
-    }
-    </style>
-  </head>
-  <body>
-    <div class="column" style="width:475px;">
-      <div class="section">
-        <h2>Documentation</h2>
-        <ul style="background-color:#ffffff;margin-bottom:0px;margin-top:0px;">
-          <li><a href="https://cadquery.readthedocs.io/en/latest/">CadQuery Documentation</a></li>
-          <li><a href="https://github.com/CadQuery/cadquery/blob/master/README.md">CadQuery Readme</a></li>
-          <li><a href="https://github.com/CadQuery/cadquery/tree/master/examples">CadQuery Examples</a></li>
-          <li><a href="https://cadquery.readthedocs.io/en/latest/apireference.html">CadQuery API Reference</a></li>
-        </ul>
-      </div>
-      <div class="section">
-        <h2>BREP Terminology</h2><br />
-        <table style="width:100%;">
-          <tr>
-            <td style="width:10%;"><strong>vertex</strong></td>
-            <td style="width:90%;">A single point in space</td>
-          </tr>
-          <tr>
-            <td><strong>edge</strong></td>
-            <td>A connection between two or more vertices along a particular path (called a curve)</td>
-          </tr>
-          <tr>
-            <td><strong>wire</strong></td>
-            <td>A collection of edges that are connected together</td>
-          </tr>
-          <tr>
-            <td><strong>face</strong></td>
-            <td>A set of edges or wires that enclose a surface</td>
-          </tr>
-          <tr>
-            <td><strong>shell</strong></td>
-            <td>A collection of faces that are connected together along some of their edges</td>
-          </tr>
-          <tr>
-            <td><strong>solid</strong></td>
-            <td>A shell that has a closed interior</td>
-          </tr>
-          <tr>
-            <td><strong>compound</strong></td>
-            <td>A collection of solids</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Named Planes</h2><br />
-        Available named planes are as follows. Direction references refer to the global directions.
-        <table style="width:100%;">
-          <tr>
-            <th style="width:25%;">Name</th>
-            <th style="width:25%;">xDir</th>
-            <th style="width:25%;">yDir</th>
-            <th style="width:25%;">zDir</th>
-          </tr>
-          <tr>
-            <td>XY</td>
-            <td>+x</td>
-            <td>+y</td>
-            <td>+z</td>
-          </tr>
-          <tr>
-            <td>YZ</td>
-            <td>+y</td>
-            <td>+z</td>
-            <td>+x</td>
-          </tr>
-          <tr>
-            <td>XZ</td>
-            <td>+x</td>
-            <td>+z</td>
-            <td>-y</td>
-          </tr>
-          <tr>
-            <td>front</td>
-            <td>+x</td>
-            <td>+y</td>
-            <td>+z</td>
-          </tr>
-          <tr>
-            <td>back</td>
-            <td>-x</td>
-            <td>+y</td>
-            <td>-z</td>
-          </tr>
-          <tr>
-            <td>left</td>
-            <td>+z</td>
-            <td>+y</td>
-            <td>-x</td>
-          </tr>
-          <tr>
-            <td>right</td>
-            <td>-z</td>
-            <td>+y</td>
-            <td>+x</td>
-          </tr>
-          <tr>
-            <td>top</td>
-            <td>+x</td>
-            <td>-z</td>
-            <td>+y</td>
-          </tr>
-          <tr>
-            <td>bottom</td>
-            <td>+x</td>
-            <td>+z</td>
-            <td>-y</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Core Classes</h2><br />
-        <table style="width:100%;">
-          <tr>
-            <th style="width:40%;">Class</th>
-            <th style="width:60%;">Description</th>
-          </tr>
-          <tr>
-            <td>CQ(obj)</td>
-            <td>Provides enhanced functionality for a wrapped CAD primitive.</td>
-          </tr>
-          <tr>
-            <td>Plane(origin, xDir, normal)</td>
-            <td>A 2d coordinate system in space, with the x-y axes on the a plane, and a particular point as the origin.</td>
-          </tr>
-          <tr>
-            <td>Workplane(inPlane[origin, obj])</td>
-            <td>Defines a coordinate system in space, in which 2D coordinates can be used.</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    <div class="column" style="width:600px;">
-      <div class="section">
-        <h2>Selector Methods</h2><br />
-        CadQuery selector strings allow filtering various types of object lists.
-        Most commonly, Edges, Faces, and Vertices are used, but all objects types can be filtered.<br />
-        <table style="width:100%;">
-          <tr>
-            <th style="width:40%;">Selector Method</th>
-            <th style="width:60%;">Description</th>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.faces">CQ.faces(selector=None)</a></td>
-            <td>Select the faces of objects on the stack, optionally filtering the selection.</td>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.edges">CQ.edges(selector=None)</a></td>
-            <td>Select the edges of objects on the stack, optionally filtering the selection.</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vertices">CQ.vertices(selector=None)</a></td>
-            <td>Select the vertices of objects on the stack, optionally filtering the selection.</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.solids">CQ.solids(selector=None)</a></td>
-            <td>Select the solids of objects on the stack, optionally filtering the selection.</td>
-          </tr>
-          <tr>
-            <td><a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.shells">CQ.shells(selector=None)</a></td>
-            <td>Select the shells of objects on the stack, optionally filtering the selection.</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Selector Classes</h2><br />
-        <table style="width:100%;">
-          <tr>
-            <th style="width:40%;">Class</th>
-            <th style="width:60%;">Description</th>
-          </tr>
-          <tr>
-            <td>NearestToPointSelector(pnt)</td>
-            <td>Selects object nearest the provided point.</td>
-          </tr>
-          <tr>
-            <td>ParallelDirSelector(vector[tolerance])</td>
-            <td>Selects objects parallel with the provided direction.</td>
-          </tr>
-          <tr>
-            <td>DirectionSelector(vector[tolerance])</td>
-            <td>Selects objects aligned with the provided direction.</td>
-          </tr>
-          <tr>
-            <td>PerpendicularDirSelector(vector[tolerance])</td>
-            <td>Selects objects perpendicular with the provided direction.</td>
-          </tr>
-          <tr>
-            <td>TypeSelector(typeString)</td>
-            <td>Selects objects of the prescribed topological type.</td>
-          </tr>
-          <tr>
-            <td>DirectionMinMaxSelector(vector[directionMax])</td>
-            <td>Selects objects closest or farthest in the specified direction.</td>
-          </tr>
-          <tr>
-            <td>StringSyntaxSelector(selectorString)</td>
-            <td>Filter lists objects using a simple string syntax.</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Selector String Modifiers</h2><br />
-        Selectors are a complex topic: see <a href="https://cadquery.readthedocs.io/en/latest/selectors.html">CadQuery String Selectors</a> for more information.<br />
-        Axis Strings are: X, Y, Z, XY, YZ, XZ
-        <table style="width:100%;">
-          <tr>
-            <th style="width:10%;">Modifier</th>
-            <th style="width:90%;">Description</th>
-          </tr>
-          <tr>
-            <td>&#124;</td>
-            <td>Parallel to (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.ParallelDirSelector">ParallelDirSelector</a>). Can return multiple objects.</td>
-          </tr>
-          <tr>
-            <td>&#35;</td>
-            <td>Perpendicular to (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.PerpendicularDirSelector">PerpendicularDirSelector</a>)</td>
-          </tr>
-          <tr>
-            <td>&#43;</td>
-            <td>Positive direction (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionSelector">DirectionSelector</a>)</td>
-          </tr>
-          <tr>
-            <td>&#45;</td>
-            <td>Negative direction (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionSelector">DirectionSelector</a>)</td>
-          </tr>
-          <tr>
-            <td>&gt;</td>
-            <td>Maximize (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a> with directionMax=True)</td>
-          </tr>
-          <tr>
-            <td>&lt;</td>
-            <td>Minimize (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a> with directionMax=False)</td>
-          </tr>
-          <tr>
-            <td>&#37;</td>
-            <td>Curve/surface type (same as <a href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.TypeSelector">TypeSelector</a>)</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Examples of Filtering Faces</h2><br />
-        All types of filters work on faces. In most cases, the selector refers to the direction of the normal vector of the face.
-        If a face is not planar, selectors are evaluated at the center of mass of the face. This can lead to results that are quite unexpected.
-        <table style="width:100%;">
-          <tr>
-            <th style="width:10%;">Selector</th>
-            <th style="width:40%;">Selector Class</th>
-            <th style="width:40%;">Selects</th>
-            <th style="width:10%;"># Objects Returned</th>
-          </tr>
-          <tr>
-            <td>&#43;Z</td>
-            <td>DirectionSelector</td>
-            <td>Faces with normal in +z direction</td>
-            <td>0 or 1</td>
-          </tr>
-          <tr>
-            <td>&#124;Z</td>
-            <td>ParallelDirSelector</td>
-            <td>Faces parallel to xy plane</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&#45;X</td>
-            <td>DirectionSelector</td>
-            <td>Faces with normal in neg x direction</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&#35;Z</td>
-            <td>PerpendicularDirSelector</td>
-            <td>Faces perpendicular to z direction</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&#37;Plane</td>
-            <td>TypeSelector</td>
-            <td>Faces of type plane</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&gt;Y</td>
-            <td>DirectionMinMaxSelector</td>
-            <td>Face farthest in the positive y dir</td>
-            <td>0 or 1</td>
-          </tr>
-          <tr>
-            <td>&lt;Y</td>
-            <td>DirectionMinMaxSelector</td>
-            <td>Face farthest in the negative y dir</td>
-            <td>0 or 1</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Examples of Filtering Edges</h2><br />
-        Some filter types are not supported for edges. The selector usually refers to the direction of the edge.
-        Non-linear edges are not selected for any selectors except type (%). Non-linear edges are never returned when these filters are applied.
-        <table style="width:100%;">
-          <tr>
-            <th style="width:10%;">Selector</th>
-            <th style="width:40%;">Selector Class</th>
-            <th style="width:40%;">Selects</th>
-            <th style="width:10%;"># Objects Returned</th>
-          </tr>
-          <tr>
-            <td>&#43;Z</td>
-            <td>DirectionSelector</td>
-            <td>Edges aligned in the Z direction</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&#124;Z</td>
-            <td>ParallelDirSelector</td>
-            <td>Edges parallel to z direction</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&#45;X</td>
-            <td>DirectionSelector</td>
-            <td>Edges aligned in neg x direction</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&#35;Z</td>
-            <td>PerpendicularDirSelector</td>
-            <td>Edges perpendicular to z direction</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&#37;Plane</td>
-            <td>TypeSelector</td>
-            <td>Edges type line</td>
-            <td>0..many</td>
-          </tr>
-          <tr>
-            <td>&gt;Y</td>
-            <td>DirectionMinMaxSelector</td>
-            <td>Edges farthest in the positive y dir</td>
-            <td>0 or 1</td>
-          </tr>
-          <tr>
-            <td>&lt;Y</td>
-            <td>DirectionMinMaxSelector</td>
-            <td>Edges farthest in the negative y dir</td>
-            <td>0 or 1</td>
-          </tr>
-        </table>
-      </div>
-      <div class="section">
-        <h2>Examples of Filtering Vertices</h2><br />
-        Only a few of the filter types apply to vertices. The location of the vertex is the subject of the filter.
-        <table style="width:100%;">
-          <tr>
-            <th style="width:10%;">Selector</th>
-            <th style="width:40%;">Selector Class</th>
-            <th style="width:40%;">Selects</th>
-            <th style="width:10%;"># Objects Returned</th>
-          </tr>
-          <tr>
-            <td>&gt;Y</td>
-            <td>DirectionMinMaxSelector</td>
-            <td>Vertices farthest in the positive y dir</td>
-            <td>0 or 1</td>
-          </tr>
-          <tr>
-            <td>&lt;Y</td>
-            <td>DirectionMinMaxSelector</td>
-            <td>Vertices farthest in the negative y dir</td>
-            <td>0 or 1</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-  </body>
+		<style type="text/css">
+		body {
+			margin: 0;
+			text-align: center;
+		}
+		#header {
+			background-color: #ddd;
+			padding: 2px;
+			margin-bottom: 10px;
+		}
+		#section-container {
+			display: flex; 
+			flex-wrap: wrap; 
+			align-items: stretch; 
+			justify-content: center; 
+			row-gap: 10px;
+			overflow: auto;
+			width: 100%;
+		}
+		.section {
+			margin: 10px;
+			padding: 0px 0.5em 0.5em;
+			background-color: #EBEBEB;
+			min-width: 360px;
+			max-width: min(50vw, 100%);
+			overflow-x: auto;
+		}
+		.section-subtitle {
+			margin-bottom: 4px;
+		}
+		a, a:visited, .dark-icon {
+			color: #2664c2;
+			fill: #2664c2;
+			font-weight: bold;
+			text-decoration: none;
+		}
+		table {
+			width: 100%;
+		}
+		tr {
+			background-color: #FFFFFF;
+		}
+		td {
+			text-align: center;
+			width: 5em;
+			padding: 3px 4px;
+			line-height: 0.8;
+		}
+		h1 {
+			margin: 10px;
+		}
+		h2 {
+			display: inline;
+		}
+		small {
+			font-size: 75%;
+			font-family: monospace;
+		}
+		code {
+			background-color: #ddd;
+		}
+		@media only screen and (max-width: 1000px) {
+			body{
+				font-size: 75%
+			}
+			.section {
+				max-width: 96%;
+			}
+		}
+		.dark{
+			color: #ccc;
+			background-color: #222;
+		}
+		.dark #header{
+			background-color: #333;
+		}
+		.dark .section {
+			background-color: #444;
+		}
+		.dark tr {
+			background-color: #333;
+		}
+		.dark a, .dark a:visited, .dark h2, .dark .dark-icon {
+			color: #cce1ff;
+			fill: #cce1ff
+		}
+		.dark code {
+			background-color: #555;
+		}
+		.dark-icon {
+			width: 12px;
+			height: 12px;
+		}
+		.dark .dark-icon.moon {
+			display: none;	
+		}
+		body:not(.dark) .dark-icon.sun {
+			display: none;	
+		}
+		</style>
+	</head>
+	<body>
+		<div id="header">
+			<h1><img src="https://cadquery.readthedocs.io/en/latest/_static/cadquery_logo_dark.svg" alt="CadQuery Logo" height=30> Cheatsheet</h1>
+			<i>
+				A Quick Guide To The Most Commonly Used Functions! 
+				<br/>
+				<sub>
+					<a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html">Full API reference</a>
+					&nbsp;|&nbsp;
+					<a target="_blank" href="https://cadquery.readthedocs.io/en/latest/examples.html">Examples</a>
+					&nbsp;|&nbsp;
+					<a target="_blank" href="https://blog.jpoles1.com/2022/08/28/intro-to-cadquery-series-installing-cq-editor/">Install CQ-Editor</a>
+					&nbsp;|&nbsp;
+					<a href="#" onclick="toggleDark()">
+						<svg xmlns="http://www.w3.org/2000/svg" class="dark-icon sun" viewBox="0 0 512 512"><path d="M361.5 1.2c5 2.1 8.6 6.6 9.6 11.9L391 121l107.9 19.8c5.3 1 9.8 4.6 11.9 9.6s1.5 10.7-1.6 15.2L446.9 256l62.3 90.3c3.1 4.5 3.7 10.2 1.6 15.2s-6.6 8.6-11.9 9.6L391 391 371.1 498.9c-1 5.3-4.6 9.8-9.6 11.9s-10.7 1.5-15.2-1.6L256 446.9l-90.3 62.3c-4.5 3.1-10.2 3.7-15.2 1.6s-8.6-6.6-9.6-11.9L121 391 13.1 371.1c-5.3-1-9.8-4.6-11.9-9.6s-1.5-10.7 1.6-15.2L65.1 256 2.8 165.7c-3.1-4.5-3.7-10.2-1.6-15.2s6.6-8.6 11.9-9.6L121 121 140.9 13.1c1-5.3 4.6-9.8 9.6-11.9s10.7-1.5 15.2 1.6L256 65.1 346.3 2.8c4.5-3.1 10.2-3.7 15.2-1.6zM352 256c0 53-43 96-96 96s-96-43-96-96s43-96 96-96s96 43 96 96zm32 0c0-70.7-57.3-128-128-128s-128 57.3-128 128s57.3 128 128 128s128-57.3 128-128z"/></svg>
+						<svg xmlns="http://www.w3.org/2000/svg" class="dark-icon moon" viewBox="0 0 384 512"><path d="M223.5 32C100 32 0 132.3 0 256S100 480 223.5 480c60.6 0 115.5-24.2 155.8-63.4c5-4.9 6.3-12.5 3.1-18.7s-10.1-9.7-17-8.5c-9.8 1.7-19.8 2.6-30.1 2.6c-96.9 0-175.5-78.8-175.5-176c0-65.8 36-123.1 89.3-153.3c6.1-3.5 9.2-10.5 7.7-17.3s-7.3-11.9-14.3-12.5c-6.3-.5-12.6-.8-19-.8z"/></svg>
+						Mode
+					</a>
+				</sub>
+			</i>
+		</div>
+		<div id="section-container">
+			<div class="section">
+				<h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#id1">3D Construction</a></h2>
+					<table>
+						<thead>
+							<tr>
+								<th>Primitives</th>
+								<th>Additive</th>
+								<th>Subtractive</th>
+							</tr>
+						</thead>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.box">box</a><br><small>(length, width, height)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.extrude">extrude</a><br><small>(until)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cutBlind">cutBlind</a><br><small>(until)</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.sphere">sphere</a><br><small>(radius)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.revolve">revolve</a><br><small>(angleDegrees)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cutThruAll">cutThruAll</a><br><small>()</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cylinder">cylinder</a><br><small>(height, radius)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.loft">loft</a><br><small>(ruled)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.hole">hole</a><br><small>(diameter, depth)</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.text">text</a><br><small>(txt, fontsize, distance)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.sweep">sweep</a><br><small>(path, isFrenet, transitionMode)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.shell">shell</a><br><small>(thickness)</small></td>
+						</tr> 
+					<tr>
+						<td rowspan="2"><small>^ quickly perform ^ <br> +/- boolean ops with<br><span style="white-space: nowrap;">(..., combine="a/s")</span><br>or use <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.union">union</a>/<a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.cut">cut</a>(shape)</small></td>
+						<td rowspan="1"></td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.fillet">fillet</a><br><small>(radius)</small></td>
+					</tr> 
+					<tr>
+						<td></td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.chamfer">chamfer</a><br><small>(length)</small></td>
+					</tr> 
+				</table>
+			</div>
+			<div class="section">
+					<h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#d-operations">2D Construction</a></h2>
+					<table>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.rect">rect</a><br><small>(xLen, yLen)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.circle">circle</a><br><small>(radius)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.ellipse">ellipse</a><br><small>(x_radius, y_radius)</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.center">center</a><br><small>(x, y)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.moveTo">moveTo</a><br><small>(x, y)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.move">move</a><br><small>(xDist, yDist)</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.lineTo">lineTo</a><br><small>(x, y)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.line">line</a><br><small>(xDist, yDist)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.polarLine">polarLine</a><br><small>(distance, angle)</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vLine">vLine</a><br><small>(distance)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.hLine">hLine</a><br><small>(distance)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.polyline">polyline</a><br><small>(listOfXYTuple)</small></td>
+						</tr>
+					</table>
+					<h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#sketch-initialization">Sketching</a></h2>
+					<table>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.rect">rect</a><br><small>(w, h)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.circle">circle</a><br><small>(r)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.ellipse">ellipse</a><br><small>(a1, a2)</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.trapezoid">trapezoid</a><br><small>(w, h, a1)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.regularPolygon">regularPolygon</a><br><small>(r, n)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.polygon">polygon</a><br><small>(pts)</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.fillet">fillet</a><br><small>(d)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.chamfer">chamfer</a><br><small>(d)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Sketch.finalize">finalize</a><br><small>()</small></td>
+						</tr>
+					</table>
+			</div>
+			<div style="display: flex; flex-direction: column;">
+				<div class="section">
+						<h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#file-management-and-export">Import/Export</a></h2>
+						<table>
+							<tr>
+								<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/importexport.html#cadquery.importers.importDXF">importers.importDXF</a><br><small>(path, tol)</small></td>
+								<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/importexport.html#importing-step">importers.importStep</a><br><small>("path")</small></td>
+							</tr>
+							<tr>
+								<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/importexport.html#exporting-stl">exporters.export</a><br><small>(solid, "path/solid.***")</small></td>
+								<td><small>Where *** can be: svg, step, stl, amf, vrml, json</small></td>
+							</tr>
+						</table>
+				</div>
+				<div class="section">
+					<h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#assemblies">Assemblies</a></h2>
+					<table>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Assembly">Assembly</a><br><small>()</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Assembly.add">add</a><br><small>(obj, loc, color)</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/assy.html#constraints">constrain</a><br><small>(***)</small></td>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Assembly.solve">solve</a><br><small>()</small></td>
+						</tr>
+						<tr>
+							<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Assembly.save">save</a><br><small>("path/assembly.***")</small></td>
+							<td><small>Where *** can be: step, xml, gltf, vtkjs, vrml</small></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<div class="section" style="min-width: 300px;" hidden>
+				<h2>BREP Terminology</h2><br />
+				<table>
+					<tr>
+						<td style="width:10%;"><strong>vertex</strong></td>
+						<td style="width:90%;">A single point in space</td>
+					</tr>
+					<tr>
+						<td><strong>edge</strong></td>
+						<td>A connection between two or more vertices along a particular path (called a curve)</td>
+					</tr>
+					<tr>
+						<td><strong>wire</strong></td>
+						<td>A collection of edges that are connected together</td>
+					</tr>
+					<tr>
+						<td><strong>face</strong></td>
+						<td>A set of edges or wires that enclose a surface</td>
+					</tr>
+					<tr>
+						<td><strong>shell</strong></td>
+						<td>A collection of faces that are connected together along some of their edges</td>
+					</tr>
+					<tr>
+						<td><strong>solid</strong></td>
+						<td>A shell that has a closed interior</td>
+					</tr>
+					<tr>
+						<td><strong>compound</strong></td>
+						<td>A collection of solids</td>
+					</tr>
+				</table>
+			</div>
+			<div class="section">
+				<h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/selectors.html">Selector String Modifiers</a></h2>
+				<h2></h2><br />
+				<div class="section-subtitle">Axis Strings are: X, Y, Z, XY, YZ, XZ</div>
+				<table>
+					<tr>
+						<th style="width:15%;">Mod</th>
+						<th style="width:85%;">Description</th>
+					</tr>
+					<tr>
+						<td>&#124;</td>
+						<td>Parallel to = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.ParallelDirSelector">ParallelDirSelector</a></td>
+					</tr>
+					<tr>
+						<td>&#35;</td>
+						<td>Perpendicular to = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.PerpendicularDirSelector">PerpendicularDirSelector</a></td>
+					</tr>
+					<tr>
+						<td>+/-</td>
+						<td>Pos/Neg direction = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionSelector">DirectionSelector</a></td>
+					</tr>
+					<tr>
+						<td>&gt;</td>
+						<td>Max = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a>(directionMax=True)</td>
+					</tr>
+					<tr>
+						<td>&lt;</td>
+						<td>Min = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.DirectionMinMaxSelector">DirectionMinMaxSelector</a>(directionMax=False)</td>
+					</tr>
+					<tr>
+						<td>&#37;</td>
+						<td>Curve/surface type = <a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.TypeSelector">TypeSelector</a></td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							Eg: select the top face (> in Z direction) = 
+							<code>.faces(">Z")</code>
+						</td>
+					</tr>
+				</table>
+				
+			</div>
+			<div class="section">
+				<h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#selector-classes">Selector Methods</a></h2><br />
+				<div class="section-subtitle">CadQuery selector strings and classes allow filtering to select objects.</div>
+				<table>
+					<tr>
+						<th style="width:40%;">Selector Methods</th>
+						<th style="width:60%;">Selector Classes
+						</th>
+					</tr>
+					<tr>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.faces">faces</a>(selector)</td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.NearestToPointSelector">NearestToPointSelector</a>(pnt)</td>
+					<tr>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.edges">edges</a>(selector)</td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.ParallelDirSelector">ParallelDirSelector</a>(vector)</td>
+					</tr>
+					<tr>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.vertices">vertices</a>(selector)</td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.PerpendicularDirSelector">PerpendicularDirSelector</a>(vector)</td>
+					</tr>
+					<tr>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.solids">solids</a>(selector)</td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.DirectionMinMaxSelector">DirectionMinMaxSelector</a>(vector)</td>
+					</tr>
+					<tr>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.shells">shells</a>(selector)</td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.RadiusNthSelector">RadiusNthSelector</a>(n)</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.AndSelector">AndSelector</a>(selector, selector)</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.SumSelector">SumSelector</a>(selector, selector)</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.SubtractSelector">SubtractSelector</a>(selector, selector)</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.selectors.InverseSelector">InverseSelector</a>(selector)</td>
+					</tr>
+				</table>
+			</div>
+			<div class="section">
+				<h2><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/apireference.html#d-operations">Workplane Positioning</a></h2>
+				<table>
+					<tr>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.translate">translate</a><br><small>(Vector(x, y, z))</small></td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.rotateAboutCenter">rotateAboutCenter</a><br><small>(Vector(x, y, z), angleDegrees)</small></td>
+						<td><a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html#cadquery.Workplane.rotate">rotate</a><br><small>(Vector(x, y, z), Vector(x, y, z), angleDegrees)</small></td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<small>
+								Position a workplane relative to an existing feature with:
+								<br>
+								<a target="_blank" href="https://cadquery.readthedocs.io/en/latest/classreference.html?highlight=workplane#cadquery.Workplane.workplane">.workplane</a>(offset, origin)
+								<br>
+								sets the <code>offset</code> perpendicular to the current plane
+								<br>
+								sets the <code>origin</code> relative to (0,0) on the current plane
+							</small>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="section">
+				<h2>Named Planes</h2><br />
+				<div class="section-subtitle">Direction references refer to the global directions.</div>
+				<table>
+					<tr>
+						<th style="width:25%;">Name</th>
+						<th style="width:25%;">xDir</th>
+						<th style="width:25%;">yDir</th>
+						<th style="width:25%;">zDir</th>
+					</tr>
+					<tr>
+						<td>XY</td>
+						<td>+x</td>
+						<td>+y</td>
+						<td>+z</td>
+					</tr>
+					<tr>
+						<td>YZ</td>
+						<td>+y</td>
+						<td>+z</td>
+						<td>+x</td>
+					</tr>
+					<tr>
+						<td>XZ</td>
+						<td>+x</td>
+						<td>+z</td>
+						<td>-y</td>
+					</tr>
+					<tr>
+						<td>front</td>
+						<td>+x</td>
+						<td>+y</td>
+						<td>+z</td>
+					</tr>
+					<tr>
+						<td>back</td>
+						<td>-x</td>
+						<td>+y</td>
+						<td>-z</td>
+					</tr>
+					<tr>
+						<td>left</td>
+						<td>+z</td>
+						<td>+y</td>
+						<td>-x</td>
+					</tr>
+					<tr>
+						<td>right</td>
+						<td>-z</td>
+						<td>+y</td>
+						<td>+x</td>
+					</tr>
+					<tr>
+						<td>top</td>
+						<td>+x</td>
+						<td>-z</td>
+						<td>+y</td>
+					</tr>
+					<tr>
+						<td>bottom</td>
+						<td>+x</td>
+						<td>+z</td>
+						<td>-y</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="section" hidden>
+				<h2>Core Classes</h2><br />
+				<table>
+					<tr>
+						<th style="width:40%;">Class</th>
+						<th style="width:60%;">Description</th>
+					</tr>
+					<tr>
+						<td>CQ(obj)</td>
+						<td>Provides enhanced functionality for a wrapped CAD primitive.</td>
+					</tr>
+					<tr>
+						<td>Plane(origin, xDir, normal)</td>
+						<td>A 2d coordinate system in space, with the x-y axes on the a plane, and a particular point as the origin.</td>
+					</tr>
+					<tr>
+						<td>Workplane(inPlane[origin, obj])</td>
+						<td>Defines a coordinate system in space, in which 2D coordinates can be used.</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="section" style="max-width: 600px">
+				<h2>Examples of Filtering Faces</h2><br />
+				<div class="section-subtitle">
+					All types of filters work on faces. In most cases, the selector refers to the direction of the normal vector of the face.
+					If a face is not planar, selectors are evaluated at the center of mass of the face. This can lead to results that are quite unexpected.
+				</div>
+				<table>
+					<tr>
+						<th style="width:10%;">Selector</th>
+						<th style="width:40%;">Selector Class</th>
+						<th style="width:40%;">Selects</th>
+						<th style="width:10%;"># Objects Returned</th>
+					</tr>
+					<tr>
+						<td>&#43;Z</td>
+						<td>DirectionSelector</td>
+						<td>Faces with normal in +z direction</td>
+						<td>0 or 1</td>
+					</tr>
+					<tr>
+						<td>&#124;Z</td>
+						<td>ParallelDirSelector</td>
+						<td>Faces parallel to xy plane</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&#45;X</td>
+						<td>DirectionSelector</td>
+						<td>Faces with normal in neg x direction</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&#35;Z</td>
+						<td>PerpendicularDirSelector</td>
+						<td>Faces perpendicular to z direction</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&#37;Plane</td>
+						<td>TypeSelector</td>
+						<td>Faces of type plane</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&gt;Y</td>
+						<td>DirectionMinMaxSelector</td>
+						<td>Face farthest in the positive y dir</td>
+						<td>0 or 1</td>
+					</tr>
+					<tr>
+						<td>&lt;Y</td>
+						<td>DirectionMinMaxSelector</td>
+						<td>Face farthest in the negative y dir</td>
+						<td>0 or 1</td>
+					</tr>
+				</table>
+			</div>
+			<div class="section" style="max-width: 600px">
+				<h2>Examples of Filtering Edges</h2><br />
+				<div class="section-subtitle">
+					Some filter types are not supported for edges. The selector usually refers to the direction of the edge.
+					Non-linear edges are not selected for any selectors except type (%). Non-linear edges are never returned when these filters are applied.
+				</div>
+				<table>
+					<tr>
+						<th style="width:10%;">Selector</th>
+						<th style="width:40%;">Selector Class</th>
+						<th style="width:40%;">Selects</th>
+						<th style="width:10%;"># Objects Returned</th>
+					</tr>
+					<tr>
+						<td>&#43;Z</td>
+						<td>DirectionSelector</td>
+						<td>Edges aligned in the Z direction</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&#124;Z</td>
+						<td>ParallelDirSelector</td>
+						<td>Edges parallel to z direction</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&#45;X</td>
+						<td>DirectionSelector</td>
+						<td>Edges aligned in neg x direction</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&#35;Z</td>
+						<td>PerpendicularDirSelector</td>
+						<td>Edges perpendicular to z direction</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&#37;Plane</td>
+						<td>TypeSelector</td>
+						<td>Edges type line</td>
+						<td>0..many</td>
+					</tr>
+					<tr>
+						<td>&gt;Y</td>
+						<td>DirectionMinMaxSelector</td>
+						<td>Edges farthest in the positive y dir</td>
+						<td>0 or 1</td>
+					</tr>
+					<tr>
+						<td>&lt;Y</td>
+						<td>DirectionMinMaxSelector</td>
+						<td>Edges farthest in the negative y dir</td>
+						<td>0 or 1</td>
+					</tr>
+				</table>
+			</div>
+			<div class="section" style="max-width: 600px">
+				<h2>Examples of Filtering Vertices</h2><br />
+				<div class="section-subtitle">Only a few of the filter types apply to vertices. The location of the vertex is the subject of the filter.</div>
+				<table>
+					<tr>
+						<th style="width:10%;">Selector</th>
+						<th style="width:40%;">Selector Class</th>
+						<th style="width:40%;">Selects</th>
+					</tr>
+					<tr>
+						<td>&gt;Y</td>
+						<td>DirectionMinMaxSelector</td>
+						<td>Vertices farthest in the +Y dir</td>
+					</tr>
+					<tr>
+						<td>&lt;Y</td>
+						<td>DirectionMinMaxSelector</td>
+						<td>Vertices farthest in the -Y dir</td>
+					</tr>
+					<tr>
+						<td>&gt;&gt;Y[-2]</td>
+						<td>CenterNthSelector</td>
+						<td>2nd farthest vertex in the +Y dir</td>
+					</tr>
+					<tr>
+						<td>&lt;&lt;Y[0]</td>
+						<td>CenterNthSelector</td>
+						<td>1st closest vertex in the Y dir</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</body>
 </html>
+
+<script type="text/javascript">
+	function getCookie(name) {
+		var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+		return v ? v[2] : null;
+	}
+	function enableDark() {
+		document.querySelector("body").classList.add("dark")
+		document.cookie="dark=1;"
+	}
+	function disableDark() {
+		document.querySelector("body").classList.remove("dark")
+		document.cookie="dark=0;"
+	}
+	function toggleDark() {
+		elem = document.querySelector("body")
+		if(elem.classList.contains("dark")) {
+			disableDark()
+		} else {
+			enableDark()
+		}
+	}
+
+	window.onload = () => {	
+		if(getCookie("dark") == "1") {
+			enableDark()
+		}
+	}
+</script>
