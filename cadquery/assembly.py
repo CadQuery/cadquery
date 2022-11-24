@@ -346,7 +346,7 @@ class Assembly(object):
 
         return self
 
-    def solve(self) -> "Assembly":
+    def solve(self, verbosity: int = 0) -> "Assembly":
         """
         Solve the constraints.
         """
@@ -412,7 +412,7 @@ class Assembly(object):
         solver = ConstraintSolver(locs, constraints, locked=locked, scale=scale)
 
         # solve
-        locs_new, self._solve_result = solver.solve()
+        locs_new, self._solve_result = solver.solve(verbosity)
 
         # update positions
 
