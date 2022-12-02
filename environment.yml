@@ -16,7 +16,7 @@ dependencies:
   - codecov
   - pytest
   - pytest-cov
-  - ezdxf
+  - ezdxf<1.0
   - ipython
   - typing_extensions
   - nptyping=2.0.1

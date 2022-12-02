@@ -92,7 +92,10 @@ def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
         pad = spline.NbKnots() - spline.LastUKnotIndex()
         poles += poles[:pad]
 
-    dxf_spline = ezdxf.math.BSpline(poles, order, knots, weights)
+    if weights:
+        dxf_spline = ezdxf.math.BSpline(poles, order, knots, weights)
+    else:
+        dxf_spline = ezdxf.math.BSpline(poles, order, knots)
 
     msp.add_spline().apply_construction_tool(dxf_spline)
 

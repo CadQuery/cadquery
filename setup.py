@@ -26,7 +26,7 @@ is_azure = "CONDA_PY" in os.environ
 if not is_rtd and not is_appveyor and not is_azure:
     reqs = [
         "cadquery-ocp>=7.6,<7.7",
-        "ezdxf",
+        "ezdxf<1.0",
         "multimethod>=1.7,<2.0",
         "nlopt",
         "nptyping==2.0.1",
