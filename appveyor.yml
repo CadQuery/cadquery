@@ -17,7 +17,7 @@ environment:
 
 init:
     - cmd: curl -fsSLo Miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe
-    - cmd: start /wait "" Miniforge3-Windows-x86_64.exe /InstallationType=JustMe /RegisterPython=0 /S /D=%MINICONDA_DIRNAME%
+    - cmd: Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=%MINICONDA_DIRNAME%
     - cmd: set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
     - sh: curl -sL https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$OS-x86_64.sh > miniconda.sh
     - sh: bash miniconda.sh -b -p $HOME/miniconda;
