@@ -19,17 +19,15 @@ init:
     - cmd: curl -fsSLo Miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe
     - cmd: Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=%MINICONDA_DIRNAME%
     - cmd: set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
+    - cmd: activate
     - sh: curl -sL https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$OS-x86_64.sh > miniconda.sh
     - sh: bash miniconda.sh -b -p $HOME/miniconda;
     - sh: export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
     - sh: source $HOME/miniconda/bin/activate 
 
 install:
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - cmd: conda init cmd.exe
-    - conda env create -f environment.yml
-    - conda activate cadquery
+    - mamba env create -f environment.yml
+    - mamba activate cadquery
     - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.6.3
 
 build: false
