@@ -96,7 +96,7 @@ Rebuild your model by clicking the Render button. Your block should look like th
 ..  image:: _static/quickstart/003.png
 
 
-The code is pretty compact, lets step through it.
+The code is pretty compact, let's step through it.
 
 **Line 4** adds a new parameter, diameter, for the diameter of the hole
 
@@ -156,7 +156,7 @@ After clicking the Render button to re-execute the model, you should see somethi
         ..  image:: _static/quickstart/004.png
 
 
-There is quite a bit going on here, so lets break it down a bit.
+There is quite a bit going on here, so let's break it down a bit.
 
 **Line 5** creates a new padding parameter that decides how far the holes are from the edges of the plate.
 
