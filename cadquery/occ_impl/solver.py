@@ -659,7 +659,7 @@ class ConstraintSolver(object):
 
     def solve(self, verbosity: int = 0) -> Tuple[List[Location], Dict[str, Any]]:
 
-        suppress_banner = ("yes" if verbosity == 0 else "no")
+        suppress_banner = "yes" if verbosity == 0 else "no"
 
         opti = self.opti
 
