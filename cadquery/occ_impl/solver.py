@@ -657,7 +657,9 @@ class ConstraintSolver(object):
 
         return rv
 
-    def solve(self) -> Tuple[List[Location], Dict[str, Any]]:
+    def solve(self, verbosity: int = 0) -> Tuple[List[Location], Dict[str, Any]]:
+
+        suppress_banner = "yes" if verbosity == 0 else "no"
 
         opti = self.opti
 
@@ -709,7 +711,8 @@ class ConstraintSolver(object):
                 "nlp_scaling_method": "none",
                 "honor_original_bounds": "yes",
                 "bound_relax_factor": 0,
-                "print_level": 5,
+                "print_level": verbosity,
+                "sb": suppress_banner,
                 "print_timing_statistics": "no",
                 "linear_solver": "mumps",
             },
