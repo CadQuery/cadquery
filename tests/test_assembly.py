@@ -377,6 +377,18 @@ def find_node(node_list, name_path):
     :param name_path: list of node names (corresponding to path)
     """
 
+    def purepath_is_relative_to(p0, p1):
+        """Alternative to PurePath.is_relative_to for Python 3.8
+        PurePath.is_relative_to is new in Python 3.9
+        """
+        try:
+            if p0.relative_to(p1):
+                is_relative_to = True
+        except ValueError:
+            is_relative_to = False
+
+        return is_relative_to
+
     def get_nodes(node_list, name, parents):
         if parents:
             nodes = []
@@ -385,7 +397,8 @@ def find_node(node_list, name_path):
                     [
                         p
                         for p in node_list
-                        if p["path"].is_relative_to(parent["path"])
+                        # if p["path"].is_relative_to(parent["path"])
+                        if purepath_is_relative_to(p["path"], parent["path"])
                         and len(p["path"].relative_to(parent["path"]).parents) == 1
                         and re.fullmatch(name, p["name"])
                         and p not in nodes
