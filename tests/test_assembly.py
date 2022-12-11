@@ -2,6 +2,9 @@ import pytest
 import os
 from itertools import product
 from math import degrees
+import copy
+from pathlib import Path, PurePath
+import re
 
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
@@ -11,12 +14,23 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF
+
 from OCP.gp import gp_XYZ
+from OCP.TDocStd import TDocStd_Document
+from OCP.TDataStd import TDataStd_Name
+from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFPrs import (
     XCAFPrs_DocumentExplorer,
+    XCAFPrs_DocumentExplorerFlags_None,
     XCAFPrs_DocumentExplorerFlags_OnlyLeafNodes,
     XCAFPrs_Style,
 )
+from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType
+from OCP.XCAFApp import XCAFApp_Application
+from OCP.STEPCAFControl import STEPCAFControl_Reader
+from OCP.IFSelect import IFSelect_RetDone
+from OCP.TDF import TDF_ChildIterator
+from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
 
 
 @pytest.fixture
@@ -126,6 +140,270 @@ def simple_assy2():
     return assy
 
 
+@pytest.fixture
+def boxes0_assy():
+
+    b0 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b0, name="box0", color=cq.Color("red"))
+    assy.add(b0, name="box1", color=cq.Color("red"), loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes1_assy():
+
+    b0 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly(name="boxes", color=cq.Color("red"))
+    assy.add(b0, name="box0")
+    assy.add(b0, name="box1", loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes2_assy():
+
+    b0 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b0, name="box0", color=cq.Color("red"))
+    assy.add(b0, name="box1", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes3_assy():
+
+    b0 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b0, name="box0", color=cq.Color("red"))
+    assy.add(b0, name="box1", loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes4_assy():
+
+    b0 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b0, name="box_0", color=cq.Color("red"))
+    assy.add(b0, name="box_1", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes5_assy():
+
+    b0 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b0, name="box:a", color=cq.Color("red"))
+    assy.add(b0, name="box:b", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes6_assy():
+
+    b0 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b0, name="box__0", color=cq.Color("red"))
+    assy.add(b0, name="box__1", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes7_assy():
+    """Naming convention for common shape is not followed.
+    The name is assigned corresponding to the hashCode.
+    """
+
+    b0 = cq.Workplane().box(1, 1, 1)
+
+    assy = cq.Assembly()
+    assy.add(b0, name="box_0", color=cq.Color("red"))
+    assy.add(b0, name="box", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
+    assy.add(
+        b0,
+        name="another box",
+        color=cq.Color(0.23, 0.26, 0.26, 0.6),
+        loc=cq.Location((2, 0, 0)),
+    )
+
+    return assy
+
+
+@pytest.fixture
+def chassis0_assy():
+
+    r_wheel = 25
+    w_wheel = 10
+    l_axle = 80
+    l_chassis = 100
+
+    wheel = cq.Workplane("YZ").circle(r_wheel).extrude(w_wheel, both=True)
+
+    axle = cq.Workplane("YZ").circle(r_wheel / 10).extrude(l_axle / 2, both=True)
+
+    wheel_axle = cq.Assembly(name="wheel-axle")
+
+    wheel_axle.add(
+        wheel,
+        name="wheel:left",
+        color=cq.Color("red"),
+        loc=cq.Location((-l_axle / 2 - w_wheel, 0, 0)),
+    )
+
+    wheel_axle.add(
+        wheel,
+        name="wheel:right",
+        color=cq.Color("red"),
+        loc=cq.Location((l_axle / 2 + w_wheel, 0, 0)),
+    )
+
+    wheel_axle.add(axle, name="axle", color=cq.Color("green"))
+
+    chassis = cq.Assembly(name="chassis")
+    chassis.add(
+        wheel_axle, name="wheel-axle-front", loc=cq.Location((0, l_chassis / 2, 0))
+    )
+    chassis.add(
+        wheel_axle, name="wheel-axle-rear", loc=cq.Location((0, -l_chassis / 2, 0))
+    )
+
+    return chassis
+
+
+def read_step(stepfile) -> TDocStd_Document:
+    """Read STEP file, return XCAF document"""
+
+    app = XCAFApp_Application.GetApplication_s()
+    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    app.InitDocument(doc)
+    reader = STEPCAFControl_Reader()
+    status = reader.ReadFile(str(stepfile))
+    assert status == IFSelect_RetDone
+    reader.Transfer(doc)
+
+    return doc
+
+
+def get_doc_nodes(doc, leaf=False):
+    """Read document and return list of nodes (dicts)"""
+
+    if leaf:
+        flags = XCAFPrs_DocumentExplorerFlags_OnlyLeafNodes
+    else:
+        flags = XCAFPrs_DocumentExplorerFlags_None
+
+    expl = XCAFPrs_DocumentExplorer(doc, flags, XCAFPrs_Style())
+    tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+
+    nodes = []
+    while expl.More():
+        node = expl.Current()
+        ctool = expl.ColorTool()
+        style = node.Style
+        label = node.RefLabel
+
+        name_att = TDataStd_Name()
+        label.FindAttribute(TDataStd_Name.GetID_s(), name_att)
+        name = TCollection_ExtendedString(name_att.Get()).ToExtString()
+
+        color = style.GetColorSurfRGBA()
+        shape = expl.FindShapeFromPathId_s(doc, node.Id)
+        color_shape = Quantity_ColorRGBA()
+        ctool.GetColor(shape, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_shape)
+
+        # on STEP import colors applied to subshapes
+        color_subshapes = None
+        color_subshapes_set = set()
+        if not node.IsAssembly and shape.NbChildren() > 1:
+            it = TDF_ChildIterator(label)
+            i = 0
+            while it.More():
+                child = it.Value()
+                color_subshape = Quantity_ColorRGBA()
+                if ctool.GetColor(
+                    child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
+                ):
+                    color_subshapes_set.add(
+                        (
+                            *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
+                            color_subshape.Alpha(),
+                        )
+                    )
+                it.Next()
+                i += 1
+                if i > 5:
+                    break
+            assert len(color_subshapes_set) == 1
+            color_subshapes = color_subshapes_set.pop()
+
+        nodes.append(
+            {
+                "path": PurePath(node.Id.ToCString()),
+                "name": TCollection_ExtendedString(name_att.Get()).ToExtString(),
+                "color": (*color.GetRGB().Values(Quantity_TOC_RGB), color.Alpha()),
+                "color_shape": (
+                    *color_shape.GetRGB().Values(Quantity_TOC_RGB),
+                    color_shape.Alpha(),
+                ),
+                "color_subshapes": color_subshapes,
+            }
+        )
+
+        expl.Next()
+
+    return nodes
+
+
+def find_node(node_list, name_path):
+    """Return node(s) matching node name path
+
+    :param node_list: list of nodes (output of get_doc_nodes)
+    :param name_path: list of node names (corresponding to path)
+    """
+
+    def get_nodes(node_list, name, parents):
+        if parents:
+            nodes = []
+            for parent in parents:
+                nodes.extend(
+                    [
+                        p
+                        for p in node_list
+                        if p["path"].is_relative_to(parent["path"])
+                        and len(p["path"].relative_to(parent["path"]).parents) == 1
+                        and re.fullmatch(name, p["name"])
+                        and p not in nodes
+                    ]
+                )
+        else:
+            nodes = [p for p in node_list if re.fullmatch(name, p["name"])]
+
+        return nodes
+
+    parents = None
+    for name in name_path:
+        nodes = get_nodes(node_list, name, parents)
+        parents = nodes
+
+    return nodes
+
+
 def test_metadata(metadata_assy):
     """Verify the metadata is present in both the base and sub assemblies"""
     assert metadata_assy.metadata["b1"] == "base-data"
@@ -158,6 +436,8 @@ def test_color():
     assert c3.wrapped.GetRGB().Red() == 1
     assert c3.wrapped.Alpha() == 0.5
 
+    c4 = cq.Color()
+
     with pytest.raises(ValueError):
         cq.Color("?????")
 
@@ -182,26 +462,6 @@ def test_assembly(simple_assy, nested_assy):
     assert kvs[0][0] == "BOTTOM"
     assert len(kvs[0][1].shapes[0].Solids()) == 2
     assert kvs[-1][0] == "TOP"
-
-
-def count_leaf_nodes(assy):
-    _, doc = toCAF(assy)
-    expl = XCAFPrs_DocumentExplorer(
-        doc, XCAFPrs_DocumentExplorerFlags_OnlyLeafNodes, XCAFPrs_Style()
-    )
-    count = 0
-    while expl.More():
-        count += 1
-        expl.Next()
-    return count
-
-
-def test_assembly_leaf(simple_assy, nested_assy, empty_top_assy):
-    """ Verify leaf node count is correct; do not add leaf for empty root object """
-
-    assert count_leaf_nodes(simple_assy) == 3
-    assert count_leaf_nodes(nested_assy) == 3
-    assert count_leaf_nodes(empty_top_assy) == 1
 
 
 def test_step_export(nested_assy, tmp_path_factory):
@@ -302,6 +562,229 @@ def test_save_raises(nested_assy):
 
     with pytest.raises(ValueError):
         nested_assy.save("nested.step", "DXF")
+
+
+@pytest.mark.parametrize(
+    "assy_fixture, count",
+    [("simple_assy", 3), ("nested_assy", 3), ("empty_top_assy", 1),],
+)
+def test_leaf_node_count(assy_fixture, count, request):
+
+    assy = request.getfixturevalue(assy_fixture)
+    _, doc = toCAF(assy, True)
+
+    assert len(get_doc_nodes(doc, True)) == count
+
+
+@pytest.mark.parametrize(
+    "assy_fixture, expected",
+    [
+        (
+            "chassis0_assy",
+            [
+                (
+                    ["chassis", "wheel-axle.*", "wheel:.*"],
+                    {
+                        "color": (1.0, 0.0, 0.0, 1.0),
+                        "color_shape": (1.0, 0.0, 0.0, 1.0),
+                        "num_nodes": 4,
+                    },
+                ),
+                (
+                    ["chassis", "wheel-axle.*", "wheel:.*", "wheel.*_part"],
+                    {"color": (1.0, 0.0, 0.0, 1.0), "num_nodes": 4},
+                ),
+                (
+                    ["chassis", "wheel-axle.*", "axle"],
+                    {
+                        "color": (0.0, 1.0, 0.0, 1.0),
+                        "color_shape": (0.0, 1.0, 0.0, 1.0),
+                        "num_nodes": 2,
+                    },
+                ),
+                (
+                    ["chassis", "wheel-axle.*", "axle", "axle_part"],
+                    {"color": (0.0, 1.0, 0.0, 1.0), "num_nodes": 2},
+                ),
+            ],
+        ),
+    ],
+)
+def test_colors_assy0(assy_fixture, expected, request):
+    """Validate assembly colors with document explorer.
+
+    Check toCAF wth color shape parameter False.
+    """
+
+    def check_nodes(doc, expected):
+        expected = copy.deepcopy(expected)
+        allnodes = get_doc_nodes(doc, False)
+        for name_path, props in expected:
+            nodes = find_node(allnodes, name_path)
+            if "num_nodes" in props:
+                assert len(nodes) == props["num_nodes"]
+                props.pop("num_nodes")
+            else:
+                assert len(nodes) > 0
+            for n in nodes:
+                for k, v in props.items():
+                    assert pytest.approx(n[k], abs=1e-3) == v
+
+    assy = request.getfixturevalue(assy_fixture)
+    _, doc = toCAF(assy, False)
+    check_nodes(doc, expected)
+
+
+@pytest.mark.parametrize(
+    "assy_fixture, expected",
+    [
+        (
+            "nested_assy",
+            [
+                (
+                    ["TOP", "SECOND", "SECOND_part"],
+                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
+                ),
+                (
+                    ["TOP", "SECOND", "BOTTOM", "BOTTOM_part"],
+                    {
+                        "color_shape": (0.0, 1.0, 0.0, 1.0),
+                        "color_subshapes": (0.0, 1.0, 0.0, 1.0),
+                    },
+                ),
+            ],
+        ),
+        ("empty_top_assy", [([".*_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),]),
+        (
+            "boxes0_assy",
+            [
+                (["box0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+            ],
+        ),
+        (
+            "boxes1_assy",
+            [
+                (["box0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+            ],
+        ),
+        (
+            "boxes2_assy",
+            [
+                (["box0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+            ],
+        ),
+        (
+            "boxes3_assy",
+            [
+                (["box0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (
+                    ["box1", "box_part"],
+                    {"color_shape": cq.Color().toTuple()},
+                ),  # default color when unspecified
+            ],
+        ),
+        (
+            "boxes4_assy",
+            [
+                (["box_0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box_1", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+            ],
+        ),
+        (
+            "boxes5_assy",
+            [
+                (["box:a", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box:b", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+            ],
+        ),
+        (
+            "boxes6_assy",
+            [
+                (["box__0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box__1", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+            ],
+        ),
+        (
+            "boxes7_assy",
+            [
+                (["box_0", "[0-9]+"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box", "[0-9]+"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["another box", "[0-9]+"], {"color_shape": (0.23, 0.26, 0.26, 0.6)}),
+            ],
+        ),
+        (
+            "chassis0_assy",
+            [
+                (
+                    ["chassis", "wheel-axle-front", "wheel:left", "wheel_part"],
+                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
+                ),
+                (
+                    ["chassis", "wheel-axle-front", "wheel:right", "wheel_part"],
+                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
+                ),
+                (
+                    ["chassis", "wheel-axle-rear", "wheel:left", "wheel_part"],
+                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
+                ),
+                (
+                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel_part"],
+                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
+                ),
+                (
+                    ["chassis", "wheel-axle-front", "axle", "axle_part"],
+                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
+                ),
+                (
+                    ["chassis", "wheel-axle-rear", "axle", "axle_part"],
+                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
+                ),
+            ],
+        ),
+    ],
+)
+def test_colors_assy1(assy_fixture, expected, request, tmpdir):
+    """Validate assembly colors with document explorer.
+
+    Check both documents created with toCAF and STEP export round trip.
+    """
+
+    def check_nodes(doc, expected, is_STEP=False):
+        expected = copy.deepcopy(expected)
+        allnodes = get_doc_nodes(doc, False)
+        for name_path, props in expected:
+            nodes = find_node(allnodes, name_path)
+            if "num_nodes" in props:
+                assert len(nodes) == props["num_nodes"]
+                props.pop("num_nodes")
+            else:
+                assert len(nodes) > 0
+            for n in nodes:
+                if not is_STEP:
+                    if "color_subshapes" in props:
+                        props.pop("color_subshapes")
+                for k, v in props.items():
+                    if (
+                        k == "color_shape"
+                        and "color_subshapes" in props
+                        and props["color_subshapes"]
+                    ):
+                        continue
+                    assert pytest.approx(n[k], abs=1e-3) == v
+
+    assy = request.getfixturevalue(assy_fixture)
+    _, doc = toCAF(assy, True)
+    check_nodes(doc, expected)
+
+    # repeat color check again - after STEP export round trip
+    stepfile = Path(tmpdir, assy_fixture).with_suffix(".step")
+    if not stepfile.exists():
+        assy.save(str(stepfile))
+    doc = read_step(stepfile)
+    check_nodes(doc, expected, True)
 
 
 def test_constrain(simple_assy, nested_assy):
