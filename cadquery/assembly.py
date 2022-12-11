@@ -9,6 +9,7 @@ from .occ_impl.shapes import Shape, Compound
 from .occ_impl.geom import Location
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
+    ConstraintKind,
     ConstraintSolver,
     ConstraintSpec as Constraint,
     UnaryConstraintKind,
@@ -26,8 +27,7 @@ from .selectors import _expression_grammar as _selector_grammar
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-ConstraintKinds = Literal["Plane", "Point", "Axis", "PointInPlane"]
-ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML"]
+ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
@@ -278,14 +278,12 @@ class Assembly(object):
 
     @overload
     def constrain(
-        self, q1: str, q2: str, kind: ConstraintKinds, param: Any = None
+        self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
     ) -> "Assembly":
         ...
 
     @overload
-    def constrain(
-        self, q1: str, kind: ConstraintKinds, param: Any = None
-    ) -> "Assembly":
+    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> "Assembly":
         ...
 
     @overload
@@ -295,14 +293,14 @@ class Assembly(object):
         s1: Shape,
         id2: str,
         s2: Shape,
-        kind: ConstraintKinds,
+        kind: ConstraintKind,
         param: Any = None,
     ) -> "Assembly":
         ...
 
     @overload
     def constrain(
-        self, id1: str, s1: Shape, kind: ConstraintKinds, param: Any = None,
+        self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
     ) -> "Assembly":
         ...
 
@@ -348,7 +346,7 @@ class Assembly(object):
 
         return self
 
-    def solve(self) -> "Assembly":
+    def solve(self, verbosity: int = 0) -> "Assembly":
         """
         Solve the constraints.
         """
@@ -414,7 +412,7 @@ class Assembly(object):
         solver = ConstraintSolver(locs, constraints, locked=locked, scale=scale)
 
         # solve
-        locs_new, self._solve_result = solver.solve()
+        locs_new, self._solve_result = solver.solve(verbosity)
 
         # update positions
 
@@ -455,7 +453,7 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF"):
+            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
@@ -470,6 +468,8 @@ class Assembly(object):
             exportGLTF(self, path, True, tolerance, angularTolerance)
         elif exportType == "VTKJS":
             exportVTKJS(self, path)
+        elif exportType == "STL":
+            self.toCompound().exportStl(path, tolerance, angularTolerance)
         else:
             raise ValueError(f"Unknown format: {exportType}")
 

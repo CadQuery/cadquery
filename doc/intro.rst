@@ -54,7 +54,7 @@ its use in a variety of engineering and scientific applications that create 3D m
 If you'd like a GUI, you have a couple of options:
 
    * The Qt-based GUI `CQ-editor <https://github.com/CadQuery/CQ-editor>`_
-   * As an Jupyter extension `jupyter-cadquery <https://github.com/bernhard-42/jupyter-cadquery>`_
+   * As a Jupyter extension `jupyter-cadquery <https://github.com/bernhard-42/jupyter-cadquery>`_
 
 
 Why CadQuery instead of OpenSCAD?

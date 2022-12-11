@@ -1218,7 +1218,7 @@ class Shape(object):
             vertices += [
                 Vector(v.X(), v.Y(), v.Z())
                 for v in (
-                    poly.Node(i).Transformed(Trsf) for i in range(1, poly.NbNodes())
+                    poly.Node(i).Transformed(Trsf) for i in range(1, poly.NbNodes() + 1)
                 )
             ]
 
@@ -1246,7 +1246,7 @@ class Shape(object):
         self,
         tolerance: Optional[float] = None,
         angularTolerance: Optional[float] = None,
-        normals: bool = True,
+        normals: bool = False,
     ) -> vtkPolyData:
         """
         Convert shape to vtkPolyData
