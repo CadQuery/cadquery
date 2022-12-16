@@ -1,4 +1,5 @@
 from math import pi
+from typing import List
 
 from ... import cq
 from ..shapes import Shape
@@ -67,14 +68,16 @@ def importStep(fileName):
     return cq.Workplane("XY").newObject(solids)
 
 
-def importDXF(filename, tol=1e-6, exclude=[], include=[]):
+def importDXF(
+    filename: str, tol: float = 1e-6, exclude: List[str] = [], include: List[str] = []
+) -> "cq.Workplane":
     """
     Loads a DXF file into a Workplane.
 
     All layers are imported by default.  Provide a layer include or exclude list
-     to select layers.  Layer names are handled as case-insensitive.
+    to select layers.  Layer names are handled as case-insensitive.
 
-    :param fileName: The path and name of the DXF file to be imported
+    :param filename: The path and name of the DXF file to be imported
     :param tol: The tolerance used for merging edges into wires
     :param exclude: a list of layer names not to import
     :param include: a list of layer names to import
