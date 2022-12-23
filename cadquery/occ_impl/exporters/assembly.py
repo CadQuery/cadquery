@@ -26,6 +26,7 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK
 from ..geom import Location
 
+
 def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     """
     Export an assembly to a STEP file.
@@ -162,7 +163,7 @@ def exportGLTF(
     """
 
     # map from CadQuery's right-handed +Z up coordinate system to glTF's right-handed +Y up coordinate system
-    # https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units 
+    # https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units
     coordinate_system_relation = Location((0, 0, 0), (1, 0, 0), -90)
     assy.loc *= coordinate_system_relation
 
@@ -174,7 +175,7 @@ def exportGLTF(
     _, doc = toCAF(assy, True)
 
     writer = RWGltf_CafWriter(TCollection_AsciiString(path), binary)
-    result =  writer.Perform(
+    result = writer.Perform(
         doc, TColStd_IndexedDataMapOfStringString(), Message_ProgressRange()
     )
 
