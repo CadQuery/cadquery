@@ -24,7 +24,7 @@ from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
 from ..assembly import AssemblyProtocol, toCAF, toVTK
-
+from ..geom import Location
 
 def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     """
@@ -161,6 +161,11 @@ def exportGLTF(
     Export an assembly to a gltf file.
     """
 
+    # map from CadQuery's right-handed +Z up coordinate system to glTF's right-handed +Y up coordinate system
+    # https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units 
+    coordinate_system_relation = Location((0, 0, 0), (1, 0, 0), -90)
+    assy.loc *= coordinate_system_relation
+
     # mesh all the shapes
     for _, el in assy.traverse():
         for s in el.shapes:
@@ -169,6 +174,11 @@ def exportGLTF(
     _, doc = toCAF(assy, True)
 
     writer = RWGltf_CafWriter(TCollection_AsciiString(path), binary)
-    return writer.Perform(
+    result =  writer.Perform(
         doc, TColStd_IndexedDataMapOfStringString(), Message_ProgressRange()
     )
+
+    # restore coordinate system after exporting
+    assy.loc *= coordinate_system_relation.inverse
+
+    return result
