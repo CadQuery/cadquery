@@ -370,8 +370,6 @@ STEP can be loaded in all CAD tool, e.g. in FreeCAD and the XML be used in other
     door.save('door.step')
     door.save('door.xml')
     
-In the case of STEP colors are preserved but not transparency.
-
 ..  image:: _static/door_assy_freecad.png
 
 
@@ -389,9 +387,9 @@ Objects can be added to an assembly with initial locations supplied, such as:
     assy = cq.Assembly()
     assy.add(
         cone,
-        loc=cq.Location(cq.Vector(0, 0, 0), cq.Vector(1, 0, 0), 180),
+        loc=cq.Location((0, 0, 0), (1, 0, 0), 180),
         name="cone0",
-        color=cq.Color("green")
+        color=cq.Color("green"),
     )
     assy.add(cone, name="cone1", color=cq.Color("blue"))
 
@@ -733,21 +731,21 @@ Where:
 
     import cadquery as cq
 
-    b1 = cq.Workplane().box(1,1,1)
+    b1 = cq.Workplane().box(1, 1, 1)
     b2 = cq.Workplane().sphere(0.15)
 
     assy = (
         cq.Assembly()
-        .add(b1,name='b1')
-        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+        .add(b1, name="b1")
+        .add(b2, loc=cq.Location((0, 0, 4)), name="b2", color=cq.Color("red"))
     )
 
     # fix the position of b1
-    assy.constrain('b1','Fixed')
+    assy.constrain("b1", "Fixed")
     # b2 on one of the edges of b1
-    assy.constrain('b2','b1@edges@>>Z and >>Y','PointOnLine')
+    assy.constrain("b2", "b1@edges@>>Z and >>Y", "PointOnLine")
     # b2 on another of the edges of b1
-    assy.constrain('b2','b1@edges@>>Z and >>X','PointOnLine')
+    assy.constrain("b2", "b1@edges@>>Z and >>X", "PointOnLine")
     # effectively b2 will be constrained to be on the intersection of the two edges
 
     assy.solve()
@@ -768,31 +766,31 @@ The cost function is:
 Where:
 
 - :math:`\vec{ c }` is the center of the argument,
-- :math:`param` is the parameter of the constraint - tuple specifying the target position,
-- :math:`\operatorname{dist}( \vec{ a }, b)` is the distance between point :math:`\vec{ a }` and
-  line :math:`b`.
+- :math:`param` is the parameter of the constraint - tuple specifying the target position.
 
 
 .. cadquery::
 
     import cadquery as cq
 
-    b1 = cq.Workplane().box(1,1,1)
+    b1 = cq.Workplane().box(1, 1, 1)
     b2 = cq.Workplane().sphere(0.15)
 
     assy = (
         cq.Assembly()
-        .add(b1,name='b1')
-        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+        .add(b1, name="b1")
+        .add(b2, loc=cq.Location((0, 0, 4)), name="b2", color=cq.Color("red"))
+        .add(b1, loc=cq.Location((-2, 0, 0)), name="b3", color=cq.Color("red"))
     )
 
+    pnt = (0.5, 0.5, 0.5)
+
     # fix the position of b1
-    assy.constrain('b1','Fixed')
-    # b2 on one of the edges of b1
-    assy.constrain('b2','b1@edges@>>Z and >>Y','PointOnLine')
-    # b2 on another of the edges of b1
-    assy.constrain('b2','b1@edges@>>Z and >>X','PointOnLine')
-    # effectively b2 will be constrained to be on the intersection of the two edges
+    assy.constrain("b1", "Fixed")
+    # fix b2 center at point
+    assy.constrain("b2", "FixedPoint", pnt)
+    # fix b3 vertex position at point
+    assy.constrain("b3@vertices@<X and <Y and <Z", "FixedPoint", pnt)
 
     assy.solve()
     show_object(assy)
@@ -801,7 +799,7 @@ Where:
 FixedRotation
 =============
 
-FixedRotation fixes the rotation of the given argument to be equal to the value specified via the parameter of the constraint. The argument is rotated about it's origin firstly by the Z angle, then Y and finally X.
+FixedRotation fixes the rotation of the given argument to be equal to the value specified via the parameter of the constraint.
 
 This constraint locks all rotational degrees of freedom of the argument.
 The cost function is:
@@ -821,21 +819,21 @@ Where:
 
     import cadquery as cq
 
-    b1 = cq.Workplane().box(1,1,1)
-    b2 = cq.Workplane().rect(0.1, 0.1).extrude(1,taper=-15)
+    b1 = cq.Workplane().box(1, 1, 1)
+    b2 = cq.Workplane().rect(0.1, 0.1).extrude(1, taper=-15)
 
     assy = (
         cq.Assembly()
-        .add(b1,name='b1')
-        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+        .add(b1, name="b1")
+        .add(b2, loc=cq.Location((0, 0, 4)), name="b2", color=cq.Color("red"))
     )
 
     # fix the position of b1
-    assy.constrain('b1','Fixed')
+    assy.constrain("b1", "Fixed")
     # fix b2 bottom face position (but not rotation)
-    assy.constrain('b2@faces@<Z','FixedPoint',(0,0,0.5))
+    assy.constrain("b2@faces@<Z", "FixedPoint", (0, 0, 0.5))
     # fix b2 rotational degrees of freedom too
-    assy.constrain('b2','FixedRotation',(45,0,45))
+    assy.constrain("b2", "FixedRotation", (45, 0, 45))
 
     assy.solve()
     show_object(assy)
@@ -862,21 +860,21 @@ Where:
 
     import cadquery as cq
 
-    b1 = cq.Workplane().box(1,1,1)
-    b2 = cq.Workplane().rect(0.1, 0.1).extrude(1,taper=-15)
+    b1 = cq.Workplane().box(1, 1, 1)
+    b2 = cq.Workplane().rect(0.1, 0.1).extrude(1, taper=-15)
 
     assy = (
         cq.Assembly()
-        .add(b1,name='b1')
-        .add(b2, loc=cq.Location(cq.Vector(0,0,4)), name='b2', color=cq.Color('red'))
+        .add(b1, name="b1")
+        .add(b2, loc=cq.Location((0, 0, 4)), name="b2", color=cq.Color("red"))
     )
 
     # fix the position of b1
-    assy.constrain('b1','Fixed')
+    assy.constrain("b1", "Fixed")
     # fix b2 bottom face position (but not rotation)
-    assy.constrain('b2@faces@<Z','FixedPoint',(0,0,0.5))
+    assy.constrain("b2@faces@<Z", "FixedPoint", (0, 0, 0.5))
     # fix b2 some rotational degrees of freedom too
-    assy.constrain('b2@faces@>Z','FixedAxis',(1,0,2))
+    assy.constrain("b2@faces@>Z", "FixedAxis", (1, 0, 2))
 
     assy.solve()
     show_object(assy)
