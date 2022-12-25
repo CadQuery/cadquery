@@ -164,8 +164,8 @@ def exportGLTF(
 
     # map from CadQuery's right-handed +Z up coordinate system to glTF's right-handed +Y up coordinate system
     # https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units
-    coordinate_system_relation = Location((0, 0, 0), (1, 0, 0), -90)
-    assy.loc *= coordinate_system_relation
+    orig_loc = assy.loc
+    assy.loc *= Location((0, 0, 0), (1, 0, 0), -90)
 
     # mesh all the shapes
     for _, el in assy.traverse():
@@ -180,6 +180,6 @@ def exportGLTF(
     )
 
     # restore coordinate system after exporting
-    assy.loc *= coordinate_system_relation.inverse
+    assy.loc = orig_loc
 
     return result
