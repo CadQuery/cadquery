@@ -83,6 +83,10 @@ class AssemblyProtocol(Protocol):
     def loc(self) -> Location:
         ...
 
+    @loc.setter
+    def loc(self, value: Location) -> None:
+        ...
+
     @property
     def name(self) -> str:
         ...
