@@ -299,11 +299,11 @@ def test_stl_ascii(tmpdir, box123, id, opt, matchvals):
 @pytest.mark.parametrize(
     "id, opt, matchval",
     [
-        (0, None, b"STL Exported by OpenCASCADE"),
-        (1, {"ascii": False}, b"STL Exported by OpenCASCADE"),
-        (2, {"ASCII": False}, b"STL Exported by OpenCASCADE"),
-        (3, {"unknown_opt": 1}, b"STL Exported by OpenCASCADE"),
-        (4, {"unknown_opt": 1, "ascii": False}, b"STL Exported by OpenCASCADE"),
+        (0, None, b"STL Exported by Open CASCADE"),
+        (1, {"ascii": False}, b"STL Exported by Open CASCADE"),
+        (2, {"ASCII": False}, b"STL Exported by Open CASCADE"),
+        (3, {"unknown_opt": 1}, b"STL Exported by Open CASCADE"),
+        (4, {"unknown_opt": 1, "ascii": False}, b"STL Exported by Open CASCADE"),
     ],
 )
 def test_stl_binary(tmpdir, box123, id, opt, matchval):
