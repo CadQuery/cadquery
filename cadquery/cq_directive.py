@@ -5,15 +5,15 @@ A special directive for including a cq object.
 
 import traceback
 
+from json import dumps
 from pathlib import Path
 from uuid import uuid1 as uuid
 from textwrap import indent
 
 from cadquery import exporters, Assembly, Compound, Color, Sketch
 from cadquery import cqgi
+from cadquery.occ_impl.assembly import toJSON
 from cadquery.occ_impl.jupyter_tools import (
-    toJSON,
-    dumps,
     TEMPLATE_RENDER,
     DEFAULT_COLOR,
 )

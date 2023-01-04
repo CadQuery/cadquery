@@ -57,10 +57,8 @@ Importing a DXF profile with default settings and using it within a CadQuery scr
     import cadquery as cq
 
     result = (
-        cq.importers.importDXF('/path/to/dxf/circle.dxf')
-        .wires().toPending()
-        .extrude(10)
-        )
+        cq.importers.importDXF("/path/to/dxf/circle.dxf").wires().toPending().extrude(10)
+    )
 
 Note the use of the :py:meth:`Workplane.wires` and :py:meth:`Workplane.toPending` methods to make the DXF profile 
 ready for use during subsequent operations. Calling ``toPending()`` tells CadQuery to make the edges/wires available 
