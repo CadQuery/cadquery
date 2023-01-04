@@ -1,8 +1,6 @@
-from typing import Iterable, Tuple, Dict, overload, Optional, Any, List
+from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List
 from typing_extensions import Protocol
 from math import degrees
-from itertools import groupby
-import re
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
@@ -23,6 +21,10 @@ from vtkmodules.vtkRenderingCore import (
 from .geom import Location
 from .shapes import Shape, Compound
 from .exporters.vtk import toString
+from ..cq import Workplane
+
+# type definitions
+AssemblyObjects = Union[Shape, Workplane, None]
 
 
 class Color(object):
@@ -118,11 +120,8 @@ class AssemblyProtocol(Protocol):
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 
-    def _flatten(self) -> Dict[str, "AssemblyProtocol"]:
-        ...
 
-
-def setName(l: TDF_Label, name: str):
+def setName(l: TDF_Label, name: str, tool):
 
     TDataStd_Name.Set_s(l, TCollection_ExtendedString(name))
 
@@ -147,141 +146,72 @@ def toCAF(
     app.InitDocument(doc)
 
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    tool.SetAutoNaming_s(True)
+    tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
 
     # add root
     top = tool.NewShape()
     TDataStd_Name.Set_s(top, TCollection_ExtendedString("CQ assembly"))
 
-    # make compound, group by hashCode
-    shape_names = {}
-    shape_colors = {}
-    assy_compounds = {}
-    default_color = Color().toTuple()  # used in sorting; not assigned explicitly
+    # used to store unique part-color combinations
+    unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
+    # used to store unique compounds
+    compounds: Dict[AssemblyObjects, Compound] = {}
 
-    # (optional) naming convention pattern when shape referenced by multiple instances
-    pat_shape_name = re.compile(r"^(\w+?)[:(_+\d)\d]")
+    def _toCAF(el, ancestor, color):
 
-    assy_flat = sorted(
-        list(assy._flatten().values()),
-        key=lambda assy: [s.hashCode() for s in assy.shapes],
-    )
-    for hashcodes, g0 in groupby(
-        assy_flat, key=lambda assy: [s.hashCode() for s in assy.shapes]
-    ):
-
-        assys0 = list(g0)
-
-        if not hashcodes:
-            compound = None
-        else:
-            compound = Compound.makeCompound(assys0[0].shapes)
-            if mesh:
-                compound.mesh(tolerance, angularTolerance)
-
-            # handle colors - this logic is needed for proper STEP export
-            if coloredSTEP:
-
-                assy_names = set([a.name for a in assys0])
-
-                if len(assy_names) > 1:
-                    i = 0
-                    name_prefixes = []
-                    # sample names that share common shape
-                    while assy_names and i < 20:
-                        if m := pat_shape_name.match(assy_names.pop()):
-                            name_prefixes.append(m.group(1))
-                        i += 1
-                    if len(name_prefixes) == i and len(set(name_prefixes)) == 1:
-                        # apply common prefix
-                        shape_name = f"{name_prefixes[0]}_part"
-                    else:
-                        # common name prefix not found
-                        shape_name = str(compound.hashCode())
-
-                else:
-                    shape_name = f"{assy_names.pop()}_part"
-
-                colors = []
-                for a in assys0:
-                    color = a.color
-                    tmp = a
-                    while not color and tmp.parent:
-                        tmp = tmp.parent
-                        color = tmp.color
-
-                    colors.append(color)
-
-                # group by colors
-                assys_colors0 = sorted(
-                    zip(assys0, colors),
-                    key=lambda x: x[1].toTuple() if x[1] else default_color,
-                )
-                for k_color, g1 in groupby(
-                    assys_colors0,
-                    key=lambda x: x[1].toTuple() if x[1] else default_color,
-                ):
-
-                    compound = Compound(
-                        BRepBuilderAPI_Copy(compound.wrapped, True, mesh).Shape()
-                    )
-
-                    assys_colors1 = list(g1)
-                    for a, _ in assys_colors1:
-                        assy_compounds[a.name] = compound
-
-                    shape_names[compound] = shape_name
-                    shape_colors[compound] = assys_colors1[0][1]
-
-            else:
-                for a in assys0:
-                    assy_compounds[a.name] = compound
-
-    # add leaf nodes and subassemblies
-    subassys: Dict[str, Tuple[TDF_Label, Location]] = {}
-
-    for k, v in assy.traverse():
-
-        # assy part
+        # create a subassy
         subassy = tool.NewShape()
+        setName(subassy, el.name, tool)
 
-        if compound := assy_compounds.get(v.name, None):
-            if coloredSTEP:
-                if tool.FindShape(compound.wrapped).IsNull():
+        # define the current color
+        current_color = el.color if el.color else color
 
-                    label = tool.NewShape()
-                    tool.SetShape(label, compound.wrapped)
-                    setName(label, shape_names[compound])
-                    if color := shape_colors[compound]:
-                        setColor(label, color, ctool)
+        # add a leaf with the actual part if needed
+        if el.obj:
+            # get/register unique parts referenced in the assy
+            key0 = (current_color, el.obj)
+            key1 = el.obj
 
-                else:
-                    label = tool.NewShape()
-                    tool.SetShape(label, compound.wrapped)
-                    setName(label, shape_names[compound])
+            if key0 in unique_objs:
+                lab = unique_objs[key0]
             else:
-                label = tool.NewShape()
-                tool.SetShape(label, compound.wrapped)
-                setName(label, f"{k}_part")
-                if v.color:
-                    setColor(subassy, v.color, ctool)
+                lab = tool.NewShape()
+                if key1 in compounds:
+                    compound = Compound(
+                        BRepBuilderAPI_Copy(compounds[key1].wrapped, True, mesh).Shape()
+                    )
+                else:
+                    compound = Compound.makeCompound(el.shapes)
+                    if mesh:
+                        compound.mesh(tolerance, angularTolerance)
 
-            tool.AddComponent(subassy, label, TopLoc_Location())
+                    compounds[key1] = compound
 
-        else:
-            if v.color:
-                setColor(subassy, v.color, ctool)
+                tool.SetShape(lab, compound.wrapped)
+                setName(lab, f"{el.name}_part", tool)
+                unique_objs[key0] = lab
 
-        setName(subassy, k)
-        subassys[k] = (subassy, v.loc)
+                # handle colors when exporting to STEP
+                if coloredSTEP and current_color:
+                    setColor(lab, current_color, ctool)
 
-        for ch in v.children:
-            tool.AddComponent(
-                subassy, subassys[ch.name][0], subassys[ch.name][1].wrapped
-            )
+            tool.AddComponent(subassy, lab, TopLoc_Location())
 
-    tool.AddComponent(top, subassys[assy.name][0], assy.loc.wrapped)
+        # handle colors when *not* exporting to STEP
+        if not coloredSTEP and current_color:
+            setColor(subassy, current_color, ctool)
+
+        # add children recursively
+        for child in el.children:
+            _toCAF(child, subassy, current_color)
+
+        # add the current subassy to the higher level assy
+        tool.AddComponent(ancestor, subassy, el.loc.wrapped)
+
+    # process the whole assy recursively
+    _toCAF(assy, top, None)
+
     tool.UpdateAssemblies()
 
     return top, doc

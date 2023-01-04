@@ -33,6 +33,11 @@ from OCP.TDF import TDF_ChildIterator
 from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
 
 
+@pytest.fixture(scope="module")
+def tmpdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("assembly")
+
+
 @pytest.fixture
 def simple_assy():
 
@@ -226,9 +231,6 @@ def boxes6_assy():
 
 @pytest.fixture
 def boxes7_assy():
-    """Naming convention for common shape is not followed.
-    The name is assigned corresponding to the hashCode.
-    """
 
     b0 = cq.Workplane().box(1, 1, 1)
 
@@ -562,6 +564,20 @@ def test_save_gltf(nested_assy_sphere):
     assert os.path.getsize("nested.glb") > 50 * 1024
 
 
+def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):
+    """
+    Output must not contain:
+
+    RWGltf_CafWriter skipped node '<name>' without triangulation data
+    """
+
+    boxes2_assy.save(str(Path(tmpdir, "boxes2_assy.glb")), "GLTF")
+
+    output = capfd.readouterr()
+    assert output.out == ""
+    assert output.err == ""
+
+
 def test_save_vtkjs(nested_assy):
 
     nested_assy.save("nested", "VTKJS")
@@ -630,7 +646,6 @@ def test_colors_assy0(assy_fixture, expected, request):
     """
 
     def check_nodes(doc, expected):
-        expected = copy.deepcopy(expected)
         allnodes = get_doc_nodes(doc, False)
         for name_path, props in expected:
             nodes = find_node(allnodes, name_path)
@@ -671,30 +686,30 @@ def test_colors_assy0(assy_fixture, expected, request):
         (
             "boxes0_assy",
             [
-                (["box0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1", "box1_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes1_assy",
             [
-                (["box0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes2_assy",
             [
-                (["box0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1", "box1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes3_assy",
             [
-                (["box0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
                 (
-                    ["box1", "box_part"],
+                    ["box1", "box1_part"],
                     {"color_shape": cq.Color().toTuple()},
                 ),  # default color when unspecified
             ],
@@ -702,49 +717,52 @@ def test_colors_assy0(assy_fixture, expected, request):
         (
             "boxes4_assy",
             [
-                (["box_0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box_1", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["box_0", "box_0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box_1", "box_1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes5_assy",
             [
-                (["box:a", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box:b", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["box:a", "box:a_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box:b", "box:b_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes6_assy",
             [
-                (["box__0", "box_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box__1", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["box__0", "box__0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box__1", "box__1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes7_assy",
             [
-                (["box_0", "[0-9]+"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box", "[0-9]+"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-                (["another box", "[0-9]+"], {"color_shape": (0.23, 0.26, 0.26, 0.6)}),
+                (["box_0", "box_0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (
+                    ["another box", "another box_part"],
+                    {"color_shape": (0.23, 0.26, 0.26, 0.6)},
+                ),
             ],
         ),
         (
             "chassis0_assy",
             [
                 (
-                    ["chassis", "wheel-axle-front", "wheel:left", "wheel_part"],
+                    ["chassis", "wheel-axle-front", "wheel:left", "wheel:left_part"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-front", "wheel:right", "wheel_part"],
+                    ["chassis", "wheel-axle-front", "wheel:right", "wheel:right_part"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-rear", "wheel:left", "wheel_part"],
+                    ["chassis", "wheel-axle-rear", "wheel:left", "wheel:left_part"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel_part"],
+                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel:right_part"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
