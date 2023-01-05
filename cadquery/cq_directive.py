@@ -199,7 +199,7 @@ template_vtk = """
 .. raw:: html
 
     <div class="cq-vtk"
-     style="text-align:{txt_align}s;float:left;border: 1px solid #ddd; width:{width}; height:{height}"">
+     style="text-align:{txt_align}s;float:left;border: 1px solid #ddd; width:{width}; height:{height}">
        <script>
        var parent_element = {element};
        var data = {data};
