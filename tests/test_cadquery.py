@@ -5413,7 +5413,7 @@ class TestCadQuery(BaseTest):
         res = t.project(f, (0, 0, -1))
 
         assert res.isValid()
-        assert len(res.Edges()) == 8
+        assert len(res.Edges()) == len(t.Edges())
         assert t.distance(res) == approx(1)
 
         # extrude it
