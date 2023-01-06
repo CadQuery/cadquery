@@ -5411,6 +5411,21 @@ class TestCadQuery(BaseTest):
         f = Workplane("XZ", origin=(0, 0, -7)).sphere(6).faces("not %PLANE").val()
 
         res = t.project(f, (0, 0, -1))
+        
+        from io import BytesIO
+        bio = BytesIO()
+
+        res.exportBrep(bio)
+
+        bio.seek(0)
+        print(bio.read())
+
+        bio = BytesIO()
+
+        f.exportBrep(bio)
+
+        bio.seek(0)
+        print(bio.read())
 
         assert res.isValid()
         assert len(res.Edges()) == len(t.Edges())
