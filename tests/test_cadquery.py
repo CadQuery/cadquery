@@ -5419,6 +5419,12 @@ class TestCadQuery(BaseTest):
 
         bio.seek(0)
         print(bio.read())
+        
+        bio = BytesIO()
+        t.exportBrep(bio)
+
+        bio.seek(0)
+        print(bio.read())
 
         bio = BytesIO()
 
