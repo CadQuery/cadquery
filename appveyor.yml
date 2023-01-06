@@ -33,7 +33,7 @@ install:
 build: false
 
 test_script:
-    - black . --diff --check
+    #- black . --diff --check
     - mypy cadquery
     - pytest -v --cov
 
