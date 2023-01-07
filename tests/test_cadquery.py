@@ -5119,7 +5119,7 @@ class TestCadQuery(BaseTest):
                     Face.makePlane(1, 1),
                 ]
             )
-            .eachpoint(lambda l: Face.makePlane(1, 1).locate(l))
+            .eachpoint(lambda l: Face.makePlane(1, 1).locate(l), True)
         )
 
         self.assertTrue(len(r1.objects) == 4)
