@@ -59,9 +59,7 @@ class deprecate_kwarg_name:
         @wraps(f)
         def wrapped(*args, **kwargs):
 
-            f_sig_params = signature(f).parameters
-
-            if f_sig_params[self.name]:
+            if self.name in kwargs:
                 warn(
                     f"Kwarg <{self.name}> will be removed. Please use <{self.new_name}>",
                     FutureWarning,
