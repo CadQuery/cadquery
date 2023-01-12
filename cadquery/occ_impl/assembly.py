@@ -10,7 +10,6 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
-from OCP.BRepBuilderAPI import BRepBuilderAPI_Copy
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -157,9 +156,9 @@ def toCAF(
     top = tool.NewShape()
     TDataStd_Name.Set_s(top, TCollection_ExtendedString("CQ assembly"))
 
-    # used to store unique part-color combinations
+    # used to store labels with unique part-color combinations
     unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
-    # used to store unique compounds
+    # used to cache unique, possibly meshed, compounds; allows to avoid redundant meshing operations if same object is referenced multiple times in an assy
     compounds: Dict[AssemblyObjects, Compound] = {}
 
     def _toCAF(el, ancestor, color):
@@ -174,17 +173,15 @@ def toCAF(
         # add a leaf with the actual part if needed
         if el.obj:
             # get/register unique parts referenced in the assy
-            key0 = (current_color, el.obj)
-            key1 = el.obj
+            key0 = (current_color, el.obj) # (color, shape)
+            key1 = el.obj # shape
 
             if key0 in unique_objs:
                 lab = unique_objs[key0]
             else:
                 lab = tool.NewShape()
                 if key1 in compounds:
-                    compound = Compound(
-                        BRepBuilderAPI_Copy(compounds[key1].wrapped, True, mesh).Shape()
-                    )
+                    compound = compounds[key1].copy(mesh)
                 else:
                     compound = Compound.makeCompound(el.shapes)
                     if mesh:
