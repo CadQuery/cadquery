@@ -912,12 +912,15 @@ class Shape(object):
 
         return self._apply_transform(T)
 
-    def copy(self: T) -> T:
+    def copy(self: T, mesh: bool = False) -> T:
         """
         Creates a new object that is a copy of this object.
+        
+        :param mesh: should I copy the triangulation too (default: False)
+        :returns: a copy of the object
         """
 
-        return self.__class__(BRepBuilderAPI_Copy(self.wrapped).Shape())
+        return self.__class__(BRepBuilderAPI_Copy(self.wrapped, True, mesh).Shape())
 
     def transformShape(self, tMatrix: Matrix) -> "Shape":
         """
