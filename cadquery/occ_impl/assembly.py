@@ -173,8 +173,8 @@ def toCAF(
         # add a leaf with the actual part if needed
         if el.obj:
             # get/register unique parts referenced in the assy
-            key0 = (current_color, el.obj) # (color, shape)
-            key1 = el.obj # shape
+            key0 = (current_color, el.obj)  # (color, shape)
+            key1 = el.obj  # shape
 
             if key0 in unique_objs:
                 lab = unique_objs[key0]
