@@ -4,7 +4,8 @@ from ..shapes import Edge
 from .utils import toCompound
 
 from OCP.gp import gp_Dir
-from OCP.GeomConvert import GeomConvert
+from OCP.GeomConvert import GeomConvert, GeomConvert_ApproxCurve
+from OCP.GeomAbs import GeomAbs_C0
 
 import ezdxf
 
@@ -72,12 +73,20 @@ def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
     adaptor = e._geomAdaptor()
     curve = GeomConvert.CurveToBSplineCurve_s(adaptor.Curve().Curve())
 
-    spline = GeomConvert.SplitBSplineCurve_s(
+    full_spline = GeomConvert.SplitBSplineCurve_s(
         curve, adaptor.FirstParameter(), adaptor.LastParameter(), CURVE_TOLERANCE
     )
 
     # need to apply the transform on the geometry level
-    spline.Transform(plane.fG.wrapped.Trsf())
+    full_spline.Transform(plane.fG.wrapped.Trsf())
+
+    # approximate the transformed spline down to max degree 3 for
+    # compatibilitly with more DXF processing tools.
+    #
+    # parameters choosen to match FreeCAD 0.20
+    approx_spline = GeomConvert_ApproxCurve(full_spline, 0.001, GeomAbs_C0, 50, 3)
+
+    spline = approx_spline.Curve()
 
     order = spline.Degree() + 1
     knots = list(spline.KnotSequence())

@@ -177,7 +177,7 @@ class TestExporters(BaseTest):
 
         s1_i = importers.importDXF("res1.dxf")
 
-        self.assertAlmostEqual(s1.val().Area(), s1_i.val().Area(), 6)
+        self.assertAlmostEqual(s1.val().Area(), s1_i.val().Area(), 5)
         self.assertAlmostEqual(s1.edges().size(), s1_i.edges().size())
 
         pts = [(0, 0), (0, 0.5), (1, 1)]
@@ -188,7 +188,7 @@ class TestExporters(BaseTest):
 
         s2_i = importers.importDXF("res2.dxf")
 
-        self.assertAlmostEqual(s2.val().Area(), s2_i.val().Area(), 6)
+        self.assertAlmostEqual(s2.val().Area(), s2_i.val().Area(), 4)
         self.assertAlmostEqual(s2.edges().size(), s2_i.edges().size())
 
         s3 = (
@@ -204,7 +204,7 @@ class TestExporters(BaseTest):
 
         s3_i = importers.importDXF("res3.dxf")
 
-        self.assertAlmostEqual(s3.val().Area(), s3_i.val().Area(), 6)
+        self.assertAlmostEqual(s3.val().Area(), s3_i.val().Area(), 3)
         self.assertAlmostEqual(s3.edges().size(), s3_i.edges().size())
 
         cyl = Workplane("XY").circle(22).extrude(10, both=True).translate((-50, 0, 0))
@@ -215,7 +215,7 @@ class TestExporters(BaseTest):
 
         s4_i = importers.importDXF("res4.dxf")
 
-        self.assertAlmostEqual(s4.val().Area(), s4_i.val().Area(), 6)
+        self.assertAlmostEqual(s4.val().Area(), s4_i.val().Area(), 5)
         self.assertAlmostEqual(s4.edges().size(), s4_i.edges().size())
 
         # test periodic spline
@@ -224,7 +224,7 @@ class TestExporters(BaseTest):
 
         w_i = importers.importDXF("res5.dxf")
 
-        self.assertAlmostEqual(w.val().Length(), w_i.wires().val().Length(), 6)
+        self.assertAlmostEqual(w.val().Length(), w_i.wires().val().Length(), 5)
 
         # test rational spline
         c = Edge.makeCircle(1)
@@ -236,7 +236,7 @@ class TestExporters(BaseTest):
 
         e_i = importers.importDXF("res6.dxf")
 
-        self.assertAlmostEqual(e.val().Length(), e_i.wires().val().Length(), 6)
+        self.assertAlmostEqual(e.val().Length(), e_i.wires().val().Length(), 3)
 
         # test non-planar section
         s5 = (
@@ -253,7 +253,7 @@ class TestExporters(BaseTest):
 
         s5_i = importers.importDXF("res7.dxf")
 
-        self.assertAlmostEqual(s5.val().Area(), s5_i.val().Area(), 4)
+        self.assertAlmostEqual(s5.val().Area(), s5_i.val().Area(), 3)
 
     def testTypeHandling(self):
 
