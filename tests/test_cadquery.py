@@ -5410,10 +5410,10 @@ class TestCadQuery(BaseTest):
         t = Compound.makeText("T", 5, 0).Faces()[0]
         f = Workplane("XZ", origin=(0, 0, -7)).sphere(6).faces("not %PLANE").val()
 
-        res = t.project(f, (0, 0, -1))
+        res = t.project(f, (0, 0, 1))
 
         assert res.isValid()
-        assert len(res.Edges()) == 8
+        assert len(res.Edges()) == len(t.Edges())
         assert t.distance(res) == approx(1)
 
         # extrude it
@@ -5425,12 +5425,12 @@ class TestCadQuery(BaseTest):
         # project a wire
         w = t.outerWire()
 
-        res_w = w.project(f, (0, 0, -1))
+        res_w = w.project(f, (0, 0, 1))
 
         assert len(res_w.Edges()) == 8
         assert res_w.isValid()
 
-        res_w1, res_w2 = w.project(f, (0, 0, -1), False)
+        res_w1, res_w2 = w.project(f, (0, 0, 1), False)
 
         assert len(res_w1.Edges()) == 8
         assert len(res_w2.Edges()) == 8
@@ -5439,7 +5439,7 @@ class TestCadQuery(BaseTest):
         o = Compound.makeText("O", 5, 0).Faces()[0]
         f = Workplane("XZ", origin=(0, 0, -7)).sphere(6).faces("not %PLANE").val()
 
-        res_o = o.project(f, (0, 0, -1))
+        res_o = o.project(f, (0, 0, 1))
 
         assert res_o.isValid()
 

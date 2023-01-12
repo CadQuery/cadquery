@@ -15,7 +15,7 @@ requirements:
     - setuptools
   run:
     - python {{ environ.get('PYTHON_VERSION') }}
-    - ocp 7.6.*
+    - ocp 7.7.*
     - pyparsing >=2.1.9
     - ezdxf
     - ipython
