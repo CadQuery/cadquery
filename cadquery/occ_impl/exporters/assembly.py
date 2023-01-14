@@ -155,7 +155,7 @@ def exportGLTF(
     assy: AssemblyProtocol,
     path: str,
     binary: bool = True,
-    tolerance: float = 0.1,
+    tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ):
     """
@@ -167,12 +167,7 @@ def exportGLTF(
     orig_loc = assy.loc
     assy.loc *= Location((0, 0, 0), (1, 0, 0), -90)
 
-    # mesh all the shapes
-    for _, el in assy.traverse():
-        for s in el.shapes:
-            s.mesh(tolerance, angularTolerance)
-
-    _, doc = toCAF(assy, True)
+    _, doc = toCAF(assy, True, True, tolerance, angularTolerance)
 
     writer = RWGltf_CafWriter(TCollection_AsciiString(path), binary)
     result = writer.Perform(
