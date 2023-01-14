@@ -2,7 +2,6 @@ name: cadquery
 channels:
   - cadquery
   - conda-forge
-  - defaults
 dependencies:
   - python>=3.8
   - ipython
@@ -23,9 +22,8 @@ dependencies:
   - nlopt
   - path
   - casadi
+  - multimethod >=1.7,<2.0
   - pip
   - pip:
-    - "--install-option=\"--no-deps\""
-    - "--editable=."
-    - sphinxcadquery
-    - multimethod>=1.7,<2.0
+    - --editable=.
+    - git+https://github.com/CadQuery/OCP-stubs.git
