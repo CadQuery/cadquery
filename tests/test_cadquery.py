@@ -5487,3 +5487,8 @@ class TestCadQuery(BaseTest):
 
         assert isinstance(vtk, vtkPolyData)
         assert vtk.GetNumberOfPolys() == 2
+
+    def test_clean(self):
+
+        solid = Workplane().circle(15).extrude(until=40, both=True)
+        assert len(solid.faces().all()) == 3
