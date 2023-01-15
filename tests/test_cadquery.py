@@ -3620,6 +3620,17 @@ class TestCadQuery(BaseTest):
         r = box.faces(">Z").workplane(invert=True).circle(0.5).extrude(4, combine="cut")
         self.assertGreater(box.val().Volume(), r.val().Volume())
 
+        # Test extrude with both=True and combine="cut"
+        wp_ref = Workplane("XY").rect(40, 40).extrude(20, both=True)
+
+        wp_ref_regular_cut = (
+            wp_ref.workplane(offset=-20).rect(20, 20).extrude(40, combine="s")
+        )
+
+        wp = wp_ref.workplane().rect(20, 20).extrude(20, both=True, combine="s")
+
+        self.assertAlmostEqual(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
+
     def testTaperedExtrudeCutBlind(self):
 
         h = 1.0
