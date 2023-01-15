@@ -104,7 +104,7 @@ def export(
 
     elif exportType == ExportTypes.DXF:
         if isinstance(w, Workplane):
-            exportDXF(w, fname)
+            exportDXF(w, fname, opt)
         else:
             raise ValueError("Only Workplanes can be exported as DXF")
 

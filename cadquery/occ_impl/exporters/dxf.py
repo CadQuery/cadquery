@@ -7,19 +7,26 @@ from OCP.gp import gp_Dir
 from OCP.GeomConvert import GeomConvert, GeomConvert_ApproxCurve
 from OCP.GeomAbs import GeomAbs_C0
 
+from typing import Dict, Any
+
 import ezdxf
 
 CURVE_TOLERANCE = 1e-9
 
 
-def _dxf_line(e, msp, plane):
+def _dxf_line(
+    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane, opt: Dict[str, Any]
+):
 
     msp.add_line(
-        e.startPoint().toTuple(), e.endPoint().toTuple(),
+        e.startPoint().toTuple(),
+        e.endPoint().toTuple(),
     )
 
 
-def _dxf_circle(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
+def _dxf_circle(
+    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane, opt: Dict[str, Any]
+):
 
     geom = e._geomAdaptor()
     circ = geom.Circle()
@@ -47,7 +54,9 @@ def _dxf_circle(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
         msp.add_arc((c.X(), c.Y(), c.Z()), r, a1, a2)
 
 
-def _dxf_ellipse(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
+def _dxf_ellipse(
+    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane, opt: Dict[str, Any]
+):
 
     geom = e._geomAdaptor()
     ellipse = geom.Ellipse()
@@ -68,25 +77,29 @@ def _dxf_ellipse(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
     )
 
 
-def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
+def _dxf_spline(
+    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane, opt: Dict[str, Any]
+):
 
     adaptor = e._geomAdaptor()
     curve = GeomConvert.CurveToBSplineCurve_s(adaptor.Curve().Curve())
 
-    full_spline = GeomConvert.SplitBSplineCurve_s(
+    spline = GeomConvert.SplitBSplineCurve_s(
         curve, adaptor.FirstParameter(), adaptor.LastParameter(), CURVE_TOLERANCE
     )
 
     # need to apply the transform on the geometry level
-    full_spline.Transform(plane.fG.wrapped.Trsf())
+    spline.Transform(plane.fG.wrapped.Trsf())
 
-    # approximate the transformed spline down to max degree 3 for
-    # compatibilitly with more DXF processing tools.
-    #
-    # parameters choosen to match FreeCAD 0.20
-    approx_spline = GeomConvert_ApproxCurve(full_spline, 0.001, GeomAbs_C0, 50, 3)
-
-    spline = approx_spline.Curve()
+    if opt["approximate"]:
+        approx_spline = GeomConvert_ApproxCurve(
+            spline,
+            opt["approximationError"],
+            GeomAbs_C0,
+            opt["maxSegments"],
+            opt["maxDegree"],
+        )
+        spline = approx_spline.Curve()
 
     order = spline.Degree() + 1
     knots = list(spline.KnotSequence())
@@ -114,14 +127,36 @@ DXF_CONVERTERS = {
 }
 
 
-def exportDXF(w: Workplane, fname: str):
+def exportDXF(w: Workplane, fname: str, opt=None):
     """
     Export Workplane content to DXF. Works with 2D sections.
 
     :param w: Workplane to be exported.
     :param fname: output filename.
+    :param opt: An options dictionary that influences the exported DXF
+    :type opt: Dictionary, keys are as follows:
+        approximate: Boolean, when True splines are approximated to conform to
+                     maxDegree, maxSegments, and approximationError. Defaults
+                     to False.
+        maxDegree: Maximum degree of outputed splines, ignored if approximate
+                   is False. Defaults to 3.
+        maxSegments: Maximum number of segments in approximated splines,
+                     ignored if approximate is False. Defaults to 50.
+        approximationError: Acceptable error in the spline approximation, in
+                            the DXF's coordinate system. Defaults to 0.001.
 
     """
+
+    # Default options and their values
+    d = {
+        "approximate": False,
+        "maxDegree": 3,
+        "maxSegments": 50,
+        "approximationError": 0.001,
+    }
+
+    if opt:
+        d.update(opt)
 
     plane = w.plane
     shape = toCompound(w).transformShape(plane.fG)
@@ -132,6 +167,6 @@ def exportDXF(w: Workplane, fname: str):
     for e in shape.Edges():
 
         conv = DXF_CONVERTERS.get(e.geomType(), _dxf_spline)
-        conv(e, msp, plane)
+        conv(e, msp, plane, d)
 
     dxf.saveas(fname)
