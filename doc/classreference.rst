@@ -99,3 +99,5 @@ Class Details
 .. automodule:: cadquery.occ_impl.exporters.assembly
    :show-inheritance:
    :members:
+
+.. autofunction:: cadquery.occ_impl.assembly.toJSON

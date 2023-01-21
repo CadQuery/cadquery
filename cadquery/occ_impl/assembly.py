@@ -262,6 +262,9 @@ def toJSON(
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
 ) -> List[Dict[str, Any]]:
+    """
+    Export an object to a structure suitable for converting to VTK.js JSON.
+    """
 
     loc = loc * assy.loc
     trans, rot = loc.toTuple()
