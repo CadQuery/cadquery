@@ -915,7 +915,7 @@ class Shape(object):
     def copy(self: T, mesh: bool = False) -> T:
         """
         Creates a new object that is a copy of this object.
-        
+
         :param mesh: should I copy the triangulation too (default: False)
         :returns: a copy of the object
         """
@@ -1093,7 +1093,7 @@ class Shape(object):
         :axis: Axis on which the line rest
         :tol: Intersection tolerance
         :direction: Valid values : "AlongAxis", "Opposite", if specified will ignore all faces that are not in the specified direction
-        including the face where the :point: lies if it is the case
+            including the face where the :point: lies if it is the case
 
         :returns: A list of intersected faces sorted by distance from :point:
         """
@@ -1513,6 +1513,7 @@ class Mixin1D(object):
         mode: Literal["length", "parameter"] = "length",
     ) -> Vector:
         """Generate a position along the underlying curve.
+
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
         :return: A Vector on the underlying curve located at the specified d value.
@@ -1533,6 +1534,7 @@ class Mixin1D(object):
         mode: Literal["length", "parameter"] = "length",
     ) -> List[Vector]:
         """Generate positions along the underlying curve
+
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
         :return: A list of Vector objects.
@@ -1548,6 +1550,7 @@ class Mixin1D(object):
         planar: bool = False,
     ) -> Location:
         """Generate a location along the underlying curve.
+
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
@@ -1595,6 +1598,7 @@ class Mixin1D(object):
         planar: bool = False,
     ) -> List[Location]:
         """Generate location along the curve
+
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
         :param frame: moving frame calculation method (default: frenet)
@@ -1887,6 +1891,7 @@ class Edge(Shape, Mixin1D):
     ) -> "Edge":
         """
         Makes a three point arc through the provided points
+
         :param cls:
         :param v1: start vector
         :param v2: middle vector
@@ -1904,6 +1909,7 @@ class Edge(Shape, Mixin1D):
         """
         Makes a tangent arc from point v1, in the direction of v2 and ends at
         v3.
+
         :param cls:
         :param v1: start vector
         :param v2: tangent vector
@@ -1920,6 +1926,7 @@ class Edge(Shape, Mixin1D):
     def makeLine(cls, v1: VectorLike, v2: VectorLike) -> "Edge":
         """
         Create a line between two points
+
         :param v1: Vector that represents the first point
         :param v2: Vector that represents the second point
         :return: A linear edge between the two provided points
@@ -1962,6 +1969,7 @@ class Wire(Shape, Mixin1D):
     ) -> List["Wire"]:
         """
         Attempt to combine a list of wires and edges into a new wire.
+
         :param cls:
         :param listOfWires:
         :param tol: default 1e-9
@@ -1982,14 +1990,17 @@ class Wire(Shape, Mixin1D):
     def assembleEdges(cls, listOfEdges: Iterable[Edge]) -> "Wire":
         """
         Attempts to build a wire that consists of the edges in the provided list
+
         :param cls:
         :param listOfEdges: a list of Edge objects. The edges are not to be consecutive.
         :return: a wire with the edges assembled
-        :BRepBuilderAPI_MakeWire::Error() values
-            :BRepBuilderAPI_WireDone = 0
-            :BRepBuilderAPI_EmptyWire = 1
-            :BRepBuilderAPI_DisconnectedWire = 2
-            :BRepBuilderAPI_NonManifoldWire = 3
+
+        BRepBuilderAPI_MakeWire::Error() values:
+
+        * BRepBuilderAPI_WireDone = 0
+        * BRepBuilderAPI_EmptyWire = 1
+        * BRepBuilderAPI_DisconnectedWire = 2
+        * BRepBuilderAPI_NonManifoldWire = 3
         """
         wire_builder = BRepBuilderAPI_MakeWire()
 
@@ -2015,10 +2026,11 @@ class Wire(Shape, Mixin1D):
     ) -> "Wire":
         """
         Makes a Circle centered at the provided point, having normal in the provided direction
+
         :param radius: floating point radius of the circle, must be > 0
         :param center: vector representing the center of the circle
         :param normal: vector representing the direction of the plane the circle should lie in
-        :return:
+        :return: Wire
         """
 
         circle_edge = Edge.makeCircle(radius, center, normal)
@@ -2040,6 +2052,7 @@ class Wire(Shape, Mixin1D):
     ) -> "Wire":
         """
         Makes an Ellipse centered at the provided point, having normal in the provided direction
+
         :param x_radius: floating point major radius of the ellipse (x-axis), must be > 0
         :param y_radius: floating point minor radius of the ellipse (y-axis), must be > 0
         :param center: vector representing the center of the circle
@@ -2263,32 +2276,32 @@ class Face(Shape):
     ) -> "Face":
         """
         Returns a surface enclosed by a closed polygon defined by 'edges' and going through 'points'.
-        :param constraints
-        :type points: list of constraints (points or edges)
-        :param edges
+
+        :param edges:
         :type edges: list of Edge
-        :param continuity=GeomAbs_C0
+        :param constraints:
+        :param continuity: =GeomAbs_C0
         :type continuity: OCC.Core.GeomAbs continuity condition
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
+        :param degree: = 3 (OCCT default)
+        :type degree: Integer >= 2
+        :param nbPtsOnCur: = 15 (OCCT default)
+        :type nbPtsOnCur: Integer >= 15
+        :param nbIter: = 2 (OCCT default)
+        :type nbIter: Integer >= 2
+        :param anisotropy: = False (OCCT default)
+        :type anisotropy: Boolean
+        :param tol2d: = 0.00001 (OCCT default)
+        :type tol2d: float > 0
+        :param tol3d: = 0.0001 (OCCT default)
+        :type tol3d: Real: float > 0
+        :param tolAng: = 0.01 (OCCT default)
+        :type tolAng: Real: float > 0
+        :param tolCurv: = 0.1 (OCCT default)
+        :type tolCurv: Real: float > 0
+        :param maxDeg: = 8 (OCCT default)
+        :type maxDeg: Integer: Integer >= 2 (?)
+        :param maxSegments: = 9 (OCCT default)
+        :type maxSegments: Integer >= 2 (?)
         """
 
         n_sided = BRepOffsetAPI_MakeFilling(
@@ -2576,6 +2589,7 @@ class Mixin3D(object):
     def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
         """
         Fillets the specified edges of this solid.
+
         :param radius: float > 0, the radius of the fillet
         :param edgeList:  a list of Edge objects, which must belong to this solid
         :return: Filleted solid
@@ -2594,6 +2608,7 @@ class Mixin3D(object):
     ) -> Any:
         """
         Chamfers the specified edges of this solid.
+
         :param length: length > 0, the length (length) of the chamfer
         :param length2: length2 > 0, optional parameter for asymmetrical chamfer. Should be `None` if not required.
         :param edgeList:  a list of Edge objects, which must belong to this solid
@@ -2791,33 +2806,32 @@ class Solid(Shape, Mixin3D):
         """
         Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going through 'surf_pts' points.
 
-        :param surf_edges
-        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
-        :type 2 surf_edges: list of ordered or unordered CadQuery wires
-        :param surf_pts = [] (uses only edges if [])
+        :param surf_edges: list of [x,y,z] float ordered coordinates, or list of ordered or unordered CadQuery wires
+        :type surf_edges:
+        :param surf_pts: = [] (uses only edges if [])
         :type surf_pts: list of [x,y,z] float coordinates
-        :param thickness = 0 (returns 2D surface if 0)
+        :param thickness: = 0 (returns 2D surface if 0)
         :type thickness: float (may be negative or positive depending on thickening direction)
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param Anisotropie = False (OCCT default)
-        :type Anisotropie: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
+        :param degree: = 3 (OCCT default)
+        :type degree: Integer >= 2
+        :param nbPtsOnCur: = 15 (OCCT default)
+        :type nbPtsOnCur: Integer >= 15
+        :param nbIter: = 2 (OCCT default)
+        :type nbIter: >= 2
+        :param anisotropy: = False (OCCT default)
+        :type anisotropy: Boolean
+        :param tol2d: = 0.00001 (OCCT default)
+        :type tol2d: float > 0
+        :param tol3d: = 0.0001 (OCCT default)
+        :type tol3d: float > 0
+        :param tolAng: = 0.01 (OCCT default)
+        :type tolAng: float > 0
+        :param tolCurv: = 0.1 (OCCT default)
+        :type tolCurv: float > 0
+        :param maxDeg: = 8 (OCCT default)
+        :type maxDeg: Integer >= 2 (?)
+        :param maxSegments: = 9 (OCCT default)
+        :type maxSegments: Integer >= 2 (?)
         """
 
         # POINTS CONSTRAINTS: list of (x,y,z) points, optional.

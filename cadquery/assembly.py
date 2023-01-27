@@ -447,7 +447,7 @@ class Assembly(object):
         :param exportType: export format (default: None, results in format being inferred form the path)
         :param tolerance: the deflection tolerance, in model units. Only used for GLTF, VRML. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Only used for GLTF, VRML. Default 0.1.
-        :param **kwargs: Additional keyword arguments.  Only used for STEP.
+        :param \**kwargs: Additional keyword arguments.  Only used for STEP.
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         """
 

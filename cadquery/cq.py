@@ -502,8 +502,9 @@ class Workplane(object):
     def toOCC(self) -> Any:
         """
         Directly returns the wrapped OCCT object.
+
         :return: The wrapped OCCT object
-        :rtype TopoDS_Shape or a subclass
+        :rtype: TopoDS_Shape or a subclass
         """
 
         v = self.val()
@@ -701,6 +702,7 @@ class Workplane(object):
     def first(self: T) -> T:
         """
         Return the first item on the stack
+
         :returns: the first item on the stack.
         :rtype: a CQ object
         """
@@ -708,8 +710,8 @@ class Workplane(object):
 
     def item(self: T, i: int) -> T:
         """
-
         Return the ith item on the stack.
+
         :rtype: a CQ object
         """
         return self.newObject([self.objects[i]])
@@ -717,6 +719,7 @@ class Workplane(object):
     def last(self: T) -> T:
         """
         Return the last item on the stack.
+
         :rtype: a CQ object
         """
         return self.newObject([self.objects[-1]])
@@ -724,6 +727,7 @@ class Workplane(object):
     def end(self, n: int = 1) -> "Workplane":
         """
         Return the nth parent of this CQ element
+
         :param n: number of ancestor to return (default: 1)
         :rtype: a CQ object
         :raises: ValueError if there are no more parents in the chain.
@@ -1154,7 +1158,7 @@ class Workplane(object):
 
         :param mirrorPlane: the plane to mirror about
         :type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
-        or the normal vector of the plane eg (1,0,0) or a Face object
+            or the normal vector of the plane eg (1,0,0) or a Face object
         :param basePointVector: the base point to mirror about (this is overwritten if a Face is passed)
         :type basePointVector: tuple
         :param union: If true will perform a union operation on the mirrored object
@@ -1325,6 +1329,7 @@ class Workplane(object):
         given in coordinates local to the current plane
         The new plane is rotated through the angles specified by the components of the rotation
         vector.
+
         :param rotate: 3-tuple of angles to rotate, in degrees relative to work plane coordinates
         :param offset: 3-tuple to offset the new plane, in local work plane coordinates
         :return: a new work plane, transformed as requested
@@ -2604,7 +2609,9 @@ class Workplane(object):
 
         *NOTE* Due to a bug in opencascade (https://tracker.dev.opencascade.org/view.php?id=31290)
         the center of mass (equals center for next shape) is shifted. To create concentric ellipses
-        use Workplane("XY")
+        use::
+
+            Workplane("XY")
             .center(10, 20).ellipse(100,10)
             .center(0, 0).ellipse(50, 5)
         """
@@ -2766,6 +2773,7 @@ class Workplane(object):
         """
         Evaluates the provided function at each point on the stack (ie, eachpoint)
         and then cuts the result from the context solid.
+
         :param fcn: a function suitable for use in the eachpoint method: ie, that accepts a vector
         :param useLocalCoords: same as for :py:meth:`eachpoint`
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
@@ -3016,10 +3024,10 @@ class Workplane(object):
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
         :param until: The distance to extrude, normal to the workplane plane. When a float is
-          passed, the extrusion extends this far and a negative value is in the opposite direction
-          to the normal of the plane. The string "next" extrudes until the next face orthogonal to
-          the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
-          the extrusion will extend until this face. **Note that the Workplane must contain a Solid for extruding to a given face.**
+            passed, the extrusion extends this far and a negative value is in the opposite direction
+            to the normal of the plane. The string "next" extrudes until the next face orthogonal to
+            the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
+            the extrusion will extend until this face. **Note that the Workplane must contain a Solid for extruding to a given face.**
         :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
         :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
         :param boolean both: extrude in both directions symmetrically
@@ -3030,9 +3038,9 @@ class Workplane(object):
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack. Note that when extruding
-          until a specified face, combine can not be False
+            until a specified face, combine can not be False
         *  if combine is true, the value is combined with the context solid if it exists,
-           and the resulting solid becomes the new context solid.
+            and the resulting solid becomes the new context solid.
         """
 
         # If subtractive mode is requested, use cutBlind
@@ -3768,37 +3776,35 @@ class Workplane(object):
         through 'surf_pts' points.  Using pushPoints directly with interpPlate and combine=True, can be
         very resources intensive depending on the complexity of the shape. In this case set combine=False.
 
-        :param surf_edges
-        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
-        :type 2 surf_edges: list of ordered or unordered CadQuery wires
-        :param surf_pts = [] (uses only edges if [])
+        :param surf_edges: list of [x,y,z] float ordered coordinates or list of ordered or unordered CadQuery wires
+        :param surf_pts: = [] (uses only edges if [])
         :type surf_pts: list of [x,y,z] float coordinates
-        :param thickness = 0 (returns 2D surface if 0)
+        :param thickness: = 0 (returns 2D surface if 0)
         :type thickness: float (may be negative or positive depending on thickening direction)
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
         :type combine: true to combine shapes, false otherwise.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param anisotropy = False (OCCT default)
+        :param clean: boolean call :py:meth:`clean` afterwards to have a clean shape
+        :param degree: = 3 (OCCT default)
+        :type degree: Integer >= 2
+        :param nbPtsOnCur: = 15 (OCCT default)
+        :type nbPtsOnCur: Integer >= 15
+        :param nbIter: = 2 (OCCT default)
+        :type nbIter: >= 2
+        :param anisotropy: = False (OCCT default)
         :type anisotropy: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
+        :param tol2d: = 0.00001 (OCCT default)
+        :type tol2d: float > 0
+        :param tol3d: = 0.0001 (OCCT default)
+        :type tol3d: float > 0
+        :param tolAng: = 0.01 (OCCT default)
+        :type tolAng: float > 0
+        :param tolCurv: = 0.1 (OCCT default)
+        :type tolCurv: float > 0
+        :param maxDeg: = 8 (OCCT default)
+        :type maxDeg: Integer >= 2 (?)
+        :param maxSegments: = 9 (OCCT default)
+        :type maxSegments: Integer >= 2 (?)
         """
 
         # convert points to edges if needed
