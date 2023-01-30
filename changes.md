@@ -3,6 +3,10 @@ Changes
 
 2.2.0 (latest release)
 ------
+   ### Highlights
+   * Introduced a new Sketch API dedicated to 2D planar operations.
+   * New constraint types were added to use with the Assembly solver.
+
    ### Breaking changes
    * Renamed the argument for `Workplane.extrude` from `distance` to `until` and `Workplane.cutBlind`'s `distanceToCut` also to `until`. This is only a breaking change if you use the named parameters, i.e. `extrude(distance = 10.0)` or `cutBlind(distanceToCut)` instead of using positional them as positional parameters.
    * Fixed a bug in `Mixin1DProtocol.tangentAt()` where `paramAt()` was being called twice. This should only break scripts that relied on the incorrect behavior. [#641](https://github.com/CadQuery/cadquery/pull/641)

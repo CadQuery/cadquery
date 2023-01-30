@@ -26,7 +26,7 @@ is_conda = "CONDA_PREFIX_1" in os.environ
 # Only include the installation dependencies if we are not running on RTD or AppVeyor or in a conda env
 if not is_rtd and not is_appveyor and not is_azure and not is_conda:
     reqs = [
-        "cadquery-ocp>=7.6,<7.7",
+        "cadquery-ocp>=7.7.0a0,<7.8",
         "ezdxf",
         "multimethod>=1.7,<2.0",
         "nlopt",
