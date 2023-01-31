@@ -8,7 +8,7 @@ Changes
    * New constraint types were added to use with the Assembly solver.
 
    ### Breaking changes
-   * Renamed the argument for `Workplane.extrude` from `distance` to `until` and `Workplane.cutBlind`'s `distanceToCut` also to `until`. This is only a breaking change if you use the named parameters, i.e. `extrude(distance = 10.0)` or `cutBlind(distanceToCut)` instead of using positional them as positional parameters.
+   * Renamed the argument for `Workplane.extrude` from `distance` to `until` and `Workplane.cutBlind`'s `distanceToCut` also to `until`. This is only a breaking change if you use the named parameters, i.e. `extrude(distance = 10.0)` or `cutBlind(distanceToCut)` instead of using them as positional parameters.
    * Fixed a bug in `Mixin1DProtocol.tangentAt()` where `paramAt()` was being called twice. This should only break scripts that relied on the incorrect behavior. [#641](https://github.com/CadQuery/cadquery/pull/641)
    * `each` and `eachpoint` accept now `combine` argument defaulted to `True` [#954](https://github.com/CadQuery/cadquery/pull/954). This only affects use cases involving solids.
 
