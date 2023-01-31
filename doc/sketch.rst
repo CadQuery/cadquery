@@ -87,6 +87,8 @@ using :meth:`~cadquery.Sketch.assemble`. Afterwards, face based operations can b
 Convex hull
 ===========
 
+.. warning:: The Convex Hull feature is currently experimental.
+
 For certain special use-cases convex hull can be constructed from straight segments
 and circles.
 
@@ -103,6 +105,8 @@ and circles.
 
 Constraint-based sketches
 =========================
+
+.. warning:: The 2D Sketch constraints and solver is currently experimental.
 
 Finally, if desired, geometric constraints can be used to construct sketches. So
 far only line segments and arcs can be used in such a use case.
