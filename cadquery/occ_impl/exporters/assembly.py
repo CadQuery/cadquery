@@ -23,7 +23,8 @@ from OCP.TColStd import TColStd_IndexedDataMapOfStringString
 from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
-from ..assembly import AssemblyProtocol, toCAF, toVTK
+from . import STEPExportMode
+from ..assembly import AssemblyProtocol, toCAF, toVTK, toSimplified, toFused
 from ..geom import Location
 
 
@@ -36,12 +37,18 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     :param assy: assembly
     :param path: Path and filename for writing
     :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
-
         If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
     :type write_pcurves: boolean
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
     :type precision_mode: int
+    :param export_mode: STEP export mode. The options are Default (the current _toCAF method), Simplified (a STEP
+        assembly with a simple hierarchy), and Fused (a single fused compound). It is possible that Fused mode may
+        exhibit low performance.
+    :type export_mode: int
+    :param assembly_name: A label to be applied to the top-level object in the assembly, if Simplified or Fused modes
+        are used. A default of "CQ assembly" will be used if none is specified.
+    :type assembly_name: str
     """
 
     # Handle the extra settings for the STEP export
@@ -49,8 +56,18 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
         pcurves = 0
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
+    assembly_name = kwargs["assembly_name"] if "assembly_name" in kwargs else "CQ assembly"
 
-    _, doc = toCAF(assy, True)
+    # Handle the mode setting
+    export_mode = kwargs["export_mode"] if "export_mode" in kwargs else STEPExportMode.DEFAULT
+
+    # Handle the doc differently based on which mode we are using
+    if export_mode == STEPExportMode.DEFAULT:
+        _, doc = toCAF(assy, True)
+    elif export_mode == STEPExportMode.SIMPLIFIED:
+        doc = toSimplified(assy, "simplified_assembly")
+    elif export_mode == STEPExportMode.FUSED:
+        doc = toFused(assy, "fused_assembly")
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)

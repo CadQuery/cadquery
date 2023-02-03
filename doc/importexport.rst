@@ -76,8 +76,40 @@ There are no parameters for this method other than the file path to import.
 
     result = cq.importers.importStep('/path/to/step/block.stp')
 
+Exporting STEP
+###############
+
+This section covers exporting CadQuery Workplane objects to STEP. For exporting assemblies to STEP, see the next section.
+
+
+
+Exporting Assemblies to STEP
+#############################
+
+The STEP exporter has several options which change the way exported STEP files will appear and operate when opened
+in other CAD programs. Some of these options should be used with care, as they can cause incompatibilities in STEP
+files, or affect performance adversely.
+
+CadQuery assemblies have a :py:meth:`Assembly.save` method which can write an assembly to a STEP file. An example assembly
+export with all defaults is shown below.
+
+.. code-block:: python
+    import cadquery as cq
+
+    # Create a sample assembly
+    assy = cq.Assembly()
+    body = cq.Workplane().box(10, 10, 10)
+    assy.add(body, color=cq.Color(1, 0, 0), name="body")
+    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+
+    # Save the assembly to STEP
+    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP)
+
+This will produce a STEP file that is nested with auto-generated object names.
+
 Exporting SVG
-##############
+###############
 
 The SVG exporter has several options which can be useful for achieving the desired final output. Those 
 options are as follows.

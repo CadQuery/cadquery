@@ -4,12 +4,14 @@ from math import degrees
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType
+from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType, XCAFDoc_ColorGen
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
+from OCP.TopoDS import TopoDS_Compound
+from OCP.BRep import BRep_Tool, BRep_Builder
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -290,3 +292,103 @@ def toJSON(
         rv.extend(toJSON(child, loc, color, tolerance))
 
     return rv
+
+
+def toSimplified(
+    assy: AssemblyProtocol,
+    assy_name: str
+) -> TDocStd_Document:
+    """
+    Converts the assembly to a compound and saves that within the document
+    to be exported.
+
+    :param assy: Assembly that is being converted to a compound for the document.
+    :param assy_name: Label that is applied to the top level object in the document.
+    """
+
+    # Prepare a document
+    app = XCAFApp_Application.GetApplication_s()
+    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    app.InitDocument(doc)
+
+    # Shape and color tools
+    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    shape_tool.SetAutoNaming_s(False)
+
+    # Set up the compound
+    comp = TopoDS_Compound()
+    comp_builder = BRep_Builder()
+    comp_builder.MakeCompound(comp)
+    for part in assy.children:
+        for solid in part.obj.solids().all():
+            # Add the current solid of the assembly component to the compound
+            comp_builder.Add(comp, solid.val().wrapped)
+
+    # Add the top level shape, have it broken apart into an assembly and set the top-level name
+    top_level_lbl = shape_tool.AddShape(comp, True)
+    TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
+
+    # Assign names and colors based on the assembly
+    for part in assy.children:
+        for solid in part.obj.solids().all():
+            cur_lbl = shape_tool.FindShape(solid.val().wrapped)
+            TDataStd_Name.Set_s(cur_lbl, TCollection_ExtendedString(part.name))
+            color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+
+    return doc
+
+
+def toFused(
+    assy: AssemblyProtocol,
+    assy_name: str
+) -> TDocStd_Document:
+    """
+    Converts the assembly to a fused compound and saves that within the document
+    to be exported in a way that preserves the face colors. Because of the use of
+    boolean operations in this method, performance may be slow in some cases.
+
+    :param assy: Assembly that is being converted to a fused compound for the document.
+    :param assy_name: Label that is applied to the top level object in the document.
+    """
+
+    # Prepare a document
+    app = XCAFApp_Application.GetApplication_s()
+    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    app.InitDocument(doc)
+
+    # Shape and color tools
+    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    shape_tool.SetAutoNaming_s(False)
+
+    # Fuse the assembly into a compound
+    comp = assy.toCompound().fuse()
+
+    # Add the top level shape
+    top_level_lbl = shape_tool.AddShape(comp.wrapped, False)
+    TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
+
+    # Walk through all the components of the assembly
+    i = 0
+    for part in assy.children:
+        other_subs = assy.children.copy()
+        other_subs.pop(i)
+
+        # Find the compound of this component that are its own within the fused solid
+        diffed_sub = part.obj
+        for other_sub in other_subs:
+            diffed_sub = diffed_sub.cut(other_sub.obj)
+
+        # Add the faces that are part of this assembly component
+        for face in diffed_sub.faces().all():
+            for comp_face in comp.Faces():
+                # See if we have the face that needs to be worked with
+                if face.val().Center() == comp_face.Center() and face.val()._uvBounds() == comp_face._uvBounds():
+                    # Add the face as a subshape and set its color to match the parent assembly component
+                    cur_lbl = shape_tool.AddSubShape(top_level_lbl, comp_face.wrapped)
+                    color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+
+        i += 1
+
+    return doc

@@ -47,6 +47,73 @@ def test_step_options(tmpdir):
     assert w.faces().size() == 6
 
 
+def test_simplified_assembly(tmpdir):
+    """
+    Exports a simple assembly using the "simplified" STEP export mode
+    and then imports that STEP again to validate it.
+    """
+
+    # Create the sample assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pin = Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=Color(0, 1, 0), name="pin")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "simplified.step")
+    assy.save(path=str(step_path), exportType=exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.SIMPLIFIED)
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 2
+
+
+def test_fused_assembly(tmpdir):
+    """
+    Exports as simple assembly using the "fused" STEP export mode
+    and then imports that STEP again to validate it.
+    """
+
+    # Create the sample assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pin = Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=Color(0, 1, 0), name="pin")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "fused.step")
+    assy.save(path=str(step_path), exportType=exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 1
+
+
+def test_fused_not_touching_assembly(tmpdir):
+    """
+    Exports as simple assembly using the "fused" STEP export mode
+    and then imports that STEP again to validate it. This tests whether
+    or not the fuse method correctly handles fusing solids to do not touch.
+    """
+
+    # Create the sample assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pin = Workplane().center(8, 8).cylinder(radius=2, height=20)
+    assy.add(pin, color=Color(0, 1, 0), name="pin")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "fused_not_touching.step")
+    assy.save(path=str(step_path), exportType=exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 2
+
+
 class TestExporters(BaseTest):
     def _exportBox(self, eType, stringsToFind, tolerance=0.1, angularTolerance=0.1):
         """
