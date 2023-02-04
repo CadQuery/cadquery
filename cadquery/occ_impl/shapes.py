@@ -156,7 +156,11 @@ from OCP.BRepFilletAPI import (
     BRepFilletAPI_MakeFillet2d,
 )
 
-from OCP.TopTools import TopTools_IndexedDataMapOfShapeListOfShape, TopTools_ListOfShape
+from OCP.TopTools import (
+    TopTools_IndexedDataMapOfShapeListOfShape,
+    TopTools_ListOfShape,
+    TopTools_MapOfShape
+)
 
 from OCP.TopExp import TopExp
 
@@ -747,16 +751,21 @@ class Shape(object):
 
     def _entities(self, topo_type: Shapes) -> List[TopoDS_Shape]:
 
-        out = set()  # using set to prevent duplicates
+        rv = []
+        shape_set = TopTools_MapOfShape()
 
         explorer = TopExp_Explorer(self.wrapped, inverse_shape_LUT[topo_type])
 
         while explorer.More():
             item = explorer.Current()
-            out.add(item)
+
+            # needed to avoid pseudo-duplicate entities
+            if shape_set.Add(item):
+                rv.append(item)
+
             explorer.Next()
 
-        return list(out)
+        return rv
 
     def _entitiesFrom(
         self, child_type: Shapes, parent_type: Shapes
@@ -913,7 +922,7 @@ class Shape(object):
     def copy(self: T, mesh: bool = False) -> T:
         """
         Creates a new object that is a copy of this object.
-        
+
         :param mesh: should I copy the triangulation too (default: False)
         :returns: a copy of the object
         """
