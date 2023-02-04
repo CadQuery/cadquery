@@ -159,7 +159,7 @@ from OCP.BRepFilletAPI import (
 from OCP.TopTools import (
     TopTools_IndexedDataMapOfShapeListOfShape,
     TopTools_ListOfShape,
-    TopTools_MapOfShape
+    TopTools_MapOfShape,
 )
 
 from OCP.TopExp import TopExp
