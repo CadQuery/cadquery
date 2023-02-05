@@ -28,7 +28,7 @@ init:
 install:
     - mamba env create -f environment.yml
     - conda activate cadquery
-    - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.6.3
+    - pip install git+https://github.com/CadQuery/OCP-stubs.git@7.7.0
 
 build: false
 
