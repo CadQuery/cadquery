@@ -478,7 +478,7 @@ class Shape(object):
         :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
 
             If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
-        :type write_pcurves: boolean
+        :type write_pcurves: bool
         :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
             See OCCT documentation.
         :type precision_mode: int
@@ -603,8 +603,8 @@ class Shape(object):
         """
         Create a bounding box for this Shape.
 
-        :param tolerance: Tolerance value passed to :py:class:`BoundBox`
-        :returns: A :py:class:`BoundBox` object for this Shape
+        :param tolerance: Tolerance value passed to :class:`BoundBox`
+        :returns: A :class:`BoundBox` object for this Shape
         """
         return BoundBox._fromTopoDS(self.wrapped, tol=tolerance)
 
@@ -3201,9 +3201,7 @@ class Solid(Shape, Mixin3D):
         :param angleDegrees: the angle to revolve through.
         :type angleDegrees: float, anything less than 360 degrees will leave the shape open
         :param axisStart: the start point of the axis of rotation
-        :type axisStart: tuple, a two tuple
         :param axisEnd: the end point of the axis of rotation
-        :type axisEnd: tuple, a two tuple
         :return: a Solid object
 
         The wires must not intersect
