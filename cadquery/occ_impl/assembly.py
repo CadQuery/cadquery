@@ -12,6 +12,8 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
 from OCP.TopoDS import TopoDS_Compound
 from OCP.BRep import BRep_Tool, BRep_Builder
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
+from OCP.TopTools import TopTools_ListOfShape
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -352,7 +354,7 @@ def toFused(
     :param assy_name: Label that is applied to the top level object in the document.
     """
 
-    # Prepare a document
+    # Prepare the document
     app = XCAFApp_Application.GetApplication_s()
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
     app.InitDocument(doc)
@@ -360,35 +362,55 @@ def toFused(
     # Shape and color tools
     shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
-    shape_tool.SetAutoNaming_s(False)
 
-    # Fuse the assembly into a compound
-    comp = assy.toCompound().fuse()
+    # To fuse the parts of the assembly together
+    fuse_op = BRepAlgoAPI_Fuse()
+    args = TopTools_ListOfShape()
+    tools = TopTools_ListOfShape()
 
-    # Add the top level shape
-    top_level_lbl = shape_tool.AddShape(comp.wrapped, False)
-    TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
+    # Add base shape(s)
+    for shape in assy.children[0].shapes:
+        args.Append(shape.wrapped)
 
-    # Walk through all the components of the assembly
+    # Add all other shapes as tools
     i = 0
-    for part in assy.children:
-        other_subs = assy.children.copy()
-        other_subs.pop(i)
+    for child in assy.children:
+        # Make sure we add the assembly parts other than the base
+        if i == 0:
+            i += 1
+            continue
 
-        # Find the compound of this component that are its own within the fused solid
-        diffed_sub = part.obj
-        for other_sub in other_subs:
-            diffed_sub = diffed_sub.cut(other_sub.obj)
-
-        # Add the faces that are part of this assembly component
-        for face in diffed_sub.faces().all():
-            for comp_face in comp.Faces():
-                # See if we have the face that needs to be worked with
-                if face.val().Center() == comp_face.Center() and face.val()._uvBounds() == comp_face._uvBounds():
-                    # Add the face as a subshape and set its color to match the parent assembly component
-                    cur_lbl = shape_tool.AddSubShape(top_level_lbl, comp_face.wrapped)
-                    color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+        for shape in child.shapes:
+            tools.Append(shape.wrapped)
 
         i += 1
+
+    fuse_op.SetArguments(args)
+    fuse_op.SetTools(tools)
+    fuse_op.Build()
+
+    # Add the fused shape as the top level object in the document
+    top_level_lbl = shape_tool.AddShape(fuse_op.Shape(), False)
+    TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
+
+    # Walk the assembly->part->shape->face hierarchy and add subshapes for all the faces
+    for part in assy.children:
+        for shape in part.shapes:
+            for face in shape.Faces():
+                # Check for modified faces
+                modded_list = fuse_op.Modified(face.wrapped)
+
+                # If there are no modified faces associated with this face, treat it as-is
+                if modded_list.Size() == 0:
+                    # Add the face as a subshape and set its color to match the parent assembly component
+                    cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
+                    color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+                # If there are modified faces based on this face, step through all of them and add
+                # them separately as subshapes
+                else:
+                    for mod in modded_list.__iter__():
+                        # Add the face as a subshape and set its color to match the parent assembly component
+                        cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
+                        color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
 
     return doc
