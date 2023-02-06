@@ -154,7 +154,7 @@ class Workplane(object):
 
     .. note::
         You can also create workplanes on the surface of existing faces using
-        :py:meth:`CQ.workplane`
+        :meth:`workplane`
     """
 
     objects: List[CQObject]
@@ -227,8 +227,7 @@ class Workplane(object):
         Tags the current CQ object for later reference.
 
         :param name: the name to tag this object with
-        :type name: string
-        :returns: self, a cq object with tag applied
+        :returns: self, a CQ object with tag applied
         """
         self._tag = name
         self.ctx.tags[name] = self
@@ -279,14 +278,14 @@ class Workplane(object):
         """
         Splits a solid on the stack into two parts, optionally keeping the separate parts.
 
-        :param boolean keepTop: True to keep the top, False or None to discard it
-        :param boolean keepBottom: True to keep the bottom, False or None to discard it
+        :param bool keepTop: True to keep the top, False or None to discard it
+        :param bool keepBottom: True to keep the bottom, False or None to discard it
         :raises ValueError: if keepTop and keepBottom are both false.
         :raises ValueError: if there is no solid in the current stack or parent chain
         :returns: CQ object with the desired objects on the stack.
 
         The most common operation splits a solid and keeps one half. This sample creates
-        split bushing::
+        a split bushing::
 
             # drill a hole in the side
             c = Workplane().box(1,1,1).faces(">Z").workplane().circle(0.25).cutThruAll()
@@ -368,7 +367,7 @@ class Workplane(object):
         After the operation, the returned solid is also the context solid.
 
         :param otherCQToCombine: another CadQuery to combine.
-        :return: a cQ object with the resulting combined solid on the stack.
+        :return: a CQ object with the resulting combined solid on the stack.
 
         Most of the time, both objects will contain a single solid, which is
         combined and returned on the stack of the new object.
@@ -423,7 +422,7 @@ class Workplane(object):
         :rtype: list of occ_impl objects
         :returns: the values of the objects on the stack.
 
-        Contrast with :py:meth:`all`, which returns CQ objects for all of the items on the stack
+        Contrast with :meth:`all`, which returns CQ objects for all of the items on the stack
         """
         return self.objects
 
@@ -447,7 +446,7 @@ class Workplane(object):
         :type obj: a Workplane, CAD primitive, or list of CAD primitives
         :return: a Workplane with the requested operation performed
 
-        If an Workplane object, the values of that object's stack are added. If
+        If a Workplane object, the values of that object's stack are added. If
         a list of cad primitives, they are all added. If a single CAD primitive
         then it is added.
 
@@ -502,8 +501,9 @@ class Workplane(object):
     def toOCC(self) -> Any:
         """
         Directly returns the wrapped OCCT object.
+
         :return: The wrapped OCCT object
-        :rtype TopoDS_Shape or a subclass
+        :rtype: TopoDS_Shape or a subclass
         """
 
         v = self.val()
@@ -526,10 +526,7 @@ class Workplane(object):
         :param invert:  invert the normal direction from that of the face.
         :param centerOption: how local origin of workplane is determined.
         :param origin: origin for plane center, requires 'ProjectedOrigin' centerOption.
-        :type offset: float or None=0.0
-        :type invert: boolean or None=False
         :type centerOption: string or None='ProjectedOrigin'
-        :type origin: Vector or None
         :rtype: Workplane object
 
         The first element on the stack must be a face, a set of
@@ -579,8 +576,9 @@ class Workplane(object):
         def _computeXdir(normal):
             """
             Figures out the X direction based on the given normal.
-            :param :normal The direction that's normal to the plane.
-            :type :normal A Vector
+
+            :param normal: The direction that's normal to the plane.
+            :type normal: A Vector
             :return A vector representing the X direction.
             """
             xd = Vector(0, 0, 1).cross(normal)
@@ -691,7 +689,6 @@ class Workplane(object):
         Copies the workplane from a tagged parent.
 
         :param name: tag to search for
-        :type name: string
         :returns: a CQ object with name's workplane
         """
         tagged = self._getTagged(name)
@@ -701,6 +698,7 @@ class Workplane(object):
     def first(self: T) -> T:
         """
         Return the first item on the stack
+
         :returns: the first item on the stack.
         :rtype: a CQ object
         """
@@ -708,8 +706,8 @@ class Workplane(object):
 
     def item(self: T, i: int) -> T:
         """
-
         Return the ith item on the stack.
+
         :rtype: a CQ object
         """
         return self.newObject([self.objects[i]])
@@ -717,6 +715,7 @@ class Workplane(object):
     def last(self: T) -> T:
         """
         Return the last item on the stack.
+
         :rtype: a CQ object
         """
         return self.newObject([self.objects[-1]])
@@ -724,6 +723,7 @@ class Workplane(object):
     def end(self, n: int = 1) -> "Workplane":
         """
         Return the nth parent of this CQ element
+
         :param n: number of ancestor to return (default: 1)
         :rtype: a CQ object
         :raises: ValueError if there are no more parents in the chain.
@@ -823,7 +823,6 @@ class Workplane(object):
         :param objType: the type of object we are searching for
         :type objType: string: (Vertex|Edge|Wire|Solid|Shell|Compound|CompSolid)
         :param tag: if set, search the tagged CQ object instead of self
-        :type tag: string
         :return: a CQ object with the selected objects on the stack.
 
         **Implementation Note**: This is the base implementation of the vertices,edges,faces,
@@ -855,29 +854,26 @@ class Workplane(object):
         are multiple objects on the stack, the vertices of all objects are collected and a list of
         all the distinct vertices is returned.
 
-        :param selector:
-        :type selector:  None, a Selector object, or a string selector expression.
-        :param tag: if set, search the tagged CQ object instead of self
-        :type tag: string
+        :param selector: optional Selector object, or string selector expression
+            (see :class:`StringSyntaxSelector`)
+        :param tag: if set, search the tagged object instead of self
         :return: a CQ object who's stack contains  the *distinct* vertices of *all* objects on the
-           current stack, after being filtered by the selector, if provided
+            current stack, after being filtered by the selector, if provided
 
         If there are no vertices for any objects on the current stack, an empty CQ object
         is returned
 
         The typical use is to select the vertices of a single object on the stack. For example::
 
-           Workplane().box(1,1,1).faces("+Z").vertices().size()
+            Workplane().box(1, 1, 1).faces("+Z").vertices().size()
 
-        returns 4, because the topmost face of cube will contain four vertices. While this::
+        returns 4, because the topmost face of a cube will contain four vertices. While this::
 
-           Workplane().box(1,1,1).faces().vertices().size()
+            Workplane().box(1, 1, 1).faces().vertices().size()
 
         returns 8, because a cube has a total of 8 vertices
 
         **Note** Circles are peculiar, they have a single vertex at the center!
-
-        :py:class:`StringSyntaxSelector`
 
         """
         return self._selectObjects("Vertices", selector, tag)
@@ -892,27 +888,26 @@ class Workplane(object):
         multiple objects on the stack, the faces of all objects are collected and a list of all the
         distinct faces is returned.
 
-        :param selector: A selector
-        :type selector:  None, a Selector object, or a string selector expression.
-        :param tag: if set, search the tagged CQ object instead of self
-        :type tag: string
+        :param selector: optional Selector object, or string selector expression
+            (see :class:`StringSyntaxSelector`)
+        :param tag: if set, search the tagged object instead of self
         :return: a CQ object who's stack contains all of the *distinct* faces of *all* objects on
             the current stack, filtered by the provided selector.
 
-        If there are no vertices for any objects on the current stack, an empty CQ object
+        If there are no faces for any objects on the current stack, an empty CQ object
         is returned.
 
         The typical use is to select the faces of a single object on the stack. For example::
 
-           CQ(aCube).faces("+Z").size()
+            Workplane().box(1, 1, 1).faces("+Z").size()
 
         returns 1, because a cube has one face with a normal in the +Z direction. Similarly::
 
-           CQ(aCube).faces().size()
+            Workplane().box(1, 1, 1).faces().size()
 
         returns 6, because a cube has a total of 6 faces, And::
 
-            CQ(aCube).faces("|Z").size()
+            Workplane().box(1, 1, 1).faces("|Z").size()
 
         returns 2, because a cube has 2 faces having normals parallel to the z direction
         """
@@ -928,10 +923,9 @@ class Workplane(object):
         multiple objects on the stack, the edges of all objects are collected and a list of all the
         distinct edges is returned.
 
-        :param selector: A selector
-        :type selector:  None, a Selector object, or a string selector expression.
-        :param tag: if set, search the tagged CQ object instead of self
-        :type tag: string
+        :param selector: optional Selector object, or string selector expression
+            (see :class:`StringSyntaxSelector`)
+        :param tag: if set, search the tagged object instead of self
         :return: a CQ object who's stack contains all of the *distinct* edges of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -939,15 +933,15 @@ class Workplane(object):
 
         The typical use is to select the edges of a single object on the stack. For example::
 
-           CQ(aCube).faces("+Z").edges().size()
+            Workplane().box(1, 1, 1).faces("+Z").edges().size()
 
-        returns 4, because a cube has one face with a normal in the +Z direction. Similarly::
+        returns 4, because the topmost face of a cube will contain four edges. Similarly::
 
-           CQ(aCube).edges().size()
+            Workplane().box(1, 1, 1).edges().size()
 
         returns 12, because a cube has a total of 12 edges, And::
 
-            CQ(aCube).edges("|Z").size()
+            Workplane().box(1, 1, 1).edges("|Z").size()
 
         returns 4, because a cube has 4 edges parallel to the z direction
         """
@@ -963,10 +957,9 @@ class Workplane(object):
         multiple objects on the stack, the wires of all objects are collected and a list of all the
         distinct wires is returned.
 
-        :param selector: A selector
-        :type selector:  None, a Selector object, or a string selector expression.
-        :param tag: if set, search the tagged CQ object instead of self
-        :type tag: string
+        :param selector: optional Selector object, or string selector expression
+            (see :class:`StringSyntaxSelector`)
+        :param tag: if set, search the tagged object instead of self
         :return: a CQ object who's stack contains all of the *distinct* wires of *all* objects on
             the current stack, filtered by the provided selector.
 
@@ -974,7 +967,7 @@ class Workplane(object):
 
         The typical use is to select the wires of a single object on the stack. For example::
 
-           CQ(aCube).faces("+Z").wires().size()
+            Workplane().box(1, 1, 1).faces("+Z").wires().size()
 
         returns 1, because a face typically only has one outer wire
         """
@@ -990,22 +983,21 @@ class Workplane(object):
         multiple objects on the stack, the solids of all objects are collected and a list of all the
         distinct solids is returned.
 
-        :param selector: A selector
-        :type selector:  None, a Selector object, or a string selector expression.
-        :param tag: if set, search the tagged CQ object instead of self
-        :type tag: string
+        :param selector: optional Selector object, or string selector expression
+            (see :class:`StringSyntaxSelector`)
+        :param tag: if set, search the tagged object instead of self
         :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no solids for any objects on the current stack, an empty CQ object is returned
 
-        The typical use is to select the  a single object on the stack. For example::
+        The typical use is to select a single object on the stack. For example::
 
-           CQ(aCube).solids().size()
+            Workplane().box(1, 1, 1).solids().size()
 
         returns 1, because a cube consists of one solid.
 
-        It is possible for single CQ object ( or even a single CAD primitive ) to contain
+        It is possible for a single CQ object ( or even a single CAD primitive ) to contain
         multiple solids.
         """
         return self._selectObjects("Solids", selector, tag)
@@ -1020,11 +1012,10 @@ class Workplane(object):
         multiple objects on the stack, the shells of all objects are collected and a list of all the
         distinct shells is returned.
 
-        :param selector: A selector
-        :type selector:  None, a Selector object, or a string selector expression.
-        :param tag: if set, search the tagged CQ object instead of self
-        :type tag: string
-        :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
+        :param selector: optional Selector object, or string selector expression
+            (see :class:`StringSyntaxSelector`)
+        :param tag: if set, search the tagged object instead of self
+        :return: a CQ object who's stack contains all of the *distinct* shells of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no shells for any objects on the current stack, an empty CQ object is returned
@@ -1044,11 +1035,10 @@ class Workplane(object):
         objects on the stack, they are collected and a list of all the distinct compounds
         is returned.
 
-        :param selector: A selector
-        :type selector:  None, a Selector object, or a string selector expression.
-        :param tag: if set, search the tagged CQ object instead of self
-        :type tag: string
-        :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
+        :param selector: optional Selector object, or string selector expression
+            (see :class:`StringSyntaxSelector`)
+        :param tag: if set, search the tagged object instead of self
+        :return: a CQ object who's stack contains all of the *distinct* compounds of *all* objects on
             the current stack, filtered by the provided selector.
 
         A compound contains multiple CAD primitives that resulted from a single operation, such as
@@ -1074,8 +1064,7 @@ class Workplane(object):
 
         For testing purposes mainly.
 
-        :param fileName: the filename to export
-        :type fileName: String, absolute path to the file
+        :param fileName: the filename to export, absolute path to the file
         """
         exportSVG(self, fileName)
 
@@ -1089,10 +1078,9 @@ class Workplane(object):
         :param axisEndPoint: the second point of axis of rotation
         :type axisEndPoint: a three-tuple in global coordinates
         :param angleDegrees: the rotation angle, in degrees
-        :type angleDegrees: float
         :returns: a CQ object, with all items rotated.
 
-        WARNING: This version returns the same cq object instead of a new one-- the
+        WARNING: This version returns the same CQ object instead of a new one-- the
         old object is not accessible.
 
         Future Enhancements:
@@ -1129,7 +1117,6 @@ class Workplane(object):
         :param axisEndPoint: The second point of the axis of rotation
         :type axisEndPoint: a 3-tuple of floats
         :param angleDegrees: the rotation angle, in degrees
-        :type angleDegrees: float
         :returns: a CQ object
         """
         return self.newObject(
@@ -1154,11 +1141,9 @@ class Workplane(object):
 
         :param mirrorPlane: the plane to mirror about
         :type mirrorPlane: string, one of "XY", "YX", "XZ", "ZX", "YZ", "ZY" the planes
-        or the normal vector of the plane eg (1,0,0) or a Face object
+            or the normal vector of the plane eg (1,0,0) or a Face object
         :param basePointVector: the base point to mirror about (this is overwritten if a Face is passed)
-        :type basePointVector: tuple
         :param union: If true will perform a union operation on the mirrored object
-        :type union: bool
         """
 
         mp: Union[Literal["XY", "YX", "XZ", "ZX", "YZ", "ZY"], Vector]
@@ -1257,10 +1242,9 @@ class Workplane(object):
         parent chain of the selected edges.
 
         :param radius: the radius of the fillet, must be > zero
-        :type radius: positive float
         :raises ValueError: if at least one edge is not selected
         :raises ValueError: if the solid containing the edge is not in the chain
-        :returns: cq object with the resulting solid selected.
+        :returns: CQ object with the resulting solid selected.
 
         This example will create a unit cube, with the top edges filleted::
 
@@ -1292,11 +1276,9 @@ class Workplane(object):
 
         :param length: the length of the chamfer, must be greater than zero
         :param length2: optional parameter for asymmetrical chamfer
-        :type length: positive float
-        :type length2: positive float
         :raises ValueError: if at least one edge is not selected
         :raises ValueError: if the solid containing the edge is not in the chain
-        :returns: cq object with the resulting solid selected.
+        :returns: CQ object with the resulting solid selected.
 
         This example will create a unit cube, with the top edges chamfered::
 
@@ -1325,6 +1307,7 @@ class Workplane(object):
         given in coordinates local to the current plane
         The new plane is rotated through the angles specified by the components of the rotation
         vector.
+
         :param rotate: 3-tuple of angles to rotate, in degrees relative to work plane coordinates
         :param offset: 3-tuple to offset the new plane, in local work plane coordinates
         :return: a new work plane, transformed as requested
@@ -1383,7 +1366,6 @@ class Workplane(object):
 
         WARNING: only the last object on the stack is used.
 
-        NOTE:
         """
         obj = self.objects[-1] if self.objects else self.plane.origin
 
@@ -1538,7 +1520,7 @@ class Workplane(object):
             body = s.circle(0.05).cutThruAll()
 
         Here the circle function operates on all three points, and is then extruded to create three
-        holes. See :py:meth:`circle` for how it works.
+        holes. See :meth:`circle` for how it works.
         """
         vecs: List[Union[Location, Vector]] = []
         for pnt in pntList:
@@ -1554,9 +1536,9 @@ class Workplane(object):
 
         The location is specified in terms of local coordinates.
 
-        :param float x: the new x location
-        :param float y: the new y location
-        :returns: the workplane object, with the center adjusted.
+        :param x: the new x location
+        :param y: the new y location
+        :returns: the Workplane object, with the center adjusted.
 
         The current point is set to the new center.
         This method is useful to adjust the center point after it has been created automatically on
@@ -1574,7 +1556,6 @@ class Workplane(object):
 
         The result is a cube with a round boss on the corner
         """
-        "Shift local coordinates to the specified location, according to current coordinates"
         new_origin = self.plane.toWorldCoords((x, y))
         n = self.newObject([new_origin])
         n.plane.setOrigin2d(x, y)
@@ -1584,11 +1565,11 @@ class Workplane(object):
         """
         Make a line from the current point to the provided point
 
-        :param float x: the x point, in workplane plane coordinates
-        :param float y: the y point, in workplane plane coordinates
+        :param x: the x point, in workplane plane coordinates
+        :param y: the y point, in workplane plane coordinates
         :return: the Workplane object with the current point at the end of the new line
 
-        see :py:meth:`line` if you want to use relative dimensions to make a line instead.
+        See :meth:`line` if you want to use relative dimensions to make a line instead.
         """
         startPoint = self._findFromPoint(False)
 
@@ -1607,11 +1588,11 @@ class Workplane(object):
         Make a line from the current point to the provided point, using
         dimensions relative to the current point
 
-        :param float xDist: x distance from current point
-        :param float yDist: y distance from current point
+        :param xDist: x distance from current point
+        :param yDist: y distance from current point
         :return: the workplane object with the current point at the end of the new line
 
-        see :py:meth:`lineTo` if you want to use absolute coordinates to make a line instead.
+        see :meth:`lineTo` if you want to use absolute coordinates to make a line instead.
         """
         p = self._findFromPoint(True)  # return local coordinates
         return self.lineTo(p.x + xDist, yDist + p.y, forConstruction)
@@ -1620,8 +1601,8 @@ class Workplane(object):
         """
         Make a vertical line from the current point the provided distance
 
-        :param float distance: (y) distance from current point
-        :return: the workplane object with the current point at the end of the new line
+        :param distance: (y) distance from current point
+        :return: the Workplane object with the current point at the end of the new line
         """
         return self.line(0, distance, forConstruction)
 
@@ -1629,7 +1610,7 @@ class Workplane(object):
         """
         Make a horizontal line from the current point the provided distance
 
-        :param float distance: (x) distance from current point
+        :param distance: (x) distance from current point
         :return: the Workplane object with the current point at the end of the new line
         """
         return self.line(distance, 0, forConstruction)
@@ -1639,9 +1620,9 @@ class Workplane(object):
         Make a vertical line from the current point to the provided y coordinate.
 
         Useful if it is more convenient to specify the end location rather than distance,
-        as in :py:meth:`vLine`
+        as in :meth:`vLine`
 
-        :param float yCoord: y coordinate for the end of the line
+        :param yCoord: y coordinate for the end of the line
         :return: the Workplane object with the current point at the end of the new line
         """
         p = self._findFromPoint(True)
@@ -1652,9 +1633,9 @@ class Workplane(object):
         Make a horizontal line from the current point to the provided x coordinate.
 
         Useful if it is more convenient to specify the end location rather than distance,
-        as in :py:meth:`hLine`
+        as in :meth:`hLine`
 
-        :param float xCoord: x coordinate for the end of the line
+        :param xCoord: x coordinate for the end of the line
         :return: the Workplane object with the current point at the end of the new line
         """
         p = self._findFromPoint(True)
@@ -1666,8 +1647,8 @@ class Workplane(object):
         """
         Make a line of the given length, at the given angle from the current point
 
-        :param float distance: distance of the end of the line from the current point
-        :param float angle: angle of the vector to the end of the line with the x-axis
+        :param distance: distance of the end of the line from the current point
+        :param angle: angle of the vector to the end of the line with the x-axis
         :return: the Workplane object with the current point at the end of the new line
         """
         x = math.cos(math.radians(angle)) * distance
@@ -1684,8 +1665,8 @@ class Workplane(object):
         Useful if it is more convenient to specify the end location rather than
         the distance and angle from the current point
 
-        :param float distance: distance of the end of the line from the origin
-        :param float angle: angle of the vector to the end of the line with the x-axis
+        :param distance: distance of the end of the line from the origin
+        :param angle: angle of the vector to the end of the line with the x-axis
         :return: the Workplane object with the current point at the end of the new line
         """
         x = math.cos(math.radians(angle)) * distance
@@ -1703,11 +1684,11 @@ class Workplane(object):
         :param y: desired y location, in local coordinates
         :type y: float, or none for zero.
 
-        Not to be confused with :py:meth:`center`, which moves the center of the entire
+        Not to be confused with :meth:`center`, which moves the center of the entire
         workplane, this method only moves the current point ( and therefore does not affect objects
         already drawn ).
 
-        See :py:meth:`move` to do the same thing but using relative dimensions
+        See :meth:`move` to do the same thing but using relative dimensions
         """
         newCenter = Vector(x, y, 0)
         return self.newObject([self.plane.toWorldCoords(newCenter)])
@@ -1722,11 +1703,11 @@ class Workplane(object):
         :param yDist: desired y distance, in local coordinates
         :type yDist: float, or none for zero.
 
-        Not to be confused with :py:meth:`center`, which moves the center of the entire
+        Not to be confused with :meth:`center`, which moves the center of the entire
         workplane, this method only moves the current point ( and therefore does not affect objects
         already drawn ).
 
-        See :py:meth:`moveTo` to do the same thing but using absolute coordinates
+        See :meth:`moveTo` to do the same thing but using absolute coordinates
         """
         p = self._findFromPoint(True)
         newCenter = p + Vector(xDist, yDist, 0)
@@ -1741,9 +1722,9 @@ class Workplane(object):
         :param angle: angle of slot in degrees, with 0 being along x-axis
         :return: a new CQ object with the created wires on the stack
 
-        Can be used to create arrays of slots, such as in cooling applications:
+        Can be used to create arrays of slots, such as in cooling applications::
 
-        result = cq.Workplane("XY").box(10,25,1).rarray(1,2,1,10).slot2D(8,1,0).cutThruAll()
+            Workplane().box(10, 25, 1).rarray(1, 2, 1, 10).slot2D(8, 1, 0).cutThruAll()
         """
 
         radius = diameter / 2
@@ -1834,8 +1815,8 @@ class Workplane(object):
         :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point at the end of the spline
 
-        The spline will begin at the current point, and
-        end with the last point in the XY tuple list
+        The spline will begin at the current point, and end with the last point in the
+        XY tuple list.
 
         This example creates a block with a spline for one side::
 
@@ -2125,7 +2106,7 @@ class Workplane(object):
         The sagitta is the distance from the center of the arc to the arc base.
         Given that a closed contour is drawn clockwise;
         A positive sagitta means convex arc and negative sagitta means concave arc.
-        See "https://en.wikipedia.org/wiki/Sagitta_(geometry)" for more information.
+        See `<https://en.wikipedia.org/wiki/Sagitta_(geometry)>`_ for more information.
         """
 
         startPoint = self._findFromPoint(useLocalCoords=True)
@@ -2192,7 +2173,6 @@ class Workplane(object):
         :param endpoint: point for the arc to end at
         :type endpoint: 2-tuple, 3-tuple or Vector
         :param relative: True if endpoint is specified relative to the current point, False if endpoint is in workplane coordinates
-        :type relative: Bool
         :return: a Workplane object with an arc on the stack
 
         Requires the the current first object on the stack is an Edge, as would
@@ -2276,8 +2256,6 @@ class Workplane(object):
         """
         Queues an edge for later combination into a wire.
 
-        :param edge:
-        :return:
         """
         self.ctx.pendingEdges.append(edge)
 
@@ -2296,7 +2274,7 @@ class Workplane(object):
         CadQuery tracks edges as they are drawn, and automatically combines them into wires
         when the user does an operation that needs it.
 
-        Similarly, cadQuery tracks pending wires, and automatically combines them into faces
+        Similarly, CadQuery tracks pending wires, and automatically combines them into faces
         when necessary to make a solid.
         """
         self.ctx.pendingWires.append(wire)
@@ -2386,9 +2364,10 @@ class Workplane(object):
 
         :param callBackFunction: the function to call for each item on the current stack.
         :param useLocalCoordinates: should  values be converted from local coordinates first?
-        :type useLocalCoordinates: boolean
-        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param combine: True or "a" to combine the resulting solid with parent solids if found,
+            "cut" or "s" to remove the resulting solid from the parent solids if found.
+            False to keep the resulting solid separated from the parent solids.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
 
 
         The callback function must accept one argument, which is the item on the stack, and return
@@ -2443,9 +2422,10 @@ class Workplane(object):
         :return: CadQuery object which contains a list of  vectors (points ) on its stack.
 
         :param useLocalCoordinates: should points be in local or global coordinates
-        :type useLocalCoordinates: boolean
-        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param combine: True or "a" to combine the resulting solid with parent solids if found,
+            "cut" or "s" to remove the resulting solid from the parent solids if found.
+            False to keep the resulting solid separated from the parent solids.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
 
 
         The resulting object has a point on the stack for each object on the original stack.
@@ -2550,7 +2530,6 @@ class Workplane(object):
         Make a circle for each item on the stack.
 
         :param radius: radius of the circle
-        :type radius: float > 0
         :param forConstruction: should the new wires be reference geometry only?
         :type forConstruction: true if the wires are for reference, false if they are creating
             part geometry
@@ -2592,11 +2571,8 @@ class Workplane(object):
         Make an ellipse for each item on the stack.
 
         :param x_radius: x radius of the ellipse (x-axis of plane the ellipse should lie in)
-        :type x_radius: float > 0
         :param y_radius: y radius of the ellipse (y-axis of plane the ellipse should lie in)
-        :type y_radius: float > 0
-        :param rotation_angle: angle to rotate the ellipse (0 = no rotation = default)
-        :type rotation_angle: float
+        :param rotation_angle: angle to rotate the ellipse
         :param forConstruction: should the new wires be reference geometry only?
         :type forConstruction: true if the wires are for reference, false if they are creating
             part geometry
@@ -2604,7 +2580,9 @@ class Workplane(object):
 
         *NOTE* Due to a bug in opencascade (https://tracker.dev.opencascade.org/view.php?id=31290)
         the center of mass (equals center for next shape) is shifted. To create concentric ellipses
-        use Workplane("XY")
+        use::
+
+            Workplane("XY")
             .center(10, 20).ellipse(100,10)
             .center(0, 0).ellipse(50, 5)
         """
@@ -2766,9 +2744,10 @@ class Workplane(object):
         """
         Evaluates the provided function at each point on the stack (ie, eachpoint)
         and then cuts the result from the context solid.
+
         :param fcn: a function suitable for use in the eachpoint method: ie, that accepts a vector
-        :param useLocalCoords: same as for :py:meth:`eachpoint`
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param useLocalCoords: same as for :meth:`eachpoint`
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :raises ValueError: if no solids or compounds are found in the stack or parent chain
         :return: a CQ object that contains the resulting solid
         """
@@ -2798,14 +2777,12 @@ class Workplane(object):
         Makes a counterbored hole for each item on the stack.
 
         :param diameter: the diameter of the hole
-        :type diameter: float > 0
-        :param cboreDiameter: the diameter of the cbore
-        :type cboreDiameter: float > 0 and > diameter
+        :param cboreDiameter: the diameter of the cbore, must be greater than hole diameter
         :param cboreDepth: depth of the counterbore
         :type cboreDepth: float > 0
         :param depth: the depth of the hole
-        :type depth: float > 0 or None to drill thru the entire part.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :type depth: float > 0 or None to drill thru the entire part
+        :param clean: call :meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane plane.
 
@@ -2827,7 +2804,7 @@ class Workplane(object):
         **Plugin Note**: this is one example of the power of plugins. Counterbored holes are quite
         time consuming to create, but are quite easily defined by users.
 
-        see :py:meth:`cskHole` to make countersinks instead of counterbores
+        see :meth:`cskHole` to make countersinks instead of counterbores
         """
         if depth is None:
             depth = self.largestDimension()
@@ -2860,13 +2837,12 @@ class Workplane(object):
 
         :param diameter: the diameter of the hole
         :type diameter: float > 0
-        :param cskDiameter: the diameter of the countersink
-        :type cskDiameter: float > 0 and > diameter
+        :param cskDiameter: the diameter of the countersink, must be greater than hole diameter
         :param cskAngle: angle of the countersink, in degrees ( 82 is common )
         :type cskAngle: float > 0
         :param depth: the depth of the hole
         :type depth: float > 0 or None to drill thru the entire part.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param clean: call :meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane.
 
@@ -2888,7 +2864,7 @@ class Workplane(object):
         **Plugin Note**: this is one example of the power of plugins. CounterSunk holes are quite
         time consuming to create, but are quite easily defined by users.
 
-        see :py:meth:`cboreHole` to make counterbores instead of countersinks
+        see :meth:`cboreHole` to make counterbores instead of countersinks
         """
 
         if depth is None:
@@ -2917,10 +2893,9 @@ class Workplane(object):
         Makes a hole for each item on the stack.
 
         :param diameter: the diameter of the hole
-        :type diameter: float > 0
         :param depth: the depth of the hole
         :type depth: float > 0 or None to drill thru the entire part.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param clean: call :meth:`clean` afterwards to have a clean shape
 
         The surface of the hole is at the current workplane.
 
@@ -2942,7 +2917,7 @@ class Workplane(object):
         **Plugin Note**: this is one example of the power of plugins. CounterSunk holes are quite
         time consuming to create, but are quite easily defined by users.
 
-        see :py:meth:`cboreHole` and :py:meth:`cskHole` to make counterbores or countersinks
+        see :meth:`cboreHole` and :meth:`cskHole` to make counterbores or countersinks
         """
         if depth is None:
             depth = self.largestDimension()
@@ -2977,8 +2952,10 @@ class Workplane(object):
 
         :param distance: the distance to extrude normal to the workplane
         :param angle: angle (in degrees) to rotate through the extrusion
-        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param combine: True or "a" to combine the resulting solid with parent solids if found,
+            "cut" or "s" to remove the resulting solid from the parent solids if found.
+            False to keep the resulting solid separated from the parent solids.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
         """
         faces = self._getFaces()
@@ -3016,23 +2993,25 @@ class Workplane(object):
         Use all un-extruded wires in the parent chain to create a prismatic solid.
 
         :param until: The distance to extrude, normal to the workplane plane. When a float is
-          passed, the extrusion extends this far and a negative value is in the opposite direction
-          to the normal of the plane. The string "next" extrudes until the next face orthogonal to
-          the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
-          the extrusion will extend until this face. **Note that the Workplane must contain a Solid for extruding to a given face.**
-        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param boolean both: extrude in both directions symmetrically
-        :param float taper: angle for optional tapered extrusion
+            passed, the extrusion extends this far and a negative value is in the opposite direction
+            to the normal of the plane. The string "next" extrudes until the next face orthogonal to
+            the wire normal. "last" extrudes to the last face. If a object of type Face is passed then
+            the extrusion will extend until this face. **Note that the Workplane must contain a Solid for extruding to a given face.**
+        :param combine: True or "a" to combine the resulting solid with parent solids if found,
+            "cut" or "s" to remove the resulting solid from the parent solids if found.
+            False to keep the resulting solid separated from the parent solids.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
+        :param both: extrude in both directions symmetrically
+        :param taper: angle for optional tapered extrusion
         :return: a CQ object with the resulting solid selected.
 
         The returned object is always a CQ object, and depends on whether combine is True, and
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack. Note that when extruding
-          until a specified face, combine can not be False
+            until a specified face, combine can not be False
         *  if combine is true, the value is combined with the context solid if it exists,
-           and the resulting solid becomes the new context solid.
+            and the resulting solid becomes the new context solid.
         """
 
         # If subtractive mode is requested, use cutBlind
@@ -3080,11 +3059,11 @@ class Workplane(object):
         :param angleDegrees: the angle to revolve through.
         :type angleDegrees: float, anything less than 360 degrees will leave the shape open
         :param axisStart: the start point of the axis of rotation
-        :type axisStart: tuple, a two tuple
         :param axisEnd: the end point of the axis of rotation
-        :type axisEnd: tuple, a two tuple
-        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param combine: True or "a" to combine the resulting solid with parent solids if found,
+            "cut" or "s" to remove the resulting solid from the parent solids if found.
+            False to keep the resulting solid separated from the parent solids.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :return: a CQ object with the resulting solid selected.
 
         The returned object is always a CQ object, and depends on whether combine is True, and
@@ -3096,7 +3075,7 @@ class Workplane(object):
 
         .. note::
             Keep in mind that `axisStart` and `axisEnd` are defined relative to the current Workplane center position.
-            So if for example you want to revolve a circle centered at (10,0,0) around the Y axis, be sure to either :py:meth:`move` (or :py:meth:`moveTo`)
+            So if for example you want to revolve a circle centered at (10,0,0) around the Y axis, be sure to either :meth:`move` (or :meth:`moveTo`)
             the current Workplane position or specify `axisStart` and `axisEnd` with the correct vector position.
             In this example (0,0,0), (0,1,0) as axis coords would fail.
         """
@@ -3147,9 +3126,12 @@ class Workplane(object):
         Use all un-extruded wires in the parent chain to create a swept solid.
 
         :param path: A wire along which the pending wires will be swept
-        :param boolean multiSection: False to create multiple swept from wires on the chain along path. True to create only one solid swept along path with shape following the list of wires on the chain
-        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param multiSection: False to create multiple swept from wires on the chain along path.
+            True to create only one solid swept along path with shape following the list of wires on the chain
+        :param combine: True or "a" to combine the resulting solid with parent solids if found,
+            "cut" or "s" to remove the resulting solid from the parent solids if found.
+            False to keep the resulting solid separated from the parent solids.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :param transition: handling of profile orientation at C1 path discontinuities. Possible values are {'transformed','round', 'right'} (default: 'right').
         :param normal: optional fixed normal for extrusion
         :param auxSpine: a wire defining the binormal along the extrusion path
@@ -3187,6 +3169,7 @@ class Workplane(object):
     ) -> T:
         """
         Combines the provided object with the base solid, if one can be found.
+
         :param obj: The object to be combined with the context solid
         :param mode: The mode to combine with the base solid (True, False, "cut", "a" or "s")
         :return: a new object that represents the result of combining the base object with obj,
@@ -3219,6 +3202,7 @@ class Workplane(object):
     def _fuseWithBase(self: T, obj: Shape) -> T:
         """
         Fuse the provided object with the base solid, if one can be found.
+
         :param obj:
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
@@ -3236,6 +3220,7 @@ class Workplane(object):
     def _cutFromBase(self: T, obj: Shape) -> T:
         """
         Cuts the provided object from the base solid, if one can be found.
+
         :param obj:
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
@@ -3253,11 +3238,12 @@ class Workplane(object):
     ) -> T:
         """
         Attempts to combine all of the items on the stack into a single item.
+
         WARNING: all of the items must be of the same type!
 
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param boolean glue: use a faster gluing mode for non-overlapping shapes (default False)
-        :param float tol: tolerance value for fuzzy bool operation mode (default None)
+        :param clean: call :meth:`clean` afterwards to have a clean shape
+        :param glue: use a faster gluing mode for non-overlapping shapes (default False)
+        :param tol: tolerance value for fuzzy bool operation mode (default None)
         :raises: ValueError if there are no items on the stack, or if they cannot be combined
         :return: a CQ object with the resulting object selected
         """
@@ -3284,9 +3270,8 @@ class Workplane(object):
         Unions all of the items on the stack of toUnion with the current solid.
         If there is no current solid, the items in toUnion are unioned together.
 
-        :param toUnion:
-        :type toUnion: a solid object, or a Workplane object having a solid,
-        :param clean: call :py:meth:`clean` afterwards to have a clean shape (default True)
+        :param toUnion: a solid object, or a Workplane object having a solid
+        :param clean: call :meth:`clean` afterwards to have a clean shape (default True)
         :param glue: use a faster gluing mode for non-overlapping shapes (default False)
         :param tol: tolerance value for fuzzy bool operation mode (default None)
         :raises: ValueError if there is no solid to add to in the chain
@@ -3327,6 +3312,7 @@ class Workplane(object):
     def __or__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for union.
+
         Notice that :code:`r = a | b` is equivalent to :code:`r = a.union(b)` and :code:`r = a + b`.
 
         Example::
@@ -3340,6 +3326,7 @@ class Workplane(object):
     def __add__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for union.
+
         Notice that :code:`r = a + b` is equivalent to :code:`r = a.union(b)` and :code:`r = a | b`.
         """
         return self.union(toUnion)
@@ -3350,9 +3337,8 @@ class Workplane(object):
         """
         Cuts the provided solid from the current solid, IE, perform a solid subtraction.
 
-        :param toCut: object to cut
-        :type toCut: a solid object, or a Workplane object having a solid,
-        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param toCut: a solid object, or a Workplane object having a solid
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a Workplane object with the resulting object selected
         """
@@ -3380,6 +3366,7 @@ class Workplane(object):
     def __sub__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for cut.
+
         Notice that :code:`r = a - b` is equivalent to :code:`r = a.cut(b)`.
 
         Example::
@@ -3396,9 +3383,8 @@ class Workplane(object):
         """
         Intersects the provided solid from the current solid.
 
-        :param toIntersect: object to intersect
-        :type toIntersect: a solid object, or a Workplane object having a solid,
-        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param toIntersect: a solid object, or a Workplane object having a solid
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :raises ValueError: if there is no solid to intersect with in the chain
         :return: a Workplane object with the resulting object selected
         """
@@ -3426,6 +3412,7 @@ class Workplane(object):
     def __and__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for intersect.
+
         Notice that :code:`r = a & b` is equivalent to :code:`r = a.intersect(b)`.
 
         Example::
@@ -3444,22 +3431,23 @@ class Workplane(object):
     ) -> T:
         """
         Use all un-extruded wires in the parent chain to create a prismatic cut from existing solid.
-        You must define either :distance: , :untilNextFace: or :untilLastFace:
+
+        Specify either a distance value, or one of "next", "last" to indicate a face to cut to.
 
         Similar to extrude, except that a solid in the parent chain is required to remove material
         from. cutBlind always removes material from a part.
 
         :param until: The distance to cut to, normal to the workplane plane. When a negative float
-          is passed the cut extends this far in the opposite direction to the normal of the plane
-          (i.e in the solid). The string "next" cuts until the next face orthogonal to the wire
-          normal.  "last" cuts to the last face. If a object of type Face is passed then the cut
-          will extend until this face.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param float taper: angle for optional tapered extrusion
+            is passed the cut extends this far in the opposite direction to the normal of the plane
+            (i.e in the solid). The string "next" cuts until the next face orthogonal to the wire
+            normal.  "last" cuts to the last face. If an object of type Face is passed, then the cut
+            will extend until this face.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
+        :param taper: angle for optional tapered extrusion
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
 
-        see :py:meth:`cutThruAll` to cut material from the entire part
+        see :meth:`cutThruAll` to cut material from the entire part
         """
         # Handling of `until` passed values
         s: Union[Compound, Solid, Shape]
@@ -3495,12 +3483,12 @@ class Workplane(object):
         Similar to extrude, except that a solid in the parent chain is required to remove material
         from. cutThruAll always removes material from a part.
 
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :raises ValueError: if there is no solid to subtract from in the chain
         :raises ValueError: if there are no pending wires to cut with
         :return: a CQ object with the resulting object selected
 
-        see :py:meth:`cutBlind` to cut material to a limited depth
+        see :meth:`cutBlind` to cut material to a limited depth
         """
         solidRef = self.findSolid()
 
@@ -3519,9 +3507,11 @@ class Workplane(object):
         """
         Make a lofted solid, through the set of wires.
 
-        :param boolean ruled: When set to `True` connects each section linearly and without continuity
-        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param ruled: When set to `True` connects each section linearly and without continuity
+        :param combine: True or "a" to combine the resulting solid with parent solids if found,
+            "cut" or "s" to remove the resulting solid from the parent solids if found.
+            False to keep the resulting solid separated from the parent solids.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
 
         :return: a Workplane object containing the created loft
 
@@ -3569,8 +3559,8 @@ class Workplane(object):
         Make a prismatic solid from the existing set of pending wires.
 
         :param distance: distance to extrude
-        :param boolean both: extrude in both directions symetrically
-        :param upToFace: if specified extrude up to the :upToFace: face, 0 for the next, -1 for the last
+        :param both: extrude in both directions symetrically
+        :param upToFace: if specified, extrude up to a face: 0 for the next, -1 for the last face
         :param additive: specify if extruding or cutting, required param for uptoface algorithm
 
         :return: OCCT solid(s), suitable for boolean operations.
@@ -3676,9 +3666,7 @@ class Workplane(object):
         :param angleDegrees: the angle to revolve through.
         :type angleDegrees: float, anything less than 360 degrees will leave the shape open
         :param axisStart: the start point of the axis of rotation
-        :type axisStart: tuple, a two tuple
         :param axisEnd: the end point of the axis of rotation
-        :type axisEnd: tuple, a two tuple
         :return: a OCCT solid(s), suitable for boolean operations.
 
         This method is a utility method, primarily for plugin and internal use.
@@ -3706,7 +3694,7 @@ class Workplane(object):
         Makes a swept solid from an existing set of pending wires.
 
         :param path: A wire along which the pending wires will be swept
-        :param boolean multisection:
+        :param multisection:
             False to create multiple swept from wires on the chain along path
             True to create only one solid swept along path with shape following the list of wires on the chain
         :param transition:
@@ -3764,41 +3752,25 @@ class Workplane(object):
         maxSegments: int = 9,
     ) -> T:
         """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points,  and going
+        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points, and going
         through 'surf_pts' points.  Using pushPoints directly with interpPlate and combine=True, can be
-        very resources intensive depending on the complexity of the shape. In this case set combine=False.
+        very resource intensive depending on the complexity of the shape. In this case set combine=False.
 
-        :param surf_edges
-        :type 1 surf_edges: list of [x,y,z] float ordered coordinates
-        :type 2 surf_edges: list of ordered or unordered CadQuery wires
-        :param surf_pts = [] (uses only edges if [])
-        :type surf_pts: list of [x,y,z] float coordinates
-        :param thickness = 0 (returns 2D surface if 0)
-        :type thickness: float (may be negative or positive depending on thickening direction)
-        :param combine: should the results be combined with other solids on the stack
-            (and each other)?
-        :type combine: true to combine shapes, false otherwise.
-        :param boolean clean: call :py:meth:`clean` afterwards to have a clean shape
-        :param Degree = 3 (OCCT default)
-        :type Degree: Integer >= 2
-        :param NbPtsOnCur = 15 (OCCT default)
-        :type: NbPtsOnCur Integer >= 15
-        :param NbIter = 2 (OCCT default)
-        :type: NbIterInteger >= 2
-        :param anisotropy = False (OCCT default)
-        :type anisotropy: Boolean
-        :param: Tol2d = 0.00001 (OCCT default)
-        :type Tol2d: float > 0
-        :param Tol3d = 0.0001 (OCCT default)
-        :type Tol3dReal: float > 0
-        :param TolAng = 0.01 (OCCT default)
-        :type TolAngReal: float > 0
-        :param TolCurv = 0.1 (OCCT default)
-        :type TolCurvReal: float > 0
-        :param MaxDeg = 8 (OCCT default)
-        :type MaxDegInteger: Integer >= 2 (?)
-        :param MaxSegments = 9 (OCCT default)
-        :type MaxSegments: Integer >= 2 (?)
+        :param surf_edges: list of [x,y,z] ordered coordinates or list of ordered or unordered edges, wires
+        :param surf_pts: list of points (uses only edges if [])
+        :param thickness: value may be negative or positive depending on thickening direction (2D surface if 0)
+        :param combine: should the results be combined with other solids on the stack (and each other)?
+        :param clean: call :meth:`clean` afterwards to have a clean shape
+        :param degree: >= 2
+        :param nbPtsOnCur: number of points on curve >= 15
+        :param nbIter: number of iterations >= 2
+        :param anisotropy: = bool Anisotropy
+        :param tol2d: 2D tolerance
+        :param tol3d: 3D tolerance
+        :param tolAng: angular tolerance
+        :param tolCurv: tolerance for curvature
+        :param maxDeg: highest polynomial degree >= 2
+        :param maxSegments: greatest number of segments >= 2
         """
 
         # convert points to edges if needed
@@ -3848,18 +3820,15 @@ class Workplane(object):
         Return a 3d box with specified dimensions for each object on the stack.
 
         :param length: box size in X direction
-        :type length: float > 0
         :param width: box size in Y direction
-        :type width: float > 0
         :param height: box size in Z direction
-        :type height: float > 0
         :param centered: If True, the box will be centered around the reference point.
-          If False, the corner of the box will be on the reference point and it will
-          extend in the positive x, y and z directions. Can also use a 3-tuple to
-          specify centering along each axis.
+            If False, the corner of the box will be on the reference point and it will
+            extend in the positive x, y and z directions. Can also use a 3-tuple to
+            specify centering along each axis.
         :param combine: should the results be combined with other solids on the stack
             (and each other)?
-        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param clean: call :meth:`clean` afterwards to have a clean shape
 
         One box is created for each item on the current stack. If no items are on the stack, one box
         using the current workplane center is created.
@@ -3920,7 +3889,6 @@ class Workplane(object):
         Returns a 3D sphere with the specified radius for each point on the stack.
 
         :param radius: The radius of the sphere
-        :type radius: float > 0
         :param direct: The direction axis for the creation of the sphere
         :type direct: A three-tuple
         :param angle1: The first angle to sweep the sphere arc through
@@ -3930,13 +3898,13 @@ class Workplane(object):
         :param angle3: The third angle to sweep the sphere arc through
         :type angle3: float > 0
         :param centered: If True, the sphere will be centered around the reference point. If False,
-          the corner of a bounding box around the sphere will be on the reference point and it
-          will extend in the positive x, y and z directions. Can also use a 3-tuple to specify
-          centering along each axis.
+            the corner of a bounding box around the sphere will be on the reference point and it
+            will extend in the positive x, y and z directions. Can also use a 3-tuple to specify
+            centering along each axis.
         :param combine: Whether the results should be combined with other solids on the stack
             (and each other)
         :type combine: true to combine shapes, false otherwise
-        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :return: A sphere object for each point on the stack
 
         One sphere is created for each item on the current stack. If no items are on the stack, one
@@ -3983,9 +3951,7 @@ class Workplane(object):
         Returns a cylinder with the specified radius and height for each point on the stack
 
         :param height: The height of the cylinder
-        :type height: float > 0
         :param radius: The radius of the cylinder
-        :type radius: float > 0
         :param direct: The direction axis for the creation of the cylinder
         :type direct: A three-tuple
         :param angle: The angle to sweep the cylinder arc through
@@ -3997,7 +3963,7 @@ class Workplane(object):
         :param combine: Whether the results should be combined with other solids on the stack
             (and each other)
         :type combine: true to combine shapes, false otherwise
-        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :return: A cylinder object for each point on the stack
 
         One cylinder is created for each item on the current stack. If no items are on the stack, one
@@ -4147,8 +4113,10 @@ class Workplane(object):
         :param distance: the distance to extrude or cut, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
         :param cut: True to cut the resulting solid from the parent solids if found
-        :param combine: True or "a" to combine the resulting solid with parent solids if found, "cut" or "s" to remove the resulting solid from the parent solids if found. False to keep the resulting solid separated from the parent solids.
-        :param clean: call :py:meth:`clean` afterwards to have a clean shape
+        :param combine: True or "a" to combine the resulting solid with parent solids if found,
+            "cut" or "s" to remove the resulting solid from the parent solids if found.
+            False to keep the resulting solid separated from the parent solids.
+        :param clean: call :meth:`clean` afterwards to have a clean shape
         :param font: font name
         :param fontPath: path to font file
         :param kind: font type
@@ -4201,7 +4169,7 @@ class Workplane(object):
         """
         Slices current solid at the given height.
 
-        :param float height: height to slice at (default: 0)
+        :param height: height to slice at (default: 0)
         :raises ValueError: if no solids or compounds are found
         :return: a CQ object with the resulting face(s).
         """
