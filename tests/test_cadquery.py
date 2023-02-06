@@ -5264,6 +5264,11 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(len(r4.solids().vals()), 1)
 
+        r5 = (
+            Workplane().sketch().polygon([(0, 0), (0, 1), (1, 0)]).finalize().extrude(1)
+        )
+        assert r5.val().Volume() == approx(0.5)
+
     def testCircumscribedPolygon(self):
         """
         Test that circumscribed polygons result in the correct shapes

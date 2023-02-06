@@ -307,7 +307,9 @@ class Sketch(object):
         Construct a polygonal face.
         """
 
-        w = Wire.makePolygon(p if isinstance(p, Vector) else Vector(*p) for p in pts)
+        w = Wire.makePolygon(
+            (p if isinstance(p, Vector) else Vector(*p) for p in pts), False, True
+        )
 
         return self.face(w, angle, mode, tag)
 

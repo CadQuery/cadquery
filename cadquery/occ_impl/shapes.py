@@ -2067,13 +2067,22 @@ class Wire(Shape, Mixin1D):
 
     @classmethod
     def makePolygon(
-        cls, listOfVertices: Iterable[VectorLike], forConstruction: bool = False,
+        cls,
+        listOfVertices: Iterable[VectorLike],
+        forConstruction: bool = False,
+        close: bool = False,
     ) -> "Wire":
-        # convert list of tuples into Vectors.
+        """
+        Construct a polygonal wire from points.
+        """
+
         wire_builder = BRepBuilderAPI_MakePolygon()
 
         for v in listOfVertices:
             wire_builder.Add(Vector(v).toPnt())
+
+        if close:
+            wire_builder.Close()
 
         w = cls(wire_builder.Wire())
         w.forConstruction = forConstruction

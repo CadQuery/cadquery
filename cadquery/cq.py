@@ -3816,7 +3816,7 @@ class Workplane(object):
 
         # Creates interpolated plate
         f: Face = Face.makeNSidedSurface(
-            edges if not points else [Wire.makePolygon(points).close()],
+            edges if not points else [Wire.makePolygon(points, False, True)],
             surf_pts,
             degree=degree,
             nbPtsOnCur=nbPtsOnCur,
