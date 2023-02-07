@@ -3674,6 +3674,17 @@ class TestCadQuery(BaseTest):
 
         self.assertTrue(middle_face.val().Area() < 1)
 
+        with self.assertWarns(DeprecationWarning):
+            s = (
+                Workplane("XY")
+                .rect(2 * r, 2 * r)
+                .extrude(2 * h)
+                .faces(">Z")
+                .workplane()
+                .rect(r, r)
+                .cutBlind(-h, True, float(t))
+            )
+
     def testClose(self):
         # Close without endPoint and startPoint coincide.
         # Create a half-circle
@@ -5274,6 +5285,11 @@ class TestCadQuery(BaseTest):
         r4 = Workplane().placeSketch(s, s.moved(Location(Vector(0, 0, 3)))).loft()
 
         self.assertEqual(len(r4.solids().vals()), 1)
+
+        r5 = (
+            Workplane().sketch().polygon([(0, 0), (0, 1), (1, 0)]).finalize().extrude(1)
+        )
+        assert r5.val().Volume() == approx(0.5)
 
     def testCircumscribedPolygon(self):
         """

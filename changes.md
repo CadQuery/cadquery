@@ -1,16 +1,24 @@
 Changes
 =======
 
-master
+2.2.0 (latest release)
 ------
+   ### Highlights
+   * Introduced a new Sketch API dedicated to 2D planar operations.
+   * New constraint types were added to use with the Assembly solver.
+
    ### Breaking changes
-   * Renamed the argument for `Workplane.extrude` from `distance` to `until` and `Workplane.cutBlind`'s `distanceToCut` also to `until`. This is only a breaking change if you use the named parameters, i.e. `extrude(distance = 10.0)` or `cutBlind(distanceToCut)` instead of using positional them as positional parameters.
+   * Renamed the argument for `Workplane.extrude` from `distance` to `until` and `Workplane.cutBlind`'s `distanceToCut` also to `until`. This is only a breaking change if you use the named parameters, i.e. `extrude(distance = 10.0)` or `cutBlind(distanceToCut)` instead of using them as positional parameters.
    * Fixed a bug in `Mixin1DProtocol.tangentAt()` where `paramAt()` was being called twice. This should only break scripts that relied on the incorrect behavior. [#641](https://github.com/CadQuery/cadquery/pull/641)
    * `each` and `eachpoint` accept now `combine` argument defaulted to `True` [#954](https://github.com/CadQuery/cadquery/pull/954). This only affects use cases involving solids.
 
+   ### Experimental Features
+   * Constraint-based sketches are still being worked on and improved, and are not production ready. There are multiple issues open including [#1127](https://github.com/CadQuery/cadquery/issues/1127), [#959](https://github.com/CadQuery/cadquery/issues/959), [#968](https://github.com/CadQuery/cadquery/issues/968) and [#960](https://github.com/CadQuery/cadquery/issues/960).
+   * The Convex Hull feature should also be considered experimental. Issues open for that feature include [#931](https://github.com/CadQuery/cadquery/issues/931), [#1190](https://github.com/CadQuery/cadquery/issues/1190), [#1224](https://github.com/CadQuery/cadquery/issues/1224) and [#943](https://github.com/CadQuery/cadquery/issues/943).
+
    ### Other changes
    * Combine option can be set to "cut" (or "s") resulting in a subtractive operation [#954](https://github.com/CadQuery/cadquery/pull/954)
-   * Documentation updates [#648](https://github.com/CadQuery/cadquery/pull/648) [#654](https://github.com/CadQuery/cadquery/pull/654) [#656](https://github.com/CadQuery/cadquery/pull/656) [#659](https://github.com/CadQuery/cadquery/pull/659) [#668](https://github.com/CadQuery/cadquery/pull/668) [#689](https://github.com/CadQuery/cadquery/pull/689) [#695](https://github.com/CadQuery/cadquery/pull/695) [#699](https://github.com/CadQuery/cadquery/pull/699) [#711](https://github.com/CadQuery/cadquery/pull/711) [#727](https://github.com/CadQuery/cadquery/pull/727) [#733](https://github.com/CadQuery/cadquery/pull/733) [#734](https://github.com/CadQuery/cadquery/pull/734) [#737](https://github.com/CadQuery/cadquery/pull/737) [#738](https://github.com/CadQuery/cadquery/pull/738) [#748](https://github.com/CadQuery/cadquery/pull/748) [#757](https://github.com/CadQuery/cadquery/pull/757) [#774](https://github.com/CadQuery/cadquery/pull/774) [#775](https://github.com/CadQuery/cadquery/pull/775) [#805](https://github.com/CadQuery/cadquery/pull/805) [#813](https://github.com/CadQuery/cadquery/pull/813) [#837](https://github.com/CadQuery/cadquery/pull/837) [#839](https://github.com/CadQuery/cadquery/pull/839) [#843](https://github.com/CadQuery/cadquery/pull/843) [#845](https://github.com/CadQuery/cadquery/pull/845) [#846](https://github.com/CadQuery/cadquery/pull/846) [#847](https://github.com/CadQuery/cadquery/pull/847) [#848](https://github.com/CadQuery/cadquery/pull/848) [#852](https://github.com/CadQuery/cadquery/pull/852) [#863](https://github.com/CadQuery/cadquery/pull/863) [#866](https://github.com/CadQuery/cadquery/pull/866) [#867](https://github.com/CadQuery/cadquery/pull/867) [#887](https://github.com/CadQuery/cadquery/pull/887) [#908](https://github.com/CadQuery/cadquery/pull/908) [#910](https://github.com/CadQuery/cadquery/pull/910) [#912] (https://github.com/CadQuery/cadquery/pull/912) [#921](https://github.com/CadQuery/cadquery/pull/921)
+   * Documentation updates [#648](https://github.com/CadQuery/cadquery/pull/648) [#654](https://github.com/CadQuery/cadquery/pull/654) [#656](https://github.com/CadQuery/cadquery/pull/656) [#659](https://github.com/CadQuery/cadquery/pull/659) [#668](https://github.com/CadQuery/cadquery/pull/668) [#689](https://github.com/CadQuery/cadquery/pull/689) [#695](https://github.com/CadQuery/cadquery/pull/695) [#699](https://github.com/CadQuery/cadquery/pull/699) [#711](https://github.com/CadQuery/cadquery/pull/711) [#727](https://github.com/CadQuery/cadquery/pull/727) [#733](https://github.com/CadQuery/cadquery/pull/733) [#734](https://github.com/CadQuery/cadquery/pull/734) [#737](https://github.com/CadQuery/cadquery/pull/737) [#738](https://github.com/CadQuery/cadquery/pull/738) [#748](https://github.com/CadQuery/cadquery/pull/748) [#757](https://github.com/CadQuery/cadquery/pull/757) [#774](https://github.com/CadQuery/cadquery/pull/774) [#775](https://github.com/CadQuery/cadquery/pull/775) [#805](https://github.com/CadQuery/cadquery/pull/805) [#813](https://github.com/CadQuery/cadquery/pull/813) [#837](https://github.com/CadQuery/cadquery/pull/837) [#839](https://github.com/CadQuery/cadquery/pull/839) [#843](https://github.com/CadQuery/cadquery/pull/843) [#845](https://github.com/CadQuery/cadquery/pull/845) [#846](https://github.com/CadQuery/cadquery/pull/846) [#847](https://github.com/CadQuery/cadquery/pull/847) [#848](https://github.com/CadQuery/cadquery/pull/848) [#852](https://github.com/CadQuery/cadquery/pull/852) [#863](https://github.com/CadQuery/cadquery/pull/863) [#866](https://github.com/CadQuery/cadquery/pull/866) [#867](https://github.com/CadQuery/cadquery/pull/867) [#887](https://github.com/CadQuery/cadquery/pull/887) [#908](https://github.com/CadQuery/cadquery/pull/908) [#910](https://github.com/CadQuery/cadquery/pull/910) [#912](https://github.com/CadQuery/cadquery/pull/912) [#921](https://github.com/CadQuery/cadquery/pull/921)
    * Added better documentation on the internals of CadQuery [#821](https://github.com/CadQuery/cadquery/pull/821)
    * Added documentation for assembly constraints [#850](https://github.com/CadQuery/cadquery/pull/850)
    * Bugfix for center option of functions such as box and rect [#617](https://github.com/CadQuery/cadquery/pull/617)
@@ -57,9 +65,57 @@ master
    * Fixed bug in ArcAngle Sketch constraint [#932](https://github.com/CadQuery/cadquery/pull/932)
    * Implemented tag merging when performing boolean operations [#934](https://github.com/CadQuery/cadquery/pull/934)
    * Fixed a bug where the height and width were switched in the Sketch rect call [#939](https://github.com/CadQuery/cadquery/pull/939)
+   * Made Face.makeFromWires check that wires are closed to prevent a certain class of segfault [#946](https://github.com/CadQuery/cadquery/pull/946)
+   * Added __repr__ to plane object to get nicer output when converted to a string [#952](https://github.com/CadQuery/cadquery/pull/952)
+   * Added `cut` option to `combine` parameter which removes material from the context solid [#954](https://github.com/CadQuery/cadquery/pull/954)
+   * Updated the dependencies for OCP 7.5.3 [#956](https://github.com/CadQuery/cadquery/pull/956)
+   * Added a fixed arc length cost to the sketch solver [#962](https://github.com/CadQuery/cadquery/pull/962)
+   * Fixed installation doc to use rst instead of markdown [#974](https://github.com/CadQuery/cadquery/pull/974)
+   * Reworked the assembly solder and added PointOnLine, FixedPoint, FixedAxis and FixedRotation assembly constraints [#975](https://github.com/CadQuery/cadquery/pull/975)
+   * Implemented Python 3.10 support [#978](https://github.com/CadQuery/cadquery/pull/978)
+   * Updated conda related sections in the README and docs [#980](https://github.com/CadQuery/cadquery/pull/980)
+   * Added rotateAboutCenter regression test [#982](https://github.com/CadQuery/cadquery/pull/982)
+   * Use `TopTools_ListOfShape` in `assembleEdges()` to prevent some classes of invalid surfaces due to unclosed wires [#986](https://github.com/CadQuery/cadquery/pull/986)
+   * Removed the pinned hdf dependency [#992](https://github.com/CadQuery/cadquery/pull/992)
+   * Fixed bug with extra translation being applied when `rarray` is used with `push` [#994](https://github.com/CadQuery/cadquery/pull/994)
+   * Added a conda web installer for Windows and Linux [#1000](https://github.com/CadQuery/cadquery/pull/1000)
+   * Multiple parray Sketch fixes [#1005](https://github.com/CadQuery/cadquery/pull/1005)
+   * Additional surface modelling functionality [#1007](https://github.com/CadQuery/cadquery/pull/1007)
+   * Fixed a bug with `polarArray` start angle and rotation [#1016](https://github.com/CadQuery/cadquery/pull/1016)
+   * Fixed a bug where Sketch.distribute was creating an extra location [#1018](https://github.com/CadQuery/cadquery/pull/1018)
+   * Fixed the screw holes in the parametric enclosure example [#1023](https://github.com/CadQuery/cadquery/pull/1023)
+   * Switched to nptyping 2.x [#1050](https://github.com/CadQuery/cadquery/pull/1050)
+   * Ability to specify DXF layer names [#1061](https://github.com/CadQuery/cadquery/pull/1061)
+   * Switch to Casadi and iPOPT for assembly solver [#1063](https://github.com/CadQuery/cadquery/pull/1063)
+   * Added adjustment parameters for linear and angular tolerances in VRML tessellation [#1066](https://github.com/CadQuery/cadquery/pull/1066)
+   * Pinned VTK to 9.0.1 for OCP 7.5.3 [#1075](https://github.com/CadQuery/cadquery/pull/1075)
+   * Fixed VTK-based assembly export rotation issue [#1078](https://github.com/CadQuery/cadquery/pull/1078)
+   * Added quality controls to STEP export for shapes and assemblies [#1083](https://github.com/CadQuery/cadquery/pull/1083)
+   * Updated setup.py for OCP being available on PyPI [#1085](https://github.com/CadQuery/cadquery/pull/1085)
+   * Added Sphinx customization for multimethod handling [#1088](https://github.com/CadQuery/cadquery/pull/1088) [#1123](https://github.com/CadQuery/cadquery/pull/1123)
+   * Pinned the nptyping version [#1095](https://github.com/CadQuery/cadquery/pull/1095) [#1096](https://github.com/CadQuery/cadquery/pull/1096)
+   * Added STL to Assembly export formats [#1101](https://github.com/CadQuery/cadquery/pull/1101)
+   * Updated the mutlimethod version pin [#1118](https://github.com/CadQuery/cadquery/pull/1118)
+   * Reworked the cheatsheet [#1129](https://github.com/CadQuery/cadquery/pull/1129)
+   * Pass clean to eachpoint in box, cylinder, interpPlate, sphere and wedge [#1145](https://github.com/CadQuery/cadquery/pull/1145)
+   * Moved to OCCT 7.6 [#1156](https://github.com/CadQuery/cadquery/pull/1156)
+   * Do not add a leaf component when assembly shapes are empty [#993](https://github.com/CadQuery/cadquery/pull/1157)
+   * Fixed an indexing bug in tessellation [#1163](https://github.com/CadQuery/cadquery/pull/1163)
+   * Pinned cadquery-ocp version to 7.6.* [#1164](https://github.com/CadQuery/cadquery/pull/1164)
+   * Disabled recompute of normals when converting to VTK [#1167](https://github.com/CadQuery/cadquery/pull/1167)
+   * Added Fixed to ConstraintKinds type definition [#1177](https://github.com/CadQuery/cadquery/pull/1177)
+   * Added option to control the verbosity of the assembly solver [#1198](https://github.com/CadQuery/cadquery/pull/1198)
+   * Only show deprecation warning when required [#1201](https://github.com/CadQuery/cadquery/pull/1201)
+   * Untangled indirect exports [#1204](https://github.com/CadQuery/cadquery/pull/1204)
+   * Added parameter and return types to `importDXF` [#1205](https://github.com/CadQuery/cadquery/pull/1205)
+   * Fixed incorrect coordinate system in glTF exports [#1211](https://github.com/CadQuery/cadquery/pull/1211)
+   * Updated to allow OCP 7.7.0 to be used [#1215](https://github.com/CadQuery/cadquery/pull/1215)
+   * Fixed VTK HTML template [#1216](https://github.com/CadQuery/cadquery/pull/1216) [#1217](https://github.com/CadQuery/cadquery/pull/1217)
+   * Cleaned up environment.yml file [#1233](https://github.com/CadQuery/cadquery/pull/1233)
+   * Various documentation fixes [#1033](https://github.com/CadQuery/cadquery/pull/1033) [#1041](https://github.com/CadQuery/cadquery/pull/1041) [#1044](https://github.com/CadQuery/cadquery/pull/1044) [#1049](https://github.com/CadQuery/cadquery/pull/1049) [#1056](https://github.com/CadQuery/cadquery/pull/1056) [#1058](https://github.com/CadQuery/cadquery/pull/1058) [#1059](https://github.com/CadQuery/cadquery/pull/1059) [#1060](https://github.com/CadQuery/cadquery/pull/1060) [#1062](https://github.com/CadQuery/cadquery/pull/1062) [#1079](https://github.com/CadQuery/cadquery/pull/1079) [#1089](https://github.com/CadQuery/cadquery/pull/1089) [#1116](https://github.com/CadQuery/cadquery/pull/1116) [#1140](https://github.com/CadQuery/cadquery/pull/1140) [#1143](https://github.com/CadQuery/cadquery/pull/1143) [#1151](https://github.com/CadQuery/cadquery/pull/1151) [#1166](https://github.com/CadQuery/cadquery/pull/1166) [#1176](https://github.com/CadQuery/cadquery/pull/1176) [#1207](https://github.com/CadQuery/cadquery/pull/1207) [#1210](https://github.com/CadQuery/cadquery/pull/1210) [#1241](https://github.com/CadQuery/cadquery/pull/1241)
 
 
-2.1 (stable release)
+2.1
 ------
    ### Breaking changes
    * Fixed bug in ParallelDirSelector where non-planar faces could be selected. Note this will be breaking if you've used DirectionNthSelector and a non-planar face made it into your object list. In that case eg. ">X[2]" will have to become ">X[1]".

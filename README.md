@@ -66,13 +66,12 @@ python3 -m pip install --upgrade pip
 ```
 Once a current version of pip is installed, CadQuery can be installed using the following command line.
 ```
-pip install --pre cadquery
+pip install cadquery
 ```
-NB: CadQuery has only recently returned to PyPI, and a full release has not happened yet. When the final release of CadQuery 2.2 is published, it will be possible to simply type `pip install cadquery`.
 
 It is also possible to install the very latest changes directly from CadQuery's GitHub repository, with the understanding that sometimes breaking changes can occur. To install from the git repository, run the following command line.
 ```
-pip install --pre git+https://github.com/CadQuery/cadquery.git
+pip install git+https://github.com/CadQuery/cadquery.git
 ```
 
 You should now have a working CadQuery installation, but developers or users who want to use CadQuery with IPython/Jupyter or to set up a developer environment can read the rest of this section.
