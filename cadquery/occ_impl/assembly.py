@@ -396,8 +396,14 @@ def toFused(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
 
                 # If there are no modified faces associated with this face, treat it as-is
                 if modded_list.Size() == 0:
-                    # Add the face as a subshape and set its color to match the parent assembly component
+                    # Add the face as a subshape
                     cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
+
+                    # If we got a null label, it is probably because the face was deleted during the fuse
+                    if cur_lbl.IsNull() == True and fuse_op.IsDeleted(face.wrapped):
+                        continue
+
+                    # Set the subshape's color to match the parent assembly component
                     color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
                 # If there are modified faces based on this face, step through all of them and add
                 # them separately as subshapes

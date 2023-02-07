@@ -69,9 +69,9 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     if export_mode == STEPExportMode.DEFAULT:
         _, doc = toCAF(assy, True)
     elif export_mode == STEPExportMode.SIMPLIFIED:
-        doc = toSimplified(assy, "simplified_assembly")
+        doc = toSimplified(assy, assembly_name)
     elif export_mode == STEPExportMode.FUSED:
-        doc = toFused(assy, "fused_assembly")
+        doc = toFused(assy, assembly_name)
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)
