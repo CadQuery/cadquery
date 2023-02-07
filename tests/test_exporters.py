@@ -62,7 +62,11 @@ def test_simplified_assembly(tmpdir):
 
     # Export the assembly
     step_path = os.path.join(tmpdir, "simplified.step")
-    assy.save(path=str(step_path), exportType=exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.SIMPLIFIED)
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        export_mode=exporters.STEPExportMode.SIMPLIFIED,
+    )
 
     # Import the assembly and make sure it acts as expected
     model = importers.importStep(step_path)
@@ -84,7 +88,11 @@ def test_fused_assembly(tmpdir):
 
     # Export the assembly
     step_path = os.path.join(tmpdir, "fused.step")
-    assy.save(path=str(step_path), exportType=exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        export_mode=exporters.STEPExportMode.FUSED,
+    )
 
     # Import the assembly and make sure it acts as expected
     model = importers.importStep(step_path)
@@ -107,7 +115,11 @@ def test_fused_not_touching_assembly(tmpdir):
 
     # Export the assembly
     step_path = os.path.join(tmpdir, "fused_not_touching.step")
-    assy.save(path=str(step_path), exportType=exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        export_mode=exporters.STEPExportMode.FUSED,
+    )
 
     # Import the assembly and make sure it acts as expected
     model = importers.importStep(step_path)

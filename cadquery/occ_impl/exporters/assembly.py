@@ -56,10 +56,14 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
         pcurves = 0
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
-    assembly_name = kwargs["assembly_name"] if "assembly_name" in kwargs else "CQ assembly"
+    assembly_name = (
+        kwargs["assembly_name"] if "assembly_name" in kwargs else "CQ assembly"
+    )
 
     # Handle the mode setting
-    export_mode = kwargs["export_mode"] if "export_mode" in kwargs else STEPExportMode.DEFAULT
+    export_mode = (
+        kwargs["export_mode"] if "export_mode" in kwargs else STEPExportMode.DEFAULT
+    )
 
     # Handle the doc differently based on which mode we are using
     if export_mode == STEPExportMode.DEFAULT:

@@ -44,6 +44,7 @@ class STEPExportMode:
     SIMPLIFIED - Export where the document is built so that the assembly stays as a STEP assembly.
     FUSED - Export where the document is built so that the assembly is a fused compound, but retains the color data.
     """
+
     DEFAULT = 0
     SIMPLIFIED = 1
     FUSED = 2

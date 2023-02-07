@@ -296,10 +296,7 @@ def toJSON(
     return rv
 
 
-def toSimplified(
-    assy: AssemblyProtocol,
-    assy_name: str
-) -> TDocStd_Document:
+def toSimplified(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     """
     Converts the assembly to a compound and saves that within the document
     to be exported.
@@ -341,10 +338,7 @@ def toSimplified(
     return doc
 
 
-def toFused(
-    assy: AssemblyProtocol,
-    assy_name: str
-) -> TDocStd_Document:
+def toFused(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     """
     Converts the assembly to a fused compound and saves that within the document
     to be exported in a way that preserves the face colors. Because of the use of
@@ -411,6 +405,8 @@ def toFused(
                     for mod in modded_list.__iter__():
                         # Add the face as a subshape and set its color to match the parent assembly component
                         cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
-                        color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+                        color_tool.SetColor(
+                            cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
+                        )
 
     return doc
