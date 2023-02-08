@@ -81,14 +81,55 @@ Exporting STEP
 
 This section covers exporting CadQuery Workplane objects to STEP. For exporting assemblies to STEP, see the next section.
 
+Default
+--------
 
+The exporters module handles exporting Workplane objects to STEP. It is not necessary to set the export type explicitly
+since it will be determined from the file extension. Below is an example.
+
+.. code-block:: python
+    # Create a simple object
+    box = cq.Workplane().box(10, 10, 10)
+
+    # Export the box
+    cq.exporters.export(box, "/path/to/step/box.step")
+
+Non-Default File Extensions
+----------------------------
+
+If there is a requirement to export the STEP file using an "stp" extension, CadQuery will throw an error saying that it does
+not recognize the file extension. In that case the export type has to be specified.
+
+.. code-block:: python
+    # Create a simple object
+    box = cq.Workplane().box(10, 10, 10)
+
+    # Export the box
+    cq.exporters.export(box, "/path/to/step/box.stp", cq.exporters.ExportTypes.STEP)
+
+Setting Extra Options
+----------------------
+
+There are multiple options that can be set when exporting an object to a STEP file, but those can only be accessed by calling
+the :py:meth:`Shape.exportSTEP`` method on the lower level CadQuery object. For an explanation of the options available, see
+the documentation for that method.
+
+.. code-block:: python
+    # Create a simple object
+    box = cq.Workplane().box(10, 10, 10)
+
+    # Export the box
+    box.val().exportStep("/path/to/step/box.step", write_pcurves=True, precision_mode=1)
 
 Exporting Assemblies to STEP
 #############################
 
-The STEP exporter has several options which change the way exported STEP files will appear and operate when opened
-in other CAD programs. Some of these options should be used with care, as they can cause incompatibilities in STEP
-files, or affect performance adversely.
+It is possible to export CadQuery assemblies directly to STEP. The STEP exporter has several options which change the way
+exported STEP files will appear and operate when opened in other CAD programs. All assembly export methods shown here will
+preserve the color information from the assembly.
+
+Default
+--------
 
 CadQuery assemblies have a :py:meth:`Assembly.save` method which can write an assembly to a STEP file. An example assembly
 export with all defaults is shown below.
@@ -106,7 +147,58 @@ export with all defaults is shown below.
     # Save the assembly to STEP
     assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP)
 
-This will produce a STEP file that is nested with auto-generated object names.
+This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
+preserved, but the names that were set for each will not.
+
+Simplified Hierarchy
+---------------------
+
+The following will export an assembly to a STEP file with a shallow hierarchy, and will preserve both the names and colors
+of each assembly object.
+
+.. code-block:: python
+    import cadquery as cq
+
+    # Create a sample assembly
+    assy = cq.Assembly()
+    body = cq.Workplane().box(10, 10, 10)
+    assy.add(body, color=cq.Color(1, 0, 0), name="body")
+    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+
+    # Save the assembly to STEP
+    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.SIMPLIFIED)
+
+Fused
+------
+
+The following will attempt to create a single, fused shape while preserving the name and color information of each assembly
+object. The process of fusing the solid may cause performance issues in some cases, and is likely to alter the faces of the
+fused solids.
+
+.. code-block:: python
+    import cadquery as cq
+
+    # Create a sample assembly
+    assy = cq.Assembly()
+    body = cq.Workplane().box(10, 10, 10)
+    assy.add(body, color=cq.Color(1, 0, 0), name="body")
+    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+
+    # Save the assembly to STEP
+    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
+
+Naming
+-------
+
+It is also possible to set the name of the top level assembly object in the STEP file with either the SIMPLIFIED or FUSED method.
+That name is set by adding the "assembly_name" option when calling save.
+
+.. code-block:: python
+    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED, assembly_name="my_assembly")
+
+If an assembly name is not specified, the default of "CQ assembly" will be used.
 
 Exporting SVG
 ###############
