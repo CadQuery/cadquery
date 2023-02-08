@@ -399,8 +399,8 @@ def toFused(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
                     # Add the face as a subshape
                     cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
 
-                    # If we got a null label, it is probably because the face was deleted during the fuse
-                    if cur_lbl.IsNull() == True and fuse_op.IsDeleted(face.wrapped):
+                    # If we got a null label, it should be because the face is covered by IsDeleted or Generated
+                    if cur_lbl.IsNull() == True:
                         continue
 
                     # Set the subshape's color to match the parent assembly component
