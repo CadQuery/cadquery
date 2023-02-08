@@ -415,4 +415,13 @@ def toFused(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
                             cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
                         )
 
+                # Handle generated faces
+                gen_list = fuse_op.Generated(face.wrapped)
+                if gen_list.Size() > 0:
+                    for gen in gen_list.__iter__():
+                        # Add the face as a subshape and set its color to match the parent assembly component
+                        cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
+                        color_tool.SetColor(
+                            cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
+                        )
     return doc
