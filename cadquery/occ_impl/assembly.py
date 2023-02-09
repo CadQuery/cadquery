@@ -362,29 +362,40 @@ def toFused(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     args = TopTools_ListOfShape()
     tools = TopTools_ListOfShape()
 
-    # Add base shape(s)
-    for shape in assy.children[0].shapes:
-        args.Append(shape.wrapped)
+    # If there is only one solid, there is no reason to fuse, and it will likely cause problems anyway
+    top_level_shape = None
+    if len(assy.children) == 1 and len(assy.children[0].shapes) == 1:
+        top_level_shape = assy.children[0].shapes[0].wrapped
+    else:
+        # Add base shape(s)
+        for shape in assy.children[0].shapes:
+            args.Append(shape.wrapped)
 
-    # Add all other shapes as tools
-    i = 0
-    for child in assy.children:
-        # Make sure we add the assembly parts other than the base
-        if i == 0:
+        # Add all other shapes as tools
+        i = 0
+        for child in assy.children:
+            # Make sure we add the assembly parts other than the base
+            if i == 0:
+                i += 1
+                continue
+
+            for shape in child.shapes:
+                tools.Append(shape.wrapped)
+
             i += 1
-            continue
 
-        for shape in child.shapes:
-            tools.Append(shape.wrapped)
+        fuse_op.SetArguments(args)
+        fuse_op.SetTools(tools)
+        fuse_op.Build()
 
-        i += 1
+        top_level_shape = fuse_op.Shape()
 
-    fuse_op.SetArguments(args)
-    fuse_op.SetTools(tools)
-    fuse_op.Build()
+    # If the top level shape is still none, something is wrong
+    if top_level_shape == None:
+        raise Exception("Error: The top level shape of assembly " + assy_name + " is not valid.")
 
     # Add the fused shape as the top level object in the document
-    top_level_lbl = shape_tool.AddShape(fuse_op.Shape(), False)
+    top_level_lbl = shape_tool.AddShape(top_level_shape, False)
     TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
 
     # Walk the assembly->part->shape->face hierarchy and add subshapes for all the faces
