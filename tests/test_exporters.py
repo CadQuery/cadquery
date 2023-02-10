@@ -1,5 +1,5 @@
 """
-    Tests basic workplane functionality
+    Tests exporters
 """
 # core modules
 import os
@@ -24,6 +24,8 @@ from cadquery import (
     Location,
     Vector,
 )
+from cadquery.occ_impl.exporters.dxf import DxfDocument
+from cadquery.occ_impl.exporters.utils import toCompound
 from tests import BaseTest
 from OCP.GeomConvert import GeomConvert
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
@@ -57,6 +59,190 @@ def test_step_options(tmpdir):
     # Make sure there was a valid box in the exported file
     assert w.solids().size() == 1
     assert w.faces().size() == 6
+
+
+class TestDxfDocument(BaseTest):
+    """Test class DxfDocument."""
+
+    def test_line(self):
+        workplane = Workplane().line(1, 1)
+
+        plane = workplane.plane
+        shape = toCompound(workplane).transformShape(plane.fG)
+        edges = shape.Edges()
+
+        result = DxfDocument._dxf_line(edges[0])
+
+        expected = ("LINE", {"start": (0.0, 0.0, 0.0), "end": (1.0, 1.0, 0.0)})
+
+        self.assertEqual(expected, result)
+
+    def test_circle(self):
+        workplane = Workplane().circle(1)
+
+        plane = workplane.plane
+        shape = toCompound(workplane).transformShape(plane.fG)
+        edges = shape.Edges()
+
+        result = DxfDocument._dxf_circle(edges[0])
+
+        expected = ("CIRCLE", {"center": (0.0, 0.0, 0.0), "radius": 1.0})
+
+        self.assertEqual(expected, result)
+
+    def test_arc(self):
+        workplane = Workplane().radiusArc((1, 1), 1)
+
+        plane = workplane.plane
+        shape = toCompound(workplane).transformShape(plane.fG)
+        edges = shape.Edges()
+
+        result_type, result_attributes = DxfDocument._dxf_circle(edges[0])
+
+        expected_type, expected_attributes = (
+            "ARC",
+            {"center": (1, 0, 0), "radius": 1, "start_angle": 90, "end_angle": 180,},
+        )
+
+        self.assertEqual(expected_type, result_type)
+        self.assertTupleAlmostEquals(
+            expected_attributes["center"], result_attributes["center"], 3
+        )
+        self.assertAlmostEqual(
+            expected_attributes["radius"], approx(result_attributes["radius"])
+        )
+        self.assertAlmostEqual(
+            expected_attributes["start_angle"], result_attributes["start_angle"]
+        )
+        self.assertAlmostEqual(
+            expected_attributes["end_angle"], result_attributes["end_angle"]
+        )
+
+    def test_ellipse(self):
+        workplane = Workplane().ellipse(2, 1, 0)
+
+        plane = workplane.plane
+        shape = toCompound(workplane).transformShape(plane.fG)
+        edges = shape.Edges()
+
+        result_type, result_attributes = DxfDocument._dxf_ellipse(edges[0])
+
+        expected_type, expected_attributes = (
+            "ELLIPSE",
+            {
+                "center": (0, 0, 0),
+                "major_axis": (2.0, 0, 0),
+                "ratio": 0.5,
+                "start_param": 0,
+                "end_param": 6.283185307179586,
+            },
+        )
+
+        self.assertEqual(expected_type, result_type)
+        self.assertEqual(expected_attributes["center"], result_attributes["center"])
+        self.assertEqual(
+            expected_attributes["major_axis"], result_attributes["major_axis"]
+        )
+        self.assertEqual(expected_attributes["ratio"], result_attributes["ratio"])
+        self.assertEqual(
+            expected_attributes["start_param"], result_attributes["start_param"]
+        )
+        self.assertAlmostEqual(
+            expected_attributes["end_param"], result_attributes["end_param"]
+        )
+
+    def test_spline(self):
+        pts = [(0, 0), (0, 0.5), (1, 1)]
+        workplane = (
+            Workplane().spline(pts).close().extrude(1).edges("|Z").fillet(0.1).section()
+        )
+
+        plane = workplane.plane
+        shape = toCompound(workplane).transformShape(plane.fG)
+        edges = shape.Edges()
+
+        result_type, result_attributes = DxfDocument._dxf_spline(edges[0], plane)
+
+        expected_type, expected_attributes = (
+            "SPLINE",
+            {
+                "control_points": [
+                    (-0.032010295564216654, 0.2020130195642037, 0.0),
+                    (-0.078234124721739, 0.8475143728081896, 0.0),
+                    (0.7171193004814275, 0.9728923786984539, 0.0),
+                ],
+                "order": 3,
+                "knots": [
+                    0.18222956891558767,
+                    0.18222956891558767,
+                    0.18222956891558767,
+                    1.416096480384525,
+                    1.416096480384525,
+                    1.416096480384525,
+                ],
+                "weights": None,
+            },
+        )
+
+        self.assertEqual(expected_type, result_type)
+        self.assertAlmostEqual(
+            expected_attributes["control_points"], result_attributes["control_points"]
+        )
+        self.assertEqual(expected_attributes["order"], result_attributes["order"])
+        self.assertEqual(expected_attributes["knots"], result_attributes["knots"])
+        self.assertEqual(expected_attributes["weights"], result_attributes["weights"])
+
+    def test_add_layer_definition(self):
+        dxf = DxfDocument()
+        dxf.add_layer("layer_1")
+
+        self.assertIn("layer_1", dxf.document.layers)
+
+    def test_add_layer_definition_with_color(self):
+        dxf = DxfDocument()
+        dxf.add_layer("layer_1", color=2)
+        layer = dxf.document.layers.get("layer_1")
+
+        self.assertEqual(2, layer.color)
+
+    def test_add_layer_definition_with_linetype(self):
+        dxf = DxfDocument(setup=True)
+        dxf.add_layer("layer_1", linetype="CENTER")
+        layer = dxf.document.layers.get("layer_1")
+
+        self.assertEqual("CENTER", layer.dxf.linetype)
+
+    def test_set_dxf_version(self):
+        dxfversion = "AC1032"
+
+        dxf_default = DxfDocument()
+        dxf = DxfDocument(dxfversion=dxfversion)
+
+        self.assertNotEqual(dxfversion, dxf_default.document.dxfversion)
+        self.assertEqual(dxfversion, dxf.document.dxfversion)
+
+    def test_set_units(self):
+        doc_units = 17
+
+        dxf_default = DxfDocument()
+        dxf = DxfDocument(doc_units=17)
+
+        self.assertNotEqual(doc_units, dxf_default.document.units)
+        self.assertEqual(doc_units, dxf.document.units)
+
+    def test_add_shape_line(self):
+        workplane = Workplane().line(1, 1)
+        dxf = DxfDocument()
+        dxf.add_shape(workplane)
+
+        result = dxf.msp.query("LINE")[0]
+
+        expected = ezdxf.entities.line.Line.new(
+            dxfattribs={"start": (0.0, 0.0, 0.0), "end": (1.0, 1.0, 0.0),},
+        )
+
+        self.assertEqual(expected.dxf.start, result.dxf.start)
+        self.assertEqual(expected.dxf.end, result.dxf.end)
 
 
 class TestExporters(BaseTest):

@@ -206,6 +206,7 @@ File Management and Export
     importers.importStep
     importers.importDXF
     exporters.export
+    occ_impl.exporters.dxf.DxfDocument
 
 
 Iteration Methods

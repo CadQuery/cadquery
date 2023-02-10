@@ -101,3 +101,8 @@ Class Details
    :members:
 
 .. autofunction:: cadquery.occ_impl.assembly.toJSON
+
+.. autoclass:: cadquery.occ_impl.exporters.dxf.DxfDocument
+   :members:
+
+   .. automethod:: __init__

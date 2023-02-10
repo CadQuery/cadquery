@@ -239,17 +239,86 @@ optimum values that will produce an acceptable mesh.
 Exporting DXF
 ##############
 
+.. seealso::
+
+    :class:`cadquery.occ_impl.exporters.dxf.DxfDocument` for exporting multiple
+    Workplanes to one or many layers of a DXF document.
+
+Options
+-------
+
+``approx``
+    Approximation strategy for converting :class:`cadquery.Workplane` objects to DXF entities:
+
+        ``None``
+            no approximation applied
+        ``"spline"``
+            all splines approximated as cubic splines
+        ``"arc"``
+            all curves approximated as arcs and straight segments
+``tolerance``
+    Approximation tolerance for converting :class:`cadquery.Workplane` objects to DXF entities.
+    See `Approximation strategy`_.
+``doc_units``
+    Ezdxf document/modelspace :doc:`units <ezdxf-stable:concepts/units>`.
+    See `Approximation strategy`_.
+
+.. code-block:: python
+    :caption: DXF document without options.
+
+    import cadquery as cq
+    from cadquery import exporters
+
+    result = cq.Workplane().box(10, 10, 10)
+
+    exporters.exportDXF(result, "/path/to/file/object.dxf")
+    # or
+    exporters.export(result, "/path/to/file/object.dxf")
+
+
+Units
+-----
+
+The default DXF document units are mm (:code:`doc_units = 4`), however the document units can be set to any
+:doc:`unit supported by ezdxf <ezdxf-stable:concepts/units>`.
+
+.. code-block:: python
+    :caption: DXF document with units set to meters.
+
+    import cadquery as cq
+    from cadquery import exporters
+
+    result = cq.Workplane().box(10, 10, 10)
+
+    exporters.exportDXF(
+        result, "/path/to/file/object.dxf", doc_units=6,  # set DXF document units to meters
+    )
+
+    # or
+
+    exporters.export(
+        result,
+        "/path/to/file/object.dxf",
+        opt={"doc_units": 6},  # set DXF document units to meters
+    )
+
+
+.. _Approximation strategy:
+
+Approximation strategy
+----------------------
+
 By default, the DXF exporter will output splines exactly as they are represented by the OpenCascade kernel. Unfortunately some software cannot handle higher-order splines resulting in missing curves after DXF import. To resolve this, specify an approximation strategy controlled by the following options:
 
 * ``approx`` - ``None``, ``"spline"`` or ``"arc"``. ``"spline"`` results in all splines approximated with cubic splines. ``"arc"`` results in all curves approximated with arcs and line segments.
-* ``tolerance``: Acceptable error of the approximation, in the DXF's coordinate system. Defaults to 0.001 (1 thou for inch-scale drawings, 1 µm for mm-scale drawings).
+* ``tolerance``: Acceptable error of the approximation, in document/modelspace units. Defaults to 0.001 (1 thou for inch-scale drawings, 1 µm for mm-scale drawings).
 
 .. code-block:: python
-
+    :caption: DXF document with curves approximated with cubic splines.
 
     cq.exporters.exportDXF(
         result,
-        '/path/to/file/object.dxf',
+        "/path/to/file/object.dxf",
         approx="spline"
     )
 
