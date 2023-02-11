@@ -140,7 +140,7 @@ def toCAF(
     mesh: bool = False,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
-) -> Tuple[TDF_Label, TDocStd_Document]:
+) -> TDocStd_Document:
 
     # prepare a doc
     app = XCAFApp_Application.GetApplication_s()
@@ -151,10 +151,6 @@ def toCAF(
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
-
-    # add root
-    top = tool.NewShape()
-    TDataStd_Name.Set_s(top, TCollection_ExtendedString("CQ assembly"))
 
     # used to store labels with unique part-color combinations
     unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
@@ -207,15 +203,16 @@ def toCAF(
         for child in el.children:
             _toCAF(child, subassy, current_color)
 
-        # add the current subassy to the higher level assy
-        tool.AddComponent(ancestor, subassy, el.loc.wrapped)
+        if ancestor:
+            # add the current subassy to the higher level assy
+            tool.AddComponent(ancestor, subassy, el.loc.wrapped)
 
     # process the whole assy recursively
-    _toCAF(assy, top, None)
+    _toCAF(assy, None, None)
 
     tool.UpdateAssemblies()
 
-    return top, doc
+    return doc
 
 
 def toVTK(
