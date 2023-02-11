@@ -407,15 +407,13 @@ def toFused(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
 
                 # If there are no modified faces associated with this face, treat it as-is
                 if modded_list.Size() == 0:
-                    # Add the face as a subshape
-                    cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
+                    # Avoid adding the shape if there are no faces
+                    if shape_tool.IsSubShape(top_level_lbl, face.wrapped):
+                        # Add the face as a subshape
+                        cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
 
-                    # If we got a null label, it should be because the face is covered by IsDeleted or Generated
-                    if cur_lbl.IsNull() == True:
-                        continue
-
-                    # Set the subshape's color to match the parent assembly component
-                    color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+                        # Set the subshape's color to match the parent assembly component
+                        color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
                 # If there are modified faces based on this face, step through all of them and add
                 # them separately as subshapes
                 else:
@@ -427,12 +425,12 @@ def toFused(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
                         )
 
                 # Handle generated faces
-                gen_list = fuse_op.Generated(face.wrapped)
-                if gen_list.Size() > 0:
-                    for gen in gen_list.__iter__():
-                        # Add the face as a subshape and set its color to match the parent assembly component
-                        cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
-                        color_tool.SetColor(
-                            cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
-                        )
+                # gen_list = fuse_op.Generated(face.wrapped)
+                # if gen_list.Size() > 0:
+                #     for gen in gen_list.__iter__():
+                #         # Add the face as a subshape and set its color to match the parent assembly component
+                #         cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
+                #         color_tool.SetColor(
+                #             cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
+                #         )
     return doc
