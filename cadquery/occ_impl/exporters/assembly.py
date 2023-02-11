@@ -24,7 +24,7 @@ from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
 from . import STEPExportMode
-from ..assembly import AssemblyProtocol, toCAF, toVTK, toSimplified, toFused
+from ..assembly import AssemblyProtocol, toCAF, toVTK, toSimplifiedCAF, toFusedCAF
 from ..geom import Location
 
 
@@ -69,9 +69,9 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     if export_mode == STEPExportMode.DEFAULT:
         _, doc = toCAF(assy, True)
     elif export_mode == STEPExportMode.SIMPLIFIED:
-        doc = toSimplified(assy, assembly_name)
+        doc = toSimplifiedCAF(assy, assembly_name)
     elif export_mode == STEPExportMode.FUSED:
-        doc = toFused(assy, assembly_name)
+        doc = toFusedCAF(assy, assembly_name)
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)

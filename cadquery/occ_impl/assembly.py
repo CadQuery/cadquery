@@ -296,7 +296,7 @@ def toJSON(
     return rv
 
 
-def toSimplified(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
+def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     """
     Converts the assembly to a compound and saves that within the document
     to be exported.
@@ -338,7 +338,7 @@ def toSimplified(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     return doc
 
 
-def toFused(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
+def toFusedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     """
     Converts the assembly to a fused compound and saves that within the document
     to be exported in a way that preserves the face colors. Because of the use of
