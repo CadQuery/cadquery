@@ -2651,8 +2651,7 @@ class Workplane(object):
         """
         Create a polyline from a list of points
 
-        :param listOfXYTuple: a list of points in Workplane coordinates
-        :type listOfXYTuple: list of 2-tuples
+        :param listOfXYTuple: a list of points in Workplane coordinates (2D or 3D)
         :param forConstruction: whether or not the edges are used for reference
         :type forConstruction: true if the edges are for reference, false if they are for creating geometry
             part geometry
@@ -2688,15 +2687,15 @@ class Workplane(object):
 
     def close(self: T) -> T:
         """
-        End 2D construction, and attempt to build a closed wire.
+        End construction, and attempt to build a closed wire.
 
         :return: a CQ object with a completed wire on the stack, if possible.
 
-        After 2D drafting with methods such as lineTo, threePointArc,
+        After 2D (or 3D) drafting with methods such as lineTo, threePointArc,
         tangentArcPoint and polyline, it is necessary to convert the edges
         produced by these into one or more wires.
 
-        When a set of edges is closed, cadQuery assumes it is safe to build
+        When a set of edges is closed, CadQuery assumes it is safe to build
         the group of edges into a wire. This example builds a simple triangular
         prism::
 
@@ -2713,7 +2712,7 @@ class Workplane(object):
         # that is larger than what is considered a numerical error.
         # If so; add a line segment between endPoint and startPoint
         if endPoint.sub(startPoint).Length > 1e-6:
-            self.lineTo(self.ctx.firstPoint.x, self.ctx.firstPoint.y)
+            self.polyline([endPoint, startPoint])
 
         # Need to reset the first point after closing a wire
         self.ctx.firstPoint = None
