@@ -19,8 +19,7 @@ def _dxf_line(
 ):
 
     msp.add_line(
-        e.startPoint().toTuple(),
-        e.endPoint().toTuple(),
+        e.startPoint().toTuple(), e.endPoint().toTuple(),
     )
 
 
