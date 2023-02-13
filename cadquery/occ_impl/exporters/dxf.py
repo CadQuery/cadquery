@@ -15,7 +15,7 @@ CURVE_TOLERANCE = 1e-9
 
 
 def _dxf_line(
-    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane, opt: Dict[str, Any]
+    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane
 ):
 
     msp.add_line(
@@ -24,7 +24,7 @@ def _dxf_line(
 
 
 def _dxf_circle(
-    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane, opt: Dict[str, Any]
+    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane
 ):
 
     geom = e._geomAdaptor()
@@ -54,7 +54,7 @@ def _dxf_circle(
 
 
 def _dxf_ellipse(
-    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane, opt: Dict[str, Any]
+    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane
 ):
 
     geom = e._geomAdaptor()
@@ -77,7 +77,7 @@ def _dxf_ellipse(
 
 
 def _dxf_spline(
-    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane, opt: Dict[str, Any]
+    e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane
 ):
 
     adaptor = e._geomAdaptor()
@@ -89,16 +89,6 @@ def _dxf_spline(
 
     # need to apply the transform on the geometry level
     spline.Transform(plane.fG.wrapped.Trsf())
-
-    if opt["approximate"]:
-        approx_spline = GeomConvert_ApproxCurve(
-            spline,
-            opt["approximationError"],
-            GeomAbs_C0,
-            opt["maxSegments"],
-            opt["maxDegree"],
-        )
-        spline = approx_spline.Curve()
 
     order = spline.Degree() + 1
     knots = list(spline.KnotSequence())
@@ -125,6 +115,17 @@ DXF_CONVERTERS = {
     "BSPLINE": _dxf_spline,
 }
 
+'''
+    if opt["approximate"]:
+        approx_spline = GeomConvert_ApproxCurve(
+            spline,
+            opt["approximationError"],
+            GeomAbs_C0,
+            opt["maxSegments"],
+            opt["maxDegree"],
+        )
+        spline = approx_spline.Curve()
+'''
 
 def exportDXF(w: Workplane, fname: str, opt=None):
     """
@@ -166,6 +167,6 @@ def exportDXF(w: Workplane, fname: str, opt=None):
     for e in shape.Edges():
 
         conv = DXF_CONVERTERS.get(e.geomType(), _dxf_spline)
-        conv(e, msp, plane, d)
+        conv(e, msp, plane)
 
     dxf.saveas(fname)
