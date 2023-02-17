@@ -236,6 +236,10 @@ from OCP.Aspect import Aspect_TOL_SOLID
 
 from OCP.Interface import Interface_Static
 
+from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
+
+from OCP.BRepAlgo import BRepAlgo
+
 from math import pi, sqrt, inf
 
 import warnings
@@ -1241,6 +1245,34 @@ class Shape(object):
             offset += poly.NbNodes()
 
         return vertices, triangles
+
+    def toSplines(
+        self: T, degree: int = 3, tolerance: float = 1e-3, nurbs: bool = False
+    ) -> T:
+        """
+        Approximate shape with b-splines of the specified degree.
+
+        :param degree: Maximum degree.
+        :param tolerance: Approximation tolerance.
+        :param nurbs: Use rational splines.
+        """
+
+        params = ShapeCustom_RestrictionParameters()
+
+        result = ShapeCustom.BSplineRestriction_s(
+            self.wrapped,
+            tolerance,  # 3D tolerance
+            tolerance,  # 2D tolerance
+            degree,
+            1,  # dumy value, degree is leading
+            ga.GeomAbs_C2,
+            ga.GeomAbs_C2,
+            True,  # set degree to be leading
+            not nurbs,
+            params,
+        )
+
+        return self.__class__(result)
 
     def toVtkPolyData(
         self,
@@ -2543,6 +2575,15 @@ class Face(Shape):
         inner_p = (tcast(Wire, w.project(other, d)) for w in self.innerWires())
 
         return self.constructOn(other, outer_p, *inner_p)
+
+    def toArcs(self, tolerance: float = 1e-3) -> "Face":
+        """
+        Approximate a planar faces arcs and straight line segments.
+
+        :param tolerance: Approximation tolerance.
+        """
+
+        return self.__class__(BRepAlgo.ConvertFace_s(self.wrapped, tolerance))
 
 
 class Shell(Shape):
