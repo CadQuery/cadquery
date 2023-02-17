@@ -10,9 +10,20 @@ import sys
 import pytest
 import ezdxf
 
+from pytest import approx
+
 # my modules
-from cadquery import *
-from cadquery import exporters, importers
+from cadquery import (
+    exporters,
+    importers,
+    Workplane,
+    Edge,
+    Vertex,
+    Assembly,
+    Plane,
+    Location,
+    Vector,
+)
 from tests import BaseTest
 from OCP.GeomConvert import GeomConvert
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
@@ -256,31 +267,6 @@ class TestExporters(BaseTest):
 
         self.assertAlmostEqual(s5.val().Area(), s5_i.val().Area(), 4)
 
-    def testDXFOptions(self):
-        options = {
-            "approximate": True,
-            "maxDegree": 2,
-            "maxSegments": 25,
-            "approximationError": 0.001,
-        }
-        pts = [(0, 0), (0, 0.5), (1, 1)]
-        s1 = (
-            Workplane().spline(pts).close().extrude(1).edges("|Z").fillet(0.1).section()
-        )
-        exporters.export(s1, "limit1.dxf", opt=options)
-
-        s1_i = importers.importDXF("limit1.dxf")
-
-        self.assertAlmostEqual(s1.val().Area(), s1_i.val().Area(), 4)
-        self.assertAlmostEqual(s1.edges().size(), s1_i.edges().size())
-
-        dxf = ezdxf.readfile("limit1.dxf")
-        msp = dxf.modelspace()
-
-        for el in msp:
-            if isinstance(el, ezdxf.entities.Spline):
-                self.assertLess(el.dxf.degree, 3)
-
     def testTypeHandling(self):
 
         with self.assertRaises(ValueError):
@@ -383,3 +369,53 @@ def test_tessellate(box123):
     verts, triangles = box123.val().tessellate(1e-6)
     assert len(verts) == 24
     assert len(triangles) == 12
+
+
+def _dxf_spline_max_degree(fname):
+
+    dxf = ezdxf.readfile(fname)
+    msp = dxf.modelspace()
+
+    rv = 0
+
+    for el in msp:
+        if isinstance(el, ezdxf.entities.Spline):
+            rv = el.dxf.degree if el.dxf.degree > rv else rv
+
+    return rv
+
+
+def _check_dxf_no_spline(fname):
+
+    dxf = ezdxf.readfile(fname)
+    msp = dxf.modelspace()
+
+    for el in msp:
+        if isinstance(el, ezdxf.entities.Spline):
+            return False
+
+    return True
+
+
+def test_dxf_approx():
+
+    pts = [(0, 0), (0, 0.5), (1, 1)]
+    w1 = Workplane().spline(pts).close().extrude(1).edges("|Z").fillet(0.1).section()
+    exporters.exportDXF(w1, "orig.dxf")
+
+    assert _dxf_spline_max_degree("orig.dxf") == 6
+
+    exporters.exportDXF(w1, "limit1.dxf", approx="spline")
+    w1_i1 = importers.importDXF("limit1.dxf")
+
+    assert _dxf_spline_max_degree("limit1.dxf") == 3
+
+    assert w1.val().Area() == approx(w1_i1.val().Area(), 1e-3)
+    assert w1.edges().size() == w1_i1.edges().size()
+
+    exporters.exportDXF(w1, "limit2.dxf", approx="arc")
+    w1_i2 = importers.importDXF("limit2.dxf")
+
+    assert _check_dxf_no_spline("limit2.dxf")
+
+    assert w1.val().Area() == approx(w1_i2.val().Area(), 1e-3)
