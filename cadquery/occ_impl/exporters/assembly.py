@@ -3,6 +3,7 @@ import os.path
 from tempfile import TemporaryDirectory
 from shutil import make_archive
 from itertools import chain
+from typing_extensions import Literal
 
 from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
 from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
@@ -23,10 +24,12 @@ from OCP.TColStd import TColStd_IndexedDataMapOfStringString
 from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
-from . import STEPExportMode
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toSimplifiedCAF, toFusedCAF
 from ..geom import Location
 
+STEPExportModeLiterals = Literal[
+    "DEFAULT", "SIMPLIFIED", "FUSED"
+]
 
 def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     """
@@ -42,10 +45,10 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
     :type precision_mode: int
-    :param export_mode: STEP export mode. The options are Default (the current _toCAF method), Simplified (a STEP
-        assembly with a simple hierarchy), and Fused (a single fused compound). It is possible that Fused mode may
+    :param export_mode: STEP export mode. The options are DEFAULT (the current _toCAF method), SIMPLIFIED (a STEP
+        assembly with a simple hierarchy), and FUSED (a single fused compound). It is possible that fused mode may
         exhibit low performance.
-    :type export_mode: int
+    :type export_mode: STEPExportModeLiterals
     :param assembly_name: A label to be applied to the top-level object in the assembly, if Simplified or Fused modes
         are used. A default of "CQ assembly" will be used if none is specified.
     :type assembly_name: str
@@ -62,15 +65,15 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
 
     # Handle the mode setting
     export_mode = (
-        kwargs["export_mode"] if "export_mode" in kwargs else STEPExportMode.DEFAULT
+        kwargs["export_mode"] if "export_mode" in kwargs else "DEFAULT"
     )
 
     # Handle the doc differently based on which mode we are using
-    if export_mode == STEPExportMode.DEFAULT:
+    if export_mode == "DEFAULT":
         _, doc = toCAF(assy, True)
-    elif export_mode == STEPExportMode.SIMPLIFIED:
+    elif export_mode == "SIMPLIFIED":
         doc = toSimplifiedCAF(assy, assembly_name)
-    elif export_mode == STEPExportMode.FUSED:
+    elif export_mode == "FUSED":
         doc = toFusedCAF(assy, assembly_name)
 
     session = XSControl_WorkSession()

@@ -37,19 +37,6 @@ ExportLiterals = Literal[
 ]
 
 
-class STEPExportMode:
-    """
-    Essentially and enum for the different export modes that are available for the STEP format.
-    DEFAULT - The standard export where _toOCAF handles setting up the STEP document.
-    SIMPLIFIED - Export where the document is built so that the assembly stays as a STEP assembly.
-    FUSED - Export where the document is built so that the assembly is a fused compound, but retains the color data.
-    """
-
-    DEFAULT = 0
-    SIMPLIFIED = 1
-    FUSED = 2
-
-
 def export(
     w: Union[Shape, Workplane],
     fname: str,
