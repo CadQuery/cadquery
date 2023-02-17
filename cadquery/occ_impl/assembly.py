@@ -417,7 +417,7 @@ def toFusedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
                 # If there are modified faces based on this face, step through all of them and add
                 # them separately as subshapes
                 else:
-                    for mod in modded_list.__iter__():
+                    for mod in modded_list:
                         # Add the face as a subshape and set its color to match the parent assembly component
                         cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
                         color_tool.SetColor(
@@ -427,7 +427,7 @@ def toFusedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
                 # Handle generated faces
                 # gen_list = fuse_op.Generated(face.wrapped)
                 # if gen_list.Size() > 0:
-                #     for gen in gen_list.__iter__():
+                #     for gen in gen_list:
                 #         # Add the face as a subshape and set its color to match the parent assembly component
                 #         cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
                 #         color_tool.SetColor(
