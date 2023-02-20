@@ -1265,8 +1265,8 @@ class Shape(object):
             tolerance,  # 2D tolerance
             degree,
             1,  # dumy value, degree is leading
-            ga.GeomAbs_C2,
-            ga.GeomAbs_C2,
+            ga.GeomAbs_C0,
+            ga.GeomAbs_C0,
             True,  # set degree to be leading
             not nurbs,
             params,
