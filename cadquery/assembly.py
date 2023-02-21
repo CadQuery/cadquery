@@ -21,6 +21,7 @@ from .occ_impl.exporters.assembly import (
     exportVTKJS,
     exportVRML,
     exportGLTF,
+    STEPExportModeLiterals,
 )
 
 from .selectors import _expression_grammar as _selector_grammar
@@ -436,6 +437,7 @@ class Assembly(object):
         self,
         path: str,
         exportType: Optional[ExportLiterals] = None,
+        exportMode: Optional[STEPExportModeLiterals] = None,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
@@ -451,6 +453,16 @@ class Assembly(object):
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         """
 
+        # Handle the export mode setting
+        if exportMode == None:
+            export_mode = "DEFAULT"
+        else:
+            # Make sure that we were given a valid export mode
+            if export_mode in ["DEFAULT", "SIMPLIFIED", "FUSED"]:
+                export_mode = cast(STEPExportModeLiterals, exportMode)
+            else:
+                raise ValueError("Unknown assembly export mode for STEP")
+
         if exportType is None:
             t = path.split(".")[-1].upper()
             if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "STL"):
@@ -459,7 +471,7 @@ class Assembly(object):
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path, **kwargs)
+            exportAssembly(self, path, export_mode, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":

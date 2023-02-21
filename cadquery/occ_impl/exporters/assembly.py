@@ -27,11 +27,21 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toSimplifiedCAF, toFusedCAF
 from ..geom import Location
 
+class ExportModes:
+    DEFAULT = "DEFAULT"
+    SIMPLIFIED = "SIMPLIFIED"
+    FUSED = "FUSED"
+
 STEPExportModeLiterals = Literal[
     "DEFAULT", "SIMPLIFIED", "FUSED"
 ]
 
-def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
+def exportAssembly(
+    assy: AssemblyProtocol,
+    path: str,
+    exportMode: str = None,
+    **kwargs
+) -> bool:
     """
     Export an assembly to a STEP file.
 
@@ -39,16 +49,15 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
 
     :param assy: assembly
     :param path: Path and filename for writing
+    :param exportMode: STEP export mode. The options are DEFAULT (the current _toCAF method), SIMPLIFIED (a STEP
+        assembly with a simple hierarchy), and FUSED (a single fused compound). It is possible that fused mode may
+        exhibit low performance.
     :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
         If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
     :type write_pcurves: boolean
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
     :type precision_mode: int
-    :param export_mode: STEP export mode. The options are DEFAULT (the current _toCAF method), SIMPLIFIED (a STEP
-        assembly with a simple hierarchy), and FUSED (a single fused compound). It is possible that fused mode may
-        exhibit low performance.
-    :type export_mode: STEPExportModeLiterals
     :param assembly_name: A label to be applied to the top-level object in the assembly, if Simplified or Fused modes
         are used. A default of "CQ assembly" will be used if none is specified.
     :type assembly_name: str
@@ -63,17 +72,12 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
         kwargs["assembly_name"] if "assembly_name" in kwargs else "CQ assembly"
     )
 
-    # Handle the mode setting
-    export_mode = (
-        kwargs["export_mode"] if "export_mode" in kwargs else "DEFAULT"
-    )
-
     # Handle the doc differently based on which mode we are using
-    if export_mode == "DEFAULT":
+    if exportMode == "DEFAULT":
         _, doc = toCAF(assy, True)
-    elif export_mode == "SIMPLIFIED":
+    elif exportMode == "SIMPLIFIED":
         doc = toSimplifiedCAF(assy, assembly_name)
-    elif export_mode == "FUSED":
+    elif exportMode == "FUSED":
         doc = toFusedCAF(assy, assembly_name)
 
     session = XSControl_WorkSession()
