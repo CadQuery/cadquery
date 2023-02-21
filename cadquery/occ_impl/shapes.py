@@ -2578,7 +2578,7 @@ class Face(Shape):
 
     def toArcs(self, tolerance: float = 1e-3) -> "Face":
         """
-        Approximate a planar faces arcs and straight line segments.
+        Approximate planar face arcs and straight line segments.
 
         :param tolerance: Approximation tolerance.
         """

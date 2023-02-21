@@ -234,19 +234,15 @@ optimum values that will produce an acceptable mesh.
 Exporting DXF
 ##############
 
-By default, the DXF exporter will output splines exactly as they are represented by the OpenCascade kernel. Unfortunately some software can not handle higher-order splines, so if some of curves and arcs appear to be missing CadQuery can be instructed to approximate splines during the export process. This approximation is controlled by the following options:
+By default, the DXF exporter will output splines exactly as they are represented by the OpenCascade kernel. Unfortunately some software cannot handle higher-order splines resulting in missing curves after DXF import. To resolve this, specify an approximation strategy controlled by the following options:
 
 * ``approx`` - ``None``, ``"spline"`` or ``"arc"``. ``"spline"`` results in all splines approximated with cubic splines. ``"arc"`` results in all curves approximated with arcs and line segments.
 * ``tolerance``: Acceptable error of the approximation, in the DXF's coordinate system. Defaults to 0.001 (1 thou for inch-scale drawings, 1 µm for mm-scale drawings).
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
-
-    exporters.exportDXF(
+    cq.exporters.exportDXF(
         result,
         '/path/to/file/object.dxf',
         approx="spline"
