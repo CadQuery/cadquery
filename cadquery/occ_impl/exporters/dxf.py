@@ -119,7 +119,7 @@ def exportDXF(
     :param w: Workplane to be exported.
     :param fname: Output filename.
     :param approx: Approximation strategy. None means no approximation is applied.
-    "spline" results in all splines being approximated as cubic splines."arc" results
+    "spline" results in all splines being approximated as cubic splines. "arc" results
     in all curves being approximated as arcs and straight segments.
     :param tolerance: Approximation tolerance.
 
