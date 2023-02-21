@@ -22,7 +22,7 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 from .geom import Location
-from .shapes import Shape, Compound
+from .shapes import Shape, Compound, Solid
 from .exporters.vtk import toString
 from ..cq import Workplane
 
@@ -315,14 +315,14 @@ def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
     shape_tool.SetAutoNaming_s(False)
 
-    # Set up the compound
-    comp = TopoDS_Compound()
-    comp_builder = BRep_Builder()
-    comp_builder.MakeCompound(comp)
+    # Convert the assembly to a compound
+    shape_list = []
     for part in assy.children:
-        for solid in part.obj.solids().all():
-            # Add the current solid of the assembly component to the compound
-            comp_builder.Add(comp, solid.val().wrapped)
+        for shape in part.shapes:
+            # Make sure that we only add solids
+            if isinstance(shape, Solid):
+                shape_list.append(shape)
+    comp = Compound.makeCompound(shape_list).wrapped
 
     # Add the top level shape, have it broken apart into an assembly and set the top-level name
     top_level_lbl = shape_tool.AddShape(comp, True)
@@ -330,10 +330,12 @@ def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
 
     # Assign names and colors based on the assembly
     for part in assy.children:
-        for solid in part.obj.solids().all():
-            cur_lbl = shape_tool.FindShape(solid.val().wrapped)
-            TDataStd_Name.Set_s(cur_lbl, TCollection_ExtendedString(part.name))
-            color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+        for shape in part.shapes:
+            # Make sure that we only trying to set the names and colors for solids
+            if isinstance(shape, Solid):
+                cur_lbl = shape_tool.FindShape(shape.wrapped)
+                TDataStd_Name.Set_s(cur_lbl, TCollection_ExtendedString(part.name))
+                color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
 
     return doc
 

@@ -454,11 +454,10 @@ class Assembly(object):
         """
 
         # Handle the export mode setting
-        if exportMode == None:
-            export_mode = "DEFAULT"
-        else:
+        export_mode = "DEFAULT"
+        if exportMode != None:
             # Make sure that we were given a valid export mode
-            if export_mode in ["DEFAULT", "SIMPLIFIED", "FUSED"]:
+            if exportMode in ["DEFAULT", "SIMPLIFIED", "FUSED"]:
                 export_mode = cast(STEPExportModeLiterals, exportMode)
             else:
                 raise ValueError("Unknown assembly export mode for STEP")
