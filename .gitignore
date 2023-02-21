@@ -10,6 +10,7 @@ target/*
 MANIFEST
 out.*
 res?.dxf
+limit?.dxf
 .~*
 .*.swp
 assy.wrl
