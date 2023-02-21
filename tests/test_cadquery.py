@@ -3629,6 +3629,7 @@ class TestCadQuery(BaseTest):
 
         wp = wp_ref.workplane().rect(20, 20).extrude(20, both=True, combine="s")
 
+        assert wp.faces().size() == 12
         self.assertAlmostEqual(wp_ref_regular_cut.val().Volume(), wp.val().Volume())
 
     def testTaperedExtrudeCutBlind(self):
