@@ -3672,11 +3672,13 @@ class Workplane(object):
             toFuse = []
             for face in faces:
                 res = Solid.extrudeLinear(face, eDir, taper=taper)
-                toFuse.append(res)
 
                 if both:
-                    res = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
-                    toFuse.append(res)
+                    res2 = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
+                    res = res.fuse(res2, glue=True)
+
+                toFuse.append(res)
+
             res = Compound.makeCompound(toFuse)
 
         return res
