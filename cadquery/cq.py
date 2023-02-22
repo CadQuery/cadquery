@@ -3671,7 +3671,7 @@ class Workplane(object):
         else:
             toFuse = []
             for face in faces:
-                res = Solid.extrudeLinear(face, eDir, taper=taper)
+                res: Shape = Solid.extrudeLinear(face, eDir, taper=taper)
 
                 if both:
                     res2 = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
