@@ -3675,7 +3675,7 @@ class Workplane(object):
 
                 if both:
                     s2 = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
-                    toFuse.append(res.fuse(s2, glue=True))
+                    toFuse.append(s1.fuse(s2, glue=True))
                 else:
                     toFuse.append(s1)
 
