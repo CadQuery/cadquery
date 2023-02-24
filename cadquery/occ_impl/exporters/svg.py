@@ -179,7 +179,7 @@ def getSVG(shape, opts=None):
     strokeColor = tuple(d["strokeColor"])
     hiddenColor = tuple(d["hiddenColor"])
     showHidden = bool(d["showHidden"])
-    focus = float(d.get("focus"))
+    focus = float(d["focus"]) if "focus" in d else None
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
