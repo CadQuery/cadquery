@@ -146,34 +146,7 @@ Which results in the following image:
 
 ..  image:: _static/importexport/box_custom_options.svg
 
-The following is an example of using the above options but making it a perspective SVG.
-
-.. code-block:: python
-
-    import cadquery as cq
-    from cadquery import exporters
-
-    result = cq.Workplane().box(10, 10, 10)
-
-    exporters.export(
-                result,
-                '/path/to/file/box_custom_options.svg',
-                opt={
-                    "width": 300,
-                    "height": 300,
-                    "marginLeft": 10,
-                    "marginTop": 10,
-                    "showAxes": False,
-                    "projectionDir": (0.5, 0.5, 0.5),
-                    "strokeWidth": 0.25,
-                    "strokeColor": (255, 0, 0),
-                    "hiddenColor": (0, 0, 255),
-                    "showHidden": True,
-                    "focus": 25
-                },
-            )
-
-Which results in the following image:
+Exporting with the additional option ``"focus": 25`` results in the following output SVG with perspective:
 
 .. image:: _static/importexport/box_custom_options_perspective.svg
 
