@@ -65,7 +65,7 @@ def test_simplified_assembly(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        export_mode=exporters.assembly.ExportModes.SIMPLIFIED,
+        exportMode=exporters.assembly.ExportModes.SIMPLIFIED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -91,7 +91,7 @@ def test_fused_assembly(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        export_mode=exporters.assembly.ExportModes.FUSED,
+        exportMode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected

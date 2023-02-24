@@ -14,6 +14,7 @@ from OCP.TopoDS import TopoDS_Compound
 from OCP.BRep import BRep_Tool, BRep_Builder
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
+from OCP.BOPAlgo import BOPAlgo_GlueEnum
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -340,7 +341,7 @@ def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     return doc
 
 
-def toFusedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
+def toFusedCAF(assy: AssemblyProtocol, assy_name: str, glue: Optional[bool] = False, tol: Optional[float] = None) -> TDocStd_Document:
     """
     Converts the assembly to a fused compound and saves that within the document
     to be exported in a way that preserves the face colors. Because of the use of
@@ -386,6 +387,12 @@ def toFusedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
 
             i += 1
 
+        # Allow the caller to configure the fuzzy and glue settings
+        if tol:
+            fuse_op.SetFuzzyValue(tol)
+        if glue:
+            fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
+
         fuse_op.SetArguments(args)
         fuse_op.SetTools(tools)
         fuse_op.Build()
@@ -427,12 +434,12 @@ def toFusedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
                         )
 
                 # Handle generated faces
-                # gen_list = fuse_op.Generated(face.wrapped)
-                # if gen_list.Size() > 0:
-                #     for gen in gen_list:
-                #         # Add the face as a subshape and set its color to match the parent assembly component
-                #         cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
-                #         color_tool.SetColor(
-                #             cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
-                #         )
+                gen_list = fuse_op.Generated(face.wrapped)
+                if gen_list.Size() > 0:
+                    for gen in gen_list:
+                        # Add the face as a subshape and set its color to match the parent assembly component
+                        cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
+                        color_tool.SetColor(
+                            cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
+                        )
     return doc

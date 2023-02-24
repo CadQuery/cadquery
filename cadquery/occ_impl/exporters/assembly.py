@@ -61,6 +61,11 @@ def exportAssembly(
     :param assembly_name: A label to be applied to the top-level object in the assembly, if Simplified or Fused modes
         are used. A default of "CQ assembly" will be used if none is specified.
     :type assembly_name: str
+    :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
+    :type assembly_name: float
+    :param glue: Glue setting used only for fused assembly export. Can be used to improve performance, but only for
+        non-overlapping shapes.
+    :type assembly_name: bool
     """
 
     # Handle the extra settings for the STEP export
@@ -71,6 +76,10 @@ def exportAssembly(
     assembly_name = (
         kwargs["assembly_name"] if "assembly_name" in kwargs else "CQ assembly"
     )
+    fuzzy_tol = (
+        kwargs["fuzzy_tol"] if "fuzzy_tol" in kwargs else None
+    )
+    glue = kwargs["glue"] if "glue" in kwargs else False
 
     # Handle the doc differently based on which mode we are using
     if exportMode == "DEFAULT":
@@ -78,7 +87,7 @@ def exportAssembly(
     elif exportMode == "SIMPLIFIED":
         doc = toSimplifiedCAF(assy, assembly_name)
     elif exportMode == "FUSED":
-        doc = toFusedCAF(assy, assembly_name)
+        doc = toFusedCAF(assy, assembly_name, glue, fuzzy_tol)
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)
