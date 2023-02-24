@@ -186,12 +186,12 @@ def getSVG(shape, opts=None):
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
 
-    coordinateSystem = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
+    coordinate_system = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
 
     if focus is not None:
-        projector = HLRAlgo_Projector(coordinateSystem, focus)
+        projector = HLRAlgo_Projector(coordinate_system, focus)
     else:
-        projector = HLRAlgo_Projector(coordinateSystem)
+        projector = HLRAlgo_Projector(coordinate_system)
 
     hlr.Projector(projector)
     hlr.Update()
