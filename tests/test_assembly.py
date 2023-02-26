@@ -484,7 +484,7 @@ def test_assembly(simple_assy, nested_assy):
 )
 def test_assy_root_name(assy_fixture, root_name, request):
     assy = request.getfixturevalue(assy_fixture)
-    doc = toCAF(assy, True)
+    _, doc = toCAF(assy, True)
     root = get_doc_nodes(doc, False)[0]
     if root_name:
         assert root["name"] == root_name
@@ -615,7 +615,7 @@ def test_save_raises(nested_assy):
 def test_leaf_node_count(assy_fixture, count, request):
 
     assy = request.getfixturevalue(assy_fixture)
-    doc = toCAF(assy, True)
+    _, doc = toCAF(assy, True)
 
     assert len(get_doc_nodes(doc, True)) == count
 
@@ -674,7 +674,7 @@ def test_colors_assy0(assy_fixture, expected, request):
                     assert pytest.approx(n[k], abs=1e-3) == v
 
     assy = request.getfixturevalue(assy_fixture)
-    doc = toCAF(assy, False)
+    _, doc = toCAF(assy, False)
     check_nodes(doc, expected)
 
 
@@ -822,7 +822,7 @@ def test_colors_assy1(assy_fixture, expected, request, tmpdir):
                     assert pytest.approx(n[k], abs=1e-3) == v
 
     assy = request.getfixturevalue(assy_fixture)
-    doc = toCAF(assy, True)
+    _, doc = toCAF(assy, True)
     check_nodes(doc, expected)
 
     # repeat color check again - after STEP export round trip

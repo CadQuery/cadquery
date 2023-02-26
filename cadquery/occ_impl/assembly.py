@@ -10,6 +10,11 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
+from OCP.XCAFPrs import (
+    XCAFPrs_DocumentExplorer,
+    XCAFPrs_DocumentExplorerFlags_None,
+    XCAFPrs_Style,
+)
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -140,7 +145,7 @@ def toCAF(
     mesh: bool = False,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
-) -> TDocStd_Document:
+) -> Tuple[TDF_Label, TDocStd_Document]:
 
     # prepare a doc
     app = XCAFApp_Application.GetApplication_s()
@@ -211,8 +216,14 @@ def toCAF(
     _toCAF(assy, None, None)
 
     tool.UpdateAssemblies()
-
-    return doc
+    return (
+        XCAFPrs_DocumentExplorer(
+            doc, XCAFPrs_DocumentExplorerFlags_None, XCAFPrs_Style()
+        )
+        .Current()
+        .Label,
+        doc,
+    )
 
 
 def toVTK(

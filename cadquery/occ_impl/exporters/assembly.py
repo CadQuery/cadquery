@@ -50,7 +50,7 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
         pcurves = 0
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
 
-    doc = toCAF(assy, True)
+    _, doc = toCAF(assy, True)
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)
@@ -75,7 +75,7 @@ def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
     name, ext = os.path.splitext(fname)
     ext = ext[1:] if ext[0] == "." else ext
 
-    doc = toCAF(assy)
+    _, doc = toCAF(assy)
     app = XCAFApp_Application.GetApplication_s()
 
     store = XmlDrivers_DocumentStorageDriver(
@@ -167,7 +167,7 @@ def exportGLTF(
     orig_loc = assy.loc
     assy.loc *= Location((0, 0, 0), (1, 0, 0), -90)
 
-    doc = toCAF(assy, True, True, tolerance, angularTolerance)
+    _, doc = toCAF(assy, True, True, tolerance, angularTolerance)
 
     writer = RWGltf_CafWriter(TCollection_AsciiString(path), binary)
     result = writer.Perform(
