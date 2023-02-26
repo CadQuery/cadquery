@@ -92,6 +92,7 @@ options are as follows.
 * *strokeColor* - Color of the line that visible edges are drawn with.
 * *hiddenColor* - Color of the line that hidden edges are drawn with.
 * *showHidden* - Whether or not to show hidden lines.
+* *focus* - If specified, creates a perspective SVG with the projector at the distance specified.
 
 The options are passed to the exporter in a dictionary, and can be left out to force the SVG to be created with default options. 
 Below are examples with and without options set.
@@ -143,6 +144,10 @@ The following is an example of using options to alter the resulting SVG output b
 Which results in the following image:
 
 ..  image:: _static/importexport/box_custom_options.svg
+
+Exporting with the additional option ``"focus": 25`` results in the following output SVG with perspective:
+
+.. image:: _static/importexport/box_custom_options_perspective.svg
 
 Exporting STL
 ##############
