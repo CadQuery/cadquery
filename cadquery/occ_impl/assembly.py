@@ -10,11 +10,6 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
-from OCP.XCAFPrs import (
-    XCAFPrs_DocumentExplorer,
-    XCAFPrs_DocumentExplorerFlags_None,
-    XCAFPrs_Style,
-)
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -162,7 +157,7 @@ def toCAF(
     # used to cache unique, possibly meshed, compounds; allows to avoid redundant meshing operations if same object is referenced multiple times in an assy
     compounds: Dict[AssemblyObjects, Compound] = {}
 
-    def _toCAF(el, ancestor, color):
+    def _toCAF(el, ancestor, color) -> TDF_Label:
 
         # create a subassy
         subassy = tool.NewShape()
@@ -212,18 +207,14 @@ def toCAF(
             # add the current subassy to the higher level assy
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
 
+        return subassy
+
     # process the whole assy recursively
-    _toCAF(assy, None, None)
+    top = _toCAF(assy, None, None)
 
     tool.UpdateAssemblies()
-    return (
-        XCAFPrs_DocumentExplorer(
-            doc, XCAFPrs_DocumentExplorerFlags_None, XCAFPrs_Style()
-        )
-        .Current()
-        .Label,
-        doc,
-    )
+
+    return top, doc
 
 
 def toVTK(
