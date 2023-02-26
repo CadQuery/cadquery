@@ -1,7 +1,7 @@
 import io as StringIO
 
 from ..shapes import Shape, Compound, TOLERANCE
-from ..geom import BoundBox
+from ..geom import BoundBox, Vector
 
 
 from OCP.gp import gp_Ax2, gp_Pnt, gp_Dir
@@ -20,7 +20,7 @@ SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
    height="%(height)s"
 
 >
-    <g transform="scale(%(unitScale)s, -%(unitScale)s)   translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s"  fill="none">
+    <g transform="translate(%(xTranslate)s,%(yTranslate)s) scale(%(unitScale)s, -%(unitScale)s)" stroke-width="%(strokeWidth)s"  fill="none">
        <!-- hidden lines -->
        <g  stroke="rgb(%(hiddenColor)s)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
 %(hiddenContent)s
@@ -137,9 +137,11 @@ def getSVG(shape, opts=None):
         height: Document height of the resulting image.
         marginLeft: Inset margin from the left side of the document.
         marginTop: Inset margin from the top side of the document.
+        viewHeight: Height in model units.  Used to set scale.
         projectionDir: Direction the camera will view the shape from.
+        up: Up direction. Default (0, 0, 1).
         showAxes: Whether or not to show the axes indicator, which will only be
-                  visible when the projectionDir is also at the default.
+            visible when the projectionDir is also at the default.
         strokeWidth: Width of the line that visible edges are drawn with.
         strokeColor: Color of the line that visible edges are drawn with.
         hiddenColor: Color of the line that hidden edges are drawn with.
@@ -152,7 +154,9 @@ def getSVG(shape, opts=None):
         "height": 240,
         "marginLeft": 200,
         "marginTop": 20,
-        "projectionDir": (-1.75, 1.1, 5),
+        "viewHeight": None,
+        "projectionDir": (1, -1, 1),
+        "up": (0, 0, 1),
         "showAxes": True,
         "strokeWidth": -1.0,  # -1 = calculated based on unitScale
         "strokeColor": (0, 0, 0),  # RGB 0-255
@@ -170,6 +174,7 @@ def getSVG(shape, opts=None):
     height = float(d["height"])
     marginLeft = float(d["marginLeft"])
     marginTop = float(d["marginTop"])
+    viewHeight = float(d["viewHeight"]) if d.get("viewHeight") else None
     projectionDir = tuple(d["projectionDir"])
     showAxes = bool(d["showAxes"])
     strokeWidth = float(d["strokeWidth"])
@@ -180,7 +185,13 @@ def getSVG(shape, opts=None):
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
 
-    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir)))
+    vx = Vector(d["up"]).cross(Vector(projectionDir))
+    if vx.Length < 1e-6:
+        projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir)))
+    else:
+        projector = HLRAlgo_Projector(
+            gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir), gp_Dir(*vx.toTuple()))
+        )
 
     hlr.Projector(projector)
     hlr.Update()
@@ -227,13 +238,17 @@ def getSVG(shape, opts=None):
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
     # width pixels for x, height pixels for y
-    unitScale = min(width / bb.xlen * 0.75, height / bb.ylen * 0.75)
-
-    # compute amount to translate-- move the top left into view
-    (xTranslate, yTranslate) = (
-        (0 - bb.xmin) + marginLeft / unitScale,
-        (0 - bb.ymax) - marginTop / unitScale,
-    )
+    if viewHeight is not None:
+        unitScale = height / viewHeight
+        xTranslate = width / 2
+        yTranslate = height / 2
+    else:
+        unitScale = min((width / bb.xlen * 0.75, height / bb.ylen * 0.75))
+        # compute amount to translate-- move the top left into view
+        (xTranslate, yTranslate) = (
+            marginLeft - bb.xmin * unitScale,
+            marginTop + bb.ymax * unitScale,
+        )
 
     # If the user did not specify a stroke width, calculate it based on the unit scale
     if strokeWidth == -1.0:
