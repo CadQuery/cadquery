@@ -111,7 +111,7 @@ class TestCadQuery(BaseTest):
         """
         r = Workplane("XY").rect(5, 5).extrude(5)
 
-        r_str = r.toSvg()
+        r_str = r.toSvg({"projectionDir": (-1.75, 1.1, 5)})
 
         # Make sure that a couple of sections from the SVG output make sense
         self.assertTrue(r_str.index('path d="M') > 0)
