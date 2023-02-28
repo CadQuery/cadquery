@@ -400,7 +400,7 @@ def toFusedCAF(assy: AssemblyProtocol, assy_name: str, glue: Optional[bool] = Fa
         top_level_shape = fuse_op.Shape()
 
     # If the top level shape is still none, something is wrong
-    if top_level_shape == None:
+    if top_level_shape == None or top_level_shape.IsNull():
         raise Exception("Error: The top level shape of assembly " + assy_name + " is not valid.")
 
     # Add the fused shape as the top level object in the document

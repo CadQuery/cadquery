@@ -58,9 +58,6 @@ def exportAssembly(
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
     :type precision_mode: int
-    :param assembly_name: A label to be applied to the top-level object in the assembly, if Simplified or Fused modes
-        are used. A default of "CQ assembly" will be used if none is specified.
-    :type assembly_name: str
     :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
     :type assembly_name: float
     :param glue: Glue setting used only for fused assembly export. Can be used to improve performance, but only for
@@ -73,13 +70,15 @@ def exportAssembly(
     if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
         pcurves = 0
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
-    assembly_name = (
-        kwargs["assembly_name"] if "assembly_name" in kwargs else "CQ assembly"
-    )
     fuzzy_tol = (
         kwargs["fuzzy_tol"] if "fuzzy_tol" in kwargs else None
     )
     glue = kwargs["glue"] if "glue" in kwargs else False
+
+    # Use the assembly name if the user set it
+    assembly_name = (
+        assy.name if assy.name else str(uuid())
+    )
 
     # Handle the doc differently based on which mode we are using
     if exportMode == "DEFAULT":
