@@ -16,6 +16,7 @@ from pytest import approx
 from cadquery import (
     exporters,
     importers,
+    Sketch,
     Workplane,
     Edge,
     Vertex,
@@ -32,6 +33,11 @@ from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 @pytest.fixture(scope="module")
 def tmpdir(tmp_path_factory):
     return tmp_path_factory.mktemp("out")
+
+
+@pytest.fixture(scope="module")
+def testdatadir():
+    return Path(__file__).parent.joinpath("testdata")
 
 
 @pytest.fixture()
@@ -420,3 +426,26 @@ def test_dxf_approx():
     assert _check_dxf_no_spline("limit2.dxf")
 
     assert w1.val().Area() == approx(w1_i2.val().Area(), 1e-3)
+
+
+def test_dxf_text(tmpdir, testdatadir):
+
+    w1 = (
+        Workplane("XZ")
+        .box(8, 8, 1)
+        .faces("<Y")
+        .workplane()
+        .text(
+            ",,", 10, -1, True, fontPath=str(Path(testdatadir, "OpenSans-Regular.ttf")),
+        )
+    )
+
+    fname = tmpdir.joinpath(f"dxf_text.dxf").resolve()
+    exporters.exportDXF(w1.section(), fname)
+
+    s2 = Sketch().importDXF(fname)
+    w2 = Workplane("XZ", origin=(0, -0.5, 0)).placeSketch(s2).extrude(-1)
+
+    assert w1.val().Volume() == approx(59.983287, 1e-2)
+    assert w2.val().Volume() == approx(w1.val().Volume(), 1e-2)
+    assert w2.intersect(w1).val().Volume() == approx(w1.val().Volume(), 1e-2)
