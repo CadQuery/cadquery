@@ -1,4 +1,4 @@
-from ...cq import Workplane, Plane
+from ...cq import Workplane, Plane, Face
 from ...units import RAD2DEG
 from ..shapes import Edge
 from .utils import toCompound
@@ -6,12 +6,14 @@ from .utils import toCompound
 from OCP.gp import gp_Dir
 from OCP.GeomConvert import GeomConvert
 
+from typing import Optional, Literal
+
 import ezdxf
 
 CURVE_TOLERANCE = 1e-9
 
 
-def _dxf_line(e, msp, plane):
+def _dxf_line(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
 
     msp.add_line(
         e.startPoint().toTuple(), e.endPoint().toTuple(),
@@ -105,12 +107,21 @@ DXF_CONVERTERS = {
 }
 
 
-def exportDXF(w: Workplane, fname: str):
+def exportDXF(
+    w: Workplane,
+    fname: str,
+    approx: Optional[Literal["spline", "arc"]] = None,
+    tolerance: float = 1e-3,
+):
     """
     Export Workplane content to DXF. Works with 2D sections.
 
     :param w: Workplane to be exported.
-    :param fname: output filename.
+    :param fname: Output filename.
+    :param approx: Approximation strategy. None means no approximation is applied.
+    "spline" results in all splines being approximated as cubic splines. "arc" results
+    in all curves being approximated as arcs and straight segments.
+    :param tolerance: Approximation tolerance.
 
     """
 
@@ -120,7 +131,22 @@ def exportDXF(w: Workplane, fname: str):
     dxf = ezdxf.new()
     msp = dxf.modelspace()
 
-    for e in shape.Edges():
+    if approx == "spline":
+        edges = [
+            e.toSplines() if e.geomType() == "BSPLINE" else e for e in shape.Edges()
+        ]
+
+    elif approx == "arc":
+        edges = []
+
+        # this is needed to handle free wires
+        for el in shape.Wires():
+            edges.extend(Face.makeFromWires(el).toArcs(tolerance).Edges())
+
+    else:
+        edges = shape.Edges()
+
+    for e in edges:
 
         conv = DXF_CONVERTERS.get(e.geomType(), _dxf_spline)
         conv(e, msp, plane)

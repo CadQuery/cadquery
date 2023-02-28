@@ -5136,6 +5136,10 @@ class TestCadQuery(BaseTest):
         w2 = w1.close()
         self.assertTrue(w1 is w2)
 
+    def test_close_3D_points(self):
+        r = Workplane().polyline([(0, 0, 10), (5, 0, 12), (0, 5, 10),]).close()
+        assert r.wire().val().Closed()
+
     def testSplitShape(self):
         """
         Testing the Shape.split method.
