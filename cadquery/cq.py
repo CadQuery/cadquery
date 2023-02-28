@@ -3443,6 +3443,7 @@ class Workplane(object):
             normal.  "last" cuts to the last face. If an object of type Face is passed, then the cut
             will extend until this face.
         :param clean: call :meth:`clean` afterwards to have a clean shape
+        :param both: cut in both directions symmetrically
         :param taper: angle for optional tapered extrusion
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
