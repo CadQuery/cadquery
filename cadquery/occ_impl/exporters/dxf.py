@@ -79,7 +79,7 @@ def _dxf_spline(e: Edge, msp: ezdxf.layouts.Modelspace, plane: Plane):
     )
 
     # need to apply the transform on the geometry level
-    spline.Transform(plane.fG.wrapped.Trsf())
+    spline.Transform(adaptor.Trsf())
 
     order = spline.Degree() + 1
     knots = list(spline.KnotSequence())
