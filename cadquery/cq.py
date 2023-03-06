@@ -3015,7 +3015,7 @@ class Workplane(object):
 
         # If subtractive mode is requested, use cutBlind
         if combine in ("cut", "s"):
-            return self.cutBlind(until, clean, taper)
+            return self.cutBlind(until, clean, both, taper)
 
         # Handle `until` multiple values
         elif until in ("next", "last") and combine in (True, "a"):
@@ -3143,7 +3143,7 @@ class Workplane(object):
             from warnings import warn
 
             warn(
-                "sweepAlongWires keyword argument is is deprecated and will "
+                "sweepAlongWires keyword argument is deprecated and will "
                 "be removed in the next version; use multisection instead",
                 DeprecationWarning,
             )
@@ -3426,6 +3426,7 @@ class Workplane(object):
         self: T,
         until: Union[float, Literal["next", "last"], Face],
         clean: bool = True,
+        both: bool = False,
         taper: Optional[float] = None,
     ) -> T:
         """
@@ -3442,6 +3443,7 @@ class Workplane(object):
             normal.  "last" cuts to the last face. If an object of type Face is passed, then the cut
             will extend until this face.
         :param clean: call :meth:`clean` afterwards to have a clean shape
+        :param both: cut in both directions symmetrically
         :param taper: angle for optional tapered extrusion
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a CQ object with the resulting object selected
@@ -3450,19 +3452,43 @@ class Workplane(object):
         """
         # Handling of `until` passed values
         s: Union[Compound, Solid, Shape]
+        if isinstance(both, float) and taper == None:
+            # Because inserting a new paramater "both" in front of "taper",
+            # existing code calling this function with position arguments will
+            # pass the taper argument (float) to the "both" argument. This
+            # warning is to catch that.
+            from warnings import warn
+
+            warn(
+                "cutBlind added a new keyword argument `both=True`. "
+                "The signature is changed from "
+                "(until, clean, taper) -> (until, clean, both, taper)",
+                DeprecationWarning,
+            )
+
+            # assign 3rd argument value to taper
+            taper = both
+            both = False
+
         if isinstance(until, str) and until in ("next", "last"):
             if until == "next":
                 faceIndex = 0
             elif until == "last":
                 faceIndex = -1
 
-            s = self._extrude(None, taper=taper, upToFace=faceIndex, additive=False)
+            s = self._extrude(
+                None, both=both, taper=taper, upToFace=faceIndex, additive=False
+            )
 
         elif isinstance(until, Face):
-            s = self._extrude(None, taper=taper, upToFace=until, additive=False)
+            s = self._extrude(
+                None, both=both, taper=taper, upToFace=until, additive=False
+            )
 
         elif isinstance(until, (int, float)):
-            toCut = self._extrude(until, taper=taper, upToFace=None, additive=False)
+            toCut = self._extrude(
+                until, both=both, taper=taper, upToFace=None, additive=False
+            )
             solidRef = self.findSolid()
             s = solidRef.cut(toCut)
         else:
@@ -3610,8 +3636,6 @@ class Workplane(object):
         direction = "AlongAxis" if additive else "Opposite"
         taper = 0.0 if taper is None else taper
 
-        toFuse = []
-
         if upToFace is not None:
             res = self.findSolid()
             for face in faces:
@@ -3644,17 +3668,20 @@ class Workplane(object):
                         upToFace=limitFace2,
                         additive=additive,
                     )
-
         else:
+            toFuse = []
             for face in faces:
-                res = Solid.extrudeLinear(face, eDir, taper=taper)
-                toFuse.append(res)
+                s1 = Solid.extrudeLinear(face, eDir, taper=taper)
 
                 if both:
-                    res = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
-                    toFuse.append(res)
+                    s2 = Solid.extrudeLinear(face, eDir.multiply(-1.0), taper=taper)
+                    toFuse.append(s1.fuse(s2, glue=True))
+                else:
+                    toFuse.append(s1)
 
-        return res if upToFace is not None else Compound.makeCompound(toFuse)
+            res = Compound.makeCompound(toFuse)
+
+        return res
 
     def _revolve(
         self, angleDegrees: float, axisStart: VectorLike, axisEnd: VectorLike
