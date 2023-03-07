@@ -20,7 +20,7 @@ requirements:
     - ezdxf
     - ipython
     - typing_extensions
-    - nptyping 2.0.1
+    - nptyping >=2.0.1
     - nlopt
     - multimethod >=1.7,<2.0
     - casadi
