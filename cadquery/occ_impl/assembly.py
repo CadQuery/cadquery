@@ -152,16 +152,12 @@ def toCAF(
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
 
-    # add root
-    top = tool.NewShape()
-    TDataStd_Name.Set_s(top, TCollection_ExtendedString("CQ assembly"))
-
     # used to store labels with unique part-color combinations
     unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
     # used to cache unique, possibly meshed, compounds; allows to avoid redundant meshing operations if same object is referenced multiple times in an assy
     compounds: Dict[AssemblyObjects, Compound] = {}
 
-    def _toCAF(el, ancestor, color):
+    def _toCAF(el, ancestor, color) -> TDF_Label:
 
         # create a subassy
         subassy = tool.NewShape()
@@ -207,11 +203,14 @@ def toCAF(
         for child in el.children:
             _toCAF(child, subassy, current_color)
 
-        # add the current subassy to the higher level assy
-        tool.AddComponent(ancestor, subassy, el.loc.wrapped)
+        if ancestor:
+            # add the current subassy to the higher level assy
+            tool.AddComponent(ancestor, subassy, el.loc.wrapped)
+
+        return subassy
 
     # process the whole assy recursively
-    _toCAF(assy, top, None)
+    top = _toCAF(assy, None, None)
 
     tool.UpdateAssemblies()
 

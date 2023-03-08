@@ -479,6 +479,21 @@ def test_assembly(simple_assy, nested_assy):
     assert kvs[-1][0] == "TOP"
 
 
+@pytest.mark.parametrize(
+    "assy_fixture, root_name", [("simple_assy", None), ("nested_assy", "TOP")],
+)
+def test_assy_root_name(assy_fixture, root_name, request):
+    assy = request.getfixturevalue(assy_fixture)
+    _, doc = toCAF(assy, True)
+    root = get_doc_nodes(doc, False)[0]
+    if root_name:
+        assert root["name"] == root_name
+    else:
+        # When a name is not user-specifed, the name is assigned a UUID
+        m = re.findall(r"[0-9a-f]+", root["name"])
+        assert list(map(len, m)) == [8, 4, 4, 4, 12]
+
+
 def test_step_export(nested_assy, tmp_path_factory):
     # Use a temporary directory
     tmpdir = tmp_path_factory.mktemp("out")
