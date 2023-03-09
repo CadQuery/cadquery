@@ -7,6 +7,7 @@ from ezdxf import units, zoom
 from ezdxf.entities import factory
 from OCP.GeomConvert import GeomConvert
 from OCP.gp import gp_Dir
+from typing_extensions import Self
 
 from ...cq import Face, Plane, Workplane
 from ...units import RAD2DEG
@@ -14,7 +15,9 @@ from ..shapes import Edge
 from .utils import toCompound
 
 ApproxOptions = Literal["spline", "arc"]
-DxfEntityAttributes = Tuple[str, Dict[str, Any]]
+DxfEntityAttributes = Tuple[
+    Literal["ARC", "CIRCLE", "ELLIPSE", "LINE", "SPLINE",], Dict[str, Any]
+]
 
 
 class DxfDocument:
@@ -64,7 +67,7 @@ class DxfDocument:
         metadata: Union[Dict[str, str], None] = None,
         approx: Optional[ApproxOptions] = None,
         tolerance: float = 1e-3,
-    ) -> None:
+    ):
         """Initialize DXF document.
 
         :param dxfversion: :attr:`DXF version specifier <ezdxf-stable:ezdxf.document.Drawing.dxfversion>`
@@ -106,7 +109,7 @@ class DxfDocument:
 
     def add_layer(
         self, name: str, *, color: int = 1, linetype: str = "CONTINUOUS"
-    ) -> "DxfDocument":
+    ) -> Self:
         """Create a layer definition
 
         Refer to :ref:`ezdxf layers <ezdxf-stable:layer_concept>` and
@@ -120,7 +123,7 @@ class DxfDocument:
 
         return self
 
-    def add_shape(self, workplane: Workplane, layer: str = "") -> "DxfDocument":
+    def add_shape(self, workplane: Workplane, layer: str = "") -> Self:
         """Add CadQuery shape to a DXF layer.
 
         :param workplane: CadQuery Workplane
