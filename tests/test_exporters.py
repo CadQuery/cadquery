@@ -23,6 +23,7 @@ from cadquery import (
     Plane,
     Location,
     Vector,
+    Color,
 )
 from tests import BaseTest
 from OCP.GeomConvert import GeomConvert

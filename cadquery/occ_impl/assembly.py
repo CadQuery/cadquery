@@ -340,7 +340,12 @@ def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     return doc
 
 
-def toFusedCAF(assy: AssemblyProtocol, assy_name: str, glue: Optional[bool] = False, tol: Optional[float] = None) -> TDocStd_Document:
+def toFusedCAF(
+    assy: AssemblyProtocol,
+    assy_name: str,
+    glue: Optional[bool] = False,
+    tol: Optional[float] = None,
+) -> TDocStd_Document:
     """
     Converts the assembly to a fused compound and saves that within the document
     to be exported in a way that preserves the face colors. Because of the use of
@@ -400,7 +405,9 @@ def toFusedCAF(assy: AssemblyProtocol, assy_name: str, glue: Optional[bool] = Fa
 
     # If the top level shape is still none, something is wrong
     if top_level_shape == None or top_level_shape.IsNull():
-        raise Exception("Error: The top level shape of assembly " + assy_name + " is not valid.")
+        raise Exception(
+            "Error: The top level shape of assembly " + assy_name + " is not valid."
+        )
 
     # Add the fused shape as the top level object in the document
     top_level_lbl = shape_tool.AddShape(top_level_shape, False)
@@ -421,7 +428,9 @@ def toFusedCAF(assy: AssemblyProtocol, assy_name: str, glue: Optional[bool] = Fa
                         cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
 
                         # Set the subshape's color to match the parent assembly component
-                        color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+                        color_tool.SetColor(
+                            cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
+                        )
                 # If there are modified faces based on this face, step through all of them and add
                 # them separately as subshapes
                 else:

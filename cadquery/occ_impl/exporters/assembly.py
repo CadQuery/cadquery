@@ -27,20 +27,18 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toSimplifiedCAF, toFusedCAF
 from ..geom import Location
 
+
 class ExportModes:
     DEFAULT = "DEFAULT"
     SIMPLIFIED = "SIMPLIFIED"
     FUSED = "FUSED"
 
-STEPExportModeLiterals = Literal[
-    "DEFAULT", "SIMPLIFIED", "FUSED"
-]
+
+STEPExportModeLiterals = Literal["DEFAULT", "SIMPLIFIED", "FUSED"]
+
 
 def exportAssembly(
-    assy: AssemblyProtocol,
-    path: str,
-    exportMode: str = None,
-    **kwargs
+    assy: AssemblyProtocol, path: str, exportMode: str = None, **kwargs
 ) -> bool:
     """
     Export an assembly to a STEP file.
@@ -59,10 +57,10 @@ def exportAssembly(
         See OCCT documentation.
     :type precision_mode: int
     :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
-    :type assembly_name: float
+    :type fuzzy_tol: float
     :param glue: Glue setting used only for fused assembly export. Can be used to improve performance, but only for
         non-overlapping shapes.
-    :type assembly_name: bool
+    :type glue: bool
     """
 
     # Handle the extra settings for the STEP export
@@ -70,23 +68,19 @@ def exportAssembly(
     if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
         pcurves = 0
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
-    fuzzy_tol = (
-        kwargs["fuzzy_tol"] if "fuzzy_tol" in kwargs else None
-    )
+    fuzzy_tol = kwargs["fuzzy_tol"] if "fuzzy_tol" in kwargs else None
     glue = kwargs["glue"] if "glue" in kwargs else False
 
     # Use the assembly name if the user set it
-    assembly_name = (
-        assy.name if assy.name else str(uuid())
-    )
+    assembly_name = assy.name if assy.name else str(uuid())
 
     # Handle the doc differently based on which mode we are using
-    if exportMode == "DEFAULT":
-        _, doc = toCAF(assy, True)
-    elif exportMode == "SIMPLIFIED":
+    if exportMode == "SIMPLIFIED":
         doc = toSimplifiedCAF(assy, assembly_name)
     elif exportMode == "FUSED":
         doc = toFusedCAF(assy, assembly_name, glue, fuzzy_tol)
+    else:  # Includes "DEFAULT"
+        _, doc = toCAF(assy, True)
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)
