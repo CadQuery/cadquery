@@ -322,7 +322,7 @@ def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
             # Make sure that we only add solids
             if isinstance(shape, Solid):
                 shape_list.append(shape)
-    comp = Compound.makeCompound(shape_list).wrapped
+    comp = Compound.makeCompound(shape_list).locate(self.loc).wrapped
 
     # Add the top level shape, have it broken apart into an assembly and set the top-level name
     top_level_lbl = shape_tool.AddShape(comp, True)

@@ -1,4 +1,5 @@
 import os.path
+import uuid
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
@@ -72,7 +73,7 @@ def exportAssembly(
     glue = kwargs["glue"] if "glue" in kwargs else False
 
     # Use the assembly name if the user set it
-    assembly_name = assy.name if assy.name else str(uuid())
+    assembly_name = assy.name if assy.name else str(uuid.uuid1())
 
     # Handle the doc differently based on which mode we are using
     if exportMode == "SIMPLIFIED":
