@@ -1,5 +1,6 @@
 # system modules
 import math
+import pytest
 import unittest
 from tests import BaseTest
 from OCP.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp, gp_XYZ, gp_Trsf
@@ -719,6 +720,19 @@ class TestCadObjects(BaseTest):
             ]
         )
         self.assertAlmostEqual(many_rad.radius(), 1.0)
+
+
+@pytest.mark.parametrize(
+    "points, close, expected_edges",
+    [
+        (((0, 0, 0), (0, 1, 0), (1, 0, 0)), False, 2),
+        (((0, 0, 0), (0, 1, 0), (1, 0, 0)), True, 3),
+        (((0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 0)), False, 3),
+        (((0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 0)), True, 3),
+    ],
+)
+def test_wire_makepolygon(points, close, expected_edges):
+    assert len(Wire.makePolygon(points, False, close).Edges()) == expected_edges
 
 
 if __name__ == "__main__":

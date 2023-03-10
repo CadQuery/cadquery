@@ -2,7 +2,7 @@ import tempfile
 import os
 import io as StringIO
 
-from typing import IO, Optional, Union, cast
+from typing import IO, Optional, Union, cast, Dict, Any
 from typing_extensions import Literal
 
 from OCP.VrmlAPI import VrmlAPI
@@ -43,7 +43,7 @@ def export(
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
-    opt=None,
+    opt: Optional[Dict[str, Any]] = None,
 ):
 
     """
@@ -59,6 +59,9 @@ def export(
 
     shape: Shape
     f: IO
+
+    if not opt:
+        opt = {}
 
     if isinstance(w, Workplane):
         shape = toCompound(w)
@@ -98,21 +101,18 @@ def export(
             aw.writeAmf(f)
 
     elif exportType == ExportTypes.THREEMF:
-        tmfw = ThreeMFWriter(shape, tolerance, angularTolerance, **opt or {})
+        tmfw = ThreeMFWriter(shape, tolerance, angularTolerance, **opt)
         with open(fname, "wb") as f:
             tmfw.write3mf(f)
 
     elif exportType == ExportTypes.DXF:
         if isinstance(w, Workplane):
-            exportDXF(w, fname)
+            exportDXF(w, fname, **opt)
         else:
             raise ValueError("Only Workplanes can be exported as DXF")
 
     elif exportType == ExportTypes.STEP:
-        if opt:
-            shape.exportStep(fname, **opt)
-        else:
-            shape.exportStep(fname)
+        shape.exportStep(fname, **opt)
 
     elif exportType == ExportTypes.STL:
         if opt:

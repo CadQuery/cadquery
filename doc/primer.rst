@@ -144,7 +144,7 @@ your operations, and defines the first solid object created as the 'context soli
 you create are automatically combined (unless you specify otherwise) with that solid.  This happens even if the
 solid was created  a long way up in the stack.  For example::
 
-    Workplane('XY').box(1,2,3).faces(">Z").circle(0.25).extrude()
+    Workplane('XY').box(1,2,3).faces(">Z").circle(0.25).extrude(1)
 
 Will create a 1x2x3 box, with a cylindrical boss extending from the top face.  It was not necessary to manually
 combine the cylinder created by extruding the circle with the box, because the default behavior for extrude is

@@ -216,6 +216,7 @@ options are as follows.
 * *strokeColor* - Color of the line that visible edges are drawn with.
 * *hiddenColor* - Color of the line that hidden edges are drawn with.
 * *showHidden* - Whether or not to show hidden lines.
+* *focus* - If specified, creates a perspective SVG with the projector at the distance specified.
 
 The options are passed to the exporter in a dictionary, and can be left out to force the SVG to be created with default options. 
 Below are examples with and without options set.
@@ -267,6 +268,10 @@ The following is an example of using options to alter the resulting SVG output b
 Which results in the following image:
 
 ..  image:: _static/importexport/box_custom_options.svg
+
+Exporting with the additional option ``"focus": 25`` results in the following output SVG with perspective:
+
+.. image:: _static/importexport/box_custom_options_perspective.svg
 
 Exporting STL
 ##############
@@ -354,6 +359,24 @@ optimum values that will produce an acceptable mesh.
     result = cq.Workplane().box(10, 10, 10)
 
     exporters.export(result, '/path/to/file/mesh.vrml', tolerance=0.01, angularTolerance=0.1)
+
+Exporting DXF
+##############
+
+By default, the DXF exporter will output splines exactly as they are represented by the OpenCascade kernel. Unfortunately some software cannot handle higher-order splines resulting in missing curves after DXF import. To resolve this, specify an approximation strategy controlled by the following options:
+
+* ``approx`` - ``None``, ``"spline"`` or ``"arc"``. ``"spline"`` results in all splines approximated with cubic splines. ``"arc"`` results in all curves approximated with arcs and line segments.
+* ``tolerance``: Acceptable error of the approximation, in the DXF's coordinate system. Defaults to 0.001 (1 thou for inch-scale drawings, 1 µm for mm-scale drawings).
+
+.. code-block:: python
+
+
+    cq.exporters.exportDXF(
+        result,
+        '/path/to/file/object.dxf',
+        approx="spline"
+    )
+
 
 Exporting Other Formats
 ########################

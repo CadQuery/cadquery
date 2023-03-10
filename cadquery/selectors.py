@@ -62,6 +62,7 @@ class Selector(object):
         Filter the provided list.
 
         The default implementation returns the original list unfiltered.
+
         :param objectList: list to filter
         :type objectList: list of OCCT primitives
         :return: filtered list
