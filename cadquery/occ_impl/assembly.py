@@ -318,11 +318,11 @@ def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
     # Convert the assembly to a compound
     shape_list = []
     for part in assy.children:
-        for shape in part.shapes:
+        for shape in part.toShapeList():
             # Make sure that we only add solids
             if isinstance(shape, Solid):
                 shape_list.append(shape)
-    comp = Compound.makeCompound(shape_list).locate(self.loc).wrapped
+    comp = Compound.makeCompound(shape_list).locate(part.loc).wrapped
 
     # Add the top level shape, have it broken apart into an assembly and set the top-level name
     top_level_lbl = shape_tool.AddShape(comp, True)
@@ -330,7 +330,7 @@ def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
 
     # Assign names and colors based on the assembly
     for part in assy.children:
-        for shape in part.shapes:
+        for shape in part.toShapeList():
             # Make sure that we only trying to set the names and colors for solids
             if isinstance(shape, Solid):
                 cur_lbl = shape_tool.FindShape(shape.wrapped)
@@ -375,7 +375,7 @@ def toFusedCAF(
         top_level_shape = assy.children[0].shapes[0].wrapped
     else:
         # Add base shape(s)
-        for shape in assy.children[0].shapes:
+        for shape in assy.children[0].toShapeList():
             args.Append(shape.wrapped)
 
         # Add all other shapes as tools
@@ -386,7 +386,7 @@ def toFusedCAF(
                 i += 1
                 continue
 
-            for shape in child.shapes:
+            for shape in child.toShapeList():
                 tools.Append(shape.wrapped)
 
             i += 1
@@ -415,7 +415,7 @@ def toFusedCAF(
 
     # Walk the assembly->part->shape->face hierarchy and add subshapes for all the faces
     for part in assy.children:
-        for shape in part.shapes:
+        for shape in part.toShapeList():
             for face in shape.Faces():
                 # Check for modified faces
                 modded_list = fuse_op.Modified(face.wrapped)
