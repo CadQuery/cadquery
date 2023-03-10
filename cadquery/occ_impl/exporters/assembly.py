@@ -39,7 +39,7 @@ STEPExportModeLiterals = Literal["DEFAULT", "SIMPLIFIED", "FUSED"]
 
 
 def exportAssembly(
-    assy: AssemblyProtocol, path: str, exportMode: str = None, **kwargs
+    assy: AssemblyProtocol, path: str, exportMode: str = "DEFAULT", **kwargs
 ) -> bool:
     """
     Export an assembly to a STEP file.

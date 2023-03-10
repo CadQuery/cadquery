@@ -139,6 +139,64 @@ def test_fused_not_touching_assembly(tmpdir):
     assert model.solids().size() == 2
 
 
+def test_nested_simplified_assembly(tmpdir):
+    """
+    Tests a nested assembly being exported with a simple hierarchy.
+    The resulting STEP is imported again to test it.
+    """
+    # Create the nested assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pins = Assembly()
+    pin1 = Workplane().center(8, 8).cylinder(radius=2, height=20)
+    pin2 = Workplane().center(-8, -8).cylinder(radius=2, height=20)
+    pins.add(pin1, color=Color(0, 1, 0), name="pin1")
+    pins.add(pin2, color=Color(0, 0, 1), name="pin2")
+    assy.add(pins, name="pins")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "nested_fused_assembly.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        export_mode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 3
+
+
+def test_nested_fused_assembly(tmpdir):
+    """
+    Tests a nested assembly being exported as a single, fused solid.
+    The resulting STEP is imported again to test it.
+    """
+    # Create the nested assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pins = Assembly()
+    pin1 = Workplane().center(8, 8).cylinder(radius=2, height=20)
+    pin2 = Workplane().center(-8, -8).cylinder(radius=2, height=20)
+    pins.add(pin1, color=Color(0, 1, 0), name="pin1")
+    pins.add(pin2, color=Color(0, 0, 1), name="pin2")
+    assy.add(pins, name="pins")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "nested_simplified_assembly.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        export_mode=exporters.assembly.ExportModes.SIMPLIFIED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 3
+
+
 class TestExporters(BaseTest):
     def _exportBox(self, eType, stringsToFind, tolerance=0.1, angularTolerance=0.1):
         """
