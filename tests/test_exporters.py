@@ -212,6 +212,27 @@ class TestDxfDocument(BaseTest):
 
         self.assertEqual("CENTER", layer.dxf.linetype)
 
+    def test_add_shape_to_layer(self):
+        line = Workplane().line(0, 10)
+
+        dxf = DxfDocument(setup=True)
+
+        default_layer_names = set()
+        for layer in dxf.document.layers:
+            default_layer_names.add(layer.dxf.name)
+
+        dxf = dxf.add_layer("layer_1").add_shape(line, "layer_1")
+
+        expected_layer_names = default_layer_names.copy()
+        expected_layer_names.add("layer_1")
+
+        self.assertEqual({"0", "Defpoints"}, default_layer_names)
+
+        self.assertEqual(1, len(dxf.msp))
+        self.assertEqual({"0", "Defpoints", "layer_1"}, expected_layer_names)
+        self.assertEqual("layer_1", dxf.msp[0].dxf.layer)
+        self.assertEqual("LINE", dxf.msp[0].dxftype())
+
     def test_set_dxf_version(self):
         dxfversion = "AC1032"
 
@@ -229,6 +250,15 @@ class TestDxfDocument(BaseTest):
 
         self.assertNotEqual(doc_units, dxf_default.document.units)
         self.assertEqual(doc_units, dxf.document.units)
+
+    def test_set_metadata(self):
+        metadata = {"CUSTOM_KEY": "custom value"}
+
+        dxf = DxfDocument(metadata=metadata)
+
+        self.assertEqual(
+            metadata["CUSTOM_KEY"], dxf.document.ezdxf_metadata().get("CUSTOM_KEY"),
+        )
 
     def test_add_shape_line(self):
         workplane = Workplane().line(1, 1)
