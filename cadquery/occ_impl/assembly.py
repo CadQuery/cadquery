@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List
+from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List, cast
 from typing_extensions import Protocol
 from math import degrees
 
@@ -126,6 +126,9 @@ class AssemblyProtocol(Protocol):
         ...
 
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
+        ...
+
+    def toShapeList(self) -> Iterable[Shape]:
         ...
 
 
@@ -335,7 +338,10 @@ def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
             if isinstance(shape, Solid):
                 cur_lbl = shape_tool.FindShape(shape.wrapped)
                 TDataStd_Name.Set_s(cur_lbl, TCollection_ExtendedString(part.name))
-                color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+
+                # Make sure that a color was passed in
+                if part.color:
+                    color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
 
     return doc
 
@@ -371,16 +377,17 @@ def toFusedCAF(
 
     # If there is only one solid, there is no reason to fuse, and it will likely cause problems anyway
     top_level_shape = None
-    if len(assy.children) == 1 and len(assy.children[0].shapes) == 1:
-        top_level_shape = assy.children[0].shapes[0].wrapped
+    children = cast(List, assy.children)
+    if len(children) == 1 and len(children[0].shapes) == 1:
+        top_level_shape = children[0].shapes[0].wrapped
     else:
         # Add base shape(s)
-        for shape in assy.children[0].toShapeList():
+        for shape in children[0].toShapeList():
             args.Append(shape.wrapped)
 
         # Add all other shapes as tools
         i = 0
-        for child in assy.children:
+        for child in children:
             # Make sure we add the assembly parts other than the base
             if i == 0:
                 i += 1
@@ -428,18 +435,20 @@ def toFusedCAF(
                         cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
 
                         # Set the subshape's color to match the parent assembly component
-                        color_tool.SetColor(
-                            cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
-                        )
+                        if part.color:
+                            color_tool.SetColor(
+                                cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
+                            )
                 # If there are modified faces based on this face, step through all of them and add
                 # them separately as subshapes
                 else:
                     for mod in modded_list:
                         # Add the face as a subshape and set its color to match the parent assembly component
                         cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
-                        color_tool.SetColor(
-                            cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
-                        )
+                        if part.color:
+                            color_tool.SetColor(
+                                cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
+                            )
 
                 # Handle generated faces
                 gen_list = fuse_op.Generated(face.wrapped)
@@ -447,7 +456,8 @@ def toFusedCAF(
                     for gen in gen_list:
                         # Add the face as a subshape and set its color to match the parent assembly component
                         cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
-                        color_tool.SetColor(
-                            cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
-                        )
+                        if part.color:
+                            color_tool.SetColor(
+                                cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
+                            )
     return doc
