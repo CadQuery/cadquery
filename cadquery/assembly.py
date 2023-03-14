@@ -438,7 +438,7 @@ class Assembly(object):
         self,
         path: str,
         exportType: Optional[ExportLiterals] = None,
-        exportMode: STEPExportModeLiterals = ExportModes.DEFAULT,
+        exportMode: STEPExportModeLiterals = "DEFAULT",
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
