@@ -22,6 +22,7 @@ from .occ_impl.exporters.assembly import (
     exportVRML,
     exportGLTF,
     STEPExportModeLiterals,
+    ExportModes,
 )
 
 from .selectors import _expression_grammar as _selector_grammar
@@ -437,7 +438,7 @@ class Assembly(object):
         self,
         path: str,
         exportType: Optional[ExportLiterals] = None,
-        exportMode: Optional[STEPExportModeLiterals] = None,
+        exportMode: STEPExportModeLiterals = ExportModes.DEFAULT,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
@@ -453,14 +454,9 @@ class Assembly(object):
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         """
 
-        # Handle the export mode setting
-        export_mode = "DEFAULT"
-        if exportMode != None:
-            # Make sure that we were given a valid export mode
-            if exportMode in ["DEFAULT", "SIMPLIFIED", "FUSED"]:
-                export_mode = cast(STEPExportModeLiterals, exportMode)
-            else:
-                raise ValueError("Unknown assembly export mode for STEP")
+        # Make sure the export mode setting is correct
+        if exportMode not in ["DEFAULT", "FUSED"]:
+            raise ValueError("Unknown assembly export mode for STEP")
 
         if exportType is None:
             t = path.split(".")[-1].upper()
@@ -470,7 +466,7 @@ class Assembly(object):
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path, export_mode, **kwargs)
+            exportAssembly(self, path, exportMode, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":
@@ -548,11 +544,12 @@ class Assembly(object):
         the assembly to a file format such as STEP.
         """
 
-        shapes = self.shapes
+        shape_list = []
+        shape_list.extend(self.shapes)
         for child in self.children:
-            shapes.extend(child.toShapeList())
+            shape_list.extend(child.toShapeList())
 
-        return shapes
+        return shape_list
 
     def _repr_javascript_(self):
         """

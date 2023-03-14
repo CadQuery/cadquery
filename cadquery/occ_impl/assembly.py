@@ -128,7 +128,7 @@ class AssemblyProtocol(Protocol):
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 
-    def toShapeList(self) -> Iterable[Shape]:
+    def toShapeList(self) -> List[Shape]:
         ...
 
 
@@ -299,53 +299,6 @@ def toJSON(
     return rv
 
 
-def toSimplifiedCAF(assy: AssemblyProtocol, assy_name: str) -> TDocStd_Document:
-    """
-    Converts the assembly to a compound and saves that within the document
-    to be exported.
-
-    :param assy: Assembly that is being converted to a compound for the document.
-    :param assy_name: Label that is applied to the top level object in the document.
-    """
-
-    # Prepare a document
-    app = XCAFApp_Application.GetApplication_s()
-    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
-    app.InitDocument(doc)
-
-    # Shape and color tools
-    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
-    shape_tool.SetAutoNaming_s(False)
-
-    # Convert the assembly to a compound
-    shape_list = []
-    for part in assy.children:
-        for shape in part.toShapeList():
-            # Make sure that we only add solids
-            if isinstance(shape, Solid):
-                shape_list.append(shape)
-    comp = Compound.makeCompound(shape_list).locate(part.loc).wrapped
-
-    # Add the top level shape, have it broken apart into an assembly and set the top-level name
-    top_level_lbl = shape_tool.AddShape(comp, True)
-    TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
-
-    # Assign names and colors based on the assembly
-    for part in assy.children:
-        for shape in part.toShapeList():
-            # Make sure that we only trying to set the names and colors for solids
-            if isinstance(shape, Solid):
-                cur_lbl = shape_tool.FindShape(shape.wrapped)
-                TDataStd_Name.Set_s(cur_lbl, TCollection_ExtendedString(part.name))
-
-                # Make sure that a color was passed in
-                if part.color:
-                    color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
-
-    return doc
-
-
 def toFusedCAF(
     assy: AssemblyProtocol,
     assy_name: str,
@@ -380,6 +333,17 @@ def toFusedCAF(
     children = cast(List, assy.children)
     if len(children) == 1 and len(children[0].shapes) == 1:
         top_level_shape = children[0].shapes[0].wrapped
+
+        # All that needs to be done is to add the input shape, set its name, and set its color
+        top_level_lbl = shape_tool.AddShape(top_level_shape, False)
+        TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
+        if children[0].color:
+            color_tool.SetColor(
+                top_level_lbl, children[0].color.wrapped, XCAFDoc_ColorGen
+            )
+
+        # Return the doc early because there is nothing else to add
+        return doc
     else:
         # Add base shape(s)
         for shape in children[0].toShapeList():
@@ -387,7 +351,7 @@ def toFusedCAF(
 
         # Add all other shapes as tools
         i = 0
-        for child in children:
+        for child in assy.children:
             # Make sure we add the assembly parts other than the base
             if i == 0:
                 i += 1

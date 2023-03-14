@@ -25,21 +25,20 @@ from OCP.TColStd import TColStd_IndexedDataMapOfStringString
 from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
-from ..assembly import AssemblyProtocol, toCAF, toVTK, toSimplifiedCAF, toFusedCAF
+from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 
 
 class ExportModes:
     DEFAULT = "DEFAULT"
-    SIMPLIFIED = "SIMPLIFIED"
     FUSED = "FUSED"
 
 
-STEPExportModeLiterals = Literal["DEFAULT", "SIMPLIFIED", "FUSED"]
+STEPExportModeLiterals = Literal["DEFAULT", "FUSED"]
 
 
 def exportAssembly(
-    assy: AssemblyProtocol, path: str, exportMode: str = "DEFAULT", **kwargs
+    assy: AssemblyProtocol, path: str, exportMode: str = ExportModes.DEFAULT, **kwargs
 ) -> bool:
     """
     Export an assembly to a STEP file.
@@ -48,9 +47,8 @@ def exportAssembly(
 
     :param assy: assembly
     :param path: Path and filename for writing
-    :param exportMode: STEP export mode. The options are DEFAULT (the current _toCAF method), SIMPLIFIED (a STEP
-        assembly with a simple hierarchy), and FUSED (a single fused compound). It is possible that fused mode may
-        exhibit low performance.
+    :param exportMode: STEP export mode. The options are DEFAULT (the current _toCAF method),
+        and FUSED (a single fused compound). It is possible that fused mode may exhibit low performance.
     :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
         If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
     :type write_pcurves: bool
@@ -76,9 +74,7 @@ def exportAssembly(
     assembly_name = assy.name if assy.name else str(uuid.uuid1())
 
     # Handle the doc differently based on which mode we are using
-    if exportMode == "SIMPLIFIED":
-        doc = toSimplifiedCAF(assy, assembly_name)
-    elif exportMode == "FUSED":
+    if exportMode == "FUSED":
         doc = toFusedCAF(assy, assembly_name, glue, fuzzy_tol)
     else:  # Includes "DEFAULT"
         _, doc = toCAF(assy, True)

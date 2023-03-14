@@ -60,32 +60,6 @@ def test_step_options(tmpdir):
     assert w.faces().size() == 6
 
 
-def test_simplified_assembly(tmpdir):
-    """
-    Exports a simple assembly using the "simplified" STEP export mode
-    and then imports that STEP again to validate it.
-    """
-
-    # Create the sample assembly
-    assy = Assembly()
-    body = Workplane().box(10, 10, 10)
-    assy.add(body, color=Color(1, 0, 0), name="body")
-    pin = Workplane().center(2, 2).cylinder(radius=2, height=20)
-    assy.add(pin, color=Color(0, 1, 0), name="pin")
-
-    # Export the assembly
-    step_path = os.path.join(tmpdir, "simplified.step")
-    assy.save(
-        path=str(step_path),
-        exportType=exporters.ExportTypes.STEP,
-        exportMode=exporters.assembly.ExportModes.SIMPLIFIED,
-    )
-
-    # Import the assembly and make sure it acts as expected
-    model = importers.importStep(step_path)
-    assert model.solids().size() == 2
-
-
 def test_fused_assembly(tmpdir):
     """
     Exports as simple assembly using the "fused" STEP export mode
@@ -131,41 +105,12 @@ def test_fused_not_touching_assembly(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        export_mode=exporters.assembly.ExportModes.FUSED,
+        exportMode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
     model = importers.importStep(step_path)
     assert model.solids().size() == 2
-
-
-def test_nested_simplified_assembly(tmpdir):
-    """
-    Tests a nested assembly being exported with a simple hierarchy.
-    The resulting STEP is imported again to test it.
-    """
-    # Create the nested assembly
-    assy = Assembly()
-    body = Workplane().box(10, 10, 10)
-    assy.add(body, color=Color(1, 0, 0), name="body")
-    pins = Assembly()
-    pin1 = Workplane().center(8, 8).cylinder(radius=2, height=20)
-    pin2 = Workplane().center(-8, -8).cylinder(radius=2, height=20)
-    pins.add(pin1, color=Color(0, 1, 0), name="pin1")
-    pins.add(pin2, color=Color(0, 0, 1), name="pin2")
-    assy.add(pins, name="pins")
-
-    # Export the assembly
-    step_path = os.path.join(tmpdir, "nested_simplified_assembly.step")
-    assy.save(
-        path=str(step_path),
-        exportType=exporters.ExportTypes.STEP,
-        export_mode=exporters.assembly.ExportModes.SIMPLIFIED,
-    )
-
-    # Import the assembly and make sure it acts as expected
-    model = importers.importStep(step_path)
-    assert model.solids().size() == 3
 
 
 def test_nested_fused_assembly(tmpdir):
@@ -189,7 +134,7 @@ def test_nested_fused_assembly(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        export_mode=exporters.assembly.ExportModes.FUSED,
+        exportMode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -212,7 +157,7 @@ def test_fused_assembly_with_one_part(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        export_mode=exporters.assembly.ExportModes.SIMPLIFIED,
+        exportMode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -238,7 +183,7 @@ def test_fused_assembly_glue_tol(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        export_mode=exporters.assembly.ExportModes.FUSED,
+        exportMode=exporters.assembly.ExportModes.FUSED,
         fuzzy_tol=0.1,
         glue=True,
     )

@@ -124,7 +124,7 @@ the documentation for that method.
 Exporting Assemblies to STEP
 #############################
 
-It is possible to export CadQuery assemblies directly to STEP. The STEP exporter has several options which change the way
+It is possible to export CadQuery assemblies directly to STEP. The STEP exporter has multiple options which change the way
 exported STEP files will appear and operate when opened in other CAD programs. All assembly export methods shown here will
 preserve the color information from the assembly.
 
@@ -150,25 +150,6 @@ export with all defaults is shown below.
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
 
-Simplified Hierarchy
----------------------
-
-The following will export an assembly to a STEP file with a shallow hierarchy, and will preserve both the names and colors
-of each assembly object.
-
-.. code-block:: python
-    import cadquery as cq
-
-    # Create a sample assembly
-    assy = cq.Assembly()
-    body = cq.Workplane().box(10, 10, 10)
-    assy.add(body, color=cq.Color(1, 0, 0), name="body")
-    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
-    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
-
-    # Save the assembly to STEP
-    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.SIMPLIFIED)
-
 Fused
 ------
 
@@ -192,13 +173,14 @@ fused solids.
 Naming
 -------
 
-It is also possible to set the name of the top level assembly object in the STEP file with either the SIMPLIFIED or FUSED method.
-That name is set by adding the "assembly_name" option when calling save.
+It is also possible to set the name of the top level assembly object in the STEP file with either the DEFAULT or FUSED methods.
+This is done by setting the name property of the assembly before calling :py:meth:`Assembly.save`.
 
 .. code-block:: python
-    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED, assembly_name="my_assembly")
+    assy = Assembly(name="my_assembly")
+    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
 
-If an assembly name is not specified, the default of "CQ assembly" will be used.
+If an assembly name is not specified, a UUID will be used to avoid name conflicts.
 
 Exporting SVG
 ###############
