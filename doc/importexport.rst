@@ -261,7 +261,7 @@ Options
     See `Approximation strategy`_.
 ``doc_units``
     Ezdxf document/modelspace :doc:`units <ezdxf-stable:concepts/units>`.
-    See `Approximation strategy`_.
+    See `Units`_.
 
 .. code-block:: python
     :caption: DXF document without options.
@@ -279,8 +279,21 @@ Options
 Units
 -----
 
-The default DXF document units are mm (:code:`doc_units = 4`), however the document units can be set to any
-:doc:`unit supported by ezdxf <ezdxf-stable:concepts/units>`.
+The default DXF document units are mm (:code:`doc_units = 4`).
+
+========= ===============
+doc_units Unit
+========= ===============
+0         Unitless
+1         Inches
+2         Feet
+3         Miles
+4         Millimeters
+5         Centimeters
+6         Meters
+========= ===============
+
+Document units can be set to any :doc:`unit supported by ezdxf <ezdxf-stable:concepts/units>`.
 
 .. code-block:: python
     :caption: DXF document with units set to meters.

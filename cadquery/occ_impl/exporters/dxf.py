@@ -108,7 +108,7 @@ class DxfDocument:
             doc_metadata[key] = value
 
     def add_layer(
-        self, name: str, *, color: int = 1, linetype: str = "CONTINUOUS"
+        self, name: str, *, color: int = 7, linetype: str = "CONTINUOUS"
     ) -> Self:
         """Create a layer definition
 
@@ -116,7 +116,8 @@ class DxfDocument:
         :doc:`ezdxf layer tutorial <ezdxf-stable:tutorials/layers>`.
 
         :param name: layer definition name
-        :param color: ezdxf color
+        :param color: color index. Standard colors include:
+            1 red, 2 yellow, 3 green, 4 cyan, 5 blue, 6 magenta, 7 white/black
         :param linetype: ezdxf :doc:`line type <ezdxf-stable:concepts/linetypes>`
         """
         self.document.layers.add(name, color=color, linetype=linetype)
@@ -280,7 +281,7 @@ class DxfDocument:
         )
 
         # need to apply the transform on the geometry level
-        spline.Transform(plane.fG.wrapped.Trsf())
+        spline.Transform(adaptor.Trsf())
 
         order = spline.Degree() + 1
         knots = list(spline.KnotSequence())
