@@ -38,6 +38,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
     "cadquery.cq_directive",
     "sphinx.ext.mathjax",
     "sphinx_autodoc_multimethod",
@@ -212,6 +213,11 @@ html_show_sphinx = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = "CadQuerydoc"
 
+# -- Options for intersphinx --------------------------------------------------
+
+intersphinx_mapping = {
+    "ezdxf-stable": ("https://ezdxf.readthedocs.io/en/stable/", None),
+}
 
 # -- Options for LaTeX output --------------------------------------------------
 
