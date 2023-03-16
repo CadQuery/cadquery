@@ -48,7 +48,7 @@ To get started playing around with CadQuery and see it's capabilities, take a lo
 There are currently 4 different ways to use CadQuery for designing your next project:
 * Using the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor)
 * From a [Jupyter notebook](https://github.com/bernhard-42/jupyter-cadquery)
-* Using the [OCP CAD Viewer VSCode extension]((https://github.com/bernhard-42/vscode-ocp-cad-viewer)
+* Using the [OCP CAD Viewer VSCode extension](https://github.com/bernhard-42/vscode-ocp-cad-viewer)
    * Please note that the CadQuery VSCode extension available in the marketplace by roipoussiere does not work with CadQuery2 and is discontinued!
    * The OCP CAD Viewer extension handles installation of CadQuery itself, so follow the extension installation instructions rather than this README if you want to use CadQuery in VSCode.
 * As a standalone library
