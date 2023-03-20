@@ -545,6 +545,12 @@ class Assembly(object):
         """
 
         shape_list = []
+
+        # Handle a shape that was set when the Assembly was initialized
+        if self.obj != None:
+            shape_list.append(self.obj.val())
+
+        # Add the shapes contained within this assembly
         shape_list.extend(self.shapes)
         for child in self.children:
             shape_list.extend(child.toShapeList())

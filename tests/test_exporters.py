@@ -201,6 +201,56 @@ def test_fused_assembly_glue_tol(tmpdir):
     assert model.solids().size() == 2
 
 
+def test_fused_assembly_top_level_only(tmpdir):
+    """
+    Tests the assembly with only a top level shape and no children.
+    The resulting STEP is imported again to test it.
+    """
+
+    # Create the assembly
+    body = Workplane().box(10, 10, 10)
+    assy = Assembly(body)
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "top_level_only_fused_assembly.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        exportMode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 1
+
+
+def test_fused_assembly_top_level_with_children(tmpdir):
+    """
+    Tests the assembly with a top level shape and multiple children.
+    The resulting STEP is imported again to test it.
+    """
+
+    # Create the assembly
+    body = Workplane().box(10, 10, 10)
+    assy = Assembly(body)
+    mark = Workplane().center(3, 3).cylinder(radius=1, height=10)
+    assy.add(mark, color=Color(1, 0, 0), name="mark")
+    pin = Workplane().center(-5, -5).cylinder(radius=2, height=20)
+    assy.add(pin, color=Color(0, 1, 0), name="pin")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "top_level_with_children_fused_assembly.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        exportMode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 1
+
+
 class TestDxfDocument(BaseTest):
     """Test class DxfDocument."""
 

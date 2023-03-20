@@ -344,16 +344,35 @@ def toFusedCAF(
 
         # Return the doc early because there is nothing else to add
         return doc
+    # Handle a top level object set directly in the Assembly constructor with no children
+    elif assy.obj != None and len(children) == 0:
+        top_level_shape = assy.obj.val().wrapped
+
+        # All that needs to be done is to add the input shape, set its name, and set its color
+        top_level_lbl = shape_tool.AddShape(top_level_shape, False)
+        TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
+        if assy.color:
+            color_tool.SetColor(top_level_lbl, assy.color.wrapped, XCAFDoc_ColorGen)
+
+        # Return the doc early because there is nothing else to add
+        return doc
     else:
-        # Add base shape(s)
-        for shape in children[0].toShapeList():
-            args.Append(shape.wrapped)
+        # Handle a top level object set directly in the Assembly constructor
+        top_level_found = False
+        if assy.obj != None:
+            # Add base shape(s) to fuse to
+            args.Append(assy.obj.val().wrapped)
+            top_level_found = True
+        else:
+            # Add base shape(s)
+            for shape in children[0].toShapeList():
+                args.Append(shape.wrapped)
 
         # Add all other shapes as tools
         i = 0
         for child in assy.children:
             # Make sure we add the assembly parts other than the base
-            if i == 0:
+            if i == 0 and not top_level_found:
                 i += 1
                 continue
 
