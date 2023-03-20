@@ -118,6 +118,10 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
+    def obj(self) -> AssemblyObjects:
+        ...
+
+    @property
     def shapes(self) -> Iterable[Shape]:
         ...
 
@@ -330,57 +334,30 @@ def toFusedCAF(
 
     # If there is only one solid, there is no reason to fuse, and it will likely cause problems anyway
     top_level_shape = None
-    children = cast(List, assy.children)
-    if len(children) == 1 and len(children[0].shapes) == 1:
-        top_level_shape = children[0].shapes[0].wrapped
 
-        # All that needs to be done is to add the input shape, set its name, and set its color
-        top_level_lbl = shape_tool.AddShape(top_level_shape, False)
-        TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
-        if children[0].color:
-            color_tool.SetColor(
-                top_level_lbl, children[0].color.wrapped, XCAFDoc_ColorGen
-            )
+    # Handle a top level object that was added during Assembly initialization
+    if assy.obj != None:
+        # If we do not have an arg yet, add this as the first.
+        if args.IsEmpty():
+            args.Append(cast(Shape, cast(Workplane, assy.obj).val()).wrapped)
 
-        # Return the doc early because there is nothing else to add
-        return doc
-    # Handle a top level object set directly in the Assembly constructor with no children
-    elif assy.obj != None and len(children) == 0:
-        top_level_shape = assy.obj.val().wrapped
-
-        # All that needs to be done is to add the input shape, set its name, and set its color
-        top_level_lbl = shape_tool.AddShape(top_level_shape, False)
-        TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
-        if assy.color:
-            color_tool.SetColor(top_level_lbl, assy.color.wrapped, XCAFDoc_ColorGen)
-
-        # Return the doc early because there is nothing else to add
-        return doc
-    else:
-        # Handle a top level object set directly in the Assembly constructor
-        top_level_found = False
-        if assy.obj != None:
-            # Add base shape(s) to fuse to
-            args.Append(assy.obj.val().wrapped)
-            top_level_found = True
+    # Handle the children of the assembly
+    for child in assy.children:
+        # If there are no args yet, add the first shape to that list, otherwise make the shapes tools
+        if args.IsEmpty():
+            for i, shape in enumerate(child.toShapeList()):
+                if i == 0:
+                    args.Append(shape.wrapped)
+                else:
+                    tools.Append(shape.wrapped)
         else:
-            # Add base shape(s)
-            for shape in children[0].toShapeList():
-                args.Append(shape.wrapped)
-
-        # Add all other shapes as tools
-        i = 0
-        for child in assy.children:
-            # Make sure we add the assembly parts other than the base
-            if i == 0 and not top_level_found:
-                i += 1
-                continue
-
             for shape in child.toShapeList():
                 tools.Append(shape.wrapped)
 
-            i += 1
-
+    # If the tools are empty, it means we only had a single shape and do not need to fuse
+    if tools.IsEmpty():
+        top_level_shape = args.First()
+    else:
         # Allow the caller to configure the fuzzy and glue settings
         if tol:
             fuse_op.SetFuzzyValue(tol)

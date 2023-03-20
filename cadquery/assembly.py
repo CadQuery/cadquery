@@ -544,11 +544,11 @@ class Assembly(object):
         the assembly to a file format such as STEP.
         """
 
-        shape_list = []
+        shape_list: List[Shape] = []
 
         # Handle a shape that was set when the Assembly was initialized
         if self.obj != None:
-            shape_list.append(self.obj.val())
+            shape_list.append(cast(Shape, cast(Workplane, self.obj).val()))
 
         # Add the shapes contained within this assembly
         shape_list.extend(self.shapes)
