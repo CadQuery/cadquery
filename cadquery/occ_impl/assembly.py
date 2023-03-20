@@ -355,7 +355,11 @@ def toFusedCAF(
                 tools.Append(shape.wrapped)
 
     # If the tools are empty, it means we only had a single shape and do not need to fuse
-    if tools.IsEmpty():
+    if args.IsEmpty():
+        raise Exception(
+            "Error: A top level shape of assembly " + assy_name + " is not present."
+        )
+    elif tools.IsEmpty():
         top_level_shape = args.First()
     else:
         # Allow the caller to configure the fuzzy and glue settings
@@ -369,12 +373,6 @@ def toFusedCAF(
         fuse_op.Build()
 
         top_level_shape = fuse_op.Shape()
-
-    # If the top level shape is still none, something is wrong
-    if top_level_shape == None or top_level_shape.IsNull():
-        raise Exception(
-            "Error: The top level shape of assembly " + assy_name + " is not valid."
-        )
 
     # Add the fused shape as the top level object in the document
     top_level_lbl = shape_tool.AddShape(top_level_shape, False)

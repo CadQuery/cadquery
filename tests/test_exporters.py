@@ -251,6 +251,44 @@ def test_fused_assembly_top_level_with_children(tmpdir):
     assert model.solids().size() == 1
 
 
+def test_fused_empty_assembly(tmpdir):
+    """
+    Tests that a save of an empty fused assembly will fail.
+    """
+    # Create the assembly
+    assy = Assembly()
+
+    # Make sure an export with no top level shape raises an exception
+    with pytest.raises(Exception):
+        # Export the assembly
+        step_path = os.path.join(tmpdir, "empty_fused_assembly.step")
+        assy.save(
+            path=str(step_path),
+            exportType=exporters.ExportTypes.STEP,
+            exportMode=exporters.assembly.ExportModes.FUSED,
+        )
+
+
+def test_fused_invalid_mode(tmpdir):
+    """
+    Tests that an exception is raised when a user passes a bad mode
+    for assembly export to STEP.
+    """
+    # Create the assembly
+    body = Workplane().box(10, 10, 10)
+    assy = Assembly(body)
+
+    # Make sure an export with an invalid export mode raises an exception
+    with pytest.raises(Exception):
+        # Export the assembly
+        step_path = os.path.join(tmpdir, "invalid_mode_fused_assembly.step")
+        assy.save(
+            path=str(step_path),
+            exportType=exporters.ExportTypes.STEP,
+            exportMode="INCORRECT",
+        )
+
+
 class TestDxfDocument(BaseTest):
     """Test class DxfDocument."""
 

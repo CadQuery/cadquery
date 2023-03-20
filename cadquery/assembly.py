@@ -456,7 +456,9 @@ class Assembly(object):
 
         # Make sure the export mode setting is correct
         if exportMode not in ["DEFAULT", "FUSED"]:
-            raise ValueError("Unknown assembly export mode for STEP")
+            raise ValueError(
+                'Unknown assembly export mode "' + exportMode + '" for STEP'
+            )
 
         if exportType is None:
             t = path.split(".")[-1].upper()
