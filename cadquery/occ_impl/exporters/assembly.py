@@ -30,17 +30,17 @@ from ..geom import Location
 
 
 class ExportModes:
-    DEFAULT = "DEFAULT"
-    FUSED = "FUSED"
+    DEFAULT = "default"
+    FUSED = "fused"
 
 
-STEPExportModeLiterals = Literal["DEFAULT", "FUSED"]
+STEPExportModeLiterals = Literal["default", "fused"]
 
 
 def exportAssembly(
     assy: AssemblyProtocol,
     path: str,
-    exportMode: STEPExportModeLiterals = "DEFAULT",
+    exportMode: STEPExportModeLiterals = "default",
     **kwargs
 ) -> bool:
     """
@@ -50,8 +50,8 @@ def exportAssembly(
 
     :param assy: assembly
     :param path: Path and filename for writing
-    :param exportMode: STEP export mode. The options are DEFAULT (the current _toCAF method),
-        and FUSED (a single fused compound). It is possible that fused mode may exhibit low performance.
+    :param exportMode: STEP export mode. The options are default (the current _toCAF method),
+        and fused (a single fused compound). It is possible that fused mode may exhibit low performance.
     :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
         If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
     :type write_pcurves: bool
@@ -77,9 +77,9 @@ def exportAssembly(
     assembly_name = assy.name if assy.name else str(uuid.uuid1())
 
     # Handle the doc differently based on which mode we are using
-    if exportMode == "FUSED":
-        doc = toFusedCAF(assy, assembly_name, glue, fuzzy_tol)
-    else:  # Includes "DEFAULT"
+    if exportMode == "fused":
+        _, doc = toFusedCAF(assy, assembly_name, glue, fuzzy_tol)
+    else:  # Includes "default"
         _, doc = toCAF(assy, True)
 
     session = XSControl_WorkSession()

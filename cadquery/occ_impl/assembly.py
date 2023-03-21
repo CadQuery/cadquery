@@ -308,7 +308,7 @@ def toFusedCAF(
     assy_name: str,
     glue: Optional[bool] = False,
     tol: Optional[float] = None,
-) -> TDocStd_Document:
+) -> Tuple[TDF_Label, TDocStd_Document]:
     """
     Converts the assembly to a fused compound and saves that within the document
     to be exported in a way that preserves the face colors. Because of the use of
@@ -356,9 +356,7 @@ def toFusedCAF(
 
     # If the tools are empty, it means we only had a single shape and do not need to fuse
     if args.IsEmpty():
-        raise Exception(
-            "Error: A top level shape of assembly " + assy_name + " is not present."
-        )
+        raise Exception(f"Error: Assembly {assy_name} has no shapes.")
     elif tools.IsEmpty():
         top_level_shape = args.First()
     else:
@@ -418,4 +416,4 @@ def toFusedCAF(
                             color_tool.SetColor(
                                 cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
                             )
-    return doc
+    return top_level_lbl, doc
