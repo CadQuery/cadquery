@@ -132,9 +132,6 @@ class AssemblyProtocol(Protocol):
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 
-    def toShapeList(self) -> List[Shape]:
-        ...
-
 
 def setName(l: TDF_Label, name: str, tool):
 

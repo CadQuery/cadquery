@@ -549,25 +549,6 @@ class Assembly(object):
 
         return Compound.makeCompound(shapes).locate(self.loc)
 
-    def toShapeList(self) -> List[Shape]:
-        """
-        Returns a list of all the shapes in the Assembly. This is most useful when exporting
-        the assembly to a file format such as STEP.
-        """
-
-        shape_list: List[Shape] = []
-
-        # Handle a shape that was set when the Assembly was initialized
-        if self.obj != None:
-            shape_list.append(cast(Shape, cast(Workplane, self.obj).val()))
-
-        # Add the shapes contained within this assembly
-        shape_list.extend(self.shapes)
-        for child in self.children:
-            shape_list.extend(child.toShapeList())
-
-        return shape_list
-
     def _repr_javascript_(self):
         """
         Jupyter 3D representation support
