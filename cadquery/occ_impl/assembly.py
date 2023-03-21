@@ -335,31 +335,22 @@ def toFusedCAF(
     # If there is only one solid, there is no reason to fuse, and it will likely cause problems anyway
     top_level_shape = None
 
-    # Handle a top level object that was added during Assembly initialization
-    if assy.obj != None:
-        # If we do not have an arg yet, add this as the first.
-        if args.IsEmpty():
-            args.Append(cast(Shape, cast(Workplane, assy.obj).val()).wrapped)
-
-    # Handle the children of the assembly
-    for child in assy.children:
-        # If there are no args yet, add the first shape to that list, otherwise make the shapes tools
-        if args.IsEmpty():
-            for i, shape in enumerate(child.toShapeList()):
-                if i == 0:
-                    args.Append(shape.wrapped)
-                else:
-                    tools.Append(shape.wrapped)
-        else:
-            for shape in child.toShapeList():
-                tools.Append(shape.wrapped)
+    # Walk the entire assembly, collecting the shapes
+    for _, part in assy.traverse():
+        for shape in part.shapes:
+            tools.Append(shape.wrapped)
 
     # If the tools are empty, it means we only had a single shape and do not need to fuse
-    if args.IsEmpty():
+    if tools.IsEmpty():
         raise Exception(f"Error: Assembly {assy_name} has no shapes.")
-    elif tools.IsEmpty():
-        top_level_shape = args.First()
+    elif tools.Size() == 1:
+        # There is only one shape and we do not need to do the fuse
+        top_level_shape = tools.First()
     else:
+        # Set the shape lists up so that the fuse operation can be performed
+        args.Append(tools.First())
+        tools.RemoveFirst()
+
         # Allow the caller to configure the fuzzy and glue settings
         if tol:
             fuse_op.SetFuzzyValue(tol)
@@ -377,8 +368,8 @@ def toFusedCAF(
     TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
 
     # Walk the assembly->part->shape->face hierarchy and add subshapes for all the faces
-    for part in assy.children:
-        for shape in part.toShapeList():
+    for _, part in assy.traverse():
+        for shape in part.shapes:
             for face in shape.Faces():
                 # Check for modified faces
                 modded_list = fuse_op.Modified(face.wrapped)
