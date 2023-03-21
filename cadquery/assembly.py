@@ -1,5 +1,16 @@
 from functools import reduce
-from typing import Union, Optional, List, Dict, Any, overload, Tuple, Iterator, cast
+from typing import (
+    Union,
+    Optional,
+    List,
+    Dict,
+    Any,
+    overload,
+    Tuple,
+    Iterator,
+    cast,
+    get_args,
+)
 from typing_extensions import Literal
 from typish import instance_of
 from uuid import uuid1 as uuid
@@ -455,7 +466,7 @@ class Assembly(object):
         """
 
         # Make sure the export mode setting is correct
-        if exportMode not in typing.get_args(STEPExportModeLiterals):
+        if exportMode not in get_args(STEPExportModeLiterals):
             raise ValueError(
                 'Unknown assembly export mode "' + exportMode + '" for STEP'
             )
