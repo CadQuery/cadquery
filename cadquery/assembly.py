@@ -455,7 +455,7 @@ class Assembly(object):
         """
 
         # Make sure the export mode setting is correct
-        if exportMode not in ["DEFAULT", "FUSED"]:
+        if exportMode not in typing.get_args(STEPExportModeLiterals):
             raise ValueError(
                 'Unknown assembly export mode "' + exportMode + '" for STEP'
             )
