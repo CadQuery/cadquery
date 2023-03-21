@@ -374,7 +374,7 @@ def toFusedCAF(
                 # If there are no modified faces associated with this face, treat it as-is
                 if not modded_list:
                     # Avoid adding the shape if there are no faces
-                    if shape_tool.IsSubShape(top_level_lbl, face.wrapped):
+                    if shape_tool.IsSubShape(top_level_lbl, face.wrapped) and not shape_tool.IsDeleted(face.wrapped):
                         # Add the face as a subshape
                         cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
 
