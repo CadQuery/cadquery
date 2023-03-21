@@ -386,7 +386,7 @@ def toFusedCAF(
                 modded_list = fuse_op.Modified(face.wrapped)
 
                 # If there are no modified faces associated with this face, treat it as-is
-                if modded_list.Size() == 0:
+                if not modded_list:
                     # Avoid adding the shape if there are no faces
                     if shape_tool.IsSubShape(top_level_lbl, face.wrapped):
                         # Add the face as a subshape
