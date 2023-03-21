@@ -468,7 +468,7 @@ class Assembly(object):
         # Make sure the export mode setting is correct
         if exportMode not in get_args(STEPExportModeLiterals):
             raise ValueError(
-                'Unknown assembly export mode "' + exportMode + '" for STEP'
+                f'Unknown assembly export mode {exportMode} for STEP'
             )
 
         if exportType is None:
