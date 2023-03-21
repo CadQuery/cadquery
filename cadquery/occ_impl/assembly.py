@@ -410,7 +410,7 @@ def toFusedCAF(
 
                 # Handle generated faces
                 gen_list = fuse_op.Generated(face.wrapped)
-                if gen_list.Size() > 0:
+                if gen_list:
                     for gen in gen_list:
                         # Add the face as a subshape and set its color to match the parent assembly component
                         cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
