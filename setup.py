@@ -36,11 +36,9 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "path",
     ]
 
-    setup_reqs = ["setuptools_scm"]
 
 setup(
     name="cadquery",
-    use_scm_version=True,
     version="2.3.0dev",  # Update this for the next release
     url="https://github.com/CadQuery/cadquery",
     license="Apache Public License 2.0",
