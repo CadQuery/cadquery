@@ -11,10 +11,10 @@ build:
 
 requirements:
   build:
-    - python >= 3.8
+    - python >=3.8
     - setuptools
   run:
-    - python >= 3.8
+    - python >=3.8
     - ocp 7.7.*
     - pyparsing >=2.1.9
     - ezdxf
