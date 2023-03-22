@@ -23,8 +23,6 @@ parameters:
 jobs:
 - ${{ each minor in parameters.minor }}:
   - template: conda-build.yml@templates
-
-  - template: conda-build.yml@templates
     parameters:
       name: Windows
       vmImage: 'windows-latest'
