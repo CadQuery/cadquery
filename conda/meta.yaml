@@ -6,15 +6,15 @@ source:
   path: ..
 
 build:
-  string: {{ 'py'+environ.get('PYTHON_VERSION')}}
+  noarch: python
   script: python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
   build:
-    - python {{ environ.get('PYTHON_VERSION') }}
+    - python >= 3.8
     - setuptools
   run:
-    - python {{ environ.get('PYTHON_VERSION') }}
+    - python >= 3.8
     - ocp 7.7.*
     - pyparsing >=2.1.9
     - ezdxf
