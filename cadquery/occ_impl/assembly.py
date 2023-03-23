@@ -373,12 +373,16 @@ def toFusedCAF(
                 gen_list = fuse_op.Generated(face.wrapped)
 
                 # See if the face can be treated as-is
-                if not modded_list and not gen_list and not fuse_op.IsDeleted(face.wrapped):
+                if (
+                    not modded_list
+                    and not gen_list
+                    and not fuse_op.IsDeleted(face.wrapped)
+                ):
                     # Add the face as a subshape
                     cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
 
                     # Set the subshape's color to match the parent assembly component
-                    if part.color:
+                    if part.color and not cur_lbl.IsNull():
                         color_tool.SetColor(
                             cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
                         )
@@ -388,7 +392,7 @@ def toFusedCAF(
                         for mod in modded_list:
                             # Add the face as a subshape and set its color to match the parent assembly component
                             cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
-                            if part.color:
+                            if part.color and not cur_lbl.IsNull():
                                 color_tool.SetColor(
                                     cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
                                 )
@@ -398,7 +402,7 @@ def toFusedCAF(
                         for gen in gen_list:
                             # Add the face as a subshape and set its color to match the parent assembly component
                             cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
-                            if part.color:
+                            if part.color and not cur_lbl.IsNull():
                                 color_tool.SetColor(
                                     cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
                                 )
