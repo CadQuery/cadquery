@@ -332,21 +332,36 @@ def toFusedCAF(
     # If there is only one solid, there is no reason to fuse, and it will likely cause problems anyway
     top_level_shape = None
 
-    # Walk the entire assembly, collecting the shapes
-    for _, part in assy.traverse():
-        for shape in part.shapes:
-            tools.Append(shape.wrapped)
+    # Walk the entire assembly, collecting the located shapes and colors
+    shapes = []
+    colors = []
+
+    def extract_shapes(assy, parent_loc=None, parent_color=None):
+
+        loc = parent_loc * assy.loc if parent_loc else assy.loc
+        color = assy.color if assy.color else parent_color
+
+        for shape in assy.shapes:
+            shapes.append(shape.locate(loc))
+            colors.append(color)
+
+        for ch in assy.children:
+            extract_shapes(ch, loc, color)
+
+    extract_shapes(assy)
 
     # If the tools are empty, it means we only had a single shape and do not need to fuse
-    if tools.IsEmpty():
+    if not shapes:
         raise Exception(f"Error: Assembly {assy_name} has no shapes.")
-    elif tools.Size() == 1:
+    elif len(shapes) == 1:
         # There is only one shape and we do not need to do the fuse
-        top_level_shape = tools.First()
+        top_level_shape = shapes[0].wrapped
     else:
         # Set the shape lists up so that the fuse operation can be performed
-        args.Append(tools.First())
-        tools.RemoveFirst()
+        args.Append(shapes[0].wrapped)
+
+        for shape in shapes[1:]:
+            tools.Append(shape.wrapped)
 
         # Allow the caller to configure the fuzzy and glue settings
         if tol:
@@ -365,42 +380,29 @@ def toFusedCAF(
     TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
 
     # Walk the assembly->part->shape->face hierarchy and add subshapes for all the faces
-    for _, part in assy.traverse():
-        for shape in part.shapes:
-            for face in shape.Faces():
-                # See if the face can be treated as-is
-                cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
-                if (
-                    part.color
-                    and not cur_lbl.IsNull()
-                    and not fuse_op.IsDeleted(face.wrapped)
-                ):
-                    color_tool.SetColor(cur_lbl, part.color.wrapped, XCAFDoc_ColorGen)
+    for color, shape in zip(colors, shapes):
+        for face in shape.Faces():
+            # See if the face can be treated as-is
+            cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
+            if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(face.wrapped):
+                color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
 
-                # Handle any modified faces
-                modded_list = fuse_op.Modified(face.wrapped)
-                if modded_list:
-                    for mod in modded_list:
-                        # Add the face as a subshape and set its color to match the parent assembly component
-                        cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
-                        if (
-                            part.color
-                            and not cur_lbl.IsNull()
-                            and not fuse_op.IsDeleted(mod)
-                        ):
-                            color_tool.SetColor(
-                                cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
-                            )
+            # Handle any modified faces
+            modded_list = fuse_op.Modified(face.wrapped)
 
-                # Handle any generated faces
-                gen_list = fuse_op.Generated(face.wrapped)
-                if gen_list:
-                    for gen in gen_list:
-                        # Add the face as a subshape and set its color to match the parent assembly component
-                        cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
-                        if part.color and not cur_lbl.IsNull():
-                            color_tool.SetColor(
-                                cur_lbl, part.color.wrapped, XCAFDoc_ColorGen
-                            )
+            for mod in modded_list:
+                # Add the face as a subshape and set its color to match the parent assembly component
+                cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
+                if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(mod):
+                    color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+
+            # Handle any generated faces
+            gen_list = fuse_op.Generated(face.wrapped)
+
+            for gen in gen_list:
+                # Add the face as a subshape and set its color to match the parent assembly component
+                cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
+                if color and not cur_lbl.IsNull():
+                    color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
 
     return top_level_lbl, doc
