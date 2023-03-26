@@ -236,7 +236,7 @@ def test_fused_assembly_top_level_with_children(tmpdir):
     mark = Workplane().center(3, 3).cylinder(radius=1, height=10)
     assy.add(mark, color=Color(1, 0, 0), name="mark")
     pin = Workplane().center(-5, -5).cylinder(radius=2, height=20)
-    assy.add(pin, color=Color(0, 1, 0), name="pin")
+    assy.add(pin, loc=Location(Vector(0, 0, 15)), color=Color(0, 1, 0), name="pin")
 
     # Export the assembly
     step_path = os.path.join(tmpdir, "top_level_with_children_fused_assembly.step")
@@ -249,6 +249,7 @@ def test_fused_assembly_top_level_with_children(tmpdir):
     # Import the assembly and make sure it acts as expected
     model = importers.importStep(step_path)
     assert model.solids().size() == 1
+    assert model.faces(">Z").val().Center().z == approx(25)
 
 
 def test_fused_empty_assembly(tmpdir):
