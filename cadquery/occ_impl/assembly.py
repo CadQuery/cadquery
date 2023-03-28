@@ -342,7 +342,7 @@ def toFusedCAF(
         color = assy.color if assy.color else parent_color
 
         for shape in assy.shapes:
-            shapes.append(shape.moved(loc))
+            shapes.append(shape.moved(loc).copy())
             colors.append(color)
 
         for ch in assy.children:
