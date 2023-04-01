@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List, cast
+from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List
 from typing_extensions import Protocol
 from math import degrees
 
@@ -10,8 +10,6 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
-from OCP.TopoDS import TopoDS_Compound
-from OCP.BRep import BRep_Tool, BRep_Builder
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum
@@ -23,7 +21,7 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 from .geom import Location
-from .shapes import Shape, Compound, Solid
+from .shapes import Shape, Compound
 from .exporters.vtk import toString
 from ..cq import Workplane
 
@@ -354,8 +352,13 @@ def toFusedCAF(
     if not shapes:
         raise Exception(f"Error: Assembly {assy_name} has no shapes.")
     elif len(shapes) == 1:
-        # There is only one shape and we do not need to do the fuse
-        top_level_shape = shapes[0].wrapped
+        # There is only one shape and we only need to make sure it is a Compound
+        # This is seems to be needed to be able to add subshapes (i.e. faces) correctly
+        shape = shapes[0]
+        if shape.ShapeType() != "Compound":
+            top_level_shape = Compound.makeCompound((shape,)).wrapped
+        else:
+            top_level_shape = shape.wrapped
     else:
         # Set the shape lists up so that the fuse operation can be performed
         args.Append(shapes[0].wrapped)
