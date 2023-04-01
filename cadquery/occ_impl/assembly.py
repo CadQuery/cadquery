@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List
+from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List, cast
 from typing_extensions import Protocol
 from math import degrees
 
@@ -13,6 +13,7 @@ from OCP.Quantity import Quantity_ColorRGBA
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum
+from OCP.TopoDS import TopoDS_Shape
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -331,7 +332,7 @@ def toFusedCAF(
     top_level_shape = None
 
     # Walk the entire assembly, collecting the located shapes and colors
-    shapes = []
+    shapes: List[Shape] = []
     colors = []
 
     def extract_shapes(assy, parent_loc=None, parent_color=None):
@@ -348,17 +349,20 @@ def toFusedCAF(
 
     extract_shapes(assy)
 
+    # Initialize with a dummy value for mypy
+    top_level_shape = cast(TopoDS_Shape, None)
+
     # If the tools are empty, it means we only had a single shape and do not need to fuse
     if not shapes:
         raise Exception(f"Error: Assembly {assy_name} has no shapes.")
     elif len(shapes) == 1:
         # There is only one shape and we only need to make sure it is a Compound
         # This is seems to be needed to be able to add subshapes (i.e. faces) correctly
-        shape = shapes[0]
-        if shape.ShapeType() != "Compound":
-            top_level_shape = Compound.makeCompound((shape,)).wrapped
+        sh = shapes[0]
+        if sh.ShapeType() != "Compound":
+            top_level_shape = Compound.makeCompound((sh,)).wrapped
         else:
-            top_level_shape = shape.wrapped
+            top_level_shape = sh.wrapped
     else:
         # Set the shape lists up so that the fuse operation can be performed
         args.Append(shapes[0].wrapped)
