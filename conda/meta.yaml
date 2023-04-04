@@ -15,7 +15,8 @@ requirements:
     - setuptools
   run:
     - python >=3.8
-    - ocp 7.7.*
+    - ocp 7.7.0
+    - occt 7.7.0
     - pyparsing >=2.1.9
     - ezdxf
     - ipython
