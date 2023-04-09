@@ -2188,7 +2188,7 @@ class Wire(Shape, Mixin1D):
         return cls(w)
 
     def stitch(self, other: "Wire") -> "Wire":
-        """Attempt to stich wires"""
+        """Attempt to stitch wires"""
 
         wire_builder = BRepBuilderAPI_MakeWire()
         wire_builder.Add(TopoDS.Wire_s(self.wrapped))

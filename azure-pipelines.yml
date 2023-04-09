@@ -18,29 +18,10 @@ parameters:
   - name: minor
     type: object
     default:
-      - 8
-      - 9
-      - 10
       - 11
 
 jobs:
 - ${{ each minor in parameters.minor }}:
-  - template: conda-build.yml@templates
-    parameters:
-      name: Linux
-      vmImage: 'ubuntu-18.04'
-      py_maj: 3
-      py_min: ${{minor}}
-      conda_bld: 3.21.6
-
-  - template: conda-build.yml@templates
-    parameters:
-      name: macOS
-      vmImage: 'macOS-10.15'
-      py_maj: 3
-      py_min: ${{minor}}
-      conda_bld: 3.21.6
-
   - template: conda-build.yml@templates
     parameters:
       name: Windows
