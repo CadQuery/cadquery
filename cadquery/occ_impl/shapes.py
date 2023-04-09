@@ -545,8 +545,10 @@ class Shape(object):
         The return values depend on the type of the shape:
 
         | Vertex:  always 'Vertex'
-        | Edge:   LINE, ARC, CIRCLE, SPLINE
-        | Face:   PLANE, SPHERE, CONE
+        | Edge:   LINE, CIRCLE, ELLIPSE, HYPERBOLA, PARABOLA, BEZIER, 
+        |         BSPLINE, OFFSET, OTHER
+        | Face:   PLANE, CYLINDER, CONE, SPHERE, TORUS, BEZIER, BSPLINE, 
+        |         REVOLUTION, EXTRUSION, OFFSET, OTHER
         | Solid:  'Solid'
         | Shell:  'Shell'
         | Compound: 'Compound'
