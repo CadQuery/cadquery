@@ -78,7 +78,7 @@ def exportAssembly(
 
     # Handle the doc differently based on which mode we are using
     if exportMode == "fused":
-        _, doc = toFusedCAF(assy, assembly_name, glue, fuzzy_tol)
+        _, doc = toFusedCAF(assy, glue, fuzzy_tol)
     else:  # Includes "default"
         _, doc = toCAF(assy, True)
 

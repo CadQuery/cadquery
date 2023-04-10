@@ -300,10 +300,7 @@ def toJSON(
 
 
 def toFusedCAF(
-    assy: AssemblyProtocol,
-    assy_name: str,
-    glue: Optional[bool] = False,
-    tol: Optional[float] = None,
+    assy: AssemblyProtocol, glue: bool = False, tol: Optional[float] = None,
 ) -> Tuple[TDF_Label, TDocStd_Document]:
     """
     Converts the assembly to a fused compound and saves that within the document
@@ -311,7 +308,6 @@ def toFusedCAF(
     boolean operations in this method, performance may be slow in some cases.
 
     :param assy: Assembly that is being converted to a fused compound for the document.
-    :param assy_name: Label that is applied to the top level object in the document.
     """
 
     # Prepare the document
@@ -354,15 +350,17 @@ def toFusedCAF(
 
     # If the tools are empty, it means we only had a single shape and do not need to fuse
     if not shapes:
-        raise Exception(f"Error: Assembly {assy_name} has no shapes.")
+        raise Exception(f"Error: Assembly {assy.name} has no shapes.")
     elif len(shapes) == 1:
         # There is only one shape and we only need to make sure it is a Compound
-        # This is seems to be needed to be able to add subshapes (i.e. faces) correctly
+        # This seems to be needed to be able to add subshapes (i.e. faces) correctly
         sh = shapes[0]
         if sh.ShapeType() != "Compound":
             top_level_shape = Compound.makeCompound((sh,)).wrapped
-        else:
-            top_level_shape = sh.wrapped
+        elif sh.ShapeType() == "Compound":
+            sh = sh.fuse(glue=glue, tol=tol)
+            top_level_shape = Compound.makeCompound((sh,)).wrapped
+            shapes = [sh]
     else:
         # Set the shape lists up so that the fuse operation can be performed
         args.Append(shapes[0].wrapped)
@@ -384,7 +382,7 @@ def toFusedCAF(
 
     # Add the fused shape as the top level object in the document
     top_level_lbl = shape_tool.AddShape(top_level_shape, False)
-    TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy_name))
+    TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy.name))
 
     # Walk the assembly->part->shape->face hierarchy and add subshapes for all the faces
     for color, shape in zip(colors, shapes):

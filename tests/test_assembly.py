@@ -149,6 +149,31 @@ def simple_assy2():
 
 
 @pytest.fixture
+def single_compound0_assy():
+
+    b0 = cq.Workplane().rect(1, 2).extrude(3, both=True)
+
+    assy = cq.Assembly(name="single_compound0")
+    assy.add(b0, color=cq.Color(1, 0, 0, 0.8))
+
+    return assy
+
+
+@pytest.fixture
+def single_compound1_assy():
+
+    b0 = cq.Workplane().circle(1).extrude(2)
+    b1 = cq.Workplane().circle(1).extrude(-2)
+
+    assy = cq.Assembly(name="single_compound1")
+    assy.add(
+        cq.Compound.makeCompound([b0.val(), b1.val()]), color=cq.Color(1, 0, 0, 0.8)
+    )
+
+    return assy
+
+
+@pytest.fixture
 def boxes0_assy():
 
     b0 = cq.Workplane().box(1, 1, 1)
@@ -246,6 +271,18 @@ def boxes7_assy():
         color=cq.Color(0.23, 0.26, 0.26, 0.6),
         loc=cq.Location((2, 0, 0)),
     )
+
+    return assy
+
+
+@pytest.fixture
+def spheres0_assy():
+
+    b0 = cq.Workplane().sphere(1)
+
+    assy = cq.Assembly(name="spheres0")
+    assy.add(b0, name="a", color=cq.Color(1, 0, 0, 0.2))
+    assy.add(b0, name="b", color=cq.Color(0, 1, 0, 0.2), loc=cq.Location((2.1, 0, 0)))
 
     return assy
 
@@ -872,18 +909,102 @@ def test_colors_assy1(assy_fixture, expected, request, tmpdir):
                     {"center": (0, 0, 0.5), "color": (0, 1, 0, 1)},
                 ]
             },
-        )
+        ),
+        (
+            "single_compound0_assy",
+            {
+                "name": "single_compound0",
+                "faces": [
+                    {"center": (-0.5, 0, 0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0.5, 0, 0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, -1.0, 0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 1.0, 0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, -3.0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, 3.0), "color": (1, 0, 0, 0.8)},
+                ],
+            },
+        ),
+        (
+            "single_compound1_assy",
+            {
+                "faces": [
+                    {"center": (0, 0, -1.0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, 1.0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, -2.0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, 2.0), "color": (1, 0, 0, 0.8)},
+                ]
+            },
+        ),
+        (
+            "spheres0_assy",
+            {
+                "faces": [
+                    {"center": (0, 0, 0), "color": (1, 0, 0, 0.2)},
+                    {"center": (2.1, 0, 0), "color": (0, 1, 0, 0.2)},
+                ]
+            },
+        ),
+        (
+            "boxes2_assy",
+            {
+                "faces": [
+                    {"center": (-0.5, 0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (0, -0.5, 0), "color": (1, 0, 0, 1)},
+                    {"center": (0, 0, 0.5), "color": (1, 0, 0, 1)},
+                    {"center": (0, 0.5, 0), "color": (1, 0, 0, 1)},
+                    {"center": (0, 0, -0.5), "color": (1, 0, 0, 1)},
+                    {"center": (1.0, -0.5, 0), "color": (0, 1, 0, 1)},
+                    {"center": (1.0, 0, 0.5), "color": (0, 1, 0, 1)},
+                    {"center": (1.0, 0.5, 0), "color": (0, 1, 0, 1)},
+                    {"center": (1.0, 0, -0.5), "color": (0, 1, 0, 1)},
+                    {"center": (1.5, 0, 0), "color": (0, 1, 0, 1)},
+                ]
+            },
+        ),
+        (
+            "chassis0_assy",
+            {
+                "faces": [
+                    # wheel
+                    {"center": (-40.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-45.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-55.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-60.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    # wheel
+                    {"center": (40.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (45.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (55.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (60.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    # axle
+                    {"center": (-20.0, 50.0, 0), "color": (0, 1, 0, 1)},
+                    {"center": (20.0, 50.0, 0), "color": (0, 1, 0, 1)},
+                    # wheel
+                    {"center": (-40.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-45.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-55.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-60.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    # wheel
+                    {"center": (40.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (45.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (55.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (60.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    # axle
+                    {"center": (-20.0, -50.0, 0), "color": (0, 1, 0, 1)},
+                    {"center": (20.0, -50.0, 0), "color": (0, 1, 0, 1)},
+                ]
+            },
+        ),
     ],
 )
 def test_colors_fused_assy(assy_fixture, expected, request, tmpdir):
     def check_nodes(doc, expected):
         nodes = get_doc_nodes(doc, False)
-        node_faces = []
-        for n in nodes:
-            node_faces.extend(n["faces"])
+        assert len(nodes) == 1
         count_face = 0
+        if "name" in expected:
+            assert expected["name"] == nodes[0]["name"]
         for props in expected["faces"]:
-            for props_doc in node_faces:
+            for props_doc in nodes[0]["faces"]:
                 if (
                     pytest.approx(props["center"], abs=1e-6) == props_doc["center"]
                     and pytest.approx(props["color"], abs=1e-3) == props_doc["color"]
