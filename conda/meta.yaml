@@ -6,6 +6,7 @@ source:
   path: ..
 
 build:
+  string: {{ GIT_DESCRIBE_TAG }}_{{ GIT_BUILD_STR }}
   noarch: python
   script: python setup.py install --single-version-externally-managed --record=record.txt
 
