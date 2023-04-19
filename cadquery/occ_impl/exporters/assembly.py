@@ -60,8 +60,7 @@ def exportAssembly(
     :type precision_mode: int
     :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
     :type fuzzy_tol: float
-    :param glue: Glue setting used only for fused assembly export. Can be used to improve performance, but only for
-        non-overlapping shapes.
+    :param glue: Glue setting used only for fused assembly export.
     :type glue: bool
     """
 
