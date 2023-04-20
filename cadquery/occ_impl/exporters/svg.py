@@ -12,26 +12,22 @@ from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
 DISCRETIZATION_TOLERANCE = 1e-3
 
-SVG_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   width="%(width)s"
-   height="%(height)s"
-
->
-    <g transform="scale(%(unitScale)s, -%(unitScale)s)   translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s"  fill="none">
-       <!-- hidden lines -->
-       <g  stroke="rgb(%(hiddenColor)s)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
+SVG_TEMPLATE = """<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<svg baseProfile="tiny" version="1.2" width="%(width)s" height="%(height)s" xmlns:cc="http://creativecommons.org/ns#" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:svg="http://www.w3.org/2000/svg">
+ <title>CadQuery SVG Export</title>      
+ <desc>Page exported from CadQuery document</desc>
+ <defs/>
+ <g id="DrawingContent" stroke-linejoin="bevel" stroke-linecap="square" stroke="black" fill="none" fill-rule="evenodd" stroke-width="%(strokeWidth)s">
+  <!-- hidden lines -->
+  <g  stroke="rgb(%(hiddenColor)s)" fill="none" stroke-dasharray="%(strokeWidth)s,%(strokeWidth)s" >
 %(hiddenContent)s
-       </g>
-
-       <!-- solid lines -->
-       <g  stroke="rgb(%(strokeColor)s)" fill="none">
+  </g>
+  <!-- solid lines -->
+  <g  stroke="rgb(%(strokeColor)s)" fill="none">
 %(visibleContent)s
-       </g>
-    </g>
-    %(axesIndicator)s
+  </g>
+ </g>
+%(axesIndicator)s
 </svg>
 """
 
@@ -51,35 +47,12 @@ AXES_TEMPLATE = """<g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255
         -->
     </g>"""
 
-PATHTEMPLATE = '\t\t\t<path d="%s" />\n'
+PATHTEMPLATE = '   <g stroke-opacity="1" stroke-linejoin="bevel" font-style="normal" stroke-linecap="square" font-family="MS Shell Dlg 2" stroke="rgb(%(strokeColor)s)" fill="none" font-weight="400" transform="scale(%(unitScale)s, %(unitScale)s) translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s" font-size="55.5625">\n    <path vector-effect="none" d="%(path)s" fill-rule="evenodd"/>\n   </g>\n'
 
 
 class UNITS:
     MM = "mm"
     IN = "in"
-
-
-def guessUnitOfMeasure(shape):
-    """
-    Guess the unit of measure of a shape.
-    """
-    bb = BoundBox._fromTopoDS(shape.wrapped)
-
-    dimList = [bb.xlen, bb.ylen, bb.zlen]
-    # no real part would likely be bigger than 10 inches on any side
-    if max(dimList) > 10:
-        return UNITS.MM
-
-    # no real part would likely be smaller than 0.1 mm on all dimensions
-    if min(dimList) < 0.1:
-        return UNITS.IN
-
-    # no real part would have the sum of its dimensions less than about 5mm
-    if sum(dimList) < 10:
-        return UNITS.IN
-
-    return UNITS.MM
-
 
 def makeSVGedge(e):
     """
@@ -125,7 +98,7 @@ def getPaths(visibleShapes, hiddenShapes):
     return (hiddenPaths, visiblePaths)
 
 
-def getSVG(shape, opts=None):
+def getSVG(shapes, opts=None):
     """
     Export a shape to SVG text.
 
@@ -150,9 +123,10 @@ def getSVG(shape, opts=None):
 
     # Available options and their defaults
     d = {
+        "unitOfMeasure": UNITS.MM,
         "width": 800,
-        "height": 240,
-        "marginLeft": 200,
+        "height": 500,
+        "marginLeft": 20,
         "marginTop": 20,
         "projectionDir": (-1.75, 1.1, 5),
         "showAxes": True,
@@ -166,9 +140,7 @@ def getSVG(shape, opts=None):
     if opts:
         d.update(opts)
 
-    # need to guess the scale and the coordinate center
-    uom = guessUnitOfMeasure(shape)
-
+    uom = d["unitOfMeasure"]
     width = float(d["width"])
     height = float(d["height"])
     marginLeft = float(d["marginLeft"])
@@ -181,8 +153,10 @@ def getSVG(shape, opts=None):
     showHidden = bool(d["showHidden"])
     focus = float(d["focus"]) if d.get("focus") else None
 
-    hlr = HLRBRep_Algo()
-    hlr.Add(shape.wrapped)
+    hlr = HLRBRep_Algo()    
+
+    for shape in shapes:
+        hlr.Add(shape.wrapped)
 
     coordinate_system = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
 
@@ -234,14 +208,21 @@ def getSVG(shape, opts=None):
 
     # get bounding box -- these are all in 2D space
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
+    print("BoundX: " + str(bb.xlen))
+    print("BoundY: " + str(bb.ylen))
 
     # width pixels for x, height pixels for y
-    unitScale = min(width / bb.xlen * 0.75, height / bb.ylen * 0.75)
+    if uom == UNITS.MM:         
+        unitScale = 3.7795
+    else:
+        unitScale = 91
+        
+    print("uniScaleX: " + str(unitScale))
 
     # compute amount to translate-- move the top left into view
     (xTranslate, yTranslate) = (
         (0 - bb.xmin) + marginLeft / unitScale,
-        (0 - bb.ymax) - marginTop / unitScale,
+        (0 + bb.ymax) + marginTop / unitScale,
     )
 
     # If the user did not specify a stroke width, calculate it based on the unit scale
@@ -254,11 +235,25 @@ def getSVG(shape, opts=None):
     # Prevent hidden paths from being added if the user disabled them
     if showHidden:
         for p in hiddenPaths:
-            hiddenContent += PATHTEMPLATE % p
+            hiddenContent += PATHTEMPLATE % (
+                {
+                    "unitScale": str(unitScale),
+                    "path": str(p)
+                }
+            )
 
     visibleContent = ""
     for p in visiblePaths:
-        visibleContent += PATHTEMPLATE % p
+        visibleContent += PATHTEMPLATE % (
+            {
+                "unitScale": str(unitScale),
+                "xTranslate": str(xTranslate),
+                "yTranslate": str(yTranslate),
+                "strokeWidth": str(strokeWidth),
+                "strokeColor": ",".join([str(x) for x in strokeColor]),
+                "path": str(p)
+            }
+        )
 
     # If the caller wants the axes indicator and is using the default direction, add in the indicator
     if showAxes and projectionDir == (-1.75, 1.1, 5):
