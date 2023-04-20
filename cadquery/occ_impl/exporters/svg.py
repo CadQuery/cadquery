@@ -49,7 +49,6 @@ AXES_TEMPLATE = """<g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255
 
 PATHTEMPLATE = '   <g stroke-opacity="1" stroke-linejoin="bevel" font-style="normal" stroke-linecap="square" font-family="MS Shell Dlg 2" stroke="rgb(%(strokeColor)s)" fill="none" font-weight="400" transform="scale(%(unitScale)s, %(unitScale)s) translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s" font-size="55.5625">\n    <path vector-effect="none" d="%(path)s" fill-rule="evenodd"/>\n   </g>\n'
 
-
 class UNITS:
     MM = "mm"
     IN = "in"
@@ -78,7 +77,6 @@ def makeSVGedge(e):
 
     return cs.getvalue()
 
-
 def getPaths(visibleShapes, hiddenShapes):
     """
     Collects the visible and hidden edges from the CadQuery object.
@@ -96,7 +94,6 @@ def getPaths(visibleShapes, hiddenShapes):
             hiddenPaths.append(makeSVGedge(e))
 
     return (hiddenPaths, visiblePaths)
-
 
 def getSVG(shapes, opts=None):
     """
@@ -208,16 +205,12 @@ def getSVG(shapes, opts=None):
 
     # get bounding box -- these are all in 2D space
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
-    print("BoundX: " + str(bb.xlen))
-    print("BoundY: " + str(bb.ylen))
 
     # width pixels for x, height pixels for y
     if uom == UNITS.MM:         
         unitScale = 3.7795
     else:
         unitScale = 91
-        
-    print("uniScaleX: " + str(unitScale))
 
     # compute amount to translate-- move the top left into view
     (xTranslate, yTranslate) = (
