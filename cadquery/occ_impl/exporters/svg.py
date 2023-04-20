@@ -3,7 +3,6 @@ import io as StringIO
 from ..shapes import Shape, Compound, TOLERANCE
 from ..geom import BoundBox
 
-
 from OCP.gp import gp_Ax2, gp_Pnt, gp_Dir
 from OCP.BRepLib import BRepLib
 from OCP.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
@@ -49,9 +48,11 @@ AXES_TEMPLATE = """<g transform="translate(20,%(textboxY)s)" stroke="rgb(0,0,255
 
 PATHTEMPLATE = '   <g stroke-opacity="1" stroke-linejoin="bevel" font-style="normal" stroke-linecap="square" font-family="MS Shell Dlg 2" stroke="rgb(%(strokeColor)s)" fill="none" font-weight="400" transform="scale(%(unitScale)s, %(unitScale)s) translate(%(xTranslate)s,%(yTranslate)s)" stroke-width="%(strokeWidth)s" font-size="55.5625">\n    <path vector-effect="none" d="%(path)s" fill-rule="evenodd"/>\n   </g>\n'
 
+
 class UNITS:
     MM = "mm"
     IN = "in"
+
 
 def makeSVGedge(e):
     """
@@ -77,6 +78,7 @@ def makeSVGedge(e):
 
     return cs.getvalue()
 
+
 def getPaths(visibleShapes, hiddenShapes):
     """
     Collects the visible and hidden edges from the CadQuery object.
@@ -94,6 +96,7 @@ def getPaths(visibleShapes, hiddenShapes):
             hiddenPaths.append(makeSVGedge(e))
 
     return (hiddenPaths, visiblePaths)
+
 
 def getSVG(shapes, opts=None):
     """
@@ -150,7 +153,7 @@ def getSVG(shapes, opts=None):
     showHidden = bool(d["showHidden"])
     focus = float(d["focus"]) if d.get("focus") else None
 
-    hlr = HLRBRep_Algo()    
+    hlr = HLRBRep_Algo()
 
     for shape in shapes:
         hlr.Add(shape.wrapped)
@@ -207,7 +210,7 @@ def getSVG(shapes, opts=None):
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
     # width pixels for x, height pixels for y
-    if uom == UNITS.MM:         
+    if uom == UNITS.MM:
         unitScale = 3.7795
     else:
         unitScale = 91
@@ -229,10 +232,7 @@ def getSVG(shapes, opts=None):
     if showHidden:
         for p in hiddenPaths:
             hiddenContent += PATHTEMPLATE % (
-                {
-                    "unitScale": str(unitScale),
-                    "path": str(p)
-                }
+                {"unitScale": str(unitScale), "path": str(p)}
             )
 
     visibleContent = ""
@@ -244,18 +244,14 @@ def getSVG(shapes, opts=None):
                 "yTranslate": str(yTranslate),
                 "strokeWidth": str(strokeWidth),
                 "strokeColor": ",".join([str(x) for x in strokeColor]),
-                "path": str(p)
+                "path": str(p),
             }
         )
 
     # If the caller wants the axes indicator and is using the default direction, add in the indicator
     if showAxes and projectionDir == (-1.75, 1.1, 5):
         axesIndicator = AXES_TEMPLATE % (
-            {
-                "unitScale": str(unitScale),
-                "textboxY": str(height - 30),
-                "uom": str(uom)
-            }
+            {"unitScale": str(unitScale), "textboxY": str(height - 30), "uom": str(uom)}
         )
     else:
         axesIndicator = ""
