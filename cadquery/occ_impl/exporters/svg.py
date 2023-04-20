@@ -251,7 +251,11 @@ def getSVG(shapes, opts=None):
     # If the caller wants the axes indicator and is using the default direction, add in the indicator
     if showAxes and projectionDir == (-1.75, 1.1, 5):
         axesIndicator = AXES_TEMPLATE % (
-            {"unitScale": str(unitScale), "textboxY": str(height - 30), "uom": str(uom)}
+            {
+                "unitScale": str(unitScale),
+                "textboxY": str(height - 30),
+                "uom": str(uom)
+            }
         )
     else:
         axesIndicator = ""
