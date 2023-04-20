@@ -232,7 +232,14 @@ def getSVG(shapes, opts=None):
     if showHidden:
         for p in hiddenPaths:
             hiddenContent += PATHTEMPLATE % (
-                {"unitScale": str(unitScale), "path": str(p)}
+                {
+                    "unitScale": str(unitScale),
+                    "xTranslate": str(xTranslate),
+                    "yTranslate": str(yTranslate),
+                    "strokeWidth": str(strokeWidth),
+                    "strokeColor": ",".join([str(x) for x in strokeColor]),
+                    "path": str(p),
+                }
             )
 
     visibleContent = ""
