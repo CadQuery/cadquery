@@ -1,4 +1,5 @@
 .. _importexport:
+.. py:currentmodule:: cadquery
 
 ******************************
 Importing and Exporting Files
@@ -45,10 +46,10 @@ Notes on the Formats
 Importing DXF
 ##############
 
-DXF files can be imported using the :py:meth:`importers.importDXF` method.
+DXF files can be imported using the :meth:`importers.importDXF` method.
 
 .. automethod::
-    cadquery.importers.importDXF
+    importers.importDXF
 
 Importing a DXF profile with default settings and using it within a CadQuery script is shown in the following code.
 
@@ -60,14 +61,14 @@ Importing a DXF profile with default settings and using it within a CadQuery scr
         cq.importers.importDXF("/path/to/dxf/circle.dxf").wires().toPending().extrude(10)
     )
 
-Note the use of the :py:meth:`Workplane.wires` and :py:meth:`Workplane.toPending` methods to make the DXF profile 
+Note the use of the :meth:`Workplane.wires` and :meth:`Workplane.toPending` methods to make the DXF profile
 ready for use during subsequent operations. Calling ``toPending()`` tells CadQuery to make the edges/wires available 
 to the next modelling operation that is called in the chain.
 
 Importing STEP
 ###############
 
-STEP files can be imported using the :py:meth:`importers.importStep` method (note the capitalization of "Step"). 
+STEP files can be imported using the :meth:`importers.importStep` method (note the capitalization of "Step").
 There are no parameters for this method other than the file path to import.
 
 .. code-block:: python
@@ -109,20 +110,27 @@ not recognize the file extension. In that case the export type has to be specifi
     # Export the box
     cq.exporters.export(box, "/path/to/step/box.stp", cq.exporters.ExportTypes.STEP)
 
+    # The export type may also be specified as a literal
+    cq.exporters.export(box, "/path/to/step/box2.stp", "STEP")
+
 Setting Extra Options
 ----------------------
 
-There are multiple options that can be set when exporting an object to a STEP file, but those can only be accessed by calling
-the :py:meth:`Shape.exportSTEP`` method on the lower level CadQuery object. For an explanation of the options available, see
-the documentation for that method.
+There are additional options that can be set when exporting an object to a STEP file.
+For an explanation of the options available, see the documentation of the :meth:`Shape.exportStep` method
+or the :meth:`Assembly.exportAssembly`` method.
 
 .. code-block:: python
 
     # Create a simple object
     box = cq.Workplane().box(10, 10, 10)
 
-    # Export the box
-    box.val().exportStep("/path/to/step/box.step", write_pcurves=True, precision_mode=1)
+    # Export the box, provide additional options with the opt dict
+    cq.exporters.export(box, "/path/to/step/box.step", opt={"write_pcurves": False})
+
+    # or equivalently when exporting a lower level Shape object
+    box.val().exportStep("/path/to/step/box2.step", write_pcurves=False)
+
 
 Exporting Assemblies to STEP
 #############################
@@ -134,7 +142,7 @@ preserve the color information from the assembly.
 Default
 --------
 
-CadQuery assemblies have a :py:meth:`Assembly.save` method which can write an assembly to a STEP file. An example assembly
+CadQuery assemblies have a :meth:`Assembly.save` method which can write an assembly to a STEP file. An example assembly
 export with all defaults is shown below.
 
 .. code-block:: python
@@ -173,18 +181,21 @@ fused solids.
     assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
     # Save the assembly to STEP
-    assy.save("out.stp", "STEP", export_mode="fused")
+    assy.save("out.stp", "STEP", exportMode="fused")
+
+    # Specify additional options such as glue as keyword arguments
+    assy.save("out_glue.step", exportMode="fused", glue=True, write_pcurves=False)
 
 Naming
 -------
 
 It is also possible to set the name of the top level assembly object in the STEP file with either the DEFAULT or FUSED methods.
-This is done by setting the name property of the assembly before calling :py:meth:`Assembly.save`.
+This is done by setting the name property of the assembly before calling :meth:`Assembly.save`.
 
 .. code-block:: python
 
     assy = Assembly(name="my_assembly")
-    assy.save("out.stp", exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
+    assy.save("out.stp", cq.exporters.ExportTypes.STEP, exportMode=cq.exporters.assembly.ExportModes.FUSED)
 
 If an assembly name is not specified, a UUID will be used to avoid name conflicts.
 

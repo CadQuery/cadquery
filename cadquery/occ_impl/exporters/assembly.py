@@ -50,14 +50,8 @@ def exportAssembly(
 
     :param assy: assembly
     :param path: Path and filename for writing
-    :param exportMode: STEP export mode. The options are default (the current _toCAF method),
-        and fused (a single fused compound). It is possible that fused mode may exhibit low performance.
-    :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
-        If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
-    :type write_pcurves: bool
-    :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
-        See OCCT documentation.
-    :type precision_mode: int
+    :param exportMode: STEP export mode. The options are "default", and "fused" (a single fused compound).
+        It is possible that fused mode may exhibit low performance.
     :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
     :type fuzzy_tol: float
     :param glue: Enable gluing mode for improved performance during fused assembly export.
@@ -65,6 +59,12 @@ def exportAssembly(
         Note that when glue is enabled, the resulting fused shape may be invalid if shapes are intersecting in an incompatible way.
         Defaults to False.
     :type glue: bool
+    :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
+        If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
+    :type write_pcurves: bool
+    :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
+        See OCCT documentation.
+    :type precision_mode: int
     """
 
     # Handle the extra settings for the STEP export
