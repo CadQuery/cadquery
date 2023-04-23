@@ -88,6 +88,7 @@ The exporters module handles exporting Workplane objects to STEP. It is not nece
 since it will be determined from the file extension. Below is an example.
 
 .. code-block:: python
+
     # Create a simple object
     box = cq.Workplane().box(10, 10, 10)
 
@@ -101,6 +102,7 @@ If there is a requirement to export the STEP file using an "stp" extension, CadQ
 not recognize the file extension. In that case the export type has to be specified.
 
 .. code-block:: python
+
     # Create a simple object
     box = cq.Workplane().box(10, 10, 10)
 
@@ -115,6 +117,7 @@ the :py:meth:`Shape.exportSTEP`` method on the lower level CadQuery object. For 
 the documentation for that method.
 
 .. code-block:: python
+
     # Create a simple object
     box = cq.Workplane().box(10, 10, 10)
 
@@ -135,6 +138,7 @@ CadQuery assemblies have a :py:meth:`Assembly.save` method which can write an as
 export with all defaults is shown below.
 
 .. code-block:: python
+
     import cadquery as cq
 
     # Create a sample assembly
@@ -145,7 +149,7 @@ export with all defaults is shown below.
     assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
     # Save the assembly to STEP
-    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP)
+    assy.save('out.step')
 
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
@@ -158,6 +162,7 @@ object. The process of fusing the solid may cause performance issues in some cas
 fused solids.
 
 .. code-block:: python
+
     import cadquery as cq
 
     # Create a sample assembly
@@ -168,7 +173,7 @@ fused solids.
     assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
     # Save the assembly to STEP
-    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
+    assy.save("out.stp", "STEP", export_mode="fused")
 
 Naming
 -------
@@ -177,8 +182,9 @@ It is also possible to set the name of the top level assembly object in the STEP
 This is done by setting the name property of the assembly before calling :py:meth:`Assembly.save`.
 
 .. code-block:: python
+
     assy = Assembly(name="my_assembly")
-    assy.save('/path/to/step/output/directory', exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
+    assy.save("out.stp", exporters.ExportTypes.STEP, export_mode=exporters.STEPExportMode.FUSED)
 
 If an assembly name is not specified, a UUID will be used to avoid name conflicts.
 
