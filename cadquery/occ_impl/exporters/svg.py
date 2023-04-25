@@ -103,7 +103,7 @@ def getPaths(visibleShapes, hiddenShapes):
     return (hiddenPaths, visiblePaths)
 
 
-def getSVG(shape, unitOfMeasure = UNITS.MM, opts=None):
+def getSVG(shape, unitOfMeasure=UNITS.MM, opts=None):
     """
     Export a shape to SVG text.
 
@@ -269,7 +269,7 @@ def getSVG(shape, unitOfMeasure = UNITS.MM, opts=None):
     return svg
 
 
-def exportSVG(shape, fileName: str, unitOfMeasure = UNITS.MM, opts=None):
+def exportSVG(shape, fileName: str, unitOfMeasure=UNITS.MM, opts=None):
     """
     Accept a cadquery shape, and export it to the provided file
     TODO: should use file-like objects, not a fileName, and/or be able to return a string instead
