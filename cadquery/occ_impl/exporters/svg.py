@@ -109,6 +109,8 @@ def getSVG(shape, unitOfMeasure = UNITS.MM, opts=None):
 
     :param shape: A CadQuery shape object to convert to an SVG string.
     :type Shape: Vertex, Edge, Wire, Face, Shell, Solid, or Compound.
+    :param unitOfMeasure: The unit of measurement to be used for the svg (mm/inch).
+    :type UNITS: MM, or INCH.
     :param opts: An options dictionary that influences the SVG that is output.
     :type opts: Dictionary, keys are as follows:
         width: Document width of the resulting image.
