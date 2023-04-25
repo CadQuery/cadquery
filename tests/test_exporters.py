@@ -86,7 +86,7 @@ def test_fused_assembly(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        exportMode=exporters.assembly.ExportModes.FUSED,
+        mode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -113,7 +113,7 @@ def test_fused_not_touching_assembly(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        exportMode=exporters.assembly.ExportModes.FUSED,
+        mode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -142,7 +142,7 @@ def test_nested_fused_assembly(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        exportMode=exporters.assembly.ExportModes.FUSED,
+        mode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -165,7 +165,7 @@ def test_fused_assembly_with_one_part(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        exportMode=exporters.assembly.ExportModes.FUSED,
+        mode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -191,7 +191,7 @@ def test_fused_assembly_glue_tol(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        exportMode=exporters.assembly.ExportModes.FUSED,
+        mode=exporters.assembly.ExportModes.FUSED,
         fuzzy_tol=0.1,
         glue=True,
     )
@@ -216,7 +216,7 @@ def test_fused_assembly_top_level_only(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        exportMode=exporters.assembly.ExportModes.FUSED,
+        mode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -243,7 +243,7 @@ def test_fused_assembly_top_level_with_children(tmpdir):
     assy.save(
         path=str(step_path),
         exportType=exporters.ExportTypes.STEP,
-        exportMode=exporters.assembly.ExportModes.FUSED,
+        mode=exporters.assembly.ExportModes.FUSED,
     )
 
     # Import the assembly and make sure it acts as expected
@@ -266,7 +266,7 @@ def test_fused_empty_assembly(tmpdir):
         assy.save(
             path=str(step_path),
             exportType=exporters.ExportTypes.STEP,
-            exportMode=exporters.assembly.ExportModes.FUSED,
+            mode=exporters.assembly.ExportModes.FUSED,
         )
 
 
@@ -286,7 +286,7 @@ def test_fused_invalid_mode(tmpdir):
         assy.save(
             path=str(step_path),
             exportType=exporters.ExportTypes.STEP,
-            exportMode="INCORRECT",
+            mode="INCORRECT",
         )
 
 

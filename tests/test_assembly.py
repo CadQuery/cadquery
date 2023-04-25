@@ -1020,7 +1020,7 @@ def test_colors_fused_assy(assy_fixture, expected, request, tmpdir):
     # repeat color check again - after STEP export round trip
     stepfile = Path(tmpdir, f"{assy_fixture}_fused").with_suffix(".step")
     if not stepfile.exists():
-        assy.save(str(stepfile), exportMode=cq.exporters.assembly.ExportModes.FUSED)
+        assy.save(str(stepfile), mode=cq.exporters.assembly.ExportModes.FUSED)
     doc = read_step(stepfile)
     check_nodes(doc, expected)
 

@@ -40,7 +40,7 @@ STEPExportModeLiterals = Literal["default", "fused"]
 def exportAssembly(
     assy: AssemblyProtocol,
     path: str,
-    exportMode: STEPExportModeLiterals = "default",
+    mode: STEPExportModeLiterals = "default",
     **kwargs
 ) -> bool:
     """
@@ -50,7 +50,7 @@ def exportAssembly(
 
     :param assy: assembly
     :param path: Path and filename for writing
-    :param exportMode: STEP export mode. The options are "default", and "fused" (a single fused compound).
+    :param mode: STEP export mode. The options are "default", and "fused" (a single fused compound).
         It is possible that fused mode may exhibit low performance.
     :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
     :type fuzzy_tol: float
@@ -79,7 +79,7 @@ def exportAssembly(
     assembly_name = assy.name if assy.name else str(uuid.uuid1())
 
     # Handle the doc differently based on which mode we are using
-    if exportMode == "fused":
+    if mode == "fused":
         _, doc = toFusedCAF(assy, glue, fuzzy_tol)
     else:  # Includes "default"
         _, doc = toCAF(assy, True)

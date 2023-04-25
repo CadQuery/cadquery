@@ -449,7 +449,7 @@ class Assembly(object):
         self,
         path: str,
         exportType: Optional[ExportLiterals] = None,
-        exportMode: STEPExportModeLiterals = "default",
+        mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
@@ -466,8 +466,8 @@ class Assembly(object):
         """
 
         # Make sure the export mode setting is correct
-        if exportMode not in get_args(STEPExportModeLiterals):
-            raise ValueError(f"Unknown assembly export mode {exportMode} for STEP")
+        if mode not in get_args(STEPExportModeLiterals):
+            raise ValueError(f"Unknown assembly export mode {mode} for STEP")
 
         if exportType is None:
             t = path.split(".")[-1].upper()
@@ -477,7 +477,7 @@ class Assembly(object):
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path, exportMode, **kwargs)
+            exportAssembly(self, path, mode, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":

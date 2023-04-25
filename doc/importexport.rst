@@ -181,10 +181,10 @@ fused solids.
     assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
     # Save the assembly to STEP
-    assy.save("out.stp", "STEP", exportMode="fused")
+    assy.save("out.stp", "STEP", mode="fused")
 
     # Specify additional options such as glue as keyword arguments
-    assy.save("out_glue.step", exportMode="fused", glue=True, write_pcurves=False)
+    assy.save("out_glue.step", mode="fused", glue=True, write_pcurves=False)
 
 Naming
 -------
@@ -195,7 +195,7 @@ This is done by setting the name property of the assembly before calling :meth:`
 .. code-block:: python
 
     assy = Assembly(name="my_assembly")
-    assy.save("out.stp", cq.exporters.ExportTypes.STEP, exportMode=cq.exporters.assembly.ExportModes.FUSED)
+    assy.save("out.stp", cq.exporters.ExportTypes.STEP, mode=cq.exporters.assembly.ExportModes.FUSED)
 
 If an assembly name is not specified, a UUID will be used to avoid name conflicts.
 
