@@ -197,6 +197,28 @@ class Assembly(object):
         """
         ...
 
+    @overload
+    def add(
+        self,
+        obj: AssemblyObjects,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "Assembly":
+        """
+        Add a subassembly to the current assembly with explicit location and name.
+
+        :param obj: object to be added as a subassembly
+        :param loc: location of the root object (default: None, interpreted as identity
+          transformation)
+        :param name: unique name of the root object (default: None, resulting in an UUID being
+          generated)
+        :param color: color of the added object (default: None)
+        :param metadata: a store for user-defined metadata (default: None)
+        """
+        ...
+
     def add(self, arg, **kwargs):
         """
         Add a subassembly to the current assembly.
@@ -214,6 +236,9 @@ class Assembly(object):
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.metadata = (
+                kwargs["metadata"] if kwargs.get("metadata") else arg.metadata
+            )
             subassy.parent = self
 
             self.children.append(subassy)
