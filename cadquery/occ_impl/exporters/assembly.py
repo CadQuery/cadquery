@@ -1,8 +1,10 @@
 import os.path
+import uuid
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
 from itertools import chain
+from typing_extensions import Literal
 
 from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
 from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
@@ -23,11 +25,24 @@ from OCP.TColStd import TColStd_IndexedDataMapOfStringString
 from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
-from ..assembly import AssemblyProtocol, toCAF, toVTK
+from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 
 
-def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
+class ExportModes:
+    DEFAULT = "default"
+    FUSED = "fused"
+
+
+STEPExportModeLiterals = Literal["default", "fused"]
+
+
+def exportAssembly(
+    assy: AssemblyProtocol,
+    path: str,
+    mode: STEPExportModeLiterals = "default",
+    **kwargs
+) -> bool:
     """
     Export an assembly to a STEP file.
 
@@ -35,8 +50,16 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
 
     :param assy: assembly
     :param path: Path and filename for writing
+    :param mode: STEP export mode. The options are "default", and "fused" (a single fused compound).
+        It is possible that fused mode may exhibit low performance.
+    :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
+    :type fuzzy_tol: float
+    :param glue: Enable gluing mode for improved performance during fused assembly export.
+        This option should only be used for non-intersecting shapes or those that are only touching or partially overlapping.
+        Note that when glue is enabled, the resulting fused shape may be invalid if shapes are intersecting in an incompatible way.
+        Defaults to False.
+    :type glue: bool
     :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
-
         If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
     :type write_pcurves: bool
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
@@ -49,8 +72,17 @@ def exportAssembly(assy: AssemblyProtocol, path: str, **kwargs) -> bool:
     if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
         pcurves = 0
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
+    fuzzy_tol = kwargs["fuzzy_tol"] if "fuzzy_tol" in kwargs else None
+    glue = kwargs["glue"] if "glue" in kwargs else False
 
-    _, doc = toCAF(assy, True)
+    # Use the assembly name if the user set it
+    assembly_name = assy.name if assy.name else str(uuid.uuid1())
+
+    # Handle the doc differently based on which mode we are using
+    if mode == "fused":
+        _, doc = toFusedCAF(assy, glue, fuzzy_tol)
+    else:  # Includes "default"
+        _, doc = toCAF(assy, True)
 
     session = XSControl_WorkSession()
     writer = STEPCAFControl_Writer(session, False)

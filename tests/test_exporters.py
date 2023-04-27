@@ -24,6 +24,7 @@ from cadquery import (
     Plane,
     Location,
     Vector,
+    Color,
 )
 from cadquery.occ_impl.exporters.dxf import DxfDocument
 from cadquery.occ_impl.exporters.utils import toCompound
@@ -65,6 +66,228 @@ def test_step_options(tmpdir):
     # Make sure there was a valid box in the exported file
     assert w.solids().size() == 1
     assert w.faces().size() == 6
+
+
+def test_fused_assembly(tmpdir):
+    """
+    Exports as simple assembly using the "fused" STEP export mode
+    and then imports that STEP again to validate it.
+    """
+
+    # Create the sample assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pin = Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=Color(0, 1, 0), name="pin")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "fused.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        mode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 1
+
+
+def test_fused_not_touching_assembly(tmpdir):
+    """
+    Exports as simple assembly using the "fused" STEP export mode
+    and then imports that STEP again to validate it. This tests whether
+    or not the fuse method correctly handles fusing solids to do not touch.
+    """
+
+    # Create the sample assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pin = Workplane().center(8, 8).cylinder(radius=2, height=20)
+    assy.add(pin, color=Color(0, 1, 0), name="pin")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "fused_not_touching.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        mode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 2
+
+
+def test_nested_fused_assembly(tmpdir):
+    """
+    Tests a nested assembly being exported as a single, fused solid.
+    The resulting STEP is imported again to test it.
+    """
+    # Create the nested assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pins = Assembly()
+    pin1 = Workplane().center(8, 8).cylinder(radius=2, height=20)
+    pin2 = Workplane().center(-8, -8).cylinder(radius=2, height=20)
+    pins.add(pin1, color=Color(0, 1, 0), name="pin1")
+    pins.add(pin2, color=Color(0, 0, 1), name="pin2")
+    assy.add(pins, name="pins")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "nested_fused_assembly.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        mode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 3
+
+
+def test_fused_assembly_with_one_part(tmpdir):
+    """
+    Tests the ability to fuse an assembly with only one part present.
+    The resulting STEP is imported again to test it.
+    """
+    # Create the single-part assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "single_part_fused_assembly.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        mode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 1
+
+
+def test_fused_assembly_glue_tol(tmpdir):
+    """
+    Tests the glue and tol settings of the fused assembly export.
+    The resulting STEP is imported again to test it.
+    """
+
+    # Create the sample assembly
+    assy = Assembly()
+    body = Workplane().box(10, 10, 10)
+    assy.add(body, color=Color(1, 0, 0), name="body")
+    pin = Workplane().center(8, 8).cylinder(radius=2, height=20)
+    assy.add(pin, color=Color(0, 1, 0), name="pin")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "fused_glue_tol.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        mode=exporters.assembly.ExportModes.FUSED,
+        fuzzy_tol=0.1,
+        glue=True,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 2
+
+
+def test_fused_assembly_top_level_only(tmpdir):
+    """
+    Tests the assembly with only a top level shape and no children.
+    The resulting STEP is imported again to test it.
+    """
+
+    # Create the assembly
+    body = Workplane().box(10, 10, 10)
+    assy = Assembly(body)
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "top_level_only_fused_assembly.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        mode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 1
+
+
+def test_fused_assembly_top_level_with_children(tmpdir):
+    """
+    Tests the assembly with a top level shape and multiple children.
+    The resulting STEP is imported again to test it.
+    """
+
+    # Create the assembly
+    body = Workplane().box(10, 10, 10)
+    assy = Assembly(body)
+    mark = Workplane().center(3, 3).cylinder(radius=1, height=10)
+    assy.add(mark, color=Color(1, 0, 0), name="mark")
+    pin = Workplane().center(-5, -5).cylinder(radius=2, height=20)
+    assy.add(pin, loc=Location(Vector(0, 0, 15)), color=Color(0, 1, 0), name="pin")
+
+    # Export the assembly
+    step_path = os.path.join(tmpdir, "top_level_with_children_fused_assembly.step")
+    assy.save(
+        path=str(step_path),
+        exportType=exporters.ExportTypes.STEP,
+        mode=exporters.assembly.ExportModes.FUSED,
+    )
+
+    # Import the assembly and make sure it acts as expected
+    model = importers.importStep(step_path)
+    assert model.solids().size() == 1
+    assert model.faces(">Z").val().Center().z == approx(25)
+
+
+def test_fused_empty_assembly(tmpdir):
+    """
+    Tests that a save of an empty fused assembly will fail.
+    """
+    # Create the assembly
+    assy = Assembly()
+
+    # Make sure an export with no top level shape raises an exception
+    with pytest.raises(Exception):
+        # Export the assembly
+        step_path = os.path.join(tmpdir, "empty_fused_assembly.step")
+        assy.save(
+            path=str(step_path),
+            exportType=exporters.ExportTypes.STEP,
+            mode=exporters.assembly.ExportModes.FUSED,
+        )
+
+
+def test_fused_invalid_mode(tmpdir):
+    """
+    Tests that an exception is raised when a user passes a bad mode
+    for assembly export to STEP.
+    """
+    # Create the assembly
+    body = Workplane().box(10, 10, 10)
+    assy = Assembly(body)
+
+    # Make sure an export with an invalid export mode raises an exception
+    with pytest.raises(Exception):
+        # Export the assembly
+        step_path = os.path.join(tmpdir, "invalid_mode_fused_assembly.step")
+        assy.save(
+            path=str(step_path),
+            exportType=exporters.ExportTypes.STEP,
+            mode="INCORRECT",
+        )
 
 
 class TestDxfDocument(BaseTest):
