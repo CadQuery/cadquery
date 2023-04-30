@@ -72,7 +72,7 @@ conda create -n cadquery
 conda activate cadquery
 
 # Install the latest released version
-conda install -c conda-forge -c cadquery cadquery
+conda install -c conda-forge cadquery occt=7.7.0
 
 # Or install the dev version to get the latest changes
 conda install -c conda-forge -c cadquery cadquery=master
