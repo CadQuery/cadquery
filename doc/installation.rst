@@ -47,17 +47,17 @@ Note that miniforge automatically sets *conda-forge* as the default channel.  ``
 conda
 `````
 
-Install the latest released version of cadquery::
+Install the latest released version of cadquery [#f1]_::
 
     conda create -n cqrel
     conda activate cqrel
-    conda install -c conda-forge cadquery
+    conda install -c conda-forge cadquery occt=7.7.0
 
-or install a given version of cadquery::
+or install a given version of cadquery [#f1]_::
 
     conda create -n cq22
     conda activate cq22
-    conda install -c conda-forge cadquery=2.2.0
+    conda install -c conda-forge cadquery=2.2.0 occt=7.7.0
 
 or install the latest dev version::
 
@@ -119,14 +119,16 @@ Jupyter
 Viewing models in Jupyter is another good option for a GUI.  Models are rendered in the browser.
 
 The cadquery library works out-of-the-box with Jupyter.
-First install cadquery, then install JupyterLab_ in the same conda or Python venv.::
+First install cadquery, then install JupyterLab_ in the same conda or Python venv.:
 
 conda
+
     .. code-block::
 
        conda install -c conda-forge jupyterlab
 
 pip
+
     .. code-block::
 
        pip install jupyterlab
@@ -157,3 +159,9 @@ If all has gone well, you can open a command line/prompt, and type::
       $ cadquery.Workplane('XY').box(1,2,3).toSvg()
 
 You should see raw SVG output displayed on the command line if the CadQuery installation was successful.
+
+
+.. note::
+
+   .. [#f1] Installation of the latest release (version 2.2.0) with conda requires you to specify the version of the OCCT dependency.
+      Typically this is not required as the dependencies are managed automatically.
