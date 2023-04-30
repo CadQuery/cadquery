@@ -1,15 +1,19 @@
-from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List
+from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List, cast
 from typing_extensions import Protocol
 from math import degrees
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType
+from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType, XCAFDoc_ColorGen
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
+from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
+from OCP.TopTools import TopTools_ListOfShape
+from OCP.BOPAlgo import BOPAlgo_GlueEnum
+from OCP.TopoDS import TopoDS_Shape
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -110,6 +114,10 @@ class AssemblyProtocol(Protocol):
 
     @property
     def color(self) -> Optional[Color]:
+        ...
+
+    @property
+    def obj(self) -> AssemblyObjects:
         ...
 
     @property
@@ -289,3 +297,117 @@ def toJSON(
         rv.extend(toJSON(child, loc, color, tolerance))
 
     return rv
+
+
+def toFusedCAF(
+    assy: AssemblyProtocol, glue: bool = False, tol: Optional[float] = None,
+) -> Tuple[TDF_Label, TDocStd_Document]:
+    """
+    Converts the assembly to a fused compound and saves that within the document
+    to be exported in a way that preserves the face colors. Because of the use of
+    boolean operations in this method, performance may be slow in some cases.
+
+    :param assy: Assembly that is being converted to a fused compound for the document.
+    """
+
+    # Prepare the document
+    app = XCAFApp_Application.GetApplication_s()
+    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    app.InitDocument(doc)
+
+    # Shape and color tools
+    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+
+    # To fuse the parts of the assembly together
+    fuse_op = BRepAlgoAPI_Fuse()
+    args = TopTools_ListOfShape()
+    tools = TopTools_ListOfShape()
+
+    # If there is only one solid, there is no reason to fuse, and it will likely cause problems anyway
+    top_level_shape = None
+
+    # Walk the entire assembly, collecting the located shapes and colors
+    shapes: List[Shape] = []
+    colors = []
+
+    def extract_shapes(assy, parent_loc=None, parent_color=None):
+
+        loc = parent_loc * assy.loc if parent_loc else assy.loc
+        color = assy.color if assy.color else parent_color
+
+        for shape in assy.shapes:
+            shapes.append(shape.moved(loc).copy())
+            colors.append(color)
+
+        for ch in assy.children:
+            extract_shapes(ch, loc, color)
+
+    extract_shapes(assy)
+
+    # Initialize with a dummy value for mypy
+    top_level_shape = cast(TopoDS_Shape, None)
+
+    # If the tools are empty, it means we only had a single shape and do not need to fuse
+    if not shapes:
+        raise Exception(f"Error: Assembly {assy.name} has no shapes.")
+    elif len(shapes) == 1:
+        # There is only one shape and we only need to make sure it is a Compound
+        # This seems to be needed to be able to add subshapes (i.e. faces) correctly
+        sh = shapes[0]
+        if sh.ShapeType() != "Compound":
+            top_level_shape = Compound.makeCompound((sh,)).wrapped
+        elif sh.ShapeType() == "Compound":
+            sh = sh.fuse(glue=glue, tol=tol)
+            top_level_shape = Compound.makeCompound((sh,)).wrapped
+            shapes = [sh]
+    else:
+        # Set the shape lists up so that the fuse operation can be performed
+        args.Append(shapes[0].wrapped)
+
+        for shape in shapes[1:]:
+            tools.Append(shape.wrapped)
+
+        # Allow the caller to configure the fuzzy and glue settings
+        if tol:
+            fuse_op.SetFuzzyValue(tol)
+        if glue:
+            fuse_op.SetGlue(BOPAlgo_GlueEnum.BOPAlgo_GlueShift)
+
+        fuse_op.SetArguments(args)
+        fuse_op.SetTools(tools)
+        fuse_op.Build()
+
+        top_level_shape = fuse_op.Shape()
+
+    # Add the fused shape as the top level object in the document
+    top_level_lbl = shape_tool.AddShape(top_level_shape, False)
+    TDataStd_Name.Set_s(top_level_lbl, TCollection_ExtendedString(assy.name))
+
+    # Walk the assembly->part->shape->face hierarchy and add subshapes for all the faces
+    for color, shape in zip(colors, shapes):
+        for face in shape.Faces():
+            # See if the face can be treated as-is
+            cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
+            if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(face.wrapped):
+                color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+
+            # Handle any modified faces
+            modded_list = fuse_op.Modified(face.wrapped)
+
+            for mod in modded_list:
+                # Add the face as a subshape and set its color to match the parent assembly component
+                cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
+                if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(mod):
+                    color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+
+            # Handle any generated faces
+            gen_list = fuse_op.Generated(face.wrapped)
+
+            for gen in gen_list:
+                # Add the face as a subshape and set its color to match the parent assembly component
+                cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
+                if color and not cur_lbl.IsNull():
+                    color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+
+    return top_level_lbl, doc

@@ -1,4 +1,5 @@
 .. _importexport:
+.. py:currentmodule:: cadquery
 
 ******************************
 Importing and Exporting Files
@@ -45,10 +46,10 @@ Notes on the Formats
 Importing DXF
 ##############
 
-DXF files can be imported using the :py:meth:`importers.importDXF` method.
+DXF files can be imported using the :meth:`importers.importDXF` method.
 
 .. automethod::
-    cadquery.importers.importDXF
+    importers.importDXF
 
 Importing a DXF profile with default settings and using it within a CadQuery script is shown in the following code.
 
@@ -60,14 +61,14 @@ Importing a DXF profile with default settings and using it within a CadQuery scr
         cq.importers.importDXF("/path/to/dxf/circle.dxf").wires().toPending().extrude(10)
     )
 
-Note the use of the :py:meth:`Workplane.wires` and :py:meth:`Workplane.toPending` methods to make the DXF profile 
+Note the use of the :meth:`Workplane.wires` and :meth:`Workplane.toPending` methods to make the DXF profile
 ready for use during subsequent operations. Calling ``toPending()`` tells CadQuery to make the edges/wires available 
 to the next modelling operation that is called in the chain.
 
 Importing STEP
 ###############
 
-STEP files can be imported using the :py:meth:`importers.importStep` method (note the capitalization of "Step"). 
+STEP files can be imported using the :meth:`importers.importStep` method (note the capitalization of "Step").
 There are no parameters for this method other than the file path to import.
 
 .. code-block:: python
@@ -76,8 +77,130 @@ There are no parameters for this method other than the file path to import.
 
     result = cq.importers.importStep('/path/to/step/block.stp')
 
+Exporting STEP
+###############
+
+This section covers exporting CadQuery Workplane objects to STEP. For exporting assemblies to STEP, see the next section.
+
+Default
+--------
+
+The exporters module handles exporting Workplane objects to STEP. It is not necessary to set the export type explicitly
+since it will be determined from the file extension. Below is an example.
+
+.. code-block:: python
+
+    # Create a simple object
+    box = cq.Workplane().box(10, 10, 10)
+
+    # Export the box
+    cq.exporters.export(box, "/path/to/step/box.step")
+
+Non-Default File Extensions
+----------------------------
+
+If there is a requirement to export the STEP file using an "stp" extension, CadQuery will throw an error saying that it does
+not recognize the file extension. In that case the export type has to be specified.
+
+.. code-block:: python
+
+    # Create a simple object
+    box = cq.Workplane().box(10, 10, 10)
+
+    # Export the box
+    cq.exporters.export(box, "/path/to/step/box.stp", cq.exporters.ExportTypes.STEP)
+
+    # The export type may also be specified as a literal
+    cq.exporters.export(box, "/path/to/step/box2.stp", "STEP")
+
+Setting Extra Options
+----------------------
+
+There are additional options that can be set when exporting an object to a STEP file.
+For an explanation of the options available, see the documentation of the :meth:`Shape.exportStep` method
+or the :meth:`Assembly.exportAssembly`` method.
+
+.. code-block:: python
+
+    # Create a simple object
+    box = cq.Workplane().box(10, 10, 10)
+
+    # Export the box, provide additional options with the opt dict
+    cq.exporters.export(box, "/path/to/step/box.step", opt={"write_pcurves": False})
+
+    # or equivalently when exporting a lower level Shape object
+    box.val().exportStep("/path/to/step/box2.step", write_pcurves=False)
+
+
+Exporting Assemblies to STEP
+#############################
+
+It is possible to export CadQuery assemblies directly to STEP. The STEP exporter has multiple options which change the way
+exported STEP files will appear and operate when opened in other CAD programs. All assembly export methods shown here will
+preserve the color information from the assembly.
+
+Default
+--------
+
+CadQuery assemblies have a :meth:`Assembly.save` method which can write an assembly to a STEP file. An example assembly
+export with all defaults is shown below.
+
+.. code-block:: python
+
+    import cadquery as cq
+
+    # Create a sample assembly
+    assy = cq.Assembly()
+    body = cq.Workplane().box(10, 10, 10)
+    assy.add(body, color=cq.Color(1, 0, 0), name="body")
+    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+
+    # Save the assembly to STEP
+    assy.save('out.step')
+
+This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
+preserved, but the names that were set for each will not.
+
+Fused
+------
+
+The following will attempt to create a single, fused shape while preserving the name and color information of each assembly
+object. The process of fusing the solid may cause performance issues in some cases, and is likely to alter the faces of the
+fused solids.
+
+.. code-block:: python
+
+    import cadquery as cq
+
+    # Create a sample assembly
+    assy = cq.Assembly()
+    body = cq.Workplane().box(10, 10, 10)
+    assy.add(body, color=cq.Color(1, 0, 0), name="body")
+    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+
+    # Save the assembly to STEP
+    assy.save("out.stp", "STEP", mode="fused")
+
+    # Specify additional options such as glue as keyword arguments
+    assy.save("out_glue.step", mode="fused", glue=True, write_pcurves=False)
+
+Naming
+-------
+
+It is also possible to set the name of the top level assembly object in the STEP file with either the DEFAULT or FUSED methods.
+This is done by setting the name property of the assembly before calling :meth:`Assembly.save`.
+
+.. code-block:: python
+
+    assy = Assembly(name="my_assembly")
+    assy.save("out.stp", cq.exporters.ExportTypes.STEP, mode=cq.exporters.assembly.ExportModes.FUSED)
+
+If an assembly name is not specified, a UUID will be used to avoid name conflicts.
+
 Exporting SVG
-##############
+###############
 
 The SVG exporter has several options which can be useful for achieving the desired final output. Those 
 options are as follows.

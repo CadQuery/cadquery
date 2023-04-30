@@ -1,5 +1,16 @@
 from functools import reduce
-from typing import Union, Optional, List, Dict, Any, overload, Tuple, Iterator, cast
+from typing import (
+    Union,
+    Optional,
+    List,
+    Dict,
+    Any,
+    overload,
+    Tuple,
+    Iterator,
+    cast,
+    get_args,
+)
 from typing_extensions import Literal
 from typish import instance_of
 from uuid import uuid1 as uuid
@@ -21,6 +32,8 @@ from .occ_impl.exporters.assembly import (
     exportVTKJS,
     exportVRML,
     exportGLTF,
+    STEPExportModeLiterals,
+    ExportModes,
 )
 
 from .selectors import _expression_grammar as _selector_grammar
@@ -436,6 +449,7 @@ class Assembly(object):
         self,
         path: str,
         exportType: Optional[ExportLiterals] = None,
+        mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
@@ -451,6 +465,10 @@ class Assembly(object):
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         """
 
+        # Make sure the export mode setting is correct
+        if mode not in get_args(STEPExportModeLiterals):
+            raise ValueError(f"Unknown assembly export mode {mode} for STEP")
+
         if exportType is None:
             t = path.split(".")[-1].upper()
             if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "STL"):
@@ -459,7 +477,7 @@ class Assembly(object):
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path, **kwargs)
+            exportAssembly(self, path, mode, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
         elif exportType == "VRML":

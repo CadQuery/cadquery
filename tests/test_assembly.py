@@ -13,7 +13,9 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVTKJS,
     exportVRML,
 )
-from cadquery.occ_impl.assembly import toJSON, toCAF
+from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
+from cadquery.occ_impl.shapes import Face
+from cadquery.occ_impl.geom import Location
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -31,6 +33,7 @@ from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
 from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
+from OCP.TopAbs import TopAbs_ShapeEnum
 
 
 @pytest.fixture(scope="module")
@@ -146,6 +149,31 @@ def simple_assy2():
 
 
 @pytest.fixture
+def single_compound0_assy():
+
+    b0 = cq.Workplane().rect(1, 2).extrude(3, both=True)
+
+    assy = cq.Assembly(name="single_compound0")
+    assy.add(b0, color=cq.Color(1, 0, 0, 0.8))
+
+    return assy
+
+
+@pytest.fixture
+def single_compound1_assy():
+
+    b0 = cq.Workplane().circle(1).extrude(2)
+    b1 = cq.Workplane().circle(1).extrude(-2)
+
+    assy = cq.Assembly(name="single_compound1")
+    assy.add(
+        cq.Compound.makeCompound([b0.val(), b1.val()]), color=cq.Color(1, 0, 0, 0.8)
+    )
+
+    return assy
+
+
+@pytest.fixture
 def boxes0_assy():
 
     b0 = cq.Workplane().box(1, 1, 1)
@@ -248,6 +276,18 @@ def boxes7_assy():
 
 
 @pytest.fixture
+def spheres0_assy():
+
+    b0 = cq.Workplane().sphere(1)
+
+    assy = cq.Assembly(name="spheres0")
+    assy.add(b0, name="a", color=cq.Color(1, 0, 0, 0.2))
+    assy.add(b0, name="b", color=cq.Color(0, 1, 0, 0.2), loc=cq.Location((2.1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
 def chassis0_assy():
 
     r_wheel = 25
@@ -329,30 +369,50 @@ def get_doc_nodes(doc, leaf=False):
         color_shape = Quantity_ColorRGBA()
         ctool.GetColor(shape, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_shape)
 
-        # on STEP import colors applied to subshapes
+        # on STEP import colors applied to subshapes; and fused export mode
         color_subshapes = None
         color_subshapes_set = set()
-        if not node.IsAssembly and shape.NbChildren() > 1:
+        faces = []
+        if not node.IsAssembly:
             it = TDF_ChildIterator(label)
             i = 0
             while it.More():
                 child = it.Value()
-                color_subshape = Quantity_ColorRGBA()
-                if ctool.GetColor(
-                    child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
-                ):
-                    color_subshapes_set.add(
-                        (
+                child_shape = tool.GetShape_s(child)
+                if child_shape.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
+                    face = Face(child_shape)
+
+                    color_subshape = Quantity_ColorRGBA()
+                    face_color = None
+
+                    if ctool.GetColor(
+                        child, XCAFDoc_ColorType.XCAFDoc_ColorGen, color_subshape
+                    ) or ctool.GetColor(
+                        child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
+                    ):
+                        face_color = (
                             *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
                             color_subshape.Alpha(),
                         )
-                    )
+
+                        faces.append(
+                            {"center": face.Center().toTuple(), "color": face_color}
+                        )
+
+                else:
+                    color_subshape = Quantity_ColorRGBA()
+                    if ctool.GetColor(
+                        child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
+                    ):
+                        color_subshapes_set.add(
+                            (
+                                *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
+                                color_subshape.Alpha(),
+                            )
+                        )
                 it.Next()
-                i += 1
-                if i > 5:
-                    break
-            assert len(color_subshapes_set) == 1
-            color_subshapes = color_subshapes_set.pop()
+            if color_subshapes_set:
+                color_subshapes = color_subshapes_set.pop()
 
         nodes.append(
             {
@@ -364,6 +424,7 @@ def get_doc_nodes(doc, leaf=False):
                     color_shape.Alpha(),
                 ),
                 "color_subshapes": color_subshapes,
+                "faces": faces,
             }
         )
 
@@ -831,6 +892,137 @@ def test_colors_assy1(assy_fixture, expected, request, tmpdir):
         assy.save(str(stepfile))
     doc = read_step(stepfile)
     check_nodes(doc, expected, True)
+
+
+@pytest.mark.parametrize(
+    "assy_fixture, expected",
+    [
+        (
+            "empty_top_assy",
+            {
+                "faces": [
+                    {"center": (-0.5, 0, 0), "color": (0, 1, 0, 1)},
+                    {"center": (0.5, 0, 0), "color": (0, 1, 0, 1)},
+                    {"center": (0, -0.5, 0), "color": (0, 1, 0, 1)},
+                    {"center": (0, 0.5, 0), "color": (0, 1, 0, 1)},
+                    {"center": (0, 0, -0.5), "color": (0, 1, 0, 1)},
+                    {"center": (0, 0, 0.5), "color": (0, 1, 0, 1)},
+                ]
+            },
+        ),
+        (
+            "single_compound0_assy",
+            {
+                "name": "single_compound0",
+                "faces": [
+                    {"center": (-0.5, 0, 0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0.5, 0, 0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, -1.0, 0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 1.0, 0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, -3.0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, 3.0), "color": (1, 0, 0, 0.8)},
+                ],
+            },
+        ),
+        (
+            "single_compound1_assy",
+            {
+                "faces": [
+                    {"center": (0, 0, -1.0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, 1.0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, -2.0), "color": (1, 0, 0, 0.8)},
+                    {"center": (0, 0, 2.0), "color": (1, 0, 0, 0.8)},
+                ]
+            },
+        ),
+        (
+            "spheres0_assy",
+            {
+                "faces": [
+                    {"center": (0, 0, 0), "color": (1, 0, 0, 0.2)},
+                    {"center": (2.1, 0, 0), "color": (0, 1, 0, 0.2)},
+                ]
+            },
+        ),
+        (
+            "boxes2_assy",
+            {
+                "faces": [
+                    {"center": (-0.5, 0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (0, -0.5, 0), "color": (1, 0, 0, 1)},
+                    {"center": (0, 0, 0.5), "color": (1, 0, 0, 1)},
+                    {"center": (0, 0.5, 0), "color": (1, 0, 0, 1)},
+                    {"center": (0, 0, -0.5), "color": (1, 0, 0, 1)},
+                    {"center": (1.0, -0.5, 0), "color": (0, 1, 0, 1)},
+                    {"center": (1.0, 0, 0.5), "color": (0, 1, 0, 1)},
+                    {"center": (1.0, 0.5, 0), "color": (0, 1, 0, 1)},
+                    {"center": (1.0, 0, -0.5), "color": (0, 1, 0, 1)},
+                    {"center": (1.5, 0, 0), "color": (0, 1, 0, 1)},
+                ]
+            },
+        ),
+        (
+            "chassis0_assy",
+            {
+                "faces": [
+                    # wheel
+                    {"center": (-40.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-45.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-55.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-60.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    # wheel
+                    {"center": (40.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (45.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (55.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (60.0, 50.0, 0), "color": (1, 0, 0, 1)},
+                    # axle
+                    {"center": (-20.0, 50.0, 0), "color": (0, 1, 0, 1)},
+                    {"center": (20.0, 50.0, 0), "color": (0, 1, 0, 1)},
+                    # wheel
+                    {"center": (-40.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-45.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-55.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (-60.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    # wheel
+                    {"center": (40.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (45.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (55.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    {"center": (60.0, -50.0, 0), "color": (1, 0, 0, 1)},
+                    # axle
+                    {"center": (-20.0, -50.0, 0), "color": (0, 1, 0, 1)},
+                    {"center": (20.0, -50.0, 0), "color": (0, 1, 0, 1)},
+                ]
+            },
+        ),
+    ],
+)
+def test_colors_fused_assy(assy_fixture, expected, request, tmpdir):
+    def check_nodes(doc, expected):
+        nodes = get_doc_nodes(doc, False)
+        assert len(nodes) == 1
+        count_face = 0
+        if "name" in expected:
+            assert expected["name"] == nodes[0]["name"]
+        for props in expected["faces"]:
+            for props_doc in nodes[0]["faces"]:
+                if (
+                    pytest.approx(props["center"], abs=1e-6) == props_doc["center"]
+                    and pytest.approx(props["color"], abs=1e-3) == props_doc["color"]
+                ):
+                    count_face += 1
+
+        assert len(expected["faces"]) == count_face
+
+    assy = request.getfixturevalue(assy_fixture)
+    _, doc = toFusedCAF(assy, False)
+    check_nodes(doc, expected)
+
+    # repeat color check again - after STEP export round trip
+    stepfile = Path(tmpdir, f"{assy_fixture}_fused").with_suffix(".step")
+    if not stepfile.exists():
+        assy.save(str(stepfile), mode=cq.exporters.assembly.ExportModes.FUSED)
+    doc = read_step(stepfile)
+    check_nodes(doc, expected)
 
 
 def test_constrain(simple_assy, nested_assy):
