@@ -1053,12 +1053,17 @@ class Shape(object):
 
         return Shape.cast(op.Shape())
 
-    def cut(self, *toCut: "Shape") -> "Shape":
+    def cut(self, *toCut: "Shape", tol: Optional[float] = None) -> "Shape":
         """
         Remove the positional arguments from this Shape.
+        
+        :param tol: Fuzzy mode tolerance
         """
 
         cut_op = BRepAlgoAPI_Cut()
+
+        if tol:
+            cut_op.SetFuzzyValue(tol)
 
         return self._bool_op((self,), toCut, cut_op)
 
@@ -1070,7 +1075,7 @@ class Shape(object):
 
         :param glue: Sets the glue option for the algorithm, which allows
             increasing performance of the intersection of the input shapes
-        :param tol: Additional tolerance
+        :param tol: Fuzzy mode tolerance
         """
 
         fuse_op = BRepAlgoAPI_Fuse()
@@ -1083,12 +1088,17 @@ class Shape(object):
 
         return rv
 
-    def intersect(self, *toIntersect: "Shape") -> "Shape":
+    def intersect(self, *toIntersect: "Shape", tol: Optional[float] = None) -> "Shape":
         """
         Intersection of the positional arguments and this Shape.
+        
+        :param tol: Fuzzy mode tolerance
         """
 
         intersect_op = BRepAlgoAPI_Common()
+
+        if tol:
+            intersect_op.SetFuzzyValue(tol)
 
         return self._bool_op((self,), toIntersect, intersect_op)
 
