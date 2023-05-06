@@ -3592,12 +3592,17 @@ class Compound(Shape, Mixin3D):
 
         return TopoDS_Iterator(self.wrapped).More()
 
-    def cut(self, *toCut: Shape) -> "Compound":
+    def cut(self, *toCut: "Shape", tol: Optional[float] = None) -> "Compound":
         """
-        Remove a shape from another one
+        Remove the positional arguments from this Shape.
+        
+        :param tol: Fuzzy mode tolerance
         """
 
         cut_op = BRepAlgoAPI_Cut()
+
+        if tol:
+            cut_op.SetFuzzyValue(tol)
 
         return tcast(Compound, self._bool_op(self, toCut, cut_op))
 
@@ -3626,12 +3631,17 @@ class Compound(Shape, Mixin3D):
 
         return tcast(Compound, rv)
 
-    def intersect(self, *toIntersect: Shape) -> "Compound":
+    def intersect(self, *toIntersect: "Shape", tol: Optional[float] = None) -> "Compound":
         """
-        Construct shape intersection
+        Intersection of the positional arguments and this Shape.
+        
+        :param tol: Fuzzy mode tolerance
         """
 
         intersect_op = BRepAlgoAPI_Common()
+
+        if tol:
+            intersect_op.SetFuzzyValue(tol)
 
         return tcast(Compound, self._bool_op(self, toIntersect, intersect_op))
 
