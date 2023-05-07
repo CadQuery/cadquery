@@ -3631,7 +3631,9 @@ class Compound(Shape, Mixin3D):
 
         return tcast(Compound, rv)
 
-    def intersect(self, *toIntersect: "Shape", tol: Optional[float] = None) -> "Compound":
+    def intersect(
+        self, *toIntersect: "Shape", tol: Optional[float] = None
+    ) -> "Compound":
         """
         Intersection of the positional arguments and this Shape.
         
