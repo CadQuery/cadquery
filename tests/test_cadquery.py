@@ -4610,6 +4610,14 @@ class TestCadQuery(BaseTest):
         self.assertEqual(res_fuzzy.solids().size(), 1)
         self.assertEqual(res_fuzzy2.solids().size(), 1)
 
+        box4 = Workplane("XY", origin=(eps, 0.0)).box(1, 1, 1)
+
+        res_fuzzy_cut = box1.cut(box4, tol=eps)
+        res_fuzzy_intersect = box1.intersect(box4, tol=eps)
+
+        self.assertAlmostEqual(res_fuzzy_cut.val().Volume(), 0)
+        self.assertAlmostEqual(res_fuzzy_intersect.val().Volume(), 1)
+
     def testLocatedMoved(self):
 
         box = Solid.makeBox(1, 1, 1, Vector(-0.5, -0.5, -0.5))
