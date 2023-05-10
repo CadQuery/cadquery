@@ -3331,13 +3331,17 @@ class Workplane(object):
         return self.union(toUnion)
 
     def cut(
-        self: T, toCut: Union["Workplane", Solid, Compound], clean: bool = True
+        self: T,
+        toCut: Union["Workplane", Solid, Compound],
+        clean: bool = True,
+        tol: Optional[float] = None,
     ) -> T:
         """
         Cuts the provided solid from the current solid, IE, perform a solid subtraction.
 
         :param toCut: a solid object, or a Workplane object having a solid
         :param clean: call :meth:`clean` afterwards to have a clean shape
+        :param tol: tolerance value for fuzzy bool operation mode (default None)
         :raises ValueError: if there is no solid to subtract from in the chain
         :return: a Workplane object with the resulting object selected
         """
@@ -3355,7 +3359,7 @@ class Workplane(object):
         else:
             raise ValueError("Cannot cut type '{}'".format(type(toCut)))
 
-        newS = solidRef.cut(*solidToCut)
+        newS = solidRef.cut(*solidToCut, tol=tol)
 
         if clean:
             newS = newS.clean()
@@ -3377,13 +3381,17 @@ class Workplane(object):
         return self.cut(toUnion)
 
     def intersect(
-        self: T, toIntersect: Union["Workplane", Solid, Compound], clean: bool = True,
+        self: T,
+        toIntersect: Union["Workplane", Solid, Compound],
+        clean: bool = True,
+        tol: Optional[float] = None,
     ) -> T:
         """
         Intersects the provided solid from the current solid.
 
         :param toIntersect: a solid object, or a Workplane object having a solid
         :param clean: call :meth:`clean` afterwards to have a clean shape
+        :param tol: tolerance value for fuzzy bool operation mode (default None)
         :raises ValueError: if there is no solid to intersect with in the chain
         :return: a Workplane object with the resulting object selected
         """
@@ -3401,7 +3409,7 @@ class Workplane(object):
         else:
             raise ValueError("Cannot intersect type '{}'".format(type(toIntersect)))
 
-        newS = solidRef.intersect(*solidToIntersect)
+        newS = solidRef.intersect(*solidToIntersect, tol=tol)
 
         if clean:
             newS = newS.clean()

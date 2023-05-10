@@ -4598,6 +4598,7 @@ class TestCadQuery(BaseTest):
 
         eps = 1e-3
 
+        # test fuse
         box1 = Workplane("XY").box(1, 1, 1)
         box2 = Workplane("XY", origin=(1 + eps, 0.0)).box(1, 1, 1)
         box3 = Workplane("XY", origin=(2, 0, 0)).box(1, 1, 1)
@@ -4609,6 +4610,32 @@ class TestCadQuery(BaseTest):
         self.assertEqual(res.solids().size(), 2)
         self.assertEqual(res_fuzzy.solids().size(), 1)
         self.assertEqual(res_fuzzy2.solids().size(), 1)
+
+        # test cut and intersect
+        box4 = Workplane("XY", origin=(eps, 0.0)).box(1, 1, 1)
+
+        res_fuzzy_cut = box1.cut(box4, tol=eps)
+        res_fuzzy_intersect = box1.intersect(box4, tol=eps)
+
+        self.assertAlmostEqual(res_fuzzy_cut.val().Volume(), 0)
+        self.assertAlmostEqual(res_fuzzy_intersect.val().Volume(), 1)
+
+        # test with compounds
+        box1_cmp = Compound.makeCompound(box1.vals())
+        box4_cmp = Compound.makeCompound(box4.vals())
+
+        res_fuzzy_cut_cmp = box1_cmp.cut(box4_cmp, tol=eps)
+        res_fuzzy_intersect_cmp = box1_cmp.intersect(box4_cmp, tol=eps)
+
+        self.assertAlmostEqual(res_fuzzy_cut_cmp.Volume(), 0)
+        self.assertAlmostEqual(res_fuzzy_intersect_cmp.Volume(), 1)
+
+        # test with solids
+        res_fuzzy_cut_val = box1.val().cut(box4.val(), tol=eps)
+        res_fuzzy_intersect_val = box1.val().intersect(box4.val(), tol=eps)
+
+        self.assertAlmostEqual(res_fuzzy_cut_val.Volume(), 0)
+        self.assertAlmostEqual(res_fuzzy_intersect_val.Volume(), 1)
 
     def testLocatedMoved(self):
 
