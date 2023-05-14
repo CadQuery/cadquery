@@ -132,6 +132,17 @@ def metadata_assy():
     )
     assy.add(sub_assy)
 
+    sub_assy2 = cq.Assembly(name="sub2", metadata={"mykey": "sub2-data"})
+    sub_assy2.add(
+        b1, name="sub2-0", loc=cq.Location((1, 0, 0)), metadata={"mykey": "sub2-0-data"}
+    )
+    sub_assy2.add(
+        b1, name="sub2-1", loc=cq.Location((2, 0, 0)), metadata={"mykey": "sub2-1-data"}
+    )
+    assy.add(
+        sub_assy2, metadata={"mykey": "sub2-data-add"}
+    )  # override metadata mykey:sub2-data
+
     return assy
 
 
@@ -488,6 +499,9 @@ def test_metadata(metadata_assy):
     assert len(metadata_assy.metadata) == 2
     # Test that metadata was copied by _copy() during the processing of adding the subassembly
     assert metadata_assy.children[0].metadata["b2"] == "sub-data"
+    assert metadata_assy.children[1].metadata["mykey"] == "sub2-data-add"
+    assert metadata_assy.children[1].children[0].metadata["mykey"] == "sub2-0-data"
+    assert metadata_assy.children[1].children[1].metadata["mykey"] == "sub2-1-data"
 
 
 def solve_result_check(solve_result: dict) -> bool:
