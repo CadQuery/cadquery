@@ -47,7 +47,10 @@ The original version of CadQuery was built on the FreeCAD API. This was great be
 
 To learn more about designing with CadQuery, visit the [documentation](https://cadquery.readthedocs.io/en/latest/intro.html), [examples](https://cadquery.readthedocs.io/en/latest/examples.html), and [cheatsheet](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html).
 
-To get started playing around with CadQuery and see its capabilities, take a look at the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor). This easy-to-use IDE is a great way to get started desiging with CadQuery.
+To get started playing around with CadQuery and see its capabilities, take a look at the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor). This easy-to-use IDE is a great way to get started desiging with CadQuery.  The CQ-editor installer bundles both CQ-editor and CadQuery (recommended).  See the [CQ-editor installation instructions](https://cadquery.readthedocs.io/en/latest/installation.html#adding-a-nicer-gui-via-cq-editor).
+
+
+The CadQuery library (with or without CQ-editor) and its dependencies may be installed using conda, or pip.  Note that conda (or the CQ-editor installer) is the better supported option.
 
 See the documentation for detailed CadQuery [installation instructions](https://cadquery.readthedocs.io/en/latest/installation.html).
 
@@ -55,8 +58,6 @@ There are also videos covering installation:
 
 * Linux [installation video](https://youtu.be/sjLTePOq8bQ)
 * Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
-
-There are two ways to install CadQuery and its dependencies. One is using conda, and the other is using pip.  Note that conda is the better supported option.
 
 ### CadQuery Installation Via Conda
 

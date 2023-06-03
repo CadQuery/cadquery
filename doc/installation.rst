@@ -4,6 +4,8 @@
 Installing CadQuery
 ===================
 
+To install both Cadquery and CQ-Editor together with a single installer see the instructions below `Adding a Nicer GUI via CQ-editor`_.
+
 CadQuery may be installed with either conda or pip.  The conda installation method is the better tested and more mature option.
 
 
@@ -99,6 +101,75 @@ Adding a Nicer GUI via CQ-editor
 
 If you prefer to have a GUI available, your best option is to use
 `CQ-editor <https://github.com/CadQuery/CQ-editor>`_.
+
+
+You can download the newest build `here`_. Install and run the *run.sh* (Linux/MacOS) or *run.bat* (Windows) script in the root CQ-editor directory. The CQ-editor window should launch.
+
+.. _here: https://github.com/CadQuery/CQ-editor/releases/tag/nightly
+
+Linux/MacOS
+```````````
+
+1. Download the installer (.sh script matching OS and platform).
+
+2. Select the script in the file browser and make executable.  Choose **Properties** from the context menu and select **Permissions**, **Allow executing file as a program** (or similar, this step varies depending on OS and window manager).
+
+3. Select the script in the file browser and choose **Run as Program** (or similar).
+
+   Follow the prompts to accept the license and optionally change the installation location.
+
+   The default installation location is ``/home/<username>/cq-editor``.
+
+4. Launch the **run.sh** script from the file brower (again make executable first and then run as program).
+
+
+To install from command line, download the installer using curl or wget or your favorite program and run the script.::
+
+    curl -LO https://github.com/CadQuery/CQ-editor/releases/download/nightly/CQ-editor-master-Linux-x86_64.sh
+    chmod +x CQ-editor-master-Linux-x86_64.sh
+    ./CQ-editor-master-Linux-x86_64.sh
+
+
+To run from command line activate the environment then run cq-editor.::
+
+    source $HOME/cq-editor/bin/activate
+    cq-editor
+    # or
+    cq-editor <script.py>
+
+
+Windows
+```````
+
+1. Download the installer (.exe) and double click it on the file browser.
+
+   Follow the prompts to accept the license and optionally change the installation location.
+
+   The default installation location is ``C:\Users\<username>\cq-editor``.
+
+2. Launch the **run.bat** script from the file brower (select **Open**).
+
+
+To run from command line, activate the environment, then run cq-editor::
+
+    C:\Users\<username>\cq-editor\Scripts\activate
+    cq-editor
+    # or
+    cq-editor <script.py>
+
+
+Installing extra packages
+```````````````````````````
+
+*mamba*, and *pip* are bundled with the CQ-editor installer and available for package installation.
+
+First activate the environment, then call mamba or pip to install additional packages.
+
+
+Adding CQ-editor to an Existing Environment
+--------------------------------------------
+
+You can install CQ-editor into a conda environment or Python virtual environment using conda (mamba) or pip.
 
 Example cq-editor installation with conda (this installs both cadquery and cq-editor)::
 
