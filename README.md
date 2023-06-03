@@ -61,7 +61,7 @@ There are also videos covering installation:
 
 ### CadQuery Installation Via Conda
 
-To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation#install-the-conda-package-manager).
+To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager).
 
 The steps to install cadquery with conda are as follows:
 
