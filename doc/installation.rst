@@ -126,16 +126,12 @@ Linux/MacOS
 To install from command line, download the installer using curl or wget or your favorite program and run the script.::
 
     curl -LO https://github.com/CadQuery/CQ-editor/releases/download/nightly/CQ-editor-master-Linux-x86_64.sh
-    chmod +x CQ-editor-master-Linux-x86_64.sh
-    ./CQ-editor-master-Linux-x86_64.sh
+    sh CQ-editor-master-Linux-x86_64.sh
 
 
-To run from command line activate the environment then run cq-editor.::
+To run from command.::
 
-    source $HOME/cq-editor/bin/activate
-    cq-editor
-    # or
-    cq-editor <script.py>
+    $HOME/cq-editor/run.sh
 
 
 Windows
@@ -152,10 +148,7 @@ Windows
 
 To run from command line, activate the environment, then run cq-editor::
 
-    C:\Users\<username>\cq-editor\Scripts\activate
-    cq-editor
-    # or
-    cq-editor <script.py>
+    C:\Users\<username>\cq-editor\run.bat
 
 
 Installing extra packages
@@ -164,6 +157,16 @@ Installing extra packages
 *mamba*, and *pip* are bundled with the CQ-editor installer and available for package installation.
 
 First activate the environment, then call mamba or pip to install additional packages.
+
+On windows.::
+
+    C:\Users\<username>\cq-editor\Scripts\activate
+    mamba install <packagename>
+
+On Linux/MacOS. ::
+
+    source $HOME/cq-editor/bin/activate
+    mamba install <packagename>
 
 
 Adding CQ-editor to an Existing Environment
