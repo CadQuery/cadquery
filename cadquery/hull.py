@@ -70,8 +70,8 @@ class Arc:
         self.a1 = a1
         self.a2 = a2
 
-        self.s = Point(r * cos(a1), r * sin(a1))
-        self.e = Point(r * cos(a2), r * sin(a2))
+        self.s = Point(c.x + r * cos(a1), c.y + r * sin(a1))
+        self.e = Point(c.x + r * cos(a2), c.y + r * sin(a2))
         self.ac = 2 * pi - (a1 - a2)
 
 
@@ -104,10 +104,12 @@ def convert_and_validate(edges: Iterable[Edge]) -> Tuple[List[Arc], List[Point]]
             r = e.radius()
             a1, a2 = e._bounds()
 
-            arcs.add(Arc(Point(c.x, c.y), r, a1, a2))
+            arc = Arc(Point(c.x, c.y), r, a1, a2)
+            arcs.add(arc)
+            points.update((arc.s, arc.e))
 
         else:
-            raise ValueError("Unsupported geometry {gt}")
+            raise ValueError(f"Unsupported geometry {gt}")
 
     return list(arcs), list(points)
 
@@ -187,6 +189,9 @@ def _pt_arc(p: Point, a: Arc) -> Tuple[float, float, float, float]:
     xc, yc = a.c.x, a.c.y
     dx, dy = x - xc, y - yc
     l = sqrt(dx ** 2 + dy ** 2)
+    ld = l ** 2 - r ** 2
+    if (ld < 0.001):
+        return x, y, x, y
 
     x1 = r ** 2 / l ** 2 * dx - r / l ** 2 * sqrt(l ** 2 - r ** 2) * dy + xc
     y1 = r ** 2 / l ** 2 * dy + r / l ** 2 * sqrt(l ** 2 - r ** 2) * dx + yc
@@ -201,6 +206,9 @@ def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
     x, y = p.x, p.y
     x1, y1, x2, y2 = _pt_arc(p, a)
 
+    if ((x1, y1) == (x2, y2)):
+        return inf, Segment(Point(inf, inf), Point(inf, inf))
+
     angles = atan2p(x1 - x, y1 - y), atan2p(x2 - x, y2 - y)
     points = Point(x1, y1), Point(x2, y2)
     ix = int(argmin(angles))
@@ -212,6 +220,9 @@ def arc_pt(a: Arc, p: Point) -> Tuple[float, Segment]:
 
     x, y = p.x, p.y
     x1, y1, x2, y2 = _pt_arc(p, a)
+
+    if ((x1, y1) == (x2, y2)):
+        return inf, Segment(Point(inf, inf), Point(inf, inf))
 
     angles = atan2p(x - x1, y - y1), atan2p(x - x2, y - y2)
     points = Point(x1, y1), Point(x2, y2)
@@ -292,12 +303,24 @@ def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
         Segment(Point(x12, y12), Point(x22, y22)),
     )
 
+    segment_angle = atan2p(segments[ix].b.x - xc2, segments[ix].b.y - yc2)
+    if (segment_angle < a2.a1 or segment_angle > a2.a2):
+        return inf, Segment(Point(inf, inf), Point(inf, inf))
+
     return angles[ix], segments[ix]
 
 
 def get_angle(current: Entity, e: Entity) -> Tuple[float, Segment]:
-
-    if current is e:
+    def center(e: Entity):
+        if isinstance(e, Point):
+            return e
+        return e.c
+    if center(current) == center(e):
+        if (isinstance(current, Arc) and isinstance(e, Arc)):
+            if (current.s == e.e and not e.s == current.e):
+                return pt_pt(current.e, e.s)
+            if (e.s == current.e and not current.s == e.e):
+                return (current.a2 + pi) % (2 * pi), Segment(Point(inf, inf), Point(inf, inf))
         return inf, Segment(Point(inf, inf), Point(inf, inf))
 
     if isinstance(current, Point):
@@ -339,7 +362,8 @@ def finalize_hull(hull: Hull) -> Wire:
     for el_p, el, el_n in zip(hull, hull[1:], hull[2:]):
 
         if isinstance(el, Segment):
-            rv.append(Edge.makeLine(Vector(el.a.x, el.a.y), Vector(el.b.x, el.b.y)))
+            if (not inf in [el.a.x, el.a.y, el.b.x, el.b.y]):
+                rv.append(Edge.makeLine(Vector(el.a.x, el.a.y), Vector(el.b.x, el.b.y)))
         elif (
             isinstance(el, Arc)
             and isinstance(el_p, Segment)
@@ -348,9 +372,10 @@ def finalize_hull(hull: Hull) -> Wire:
             a1 = degrees(atan2p(el_p.b.x - el.c.x, el_p.b.y - el.c.y))
             a2 = degrees(atan2p(el_n.a.x - el.c.x, el_n.a.y - el.c.y))
 
-            rv.append(
-                Edge.makeCircle(el.r, Vector(el.c.x, el.c.y), angle1=a1, angle2=a2)
-            )
+            if (a1 != a2):
+                rv.append(
+                    Edge.makeCircle(el.r, Vector(el.c.x, el.c.y), angle1=a1, angle2=a2)
+                )
 
     el1 = hull[1]
     if isinstance(el, Segment) and isinstance(el_n, Arc) and isinstance(el1, Segment):
