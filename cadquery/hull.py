@@ -200,8 +200,7 @@ def _pt_arc(p: Point, a: Arc) -> Tuple[float, float, float, float]:
 
     return x1, y1, x2, y2
 
-
-def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
+def pt_arc(angle: float, p: Point, a: Arc) -> Tuple[float, Segment]:
 
     x, y = p.x, p.y
     x1, y1, x2, y2 = _pt_arc(p, a)
@@ -211,12 +210,12 @@ def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
 
     angles = atan2p(x1 - x, y1 - y), atan2p(x2 - x, y2 - y)
     points = Point(x1, y1), Point(x2, y2)
-    ix = int(argmin(angles))
+    ix = int(argmin([a + 2*pi if a < angle else a for a in angles]))
 
     return angles[ix], Segment(p, points[ix])
 
 
-def arc_pt(a: Arc, p: Point) -> Tuple[float, Segment]:
+def arc_pt(angle: float, a: Arc, p: Point) -> Tuple[float, Segment]:
 
     x, y = p.x, p.y
     x1, y1, x2, y2 = _pt_arc(p, a)
@@ -227,12 +226,12 @@ def arc_pt(a: Arc, p: Point) -> Tuple[float, Segment]:
     angles = atan2p(x - x1, y - y1), atan2p(x - x2, y - y2)
     points = Point(x1, y1), Point(x2, y2)
 
-    ix = int(argmax(angles))
+    ix = int(argmax([a + 2*pi if a < angle else a for a in angles]))
 
     return angles[ix], Segment(points[ix], p)
 
 
-def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
+def arc_arc(angle: float, a1: Arc, a2: Arc) -> Tuple[float, Segment]:
 
     r1 = a1.r
     xc1, yc1 = a1.c.x, a1.c.y
@@ -310,7 +309,7 @@ def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
     return angles[ix], segments[ix]
 
 
-def get_angle(current: Entity, e: Entity) -> Tuple[float, Segment]:
+def get_angle(angle: float, current: Entity, e: Entity) -> Tuple[float, Segment]:
     def center(e: Entity):
         if isinstance(e, Point):
             return e
@@ -327,12 +326,12 @@ def get_angle(current: Entity, e: Entity) -> Tuple[float, Segment]:
         if isinstance(e, Point):
             return pt_pt(current, e)
         else:
-            return pt_arc(current, e)
+            return pt_arc(angle, current, e)
     else:
         if isinstance(e, Point):
-            return arc_pt(current, e)
+            return arc_pt(angle, current, e)
         else:
-            return arc_arc(current, e)
+            return arc_arc(angle, current, e)
 
 
 def update_hull(
@@ -410,14 +409,17 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
     current_angle = 0.0
     finished = False
 
+    iterations = 0
+
     # march around
-    while not finished:
+    while not finished and iterations < len(entities):
+        iterations += 1
 
         angles = []
         segments = []
 
         for e in entities:
-            angle, segment = get_angle(current_e, e)
+            angle, segment = get_angle(current_angle, current_e, e)
             angles.append(angle if angle >= current_angle else inf)
             segments.append(segment)
 
