@@ -216,7 +216,7 @@ options are as follows.
 * *hiddenColor* - Color of the line that hidden edges are drawn with.
 * *showHidden* - Whether or not to show hidden lines.
 * *focus* - If specified, creates a perspective SVG with the projector at the distance specified.
-* *fitView* - If specified, will attempt to fit the height and width of the image to the contents. The ``marginLeft`` and ``marginTop`` options should be set to 0 or the object will fall outside the viewport. The ``width`` or ``height`` options that were specified will be overridden, but the largest dimension should be preserved.
+* *fitView* - If specified, will attempt to fit the height and width of the image to the contents. The ``marginLeft`` and ``marginTop`` options  will be respected and will add to the total image size so that the margin can be duplicated at the bottom right. The ``width`` or ``height`` options that were specified will be overridden, but the largest dimension should be preserved except when margins are used.
 
 The options are passed to the exporter in a dictionary, and can be left out to force the SVG to be created with default options. 
 Below are examples with and without options set.
