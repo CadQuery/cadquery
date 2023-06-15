@@ -247,6 +247,12 @@ def getSVG(shape, opts=None):
         else:
             width = height * (bb.xlen / bb.ylen)
 
+        image_width = width + (marginLeft * 2.0)
+        image_height = height + (marginTop * 2.0)
+    else:
+        image_width = width
+        image_height = height
+
     # width pixels for x, height pixels for y
     unitScale = min(width / bb.xlen * bb_scale, height / bb.ylen * bb_scale)
 
@@ -290,8 +296,8 @@ def getSVG(shape, opts=None):
             "visibleContent": visibleContent,
             "xTranslate": str(xTranslate),
             "yTranslate": str(yTranslate),
-            "width": str(width),
-            "height": str(height),
+            "width": str(image_width),
+            "height": str(image_height),
             "textboxY": str(height - 30),
             "uom": str(uom),
             "axesIndicator": axesIndicator,
