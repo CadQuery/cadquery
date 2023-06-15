@@ -180,6 +180,7 @@ def getSVG(shape, opts=None):
     hiddenColor = tuple(d["hiddenColor"])
     showHidden = bool(d["showHidden"])
     focus = float(d["focus"]) if d.get("focus") else None
+    fitView = bool(d["fitView"]) if d.get("fitView") else None
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
@@ -235,8 +236,15 @@ def getSVG(shape, opts=None):
     # get bounding box -- these are all in 2D space
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
+    # Determine whether the user wants to fit the drawing to the bounding box
+    bb_scale = 0.75
+    if fitView:
+        bb_scale = 1.0
+        width = bb.xlen
+        height = bb.ylen
+
     # width pixels for x, height pixels for y
-    unitScale = min(width / bb.xlen * 0.75, height / bb.ylen * 0.75)
+    unitScale = min(width / bb.xlen * bb_scale, height / bb.ylen * bb_scale)
 
     # compute amount to translate-- move the top left into view
     (xTranslate, yTranslate) = (

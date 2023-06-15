@@ -562,6 +562,7 @@ class TestExporters(BaseTest):
                 "hiddenColor": (0, 0, 255),
                 "showHidden": True,
                 "focus": 4,
+                "fitView": True,
             },
         )
 
