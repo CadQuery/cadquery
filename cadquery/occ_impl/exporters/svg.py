@@ -240,8 +240,12 @@ def getSVG(shape, opts=None):
     bb_scale = 0.75
     if fitView:
         bb_scale = 1.0
-        width = bb.xlen
-        height = bb.ylen
+
+        # Figure out which dimension to base the adjusted image size on
+        if width / bb.xlen < height / bb.ylen:
+            height = width * (bb.ylen / bb.xlen)
+        else:
+            width = height * (bb.xlen / bb.ylen)
 
     # width pixels for x, height pixels for y
     unitScale = min(width / bb.xlen * bb_scale, height / bb.ylen * bb_scale)
