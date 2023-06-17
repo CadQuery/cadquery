@@ -552,6 +552,25 @@ class TestExporters(BaseTest):
             "out.svg",
             opt={
                 "width": 100,
+                "height": 50,
+                "marginLeft": 10,
+                "marginTop": 10,
+                "showAxes": False,
+                "projectionDir": (0, 0, 1),
+                "strokeWidth": 0.25,
+                "strokeColor": (255, 0, 0),
+                "hiddenColor": (0, 0, 255),
+                "showHidden": True,
+                "focus": 4,
+                "fitView": True,
+            },
+        )
+
+        exporters.export(
+            self._box(),
+            "out.svg",
+            opt={
+                "width": 50,
                 "height": 100,
                 "marginLeft": 10,
                 "marginTop": 10,
