@@ -84,7 +84,7 @@ def arc_point(x, val):
 
 def line_point(x, val):
 
-    return x[:2] + val * x[2:]
+    return x[:2] + val * (x[2:] - x[:2])
 
 
 def arc_first_tangent(x):
