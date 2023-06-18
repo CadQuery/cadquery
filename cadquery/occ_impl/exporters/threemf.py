@@ -36,10 +36,7 @@ class ThreeMFWriter(object):
         """
         self.unit = unit
 
-        if isinstance(shape, Compound):
-            shapes = list(shape)
-        else:
-            shapes = [shape]
+        shapes = shape.Solids()
 
         tessellations = [s.tessellate(tolerance, angularTolerance) for s in shapes]
         # Remove shapes that did not tesselate
