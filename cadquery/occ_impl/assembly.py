@@ -440,6 +440,8 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
 
     # connect topologically
     bldr = BOPAlgo_MakeConnected()
+    bldr.SetRunParallel(True)
+    bldr.SetUseOBB(True)
 
     for obj in id_map:
         bldr.AddArgument(obj.wrapped)
