@@ -12,7 +12,7 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
-from OCP.BOPAlgo import BOPAlgo_GlueEnum
+from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
 
 from vtkmodules.vtkRenderingCore import (
@@ -411,3 +411,45 @@ def toFusedCAF(
                     color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
 
     return top_level_lbl, doc
+
+
+def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]]:
+
+    # assy iterator
+    def iterate(a, loc=None, name=None):
+
+        name = f"{name}/{a.name}" if name else a.name
+        loc = loc * a.loc if loc else a.loc
+
+        if a.obj:
+            yield a.obj, name, loc
+
+        for ch in a.children:
+            yield from iterate(ch, loc, name)
+
+    # make the id map
+    id_map = {}
+    for obj, name, loc in iterate(assy):
+        if isinstance(obj, Shape):
+            tmp = obj.moved(loc)
+        else:
+            tmp = Compound.makeCompound(obj.vals()).moved(loc)
+
+        for s in tmp.Solids():
+            id_map[s] = name
+
+    # connect topologically
+    bldr = BOPAlgo_MakeConnected()
+
+    for obj in id_map:
+        bldr.AddArgument(obj.wrapped)
+
+    bldr.Perform()
+    res = Shape(bldr.Shape())
+
+    # make the conneted solid -> id map
+    origins = {}
+    for s in res.Solids():
+        origins[s] = tuple(id_map[Shape(el)] for el in bldr.GetOrigins(s.wrapped))
+
+    return res, origins
