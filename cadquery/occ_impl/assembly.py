@@ -22,7 +22,7 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 from .geom import Location
-from .shapes import Shape, Compound
+from .shapes import Shape, Solid, Compound
 from .exporters.vtk import toString
 from ..cq import Workplane
 
@@ -429,6 +429,7 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
 
     # make the id map
     id_map = {}
+
     for obj, name, loc in iterate(assy):
         if isinstance(obj, Shape):
             tmp = obj.moved(loc)
@@ -450,8 +451,11 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
     res = Shape(bldr.Shape())
 
     # make the conneted solid -> id map
-    origins = {}
+    origins: Dict[Shape, Tuple[str, ...]] = {}
+
     for s in res.Solids():
-        origins[s] = tuple(id_map[Shape(el)] for el in bldr.GetOrigins(s.wrapped))
+        ids = tuple(id_map[Solid(el)] for el in bldr.GetOrigins(s.wrapped))
+        # if GetOrigins yiels nothing, solid was not modified
+        origins[s] = ids if ids else (id_map[s],)
 
     return res, origins
