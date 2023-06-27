@@ -1778,6 +1778,25 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(0.0, bb.zmin, 2)
         self.assertAlmostEqual(100.0, bb.zmax, 2)
 
+    def testBoundBoxEnlarge(self):
+        """
+        Tests BoundBox.enlarge(). Confirms that the 
+        bounding box lengths are all enlarged by the
+        correct amount.
+        """
+
+        enlarge_tol = 2.0
+        bb = Workplane("XY").rect(10, 10).extrude(10).val().BoundingBox()
+        bb_enlarged = bb.enlarge(enlarge_tol)
+
+        self.assertTrue(bb_enlarged.isInside(bb))
+        self.assertAlmostEqual(bb_enlarged.xmin, bb.xmin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.xmax, bb.xmax + enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.ymin, bb.ymin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.ymax, bb.ymax + enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.zmin, bb.zmin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.zmax, bb.zmax + enlarge_tol, 2)
+
     def testCutThroughAll(self):
         """
         Tests a model that uses more than one workplane
