@@ -1,7 +1,32 @@
 Changes
 =======
 
-2.2.0 (latest release)
+2.3.0 (latest release)
+------
+
+### Highlights
+   * Explicit Python 3.11 support [#1247](https://github.com/CadQuery/cadquery/pull/1247) [#1280](https://github.com/CadQuery/cadquery/pull/1280)
+
+ ### Experimental Features
+   * Constraint-based sketches are still being worked on and improved, and are not production ready. There have been fixes, but multiple issues are still open including [#959](https://github.com/CadQuery/cadquery/issues/959), [#968](https://github.com/CadQuery/cadquery/issues/968) and [#960](https://github.com/CadQuery/cadquery/issues/960).
+   * The Convex Hull feature should also be considered experimental. Issues open for that feature include [#931](https://github.com/CadQuery/cadquery/issues/931), [#1190](https://github.com/CadQuery/cadquery/issues/1190), [#1224](https://github.com/CadQuery/cadquery/issues/1224) and [#943](https://github.com/CadQuery/cadquery/issues/943).
+
+ ### Other changes
+   * Various documentation fixes and updates [#1250](https://github.com/CadQuery/cadquery/pull/1250) [#1251](https://github.com/CadQuery/cadquery/pull/1251) [#1256](https://github.com/CadQuery/cadquery/pull/1256) [#1262](https://github.com/CadQuery/cadquery/pull/1262) [#1305](https://github.com/CadQuery/cadquery/pull/1305) [#1306](https://github.com/CadQuery/cadquery/pull/1306) [#1309](https://github.com/CadQuery/cadquery/pull/1309) [#1240](https://github.com/CadQuery/cadquery/pull/1340)
+   * Added a `close` option to `Wire.makePolygon()` [#1257](https://github.com/CadQuery/cadquery/pull/1257)
+   * Fixed iteration over entities and avoid hash collisions to help solve intermittent test failures [#1260](https://github.com/CadQuery/cadquery/pull/1260)
+   * Added fused export for assemblies that preserves face colors [#1261](https://github.com/CadQuery/cadquery/pull/1261)
+   * Added multilayer support to DXF export [#1267](https://github.com/CadQuery/cadquery/pull/1267)
+   * Removed one unneeded layer of hierarchy from STEP export [#1270](https://github.com/CadQuery/cadquery/pull/1270)
+   * Fixed a bug where `Workplane.close()` would not work with a set of 3D points [#1271](https://github.com/CadQuery/cadquery/pull/1271)
+   * Fixed a missing `distance` parameter in an extrude example [#1275](https://github.com/CadQuery/cadquery/pull/1275)
+   * Started building noarch packages in Azure Pipelines [#1293](https://github.com/CadQuery/cadquery/pull/1293)
+   * Added a better version string to identify conda master builds [#1315](https://github.com/CadQuery/cadquery/pull/1315)
+   * Fixed metadata being lost when adding a subassembly to an assembly [#1327](https://github.com/CadQuery/cadquery/pull/1327)
+   * Added tolerance (`tol`) to enable fuzzy `cut()` and `intersect()` operations [#1332](https://github.com/CadQuery/cadquery/pull/1332)
+   * Fixed relative/absolute bug in `line_point` sketch solver method [#1336](https://github.com/CadQuery/cadquery/pull/1336)
+
+2.2.0
 ------
    ### Highlights
    * Introduced a new Sketch API dedicated to 2D planar operations.
