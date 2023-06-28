@@ -1,7 +1,11 @@
 Changes
 =======
 
-2.3.0 (latest release)
+2.3.1 (latest release)
+
+This was an incremental release to fix a broken PyPI package.
+
+2.3.0
 ------
 
 ### Highlights

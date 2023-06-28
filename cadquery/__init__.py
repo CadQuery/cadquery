@@ -4,7 +4,7 @@ try:
     __version__ = version("cadquery")
 except PackageNotFoundError:
     # package is not installed
-    __version__ = "2.3.0"
+    __version__ = "2.3.1"
 
 # these items point to the OCC implementation
 from .occ_impl.geom import Plane, BoundBox, Vector, Matrix, Location
