@@ -1032,9 +1032,12 @@ class Shape(object):
         args: Iterable["Shape"],
         tools: Iterable["Shape"],
         op: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
+        parallel: bool = True,
     ) -> "Shape":
         """
         Generic boolean operation
+
+        :param parallel: Sets the SetRunParallel flag, which enables parallel execution of boolean operations in OCC kernel
         """
 
         arg = TopTools_ListOfShape()
@@ -1048,7 +1051,7 @@ class Shape(object):
         op.SetArguments(arg)
         op.SetTools(tool)
 
-        op.SetRunParallel(True)
+        op.SetRunParallel(parallel)
         op.Build()
 
         return Shape.cast(op.Shape())
