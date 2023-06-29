@@ -350,19 +350,9 @@ def toFusedCAF(
     shapes: List[Shape] = []
     colors = []
 
-    def extract_shapes(assy, parent_loc=None, parent_color=None):
-
-        loc = parent_loc * assy.loc if parent_loc else assy.loc
-        color = assy.color if assy.color else parent_color
-
-        for shape in assy.shapes:
-            shapes.append(shape.moved(loc).copy())
-            colors.append(color)
-
-        for ch in assy.children:
-            extract_shapes(ch, loc, color)
-
-    extract_shapes(assy)
+    for shape, _, loc, color in assy:
+        shapes.append(shape.moved(loc).copy())
+        colors.append(color)
 
     # Initialize with a dummy value for mypy
     top_level_shape = cast(TopoDS_Shape, None)
