@@ -1,4 +1,15 @@
-from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List, cast
+from typing import (
+    Union,
+    Iterable,
+    Iterator,
+    Tuple,
+    Dict,
+    overload,
+    Optional,
+    Any,
+    List,
+    cast,
+)
 from typing_extensions import Protocol
 from math import degrees
 
@@ -129,6 +140,14 @@ class AssemblyProtocol(Protocol):
         ...
 
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
+        ...
+
+    def __iter__(
+        self,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
         ...
 
 
@@ -414,29 +433,15 @@ def toFusedCAF(
 
 
 def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]]:
-
-    # assy iterator
-    def iterate(a, loc=None, name=None):
-
-        name = f"{name}/{a.name}" if name else a.name
-        loc = loc * a.loc if loc else a.loc
-
-        if a.obj:
-            yield a.obj, name, loc
-
-        for ch in a.children:
-            yield from iterate(ch, loc, name)
+    """
+    Imprint all the solids and construct a dictionary mapping imprinted solids to names from the input assy.
+    """
 
     # make the id map
     id_map = {}
 
-    for obj, name, loc in iterate(assy):
-        if isinstance(obj, Shape):
-            tmp = obj.moved(loc)
-        else:
-            tmp = Compound.makeCompound(obj.vals()).moved(loc)
-
-        for s in tmp.Solids():
+    for obj, name, loc, _ in assy:
+        for s in obj.moved(loc).Solids():
             id_map[s] = name
 
     # connect topologically
