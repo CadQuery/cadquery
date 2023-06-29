@@ -140,10 +140,9 @@ def _vtkRenderWindow(
     Convert an assembly to a vtkRenderWindow. Used by vtk based exporters.
     """
 
-    renderer = vtkRenderer()
+    renderer = toVTK(assy, tolerance=tolerance, angularTolerance=angularTolerance)
     renderWindow = vtkRenderWindow()
     renderWindow.AddRenderer(renderer)
-    toVTK(assy, renderer, tolerance=tolerance, angularTolerance=angularTolerance)
 
     renderer.ResetCamera()
     renderer.SetBackground(1, 1, 1)

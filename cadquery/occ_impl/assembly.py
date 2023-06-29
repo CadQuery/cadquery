@@ -246,23 +246,19 @@ def toCAF(
 
 def toVTK(
     assy: AssemblyProtocol,
-    renderer: vtkRenderer = vtkRenderer(),
-    loc: Location = Location(),
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ) -> vtkRenderer:
 
-    loc = loc * assy.loc
-    trans, rot = loc.toTuple()
+    renderer = vtkRenderer()
 
-    if assy.color:
-        color = assy.color.toTuple()
+    for shape, _, loc, col_ in assy:
 
-    if assy.shapes:
-        data = Compound.makeCompound(assy.shapes).toVtkPolyData(
-            tolerance, angularTolerance
-        )
+        col = col_.toTuple() if col_ else color
+        trans, rot = loc.toTuple()
+
+        data = shape.toVtkPolyData(tolerance, angularTolerance)
 
         mapper = vtkMapper()
         mapper.SetInputData(data)
@@ -271,13 +267,10 @@ def toVTK(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*map(degrees, rot))
-        actor.GetProperty().SetColor(*color[:3])
-        actor.GetProperty().SetOpacity(color[3])
+        actor.GetProperty().SetColor(*col[:3])
+        actor.GetProperty().SetOpacity(col[3])
 
         renderer.AddActor(actor)
-
-    for child in assy.children:
-        renderer = toVTK(child, renderer, loc, color, tolerance, angularTolerance)
 
     return renderer
 
