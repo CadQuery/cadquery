@@ -550,7 +550,7 @@ class Assembly(object):
         color: Optional[Color] = None,
     ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
         """
-        Assembly iterator yielding shapes, locatons, names and colors.
+        Assembly iterator yielding shapes, names, locations and colors.
         """
 
         name = f"{name}/{self.name}" if name else self.name

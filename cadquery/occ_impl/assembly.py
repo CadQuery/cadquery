@@ -32,6 +32,9 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
 )
 
+from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
+from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_LINE, VTK_VERTEX
+
 from .geom import Location
 from .shapes import Shape, Solid, Compound
 from .exporters.vtk import toString
@@ -260,8 +263,29 @@ def toVTK(
 
         data = shape.toVtkPolyData(tolerance, angularTolerance)
 
+        # extract faces
+        extr = vtkExtractCellsByType()
+        extr.SetInputDataObject(data)
+
+        extr.AddCellType(VTK_LINE)
+        extr.AddCellType(VTK_VERTEX)
+        extr.Update()
+        data_edges = extr.GetOutput()
+
+        # extract edges
+        extr = vtkExtractCellsByType()
+        extr.SetInputDataObject(data)
+
+        extr.AddCellType(VTK_TRIANGLE)
+        extr.Update()
+        data_faces = extr.GetOutput()
+
+        # remove normals from edges
+        data_edges.GetPointData().RemoveArray("Normals")
+
+        # add both to the renderer
         mapper = vtkMapper()
-        mapper.SetInputData(data)
+        mapper.AddInputDataObject(data_faces)
 
         actor = vtkActor()
         actor.SetMapper(mapper)
@@ -272,12 +296,23 @@ def toVTK(
 
         renderer.AddActor(actor)
 
+        mapper = vtkMapper()
+        mapper.AddInputDataObject(data_edges)
+
+        actor = vtkActor()
+        actor.SetMapper(mapper)
+        actor.SetPosition(*trans)
+        actor.SetOrientation(*map(degrees, rot))
+        actor.GetProperty().SetColor(0, 0, 0)
+        actor.GetProperty().SetLineWidth(2)
+
+        renderer.AddActor(actor)
+
     return renderer
 
 
 def toJSON(
     assy: AssemblyProtocol,
-    loc: Location = Location(),
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
 ) -> List[Dict[str, Any]]:
@@ -285,28 +320,21 @@ def toJSON(
     Export an object to a structure suitable for converting to VTK.js JSON.
     """
 
-    loc = loc * assy.loc
-    trans, rot = loc.toTuple()
-
-    if assy.color:
-        color = assy.color.toTuple()
-
     rv = []
 
-    if assy.shapes:
+    for shape, _, loc, col_ in assy:
+
         val: Any = {}
 
         data = toString(Compound.makeCompound(assy.shapes), tolerance)
+        trans, rot = loc.toTuple()
 
         val["shape"] = data
-        val["color"] = color
+        val["color"] = col_.toTuple() if col_ else color
         val["position"] = trans
         val["orientation"] = rot
 
         rv.append(val)
-
-    for child in assy.children:
-        rv.extend(toJSON(child, loc, color, tolerance))
 
     return rv
 
@@ -438,12 +466,12 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
     bldr.Perform()
     res = Shape(bldr.Shape())
 
-    # make the conneted solid -> id map
+    # make the connected solid -> id map
     origins: Dict[Shape, Tuple[str, ...]] = {}
 
     for s in res.Solids():
         ids = tuple(id_map[Solid(el)] for el in bldr.GetOrigins(s.wrapped))
-        # if GetOrigins yiels nothing, solid was not modified
+        # if GetOrigins yields nothing, solid was not modified
         origins[s] = ids if ids else (id_map[s],)
 
     return res, origins
