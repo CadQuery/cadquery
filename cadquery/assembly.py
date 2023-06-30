@@ -44,7 +44,7 @@ ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
-# entity selector grammar definiiton
+# entity selector grammar definition
 def _define_grammar():
 
     from pyparsing import (
@@ -385,7 +385,7 @@ class Assembly(object):
                 ] not in locked:
                     locked.append(ents[name])
 
-        # Lock the first occuring entity if needed.
+        # Lock the first occurring entity if needed.
         if not locked:
             unary_objects = [
                 c.objects[0]
@@ -402,7 +402,7 @@ class Assembly(object):
                     locked.append(ents[b])
                     break
 
-        # Lock the first occuring entity if needed.
+        # Lock the first occurring entity if needed.
         if not locked:
             locked.append(0)
 
