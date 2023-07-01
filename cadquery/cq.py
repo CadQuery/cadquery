@@ -3461,7 +3461,7 @@ class Workplane(object):
         # Handling of `until` passed values
         s: Union[Compound, Solid, Shape]
         if isinstance(both, float) and taper == None:
-            # Because inserting a new paramater "both" in front of "taper",
+            # Because inserting a new parameter "both" in front of "taper",
             # existing code calling this function with position arguments will
             # pass the taper argument (float) to the "both" argument. This
             # warning is to catch that.
@@ -3592,7 +3592,7 @@ class Workplane(object):
         Make a prismatic solid from the existing set of pending wires.
 
         :param distance: distance to extrude
-        :param both: extrude in both directions symetrically
+        :param both: extrude in both directions symmetrically
         :param upToFace: if specified, extrude up to a face: 0 for the next, -1 for the last face
         :param additive: specify if extruding or cutting, required param for uptoface algorithm
 
