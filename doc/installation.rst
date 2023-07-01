@@ -20,7 +20,7 @@ Install the Conda Package Manager
 
 In principle, any Conda distribution will work, but it is probably best to install `Mambaforge <https://github.com/conda-forge/miniforge#mambaforge>`_ to a local directory and to avoid running `conda init`. After performing a local directory installation, Mambaforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation.
 
-Mambaforge is a minimal installer that sets *conda-forge* as the default channel for package installation and provides **mamba**.   ``mamba install`` is recommended over ``conda install`` for faster and less memory intensive caduqery installation.
+Mambaforge is a minimal installer that sets *conda-forge* as the default channel for package installation and provides **mamba**.   ``mamba install`` is recommended over ``conda install`` for faster and less memory intensive cadquery installation.
 
 In Linux/MacOS, the local directory installation method looks something like this::
 
