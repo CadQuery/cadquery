@@ -133,8 +133,8 @@ def getSVG(shape, opts=None):
     :type Shape: Vertex, Edge, Wire, Face, Shell, Solid, or Compound.
     :param opts: An options dictionary that influences the SVG that is output.
     :type opts: Dictionary, keys are as follows:
-        width: Width of the resulting image (-1 to fit based on height).
-        height: Height of the resulting image (-1 to fit based on width).
+        width: Width of the resulting image (None to fit based on height).
+        height: Height of the resulting image (None to fit based on width).
         marginLeft: Inset margin from the left side of the document.
         marginTop: Inset margin from the top side of the document.
         projectionDir: Direction the camera will view the shape from.
@@ -169,8 +169,13 @@ def getSVG(shape, opts=None):
     # need to guess the scale and the coordinate center
     uom = guessUnitOfMeasure(shape)
 
-    width = float(d["width"])
-    height = float(d["height"])
+    # Handle the case where the height or width are None
+    width = d["width"]
+    if width != None:
+        width = float(d["width"])
+    height = d["height"]
+    if d["height"] != None:
+        height = float(d["height"])
     marginLeft = float(d["marginLeft"])
     marginTop = float(d["marginTop"])
     projectionDir = tuple(d["projectionDir"])
@@ -236,9 +241,9 @@ def getSVG(shape, opts=None):
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
     # Determine whether the user wants to fit the drawing to the bounding box
-    if width <= 0 or height <= 0:
+    if width == None or height == None:
         # Fit image to specified width (or height)
-        if width <= 0:
+        if width == None:
             width = (height - (2.0 * marginTop)) * (
                 bb.xlen / bb.ylen
             ) + 2.0 * marginLeft
