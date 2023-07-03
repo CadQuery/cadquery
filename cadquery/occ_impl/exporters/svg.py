@@ -133,8 +133,8 @@ def getSVG(shape, opts=None):
     :type Shape: Vertex, Edge, Wire, Face, Shell, Solid, or Compound.
     :param opts: An options dictionary that influences the SVG that is output.
     :type opts: Dictionary, keys are as follows:
-        width: Document width of the resulting image.
-        height: Document height of the resulting image.
+        width: Width of the resulting image (-1 to fit based on height).
+        height: Height of the resulting image (-1 to fit based on width).
         marginLeft: Inset margin from the left side of the document.
         marginTop: Inset margin from the top side of the document.
         projectionDir: Direction the camera will view the shape from.
@@ -180,7 +180,6 @@ def getSVG(shape, opts=None):
     hiddenColor = tuple(d["hiddenColor"])
     showHidden = bool(d["showHidden"])
     focus = float(d["focus"]) if d.get("focus") else None
-    fitView = bool(d["fitView"]) if d.get("fitView") else None
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
@@ -237,24 +236,21 @@ def getSVG(shape, opts=None):
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
     # Determine whether the user wants to fit the drawing to the bounding box
-    bb_scale = 0.75
-    if fitView:
-        bb_scale = 1.0
-
-        # Figure out which dimension to base the adjusted image size on
-        if width / bb.xlen < height / bb.ylen:
-            height = width * (bb.ylen / bb.xlen)
+    if width <= 0 or height <= 0:
+        # Fit image to specified width (or height)
+        if width <= 0:
+            width = (height - (2.0 * marginTop)) * (
+                bb.xlen / bb.ylen
+            ) + 2.0 * marginLeft
         else:
-            width = height * (bb.xlen / bb.ylen)
+            height = (width - 2.0 * marginLeft) * (bb.ylen / bb.xlen) + 2.0 * marginTop
 
-        image_width = width + (marginLeft * 2.0)
-        image_height = height + (marginTop * 2.0)
+        # width pixels for x, height pixels for y
+        unitScale = (width - 2.0 * marginLeft) / bb.xlen
     else:
-        image_width = width
-        image_height = height
-
-    # width pixels for x, height pixels for y
-    unitScale = min(width / bb.xlen * bb_scale, height / bb.ylen * bb_scale)
+        bb_scale = 0.75
+        # width pixels for x, height pixels for y
+        unitScale = min(width / bb.xlen * bb_scale, height / bb.ylen * bb_scale)
 
     # compute amount to translate-- move the top left into view
     (xTranslate, yTranslate) = (
@@ -296,8 +292,8 @@ def getSVG(shape, opts=None):
             "visibleContent": visibleContent,
             "xTranslate": str(xTranslate),
             "yTranslate": str(yTranslate),
-            "width": str(image_width),
-            "height": str(image_height),
+            "width": str(width),
+            "height": str(height),
             "textboxY": str(height - 30),
             "uom": str(uom),
             "axesIndicator": axesIndicator,
