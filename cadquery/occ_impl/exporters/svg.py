@@ -133,8 +133,8 @@ def getSVG(shape, opts=None):
     :type Shape: Vertex, Edge, Wire, Face, Shell, Solid, or Compound.
     :param opts: An options dictionary that influences the SVG that is output.
     :type opts: Dictionary, keys are as follows:
-        width: Document width of the resulting image.
-        height: Document height of the resulting image.
+        width: Width of the resulting image (None to fit based on height).
+        height: Height of the resulting image (None to fit based on width).
         marginLeft: Inset margin from the left side of the document.
         marginTop: Inset margin from the top side of the document.
         projectionDir: Direction the camera will view the shape from.
@@ -169,8 +169,13 @@ def getSVG(shape, opts=None):
     # need to guess the scale and the coordinate center
     uom = guessUnitOfMeasure(shape)
 
-    width = float(d["width"])
-    height = float(d["height"])
+    # Handle the case where the height or width are None
+    width = d["width"]
+    if width != None:
+        width = float(d["width"])
+    height = d["height"]
+    if d["height"] != None:
+        height = float(d["height"])
     marginLeft = float(d["marginLeft"])
     marginTop = float(d["marginTop"])
     projectionDir = tuple(d["projectionDir"])
@@ -235,8 +240,22 @@ def getSVG(shape, opts=None):
     # get bounding box -- these are all in 2D space
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
-    # width pixels for x, height pixels for y
-    unitScale = min(width / bb.xlen * 0.75, height / bb.ylen * 0.75)
+    # Determine whether the user wants to fit the drawing to the bounding box
+    if width == None or height == None:
+        # Fit image to specified width (or height)
+        if width == None:
+            width = (height - (2.0 * marginTop)) * (
+                bb.xlen / bb.ylen
+            ) + 2.0 * marginLeft
+        else:
+            height = (width - 2.0 * marginLeft) * (bb.ylen / bb.xlen) + 2.0 * marginTop
+
+        # width pixels for x, height pixels for y
+        unitScale = (width - 2.0 * marginLeft) / bb.xlen
+    else:
+        bb_scale = 0.75
+        # width pixels for x, height pixels for y
+        unitScale = min(width / bb.xlen * bb_scale, height / bb.ylen * bb_scale)
 
     # compute amount to translate-- move the top left into view
     (xTranslate, yTranslate) = (
