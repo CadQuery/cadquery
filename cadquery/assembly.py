@@ -543,6 +543,28 @@ class Assembly(object):
 
         return rv
 
+    def __iter__(
+        self,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        """
+        Assembly iterator yielding shapes, names, locations and colors.
+        """
+
+        name = f"{name}/{self.name}" if name else self.name
+        loc = loc * self.loc if loc else self.loc
+        color = self.color if self.color else color
+
+        if self.obj:
+            yield self.obj if isinstance(self.obj, Shape) else Compound.makeCompound(
+                s for s in self.obj.vals() if isinstance(s, Shape)
+            ), name, loc, color
+
+        for ch in self.children:
+            yield from ch.__iter__(loc, name, color)
+
     def toCompound(self) -> Compound:
         """
         Returns a Compound made from this Assembly (including all children) with the
