@@ -34,7 +34,7 @@ def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:
     return assy
 
 
-def show(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> vtkRenderWindow:
+def show(*objs: Union[Shape, Workplane, Assembly, Sketch]):
     """
     Show CQ objects using VTK
     """
@@ -85,8 +85,6 @@ def show(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> vtkRenderWindow:
     inter.Initialize()
     win.Render()
     inter.Start()
-
-    return win
 
 
 # alias
