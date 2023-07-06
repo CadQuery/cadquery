@@ -783,14 +783,12 @@ Where:
         .add(b1, loc=cq.Location((-2, 0, 0)), name="b3", color=cq.Color("red"))
     )
 
-    pnt = (0.5, 0.5, 0.5)
-
     # fix the position of b1
     assy.constrain("b1", "Fixed")
     # fix b2 center at point
-    assy.constrain("b2", "FixedPoint", pnt)
+    assy.constrain("b2", "FixedPoint", (0.5, 0.5, 0.5))
     # fix b3 vertex position at point
-    assy.constrain("b3@vertices@<X and <Y and <Z", "FixedPoint", pnt)
+    assy.constrain("b3@vertices@<X and <Y and <Z", "FixedPoint", (0.5, 0.5, 0.5))
 
     assy.solve()
     show_object(assy)
