@@ -42,6 +42,18 @@ class FakeWindow(vtkRenderWindow):
 
         pass
 
+    def SetSize(*args):
+
+        pass
+
+    def GetScreenSize(*args):
+
+        return 1, 1
+
+    def SetPosition(*args):
+
+        pass
+
 
 def test_show(wp, assy, sk, monkeypatch):
 
