@@ -8,11 +8,7 @@ from OCP.TopoDS import TopoDS_Shape
 from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
-from vtkmodules.vtkRenderingCore import (
-    vtkMapper,
-    vtkRenderWindowInteractor,
-    vtkRenderWindow,
-)
+from vtkmodules.vtkRenderingCore import vtkMapper, vtkRenderWindowInteractor
 
 
 def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:

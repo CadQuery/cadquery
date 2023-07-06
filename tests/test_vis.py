@@ -1,7 +1,10 @@
 from cadquery import Workplane, Assembly, Sketch
 from cadquery.vis import show, show_object
 
+import cadquery.occ_impl.exporters.assembly as assembly
 import cadquery.vis as vis
+
+from vtkmodules.vtkRenderingCore import vtkRenderWindow, vtkRenderWindowInteractor
 
 from pytest import fixture, raises
 
@@ -24,12 +27,8 @@ def sk():
     return Sketch().circle(1.0)
 
 
-class FakeInteractor:
-    def SetInteractorStyle(self, x):
-
-        pass
-
-    def SetRenderWindow(self, x):
+class FakeInteractor(vtkRenderWindowInteractor):
+    def Start(self):
 
         pass
 
@@ -37,33 +36,9 @@ class FakeInteractor:
 
         pass
 
-    def Start(self):
 
-        pass
-
-
-class FakeOrientationWidget:
-    def SetOrientationMarker(*args):
-
-        pass
-
-    def SetViewport(*args):
-
-        pass
-
-    def SetZoom(*args):
-
-        pass
-
-    def SetInteractor(*args):
-
-        pass
-
-    def EnabledOn(*args):
-
-        pass
-
-    def InteractiveOff(*args):
+class FakeWindow(vtkRenderWindow):
+    def Render(*args):
 
         pass
 
@@ -72,7 +47,7 @@ def test_show(wp, assy, sk, monkeypatch):
 
     # use some dummy vtk objects
     monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
-    monkeypatch.setattr(vis, "vtkOrientationMarkerWidget", FakeOrientationWidget)
+    monkeypatch.setattr(assembly, "vtkRenderWindow", FakeWindow)
 
     # simple smoke test
     show(wp)
