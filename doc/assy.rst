@@ -511,13 +511,13 @@ The cost function is:
 Where:
 
 - :math:`k_{ dir }` is a scaling factor for directional constraints,
-- :math:`param` is the parameter of the constraint, which defaults to :math:`\pi` radians,
+- :math:`param` is the parameter of the constraint, which defaults to 180 degrees,
 - :math:`\vec{d_i}` is the direction created from the ith object argument as described below, and
-- :math:`\vec{ d_1 } \angle \vec{ d_2 }` is the angle in radians between :math:`\vec{ d_1 }` and
+- :math:`\vec{ d_1 } \angle \vec{ d_2 }` is the angle between :math:`\vec{ d_1 }` and
   :math:`\vec{ d_2 }`.
 
 
-The argument ``param`` defaults to :math:`\pi` radians, which sets the two directions opposite
+The argument ``param`` defaults to 180 degrees, which sets the two directions opposite
 to each other. This represents what is often called a "mate" relationship, where the external faces
 of two objects touch.
 
