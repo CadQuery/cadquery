@@ -1,5 +1,6 @@
-from . import Shape, Workplane, Assembly, Sketch, Compound
+from . import Shape, Workplane, Assembly, Sketch, Compound, Color
 from .occ_impl.exporters.assembly import _vtkRenderWindow
+from .occ_impl.jupyter_tools import DEFAULT_COLOR
 
 from typing import Union
 
@@ -13,7 +14,7 @@ from vtkmodules.vtkRenderingCore import vtkMapper, vtkRenderWindowInteractor
 
 def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:
 
-    assy = Assembly()
+    assy = Assembly(color=Color(*DEFAULT_COLOR))
 
     for obj in objs:
         if isinstance(obj, (Shape, Workplane, Assembly)):
@@ -56,8 +57,6 @@ def show(*objs: Union[Shape, Workplane, Assembly, Sketch]):
 
     # construct an axes indicator
     axes = vtkAxesActor()
-    axes.SetNormalizedShaftLength(1, 1, 1)
-    axes.SetTotalLength(10, 10, 10)
     axes.SetDragable(0)
 
     tp = axes.GetXAxisCaptionActor2D().GetCaptionTextProperty()
@@ -75,9 +74,20 @@ def show(*objs: Union[Shape, Workplane, Assembly, Sketch]):
     orient_widget.EnabledOn()
     orient_widget.InteractiveOff()
 
-    # set sie, show and return
+    # use gradient background
+    renderer = win.GetRenderers().GetFirstRenderer()
+    renderer.GradientBackgroundOn()
+
+    # set size and camera
     win.SetSize(*win.GetScreenSize())
     win.SetPosition(-10, 0)
+
+    camera = renderer.GetActiveCamera()
+    camera.Roll(-35)
+    camera.Elevation(-45)
+    camera.SetClippingRange(0.1, 100)
+
+    # show and return
     inter.Initialize()
     win.Render()
     inter.Start()
