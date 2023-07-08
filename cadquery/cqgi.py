@@ -560,9 +560,13 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             if type(node.value) in astTypes:
                 self.handle_assignment(left_side.id, node.value)
             elif type(node.value) == ast.Tuple:
-                # we have a multi-value assignment
-                for n, v in zip(left_side.elts, node.value.elts):
-                    self.handle_assignment(n.id, v)
+                if isinstance(left_side, ast.Name):
+                    # skip unsupported parameter type
+                    pass
+                else:
+                    # we have a multi-value assignment
+                    for n, v in zip(left_side.elts, node.value.elts):
+                        self.handle_assignment(n.id, v)
         except:
             traceback.print_exc()
             print("Unable to handle assignment for node '%s'" % ast.dump(left_side))

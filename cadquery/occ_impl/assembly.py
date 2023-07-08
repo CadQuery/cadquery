@@ -326,7 +326,7 @@ def toJSON(
 
         val: Any = {}
 
-        data = toString(Compound.makeCompound(assy.shapes), tolerance)
+        data = toString(shape, tolerance)
         trans, rot = loc.toTuple()
 
         val["shape"] = data
