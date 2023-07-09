@@ -85,7 +85,7 @@ def show(*objs: Union[Shape, Workplane, Assembly, Sketch]):
     camera = renderer.GetActiveCamera()
     camera.Roll(-35)
     camera.Elevation(-45)
-    camera.SetClippingRange(0.1, 100)
+    renderer.ResetCamera()
 
     # show and return
     inter.Initialize()
