@@ -313,7 +313,7 @@ class InputParameter:
             self.ast_node.elts = [
                 ast.Constant(value=new_value[0]),
                 ast.Constant(value=new_value[1]),
-                ast.Constant(value=new_value[2])
+                ast.Constant(value=new_value[2]),
             ]
             ast.fix_missing_locations(self.ast_node)
         else:
@@ -517,10 +517,10 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                     )
             elif type(value_node) == ast.Tuple:
                 self.cqModel.add_script_parameter(
-                        InputParameter.create(
-                            value_node, var_name, TupleParameterType, (0, 0, 0)
-                        )
+                    InputParameter.create(
+                        value_node, var_name, TupleParameterType, (0, 0, 0)
                     )
+                )
             elif hasattr(ast, "NameConstant") and type(value_node) == ast.NameConstant:
                 if value_node.value == True:
                     self.cqModel.add_script_parameter(
