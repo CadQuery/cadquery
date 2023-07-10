@@ -16,9 +16,10 @@ TESTSCRIPT = textwrap.dedent(
         height=2.0
         width=3.0
         (a,b) = (1.0,1.0)
+        o = (2, 2, 0)
         foo="bar"
 
-        result =  "%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) )
+        result =  "%s|%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) , str(o) )
         show_object(result)
     """
 )
@@ -28,9 +29,10 @@ TEST_DEBUG_SCRIPT = textwrap.dedent(
         height=2.0
         width=3.0
         (a,b) = (1.0,1.0)
+        o = (2, 2, 0)
         foo="bar"
         debug(foo, { "color": 'yellow' } )
-        result =  "%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) )
+        result =  "%s|%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) , str(o) )
         show_object(result)
         debug(height )
     """
@@ -41,9 +43,8 @@ class TestCQGI(BaseTest):
     def test_parser(self):
         model = cqgi.CQModel(TESTSCRIPT)
         metadata = model.metadata
-
         self.assertEqual(
-            set(metadata.parameters.keys()), {"height", "width", "a", "b", "foo"}
+            set(metadata.parameters.keys()), {"height", "width", "a", "b", "foo", "o"}
         )
 
     def test_build_with_debug(self):
@@ -62,12 +63,13 @@ class TestCQGI(BaseTest):
 
         self.assertTrue(result.success)
         self.assertTrue(len(result.results) == 1)
-        self.assertTrue(result.results[0].shape == "2.0|3.0|bar|1.0")
+        self.assertTrue(result.results[0].shape == "2.0|3.0|bar|1.0|(2, 2, 0)")
 
     def test_build_with_different_params(self):
         model = cqgi.CQModel(TESTSCRIPT)
-        result = model.build({"height": 3.0})
-        self.assertTrue(result.results[0].shape == "3.0|3.0|bar|1.0")
+        result = model.build({"height": 3.0, "o": (3, 3, 1)})
+        print(result.results[0].shape)
+        self.assertTrue(result.results[0].shape == "3.0|3.0|bar|1.0|(3, 3, 1)")
 
     def test_describe_parameters(self):
         script = textwrap.dedent(
