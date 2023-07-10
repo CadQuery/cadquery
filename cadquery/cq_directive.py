@@ -6,17 +6,11 @@ A special directive for including a cq object.
 import traceback
 
 from json import dumps
-from pathlib import Path
-from uuid import uuid1 as uuid
-from textwrap import indent
 
 from cadquery import exporters, Assembly, Compound, Color, Sketch
 from cadquery import cqgi
 from cadquery.occ_impl.assembly import toJSON
-from cadquery.occ_impl.jupyter_tools import (
-    TEMPLATE_RENDER,
-    DEFAULT_COLOR,
-)
+from cadquery.occ_impl.jupyter_tools import DEFAULT_COLOR
 from docutils.parsers.rst import directives, Directive
 
 template = """
@@ -30,7 +24,6 @@ template = """
     </div>
 
 """
-template_content_indent = "      "
 
 rendering_code = """
 const RENDERERS = {};
@@ -216,10 +209,8 @@ class cq_directive(Directive):
 
     has_content = True
     required_arguments = 0
-    optional_arguments = 2
+    optional_arguments = 0
     option_spec = {
-        "height": directives.length_or_unitless,
-        "width": directives.length_or_percentage_or_unitless,
         "align": directives.unchanged,
     }
 
@@ -278,7 +269,7 @@ class cq_directive_vtk(Directive):
 
     has_content = True
     required_arguments = 0
-    optional_arguments = 2
+    optional_arguments = 0
     option_spec = {
         "height": directives.length_or_unitless,
         "width": directives.length_or_percentage_or_unitless,
@@ -291,9 +282,6 @@ class cq_directive_vtk(Directive):
         options = self.options
         content = self.content
         state_machine = self.state_machine
-        env = self.state.document.settings.env
-        build_path = Path(env.app.builder.outdir)
-        out_path = build_path / "_static"
 
         # only consider inline snippets
         plot_code = "\n".join(content)
@@ -321,11 +309,6 @@ class cq_directive_vtk(Directive):
             traceback.print_exc()
             assy = Assembly(Compound.makeText("CQGI error", 10, 5))
 
-        # save vtkjs to static
-        fname = Path(str(uuid()))
-        exporters.assembly.exportVTKJS(assy, out_path / fname)
-        fname = str(fname) + ".zip"
-
         # add the output
         lines = []
 
@@ -333,9 +316,7 @@ class cq_directive_vtk(Directive):
 
         lines.extend(
             template_vtk.format(
-                code=indent(TEMPLATE_RENDER.format(), "    "),
                 data=data,
-                ratio="null",
                 element="document.currentScript.parentNode",
                 txt_align=options.get("align", "left"),
                 width=options.get("width", "100%"),

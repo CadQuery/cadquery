@@ -1,4 +1,15 @@
-from typing import Union, Iterable, Tuple, Dict, overload, Optional, Any, List, cast
+from typing import (
+    Union,
+    Iterable,
+    Iterator,
+    Tuple,
+    Dict,
+    overload,
+    Optional,
+    Any,
+    List,
+    cast,
+)
 from typing_extensions import Protocol
 from math import degrees
 
@@ -12,7 +23,7 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.Quantity import Quantity_ColorRGBA
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
-from OCP.BOPAlgo import BOPAlgo_GlueEnum
+from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
 
 from vtkmodules.vtkRenderingCore import (
@@ -21,8 +32,11 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
 )
 
+from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
+from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_LINE, VTK_VERTEX
+
 from .geom import Location
-from .shapes import Shape, Compound
+from .shapes import Shape, Solid, Compound
 from .exporters.vtk import toString
 from ..cq import Workplane
 
@@ -131,6 +145,14 @@ class AssemblyProtocol(Protocol):
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 
+    def __iter__(
+        self,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        ...
+
 
 def setName(l: TDF_Label, name: str, tool):
 
@@ -227,45 +249,70 @@ def toCAF(
 
 def toVTK(
     assy: AssemblyProtocol,
-    renderer: vtkRenderer = vtkRenderer(),
-    loc: Location = Location(),
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ) -> vtkRenderer:
 
-    loc = loc * assy.loc
-    trans, rot = loc.toTuple()
+    renderer = vtkRenderer()
 
-    if assy.color:
-        color = assy.color.toTuple()
+    for shape, _, loc, col_ in assy:
 
-    if assy.shapes:
-        data = Compound.makeCompound(assy.shapes).toVtkPolyData(
-            tolerance, angularTolerance
-        )
+        col = col_.toTuple() if col_ else color
+        trans, rot = loc.toTuple()
 
+        data = shape.toVtkPolyData(tolerance, angularTolerance)
+
+        # extract faces
+        extr = vtkExtractCellsByType()
+        extr.SetInputDataObject(data)
+
+        extr.AddCellType(VTK_LINE)
+        extr.AddCellType(VTK_VERTEX)
+        extr.Update()
+        data_edges = extr.GetOutput()
+
+        # extract edges
+        extr = vtkExtractCellsByType()
+        extr.SetInputDataObject(data)
+
+        extr.AddCellType(VTK_TRIANGLE)
+        extr.Update()
+        data_faces = extr.GetOutput()
+
+        # remove normals from edges
+        data_edges.GetPointData().RemoveArray("Normals")
+
+        # add both to the renderer
         mapper = vtkMapper()
-        mapper.SetInputData(data)
+        mapper.AddInputDataObject(data_faces)
 
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*map(degrees, rot))
-        actor.GetProperty().SetColor(*color[:3])
-        actor.GetProperty().SetOpacity(color[3])
+        actor.GetProperty().SetColor(*col[:3])
+        actor.GetProperty().SetOpacity(col[3])
 
         renderer.AddActor(actor)
 
-    for child in assy.children:
-        renderer = toVTK(child, renderer, loc, color, tolerance, angularTolerance)
+        mapper = vtkMapper()
+        mapper.AddInputDataObject(data_edges)
+
+        actor = vtkActor()
+        actor.SetMapper(mapper)
+        actor.SetPosition(*trans)
+        actor.SetOrientation(*map(degrees, rot))
+        actor.GetProperty().SetColor(0, 0, 0)
+        actor.GetProperty().SetLineWidth(2)
+
+        renderer.AddActor(actor)
 
     return renderer
 
 
 def toJSON(
     assy: AssemblyProtocol,
-    loc: Location = Location(),
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
 ) -> List[Dict[str, Any]]:
@@ -273,28 +320,21 @@ def toJSON(
     Export an object to a structure suitable for converting to VTK.js JSON.
     """
 
-    loc = loc * assy.loc
-    trans, rot = loc.toTuple()
-
-    if assy.color:
-        color = assy.color.toTuple()
-
     rv = []
 
-    if assy.shapes:
+    for shape, _, loc, col_ in assy:
+
         val: Any = {}
 
-        data = toString(Compound.makeCompound(assy.shapes), tolerance)
+        data = toString(shape, tolerance)
+        trans, rot = loc.toTuple()
 
         val["shape"] = data
-        val["color"] = color
+        val["color"] = col_.toTuple() if col_ else color
         val["position"] = trans
         val["orientation"] = rot
 
         rv.append(val)
-
-    for child in assy.children:
-        rv.extend(toJSON(child, loc, color, tolerance))
 
     return rv
 
@@ -331,19 +371,9 @@ def toFusedCAF(
     shapes: List[Shape] = []
     colors = []
 
-    def extract_shapes(assy, parent_loc=None, parent_color=None):
-
-        loc = parent_loc * assy.loc if parent_loc else assy.loc
-        color = assy.color if assy.color else parent_color
-
-        for shape in assy.shapes:
-            shapes.append(shape.moved(loc).copy())
-            colors.append(color)
-
-        for ch in assy.children:
-            extract_shapes(ch, loc, color)
-
-    extract_shapes(assy)
+    for shape, _, loc, color in assy:
+        shapes.append(shape.moved(loc).copy())
+        colors.append(color)
 
     # Initialize with a dummy value for mypy
     top_level_shape = cast(TopoDS_Shape, None)
@@ -411,3 +441,37 @@ def toFusedCAF(
                     color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
 
     return top_level_lbl, doc
+
+
+def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]]:
+    """
+    Imprint all the solids and construct a dictionary mapping imprinted solids to names from the input assy.
+    """
+
+    # make the id map
+    id_map = {}
+
+    for obj, name, loc, _ in assy:
+        for s in obj.moved(loc).Solids():
+            id_map[s] = name
+
+    # connect topologically
+    bldr = BOPAlgo_MakeConnected()
+    bldr.SetRunParallel(True)
+    bldr.SetUseOBB(True)
+
+    for obj in id_map:
+        bldr.AddArgument(obj.wrapped)
+
+    bldr.Perform()
+    res = Shape(bldr.Shape())
+
+    # make the connected solid -> id map
+    origins: Dict[Shape, Tuple[str, ...]] = {}
+
+    for s in res.Solids():
+        ids = tuple(id_map[Solid(el)] for el in bldr.GetOrigins(s.wrapped))
+        # if GetOrigins yields nothing, solid was not modified
+        origins[s] = ids if ids else (id_map[s],)
+
+    return res, origins

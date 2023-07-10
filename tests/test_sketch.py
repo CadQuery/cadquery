@@ -640,7 +640,7 @@ def test_constraint_solver():
 
     midpoint = (seg2.startPoint() + seg2.endPoint()) / 2
 
-    (midpoint - seg1.startPoint()).Length == approx(2)
+    assert (midpoint - seg1.startPoint()).Length == approx(2)
 
     s5 = (
         Sketch()

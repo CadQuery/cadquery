@@ -205,8 +205,8 @@ Exporting SVG
 The SVG exporter has several options which can be useful for achieving the desired final output. Those 
 options are as follows.
 
-* *width* - Document width of the resulting image.
-* *height* - Document height of the resulting image.
+* *width* - Width of the resulting image (None to fit based on height).
+* *height* - Height of the resulting image (None to fit based on width).
 * *marginLeft* - Inset margin from the left side of the document.
 * *marginTop* - Inset margin from the top side of the document.
 * *projectionDir* - Direction the camera will view the shape from.

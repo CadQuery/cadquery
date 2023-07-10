@@ -1,7 +1,7 @@
 name: cadquery
 channels:
-  - cadquery
   - conda-forge
+  - cadquery
 dependencies:
   - python>=3.8
   - ipython
@@ -16,7 +16,6 @@ dependencies:
   - pytest
   - pytest-cov
   - ezdxf
-  - ipython
   - typing_extensions
   - nptyping=2.0.1
   - nlopt
