@@ -518,7 +518,14 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             elif type(value_node) == ast.Tuple:
                 self.cqModel.add_script_parameter(
                     InputParameter.create(
-                        value_node, var_name, TupleParameterType, (0, 0, 0)
+                        value_node,
+                        var_name,
+                        TupleParameterType,
+                        (
+                            value_node.elts[0].value,
+                            value_node.elts[1].value,
+                            value_node.elts[2].value,
+                        ),
                     )
                 )
             elif hasattr(ast, "NameConstant") and type(value_node) == ast.NameConstant:
