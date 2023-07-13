@@ -520,14 +520,11 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                 # Handle multi-length tuples
                 tup = ()
                 for entry in value_node.elts:
-                    tup = tup + (entry.value, )
+                    tup = tup + (entry.value,)
 
                 self.cqModel.add_script_parameter(
                     InputParameter.create(
-                        value_node,
-                        var_name,
-                        TupleParameterType,
-                        tup,
+                        value_node, var_name, TupleParameterType, tup,
                     )
                 )
             elif hasattr(ast, "NameConstant") and type(value_node) == ast.NameConstant:
