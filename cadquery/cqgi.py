@@ -310,11 +310,12 @@ class InputParameter:
                     self.ast_node.id = "False"
         elif self.varType == TupleParameterType:
             self.ast_node.n = new_value
-            self.ast_node.elts = [
-                ast.Constant(value=new_value[0]),
-                ast.Constant(value=new_value[1]),
-                ast.Constant(value=new_value[2]),
-            ]
+
+            # Build the list of constants to set as the tuple value
+            constants = []
+            for nv in new_value:
+                constants.append(ast.Constant(value=nv))
+            self.ast_node.elts = constants
             ast.fix_missing_locations(self.ast_node)
         else:
             raise ValueError("Unknown Type of var: ", str(self.varType))
@@ -516,16 +517,17 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                         )
                     )
             elif type(value_node) == ast.Tuple:
+                # Handle multi-length tuples
+                tup = ()
+                for entry in value_node.elts:
+                    tup = tup + (entry.value, )
+
                 self.cqModel.add_script_parameter(
                     InputParameter.create(
                         value_node,
                         var_name,
                         TupleParameterType,
-                        (
-                            value_node.elts[0].value,
-                            value_node.elts[1].value,
-                            value_node.elts[2].value,
-                        ),
+                        tup,
                     )
                 )
             elif hasattr(ast, "NameConstant") and type(value_node) == ast.NameConstant:
