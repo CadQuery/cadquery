@@ -173,7 +173,7 @@ from OCP.StlAPI import StlAPI_Writer
 
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
-from OCP.BRepTools import BRepTools
+from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
 
 from OCP.LocOpe import LocOpe_DPrism
 
@@ -545,9 +545,9 @@ class Shape(object):
         The return values depend on the type of the shape:
 
         | Vertex:  always 'Vertex'
-        | Edge:   LINE, CIRCLE, ELLIPSE, HYPERBOLA, PARABOLA, BEZIER, 
+        | Edge:   LINE, CIRCLE, ELLIPSE, HYPERBOLA, PARABOLA, BEZIER,
         |         BSPLINE, OFFSET, OTHER
-        | Face:   PLANE, CYLINDER, CONE, SPHERE, TORUS, BEZIER, BSPLINE, 
+        | Face:   PLANE, CYLINDER, CONE, SPHERE, TORUS, BEZIER, BSPLINE,
         |         REVOLUTION, EXTRUSION, OFFSET, OTHER
         | Solid:  'Solid'
         | Shell:  'Shell'
@@ -1056,7 +1056,7 @@ class Shape(object):
     def cut(self, *toCut: "Shape", tol: Optional[float] = None) -> "Shape":
         """
         Remove the positional arguments from this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -1091,7 +1091,7 @@ class Shape(object):
     def intersect(self, *toIntersect: "Shape", tol: Optional[float] = None) -> "Shape":
         """
         Intersection of the positional arguments and this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -2251,6 +2251,18 @@ class Wire(Shape, Mixin1D):
         f = Face.makeFromWires(self)
 
         return f.chamfer2D(d, vertices).outerWire()
+
+    def __iter__(self) -> Iterator[Edge]:
+        """
+        Iterate over subshapes.
+
+        """
+
+        exp = BRepTools_WireExplorer(self.wrapped)
+
+        while exp.Current():
+            yield Edge(exp.Current())
+            exp.Next()
 
 
 class Face(Shape):
@@ -3595,7 +3607,7 @@ class Compound(Shape, Mixin3D):
     def cut(self, *toCut: "Shape", tol: Optional[float] = None) -> "Compound":
         """
         Remove the positional arguments from this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -3636,7 +3648,7 @@ class Compound(Shape, Mixin3D):
     ) -> "Compound":
         """
         Intersection of the positional arguments and this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
