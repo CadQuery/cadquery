@@ -2254,7 +2254,7 @@ class Wire(Shape, Mixin1D):
 
     def __iter__(self) -> Iterator[Edge]:
         """
-        Iterate over subshapes.
+        Iterate over edges in an ordered way.
 
         """
 
