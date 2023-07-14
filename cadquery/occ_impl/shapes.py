@@ -1353,6 +1353,18 @@ class Shape(object):
 
         return display(self)._repr_javascript_()
 
+    def __iter__(self) -> Iterator["Shape"]:
+        """
+        Iterate over subshapes.
+
+        """
+
+        it = TopoDS_Iterator(self.wrapped)
+
+        while it.More():
+            yield Shape.cast(it.Value())
+            it.Next()
+
 
 class ShapeProtocol(Protocol):
     @property
@@ -3584,18 +3596,6 @@ class Compound(Shape, Mixin3D):
             rv = text_flat.transformShape(position.rG)
 
         return rv
-
-    def __iter__(self) -> Iterator[Shape]:
-        """
-        Iterate over subshapes.
-
-        """
-
-        it = TopoDS_Iterator(self.wrapped)
-
-        while it.More():
-            yield Shape.cast(it.Value())
-            it.Next()
 
     def __bool__(self) -> bool:
         """
