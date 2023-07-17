@@ -1,11 +1,10 @@
 name: cadquery
 channels:
   - conda-forge
-  - cadquery
 dependencies:
   - python>=3.8
   - ipython
-  - ocp=7.7.0
+  - ocp=7.7.1
   - pyparsing>=2.1.9
   - sphinx=5.0.1
   - sphinx_rtd_theme

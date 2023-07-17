@@ -396,9 +396,9 @@ def get_doc_nodes(doc, leaf=False):
                     color_subshape = Quantity_ColorRGBA()
                     face_color = None
 
-                    if ctool.GetColor(
+                    if ctool.GetColor_s(
                         child, XCAFDoc_ColorType.XCAFDoc_ColorGen, color_subshape
-                    ) or ctool.GetColor(
+                    ) or ctool.GetColor_s(
                         child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
                     ):
                         face_color = (
@@ -412,7 +412,7 @@ def get_doc_nodes(doc, leaf=False):
 
                 else:
                     color_subshape = Quantity_ColorRGBA()
-                    if ctool.GetColor(
+                    if ctool.GetColor_s(
                         child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
                     ):
                         color_subshapes_set.add(
