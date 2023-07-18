@@ -93,7 +93,7 @@ from OCP.BRepPrimAPI import (
 )
 from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
-from OCP.TopExp import TopExp_Explorer  # Topology explorer
+from OCP.TopExp import TopExp_Explorer, TopExp  # Topology explorer
 
 # used for getting underlying geometry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
@@ -301,6 +301,14 @@ geom_LUT = {
     ta.TopAbs_COMPOUND: "Compound",
 }
 
+ancestors_LUT = {
+    "Vertex": ta.TopAbs_EDGE,
+    "Edge": ta.TopAbs_WIRE,
+    "Wire": ta.TopAbs_FACE,
+    "Face": ta.TopAbs_SHELL,
+    "Shell": ta.TopAbs_SOLID,
+}
+
 geom_LUT_FACE = {
     ga.GeomAbs_Plane: "PLANE",
     ga.GeomAbs_Cylinder: "CYLINDER",
@@ -330,6 +338,7 @@ geom_LUT_EDGE = {
 Shapes = Literal[
     "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"
 ]
+
 Geoms = Literal[
     "Vertex",
     "Wire",
@@ -1364,6 +1373,37 @@ class Shape(object):
         while it.More():
             yield Shape.cast(it.Value())
             it.Next()
+
+    def ancestors(self, shape: "Shape", kind: Shapes) -> Iterator["Shape"]:
+        """
+        Iterate over ancestors, i.e. shapes of kind within self that contain shape.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+
+        TopExp.MapShapesAndAncestors_s(
+            self.wrapped, shapetype(shape.wrapped), inverse_shape_LUT[kind], shape_map
+        )
+
+        for s in shape_map.FindFromKey(shape.wrapped):
+            yield Shape.cast(s)
+
+    def siblings(self, shape: "Shape", kind: Shapes) -> Iterator["Shape"]:
+        """
+        Iterate over siblings, i.e. shapes within self that share subshapes of kind with shape.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+
+        TopExp.MapShapesAndAncestors_s(
+            self.wrapped, inverse_shape_LUT[kind], shapetype(shape.wrapped), shape_map
+        )
+
+        for child in shape._entities(kind):
+            for s in shape_map.FindFromKey(child):
+                yield Shape.cast(s)
 
 
 class ShapeProtocol(Protocol):
