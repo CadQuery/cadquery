@@ -1403,7 +1403,8 @@ class Shape(object):
 
         for child in shape._entities(kind):
             for s in shape_map.FindFromKey(child):
-                yield Shape.cast(s)
+                if not shape.wrapped.IsSame(s):
+                    yield Shape.cast(s)
 
 
 class ShapeProtocol(Protocol):
