@@ -1376,34 +1376,34 @@ class Shape(object):
 
     def ancestors(self, shape: "Shape", kind: Shapes) -> Iterator["Shape"]:
         """
-        Iterate over ancestors, i.e. shapes of kind within self that contain shape.
+        Iterate over ancestors, i.e. shapes of same kind within shape that contain self.
 
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
 
         TopExp.MapShapesAndAncestors_s(
-            self.wrapped, shapetype(shape.wrapped), inverse_shape_LUT[kind], shape_map
+            shape.wrapped, shapetype(self.wrapped), inverse_shape_LUT[kind], shape_map
         )
 
-        for s in shape_map.FindFromKey(shape.wrapped):
+        for s in shape_map.FindFromKey(self.wrapped):
             yield Shape.cast(s)
 
     def siblings(self, shape: "Shape", kind: Shapes) -> Iterator["Shape"]:
         """
-        Iterate over siblings, i.e. shapes within self that share subshapes of kind with shape.
+        Iterate over siblings, i.e. shapes within shape that share subshapes of kind with self.
 
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
 
         TopExp.MapShapesAndAncestors_s(
-            self.wrapped, inverse_shape_LUT[kind], shapetype(shape.wrapped), shape_map
+            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map
         )
 
-        for child in shape._entities(kind):
+        for child in self._entities(kind):
             for s in shape_map.FindFromKey(child):
-                if not shape.wrapped.IsSame(s):
+                if not self.wrapped.IsSame(s):
                     yield Shape.cast(s)
 
 

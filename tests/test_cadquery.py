@@ -5552,11 +5552,11 @@ class TestCadQuery(BaseTest):
         s = Workplane().box(1, 1, 1).val()
 
         # check ancestors
-        res1 = list(s.ancestors(s.Edges()[0], "Face"))
+        res1 = list(s.Edges()[0].ancestors(s, "Face"))
         assert len(res1) == 2
 
         # check siblings
-        res2 = list(s.siblings(s.Faces()[0], "Edge"))
+        res2 = list(s.Faces()[0].siblings(s, "Edge"))
         assert len(res2) == 4
 
         # check regular iterator
