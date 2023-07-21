@@ -5546,3 +5546,27 @@ class TestCadQuery(BaseTest):
 
         assert isinstance(vtk, vtkPolyData)
         assert vtk.GetNumberOfPolys() == 2
+
+    def test_iterators(self):
+
+        s = Workplane().box(1, 1, 1).val()
+
+        # check ancestors
+        res1 = list(s.ancestors(s.Edges()[0], "Face"))
+        assert len(res1) == 2
+
+        # check siblings
+        res2 = list(s.siblings(s.Faces()[0], "Edge"))
+        assert len(res2) == 4
+
+        # check regular iterator
+        res3 = list(s)
+        assert len(res3) == 1
+        assert isinstance(res3[0], Shell)
+
+        # check ordered iteration for wires
+        w = Workplane().polygon(5, 1).val()
+        edges = list(w)
+
+        for e1, e2 in zip(edges, edges[1:]):
+            assert (e2.startPoint() - e1.endPoint()).Length == approx(0.0)
