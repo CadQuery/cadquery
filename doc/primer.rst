@@ -144,7 +144,7 @@ your operations, and defines the first solid object created as the 'context soli
 you create are automatically combined (unless you specify otherwise) with that solid.  This happens even if the
 solid was created  a long way up in the stack.  For example::
 
-    Workplane('XY').box(1,2,3).faces(">Z").circle(0.25).extrude(1)
+    Workplane("XY").box(1, 2, 3).faces(">Z").circle(0.25).extrude(1)
 
 Will create a 1x2x3 box, with a cylindrical boss extending from the top face.  It was not necessary to manually
 combine the cylinder created by extruding the circle with the box, because the default behavior for extrude is
@@ -161,7 +161,7 @@ CAD models often have repeated geometry, and its really annoying to resort to fo
 Many CadQuery methods operate automatically on each element on the stack, so that you don't have to write loops.
 For example, this::
 
-    Workplane('XY').box(1,2,3).faces(">Z").vertices().circle(0.5)
+    Workplane("XY").box(1, 2, 3).faces(">Z").vertices().circle(0.5)
 
 Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a rectangular face, and the ``circle()`` method
 iterates on each member of the stack.
@@ -186,7 +186,7 @@ The Fluent API
 What we call the fluent API is what you work with when you first start using CadQuery, the :class:`~cadquery.Workplane` class and all its methods defines the Fluent API.
 This is the API you will use and see most of the time, it's fairly easy to use and it simplifies a lot of things for you. A classic example could be : ::
 
-    part = Workplane('XY').box(1,2,3).faces(">Z").vertices().circle(0.5).cutThruAll()
+    part = Workplane("XY").box(1, 2, 3).faces(">Z").vertices().circle(0.5).cutThruAll()
 
 Here we create a :class:`~cadquery.Workplane` object on which we subsequently call several methods to create our part. A general way of thinking about the Fluent API is to 
 consider the :class:`~cadquery.Workplane` as your part object and all it's methods as operations that will affect your part.
@@ -195,18 +195,12 @@ Often you will start with an empty :class:`~cadquery.Workplane`, then add more f
 This hierarchical structure of operations modifying a part is well seen with the traditional code style used in CadQuery code. 
 Code written with the CadQuery fluent API will often look like this : ::
 
-    part = (Workplane('XY')
-            .box(1,2,3)
-            .faces(">Z")
-            .vertices()
-            .circle(0.5)
-            .cutThruAll()
-            )
+    part = Workplane("XY").box(1, 2, 3).faces(">Z").vertices().circle(0.5).cutThruAll()
 
 Or like this : ::
 
-    part = Workplane('XY')
-    part = part.box(1,2,3)
+    part = Workplane("XY")
+    part = part.box(1, 2, 3)
     part = part.faces(">Z")
     part = part.vertices()
     part = part.circle(0.5)
@@ -240,7 +234,7 @@ topological classes. A Wire is made of several edges which are themselves made o
 
 For example we can create a circular face like so ::
 
-  circle_wire = Wire.makeCircle(10,Vector(0,0,0), Vector(0,0,1))
+  circle_wire = Wire.makeCircle(10, Vector(0, 0, 0), Vector(0, 0, 1))
   circular_face = Face.makeFromWires(circle_wire, [])
 
 .. note::
@@ -288,69 +282,79 @@ Fluent API <=> Direct API
 
 Here are all the possibilities you have to get an object from the Direct API (i.e a topological object).
 
-You can end the Fluent API call chain and get the last object on the stack with :py:meth:`Workplane.val` alternatively you can get all 
-the objects with :py:meth:`Workplane.vals` ::
+You can end the Fluent API call chain and get the last object on the stack with :py:meth:`Workplane.val` alternatively you can get all
+the objects with :py:meth:`Workplane.vals`
 
-  box = Workplane().box(10,5,5)
-  print(type(box))
-  >>> <class cadquery.cq.Workplane>
+.. code-block:: pycon
 
-  box = Workplane().box(10,5,5).val()
-  print(type(box))
-  >>> <class cadquery.occ_impl.shapes.Solid> 
+    >>> box = Workplane().box(10, 5, 5)
+    >>> print(type(box))
+    <class cadquery.cq.Workplane>
 
-If you are only interested in getting the context solid of your Workplane, you can use :py:meth:`Workplane.findSolid`::
+    >>> box = Workplane().box(10, 5, 5).val()
+    >>> print(type(box))
+    <class cadquery.occ_impl.shapes.Solid>
 
-  part = Workplane().box(10,5,5).circle(3).val()
-  print(type(part))
-  >>> <class cadquery.cq.Wire>
+If you are only interested in getting the context solid of your Workplane, you can use :py:meth:`Workplane.findSolid`:
 
-  part = Workplane().box(10,5,5).circle(3).findSolid()
-  print(type(part))
-  >>> <class cadquery.occ_impl.shapes.Compound> 
-  # The return type of findSolid is either a Solid or a Compound object 
+.. code-block::
+
+    >>> part = Workplane().box(10,5,5).circle(3).val()
+    >>> print(type(part))
+    <class cadquery.cq.Wire>
+
+    >>> part = Workplane().box(10,5,5).circle(3).findSolid()
+    >>> print(type(part))
+    <class cadquery.occ_impl.shapes.Compound>
+    # The return type of findSolid is either a Solid or a Compound object
 
 If you want to go the other way around i.e using objects from the topological API in the Fluent API here are your options :
 
 You can pass a topological object as a base object to the :class:`~cadquery.Workplane` object. ::
 
-  solid_box = Solid.makeBox(10,10,10)
-  part = Workplane(obj = solid_box) 
-  # And you can continue your modelling in the fluent API 
+  solid_box = Solid.makeBox(10, 10, 10)
+  part = Workplane(obj=solid_box)
+  # And you can continue your modelling in the fluent API
   part = part.faces(">Z").circle(1).extrude(10)
 
 
 You can add a topological object as a new operation/step in the Fluent API call chain with :py:meth:`Workplane.newObject` ::
-   
-  circle_wire = Wire.makeCircle(1,Vector(0,0,0), Vector(0,0,1))
-  box = Workplane().box(10,10,10).newObject([circle_wire])
-  # And you can continue modelling 
-  box = box.toPending().cutThruAll() # notice the call to `toPending` that is needed if you want to use it in a subsequent operation
+
+  circle_wire = Wire.makeCircle(1, Vector(0, 0, 0), Vector(0, 0, 1))
+  box = Workplane().box(10, 10, 10).newObject([circle_wire])
+  # And you can continue modelling
+  box = (
+      box.toPending().cutThruAll()
+  )  # notice the call to `toPending` that is needed if you want to use it in a subsequent operation
 
 -------------------------
 Direct API <=> OCCT API
 -------------------------
 
-Every object of the Direct API stores its OCCT equivalent object in its :attr:`wrapped` attribute. ::
+Every object of the Direct API stores its OCCT equivalent object in its :attr:`wrapped` attribute.:
 
-  box = Solid.makeBox(10,5,5)
-  print(type(box))
-  >>> <class cadquery.occ_impl.shapes.Solid> 
+.. code-block::
 
-  box = Solid.makeBox(10,5,5).wrapped
-  print(type(box))
-  >>> <class OCP.TopoDS.TopoDS_Solid> 
+    >>> box = Solid.makeBox(10,5,5)
+    >>> print(type(box))
+    <class cadquery.occ_impl.shapes.Solid>
+
+    >>> box = Solid.makeBox(10,5,5).wrapped
+    >>> print(type(box))
+    <class OCP.TopoDS.TopoDS_Solid>
 
 
-If you want to cast an OCCT object into a Direct API one you can just pass it as a parameter of the intended class ::
+If you want to cast an OCCT object into a Direct API one you can just pass it as a parameter of the intended class:
 
-  occt_box = BRepPrimAPI_MakeBox(5,5,5).Solid()
-  print(type(occt_box))
-  >>> <class OCP.TopoDS.TopoDS_Solid> 
+.. code-block::
 
-  direct_api_box = Solid(occt_box)
-  print(type(direct_api_box))
-  >>> <class cadquery.occ_impl.shapes.Solid> 
+    >>> occt_box = BRepPrimAPI_MakeBox(5,5,5).Solid()
+    >>> print(type(occt_box))
+    <class OCP.TopoDS.TopoDS_Solid>
+
+    >>> direct_api_box = Solid(occt_box)
+    >>> print(type(direct_api_box))
+    <class cadquery.occ_impl.shapes.Solid>
 
 .. note::
   You can cast into the direct API the types found `here <https://dev.opencascade.org/doc/refman/html/class_topo_d_s___shape.html>`_
@@ -384,14 +388,14 @@ patch them in::
 
 
     def tidy_repr(obj):
-        """ Shortens a default repr string
-        """
-        return repr(obj).split('.')[-1].rstrip('>')
+        """Shortens a default repr string"""
+        return repr(obj).split(".")[-1].rstrip(">")
 
 
     def _ctx_str(self):
         return (
-            tidy_repr(self) + ":\n"
+            tidy_repr(self)
+            + ":\n"
             + f"    pendingWires: {self.pendingWires}\n"
             + f"    pendingEdges: {self.pendingEdges}\n"
             + f"    tags: {self.tags}"
@@ -403,7 +407,8 @@ patch them in::
 
     def _plane_str(self):
         return (
-            tidy_repr(self) + ":\n"
+            tidy_repr(self)
+            + ":\n"
             + f"    origin: {self.origin.toTuple()}\n"
             + f"    z direction: {self.zDir.toTuple()}"
         )
@@ -682,12 +687,14 @@ context's :attr:`~cadquery.cq.CQContext.pendingWires` has been cleared by
     :meth:`~cadquery.Workplane.val` or :meth:`~cadquery.Workplane.findSolid` to get at the
     :class:`~cadquery.Compound` object, then use :meth:`cadquery.Shape.Solids` to return a list
     of the :class:`~cadquery.Solid` objects contained in the :class:`~cadquery.Compound`, which in
-    this example will be a single :class:`~cadquery.Solid` object. For example::
+    this example will be a single :class:`~cadquery.Solid` object. For example:
 
-        >>> a_compound = part.findSolid()
-        >>> a_list_of_solids = a_compound.Solids()
-        >>> len(a_list_of_solids)
-        1
+.. code-block:: pycon
+
+    >>> a_compound = part.findSolid()
+    >>> a_list_of_solids = a_compound.Solids()
+    >>> len(a_list_of_solids)
+    1
 
 Now we will create a small cylinder protruding from a face on the original box. We need to set up a
 workplane to draw a circle on, so firstly we will select the correct face::
@@ -807,14 +814,16 @@ A simple example could look as follows::
     d = 10
     h = 10
 
-    part1 = Workplane().box(2*w,2*d,h)
-    part2 = Workplane().box(w,d,2*h)
-    part3 = Workplane().box(w,d,3*h)
+    part1 = Workplane().box(2 * w, 2 * d, h)
+    part2 = Workplane().box(w, d, 2 * h)
+    part3 = Workplane().box(w, d, 3 * h)
 
     assy = (
-        Assembly(part1, loc=Location(Vector(-w,0,h/2)))
-        .add(part2, loc=Location(Vector(1.5*w,-.5*d,h/2)), color=Color(0,0,1,0.5))
-        .add(part3, loc=Location(Vector(-.5*w,-.5*d,2*h)), color=Color("red"))
+        Assembly(part1, loc=Location(Vector(-w, 0, h / 2)))
+        .add(
+            part2, loc=Location(Vector(1.5 * w, -0.5 * d, h / 2)), color=Color(0, 0, 1, 0.5)
+        )
+        .add(part3, loc=Location(Vector(-0.5 * w, -0.5 * d, 2 * h)), color=Color("red"))
     )
 
 Resulting in:
@@ -837,20 +846,20 @@ constraints to obtain a fully parametric assembly. This can be achieved in the f
     d = 10
     h = 10
 
-    part1 = Workplane().box(2*w,2*d,h)
-    part2 = Workplane().box(w,d,2*h)
-    part3 = Workplane().box(w,d,3*h)
+    part1 = Workplane().box(2 * w, 2 * d, h)
+    part2 = Workplane().box(w, d, 2 * h)
+    part3 = Workplane().box(w, d, 3 * h)
 
     assy = (
-        Assembly(part1, name='part1',loc=Location(Vector(-w,0,h/2)))
-        .add(part2, name='part2',color=Color(0,0,1,0.5))
-        .add(part3, name='part3',color=Color("red"))
-        .constrain('part1@faces@>Z','part3@faces@<Z','Axis')
-        .constrain('part1@faces@>Z','part2@faces@<Z','Axis')
-        .constrain('part1@faces@>Y','part3@faces@<Y','Axis')
-        .constrain('part1@faces@>Y','part2@faces@<Y','Axis')
-        .constrain('part1@vertices@>(-1,-1,1)','part3@vertices@>(-1,-1,-1)','Point')
-        .constrain('part1@vertices@>(1,-1,-1)','part2@vertices@>(-1,-1,-1)','Point')
+        Assembly(part1, name="part1", loc=Location(Vector(-w, 0, h / 2)))
+        .add(part2, name="part2", color=Color(0, 0, 1, 0.5))
+        .add(part3, name="part3", color=Color("red"))
+        .constrain("part1@faces@>Z", "part3@faces@<Z", "Axis")
+        .constrain("part1@faces@>Z", "part2@faces@<Z", "Axis")
+        .constrain("part1@faces@>Y", "part3@faces@<Y", "Axis")
+        .constrain("part1@faces@>Y", "part2@faces@<Y", "Axis")
+        .constrain("part1@vertices@>(-1,-1,1)", "part3@vertices@>(-1,-1,-1)", "Point")
+        .constrain("part1@vertices@>(1,-1,-1)", "part2@vertices@>(-1,-1,-1)", "Point")
         .solve()
     )
 
@@ -865,25 +874,25 @@ using tags. Tags can be directly referenced when constructing the constraints::
     d = 10
     h = 10
 
-    part1 = Workplane().box(2*w,2*d,h)
-    part2 = Workplane().box(w,d,2*h)
-    part3 = Workplane().box(w,d,3*h)
+    part1 = Workplane().box(2 * w, 2 * d, h)
+    part2 = Workplane().box(w, d, 2 * h)
+    part3 = Workplane().box(w, d, 3 * h)
 
-    part1.faces('>Z').edges('<X').vertices('<Y').tag('pt1')
-    part1.faces('>X').edges('<Z').vertices('<Y').tag('pt2')
-    part3.faces('<Z').edges('<X').vertices('<Y').tag('pt1')
-    part2.faces('<X').edges('<Z').vertices('<Y').tag('pt2')
+    part1.faces(">Z").edges("<X").vertices("<Y").tag("pt1")
+    part1.faces(">X").edges("<Z").vertices("<Y").tag("pt2")
+    part3.faces("<Z").edges("<X").vertices("<Y").tag("pt1")
+    part2.faces("<X").edges("<Z").vertices("<Y").tag("pt2")
 
     assy1 = (
-        Assembly(part1, name='part1',loc=Location(Vector(-w,0,h/2)))
-        .add(part2, name='part2',color=Color(0,0,1,0.5))
-        .add(part3, name='part3',color=Color("red"))
-        .constrain('part1@faces@>Z','part3@faces@<Z','Axis')
-        .constrain('part1@faces@>Z','part2@faces@<Z','Axis')
-        .constrain('part1@faces@>Y','part3@faces@<Y','Axis')
-        .constrain('part1@faces@>Y','part2@faces@<Y','Axis')
-        .constrain('part1?pt1','part3?pt1','Point')
-        .constrain('part1?pt2','part2?pt2','Point')
+        Assembly(part1, name="part1", loc=Location(Vector(-w, 0, h / 2)))
+        .add(part2, name="part2", color=Color(0, 0, 1, 0.5))
+        .add(part3, name="part3", color=Color("red"))
+        .constrain("part1@faces@>Z", "part3@faces@<Z", "Axis")
+        .constrain("part1@faces@>Z", "part2@faces@<Z", "Axis")
+        .constrain("part1@faces@>Y", "part3@faces@<Y", "Axis")
+        .constrain("part1@faces@>Y", "part2@faces@<Y", "Axis")
+        .constrain("part1?pt1", "part3?pt1", "Point")
+        .constrain("part1?pt2", "part2?pt2", "Point")
         .solve()
     )
 

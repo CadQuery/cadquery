@@ -22,15 +22,16 @@ combining them using boolean operations.
     import cadquery as cq
 
     result = (
-       cq.Sketch()
-       .trapezoid(4,3,90)
-       .vertices()
-       .circle(.5, mode='s')
-       .reset()
-       .vertices()
-       .fillet(.25)
-       .reset()
-       .rarray(.6,1,5,1).slot(1.5,0.4, mode='s', angle=90)
+        cq.Sketch()
+        .trapezoid(4, 3, 90)
+        .vertices()
+        .circle(0.5, mode="s")
+        .reset()
+        .vertices()
+        .fillet(0.25)
+        .reset()
+        .rarray(0.6, 1, 5, 1)
+        .slot(1.5, 0.4, mode="s", angle=90)
     )
 
 Note that selectors are implemented, but selection has to be explicitly reset. Sketch
@@ -45,16 +46,16 @@ Every operation from the face API accepts a mode parameter to define how to comb
     :height: 600px
 
     result = (
-       cq.Sketch()
-       .rect(1, 2, mode='c', tag='base')
-       .vertices(tag='base')
-       .circle(.7)
-       .reset()
-       .edges('|Y', tag='base')
-       .ellipse(1.2, 1, mode='i')
-       .reset()
-       .rect(2, 2, mode='i')
-       .clean()
+        cq.Sketch()
+        .rect(1, 2, mode="c", tag="base")
+        .vertices(tag="base")
+        .circle(0.7)
+        .reset()
+        .edges("|Y", tag="base")
+        .ellipse(1.2, 1, mode="i")
+        .reset()
+        .rect(2, 2, mode="i")
+        .clean()
     )
 
 
@@ -70,12 +71,12 @@ If needed, one can construct sketches by placing individual edges.
 
     result = (
         cq.Sketch()
-        .segment((0.,0),(0.,2.))
-        .segment((2.,0))
+        .segment((0.0, 0), (0.0, 2.0))
+        .segment((2.0, 0))
         .close()
-        .arc((.6,.6),0.4,0.,360.)
-        .assemble(tag='face')
-        .edges('%LINE',tag='face')
+        .arc((0.6, 0.6), 0.4, 0.0, 360.0)
+        .assemble(tag="face")
+        .edges("%LINE", tag="face")
         .vertices()
         .chamfer(0.2)
     )
@@ -97,11 +98,11 @@ and circles.
 
     result = (
         cq.Sketch()
-        .arc((0,0),1.,0.,360.)
-        .arc((1,1.5),0.5,0.,360.)
-        .segment((0.,2),(-1,3.))
+        .arc((0, 0), 1.0, 0.0, 360.0)
+        .arc((1, 1.5), 0.5, 0.0, 360.0)
+        .segment((0.0, 2), (-1, 3.0))
         .hull()
-       )
+    )
 
 Constraint-based sketches
 =========================
@@ -118,12 +119,12 @@ far only line segments and arcs can be used in such a use case.
 
     result = (
         cq.Sketch()
-        .segment((0,0), (0,3.),"s1")
-        .arc((0.,3.), (1.5,1.5), (0.,0.),"a1")
-        .constrain("s1","Fixed",None)
-        .constrain("s1", "a1","Coincident",None)
-        .constrain("a1", "s1","Coincident",None)
-        .constrain("s1",'a1', "Angle", 45)
+        .segment((0, 0), (0, 3.0), "s1")
+        .arc((0.0, 3.0), (1.5, 1.5), (0.0, 0.0), "a1")
+        .constrain("s1", "Fixed", None)
+        .constrain("s1", "a1", "Coincident", None)
+        .constrain("a1", "s1", "Coincident", None)
+        .constrain("s1", "a1", "Angle", 45)
         .solve()
         .assemble()
     )
@@ -204,15 +205,15 @@ Constructing sketches in-place can be accomplished as follows.
 
     result = (
         cq.Workplane()
-        .box(5,5,1)
-        .faces('>Z')
+        .box(5, 5, 1)
+        .faces(">Z")
         .sketch()
-        .regularPolygon(2,3,tag='outer')
-        .regularPolygon(1.5,3,mode='s')
-        .vertices(tag='outer')
-        .fillet(.2)
+        .regularPolygon(2, 3, tag="outer")
+        .regularPolygon(1.5, 3, mode="s")
+        .vertices(tag="outer")
+        .fillet(0.2)
         .finalize()
-        .extrude(.5)
+        .extrude(0.5)
     )
 
 Sketch API is available after the :meth:`~cadquery.Workplane.sketch` call and original `workplane`.
@@ -226,21 +227,21 @@ When multiple elements are selected before constructing the sketch, multiple ske
 
     result = (
         cq.Workplane()
-        .box(5,5,1)
-        .faces('>Z')
+        .box(5, 5, 1)
+        .faces(">Z")
         .workplane()
-        .rarray(2,2,2,2)
-        .rect(1.5,1.5)
-        .extrude(.5)
-        .faces('>Z')
+        .rarray(2, 2, 2, 2)
+        .rect(1.5, 1.5)
+        .extrude(0.5)
+        .faces(">Z")
         .sketch()
         .circle(0.4)
         .wires()
         .distribute(6)
-        .circle(0.1,mode='a')
+        .circle(0.1, mode="a")
         .clean()
         .finalize()
-        .cutBlind(-0.5,taper=10)
+        .cutBlind(-0.5, taper=10)
     )
 
 Sometimes it is desired to reuse existing sketches and place them as-is on a workplane.
@@ -251,22 +252,17 @@ Sometimes it is desired to reuse existing sketches and place them as-is on a wor
 
     import cadquery as cq
 
-    s = (
-         cq.Sketch()
-         .trapezoid(3,1,110)
-         .vertices()
-         .fillet(0.2)
-         )
+    s = cq.Sketch().trapezoid(3, 1, 110).vertices().fillet(0.2)
 
     result = (
         cq.Workplane()
-        .box(5,5,5)
-        .faces('>X')
+        .box(5, 5, 5)
+        .faces(">X")
         .workplane()
-        .transformed((0,0,-90))
+        .transformed((0, 0, -90))
         .placeSketch(s)
         .cutThruAll()
-        )
+    )
 
 Reusing of existing sketches is needed when using :meth:`~cadquery.Workplane.loft`.
 
@@ -275,24 +271,10 @@ Reusing of existing sketches is needed when using :meth:`~cadquery.Workplane.lof
 
     from cadquery import Workplane, Sketch, Vector, Location
 
-    s1 = (
-         Sketch()
-         .trapezoid(3,1,110)
-         .vertices()
-         .fillet(0.2)
-         )
+    s1 = Sketch().trapezoid(3, 1, 110).vertices().fillet(0.2)
 
-    s2 = (
-         Sketch()
-         .rect(2,1)
-         .vertices()
-         .fillet(0.2)
-         )
+    s2 = Sketch().rect(2, 1).vertices().fillet(0.2)
 
-    result = (
-        Workplane()
-        .placeSketch(s1, s2.moved(Location(Vector(0, 0, 3))))
-        .loft()
-        )
+    result = Workplane().placeSketch(s1, s2.moved(Location(Vector(0, 0, 3)))).loft()
 
 When lofting only outer wires are taken into account and inner wires are silently ignored.

@@ -20,7 +20,9 @@ Install the Conda Package Manager
 
 In principle, any Conda distribution will work, but it is probably best to install `Miniforge <https://github.com/conda-forge/miniforge>`_ to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation.
 
-In Linux/MacOS, the local directory installation method looks something like this::
+In Linux/MacOS, the local directory installation method looks something like this:
+
+.. code-block::
 
     # Install the script to ~/miniforge
     wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
@@ -30,7 +32,9 @@ In Linux/MacOS, the local directory installation method looks something like thi
     source $HOME/miniforge/bin/activate
 
 
-On Windows, download the installer and double click it on the file browser or install non-interactively as follows::
+On Windows, download the installer and double click it on the file browser or install non-interactively as follows:
+
+.. code-block::
 
     :: Install
     curl -L -o miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
@@ -49,19 +53,25 @@ Note that miniforge automatically sets *conda-forge* as the default channel.  ``
 conda
 `````
 
-Install the latest released version of cadquery [#f1]_::
+Install the latest released version of cadquery [#f1]_:
+
+.. code-block::
 
     conda create -n cqrel
     conda activate cqrel
     conda install -c conda-forge cadquery occt=7.7.0
 
-or install a given version of cadquery [#f1]_::
+or install a given version of cadquery [#f1]_:
+
+.. code-block::
 
     conda create -n cq22
     conda activate cq22
     conda install -c conda-forge cadquery=2.2.0 occt=7.7.0
 
-or install the latest dev version::
+or install the latest dev version:
+
+.. code-block::
 
     conda create -n cqdev
     conda activate cqdev
@@ -73,25 +83,35 @@ Install via pip
 
 CadQuery has a complex set of dependencies including OCP, which is our set of bindings to the OpenCASCADE CAD kernel. OCP is distributed as binary wheels for Linux, MacOS and Windows. However, there are some limitations. Only Python 3.8 through 3.10 are currently supported, and some older Linux distributions such as Ubuntu 18.04 are not supported. If the pip installation method does not work for your system, you can try the conda installation method.
 
-It is highly recommended that a virtual environment is used when installing CadQuery, although it is not strictly required. Installing CadQuery via pip requires an up-to-date version of pip, which can be obtained with the following command line (or a slight variation thereof).::
+It is highly recommended that a virtual environment is used when installing CadQuery, although it is not strictly required. Installing CadQuery via pip requires an up-to-date version of pip, which can be obtained with the following command line (or a slight variation thereof).:
+
+.. code-block::
 
     python3 -m pip install --upgrade pip
 
-Once a current version of pip is installed, CadQuery can be installed using the following command line.::
+Once a current version of pip is installed, CadQuery can be installed using the following command line.:
+
+.. code-block::
 
     pip install cadquery
 
-It is also possible to install the very latest changes directly from CadQuery's GitHub repository, with the understanding that sometimes breaking changes can occur. To install from the git repository, run the following command line.::
+It is also possible to install the very latest changes directly from CadQuery's GitHub repository, with the understanding that sometimes breaking changes can occur. To install from the git repository, run the following command line.:
+
+.. code-block::
 
     pip install git+https://github.com/CadQuery/cadquery.git
 
 You should now have a working CadQuery installation, but developers or users who want to use CadQuery with IPython/Jupyter or to set up a developer environment can read the rest of this section.
 
-If you are installing CadQuery to use with IPython/Jupyter, you may want to run the following command line to install the extra dependencies.::
+If you are installing CadQuery to use with IPython/Jupyter, you may want to run the following command line to install the extra dependencies.:
+
+.. code-block::
 
     pip install cadquery[ipython]
 
-If you want to create a developer setup to contribute to CadQuery, the following command line will install all the development dependencies that are needed.::
+If you want to create a developer setup to contribute to CadQuery, the following command line will install all the development dependencies that are needed.:
+
+.. code-block::
 
     pip install cadquery[dev]
 
@@ -123,13 +143,17 @@ Linux/MacOS
 4. Launch the **run.sh** script from the file brower (again make executable first and then run as program).
 
 
-To install from command line, download the installer using curl or wget or your favorite program and run the script.::
+To install from command line, download the installer using curl or wget or your favorite program and run the script.:
+
+.. code-block::
 
     curl -LO https://github.com/CadQuery/CQ-editor/releases/download/nightly/CQ-editor-master-Linux-x86_64.sh
     sh CQ-editor-master-Linux-x86_64.sh
 
 
-To run from command.::
+To run from command.:
+
+.. code-block::
 
     $HOME/cq-editor/run.sh
 
@@ -146,7 +170,9 @@ Windows
 2. Launch the **run.bat** script from the file brower (select **Open**).
 
 
-To run from command line, activate the environment, then run cq-editor::
+To run from command line, activate the environment, then run cq-editor:
+
+.. code-block::
 
     C:\Users\<username>\cq-editor\run.bat
 
@@ -158,12 +184,16 @@ Installing extra packages
 
 First activate the environment, then call mamba or pip to install additional packages.
 
-On windows.::
+On windows.:
+
+.. code-block::
 
     C:\Users\<username>\cq-editor\Scripts\activate
     mamba install <packagename>
 
-On Linux/MacOS. ::
+On Linux/MacOS.:
+
+.. code-block::
 
     source $HOME/cq-editor/bin/activate
     mamba install <packagename>
@@ -174,14 +204,18 @@ Adding CQ-editor to an Existing Environment
 
 You can install CQ-editor into a conda environment or Python virtual environment using conda (mamba) or pip.
 
-Example cq-editor installation with conda (this installs both cadquery and cq-editor)::
+Example cq-editor installation with conda (this installs both cadquery and cq-editor):
+
+.. code-block::
 
     conda create -n cqdev
     conda activate cqdev
     conda install -c cadquery -c conda-forge cq-editor=master
 
 
-Example cq-editor installation with pip::
+Example cq-editor installation with pip:
+
+.. code-block::
 
     pip install PyQt5 spyder pyqtgraph logbook
     pip install git+https://github.com/CadQuery/CQ-editor.git
@@ -208,14 +242,18 @@ pip
        pip install jupyterlab
 
 
-Start JupyterLab::
+Start JupyterLab:
+
+.. code-block::
 
     jupyter lab
 
 
 JupyterLab will open automatically in your browser.  Create a Notebook to interactively edit/view CadQuery models.
 
-Call ``display`` to show the model.::
+Call ``display`` to show the model.:
+
+.. code-block::
 
     display(<Workplane, Shape, or Assembly object>)
 
@@ -226,7 +264,9 @@ Call ``display`` to show the model.::
 Test Your Installation
 ------------------------
 
-If all has gone well, you can open a command line/prompt, and type::
+If all has gone well, you can open a command line/prompt, and type:
+
+.. code-block::
 
       $ python
       $ import cadquery

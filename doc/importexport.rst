@@ -75,7 +75,7 @@ There are no parameters for this method other than the file path to import.
 
     import cadquery as cq
 
-    result = cq.importers.importStep('/path/to/step/block.stp')
+    result = cq.importers.importStep("/path/to/step/block.stp")
 
 Exporting STEP
 ###############
@@ -157,7 +157,7 @@ export with all defaults is shown below.
     assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
     # Save the assembly to STEP
-    assy.save('out.step')
+    assy.save("out.step")
 
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
@@ -195,7 +195,11 @@ This is done by setting the name property of the assembly before calling :meth:`
 .. code-block:: python
 
     assy = Assembly(name="my_assembly")
-    assy.save("out.stp", cq.exporters.ExportTypes.STEP, mode=cq.exporters.assembly.ExportModes.FUSED)
+    assy.save(
+        "out.stp",
+        cq.exporters.ExportTypes.STEP,
+        mode=cq.exporters.assembly.ExportModes.FUSED,
+    )
 
 If an assembly name is not specified, a UUID will be used to avoid name conflicts.
 
@@ -229,7 +233,7 @@ Without options:
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, '/path/to/file/box.svg')
+    exporters.export(result, "/path/to/file/box.svg")
 
 Results in:
 
@@ -248,21 +252,21 @@ The following is an example of using options to alter the resulting SVG output b
     result = cq.Workplane().box(10, 10, 10)
 
     exporters.export(
-                result,
-                '/path/to/file/box_custom_options.svg',
-                opt={
-                    "width": 300,
-                    "height": 300,
-                    "marginLeft": 10,
-                    "marginTop": 10,
-                    "showAxes": False,
-                    "projectionDir": (0.5, 0.5, 0.5),
-                    "strokeWidth": 0.25,
-                    "strokeColor": (255, 0, 0),
-                    "hiddenColor": (0, 0, 255),
-                    "showHidden": True,
-                },
-            )
+        result,
+        "/path/to/file/box_custom_options.svg",
+        opt={
+            "width": 300,
+            "height": 300,
+            "marginLeft": 10,
+            "marginTop": 10,
+            "showAxes": False,
+            "projectionDir": (0.5, 0.5, 0.5),
+            "strokeWidth": 0.25,
+            "strokeColor": (255, 0, 0),
+            "hiddenColor": (0, 0, 255),
+            "showHidden": True,
+        },
+    )
 
 Which results in the following image:
 
@@ -290,7 +294,7 @@ optimum values that will produce an acceptable mesh.
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, '/path/to/file/mesh.stl')
+    exporters.export(result, "/path/to/file/mesh.stl")
 
 Exporting AMF and 3MF
 ######################
@@ -311,7 +315,7 @@ optimum values that will produce an acceptable mesh. Note that parameters for co
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, '/path/to/file/mesh.amf', tolerance=0.01, angularTolerance=0.1)
+    exporters.export(result, "/path/to/file/mesh.amf", tolerance=0.01, angularTolerance=0.1)
 
 
 Exporting TJS
@@ -333,7 +337,13 @@ optimum values that will produce an acceptable mesh.
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, '/path/to/file/mesh.json', tolerance=0.01, angularTolerance=0.1, exportType=exporters.ExportTypes.TJS)
+    exporters.export(
+        result,
+        "/path/to/file/mesh.json",
+        tolerance=0.01,
+        angularTolerance=0.1,
+        exportType=exporters.ExportTypes.TJS,
+    )
 
 Note that the export type was explicitly specified as ``TJS`` because the extension that was used for the file name was ``.json``. If the extension ``.tjs`` 
 had been used, CadQuery would have understood to use the ``TJS`` export format.
@@ -357,7 +367,9 @@ optimum values that will produce an acceptable mesh.
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, '/path/to/file/mesh.vrml', tolerance=0.01, angularTolerance=0.1)
+    exporters.export(
+        result, "/path/to/file/mesh.vrml", tolerance=0.01, angularTolerance=0.1
+    )
 
 Exporting DXF
 ##############
@@ -427,7 +439,9 @@ Document units can be set to any :doc:`unit supported by ezdxf <ezdxf-stable:con
     result = cq.Workplane().box(10, 10, 10)
 
     exporters.exportDXF(
-        result, "/path/to/file/object.dxf", doc_units=6,  # set DXF document units to meters
+        result,
+        "/path/to/file/object.dxf",
+        doc_units=6,  # set DXF document units to meters
     )
 
     # or
@@ -452,11 +466,7 @@ By default, the DXF exporter will output splines exactly as they are represented
 .. code-block:: python
     :caption: DXF document with curves approximated with cubic splines.
 
-    cq.exporters.exportDXF(
-        result,
-        "/path/to/file/object.dxf",
-        approx="spline"
-    )
+    cq.exporters.exportDXF(result, "/path/to/file/object.dxf", approx="spline")
 
 
 Exporting Other Formats
@@ -472,7 +482,7 @@ using the following structure.
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, '/path/to/file/object.[file_extension]')
+    exporters.export(result, "/path/to/file/object.[file_extension]")
 
 Be sure to use the correct file extension so that CadQuery can determine the export format. If in doubt, fall 
 back to setting the type explicitly by using :py:class:`exporters.ExportTypes`.
@@ -486,4 +496,4 @@ For example:
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, '/path/to/file/object.dxf', exporters.ExportTypes.DXF)
+    exporters.export(result, "/path/to/file/object.dxf", exporters.ExportTypes.DXF)

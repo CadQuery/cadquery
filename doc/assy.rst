@@ -19,21 +19,21 @@ We want to start with defining the model parameters to allow for easy dimension 
 .. code-block:: python
 
     import cadquery as cq
-    
+
     # Parameters
     H = 400
     W = 200
     D = 350
-    
+
     PROFILE = cq.importers.importDXF("vslot-2020_1.dxf").wires()
-    
+
     SLOT_D = 5
     PANEL_T = 3
-    
+
     HANDLE_D = 20
     HANDLE_L = 50
     HANDLE_W = 4
-    
+
 It is interesting to note that the v-slot profile is imported from a DXF file.
 This way it is very easy to change to other aluminum extrusion type, e.g. Item or Bosch.
 Vendors usually provide DXF files.
@@ -46,12 +46,10 @@ Next we want to define functions generating the assembly components based on the
 .. code-block:: python
 
     def make_vslot(l):
-    
         return PROFILE.toPending().extrude(l)
-    
-    
+
+
     def make_connector():
-    
         rv = (
             cq.Workplane()
             .box(20, 20, 20)
@@ -62,43 +60,41 @@ Next we want to define functions generating the assembly components based on the
             .workplane(centerOption="CenterOfMass")
             .cboreHole(6, 15, 18)
         )
-    
+
         # tag mating faces
         rv.faces(">X").tag("X").end()
         rv.faces(">Z").tag("Z").end()
-    
+
         return rv
-    
-    
+
+
     def make_panel(w, h, t, cutout):
-    
         rv = (
             cq.Workplane("XZ")
             .rect(w, h)
             .extrude(t)
             .faces(">Y")
             .vertices()
-            .rect(2*cutout,2*cutout)
+            .rect(2 * cutout, 2 * cutout)
             .cutThruAll()
             .faces("<Y")
             .workplane()
             .pushPoints([(-w / 3, HANDLE_L / 2), (-w / 3, -HANDLE_L / 2)])
             .hole(3)
         )
-    
+
         # tag mating edges
         rv.faces(">Y").edges("%CIRCLE").edges(">Z").tag("hole1")
         rv.faces(">Y").edges("%CIRCLE").edges("<Z").tag("hole2")
-    
+
         return rv
-    
-    
+
+
     def make_handle(w, h, r):
-    
         pts = ((0, 0), (w, 0), (w, h), (0, h))
-    
+
         path = cq.Workplane().polyline(pts)
-    
+
         rv = (
             cq.Workplane("YZ")
             .rect(r, r)
@@ -109,43 +105,43 @@ Next we want to define functions generating the assembly components based on the
             .faces("<X", tag="solid")
             .hole(r / 1.5)
         )
-        
+
         # tag mating faces
         rv.faces("<X").faces(">Y").tag("mate1")
         rv.faces("<X").faces("<Y").tag("mate2")
-    
+
         return rv
-        
+
 Initial assembly
 ================
 
 Next we want to instantiate all the components and add them to the assembly.
 
 .. code-block:: python
-   
-    # define the elements
-    door = (
-        cq.Assembly()
-        .add(make_vslot(H), name="left")
-        .add(make_vslot(H), name="right")
-        .add(make_vslot(W), name="top")
-        .add(make_vslot(W), name="bottom")
-        .add(make_connector(), name="con_tl", color=cq.Color("black"))
-        .add(make_connector(), name="con_tr", color=cq.Color("black"))
-        .add(make_connector(), name="con_bl", color=cq.Color("black"))
-        .add(make_connector(), name="con_br", color=cq.Color("black"))
-        .add(
-            make_panel(W + SLOT_D, H + SLOT_D, PANEL_T, SLOT_D),
-            name="panel",
-            color=cq.Color(0, 0, 1, 0.2),
-        )
-        .add(
-            make_handle(HANDLE_D, HANDLE_L, HANDLE_W),
-            name="handle",
-            color=cq.Color("yellow"),
-        )
-    )
-    
+
+   # define the elements
+   door = (
+       cq.Assembly()
+       .add(make_vslot(H), name="left")
+       .add(make_vslot(H), name="right")
+       .add(make_vslot(W), name="top")
+       .add(make_vslot(W), name="bottom")
+       .add(make_connector(), name="con_tl", color=cq.Color("black"))
+       .add(make_connector(), name="con_tr", color=cq.Color("black"))
+       .add(make_connector(), name="con_bl", color=cq.Color("black"))
+       .add(make_connector(), name="con_br", color=cq.Color("black"))
+       .add(
+           make_panel(W + SLOT_D, H + SLOT_D, PANEL_T, SLOT_D),
+           name="panel",
+           color=cq.Color(0, 0, 1, 0.2),
+       )
+       .add(
+           make_handle(HANDLE_D, HANDLE_L, HANDLE_W),
+           name="handle",
+           color=cq.Color("yellow"),
+       )
+   )
+
 Constraints definition
 ======================
 
@@ -182,20 +178,20 @@ Then we want to define all the constraints
         .constrain("panel?hole1", "handle?mate1", "Plane")
         .constrain("panel?hole2", "handle?mate2", "Point")
     )
-    
+
 Should you need to do something unusual that is not possible with the string
 based selectors (e.g. use :py:class:`cadquery.selectors.BoxSelector` or a user-defined selector class),
 it is possible to pass :py:class:`cadquery.Shape` objects to the :py:meth:`cadquery.Assembly.constrain` method directly. For example, the above
 
-.. code-block:: python
+.. code-block::
 
-    .constrain('part1@faces@>Z','part3@faces@<Z','Axis')
+    .constrain("part1@faces@>Z", "part3@faces@<Z", "Axis")
 
 is equivalent to
 
-.. code-block:: python
+.. code-block::
 
-    .constrain('part1',part1.faces('>z').val(),'part3',part3.faces('<Z').val(),'Axis')
+    .constrain("part1", part1.faces(">z").val(), "part3", part3.faces("<Z").val(), "Axis")
 
 This method requires a :py:class:`cadquery.Shape` object, so remember to use the :py:meth:`cadquery.Workplane.val`
 method to pass a single :py:class:`cadquery.Shape` and not the whole :py:class:`cadquery.Workplane` object.
@@ -209,29 +205,27 @@ Below is the complete code including the final solve step.
     :height: 600px
 
     import cadquery as cq
-    
+
     # Parameters
     H = 400
     W = 200
     D = 350
-    
+
     PROFILE = cq.importers.importDXF("vslot-2020_1.dxf").wires()
-    
+
     SLOT_D = 6
     PANEL_T = 3
-    
+
     HANDLE_D = 20
     HANDLE_L = 50
     HANDLE_W = 4
-    
-    
+
+
     def make_vslot(l):
-    
         return PROFILE.toPending().extrude(l)
-    
-    
+
+
     def make_connector():
-    
         rv = (
             cq.Workplane()
             .box(20, 20, 20)
@@ -242,43 +236,41 @@ Below is the complete code including the final solve step.
             .workplane(centerOption="CenterOfMass")
             .cboreHole(6, 15, 18)
         )
-    
+
         # tag mating faces
         rv.faces(">X").tag("X").end()
         rv.faces(">Z").tag("Z").end()
-    
+
         return rv
-    
-    
+
+
     def make_panel(w, h, t, cutout):
-    
         rv = (
             cq.Workplane("XZ")
             .rect(w, h)
             .extrude(t)
             .faces(">Y")
             .vertices()
-            .rect(2*cutout,2*cutout)
+            .rect(2 * cutout, 2 * cutout)
             .cutThruAll()
             .faces("<Y")
             .workplane()
             .pushPoints([(-w / 3, HANDLE_L / 2), (-w / 3, -HANDLE_L / 2)])
             .hole(3)
         )
-    
+
         # tag mating edges
         rv.faces(">Y").edges("%CIRCLE").edges(">Z").tag("hole1")
         rv.faces(">Y").edges("%CIRCLE").edges("<Z").tag("hole2")
-    
+
         return rv
-    
-    
+
+
     def make_handle(w, h, r):
-    
         pts = ((0, 0), (w, 0), (w, h), (0, h))
-    
+
         path = cq.Workplane().polyline(pts)
-    
+
         rv = (
             cq.Workplane("YZ")
             .rect(r, r)
@@ -289,14 +281,14 @@ Below is the complete code including the final solve step.
             .faces("<X", tag="solid")
             .hole(r / 1.5)
         )
-        
+
         # tag mating faces
         rv.faces("<X").faces(">Y").tag("mate1")
         rv.faces("<X").faces("<Y").tag("mate2")
-    
+
         return rv
-    
-    
+
+
     # define the elements
     door = (
         cq.Assembly()
@@ -309,7 +301,7 @@ Below is the complete code including the final solve step.
         .add(make_connector(), name="con_bl", color=cq.Color("black"))
         .add(make_connector(), name="con_br", color=cq.Color("black"))
         .add(
-            make_panel(W + 2*SLOT_D, H + 2*SLOT_D, PANEL_T, SLOT_D),
+            make_panel(W + 2 * SLOT_D, H + 2 * SLOT_D, PANEL_T, SLOT_D),
             name="panel",
             color=cq.Color(0, 0, 1, 0.2),
         )
@@ -319,7 +311,7 @@ Below is the complete code including the final solve step.
             color=cq.Color("yellow"),
         )
     )
-    
+
     # define the constraints
     (
         door
@@ -349,11 +341,11 @@ Below is the complete code including the final solve step.
         .constrain("panel?hole1", "handle?mate1", "Plane")
         .constrain("panel?hole2", "handle?mate2", "Point")
     )
-    
+
     # solve
     door.solve()
-    
-    show_object(door,name='door')
+
+    show_object(door, name="door")
 
 
 Data export
@@ -367,9 +359,8 @@ STEP can be loaded in all CAD tool, e.g. in FreeCAD and the XML be used in other
 .. code-block:: python
    :linenos:
 
-    door.save('door.step')
-    door.save('door.xml')
-    
+    door.save("door.step")
+    door.save("door.xml")
 ..  image:: _static/door_assy_freecad.png
 
 
@@ -462,18 +453,22 @@ argument. Hence it will work with all subclasses of :class:`~cadquery.Shape`.
 
     assy = cq.Assembly()
     assy.add(line, name="line")
-    
+
     # position the red box on the center of the arc
     assy.add(box, name="box0", color=cq.Color("red"))
     assy.constrain("line", "box0", "Point")
-    
+
     # position the green box at a normalized distance of 0.8 along the arc
     position0 = line.positionAt(0.8)
     assy.add(box, name="box1", color=cq.Color("green"))
     assy.constrain(
-        "line", cq.Vertex.makeVertex(*position0.toTuple()), "box1", box.val(), "Point",
+        "line",
+        cq.Vertex.makeVertex(*position0.toTuple()),
+        "box1",
+        box.val(),
+        "Point",
     )
-    
+
     # position the orange box 2 units in any direction from the green box
     assy.add(box, name="box2", color=cq.Color("orange"))
     assy.constrain(
@@ -489,9 +484,13 @@ argument. Hence it will work with all subclasses of :class:`~cadquery.Shape`.
     position1 = position0 + cq.Vector(2, 0, 0)
     assy.add(box, name="box3", color=cq.Color("blue"))
     assy.constrain(
-        "line", cq.Vertex.makeVertex(*position1.toTuple()), "box3", box.val(), "Point",
+        "line",
+        cq.Vertex.makeVertex(*position1.toTuple()),
+        "box3",
+        box.val(),
+        "Point",
     )
-    
+
     assy.solve()
     show_object(assy)
 
@@ -532,7 +531,7 @@ of two objects touch.
     assy.add(cone, name="cone0", color=cq.Color("green"))
     assy.add(cone, name="cone1", color=cq.Color("blue"))
     assy.constrain("cone0@faces@<Z", "cone1@faces@<Z", "Axis")
-    
+
     assy.solve()
     show_object(assy)
 
@@ -547,16 +546,16 @@ This is often used when one object goes through another, such as a pin going int
 
     plate = cq.Workplane().box(10, 10, 1).faces(">Z").workplane().hole(2)
     cone = cq.Solid.makeCone(0.8, 0, 4)
-    
+
     assy = cq.Assembly()
     assy.add(plate, name="plate", color=cq.Color("green"))
     assy.add(cone, name="cone", color=cq.Color("blue"))
     # place the center of the flat face of the cone in the center of the upper face of the plate
     assy.constrain("plate@faces@>Z", "cone@faces@<Z", "Point")
-    
+
     # set both the flat face of the cone and the upper face of the plate to point in the same direction
     assy.constrain("plate@faces@>Z", "cone@faces@<Z", "Axis", param=0)
-    
+
     assy.solve()
     show_object(assy)
 
@@ -662,7 +661,7 @@ Where:
 - :math:`\operatorname{dist}( \vec{ a }, b)` is the distance between point :math:`\vec{ a }` and
   plane :math:`b`.
 
-    
+
 .. cadquery::
 
     import cadquery as cq
