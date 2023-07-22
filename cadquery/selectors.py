@@ -94,7 +94,7 @@ class NearestToPointSelector(Selector):
 
     Example::
 
-       CQ(aCube).vertices(NearestToPointSelector((0,1,0))
+       CQ(aCube).vertices(NearestToPointSelector((0, 1, 0)))
 
     returns the vertex of the unit cube closest to the point x=0,y=1,z=0
 
@@ -126,7 +126,7 @@ class BoxSelector(Selector):
 
     Example::
 
-        CQ(aCube).edges(BoxSelector((0,1,0), (1,2,1))
+        CQ(aCube).edges(BoxSelector((0, 1, 0), (1, 2, 1)))
     """
 
     def __init__(self, point0, point1, boundingbox=False):
@@ -213,7 +213,7 @@ class ParallelDirSelector(BaseDirSelector):
 
     Example::
 
-        CQ(aCube).faces(ParallelDirSelector((0, 0, 1))
+        CQ(aCube).faces(ParallelDirSelector((0, 0, 1)))
 
     selects faces with the normal parallel to the z direction, and is equivalent to::
 
@@ -236,7 +236,7 @@ class DirectionSelector(BaseDirSelector):
 
     Example::
 
-        CQ(aCube).faces(DirectionSelector((0, 0, 1))
+        CQ(aCube).faces(DirectionSelector((0, 0, 1)))
 
     selects faces with the normal in the z direction, and is equivalent to::
 
@@ -260,7 +260,7 @@ class PerpendicularDirSelector(BaseDirSelector):
 
     Example::
 
-        CQ(aCube).faces(PerpendicularDirSelector((0, 0, 1))
+        CQ(aCube).faces(PerpendicularDirSelector((0, 0, 1)))
 
     selects faces with the normal perpendicular to the z direction, and is equivalent to::
 
@@ -418,7 +418,7 @@ class DirectionMinMaxSelector(CenterNthSelector):
 
     For example this::
 
-        CQ(aCube).faces(DirectionMinMaxSelector((0, 0, 1), True)
+        CQ(aCube).faces(DirectionMinMaxSelector((0, 0, 1), True))
 
     Means to select the face having the center of mass farthest in the positive
     z direction, and is the same as::

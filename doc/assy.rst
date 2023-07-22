@@ -187,15 +187,15 @@ Should you need to do something unusual that is not possible with the string
 based selectors (e.g. use :py:class:`cadquery.selectors.BoxSelector` or a user-defined selector class),
 it is possible to pass :py:class:`cadquery.Shape` objects to the :py:meth:`cadquery.Assembly.constrain` method directly. For example, the above
 
-.. code-block:: python
+.. code-block::
 
-    .constrain('part1@faces@>Z','part3@faces@<Z','Axis')
+    .constrain("part1@faces@>Z", "part3@faces@<Z", "Axis")
 
 is equivalent to
 
-.. code-block:: python
+.. code-block::
 
-    .constrain('part1',part1.faces('>z').val(),'part3',part3.faces('<Z').val(),'Axis')
+    .constrain("part1", part1.faces(">z").val(), "part3", part3.faces("<Z").val(), "Axis")
 
 This method requires a :py:class:`cadquery.Shape` object, so remember to use the :py:meth:`cadquery.Workplane.val`
 method to pass a single :py:class:`cadquery.Shape` and not the whole :py:class:`cadquery.Workplane` object.

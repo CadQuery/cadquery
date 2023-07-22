@@ -2582,9 +2582,7 @@ class Workplane(object):
         the center of mass (equals center for next shape) is shifted. To create concentric ellipses
         use::
 
-            Workplane("XY")
-            .center(10, 20).ellipse(100,10)
-            .center(0, 0).ellipse(50, 5)
+            Workplane("XY").center(10, 20).ellipse(100,10).center(0, 0).ellipse(50, 5)
         """
 
         e = Wire.makeEllipse(

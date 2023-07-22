@@ -288,27 +288,31 @@ Fluent API <=> Direct API
 
 Here are all the possibilities you have to get an object from the Direct API (i.e a topological object).
 
-You can end the Fluent API call chain and get the last object on the stack with :py:meth:`Workplane.val` alternatively you can get all 
-the objects with :py:meth:`Workplane.vals` ::
+You can end the Fluent API call chain and get the last object on the stack with :py:meth:`Workplane.val` alternatively you can get all
+the objects with :py:meth:`Workplane.vals`
 
-  box = Workplane().box(10,5,5)
-  print(type(box))
-  >>> <class cadquery.cq.Workplane>
+.. code-block:: pycon
 
-  box = Workplane().box(10,5,5).val()
-  print(type(box))
-  >>> <class cadquery.occ_impl.shapes.Solid> 
+    >>> box = Workplane().box(10, 5, 5)
+    >>> print(type(box))
+    <class cadquery.cq.Workplane>
 
-If you are only interested in getting the context solid of your Workplane, you can use :py:meth:`Workplane.findSolid`::
+    >>> box = Workplane().box(10, 5, 5).val()
+    >>> print(type(box))
+    <class cadquery.occ_impl.shapes.Solid>
 
-  part = Workplane().box(10,5,5).circle(3).val()
-  print(type(part))
-  >>> <class cadquery.cq.Wire>
+If you are only interested in getting the context solid of your Workplane, you can use :py:meth:`Workplane.findSolid`:
 
-  part = Workplane().box(10,5,5).circle(3).findSolid()
-  print(type(part))
-  >>> <class cadquery.occ_impl.shapes.Compound> 
-  # The return type of findSolid is either a Solid or a Compound object 
+.. code-block::
+
+    >>> part = Workplane().box(10,5,5).circle(3).val()
+    >>> print(type(part))
+    <class cadquery.cq.Wire>
+
+    >>> part = Workplane().box(10,5,5).circle(3).findSolid()
+    >>> print(type(part))
+    <class cadquery.occ_impl.shapes.Compound>
+    # The return type of findSolid is either a Solid or a Compound object
 
 If you want to go the other way around i.e using objects from the topological API in the Fluent API here are your options :
 
@@ -331,26 +335,30 @@ You can add a topological object as a new operation/step in the Fluent API call 
 Direct API <=> OCCT API
 -------------------------
 
-Every object of the Direct API stores its OCCT equivalent object in its :attr:`wrapped` attribute. ::
+Every object of the Direct API stores its OCCT equivalent object in its :attr:`wrapped` attribute.:
 
-  box = Solid.makeBox(10,5,5)
-  print(type(box))
-  >>> <class cadquery.occ_impl.shapes.Solid> 
+.. code-block::
 
-  box = Solid.makeBox(10,5,5).wrapped
-  print(type(box))
-  >>> <class OCP.TopoDS.TopoDS_Solid> 
+    >>> box = Solid.makeBox(10,5,5)
+    >>> print(type(box))
+    <class cadquery.occ_impl.shapes.Solid>
+
+    >>> box = Solid.makeBox(10,5,5).wrapped
+    >>> print(type(box))
+    <class OCP.TopoDS.TopoDS_Solid>
 
 
-If you want to cast an OCCT object into a Direct API one you can just pass it as a parameter of the intended class ::
+If you want to cast an OCCT object into a Direct API one you can just pass it as a parameter of the intended class:
 
-  occt_box = BRepPrimAPI_MakeBox(5,5,5).Solid()
-  print(type(occt_box))
-  >>> <class OCP.TopoDS.TopoDS_Solid> 
+.. code-block::
 
-  direct_api_box = Solid(occt_box)
-  print(type(direct_api_box))
-  >>> <class cadquery.occ_impl.shapes.Solid> 
+    >>> occt_box = BRepPrimAPI_MakeBox(5,5,5).Solid()
+    >>> print(type(occt_box))
+    <class OCP.TopoDS.TopoDS_Solid>
+
+    >>> direct_api_box = Solid(occt_box)
+    >>> print(type(direct_api_box))
+    <class cadquery.occ_impl.shapes.Solid>
 
 .. note::
   You can cast into the direct API the types found `here <https://dev.opencascade.org/doc/refman/html/class_topo_d_s___shape.html>`_
@@ -682,12 +690,14 @@ context's :attr:`~cadquery.cq.CQContext.pendingWires` has been cleared by
     :meth:`~cadquery.Workplane.val` or :meth:`~cadquery.Workplane.findSolid` to get at the
     :class:`~cadquery.Compound` object, then use :meth:`cadquery.Shape.Solids` to return a list
     of the :class:`~cadquery.Solid` objects contained in the :class:`~cadquery.Compound`, which in
-    this example will be a single :class:`~cadquery.Solid` object. For example::
+    this example will be a single :class:`~cadquery.Solid` object. For example:
 
-        >>> a_compound = part.findSolid()
-        >>> a_list_of_solids = a_compound.Solids()
-        >>> len(a_list_of_solids)
-        1
+.. code-block:: pycon
+
+    >>> a_compound = part.findSolid()
+    >>> a_list_of_solids = a_compound.Solids()
+    >>> len(a_list_of_solids)
+    1
 
 Now we will create a small cylinder protruding from a face on the original box. We need to set up a
 workplane to draw a circle on, so firstly we will select the correct face::

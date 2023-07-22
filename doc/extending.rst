@@ -131,7 +131,7 @@ You can also accept other arguments.
 To install it, simply attach it to the CadQuery or Workplane object, like this::
 
     def _yourFunction(self,arg1,arg):
-        do stuff
+        # do stuff
         return whatever_you_want
 
     cq.Workplane.yourPlugin = _yourFunction

@@ -133,7 +133,7 @@ You can list the variables defined in the model by using the return value of the
 
        model = cqgi.parse(user_script)
 
-       //a dictionary of InputParameter objects
+       # a dictionary of InputParameter objects
        parameters = model.metadata.parameters
 
 The key of the dictionary is a string , and the value is a :py:class:`cadquery.cqgi.InputParameter` object
