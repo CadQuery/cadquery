@@ -281,11 +281,11 @@ class TypeSelector(Selector):
 
     You can use the string selector syntax. For example this::
 
-        CQ(aCube).faces ( TypeSelector("PLANE") )
+        CQ(aCube).faces(TypeSelector("PLANE"))
 
     will select 6 faces, and is equivalent to::
 
-        CQ(aCube).faces( "%PLANE" )
+        CQ(aCube).faces("%PLANE")
 
     """
 

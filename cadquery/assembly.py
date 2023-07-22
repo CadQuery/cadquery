@@ -121,8 +121,8 @@ class Assembly(object):
 
         To create one constraint a root object::
 
-            b = Workplane().box(1,1,1)
-            assy = Assembly(b, Location(Vector(0,0,1)), name="root")
+            b = Workplane().box(1, 1, 1)
+            assy = Assembly(b, Location(Vector(0, 0, 1)), name="root")
 
         """
 

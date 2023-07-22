@@ -26,20 +26,28 @@ Using CadQuery, you can build fully parametric models with a very small amount o
 produces a flat plate with a hole in the middle::
 
     thickness = 0.5
-    width=2.0
-    result = Workplane("front").box(width,width,thickness).faces(">Z").hole(thickness)
+    width = 2.0
+    result = Workplane("front").box(width, width, thickness).faces(">Z").hole(thickness)
 
 ..  image:: _static/simpleblock.png
 
 That's a bit of a dixie-cup example. But it is pretty similar to a more useful part: a parametric pillow block for a
 standard 608-size ball bearing::
 
-    (length,height,diam, thickness,padding) = ( 30.0,40.0,22.0,10.0,8.0)
+    (length, height, diam, thickness, padding) = (30.0, 40.0, 22.0, 10.0, 8.0)
 
-    result = Workplane("XY").box(length,height,thickness).faces(">Z").workplane().hole(diam)\
-            .faces(">Z").workplane() \
-            .rect(length-padding,height-padding,forConstruction=True) \
-            .vertices().cboreHole(2.4,4.4,2.1)
+    result = (
+        Workplane("XY")
+        .box(length, height, thickness)
+        .faces(">Z")
+        .workplane()
+        .hole(diam)
+        .faces(">Z")
+        .workplane()
+        .rect(length - padding, height - padding, forConstruction=True)
+        .vertices()
+        .cboreHole(2.4, 4.4, 2.1)
+    )
 
 ..  image:: _static/pillowblock.png
 
