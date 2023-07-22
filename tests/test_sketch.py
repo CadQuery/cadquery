@@ -645,8 +645,8 @@ def test_constraint_solver():
     s5 = (
         Sketch()
         .segment((0, 0), (0, 3.0), "segment1")
-        .arc((0.0, 0), (1.5, 1.5), (0.0, 3), "a1")
-        .arc((0.0, 0), (-1.0, 1.5), (0.0, 3), "a2")
+        .arc((0.0, 0), (1.5, 1.5), (0.0, 3), "arc1")
+        .arc((0.0, 0), (-1.0, 1.5), (0.0, 3), "arc2")
     )
 
     s5.constrain("segment1", "Fixed", None)
