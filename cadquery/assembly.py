@@ -44,7 +44,7 @@ ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
-# entity selector grammar definiiton
+# entity selector grammar definition
 def _define_grammar():
 
     from pyparsing import (
@@ -121,8 +121,8 @@ class Assembly(object):
 
         To create one constraint a root object::
 
-            b = Workplane().box(1,1,1)
-            assy = Assembly(b, Location(Vector(0,0,1)), name="root")
+            b = Workplane().box(1, 1, 1)
+            assy = Assembly(b, Location(Vector(0, 0, 1)), name="root")
 
         """
 
@@ -385,7 +385,7 @@ class Assembly(object):
                 ] not in locked:
                     locked.append(ents[name])
 
-        # Lock the first occuring entity if needed.
+        # Lock the first occurring entity if needed.
         if not locked:
             unary_objects = [
                 c.objects[0]
@@ -402,7 +402,7 @@ class Assembly(object):
                     locked.append(ents[b])
                     break
 
-        # Lock the first occuring entity if needed.
+        # Lock the first occurring entity if needed.
         if not locked:
             locked.append(0)
 
@@ -542,6 +542,28 @@ class Assembly(object):
         rv[PATH_DELIM.join(parents + [self.name])] = self
 
         return rv
+
+    def __iter__(
+        self,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        """
+        Assembly iterator yielding shapes, names, locations and colors.
+        """
+
+        name = f"{name}/{self.name}" if name else self.name
+        loc = loc * self.loc if loc else self.loc
+        color = self.color if self.color else color
+
+        if self.obj:
+            yield self.obj if isinstance(self.obj, Shape) else Compound.makeCompound(
+                s for s in self.obj.vals() if isinstance(s, Shape)
+            ), name, loc, color
+
+        for ch in self.children:
+            yield from ch.__iter__(loc, name, color)
 
     def toCompound(self) -> Compound:
         """

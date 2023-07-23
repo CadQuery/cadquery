@@ -76,7 +76,7 @@ This modification will do the trick:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 4,8
+   :emphasize-lines: 4,10-12
 
     height = 60.0
     width = 80.0
@@ -84,8 +84,12 @@ This modification will do the trick:
     diameter = 22.0
 
     # make the base
-    result = (cq.Workplane("XY").box(height, width, thickness)
-        .faces(">Z").workplane().hole(diameter)
+    result = (
+        cq.Workplane("XY")
+        .box(height, width, thickness)
+        .faces(">Z")
+        .workplane()
+        .hole(diameter)
     )
 
     # Render the solid
@@ -130,7 +134,7 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 5,10-13
+   :emphasize-lines: 5,11-17
 
     height = 60.0
     width = 80.0
@@ -139,11 +143,15 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
     padding = 12.0
 
     # make the base
-    result = (cq.Workplane("XY")
+    result = (
+        cq.Workplane("XY")
         .box(height, width, thickness)
-        .faces(">Z").workplane().hole(diameter)
-        .faces(">Z").workplane()
-        .rect(height - padding,width - padding,forConstruction=True)
+        .faces(">Z")
+        .workplane()
+        .hole(diameter)
+        .faces(">Z")
+        .workplane()
+        .rect(height - padding, width - padding, forConstruction=True)
         .vertices()
         .cboreHole(2.4, 4.4, 2.1)
     )
@@ -196,7 +204,7 @@ We can do that using the preset dictionaries in the parameter definition:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 13
+   :emphasize-lines: 17-18
 
     height = 60.0
     width = 80.0
@@ -205,13 +213,19 @@ We can do that using the preset dictionaries in the parameter definition:
     padding = 12.0
 
     # make the base
-    result = (cq.Workplane("XY")
+    result = (
+        cq.Workplane("XY")
         .box(height, width, thickness)
-        .faces(">Z").workplane().hole(diameter)
-        .faces(">Z").workplane()
+        .faces(">Z")
+        .workplane()
+        .hole(diameter)
+        .faces(">Z")
+        .workplane()
         .rect(height - padding, width - padding, forConstruction=True)
-        .vertices().cboreHole(2.4, 4.4, 2.1)
-        .edges("|Z").fillet(2.0)
+        .vertices()
+        .cboreHole(2.4, 4.4, 2.1)
+        .edges("|Z")
+        .fillet(2.0)
     )
 
     # Render the solid
@@ -235,7 +249,7 @@ This can be easily accomplished using the :py:meth:`cadquery.exporters.export` f
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 13
+   :emphasize-lines: 17-18
 
     height = 60.0
     width = 80.0
@@ -244,22 +258,28 @@ This can be easily accomplished using the :py:meth:`cadquery.exporters.export` f
     padding = 12.0
 
     # make the base
-    result = (cq.Workplane("XY")
+    result = (
+        cq.Workplane("XY")
         .box(height, width, thickness)
-        .faces(">Z").workplane().hole(diameter)
-        .faces(">Z").workplane()
+        .faces(">Z")
+        .workplane()
+        .hole(diameter)
+        .faces(">Z")
+        .workplane()
         .rect(height - padding, width - padding, forConstruction=True)
-        .vertices().cboreHole(2.4, 4.4, 2.1)
-        .edges("|Z").fillet(2.0)
+        .vertices()
+        .cboreHole(2.4, 4.4, 2.1)
+        .edges("|Z")
+        .fillet(2.0)
     )
 
     # Render the solid
     show_object(result)
-    
+
     # Export
-    cq.exporters.export(result,'result.stl')
-    cq.exporters.export(result.section(),'result.dxf')
-    cq.exporters.export(result,'result.step')
+    cq.exporters.export(result, "result.stl")
+    cq.exporters.export(result.section(), "result.dxf")
+    cq.exporters.export(result, "result.step")
 
 Done!
 ============

@@ -36,12 +36,7 @@ Selectors can be combined logically, currently defined operators include **and**
 
 .. cadquery::
 
-    result = (
-        cq.Workplane("XY")
-        .box(2, 2, 2)
-        .edges("|Z and >Y")
-        .chamfer(0.2)
-    )
+    result = cq.Workplane("XY").box(2, 2, 2).edges("|Z and >Y").chamfer(0.2)
 
 Much more complex expressions are possible as well:
 
@@ -147,4 +142,4 @@ It is possible to use user defined vectors as a basis for the selectors. For exa
     result = cq.Workplane("XY").box(10, 10, 10)
 
     # chamfer only one edge
-    result = result.edges('>(-1, 1, 0)').chamfer(1)
+    result = result.edges(">(-1, 1, 0)").chamfer(1)

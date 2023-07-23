@@ -396,9 +396,9 @@ def get_doc_nodes(doc, leaf=False):
                     color_subshape = Quantity_ColorRGBA()
                     face_color = None
 
-                    if ctool.GetColor(
+                    if ctool.GetColor_s(
                         child, XCAFDoc_ColorType.XCAFDoc_ColorGen, color_subshape
-                    ) or ctool.GetColor(
+                    ) or ctool.GetColor_s(
                         child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
                     ):
                         face_color = (
@@ -412,7 +412,7 @@ def get_doc_nodes(doc, leaf=False):
 
                 else:
                     color_subshape = Quantity_ColorRGBA()
-                    if ctool.GetColor(
+                    if ctool.GetColor_s(
                         child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
                     ):
                         color_subshapes_set.add(
@@ -1475,3 +1475,42 @@ def test_point_constraint(simple_assy2):
     t2 = assy.children[1].loc.wrapped.Transformation().TranslationPart()
 
     assert t2.Modulus() == pytest.approx(1)
+
+
+@pytest.fixture
+def touching_assy():
+
+    b1 = cq.Workplane().box(1, 1, 1)
+    b2 = cq.Workplane(origin=(1, 0, 0)).box(1, 1, 1)
+
+    return cq.Assembly().add(b1).add(b2)
+
+
+@pytest.fixture
+def disjoint_assy():
+
+    b1 = cq.Workplane().box(1, 1, 1)
+    b2 = cq.Workplane(origin=(2, 0, 0)).box(1, 1, 1)
+
+    return cq.Assembly().add(b1).add(b2)
+
+
+def test_imprinting(touching_assy, disjoint_assy):
+
+    # normal usecase
+    r, o = cq.occ_impl.assembly.imprint(touching_assy)
+
+    assert len(r.Solids()) == 2
+    assert len(r.Faces()) == 11
+
+    for s in r.Solids():
+        assert s in o
+
+    # edge usecase
+    r, o = cq.occ_impl.assembly.imprint(disjoint_assy)
+
+    assert len(r.Solids()) == 2
+    assert len(r.Faces()) == 12
+
+    for s in r.Solids():
+        assert s in o

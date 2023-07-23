@@ -1,8 +1,11 @@
 from functools import wraps
 from inspect import signature
+from typing import TypeVar, Callable, cast
 from warnings import warn
 
 from multimethod import multimethod, DispatchError
+
+TCallable = TypeVar("TCallable", bound=Callable)
 
 
 class deprecate_kwarg:
@@ -11,7 +14,7 @@ class deprecate_kwarg:
         self.name = name
         self.new_value = new_value
 
-    def __call__(self, f):
+    def __call__(self, f: TCallable) -> TCallable:
         @wraps(f)
         def wrapped(*args, **kwargs):
 
@@ -25,7 +28,7 @@ class deprecate_kwarg:
 
             return f(*args, **kwargs)
 
-        return wrapped
+        return cast(TCallable, wrapped)
 
 
 class deprecate:
