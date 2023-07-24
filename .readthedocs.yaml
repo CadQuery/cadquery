@@ -7,3 +7,5 @@ build:
 
 conda:
   environment: environment.yml
+
+formats: all
