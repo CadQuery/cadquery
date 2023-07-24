@@ -1,14 +1,12 @@
 from math import pi
-from typing import List
+from typing import List, Literal
+
+import OCP.IFSelect
+from OCP.STEPControl import STEPControl_Reader
 
 from ... import cq
 from ..shapes import Shape
 from .dxf import _importDXF
-
-
-from OCP.STEPControl import STEPControl_Reader
-
-import OCP.IFSelect
 
 RAD2DEG = 360.0 / (2 * pi)
 
@@ -23,17 +21,19 @@ class UNITS:
     IN = "in"
 
 
-def importShape(importType, fileName, *args, **kwargs):
+def importShape(
+    importType: Literal["STEP", "DXF"], fileName: str, *args, **kwargs
+) -> "cq.Workplane":
     """
     Imports a file based on the type (STEP, STL, etc)
 
     :param importType: The type of file that we're importing
-    :param fileName: THe name of the file that we're importing
+    :param fileName: The name of the file that we're importing
     """
 
     # Check to see what type of file we're working with
     if importType == ImportTypes.STEP:
-        return importStep(fileName, *args, **kwargs)
+        return importStep(fileName)
     elif importType == ImportTypes.DXF:
         return importDXF(fileName, *args, **kwargs)
     else:
@@ -41,7 +41,7 @@ def importShape(importType, fileName, *args, **kwargs):
 
 
 # Loads a STEP file into a CQ.Workplane object
-def importStep(fileName):
+def importStep(fileName: str) -> "cq.Workplane":
     """
     Accepts a file name and loads the STEP file into a cadquery Workplane
 
