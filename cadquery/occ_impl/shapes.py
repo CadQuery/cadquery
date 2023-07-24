@@ -1390,24 +1390,37 @@ class Shape(object):
             Shape.cast(s) for s in shape_map.FindFromKey(self.wrapped)
         )
 
-    def siblings(self, shape: "Shape", kind: Shapes) -> "Compound":
+    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
         """
         Iterate over siblings, i.e. shapes within shape that share subshapes of kind with self.
 
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
-
         TopExp.MapShapesAndAncestors_s(
-            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map
+            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
         )
+        exclude = TopTools_MapOfShape()
 
-        return Compound.makeCompound(
-            Shape.cast(s)
-            for child in self._entities(kind)
-            for s in shape_map.FindFromKey(child)
-            if not self.wrapped.IsSame(s)
-        )
+        def _siblings(shapes, level):
+
+            rv = set()
+
+            for s in shapes:
+                exclude.Add(s.wrapped)
+
+            for s in shapes:
+
+                rv.update(
+                    Shape.cast(el)
+                    for child in s._entities(kind)
+                    for el in shape_map.FindFromKey(child)
+                    if not exclude.Contains(el)
+                )
+
+            return rv if level == 1 else _siblings(rv, level - 1)
+
+        return Compound.makeCompound(_siblings([self], level))
 
 
 class ShapeProtocol(Protocol):
@@ -3720,27 +3733,37 @@ class Compound(Shape, Mixin3D):
             Shape.cast(s) for s in shape_map.FindFromKey(self.wrapped)
         )
 
-    def siblings(self, shape: "Shape", kind: Shapes) -> "Compound":
+    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
         """
         Iterate over siblings, i.e. shapes within shape that share subshapes of kind with the elements of self.
 
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
-
-        items = set()
-        for ch in self:
-            TopExp.MapShapesAndAncestors_s(
-                shape.wrapped, inverse_shape_LUT[kind], shapetype(ch.wrapped), shape_map
-            )
-            items.add(ch.wrapped)
-
-        return Compound.makeCompound(
-            Shape.cast(s)
-            for child in self._entities(kind)
-            for s in shape_map.FindFromKey(child)
-            if not s.wrapped in items
+        TopExp.MapShapesAndAncestors_s(
+            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
         )
+        exclude = TopTools_MapOfShape()
+
+        def _siblings(shapes, level):
+
+            rv = set()
+
+            for s in shapes:
+                exclude.Add(s.wrapped)
+
+            for s in shapes:
+
+                rv.update(
+                    Shape.cast(el)
+                    for child in s._entities(kind)
+                    for el in shape_map.FindFromKey(child)
+                    if not exclude.Contains(el)
+                )
+
+            return rv if level == 1 else _siblings(rv, level - 1)
+
+        return Compound.makeCompound(_siblings(self, level))
 
 
 def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
