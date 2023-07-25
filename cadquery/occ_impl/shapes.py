@@ -3740,8 +3740,12 @@ class Compound(Shape, Mixin3D):
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+
         TopExp.MapShapesAndAncestors_s(
-            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
+            shape.wrapped,
+            inverse_shape_LUT[kind],
+            shapetype(next(iter(self)).wrapped),
+            shape_map,
         )
         exclude = TopTools_MapOfShape()
 

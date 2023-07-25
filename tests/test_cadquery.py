@@ -5549,20 +5549,28 @@ class TestCadQuery(BaseTest):
 
     def test_iterators(self):
 
-        s = Workplane().box(1, 1, 1).val()
+        w = Workplane().box(1, 1, 1)
+        s = w.val()
+        f = w.faces(">Z").val()
 
         # check ancestors
         res1 = list(s.Edges()[0].ancestors(s, "Face"))
         assert len(res1) == 2
 
         # check siblings
-        res2 = list(s.Faces()[0].siblings(s, "Edge"))
+        res2 = list(f.siblings(s, "Edge"))
         assert len(res2) == 4
 
-        # check regular iterator
-        res3 = list(s)
+        res3 = list(f.siblings(s, "Edge", 2))
         assert len(res3) == 1
-        assert isinstance(res3[0], Shell)
+
+        res4 = list(f.siblings(s, "Edge").siblings(s, "Edge"))
+        assert len(res4) == 2
+
+        # check regular iterator
+        res5 = list(s)
+        assert len(res5) == 1
+        assert isinstance(res5[0], Shell)
 
         # check ordered iteration for wires
         w = Workplane().polygon(5, 1).val()
