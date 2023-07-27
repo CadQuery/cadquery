@@ -5578,3 +5578,14 @@ class TestCadQuery(BaseTest):
 
         for e1, e2 in zip(edges, edges[1:]):
             assert (e2.startPoint() - e1.endPoint()).Length == approx(0.0)
+
+        # check ancestors on a compound
+        w = Workplane().pushPoints([(0, 0), (2, 0)]).box(1, 1, 1)
+        c = w.val()
+        fs = w.faces(">Z").combine().val()
+
+        res6 = list(fs.ancestors(c, "Solid"))
+        assert len(res6) == 2
+
+        res7 = list(fs.siblings(c, "Edge", 2))
+        assert len(res7) == 2

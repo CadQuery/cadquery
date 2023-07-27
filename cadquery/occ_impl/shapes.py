@@ -3723,14 +3723,15 @@ class Compound(Shape, Mixin3D):
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        shapetypes = set(shapetype(ch.wrapped) for ch in self)
 
-        for ch in self:
+        for t in shapetypes:
             TopExp.MapShapesAndAncestors_s(
-                shape.wrapped, shapetype(ch.wrapped), inverse_shape_LUT[kind], shape_map
+                shape.wrapped, t, inverse_shape_LUT[kind], shape_map
             )
 
         return Compound.makeCompound(
-            Shape.cast(s) for s in shape_map.FindFromKey(self.wrapped)
+            Shape.cast(a) for s in self for a in shape_map.FindFromKey(s.wrapped)
         )
 
     def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
@@ -3740,13 +3741,13 @@ class Compound(Shape, Mixin3D):
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        shapetypes = set(shapetype(ch.wrapped) for ch in self)
 
-        TopExp.MapShapesAndAncestors_s(
-            shape.wrapped,
-            inverse_shape_LUT[kind],
-            shapetype(next(iter(self)).wrapped),
-            shape_map,
-        )
+        for t in shapetypes:
+            TopExp.MapShapesAndAncestors_s(
+                shape.wrapped, inverse_shape_LUT[kind], t, shape_map,
+            )
+
         exclude = TopTools_MapOfShape()
 
         def _siblings(shapes, level):
@@ -3757,7 +3758,6 @@ class Compound(Shape, Mixin3D):
                 exclude.Add(s.wrapped)
 
             for s in shapes:
-
                 rv.update(
                     Shape.cast(el)
                     for child in s._entities(kind)
