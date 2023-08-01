@@ -243,7 +243,8 @@ class Workplane(object):
         on it.  This is meant to be a reference to the most recently modified version
         of the context solid, whatever it is.
         """
-        rv = set()
+        rv: Dict[CQObject, Any] = {}  # used as an ordered set
+
         for o in self.objects:
 
             # tricky-- if an object is a compound of solids,
@@ -254,12 +255,14 @@ class Workplane(object):
                 and isinstance(o, Solid)
                 and o.ShapeType() == "Compound"
             ):
-                rv.update(getattr(o, "Compounds")())
+                for k in getattr(o, "Compounds")():
+                    rv[k] = None
             else:
                 if hasattr(o, propName):
-                    rv.update(getattr(o, propName)())
+                    for k in getattr(o, propName)():
+                        rv[k] = None
 
-        return list(rv)
+        return list(rv.keys())
 
     @overload
     def split(self: T, keepTop: bool = False, keepBottom: bool = False) -> T:
