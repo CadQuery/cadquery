@@ -238,15 +238,12 @@ class Workplane(object):
         """
         Collects all of the values for propName,
         for all items on the stack.
-        OCCT objects do not implement id correctly,
-        so hashCode is used to ensure we don't add the same
-        object multiple times.
 
         One weird use case is that the stack could have a solid reference object
         on it.  This is meant to be a reference to the most recently modified version
         of the context solid, whatever it is.
         """
-        all = {}
+        rv = set()
         for o in self.objects:
 
             # tricky-- if an object is a compound of solids,
@@ -257,14 +254,12 @@ class Workplane(object):
                 and isinstance(o, Solid)
                 and o.ShapeType() == "Compound"
             ):
-                for i in getattr(o, "Compounds")():
-                    all[i.hashCode()] = i
+                rv.update(getattr(o, "Compounds")())
             else:
                 if hasattr(o, propName):
-                    for i in getattr(o, propName)():
-                        all[i.hashCode()] = i
+                    rv.update(getattr(o, propName)())
 
-        return list(all.values())
+        return list(rv)
 
     @overload
     def split(self: T, keepTop: bool = False, keepBottom: bool = False) -> T:
@@ -471,7 +466,7 @@ class Workplane(object):
         """
         return self.objects[0] if self.objects else self.plane.origin
 
-    def _getTagged(self, name: str) -> "Workplane":
+    def _getTagged(self: T, name: str) -> "Workplane":
         """
         Search the parent chain for an object with tag == name.
 
@@ -831,8 +826,13 @@ class Workplane(object):
         """
         self_as_workplane: Workplane = self
         cq_obj = self._getTagged(tag) if tag else self_as_workplane
+
         # A single list of all faces from all objects on the stack
         toReturn = cq_obj._collectProperty(objType)
+
+        return self.newObject(self._filter(toReturn, selector))
+
+    def _filter(self, objs, selector):
 
         selectorObj: Selector
         if selector:
@@ -840,9 +840,11 @@ class Workplane(object):
                 selectorObj = StringSyntaxSelector(selector)
             else:
                 selectorObj = selector
-            toReturn = selectorObj.filter(toReturn)
+            toReturn = selectorObj.filter(objs)
+        else:
+            toReturn = objs
 
-        return self.newObject(toReturn)
+        return toReturn
 
     def vertices(
         self: T,
