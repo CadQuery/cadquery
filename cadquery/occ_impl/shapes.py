@@ -162,7 +162,6 @@ from OCP.TopTools import (
     TopTools_MapOfShape,
 )
 
-from OCP.TopExp import TopExp
 
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
 
