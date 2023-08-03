@@ -469,7 +469,7 @@ class Workplane(object):
         """
         return self.objects[0] if self.objects else self.plane.origin
 
-    def _getTagged(self: T, name: str) -> "Workplane":
+    def _getTagged(self: T, name: str) -> T:
         """
         Search the parent chain for an object with tag == name.
 
@@ -482,7 +482,7 @@ class Workplane(object):
         if rv is None:
             raise ValueError(f"No Workplane object named {name} in chain")
 
-        return rv
+        return cast(T, rv)
 
     def _mergeTags(self: T, obj: "Workplane") -> T:
         """
@@ -827,15 +827,14 @@ class Workplane(object):
         solids,shells, and other similar selector methods.  It is a useful extension point for
         plugin developers to make other selector methods.
         """
-        self_as_workplane: Workplane = self
-        cq_obj = self._getTagged(tag) if tag else self_as_workplane
+        cq_obj = self._getTagged(tag) if tag else self
 
         # A single list of all faces from all objects on the stack
         toReturn = cq_obj._collectProperty(objType)
 
         return self.newObject(self._filter(toReturn, selector))
 
-    def _filter(self, objs, selector):
+    def _filter(self, objs, selector: Optional[Union[Selector, str]]):
 
         selectorObj: Selector
         if selector:
@@ -1050,6 +1049,36 @@ class Workplane(object):
         a union, cut, split, or fillet.  Compounds can contain multiple edges, wires, or solids.
         """
         return self._selectObjects("Compounds", selector, tag)
+
+    def ancestors(self: T, kind, tag: Optional[str] = None) -> T:
+        """
+        Iterate over ancestors.
+
+        """
+        ctx_solid = self.findSolid()
+        objects = self._getTagged(tag).objects if tag else self.objects
+
+        results = [
+            el.ancestors(ctx_solid, kind) for el in objects if isinstance(el, Shape)
+        ]
+
+        return self.newObject(el for res in results for el in res)
+
+    def siblings(self: T, kind, level: int = 1, tag: Optional[str] = None) -> T:
+        """
+        Iterate over siblings.
+
+        """
+        ctx_solid = self.findSolid()
+        objects = self._getTagged(tag).objects if tag else self.objects
+
+        results = [
+            el.siblings(ctx_solid, kind, level)
+            for el in objects
+            if isinstance(el, Shape)
+        ]
+
+        return self.newObject(el for res in results for el in res)
 
     def toSvg(self, opts: Any = None) -> str:
         """
