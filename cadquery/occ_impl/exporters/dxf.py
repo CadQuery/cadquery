@@ -250,6 +250,8 @@ class DxfDocument:
         xdir = ellipse.XAxis().Direction()
         xax = r2 * xdir.XYZ()
 
+        zdir = ellipse.Axis().Direction()
+        ocs = ezdxf.math.OCS((zdir.X(), zdir.Y(), zdir.Z()))
         return (
             "ELLIPSE",
             {
@@ -258,6 +260,7 @@ class DxfDocument:
                 "ratio": r1 / r2,
                 "start_param": geom.FirstParameter(),
                 "end_param": geom.LastParameter(),
+                "extrusion": ocs.uz,
             },
         )
 
