@@ -253,13 +253,18 @@ class DxfDocument:
 
         zdir = ellipse.Axis().Direction()
 
-        if zdir.Z() < 0:
-            geom = GC_MakeArcOfEllipse(
+        if zdir.Z() > 0:
+            start_param = geom.FirstParameter()
+            end_param = geom.LastParameter()
+        else:
+            gc = GC_MakeArcOfEllipse(
                 ellipse,
                 geom.FirstParameter(),
                 geom.LastParameter(),
                 False,  # reverse Sense
             ).Value()
+            start_param = gc.FirstParameter()
+            end_param = gc.LastParameter()
 
         return (
             "ELLIPSE",
@@ -267,8 +272,8 @@ class DxfDocument:
                 "center": (c.X(), c.Y(), c.Z()),
                 "major_axis": (xax.X(), xax.Y(), xax.Z()),
                 "ratio": r1 / r2,
-                "start_param": geom.FirstParameter(),
-                "end_param": geom.LastParameter(),
+                "start_param": start_param,
+                "end_param": end_param,
             },
         )
 
