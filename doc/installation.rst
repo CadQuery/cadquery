@@ -18,56 +18,58 @@ Begin by installing the conda package manager.  If conda is already installed sk
 Install the Conda Package Manager
 ``````````````````````````````````
 
-In principle, any Conda distribution will work, but it is probably best to install `Miniforge <https://github.com/conda-forge/miniforge>`_ to a local directory and to avoid running `conda init`. After performing a local directory installation, Miniforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation.
+In principle, any Conda distribution will work, but it is probably best to install `Mambaforge <https://github.com/conda-forge/miniforge#mambaforge>`_ to a local directory and to avoid running `conda init`. After performing a local directory installation, Mambaforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation.
+
+Mambaforge is a minimal installer that sets *conda-forge* as the default channel for package installation and provides `mamba <https://mamba.readthedocs.io/en/latest/user_guide/mamba.html>`_.  You can swap almost all commands between conda & mamba.
 
 In Linux/MacOS, the local directory installation method looks something like this:
 
 .. code-block::
 
-    # Install the script to ~/miniforge
-    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
-    bash miniforge.sh -b -p $HOME/miniforge
+    # Install to ~/mambaforge
+    curl -L -o mambaforge.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
+    bash mambaforge.sh -b -p $HOME/mambaforge
 
-    # To activate and use Miniconda
-    source $HOME/miniforge/bin/activate
+    # Activate
+    source $HOME/mambaforge/bin/activate
 
 
 On Windows, download the installer and double click it on the file browser or install non-interactively as follows:
 
 .. code-block::
 
-    :: Install
-    curl -L -o miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
-    start /wait "" miniforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegistry=1 /NoScripts=1 /S /D=%USERPROFILE%\Miniforge3
+    :: Install to %USERPROFILE%\Mambaforge
+    curl -L -o mambaforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe
+    start /wait "" mambaforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegistry=1 /NoScripts=1 /S /D=%USERPROFILE%\Mambaforge
 
     :: Activate
-    cmd /K ""%USERPROFILE%/Miniforge3/Scripts/activate.bat" "%USERPROFILE%/Miniforge3""
+    cmd /K ""%USERPROFILE%/Mambaforge/Scripts/activate.bat" "%USERPROFILE%/Mambaforge""
 
 It might be worthwhile to consider using ``/NoScripts=0`` to have an activation shortcut added to the start menu.
 
 After conda installation, create and activate a new `conda environment <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_ to prepare for cadquery installation.
 
-Note that miniforge automatically sets *conda-forge* as the default channel.  ``-c conda-forge`` can be omitted from the install command when using a miniforge installation.
-
 
 conda
 `````
 
-Install the latest released version of cadquery [#f1]_:
+``mamba install`` is recommended over ``conda install`` for faster and less memory intensive cadquery installation.
+
+Install the latest released version of cadquery:
 
 .. code-block::
 
-    conda create -n cqrel
-    conda activate cqrel
-    conda install -c conda-forge cadquery occt=7.7.0
+    conda create -n cq
+    conda activate cq
+    mamba install cadquery
 
 or install a given version of cadquery [#f1]_:
 
 .. code-block::
 
-    conda create -n cq22
-    conda activate cq22
-    conda install -c conda-forge cadquery=2.2.0 occt=7.7.0
+    conda create -n cq231
+    conda activate cq231
+    mamba install cadquery=2.3.1
 
 or install the latest dev version:
 
@@ -75,7 +77,10 @@ or install the latest dev version:
 
     conda create -n cqdev
     conda activate cqdev
-    conda install -c cadquery -c conda-forge cadquery=master
+    mamba install -c cadquery cadquery=master
+
+
+Add the *conda-forge* channel explicitly to the install command if needed (not using a miniforge based conda distribution).
 
 
 Install via pip
@@ -210,7 +215,7 @@ Example cq-editor installation with conda (this installs both cadquery and cq-ed
 
     conda create -n cqdev
     conda activate cqdev
-    conda install -c cadquery -c conda-forge cq-editor=master
+    mamba install -c cadquery cq-editor=master
 
 
 Example cq-editor installation with pip:
@@ -233,7 +238,7 @@ conda
 
     .. code-block::
 
-       conda install -c conda-forge jupyterlab
+       mamba install jupyterlab
 
 pip
 
@@ -277,5 +282,8 @@ You should see raw SVG output displayed on the command line if the CadQuery inst
 
 .. note::
 
-   .. [#f1] Installation of the latest release (version 2.2.0) with conda requires you to specify the version of the OCCT dependency.
-      Typically this is not required as the dependencies are managed automatically.
+   .. [#f1] Older releases may not be compatible with the latest OCP/OCCT version.  In that case, specify the version of the dependency explicitly.
+
+       .. code-block::
+
+           mamba install cadquery=2.2.0 ocp=7.7.0.*
