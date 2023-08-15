@@ -3692,22 +3692,14 @@ class TestCadQuery(BaseTest):
         """
 
         # Tapered extrusion to check the height of, with positive taper
-        s = (
-            Workplane('XY')
-            .rect(100.0,100.0)
-            .extrude(100.0, taper=20.0)
-        )
+        s = Workplane("XY").rect(100.0, 100.0).extrude(100.0, taper=20.0)
 
         # Get the bounding box and make sure the height matches the requested height
         bb = s.val().BoundingBox()
         self.assertAlmostEqual(bb.zlen, 100.0)
 
         # Tapered extrusion to check the height of, with negative taper
-        s2 = (
-            Workplane('XY')
-            .rect(100.0,100.0)
-            .extrude(100.0, taper=-20.0)
-        )
+        s2 = Workplane("XY").rect(100.0, 100.0).extrude(100.0, taper=-20.0)
 
         # Get the bounding box and make sure the height matches the requested height
         bb2 = s2.val().BoundingBox()

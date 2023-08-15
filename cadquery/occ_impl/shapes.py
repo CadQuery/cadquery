@@ -3249,7 +3249,9 @@ class Solid(Shape, Mixin3D):
 
             # Divided by cos of taper angle to ensure the height chosen by the user is respected
             prism_builder = LocOpe_DPrism(
-                face.wrapped, (d * vecNormal.Length) / cos(radians(taper)), d * radians(taper)
+                face.wrapped,
+                (d * vecNormal.Length) / cos(radians(taper)),
+                d * radians(taper),
             )
 
         return cls(prism_builder.Shape())
