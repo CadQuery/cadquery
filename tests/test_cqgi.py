@@ -71,6 +71,12 @@ class TestCQGI(BaseTest):
         print(result.results[0].shape)
         self.assertTrue(result.results[0].shape == "3.0|3.0|bar|1.0|(3, 3)")
 
+    def test_build_with_nested_tuple_params(self):
+        model = cqgi.CQModel(TESTSCRIPT)
+        result = model.build({"height": 3.0, "o": ((2, 2), (3, 3))})
+        print(result.results[0].shape)
+        self.assertTrue(result.results[0].shape == "3.0|3.0|bar|1.0|((2, 2), (3, 3))")
+
     def test_describe_parameters(self):
         script = textwrap.dedent(
             """
