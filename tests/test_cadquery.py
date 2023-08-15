@@ -3686,6 +3686,33 @@ class TestCadQuery(BaseTest):
                 .cutBlind(-h, True, float(t))
             )
 
+    def testTaperedExtrudeHeight(self):
+        """
+        Ensures that the tapered prism has the correct height.
+        """
+
+        # Tapered extrusion to check the height of, with positive taper
+        s = (
+            Workplane('XY')
+            .rect(100.0,100.0)
+            .extrude(100.0, taper=20.0)
+        )
+
+        # Get the bounding box and make sure the height matches the requested height
+        bb = s.val().BoundingBox()
+        self.assertAlmostEqual(bb.zlen, 100.0)
+
+        # Tapered extrusion to check the height of, with negative taper
+        s2 = (
+            Workplane('XY')
+            .rect(100.0,100.0)
+            .extrude(100.0, taper=-20.0)
+        )
+
+        # Get the bounding box and make sure the height matches the requested height
+        bb2 = s2.val().BoundingBox()
+        self.assertAlmostEqual(bb2.zlen, 100.0)
+
     def testClose(self):
         # Close without endPoint and startPoint coincide.
         # Create a half-circle
