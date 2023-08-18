@@ -5563,16 +5563,21 @@ class TestCadQuery(BaseTest):
         # check ancestors
         res1 = list(s.Edges()[0].ancestors(s, "Face"))
         assert len(res1) == 2
+        assert w.faces(">Z").edges(">X").ancestors("Face").size() == 2
+        assert w.faces(">Z").edges(">X or <X").ancestors("Face").size() == 3
 
         # check siblings
         res2 = list(f.siblings(s, "Edge"))
         assert len(res2) == 4
+        assert w.faces(">Z").siblings("Edge").size() == 4
 
         res3 = list(f.siblings(s, "Edge", 2))
         assert len(res3) == 1
+        assert w.faces(">Z").siblings("Edge", 2).size() == 1
 
         res4 = list(f.siblings(s, "Edge").siblings(s, "Edge"))
         assert len(res4) == 2
+        assert w.faces(">Z").siblings("Edge").siblings("Edge").size() == 2
 
         # check regular iterator
         res5 = list(s)

@@ -1062,7 +1062,7 @@ class Workplane(object):
             el.ancestors(ctx_solid, kind) for el in objects if isinstance(el, Shape)
         ]
 
-        return self.newObject(el for res in results for el in res)
+        return self.newObject(set(el for res in results for el in res))
 
     def siblings(self: T, kind, level: int = 1, tag: Optional[str] = None) -> T:
         """
@@ -1071,14 +1071,11 @@ class Workplane(object):
         """
         ctx_solid = self.findSolid()
         objects = self._getTagged(tag).objects if tag else self.objects
+        shapes = [el for el in objects if isinstance(el, Shape)]
 
-        results = [
-            el.siblings(ctx_solid, kind, level)
-            for el in objects
-            if isinstance(el, Shape)
-        ]
+        results = [el.siblings(ctx_solid, kind, level) for el in shapes]
 
-        return self.newObject(el for res in results for el in res)
+        return self.newObject(set(el for res in results for el in res) - set(shapes))
 
     def toSvg(self, opts: Any = None) -> str:
         """
