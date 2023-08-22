@@ -1,7 +1,7 @@
 .. _selector_reference:
 
-String Selectors Reference
-=============================
+Selectors Reference
+===================
 
 
 CadQuery selector strings allow filtering various types of object lists. Most commonly, Edges, Faces, and Vertices are
@@ -148,3 +148,30 @@ It is possible to use user defined vectors as a basis for the selectors. For exa
 
     # chamfer only one edge
     result = result.edges('>(-1, 1, 0)').chamfer(1)
+
+
+Topological Selectors
+---------------------
+
+Is is also possible to use topological relations to select objects. Currently
+the following methods are supported:
+
+    * :py:meth:`cadquery.Workplane.ancestors`
+    * :py:meth:`cadquery.Workplane.siblings`
+
+Ancestors allows to select all objects containing currently selected object.
+
+.. cadquery::
+
+    result = cq.Workplane("XY").box(10, 10, 10).faces(">Z").edges("<Y")
+
+    result = result.ancestors("Face")
+
+Siblings allows to select all objects of the same type as selection that are connected
+via the specfied kind of elements.
+
+.. cadquery::
+
+    result = cq.Workplane("XY").box(10, 10, 10).faces(">Z")
+
+    result = result.siblings("Edge")
