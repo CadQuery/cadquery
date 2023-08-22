@@ -47,6 +47,7 @@ from .occ_impl.shapes import (
     Solid,
     Compound,
     wiresToFaces,
+    Shapes,
 )
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
@@ -1050,9 +1051,14 @@ class Workplane(object):
         """
         return self._selectObjects("Compounds", selector, tag)
 
-    def ancestors(self: T, kind, tag: Optional[str] = None) -> T:
+    def ancestors(self: T, kind: Shapes, tag: Optional[str] = None) -> T:
         """
         Iterate over ancestors.
+
+        :param kind: kind of ancestor, e.g. "Face" or "Edge"
+        :param tag: if set, search the tagged object instead of self
+        :return: a Workplane object who's stack contains all ancestors.
+
 
         """
         ctx_solid = self.findSolid()
@@ -1064,9 +1070,14 @@ class Workplane(object):
 
         return self.newObject(set(el for res in results for el in res))
 
-    def siblings(self: T, kind, level: int = 1, tag: Optional[str] = None) -> T:
+    def siblings(self: T, kind: Shapes, level: int = 1, tag: Optional[str] = None) -> T:
         """
         Iterate over siblings.
+
+        :param kind: kind of linking element, e.g. "Vertex" or "Edge"
+        :param level: level of relation - how many elements of kind are in the link
+        :param tag: if set, search the tagged object instead of self
+        :return: a Workplane object who's stack contains all ancestors.
 
         """
         ctx_solid = self.findSolid()
