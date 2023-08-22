@@ -287,7 +287,7 @@ class Workplane(object):
         a split bushing::
 
             # drill a hole in the side
-            c = Workplane().box(1,1,1).faces(">Z").workplane().circle(0.25).cutThruAll()
+            c = Workplane().box(1, 1, 1).faces(">Z").workplane().circle(0.25).cutThruAll()
 
             # now cut it in half sideways
             c = c.faces(">Y").workplane(-0.5).split(keepTop=True)
@@ -1290,7 +1290,7 @@ class Workplane(object):
 
         This example will create a unit cube, with the top edges filleted::
 
-            s = Workplane().box(1,1,1).faces("+Z").edges().fillet(0.1)
+            s = Workplane().box(1, 1, 1).faces("+Z").edges().fillet(0.1)
         """
         # TODO: ensure that edges selected actually belong to the solid in the chain, otherwise,
         # TODO: we segfault
@@ -1324,11 +1324,11 @@ class Workplane(object):
 
         This example will create a unit cube, with the top edges chamfered::
 
-            s = Workplane("XY").box(1,1,1).faces("+Z").chamfer(0.1)
+            s = Workplane("XY").box(1, 1, 1).faces("+Z").chamfer(0.1)
 
         This example will create chamfers longer on the sides::
 
-            s = Workplane("XY").box(1,1,1).faces("+Z").chamfer(0.2, 0.1)
+            s = Workplane("XY").box(1, 1, 1).faces("+Z").chamfer(0.2, 0.1)
         """
         solid = self.findSolid()
 
@@ -1557,8 +1557,13 @@ class Workplane(object):
         circles or holes. This example creates a cube, and then drills three holes through it,
         based on three points::
 
-            s = Workplane().box(1,1,1).faces(">Z").workplane().\
-                pushPoints([(-0.3,0.3),(0.3,0.3),(0,0)])
+            s = (
+                Workplane()
+                .box(1, 1, 1)
+                .faces(">Z")
+                .workplane()
+                .pushPoints([(-0.3, 0.3), (0.3, 0.3), (0, 0)])
+            )
             body = s.circle(0.05).cutThruAll()
 
         Here the circle function operates on all three points, and is then extruded to create three
@@ -1589,12 +1594,12 @@ class Workplane(object):
         In this example, we adjust the workplane center to be at the corner of a cube, instead of
         the center of a face, which is the default::
 
-            #this workplane is centered at x=0.5,y=0.5, the center of the upper face
-            s = Workplane().box(1,1,1).faces(">Z").workplane()
+            # this workplane is centered at x=0.5,y=0.5, the center of the upper face
+            s = Workplane().box(1, 1, 1).faces(">Z").workplane()
 
-            s = s.center(-0.5,-0.5) # move the center to the corner
+            s = s.center(-0.5, -0.5)  # move the center to the corner
             t = s.circle(0.25).extrude(0.2)
-            assert ( t.faces().size() == 9 ) # a cube with a cylindrical nub at the top right corner
+            assert t.faces().size() == 9  # a cube with a cylindrical nub at the top right corner
 
         The result is a cube with a round boss on the corner
         """
@@ -1864,15 +1869,15 @@ class Workplane(object):
 
             s = Workplane(Plane.XY())
             sPnts = [
-                (2.75,1.5),
-                (2.5,1.75),
-                (2.0,1.5),
-                (1.5,1.0),
-                (1.0,1.25),
-                (0.5,1.0),
-                (0,1.0)
+                (2.75, 1.5),
+                (2.5, 1.75),
+                (2.0, 1.5),
+                (1.5, 1.0),
+                (1.0, 1.25),
+                (0.5, 1.0),
+                (0, 1.0),
             ]
-            r = s.lineTo(3.0,0).lineTo(3.0,1.0).spline(sPnts).close()
+            r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts).close()
             r = r.extrude(0.5)
 
         *WARNING*  It is fairly easy to create a list of points
@@ -2249,7 +2254,7 @@ class Workplane(object):
 
         Typically used to make creating wires with symmetry easier. This line of code::
 
-             s = Workplane().lineTo(2,2).threePointArc((3,1),(2,0)).mirrorX().extrude(0.25)
+             s = Workplane().lineTo(2, 2).threePointArc((3, 1), (2, 0)).mirrorX().extrude(0.25)
 
         Produces a flat, heart shaped object
         """
@@ -2530,7 +2535,7 @@ class Workplane(object):
         A common use case is to use a for-construction rectangle to define the centers of a hole
         pattern::
 
-            s = Workplane().rect(4.0,4.0,forConstruction=True).vertices().circle(0.25)
+            s = Workplane().rect(4.0, 4.0, forConstruction=True).vertices().circle(0.25)
 
         Creates 4 circles at the corners of a square centered on the origin.
 
@@ -2580,7 +2585,7 @@ class Workplane(object):
         A common use case is to use a for-construction rectangle to define the centers of a
         hole pattern::
 
-            s = Workplane().rect(4.0,4.0,forConstruction=True).vertices().circle(0.25)
+            s = Workplane().rect(4.0, 4.0, forConstruction=True).vertices().circle(0.25)
 
         Creates 4 circles at the corners of a square centered on the origin. Another common case is
         to use successive circle() calls to create concentric circles.  This works because the
@@ -2624,9 +2629,7 @@ class Workplane(object):
         the center of mass (equals center for next shape) is shifted. To create concentric ellipses
         use::
 
-            Workplane("XY")
-            .center(10, 20).ellipse(100,10)
-            .center(0, 0).ellipse(50, 5)
+            Workplane("XY").center(10, 20).ellipse(100, 10).center(0, 0).ellipse(50, 5)
         """
 
         e = Wire.makeEllipse(
@@ -2741,7 +2744,7 @@ class Workplane(object):
         the group of edges into a wire. This example builds a simple triangular
         prism::
 
-            s = Workplane().lineTo(1,0).lineTo(1,1).close().extrude(0.2)
+            s = Workplane().lineTo(1, 0).lineTo(1, 1).close().extrude(0.2)
         """
         endPoint = self._findFromPoint(True)
 
@@ -3924,11 +3927,11 @@ class Workplane(object):
 
             # create 4 small square bumps on a larger base plate:
             s = (
-                Workplane().
-                box(4, 4, 0.5).
-                faces(">Z").
-                workplane().
-                rect(3, 3, forConstruction=True)
+                Workplane()
+                .box(4, 4, 0.5)
+                .faces(">Z")
+                .workplane()
+                .rect(3, 3, forConstruction=True)
                 .vertices()
                 .box(0.25, 0.25, 0.25, combine=True)
             )

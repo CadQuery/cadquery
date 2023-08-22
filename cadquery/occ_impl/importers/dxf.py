@@ -114,6 +114,7 @@ def _dxf_ellipse(el):
                 el.dxf.major_axis.magnitude,
                 el.minor_axis.magnitude,
                 pnt=Vector(el.dxf.center.xyz),
+                dir=el.dxf.extrusion.xyz,
                 xdir=Vector(el.dxf.major_axis.xyz),
                 angle1=el.dxf.start_param * RAD2DEG,
                 angle2=el.dxf.end_param * RAD2DEG,

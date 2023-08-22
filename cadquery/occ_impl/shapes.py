@@ -243,7 +243,7 @@ from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
 
 from OCP.BRepAlgo import BRepAlgo
 
-from math import pi, sqrt, inf
+from math import pi, sqrt, inf, radians, cos
 
 import warnings
 
@@ -252,7 +252,6 @@ from ..utils import deprecate
 Real = Union[float, int]
 
 TOLERANCE = 1e-6
-DEG2RAD = 2 * pi / 360.0
 HASH_CODE_MAX = 2147483647  # max 32bit signed int, required by OCC.Core.HashCode
 
 shape_LUT = {
@@ -908,7 +907,7 @@ class Shape(object):
                 Vector(startVector).toPnt(),
                 (Vector(endVector) - Vector(startVector)).toDir(),
             ),
-            angleDegrees * DEG2RAD,
+            radians(angleDegrees),
         )
 
         return self._apply_transform(Tr)
@@ -1040,9 +1039,12 @@ class Shape(object):
         args: Iterable["Shape"],
         tools: Iterable["Shape"],
         op: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
+        parallel: bool = True,
     ) -> "Shape":
         """
         Generic boolean operation
+
+        :param parallel: Sets the SetRunParallel flag, which enables parallel execution of boolean operations in OCC kernel
         """
 
         arg = TopTools_ListOfShape()
@@ -1056,7 +1058,7 @@ class Shape(object):
         op.SetArguments(arg)
         op.SetTools(tool)
 
-        op.SetRunParallel(True)
+        op.SetRunParallel(parallel)
         op.Build()
 
         return Shape.cast(op.Shape())
@@ -1825,7 +1827,7 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_gp).Edge())
         else:  # arc case
             circle_geom = GC_MakeArcOfCircle(
-                circle_gp, angle1 * DEG2RAD, angle2 * DEG2RAD, orientation
+                circle_gp, radians(angle1), radians(angle2), orientation
             ).Value()
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
@@ -1864,7 +1866,7 @@ class Edge(Shape, Mixin1D):
 
         if y_radius > x_radius:
             # swap x and y radius and rotate by 90° afterwards to create an ellipse with x_radius < y_radius
-            correction_angle = 90.0 * DEG2RAD
+            correction_angle = radians(90.0)
             ellipse_gp = gp_Elips(ax2, y_radius, x_radius).Rotated(
                 ax1, correction_angle
             )
@@ -1878,8 +1880,8 @@ class Edge(Shape, Mixin1D):
             # take correction_angle into account
             ellipse_geom = GC_MakeArcOfEllipse(
                 ellipse_gp,
-                angle1 * DEG2RAD - correction_angle,
-                angle2 * DEG2RAD - correction_angle,
+                radians(angle1) - correction_angle,
+                radians(angle2) - correction_angle,
                 sense == 1,
             ).Value()
             ellipse = cls(BRepBuilderAPI_MakeEdge(ellipse_geom).Edge())
@@ -2243,7 +2245,7 @@ class Wire(Shape, Mixin1D):
         else:
             geom_surf = Geom_ConicalSurface(
                 gp_Ax3(Vector(center).toPnt(), Vector(dir).toDir()),
-                angle * DEG2RAD,
+                radians(angle),
                 radius,
             )
 
@@ -2896,7 +2898,7 @@ class Mixin3D(object):
                 shape,
                 face.wrapped,
                 basis.wrapped if basis else TopoDS_Face(),
-                taper * DEG2RAD,
+                radians(taper),
                 additive,
                 False,
             )
@@ -3063,7 +3065,7 @@ class Solid(Shape, Mixin3D):
                 radius1,
                 radius2,
                 height,
-                angleDegrees * DEG2RAD,
+                radians(angleDegrees),
             ).Shape()
         )
 
@@ -3086,7 +3088,7 @@ class Solid(Shape, Mixin3D):
                 gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius,
                 height,
-                angleDegrees * DEG2RAD,
+                radians(angleDegrees),
             ).Shape()
         )
 
@@ -3111,8 +3113,8 @@ class Solid(Shape, Mixin3D):
                 gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius1,
                 radius2,
-                angleDegrees1 * DEG2RAD,
-                angleDegrees2 * DEG2RAD,
+                radians(angleDegrees1),
+                radians(angleDegrees2),
             ).Shape()
         )
 
@@ -3184,9 +3186,9 @@ class Solid(Shape, Mixin3D):
             BRepPrimAPI_MakeSphere(
                 gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius,
-                angleDegrees1 * DEG2RAD,
-                angleDegrees2 * DEG2RAD,
-                angleDegrees3 * DEG2RAD,
+                radians(angleDegrees1),
+                radians(angleDegrees2),
+                radians(angleDegrees3),
             ).Shape()
         )
 
@@ -3326,9 +3328,13 @@ class Solid(Shape, Mixin3D):
             )
         else:
             faceNormal = face.normalAt()
-            d = 1 if vecNormal.getAngle(faceNormal) < 90 * DEG2RAD else -1
+            d = 1 if vecNormal.getAngle(faceNormal) < radians(90.0) else -1
+
+            # Divided by cos of taper angle to ensure the height chosen by the user is respected
             prism_builder = LocOpe_DPrism(
-                face.wrapped, d * vecNormal.Length, d * taper * DEG2RAD
+                face.wrapped,
+                (d * vecNormal.Length) / cos(radians(taper)),
+                d * radians(taper),
             )
 
         return cls(prism_builder.Shape())
@@ -3378,7 +3384,7 @@ class Solid(Shape, Mixin3D):
         v2 = Vector(axisEnd)
         v2 = v2 - v1
         revol_builder = BRepPrimAPI_MakeRevol(
-            face.wrapped, gp_Ax1(v1.toPnt(), v2.toDir()), angleDegrees * DEG2RAD, True
+            face.wrapped, gp_Ax1(v1.toPnt(), v2.toDir()), radians(angleDegrees), True
         )
 
         return cls(revol_builder.Shape())

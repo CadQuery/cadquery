@@ -7,6 +7,7 @@ from ezdxf import units, zoom
 from ezdxf.entities import factory
 from OCP.GeomConvert import GeomConvert
 from OCP.gp import gp_Dir
+from OCP.GC import GC_MakeArcOfEllipse
 from typing_extensions import Self
 
 from ...cq import Face, Plane, Workplane
@@ -268,14 +269,29 @@ class DxfDocument:
         xdir = ellipse.XAxis().Direction()
         xax = r2 * xdir.XYZ()
 
+        zdir = ellipse.Axis().Direction()
+
+        if zdir.Z() > 0:
+            start_param = geom.FirstParameter()
+            end_param = geom.LastParameter()
+        else:
+            gc = GC_MakeArcOfEllipse(
+                ellipse,
+                geom.FirstParameter(),
+                geom.LastParameter(),
+                False,  # reverse Sense
+            ).Value()
+            start_param = gc.FirstParameter()
+            end_param = gc.LastParameter()
+
         return (
             "ELLIPSE",
             {
                 "center": (c.X(), c.Y(), c.Z()),
                 "major_axis": (xax.X(), xax.Y(), xax.Z()),
                 "ratio": r1 / r2,
-                "start_param": geom.FirstParameter(),
-                "end_param": geom.LastParameter(),
+                "start_param": start_param,
+                "end_param": end_param,
             },
         )
 

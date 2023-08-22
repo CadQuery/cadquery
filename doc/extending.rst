@@ -18,17 +18,25 @@ Using OpenCascade methods
 The easiest way to extend CadQuery is to simply use OpenCascade/OCP scripting inside of your build method.  Just about
 any valid OCP script will execute just fine. For example, this simple CadQuery script::
 
-    return cq.Workplane("XY").box(1.0,2.0,3.0).val()
+    return cq.Workplane("XY").box(1.0, 2.0, 3.0).val()
 
 is actually equivalent to::
 
-    return cq.Shape.cast(BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape())
+    return cq.Shape.cast(
+        BRepPrimAPI_MakeBox(
+            gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0
+        ).Shape()
+    )
 
 As long as you return a valid OCP Shape, you can use any OCP methods you like. You can even mix and match the
 two. For example, consider this script, which creates a OCP box, but then uses CadQuery to select its faces::
 
-    box = cq.Shape.cast(BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape())
-    cq = Workplane(box).faces(">Z").size() # returns 6
+    box = cq.Shape.cast(
+        BRepPrimAPI_MakeBox(
+            gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0
+        ).Shape()
+    )
+    cq = Workplane(box).faces(">Z").size()  # returns 6
 
 
 Extending CadQuery: Plugins
@@ -130,9 +138,10 @@ You can also accept other arguments.
 
 To install it, simply attach it to the CadQuery or Workplane object, like this::
 
-    def _yourFunction(self,arg1,arg):
-        do stuff
+    def _yourFunction(self, arg1, arg):
+        # do stuff
         return whatever_you_want
+
 
     cq.Workplane.yourPlugin = _yourFunction
 
@@ -156,24 +165,31 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
 
 .. code-block:: python
 
-        def makeCubes(self,length):
-            #self refers to the CQ or Workplane object
+        def makeCubes(self, length):
+            # self refers to the CQ or Workplane object
 
-            #inner method that creates a cube
+            # inner method that creates a cube
             def _singleCube(loc):
-                #loc is a location in local coordinates
-                #since we're using eachpoint with useLocalCoordinates=True
-                return cq.Solid.makeBox(length,length,length,pnt).locate(loc)
+                # loc is a location in local coordinates
+                # since we're using eachpoint with useLocalCoordinates=True
+                return cq.Solid.makeBox(length, length, length, pnt).locate(loc)
 
-            #use CQ utility method to iterate over the stack, call our
-            #method, and convert to/from local coordinates.
-            return self.eachpoint(_singleCube,True)
+            # use CQ utility method to iterate over the stack, call our
+            # method, and convert to/from local coordinates.
+            return self.eachpoint(_singleCube, True)
 
-        #link the plugin into CadQuery
+
+        # link the plugin into CadQuery
         cq.Workplane.makeCubes = makeCubes
 
-        #use the plugin
-        result = cq.Workplane("XY").box(6.0,8.0,0.5).faces(">Z")\
-            .rect(4.0,4.0,forConstruction=True).vertices() \
-            .makeCubes(1.0).combineSolids()
+        # use the plugin
+        result = (
+            cq.Workplane("XY")
+            .box(6.0, 8.0, 0.5)
+            .faces(">Z")
+            .rect(4.0, 4.0, forConstruction=True)
+            .vertices()
+            .makeCubes(1.0)
+            .combineSolids()
+        )
 

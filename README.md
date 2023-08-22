@@ -61,9 +61,9 @@ There are also videos covering installation:
 
 ### CadQuery Installation Via Conda
 
-To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager).
+To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager), and [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) for a minimal installer.
 
-The steps to install cadquery with conda are as follows:
+``mamba install`` is recommended over ``conda install`` for faster and less memory intensive cadquery installation.
 
 ```
 # Set up a new environment
@@ -73,10 +73,10 @@ conda create -n cadquery
 conda activate cadquery
 
 # Install the latest released version
-conda install -c conda-forge cadquery occt=7.7.0
+mamba install -c conda-forge cadquery
 
 # Or install the dev version to get the latest changes
-conda install -c conda-forge -c cadquery cadquery=master
+mamba install -c conda-forge -c cadquery cadquery=master
 ```
 
 ### CadQuery Installation Via Pip
@@ -188,11 +188,11 @@ If you are going to contribute code, make sure to follow this steps:
 - Fork the CadQuery repository, clone your fork and create a new branch to
   start working on your changes
 - Create a conda development environment with something like:
-  - `conda env create -n cq-dev -f environment.yml`
+  - `mamba env create -n cq-dev -f environment.yml`
 - Activate the new conda environment:
   - `conda activate cq-dev`
 - If desired, install the master branch of cq-editor (Note; a release version may not be compatible with the master branch of cadquery):
-  - `conda install -c cadquery -c conda-forge cq-editor=master`
+  - `mamba install -c cadquery -c conda-forge cq-editor=master`
     Installing cq-editor adds another instance of cadquery which overrides the clone just added. Fix this by reinstalling cadquery using pip:
   - `pip install -e .`
 - Before making any changes verify that the current tests pass. Run `pytest` from the root of your cadquery clone, there should be no failures and the output will look similar to this:
