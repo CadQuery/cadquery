@@ -142,7 +142,7 @@ It is possible to use user defined vectors as a basis for the selectors. For exa
     result = cq.Workplane("XY").box(10, 10, 10)
 
     # chamfer only one edge
-    result = result.edges('>(-1, 1, 0)').chamfer(1)
+    result = result.edges(">(-1, 1, 0)").chamfer(1)
 
 
 Topological Selectors
