@@ -8,6 +8,7 @@ from ezdxf.entities import factory
 from OCP.GeomConvert import GeomConvert
 from OCP.gp import gp_Dir
 from OCP.GC import GC_MakeArcOfEllipse
+from OCP.TopAbs import TopAbs_Orientation
 from typing_extensions import Self
 
 from ...cq import Face, Plane, Workplane
@@ -199,9 +200,17 @@ class DxfDocument:
 
         :return: dictionary of DXF entity attributes for creating a line
         """
+
+        if edge.wrapped.Orientation() == TopAbs_Orientation.TopAbs_FORWARD:
+            start = edge.startPoint()
+            end = edge.endPoint()
+        else:
+            start = edge.endPoint()
+            end = edge.startPoint()
+
         return (
             "LINE",
-            {"start": edge.startPoint().toTuple(), "end": edge.endPoint().toTuple(),},
+            {"start": start.toTuple(), "end": end.toTuple(),},
         )
 
     @staticmethod
