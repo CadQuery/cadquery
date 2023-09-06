@@ -2946,7 +2946,7 @@ class Solid(Shape, Mixin3D):
     @classmethod
     def makeSolid(cls, shell: Shell) -> "Solid":
         """
-        Makes a solid from from a single shell. 
+        Makes a solid from a single shell. 
         """
 
         return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
