@@ -2627,6 +2627,9 @@ class Shell(Shape):
 
     @classmethod
     def makeShell(cls, listOfFaces: Iterable[Face]) -> "Shell":
+        """
+        Makes a shell from faces. 
+        """
 
         shell_builder = BRepBuilderAPI_Sewing()
 
@@ -2942,6 +2945,9 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def makeSolid(cls, shell: Shell) -> "Solid":
+        """
+        Makes a solid from a single shell. 
+        """
 
         return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
 
