@@ -862,7 +862,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains  the *distinct* vertices of *all* objects on the
+        :return: a CQ object whose stack contains  the *distinct* vertices of *all* objects on the
             current stack, after being filtered by the selector, if provided
 
         If there are no vertices for any objects on the current stack, an empty CQ object
@@ -896,7 +896,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* faces of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* faces of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no faces for any objects on the current stack, an empty CQ object
@@ -931,7 +931,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* edges of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* edges of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no edges for any objects on the current stack, an empty CQ object is returned
@@ -965,7 +965,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* wires of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* wires of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no wires for any objects on the current stack, an empty CQ object is returned
@@ -991,7 +991,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no solids for any objects on the current stack, an empty CQ object is returned
@@ -1020,7 +1020,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* shells of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* shells of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no shells for any objects on the current stack, an empty CQ object is returned
@@ -1043,7 +1043,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* compounds of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* compounds of *all* objects on
             the current stack, filtered by the provided selector.
 
         A compound contains multiple CAD primitives that resulted from a single operation, such as
