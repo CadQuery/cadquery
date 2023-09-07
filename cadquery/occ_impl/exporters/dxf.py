@@ -181,7 +181,7 @@ class DxfDocument:
 
         rv: List[Edge] = []
 
-        # iterato over wires and then edges
+        # iterate over wires and then edges
         for w in s.Wires():
             rv.extend(w)
 
