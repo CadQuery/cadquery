@@ -942,3 +942,21 @@ def test_dxf_ellipse_arc(tmpdir):
 
     assert w2.val().isValid()
     assert w2.val().Volume() == approx(math.pi * r ** 2 / 4)
+
+
+def test_dxf_edge_iteration(tmpdir):
+
+    w1 = Workplane().box(50, 50, 1).edges("|Z and >XY").fillet(10)
+
+    dxf = exporters.dxf.DxfDocument()
+    dxf.add_layer("layer1", color=1)
+    dxf.add_shape(w1.section(0), "layer1")
+
+    fname = tmpdir.joinpath("edge_iteration1.dxf").resolve()
+    dxf.document.saveas(fname)
+
+    s1 = Sketch().importDXF(fname)
+    edges = s1.edges().vals()
+
+    for e1, e2 in zip(edges, edges[1:]):
+        assert (e2.startPoint() - e1.endPoint()).Length == approx(0.0)
