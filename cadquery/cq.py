@@ -1053,11 +1053,11 @@ class Workplane(object):
 
     def ancestors(self: T, kind: Shapes, tag: Optional[str] = None) -> T:
         """
-        Iterate over ancestors.
+        Select topological ancestors.
 
         :param kind: kind of ancestor, e.g. "Face" or "Edge"
         :param tag: if set, search the tagged object instead of self
-        :return: a Workplane object who's stack contains all ancestors.
+        :return: a Workplane object whose stack contains selected ancestors.
 
 
         """
@@ -1072,12 +1072,12 @@ class Workplane(object):
 
     def siblings(self: T, kind: Shapes, level: int = 1, tag: Optional[str] = None) -> T:
         """
-        Iterate over siblings.
+        Select topological siblings.
 
         :param kind: kind of linking element, e.g. "Vertex" or "Edge"
         :param level: level of relation - how many elements of kind are in the link
         :param tag: if set, search the tagged object instead of self
-        :return: a Workplane object who's stack contains all ancestors.
+        :return: a Workplane object whose stack contains selected siblings.
 
         """
         ctx_solid = self.findSolid()
