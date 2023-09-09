@@ -12,7 +12,7 @@ from typing_extensions import Self
 
 from ...cq import Face, Plane, Workplane
 from ...units import RAD2DEG
-from ..shapes import Edge
+from ..shapes import Edge, Shape, Compound
 from .utils import toCompound
 
 ApproxOptions = Literal["spline", "arc"]
@@ -140,7 +140,8 @@ class DxfDocument:
 
         if self.approx == "spline":
             edges = [
-                e.toSplines() if e.geomType() == "BSPLINE" else e for e in shape.Edges()
+                e.toSplines() if e.geomType() == "BSPLINE" else e
+                for e in self._ordered_edges(shape)
             ]
 
         elif self.approx == "arc":
@@ -148,10 +149,12 @@ class DxfDocument:
 
             # this is needed to handle free wires
             for el in shape.Wires():
-                edges.extend(Face.makeFromWires(el).toArcs(self.tolerance).Edges())
+                edges.extend(
+                    self._ordered_edges(Face.makeFromWires(el).toArcs(self.tolerance))
+                )
 
         else:
-            edges = shape.Edges()
+            edges = self._ordered_edges(shape)
 
         for edge in edges:
             converter = self._DISPATCH_MAP.get(edge.geomType(), None)
@@ -172,6 +175,21 @@ class DxfDocument:
         zoom.extents(self.msp)
 
         return self
+
+    @staticmethod
+    def _ordered_edges(s: Shape) -> List[Edge]:
+
+        rv: List[Edge] = []
+
+        # iterate over wires and then edges
+        for w in s.Wires():
+            rv.extend(w)
+
+        # add free edges
+        if isinstance(s, Compound):
+            rv.extend(e for e in s if isinstance(e, Edge))
+
+        return rv
 
     @staticmethod
     def _dxf_line(edge: Edge) -> DxfEntityAttributes:

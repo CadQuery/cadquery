@@ -154,7 +154,7 @@ class Sketch(object):
             res = Face.makeFromWires(b)
         elif isinstance(b, (Sketch, Compound)):
             res = b
-        elif isinstance(b, Iterable):
+        elif isinstance(b, Iterable) and not isinstance(b, Shape):
             wires = edgesToWires(tcast(Iterable[Edge], b))
             res = Face.makeFromWires(*(wires[0], wires[1:]))
         else:

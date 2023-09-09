@@ -47,6 +47,7 @@ from .occ_impl.shapes import (
     Solid,
     Compound,
     wiresToFaces,
+    Shapes,
 )
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
@@ -238,15 +239,13 @@ class Workplane(object):
         """
         Collects all of the values for propName,
         for all items on the stack.
-        OCCT objects do not implement id correctly,
-        so hashCode is used to ensure we don't add the same
-        object multiple times.
 
         One weird use case is that the stack could have a solid reference object
         on it.  This is meant to be a reference to the most recently modified version
         of the context solid, whatever it is.
         """
-        all = {}
+        rv: Dict[CQObject, Any] = {}  # used as an ordered set
+
         for o in self.objects:
 
             # tricky-- if an object is a compound of solids,
@@ -257,14 +256,14 @@ class Workplane(object):
                 and isinstance(o, Solid)
                 and o.ShapeType() == "Compound"
             ):
-                for i in getattr(o, "Compounds")():
-                    all[i.hashCode()] = i
+                for k in getattr(o, "Compounds")():
+                    rv[k] = None
             else:
                 if hasattr(o, propName):
-                    for i in getattr(o, propName)():
-                        all[i.hashCode()] = i
+                    for k in getattr(o, propName)():
+                        rv[k] = None
 
-        return list(all.values())
+        return list(rv.keys())
 
     @overload
     def split(self: T, keepTop: bool = False, keepBottom: bool = False) -> T:
@@ -471,7 +470,7 @@ class Workplane(object):
         """
         return self.objects[0] if self.objects else self.plane.origin
 
-    def _getTagged(self, name: str) -> "Workplane":
+    def _getTagged(self: T, name: str) -> T:
         """
         Search the parent chain for an object with tag == name.
 
@@ -484,7 +483,7 @@ class Workplane(object):
         if rv is None:
             raise ValueError(f"No Workplane object named {name} in chain")
 
-        return rv
+        return cast(T, rv)
 
     def _mergeTags(self: T, obj: "Workplane") -> T:
         """
@@ -829,10 +828,14 @@ class Workplane(object):
         solids,shells, and other similar selector methods.  It is a useful extension point for
         plugin developers to make other selector methods.
         """
-        self_as_workplane: Workplane = self
-        cq_obj = self._getTagged(tag) if tag else self_as_workplane
+        cq_obj = self._getTagged(tag) if tag else self
+
         # A single list of all faces from all objects on the stack
         toReturn = cq_obj._collectProperty(objType)
+
+        return self.newObject(self._filter(toReturn, selector))
+
+    def _filter(self, objs, selector: Optional[Union[Selector, str]]):
 
         selectorObj: Selector
         if selector:
@@ -840,9 +843,11 @@ class Workplane(object):
                 selectorObj = StringSyntaxSelector(selector)
             else:
                 selectorObj = selector
-            toReturn = selectorObj.filter(toReturn)
+            toReturn = selectorObj.filter(objs)
+        else:
+            toReturn = objs
 
-        return self.newObject(toReturn)
+        return toReturn
 
     def vertices(
         self: T,
@@ -857,7 +862,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains  the *distinct* vertices of *all* objects on the
+        :return: a CQ object whose stack contains  the *distinct* vertices of *all* objects on the
             current stack, after being filtered by the selector, if provided
 
         If there are no vertices for any objects on the current stack, an empty CQ object
@@ -891,7 +896,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* faces of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* faces of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no faces for any objects on the current stack, an empty CQ object
@@ -926,7 +931,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* edges of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* edges of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no edges for any objects on the current stack, an empty CQ object is returned
@@ -960,7 +965,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* wires of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* wires of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no wires for any objects on the current stack, an empty CQ object is returned
@@ -986,7 +991,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* solids of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* solids of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no solids for any objects on the current stack, an empty CQ object is returned
@@ -1015,7 +1020,7 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* shells of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* shells of *all* objects on
             the current stack, filtered by the provided selector.
 
         If there are no shells for any objects on the current stack, an empty CQ object is returned
@@ -1038,13 +1043,50 @@ class Workplane(object):
         :param selector: optional Selector object, or string selector expression
             (see :class:`StringSyntaxSelector`)
         :param tag: if set, search the tagged object instead of self
-        :return: a CQ object who's stack contains all of the *distinct* compounds of *all* objects on
+        :return: a CQ object whose stack contains all of the *distinct* compounds of *all* objects on
             the current stack, filtered by the provided selector.
 
         A compound contains multiple CAD primitives that resulted from a single operation, such as
         a union, cut, split, or fillet.  Compounds can contain multiple edges, wires, or solids.
         """
         return self._selectObjects("Compounds", selector, tag)
+
+    def ancestors(self: T, kind: Shapes, tag: Optional[str] = None) -> T:
+        """
+        Select topological ancestors.
+
+        :param kind: kind of ancestor, e.g. "Face" or "Edge"
+        :param tag: if set, search the tagged object instead of self
+        :return: a Workplane object whose stack contains selected ancestors.
+
+
+        """
+        ctx_solid = self.findSolid()
+        objects = self._getTagged(tag).objects if tag else self.objects
+
+        results = [
+            el.ancestors(ctx_solid, kind) for el in objects if isinstance(el, Shape)
+        ]
+
+        return self.newObject(set(el for res in results for el in res))
+
+    def siblings(self: T, kind: Shapes, level: int = 1, tag: Optional[str] = None) -> T:
+        """
+        Select topological siblings.
+
+        :param kind: kind of linking element, e.g. "Vertex" or "Edge"
+        :param level: level of relation - how many elements of kind are in the link
+        :param tag: if set, search the tagged object instead of self
+        :return: a Workplane object whose stack contains selected siblings.
+
+        """
+        ctx_solid = self.findSolid()
+        objects = self._getTagged(tag).objects if tag else self.objects
+        shapes = [el for el in objects if isinstance(el, Shape)]
+
+        results = [el.siblings(ctx_solid, kind, level) for el in shapes]
+
+        return self.newObject(set(el for res in results for el in res) - set(shapes))
 
     def toSvg(self, opts: Any = None) -> str:
         """

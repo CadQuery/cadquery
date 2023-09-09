@@ -93,7 +93,7 @@ from OCP.BRepPrimAPI import (
 )
 from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
-from OCP.TopExp import TopExp_Explorer  # Topology explorer
+from OCP.TopExp import TopExp_Explorer, TopExp  # Topology explorer
 
 # used for getting underlying geometry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
@@ -162,7 +162,6 @@ from OCP.TopTools import (
     TopTools_MapOfShape,
 )
 
-from OCP.TopExp import TopExp
 
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
 
@@ -173,7 +172,7 @@ from OCP.StlAPI import StlAPI_Writer
 
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
-from OCP.BRepTools import BRepTools
+from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
 
 from OCP.LocOpe import LocOpe_DPrism
 
@@ -300,6 +299,14 @@ geom_LUT = {
     ta.TopAbs_COMPOUND: "Compound",
 }
 
+ancestors_LUT = {
+    "Vertex": ta.TopAbs_EDGE,
+    "Edge": ta.TopAbs_WIRE,
+    "Wire": ta.TopAbs_FACE,
+    "Face": ta.TopAbs_SHELL,
+    "Shell": ta.TopAbs_SOLID,
+}
+
 geom_LUT_FACE = {
     ga.GeomAbs_Plane: "PLANE",
     ga.GeomAbs_Cylinder: "CYLINDER",
@@ -329,6 +336,7 @@ geom_LUT_EDGE = {
 Shapes = Literal[
     "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"
 ]
+
 Geoms = Literal[
     "Vertex",
     "Wire",
@@ -544,9 +552,9 @@ class Shape(object):
         The return values depend on the type of the shape:
 
         | Vertex:  always 'Vertex'
-        | Edge:   LINE, CIRCLE, ELLIPSE, HYPERBOLA, PARABOLA, BEZIER, 
+        | Edge:   LINE, CIRCLE, ELLIPSE, HYPERBOLA, PARABOLA, BEZIER,
         |         BSPLINE, OFFSET, OTHER
-        | Face:   PLANE, CYLINDER, CONE, SPHERE, TORUS, BEZIER, BSPLINE, 
+        | Face:   PLANE, CYLINDER, CONE, SPHERE, TORUS, BEZIER, BSPLINE,
         |         REVOLUTION, EXTRUSION, OFFSET, OTHER
         | Solid:  'Solid'
         | Shell:  'Shell'
@@ -1058,7 +1066,7 @@ class Shape(object):
     def cut(self, *toCut: "Shape", tol: Optional[float] = None) -> "Shape":
         """
         Remove the positional arguments from this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -1093,7 +1101,7 @@ class Shape(object):
     def intersect(self, *toIntersect: "Shape", tol: Optional[float] = None) -> "Shape":
         """
         Intersection of the positional arguments and this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -1354,6 +1362,66 @@ class Shape(object):
         from .jupyter_tools import display
 
         return display(self)._repr_javascript_()
+
+    def __iter__(self) -> Iterator["Shape"]:
+        """
+        Iterate over subshapes.
+
+        """
+
+        it = TopoDS_Iterator(self.wrapped)
+
+        while it.More():
+            yield Shape.cast(it.Value())
+            it.Next()
+
+    def ancestors(self, shape: "Shape", kind: Shapes) -> "Compound":
+        """
+        Iterate over ancestors, i.e. shapes of same kind within shape that contain self.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+
+        TopExp.MapShapesAndAncestors_s(
+            shape.wrapped, shapetype(self.wrapped), inverse_shape_LUT[kind], shape_map
+        )
+
+        return Compound.makeCompound(
+            Shape.cast(s) for s in shape_map.FindFromKey(self.wrapped)
+        )
+
+    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+        """
+        Iterate over siblings, i.e. shapes within shape that share subshapes of kind with self.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        TopExp.MapShapesAndAncestors_s(
+            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
+        )
+        exclude = TopTools_MapOfShape()
+
+        def _siblings(shapes, level):
+
+            rv = set()
+
+            for s in shapes:
+                exclude.Add(s.wrapped)
+
+            for s in shapes:
+
+                rv.update(
+                    Shape.cast(el)
+                    for child in s._entities(kind)
+                    for el in shape_map.FindFromKey(child)
+                    if not exclude.Contains(el)
+                )
+
+            return rv if level == 1 else _siblings(rv, level - 1)
+
+        return Compound.makeCompound(_siblings([self], level))
 
 
 class ShapeProtocol(Protocol):
@@ -2253,6 +2321,18 @@ class Wire(Shape, Mixin1D):
         f = Face.makeFromWires(self)
 
         return f.chamfer2D(d, vertices).outerWire()
+
+    def __iter__(self) -> Iterator[Edge]:
+        """
+        Iterate over edges in an ordered way.
+
+        """
+
+        exp = BRepTools_WireExplorer(self.wrapped)
+
+        while exp.Current():
+            yield Edge(exp.Current())
+            exp.Next()
 
 
 class Face(Shape):
@@ -3585,18 +3665,6 @@ class Compound(Shape, Mixin3D):
 
         return rv
 
-    def __iter__(self) -> Iterator[Shape]:
-        """
-        Iterate over subshapes.
-
-        """
-
-        it = TopoDS_Iterator(self.wrapped)
-
-        while it.More():
-            yield Shape.cast(it.Value())
-            it.Next()
-
     def __bool__(self) -> bool:
         """
         Check if empty.
@@ -3607,7 +3675,7 @@ class Compound(Shape, Mixin3D):
     def cut(self, *toCut: "Shape", tol: Optional[float] = None) -> "Compound":
         """
         Remove the positional arguments from this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -3648,7 +3716,7 @@ class Compound(Shape, Mixin3D):
     ) -> "Compound":
         """
         Intersection of the positional arguments and this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -3658,6 +3726,59 @@ class Compound(Shape, Mixin3D):
             intersect_op.SetFuzzyValue(tol)
 
         return tcast(Compound, self._bool_op(self, toIntersect, intersect_op))
+
+    def ancestors(self, shape: "Shape", kind: Shapes) -> "Compound":
+        """
+        Iterate over ancestors, i.e. shapes of same kind within shape that contain elements of self.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        shapetypes = set(shapetype(ch.wrapped) for ch in self)
+
+        for t in shapetypes:
+            TopExp.MapShapesAndAncestors_s(
+                shape.wrapped, t, inverse_shape_LUT[kind], shape_map
+            )
+
+        return Compound.makeCompound(
+            Shape.cast(a) for s in self for a in shape_map.FindFromKey(s.wrapped)
+        )
+
+    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+        """
+        Iterate over siblings, i.e. shapes within shape that share subshapes of kind with the elements of self.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        shapetypes = set(shapetype(ch.wrapped) for ch in self)
+
+        for t in shapetypes:
+            TopExp.MapShapesAndAncestors_s(
+                shape.wrapped, inverse_shape_LUT[kind], t, shape_map,
+            )
+
+        exclude = TopTools_MapOfShape()
+
+        def _siblings(shapes, level):
+
+            rv = set()
+
+            for s in shapes:
+                exclude.Add(s.wrapped)
+
+            for s in shapes:
+                rv.update(
+                    Shape.cast(el)
+                    for child in s._entities(kind)
+                    for el in shape_map.FindFromKey(child)
+                    if not exclude.Contains(el)
+                )
+
+            return rv if level == 1 else _siblings(rv, level - 1)
+
+        return Compound.makeCompound(_siblings(self, level))
 
 
 def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
