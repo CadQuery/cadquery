@@ -20,13 +20,10 @@
 from abc import abstractmethod, ABC
 import math
 from .occ_impl.geom import Vector
-from .occ_impl.shapes import (
-    Shape,
-    Edge,
-    Face,
-    Wire,
-    Shell,
-    Solid,
+from .occ_impl.shape_protocols import (
+    ShapeProtocol,
+    Shape1DProtocol,
+    FaceProtocol,
     geom_LUT_EDGE,
     geom_LUT_FACE,
 )
@@ -47,7 +44,9 @@ from pyparsing import (
     Keyword,
 )
 from functools import reduce
-from typing import List, Union, Sequence
+from typing import List, Union, Sequence, TypeVar, cast
+
+Shape = TypeVar("Shape", bound=ShapeProtocol)
 
 
 class Selector(object):
@@ -185,13 +184,13 @@ class BaseDirSelector(Selector):
         r = []
         for o in objectList:
             # no really good way to avoid a switch here, edges and faces are simply different!
-            if isinstance(o, Face) and o.geomType() == "PLANE":
+            if o.ShapeType() == "Face" and o.geomType() == "PLANE":
                 # a face is only parallel to a direction if it is a plane, and
                 # its normal is parallel to the dir
-                test_vector = o.normalAt(None)
-            elif isinstance(o, Edge) and o.geomType() == "LINE":
+                test_vector = cast(FaceProtocol, o).normalAt(None)
+            elif o.ShapeType() == "Edge" and o.geomType() == "LINE":
                 # an edge is parallel to a direction if its underlying geometry is plane or line
-                test_vector = o.tangentAt()
+                test_vector = cast(Shape1DProtocol, o).tangentAt()
             else:
                 continue
 
@@ -377,8 +376,8 @@ class RadiusNthSelector(_NthSelector):
     """
 
     def key(self, obj: Shape) -> float:
-        if isinstance(obj, (Edge, Wire)):
-            return obj.radius()
+        if obj.ShapeType() in ("Edge", "Wire"):
+            return cast(Shape1DProtocol, obj).radius()
         else:
             raise ValueError("Can not get a radius from this object")
 
@@ -470,8 +469,8 @@ class LengthNthSelector(_NthSelector):
     """
 
     def key(self, obj: Shape) -> float:
-        if isinstance(obj, (Edge, Wire)):
-            return obj.Length()
+        if obj.ShapeType() in ("Edge", "Wire"):
+            return cast(Shape1DProtocol, obj).Length()
         else:
             raise ValueError(
                 f"LengthNthSelector supports only Edges and Wires, not {type(obj).__name__}"
@@ -529,11 +528,13 @@ class AreaNthSelector(_NthSelector):
     """
 
     def key(self, obj: Shape) -> float:
-        if isinstance(obj, (Face, Shell, Solid)):
+        if obj.ShapeType() in ("Face", "Shell", "Solid"):
             return obj.Area()
-        elif isinstance(obj, Wire):
+        elif obj.ShapeType() == "Wire":
             try:
-                return abs(Face.makeFromWires(obj).Area())
+                from cadquery.occ_impl.shapes import Face, Wire
+
+                return abs(Face.makeFromWires(cast(Wire, obj)).Area())
             except Exception as ex:
                 raise ValueError(
                     f"Can not compute area of the Wire: {ex}. AreaNthSelector supports only closed planar Wires."

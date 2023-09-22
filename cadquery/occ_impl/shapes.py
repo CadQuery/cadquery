@@ -20,6 +20,12 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
+from .shape_protocols import geom_LUT_FACE, geom_LUT_EDGE, Shapes, Geoms
+
+from ..selectors import (
+    Selector,
+    StringSyntaxSelector,
+)
 
 from ..utils import cqmultimethod as multimethod
 
@@ -306,60 +312,6 @@ ancestors_LUT = {
     "Face": ta.TopAbs_SHELL,
     "Shell": ta.TopAbs_SOLID,
 }
-
-geom_LUT_FACE = {
-    ga.GeomAbs_Plane: "PLANE",
-    ga.GeomAbs_Cylinder: "CYLINDER",
-    ga.GeomAbs_Cone: "CONE",
-    ga.GeomAbs_Sphere: "SPHERE",
-    ga.GeomAbs_Torus: "TORUS",
-    ga.GeomAbs_BezierSurface: "BEZIER",
-    ga.GeomAbs_BSplineSurface: "BSPLINE",
-    ga.GeomAbs_SurfaceOfRevolution: "REVOLUTION",
-    ga.GeomAbs_SurfaceOfExtrusion: "EXTRUSION",
-    ga.GeomAbs_OffsetSurface: "OFFSET",
-    ga.GeomAbs_OtherSurface: "OTHER",
-}
-
-geom_LUT_EDGE = {
-    ga.GeomAbs_Line: "LINE",
-    ga.GeomAbs_Circle: "CIRCLE",
-    ga.GeomAbs_Ellipse: "ELLIPSE",
-    ga.GeomAbs_Hyperbola: "HYPERBOLA",
-    ga.GeomAbs_Parabola: "PARABOLA",
-    ga.GeomAbs_BezierCurve: "BEZIER",
-    ga.GeomAbs_BSplineCurve: "BSPLINE",
-    ga.GeomAbs_OffsetCurve: "OFFSET",
-    ga.GeomAbs_OtherCurve: "OTHER",
-}
-
-Shapes = Literal[
-    "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"
-]
-
-Geoms = Literal[
-    "Vertex",
-    "Wire",
-    "Shell",
-    "Solid",
-    "Compound",
-    "PLANE",
-    "CYLINDER",
-    "CONE",
-    "SPHERE",
-    "TORUS",
-    "BEZIER",
-    "BSPLINE",
-    "REVOLUTION",
-    "EXTRUSION",
-    "OFFSET",
-    "OTHER",
-    "LINE",
-    "CIRCLE",
-    "ELLIPSE",
-    "HYPERBOLA",
-    "PARABOLA",
-]
 
 T = TypeVar("T", bound="Shape")
 
@@ -861,6 +813,46 @@ class Shape(object):
         """
 
         return [CompSolid(i) for i in self._entities("CompSolid")]
+
+    def _filter(
+        self, selector: Optional[Union[Selector, str]], objs: Iterable["Shape"]
+    ) -> "Compound":
+
+        selectorObj: Selector
+        if selector:
+            if isinstance(selector, str):
+                selectorObj = StringSyntaxSelector(selector)
+            else:
+                selectorObj = selector
+            rv = selectorObj.filter(objs)
+        else:
+            rv = objs
+
+        return Compound.makeCompound(rv)
+
+    def vertices(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+
+        return self._filter(selector, self.Vertices())
+
+    def edges(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+
+        return self._filter(selector, self.Edges())
+
+    def wires(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+
+        return self._filter(selector, self.Wires())
+
+    def faces(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+
+        return self._filter(selector, self.Faces())
+
+    def shells(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+
+        return self._filter(selector, self.Shells())
+
+    def solids(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+
+        return self._filter(selector, self.Solids())
 
     def Area(self) -> float:
         """
@@ -2708,7 +2700,7 @@ class Shell(Shape):
     @classmethod
     def makeShell(cls, listOfFaces: Iterable[Face]) -> "Shell":
         """
-        Makes a shell from faces. 
+        Makes a shell from faces.
         """
 
         shell_builder = BRepBuilderAPI_Sewing()
@@ -3026,7 +3018,7 @@ class Solid(Shape, Mixin3D):
     @classmethod
     def makeSolid(cls, shell: Shell) -> "Solid":
         """
-        Makes a solid from a single shell. 
+        Makes a solid from a single shell.
         """
 
         return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
@@ -3832,6 +3824,7 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
 
     for e in edges:
         edges_in.Append(e.wrapped)
+
     ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
 
     return [Wire(el) for el in wires_out]
