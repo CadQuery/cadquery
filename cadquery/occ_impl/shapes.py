@@ -816,7 +816,7 @@ class Shape(object):
 
     def _filter(
         self, selector: Optional[Union[Selector, str]], objs: Iterable["Shape"]
-    ) -> "Compound":
+    ) -> "Shape":
 
         selectorObj: Selector
         if selector:
@@ -824,33 +824,38 @@ class Shape(object):
                 selectorObj = StringSyntaxSelector(selector)
             else:
                 selectorObj = selector
-            rv = selectorObj.filter(objs)
+            selected = selectorObj.filter(objs)
         else:
-            rv = objs
+            selected = objs
 
-        return Compound.makeCompound(rv)
+        if len(selected) == 1:
+            rv = selected[0]
+        else:
+            rv = Compound.makeCompound(selected)
 
-    def vertices(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+        return rv
+
+    def vertices(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
 
         return self._filter(selector, self.Vertices())
 
-    def edges(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+    def edges(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
 
         return self._filter(selector, self.Edges())
 
-    def wires(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+    def wires(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
 
         return self._filter(selector, self.Wires())
 
-    def faces(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+    def faces(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
 
         return self._filter(selector, self.Faces())
 
-    def shells(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+    def shells(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
 
         return self._filter(selector, self.Shells())
 
-    def solids(self, selector: Optional[Union[Selector, str]] = None) -> "Compound":
+    def solids(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
 
         return self._filter(selector, self.Solids())
 
