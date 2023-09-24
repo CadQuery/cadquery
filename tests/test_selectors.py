@@ -1136,3 +1136,59 @@ class TestCQSelectors(BaseTest):
 
         for e in expressions:
             gram.parseString(e, parseAll=True)
+
+    def testShape(self):
+        """
+        Test selectors with shapes
+        """
+
+        def check_centers(w, s):
+            self.assertTupleAlmostEquals(
+                w.val().Center().toTuple(), s.Center().toTuple(), 6
+            )
+
+        w = Workplane().box(3, 2, 1)
+        s = w.val()
+
+        res1 = s.solids()
+
+        assert res1.ShapeType() == "Solid"
+
+        res2 = s.faces(">Z")
+        res2_w = w.faces(">Z")
+
+        check_centers(res2_w, res2)
+
+        res3 = s.wires(">Z")
+        res3_w = w.wires(">Z")
+
+        assert res3.ShapeType() == "Wire"
+        check_centers(res3_w, res3)
+
+        res4 = s.edges(">Z")
+        res4_w = w.edges(">Z")
+
+        assert res4.ShapeType() == "Compound"
+
+        res5 = s.edges(">Z").edges(">X")
+        res5_w = w.edges(">Z").edges(">X")
+
+        check_centers(res5_w, res5)
+        assert res5.ShapeType() == "Edge"
+
+        res6 = s.vertices(">Z").vertices(">X and >Y")
+        res6_w = w.vertices(">Z").vertices(">X and >Y")
+
+        assert res6.ShapeType() == "Vertex"
+        check_centers(res6_w, res6)
+
+        res7 = s.shells(">Z")
+        res7_w = w.shells(">Z")
+
+        check_centers(res7_w, res7)
+        assert res7.ShapeType() == "Shell"
+
+        res8 = s.faces(selectors.DirectionMinMaxSelector(Vector(0, 0, 1)))
+        res8_w = w.faces(">Z")
+
+        check_centers(res8_w, res8)
