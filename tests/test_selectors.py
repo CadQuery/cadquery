@@ -1166,7 +1166,6 @@ class TestCQSelectors(BaseTest):
         check_centers(res3_w, res3)
 
         res4 = s.edges(">Z")
-        res4_w = w.edges(">Z")
 
         assert res4.ShapeType() == "Compound"
 

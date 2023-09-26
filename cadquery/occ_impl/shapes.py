@@ -714,9 +714,8 @@ class Shape(object):
     def ShapeType(self) -> Shapes:
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
-    def _entities(self, topo_type: Shapes) -> List[TopoDS_Shape]:
+    def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
 
-        rv = []
         shape_set = TopTools_MapOfShape()
 
         explorer = TopExp_Explorer(self.wrapped, inverse_shape_LUT[topo_type])
@@ -726,11 +725,9 @@ class Shape(object):
 
             # needed to avoid pseudo-duplicate entities
             if shape_set.Add(item):
-                rv.append(item)
+                yield item
 
             explorer.Next()
-
-        return rv
 
     def _entitiesFrom(
         self, child_type: Shapes, parent_type: Shapes
@@ -824,9 +821,9 @@ class Shape(object):
                 selectorObj = StringSyntaxSelector(selector)
             else:
                 selectorObj = selector
-            selected = selectorObj.filter(objs)
+            selected = selectorObj.filter(list(objs))
         else:
-            selected = objs
+            selected = list(objs)
 
         if len(selected) == 1:
             rv = selected[0]
@@ -836,28 +833,46 @@ class Shape(object):
         return rv
 
     def vertices(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select vertices.
+        """
 
-        return self._filter(selector, self.Vertices())
+        return self._filter(selector, map(Shape.cast, self._entities("Vertex")))
 
     def edges(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select edges.
+        """
 
-        return self._filter(selector, self.Edges())
+        return self._filter(selector, map(Shape.cast, self._entities("Edge")))
 
     def wires(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select wires.
+        """
 
-        return self._filter(selector, self.Wires())
+        return self._filter(selector, map(Shape.cast, self._entities("Wire")))
 
     def faces(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select faces.
+        """
 
-        return self._filter(selector, self.Faces())
+        return self._filter(selector, map(Shape.cast, self._entities("Face")))
 
     def shells(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select shells.
+        """
 
-        return self._filter(selector, self.Shells())
+        return self._filter(selector, map(Shape.cast, self._entities("Shell")))
 
     def solids(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select solids.
+        """
 
-        return self._filter(selector, self.Solids())
+        return self._filter(selector, map(Shape.cast, self._entities("Solid")))
 
     def Area(self) -> float:
         """
