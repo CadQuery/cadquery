@@ -3804,7 +3804,11 @@ class Workplane(object):
                 thisObj = Solid.sweep(f, p, makeSolid, isFrenet, mode, transition)
                 toFuse.append(thisObj)
         else:
-            sections = self.ctx.popPendingWires()
+            if self.ctx.pendingWires:
+                sections = self.ctx.popPendingWires()
+            else:
+                sections = [f.outerWire() for f in self._getFaces()]
+
             thisObj = Solid.sweep_multi(sections, p, makeSolid, isFrenet, mode)
             toFuse.append(thisObj)
 
