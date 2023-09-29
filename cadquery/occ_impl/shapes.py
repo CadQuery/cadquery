@@ -25,6 +25,7 @@ from ..utils import cqmultimethod as multimethod
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
+
 for printer in Message.DefaultMessenger_s().Printers():
     printer.SetTraceLevel(Message_Gravity.Message_Fail)
 
