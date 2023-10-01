@@ -99,7 +99,7 @@ from OCP.BRepPrimAPI import (
 )
 from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
-from OCP.TopExp import TopExp_Explorer, TopExp  # Topology explorer
+from OCP.TopExp import TopExp  # Topology explorer
 
 # used for getting underlying geometry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
@@ -166,6 +166,7 @@ from OCP.TopTools import (
     TopTools_IndexedDataMapOfShapeListOfShape,
     TopTools_ListOfShape,
     TopTools_MapOfShape,
+    TopTools_IndexedMapOfShape,
 )
 
 
@@ -716,18 +717,10 @@ class Shape(object):
 
     def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
 
-        shape_set = TopTools_MapOfShape()
+        shape_set = TopTools_IndexedMapOfShape()
+        TopExp.MapShapes_s(self.wrapped, inverse_shape_LUT[topo_type], shape_set)
 
-        explorer = TopExp_Explorer(self.wrapped, inverse_shape_LUT[topo_type])
-
-        while explorer.More():
-            item = explorer.Current()
-
-            # needed to avoid pseudo-duplicate entities
-            if shape_set.Add(item):
-                yield item
-
-            explorer.Next()
+        return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _entitiesFrom(
         self, child_type: Shapes, parent_type: Shapes
