@@ -2,7 +2,7 @@
 
 .. _cadquery_concepts:
 
-CadQuery Concepts
+Concepts
 ===================================
 
 
@@ -42,20 +42,20 @@ See :ref:`apireference` to learn more.
 Workplanes
 ---------------------------
 
-Most CAD programs use the concept of Workplanes. If you have experience with other CAD programs you will probably 
-feel comfortable with CadQuery's Workplanes, but if you don't have experience then they are an essential concept to 
-understand. 
+Most CAD programs use the concept of Workplanes. If you have experience with other CAD programs you will probably
+feel comfortable with CadQuery's Workplanes, but if you don't have experience then they are an essential concept to
+understand.
 
-Workplanes represent a plane in space, from which other features can be located. They have a center point and a local 
+Workplanes represent a plane in space, from which other features can be located. They have a center point and a local
 coordinate system. Most methods that create an object do so relative to the current workplane.
 
-Usually the first workplane created is the "XY" plane, also known as the "front" plane. Once a solid is defined the most 
-common way to create a workplane is to select a face on the solid that you intend to modify and create a new workplane 
-relative to it. You can also create new workplanes in anywhere in world coordinate system, or relative to other planes 
+Usually the first workplane created is the "XY" plane, also known as the "front" plane. Once a solid is defined the most
+common way to create a workplane is to select a face on the solid that you intend to modify and create a new workplane
+relative to it. You can also create new workplanes in anywhere in world coordinate system, or relative to other planes
 using offsets or rotations.
 
 The most powerful feature of workplanes is that they allow you to work in 2D space in the coordinate system of the
-workplane, and then CadQuery will transform these points from the workplane coordinate system to the world coordinate 
+workplane, and then CadQuery will transform these points from the workplane coordinate system to the world coordinate
 system so your 3D features are located where you intended. This makes scripts much easier to create and maintain.
 
 See :py:class:`cadquery.Workplane` to learn more.
@@ -176,9 +176,9 @@ This chapter aims to give an explanation on this topic and to provide background
 
 CadQuery is composed of 3 different API, which are implemented on top of each other.
 
-1. The Fluent API 
-2. The Direct API 
-3. The OCCT API 
+1. The Fluent API
+2. The Direct API
+3. The OCCT API
 
 The Fluent API
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -188,11 +188,11 @@ This is the API you will use and see most of the time, it's fairly easy to use a
 
     part = Workplane("XY").box(1, 2, 3).faces(">Z").vertices().circle(0.5).cutThruAll()
 
-Here we create a :class:`~cadquery.Workplane` object on which we subsequently call several methods to create our part. A general way of thinking about the Fluent API is to 
+Here we create a :class:`~cadquery.Workplane` object on which we subsequently call several methods to create our part. A general way of thinking about the Fluent API is to
 consider the :class:`~cadquery.Workplane` as your part object and all it's methods as operations that will affect your part.
 Often you will start with an empty :class:`~cadquery.Workplane`, then add more features by calling :class:`~cadquery.Workplane` methods.
 
-This hierarchical structure of operations modifying a part is well seen with the traditional code style used in CadQuery code. 
+This hierarchical structure of operations modifying a part is well seen with the traditional code style used in CadQuery code.
 Code written with the CadQuery fluent API will often look like this : ::
 
     part = Workplane("XY").box(1, 2, 3).faces(">Z").vertices().circle(0.5).cutThruAll()
@@ -229,7 +229,7 @@ The 9 topological classes are :
 8. :class:`~cadquery.Edge`
 9. :class:`~cadquery.Vertex`
 
-Each class has its own methods to create and/or edit shapes of their respective type. As already explained in :ref:`cadquery_concepts` there is also some kind of hierarchy in the 
+Each class has its own methods to create and/or edit shapes of their respective type. As already explained in :ref:`cadquery_concepts` there is also some kind of hierarchy in the
 topological classes. A Wire is made of several edges which are themselves made of several vertices. This means you can create geometry from the bottom up and have a lot of control over it.
 
 For example we can create a circular face like so ::
@@ -238,7 +238,7 @@ For example we can create a circular face like so ::
   circular_face = Face.makeFromWires(circle_wire, [])
 
 .. note::
-  In CadQuery (and OCCT) all the topological classes are shapes, the :class:`~cadquery.Shape` class is the most abstract topological class. 
+  In CadQuery (and OCCT) all the topological classes are shapes, the :class:`~cadquery.Shape` class is the most abstract topological class.
   The topological class inherits :class:`~cadquery.Mixin3D` or :class:`~cadquery.Mixin1D` which provide aditional methods that are shared between the classes that inherits them.
 
 The direct API as its name suggests doesn't provide a parent/children data structure, instead each method call directly returns an object of the specified topological type.
@@ -250,7 +250,7 @@ The OCCT API
 
 Finally we are discussing about the OCCT API. The OCCT API is the lowest level of CadQuery. The direct API is built upon the OCCT API, where the OCCT API in CadQuery is available through OCP.
 OCP are the Python bindings of the OCCT C++ libraries CadQuery uses. This means you have access to (almost) all the OCCT C++ libraries in Python and in CadQuery.
-Working with the OCCT API will give you the maximum flexibility and control over you designs, it is however very verbose and difficult to use. You will need to have a strong 
+Working with the OCCT API will give you the maximum flexibility and control over you designs, it is however very verbose and difficult to use. You will need to have a strong
 knowledge of the different C++ libraries to be able to achieve what you want. To obtain this knowledge the most obvious ways are :
 
 1. Read the direct API source code, since it is build upon the OCCT API it is full of example usage.
@@ -864,7 +864,7 @@ constraints to obtain a fully parametric assembly. This can be achieved in the f
     )
 
 This code results in identical object as one from the previous section. The added
-benefit is that with changing parameters ``w``, ``d``, ``h`` the final locations 
+benefit is that with changing parameters ``w``, ``d``, ``h`` the final locations
 will be calculated automatically. It is admittedly dense and can be made clearer
 using tags. Tags can be directly referenced when constructing the constraints::
 

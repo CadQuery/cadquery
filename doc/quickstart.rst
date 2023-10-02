@@ -1,7 +1,7 @@
 .. _quickstart:
 
 ***********************
-CadQuery QuickStart
+QuickStart
 ***********************
 
 .. currentmodule:: cadquery

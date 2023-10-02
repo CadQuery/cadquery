@@ -170,3 +170,18 @@ via the specfied kind of elements.
     result = cq.Workplane("XY").box(10, 10, 10).faces(">Z")
 
     result = result.siblings("Edge")
+
+
+Using selectors with Shape and Sketch objects
+---------------------------------------------
+
+It is possible to use selectors with :py:class:`cadquery.Shape` and :py:class:`cadquery.Sketch`
+objects. This includes chaining and combining.
+
+.. cadquery::
+
+    box = cq.Solid.makeBox(1,2,3)
+
+    # select top and bottom wires
+    result = box.faces(">Z or <Z").wires()
+
