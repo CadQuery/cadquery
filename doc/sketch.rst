@@ -277,4 +277,4 @@ Reusing of existing sketches is needed when using :meth:`~cadquery.Workplane.lof
 
     result = Workplane().placeSketch(s1, s2.moved(Location(Vector(0, 0, 3)))).loft()
 
-When lofting only outer wires are taken into account and inner wires are silently ignored.
+When lofting only outer wires are taken into account and inner wires are silently ignored. Note that only sketches on the top of stack are considered for the current operation (i.e. there are no pending sketches), so when lofting or sweeping all relevant sketches have to be added in one `placeSketch` call.

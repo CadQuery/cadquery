@@ -5342,6 +5342,18 @@ class TestCadQuery(BaseTest):
         )
         assert r5.val().Volume() == approx(0.5)
 
+        p = Workplane("XZ").spline([(0, 0), (0, 1), (2, 1)]).val()
+        s1 = Sketch().circle(0.5)
+        s2 = Sketch().circle(1)
+
+        r6 = (
+            Workplane()
+            .placeSketch(s1.moved(p.locationAt(0)), s2.moved(p.locationAt(1)))
+            .sweep(p, multisection=True)
+        )
+
+        assert r6.val().isValid()
+
     def testCircumscribedPolygon(self):
         """
         Test that circumscribed polygons result in the correct shapes
