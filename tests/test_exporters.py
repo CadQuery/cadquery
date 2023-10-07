@@ -415,11 +415,14 @@ class TestDxfDocument(BaseTest):
         )
 
         self.assertEqual(expected_type, result_type)
-        self.assertAlmostEqual(
+
+        for expected, result in zip(
             expected_attributes["control_points"], result_attributes["control_points"]
-        )
+        ):
+            assert result == approx(expected)
+
         self.assertEqual(expected_attributes["order"], result_attributes["order"])
-        self.assertEqual(expected_attributes["knots"], result_attributes["knots"])
+        assert result_attributes["knots"] == approx(expected_attributes["knots"])
         self.assertEqual(expected_attributes["weights"], result_attributes["weights"])
 
     def test_add_layer_definition(self):
