@@ -20,6 +20,12 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
+from .shape_protocols import geom_LUT_FACE, geom_LUT_EDGE, Shapes, Geoms
+
+from ..selectors import (
+    Selector,
+    StringSyntaxSelector,
+)
 
 from ..utils import cqmultimethod as multimethod
 
@@ -99,7 +105,7 @@ from OCP.BRepPrimAPI import (
 )
 from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
-from OCP.TopExp import TopExp_Explorer, TopExp  # Topology explorer
+from OCP.TopExp import TopExp  # Topology explorer
 
 # used for getting underlying geometry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
@@ -166,6 +172,7 @@ from OCP.TopTools import (
     TopTools_IndexedDataMapOfShapeListOfShape,
     TopTools_ListOfShape,
     TopTools_MapOfShape,
+    TopTools_IndexedMapOfShape,
 )
 
 
@@ -312,60 +319,6 @@ ancestors_LUT = {
     "Face": ta.TopAbs_SHELL,
     "Shell": ta.TopAbs_SOLID,
 }
-
-geom_LUT_FACE = {
-    ga.GeomAbs_Plane: "PLANE",
-    ga.GeomAbs_Cylinder: "CYLINDER",
-    ga.GeomAbs_Cone: "CONE",
-    ga.GeomAbs_Sphere: "SPHERE",
-    ga.GeomAbs_Torus: "TORUS",
-    ga.GeomAbs_BezierSurface: "BEZIER",
-    ga.GeomAbs_BSplineSurface: "BSPLINE",
-    ga.GeomAbs_SurfaceOfRevolution: "REVOLUTION",
-    ga.GeomAbs_SurfaceOfExtrusion: "EXTRUSION",
-    ga.GeomAbs_OffsetSurface: "OFFSET",
-    ga.GeomAbs_OtherSurface: "OTHER",
-}
-
-geom_LUT_EDGE = {
-    ga.GeomAbs_Line: "LINE",
-    ga.GeomAbs_Circle: "CIRCLE",
-    ga.GeomAbs_Ellipse: "ELLIPSE",
-    ga.GeomAbs_Hyperbola: "HYPERBOLA",
-    ga.GeomAbs_Parabola: "PARABOLA",
-    ga.GeomAbs_BezierCurve: "BEZIER",
-    ga.GeomAbs_BSplineCurve: "BSPLINE",
-    ga.GeomAbs_OffsetCurve: "OFFSET",
-    ga.GeomAbs_OtherCurve: "OTHER",
-}
-
-Shapes = Literal[
-    "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"
-]
-
-Geoms = Literal[
-    "Vertex",
-    "Wire",
-    "Shell",
-    "Solid",
-    "Compound",
-    "PLANE",
-    "CYLINDER",
-    "CONE",
-    "SPHERE",
-    "TORUS",
-    "BEZIER",
-    "BSPLINE",
-    "REVOLUTION",
-    "EXTRUSION",
-    "OFFSET",
-    "OTHER",
-    "LINE",
-    "CIRCLE",
-    "ELLIPSE",
-    "HYPERBOLA",
-    "PARABOLA",
-]
 
 T = TypeVar("T", bound="Shape")
 
@@ -768,23 +721,12 @@ class Shape(object):
     def ShapeType(self) -> Shapes:
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
-    def _entities(self, topo_type: Shapes) -> List[TopoDS_Shape]:
+    def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
 
-        rv = []
-        shape_set = TopTools_MapOfShape()
+        shape_set = TopTools_IndexedMapOfShape()
+        TopExp.MapShapes_s(self.wrapped, inverse_shape_LUT[topo_type], shape_set)
 
-        explorer = TopExp_Explorer(self.wrapped, inverse_shape_LUT[topo_type])
-
-        while explorer.More():
-            item = explorer.Current()
-
-            # needed to avoid pseudo-duplicate entities
-            if shape_set.Add(item):
-                rv.append(item)
-
-            explorer.Next()
-
-        return rv
+        return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _entitiesFrom(
         self, child_type: Shapes, parent_type: Shapes
@@ -867,6 +809,69 @@ class Shape(object):
         """
 
         return [CompSolid(i) for i in self._entities("CompSolid")]
+
+    def _filter(
+        self, selector: Optional[Union[Selector, str]], objs: Iterable["Shape"]
+    ) -> "Shape":
+
+        selectorObj: Selector
+        if selector:
+            if isinstance(selector, str):
+                selectorObj = StringSyntaxSelector(selector)
+            else:
+                selectorObj = selector
+            selected = selectorObj.filter(list(objs))
+        else:
+            selected = list(objs)
+
+        if len(selected) == 1:
+            rv = selected[0]
+        else:
+            rv = Compound.makeCompound(selected)
+
+        return rv
+
+    def vertices(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select vertices.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Vertex")))
+
+    def edges(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select edges.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Edge")))
+
+    def wires(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select wires.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Wire")))
+
+    def faces(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select faces.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Face")))
+
+    def shells(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select shells.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Shell")))
+
+    def solids(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select solids.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Solid")))
 
     def Area(self) -> float:
         """
@@ -2714,7 +2719,7 @@ class Shell(Shape):
     @classmethod
     def makeShell(cls, listOfFaces: Iterable[Face]) -> "Shell":
         """
-        Makes a shell from faces. 
+        Makes a shell from faces.
         """
 
         shell_builder = BRepBuilderAPI_Sewing()
@@ -3032,7 +3037,7 @@ class Solid(Shape, Mixin3D):
     @classmethod
     def makeSolid(cls, shell: Shell) -> "Solid":
         """
-        Makes a solid from a single shell. 
+        Makes a solid from a single shell.
         """
 
         return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
@@ -3838,6 +3843,7 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
 
     for e in edges:
         edges_in.Append(e.wrapped)
+
     ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
 
     return [Wire(el) for el in wires_out]

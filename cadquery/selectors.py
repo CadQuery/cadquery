@@ -20,13 +20,10 @@
 from abc import abstractmethod, ABC
 import math
 from .occ_impl.geom import Vector
-from .occ_impl.shapes import (
-    Shape,
-    Edge,
-    Face,
-    Wire,
-    Shell,
-    Solid,
+from .occ_impl.shape_protocols import (
+    ShapeProtocol,
+    Shape1DProtocol,
+    FaceProtocol,
     geom_LUT_EDGE,
     geom_LUT_FACE,
 )
@@ -38,16 +35,14 @@ from pyparsing import (
     Optional,
     Combine,
     oneOf,
-    CaselessLiteral,
     Group,
     infixNotation,
     opAssoc,
-    Forward,
-    ZeroOrMore,
-    Keyword,
 )
 from functools import reduce
-from typing import List, Union, Sequence
+from typing import Iterable, List, Sequence, TypeVar, cast
+
+Shape = TypeVar("Shape", bound=ShapeProtocol)
 
 
 class Selector(object):
@@ -57,7 +52,7 @@ class Selector(object):
     Filters must provide a single method that filters objects.
     """
 
-    def filter(self, objectList):
+    def filter(self, objectList: Sequence[Shape]) -> List[Shape]:
         """
         Filter the provided list.
 
@@ -67,7 +62,7 @@ class Selector(object):
         :type objectList: list of OCCT primitives
         :return: filtered list
         """
-        return objectList
+        return list(objectList)
 
     def __and__(self, other):
         return AndSelector(self, other)
@@ -103,13 +98,9 @@ class NearestToPointSelector(Selector):
     def __init__(self, pnt):
         self.pnt = pnt
 
-    def filter(self, objectList):
+    def filter(self, objectList: Sequence[Shape]):
         def dist(tShape):
             return tShape.Center().sub(Vector(*self.pnt)).Length
-            # if tShape.ShapeType == 'Vertex':
-            #    return tShape.Point.sub(toVector(self.pnt)).Length
-            # else:
-            #    return tShape.CenterOfMass.sub(toVector(self.pnt)).Length
 
         return [min(objectList, key=dist)]
 
@@ -134,7 +125,7 @@ class BoxSelector(Selector):
         self.p1 = Vector(*point1)
         self.test_boundingbox = boundingbox
 
-    def filter(self, objectList):
+    def filter(self, objectList: Sequence[Shape]):
 
         result = []
         x0, y0, z0 = self.p0.toTuple()
@@ -185,13 +176,13 @@ class BaseDirSelector(Selector):
         r = []
         for o in objectList:
             # no really good way to avoid a switch here, edges and faces are simply different!
-            if isinstance(o, Face) and o.geomType() == "PLANE":
+            if o.ShapeType() == "Face" and o.geomType() == "PLANE":
                 # a face is only parallel to a direction if it is a plane, and
                 # its normal is parallel to the dir
-                test_vector = o.normalAt(None)
-            elif isinstance(o, Edge) and o.geomType() == "LINE":
+                test_vector = cast(FaceProtocol, o).normalAt(None)
+            elif o.ShapeType() == "Edge" and o.geomType() == "LINE":
                 # an edge is parallel to a direction if its underlying geometry is plane or line
-                test_vector = o.tangentAt()
+                test_vector = cast(Shape1DProtocol, o).tangentAt()
             else:
                 continue
 
@@ -315,9 +306,11 @@ class _NthSelector(Selector, ABC):
         Return the nth object in the objectlist sorted by self.key and
         clustered if within self.tolerance.
         """
+
         if len(objectlist) == 0:
             # nothing to filter
             raise ValueError("Can not return the Nth element of an empty list")
+
         clustered = self.cluster(objectlist)
         if not self.directionMax:
             clustered.reverse()
@@ -353,6 +346,7 @@ class _NthSelector(Selector, ABC):
                 # forget about this element and continue
                 continue
             key_and_obj.append((key, obj))
+
         key_and_obj.sort(key=lambda x: x[0])
         clustered = [[]]  # type: List[List[Shape]]
         start = key_and_obj[0][0]
@@ -377,8 +371,8 @@ class RadiusNthSelector(_NthSelector):
     """
 
     def key(self, obj: Shape) -> float:
-        if isinstance(obj, (Edge, Wire)):
-            return obj.radius()
+        if obj.ShapeType() in ("Edge", "Wire"):
+            return cast(Shape1DProtocol, obj).radius()
         else:
             raise ValueError("Can not get a radius from this object")
 
@@ -470,8 +464,8 @@ class LengthNthSelector(_NthSelector):
     """
 
     def key(self, obj: Shape) -> float:
-        if isinstance(obj, (Edge, Wire)):
-            return obj.Length()
+        if obj.ShapeType() in ("Edge", "Wire"):
+            return cast(Shape1DProtocol, obj).Length()
         else:
             raise ValueError(
                 f"LengthNthSelector supports only Edges and Wires, not {type(obj).__name__}"
@@ -529,11 +523,13 @@ class AreaNthSelector(_NthSelector):
     """
 
     def key(self, obj: Shape) -> float:
-        if isinstance(obj, (Face, Shell, Solid)):
+        if obj.ShapeType() in ("Face", "Shell", "Solid"):
             return obj.Area()
-        elif isinstance(obj, Wire):
+        elif obj.ShapeType() == "Wire":
             try:
-                return abs(Face.makeFromWires(obj).Area())
+                from cadquery.occ_impl.shapes import Face, Wire
+
+                return abs(Face.makeFromWires(cast(Wire, obj)).Area())
             except Exception as ex:
                 raise ValueError(
                     f"Can not compute area of the Wire: {ex}. AreaNthSelector supports only closed planar Wires."
@@ -554,7 +550,7 @@ class BinarySelector(Selector):
         self.left = left
         self.right = right
 
-    def filter(self, objectList):
+    def filter(self, objectList: Sequence[Shape]):
         return self.filterResults(
             self.left.filter(objectList), self.right.filter(objectList)
         )
@@ -602,7 +598,7 @@ class InverseSelector(Selector):
     def __init__(self, selector):
         self.selector = selector
 
-    def filter(self, objectList):
+    def filter(self, objectList: Sequence[Shape]):
         # note that Selector() selects everything
         return SubtractSelector(Selector(), self.selector).filter(objectList)
 
@@ -766,7 +762,7 @@ class _SimpleStringSyntaxSelector(Selector):
         else:
             return self.axes[pr.simple_dir]
 
-    def filter(self, objectList):
+    def filter(self, objectList: Sequence[Shape]):
         r"""
         selects minimum, maximum, positive or negative values relative to a direction
         ``[+|-|<|>|] <X|Y|Z>``
@@ -888,7 +884,7 @@ class StringSyntaxSelector(Selector):
         parse_result = _expression_grammar.parseString(selectorString, parseAll=True)
         self.mySelector = parse_result.asList()[0]
 
-    def filter(self, objectList):
+    def filter(self, objectList: Sequence[Shape]):
         """
         Filter give object list through th already constructed complex selector object
         """

@@ -2,7 +2,7 @@
 
 
 ===========================
-CadQuery Design Principles
+Design Principles
 ===========================
 
 
