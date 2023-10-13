@@ -468,8 +468,6 @@ class Assembly(object):
         :param angularTolerance: the angular tolerance, in radians. Only used for GLTF, VRML. Default 0.1.
         :param \**kwargs: Additional keyword arguments.  Only used for STEP, GLTF and STL.
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
-        :param binary: GLTF only - Sets whether or not GTLF export should be text (.gltf) or binary (.glb)
-        :type binary: bool
         :param ascii: STL only - Sets whether or not STL export should be text or binary
         :type ascii: bool
         """
@@ -494,8 +492,9 @@ class Assembly(object):
         elif exportType == "GLTF":
             # Handle the binary option for GLTF export
             binary = True
-            if "binary" in kwargs:
-                binary = bool(kwargs.get("binary"))
+            path_parts = path.split(".")
+            if len(path_parts) > 0 and path_parts[-1] == "gltf":
+                binary = False
 
             exportGLTF(self, path, binary, tolerance, angularTolerance)
         elif exportType == "VTKJS":

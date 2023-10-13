@@ -668,7 +668,7 @@ def test_save_gltf(nested_assy_sphere):
     assert os.path.getsize("nested.glb") > 50 * 1024
 
     # ASCII export
-    nested_assy_sphere.save("nested_ascii.gltf", binary=False)
+    nested_assy_sphere.save("nested_ascii.gltf")
     assert os.path.exists("nested_ascii.gltf")
     assert os.path.getsize("nested_ascii.gltf") > 5 * 1024
 
