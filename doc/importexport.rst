@@ -32,6 +32,7 @@ Export Formats
 * VRML
 * VTP
 * 3MF
+* GLTF
 
 Notes on the Formats
 ---------------------
@@ -42,6 +43,7 @@ Notes on the Formats
 * TJS is short for ThreeJS, and is a JSON mesh format that is useful for displaying 3D models in web browsers. The TJS format is used to display embedded 3D examples within the CadQuery documentation.
 * VRML is a mesh-based format for representing interactive 3D objects in a web browser.
 * VTP is a mesh-based format used by the VTK library.
+* GLTF is a mesh-based format useful for viewing models on the web. Whether the resulting gltf file is binary (.glb) or text (.gltf) is set by the file extension.
 
 Importing DXF
 ##############
