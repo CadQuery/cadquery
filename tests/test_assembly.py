@@ -647,11 +647,30 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
     assert os.path.exists(filename)
 
 
+def test_save_stl_formats(nested_assy_sphere):
+
+     # Binary export
+    nested_assy_sphere.save("nested.stl", "STL", ascii=False)
+    assert os.path.exists("nested.stl")
+    assert os.path.getsize("nested.stl") > 782 * 1024
+
+    # ASCII export
+    nested_assy_sphere.save("nested_ascii.stl", ascii=True)
+    assert os.path.exists("nested_ascii.stl")
+    assert os.path.getsize("nested_ascii.stl") > 3960 * 1024
+
+
 def test_save_gltf(nested_assy_sphere):
 
+    # Binary export
     nested_assy_sphere.save("nested.glb", "GLTF")
     assert os.path.exists("nested.glb")
     assert os.path.getsize("nested.glb") > 50 * 1024
+
+    # ASCII export
+    nested_assy_sphere.save("nested_ascii.gltf", binary=False)
+    assert os.path.exists("nested_ascii.gltf")
+    assert os.path.getsize("nested_ascii.gltf") > 5 * 1024
 
 
 def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):

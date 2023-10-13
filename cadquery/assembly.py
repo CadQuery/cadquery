@@ -466,8 +466,12 @@ class Assembly(object):
         :param exportType: export format (default: None, results in format being inferred form the path)
         :param tolerance: the deflection tolerance, in model units. Only used for GLTF, VRML. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Only used for GLTF, VRML. Default 0.1.
-        :param \**kwargs: Additional keyword arguments.  Only used for STEP.
+        :param \**kwargs: Additional keyword arguments.  Only used for STEP, GLTF and STL.
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
+        :param binary: GLTF only - Sets whether or not GTLF export should be text (.gltf) or binary (.glb)
+        :type binary: bool
+        :param ascii: STL only - Sets whether or not STL export should be text or binary
+        :type ascii: bool
         """
 
         # Make sure the export mode setting is correct
@@ -488,11 +492,23 @@ class Assembly(object):
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF":
-            exportGLTF(self, path, True, tolerance, angularTolerance)
+            # Handle the binary option for GLTF export
+            if "binary" in kwargs:
+                binary = kwargs.get("binary")
+            else:
+                binary = True
+
+            exportGLTF(self, path, binary, tolerance, angularTolerance)
         elif exportType == "VTKJS":
             exportVTKJS(self, path)
         elif exportType == "STL":
-            self.toCompound().exportStl(path, tolerance, angularTolerance)
+            # Handle the ascii setting for STL export
+            if "ascii" in kwargs:
+                export_ascii = kwargs.get("ascii")
+            else:
+                export_ascii = False
+
+            self.toCompound().exportStl(path, tolerance, angularTolerance, export_ascii)
         else:
             raise ValueError(f"Unknown format: {exportType}")
 
