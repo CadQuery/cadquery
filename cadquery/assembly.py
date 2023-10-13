@@ -493,20 +493,18 @@ class Assembly(object):
             exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF":
             # Handle the binary option for GLTF export
+            binary = True
             if "binary" in kwargs:
-                binary = kwargs.get("binary")
-            else:
-                binary = True
+                binary = bool(kwargs.get("binary"))
 
             exportGLTF(self, path, binary, tolerance, angularTolerance)
         elif exportType == "VTKJS":
             exportVTKJS(self, path)
         elif exportType == "STL":
             # Handle the ascii setting for STL export
+            export_ascii = False
             if "ascii" in kwargs:
-                export_ascii = kwargs.get("ascii")
-            else:
-                export_ascii = False
+                export_ascii = bool(kwargs.get("ascii"))
 
             self.toCompound().exportStl(path, tolerance, angularTolerance, export_ascii)
         else:
