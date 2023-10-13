@@ -649,7 +649,7 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
 
 def test_save_stl_formats(nested_assy_sphere):
 
-     # Binary export
+    # Binary export
     nested_assy_sphere.save("nested.stl", "STL", ascii=False)
     assert os.path.exists("nested.stl")
     assert os.path.getsize("nested.stl") > 782 * 1024
