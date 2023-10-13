@@ -652,7 +652,12 @@ def test_save_stl_formats(nested_assy_sphere):
     # Binary export
     nested_assy_sphere.save("nested.stl", "STL", ascii=False)
     assert os.path.exists("nested.stl")
-    assert os.path.getsize("nested.stl") > 782 * 1024
+
+    # Trying to read a binary file as UTF-8/ASCII should throw an error
+    with pytest.raises(UnicodeDecodeError) as info:
+        with open("nested.stl", "r") as file:
+            file.read()
+    assert "invalid start byte" in str(info.value)
 
     # ASCII export
     nested_assy_sphere.save("nested_ascii.stl", ascii=True)
@@ -665,7 +670,12 @@ def test_save_gltf(nested_assy_sphere):
     # Binary export
     nested_assy_sphere.save("nested.glb", "GLTF")
     assert os.path.exists("nested.glb")
-    assert os.path.getsize("nested.glb") > 50 * 1024
+
+    # Trying to read a binary file as UTF-8/ASCII should throw an error
+    with pytest.raises(UnicodeDecodeError) as info:
+        with open("nested.glb", "r") as file:
+            file.read()
+    assert "invalid start byte" in str(info.value)
 
     # ASCII export
     nested_assy_sphere.save("nested_ascii.gltf")
