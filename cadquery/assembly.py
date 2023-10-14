@@ -490,13 +490,7 @@ class Assembly(object):
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF":
-            # Handle the binary option for GLTF export
-            binary = True
-            path_parts = path.split(".")
-            if len(path_parts) > 0 and path_parts[-1] == "gltf":
-                binary = False
-
-            exportGLTF(self, path, binary, tolerance, angularTolerance)
+            exportGLTF(self, path, None, tolerance, angularTolerance)
         elif exportType == "VTKJS":
             exportVTKJS(self, path)
         elif exportType == "STL":

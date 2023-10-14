@@ -4,6 +4,7 @@ import uuid
 from tempfile import TemporaryDirectory
 from shutil import make_archive
 from itertools import chain
+from typing import Optional
 from typing_extensions import Literal
 
 from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
@@ -185,13 +186,23 @@ def exportVRML(
 def exportGLTF(
     assy: AssemblyProtocol,
     path: str,
-    binary: bool = True,
+    binary: Optional[bool] = None,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ):
     """
     Export an assembly to a gltf file.
     """
+
+    # If the caller specified the binary option, respect it
+    if binary is None:
+        # Handle the binary option for GLTF export based on file extension
+        binary = True
+        path_parts = path.split(".")
+
+        # Binary will be the default if the user specified a non-standard file extension
+        if len(path_parts) > 0 and path_parts[-1] == "gltf":
+            binary = False
 
     # map from CadQuery's right-handed +Z up coordinate system to glTF's right-handed +Y up coordinate system
     # https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units
