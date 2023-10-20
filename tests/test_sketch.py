@@ -534,16 +534,16 @@ def test_constraint_solver():
 
     s1 = (
         Sketch()
-        .segment((0.0, 0), (0.0, 2.0), "s1")
-        .segment((0.5, 2.5), (1.0, 1), "s2")
-        .close("s3")
+        .segment((0.0, 0), (0.0, 2.0), "segment1")
+        .segment((0.5, 2.5), (1.0, 1), "segment2")
+        .close("segment3")
     )
-    s1.constrain("s1", "Fixed", None)
-    s1.constrain("s1", "s2", "Coincident", None)
-    s1.constrain("s2", "s3", "Coincident", None)
-    s1.constrain("s3", "s1", "Coincident", None)
-    s1.constrain("s3", "s1", "Angle", 90)
-    s1.constrain("s2", "s3", "Angle", 180 - 45)
+    s1.constrain("segment1", "Fixed", None)
+    s1.constrain("segment1", "segment2", "Coincident", None)
+    s1.constrain("segment2", "segment3", "Coincident", None)
+    s1.constrain("segment3", "segment1", "Coincident", None)
+    s1.constrain("segment3", "segment1", "Angle", 90)
+    s1.constrain("segment2", "segment3", "Angle", 180 - 45)
 
     s1.solve()
 
@@ -555,23 +555,23 @@ def test_constraint_solver():
 
     s2 = (
         Sketch()
-        .arc((0.0, 0.0), (-0.5, 0.5), (0.0, 1.0), "a1")
-        .arc((0.0, 1.0), (0.5, 1.5), (1.0, 1.0), "a2")
-        .segment((1.0, 0.0), "s1")
-        .close("s2")
+        .arc((0.0, 0.0), (-0.5, 0.5), (0.0, 1.0), "arc1")
+        .arc((0.0, 1.0), (0.5, 1.5), (1.0, 1.0), "arc2")
+        .segment((1.0, 0.0), "segment1")
+        .close("segment2")
     )
 
-    s2.constrain("s2", "Fixed", None)
-    s2.constrain("s1", "s2", "Coincident", None)
-    s2.constrain("a2", "s1", "Coincident", None)
-    s2.constrain("s2", "a1", "Coincident", None)
-    s2.constrain("a1", "a2", "Coincident", None)
-    s2.constrain("s1", "s2", "Angle", 90)
-    s2.constrain("s2", "a1", "Angle", 90)
-    s2.constrain("a1", "a2", "Angle", -90)
-    s2.constrain("a2", "s1", "Angle", 90)
-    s2.constrain("s1", "Length", 0.5)
-    s2.constrain("a1", "Length", 1.0)
+    s2.constrain("segment2", "Fixed", None)
+    s2.constrain("segment1", "segment2", "Coincident", None)
+    s2.constrain("arc2", "segment1", "Coincident", None)
+    s2.constrain("segment2", "arc1", "Coincident", None)
+    s2.constrain("arc1", "arc2", "Coincident", None)
+    s2.constrain("segment1", "segment2", "Angle", 90)
+    s2.constrain("segment2", "arc1", "Angle", 90)
+    s2.constrain("arc1", "arc2", "Angle", -90)
+    s2.constrain("arc2", "segment1", "Angle", 90)
+    s2.constrain("segment1", "Length", 0.5)
+    s2.constrain("arc1", "Length", 1.0)
 
     s2.solve()
 
@@ -581,22 +581,22 @@ def test_constraint_solver():
 
     assert s2._faces.isValid()
 
-    assert s2._tags["s1"][0].Length() == approx(0.5)
-    assert s2._tags["a1"][0].Length() == approx(1.0)
+    assert s2._tags["segment1"][0].Length() == approx(0.5)
+    assert s2._tags["arc1"][0].Length() == approx(1.0)
 
     s3 = (
         Sketch()
-        .arc((0.0, 0.0), (-0.5, 0.5), (0.0, 1.0), "a1")
-        .segment((1.0, 0.0), "s1")
-        .close("s2")
+        .arc((0.0, 0.0), (-0.5, 0.5), (0.0, 1.0), "arc1")
+        .segment((1.0, 0.0), "segment1")
+        .close("segment2")
     )
 
-    s3.constrain("s2", "Fixed", None)
-    s3.constrain("a1", "ArcAngle", 60)
-    s3.constrain("a1", "Radius", 1.0)
-    s3.constrain("s2", "a1", "Coincident", None)
-    s3.constrain("a1", "s1", "Coincident", None)
-    s3.constrain("s1", "s2", "Coincident", None)
+    s3.constrain("segment2", "Fixed", None)
+    s3.constrain("arc1", "ArcAngle", 60)
+    s3.constrain("arc1", "Radius", 1.0)
+    s3.constrain("segment2", "arc1", "Coincident", None)
+    s3.constrain("arc1", "segment1", "Coincident", None)
+    s3.constrain("segment1", "segment2", "Coincident", None)
 
     s3.solve()
 
@@ -606,22 +606,22 @@ def test_constraint_solver():
 
     assert s3._faces.isValid()
 
-    assert s3._tags["a1"][0].radius() == approx(1)
-    assert s3._tags["a1"][0].Length() == approx(pi / 3)
+    assert s3._tags["arc1"][0].radius() == approx(1)
+    assert s3._tags["arc1"][0].Length() == approx(pi / 3)
 
     s4 = (
         Sketch()
-        .arc((0.0, 0.0), (-0.5, 0.5), (0.0, 1.0), "a1")
-        .segment((1.0, 0.0), "s1")
-        .close("s2")
+        .arc((0.0, 0.0), (-0.5, 0.5), (0.0, 1.0), "arc1")
+        .segment((1.0, 0.0), "segment1")
+        .close("segment2")
     )
 
-    s4.constrain("s2", "Fixed", None)
-    s4.constrain("s1", "Orientation", (-1.0, -1))
-    s4.constrain("s1", "s2", "Distance", (0.0, 0.5, 2.0))
-    s4.constrain("s2", "a1", "Coincident", None)
-    s4.constrain("a1", "s1", "Coincident", None)
-    s4.constrain("s1", "s2", "Coincident", None)
+    s4.constrain("segment2", "Fixed", None)
+    s4.constrain("segment1", "Orientation", (-1.0, -1))
+    s4.constrain("segment1", "segment2", "Distance", (0.0, 0.5, 2.0))
+    s4.constrain("segment2", "arc1", "Coincident", None)
+    s4.constrain("arc1", "segment1", "Coincident", None)
+    s4.constrain("segment1", "segment2", "Coincident", None)
 
     s4.solve()
 
@@ -631,8 +631,8 @@ def test_constraint_solver():
 
     assert s4._faces.isValid()
 
-    seg1 = s4._tags["s1"][0]
-    seg2 = s4._tags["s2"][0]
+    seg1 = s4._tags["segment1"][0]
+    seg2 = s4._tags["segment2"][0]
 
     assert (seg1.endPoint() - seg1.startPoint()).getAngle(Vector(-1, -1)) == approx(
         0, abs=1e-9
@@ -644,18 +644,18 @@ def test_constraint_solver():
 
     s5 = (
         Sketch()
-        .segment((0, 0), (0, 3.0), "s1")
-        .arc((0.0, 0), (1.5, 1.5), (0.0, 3), "a1")
-        .arc((0.0, 0), (-1.0, 1.5), (0.0, 3), "a2")
+        .segment((0, 0), (0, 3.0), "segment1")
+        .arc((0.0, 0), (1.5, 1.5), (0.0, 3), "arc1")
+        .arc((0.0, 0), (-1.0, 1.5), (0.0, 3), "arc2")
     )
 
-    s5.constrain("s1", "Fixed", None)
-    s5.constrain("s1", "a1", "Distance", (0.5, 0.5, 3))
-    s5.constrain("s1", "a1", "Distance", (0.0, 1.0, 0.0))
-    s5.constrain("a1", "s1", "Distance", (0.0, 1.0, 0.0))
-    s5.constrain("s1", "a2", "Coincident", None)
-    s5.constrain("a2", "s1", "Coincident", None)
-    s5.constrain("a1", "a2", "Distance", (0.5, 0.5, 10.5))
+    s5.constrain("segment1", "Fixed", None)
+    s5.constrain("segment1", "arc1", "Distance", (0.5, 0.5, 3))
+    s5.constrain("segment1", "arc1", "Distance", (0.0, 1.0, 0.0))
+    s5.constrain("arc1", "segment1", "Distance", (0.0, 1.0, 0.0))
+    s5.constrain("segment1", "arc2", "Coincident", None)
+    s5.constrain("arc2", "segment1", "Coincident", None)
+    s5.constrain("arc1", "arc2", "Distance", (0.5, 0.5, 10.5))
 
     s5.solve()
 
@@ -670,14 +670,14 @@ def test_constraint_solver():
 
     s6 = (
         Sketch()
-        .segment((0, 0), (0, 3.0), "s1")
-        .arc((0.0, 0), (5.5, 5.5), (0.0, 3), "a1")
+        .segment((0, 0), (0, 3.0), "segment1")
+        .arc((0.0, 0), (5.5, 5.5), (0.0, 3), "arc1")
     )
 
-    s6.constrain("s1", "Fixed", None)
-    s6.constrain("s1", "a1", "Coincident", None)
-    s6.constrain("a1", "s1", "Coincident", None)
-    s6.constrain("a1", "s1", "Distance", (None, 0.5, 0))
+    s6.constrain("segment1", "Fixed", None)
+    s6.constrain("segment1", "arc1", "Coincident", None)
+    s6.constrain("arc1", "segment1", "Coincident", None)
+    s6.constrain("arc1", "segment1", "Distance", (None, 0.5, 0))
 
     s6.solve()
 
@@ -690,15 +690,15 @@ def test_constraint_solver():
 
     s7 = (
         Sketch()
-        .segment((0, 0), (0, 3.0), "s1")
-        .arc((0.0, 0), (5.5, 5.5), (0.0, 4), "a1")
+        .segment((0, 0), (0, 3.0), "segment1")
+        .arc((0.0, 0), (5.5, 5.5), (0.0, 4), "arc1")
     )
 
-    s7.constrain("s1", "FixedPoint", 0)
-    s7.constrain("a1", "FixedPoint", None)
-    s7.constrain("a1", "FixedPoint", 1)
-    s7.constrain("a1", "s1", "Distance", (0, 0, 0))
-    s7.constrain("a1", "s1", "Distance", (1, 1, 0))
+    s7.constrain("segment1", "FixedPoint", 0)
+    s7.constrain("arc1", "FixedPoint", None)
+    s7.constrain("arc1", "FixedPoint", 1)
+    s7.constrain("arc1", "segment1", "Distance", (0, 0, 0))
+    s7.constrain("arc1", "segment1", "Distance", (1, 1, 0))
 
     s7.solve()
 

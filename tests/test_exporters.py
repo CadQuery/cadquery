@@ -7,6 +7,7 @@ import io
 from pathlib import Path
 import re
 import sys
+import math
 import pytest
 import ezdxf
 
@@ -909,3 +910,35 @@ def test_dxf_text(tmpdir, testdatadir):
     assert w1.val().Volume() == approx(59.983287, 1e-2)
     assert w2.val().Volume() == approx(w1.val().Volume(), 1e-2)
     assert w2.intersect(w1).val().Volume() == approx(w1.val().Volume(), 1e-2)
+
+
+def test_dxf_ellipse_arc(tmpdir):
+
+    normal = (0, 1, 0)
+    plane = Plane((0, 0, 0), (1, 0, 0), normal=normal)
+    w1 = Workplane(plane)
+
+    r = 10
+    normal_reversed = (0, -1, 0)
+    e1 = Edge.makeEllipse(r, r, (0, 0, 0), normal_reversed, (1, 0, 1), 90, 135)
+    e2 = Edge.makeEllipse(r, r, (0, 0, 0), normal, (0, 0, -1), 45, 90)
+    e3 = Edge.makeLine(
+        (0, 0, 0), (-r * math.sin(math.pi / 4), 0, r * math.sin(math.pi / 4))
+    )
+    e4 = Edge.makeLine(
+        (0, 0, 0), (-r * math.sin(math.pi / 4), 0, -r * math.sin(math.pi / 4))
+    )
+
+    w1.add([e1, e2, e3, e4])
+
+    dxf = exporters.dxf.DxfDocument()
+    dxf.add_layer("layer1", color=1)
+    dxf.add_shape(w1, "layer1")
+    fname = tmpdir.joinpath("ellipse_arc.dxf").resolve()
+    dxf.document.saveas(fname)
+
+    s1 = Sketch().importDXF(fname)
+    w2 = Workplane("XZ", origin=(0, 0, 0)).placeSketch(s1).extrude(1)
+
+    assert w2.val().isValid()
+    assert w2.val().Volume() == approx(math.pi * r ** 2 / 4)

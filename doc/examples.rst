@@ -3,7 +3,7 @@
 .. currentmodule:: cadquery
 
 *********************************
-CadQuery Examples
+Examples
 *********************************
 
 
@@ -56,7 +56,7 @@ Plate with Hole
 A rectangular box, but with a hole added.
 
 "\>Z" selects the top most face of the resulting box. The hole is located in the center because the default origin
-of a working plane is the projected origin of the last Workplane, the last Workplane having origin at (0,0,0) the 
+of a working plane is the projected origin of the last Workplane, the last Workplane having origin at (0,0,0) the
 projection is at the center of the face. The default hole depth is through the entire part.
 
 
@@ -70,8 +70,13 @@ projection is at the center of the face. The default hole depth is through the e
         center_hole_dia = 22.0
 
         # Create a box based on the dimensions above and add a 22mm center hole
-        result = (cq.Workplane("XY").box(length, height, thickness)
-            .faces(">Z").workplane().hole(center_hole_dia))
+        result = (
+            cq.Workplane("XY")
+            .box(length, height, thickness)
+            .faces(">Z")
+            .workplane()
+            .hole(center_hole_dia)
+        )
 
 .. topic:: Api References
 
@@ -117,8 +122,14 @@ closed curve.
 
 .. cadquery::
 
-    result = (cq.Workplane("front").lineTo(2.0, 0).lineTo(2.0, 1.0).threePointArc((1.0, 1.5), (0.0, 1.0))
-        .close().extrude(0.25))
+    result = (
+        cq.Workplane("front")
+        .lineTo(2.0, 0)
+        .lineTo(2.0, 1.0)
+        .threePointArc((1.0, 1.5), (0.0, 1.0))
+        .close()
+        .extrude(0.25)
+    )
 
 
 .. topic:: Api References
@@ -143,7 +154,9 @@ A new work plane center can be established at any point.
 
 .. cadquery::
 
-    result = cq.Workplane("front").circle(3.0)  # current point is the center of the circle, at (0, 0)
+    result = cq.Workplane("front").circle(
+        3.0
+    )  # current point is the center of the circle, at (0, 0)
     result = result.center(1.5, 0.0).rect(0.5, 0.5)  # new work center is (1.5, 0.0)
 
     result = result.center(-1.5, 1.5).circle(0.25)  # new work center is (0.0, 1.5).
@@ -174,10 +187,12 @@ like :py:meth:`Workplane.circle` and :py:meth:`Workplane.rect`, will operate on 
 
 .. cadquery::
 
-   r = cq.Workplane("front").circle(2.0)                           # make base
-   r = r.pushPoints([(1.5, 0), (0, 1.5), (-1.5, 0), (0, -1.5)])    # now four points are on the stack
-   r = r.circle(0.25)                                              # circle will operate on all four points
-   result = r.extrude(0.125)                                       # make prism
+   r = cq.Workplane("front").circle(2.0)  # make base
+   r = r.pushPoints(
+       [(1.5, 0), (0, 1.5), (-1.5, 0), (0, -1.5)]
+   )  # now four points are on the stack
+   r = r.circle(0.25)  # circle will operate on all four points
+   result = r.extrude(0.125)  # make prism
 
 .. topic:: Api References
 
@@ -197,8 +212,13 @@ correct for small hole sizes.
 
 .. cadquery::
 
-    result = (cq.Workplane("front").box(3.0, 4.0, 0.25).pushPoints([(0, 0.75), (0, -0.75)])
-        .polygon(6, 1.0).cutThruAll())
+    result = (
+        cq.Workplane("front")
+        .box(3.0, 4.0, 0.25)
+        .pushPoints([(0, 0.75), (0, -0.75)])
+        .polygon(6, 1.0)
+        .cutThruAll()
+    )
 
 .. topic:: Api References
 
@@ -220,14 +240,14 @@ This example uses a polyline to create one half of an i-beam shape, which is mir
 
     (L, H, W, t) = (100.0, 20.0, 20.0, 1.0)
     pts = [
-        (0, H/2.0),
-        (W/2.0, H/2.0),
-        (W/2.0, (H/2.0 - t)),
-        (t/2.0, (H/2.0 - t)),
-        (t/2.0, (t - H/2.0)),
-        (W/2.0, (t - H/2.0)),
-        (W/2.0, H/-2.0),
-        (0, H/-2.0)
+        (0, H / 2.0),
+        (W / 2.0, H / 2.0),
+        (W / 2.0, (H / 2.0 - t)),
+        (t / 2.0, (H / 2.0 - t)),
+        (t / 2.0, (t - H / 2.0)),
+        (W / 2.0, (t - H / 2.0)),
+        (W / 2.0, H / -2.0),
+        (0, H / -2.0),
     ]
     result = cq.Workplane("front").polyline(pts).mirrorY().extrude(L)
 
@@ -259,7 +279,7 @@ needs a complex profile
         (1.5, 1.0),
         (1.0, 1.25),
         (0.5, 1.0),
-        (0, 1.0)
+        (0, 1.0),
     ]
     r = s.lineTo(3.0, 0).lineTo(3.0, 1.0).spline(sPnts, includeCurrent=True).close()
     result = r.extrude(0.5)
@@ -284,9 +304,11 @@ introduce horizontal and vertical lines, which make for slightly easier coding.
 
 .. cadquery::
 
-   r = cq.Workplane("front").hLine(1.0)                       # 1.0 is the distance, not coordinate
-   r = r.vLine(0.5).hLine(-0.25).vLine(-0.25).hLineTo(0.0)    # hLineTo allows using xCoordinate not distance
-   result = r.mirrorY().extrude(0.25)                         # mirror the geometry and extrude
+   r = cq.Workplane("front").hLine(1.0)  # 1.0 is the distance, not coordinate
+   r = (
+       r.vLine(0.5).hLine(-0.25).vLine(-0.25).hLineTo(0.0)
+   )  # hLineTo allows using xCoordinate not distance
+   result = r.mirrorY().extrude(0.25)  # mirror the geometry and extrude
 
 .. topic:: Api References
 
@@ -306,32 +328,34 @@ Mirroring 3D Objects
 
 .. cadquery::
 
-    result0 = (cadquery.Workplane("XY")
-               .moveTo(10, 0)
-               .lineTo(5, 0)
-               .threePointArc((3.9393, 0.4393), (3.5, 1.5))
-               .threePointArc((3.0607, 2.5607), (2, 3))
-               .lineTo(1.5, 3)
-               .threePointArc((0.4393, 3.4393), (0, 4.5))
-               .lineTo(0, 13.5)
-               .threePointArc((0.4393, 14.5607), (1.5, 15))
-               .lineTo(28, 15)
-               .lineTo(28, 13.5)
-               .lineTo(24, 13.5)
-               .lineTo(24, 11.5)
-               .lineTo(27, 11.5)
-               .lineTo(27, 10)
-               .lineTo(22, 10)
-               .lineTo(22, 13.2)
-               .lineTo(14.5, 13.2)
-               .lineTo(14.5, 10)
-               .lineTo(12.5, 10)
-               .lineTo(12.5, 13.2)
-               .lineTo(5.5, 13.2)
-               .lineTo(5.5, 2)
-               .threePointArc((5.793, 1.293), (6.5, 1))
-               .lineTo(10, 1)
-               .close())
+    result0 = (
+        cadquery.Workplane("XY")
+        .moveTo(10, 0)
+        .lineTo(5, 0)
+        .threePointArc((3.9393, 0.4393), (3.5, 1.5))
+        .threePointArc((3.0607, 2.5607), (2, 3))
+        .lineTo(1.5, 3)
+        .threePointArc((0.4393, 3.4393), (0, 4.5))
+        .lineTo(0, 13.5)
+        .threePointArc((0.4393, 14.5607), (1.5, 15))
+        .lineTo(28, 15)
+        .lineTo(28, 13.5)
+        .lineTo(24, 13.5)
+        .lineTo(24, 11.5)
+        .lineTo(27, 11.5)
+        .lineTo(27, 10)
+        .lineTo(22, 10)
+        .lineTo(22, 13.2)
+        .lineTo(14.5, 13.2)
+        .lineTo(14.5, 10)
+        .lineTo(12.5, 10)
+        .lineTo(12.5, 13.2)
+        .lineTo(5.5, 13.2)
+        .lineTo(5.5, 2)
+        .threePointArc((5.793, 1.293), (6.5, 1))
+        .lineTo(10, 1)
+        .close()
+    )
     result = result0.extrude(100)
 
     result = result.rotate((0, 0, 0), (1, 0, 0), 90)
@@ -367,12 +391,7 @@ This example shows how you can mirror about a selected face. It also shows how t
 
 .. cadquery::
 
-    result = (cq.Workplane("XY")
-              .line(0, 1)
-              .line(1, 0)
-              .line(0, -.5)
-              .close()
-              .extrude(1))
+    result = cq.Workplane("XY").line(0, 1).line(1, 0).line(0, -0.5).close().extrude(1)
 
     result = result.mirror(result.faces(">X"), union=True)
 
@@ -410,7 +429,9 @@ through the centerOption argument of :py:meth:`Workplane.workplane`.
 .. cadquery::
 
     result = cq.Workplane("front").box(2, 3, 0.5)  # make a basic prism
-    result = result.faces(">Z").workplane().hole(0.5)  # find the top-most face and make a hole
+    result = (
+        result.faces(">Z").workplane().hole(0.5)
+    )  # find the top-most face and make a hole
 
 .. topic:: Api References
 
@@ -437,8 +458,10 @@ part, no matter how deep the part is.
 
 .. cadquery::
 
-    result = cq.Workplane("front").box(3,2, 0.5)  # make a basic prism
-    result = result.faces(">Z").vertices("<XY").workplane(centerOption="CenterOfMass")  # select the lower left vertex and make a workplane
+    result = cq.Workplane("front").box(3, 2, 0.5)  # make a basic prism
+    result = (
+        result.faces(">Z").vertices("<XY").workplane(centerOption="CenterOfMass")
+    )  # select the lower left vertex and make a workplane
     result = result.circle(1.0).cutThruAll()  # cut the corner out
 
 .. topic:: Api References
@@ -464,9 +487,11 @@ This example uses an offset workplane to make a compound object, which is perfec
 
 .. cadquery::
 
-    result = cq.Workplane("front").box(3, 2, 0.5)         # make a basic prism
-    result = result.faces("<X").workplane(offset=0.75)    # workplane is offset from the object surface
-    result = result.circle(1.0).extrude(0.5)              # disc
+    result = cq.Workplane("front").box(3, 2, 0.5)  # make a basic prism
+    result = result.faces("<X").workplane(
+        offset=0.75
+    )  # workplane is offset from the object surface
+    result = result.circle(1.0).extrude(0.5)  # disc
 
 .. topic:: Api References
 
@@ -485,13 +510,19 @@ An existing CQ object can copy a workplane from another CQ object.
 
 .. cadquery::
 
-    result = (cq.Workplane("front").circle(1).extrude(10)  # make a cylinder
-              # We want to make a second cylinder perpendicular to the first,
-              # but we have no face to base the workplane off
-              .copyWorkplane(
-                  # create a temporary object with the required workplane
-                  cq.Workplane("right", origin=(-5, 0, 0))
-              ).circle(1).extrude(10))
+    result = (
+        cq.Workplane("front")
+        .circle(1)
+        .extrude(10)  # make a cylinder
+        # We want to make a second cylinder perpendicular to the first,
+        # but we have no face to base the workplane off
+        .copyWorkplane(
+            # create a temporary object with the required workplane
+            cq.Workplane("right", origin=(-5, 0, 0))
+        )
+        .circle(1)
+        .extrude(10)
+    )
 
 .. topic:: API References
 
@@ -510,9 +541,16 @@ You can create a rotated work plane by specifying angles of rotation relative to
 
 .. cadquery::
 
-    result = (cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").workplane()
-         .transformed(offset=cq.Vector(0, -1.5, 1.0),rotate=cq.Vector(60, 0, 0))
-         .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.25))
+    result = (
+        cq.Workplane("front")
+        .box(4.0, 4.0, 0.25)
+        .faces(">Z")
+        .workplane()
+        .transformed(offset=cq.Vector(0, -1.5, 1.0), rotate=cq.Vector(60, 0, 0))
+        .rect(1.5, 1.5, forConstruction=True)
+        .vertices()
+        .hole(0.25)
+    )
 
 .. topic:: Api References
 
@@ -534,8 +572,15 @@ In the example below, a rectangle is drawn, and its vertices are used to locate 
 
 .. cadquery::
 
-    result = (cq.Workplane("front").box(2, 2, 0.5).faces(">Z").workplane()
-        .rect(1.5, 1.5, forConstruction=True).vertices().hole(0.125))
+    result = (
+        cq.Workplane("front")
+        .box(2, 2, 0.5)
+        .faces(">Z")
+        .workplane()
+        .rect(1.5, 1.5, forConstruction=True)
+        .vertices()
+        .hole(0.125)
+    )
 
 .. topic:: Api References
 
@@ -578,12 +623,7 @@ Multiple faces can be removed using more complex selectors.
 
 .. cadquery::
 
-   result = (
-        cq.Workplane("front")
-        .box(2, 2, 2)
-        .faces("+Z or -X or +X")
-        .shell(0.1)
-   )
+   result = cq.Workplane("front").box(2, 2, 2).faces("+Z or -X or +X").shell(0.1)
 
 .. topic:: Api References
 
@@ -604,8 +644,15 @@ and a circular section.
 
 .. cadquery::
 
-    result = (cq.Workplane("front").box(4.0, 4.0, 0.25).faces(">Z").circle(1.5)
-        .workplane(offset=3.0).rect(0.75, 0.5).loft(combine=True))
+    result = (
+        cq.Workplane("front")
+        .box(4.0, 4.0, 0.25)
+        .faces(">Z")
+        .circle(1.5)
+        .workplane(offset=3.0)
+        .rect(0.75, 0.5)
+        .loft(combine=True)
+    )
 
 
 .. topic:: Api References
@@ -630,12 +677,13 @@ or even give a :class:`~cadquery.Face` object for the `until` argument of
 
 .. cadquery::
 
-    result = (cq.Workplane(origin = (20,0,0))
+    result = (
+        cq.Workplane(origin=(20, 0, 0))
         .circle(2)
-        .revolve(180, (-20,0,0),(-20,-1,0))
-        .center(-20,0)
+        .revolve(180, (-20, 0, 0), (-20, -1, 0))
+        .center(-20, 0)
         .workplane()
-        .rect(20,4)
+        .rect(20, 4)
         .extrude("next")
     )
 
@@ -645,67 +693,58 @@ same is true for :meth:`~cadquery.Workplane.extrude`).
 
 .. cadquery::
 
-    skyscrapers_locations = [(-16,1),(-8,0),(7,0.2),(17,-1.2)]
-    angles = iter([15,0,-8,10])
-    skyscrapers = (cq.Workplane()
+    skyscrapers_locations = [(-16, 1), (-8, 0), (7, 0.2), (17, -1.2)]
+    angles = iter([15, 0, -8, 10])
+    skyscrapers = (
+        cq.Workplane()
         .pushPoints(skyscrapers_locations)
-        .eachpoint(lambda loc: (cq.Workplane()
-                                .rect(5,16)
-                                .workplane(offset=10)
-                                .ellipse(3,8)
-                                .workplane(offset=10)
-                                .slot2D(20,5, 90)
-                                .loft()
-                                .rotateAboutCenter((0,0,1),next(angles))
-                                .val().located(loc)
-                                )
-        )    
+        .eachpoint(
+            lambda loc: (
+                cq.Workplane()
+                .rect(5, 16)
+                .workplane(offset=10)
+                .ellipse(3, 8)
+                .workplane(offset=10)
+                .slot2D(20, 5, 90)
+                .loft()
+                .rotateAboutCenter((0, 0, 1), next(angles))
+                .val()
+                .located(loc)
+            )
+        )
     )
 
-    result = (skyscrapers
-        .transformed((0,-90,0))
-        .moveTo(15,0)
-        .rect(3,3, forConstruction=True)
+    result = (
+        skyscrapers.transformed((0, -90, 0))
+        .moveTo(15, 0)
+        .rect(3, 3, forConstruction=True)
         .vertices()
-        .circle(1)    
+        .circle(1)
         .cutBlind("last")
     )
 
 Here is a typical situation where extruding and cuting until a given surface is very handy. It allows us to extrude or cut until a curved surface without overlapping issues.
 
 .. cadquery::
-    
+
     import cadquery as cq
 
     sphere = cq.Workplane().sphere(5)
-    base = (cq.Workplane(origin=(0,0,-2))
-        .box(12,12,10)
-        .cut(sphere)
-        .edges("|Z")
-        .fillet(2)
-    )
+    base = cq.Workplane(origin=(0, 0, -2)).box(12, 12, 10).cut(sphere).edges("|Z").fillet(2)
     sphere_face = base.faces(">>X[2] and (not |Z) and (not |Y)").val()
-    base = (base
-        .faces("<Z")
-        .workplane()
-        .circle(2)
-        .extrude(10)
-    )
+    base = base.faces("<Z").workplane().circle(2).extrude(10)
 
-    shaft = (cq.Workplane()
-        .sphere(4.5)
-        .circle(1.5)
-        .extrude(20)
-    )
+    shaft = cq.Workplane().sphere(4.5).circle(1.5).extrude(20)
 
-    spherical_joint = (base.union(shaft)
+    spherical_joint = (
+        base.union(shaft)
         .faces(">X")
         .workplane(centerOption="CenterOfMass")
-        .move(0,4)
-        .slot2D(10,2,90)
-        .cutBlind(sphere_face)    
+        .move(0, 4)
+        .slot2D(10, 2, 90)
+        .cutBlind(sphere_face)
         .workplane(offset=10)
-        .move(0,2)
+        .move(0, 2)
         .circle(0.9)
         .extrude("next")
     )
@@ -780,13 +819,7 @@ inwards or outwards, and with different techniques for extending the corners.
 .. cadquery::
 
     original = cq.Workplane().polygon(5, 10).extrude(0.1).translate((0, 0, 2))
-    arc = (
-        cq.Workplane()
-        .polygon(5, 10)
-        .offset2D(1, "arc")
-        .extrude(0.1)
-        .translate((0, 0, 1))
-    )
+    arc = cq.Workplane().polygon(5, 10).offset2D(1, "arc").extrude(0.1).translate((0, 0, 1))
     intersection = cq.Workplane().polygon(5, 10).offset2D(1, "intersection").extrude(0.1)
     result = original.add(arc).add(intersection)
 
@@ -862,29 +895,49 @@ The :py:meth:`Workplane.workplaneFromTagged` method applies :py:meth:`Workplane.
 
 .. cadquery::
 
-    result = (cq.Workplane("XY")
-              # create and tag the base workplane
-              .box(10, 10, 10).faces(">Z").workplane().tag("baseplane")
-              # extrude a cylinder
-              .center(-3, 0).circle(1).extrude(3)
-              # to reselect the base workplane, simply
-              .workplaneFromTagged("baseplane")
-              # extrude a second cylinder
-              .center(3, 0).circle(1).extrude(2))
+    result = (
+        cq.Workplane("XY")
+        # create and tag the base workplane
+        .box(10, 10, 10)
+        .faces(">Z")
+        .workplane()
+        .tag("baseplane")
+        # extrude a cylinder
+        .center(-3, 0)
+        .circle(1)
+        .extrude(3)
+        # to reselect the base workplane, simply
+        .workplaneFromTagged("baseplane")
+        # extrude a second cylinder
+        .center(3, 0)
+        .circle(1)
+        .extrude(2)
+    )
 
 
 Tags can also be used with most selectors, including :py:meth:`Workplane.vertices`, :py:meth:`Workplane.faces`, :py:meth:`Workplane.edges`, :py:meth:`Workplane.wires`, :py:meth:`Workplane.shells`, :py:meth:`Workplane.solids` and :py:meth:`Workplane.compounds`.
 
 .. cadquery::
 
-    result = (cq.Workplane("XY")
-              # create a triangular prism and tag it
-              .polygon(3, 5).extrude(4).tag("prism")
-              # create a sphere that obscures the prism
-              .sphere(10)
-              # create features based on the prism's faces
-              .faces("<X", tag="prism").workplane().circle(1).cutThruAll()
-              .faces(">X", tag="prism").faces(">Y").workplane().circle(1).cutThruAll())
+    result = (
+        cq.Workplane("XY")
+        # create a triangular prism and tag it
+        .polygon(3, 5)
+        .extrude(4)
+        .tag("prism")
+        # create a sphere that obscures the prism
+        .sphere(10)
+        # create features based on the prism's faces
+        .faces("<X", tag="prism")
+        .workplane()
+        .circle(1)
+        .cutThruAll()
+        .faces(">X", tag="prism")
+        .faces(">Y")
+        .workplane()
+        .circle(1)
+        .cutThruAll()
+    )
 
 .. topic:: Api References
 
@@ -910,10 +963,18 @@ with just a few lines of code.
 
         (length, height, bearing_diam, thickness, padding) = (30.0, 40.0, 22.0, 10.0, 8.0)
 
-        result = (cq.Workplane("XY").box(length, height, thickness).faces(">Z").workplane().hole(bearing_diam)
-                .faces(">Z").workplane()
-                .rect(length-padding, height-padding, forConstruction=True)
-                .vertices().cboreHole(2.4, 4.4, 2.1))
+        result = (
+            cq.Workplane("XY")
+            .box(length, height, thickness)
+            .faces(">Z")
+            .workplane()
+            .hole(bearing_diam)
+            .faces(">Z")
+            .workplane()
+            .rect(length - padding, height - padding, forConstruction=True)
+            .vertices()
+            .cboreHole(2.4, 4.4, 2.1)
+        )
 
 
 Splitting an Object
@@ -958,9 +1019,14 @@ ones at 13 lines, but that's very short compared to the pythonOCC version, which
     s = cq.Workplane("XY")
 
     # Draw half the profile of the bottle and extrude it
-    p = (s.center(-L/2.0, 0).vLine(w/2.0)
-        .threePointArc((L/2.0, w/2.0 + t), (L, w/2.0)).vLine(-w/2.0)
-        .mirrorX().extrude(30.0, True))
+    p = (
+        s.center(-L / 2.0, 0)
+        .vLine(w / 2.0)
+        .threePointArc((L / 2.0, w / 2.0 + t), (L, w / 2.0))
+        .vLine(-w / 2.0)
+        .mirrorX()
+        .extrude(30.0, True)
+    )
 
     # Make the neck
     p = p.faces(">Z").workplane(centerOption="CenterOfMass").circle(3.0).extrude(2.0, True)
@@ -995,7 +1061,9 @@ A Parametric Enclosure
 
     p_thickness = 3.0  # Thickness of the box walls
     p_sideRadius = 10.0  # Radius for the curves around the sides of the box
-    p_topAndBottomRadius = 2.0  # Radius for the curves on the top and bottom edges of the box
+    p_topAndBottomRadius = (
+        2.0  # Radius for the curves on the top and bottom edges of the box
+    )
 
     p_screwpostInset = 12.0  # How far in from the edges the screw posts should be place.
     p_screwpostID = 4.0  # Inner Diameter of the screw post holes, should be roughly screw diameter not including threads
@@ -1009,7 +1077,11 @@ A Parametric Enclosure
     p_lipHeight = 1.0  # Height of lip on the underside of the lid.\nSits inside the box body for a snug fit.
 
     # outer shell
-    oshell = cq.Workplane("XY").rect(p_outerWidth, p_outerLength).extrude(p_outerHeight + p_lipHeight)
+    oshell = (
+        cq.Workplane("XY")
+        .rect(p_outerWidth, p_outerLength)
+        .extrude(p_outerHeight + p_lipHeight)
+    )
 
     # weird geometry happens if we make the fillets in the wrong order
     if p_sideRadius > p_topAndBottomRadius:
@@ -1020,9 +1092,13 @@ A Parametric Enclosure
         oshell = oshell.edges("|Z").fillet(p_sideRadius)
 
     # inner shell
-    ishell = (oshell.faces("<Z").workplane(p_thickness, True)
-        .rect((p_outerWidth - 2.0*p_thickness), (p_outerLength - 2.0*p_thickness))
-        .extrude((p_outerHeight - 2.0*p_thickness), False)  # set combine false to produce just the new boss
+    ishell = (
+        oshell.faces("<Z")
+        .workplane(p_thickness, True)
+        .rect((p_outerWidth - 2.0 * p_thickness), (p_outerLength - 2.0 * p_thickness))
+        .extrude(
+            (p_outerHeight - 2.0 * p_thickness), False
+        )  # set combine false to produce just the new boss
     )
     ishell = ishell.edges("|Z").fillet(p_sideRadius - p_thickness)
 
@@ -1030,32 +1106,52 @@ A Parametric Enclosure
     box = oshell.cut(ishell)
 
     # make the screw posts
-    POSTWIDTH = (p_outerWidth - 2.0*p_screwpostInset)
-    POSTLENGTH = (p_outerLength - 2.0*p_screwpostInset)
+    POSTWIDTH = p_outerWidth - 2.0 * p_screwpostInset
+    POSTLENGTH = p_outerLength - 2.0 * p_screwpostInset
 
-    box = (box.faces(">Z").workplane(-p_thickness)
+    box = (
+        box.faces(">Z")
+        .workplane(-p_thickness)
         .rect(POSTWIDTH, POSTLENGTH, forConstruction=True)
-        .vertices().circle(p_screwpostOD/2.0).circle(p_screwpostID/2.0)
-        .extrude(-1.0*(p_outerHeight + p_lipHeight - p_thickness),True))
+        .vertices()
+        .circle(p_screwpostOD / 2.0)
+        .circle(p_screwpostID / 2.0)
+        .extrude(-1.0 * (p_outerHeight + p_lipHeight - p_thickness), True)
+    )
 
     # split lid into top and bottom parts
-    (lid, bottom) = box.faces(">Z").workplane(-p_thickness - p_lipHeight).split(keepTop=True, keepBottom=True).all()  # splits into two solids
+    (lid, bottom) = (
+        box.faces(">Z")
+        .workplane(-p_thickness - p_lipHeight)
+        .split(keepTop=True, keepBottom=True)
+        .all()
+    )  # splits into two solids
 
     # translate the lid, and subtract the bottom from it to produce the lid inset
     lowerLid = lid.translate((0, 0, -p_lipHeight))
-    cutlip = lowerLid.cut(bottom).translate((p_outerWidth + p_thickness, 0, p_thickness - p_outerHeight + p_lipHeight))
+    cutlip = lowerLid.cut(bottom).translate(
+        (p_outerWidth + p_thickness, 0, p_thickness - p_outerHeight + p_lipHeight)
+    )
 
     # compute centers for screw holes
-    topOfLidCenters = (cutlip.faces(">Z").workplane(centerOption="CenterOfMass")
-        .rect(POSTWIDTH, POSTLENGTH, forConstruction=True).vertices())
+    topOfLidCenters = (
+        cutlip.faces(">Z")
+        .workplane(centerOption="CenterOfMass")
+        .rect(POSTWIDTH, POSTLENGTH, forConstruction=True)
+        .vertices()
+    )
 
     # add holes of the desired type
     if p_boreDiameter > 0 and p_boreDepth > 0:
-        topOfLid = topOfLidCenters.cboreHole(p_screwpostID, p_boreDiameter, p_boreDepth, 2.0*p_thickness)
+        topOfLid = topOfLidCenters.cboreHole(
+            p_screwpostID, p_boreDiameter, p_boreDepth, 2.0 * p_thickness
+        )
     elif p_countersinkDiameter > 0 and p_countersinkAngle > 0:
-        topOfLid = topOfLidCenters.cskHole(p_screwpostID, p_countersinkDiameter, p_countersinkAngle, 2.0*p_thickness)
+        topOfLid = topOfLidCenters.cskHole(
+            p_screwpostID, p_countersinkDiameter, p_countersinkAngle, 2.0 * p_thickness
+        )
     else:
-        topOfLid = topOfLidCenters.hole(p_screwpostID, 2.0*p_thickness)
+        topOfLid = topOfLidCenters.hole(p_screwpostID, 2.0 * p_thickness)
 
     # flip lid upside down if desired
     if p_flipLid:
@@ -1100,9 +1196,9 @@ regarding the underside of the brick.
     #####
     # Inputs
     ######
-    lbumps = 6     # number of bumps long
-    wbumps = 2     # number of bumps wide
-    thin = True    # True for thin, False for thick
+    lbumps = 6  # number of bumps long
+    wbumps = 2  # number of bumps wide
+    thin = True  # True for thin, False for thick
 
     #
     # Lego Brick Constants-- these make a Lego brick a Lego :)
@@ -1118,8 +1214,8 @@ regarding the underside of the brick.
 
     t = (pitch - (2 * clearance) - bumpDiam) / 2.0
     postDiam = pitch - t  # works out to 6.5
-    total_length = lbumps*pitch - 2.0*clearance
-    total_width = wbumps*pitch - 2.0*clearance
+    total_length = lbumps * pitch - 2.0 * clearance
+    total_width = wbumps * pitch - 2.0 * clearance
 
     # make the base
     s = cq.Workplane("XY").box(total_length, total_width, height)
@@ -1128,23 +1224,37 @@ regarding the underside of the brick.
     s = s.faces("<Z").shell(-1.0 * t)
 
     # make the bumps on the top
-    s = (s.faces(">Z").workplane().
-        rarray(pitch, pitch, lbumps, wbumps, True).circle(bumpDiam / 2.0)
-        .extrude(bumpHeight))
+    s = (
+        s.faces(">Z")
+        .workplane()
+        .rarray(pitch, pitch, lbumps, wbumps, True)
+        .circle(bumpDiam / 2.0)
+        .extrude(bumpHeight)
+    )
 
     # add posts on the bottom. posts are different diameter depending on geometry
     # solid studs for 1 bump, tubes for multiple, none for 1x1
     tmp = s.faces("<Z").workplane(invert=True)
 
     if lbumps > 1 and wbumps > 1:
-        tmp = (tmp.rarray(pitch, pitch, lbumps - 1, wbumps - 1, center=True).
-            circle(postDiam / 2.0).circle(bumpDiam / 2.0).extrude(height - t))
+        tmp = (
+            tmp.rarray(pitch, pitch, lbumps - 1, wbumps - 1, center=True)
+            .circle(postDiam / 2.0)
+            .circle(bumpDiam / 2.0)
+            .extrude(height - t)
+        )
     elif lbumps > 1:
-        tmp = (tmp.rarray(pitch, pitch, lbumps - 1, 1, center=True).
-            circle(t).extrude(height - t))
+        tmp = (
+            tmp.rarray(pitch, pitch, lbumps - 1, 1, center=True)
+            .circle(t)
+            .extrude(height - t)
+        )
     elif wbumps > 1:
-        tmp = (tmp.rarray(pitch, pitch, 1, wbumps - 1, center=True).
-            circle(t).extrude(height - t))
+        tmp = (
+            tmp.rarray(pitch, pitch, 1, wbumps - 1, center=True)
+            .circle(t)
+            .extrude(height - t)
+        )
     else:
         tmp = s
 
@@ -1161,7 +1271,7 @@ Braille Example
     # text_lines is a list of text lines.
     # Braille (converted with braille-converter:
     # https://github.com/jpaugh/braille-converter.git).
-    text_lines = ['⠠ ⠋ ⠗ ⠑ ⠑ ⠠ ⠉ ⠠ ⠁ ⠠ ⠙']
+    text_lines = ["⠠ ⠋ ⠗ ⠑ ⠑ ⠠ ⠉ ⠠ ⠁ ⠠ ⠙"]
     # See http://www.tiresias.org/research/reports/braille_cell.htm for examples
     # of braille cell geometry.
     horizontal_interdot = 2.5
@@ -1174,13 +1284,17 @@ Braille Example
     base_thickness = 1.5
 
     # End of configuration.
-    BrailleCellGeometry = namedtuple('BrailleCellGeometry',
-                                     ('horizontal_interdot',
-                                      'vertical_interdot',
-                                      'intercell',
-                                      'interline',
-                                      'dot_height',
-                                      'dot_diameter'))
+    BrailleCellGeometry = namedtuple(
+        "BrailleCellGeometry",
+        (
+            "horizontal_interdot",
+            "vertical_interdot",
+            "intercell",
+            "interline",
+            "dot_height",
+            "dot_diameter",
+        ),
+    )
 
 
     class Point(object):
@@ -1198,7 +1312,7 @@ Braille Example
             return (self.x, self.y)[index]
 
         def __str__(self):
-            return '({}, {})'.format(self.x, self.y)
+            return "({}, {})".format(self.x, self.y)
 
 
     def brailleToPoints(text, cell_geometry):
@@ -1227,14 +1341,14 @@ Braille Example
         pos = (pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8)
 
         # Braille blank pattern (u'\u2800').
-        blank = '⠀'
+        blank = "⠀"
         points = []
         # Position of dot1 along the x-axis (horizontal).
         character_origin = 0
         for c in text:
             for m, p in zip(masks, pos):
                 delta_to_blank = ord(c) - ord(blank)
-                if (m & delta_to_blank):
+                if m & delta_to_blank:
                     points.append(p + Point(character_origin, 0))
             character_origin += cell_geometry.intercell
         return points
@@ -1243,18 +1357,22 @@ Braille Example
     def get_plate_height(text_lines, cell_geometry):
         # cell_geometry.vertical_interdot is also used as space between base
         # borders and characters.
-        return (2 * cell_geometry.vertical_interdot +
-                2 * cell_geometry.vertical_interdot +
-                (len(text_lines) - 1) * cell_geometry.interline)
+        return (
+            2 * cell_geometry.vertical_interdot
+            + 2 * cell_geometry.vertical_interdot
+            + (len(text_lines) - 1) * cell_geometry.interline
+        )
 
 
     def get_plate_width(text_lines, cell_geometry):
         # cell_geometry.horizontal_interdot is also used as space between base
         # borders and characters.
         max_len = max([len(t) for t in text_lines])
-        return (2 * cell_geometry.horizontal_interdot +
-                cell_geometry.horizontal_interdot +
-                (max_len - 1) * cell_geometry.intercell)
+        return (
+            2 * cell_geometry.horizontal_interdot
+            + cell_geometry.horizontal_interdot
+            + (max_len - 1) * cell_geometry.intercell
+        )
 
 
     def get_cylinder_radius(cell_geometry):
@@ -1266,22 +1384,23 @@ Braille Example
         """
         h = cell_geometry.dot_height
         r = cell_geometry.dot_diameter / 2
-        return (r ** 2 + h ** 2) / 2 / h
+        return (r**2 + h**2) / 2 / h
 
 
     def get_base_plate_thickness(plate_thickness, cell_geometry):
         """Return the height on which the half spheres will sit"""
-        return (plate_thickness +
-                get_cylinder_radius(cell_geometry) -
-                cell_geometry.dot_height)
+        return (
+            plate_thickness + get_cylinder_radius(cell_geometry) - cell_geometry.dot_height
+        )
 
 
     def make_base(text_lines, cell_geometry, plate_thickness):
         base_width = get_plate_width(text_lines, cell_geometry)
         base_height = get_plate_height(text_lines, cell_geometry)
         base_thickness = get_base_plate_thickness(plate_thickness, cell_geometry)
-        base = cq.Workplane('XY').box(base_width, base_height, base_thickness,
-                                      centered=False)
+        base = cq.Workplane("XY").box(
+            base_width, base_height, base_thickness, centered=False
+        )
         return base
 
 
@@ -1307,16 +1426,22 @@ Braille Example
             line_start_pos += Point(0, -cell_geometry.interline)
 
         r = get_cylinder_radius(cell_geometry)
-        base = (base.faces('>Z').vertices('<XY').workplane()
-            .pushPoints(dot_pos).circle(r)
-            .extrude(r))
+        base = (
+            base.faces(">Z")
+            .vertices("<XY")
+            .workplane()
+            .pushPoints(dot_pos)
+            .circle(r)
+            .extrude(r)
+        )
         # Make a fillet almost the same radius to get a pseudo spherical cap.
-        base = (base.faces('>Z').edges()
-            .fillet(r - 0.001))
-        hidding_box = cq.Workplane('XY').box(
-            base_width, base_height, base_thickness, centered=False)
+        base = base.faces(">Z").edges().fillet(r - 0.001)
+        hidding_box = cq.Workplane("XY").box(
+            base_width, base_height, base_thickness, centered=False
+        )
         result = hidding_box.union(base)
         return result
+
 
     _cell_geometry = BrailleCellGeometry(
         horizontal_interdot,
@@ -1324,10 +1449,11 @@ Braille Example
         horizontal_intercell,
         vertical_interline,
         dot_height,
-        dot_diameter)
+        dot_diameter,
+    )
 
     if base_thickness < get_cylinder_radius(_cell_geometry):
-        raise ValueError('Base thickness should be at least {}'.format(dot_height))
+        raise ValueError("Base thickness should be at least {}".format(dot_height))
 
     result = make_embossed_plate(text_lines, _cell_geometry)
 
@@ -1348,35 +1474,188 @@ Panel With Various Connector Holes
 
     h_sep = 60
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(157, 210 - idx*h_sep).moveTo(-23.5, 0).circle(1.6).moveTo(23.5, 0).circle(1.6).moveTo(-17.038896, -5.7).threePointArc((-19.44306, -4.70416), (-20.438896, -2.3)).lineTo(-21.25, 2.3).threePointArc((-20.25416, 4.70416), (-17.85, 5.7)).lineTo(17.85, 5.7).threePointArc((20.25416, 4.70416), (21.25, 2.3)).lineTo(20.438896, -2.3).threePointArc((19.44306, -4.70416), (17.038896, -5.7)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(157, 210 - idx * h_sep)
+            .moveTo(-23.5, 0)
+            .circle(1.6)
+            .moveTo(23.5, 0)
+            .circle(1.6)
+            .moveTo(-17.038896, -5.7)
+            .threePointArc((-19.44306, -4.70416), (-20.438896, -2.3))
+            .lineTo(-21.25, 2.3)
+            .threePointArc((-20.25416, 4.70416), (-17.85, 5.7))
+            .lineTo(17.85, 5.7)
+            .threePointArc((20.25416, 4.70416), (21.25, 2.3))
+            .lineTo(20.438896, -2.3)
+            .threePointArc((19.44306, -4.70416), (17.038896, -5.7))
+            .close()
+            .cutThruAll()
+        )
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(157, -30 - idx*h_sep).moveTo(-16.65, 0).circle(1.6).moveTo(16.65, 0).circle(1.6).moveTo(-10.1889, -5.7).threePointArc((-12.59306, -4.70416), (-13.5889, -2.3)).lineTo(-14.4, 2.3).threePointArc((-13.40416, 4.70416), (-11, 5.7)).lineTo(11, 5.7).threePointArc((13.40416, 4.70416), (14.4, 2.3)).lineTo(13.5889, -2.3).threePointArc((12.59306, -4.70416), (10.1889, -5.7)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(157, -30 - idx * h_sep)
+            .moveTo(-16.65, 0)
+            .circle(1.6)
+            .moveTo(16.65, 0)
+            .circle(1.6)
+            .moveTo(-10.1889, -5.7)
+            .threePointArc((-12.59306, -4.70416), (-13.5889, -2.3))
+            .lineTo(-14.4, 2.3)
+            .threePointArc((-13.40416, 4.70416), (-11, 5.7))
+            .lineTo(11, 5.7)
+            .threePointArc((13.40416, 4.70416), (14.4, 2.3))
+            .lineTo(13.5889, -2.3)
+            .threePointArc((12.59306, -4.70416), (10.1889, -5.7))
+            .close()
+            .cutThruAll()
+        )
 
     h_sep4DB9 = 30
     for idx in range(8):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(91, 225 - idx*h_sep4DB9).moveTo(-12.5, 0).circle(1.6).moveTo(12.5, 0).circle(1.6).moveTo(-6.038896, -5.7).threePointArc((-8.44306, -4.70416), (-9.438896, -2.3)).lineTo(-10.25, 2.3).threePointArc((-9.25416, 4.70416), (-6.85, 5.7)).lineTo(6.85, 5.7).threePointArc((9.25416, 4.70416), (10.25, 2.3)).lineTo(9.438896, -2.3).threePointArc((8.44306, -4.70416), (6.038896, -5.7)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(91, 225 - idx * h_sep4DB9)
+            .moveTo(-12.5, 0)
+            .circle(1.6)
+            .moveTo(12.5, 0)
+            .circle(1.6)
+            .moveTo(-6.038896, -5.7)
+            .threePointArc((-8.44306, -4.70416), (-9.438896, -2.3))
+            .lineTo(-10.25, 2.3)
+            .threePointArc((-9.25416, 4.70416), (-6.85, 5.7))
+            .lineTo(6.85, 5.7)
+            .threePointArc((9.25416, 4.70416), (10.25, 2.3))
+            .lineTo(9.438896, -2.3)
+            .threePointArc((8.44306, -4.70416), (6.038896, -5.7))
+            .close()
+            .cutThruAll()
+        )
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(25, 210 - idx*h_sep).moveTo(-23.5, 0).circle(1.6).moveTo(23.5, 0).circle(1.6).moveTo(-17.038896, -5.7).threePointArc((-19.44306, -4.70416), (-20.438896, -2.3)).lineTo(-21.25, 2.3).threePointArc((-20.25416, 4.70416), (-17.85, 5.7)).lineTo(17.85, 5.7).threePointArc((20.25416, 4.70416), (21.25, 2.3)).lineTo(20.438896, -2.3).threePointArc((19.44306, -4.70416), (17.038896, -5.7)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(25, 210 - idx * h_sep)
+            .moveTo(-23.5, 0)
+            .circle(1.6)
+            .moveTo(23.5, 0)
+            .circle(1.6)
+            .moveTo(-17.038896, -5.7)
+            .threePointArc((-19.44306, -4.70416), (-20.438896, -2.3))
+            .lineTo(-21.25, 2.3)
+            .threePointArc((-20.25416, 4.70416), (-17.85, 5.7))
+            .lineTo(17.85, 5.7)
+            .threePointArc((20.25416, 4.70416), (21.25, 2.3))
+            .lineTo(20.438896, -2.3)
+            .threePointArc((19.44306, -4.70416), (17.038896, -5.7))
+            .close()
+            .cutThruAll()
+        )
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(25, -30 - idx*h_sep).moveTo(-16.65, 0).circle(1.6).moveTo(16.65, 0).circle(1.6).moveTo(-10.1889, -5.7).threePointArc((-12.59306, -4.70416), (-13.5889, -2.3)).lineTo(-14.4, 2.3).threePointArc((-13.40416, 4.70416), (-11, 5.7)).lineTo(11, 5.7).threePointArc((13.40416, 4.70416), (14.4, 2.3)).lineTo(13.5889, -2.3).threePointArc((12.59306, -4.70416), (10.1889, -5.7)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(25, -30 - idx * h_sep)
+            .moveTo(-16.65, 0)
+            .circle(1.6)
+            .moveTo(16.65, 0)
+            .circle(1.6)
+            .moveTo(-10.1889, -5.7)
+            .threePointArc((-12.59306, -4.70416), (-13.5889, -2.3))
+            .lineTo(-14.4, 2.3)
+            .threePointArc((-13.40416, 4.70416), (-11, 5.7))
+            .lineTo(11, 5.7)
+            .threePointArc((13.40416, 4.70416), (14.4, 2.3))
+            .lineTo(13.5889, -2.3)
+            .threePointArc((12.59306, -4.70416), (10.1889, -5.7))
+            .close()
+            .cutThruAll()
+        )
 
     for idx in range(8):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-41, 225 - idx*h_sep4DB9).moveTo(-12.5, 0).circle(1.6).moveTo(12.5, 0).circle(1.6).moveTo(-6.038896, -5.7).threePointArc((-8.44306, -4.70416), (-9.438896, -2.3)).lineTo(-10.25, 2.3).threePointArc((-9.25416, 4.70416), (-6.85, 5.7)).lineTo(6.85, 5.7).threePointArc((9.25416, 4.70416), (10.25, 2.3)).lineTo(9.438896, -2.3).threePointArc((8.44306, -4.70416), (6.038896, -5.7)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(-41, 225 - idx * h_sep4DB9)
+            .moveTo(-12.5, 0)
+            .circle(1.6)
+            .moveTo(12.5, 0)
+            .circle(1.6)
+            .moveTo(-6.038896, -5.7)
+            .threePointArc((-8.44306, -4.70416), (-9.438896, -2.3))
+            .lineTo(-10.25, 2.3)
+            .threePointArc((-9.25416, 4.70416), (-6.85, 5.7))
+            .lineTo(6.85, 5.7)
+            .threePointArc((9.25416, 4.70416), (10.25, 2.3))
+            .lineTo(9.438896, -2.3)
+            .threePointArc((8.44306, -4.70416), (6.038896, -5.7))
+            .close()
+            .cutThruAll()
+        )
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-107, 210 - idx*h_sep).moveTo(-23.5, 0).circle(1.6).moveTo(23.5, 0).circle(1.6).moveTo(-17.038896, -5.7).threePointArc((-19.44306, -4.70416), (-20.438896, -2.3)).lineTo(-21.25, 2.3).threePointArc((-20.25416, 4.70416), (-17.85, 5.7)).lineTo(17.85, 5.7).threePointArc((20.25416, 4.70416), (21.25, 2.3)).lineTo(20.438896, -2.3).threePointArc((19.44306, -4.70416), (17.038896, -5.7)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(-107, 210 - idx * h_sep)
+            .moveTo(-23.5, 0)
+            .circle(1.6)
+            .moveTo(23.5, 0)
+            .circle(1.6)
+            .moveTo(-17.038896, -5.7)
+            .threePointArc((-19.44306, -4.70416), (-20.438896, -2.3))
+            .lineTo(-21.25, 2.3)
+            .threePointArc((-20.25416, 4.70416), (-17.85, 5.7))
+            .lineTo(17.85, 5.7)
+            .threePointArc((20.25416, 4.70416), (21.25, 2.3))
+            .lineTo(20.438896, -2.3)
+            .threePointArc((19.44306, -4.70416), (17.038896, -5.7))
+            .close()
+            .cutThruAll()
+        )
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-107, -30 - idx*h_sep).circle(14).rect(24.7487, 24.7487,  forConstruction=True).vertices().hole(3.2).cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(-107, -30 - idx * h_sep)
+            .circle(14)
+            .rect(24.7487, 24.7487, forConstruction=True)
+            .vertices()
+            .hole(3.2)
+            .cutThruAll()
+        )
 
     for idx in range(8):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-173, 225 - idx*h_sep4DB9).moveTo(-12.5, 0).circle(1.6).moveTo(12.5, 0).circle(1.6).moveTo(-6.038896, -5.7).threePointArc((-8.44306, -4.70416), (-9.438896, -2.3)).lineTo(-10.25, 2.3).threePointArc((-9.25416, 4.70416), (-6.85, 5.7)).lineTo(6.85, 5.7).threePointArc((9.25416, 4.70416), (10.25, 2.3)).lineTo(9.438896, -2.3).threePointArc((8.44306, -4.70416), (6.038896, -5.7)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(-173, 225 - idx * h_sep4DB9)
+            .moveTo(-12.5, 0)
+            .circle(1.6)
+            .moveTo(12.5, 0)
+            .circle(1.6)
+            .moveTo(-6.038896, -5.7)
+            .threePointArc((-8.44306, -4.70416), (-9.438896, -2.3))
+            .lineTo(-10.25, 2.3)
+            .threePointArc((-9.25416, 4.70416), (-6.85, 5.7))
+            .lineTo(6.85, 5.7)
+            .threePointArc((9.25416, 4.70416), (10.25, 2.3))
+            .lineTo(9.438896, -2.3)
+            .threePointArc((8.44306, -4.70416), (6.038896, -5.7))
+            .close()
+            .cutThruAll()
+        )
 
     for idx in range(4):
-        result = result.workplane(offset=1, centerOption="CenterOfBoundBox").center(-173, -30 - idx*h_sep).moveTo(-2.9176, -5.3).threePointArc((-6.05, 0), (-2.9176, 5.3)).lineTo(2.9176, 5.3).threePointArc((6.05, 0), (2.9176, -5.3)).close().cutThruAll()
+        result = (
+            result.workplane(offset=1, centerOption="CenterOfBoundBox")
+            .center(-173, -30 - idx * h_sep)
+            .moveTo(-2.9176, -5.3)
+            .threePointArc((-6.05, 0), (-2.9176, 5.3))
+            .lineTo(2.9176, 5.3)
+            .threePointArc((6.05, 0), (2.9176, -5.3))
+            .close()
+            .cutThruAll()
+        )
 
 
 Cycloidal gear
@@ -1391,19 +1670,36 @@ This specific examples generates a helical cycloidal gear.
     import cadquery as cq
     from math import sin, cos, pi, floor
 
+
     # define the generating function
     def hypocycloid(t, r1, r2):
-        return ((r1-r2)*cos(t)+r2*cos(r1/r2*t-t), (r1-r2)*sin(t)+r2*sin(-(r1/r2*t-t)))
+        return (
+            (r1 - r2) * cos(t) + r2 * cos(r1 / r2 * t - t),
+            (r1 - r2) * sin(t) + r2 * sin(-(r1 / r2 * t - t)),
+        )
+
 
     def epicycloid(t, r1, r2):
-        return ((r1+r2)*cos(t)-r2*cos(r1/r2*t+t), (r1+r2)*sin(t)-r2*sin(r1/r2*t+t))
+        return (
+            (r1 + r2) * cos(t) - r2 * cos(r1 / r2 * t + t),
+            (r1 + r2) * sin(t) - r2 * sin(r1 / r2 * t + t),
+        )
+
 
     def gear(t, r1=4, r2=1):
-        if (-1)**(1+floor(t/2/pi*(r1/r2))) < 0:
+        if (-1) ** (1 + floor(t / 2 / pi * (r1 / r2))) < 0:
             return epicycloid(t, r1, r2)
         else:
             return hypocycloid(t, r1, r2)
 
+
     # create the gear profile and extrude it
-    result = (cq.Workplane('XY').parametricCurve(lambda t: gear(t*2*pi, 6, 1))
-        .twistExtrude(15, 90).faces('>Z').workplane().circle(2).cutThruAll())
+    result = (
+        cq.Workplane("XY")
+        .parametricCurve(lambda t: gear(t * 2 * pi, 6, 1))
+        .twistExtrude(15, 90)
+        .faces(">Z")
+        .workplane()
+        .circle(2)
+        .cutThruAll()
+    )

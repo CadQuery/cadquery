@@ -1,7 +1,7 @@
 .. _selector_reference:
 
-String Selectors Reference
-=============================
+Selectors Reference
+===================
 
 
 CadQuery selector strings allow filtering various types of object lists. Most commonly, Edges, Faces, and Vertices are
@@ -36,12 +36,7 @@ Selectors can be combined logically, currently defined operators include **and**
 
 .. cadquery::
 
-    result = (
-        cq.Workplane("XY")
-        .box(2, 2, 2)
-        .edges("|Z and >Y")
-        .chamfer(0.2)
-    )
+    result = cq.Workplane("XY").box(2, 2, 2).edges("|Z and >Y").chamfer(0.2)
 
 Much more complex expressions are possible as well:
 
@@ -147,4 +142,46 @@ It is possible to use user defined vectors as a basis for the selectors. For exa
     result = cq.Workplane("XY").box(10, 10, 10)
 
     # chamfer only one edge
-    result = result.edges('>(-1, 1, 0)').chamfer(1)
+    result = result.edges(">(-1, 1, 0)").chamfer(1)
+
+
+Topological Selectors
+---------------------
+
+Is is also possible to use topological relations to select objects. Currently
+the following methods are supported:
+
+    * :py:meth:`cadquery.Workplane.ancestors`
+    * :py:meth:`cadquery.Workplane.siblings`
+
+Ancestors allows to select all objects containing currently selected object.
+
+.. cadquery::
+
+    result = cq.Workplane("XY").box(10, 10, 10).faces(">Z").edges("<Y")
+
+    result = result.ancestors("Face")
+
+Siblings allows to select all objects of the same type as selection that are connected
+via the specfied kind of elements.
+
+.. cadquery::
+
+    result = cq.Workplane("XY").box(10, 10, 10).faces(">Z")
+
+    result = result.siblings("Edge")
+
+
+Using selectors with Shape and Sketch objects
+---------------------------------------------
+
+It is possible to use selectors with :py:class:`cadquery.Shape` and :py:class:`cadquery.Sketch`
+objects. This includes chaining and combining.
+
+.. cadquery::
+
+    box = cq.Solid.makeBox(1,2,3)
+
+    # select top and bottom wires
+    result = box.faces(">Z or <Z").wires()
+

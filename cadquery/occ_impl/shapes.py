@@ -20,8 +20,20 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
+from .shape_protocols import geom_LUT_FACE, geom_LUT_EDGE, Shapes, Geoms
+
+from ..selectors import (
+    Selector,
+    StringSyntaxSelector,
+)
 
 from ..utils import cqmultimethod as multimethod
+
+# change default OCCT logging level
+from OCP.Message import Message, Message_Gravity
+
+for printer in Message.DefaultMessenger_s().Printers():
+    printer.SetTraceLevel(Message_Gravity.Message_Fail)
 
 import OCP.TopAbs as ta  # Topology type enum
 import OCP.GeomAbs as ga  # Geometry type enum
@@ -93,7 +105,7 @@ from OCP.BRepPrimAPI import (
 )
 from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 
-from OCP.TopExp import TopExp_Explorer  # Topology explorer
+from OCP.TopExp import TopExp  # Topology explorer
 
 # used for getting underlying geometry -- is this equivalent to brep adaptor?
 from OCP.BRep import BRep_Tool, BRep_Builder
@@ -160,9 +172,9 @@ from OCP.TopTools import (
     TopTools_IndexedDataMapOfShapeListOfShape,
     TopTools_ListOfShape,
     TopTools_MapOfShape,
+    TopTools_IndexedMapOfShape,
 )
 
-from OCP.TopExp import TopExp
 
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
 
@@ -173,7 +185,7 @@ from OCP.StlAPI import StlAPI_Writer
 
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
-from OCP.BRepTools import BRepTools
+from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
 
 from OCP.LocOpe import LocOpe_DPrism
 
@@ -244,7 +256,7 @@ from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
 
 from OCP.BRepAlgo import BRepAlgo
 
-from math import pi, sqrt, inf
+from math import pi, sqrt, inf, radians, cos
 
 import warnings
 
@@ -253,7 +265,6 @@ from ..utils import deprecate
 Real = Union[float, int]
 
 TOLERANCE = 1e-6
-DEG2RAD = 2 * pi / 360.0
 HASH_CODE_MAX = 2147483647  # max 32bit signed int, required by OCC.Core.HashCode
 
 shape_LUT = {
@@ -301,58 +312,13 @@ geom_LUT = {
     ta.TopAbs_COMPOUND: "Compound",
 }
 
-geom_LUT_FACE = {
-    ga.GeomAbs_Plane: "PLANE",
-    ga.GeomAbs_Cylinder: "CYLINDER",
-    ga.GeomAbs_Cone: "CONE",
-    ga.GeomAbs_Sphere: "SPHERE",
-    ga.GeomAbs_Torus: "TORUS",
-    ga.GeomAbs_BezierSurface: "BEZIER",
-    ga.GeomAbs_BSplineSurface: "BSPLINE",
-    ga.GeomAbs_SurfaceOfRevolution: "REVOLUTION",
-    ga.GeomAbs_SurfaceOfExtrusion: "EXTRUSION",
-    ga.GeomAbs_OffsetSurface: "OFFSET",
-    ga.GeomAbs_OtherSurface: "OTHER",
+ancestors_LUT = {
+    "Vertex": ta.TopAbs_EDGE,
+    "Edge": ta.TopAbs_WIRE,
+    "Wire": ta.TopAbs_FACE,
+    "Face": ta.TopAbs_SHELL,
+    "Shell": ta.TopAbs_SOLID,
 }
-
-geom_LUT_EDGE = {
-    ga.GeomAbs_Line: "LINE",
-    ga.GeomAbs_Circle: "CIRCLE",
-    ga.GeomAbs_Ellipse: "ELLIPSE",
-    ga.GeomAbs_Hyperbola: "HYPERBOLA",
-    ga.GeomAbs_Parabola: "PARABOLA",
-    ga.GeomAbs_BezierCurve: "BEZIER",
-    ga.GeomAbs_BSplineCurve: "BSPLINE",
-    ga.GeomAbs_OffsetCurve: "OFFSET",
-    ga.GeomAbs_OtherCurve: "OTHER",
-}
-
-Shapes = Literal[
-    "Vertex", "Edge", "Wire", "Face", "Shell", "Solid", "CompSolid", "Compound"
-]
-Geoms = Literal[
-    "Vertex",
-    "Wire",
-    "Shell",
-    "Solid",
-    "Compound",
-    "PLANE",
-    "CYLINDER",
-    "CONE",
-    "SPHERE",
-    "TORUS",
-    "BEZIER",
-    "BSPLINE",
-    "REVOLUTION",
-    "EXTRUSION",
-    "OFFSET",
-    "OTHER",
-    "LINE",
-    "CIRCLE",
-    "ELLIPSE",
-    "HYPERBOLA",
-    "PARABOLA",
-]
 
 T = TypeVar("T", bound="Shape")
 
@@ -545,9 +511,9 @@ class Shape(object):
         The return values depend on the type of the shape:
 
         | Vertex:  always 'Vertex'
-        | Edge:   LINE, CIRCLE, ELLIPSE, HYPERBOLA, PARABOLA, BEZIER, 
+        | Edge:   LINE, CIRCLE, ELLIPSE, HYPERBOLA, PARABOLA, BEZIER,
         |         BSPLINE, OFFSET, OTHER
-        | Face:   PLANE, CYLINDER, CONE, SPHERE, TORUS, BEZIER, BSPLINE, 
+        | Face:   PLANE, CYLINDER, CONE, SPHERE, TORUS, BEZIER, BSPLINE,
         |         REVOLUTION, EXTRUSION, OFFSET, OTHER
         | Solid:  'Solid'
         | Shell:  'Shell'
@@ -755,23 +721,12 @@ class Shape(object):
     def ShapeType(self) -> Shapes:
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
-    def _entities(self, topo_type: Shapes) -> List[TopoDS_Shape]:
+    def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
 
-        rv = []
-        shape_set = TopTools_MapOfShape()
+        shape_set = TopTools_IndexedMapOfShape()
+        TopExp.MapShapes_s(self.wrapped, inverse_shape_LUT[topo_type], shape_set)
 
-        explorer = TopExp_Explorer(self.wrapped, inverse_shape_LUT[topo_type])
-
-        while explorer.More():
-            item = explorer.Current()
-
-            # needed to avoid pseudo-duplicate entities
-            if shape_set.Add(item):
-                rv.append(item)
-
-            explorer.Next()
-
-        return rv
+        return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _entitiesFrom(
         self, child_type: Shapes, parent_type: Shapes
@@ -855,6 +810,69 @@ class Shape(object):
 
         return [CompSolid(i) for i in self._entities("CompSolid")]
 
+    def _filter(
+        self, selector: Optional[Union[Selector, str]], objs: Iterable["Shape"]
+    ) -> "Shape":
+
+        selectorObj: Selector
+        if selector:
+            if isinstance(selector, str):
+                selectorObj = StringSyntaxSelector(selector)
+            else:
+                selectorObj = selector
+            selected = selectorObj.filter(list(objs))
+        else:
+            selected = list(objs)
+
+        if len(selected) == 1:
+            rv = selected[0]
+        else:
+            rv = Compound.makeCompound(selected)
+
+        return rv
+
+    def vertices(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select vertices.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Vertex")))
+
+    def edges(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select edges.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Edge")))
+
+    def wires(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select wires.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Wire")))
+
+    def faces(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select faces.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Face")))
+
+    def shells(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select shells.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Shell")))
+
+    def solids(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
+        """
+        Select solids.
+        """
+
+        return self._filter(selector, map(Shape.cast, self._entities("Solid")))
+
     def Area(self) -> float:
         """
         :returns: The surface area of all faces in this Shape
@@ -900,7 +918,7 @@ class Shape(object):
                 Vector(startVector).toPnt(),
                 (Vector(endVector) - Vector(startVector)).toDir(),
             ),
-            angleDegrees * DEG2RAD,
+            radians(angleDegrees),
         )
 
         return self._apply_transform(Tr)
@@ -1032,9 +1050,12 @@ class Shape(object):
         args: Iterable["Shape"],
         tools: Iterable["Shape"],
         op: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
+        parallel: bool = True,
     ) -> "Shape":
         """
         Generic boolean operation
+
+        :param parallel: Sets the SetRunParallel flag, which enables parallel execution of boolean operations in OCC kernel
         """
 
         arg = TopTools_ListOfShape()
@@ -1048,7 +1069,7 @@ class Shape(object):
         op.SetArguments(arg)
         op.SetTools(tool)
 
-        op.SetRunParallel(True)
+        op.SetRunParallel(parallel)
         op.Build()
 
         return Shape.cast(op.Shape())
@@ -1056,7 +1077,7 @@ class Shape(object):
     def cut(self, *toCut: "Shape", tol: Optional[float] = None) -> "Shape":
         """
         Remove the positional arguments from this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -1091,7 +1112,7 @@ class Shape(object):
     def intersect(self, *toIntersect: "Shape", tol: Optional[float] = None) -> "Shape":
         """
         Intersection of the positional arguments and this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -1352,6 +1373,66 @@ class Shape(object):
         from .jupyter_tools import display
 
         return display(self)._repr_javascript_()
+
+    def __iter__(self) -> Iterator["Shape"]:
+        """
+        Iterate over subshapes.
+
+        """
+
+        it = TopoDS_Iterator(self.wrapped)
+
+        while it.More():
+            yield Shape.cast(it.Value())
+            it.Next()
+
+    def ancestors(self, shape: "Shape", kind: Shapes) -> "Compound":
+        """
+        Iterate over ancestors, i.e. shapes of same kind within shape that contain self.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+
+        TopExp.MapShapesAndAncestors_s(
+            shape.wrapped, shapetype(self.wrapped), inverse_shape_LUT[kind], shape_map
+        )
+
+        return Compound.makeCompound(
+            Shape.cast(s) for s in shape_map.FindFromKey(self.wrapped)
+        )
+
+    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+        """
+        Iterate over siblings, i.e. shapes within shape that share subshapes of kind with self.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        TopExp.MapShapesAndAncestors_s(
+            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
+        )
+        exclude = TopTools_MapOfShape()
+
+        def _siblings(shapes, level):
+
+            rv = set()
+
+            for s in shapes:
+                exclude.Add(s.wrapped)
+
+            for s in shapes:
+
+                rv.update(
+                    Shape.cast(el)
+                    for child in s._entities(kind)
+                    for el in shape_map.FindFromKey(child)
+                    if not exclude.Contains(el)
+                )
+
+            return rv if level == 1 else _siblings(rv, level - 1)
+
+        return Compound.makeCompound(_siblings([self], level))
 
 
 class ShapeProtocol(Protocol):
@@ -1757,7 +1838,7 @@ class Edge(Shape, Mixin1D):
             return cls(BRepBuilderAPI_MakeEdge(circle_gp).Edge())
         else:  # arc case
             circle_geom = GC_MakeArcOfCircle(
-                circle_gp, angle1 * DEG2RAD, angle2 * DEG2RAD, orientation
+                circle_gp, radians(angle1), radians(angle2), orientation
             ).Value()
             return cls(BRepBuilderAPI_MakeEdge(circle_geom).Edge())
 
@@ -1796,7 +1877,7 @@ class Edge(Shape, Mixin1D):
 
         if y_radius > x_radius:
             # swap x and y radius and rotate by 90° afterwards to create an ellipse with x_radius < y_radius
-            correction_angle = 90.0 * DEG2RAD
+            correction_angle = radians(90.0)
             ellipse_gp = gp_Elips(ax2, y_radius, x_radius).Rotated(
                 ax1, correction_angle
             )
@@ -1810,8 +1891,8 @@ class Edge(Shape, Mixin1D):
             # take correction_angle into account
             ellipse_geom = GC_MakeArcOfEllipse(
                 ellipse_gp,
-                angle1 * DEG2RAD - correction_angle,
-                angle2 * DEG2RAD - correction_angle,
+                radians(angle1) - correction_angle,
+                radians(angle2) - correction_angle,
                 sense == 1,
             ).Value()
             ellipse = cls(BRepBuilderAPI_MakeEdge(ellipse_geom).Edge())
@@ -2175,7 +2256,7 @@ class Wire(Shape, Mixin1D):
         else:
             geom_surf = Geom_ConicalSurface(
                 gp_Ax3(Vector(center).toPnt(), Vector(dir).toDir()),
-                angle * DEG2RAD,
+                radians(angle),
                 radius,
             )
 
@@ -2251,6 +2332,18 @@ class Wire(Shape, Mixin1D):
         f = Face.makeFromWires(self)
 
         return f.chamfer2D(d, vertices).outerWire()
+
+    def __iter__(self) -> Iterator[Edge]:
+        """
+        Iterate over edges in an ordered way.
+
+        """
+
+        exp = BRepTools_WireExplorer(self.wrapped)
+
+        while exp.Current():
+            yield Edge(exp.Current())
+            exp.Next()
 
 
 class Face(Shape):
@@ -2625,6 +2718,9 @@ class Shell(Shape):
 
     @classmethod
     def makeShell(cls, listOfFaces: Iterable[Face]) -> "Shell":
+        """
+        Makes a shell from faces.
+        """
 
         shell_builder = BRepBuilderAPI_Sewing()
 
@@ -2816,7 +2912,7 @@ class Mixin3D(object):
                 shape,
                 face.wrapped,
                 basis.wrapped if basis else TopoDS_Face(),
-                taper * DEG2RAD,
+                radians(taper),
                 additive,
                 False,
             )
@@ -2940,6 +3036,9 @@ class Solid(Shape, Mixin3D):
 
     @classmethod
     def makeSolid(cls, shell: Shell) -> "Solid":
+        """
+        Makes a solid from a single shell.
+        """
 
         return cls(ShapeFix_Solid().SolidFromShell(shell.wrapped))
 
@@ -2983,7 +3082,7 @@ class Solid(Shape, Mixin3D):
                 radius1,
                 radius2,
                 height,
-                angleDegrees * DEG2RAD,
+                radians(angleDegrees),
             ).Shape()
         )
 
@@ -3006,7 +3105,7 @@ class Solid(Shape, Mixin3D):
                 gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius,
                 height,
-                angleDegrees * DEG2RAD,
+                radians(angleDegrees),
             ).Shape()
         )
 
@@ -3031,8 +3130,8 @@ class Solid(Shape, Mixin3D):
                 gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius1,
                 radius2,
-                angleDegrees1 * DEG2RAD,
-                angleDegrees2 * DEG2RAD,
+                radians(angleDegrees1),
+                radians(angleDegrees2),
             ).Shape()
         )
 
@@ -3104,9 +3203,9 @@ class Solid(Shape, Mixin3D):
             BRepPrimAPI_MakeSphere(
                 gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir()),
                 radius,
-                angleDegrees1 * DEG2RAD,
-                angleDegrees2 * DEG2RAD,
-                angleDegrees3 * DEG2RAD,
+                radians(angleDegrees1),
+                radians(angleDegrees2),
+                radians(angleDegrees3),
             ).Shape()
         )
 
@@ -3246,9 +3345,13 @@ class Solid(Shape, Mixin3D):
             )
         else:
             faceNormal = face.normalAt()
-            d = 1 if vecNormal.getAngle(faceNormal) < 90 * DEG2RAD else -1
+            d = 1 if vecNormal.getAngle(faceNormal) < radians(90.0) else -1
+
+            # Divided by cos of taper angle to ensure the height chosen by the user is respected
             prism_builder = LocOpe_DPrism(
-                face.wrapped, d * vecNormal.Length, d * taper * DEG2RAD
+                face.wrapped,
+                (d * vecNormal.Length) / cos(radians(taper)),
+                d * radians(taper),
             )
 
         return cls(prism_builder.Shape())
@@ -3298,7 +3401,7 @@ class Solid(Shape, Mixin3D):
         v2 = Vector(axisEnd)
         v2 = v2 - v1
         revol_builder = BRepPrimAPI_MakeRevol(
-            face.wrapped, gp_Ax1(v1.toPnt(), v2.toDir()), angleDegrees * DEG2RAD, True
+            face.wrapped, gp_Ax1(v1.toPnt(), v2.toDir()), radians(angleDegrees), True
         )
 
         return cls(revol_builder.Shape())
@@ -3573,18 +3676,6 @@ class Compound(Shape, Mixin3D):
 
         return rv
 
-    def __iter__(self) -> Iterator[Shape]:
-        """
-        Iterate over subshapes.
-
-        """
-
-        it = TopoDS_Iterator(self.wrapped)
-
-        while it.More():
-            yield Shape.cast(it.Value())
-            it.Next()
-
     def __bool__(self) -> bool:
         """
         Check if empty.
@@ -3595,7 +3686,7 @@ class Compound(Shape, Mixin3D):
     def cut(self, *toCut: "Shape", tol: Optional[float] = None) -> "Compound":
         """
         Remove the positional arguments from this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -3636,7 +3727,7 @@ class Compound(Shape, Mixin3D):
     ) -> "Compound":
         """
         Intersection of the positional arguments and this Shape.
-        
+
         :param tol: Fuzzy mode tolerance
         """
 
@@ -3646,6 +3737,59 @@ class Compound(Shape, Mixin3D):
             intersect_op.SetFuzzyValue(tol)
 
         return tcast(Compound, self._bool_op(self, toIntersect, intersect_op))
+
+    def ancestors(self, shape: "Shape", kind: Shapes) -> "Compound":
+        """
+        Iterate over ancestors, i.e. shapes of same kind within shape that contain elements of self.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        shapetypes = set(shapetype(ch.wrapped) for ch in self)
+
+        for t in shapetypes:
+            TopExp.MapShapesAndAncestors_s(
+                shape.wrapped, t, inverse_shape_LUT[kind], shape_map
+            )
+
+        return Compound.makeCompound(
+            Shape.cast(a) for s in self for a in shape_map.FindFromKey(s.wrapped)
+        )
+
+    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+        """
+        Iterate over siblings, i.e. shapes within shape that share subshapes of kind with the elements of self.
+
+        """
+
+        shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        shapetypes = set(shapetype(ch.wrapped) for ch in self)
+
+        for t in shapetypes:
+            TopExp.MapShapesAndAncestors_s(
+                shape.wrapped, inverse_shape_LUT[kind], t, shape_map,
+            )
+
+        exclude = TopTools_MapOfShape()
+
+        def _siblings(shapes, level):
+
+            rv = set()
+
+            for s in shapes:
+                exclude.Add(s.wrapped)
+
+            for s in shapes:
+                rv.update(
+                    Shape.cast(el)
+                    for child in s._entities(kind)
+                    for el in shape_map.FindFromKey(child)
+                    if not exclude.Contains(el)
+                )
+
+            return rv if level == 1 else _siblings(rv, level - 1)
+
+        return Compound.makeCompound(_siblings(self, level))
 
 
 def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
@@ -3699,6 +3843,7 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
 
     for e in edges:
         edges_in.Append(e.wrapped)
+
     ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
 
     return [Wire(el) for el in wires_out]

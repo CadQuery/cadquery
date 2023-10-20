@@ -877,14 +877,14 @@ class TestCadQuery(BaseTest):
                 r1, r2, startAtCurrent=False, angle1=a1, angle2=a2, rotation_angle=ra
             )
         )
-        start = ellipseArc1.vertices().objects[0]
-        end = ellipseArc1.vertices().objects[1]
+        start = ellipseArc1.val().startPoint()
+        end = ellipseArc1.val().endPoint()
 
         self.assertTupleAlmostEquals(
-            (start.X, start.Y), (p0[0] + sx_rot, p0[1] + sy_rot), 3
+            (start.x, start.y), (p0[0] + sx_rot, p0[1] + sy_rot), 3
         )
         self.assertTupleAlmostEquals(
-            (end.X, end.Y), (p0[0] + ex_rot, p0[1] + ey_rot), 3
+            (end.x, end.y), (p0[0] + ex_rot, p0[1] + ey_rot), 3
         )
 
         # startAtCurrent=True, sense = 1
@@ -895,14 +895,14 @@ class TestCadQuery(BaseTest):
                 r1, r2, startAtCurrent=True, angle1=a1, angle2=a2, rotation_angle=ra
             )
         )
-        start = ellipseArc2.vertices().objects[0]
-        end = ellipseArc2.vertices().objects[1]
+        start = ellipseArc2.val().startPoint()
+        end = ellipseArc2.val().endPoint()
 
         self.assertTupleAlmostEquals(
-            (start.X, start.Y), (p0[0] + sx_rot - sx_rot, p0[1] + sy_rot - sy_rot), 3
+            (start.x, start.y), (p0[0] + sx_rot - sx_rot, p0[1] + sy_rot - sy_rot), 3
         )
         self.assertTupleAlmostEquals(
-            (end.X, end.Y), (p0[0] + ex_rot - sx_rot, p0[1] + ey_rot - sy_rot), 3
+            (end.x, end.y), (p0[0] + ex_rot - sx_rot, p0[1] + ey_rot - sy_rot), 3
         )
 
         # startAtCurrent=False, sense = -1
@@ -919,15 +919,15 @@ class TestCadQuery(BaseTest):
                 sense=-1,
             )
         )
-        start = ellipseArc3.vertices().objects[0]
-        end = ellipseArc3.vertices().objects[1]
+        start = ellipseArc3.val().startPoint()
+        end = ellipseArc3.val().endPoint()
 
         # swap start and end points for comparison due to different sense
         self.assertTupleAlmostEquals(
-            (start.X, start.Y), (p0[0] + ex_rot, p0[1] + ey_rot), 3
+            (start.x, start.y), (p0[0] + ex_rot, p0[1] + ey_rot), 3
         )
         self.assertTupleAlmostEquals(
-            (end.X, end.Y), (p0[0] + sx_rot, p0[1] + sy_rot), 3
+            (end.x, end.y), (p0[0] + sx_rot, p0[1] + sy_rot), 3
         )
 
         # startAtCurrent=True, sense = -1
@@ -948,15 +948,15 @@ class TestCadQuery(BaseTest):
 
         self.assertEqual(len(ellipseArc4.ctx.pendingWires), 1)
 
-        start = ellipseArc4.vertices().objects[0]
-        end = ellipseArc4.vertices().objects[1]
+        start = ellipseArc4.val().startPoint()
+        end = ellipseArc4.val().endPoint()
 
         # swap start and end points for comparison due to different sense
         self.assertTupleAlmostEquals(
-            (start.X, start.Y), (p0[0] + ex_rot - ex_rot, p0[1] + ey_rot - ey_rot), 3
+            (start.x, start.y), (p0[0] + ex_rot - ex_rot, p0[1] + ey_rot - ey_rot), 3
         )
         self.assertTupleAlmostEquals(
-            (end.X, end.Y), (p0[0] + sx_rot - ex_rot, p0[1] + sy_rot - ey_rot), 3
+            (end.x, end.y), (p0[0] + sx_rot - ex_rot, p0[1] + sy_rot - ey_rot), 3
         )
 
     def testEllipseArcsClockwise(self):
@@ -1777,6 +1777,25 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(15.0, bb.ymax, 2)
         self.assertAlmostEqual(0.0, bb.zmin, 2)
         self.assertAlmostEqual(100.0, bb.zmax, 2)
+
+    def testBoundBoxEnlarge(self):
+        """
+        Tests BoundBox.enlarge(). Confirms that the 
+        bounding box lengths are all enlarged by the
+        correct amount.
+        """
+
+        enlarge_tol = 2.0
+        bb = Workplane("XY").rect(10, 10).extrude(10).val().BoundingBox()
+        bb_enlarged = bb.enlarge(enlarge_tol)
+
+        self.assertTrue(bb_enlarged.isInside(bb))
+        self.assertAlmostEqual(bb_enlarged.xmin, bb.xmin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.xmax, bb.xmax + enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.ymin, bb.ymin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.ymax, bb.ymax + enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.zmin, bb.zmin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.zmax, bb.zmax + enlarge_tol, 2)
 
     def testCutThroughAll(self):
         """
@@ -3686,6 +3705,25 @@ class TestCadQuery(BaseTest):
                 .cutBlind(-h, True, float(t))
             )
 
+    def testTaperedExtrudeHeight(self):
+        """
+        Ensures that the tapered prism has the correct height.
+        """
+
+        # Tapered extrusion to check the height of, with positive taper
+        s = Workplane("XY").rect(100.0, 100.0).extrude(100.0, taper=20.0)
+
+        # Get the bounding box and make sure the height matches the requested height
+        bb = s.val().BoundingBox()
+        self.assertAlmostEqual(bb.zlen, 100.0)
+
+        # Tapered extrusion to check the height of, with negative taper
+        s2 = Workplane("XY").rect(100.0, 100.0).extrude(100.0, taper=-20.0)
+
+        # Get the bounding box and make sure the height matches the requested height
+        bb2 = s2.val().BoundingBox()
+        self.assertAlmostEqual(bb2.zlen, 100.0)
+
     def testClose(self):
         # Close without endPoint and startPoint coincide.
         # Create a half-circle
@@ -5323,6 +5361,18 @@ class TestCadQuery(BaseTest):
         )
         assert r5.val().Volume() == approx(0.5)
 
+        p = Workplane("XZ").spline([(0, 0), (0, 1), (2, 1)]).val()
+        s1 = Sketch().circle(0.5)
+        s2 = Sketch().circle(1)
+
+        r6 = (
+            Workplane()
+            .placeSketch(s1.moved(p.locationAt(0)), s2.moved(p.locationAt(1)))
+            .sweep(p, multisection=True)
+        )
+
+        assert r6.val().isValid()
+
     def testCircumscribedPolygon(self):
         """
         Test that circumscribed polygons result in the correct shapes
@@ -5333,33 +5383,40 @@ class TestCadQuery(BaseTest):
 
         a = 1
         # Test triangle
-        vs = Workplane("XY").polygon(3, 2 * a, circumscribed=True).vertices().vals()
+        w = Workplane("XY").polygon(3, 2 * a, circumscribed=True)
+        vs = w.vertices().vals()
+
         self.assertEqual(3, len(vs))
+
         R = circumradius(3, a)
-        self.assertEqual(
-            vs[0].toTuple(), approx((a, a * math.tan(math.radians(60)), 0))
-        )
-        self.assertEqual(vs[1].toTuple(), approx((-R, 0, 0)))
-        self.assertEqual(
-            vs[2].toTuple(), approx((a, -a * math.tan(math.radians(60)), 0))
-        )
+
+        vs0 = w.vertices(">X").vertices(">Y").val()
+        vs1 = w.vertices("<X").val()
+        vs2 = w.vertices(">X").vertices("<Y").val()
+
+        self.assertEqual(vs0.toTuple(), approx((a, a * math.tan(math.radians(60)), 0)))
+        self.assertEqual(vs1.toTuple(), approx((-R, 0, 0)))
+        self.assertEqual(vs2.toTuple(), approx((a, -a * math.tan(math.radians(60)), 0)))
 
         # Test square
-        vs = Workplane("XY").polygon(4, 2 * a, circumscribed=True).vertices().vals()
+        w = Workplane("XY").polygon(4, 2 * a, circumscribed=True)
+        vs = w.vertices().vals()
+
         self.assertEqual(4, len(vs))
+
         R = circumradius(4, a)
+
+        vs0 = w.vertices(">X").vertices(">Y").val()
+        vs1 = w.vertices("<X").vertices(">Y").val()
+        vs2 = w.vertices("<X").vertices("<Y").val()
+        vs3 = w.vertices(">X").vertices("<Y").val()
+
+        self.assertEqual(vs0.toTuple(), approx((a, a * math.tan(math.radians(45)), 0)))
+        self.assertEqual(vs1.toTuple(), approx((-a, a * math.tan(math.radians(45)), 0)))
         self.assertEqual(
-            vs[0].toTuple(), approx((a, a * math.tan(math.radians(45)), 0))
+            vs2.toTuple(), approx((-a, -a * math.tan(math.radians(45)), 0))
         )
-        self.assertEqual(
-            vs[1].toTuple(), approx((-a, a * math.tan(math.radians(45)), 0))
-        )
-        self.assertEqual(
-            vs[2].toTuple(), approx((-a, -a * math.tan(math.radians(45)), 0))
-        )
-        self.assertEqual(
-            vs[3].toTuple(), approx((a, -a * math.tan(math.radians(45)), 0))
-        )
+        self.assertEqual(vs3.toTuple(), approx((a, -a * math.tan(math.radians(45)), 0)))
 
     def test_combineWithBase(self):
         # Test the helper mehod _combinewith
@@ -5546,3 +5603,51 @@ class TestCadQuery(BaseTest):
 
         assert isinstance(vtk, vtkPolyData)
         assert vtk.GetNumberOfPolys() == 2
+
+    def test_iterators(self):
+
+        w = Workplane().box(1, 1, 1)
+        s = w.val()
+        f = w.faces(">Z").val()
+
+        # check ancestors
+        res1 = list(s.Edges()[0].ancestors(s, "Face"))
+        assert len(res1) == 2
+        assert w.faces(">Z").edges(">X").ancestors("Face").size() == 2
+        assert w.faces(">Z").edges(">X or <X").ancestors("Face").size() == 3
+
+        # check siblings
+        res2 = list(f.siblings(s, "Edge"))
+        assert len(res2) == 4
+        assert w.faces(">Z").siblings("Edge").size() == 4
+
+        res3 = list(f.siblings(s, "Edge", 2))
+        assert len(res3) == 1
+        assert w.faces(">Z").siblings("Edge", 2).size() == 1
+
+        res4 = list(f.siblings(s, "Edge").siblings(s, "Edge"))
+        assert len(res4) == 2
+        assert w.faces(">Z").siblings("Edge").siblings("Edge").size() == 2
+
+        # check regular iterator
+        res5 = list(s)
+        assert len(res5) == 1
+        assert isinstance(res5[0], Shell)
+
+        # check ordered iteration for wires
+        w = Workplane().polygon(5, 1).val()
+        edges = list(w)
+
+        for e1, e2 in zip(edges, edges[1:]):
+            assert (e2.startPoint() - e1.endPoint()).Length == approx(0.0)
+
+        # check ancestors on a compound
+        w = Workplane().pushPoints([(0, 0), (2, 0)]).box(1, 1, 1)
+        c = w.val()
+        fs = w.faces(">Z").combine().val()
+
+        res6 = list(fs.ancestors(c, "Solid"))
+        assert len(res6) == 2
+
+        res7 = list(fs.siblings(c, "Edge", 2))
+        assert len(res7) == 2
