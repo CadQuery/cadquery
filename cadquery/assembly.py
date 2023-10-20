@@ -464,9 +464,9 @@ class Assembly(object):
 
         :param path: Path and filename for writing.
         :param exportType: export format (default: None, results in format being inferred form the path)
-        :param tolerance: the deflection tolerance, in model units. Only used for GLTF, VRML. Default 0.1.
-        :param angularTolerance: the angular tolerance, in radians. Only used for GLTF, VRML. Default 0.1.
-        :param \**kwargs: Additional keyword arguments.  Only used for STEP, GLTF and STL.
+        :param tolerance: the deflection tolerance, in model units. Only used for glTF, VRML. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Only used for glTF, VRML. Default 0.1.
+        :param \**kwargs: Additional keyword arguments.  Only used for STEP, glTF and STL.
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         :param ascii: STL only - Sets whether or not STL export should be text or binary
         :type ascii: bool
@@ -478,7 +478,7 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "STL"):
+            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
@@ -489,7 +489,7 @@ class Assembly(object):
             exportCAF(self, path)
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
-        elif exportType == "GLTF":
+        elif exportType == "GLTF" or exportType == "GLB":
             exportGLTF(self, path, None, tolerance, angularTolerance)
         elif exportType == "VTKJS":
             exportVTKJS(self, path)

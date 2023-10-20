@@ -667,7 +667,7 @@ def test_save_stl_formats(nested_assy_sphere):
 def test_save_gltf(nested_assy_sphere):
 
     # Binary export
-    nested_assy_sphere.save("nested.glb", "GLTF")
+    nested_assy_sphere.save("nested.glb")
     assert os.path.exists("nested.glb")
 
     # Trying to read a binary file as UTF-8/ASCII should throw an error
