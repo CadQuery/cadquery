@@ -680,6 +680,12 @@ def test_save_gltf(nested_assy_sphere):
     assert os.path.exists("nested_ascii.gltf")
     assert os.path.getsize("nested_ascii.gltf") > 5 * 1024
 
+    # Test exportGLTF function
+    cq.exporters.assembly.exportGLTF(nested_assy_sphere, "nested.glb")
+    with pytest.raises(UnicodeDecodeError) as info:
+        with open("nested.glb", "r") as file:
+            file.read()
+
 
 def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):
     """
