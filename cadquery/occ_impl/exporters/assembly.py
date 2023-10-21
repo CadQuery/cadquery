@@ -195,7 +195,7 @@ def exportGLTF(
     """
 
     # If the caller specified the binary option, respect it
-    if binary is None:
+    if binary is None: 
         # Handle the binary option for GLTF export based on file extension
         binary = True
         path_parts = path.split(".")
