@@ -526,7 +526,7 @@ An existing CQ object can copy a workplane from another CQ object.
 
 .. topic:: API References
 
-    .. hlist:
+    .. hlist::
         :columns: 2
 
         * :py:meth:`Workplane.copyWorkplane` **!**
