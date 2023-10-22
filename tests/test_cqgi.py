@@ -232,7 +232,6 @@ class TestCQGI(BaseTest):
 
         self.assertEqual(2, len(model.metadata.parameters))
 
-
     def test_invalid_parameter_type(self):
         """Contrived test in case a parameter type that is not valid for InputParameter sneaks through."""
 
