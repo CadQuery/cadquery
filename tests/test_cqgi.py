@@ -7,6 +7,7 @@
        defining a build_object function to return results
 """
 
+import pytest
 from cadquery import cqgi
 from tests import BaseTest
 import textwrap
@@ -230,3 +231,20 @@ class TestCQGI(BaseTest):
         model = cqgi.parse(script)
 
         self.assertEqual(2, len(model.metadata.parameters))
+
+
+    def test_invalid_parameter_type(self):
+        """Contrived test in case a parameter type that is not valid for InputParameter sneaks through."""
+
+        # Made up parameter class
+        class UnknowParameter:
+            def __init__():
+                return 1
+
+        # Set up the most basic InputParameter object that is possible
+        p = cqgi.InputParameter()
+        p.varType = UnknowParameter
+
+        # Setting the parameter should throw an unknown parameter type error
+        with pytest.raises(ValueError) as info:
+            p.set_value(2)
