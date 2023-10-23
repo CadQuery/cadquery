@@ -647,11 +647,64 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
     assert os.path.exists(filename)
 
 
+def test_save_stl_formats(nested_assy_sphere):
+
+    # Binary export
+    nested_assy_sphere.save("nested.stl", "STL", ascii=False)
+    assert os.path.exists("nested.stl")
+
+    # Trying to read a binary file as UTF-8/ASCII should throw an error
+    with pytest.raises(UnicodeDecodeError) as info:
+        with open("nested.stl", "r") as file:
+            file.read()
+
+    # ASCII export
+    nested_assy_sphere.save("nested_ascii.stl", ascii=True)
+    assert os.path.exists("nested_ascii.stl")
+    assert os.path.getsize("nested_ascii.stl") > 3960 * 1024
+
+
 def test_save_gltf(nested_assy_sphere):
 
-    nested_assy_sphere.save("nested.glb", "GLTF")
+    # Binary export
+    nested_assy_sphere.save("nested.glb")
     assert os.path.exists("nested.glb")
-    assert os.path.getsize("nested.glb") > 50 * 1024
+
+    # Trying to read a binary file as UTF-8/ASCII should throw an error
+    with pytest.raises(UnicodeDecodeError) as info:
+        with open("nested.glb", "r") as file:
+            file.read()
+
+    # ASCII export
+    nested_assy_sphere.save("nested_ascii.gltf")
+    assert os.path.exists("nested_ascii.gltf")
+    assert os.path.getsize("nested_ascii.gltf") > 5 * 1024
+
+
+def test_exportGLTF(nested_assy_sphere):
+    """Tests the exportGLTF function directly for binary vs ascii export."""
+
+    # Test binary export inferred from file extension
+    cq.exporters.assembly.exportGLTF(nested_assy_sphere, "nested_export_gltf.glb")
+    with pytest.raises(UnicodeDecodeError) as info:
+        with open("nested_export_gltf.glb", "r") as file:
+            file.read()
+
+    # Test explicit binary export
+    cq.exporters.assembly.exportGLTF(
+        nested_assy_sphere, "nested_export_gltf_2.glb", binary=True
+    )
+    with pytest.raises(UnicodeDecodeError) as info:
+        with open("nested_export_gltf_2.glb", "r") as file:
+            file.read()
+
+    # Test explicit ascii export
+    cq.exporters.assembly.exportGLTF(
+        nested_assy_sphere, "nested_export_gltf_3.gltf", binary=False
+    )
+    with open("nested_export_gltf_3.gltf", "r") as file:
+        lines = file.readlines()
+        assert lines[0].startswith('{"accessors"')
 
 
 def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):

@@ -29,6 +29,11 @@ nested.wrl
 nested.xml
 nested.zip
 nested.stl
+nested.bin
+nested_*.bin
+nested_*.gltf
+nested_*.glb
+nested_*.stl
 out1.3mf
 out2.3mf
 out3.3mf
