@@ -78,17 +78,18 @@ def show(*objs: Union[Shape, Workplane, Assembly, Sketch]):
     renderer = win.GetRenderers().GetFirstRenderer()
     renderer.GradientBackgroundOn()
 
-    # set size and camera
-    win.SetSize(*win.GetScreenSize())
-    win.SetPosition(-10, 0)
-
+    # set camera
     camera = renderer.GetActiveCamera()
     camera.Roll(-35)
     camera.Elevation(-45)
     renderer.ResetCamera()
 
-    # show and return
+    # initialize and set size
     inter.Initialize()
+    win.SetSize(*win.GetScreenSize())
+    win.SetPosition(-10, 0)
+
+    # show and return
     win.Render()
     inter.Start()
 
