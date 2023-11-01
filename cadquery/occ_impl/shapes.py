@@ -417,6 +417,8 @@ class Shape(object):
         tolerance: float = 1e-3,
         angularTolerance: float = 0.1,
         ascii: bool = False,
+        isToleranceRelative: bool = True,
+        isParallel: bool = False,
     ) -> bool:
         """
         Exports a shape to a specified STL file.
@@ -428,9 +430,11 @@ class Shape(object):
             Default is 1e-3, which is a good starting point for a range of cases.
         :param angularTolerance: Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
         :param ascii: Export the file as ASCII (True) or binary (False) STL format.  Default is binary.
+        :param isToleranceRelative: If True, deflection used for discretization of each edge will be <tolerance> * <size of="" edge>="">. Deflection used for the faces will be the maximum deflection of their edges.
+            Setting this value to True may be problematic for parts with a wide range of feature sizes, as large features will be very faceted, or small features will be very dense.
         """
 
-        mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
+        mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, isToleranceRelative, angularTolerance, isParallel)
         mesh.Perform()
 
         writer = StlAPI_Writer()
