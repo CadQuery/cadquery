@@ -433,16 +433,11 @@ class Shape(object):
         :param isToleranceRelative: If True, deflection used for discretization of each edge will be <tolerance> * <size of="" edge>="">. Deflection used for the faces will be the maximum deflection of their edges.
             Setting this value to True may be problematic for parts with a wide range of feature sizes, as large features will be very faceted, or small features will be very dense.
         """
-
-        mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, isToleranceRelative, angularTolerance, isParallel)
-        mesh.Perform()
+        # The constructor used here automatically calls mesh.Perform(). https://dev.opencascade.org/doc/refman/html/class_b_rep_mesh___incremental_mesh.html#a3a383b3afe164161a3aa59a492180ac6
+        BRepMesh_IncrementalMesh(self.wrapped, tolerance, isToleranceRelative, angularTolerance, isParallel)
 
         writer = StlAPI_Writer()
-
-        if ascii:
-            writer.ASCIIMode = True
-        else:
-            writer.ASCIIMode = False
+        writer.ASCIIMode = bool(ascii)
 
         return writer.Write(self.wrapped, fileName)
 
