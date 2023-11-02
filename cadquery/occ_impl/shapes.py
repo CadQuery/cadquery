@@ -439,7 +439,7 @@ class Shape(object):
         )
 
         writer = StlAPI_Writer()
-        writer.ASCIIMode = bool(ascii)
+        writer.ASCIIMode = ascii
 
         return writer.Write(self.wrapped, fileName)
 
