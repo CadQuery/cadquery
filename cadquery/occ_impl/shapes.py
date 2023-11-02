@@ -434,7 +434,9 @@ class Shape(object):
             Setting this value to True may be problematic for parts with a wide range of feature sizes, as large features will be very faceted, or small features will be very dense.
         """
         # The constructor used here automatically calls mesh.Perform(). https://dev.opencascade.org/doc/refman/html/class_b_rep_mesh___incremental_mesh.html#a3a383b3afe164161a3aa59a492180ac6
-        BRepMesh_IncrementalMesh(self.wrapped, tolerance, isToleranceRelative, angularTolerance, isParallel)
+        BRepMesh_IncrementalMesh(
+            self.wrapped, tolerance, isToleranceRelative, angularTolerance, isParallel
+        )
 
         writer = StlAPI_Writer()
         writer.ASCIIMode = bool(ascii)
