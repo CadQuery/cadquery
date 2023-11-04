@@ -28,7 +28,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
     reqs = [
         "cadquery-ocp>=7.7.0a0,<7.8",
         "ezdxf",
-        "multimethod>=1.7,<1.10",
+        "multimethod==1.9.1",
         "nlopt",
         "nptyping==2.0.1",
         "typish",
