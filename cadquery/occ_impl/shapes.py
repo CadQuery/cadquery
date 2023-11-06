@@ -418,7 +418,7 @@ class Shape(object):
         angularTolerance: float = 0.1,
         ascii: bool = False,
         isToleranceRelative: bool = True,
-        isParallel: bool = False,
+        parallel: bool = True,
     ) -> bool:
         """
         Exports a shape to a specified STL file.
@@ -430,12 +430,13 @@ class Shape(object):
             Default is 1e-3, which is a good starting point for a range of cases.
         :param angularTolerance: Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
         :param ascii: Export the file as ASCII (True) or binary (False) STL format.  Default is binary.
-        :param isToleranceRelative: If True, deflection used for discretization of each edge will be <tolerance> * <size of="" edge>="">. Deflection used for the faces will be the maximum deflection of their edges.
-            Setting this value to True may be problematic for parts with a wide range of feature sizes, as large features will be very faceted, or small features will be very dense.
+        :param isToleranceRelative: If True, tolerance will be scaled by the size of the edge being meshed. Default is True.
+            Setting this value to True may cause large features to become faceted, or small features dense.
+        :param parallel: If True, OCCT will use parallel processing to mesh the shape. Default is True.
         """
         # The constructor used here automatically calls mesh.Perform(). https://dev.opencascade.org/doc/refman/html/class_b_rep_mesh___incremental_mesh.html#a3a383b3afe164161a3aa59a492180ac6
         BRepMesh_IncrementalMesh(
-            self.wrapped, tolerance, isToleranceRelative, angularTolerance, isParallel
+            self.wrapped, tolerance, isToleranceRelative, angularTolerance, parallel
         )
 
         writer = StlAPI_Writer()
