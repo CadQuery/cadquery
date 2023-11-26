@@ -22,6 +22,3 @@ dependencies:
   - casadi
   - multimethod ==1.9.1
   - pip
-  - pip:
-    - --editable=.
-    - git+https://github.com/CadQuery/OCP-stubs.git
