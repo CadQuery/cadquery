@@ -3655,15 +3655,19 @@ class Compound(Shape, Mixin3D):
 
         t = Vector()
 
-        if halign == "center":
-            t.x = -bb.xlen / 2
+        if halign == "left":
+            t.x = -bb.xmin
+        elif halign == "center":
+            t.x = -(bb.xmin + bb.xlen / 2)
         elif halign == "right":
-            t.x = -bb.xlen
+            t.x = -bb.xmax
 
-        if valign == "center":
-            t.y = -bb.ylen / 2
+        if valign == "bottom":
+            t.y = -bb.ymin
+        elif valign == "center":
+            t.y = -(bb.ymin + bb.ylen / 2)
         elif valign == "top":
-            t.y = -bb.ylen
+            t.y = -bb.ymax
 
         text_flat = text_flat.translate(t)
 

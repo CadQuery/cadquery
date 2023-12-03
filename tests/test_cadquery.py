@@ -3889,13 +3889,7 @@ class TestCadQuery(BaseTest):
         bottom_left = (
             box.faces(">Z")
             .workplane()
-            .text(
-                "CQ 2.0",
-                0.5,
-                -0.05,
-                halign="left",
-                valign="bottom",
-            )
+            .text("CQ 2.0", 0.5, -0.05, halign="left", valign="bottom")
         )
 
         bb = getBoundingBoxForText(bottom_left.faces("Z"))
@@ -3905,13 +3899,7 @@ class TestCadQuery(BaseTest):
         centers = (
             box.faces(">Z")
             .workplane()
-            .text(
-                "CQ 2.0",
-                0.5,
-                -0.05,
-                halign="center",
-                valign="center",
-            )
+            .text("CQ 2.0", 0.5, -0.05, halign="center", valign="center")
         )
 
         bb = getBoundingBoxForText(centers.faces("Z"))
@@ -3921,13 +3909,7 @@ class TestCadQuery(BaseTest):
         top_right = (
             box.faces(">Z")
             .workplane()
-            .text(
-                "CQ 2.0",
-                0.5,
-                -0.05,
-                halign="right",
-                valign="top",
-            )
+            .text("CQ 2.0", 0.5, -0.05, halign="right", valign="top")
         )
 
         bb = getBoundingBoxForText(top_right.faces("Z"))
