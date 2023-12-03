@@ -570,7 +570,7 @@ class Workplane(object):
                 return False
 
             # test if p1 is on the plane of f0 (offset of planes)
-            return abs(n0.dot(p0.sub(p1)) < self.ctx.tolerance)
+            return abs(n0.dot(p0.sub(p1))) < self.ctx.tolerance
 
         def _computeXdir(normal):
             """

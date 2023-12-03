@@ -1613,6 +1613,10 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(o.y, 0.0, 3)
         self.assertAlmostEqual(o.z, 0.5, 3)
 
+        # Test creation with non-co-planar faces fails
+        with raises(ValueError):
+            w = s.faces("+Y").workplane()
+
     def testTriangularPrism(self):
         s = Workplane("XY").lineTo(1, 0).lineTo(1, 1).close().extrude(0.2)
         self.saveModel(s)
