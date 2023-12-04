@@ -3659,14 +3659,14 @@ class Compound(Shape, Mixin3D):
             t.x = -bb.xmin
         elif halign == "center":
             t.x = -(bb.xmin + bb.xlen / 2)
-        elif halign == "right":
+        else:  # halign == "right"
             t.x = -bb.xmax
 
         if valign == "bottom":
             t.y = -bb.ymin
         elif valign == "center":
             t.y = -(bb.ymin + bb.ylen / 2)
-        elif valign == "top":
+        else:  # valign == "top"
             t.y = -bb.ymax
 
         text_flat = text_flat.translate(t)
