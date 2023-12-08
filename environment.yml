@@ -9,6 +9,7 @@ dependencies:
   - sphinx=5.0.1
   - sphinx_rtd_theme
   - black=19.10b0
+  - click
   - mypy
   - codecov
   - pytest
