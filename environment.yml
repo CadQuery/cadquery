@@ -8,8 +8,7 @@ dependencies:
   - pyparsing>=2.1.9
   - sphinx=5.0.1
   - sphinx_rtd_theme
-  - black=19.10b0
-  - click
+  - black=23.11
   - mypy
   - codecov
   - pytest
