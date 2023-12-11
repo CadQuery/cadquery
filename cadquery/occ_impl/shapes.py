@@ -200,6 +200,14 @@ from OCP.Font import (
 )
 
 from OCP.StdPrs import StdPrs_BRepFont, StdPrs_BRepTextBuilder as Font_BRepTextBuilder
+from OCP.Graphic3d import (
+    Graphic3d_HTA_LEFT,
+    Graphic3d_HTA_CENTER,
+    Graphic3d_HTA_RIGHT,
+    Graphic3d_VTA_BOTTOM,
+    Graphic3d_VTA_CENTER,
+    Graphic3d_VTA_TOP,
+)
 
 from OCP.NCollection import NCollection_Utf8String
 
@@ -3649,27 +3657,28 @@ class Compound(Shape, Mixin3D):
             font_kind,
             float(size),
         )
-        text_flat = Shape(builder.Perform(font_i, NCollection_Utf8String(text)))
-
-        bb = text_flat.BoundingBox()
-
-        t = Vector()
-
         if halign == "left":
-            t.x = -bb.xmin
+            theHAlign = Graphic3d_HTA_LEFT
         elif halign == "center":
-            t.x = -(bb.xmin + bb.xlen / 2)
+            theHAlign = Graphic3d_HTA_CENTER
         else:  # halign == "right"
-            t.x = -bb.xmax
+            theHAlign = Graphic3d_HTA_RIGHT
 
         if valign == "bottom":
-            t.y = -bb.ymin
+            theVAlign = Graphic3d_VTA_BOTTOM
         elif valign == "center":
-            t.y = -(bb.ymin + bb.ylen / 2)
-        else:  # valign == "top"
-            t.y = -bb.ymax
+            theVAlign = Graphic3d_VTA_CENTER
+        else:  # valign == "top":
+            theVAlign = Graphic3d_VTA_TOP
 
-        text_flat = text_flat.translate(t)
+        text_flat = Shape(
+            builder.Perform(
+                font_i,
+                NCollection_Utf8String(text),
+                theHAlign=theHAlign,
+                theVAlign=theVAlign,
+            )
+        )
 
         if height != 0:
             vecNormal = text_flat.Faces()[0].normalAt() * height
