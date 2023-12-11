@@ -1,12 +1,13 @@
 # system modules
 import math
-import pytest
 import unittest
-from tests import BaseTest
-from OCP.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp, gp_XYZ, gp_Trsf
+
+import pytest
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+from OCP.gp import gp, gp_Ax2, gp_Circ, gp_Elips, gp_Pnt, gp_Trsf, gp_Vec, gp_XYZ
 
 from cadquery import *
+from tests import BaseTest
 
 DEG2RAD = math.pi / 180
 RAD2DEG = 180 / math.pi
@@ -14,12 +15,10 @@ RAD2DEG = 180 / math.pi
 
 class TestCadObjects(BaseTest):
     def _make_circle(self):
-
         circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp.DZ_s()), 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(circle).Edge())
 
     def _make_ellipse(self):
-
         ellipse = gp_Elips(gp_Ax2(gp_Pnt(1, 2, 3), gp.DZ_s()), 4.0, 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(ellipse).Edge())
 
@@ -238,6 +237,22 @@ class TestCadObjects(BaseTest):
 
         self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
 
+    def testMatrixOfInertia(self):
+        """
+        Tests the calculation of the matrix of inertia for a solid
+        """
+        radius = 1.0
+        height = 2.0
+        cylinder = Solid.makeCylinder(radius=radius, height=height)
+        moi = Shape.matrixOfInertia(cylinder)
+        two_pi = 2 * math.pi
+        true_moi = (
+            two_pi * (radius**2 / 4 + height**2 / 12),
+            two_pi * (radius**2 / 4 + height**2 / 12),
+            two_pi * radius**2 / 2,
+        )
+        self.assertTupleAlmostEquals((moi[0][0], moi[1][1], moi[2][2]), true_moi, 3)
+
     def testCenterOfBoundBox(self):
         pass
 
@@ -250,7 +265,6 @@ class TestCadObjects(BaseTest):
         """
 
         def cylinders(self, radius, height):
-
             c = Solid.makeCylinder(radius, height, Vector())
 
             # Combine all the cylinders into a single compound
@@ -594,7 +608,6 @@ class TestCadObjects(BaseTest):
             self.assertTupleAlmostEquals(target_point, mirror_box_vertices[i], 7)
 
     def testLocation(self):
-
         # Tuple
         loc0 = Location((0, 0, 1))
 
@@ -633,7 +646,7 @@ class TestCadObjects(BaseTest):
 
         loc5 = loc1 * loc4
         loc6 = loc4 * loc4
-        loc7 = loc4 ** 2
+        loc7 = loc4**2
 
         T = loc5.wrapped.Transformation().TranslationPart()
         self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 1), 6)
@@ -660,7 +673,6 @@ class TestCadObjects(BaseTest):
             Location("xy_plane")
 
     def testEdgeWrapperRadius(self):
-
         # get a radius from a simple circle
         e0 = Edge.makeCircle(2.4)
         self.assertAlmostEqual(e0.radius(), 2.4)
@@ -692,7 +704,13 @@ class TestCadObjects(BaseTest):
         self.assertAlmostEqual(w1.radius(), rad)
 
         # test value error from wire
-        w2 = Wire.makePolygon([Vector(-1, 0, 0), Vector(0, 1, 0), Vector(1, -1, 0),])
+        w2 = Wire.makePolygon(
+            [
+                Vector(-1, 0, 0),
+                Vector(0, 1, 0),
+                Vector(1, -1, 0),
+            ]
+        )
         with self.assertRaises(ValueError):
             w2.radius()
 
@@ -736,4 +754,5 @@ def test_wire_makepolygon(points, close, expected_edges):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    # unittest.main()
+    TestCadObjects().testMatrixOfInertia()
