@@ -1,210 +1,264 @@
-from io import BytesIO
 from typing import (
-    Any,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
     Optional,
-    Sequence,
     Tuple,
-    TypeVar,
     Union,
+    Iterable,
+    List,
+    Sequence,
+    Iterator,
+    Dict,
+    Any,
+    overload,
+    TypeVar,
+    cast as tcast,
 )
-from typing import cast as tcast
-from typing import overload
+from typing_extensions import Literal, Protocol
+
+from io import BytesIO
+
+from vtkmodules.vtkCommonDataModel import vtkPolyData
+from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
+
+from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
+from .shape_protocols import geom_LUT_FACE, geom_LUT_EDGE, Shapes, Geoms
+
+from ..selectors import (
+    Selector,
+    StringSyntaxSelector,
+)
+
+from ..utils import cqmultimethod as multimethod
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
-from typing_extensions import Literal, Protocol
-from vtkmodules.vtkCommonDataModel import vtkPolyData
-from vtkmodules.vtkFiltersCore import vtkPolyDataNormals, vtkTriangleFilter
-
-from ..selectors import Selector, StringSyntaxSelector
-from ..utils import cqmultimethod as multimethod
-from .geom import BoundBox, Location, Matrix, Plane, Vector, VectorLike
-from .shape_protocols import Geoms, Shapes, geom_LUT_EDGE, geom_LUT_FACE
 
 for printer in Message.DefaultMessenger_s().Printers():
     printer.SetTraceLevel(Message_Gravity.Message_Fail)
 
-import warnings
-from math import cos, inf, pi, radians, sqrt
-
-import OCP.GeomAbs as ga  # Geometry type enum
 import OCP.TopAbs as ta  # Topology type enum
-from OCP.Aspect import Aspect_TOL_SOLID
-from OCP.BOPAlgo import BOPAlgo_GlueEnum
+import OCP.GeomAbs as ga  # Geometry type enum
 
-# used for getting underlying geometry -- is this equivalent to brep adaptor?
-from OCP.BRep import BRep_Builder, BRep_Tool
+from OCP.Precision import Precision
+
+from OCP.gp import (
+    gp_Vec,
+    gp_Pnt,
+    gp_Ax1,
+    gp_Ax2,
+    gp_Ax3,
+    gp_Dir,
+    gp_Circ,
+    gp_Trsf,
+    gp_Pln,
+    gp_Pnt2d,
+    gp_Dir2d,
+    gp_Elips,
+)
+
+# Array of points (used for B-spline construction):
+from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
+
+# Array of vectors (used for B-spline interpolation):
+from OCP.TColgp import TColgp_Array1OfVec
+
+# Array of booleans (used for B-spline interpolation):
+from OCP.TColStd import TColStd_HArray1OfBoolean
+
+# Array of floats (used for B-spline interpolation):
+from OCP.TColStd import TColStd_HArray1OfReal
+
 from OCP.BRepAdaptor import (
-    BRepAdaptor_CompCurve,
     BRepAdaptor_Curve,
+    BRepAdaptor_CompCurve,
     BRepAdaptor_Surface,
 )
-from OCP.BRepAlgo import BRepAlgo
-from OCP.BRepAlgoAPI import (
-    BRepAlgoAPI_BooleanOperation,
-    BRepAlgoAPI_Common,
-    BRepAlgoAPI_Cut,
-    BRepAlgoAPI_Fuse,
-    BRepAlgoAPI_Splitter,
-)
+
 from OCP.BRepBuilderAPI import (
-    BRepBuilderAPI_Copy,
-    BRepBuilderAPI_GTransform,
+    BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,
     BRepBuilderAPI_MakePolygon,
-    BRepBuilderAPI_MakeSolid,
-    BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeWire,
-    BRepBuilderAPI_RightCorner,
-    BRepBuilderAPI_RoundCorner,
     BRepBuilderAPI_Sewing,
+    BRepBuilderAPI_Copy,
+    BRepBuilderAPI_GTransform,
     BRepBuilderAPI_Transform,
     BRepBuilderAPI_Transformed,
+    BRepBuilderAPI_RightCorner,
+    BRepBuilderAPI_RoundCorner,
+    BRepBuilderAPI_MakeSolid,
 )
-from OCP.BRepCheck import BRepCheck_Analyzer
-from OCP.BRepClass3d import BRepClass3d_SolidClassifier
-from OCP.BRepExtrema import BRepExtrema_DistShapeShape
-from OCP.BRepFeat import BRepFeat_MakeDPrism
+
+# properties used to store mass calculation result
+from OCP.GProp import GProp_GProps
+from OCP.BRepGProp import BRepGProp_Face, BRepGProp  # used for mass calculation
+
+from OCP.BRepPrimAPI import (
+    BRepPrimAPI_MakeBox,
+    BRepPrimAPI_MakeCone,
+    BRepPrimAPI_MakeCylinder,
+    BRepPrimAPI_MakeTorus,
+    BRepPrimAPI_MakeWedge,
+    BRepPrimAPI_MakePrism,
+    BRepPrimAPI_MakeRevol,
+    BRepPrimAPI_MakeSphere,
+)
+from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
+
+from OCP.TopExp import TopExp  # Topology explorer
+
+# used for getting underlying geometry -- is this equivalent to brep adaptor?
+from OCP.BRep import BRep_Tool, BRep_Builder
+
+from OCP.TopoDS import (
+    TopoDS,
+    TopoDS_Shape,
+    TopoDS_Builder,
+    TopoDS_Compound,
+    TopoDS_Iterator,
+    TopoDS_Wire,
+    TopoDS_Face,
+    TopoDS_Edge,
+    TopoDS_Vertex,
+    TopoDS_Solid,
+    TopoDS_Shell,
+    TopoDS_CompSolid,
+)
+
+from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
+from OCP.GCE2d import GCE2d_MakeSegment
+from OCP.gce import gce_MakeLin, gce_MakeDir
+from OCP.GeomAPI import (
+    GeomAPI_Interpolate,
+    GeomAPI_ProjectPointOnSurf,
+    GeomAPI_PointsToBSpline,
+    GeomAPI_PointsToBSplineSurface,
+)
+
 from OCP.BRepFill import BRepFill
+
+from OCP.BRepAlgoAPI import (
+    BRepAlgoAPI_Common,
+    BRepAlgoAPI_Fuse,
+    BRepAlgoAPI_Cut,
+    BRepAlgoAPI_BooleanOperation,
+    BRepAlgoAPI_Splitter,
+)
+
+from OCP.Geom import (
+    Geom_ConicalSurface,
+    Geom_CylindricalSurface,
+    Geom_Surface,
+    Geom_Plane,
+)
+from OCP.Geom2d import Geom2d_Line
+
+from OCP.BRepLib import BRepLib, BRepLib_FindSurface
+
+from OCP.BRepOffsetAPI import (
+    BRepOffsetAPI_ThruSections,
+    BRepOffsetAPI_MakePipeShell,
+    BRepOffsetAPI_MakeThickSolid,
+    BRepOffsetAPI_MakeOffset,
+)
+
 from OCP.BRepFilletAPI import (
     BRepFilletAPI_MakeChamfer,
     BRepFilletAPI_MakeFillet,
     BRepFilletAPI_MakeFillet2d,
 )
-from OCP.BRepGProp import BRepGProp, BRepGProp_Face  # used for mass calculation
-from OCP.BRepIntCurveSurface import BRepIntCurveSurface_Inter
-from OCP.BRepLib import BRepLib, BRepLib_FindSurface
+
+from OCP.TopTools import (
+    TopTools_IndexedDataMapOfShapeListOfShape,
+    TopTools_ListOfShape,
+    TopTools_MapOfShape,
+    TopTools_IndexedMapOfShape,
+)
+
+
+from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
+
+from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
+
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
-from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
-from OCP.BRepOffsetAPI import (
-    BRepOffsetAPI_MakeFilling,
-    BRepOffsetAPI_MakeOffset,
-    BRepOffsetAPI_MakePipeShell,
-    BRepOffsetAPI_MakeThickSolid,
-    BRepOffsetAPI_ThruSections,
-)
-from OCP.BRepPrimAPI import (
-    BRepPrimAPI_MakeBox,
-    BRepPrimAPI_MakeCone,
-    BRepPrimAPI_MakeCylinder,
-    BRepPrimAPI_MakePrism,
-    BRepPrimAPI_MakeRevol,
-    BRepPrimAPI_MakeSphere,
-    BRepPrimAPI_MakeTorus,
-    BRepPrimAPI_MakeWedge,
-)
-from OCP.BRepProj import BRepProj_Projection
+from OCP.StlAPI import StlAPI_Writer
+
+from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+
 from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
+
+from OCP.LocOpe import LocOpe_DPrism
+
+from OCP.BRepCheck import BRepCheck_Analyzer
+
 from OCP.Font import (
-    Font_FA_Bold,
-    Font_FA_Italic,
-    Font_FA_Regular,
     Font_FontMgr,
+    Font_FA_Regular,
+    Font_FA_Italic,
+    Font_FA_Bold,
     Font_SystemFont,
 )
-from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
-from OCP.gce import gce_MakeDir, gce_MakeLin
-from OCP.GCE2d import GCE2d_MakeSegment
-from OCP.GCPnts import GCPnts_AbscissaPoint
-from OCP.Geom import (
-    Geom_ConicalSurface,
-    Geom_CylindricalSurface,
-    Geom_Plane,
-    Geom_Surface,
-)
-from OCP.Geom2d import Geom2d_Line
+
+from OCP.StdPrs import StdPrs_BRepFont, StdPrs_BRepTextBuilder as Font_BRepTextBuilder
+
+from OCP.NCollection import NCollection_Utf8String
+
+from OCP.BRepFeat import BRepFeat_MakeDPrism
+
+from OCP.BRepClass3d import BRepClass3d_SolidClassifier
+
+from OCP.TCollection import TCollection_AsciiString
+
+from OCP.TopLoc import TopLoc_Location
+
 from OCP.GeomAbs import (
+    GeomAbs_Shape,
     GeomAbs_C0,
     GeomAbs_Intersection,
     GeomAbs_JoinType,
-    GeomAbs_Shape,
 )
-from OCP.GeomAPI import (
-    GeomAPI_Interpolate,
-    GeomAPI_PointsToBSpline,
-    GeomAPI_PointsToBSplineSurface,
-    GeomAPI_ProjectPointOnSurf,
-)
+from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
+from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
+
+from OCP.BOPAlgo import BOPAlgo_GlueEnum
+
+from OCP.IFSelect import IFSelect_ReturnStatus
+
+from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
+
+from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
+from OCP.TopTools import TopTools_HSequenceOfShape
+
+from OCP.GCPnts import GCPnts_AbscissaPoint
+
 from OCP.GeomFill import (
-    GeomFill_CorrectedFrenet,
     GeomFill_Frenet,
+    GeomFill_CorrectedFrenet,
     GeomFill_TrihedronLaw,
 )
-from OCP.gp import (
-    gp_Ax1,
-    gp_Ax2,
-    gp_Ax3,
-    gp_Circ,
-    gp_Dir,
-    gp_Dir2d,
-    gp_Elips,
-    gp_Pln,
-    gp_Pnt,
-    gp_Pnt2d,
-    gp_Trsf,
-    gp_Vec,
-)
 
-# properties used to store mass calculation result
-from OCP.GProp import GProp_GProps
-from OCP.IFSelect import IFSelect_ReturnStatus
-from OCP.Interface import Interface_Static
+from OCP.BRepProj import BRepProj_Projection
+from OCP.BRepExtrema import BRepExtrema_DistShapeShape
+
 from OCP.IVtkOCC import IVtkOCC_Shape, IVtkOCC_ShapeMesher
 from OCP.IVtkVTK import IVtkVTK_ShapeData
-from OCP.LocOpe import LocOpe_DPrism
-from OCP.NCollection import NCollection_Utf8String
-from OCP.Precision import Precision
-from OCP.Prs3d import Prs3d_IsoAspect
-from OCP.Quantity import Quantity_Color
-from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
-from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
-from OCP.ShapeFix import ShapeFix_Face, ShapeFix_Shape, ShapeFix_Solid
-from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 # for catching exceptions
-from OCP.Standard import Standard_Failure, Standard_NoSuchObject
-from OCP.StdPrs import StdPrs_BRepFont
-from OCP.StdPrs import StdPrs_BRepTextBuilder as Font_BRepTextBuilder
-from OCP.STEPControl import STEPControl_AsIs, STEPControl_Writer
-from OCP.StlAPI import StlAPI_Writer
+from OCP.Standard import Standard_NoSuchObject, Standard_Failure
 
-# Array of vectors (used for B-spline interpolation):
-# Array of points (used for B-spline construction):
-from OCP.TColgp import TColgp_Array1OfVec, TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
-from OCP.TCollection import TCollection_AsciiString
+from OCP.Prs3d import Prs3d_IsoAspect
+from OCP.Quantity import Quantity_Color
+from OCP.Aspect import Aspect_TOL_SOLID
 
-# Array of floats (used for B-spline interpolation):
-# Array of booleans (used for B-spline interpolation):
-from OCP.TColStd import TColStd_HArray1OfBoolean, TColStd_HArray1OfReal
-from OCP.TopAbs import TopAbs_Orientation, TopAbs_ShapeEnum
-from OCP.TopExp import TopExp  # Topology explorer
-from OCP.TopLoc import TopLoc_Location
-from OCP.TopoDS import (
-    TopoDS,
-    TopoDS_Builder,
-    TopoDS_Compound,
-    TopoDS_CompSolid,
-    TopoDS_Edge,
-    TopoDS_Face,
-    TopoDS_Iterator,
-    TopoDS_Shape,
-    TopoDS_Shell,
-    TopoDS_Solid,
-    TopoDS_Vertex,
-    TopoDS_Wire,
-)
-from OCP.TopTools import (
-    TopTools_HSequenceOfShape,
-    TopTools_IndexedDataMapOfShapeListOfShape,
-    TopTools_IndexedMapOfShape,
-    TopTools_ListOfShape,
-    TopTools_MapOfShape,
-)
+from OCP.Interface import Interface_Static
+
+from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
+
+from OCP.BRepAlgo import BRepAlgo
+
+from math import pi, sqrt, inf, radians, cos
+
+import warnings
 
 from ..utils import deprecate
 
@@ -270,6 +324,7 @@ T = TypeVar("T", bound="Shape")
 
 
 def shapetype(obj: TopoDS_Shape) -> TopAbs_ShapeEnum:
+
     if obj.IsNull():
         raise ValueError("Null TopoDS_Shape object")
 
@@ -570,10 +625,27 @@ class Shape(object):
 
     @staticmethod
     def _center_of_mass(shape: "Shape") -> Vector:
+
         Properties = GProp_GProps()
         BRepGProp.VolumeProperties_s(shape.wrapped, Properties)
 
         return Vector(Properties.CentreOfMass())
+
+    @staticmethod
+    def matrixOfInertia(obj: "Shape") -> List[List[float]]:
+        """
+        Calculates the matrix of inertia of an object.
+        :param obj: Compute the matrix of inertia of this object
+        """
+        Properties = GProp_GProps()
+        calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
+
+        if calc_function:
+            calc_function(obj.wrapped, Properties)
+            moi = Properties.MatrixOfInertia()
+            return [[moi.Value(i, j) for j in range(1, 4)] for i in range(1, 4)]
+
+        raise NotImplementedError
 
     def Center(self) -> Vector:
         """
@@ -640,23 +712,6 @@ class Shape(object):
             raise NotImplementedError
 
     @staticmethod
-    def matrixOfInertia(obj: "Shape") -> List[List[float]]:
-        """
-        Calculates the matrix of inertia of an object.
-
-        :param obj: Compute the matrix of inertia of this object
-        """
-        Properties = GProp_GProps()
-        calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
-
-        if calc_function:
-            calc_function(obj.wrapped, Properties)
-            moi = Properties.MatrixOfInertia()
-            return [[moi.Value(i, j) for j in range(1, 4)] for i in range(1, 4)]
-
-        raise NotImplementedError
-
-    @staticmethod
     def CombinedCenterOfBoundBox(objects: List["Shape"]) -> Vector:
         """
         Calculates the center of a bounding box of multiple objects.
@@ -685,6 +740,7 @@ class Shape(object):
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
     def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
+
         shape_set = TopTools_IndexedMapOfShape()
         TopExp.MapShapes_s(self.wrapped, inverse_shape_LUT[topo_type], shape_set)
 
@@ -693,6 +749,7 @@ class Shape(object):
     def _entitiesFrom(
         self, child_type: Shapes, parent_type: Shapes
     ) -> Dict["Shape", List["Shape"]]:
+
         res = TopTools_IndexedDataMapOfShapeListOfShape()
 
         TopExp.MapShapesAndAncestors_s(
@@ -773,6 +830,7 @@ class Shape(object):
     def _filter(
         self, selector: Optional[Union[Selector, str]], objs: Iterable["Shape"]
     ) -> "Shape":
+
         selectorObj: Selector
         if selector:
             if isinstance(selector, str):
@@ -849,6 +907,7 @@ class Shape(object):
         return Shape.computeMass(self)
 
     def _apply_transform(self: T, Tr: gp_Trsf) -> T:
+
         return self.__class__(BRepBuilderAPI_Transform(self.wrapped, Tr, True).Shape())
 
     def rotate(
@@ -996,9 +1055,11 @@ class Shape(object):
         return r
 
     def __hash__(self) -> int:
+
         return self.hashCode()
 
     def __eq__(self, other) -> bool:
+
         return self.isSame(other) if isinstance(other, Shape) else False
 
     def _bool_op(
@@ -1199,6 +1260,7 @@ class Shape(object):
     def tessellate(
         self, tolerance: float, angularTolerance: float = 0.1
     ) -> Tuple[List[Vector], List[Tuple[int, int, int]]]:
+
         self.mesh(tolerance, angularTolerance)
 
         vertices: List[Vector] = []
@@ -1206,6 +1268,7 @@ class Shape(object):
         offset = 0
 
         for f in self.Faces():
+
             loc = TopLoc_Location()
             poly = BRep_Tool.Triangulation_s(f.wrapped, loc)
             Trsf = loc.Transformation()
@@ -1364,20 +1427,19 @@ class Shape(object):
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
         TopExp.MapShapesAndAncestors_s(
-            shape.wrapped,
-            inverse_shape_LUT[kind],
-            shapetype(self.wrapped),
-            shape_map,
+            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
         )
         exclude = TopTools_MapOfShape()
 
         def _siblings(shapes, level):
+
             rv = set()
 
             for s in shapes:
                 exclude.Add(s.wrapped)
 
             for s in shapes:
+
                 rv.update(
                     Shape.cast(el)
                     for child in s._entities(kind)
@@ -1422,6 +1484,7 @@ class Vertex(Shape):
         self.X, self.Y, self.Z = self.toTuple()
 
     def toTuple(self) -> Tuple[float, float, float]:
+
         geom_point = BRep_Tool.Pnt_s(self.wrapped)
         return (geom_point.X(), geom_point.Y(), geom_point.Z())
 
@@ -1433,6 +1496,7 @@ class Vertex(Shape):
 
     @classmethod
     def makeVertex(cls, x: float, y: float, z: float) -> "Vertex":
+
         return cls(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
 
@@ -1444,9 +1508,7 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
         ...
 
     def positionAt(
-        self,
-        d: float,
-        mode: Literal["length", "parameter"] = "length",
+        self, d: float, mode: Literal["length", "parameter"] = "length",
     ) -> Vector:
         ...
 
@@ -1465,6 +1527,7 @@ T1D = TypeVar("T1D", bound=Mixin1DProtocol)
 
 class Mixin1D(object):
     def _bounds(self: Mixin1DProtocol) -> Tuple[float, float]:
+
         curve = self._geomAdaptor()
         return curve.FirstParameter(), curve.LastParameter()
 
@@ -1563,12 +1626,14 @@ class Mixin1D(object):
         return rv
 
     def Center(self: Mixin1DProtocol) -> Vector:
+
         Properties = GProp_GProps()
         BRepGProp.LinearProperties_s(self.wrapped, Properties)
 
         return Vector(Properties.CentreOfMass())
 
     def Length(self: Mixin1DProtocol) -> float:
+
         return GCPnts_AbscissaPoint.Length_s(self._geomAdaptor())
 
     def radius(self: Mixin1DProtocol) -> float:
@@ -1588,6 +1653,7 @@ class Mixin1D(object):
         return circ.Radius()
 
     def IsClosed(self: Mixin1DProtocol) -> bool:
+
         return BRep_Tool.IsClosed_s(self.wrapped)
 
     def positionAt(
@@ -1705,6 +1771,7 @@ class Mixin1D(object):
         rv: Union[T1D, List[T1D]]
 
         if closest:
+
             dist_calc = BRepExtrema_DistShapeShape()
             dist_calc.LoadS1(self.wrapped)
 
@@ -2219,7 +2286,7 @@ class Wire(Shape, Mixin1D):
         # 3. put it together into a wire
         n_turns = height / pitch
         u_start = geom_line.Value(0.0)
-        u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch**2))
+        u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch ** 2))
         geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
 
         e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf).Edge()
@@ -2310,6 +2377,7 @@ class Face(Shape):
         return BRep_Tool.Surface_s(self.wrapped)
 
     def _uvBounds(self) -> Tuple[float, float, float, float]:
+
         return BRepTools.UVBounds_s(self.wrapped)
 
     def normalAt(self, locationVector: Optional[Vector] = None) -> Vector:
@@ -2340,15 +2408,18 @@ class Face(Shape):
         return Vector(vn)
 
     def Center(self) -> Vector:
+
         Properties = GProp_GProps()
         BRepGProp.SurfaceProperties_s(self.wrapped, Properties)
 
         return Vector(Properties.CentreOfMass())
 
     def outerWire(self) -> Wire:
+
         return Wire(BRepTools.OuterWire_s(self.wrapped))
 
     def innerWires(self) -> List[Wire]:
+
         outer = self.outerWire()
 
         return [w for w in self.Wires() if not w.isSame(outer)]
@@ -2630,6 +2701,7 @@ class Face(Shape):
 
     @classmethod
     def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> "Face":
+
         bldr = BRepBuilderAPI_MakeFace(f._geomAdaptor(), outer.wrapped)
 
         for w in inner:
@@ -2638,6 +2710,7 @@ class Face(Shape):
         return cls(bldr.Face()).fix()
 
     def project(self, other: "Face", d: VectorLike) -> "Face":
+
         outer_p = tcast(Wire, self.outerWire().project(other, d))
         inner_p = (tcast(Wire, w.project(other, d)) for w in self.innerWires())
 
@@ -2849,6 +2922,7 @@ class Mixin3D(object):
         thruAll: bool = True,
         additive: bool = True,
     ) -> "Solid":
+
         shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
         for face in faces:
             feat = BRepFeat_MakeDPrism(
@@ -3198,11 +3272,7 @@ class Solid(Shape, Mixin3D):
         """
         # make straight spine
         straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
-        straight_spine_w = Wire.combine(
-            [
-                straight_spine_e,
-            ]
-        )[0].wrapped
+        straight_spine_w = Wire.combine([straight_spine_e,])[0].wrapped
 
         # make an auxiliary spine
         pitch = 360.0 / angleDegrees * vecNormal.Length
@@ -3237,6 +3307,7 @@ class Solid(Shape, Mixin3D):
         vecNormal: VectorLike,
         angleDegrees: Real,
     ) -> "Solid":
+
         return cls.extrudeLinearWithRotation(
             face.outerWire(), face.innerWires(), vecCenter, vecNormal, angleDegrees
         )
@@ -3282,11 +3353,9 @@ class Solid(Shape, Mixin3D):
     @classmethod
     @extrudeLinear.register
     def extrudeLinear(
-        cls,
-        face: Face,
-        vecNormal: VectorLike,
-        taper: Real = 0,
+        cls, face: Face, vecNormal: VectorLike, taper: Real = 0,
     ) -> "Solid":
+
         if taper == 0:
             prism_builder: Any = BRepPrimAPI_MakePrism(
                 face.wrapped, Vector(vecNormal).wrapped, True
@@ -3342,12 +3411,9 @@ class Solid(Shape, Mixin3D):
     @classmethod
     @revolve.register
     def revolve(
-        cls,
-        face: Face,
-        angleDegrees: Real,
-        axisStart: VectorLike,
-        axisEnd: VectorLike,
+        cls, face: Face, angleDegrees: Real, axisStart: VectorLike, axisEnd: VectorLike,
     ) -> "Solid":
+
         v1 = Vector(axisStart)
         v2 = Vector(axisEnd)
         v2 = v2 - v1
@@ -3370,6 +3436,7 @@ class Solid(Shape, Mixin3D):
         path: Union[Wire, Edge],
         mode: Union[Vector, Wire, Edge],
     ) -> bool:
+
         rotate = False
 
         if isinstance(mode, Vector):
@@ -3385,12 +3452,9 @@ class Solid(Shape, Mixin3D):
 
     @staticmethod
     def _toWire(p: Union[Edge, Wire]) -> Wire:
+
         if isinstance(p, Edge):
-            rv = Wire.assembleEdges(
-                [
-                    p,
-                ]
-            )
+            rv = Wire.assembleEdges([p,])
         else:
             rv = p
 
@@ -3464,6 +3528,7 @@ class Solid(Shape, Mixin3D):
         mode: Union[Vector, Wire, Edge, None] = None,
         transitionMode: Literal["transformed", "round", "right"] = "transformed",
     ) -> "Shape":
+
         return cls.sweep(
             face.outerWire(),
             face.innerWires(),
@@ -3492,11 +3557,7 @@ class Solid(Shape, Mixin3D):
         :return: a Solid object
         """
         if isinstance(path, Edge):
-            w = Wire.assembleEdges(
-                [
-                    path,
-                ]
-            ).wrapped
+            w = Wire.assembleEdges([path,]).wrapped
         else:
             w = path.wrapped
 
@@ -3539,6 +3600,7 @@ class Compound(Shape, Mixin3D):
 
     @staticmethod
     def _makeCompound(listOfShapes: Iterable[TopoDS_Shape]) -> TopoDS_Compound:
+
         comp = TopoDS_Compound()
         comp_builder = TopoDS_Builder()
         comp_builder.MakeCompound(comp)
@@ -3722,15 +3784,13 @@ class Compound(Shape, Mixin3D):
 
         for t in shapetypes:
             TopExp.MapShapesAndAncestors_s(
-                shape.wrapped,
-                inverse_shape_LUT[kind],
-                t,
-                shape_map,
+                shape.wrapped, inverse_shape_LUT[kind], t, shape_map,
             )
 
         exclude = TopTools_MapOfShape()
 
         def _siblings(shapes, level):
+
             rv = set()
 
             for s in shapes:
@@ -3777,12 +3837,7 @@ def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
 
     rv = []
     for face in faces.Faces():
-        rv.append(
-            [
-                face.outerWire(),
-            ]
-            + face.innerWires()
-        )
+        rv.append([face.outerWire(),] + face.innerWires())
 
     return rv
 
