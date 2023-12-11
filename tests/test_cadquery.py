@@ -3877,44 +3877,26 @@ class TestCadQuery(BaseTest):
         )
 
     def testTextAlignment(self):
-        def getBoundingBoxForText(workplane):
-            """Pick the largest face on the stack and return the bounding box of its inner wires"""
-            main_face = max(workplane.vals(), key=lambda f: f.Area())
-            return reduce(
-                lambda a, b: a.add(b),
-                [wire.BoundingBox() for wire in main_face.innerWires()],
-            )
+        tolerance = 0.1
 
-        box = Workplane("XY").box(4, 4, 4)
-        bottom_left = (
-            box.faces(">Z")
-            .workplane()
-            .text("CQ 2.0", 0.5, -0.05, halign="left", valign="bottom")
+        left_bottom = Workplane().text(
+            "CQ 2.0", 0.5, 0.05, halign="left", valign="bottom"
         )
+        bb = left_bottom.val().BoundingBox()
+        self.assertTrue(abs(bb.xmin) < tolerance)
+        self.assertTrue(abs(bb.ymin) < tolerance)
 
-        bb = getBoundingBoxForText(bottom_left.faces("Z"))
-        self.assertAlmostEqual(bb.xmin, 0, places=1)
-        self.assertAlmostEqual(bb.ymin, 0, places=1)
-
-        centers = (
-            box.faces(">Z")
-            .workplane()
-            .text("CQ 2.0", 0.5, -0.05, halign="center", valign="center")
+        centers = Workplane().text(
+            "CQ 2.0", 0.5, 0.05, halign="center", valign="center"
         )
+        bb = centers.val().BoundingBox()
+        self.assertTrue(abs(bb.xmax + bb.xmin) < tolerance)
+        self.assertTrue(abs(bb.ymax + bb.ymin) < tolerance)
 
-        bb = getBoundingBoxForText(centers.faces("Z"))
-        self.assertAlmostEqual(-bb.xmin, bb.xmax, places=1)
-        self.assertAlmostEqual(-bb.ymin, bb.ymax, places=1)
-
-        top_right = (
-            box.faces(">Z")
-            .workplane()
-            .text("CQ 2.0", 0.5, -0.05, halign="right", valign="top")
-        )
-
-        bb = getBoundingBoxForText(top_right.faces("Z"))
-        self.assertAlmostEqual(bb.xmax, 0, places=1)
-        self.assertAlmostEqual(bb.ymax, 0, places=1)
+        right_top = Workplane().text("CQ 2.0", 0.5, 0.05, halign="right", valign="top")
+        bb = right_top.val().BoundingBox()
+        self.assertTrue(abs(bb.xmax) < tolerance)
+        self.assertTrue(abs(bb.ymax) < tolerance)
 
     def testParametricCurve(self):
 
