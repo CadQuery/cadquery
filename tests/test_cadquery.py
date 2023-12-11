@@ -7,7 +7,6 @@ import math, os.path, time, tempfile
 from random import random
 from random import randrange
 from itertools import product
-from functools import reduce
 
 from pytest import approx, raises
 
