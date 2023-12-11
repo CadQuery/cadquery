@@ -770,5 +770,4 @@ def test_wire_makepolygon(points, close, expected_edges):
 
 
 if __name__ == "__main__":
-    # unittest.main()
-    TestCadObjects().testMatrixOfInertia()
+    unittest.main()
