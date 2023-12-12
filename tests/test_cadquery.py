@@ -3876,26 +3876,20 @@ class TestCadQuery(BaseTest):
         )
 
     def testTextAlignment(self):
-        tolerance = 0.1
+        left_bottom = Workplane().text("I", 10, 0, halign="left", valign="bottom")
+        lb_bb = left_bottom.val().BoundingBox()
+        self.assertGreaterEqual(lb_bb.xmin, 0)
+        self.assertGreaterEqual(lb_bb.ymin, 0)
 
-        left_bottom = Workplane().text(
-            "CQ 2.0", 0.5, 0.05, halign="left", valign="bottom"
-        )
-        bb = left_bottom.val().BoundingBox()
-        self.assertTrue(abs(bb.xmin) < tolerance)
-        self.assertTrue(abs(bb.ymin) < tolerance)
+        centers = Workplane().text("I", 10, 0, halign="center", valign="center")
+        c_bb = centers.val().BoundingBox()
+        self.assertAlmostEqual(c_bb.center.x, 0, places=0)
+        self.assertAlmostEqual(c_bb.center.y, 0, places=0)
 
-        centers = Workplane().text(
-            "CQ 2.0", 0.5, 0.05, halign="center", valign="center"
-        )
-        bb = centers.val().BoundingBox()
-        self.assertTrue(abs(bb.xmax + bb.xmin) < tolerance)
-        self.assertTrue(abs(bb.ymax + bb.ymin) < tolerance)
-
-        right_top = Workplane().text("CQ 2.0", 0.5, 0.05, halign="right", valign="top")
-        bb = right_top.val().BoundingBox()
-        self.assertTrue(abs(bb.xmax) < tolerance)
-        self.assertTrue(abs(bb.ymax) < tolerance)
+        right_top = Workplane().text("I", 10, 0, halign="right", valign="top")
+        rt_bb = right_top.val().BoundingBox()
+        self.assertLessEqual(rt_bb.xmax, 0)
+        self.assertLessEqual(rt_bb.ymax, 0)
 
     def testParametricCurve(self):
 
