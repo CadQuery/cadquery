@@ -28,6 +28,7 @@ init:
 install:
     - mamba env create -f environment.yml
     - conda activate cadquery
+    - pip install git+https://github.com/cadquery/black.git@cq
 
 build: false
 
