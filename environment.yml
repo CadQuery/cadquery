@@ -20,6 +20,12 @@ dependencies:
   - path
   - casadi
   - multimethod ==1.9.1
+  - typed-ast
+  - regex
+  - pathspec
+  - click
+  - appdirs
   - pip
   - pip:
     - --editable=.
+    - git+https://github.com/cadquery/black.git@cq
