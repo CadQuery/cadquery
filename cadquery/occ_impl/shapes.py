@@ -3847,3 +3847,78 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
     ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
 
     return [Wire(el) for el in wires_out]
+
+
+def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes]]) -> Iterable[Shape]:
+    """
+    Get desired shapes or raise an error.
+    """
+
+    # convert input into tuple
+    if isinstance(ts, tuple):
+        types = ts
+    else:
+        types = (ts,)
+
+    # validate the underlying shape, compounds are unpacked
+    t = Shape.GetType()
+
+    if t in types:
+        yield t
+    elif t == 'Compound':
+        for el in t:
+            if el.GetType() in ts:
+                yield el
+            else:
+                raise ValueError(f'Required type(s): {types}, encountered {el.GetType()}')
+    else:
+        raise ValueError(f'Required type(s): {types}, encountered {t}')
+
+
+def _compound_or_shape(s: List[TopoDS_Shape]) -> Shape:
+    """
+    Convert a list of TopoDS_Shape to a Shape or Compound.
+    """
+
+    if len(s) == 1:
+        rv = Shape.cast(s[0])
+    else:
+        rv = Compound.makeCompound([Shape.cast(el) for el in s])
+
+    return rv
+
+
+def thicken(s: Shape, t: float):
+    """
+    Thicken face or shell.
+    """
+
+    builder = BRepOffset_MakeOffset()
+
+    results = []
+
+    for el in _get(s, ('Face', 'Shell')):
+        builder.Initialize(
+            el.wrapped,
+            t,
+            1.0e-6,
+            BRepOffset_Mode.BRepOffset_Skin,
+            False,
+            False,
+            GeomAbs_Intersection,
+            True,
+        )  # The last True is important to make solid
+
+        builder.MakeOffsetShape()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+def sweep(s: Shape, p: Shape):
+
+    builder = BRepOffsetAPI_MakePipeShell(p.wrapped)
+    builder.Add(s.wrapped,False, False)
+    builder.Build()
+
+    return Shape(builder.Shape())
