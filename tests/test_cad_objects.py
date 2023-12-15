@@ -1,13 +1,12 @@
 # system modules
 import math
-import unittest
-
 import pytest
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+import unittest
+from tests import BaseTest
 from OCP.gp import gp, gp_Ax2, gp_Circ, gp_Elips, gp_Pnt, gp_Trsf, gp_Vec, gp_XYZ
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 from cadquery import *
-from tests import BaseTest
 
 DEG2RAD = math.pi / 180
 RAD2DEG = 180 / math.pi
@@ -15,10 +14,12 @@ RAD2DEG = 180 / math.pi
 
 class TestCadObjects(BaseTest):
     def _make_circle(self):
+
         circle = gp_Circ(gp_Ax2(gp_Pnt(1, 2, 3), gp.DZ_s()), 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(circle).Edge())
 
     def _make_ellipse(self):
+
         ellipse = gp_Elips(gp_Ax2(gp_Pnt(1, 2, 3), gp.DZ_s()), 4.0, 2.0)
         return Shape.cast(BRepBuilderAPI_MakeEdge(ellipse).Edge())
 
@@ -247,9 +248,9 @@ class TestCadObjects(BaseTest):
         moi = Shape.matrixOfInertia(cylinder)
         two_pi = 2 * math.pi
         true_moi = (
-            two_pi * (radius**2 / 4 + height**2 / 12),
-            two_pi * (radius**2 / 4 + height**2 / 12),
-            two_pi * radius**2 / 2,
+            two_pi * (radius ** 2 / 4 + height ** 2 / 12),
+            two_pi * (radius ** 2 / 4 + height ** 2 / 12),
+            two_pi * radius ** 2 / 2,
         )
         self.assertTupleAlmostEquals((moi[0][0], moi[1][1], moi[2][2]), true_moi, 3)
 
@@ -281,6 +282,7 @@ class TestCadObjects(BaseTest):
         """
 
         def cylinders(self, radius, height):
+
             c = Solid.makeCylinder(radius, height, Vector())
 
             # Combine all the cylinders into a single compound
@@ -624,6 +626,7 @@ class TestCadObjects(BaseTest):
             self.assertTupleAlmostEquals(target_point, mirror_box_vertices[i], 7)
 
     def testLocation(self):
+        
         # Tuple
         loc0 = Location((0, 0, 1))
 
@@ -662,7 +665,7 @@ class TestCadObjects(BaseTest):
 
         loc5 = loc1 * loc4
         loc6 = loc4 * loc4
-        loc7 = loc4**2
+        loc7 = loc4 ** 2
 
         T = loc5.wrapped.Transformation().TranslationPart()
         self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 1), 6)
@@ -720,13 +723,7 @@ class TestCadObjects(BaseTest):
         self.assertAlmostEqual(w1.radius(), rad)
 
         # test value error from wire
-        w2 = Wire.makePolygon(
-            [
-                Vector(-1, 0, 0),
-                Vector(0, 1, 0),
-                Vector(1, -1, 0),
-            ]
-        )
+        w2 = Wire.makePolygon([Vector(-1, 0, 0), Vector(0, 1, 0), Vector(1, -1, 0),])
         with self.assertRaises(ValueError):
             w2.radius()
 
