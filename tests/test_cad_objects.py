@@ -3,7 +3,7 @@ import math
 import pytest
 import unittest
 from tests import BaseTest
-from OCP.gp import gp, gp_Ax2, gp_Circ, gp_Elips, gp_Pnt, gp_Trsf, gp_Vec, gp_XYZ
+from OCP.gp import gp_Vec, gp_Pnt, gp_Ax2, gp_Circ, gp_Elips, gp, gp_XYZ, gp_Trsf
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 from cadquery import *
@@ -626,7 +626,7 @@ class TestCadObjects(BaseTest):
             self.assertTupleAlmostEquals(target_point, mirror_box_vertices[i], 7)
 
     def testLocation(self):
-        
+
         # Tuple
         loc0 = Location((0, 0, 1))
 
@@ -692,6 +692,7 @@ class TestCadObjects(BaseTest):
             Location("xy_plane")
 
     def testEdgeWrapperRadius(self):
+
         # get a radius from a simple circle
         e0 = Edge.makeCircle(2.4)
         self.assertAlmostEqual(e0.radius(), 2.4)
