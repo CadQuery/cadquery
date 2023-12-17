@@ -210,7 +210,7 @@ If you are going to contribute code, make sure to follow this steps:
 - Consider adding an example to the documentation showing your cool new
   feature!
 - Make sure nothing is broken (run the complete test suite with `pytest`)
-- Run `black` to autoformat your code and make sure your code style complies
+- Run `black` from [our fork](https://github.com/CadQuery/black) to autoformat your code and make sure your code style complies
   with CadQuery's
 - Push the changes to your fork and open a pull-request upstream
 - Keep an eye on the automated feedback you will receive from the CI pipelines;

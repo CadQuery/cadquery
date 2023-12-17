@@ -2,14 +2,13 @@ name: cadquery
 channels:
   - conda-forge
 dependencies:
-  - python>=3.8
+  - python=3.12
   - ipython
-  - ocp=7.7.1
+  - ocp=7.7.2
+  - vtk=*=qt*
   - pyparsing>=2.1.9
   - sphinx=5.0.1
   - sphinx_rtd_theme
-  - black=19.10b0
-  - click=8.0.4
   - mypy
   - codecov
   - pytest
@@ -21,7 +20,12 @@ dependencies:
   - path
   - casadi
   - multimethod ==1.9.1
+  - typed-ast
+  - regex
+  - pathspec
+  - click
+  - appdirs
   - pip
   - pip:
     - --editable=.
-    - git+https://github.com/CadQuery/OCP-stubs.git
+    - git+https://github.com/cadquery/black.git@cq

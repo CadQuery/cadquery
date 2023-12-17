@@ -467,7 +467,7 @@ class Assembly(object):
         :param mode: STEP only - See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         :param tolerance: the deflection tolerance, in model units. Only used for glTF, VRML. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Only used for glTF, VRML. Default 0.1.
-        :param \**kwargs: Additional keyword arguments.  Only used for STEP, glTF and STL.
+        :param \\**kwargs: Additional keyword arguments.  Only used for STEP, glTF and STL.
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         :param ascii: STL only - Sets whether or not STL export should be text or binary
         :type ascii: bool
