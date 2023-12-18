@@ -14,6 +14,7 @@ RAD2DEG = 360.0 / (2 * pi)
 class ImportTypes:
     STEP = "STEP"
     DXF = "DXF"
+    BREP = "BREP"
 
 
 class UNITS:
@@ -22,7 +23,7 @@ class UNITS:
 
 
 def importShape(
-    importType: Literal["STEP", "DXF"], fileName: str, *args, **kwargs
+    importType: Literal["STEP", "DXF", "BREP"], fileName: str, *args, **kwargs
 ) -> "cq.Workplane":
     """
     Imports a file based on the type (STEP, STL, etc)
@@ -36,8 +37,27 @@ def importShape(
         return importStep(fileName)
     elif importType == ImportTypes.DXF:
         return importDXF(fileName, *args, **kwargs)
+    elif importType == ImportTypes.BREP:
+        return importBrep(fileName)
     else:
         raise RuntimeError("Unsupported import type: {!r}".format(importType))
+
+
+def importBrep(fileName: str) -> "cq.Workplane":
+    """
+    Accepts a file name and loads the BREP file into a cadquery Workplane.
+
+    :param fileName: The path and name of the BREP file to be imported
+
+    """
+    shape = Shape.importBrep(fileName)
+
+    if shape.ShapeType() == "Compound":
+        rv = cq.Workplane("XY").newObject(shape)
+    else:
+        rv = cq.Workplane("XY").newObject([shape])
+
+    return rv
 
 
 # Loads a STEP file into a CQ.Workplane object
