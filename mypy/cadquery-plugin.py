@@ -24,10 +24,10 @@ def hook__get(ctx: FunctionContext) -> Type:
     """
 
     return_type_names = [el.value for el in ctx.args[1][0].items]
-    return_types =  UnionType([ctx.api.named_type(n) for n in return_type_names]
-    )
+    return_types = UnionType([ctx.api.named_type(n) for n in return_type_names])
 
     return ctx.api.named_generic_type("typing.Iterable", [return_types])
+
 
 def hook__get_one(ctx: FunctionContext) -> Type:
     """
@@ -38,7 +38,7 @@ def hook__get_one(ctx: FunctionContext) -> Type:
 
     return_type_names = [el.value for el in ctx.args[1][0].items]
 
-    return  UnionType([ctx.api.named_type(n) for n in return_type_names])
+    return UnionType([ctx.api.named_type(n) for n in return_type_names])
 
 
 def plugin(version: str):
