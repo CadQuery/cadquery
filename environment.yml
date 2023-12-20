@@ -2,7 +2,7 @@ name: cadquery
 channels:
   - conda-forge
 dependencies:
-  - python=3.12
+  - python>=3.8
   - ipython
   - ocp=7.7.2
   - vtk=*=qt*
