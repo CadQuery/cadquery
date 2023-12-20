@@ -3849,7 +3849,7 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
     return [Wire(el) for el in wires_out]
 
 
-def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes]]) -> Iterable[Shape]:
+def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Iterable[Shape]:
     """
     Get desired shapes or raise an error.
     """
@@ -3861,18 +3861,20 @@ def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes]]) -> Iterable[Shape]:
         types = (ts,)
 
     # validate the underlying shape, compounds are unpacked
-    t = Shape.GetType()
+    t = s.ShapeType()
 
     if t in types:
-        yield t
-    elif t == 'Compound':
-        for el in t:
-            if el.GetType() in ts:
+        yield s
+    elif t == "Compound":
+        for el in s:
+            if el.ShapeType() in ts:
                 yield el
             else:
-                raise ValueError(f'Required type(s): {types}, encountered {el.GetType()}')
+                raise ValueError(
+                    f"Required type(s): {types}, encountered {el.ShapeType()}"
+                )
     else:
-        raise ValueError(f'Required type(s): {types}, encountered {t}')
+        raise ValueError(f"Required type(s): {types}, encountered {t}")
 
 
 def _compound_or_shape(s: List[TopoDS_Shape]) -> Shape:
@@ -3897,7 +3899,7 @@ def thicken(s: Shape, t: float):
 
     results = []
 
-    for el in _get(s, ('Face', 'Shell')):
+    for el in _get(s, ("Face", "Shell")):
         builder.Initialize(
             el.wrapped,
             t,
@@ -3915,10 +3917,11 @@ def thicken(s: Shape, t: float):
 
     return _compound_or_shape(results)
 
+
 def sweep(s: Shape, p: Shape):
 
     builder = BRepOffsetAPI_MakePipeShell(p.wrapped)
-    builder.Add(s.wrapped,False, False)
+    builder.Add(s.wrapped, False, False)
     builder.Build()
 
     return Shape(builder.Shape())
