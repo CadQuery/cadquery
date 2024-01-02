@@ -631,6 +631,22 @@ class Shape(object):
 
         return Vector(Properties.CentreOfMass())
 
+    @staticmethod
+    def matrixOfInertia(obj: "Shape") -> List[List[float]]:
+        """
+        Calculates the matrix of inertia of an object.
+        :param obj: Compute the matrix of inertia of this object
+        """
+        Properties = GProp_GProps()
+        calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
+
+        if calc_function:
+            calc_function(obj.wrapped, Properties)
+            moi = Properties.MatrixOfInertia()
+            return [[moi.Value(i, j) for j in range(1, 4)] for i in range(1, 4)]
+
+        raise NotImplementedError
+
     def Center(self) -> Vector:
         """
         :returns: The point of the center of mass of this Shape

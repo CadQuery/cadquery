@@ -238,6 +238,27 @@ class TestCadObjects(BaseTest):
 
         self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
 
+    def testMatrixOfInertia(self):
+        """
+        Tests the calculation of the matrix of inertia for a solid
+        """
+        radius = 1.0
+        height = 2.0
+        cylinder = Solid.makeCylinder(radius=radius, height=height)
+        moi = Shape.matrixOfInertia(cylinder)
+        two_pi = 2 * math.pi
+        true_moi = (
+            two_pi * (radius ** 2 / 4 + height ** 2 / 12),
+            two_pi * (radius ** 2 / 4 + height ** 2 / 12),
+            two_pi * radius ** 2 / 2,
+        )
+        self.assertTupleAlmostEquals((moi[0][0], moi[1][1], moi[2][2]), true_moi, 3)
+
+    def testVertexMatrixOfInertiaNotImplemented(self):
+        with self.assertRaises(NotImplementedError):
+            vertex = Vertex.makeVertex(1, 1, 1)
+            Shape.matrixOfInertia(vertex)
+
     def testCenterOfBoundBox(self):
         pass
 
