@@ -369,7 +369,7 @@ where ``a_sketch.arc((1, 2), (2, 3))`` would be dispatched to one method but ``a
 not use keyword arguments to specify positional parameters. For example, you **should not** write
 ``a_sketch.arc(p1=(1, 2), p2=(2, 3), p3=(3, 4))``, instead you should use the previous example.
 Note CadQuery makes an attempt to fall back on the first registered multimethod in the event of a
-dispatch error, but it is still best practise to not use keyword arguments to specify positional
+dispatch error, but it is still best practice to not use keyword arguments to specify positional
 arguments in CadQuery.
 
 An Introspective Example
