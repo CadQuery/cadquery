@@ -910,7 +910,7 @@ def test_dxf_text(tmpdir, testdatadir):
     s2 = Sketch().importDXF(fname)
     w2 = Workplane("XZ", origin=(0, -0.5, 0)).placeSketch(s2).extrude(-1)
 
-    assert w1.val().Volume() == approx(59.983287, 1e-2)
+    assert w1.val().Volume() == approx(61.669465, 1e-2)
     assert w2.val().Volume() == approx(w1.val().Volume(), 1e-2)
     assert w2.intersect(w1).val().Volume() == approx(w1.val().Volume(), 1e-2)
 
