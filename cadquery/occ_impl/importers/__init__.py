@@ -45,19 +45,19 @@ def importShape(
 
 def importBrep(fileName: str) -> "cq.Workplane":
     """
-    Accepts a file name and loads the BREP file into a cadquery Workplane.
+    Loads the BREP file as a single shape into a cadquery Workplane.
 
     :param fileName: The path and name of the BREP file to be imported
 
     """
     shape = Shape.importBrep(fileName)
 
-    if shape.ShapeType() == "Compound":
-        rv = cq.Workplane("XY").newObject(shape)
-    else:
-        rv = cq.Workplane("XY").newObject([shape])
-
-    return rv
+    # We know a single shape is returned. Sending it as a list prevents
+    # newObject from decomposing the part into its constituent parts. If the
+    # shape is a compound, it will be stored as a compound on the workplane. In
+    # some cases it may be desirable for the compound to be broken into its
+    # constituent solids. To do this, use list(shape) or shape.Solids().
+    return cq.Workplane("XY").newObject([shape])
 
 
 # Loads a STEP file into a CQ.Workplane object
