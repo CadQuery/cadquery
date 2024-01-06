@@ -114,6 +114,12 @@ class TestImporters(BaseTest):
         self.assertEqual(workplane.faces("+Z").size(), nFacesZ)
         self.assertEqual(workplane.faces("+Z").vertices().size(), nVerticesZ)
 
+    def testInvalidImportTypeRaisesRuntimeError(self):
+        fileName = os.path.join(OUTDIR, "tempSTEP.step")
+        shape = Workplane("XY").box(1, 2, 3).val()
+        shape.exportStep(fileName)
+        self.assertRaises(RuntimeError, importers.importShape, "INVALID", fileName)
+
     def testBREP(self):
         """
         Test BREP file import.
