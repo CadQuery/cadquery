@@ -13,6 +13,14 @@ class CadqueryPlugin(Plugin):
 
             return hook__get_one
 
+        elif fullname == "cadquery.occ_impl.shapes._get_edges":
+
+            return hook__get_edges
+
+        elif fullname == "cadquery.occ_impl.shapes._get_wires":
+
+            return hook__get_wires
+
         return None
 
 
@@ -39,6 +47,28 @@ def hook__get_one(ctx: FunctionContext) -> Type:
     return_type_names = [el.value for el in ctx.args[1][0].items]
 
     return UnionType([ctx.api.named_type(n) for n in return_type_names])
+
+
+def hook__get_wires(ctx: FunctionContext) -> Type:
+    """
+    Hook for cq.occ_impl.shapes._get_wires
+
+   """
+
+    return_type = ctx.api.named_type("Wire")
+
+    return ctx.api.named_generic_type("typing.Iterable", [return_type])
+
+
+def hook__get_edges(ctx: FunctionContext) -> Type:
+    """
+    Hook for cq.occ_impl.shapes._get_edges
+
+   """
+
+    return_type = ctx.api.named_type("Edge")
+
+    return ctx.api.named_generic_type("typing.Iterable", [return_type])
 
 
 def plugin(version: str):
