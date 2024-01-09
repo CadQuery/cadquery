@@ -214,6 +214,8 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.GeomAbs import (
     GeomAbs_Shape,
     GeomAbs_C0,
+    GeomAbs_C1,
+    GeomAbs_C2,
     GeomAbs_Intersection,
     GeomAbs_JoinType,
 )
@@ -3849,6 +3851,9 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
     return [Wire(el) for el in wires_out]
 
 
+#%% utilities
+
+
 def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Iterable[Shape]:
     """
     Get desired shapes or raise an error.
@@ -3871,10 +3876,10 @@ def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Iterable[Shape]:
                 yield el
             else:
                 raise ValueError(
-                    f"Required type(s): {types}, encountered {el.ShapeType()}"
+                    f"Required type(s): {types}; encountered {el.ShapeType()}"
                 )
     else:
-        raise ValueError(f"Required type(s): {types}, encountered {t}")
+        raise ValueError(f"Required type(s): {types}; encountered {t}")
 
 
 def _get_one(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Shape:
@@ -3903,12 +3908,15 @@ def _get_one(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Shape:
                     f"Required type(s): {types}, encountered {el.ShapeType()}"
                 )
     else:
-        raise ValueError(f"Required type(s): {types}, encountered {t}")
+        raise ValueError(f"Required type(s): {types}; encountered {t}")
 
     return rv
 
 
 def _get_one_wire(s: Shape) -> Wire:
+    """
+    Get one wire or edge and convert to wire
+    """
 
     rv = _get_one(s, ("Wire", "Edge"))
 
@@ -3918,12 +3926,67 @@ def _get_one_wire(s: Shape) -> Wire:
         return Wire.assembleEdges((rv,))
 
 
-def _compound_or_shape(s: List[TopoDS_Shape]) -> Shape:
+def _get_wires(s: Shape) -> Iterable[Shape]:
+    """
+    Get wires or wires from edges
+    """
+
+    t = s.ShapeType()
+
+    if t == "Wire":
+        yield s
+    elif t == "Edge":
+        yield Wire.assembleEdges((tcast(Edge, s),))
+    elif t == "Compound":
+        for el in s:
+            yield from _get_wires(el)
+    else:
+        raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+
+
+def _get_edges(s: Shape) -> Iterable[Shape]:
+    """
+    Get wires or wires from edges
+    """
+
+    t = s.ShapeType()
+
+    if t == "Edge":
+        yield s
+    elif t == "Wire":
+        yield from s.edges()
+    elif t == "Compound":
+        for el in s:
+            yield from _get_edges(el)
+    else:
+        raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+
+
+def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
+    """
+    Get lists or wires for sweeping or lofting
+    """
+
+    wire_lists: List[List[Wire]] = []
+
+    for el in s:
+        if not wire_lists:
+            wire_lists = [[w] for w in _get_wires(el)]
+        else:
+            for wire_list, w in zip(wire_lists, _get_wires(el)):
+                wire_list.append(w)
+
+    return wire_lists
+
+
+def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
     """
     Convert a list of TopoDS_Shape to a Shape or a Compound.
     """
 
-    if len(s) == 1:
+    if isinstance(s, TopoDS_Shape):
+        rv = Shape.cast(s)
+    elif len(s) == 1:
         rv = Shape.cast(s[0])
     else:
         rv = Compound.makeCompound([Shape.cast(el) for el in s])
@@ -3931,9 +3994,264 @@ def _compound_or_shape(s: List[TopoDS_Shape]) -> Shape:
     return rv
 
 
-def thicken(s: Shape, t: float):
+#%% primitives
+
+
+def vertex(x: float, y: float, z: float) -> Shape:
+
+    return _compound_or_shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
+
+
+def segment(p1: VectorLike, p2: VectorLike) -> Shape:
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeEdge(Vector(p1).toPnt(), Vector(p2).toPnt()).Edge()
+    )
+
+
+def polyline(*ps: VectorLike) -> Shape:
+
+    builder = BRepBuilderAPI_MakePolygon()
+
+    for p in ps:
+        builder.Add(Vector(p).toPnt())
+
+    return _compound_or_shape(builder.Wire())
+
+
+def polygon(*ps: VectorLike) -> Shape:
+
+    builder = BRepBuilderAPI_MakePolygon()
+
+    for p in ps:
+        builder.Add(Vector(p).toPnt())
+
+    builder.Close()
+
+    return _compound_or_shape(builder.Wire())
+
+
+def circle(r: float) -> Shape:
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeEdge(
+            gp_Circ(gp_Ax2(Vector().toPnt(), Vector(0, 0, 1).toDir()), r)
+        ).Edge()
+    )
+
+
+def ellipse(r1: float, r2: float) -> Shape:
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeEdge(
+            gp_Elips(gp_Ax2(Vector().toPnt(), Vector(0, 0, 1).toDir()), r1, r2)
+        ).Edge()
+    )
+
+
+def plane(l: float, w: float) -> Shape:
+
+    pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeFace(pln_geom, -w / 2, w / 2, -l / 2, l / 2).Face()
+    )
+
+
+def box(l: float, w: float, h: float) -> Shape:
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeBox(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), l, w, h
+        ).Shape()
+    )
+
+
+def cylinder(d: float, h: float) -> Shape:
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeCylinder(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), d / 2, h, 2 * pi
+        ).Shape()
+    )
+
+
+def sphere(d: float) -> Shape:
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeSphere(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
+            d / 2,
+            0,
+            pi / 2,
+            2 * pi,
+        ).Shape()
+    )
+
+
+def torus(d1: float, d2: float) -> Shape:
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeTorus(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
+            d1 / 2,
+            d2 / 2,
+            0,
+            2 * pi,
+        ).Shape()
+    )
+
+
+def cone(d1: float, d2: float, h: float) -> Shape:
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeCone(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
+            d1 / 2,
+            d2 / 2,
+            h,
+            2 * pi,
+        ).Shape()
+    )
+
+
+#%% ops
+
+
+def _bool_op(
+    s1: Shape,
+    s2: Shape,
+    builder: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
+    tol: float = 0.0,
+    parallel: bool = True,
+):
+
+    arg = TopTools_ListOfShape()
+    arg.Append(s1.wrapped)
+
+    tool = TopTools_ListOfShape()
+    tool.Append(s2.wrapped)
+
+    builder.SetArguments(arg)
+    builder.SetTools(tool)
+
+    builder.SetRunParallel(parallel)
+
+    if tol:
+        builder.SetFuzzyValue(tol)
+
+    builder.Build()
+
+
+def fuse(s1: Shape, s2: Shape) -> Shape:
+
+    builder = BRepAlgoAPI_Fuse()
+    _bool_op(s1, s2, builder)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def cut(s1: Shape, s2: Shape) -> Shape:
+
+    builder = BRepAlgoAPI_Cut()
+    _bool_op(s1, s2, builder)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def intersect(s1: Shape, s2: Shape) -> Shape:
+
+    builder = BRepAlgoAPI_Common()
+    _bool_op(s1, s2, builder)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def split(s1: Shape, s2: Shape) -> Shape:
+
+    builder = BRepAlgoAPI_Splitter()
+    _bool_op(s1, s2, builder)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def clean(s: Shape) -> Shape:
+
+    builder = ShapeUpgrade_UnifySameDomain(s.wrapped, True, True, True)
+    builder.AllowInternalEdges(False)
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def fill(s: Shape) -> Shape:
+
+    builder = BRepOffsetAPI_MakeFilling()
+
+    for e in _get_edges(s):
+        builder.Add(e.wrapped, GeomAbs_C0)
+
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def fillet(s: Shape, e: Shape, r: float) -> Shape:
+
+    builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
+
+    for el in _get_edges(e.edges()):
+        builder.Add(r, el.wrapped)
+
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def chamfer(s: Shape, e: Shape, d: float) -> Shape:
+
+    builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
+
+    for el in _get_edges(e.edges()):
+        builder.Add(d, el.wrapped)
+
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def extrude(s: Shape, d: VectorLike) -> Shape:
+
+    results = []
+
+    for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
+
+        builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
+        builder.Build()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+def revolve(s: Shape, p: VectorLike, d: VectorLike, a: float = 360):
+
+    results = []
+    ax = gp_Ax1(Vector(p).toPnt(), Vector(d).toDir())
+
+    for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
+
+        builder = BRepPrimAPI_MakeRevol(el.wrapped, ax, radians(a))
+        builder.Build()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
     """
-    Thicken face or shell.
+    Offset or thicken faces or shells.
     """
 
     builder = BRepOffset_MakeOffset()
@@ -3945,13 +4263,13 @@ def thicken(s: Shape, t: float):
         builder.Initialize(
             el.wrapped,
             t,
-            1.0e-6,
+            tol,
             BRepOffset_Mode.BRepOffset_Skin,
             False,
             False,
             GeomAbs_Intersection,
-            True,
-        )  # The last True is important to make solid
+            cap,
+        )
 
         builder.MakeOffsetShape()
 
@@ -3960,12 +4278,66 @@ def thicken(s: Shape, t: float):
     return _compound_or_shape(results)
 
 
-def sweep(s: Shape, p: Shape):
+@multimethod
+def sweep(s: Shape, p: Shape, cap: bool = False) -> Shape:
 
     spine = _get_one_wire(p)
 
-    builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
-    builder.Add(s.wrapped, False, False)
-    builder.Build()
+    results = []
 
-    return Shape(builder.Shape())
+    for w in _get_wires(s):
+        builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+        builder.Add(w.wrapped, False, False)
+        builder.Build()
+
+        if cap:
+            builder.MakeSolid()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+@sweep.register
+def sweep(s: Sequence[Shape], p: Shape, cap: bool = False) -> Shape:
+
+    spine = _get_one_wire(p)
+
+    results = []
+
+    # construct sweeps
+    for el in _get_wire_lists(s):
+        builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+
+        for w in el:
+            builder.Add(w.wrapped, False, False)
+
+        builder.Build()
+
+        if cap:
+            builder.MakeSolid()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
+
+    results = []
+
+    # construct lofts
+    builder = BRepOffsetAPI_ThruSections()
+
+    for el in _get_wire_lists(s):
+        builder.Init(cap, ruled)
+
+        for w in el:
+            builder.AddWire(w.wrapped)
+
+        builder.Build()
+        builder.Check()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
