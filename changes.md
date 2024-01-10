@@ -13,7 +13,7 @@ Changes
 * Documentation fixes and improvements [#1360](https://github.com/CadQuery/cadquery/pull/1360) [#1362](https://github.com/CadQuery/cadquery/pull/1362) [#1367](https://github.com/CadQuery/cadquery/pull/1367) [#1368](https://github.com/CadQuery/cadquery/pull/1368) [#1380](https://github.com/CadQuery/cadquery/pull/1380) [#1400](https://github.com/CadQuery/cadquery/pull/1400) [#1423](https://github.com/CadQuery/cadquery/pull/1423) [#1424](https://github.com/CadQuery/cadquery/pull/1424) [#1458](https://github.com/CadQuery/cadquery/pull/1458) [#1474](https://github.com/CadQuery/cadquery/pull/1474)
 * Added an `enlarge` method to BoundBox object [#1356](https://github.com/CadQuery/cadquery/pull/1356)
 * Added parallel operation support to `_bool_op()` [#1357](https://github.com/CadQuery/cadquery/pull/1357)
-* Added typing for `inportStep()` and `importShape()` [#1372](https://github.com/CadQuery/cadquery/pull/1372)
+* Added typing for `importStep()` and `importShape()` [#1372](https://github.com/CadQuery/cadquery/pull/1372)
 * Added tuple parameter support to CQGI [#1373](https://github.com/CadQuery/cadquery/pull/1373)
 * Improved the shape iterator [#1376](https://github.com/CadQuery/cadquery/pull/1376)
 * Added all other formats to ReadTheDocs downloads [#1377](https://github.com/CadQuery/cadquery/pull/1377)
