@@ -86,7 +86,7 @@ Add the *conda-forge* channel explicitly to the install command if needed (not u
 Install via pip
 ---------------
 
-CadQuery can be installed via pip on Linux, MacOS and Windows. Python versions 3.8 and newer are supported by CadQuery, however a bleeding-edge Python installation may be broken due to lagging support in CadQuery's complex set of dependencies. If the pip installation method does not work for your system, you can try the conda installation method above.
+CadQuery can be installed via pip on Linux, MacOS and Windows. Python versions 3.9 and newer are supported by CadQuery, however a bleeding-edge Python installation may be broken due to lagging support in CadQuery's complex set of dependencies. If the pip installation method does not work for your system, you can try the conda installation method above.
 
 It is highly recommended that a virtual environment is used when installing CadQuery, although it is not strictly required. Installing CadQuery via pip requires an up-to-date version of pip, which can be obtained with the following command line (or a slight variation thereof).:
 
