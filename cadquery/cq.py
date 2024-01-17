@@ -2953,7 +2953,7 @@ class Workplane(object):
                 .workplane()
                 .rect(1.5, 3.5, forConstruction=True)
                 .vertices()
-                .hole(0.125, 82, clean=True)
+                .hole(0.125, 82)
             )
 
         This sample creates a plate with a set of holes at the corners.
