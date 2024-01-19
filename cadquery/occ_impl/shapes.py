@@ -4250,6 +4250,9 @@ def split(s1: Shape, s2: Shape) -> Shape:
 
 
 def clean(s: Shape) -> Shape:
+    """
+    Clean superflous edges and faces.
+    """
 
     builder = ShapeUpgrade_UnifySameDomain(s.wrapped, True, True, True)
     builder.AllowInternalEdges(False)
