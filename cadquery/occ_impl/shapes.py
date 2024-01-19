@@ -4024,6 +4024,16 @@ def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
     return rv
 
 
+def _pts_to_harray(ps: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
+
+    rv = TColgp_HArray1OfPnt(1, len(ps))
+
+    for i, p in enumerate(ps):
+        rv.SetValue(i + 1, Vector(p).toPnt())
+
+    return rv
+
+
 #%% primitives
 
 
@@ -4045,32 +4055,67 @@ def segment(p1: VectorLike, p2: VectorLike) -> Shape:
     )
 
 
-def polyline(*ps: VectorLike) -> Shape:
+def polyline(*pts: VectorLike) -> Shape:
     """
     Construct a polyline from points.
     """
 
     builder = BRepBuilderAPI_MakePolygon()
 
-    for p in ps:
+    for p in pts:
         builder.Add(Vector(p).toPnt())
 
     return _compound_or_shape(builder.Wire())
 
 
-def polygon(*ps: VectorLike) -> Shape:
+def polygon(*pts: VectorLike) -> Shape:
     """
     Construct a polygon (closed polyline) from points.
     """
 
     builder = BRepBuilderAPI_MakePolygon()
 
-    for p in ps:
+    for p in pts:
         builder.Add(Vector(p).toPnt())
 
     builder.Close()
 
     return _compound_or_shape(builder.Wire())
+
+
+@multimethod
+def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape:
+    """
+    Construct a polygon (closed polyline) from points.
+    """
+
+    data = _pts_to_harray(pts)
+
+    builder = GeomAPI_Interpolate(data, periodic, tol)
+    builder.Perform()
+
+    return _compound_or_shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge())
+
+
+@spline.register
+def spline(
+    pts: Sequence[VectorLike],
+    tgts: Sequence[VectorLike] = (),
+    tol: float = 1e-6,
+    periodic: bool = False,
+    scale: bool = True,
+) -> Shape:
+
+    data = _pts_to_harray(pts)
+
+    builder = GeomAPI_Interpolate(data, periodic, tol)
+
+    if tgts:
+        builder.Load(Vector(tgts[0]).wrapped, Vector(tgts[1]).wrapped, scale)
+
+    builder.Perform()
+
+    return _compound_or_shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge())
 
 
 def circle(r: float) -> Shape:
