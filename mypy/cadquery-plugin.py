@@ -31,7 +31,11 @@ def hook__get(ctx: FunctionContext) -> Type:
     Based on the second argument values it adjusts return type to an Iterator of specific subclasses of Shape.
     """
 
-    return_type_names = [el.value for el in ctx.args[1][0].items]
+    if hasattr(ctx.args[1][0], "items"):
+        return_type_names = [el.value for el in ctx.args[1][0].items]
+    else:
+        return_type_names = [ctx.args[1][0].value]
+
     return_types = UnionType([ctx.api.named_type(n) for n in return_type_names])
 
     return ctx.api.named_generic_type("typing.Iterable", [return_types])
@@ -44,7 +48,10 @@ def hook__get_one(ctx: FunctionContext) -> Type:
     Based on the second argument values it adjusts return type to a Union of specific subclasses of Shape.
     """
 
-    return_type_names = [el.value for el in ctx.args[1][0].items]
+    if hasattr(ctx.args[1][0], "items"):
+        return_type_names = [el.value for el in ctx.args[1][0].items]
+    else:
+        return_type_names = [ctx.args[1][0].value]
 
     return UnionType([ctx.api.named_type(n) for n in return_type_names])
 

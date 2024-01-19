@@ -4000,11 +4000,17 @@ def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
 
 
 def vertex(x: float, y: float, z: float) -> Shape:
+    """
+    Construct a vertex from cooridnates.
+    """
 
     return _compound_or_shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
 
 def segment(p1: VectorLike, p2: VectorLike) -> Shape:
+    """
+    Construct a segment from two points.
+    """
 
     return _compound_or_shape(
         BRepBuilderAPI_MakeEdge(Vector(p1).toPnt(), Vector(p2).toPnt()).Edge()
@@ -4012,6 +4018,9 @@ def segment(p1: VectorLike, p2: VectorLike) -> Shape:
 
 
 def polyline(*ps: VectorLike) -> Shape:
+    """
+    Construct a polyline from points.
+    """
 
     builder = BRepBuilderAPI_MakePolygon()
 
@@ -4022,6 +4031,9 @@ def polyline(*ps: VectorLike) -> Shape:
 
 
 def polygon(*ps: VectorLike) -> Shape:
+    """
+    Construct a polygon (closed polyline) from points.
+    """
 
     builder = BRepBuilderAPI_MakePolygon()
 
@@ -4034,6 +4046,9 @@ def polygon(*ps: VectorLike) -> Shape:
 
 
 def circle(r: float) -> Shape:
+    """
+    Construct a circle.
+    """
 
     return _compound_or_shape(
         BRepBuilderAPI_MakeEdge(
@@ -4043,6 +4058,9 @@ def circle(r: float) -> Shape:
 
 
 def ellipse(r1: float, r2: float) -> Shape:
+    """
+    Construct an ellipse.
+    """
 
     return _compound_or_shape(
         BRepBuilderAPI_MakeEdge(
@@ -4052,6 +4070,9 @@ def ellipse(r1: float, r2: float) -> Shape:
 
 
 def plane(l: float, w: float) -> Shape:
+    """
+    Construct a planar face.
+    """
 
     pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
 
@@ -4061,6 +4082,9 @@ def plane(l: float, w: float) -> Shape:
 
 
 def box(l: float, w: float, h: float) -> Shape:
+    """
+    Construct a solid box.
+    """
 
     return _compound_or_shape(
         BRepPrimAPI_MakeBox(
@@ -4070,6 +4094,9 @@ def box(l: float, w: float, h: float) -> Shape:
 
 
 def cylinder(d: float, h: float) -> Shape:
+    """
+    Construct a solid cylinder.
+    """
 
     return _compound_or_shape(
         BRepPrimAPI_MakeCylinder(
@@ -4079,6 +4106,9 @@ def cylinder(d: float, h: float) -> Shape:
 
 
 def sphere(d: float) -> Shape:
+    """
+    Construct a solid sphere.
+    """
 
     return _compound_or_shape(
         BRepPrimAPI_MakeSphere(
@@ -4088,6 +4118,9 @@ def sphere(d: float) -> Shape:
 
 
 def torus(d1: float, d2: float) -> Shape:
+    """
+    Construct a solid torus.
+    """
 
     return _compound_or_shape(
         BRepPrimAPI_MakeTorus(
@@ -4101,6 +4134,9 @@ def torus(d1: float, d2: float) -> Shape:
 
 
 def cone(d1: float, d2: float, h: float) -> Shape:
+    """
+    Construct a solid cone.
+    """
 
     return _compound_or_shape(
         BRepPrimAPI_MakeCone(
@@ -4142,6 +4178,9 @@ def _bool_op(
 
 
 def fuse(s1: Shape, s2: Shape) -> Shape:
+    """
+    Fuse two shapes.
+    """
 
     builder = BRepAlgoAPI_Fuse()
     _bool_op(s1, s2, builder)
@@ -4150,6 +4189,9 @@ def fuse(s1: Shape, s2: Shape) -> Shape:
 
 
 def cut(s1: Shape, s2: Shape) -> Shape:
+    """
+    Subtract two shapes.
+    """
 
     builder = BRepAlgoAPI_Cut()
     _bool_op(s1, s2, builder)
@@ -4158,6 +4200,9 @@ def cut(s1: Shape, s2: Shape) -> Shape:
 
 
 def intersect(s1: Shape, s2: Shape) -> Shape:
+    """
+    Intersect two shapes.
+    """
 
     builder = BRepAlgoAPI_Common()
     _bool_op(s1, s2, builder)
@@ -4166,6 +4211,9 @@ def intersect(s1: Shape, s2: Shape) -> Shape:
 
 
 def split(s1: Shape, s2: Shape) -> Shape:
+    """
+    Split one shape with another.
+    """
 
     builder = BRepAlgoAPI_Splitter()
     _bool_op(s1, s2, builder)
@@ -4183,6 +4231,9 @@ def clean(s: Shape) -> Shape:
 
 
 def fill(s: Shape, constraints: Sequence[Union[Shape, VectorLike]] = ()) -> Shape:
+    """
+    Fill edges/wire possibly obeying constraints.
+    """
 
     builder = BRepOffsetAPI_MakeFilling()
 
@@ -4201,14 +4252,19 @@ def fill(s: Shape, constraints: Sequence[Union[Shape, VectorLike]] = ()) -> Shap
     return _compound_or_shape(builder.Shape())
 
 
-def cap(s: Shape, ctx: Shape, constraints: Sequence[Union[Shape, VectorLike]] = ()) -> Shape:
+def cap(
+    s: Shape, ctx: Shape, constraints: Sequence[Union[Shape, VectorLike]] = ()
+) -> Shape:
+    """
+    Fill edges/wire possibly obeying constraints and try to connect smoothly to the context shape.
+    """
 
     builder = BRepOffsetAPI_MakeFilling()
-    builder.SetApproxParam(3,5)
-    builder.SetResolParam(2,15,10)
+    builder.SetApproxParam(3, 5)
+    builder.SetResolParam(2, 15, 10)
 
     for e in _get_edges(s):
-        f = next(iter(e.ancestors(ctx, 'Face')))
+        f = _get_one(e.ancestors(ctx, "Face"), "Face")
         builder.Add(e.wrapped, f.wrapped, GeomAbs_G2, True)
 
     for c in constraints:
@@ -4218,14 +4274,15 @@ def cap(s: Shape, ctx: Shape, constraints: Sequence[Union[Shape, VectorLike]] = 
         else:
             builder.Add(Vector(c).toPnt())
 
-
-
     builder.Build()
 
     return _compound_or_shape(builder.Shape())
 
 
 def fillet(s: Shape, e: Shape, r: float) -> Shape:
+    """
+    Fillet selected edges in a given shell or solid.
+    """
 
     builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
 
@@ -4238,6 +4295,9 @@ def fillet(s: Shape, e: Shape, r: float) -> Shape:
 
 
 def chamfer(s: Shape, e: Shape, d: float) -> Shape:
+    """
+    Chamfer selected edges in a given shell or solid.
+    """
 
     builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
 
@@ -4250,6 +4310,9 @@ def chamfer(s: Shape, e: Shape, d: float) -> Shape:
 
 
 def extrude(s: Shape, d: VectorLike) -> Shape:
+    """
+    Extrude a shape.
+    """
 
     results = []
 
@@ -4264,6 +4327,9 @@ def extrude(s: Shape, d: VectorLike) -> Shape:
 
 
 def revolve(s: Shape, p: VectorLike, d: VectorLike, a: float = 360):
+    """
+    Revolve a shape.
+    """
 
     results = []
     ax = gp_Ax1(Vector(p).toPnt(), Vector(d).toDir())
@@ -4309,6 +4375,9 @@ def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
 
 @multimethod
 def sweep(s: Shape, p: Shape, cap: bool = False) -> Shape:
+    """
+    Sweep edge or wire along a path.
+    """
 
     spine = _get_one_wire(p)
 
@@ -4329,6 +4398,9 @@ def sweep(s: Shape, p: Shape, cap: bool = False) -> Shape:
 
 @sweep.register
 def sweep(s: Sequence[Shape], p: Shape, cap: bool = False) -> Shape:
+    """
+    Sweep edges or wires along a path, chaning sections are supported.
+    """
 
     spine = _get_one_wire(p)
 
@@ -4352,6 +4424,9 @@ def sweep(s: Sequence[Shape], p: Shape, cap: bool = False) -> Shape:
 
 
 def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
+    """
+    Loft edges or wires.
+    """
 
     results = []
 
