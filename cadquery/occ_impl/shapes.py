@@ -1438,6 +1438,34 @@ class Shape(object):
 
         return Compound.makeCompound(_siblings([self], level))
 
+    def __add__(self, other: "Shape") -> "Shape":
+        """
+        Fuse self and other.
+        """
+
+        return fuse(self, other)
+
+    def __sub__(self, other: "Shape") -> "Shape":
+        """
+        Subtract other from self.
+        """
+
+        return cut(self, other)
+
+    def __mul__(self, other: "Shape") -> "Shape":
+        """
+        Intersect slef and other.
+        """
+
+        return intersect(self, other)
+
+    def __truediv__(self, other: "Shape") -> "Shape":
+        """
+        Split self with other.
+        """
+
+        return split(self, other)
+
 
 class ShapeProtocol(Protocol):
     @property
