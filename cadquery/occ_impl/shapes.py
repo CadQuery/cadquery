@@ -216,6 +216,8 @@ from OCP.GeomAbs import (
     GeomAbs_C0,
     GeomAbs_C1,
     GeomAbs_C2,
+    GeomAbs_G2,
+    GeomAbs_G1,
     GeomAbs_Intersection,
     GeomAbs_JoinType,
 )
@@ -3954,7 +3956,7 @@ def _get_edges(s: Shape) -> Iterable[Shape]:
     if t == "Edge":
         yield s
     elif t == "Wire":
-        yield from s.edges()
+        yield from _get_edges(s.edges())
     elif t == "Compound":
         for el in s:
             yield from _get_edges(el)
@@ -4080,11 +4082,7 @@ def sphere(d: float) -> Shape:
 
     return _compound_or_shape(
         BRepPrimAPI_MakeSphere(
-            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
-            d / 2,
-            0,
-            pi / 2,
-            2 * pi,
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), d / 2,
         ).Shape()
     )
 
@@ -4184,12 +4182,43 @@ def clean(s: Shape) -> Shape:
     return _compound_or_shape(builder.Shape())
 
 
-def fill(s: Shape) -> Shape:
+def fill(s: Shape, constraints: Sequence[Union[Shape, VectorLike]] = ()) -> Shape:
 
     builder = BRepOffsetAPI_MakeFilling()
 
     for e in _get_edges(s):
         builder.Add(e.wrapped, GeomAbs_C0)
+
+    for c in constraints:
+        if isinstance(c, Shape):
+            for e in _get_edges(c):
+                builder.Add(e.wrapped, GeomAbs_C0, False)
+        else:
+            builder.Add(Vector(c).toPnt())
+
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def cap(s: Shape, ctx: Shape, constraints: Sequence[Union[Shape, VectorLike]] = ()) -> Shape:
+
+    builder = BRepOffsetAPI_MakeFilling()
+    builder.SetApproxParam(3,5)
+    builder.SetResolParam(2,15,10)
+
+    for e in _get_edges(s):
+        f = next(iter(e.ancestors(ctx, 'Face')))
+        builder.Add(e.wrapped, f.wrapped, GeomAbs_G2, True)
+
+    for c in constraints:
+        if isinstance(c, Shape):
+            for e in _get_edges(c):
+                builder.Add(e.wrapped, GeomAbs_C0, False)
+        else:
+            builder.Add(Vector(c).toPnt())
+
+
 
     builder.Build()
 
