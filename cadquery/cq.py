@@ -4369,6 +4369,77 @@ class Workplane(object):
                 _selectShapes(self.objects)
             )._repr_javascript_()
 
+    def __getitem__(self, item):
+        return self.newObject(self.objects[item])
+
+    def filter_objects(self: T, f: Callable[[CQObject], bool]) -> T:
+        """
+        TODO
+        :param f:
+        :return:
+        """
+        return self.newObject(filter(f, self.objects))
+
+    def map_objects(self: T, f: Callable[[Iterable[CQObject]], Iterable[CQObject]]):
+        """
+        TODO
+        :param f: 
+        :return: 
+        """
+        return self.newObject(f(self.objects))
+
+    def sort_objects(self: T, key: Callable[[CQObject], Any]) -> T:
+        """
+        TODO
+        :param key:
+        :return:
+        """
+        return self.newObject(sorted(self.objects, key=key))
+
 
 # alias for backward compatibility
 CQ = Workplane
+
+
+class Group:
+    def __init__(self, key: Callable[[CQObject], Any], tol=TOL, fixed_width=False):
+        """
+        TODO
+        :param key:
+        :param tol:
+        :param fixed_width:
+        """
+        self.key = key
+        self.tol = tol
+        self.fixed_width = fixed_width
+        self._item = None
+        self._last_value = None
+
+    def __getitem__(self, item):
+        if self._item is None:
+            self._item = item
+            return self
+        raise ValueError("Group must not be indexed or sliced more than once")
+
+    def __call__(self, objs: Iterable[CQObject]) -> Iterable[CQObject]:
+        if self._item is None:
+            raise ValueError("Group must be indexed or sliced before it can be used.")
+
+        objs = sorted(objs, key=self.key)
+        groups = []
+        group = [objs[0]]
+        last_value = self.key(objs[0])
+        for obj in objs[1:]:
+            value = self.key(obj)
+            if value - last_value <= self.tol:
+                group.append(obj)
+                if not self.fixed_width:
+                    last_value = value
+            else:
+                groups.append(group)
+                group = [obj]
+                last_value = value
+
+        groups.append(group)
+
+        return [obj for group in groups[self._item] for obj in group]
