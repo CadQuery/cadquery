@@ -52,7 +52,12 @@ setup(
     setup_requires=setup_reqs,
     install_requires=reqs,
     extras_require={
-        "dev": ["docutils", "ipython", "pytest", "black@git+https://github.com/cadquery/black.git@cq",],
+        "dev": [
+            "docutils",
+            "ipython",
+            "pytest",
+            "black@git+https://github.com/cadquery/black.git@cq",
+        ],
         "ipython": ["ipython",],
     },
     include_package_data=True,
