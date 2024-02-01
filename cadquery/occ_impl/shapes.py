@@ -4034,6 +4034,128 @@ def _pts_to_harray(ps: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
     return rv
 
 
+def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
+    rv = TopTools_ListOfShape()
+
+    for el in s:
+        rv.Append(el.wrapped)
+
+    return rv
+
+
+# %% alternative constructors
+
+
+@multimethod
+def wire(*s: Shape) -> Shape:
+    """
+    Build wire from edges.
+    """
+
+    builder = BRepBuilderAPI_MakeWire()
+
+    edges = _shapes_to_toptools_list(e for el in s for e in _get_edges(el))
+    builder.Add(edges)
+
+    return _compound_or_shape(builder.Shape())
+
+
+@wire.register
+def wire(s: Sequence[Shape]) -> Shape:
+
+    return wire(*s)
+
+
+@multimethod
+def face(*s: Shape) -> Shape:
+    """
+    Builld face from edges or wires
+    """
+
+    from OCP.BOPAlgo import BOPAlgo_Tools
+
+    ws = Compound.makeCompound(s).wrapped
+    rv = TopoDS_Compound()
+
+    status = BOPAlgo_Tools.WiresToFaces_s(ws, rv)
+
+    if not status:
+        raise ValueError("Face construction failed")
+
+    return _get_one(_compound_or_shape(rv), "Face")
+
+
+@face.register
+def face(s: Sequence[Shape]) -> Shape:
+
+    return face(*s)
+
+
+@multimethod
+def shell(*s: Shape) -> Shape:
+    """
+    Buld shell form faces
+    """
+
+    builder = BRepBuilderAPI_Sewing()
+
+    for el in s:
+        for f in _get(el, "Face"):
+            builder.Add(f.wrapped)
+
+    builder.Perform()
+
+    return _compound_or_shape(builder.SewedShape())
+
+
+@shell.register
+def shell(s: Sequence[Shape]) -> Shape:
+
+    return shell(*s)
+
+
+@multimethod
+def solid(*s: Shape) -> Shape:
+    """
+    Build solids from shells
+    """
+
+    builder = ShapeFix_Solid()
+
+    rv = [builder.SolidFromShell(sh.wrapped) for el in s for sh in _get(el, "Shell")]
+
+    return _compound_or_shape(rv)
+
+
+@solid.register
+def solid(s: Sequence[Shape]) -> Shape:
+
+    return solid(*s)
+
+
+@multimethod
+def compound(*s: Shape) -> Shape:
+    """
+    Build compound from shapes
+    """
+
+    rv = TopoDS_Compound()
+
+    builder = TopoDS_Builder()
+    builder.MakeCompound(rv)
+
+    for el in s:
+        builder.Add(rv, el.wrapped)
+
+    return Compound(rv)
+
+
+@compound.register
+def compound(s: Sequence[Shape]) -> Shape:
+
+    return compound(*s)
+
+
 #%% primitives
 
 
