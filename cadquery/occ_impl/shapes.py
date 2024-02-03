@@ -4117,12 +4117,13 @@ def shell(s: Sequence[Shape]) -> Shape:
 @multimethod
 def solid(*s: Shape) -> Shape:
     """
-    Build solids from shells
+    Build solid from faces
     """
 
     builder = ShapeFix_Solid()
 
-    rv = [builder.SolidFromShell(sh.wrapped) for el in s for sh in _get(el, "Shell")]
+    faces = [f for el in s for f in _get(el, "Face")]
+    rv = builder.SolidFromShell(shell(*faces).wrapped)
 
     return _compound_or_shape(rv)
 
