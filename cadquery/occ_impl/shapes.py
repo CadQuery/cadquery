@@ -4009,17 +4009,34 @@ def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
     return wire_lists
 
 
+def _normalize(s: Shape) -> Shape:
+    """
+    Apply some normalizations:
+    - Shell with only one Face -> Face
+    """
+
+    t = s.ShapeType()
+    rv = s
+
+    if t == "Shell":
+        faces = s.Faces()
+        if len(faces) == 1:
+            rv = faces[0]
+
+    return rv
+
+
 def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
     """
     Convert a list of TopoDS_Shape to a Shape or a Compound.
     """
 
     if isinstance(s, TopoDS_Shape):
-        rv = Shape.cast(s)
+        rv = _normalize(Shape.cast(s))
     elif len(s) == 1:
-        rv = Shape.cast(s[0])
+        rv = _normalize(Shape.cast(s[0]))
     else:
-        rv = Compound.makeCompound([Shape.cast(el) for el in s])
+        rv = Compound.makeCompound([_normalize(Shape.cast(el)) for el in s])
 
     return rv
 
@@ -4204,6 +4221,16 @@ def polygon(*pts: VectorLike) -> Shape:
     builder.Close()
 
     return _compound_or_shape(builder.Wire())
+
+
+def rect(w: float, h: float) -> Shape:
+    """
+    Construct a rectangle
+    """
+
+    return polygon(
+        (-w / 2, -h / 2, 0), (w / 2, -h / 2, 0), (w / 2, h / 2, 0), (-w / 2, h / 2, 0)
+    )
 
 
 @multimethod
@@ -4573,12 +4600,12 @@ def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
 
 
 @multimethod
-def sweep(s: Shape, p: Shape, cap: bool = False) -> Shape:
+def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
     """
     Sweep edge or wire along a path.
     """
 
-    spine = _get_one_wire(p)
+    spine = _get_one_wire(path)
 
     results = []
 
@@ -4596,12 +4623,12 @@ def sweep(s: Shape, p: Shape, cap: bool = False) -> Shape:
 
 
 @sweep.register
-def sweep(s: Sequence[Shape], p: Shape, cap: bool = False) -> Shape:
+def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
     """
     Sweep edges or wires along a path, chaning sections are supported.
     """
 
-    spine = _get_one_wire(p)
+    spine = _get_one_wire(path)
 
     results = []
 
@@ -4622,6 +4649,7 @@ def sweep(s: Sequence[Shape], p: Shape, cap: bool = False) -> Shape:
     return _compound_or_shape(results)
 
 
+@multimethod
 def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
     """
     Loft edges or wires.
@@ -4644,3 +4672,9 @@ def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
         results.append(builder.Shape())
 
     return _compound_or_shape(results)
+
+
+@loft.register
+def loft(*s: Shape, cap: bool = False, ruled: bool = False) -> Shape:
+
+    return loft(s, cap, ruled)
