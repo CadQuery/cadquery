@@ -201,6 +201,15 @@ from OCP.Font import (
 
 from OCP.StdPrs import StdPrs_BRepFont, StdPrs_BRepTextBuilder as Font_BRepTextBuilder
 
+from OCP.Graphic3d import (
+    Graphic3d_HTA_LEFT,
+    Graphic3d_HTA_CENTER,
+    Graphic3d_HTA_RIGHT,
+    Graphic3d_VTA_BOTTOM,
+    Graphic3d_VTA_CENTER,
+    Graphic3d_VTA_TOP,
+)
+
 from OCP.NCollection import NCollection_Utf8String
 
 from OCP.BRepFeat import BRepFeat_MakeDPrism
@@ -4370,6 +4379,62 @@ def cone(d1: float, d2: float, h: float) -> Shape:
             2 * pi,
         ).Shape()
     )
+
+
+def text(
+    txt: str,
+    size: float,
+    font: str = "Arial",
+    path: Optional[str] = None,
+    kind: Literal["regular", "bold", "italic"] = "regular",
+    halign: Literal["center", "left", "right"] = "center",
+    valign: Literal["center", "top", "bottom"] = "center",
+) -> Shape:
+    """
+    Create a flat text.
+    """
+
+    builder = Font_BRepTextBuilder()
+
+    font_kind = {
+        "regular": Font_FA_Regular,
+        "bold": Font_FA_Bold,
+        "italic": Font_FA_Italic,
+    }[kind]
+
+    mgr = Font_FontMgr.GetInstance_s()
+
+    if path and mgr.CheckFont(TCollection_AsciiString(path).ToCString()):
+        font_t = Font_SystemFont(TCollection_AsciiString(path))
+        font_t.SetFontPath(font_kind, TCollection_AsciiString(path))
+        mgr.RegisterFont(font_t, True)
+
+    else:
+        font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+
+    font_i = StdPrs_BRepFont(
+        NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, float(size),
+    )
+
+    if halign == "left":
+        theHAlign = Graphic3d_HTA_LEFT
+    elif halign == "center":
+        theHAlign = Graphic3d_HTA_CENTER
+    else:
+        theHAlign = Graphic3d_HTA_RIGHT
+
+    if valign == "bottom":
+        theVAlign = Graphic3d_VTA_BOTTOM
+    elif valign == "center":
+        theVAlign = Graphic3d_VTA_CENTER
+    else:
+        theVAlign = Graphic3d_VTA_TOP
+
+    rv = builder.Perform(
+        font_i, NCollection_Utf8String(txt), theHAlign=theHAlign, theVAlign=theVAlign
+    )
+
+    return _compound_or_shape(rv)
 
 
 #%% ops
