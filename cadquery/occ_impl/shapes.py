@@ -1040,6 +1040,7 @@ class Shape(object):
 
         return self
 
+    @multimethod
     def moved(self: T, loc: Location) -> T:
         """
         Apply a location in relative sense (i.e. update current location) to a copy of self
@@ -1049,6 +1050,19 @@ class Shape(object):
         r.forConstruction = self.forConstruction
 
         return r
+
+    @moved.register
+    def moved(self: T, locs: Sequence[Location]) -> "Shape":
+        """
+        Apply locations in relative sense (i.e. update current location) to a copy of self
+        """
+
+        rv = []
+
+        for l in locs:
+            rv.append(self.wrapped.Moved(l.wrapped))
+
+        return _compound_or_shape(rv)
 
     def __hash__(self) -> int:
 
