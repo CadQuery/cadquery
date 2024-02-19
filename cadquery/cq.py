@@ -2503,7 +2503,7 @@ class Workplane(object):
         if useLocalCoordinates:
             res = [callback(p).move(loc) for p in pnts]
         else:
-            res = [callback(p * loc) for p in pnts]
+            res = [callback(loc * p) for p in pnts]
 
         for r in res:
             if isinstance(r, Wire) and not r.forConstruction:
