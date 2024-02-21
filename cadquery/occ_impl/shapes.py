@@ -1052,6 +1052,14 @@ class Shape(object):
         return r
 
     @moved.register
+    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> "Shape":
+        """
+        Apply a location in relative sense (i.e. update current location) to a copy of self
+        """
+
+        return self.moved((loc1, loc2) + locs)
+
+    @moved.register
     def moved(self: T, locs: Sequence[Location]) -> "Shape":
         """
         Apply locations in relative sense (i.e. update current location) to a copy of self
