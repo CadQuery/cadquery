@@ -14,6 +14,8 @@ from OCP.gp import (
     gp_XYZ,
     gp_EulerSequence,
     gp,
+    gp_Quaternion,
+    gp_Extrinsic_XYZ,
 )
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
@@ -983,6 +985,20 @@ class Location(object):
         T.SetRotation(
             gp_Ax1(Vector().toPnt(), Vector(ax).toDir()), angle * math.pi / 180.0
         )
+        T.SetTranslationPart(Vector(t).wrapped)
+
+        self.wrapped = TopLoc_Location(T)
+
+    @__init__.register
+    def __init__(self, t: VectorLike, angles: Tuple[Real, Real, Real]) -> None:
+        """Location with translation t and 3 rotation angles."""
+
+        T = gp_Trsf()
+
+        q = gp_Quaternion()
+        q.SetEulerAngles(gp_Extrinsic_XYZ, *angles)
+
+        T.SetRotation(q)
         T.SetTranslationPart(Vector(t).wrapped)
 
         self.wrapped = TopLoc_Location(T)
