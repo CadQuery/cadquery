@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # These can be modified rather than hardcoding values for each dimension.
 width = 2.0  # Overall width of the plate

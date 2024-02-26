@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # 1.  Establishes a workplane that an object can be built on.
 # 1a. Uses the named plane orientation "front" to define the workplane, meaning

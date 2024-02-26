@@ -1,5 +1,6 @@
 import cadquery as cq
 from cadquery.selectors import AreaNthSelector
+from cadquery.vis import show_object
 
 case_bottom = (
     cq.Workplane("XY")

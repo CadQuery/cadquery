@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # The dimensions of the model. These can be modified rather than changing the
 # shape's code directly.

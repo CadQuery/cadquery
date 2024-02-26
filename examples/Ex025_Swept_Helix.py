@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 r = 0.5  # Radius of the helix
 p = 0.4  # Pitch of the helix - vertical distance between loops

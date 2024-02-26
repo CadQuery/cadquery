@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # Create a plate with 4 counter-sunk holes in it.
 # 1.  Establishes a workplane using an XY object instead of a named plane.

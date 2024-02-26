@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # 1.  Establishes a workplane to create the spline on to extrude.
 # 1a. Uses the X and Y origins to define the workplane, meaning that the

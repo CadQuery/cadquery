@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # Create a lofted section between a rectangle and a circular section.
 # 1.  Establishes a workplane that an object can be built on.

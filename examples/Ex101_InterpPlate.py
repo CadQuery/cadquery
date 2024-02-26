@@ -1,5 +1,6 @@
 from math import sin, cos, pi, sqrt
 import cadquery as cq
+from cadquery.vis import show_object
 
 # TEST_1
 # example from PythonOCC core_geometry_geomplate.py, use of thickness = 0 returns 2D surface.

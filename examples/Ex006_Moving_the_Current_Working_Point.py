@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # These can be modified rather than hardcoding values for each dimension.
 circle_radius = 3.0  # The outside radius of the plate

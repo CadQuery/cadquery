@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # Create a plate with 4 rounded corners in the Z-axis.
 # 1.  Establishes a workplane that an object can be built on.

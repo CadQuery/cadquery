@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # Points we will use to create spline and polyline paths to sweep over
 pts = [(0, 1), (1, 2), (2, 4)]

@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # Create a simple block with a hole through it that we can split.
 # 1.  Establishes a workplane that an object can be built on.

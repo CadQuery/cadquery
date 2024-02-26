@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.vis import show_object
 
 # X axis line length 20.0
 path = cq.Workplane("XZ").moveTo(-10, 0).lineTo(10, 0)
