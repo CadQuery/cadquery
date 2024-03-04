@@ -56,7 +56,7 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
+from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt, TColgp_Array1OfPnt
 
 # Array of vectors (used for B-spline interpolation):
 from OCP.TColgp import TColgp_Array1OfVec
@@ -146,6 +146,7 @@ from OCP.BRepAlgoAPI import (
 )
 
 from OCP.Geom import (
+    Geom_BezierCurve,
     Geom_ConicalSurface,
     Geom_CylindricalSurface,
     Geom_Surface,
@@ -2090,6 +2091,26 @@ class Edge(Shape, Mixin1D):
         return cls(
             BRepBuilderAPI_MakeEdge(Vector(v1).toPnt(), Vector(v2).toPnt()).Edge()
         )
+
+    @classmethod
+    def makeBezier(cls, points: List[Vector]) -> "Edge":
+        """
+        Create a cubic Bézier Curve from the points.
+
+        :param points: a list of Vectors that represent the points.
+            The edge will pass through the first and the last point,
+            and the inner points are Bézier control points.
+        :return: An edge
+        """
+
+        # Convert to a TColgp_Array1OfPnt
+        arr = TColgp_Array1OfPnt(1, len(points))
+        for i, v in enumerate(points):
+            arr.SetValue(i + 1, Vector(v).toPnt())
+
+        bez = Geom_BezierCurve(arr)
+
+        return cls(BRepBuilderAPI_MakeEdge(bez).Edge())
 
 
 class Wire(Shape, Mixin1D):

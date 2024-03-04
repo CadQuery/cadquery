@@ -859,6 +859,23 @@ class Sketch(object):
 
         return self.spline(pts, None, False, tag, forConstruction)
 
+    def bezier(
+        self: T,
+        pts: Iterable[Point],
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
+    ) -> T:
+        """
+        Construct an bezier curve.
+
+        The edge will pass through the last points, and the inner points
+        are bezier control points.
+        """
+        p1 = self._endPoint()
+        val = Edge.makeBezier([Vector(*p) for p in pts])
+
+        return self.edge(val, tag, forConstruction)
+
     def close(self: T, tag: Optional[str] = None) -> T:
         """
         Connect last edge to the first one.

@@ -470,6 +470,19 @@ def test_edge_interface():
     assert len(s6.vertices()._selection) == 1
 
 
+def test_bezier():
+    s1 = (
+        Sketch()
+        .segment((0, 0), (0, 0.5))
+        .bezier(((0, 0.5), (-1, 2), (1, 0.5), (5, 0)))
+        .bezier(((5, 0), (1, -0.5), (-1, -2), (0, -0.5)))
+        .close()
+        .assemble()
+    )
+    assert s1._faces.Area() == approx(5.35)
+    # What other kind of tests can we do?
+
+
 def test_assemble():
 
     s1 = Sketch()
