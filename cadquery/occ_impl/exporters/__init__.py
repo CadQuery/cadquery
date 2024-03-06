@@ -132,6 +132,8 @@ def export(
     else:
         raise ValueError("Unknown export type")
 
+Workplane.export = export
+
 
 @deprecate()
 def toString(shape, exportType, tolerance=0.1, angularTolerance=0.05):
