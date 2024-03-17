@@ -25,6 +25,7 @@ from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
+from OCP.gp import gp_EulerSequence
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -259,7 +260,14 @@ def toVTK(
     for shape, _, loc, col_ in assy:
 
         col = col_.toTuple() if col_ else color
-        trans, rot = loc.toTuple()
+        T = loc.wrapped.Transformation()
+        trans = T.TranslationPart().Coord()
+        rot = tuple(
+            map(
+                degrees,
+                T.GetRotation().GetEulerAngles(gp_EulerSequence.gp_Intrinsic_ZXY),
+            )
+        )
 
         data = shape.toVtkPolyData(tolerance, angularTolerance)
 
@@ -290,7 +298,7 @@ def toVTK(
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
-        actor.SetOrientation(*map(degrees, rot))
+        actor.SetOrientation(rot[1], rot[2], rot[0])
         actor.GetProperty().SetColor(*col[:3])
         actor.GetProperty().SetOpacity(col[3])
 
@@ -302,7 +310,7 @@ def toVTK(
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
-        actor.SetOrientation(*map(degrees, rot))
+        actor.SetOrientation(rot[1], rot[2], rot[0])
         actor.GetProperty().SetColor(0, 0, 0)
         actor.GetProperty().SetLineWidth(2)
 
