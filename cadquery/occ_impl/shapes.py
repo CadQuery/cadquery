@@ -1279,6 +1279,8 @@ class Shape(object):
 
             loc = TopLoc_Location()
             poly = BRep_Tool.Triangulation_s(f.wrapped, loc)
+            if poly is None:
+                continue
             Trsf = loc.Transformation()
             reverse = (
                 True
