@@ -863,6 +863,8 @@ constraints to obtain a fully parametric assembly. This can be achieved in the f
         .solve()
     )
 
+    show_object(assy)
+
 This code results in identical object as one from the previous section. The added
 benefit is that with changing parameters ``w``, ``d``, ``h`` the final locations
 will be calculated automatically. It is admittedly dense and can be made clearer
