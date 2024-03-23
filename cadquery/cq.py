@@ -1629,6 +1629,39 @@ class Workplane(object):
 
         return self.newObject([p])
 
+    def bezier(
+        self: T,
+        listOfXYTuple: Iterable[VectorLike],
+        forConstruction: bool = False,
+        includeCurrent: bool = False,
+        makeWire: bool = False,
+    ) -> T:
+        """
+        Make a cubic Bézier curve by the provided points (2D or 3D).
+
+        :param listOfXYTuple: Bezier control points and end point.
+            All points except the last point are Bezier control points,
+            and the last point is the end point
+        :param includeCurrent: Use the current point as a starting point of the curve
+        :param makeWire: convert the resulting bezier edge to a wire
+        :return: a Workplane object with the current point at the end of the bezier
+
+        The Bézier Will begin at either current point or the first point
+        of listOfXYTuple, and end with the last point of listOfXYTuple
+        """
+        allPoints = self._toVectors(listOfXYTuple, includeCurrent)
+
+        e = Edge.makeBezier(allPoints)
+
+        if makeWire:
+            rv_w = Wire.assembleEdges([e])
+            if not forConstruction:
+                self._addPendingWire(rv_w)
+        elif not forConstruction:
+            self._addPendingEdge(e)
+
+        return self.newObject([rv_w if makeWire else e])
+
     # line a specified incremental amount from current point
     def line(self: T, xDist: float, yDist: float, forConstruction: bool = False) -> T:
         """
