@@ -258,7 +258,7 @@ This example uses a polyline to create one half of an i-beam shape, which is mir
 
         * :py:meth:`Workplane.polyline` **!**
         * :py:meth:`Workplane`
-        * :py:meth:`Workplane.mirrorY`
+        * :py:meth:`Workplane.mirrorY` **!**
         * :py:meth:`Workplane.extrude`
 
 
