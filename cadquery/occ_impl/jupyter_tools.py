@@ -8,8 +8,7 @@ from .exporters.vtk import toString
 from .shapes import Shape
 from ..assembly import Assembly
 from .assembly import toJSON
-
-DEFAULT_COLOR = [1, 0.8, 0, 1]
+from ..vis import DEFAULT_COLOR
 
 TEMPLATE_RENDER = """
 
