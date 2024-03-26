@@ -14,6 +14,8 @@ from OCP.gp import (
     gp_XYZ,
     gp_EulerSequence,
     gp,
+    gp_Quaternion,
+    gp_Extrinsic_XYZ,
 )
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
@@ -22,6 +24,7 @@ from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
 
 from ..types import Real
+from ..utils import cqmultimethod as multimethod
 
 TOL = 1e-2
 
@@ -942,75 +945,77 @@ class Location(object):
 
     wrapped: TopLoc_Location
 
-    @overload
+    @multimethod
     def __init__(self) -> None:
         """Empty location with not rotation or translation with respect to the original location."""
-        ...
 
-    @overload
+        self.wrapped = TopLoc_Location(gp_Trsf())
+
+    @__init__.register
     def __init__(self, t: VectorLike) -> None:
         """Location with translation t with respect to the original location."""
-        ...
 
-    @overload
+        T = gp_Trsf()
+        T.SetTranslationPart(Vector(t).wrapped)
+
+        self.wrapped = TopLoc_Location(T)
+
+    @__init__.register
     def __init__(self, t: Plane) -> None:
         """Location corresponding to the location of the Plane t."""
-        ...
 
-    @overload
+        T = gp_Trsf()
+        T.SetTransformation(gp_Ax3(t.origin.toPnt(), t.zDir.toDir(), t.xDir.toDir()))
+        T.Invert()
+
+        self.wrapped = TopLoc_Location(T)
+
+    @__init__.register
     def __init__(self, t: Plane, v: VectorLike) -> None:
         """Location corresponding to the angular location of the Plane t with translation v."""
-        ...
 
-    @overload
-    def __init__(self, t: TopLoc_Location) -> None:
+        T = gp_Trsf()
+        T.SetTransformation(gp_Ax3(Vector(v).toPnt(), t.zDir.toDir(), t.xDir.toDir()))
+        T.Invert()
+
+        self.wrapped = TopLoc_Location(T)
+
+    @__init__.register
+    def __init__(self, T: TopLoc_Location) -> None:
         """Location wrapping the low-level TopLoc_Location object t"""
-        ...
 
-    @overload
-    def __init__(self, t: gp_Trsf) -> None:
+        self.wrapped = T
+
+    @__init__.register
+    def __init__(self, T: gp_Trsf) -> None:
         """Location wrapping the low-level gp_Trsf object t"""
-        ...
 
-    @overload
-    def __init__(self, t: VectorLike, ax: VectorLike, angle: float) -> None:
+        self.wrapped = TopLoc_Location(T)
+
+    @__init__.register
+    def __init__(self, t: VectorLike, ax: VectorLike, angle: Real) -> None:
         """Location with translation t and rotation around ax by angle
         with respect to the original location."""
-        ...
 
-    def __init__(self, *args):
+        T = gp_Trsf()
+        T.SetRotation(
+            gp_Ax1(Vector().toPnt(), Vector(ax).toDir()), angle * math.pi / 180.0
+        )
+        T.SetTranslationPart(Vector(t).wrapped)
+
+        self.wrapped = TopLoc_Location(T)
+
+    @__init__.register
+    def __init__(self, t: VectorLike, angles: Tuple[Real, Real, Real]) -> None:
+        """Location with translation t and 3 rotation angles."""
 
         T = gp_Trsf()
 
-        if len(args) == 0:
-            pass
-        elif len(args) == 1:
-            t = args[0]
+        q = gp_Quaternion()
+        q.SetEulerAngles(gp_Extrinsic_XYZ, *angles)
 
-            if isinstance(t, (Vector, tuple)):
-                T.SetTranslationPart(Vector(t).wrapped)
-            elif isinstance(t, Plane):
-                cs = gp_Ax3(t.origin.toPnt(), t.zDir.toDir(), t.xDir.toDir())
-                T.SetTransformation(cs)
-                T.Invert()
-            elif isinstance(t, TopLoc_Location):
-                self.wrapped = t
-                return
-            elif isinstance(t, gp_Trsf):
-                T = t
-            else:
-                raise TypeError("Unexpected parameters")
-        elif len(args) == 2:
-            t, v = args
-            cs = gp_Ax3(Vector(v).toPnt(), t.zDir.toDir(), t.xDir.toDir())
-            T.SetTransformation(cs)
-            T.Invert()
-        else:
-            t, ax, angle = args
-            T.SetRotation(
-                gp_Ax1(Vector().toPnt(), Vector(ax).toDir()), angle * math.pi / 180.0
-            )
-            T.SetTranslationPart(Vector(t).wrapped)
+        T.SetRotation(q)
+        T.SetTranslationPart(Vector(t).wrapped)
 
         self.wrapped = TopLoc_Location(T)
 
