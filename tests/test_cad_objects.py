@@ -744,12 +744,12 @@ class TestCadObjects(BaseTest):
 
     def testWireFillet(self):
         points = [
-            [0.000, 0.000, 0.000],
-            [-0.287, 1.183, -0.592],
-            [-1.404, 4.113, -2.787],
-            [-1.332, 1.522, 0.553],
-            [7.062, 0.433, -0.097],
-            [8.539, -0.000, -0.000],
+            (0.000, 0.000, 0.000),
+            (-0.287, 1.183, -0.592),
+            (-1.404, 4.113, -2.787),
+            (-1.332, 1.522, 0.553),
+            (7.062, 0.433, -0.097),
+            (8.539, -0.000, -0.000),
         ]
         wire = Wire.makePolygon(points, close=False)
 
@@ -765,6 +765,10 @@ class TestCadObjects(BaseTest):
         # a radius
         with self.assertRaises(ValueError):
             wfillet = wire.fillet(radius=1.0)
+
+        # Fillet a single vertex with a Vertex attribute
+        wfillet = wire.fillet(radius=0.560, vertices=[Vertex.makeVertex(*points[1])])
+        assert len(wfillet.Edges()) == len(points)
 
 
 @pytest.mark.parametrize(

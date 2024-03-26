@@ -2401,7 +2401,9 @@ class Wire(Shape, Mixin1D):
         # Make vertices into a set so that we can query for membership
         # in O(log n).
         if vertices is not None:
-            vertices = {Vector(v).toTuple() for v in vertices}
+            verticesSet = {
+                v.toTuple() if isinstance(v, Vertex) else tuple(v) for v in vertices
+            }
 
         for i in range(len(edges) - 1):
             nextEdge = edges[i + 1]
@@ -2416,7 +2418,7 @@ class Wire(Shape, Mixin1D):
             #  2. The vertex is not in the vertices white list
             vertex = currentEdge.startPoint().toTuple()
             if normalDir.Length == 0 or (
-                vertices is not None and vertex not in vertices
+                vertices is not None and vertex not in verticesSet
             ):
                 newEdges.append(currentEdge)
                 currentEdge = nextEdge
