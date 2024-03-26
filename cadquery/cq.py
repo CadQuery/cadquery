@@ -2231,7 +2231,11 @@ class Workplane(object):
         # Calculate the sagitta from the radius
         length = endPoint.sub(startPoint).Length / 2.0
         try:
-            sag = abs(radius) - math.sqrt(radius ** 2 - length ** 2)
+            sag = abs(radius)
+            r_2_l_2 = radius ** 2 - length ** 2
+            # Float imprecision can lead slightly negative values: consider them as zeros
+            if abs(r_2_l_2) >= TOL:
+                sag -= math.sqrt(r_2_l_2)
         except ValueError:
             raise ValueError("Arc radius is not large enough to reach the end point.")
 
