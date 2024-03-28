@@ -2414,9 +2414,7 @@ class Wire(Shape, Mixin1D):
             #  1. The edges are are parallell
             #  2. The vertex is not in the vertices white list
             vertex = currentEdge.startPoint()
-            if normalDir.Length == 0 or (
-                vertex not in verticesSet
-            ):
+            if normalDir.Length == 0 or (vertex not in verticesSet):
                 newEdges.append(currentEdge)
                 currentEdge = nextEdge
                 continue
