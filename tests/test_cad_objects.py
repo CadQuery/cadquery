@@ -758,17 +758,13 @@ class TestCadObjects(BaseTest):
         assert len(wfillet.Edges()) == 2 * len(points) - 3
 
         # Fillet a single vertex
-        wfillet = wire.fillet(radius=0.560, vertices=[points[1]])
+        wfillet = wire.fillet(radius=0.560, vertices=wire.vertices("<<X[-2]"))
         assert len(wfillet.Edges()) == len(points)
 
         # Assert exception if trying to fillet with too big
         # a radius
         with self.assertRaises(ValueError):
             wfillet = wire.fillet(radius=1.0)
-
-        # Fillet a single vertex with a Vertex attribute
-        wfillet = wire.fillet(radius=0.560, vertices=[Vertex.makeVertex(*points[1])])
-        assert len(wfillet.Edges()) == len(points)
 
 
 @pytest.mark.parametrize(
