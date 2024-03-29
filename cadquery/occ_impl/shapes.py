@@ -2395,6 +2395,7 @@ class Wire(Shape, Mixin1D):
         :return: A wire with filleted corners
         """
         edges = list(self)
+        all_vertices = self.Vertices()
         newEdges = []
         currentEdge = edges[0]
 
@@ -2413,8 +2414,7 @@ class Wire(Shape, Mixin1D):
             # Check conditions for skipping fillet:
             #  1. The edges are are parallell
             #  2. The vertex is not in the vertices white list
-            vertex = currentEdge.startPoint()
-            if normalDir.Length == 0 or (vertex not in verticesSet):
+            if normalDir.Length == 0 or (all_vertices[i + 1] not in verticesSet):
                 newEdges.append(currentEdge)
                 currentEdge = nextEdge
                 continue
@@ -2446,6 +2446,47 @@ class Wire(Shape, Mixin1D):
         newEdges.append(currentEdge)
 
         return Wire.assembleEdges(newEdges)
+
+
+    def firstVertex(self) -> Vertex:
+        """
+        First vertex of the wire.
+        """
+
+        exp = BRepTools_WireExplorer(self.wrapped)
+
+        return Vertex(exp.CurrentVertex())
+
+
+    def lastVertex(self) -> Vertex:
+        """
+        Last vertex of the wire.
+        """
+
+        exp = BRepTools_WireExplorer(self.wrapped)
+        while exp.More():
+            exp.Next()
+
+        return Vertex(exp.CurrentVertex())
+
+
+    def Vertices(self) -> List[Vertex]:
+        """
+        Ordered list of vertices of the wire.
+        """
+
+        rv = []
+
+        exp = BRepTools_WireExplorer(self.wrapped)
+        rv.append(Vertex(exp.CurrentVertex()))
+
+        while exp.More():
+            exp.Next()
+
+        rv.append(Vertex(exp.CurrentVertex()))
+
+        return rv 
+
 
     def __iter__(self) -> Iterator[Edge]:
         """
