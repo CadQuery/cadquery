@@ -2479,6 +2479,10 @@ class Wire(Shape, Mixin1D):
             exp.Next()
             rv.append(Vertex(exp.CurrentVertex()))
 
+        # handle closed wires correclty
+        if self.IsClosed():
+            rv = rv[:-1]
+
         return rv
 
     def __iter__(self) -> Iterator[Edge]:
