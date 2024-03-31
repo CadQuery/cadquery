@@ -2385,22 +2385,18 @@ class Wire(Shape, Mixin1D):
         self, radius: float, vertices: Optional[Iterable[Vertex]] = None
     ) -> "Wire":
         """
-
         Apply 2D or 3D fillet to a wire
-
         :param wire: The input wire to fillet. Currently only open wires are supported
         :param radius: the radius of the fillet, must be > zero
         :param vertices: Optional list of vertices to fillet. By default all vertices are fillet.
-
         :return: A wire with filleted corners
         """
+
         edges = list(self)
         all_vertices = self.Vertices()
         newEdges = []
         currentEdge = edges[0]
 
-        # Make vertices into a set so that we can query for membership
-        # in O(log n).
         verticesSet = set(vertices) if vertices else set()
 
         for i in range(len(edges) - 1):
@@ -2414,7 +2410,9 @@ class Wire(Shape, Mixin1D):
             # Check conditions for skipping fillet:
             #  1. The edges are are parallell
             #  2. The vertex is not in the vertices white list
-            if normalDir.Length == 0 or (all_vertices[i + 1] not in verticesSet):
+            if normalDir.Length == 0 or (
+                all_vertices[i + 1] not in verticesSet and bool(verticesSet)
+            ):
                 newEdges.append(currentEdge)
                 currentEdge = nextEdge
                 continue
@@ -2447,7 +2445,6 @@ class Wire(Shape, Mixin1D):
 
         return Wire.assembleEdges(newEdges)
 
-
     def firstVertex(self) -> Vertex:
         """
         First vertex of the wire.
@@ -2456,7 +2453,6 @@ class Wire(Shape, Mixin1D):
         exp = BRepTools_WireExplorer(self.wrapped)
 
         return Vertex(exp.CurrentVertex())
-
 
     def lastVertex(self) -> Vertex:
         """
@@ -2468,7 +2464,6 @@ class Wire(Shape, Mixin1D):
             exp.Next()
 
         return Vertex(exp.CurrentVertex())
-
 
     def Vertices(self) -> List[Vertex]:
         """
@@ -2482,11 +2477,9 @@ class Wire(Shape, Mixin1D):
 
         while exp.More():
             exp.Next()
+            rv.append(Vertex(exp.CurrentVertex()))
 
-        rv.append(Vertex(exp.CurrentVertex()))
-
-        return rv 
-
+        return rv
 
     def __iter__(self) -> Iterator[Edge]:
         """
