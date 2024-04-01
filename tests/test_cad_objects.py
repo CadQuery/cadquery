@@ -758,7 +758,7 @@ class TestCadObjects(BaseTest):
         assert len(wfillet.Edges()) == 2 * len(points) - 3
 
         # Fillet a single vertex
-        wfillet = wire.fillet(radius=0.560, vertices=wire.vertices("<<X[-2]"))
+        wfillet = wire.fillet(radius=0.560, vertices=wire.Vertices()[1:2])
         assert len(wfillet.Edges()) == len(points)
 
         # Assert exception if trying to fillet with too big
