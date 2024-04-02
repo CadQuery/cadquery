@@ -2445,26 +2445,6 @@ class Wire(Shape, Mixin1D):
 
         return Wire.assembleEdges(newEdges)
 
-    def firstVertex(self) -> Vertex:
-        """
-        First vertex of the wire.
-        """
-
-        exp = BRepTools_WireExplorer(self.wrapped)
-
-        return Vertex(exp.CurrentVertex())
-
-    def lastVertex(self) -> Vertex:
-        """
-        Last vertex of the wire.
-        """
-
-        exp = BRepTools_WireExplorer(self.wrapped)
-        while exp.More():
-            exp.Next()
-
-        return Vertex(exp.CurrentVertex())
-
     def Vertices(self) -> List[Vertex]:
         """
         Ordered list of vertices of the wire.
