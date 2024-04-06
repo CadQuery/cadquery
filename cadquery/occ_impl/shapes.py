@@ -2408,7 +2408,7 @@ class Wire(Shape, Mixin1D):
             normalDir = currentDir.cross(nextDir)
 
             # Check conditions for skipping fillet:
-            #  1. The edges are are parallell
+            #  1. The edges are parallel
             #  2. The vertex is not in the vertices white list
             if normalDir.Length == 0 or (
                 all_vertices[i + 1] not in verticesSet and bool(verticesSet)
