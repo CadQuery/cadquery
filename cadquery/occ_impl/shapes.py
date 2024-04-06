@@ -265,6 +265,8 @@ from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
 
 from OCP.BRepAlgo import BRepAlgo
 
+from OCP.ChFi2d import ChFi2d_FilletAPI  # For Wire.Fillet()
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -2378,6 +2380,90 @@ class Wire(Shape, Mixin1D):
         f = Face.makeFromWires(self)
 
         return f.chamfer2D(d, vertices).outerWire()
+
+    def fillet(
+        self, radius: float, vertices: Optional[Iterable[Vertex]] = None
+    ) -> "Wire":
+        """
+        Apply 2D or 3D fillet to a wire
+        :param wire: The input wire to fillet. Currently only open wires are supported
+        :param radius: the radius of the fillet, must be > zero
+        :param vertices: Optional list of vertices to fillet. By default all vertices are fillet.
+        :return: A wire with filleted corners
+        """
+
+        edges = list(self)
+        all_vertices = self.Vertices()
+        newEdges = []
+        currentEdge = edges[0]
+
+        verticesSet = set(vertices) if vertices else set()
+
+        for i in range(len(edges) - 1):
+            nextEdge = edges[i + 1]
+
+            # Create a plane that is spanned by currentEdge and nextEdge
+            currentDir = currentEdge.tangentAt(1)
+            nextDir = nextEdge.tangentAt(0)
+            normalDir = currentDir.cross(nextDir)
+
+            # Check conditions for skipping fillet:
+            #  1. The edges are parallel
+            #  2. The vertex is not in the vertices white list
+            if normalDir.Length == 0 or (
+                all_vertices[i + 1] not in verticesSet and bool(verticesSet)
+            ):
+                newEdges.append(currentEdge)
+                currentEdge = nextEdge
+                continue
+
+            # Prepare for using ChFi2d_FilletAPI
+            pointInPlane = currentEdge.Center().toPnt()
+            cornerPlane = gp_Pln(pointInPlane, normalDir.toDir())
+
+            filletMaker = ChFi2d_FilletAPI(
+                currentEdge.wrapped, nextEdge.wrapped, cornerPlane
+            )
+
+            ok = filletMaker.Perform(radius)
+            if not ok:
+                raise ValueError(f"Failed fillet at vertex {i+1}!")
+
+            # Get the result of the fillet operation
+            thePoint = next(iter(nextEdge)).Center().toPnt()
+            res_arc = filletMaker.Result(
+                thePoint, currentEdge.wrapped, nextEdge.wrapped
+            )
+
+            newEdges.append(currentEdge)
+            newEdges.append(Edge(res_arc))
+
+            currentEdge = nextEdge
+
+        # Add the last edge
+        newEdges.append(currentEdge)
+
+        return Wire.assembleEdges(newEdges)
+
+    def Vertices(self) -> List[Vertex]:
+        """
+        Ordered list of vertices of the wire.
+        """
+
+        rv = []
+
+        exp = BRepTools_WireExplorer(self.wrapped)
+        rv.append(Vertex(exp.CurrentVertex()))
+
+        while exp.More():
+            exp.Next()
+            rv.append(Vertex(exp.CurrentVertex()))
+
+        # handle closed wires correclty
+        if self.IsClosed():
+            rv = rv[:-1]
+
+        return rv
 
     def __iter__(self) -> Iterator[Edge]:
         """

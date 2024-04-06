@@ -742,6 +742,30 @@ class TestCadObjects(BaseTest):
         )
         self.assertAlmostEqual(many_rad.radius(), 1.0)
 
+    def testWireFillet(self):
+        points = [
+            (0.000, 0.000, 0.000),
+            (-0.287, 1.183, -0.592),
+            (-1.404, 4.113, -2.787),
+            (-1.332, 1.522, 0.553),
+            (7.062, 0.433, -0.097),
+            (8.539, -0.000, -0.000),
+        ]
+        wire = Wire.makePolygon(points, close=False)
+
+        # Fillet the wire
+        wfillet = wire.fillet(radius=0.560)
+        assert len(wfillet.Edges()) == 2 * len(points) - 3
+
+        # Fillet a single vertex
+        wfillet = wire.fillet(radius=0.560, vertices=wire.Vertices()[1:2])
+        assert len(wfillet.Edges()) == len(points)
+
+        # Assert exception if trying to fillet with too big
+        # a radius
+        with self.assertRaises(ValueError):
+            wfillet = wire.fillet(radius=1.0)
+
 
 @pytest.mark.parametrize(
     "points, close, expected_edges",
