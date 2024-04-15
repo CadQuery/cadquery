@@ -4208,12 +4208,19 @@ def compound(s: Sequence[Shape]) -> Shape:
 #%% primitives
 
 
+@multimethod
 def vertex(x: float, y: float, z: float) -> Shape:
     """
     Construct a vertex from cooridnates.
     """
 
     return _compound_or_shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
+
+
+@vertex.register
+def vertex(p: VectorLike):
+
+    return _compound_or_shape(BRepBuilderAPI_MakeVertex(Vector(p).toPnt()).Vertex())
 
 
 def segment(p1: VectorLike, p2: VectorLike) -> Shape:
