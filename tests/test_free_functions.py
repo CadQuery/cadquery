@@ -19,6 +19,8 @@ from cadquery.occ_impl.shapes import (
     extrude,
     fillet,
     chamfer,
+    revolve,
+    offset,
     Location,
 )
 
@@ -271,3 +273,24 @@ def test_extrude():
     assert r2.Area() == approx(1)
     assert r3.Area() == approx(4)
     assert r4.Volume() == approx(1)
+
+
+def test_revolve():
+
+    w = rect(1, 1)
+
+    r = revolve(w, (0.5, 0, 0), (0, 1, 0))
+
+    assert r.Volume() == approx(4 * pi)
+
+
+def test_offset():
+
+    f = plane(1, 1)
+    s = box(1, 1, 1).shells()
+
+    r1 = offset(f, 1)
+    r2 = offset(s, -0.25)
+
+    assert r1.Volume() == approx(1)
+    assert r2.Volume() == approx(1 - 0.5 ** 3)
