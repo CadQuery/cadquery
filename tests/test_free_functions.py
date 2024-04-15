@@ -137,3 +137,23 @@ def test_cone():
 
     assert s.isValid()
     assert s.Volume() == approx(1 / 3 * pi * (1 + 0.25 + 0.5))
+
+
+#%% bool ops
+def test_operators():
+
+    b1 = box(1, 1, 1)  # small box
+    b2 = box(2, 2, 2)  # large box
+    f = plane(3, 3)  # face
+    e = segment((-2, 0), (2, 0))  # edge
+
+    assert (b2 - b1).Volume() == approx(8 - 1)
+
+    assert (b2 * b1).Volume() == approx(1)
+    assert (b1 * f).Area() == approx(1)
+    assert (b1 * e).Length() == approx(1)
+    assert (f * e).Length() == approx(3)
+
+    assert (b2 + b1).Volume() == approx(8)
+
+    assert len((b1 / f).Solids()) == 2
