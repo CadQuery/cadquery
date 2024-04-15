@@ -4122,7 +4122,7 @@ def face(*s: Shape) -> Shape:
 
     from OCP.BOPAlgo import BOPAlgo_Tools
 
-    ws = Compound.makeCompound(s).wrapped
+    ws = Compound.makeCompound(w for el in s for w in _get_wires(el)).wrapped
     rv = TopoDS_Compound()
 
     status = BOPAlgo_Tools.WiresToFaces_s(ws, rv)
@@ -4209,7 +4209,7 @@ def compound(s: Sequence[Shape]) -> Shape:
 
 
 @multimethod
-def vertex(x: float, y: float, z: float) -> Shape:
+def vertex(x: Real, y: Real, z: Real) -> Shape:
     """
     Construct a vertex from cooridnates.
     """
@@ -4394,7 +4394,8 @@ def torus(d1: float, d2: float) -> Shape:
     )
 
 
-def cone(d1: float, d2: float, h: float) -> Shape:
+@multimethod
+def cone(d1: Real, d2: Real, h: Real) -> Shape:
     """
     Construct a solid cone.
     """
@@ -4408,6 +4409,12 @@ def cone(d1: float, d2: float, h: float) -> Shape:
             2 * pi,
         ).Shape()
     )
+
+
+@cone.register
+def cone(d: Real, h: Real) -> Shape:
+
+    return cone(d, 0, h)
 
 
 def text(
