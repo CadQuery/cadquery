@@ -13,6 +13,7 @@ from cadquery.occ_impl.shapes import (
     sphere,
     torus,
     cone,
+    Location,
 )
 
 from pytest import approx
@@ -142,8 +143,8 @@ def test_cone():
 #%% bool ops
 def test_operators():
 
-    b1 = box(1, 1, 1)  # small box
-    b2 = box(2, 2, 2)  # large box
+    b1 = box(1, 1, 1).moved(Location(-0.5, -0.5, -0.5))  # small box
+    b2 = box(2, 2, 2).moved(Location(-1, -1, -1))  # large box
     f = plane(3, 3)  # face
     e = segment((-2, 0), (2, 0))  # edge
 
@@ -157,3 +158,27 @@ def test_operators():
     assert (b2 + b1).Volume() == approx(8)
 
     assert len((b1 / f).Solids()) == 2
+
+
+#%% moved
+def test_moved():
+
+    b = box(1, 1, 1)
+    l1 = Location((-1, 0, 0))
+    l2 = Location((1, 0, 0))
+    l3 = Location((0, 1, 0), (45, 0, 0))
+    l4 = Location((0, -1, 0), (-45, 0, 0))
+
+    bs1 = b.moved(l1, l2)
+    bs2 = b.moved((l1, l2))
+
+    assert bs1.Volume() == approx(2)
+    assert len(bs1.Solids()) == 2
+    assert bs2.Volume() == approx(2)
+    assert len(bs2.Solids()) == 2
+
+    # nested move
+    bs3 = bs1.moved(l3, l4)
+
+    assert bs3.Volume() == approx(4)
+    assert len(bs3.Solids()) == 4
