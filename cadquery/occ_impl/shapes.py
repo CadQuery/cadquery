@@ -4591,8 +4591,7 @@ def cap(
     """
 
     builder = BRepOffsetAPI_MakeFilling()
-    builder.SetApproxParam(3, 5)
-    builder.SetResolParam(2, 15, 10)
+    builder.SetResolParam(2, 15, 5)
 
     for e in _get_edges(s):
         f = _get_one(e.ancestors(ctx, "Face"), "Face")
