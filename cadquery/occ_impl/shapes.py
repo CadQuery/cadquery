@@ -4053,6 +4053,10 @@ def _normalize(s: Shape) -> Shape:
         faces = s.Faces()
         if len(faces) == 1:
             rv = faces[0]
+    elif t == "Compound":
+        objs = list(s)
+        if len(objs) == 1:
+            rv = objs[0]
 
     return rv
 
