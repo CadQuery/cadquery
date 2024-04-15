@@ -945,6 +945,15 @@ class Location(object):
         self.wrapped = TopLoc_Location(T)
 
     @__init__.register
+    def __init__(self, x: Real, y: Real, z: Real) -> None:
+        """Location with translation (x,y,z) with respect to the original location."""
+
+        T = gp_Trsf()
+        T.SetTranslationPart(Vector(x, y, z).wrapped)
+
+        self.wrapped = TopLoc_Location(T)
+
+    @__init__.register
     def __init__(self, t: Plane) -> None:
         """Location corresponding to the location of the Plane t."""
 
