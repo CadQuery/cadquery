@@ -13,6 +13,12 @@ from cadquery.occ_impl.shapes import (
     sphere,
     torus,
     cone,
+    clean,
+    fill,
+    cap,
+    extrude,
+    fillet,
+    chamfer,
     Location,
 )
 
@@ -182,3 +188,86 @@ def test_moved():
 
     assert bs3.Volume() == approx(4)
     assert len(bs3.Solids()) == 4
+
+
+#%% ops
+def test_clean():
+
+    b1 = box(1, 1, 1)
+    b2 = b1.moved(Location(1, 0, 0))
+
+    len((b1 + b2).Faces()) == 10
+    len(clean(b1 + b2).Faces()) == 6
+
+
+def test_fill():
+
+    w1 = rect(1, 1)
+    w2 = rect(0.5, 0.5).moved(Location(0, 0, 1))
+
+    f1 = fill(w1)
+    f2 = fill(w1, [(0, 0, 1)])
+    f3 = fill(w1, [w2])
+
+    assert f1.isValid()
+    assert f1.Area() == approx(1)
+
+    assert f2.isValid()
+    assert f2.Area() > 1
+
+    assert f3.isValid()
+    assert f3.Area() > 1
+    assert len(f3.Edges()) == 4
+    assert len(f3.Wires()) == 1
+
+
+def test_cap():
+
+    s = extrude(circle(1), (0, 0, 1))
+
+    f = cap(s.edges(">Z"), s, [(0, 0, 1.5)])
+
+    assert f.isValid()
+    assert f.Area() > pi
+
+
+def test_fillet():
+
+    b = box(1, 1, 1)
+
+    r = fillet(b, b.edges(">Z"), 0.1)
+
+    assert r.isValid()
+    assert len(r.Edges()) == 20
+    assert r.faces(">Z").Area() < 1
+
+
+def test_chamfer():
+
+    b = box(1, 1, 1)
+
+    r = chamfer(b, b.edges(">Z"), 0.1)
+
+    assert r.isValid()
+    assert len(r.Edges()) == 20
+    assert r.faces(">Z").Area() < 1
+
+
+def test_extrude():
+
+    v = vertex(0, 0, 0)
+    e = segment((0, 0), (0, 1))
+    w = rect(1, 1)
+    f = fill(w)
+
+    d = (0, 0, 1)
+
+    r1 = extrude(v, d)
+    r2 = extrude(e, d)
+    r3 = extrude(w, d)
+    r4 = extrude(f, d)
+
+    assert r1.Length() == approx(1)
+    assert r2.Area() == approx(1)
+    assert r3.Area() == approx(4)
+    assert r4.Volume() == approx(1)
