@@ -21,11 +21,24 @@ from cadquery.occ_impl.shapes import (
     chamfer,
     revolve,
     offset,
+    loft,
+    sweep,
+    spline,
     Location,
+    Shape,
 )
 
 from pytest import approx
 from math import pi
+
+#%% utils
+
+
+def assert_all_valid(*objs: Shape):
+
+    for o in objs:
+        assert o.isValid()
+
 
 #%% primitives
 
@@ -294,3 +307,52 @@ def test_offset():
 
     assert r1.Volume() == approx(1)
     assert r2.Volume() == approx(1 - 0.5 ** 3)
+
+
+def test_sweep():
+
+    w1 = rect(1, 1)
+    w2 = w1.moved(Location(0, 0, 1))
+    w3 = w1.moved(Location(3, 0, 0))
+
+    p1 = segment((0, 0, 0), (0, 0, 1))
+    p2 = spline((w1.Center(), w2.Center()), ((-0.5, 0, 1), (0.5, 0, 1)))
+
+    r1 = sweep(w1, p1)
+    r2 = sweep((w1, w2), p1)
+    r3 = sweep(w1, p1, cap=True)
+    r4 = sweep((w1, w2), p1, cap=True)
+    r5 = sweep((w1, w2), p2, cap=True)
+
+    assert_all_valid(r1, r2, r3, r4, r5)
+
+    assert r1.Area() == approx(4)
+    assert r2.Area() == approx(4)
+    assert r3.Volume() == approx(1)
+    assert r4.Volume() == approx(1)
+    assert r5.Volume() > 0
+    assert len(r5.Faces()) == 6
+
+
+def test_loft():
+
+    w1 = circle(1)
+    w2 = ellipse(1.5, 1).move(Location(0, 0.1, 2))
+    w3 = circle(1).moved(Location(0, 0, 4))
+
+    w4 = segment((0, 0), (1, 0))
+    w5 = w4.moved(Location(0, 0, 1))
+
+    r1 = loft(w1, w2, w3)  # loft
+    r2 = loft(w1, w2, w3, ruled=True)  # ruled loft
+    r3 = loft([w1, w2, w3])  # overload
+    r4 = loft(w1, w2, w3, cap=True)  # capped loft
+    r5 = loft(w4, w5)  # loft with open edges
+
+    assert_all_valid(r1, r2, r3, r4, r5)
+
+    assert len(r1.Faces()) == 1
+    assert len(r2.Faces()) == 2
+    assert len((r1 - r3).Faces()) == 0
+    assert r4.Volume() > 0
+    assert r5.Area() == approx(1)
