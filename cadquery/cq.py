@@ -4295,7 +4295,7 @@ class Workplane(object):
         :return: CQ object with resulting wire(s).
         """
 
-        ws = self._consolidateWires()
+        ws = [el for el in self.objects if isinstance(el, Wire)]
         rv = list(chain.from_iterable(w.offset2D(d, kind) for w in ws))
 
         self.ctx.pendingEdges = []
@@ -4304,7 +4304,9 @@ class Workplane(object):
                 wire.forConstruction = True
             self.ctx.pendingWires = []
         else:
-            self.ctx.pendingWires = rv
+            for w in ws:
+                self.ctx.pendingWires.remove(w)
+            self.ctx.pendingWires.extend(rv)
 
         return self.newObject(rv)
 
