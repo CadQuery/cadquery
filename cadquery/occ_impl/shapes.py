@@ -4499,35 +4499,35 @@ def _bool_op(
     builder.Build()
 
 
-def fuse(s1: Shape, s2: Shape) -> Shape:
+def fuse(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
     """
     Fuse two shapes.
     """
 
     builder = BRepAlgoAPI_Fuse()
-    _bool_op(s1, s2, builder)
+    _bool_op(s1, s2, builder, tol)
 
     return _compound_or_shape(builder.Shape())
 
 
-def cut(s1: Shape, s2: Shape) -> Shape:
+def cut(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
     """
     Subtract two shapes.
     """
 
     builder = BRepAlgoAPI_Cut()
-    _bool_op(s1, s2, builder)
+    _bool_op(s1, s2, builder, tol)
 
     return _compound_or_shape(builder.Shape())
 
 
-def intersect(s1: Shape, s2: Shape) -> Shape:
+def intersect(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
     """
     Intersect two shapes.
     """
 
     builder = BRepAlgoAPI_Common()
-    _bool_op(s1, s2, builder)
+    _bool_op(s1, s2, builder, tol)
 
     return _compound_or_shape(builder.Shape())
 
