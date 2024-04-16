@@ -6,13 +6,14 @@ from cadquery.occ_impl.shapes import (
     rect,
     circle,
     ellipse,
-    face,
     plane,
     box,
     cylinder,
     sphere,
     torus,
     cone,
+    spline,
+    text,
     clean,
     fill,
     cap,
@@ -23,7 +24,6 @@ from cadquery.occ_impl.shapes import (
     offset,
     loft,
     sweep,
-    spline,
     cut,
     fuse,
     intersect,
@@ -32,7 +32,6 @@ from cadquery.occ_impl.shapes import (
     shell,
     solid,
     compound,
-    solid,
     Location,
     Shape,
 )
@@ -234,6 +233,26 @@ def test_spline():
     assert s3.Length() > 0
     assert s3.tangentAt(0).toTuple() == approx((1, 0, 0))
     assert s3.tangentAt(1).toTuple() == approx((-1, 0, 0))
+
+
+def test_text():
+
+    r1 = text("CQ", 10)
+
+    assert len(r1.Faces()) == 2
+    assert len(r1.Wires()) == 3
+    assert r1.Area() > 0.0
+
+    # test alignemnt
+    r2 = text("CQ", 10, halign="left")
+    r3 = text("CQ", 10, halign="right")
+    r4 = text("CQ", 10, valign="bottom")
+    r5 = text("CQ", 10, valign="top")
+
+    assert r2.faces("<X").Center().x > r1.faces("<X").Center().x
+    assert r1.faces("<X").Center().x > r3.faces("<X").Center().x
+    assert r4.faces("<X").Center().y > r1.faces("<X").Center().y
+    assert r1.faces("<X").Center().y > r5.faces("<X").Center().x
 
 
 #%% bool ops
