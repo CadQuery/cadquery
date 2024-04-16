@@ -24,6 +24,15 @@ from cadquery.occ_impl.shapes import (
     loft,
     sweep,
     spline,
+    cut,
+    fuse,
+    intersect,
+    wire,
+    face,
+    shell,
+    solid,
+    compound,
+    solid,
     Location,
     Shape,
 )
@@ -38,6 +47,59 @@ def assert_all_valid(*objs: Shape):
 
     for o in objs:
         assert o.isValid()
+
+
+#%% constructors
+
+
+def test_constructors():
+
+    # wire
+    e1 = segment((0, 0), (0, 1))
+    e2 = segment((0, 1), (1, 1))
+    e3 = segment((1, 1), (1, 0))
+    e4 = segment((1, 0), (0, 0))
+
+    w1 = wire(e1, e2, e3, e4)
+    w2 = wire((e1, e2, e3, e4))
+
+    assert w1.Length() == approx(4)
+    assert w2.Length() == approx(4)
+
+    # face
+    f1 = face(w1, circle(0.1).moved(Location(0.5, 0.5, 0)))
+    f2 = face((w1,))
+
+    assert f1.Area() < 1
+    assert len(f1.Wires()) == 2
+    assert f2.Area() == approx(1)
+    assert len(f2.Wires()) == 1
+
+    # shell
+    b = box(1, 1, 1)
+
+    sh1 = shell(b.Faces())
+    sh2 = shell(*b.Faces())
+
+    assert sh1.Area() == approx(6)
+    assert sh2.Area() == approx(6)
+
+    # solid
+    s1 = solid(b.Faces())
+    s2 = solid(*b.Faces())
+
+    assert s1.Volume() == approx(1)
+    assert s2.Volume() == approx(1)
+
+    # compound
+    c1 = compound(b.Faces())
+    c2 = compound(*b.Faces())
+
+    assert len(list(c1)) == 6
+    assert len(list(c2)) == 6
+
+    for f in list(c1) + list(c2):
+        assert f.ShapeType() == "Face"
 
 
 #%% primitives
@@ -161,11 +223,25 @@ def test_cone():
     assert s.Volume() == approx(1 / 3 * pi * (1 + 0.25 + 0.5))
 
 
+def test_spline():
+
+    s1 = spline((0, 0), (0, 1))
+    s2 = spline([(0, 0), (0, 1)])
+    s3 = spline([(0, 0), (0, 1)], [(1, 0), (-1, 0)])
+
+    assert s1.Length() == approx(1)
+    assert s2.Length() == approx(1)
+    assert s3.Length() > 0
+    assert s3.tangentAt(0).toTuple() == approx((1, 0, 0))
+    assert s3.tangentAt(1).toTuple() == approx((-1, 0, 0))
+
+
 #%% bool ops
 def test_operators():
 
     b1 = box(1, 1, 1).moved(Location(-0.5, -0.5, -0.5))  # small box
     b2 = box(2, 2, 2).moved(Location(-1, -1, -1))  # large box
+    b3 = b1.moved(Location(0, 0, 1e-4))  # almost b1
     f = plane(3, 3)  # face
     e = segment((-2, 0), (2, 0))  # edge
 
@@ -179,6 +255,15 @@ def test_operators():
     assert (b2 + b1).Volume() == approx(8)
 
     assert len((b1 / f).Solids()) == 2
+
+    # test fuzzy ops
+    assert len((b1 + b3).Faces()) == 14
+    assert (b1 - b3).Volume() > 0
+    assert (b1 * b3).Volume() < 1
+
+    assert len(fuse(b1, b3, 1e-3).Faces()) == 6
+    assert len(cut(b1, b3, 1e-3).Faces()) == 0
+    assert len(intersect(b1, b3, 1e-3).Faces()) == 6
 
 
 #%% moved
@@ -240,10 +325,12 @@ def test_cap():
 
     s = extrude(circle(1), (0, 0, 1))
 
-    f = cap(s.edges(">Z"), s, [(0, 0, 1.5)])
+    f1 = cap(s.edges(">Z"), s, [(0, 0, 1.5)])
+    f2 = cap(s.edges(">Z"), s, [circle(0.5).moved(Location(0, 0, 2))])
 
-    assert f.isValid()
-    assert f.Area() > pi
+    assert_all_valid(f1, f2)
+    assert f1.Area() > pi
+    assert f2.Area() > pi
 
 
 def test_fillet():
@@ -313,7 +400,6 @@ def test_sweep():
 
     w1 = rect(1, 1)
     w2 = w1.moved(Location(0, 0, 1))
-    w3 = w1.moved(Location(3, 0, 0))
 
     p1 = segment((0, 0, 0), (0, 0, 1))
     p2 = spline((w1.Center(), w2.Center()), ((-0.5, 0, 1), (0.5, 0, 1)))
