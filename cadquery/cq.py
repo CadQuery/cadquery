@@ -3370,6 +3370,8 @@ class Workplane(object):
             self._mergeTags(toUnion)
         elif isinstance(toUnion, (Solid, Compound)):
             newS = [toUnion]
+        elif toUnion is None:
+            newS = []
         else:
             raise ValueError("Cannot union type '{}'".format(type(toUnion)))
 

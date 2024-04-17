@@ -2797,6 +2797,15 @@ class TestCadQuery(BaseTest):
         objects2 = objects1.add(objects2).combine(glue=True, tol=None)
         self.assertEqual(11, objects2.faces().size())
 
+    def testUnionNoArgs(self):
+        # combine using union with no arguments
+        s = Workplane(Plane.XY())
+
+        objects1 = s.rect(2.0, 2.0).extrude(0.5)
+        objects2 = s.rect(1.0, 1.0).extrude(0.5).translate((0, 0, 0.5))
+        objects2 = objects1.add(objects2).union(glue=True, tol=None)
+        self.assertEqual(11, objects2.faces().size())
+
     def testCombineSolidsInLoop(self):
         # duplicates a memory problem of some kind reported when combining lots of objects
         s = Workplane("XY").rect(0.5, 0.5).extrude(5.0)
