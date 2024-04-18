@@ -24,15 +24,25 @@ The purpose of this section is to demonstrate how to construct Shape objects usi
     dh = 1
     r = 1
 
+    # construct edges
     edge1 = circle(r)
     edge2 = circle(2*r).moved(z=dh)
     edge3 = circle(r).moved(z=1.5*dh)
 
+    # loft the side face
     side = loft(edge1, edge2, edge3)
-    bottom = fill(side.faces('<Z'))
+
+    # bottom face
+    bottom = fill(side.edges('<Z'))
+
+    # top face with continous curvature
     top = cap(side.edges('>Z'), side, [(0,0,1.75*dh)])
 
-    result = solid(side, bottom, top).moved((-3*r,0), (3*r, 0))
+    # assemble into a solid
+    s = solid(side, bottom, top)
+
+    # construct the final result
+    result = s.moved(Location(-3*r, 0, 0), Locations(3*r, 0, 0))
 
 
-The code above builts non-trivial object by sequentially constructing individual faces and assembling them into a solid.
+The code above builts non-trivial object by sequentially constructing individual faces, assembling them into a solid and finally generating a pattern.
