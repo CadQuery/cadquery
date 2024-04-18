@@ -1613,6 +1613,10 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(o.y, 0.0, 3)
         self.assertAlmostEqual(o.z, 0.5, 3)
 
+        # Test creation with non-co-planar faces fails
+        with raises(ValueError):
+            w = s.faces("+Y").workplane()
+
     def testTriangularPrism(self):
         s = Workplane("XY").lineTo(1, 0).lineTo(1, 1).close().extrude(0.2)
         self.saveModel(s)
@@ -1777,6 +1781,25 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(15.0, bb.ymax, 2)
         self.assertAlmostEqual(0.0, bb.zmin, 2)
         self.assertAlmostEqual(100.0, bb.zmax, 2)
+
+    def testBoundBoxEnlarge(self):
+        """
+        Tests BoundBox.enlarge(). Confirms that the 
+        bounding box lengths are all enlarged by the
+        correct amount.
+        """
+
+        enlarge_tol = 2.0
+        bb = Workplane("XY").rect(10, 10).extrude(10).val().BoundingBox()
+        bb_enlarged = bb.enlarge(enlarge_tol)
+
+        self.assertTrue(bb_enlarged.isInside(bb))
+        self.assertAlmostEqual(bb_enlarged.xmin, bb.xmin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.xmax, bb.xmax + enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.ymin, bb.ymin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.ymax, bb.ymax + enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.zmin, bb.zmin - enlarge_tol, 2)
+        self.assertAlmostEqual(bb_enlarged.zmax, bb.zmax + enlarge_tol, 2)
 
     def testCutThroughAll(self):
         """
@@ -2772,6 +2795,15 @@ class TestCadQuery(BaseTest):
         objects1 = s.rect(2.0, 2.0).extrude(0.5)
         objects2 = s.rect(1.0, 1.0).extrude(0.5).translate((0, 0, 0.5))
         objects2 = objects1.add(objects2).combine(glue=True, tol=None)
+        self.assertEqual(11, objects2.faces().size())
+
+    def testUnionNoArgs(self):
+        # combine using union with no arguments
+        s = Workplane(Plane.XY())
+
+        objects1 = s.rect(2.0, 2.0).extrude(0.5)
+        objects2 = s.rect(1.0, 1.0).extrude(0.5).translate((0, 0, 0.5))
+        objects2 = objects1.add(objects2).union(glue=True, tol=None)
         self.assertEqual(11, objects2.faces().size())
 
     def testCombineSolidsInLoop(self):
@@ -3851,6 +3883,22 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0", 10, -1, cut=True, halign="left", valign="bottom", font="Sans",
             )
         )
+
+    def testTextAlignment(self):
+        left_bottom = Workplane().text("I", 10, 0, halign="left", valign="bottom")
+        lb_bb = left_bottom.val().BoundingBox()
+        self.assertGreaterEqual(lb_bb.xmin, 0)
+        self.assertGreaterEqual(lb_bb.ymin, 0)
+
+        centers = Workplane().text("I", 10, 0, halign="center", valign="center")
+        c_bb = centers.val().BoundingBox()
+        self.assertAlmostEqual(c_bb.center.x, 0, places=0)
+        self.assertAlmostEqual(c_bb.center.y, 0, places=0)
+
+        right_top = Workplane().text("I", 10, 0, halign="right", valign="top")
+        rt_bb = right_top.val().BoundingBox()
+        self.assertLessEqual(rt_bb.xmax, 0)
+        self.assertLessEqual(rt_bb.ymax, 0)
 
     def testParametricCurve(self):
 

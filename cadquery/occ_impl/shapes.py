@@ -56,7 +56,7 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
+from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt, TColgp_Array1OfPnt
 
 # Array of vectors (used for B-spline interpolation):
 from OCP.TColgp import TColgp_Array1OfVec
@@ -146,6 +146,7 @@ from OCP.BRepAlgoAPI import (
 )
 
 from OCP.Geom import (
+    Geom_BezierCurve,
     Geom_ConicalSurface,
     Geom_CylindricalSurface,
     Geom_Surface,
@@ -200,6 +201,14 @@ from OCP.Font import (
 )
 
 from OCP.StdPrs import StdPrs_BRepFont, StdPrs_BRepTextBuilder as Font_BRepTextBuilder
+from OCP.Graphic3d import (
+    Graphic3d_HTA_LEFT,
+    Graphic3d_HTA_CENTER,
+    Graphic3d_HTA_RIGHT,
+    Graphic3d_VTA_BOTTOM,
+    Graphic3d_VTA_CENTER,
+    Graphic3d_VTA_TOP,
+)
 
 from OCP.Graphic3d import (
     Graphic3d_HTA_LEFT,
@@ -268,6 +277,8 @@ from OCP.Interface import Interface_Static
 from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
 
 from OCP.BRepAlgo import BRepAlgo
+
+from OCP.ChFi2d import ChFi2d_FilletAPI  # For Wire.Fillet()
 
 from math import pi, sqrt, inf, radians, cos
 
@@ -430,6 +441,8 @@ class Shape(object):
         tolerance: float = 1e-3,
         angularTolerance: float = 0.1,
         ascii: bool = False,
+        relative: bool = True,
+        parallel: bool = True,
     ) -> bool:
         """
         Exports a shape to a specified STL file.
@@ -441,17 +454,17 @@ class Shape(object):
             Default is 1e-3, which is a good starting point for a range of cases.
         :param angularTolerance: Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
         :param ascii: Export the file as ASCII (True) or binary (False) STL format.  Default is binary.
+        :param relative: If True, tolerance will be scaled by the size of the edge being meshed. Default is True.
+            Setting this value to True may cause large features to become faceted, or small features dense.
+        :param parallel: If True, OCCT will use parallel processing to mesh the shape. Default is True.
         """
-
-        mesh = BRepMesh_IncrementalMesh(self.wrapped, tolerance, True, angularTolerance)
-        mesh.Perform()
+        # The constructor used here automatically calls mesh.Perform(). https://dev.opencascade.org/doc/refman/html/class_b_rep_mesh___incremental_mesh.html#a3a383b3afe164161a3aa59a492180ac6
+        BRepMesh_IncrementalMesh(
+            self.wrapped, tolerance, relative, angularTolerance, parallel
+        )
 
         writer = StlAPI_Writer()
-
-        if ascii:
-            writer.ASCIIMode = True
-        else:
-            writer.ASCIIMode = False
+        writer.ASCIIMode = ascii
 
         return writer.Write(self.wrapped, fileName)
 
@@ -642,6 +655,22 @@ class Shape(object):
 
         return Vector(Properties.CentreOfMass())
 
+    @staticmethod
+    def matrixOfInertia(obj: "Shape") -> List[List[float]]:
+        """
+        Calculates the matrix of inertia of an object.
+        :param obj: Compute the matrix of inertia of this object
+        """
+        Properties = GProp_GProps()
+        calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
+
+        if calc_function:
+            calc_function(obj.wrapped, Properties)
+            moi = Properties.MatrixOfInertia()
+            return [[moi.Value(i, j) for j in range(1, 4)] for i in range(1, 4)]
+
+        raise NotImplementedError
+
     def Center(self) -> Vector:
         """
         :returns: The point of the center of mass of this Shape
@@ -747,7 +776,6 @@ class Shape(object):
 
         res = TopTools_IndexedDataMapOfShapeListOfShape()
 
-        TopTools_IndexedDataMapOfShapeListOfShape()
         TopExp.MapShapesAndAncestors_s(
             self.wrapped,
             inverse_shape_LUT[child_type],
@@ -2152,6 +2180,26 @@ class Edge(Shape, Mixin1D):
             BRepBuilderAPI_MakeEdge(Vector(v1).toPnt(), Vector(v2).toPnt()).Edge()
         )
 
+    @classmethod
+    def makeBezier(cls, points: List[Vector]) -> "Edge":
+        """
+        Create a cubic Bézier Curve from the points.
+
+        :param points: a list of Vectors that represent the points.
+            The edge will pass through the first and the last point,
+            and the inner points are Bézier control points.
+        :return: An edge
+        """
+
+        # Convert to a TColgp_Array1OfPnt
+        arr = TColgp_Array1OfPnt(1, len(points))
+        for i, v in enumerate(points):
+            arr.SetValue(i + 1, Vector(v).toPnt())
+
+        bez = Geom_BezierCurve(arr)
+
+        return cls(BRepBuilderAPI_MakeEdge(bez).Edge())
+
 
 class Wire(Shape, Mixin1D):
     """
@@ -2418,6 +2466,90 @@ class Wire(Shape, Mixin1D):
         f = Face.makeFromWires(self)
 
         return f.chamfer2D(d, vertices).outerWire()
+
+    def fillet(
+        self, radius: float, vertices: Optional[Iterable[Vertex]] = None
+    ) -> "Wire":
+        """
+        Apply 2D or 3D fillet to a wire
+        :param wire: The input wire to fillet. Currently only open wires are supported
+        :param radius: the radius of the fillet, must be > zero
+        :param vertices: Optional list of vertices to fillet. By default all vertices are fillet.
+        :return: A wire with filleted corners
+        """
+
+        edges = list(self)
+        all_vertices = self.Vertices()
+        newEdges = []
+        currentEdge = edges[0]
+
+        verticesSet = set(vertices) if vertices else set()
+
+        for i in range(len(edges) - 1):
+            nextEdge = edges[i + 1]
+
+            # Create a plane that is spanned by currentEdge and nextEdge
+            currentDir = currentEdge.tangentAt(1)
+            nextDir = nextEdge.tangentAt(0)
+            normalDir = currentDir.cross(nextDir)
+
+            # Check conditions for skipping fillet:
+            #  1. The edges are parallel
+            #  2. The vertex is not in the vertices white list
+            if normalDir.Length == 0 or (
+                all_vertices[i + 1] not in verticesSet and bool(verticesSet)
+            ):
+                newEdges.append(currentEdge)
+                currentEdge = nextEdge
+                continue
+
+            # Prepare for using ChFi2d_FilletAPI
+            pointInPlane = currentEdge.Center().toPnt()
+            cornerPlane = gp_Pln(pointInPlane, normalDir.toDir())
+
+            filletMaker = ChFi2d_FilletAPI(
+                currentEdge.wrapped, nextEdge.wrapped, cornerPlane
+            )
+
+            ok = filletMaker.Perform(radius)
+            if not ok:
+                raise ValueError(f"Failed fillet at vertex {i+1}!")
+
+            # Get the result of the fillet operation
+            thePoint = next(iter(nextEdge)).Center().toPnt()
+            res_arc = filletMaker.Result(
+                thePoint, currentEdge.wrapped, nextEdge.wrapped
+            )
+
+            newEdges.append(currentEdge)
+            newEdges.append(Edge(res_arc))
+
+            currentEdge = nextEdge
+
+        # Add the last edge
+        newEdges.append(currentEdge)
+
+        return Wire.assembleEdges(newEdges)
+
+    def Vertices(self) -> List[Vertex]:
+        """
+        Ordered list of vertices of the wire.
+        """
+
+        rv = []
+
+        exp = BRepTools_WireExplorer(self.wrapped)
+        rv.append(Vertex(exp.CurrentVertex()))
+
+        while exp.More():
+            exp.Next()
+            rv.append(Vertex(exp.CurrentVertex()))
+
+        # handle closed wires correclty
+        if self.IsClosed():
+            rv = rv[:-1]
+
+        return rv
 
     def __iter__(self) -> Iterator[Edge]:
         """
@@ -3734,23 +3866,28 @@ class Compound(Shape, Mixin3D):
             font_kind,
             float(size),
         )
-        text_flat = Shape(builder.Perform(font_i, NCollection_Utf8String(text)))
+        if halign == "left":
+            theHAlign = Graphic3d_HTA_LEFT
+        elif halign == "center":
+            theHAlign = Graphic3d_HTA_CENTER
+        else:  # halign == "right"
+            theHAlign = Graphic3d_HTA_RIGHT
 
-        bb = text_flat.BoundingBox()
+        if valign == "bottom":
+            theVAlign = Graphic3d_VTA_BOTTOM
+        elif valign == "center":
+            theVAlign = Graphic3d_VTA_CENTER
+        else:  # valign == "top":
+            theVAlign = Graphic3d_VTA_TOP
 
-        t = Vector()
-
-        if halign == "center":
-            t.x = -bb.xlen / 2
-        elif halign == "right":
-            t.x = -bb.xlen
-
-        if valign == "center":
-            t.y = -bb.ylen / 2
-        elif valign == "top":
-            t.y = -bb.ylen
-
-        text_flat = text_flat.translate(t)
+        text_flat = Shape(
+            builder.Perform(
+                font_i,
+                NCollection_Utf8String(text),
+                theHAlign=theHAlign,
+                theVAlign=theVAlign,
+            )
+        )
 
         if height != 0:
             vecNormal = text_flat.Faces()[0].normalAt() * height

@@ -1,7 +1,35 @@
 Changes
 =======
 
-2.3.1 (latest release)
+2.4.0 (latest release)
+------
+
+### Highlights
+* Updated to OCP and OpenCASCADE 7.7.2 [#1440](https://github.com/CadQuery/cadquery/pull/1440)
+* Python 3.12 support [#1468](https://github.com/CadQuery/cadquery/pull/1468)
+* VTK-based `show` function for showing models from the command line [#1366](https://github.com/CadQuery/cadquery/pull/1366) [#1394](https://github.com/CadQuery/cadquery/pull/1394)
+
+### Other changes
+* Documentation fixes and improvements [#1360](https://github.com/CadQuery/cadquery/pull/1360) [#1362](https://github.com/CadQuery/cadquery/pull/1362) [#1367](https://github.com/CadQuery/cadquery/pull/1367) [#1368](https://github.com/CadQuery/cadquery/pull/1368) [#1380](https://github.com/CadQuery/cadquery/pull/1380) [#1400](https://github.com/CadQuery/cadquery/pull/1400) [#1423](https://github.com/CadQuery/cadquery/pull/1423) [#1424](https://github.com/CadQuery/cadquery/pull/1424) [#1458](https://github.com/CadQuery/cadquery/pull/1458) [#1474](https://github.com/CadQuery/cadquery/pull/1474)
+* Added an `enlarge` method to BoundBox object [#1356](https://github.com/CadQuery/cadquery/pull/1356)
+* Added parallel operation support to `_bool_op()` [#1357](https://github.com/CadQuery/cadquery/pull/1357)
+* Added typing for `importStep()` and `importShape()` [#1372](https://github.com/CadQuery/cadquery/pull/1372)
+* Added tuple parameter support to CQGI [#1373](https://github.com/CadQuery/cadquery/pull/1373)
+* Improved the shape iterator [#1376](https://github.com/CadQuery/cadquery/pull/1376)
+* Added all other formats to ReadTheDocs downloads [#1377](https://github.com/CadQuery/cadquery/pull/1377)
+* Improved segment naming in constraint solver test [#1379](https://github.com/CadQuery/cadquery/pull/1379)
+* Fixed ellipse arc normal with DXF import and export [#1384](https://github.com/CadQuery/cadquery/pull/1384)
+* Fixed bug in tapered extrude height [#1388](https://github.com/CadQuery/cadquery/pull/1388)
+* Implementation of cq.Shape selectors [#1406](https://github.com/CadQuery/cadquery/pull/1406)
+* Fix bug in multisection sweep for sketches [#1408](https://github.com/CadQuery/cadquery/pull/1408)
+* Added ASCII option for GLTF and STL exports of assemblies [#1418](https://github.com/CadQuery/cadquery/pull/1418)
+* Added non-relative tolerancing to STL export [#1432](https://github.com/CadQuery/cadquery/pull/1432)
+* Fixed redundant call to `TopTools_IndexedDataMapOfShapeListOfShape()` [#1439](https://github.com/CadQuery/cadquery/pull/1439)
+* Fixed parenthesis bug in `_isCoPlanar()` [#1451](https://github.com/CadQuery/cadquery/pull/1451)
+* Improved 3D text alignment [#1455](https://github.com/CadQuery/cadquery/pull/1455)
+* Added matrix of intertia functionality [#1460](https://github.com/CadQuery/cadquery/pull/1460)
+
+2.3.1
 ------
 
 This was an incremental release to fix a broken PyPI package.

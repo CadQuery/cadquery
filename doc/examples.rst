@@ -199,7 +199,7 @@ like :py:meth:`Workplane.circle` and :py:meth:`Workplane.rect`, will operate on 
     .. hlist::
         :columns: 2
 
-        * :py:meth:`Workplane.points` **!**
+        * :py:meth:`Workplane.pushPoints` **!**
         * :py:meth:`Workplane`
         * :py:meth:`Workplane.circle`
         * :py:meth:`Workplane.extrude`
@@ -526,7 +526,7 @@ An existing CQ object can copy a workplane from another CQ object.
 
 .. topic:: API References
 
-    .. hlist:
+    .. hlist::
         :columns: 2
 
         * :py:meth:`Workplane.copyWorkplane` **!**

@@ -250,3 +250,52 @@ class TestWorkplanes(BaseTest):
             (bbBox.xlen, bbBox.ylen, bbBox.zlen), (1.0, 1.0, 1.0), 4
         )
         self.assertAlmostEqual(r.findSolid().Volume(), 1.0, 5)
+
+    def test_bezier_curve(self):
+        # Quadratic bezier
+        r = (
+            Workplane("XZ")
+            .bezier([(0, 0), (1, 2), (5, 0)])
+            .bezier([(1, -2), (0, 0)], includeCurrent=True)
+            .close()
+            .extrude(1)
+        )
+
+        bbBox = r.findSolid().BoundingBox()
+        # Why is the bounding box larger than expected?
+        self.assertTupleAlmostEquals((bbBox.xlen, bbBox.ylen, bbBox.zlen), (5, 1, 2), 1)
+        self.assertAlmostEqual(r.findSolid().Volume(), 6.6666667, 4)
+
+        r = Workplane("XY").bezier([(0, 0), (1, 2), (2, -1), (5, 0)])
+        self.assertTrue(len(r.ctx.pendingEdges) == 1)
+        r = (
+            r.lineTo(5, -0.1)
+            .bezier([(2, -3), (1, 0), (0, 0)], includeCurrent=True)
+            .close()
+            .extrude(1)
+        )
+
+        bbBox = r.findSolid().BoundingBox()
+        self.assertTupleAlmostEquals(
+            (bbBox.xlen, bbBox.ylen, bbBox.zlen), (5, 2.06767, 1), 1
+        )
+        self.assertAlmostEqual(r.findSolid().Volume(), 4.975, 4)
+
+        # Test makewire by translate and loft example like in
+        # the documentation
+        r = Workplane("XY").bezier([(0, 0), (1, 2), (1, -1), (0, 0)], makeWire=True)
+
+        self.assertTrue(len(r.ctx.pendingWires) == 1)
+        r = r.translate((0, 0, 0.2)).toPending().loft()
+        self.assertAlmostEqual(r.findSolid().Volume(), 0.09, 4)
+
+        # Finally test forConstruction
+        r = Workplane("XY").bezier(
+            [(0, 0), (1, 2), (1, -1), (0, 0)], makeWire=True, forConstruction=True
+        )
+        self.assertTrue(len(r.ctx.pendingWires) == 0)
+
+        r = Workplane("XY").bezier(
+            [(0, 0), (1, 2), (2, -1), (5, 0)], forConstruction=True
+        )
+        self.assertTrue(len(r.ctx.pendingEdges) == 0)

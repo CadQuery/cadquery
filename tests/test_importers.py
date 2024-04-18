@@ -5,7 +5,7 @@
 import tempfile
 import os
 
-from cadquery import importers, Workplane
+from cadquery import importers, Workplane, Compound
 from tests import BaseTest
 from pytest import approx, raises
 
@@ -19,50 +19,135 @@ testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
 class TestImporters(BaseTest):
     def importBox(self, importType, fileName):
         """
-        Exports a simple box to a STEP file and then imports it again
+        Exports a simple box and then imports it again
         :param importType: The type of file we're importing (STEP, STL, etc)
         :param fileName: The path and name of the file to write to
         """
-        # We're importing a STEP file
-        if importType == importers.ImportTypes.STEP:
-            # We first need to build a simple shape to export
-            shape = Workplane("XY").box(1, 2, 3).val()
+        # We first need to build a simple shape to export
+        shape = Workplane("XY").box(1, 2, 3).val()
 
+        if importType == importers.ImportTypes.STEP:
             # Export the shape to a temporary file
             shape.exportStep(fileName)
+        elif importType == importers.ImportTypes.BREP:
+            shape.exportBrep(fileName)
 
-            # Reimport the shape from the new STEP file
-            importedShape = importers.importShape(importType, fileName)
+        # Reimport the shape from the new file
+        importedShape = importers.importShape(importType, fileName)
 
-            # Check to make sure we got a solid back
-            self.assertTrue(importedShape.val().ShapeType() == "Solid")
+        # Check to make sure we got a single solid back.
+        self.assertTrue(importedShape.val().isValid())
+        self.assertEqual(importedShape.val().ShapeType(), "Solid")
+        self.assertEqual(len(importedShape.objects), 1)
 
-            # Check the number of faces and vertices per face to make sure we have a box shape
-            self.assertTrue(
-                importedShape.faces("+X").size() == 1
-                and importedShape.faces("+X").vertices().size() == 4
-            )
-            self.assertTrue(
-                importedShape.faces("+Y").size() == 1
-                and importedShape.faces("+Y").vertices().size() == 4
-            )
-            self.assertTrue(
-                importedShape.faces("+Z").size() == 1
-                and importedShape.faces("+Z").vertices().size() == 4
-            )
+        # Check the number of faces and vertices per face to make sure we have a
+        # box shape.
+        self.assertNFacesAndNVertices(importedShape, (1, 1, 1), (4, 4, 4))
+        # Check that the volume is correct.
+        self.assertAlmostEqual(importedShape.findSolid().Volume(), 6)
+
+    def importCompound(self, importType, fileName):
+        """
+        Exports a "+" shaped compound box and then imports it again.
+        :param importType: The type of file we're importing (STEP, STL, etc)
+        :param fileName: The path and name of the file to write to
+        """
+        # We first need to build a simple shape to export
+        b1 = Workplane("XY").box(1, 2, 3).val()
+        b2 = Workplane("XZ").box(1, 2, 3).val()
+        shape = Compound.makeCompound([b1, b2])
+
+        if importType == importers.ImportTypes.STEP:
+            # Export the shape to a temporary file
+            shape.exportStep(fileName)
+        elif importType == importers.ImportTypes.BREP:
+            shape.exportBrep(fileName)
+
+        # Reimport the shape from the new file
+        importedShape = importers.importShape(importType, fileName)
+
+        # Check to make sure we got the shapes we expected.
+        self.assertTrue(importedShape.val().isValid())
+        self.assertEqual(importedShape.val().ShapeType(), "Compound")
+        self.assertEqual(len(importedShape.objects), 1)
+
+        # Check the number of faces and vertices per face to make sure we have
+        # two boxes.
+        self.assertNFacesAndNVertices(importedShape, (2, 2, 2), (8, 8, 8))
+
+        # Check that the volume is the independent sum of the two boxes' 6mm^2
+        # volumes.
+        self.assertAlmostEqual(importedShape.findSolid().Volume(), 12)
+
+        # Join the boxes together and ensure that they are geometrically where
+        # we expected them to be. This should be a workplane containing a
+        # compound composed of a single Solid.
+        fusedShape = Workplane("XY").newObject(importedShape.val().fuse())
+
+        # Check to make sure we got a valid shape
+        self.assertTrue(fusedShape.val().isValid())
+
+        # Check the number of faces and vertices per face to make sure we have
+        # two boxes.
+        self.assertNFacesAndNVertices(fusedShape, (5, 3, 3), (12, 12, 12))
+
+        # Check that the volume accounts for the overlap of the two shapes.
+        self.assertAlmostEqual(fusedShape.findSolid().Volume(), 8)
+
+    def assertNFacesAndNVertices(self, workplane, nFacesXYZ, nVerticesXYZ):
+        """
+        Checks that the workplane has the number of faces and vertices expected
+        in X, Y, and Z.
+        :param workplane: The workplane to assess.
+        :param nFacesXYZ: The number of faces expected in +X, +Y, and +Z planes.
+        :param nVerticesXYZ: The number of vertices expected in +X, +Y, and +Z planes.
+        """
+        nFacesX, nFacesY, nFacesZ = nFacesXYZ
+        nVerticesX, nVerticesY, nVerticesZ = nVerticesXYZ
+
+        self.assertEqual(workplane.faces("+X").size(), nFacesX)
+        self.assertEqual(workplane.faces("+X").vertices().size(), nVerticesX)
+
+        self.assertEqual(workplane.faces("+Y").size(), nFacesY)
+        self.assertEqual(workplane.faces("+Y").vertices().size(), nVerticesY)
+
+        self.assertEqual(workplane.faces("+Z").size(), nFacesZ)
+        self.assertEqual(workplane.faces("+Z").vertices().size(), nVerticesZ)
+
+    def testInvalidImportTypeRaisesRuntimeError(self):
+        fileName = os.path.join(OUTDIR, "tempSTEP.step")
+        shape = Workplane("XY").box(1, 2, 3).val()
+        shape.exportStep(fileName)
+        self.assertRaises(RuntimeError, importers.importShape, "INVALID", fileName)
+
+    def testBREP(self):
+        """
+        Test BREP file import.
+        """
+        self.importBox(
+            importers.ImportTypes.BREP, os.path.join(OUTDIR, "tempBREP.brep")
+        )
+        self.importCompound(
+            importers.ImportTypes.BREP, os.path.join(OUTDIR, "tempBREP.brep")
+        )
 
     def testSTEP(self):
         """
         Tests STEP file import
         """
-        self.importBox(importers.ImportTypes.STEP, OUTDIR + "/tempSTEP.step")
+        self.importBox(
+            importers.ImportTypes.STEP, os.path.join(OUTDIR, "tempSTEP.step")
+        )
+        self.importCompound(
+            importers.ImportTypes.STEP, os.path.join(OUTDIR, "tempSTEP.step")
+        )
 
     def testInvalidSTEP(self):
         """
         Attempting to load an invalid STEP file should throw an exception, but
         not segfault.
         """
-        tmpfile = OUTDIR + "/badSTEP.step"
+        tmpfile = os.path.join(OUTDIR, "badSTEP.step")
         with open(tmpfile, "w") as f:
             f.write("invalid STEP file")
         with self.assertRaises(ValueError):

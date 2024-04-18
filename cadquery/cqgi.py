@@ -219,6 +219,10 @@ class BooleanParameterType(ParameterType):
     pass
 
 
+class TupleParameterType(ParameterType):
+    pass
+
+
 class InputParameter:
     """
     Defines a parameter that can be supplied when the model is executed.
@@ -304,6 +308,15 @@ class InputParameter:
                     self.ast_node.value = False
                 else:
                     self.ast_node.id = "False"
+        elif self.varType == TupleParameterType:
+            self.ast_node.n = new_value
+
+            # Build the list of constants to set as the tuple value
+            constants = []
+            for nv in new_value:
+                constants.append(ast.Constant(value=nv))
+            self.ast_node.elts = constants
+            ast.fix_missing_locations(self.ast_node)
         else:
             raise ValueError("Unknown Type of var: ", str(self.varType))
 
@@ -478,7 +491,6 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
 
     def handle_assignment(self, var_name, value_node):
         try:
-
             if type(value_node) == ast.Num:
                 self.cqModel.add_script_parameter(
                     InputParameter.create(
@@ -504,6 +516,17 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                             value_node, var_name, BooleanParameterType, False
                         )
                     )
+            elif type(value_node) == ast.Tuple:
+                # Handle multi-length tuples
+                tup = ()
+                for entry in value_node.elts:
+                    tup = tup + (entry.value,)
+
+                self.cqModel.add_script_parameter(
+                    InputParameter.create(
+                        value_node, var_name, TupleParameterType, tup,
+                    )
+                )
             elif hasattr(ast, "NameConstant") and type(value_node) == ast.NameConstant:
                 if value_node.value == True:
                     self.cqModel.add_script_parameter(
@@ -525,6 +548,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                     str: StringParameterType,
                     float: NumberParameterType,
                     int: NumberParameterType,
+                    tuple: TupleParameterType,
                 }
 
                 self.cqModel.add_script_parameter(
@@ -561,8 +585,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                 self.handle_assignment(left_side.id, node.value)
             elif type(node.value) == ast.Tuple:
                 if isinstance(left_side, ast.Name):
-                    # skip unsupported parameter type
-                    pass
+                    self.handle_assignment(left_side.id, node.value)
                 else:
                     # we have a multi-value assignment
                     for n, v in zip(left_side.elts, node.value.elts):
