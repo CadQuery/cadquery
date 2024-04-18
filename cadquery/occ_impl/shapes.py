@@ -27,7 +27,7 @@ from ..selectors import (
     StringSyntaxSelector,
 )
 
-from ..utils import cqmultimethod as multimethod
+from ..utils import multimethod
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -1031,12 +1031,28 @@ class Shape(object):
 
         return r
 
+    @multimethod
     def move(self: T, loc: Location) -> T:
         """
         Apply a location in relative sense (i.e. update current location) to self
         """
 
         self.wrapped.Move(loc.wrapped)
+
+        return self
+
+    @move.register
+    def move(
+        self: T,
+        x: Real = 0,
+        y: Real = 0,
+        z: Real = 0,
+        rx: Real = 0,
+        ry: Real = 0,
+        rz: Real = 0,
+    ) -> T:
+
+        self.wrapped.Move(Location(x, y, z, rx, ry, rz).wrapped)
 
         return self
 
@@ -1052,12 +1068,12 @@ class Shape(object):
         return r
 
     @moved.register
-    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> "Shape":
+    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> T:
 
         return self.moved((loc1, loc2) + locs)
 
     @moved.register
-    def moved(self: T, locs: Sequence[Location]) -> "Shape":
+    def moved(self: T, locs: Sequence[Location]) -> T:
 
         rv = []
 
@@ -1065,6 +1081,19 @@ class Shape(object):
             rv.append(self.wrapped.Moved(l.wrapped))
 
         return _compound_or_shape(rv)
+
+    @moved.register
+    def moved(
+        self: T,
+        x: Real = 0,
+        y: Real = 0,
+        z: Real = 0,
+        rx: Real = 0,
+        ry: Real = 0,
+        rz: Real = 0,
+    ) -> T:
+
+        return self.moved(Location(x, y, z, rx, ry, rz))
 
     def __hash__(self) -> int:
 

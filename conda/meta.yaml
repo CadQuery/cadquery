@@ -12,10 +12,10 @@ build:
 
 requirements:
   build:
-    - python >=3.8
+    - python >=3.9
     - setuptools
   run:
-    - python >=3.8
+    - python >=3.9
     - ocp 7.7.1
     - occt 7.7.1
     - pyparsing >=2.1.9
@@ -24,7 +24,7 @@ requirements:
     - typing_extensions
     - nptyping >=2.0.1
     - nlopt
-    - multimethod >=1.7,<2.0
+    - multimethod >=1.11,<2.0
     - casadi
 
 test:

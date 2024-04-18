@@ -479,11 +479,11 @@ def test_sweep():
 def test_loft():
 
     w1 = circle(1)
-    w2 = ellipse(1.5, 1).move(Location(0, 0.1, 2))
-    w3 = circle(1).moved(Location(0, 0, 4))
+    w2 = ellipse(1.5, 1).move(0, y=1)
+    w3 = circle(1).moved(z=4, rx=15)
 
     w4 = segment((0, 0), (1, 0))
-    w5 = w4.moved(Location(0, 0, 1))
+    w5 = w4.moved(0, 0, 1)
 
     r1 = loft(w1, w2, w3)  # loft
     r2 = loft(w1, w2, w3, ruled=True)  # ruled loft

@@ -24,7 +24,7 @@ from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
 
 from ..types import Real
-from ..utils import cqmultimethod as multimethod
+from ..utils import multimethod
 
 TOL = 1e-2
 
@@ -945,10 +945,23 @@ class Location(object):
         self.wrapped = TopLoc_Location(T)
 
     @__init__.register
-    def __init__(self, x: Real, y: Real, z: Real) -> None:
-        """Location with translation (x,y,z) with respect to the original location."""
+    def __init__(
+        self,
+        x: Real = 0,
+        y: Real = 0,
+        z: Real = 0,
+        rx: Real = 0,
+        ry: Real = 0,
+        rz: Real = 0,
+    ) -> None:
+        """Location with translation (x,y,z) and 3 rotation angles."""
 
         T = gp_Trsf()
+
+        q = gp_Quaternion()
+        q.SetEulerAngles(gp_Extrinsic_XYZ, rx, ry, rz)
+
+        T.SetRotation(q)
         T.SetTranslationPart(Vector(x, y, z).wrapped)
 
         self.wrapped = TopLoc_Location(T)
