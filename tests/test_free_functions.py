@@ -34,18 +34,55 @@ from cadquery.occ_impl.shapes import (
     compound,
     Location,
     Shape,
+    _get_one_wire,
+    _get_wires,
+    _get,
+    _get_one,
 )
 
-from pytest import approx
+from pytest import approx, raises
 from math import pi
 
-#%% utils
+#%% test utils
 
 
 def assert_all_valid(*objs: Shape):
 
     for o in objs:
         assert o.isValid()
+
+
+#%% utils
+
+
+def test_utils():
+
+    r1 = _get_one_wire(rect(1, 1))
+
+    assert r1.ShapeType() == "Wire"
+
+    r2 = list(_get_wires(compound(r1, r1.moved(Location(0, 0, 1)))))
+
+    assert len(r2) == 2
+    assert all(el.ShapeType() == "Wire" for el in r2)
+
+    with raises(ValueError):
+        list(_get_wires(box(1, 1, 1)))
+
+    r3 = list(_get(box(1, 1, 1).moved(Location(), Location(2, 0, 0)), "Solid"))
+
+    assert (len(r3)) == 2
+    assert all(el.ShapeType() == "Solid" for el in r3)
+
+    with raises(ValueError):
+        list(_get(box(1, 1, 1), "Shell"))
+
+    r4 = _get_one(compound(box(1, 1, 1), box(2, 2, 2)), "Solid")
+
+    assert r4.ShapeType() == "Solid"
+
+    with raises(ValueError):
+        _get_one(rect(1, 1), ("Solid", "Shell"))
 
 
 #%% constructors
