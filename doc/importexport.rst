@@ -32,6 +32,7 @@ Export Formats
 * VRML
 * VTP
 * 3MF
+* glTF
 
 Notes on the Formats
 ---------------------
@@ -42,6 +43,7 @@ Notes on the Formats
 * TJS is short for ThreeJS, and is a JSON mesh format that is useful for displaying 3D models in web browsers. The TJS format is used to display embedded 3D examples within the CadQuery documentation.
 * VRML is a mesh-based format for representing interactive 3D objects in a web browser.
 * VTP is a mesh-based format used by the VTK library.
+* glTF is a mesh-based format useful for viewing models on the web. Whether the resulting glTF file is binary (.glb) or text (.gltf) is set by the file extension. This export format is only available for assemblies.
 
 Importing DXF
 ##############
@@ -202,6 +204,28 @@ This is done by setting the name property of the assembly before calling :meth:`
     )
 
 If an assembly name is not specified, a UUID will be used to avoid name conflicts.
+
+Exporting Assemblies to glTF
+#############################
+
+It is possible to export CadQuery assemblies to glTF format. glTF is a mesh-based format useful for viewing models on the web. Whether the resulting glTF file is binary (.glb) or text (.gltf) is set by the file extension.
+
+CadQuery assemblies have a :meth:`Assembly.save` method which can write an assembly to a glTF file. An example assembly
+export with all defaults is shown below. To export to a binary glTF file, change the extension to ``glb``.
+
+.. code-block:: python
+
+    import cadquery as cq
+
+    # Create a sample assembly
+    assy = cq.Assembly()
+    body = cq.Workplane().box(10, 10, 10)
+    assy.add(body, color=cq.Color(1, 0, 0), name="body")
+    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+
+    # Save the assembly to STEP
+    assy.save("out.gltf")
 
 Exporting SVG
 ###############

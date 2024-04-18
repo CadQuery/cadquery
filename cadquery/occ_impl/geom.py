@@ -849,6 +849,22 @@ class BoundBox(object):
 
         return BoundBox(tmp)
 
+    def enlarge(self, tol: float) -> "BoundBox":
+        """Returns a modified (expanded) bounding box, expanded in all
+        directions by the tolerance value. 
+
+        This means that the minimum values of its X, Y and Z intervals
+        of the bounding box are reduced by the absolute value of tol, while 
+        the maximum values are increased by the same amount. 
+        """
+        tmp = Bnd_Box()
+        tmp.Add(self.wrapped)
+        tmp.SetGap(self.wrapped.GetGap())
+
+        tmp.Enlarge(tol)
+
+        return BoundBox(tmp)
+
     @staticmethod
     def findOutsideBox2D(bb1: "BoundBox", bb2: "BoundBox") -> Optional["BoundBox"]:
         """Compares bounding boxes

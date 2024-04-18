@@ -415,11 +415,14 @@ class TestDxfDocument(BaseTest):
         )
 
         self.assertEqual(expected_type, result_type)
-        self.assertAlmostEqual(
+
+        for expected, result in zip(
             expected_attributes["control_points"], result_attributes["control_points"]
-        )
+        ):
+            assert result == approx(expected)
+
         self.assertEqual(expected_attributes["order"], result_attributes["order"])
-        self.assertEqual(expected_attributes["knots"], result_attributes["knots"])
+        assert result_attributes["knots"] == approx(expected_attributes["knots"])
         self.assertEqual(expected_attributes["weights"], result_attributes["weights"])
 
     def test_add_layer_definition(self):
@@ -907,7 +910,7 @@ def test_dxf_text(tmpdir, testdatadir):
     s2 = Sketch().importDXF(fname)
     w2 = Workplane("XZ", origin=(0, -0.5, 0)).placeSketch(s2).extrude(-1)
 
-    assert w1.val().Volume() == approx(59.983287, 1e-2)
+    assert w1.val().Volume() == approx(61.669465, 1e-2)
     assert w2.val().Volume() == approx(w1.val().Volume(), 1e-2)
     assert w2.intersect(w1).val().Volume() == approx(w1.val().Volume(), 1e-2)
 

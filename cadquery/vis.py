@@ -1,6 +1,5 @@
 from . import Shape, Workplane, Assembly, Sketch, Compound, Color
 from .occ_impl.exporters.assembly import _vtkRenderWindow
-from .occ_impl.jupyter_tools import DEFAULT_COLOR
 
 from typing import Union
 
@@ -10,6 +9,8 @@ from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingCore import vtkMapper, vtkRenderWindowInteractor
+
+DEFAULT_COLOR = [1, 0.8, 0, 1]
 
 
 def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:
@@ -78,17 +79,18 @@ def show(*objs: Union[Shape, Workplane, Assembly, Sketch]):
     renderer = win.GetRenderers().GetFirstRenderer()
     renderer.GradientBackgroundOn()
 
-    # set size and camera
-    win.SetSize(*win.GetScreenSize())
-    win.SetPosition(-10, 0)
-
+    # set camera
     camera = renderer.GetActiveCamera()
     camera.Roll(-35)
     camera.Elevation(-45)
     renderer.ResetCamera()
 
-    # show and return
+    # initialize and set size
     inter.Initialize()
+    win.SetSize(*win.GetScreenSize())
+    win.SetPosition(-10, 0)
+
+    # show and return
     win.Render()
     inter.Start()
 

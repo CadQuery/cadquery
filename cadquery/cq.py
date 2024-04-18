@@ -570,7 +570,7 @@ class Workplane(object):
                 return False
 
             # test if p1 is on the plane of f0 (offset of planes)
-            return abs(n0.dot(p0.sub(p1)) < self.ctx.tolerance)
+            return abs(n0.dot(p0.sub(p1))) < self.ctx.tolerance
 
         def _computeXdir(normal):
             """
@@ -1629,6 +1629,39 @@ class Workplane(object):
 
         return self.newObject([p])
 
+    def bezier(
+        self: T,
+        listOfXYTuple: Iterable[VectorLike],
+        forConstruction: bool = False,
+        includeCurrent: bool = False,
+        makeWire: bool = False,
+    ) -> T:
+        """
+        Make a cubic Bézier curve by the provided points (2D or 3D).
+
+        :param listOfXYTuple: Bezier control points and end point.
+            All points except the last point are Bezier control points,
+            and the last point is the end point
+        :param includeCurrent: Use the current point as a starting point of the curve
+        :param makeWire: convert the resulting bezier edge to a wire
+        :return: a Workplane object with the current point at the end of the bezier
+
+        The Bézier Will begin at either current point or the first point
+        of listOfXYTuple, and end with the last point of listOfXYTuple
+        """
+        allPoints = self._toVectors(listOfXYTuple, includeCurrent)
+
+        e = Edge.makeBezier(allPoints)
+
+        if makeWire:
+            rv_w = Wire.assembleEdges([e])
+            if not forConstruction:
+                self._addPendingWire(rv_w)
+        elif not forConstruction:
+            self._addPendingEdge(e)
+
+        return self.newObject([rv_w if makeWire else e])
+
     # line a specified incremental amount from current point
     def line(self: T, xDist: float, yDist: float, forConstruction: bool = False) -> T:
         """
@@ -2198,7 +2231,11 @@ class Workplane(object):
         # Calculate the sagitta from the radius
         length = endPoint.sub(startPoint).Length / 2.0
         try:
-            sag = abs(radius) - math.sqrt(radius ** 2 - length ** 2)
+            sag = abs(radius)
+            r_2_l_2 = radius ** 2 - length ** 2
+            # Float imprecision can lead slightly negative values: consider them as zeros
+            if abs(r_2_l_2) >= TOL:
+                sag -= math.sqrt(r_2_l_2)
         except ValueError:
             raise ValueError("Arc radius is not large enough to reach the end point.")
 
@@ -2953,7 +2990,7 @@ class Workplane(object):
                 .workplane()
                 .rect(1.5, 3.5, forConstruction=True)
                 .vertices()
-                .hole(0.125, 0.25, 82, depth=None)
+                .hole(0.125, 82)
             )
 
         This sample creates a plate with a set of holes at the corners.
@@ -3333,6 +3370,8 @@ class Workplane(object):
             self._mergeTags(toUnion)
         elif isinstance(toUnion, (Solid, Compound)):
             newS = [toUnion]
+        elif toUnion is None:
+            newS = []
         else:
             raise ValueError("Cannot union type '{}'".format(type(toUnion)))
 
