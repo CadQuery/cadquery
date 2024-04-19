@@ -1084,6 +1084,13 @@ class Shape(object):
 
         return self
 
+    @move.register
+    def move(self: T, loc: VectorLike) -> T:
+
+        self.wrapped.Move(Location(loc).wrapped)
+
+        return self
+
     @multimethod
     def moved(self: T, loc: Location) -> T:
         """
@@ -1122,6 +1129,18 @@ class Shape(object):
     ) -> T:
 
         return self.moved(Location(x, y, z, rx, ry, rz))
+
+    @moved.register
+    def moved(self: T, loc: VectorLike) -> T:
+
+        return self.moved(Location(loc))
+
+    @moved.register
+    def moved(self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike) -> T:
+
+        return self.moved(
+            (Location(loc1), Location(loc2)) + tuple(Location(loc) for loc in locs)
+        )
 
     def __hash__(self) -> int:
 

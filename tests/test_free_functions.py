@@ -52,6 +52,11 @@ def assert_all_valid(*objs: Shape):
         assert o.isValid()
 
 
+def vector_equal(v1, v2):
+
+    return v1.toTuple() == approx(v2.toTuple())
+
+
 #%% utils
 
 
@@ -336,6 +341,7 @@ def test_moved():
 
     assert bs1.Volume() == approx(2)
     assert len(bs1.Solids()) == 2
+
     assert bs2.Volume() == approx(2)
     assert len(bs2.Solids()) == 2
 
@@ -344,6 +350,24 @@ def test_moved():
 
     assert bs3.Volume() == approx(4)
     assert len(bs3.Solids()) == 4
+
+    # move with VectorLike
+    bs4 = b.moved((0, 0, 1), (0, 0, -1))
+    bs5 = bs4.moved((1, 0, 0)).move((-1, 0, 0))
+
+    assert bs4.Volume() == approx(2)
+    assert vector_equal(bs5.Center(), bs4.Center())
+
+    # move with direct params
+    bs6 = b.moved((0, 0, 1)).moved(0, 0, -1)
+    bs7 = b.moved((0, 0, 1)).moved(z=-1)
+    bs8 = b.moved(Location((0, 0, 0), (-45, 0, 0))).moved(rx=45)
+    bs9 = b.moved().move(Location((0, 0, 0), (-45, 0, 0))).move(rx=45)
+
+    assert vector_equal(bs6.Center(), b.Center())
+    assert vector_equal(bs7.Center(), b.Center())
+    assert vector_equal(bs8.edges(">Z").Center(), b.edges(">Z").Center())
+    assert vector_equal(bs9.edges(">Z").Center(), b.edges(">Z").Center())
 
 
 #%% ops
