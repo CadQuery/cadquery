@@ -42,7 +42,7 @@ The purpose of this section is to demonstrate how to construct Shape objects usi
     s = solid(side, bottom, top)
 
     # construct the final result
-    result = s.moved(Location(-3*r, 0, 0), Locations(3*r, 0, 0))
+    result = s.moved(Location(-3*r, 0, 0), Location(3*r, 0, 0))
 
 
 The code above builts non-trivial object by sequentially constructing individual faces, assembling them into a solid and finally generating a pattern.
