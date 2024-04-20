@@ -616,6 +616,12 @@ class TestCadObjects(BaseTest):
 
     def testLocation(self):
 
+        # empty
+        loc = Location()
+
+        T = loc.wrapped.Transformation().TranslationPart()
+        self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 0), 6)
+
         # Tuple
         loc0 = Location((0, 0, 1))
 
