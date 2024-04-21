@@ -1,4 +1,4 @@
-import math
+from math import pi, radians, degrees
 
 from typing import overload, Sequence, Union, Tuple, Type, Optional
 
@@ -685,7 +685,7 @@ class Plane(object):
         # NB: this is not a geometric Vector
         rotate = Vector(rotate)
         # Convert to radians.
-        rotate = rotate.multiply(math.pi / 180.0)
+        rotate = rotate.multiply(pi / 180.0)
 
         # Compute rotation matrix.
         T1 = gp_Trsf()
@@ -851,11 +851,11 @@ class BoundBox(object):
 
     def enlarge(self, tol: float) -> "BoundBox":
         """Returns a modified (expanded) bounding box, expanded in all
-        directions by the tolerance value. 
+        directions by the tolerance value.
 
         This means that the minimum values of its X, Y and Z intervals
-        of the bounding box are reduced by the absolute value of tol, while 
-        the maximum values are increased by the same amount. 
+        of the bounding box are reduced by the absolute value of tol, while
+        the maximum values are increased by the same amount.
         """
         tmp = Bnd_Box()
         tmp.Add(self.wrapped)
@@ -975,7 +975,7 @@ class Location(object):
         T = gp_Trsf()
 
         q = gp_Quaternion()
-        q.SetEulerAngles(gp_Extrinsic_XYZ, rx, ry, rz)
+        q.SetEulerAngles(gp_Extrinsic_XYZ, radians(rx), radians(ry), radians(rz))
 
         T.SetRotation(q)
         T.SetTranslationPart(Vector(x, y, z).wrapped)
@@ -1020,9 +1020,7 @@ class Location(object):
         with respect to the original location."""
 
         T = gp_Trsf()
-        T.SetRotation(
-            gp_Ax1(Vector().toPnt(), Vector(ax).toDir()), angle * math.pi / 180.0
-        )
+        T.SetRotation(gp_Ax1(Vector().toPnt(), Vector(ax).toDir()), radians(angle))
         T.SetTranslationPart(Vector(t).wrapped)
 
         self.wrapped = TopLoc_Location(T)
@@ -1034,7 +1032,7 @@ class Location(object):
         T = gp_Trsf()
 
         q = gp_Quaternion()
-        q.SetEulerAngles(gp_Extrinsic_XYZ, *angles)
+        q.SetEulerAngles(gp_Extrinsic_XYZ, *map(radians, angles))
 
         T.SetRotation(q)
         T.SetTranslationPart(Vector(t).wrapped)
@@ -1064,4 +1062,4 @@ class Location(object):
         rv_trans = (trans.X(), trans.Y(), trans.Z())
         rv_rot = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
 
-        return rv_trans, rv_rot
+        return rv_trans, tuple(map(degrees, rv_rot))

@@ -686,6 +686,14 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(TypeError):
             Location("xy_plane")
 
+        # test to tuple
+        loc8 = Location(z=2, ry=15)
+
+        trans, rot = loc8.toTuple()
+
+        self.assertTupleAlmostEquals(trans, (0, 0, 2), 6)
+        self.assertTupleAlmostEquals(rot, (0, 15, 0), 6)
+
     def testEdgeWrapperRadius(self):
 
         # get a radius from a simple circle
