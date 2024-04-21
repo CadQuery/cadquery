@@ -1060,6 +1060,6 @@ class Location(object):
         rot = T.GetRotation()
 
         rv_trans = (trans.X(), trans.Y(), trans.Z())
-        rv_rot = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
+        rx, ry, rz = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
 
-        return rv_trans, tuple(map(degrees, rv_rot))
+        return rv_trans, (degrees(rx), degrees(ry), degrees(rz))
