@@ -23,12 +23,12 @@ The purpose of this section is to demonstrate how to construct Shape objects usi
 
     from cadquery.occ_impl.shapes import *
 
-    dh = 1
+    dh = 2
     r = 1
 
     # construct edges
     edge1 = circle(r)
-    edge2 = circle(2*r).moved(z=dh)
+    edge2 = circle(1.5*r).moved(z=dh)
     edge3 = circle(r).moved(z=1.5*dh)
 
     # loft the side face
@@ -38,7 +38,7 @@ The purpose of this section is to demonstrate how to construct Shape objects usi
     bottom = fill(side.edges('<Z'))
 
     # top face with continuous curvature
-    top = cap(side.edges('>Z'), side, [(0,0,1.75*dh)])
+    top = cap(side.edges('>Z'), side, [(0,0,1.6*dh)])
 
     # assemble into a solid
     s = solid(side, bottom, top)
@@ -201,9 +201,9 @@ Placement and creation of arrays is possible using `move` and `moved`.
 
     from cadquery.occ_impl.shapes import *
 
-    locs = [(0,-2,0), (0,2,0)]
+    locs = [(0,-1,0), (0,1,0)]
 
     s = sphere(1).moved(locs)
-    c = cylinder(1,2).move(rx=45).moved(*locs)
+    c = cylinder(1,2).move(rx=15).moved(*locs)
 
     result = compound(s, c.moved(2))
