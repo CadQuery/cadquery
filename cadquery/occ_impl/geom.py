@@ -946,12 +946,6 @@ class Location(object):
     wrapped: TopLoc_Location
 
     @multimethod
-    def __init__(self) -> None:
-        """Empty location with not rotation or translation with respect to the original location."""
-
-        self.wrapped = TopLoc_Location(gp_Trsf())
-
-    @__init__.register
     def __init__(self, t: VectorLike) -> None:
         """Location with translation t with respect to the original location."""
 
