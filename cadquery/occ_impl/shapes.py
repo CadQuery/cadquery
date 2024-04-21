@@ -1142,6 +1142,11 @@ class Shape(object):
             (Location(loc1), Location(loc2)) + tuple(Location(loc) for loc in locs)
         )
 
+    @moved.register
+    def moved(self: T, loc: Sequence[VectorLike]) -> T:
+
+        return self.moved(tuple(Location(l) for l in loc))
+
     def __hash__(self) -> int:
 
         return self.hashCode()
