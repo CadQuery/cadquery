@@ -38,6 +38,7 @@ from cadquery.occ_impl.shapes import (
     _get_wires,
     _get,
     _get_one,
+    _get_edges,
 )
 
 from pytest import approx, raises
@@ -89,6 +90,9 @@ def test_utils():
     with raises(ValueError):
         _get_one(rect(1, 1), ("Solid", "Shell"))
 
+    with raises(ValueError):
+        list(_get_edges(fill(circle(1))))
+
 
 #%% constructors
 
@@ -115,6 +119,9 @@ def test_constructors():
     assert len(f1.Wires()) == 2
     assert f2.Area() == approx(1)
     assert len(f2.Wires()) == 1
+
+    with raises(ValueError):
+        face(e1)
 
     # shell
     b = box(1, 1, 1)
