@@ -4518,7 +4518,7 @@ def ellipse(r1: float, r2: float) -> Shape:
     )
 
 
-def plane(l: float, w: float) -> Shape:
+def plane(w: float, l: float) -> Shape:
     """
     Construct a planar face.
     """
@@ -4530,14 +4530,14 @@ def plane(l: float, w: float) -> Shape:
     )
 
 
-def box(l: float, w: float, h: float) -> Shape:
+def box(w: float, l: float, h: float) -> Shape:
     """
     Construct a solid box.
     """
 
     return _compound_or_shape(
         BRepPrimAPI_MakeBox(
-            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), l, w, h
+            gp_Ax2(Vector(-w / 2, -l / 2, 0).toPnt(), Vector(0, 0, 1).toDir()), w, l, h
         ).Shape()
     )
 
