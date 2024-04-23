@@ -198,7 +198,7 @@ Free function api currently supports extrude, loft, revolve and sweep operations
 
     r = rect(1,0.5)
     c = circle(0.2)
-    p = spline((0,0,0), (0,1,2), (0,0,1), (0,1,1))
+    p = spline([(0,0,0), (0,1,2)], [(0,0,1), (0,1,1)])
 
     # extrude
     s1 = extrude(r, (0,0,2))
