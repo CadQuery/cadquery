@@ -646,6 +646,7 @@ class Shape(object):
     def matrixOfInertia(obj: "Shape") -> List[List[float]]:
         """
         Calculates the matrix of inertia of an object.
+        Since the part's density is unknown, this result is inertia/density with units of [1/length].
         :param obj: Compute the matrix of inertia of this object
         """
         Properties = GProp_GProps()
