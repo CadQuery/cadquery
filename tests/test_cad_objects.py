@@ -766,6 +766,17 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(ValueError):
             wfillet = wire.fillet(radius=1.0)
 
+        # Test a closed fillet
+        points = [[0, 0, 0], [5, 4, 0], [8, 3, 1], [10, 0, 0]]
+
+        wire = Wire.makePolygon(points, close=True)
+        wfillet = wire.fillet(radius=0.5)
+        assert len(wfillet.Edges()) == 2 * len(points)
+
+        # Fillet a single vertex
+        wfillet = wire.fillet(radius=0.5, vertices=wire.Vertices()[0:1])
+        assert len(wfillet.Edges()) == len(points) + 1
+
 
 @pytest.mark.parametrize(
     "points, close, expected_edges",
