@@ -133,26 +133,26 @@ TEMPLATE = (
 
 function load_and_render(parent_element)
 {{
-    new Promise(
-      function(resolve, reject)
-      {{
-        if (typeof(require) !== "undefined" ){{
-            require.config({{
-             "paths": {{"vtk": "https://unpkg.com/vtk"}},
-            }});
-            require(["vtk"], resolve, reject);
-        }} else if ( typeof(vtk) === "undefined" ){{
-            var script = document.createElement("script");
-            script.onload = resolve;
-            script.onerror = reject;
-            script.src = "https://unpkg.com/vtk.js";
-            document.head.appendChild(script);
-        }} else {{ resolve() }};
-     }}
-    ).then(() => {{
-        var data = {data};
-        render(data, parent_element, {ratio});
-    }});
+new Promise(
+  function(resolve, reject)
+  {{
+    if (typeof(require) !== "undefined" ){{
+        require.config({{
+         "paths": {{"vtk": "https://unpkg.com/vtk"}},
+        }});
+        require(["vtk"], resolve, reject);
+    }} else if ( typeof(vtk) === "undefined" ){{
+        var script = document.createElement("script");
+        script.onload = resolve;
+        script.onerror = reject;
+        script.src = "https://unpkg.com/vtk.js";
+        document.head.appendChild(script);
+    }} else {{ resolve() }};
+ }}
+).then(() => {{
+    var data = {data};
+    render(data, parent_element, {ratio});
+}});
 }}
 
 load_and_render({element});
