@@ -4396,6 +4396,12 @@ class Workplane(object):
 
         return self.newObject(rv)
 
+    def addWire(self: T, wire: Wire) -> T:
+        """
+        Add a wire for each point on the stack.
+        """
+        return self.eachpoint(lambda v: wire.moved(v))
+
     def _repr_javascript_(self) -> Any:
         """
         Special method for rendering current object in a jupyter notebook

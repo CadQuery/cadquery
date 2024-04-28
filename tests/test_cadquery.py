@@ -5680,3 +5680,16 @@ class TestCadQuery(BaseTest):
 
         res7 = list(fs.siblings(c, "Edge", 2))
         assert len(res7) == 2
+
+    def test_addWire(self):
+
+        s = 0.5
+        wire = Wire.makePolygon(
+            [(-s, -s, 0), (s, -s, 0), (s, s, 0), (-s, s, 0)], close=True
+        )
+
+        obj = Workplane("XY").addWire(wire).extrude(s, both=True)
+        bb = obj.val().BoundingBox()
+        self.assertAlmostEqual(bb.xlen, 2 * s, 2)
+        self.assertAlmostEqual(bb.ylen, 2 * s, 2)
+        self.assertAlmostEqual(bb.zlen, 2 * s, 2)
