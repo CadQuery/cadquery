@@ -143,10 +143,10 @@ new Promise(
         require(["vtk"], resolve, reject);
     }} else if ( typeof(vtk) === "undefined" ){{
         var script = document.createElement("script");
-        script.onload = resolve;
-        script.onerror = reject;
-        script.src = "https://unpkg.com/vtk.js";
-        document.head.appendChild(script);
+    	script.onload = resolve;
+    	script.onerror = reject;
+    	script.src = "https://unpkg.com/vtk.js";
+    	document.head.appendChild(script);
     }} else {{ resolve() }};
  }}
 ).then(() => {{
