@@ -5331,6 +5331,31 @@ class TestCadQuery(BaseTest):
         r = ref.vertices().eachpoint(lambda loc: box.moved(loc), combine="cut")
         self.assertGreater(ref.val().Volume(), r.val().Volume())
 
+        # test eachpoint with a wire cutThru()
+        holeRadius = 1
+        wire = Wire.makeCircle(holeRadius, (0, 0, 0), (0, 0, 1))
+        boxHeight = 1
+        ref = Workplane("XY").box(10, 10, boxHeight)
+        r = (
+            ref.faces(">Z")
+            .rect(7, 7, forConstruction=True)
+            .vertices()
+            .eachpoint(wire)
+            .cutThruAll()
+        )
+        holeVolume = math.pi * holeRadius**2 * boxHeight
+        self.assertAlmostEqual(r.val().Volume(), ref.val().Volume() - holeVolume* 4)
+
+        # test eachpoint with a workplane
+        box = Workplane().box(2, 2, 2)
+        sph = Workplane().sphere(1.0)
+        # Place the sphere in the center of each box face
+        r = box.faces().eachpoint(sph, combine=True)
+        self.assertAlmostEqual(
+            r.val().Volume(), box.val().Volume() + 3 * sph.val().Volume()
+        )
+
+
     def testSketch(self):
 
         r1 = (
