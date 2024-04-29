@@ -3891,7 +3891,7 @@ class TestCadQuery(BaseTest):
             0,
             halign="left",
             valign="bottom",
-            fontPath="tests/testdata/OpenSans-Regular.ttf",
+            fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
         )
         lb_bb = left_bottom.val().BoundingBox()
         self.assertGreaterEqual(lb_bb.xmin, 0)
@@ -3903,7 +3903,7 @@ class TestCadQuery(BaseTest):
             0,
             halign="center",
             valign="center",
-            fontPath="tests/testdata/OpenSans-Regular.ttf",
+            fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
         )
         c_bb = centers.val().BoundingBox()
         self.assertAlmostEqual(c_bb.center.x, 0, places=0)
@@ -3915,7 +3915,7 @@ class TestCadQuery(BaseTest):
             0,
             halign="right",
             valign="top",
-            fontPath="tests/testdata/OpenSans-Regular.ttf",
+            fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
         )
         rt_bb = right_top.val().BoundingBox()
         self.assertLessEqual(rt_bb.xmax, 0)
