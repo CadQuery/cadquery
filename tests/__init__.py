@@ -62,4 +62,5 @@ __all__ = [
     "TestImporters",
     "TestJupyter",
     "TestWorkplanes",
+    "TestChamfer"
 ]
