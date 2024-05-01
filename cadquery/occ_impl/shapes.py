@@ -2888,39 +2888,63 @@ class Mixin3D(object):
         return self.__class__(fillet_builder.Shape())
 
     def chamfer(
-        self: Any, length: float, length2: Optional[float], edgeList: Iterable[Edge]
+        self: Any, length: float, length2: Optional[float], edgeList: Iterable[Edge], facesList: Iterable[Face]
     ) -> Any:
         """
         Chamfers the specified edges of this solid.
 
         :param length: length > 0, the length (length) of the chamfer
         :param length2: length2 > 0, optional parameter for asymmetrical chamfer. Should be `None` if not required.
-        :param edgeList:  a list of Edge objects, which must belong to this solid
+        :param edgeList: a list of Edge objects, which must belong to this solid
+        :param facesList: a list of Face objects, which must belong to this solid
+        :raises ValueError: if the asymmetric mode and can't find face in stack
         :return: Chamfered solid
         """
-        nativeEdges = [e.wrapped for e in edgeList]
-
-        # make a edge --> faces mapping
-        edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
-        TopExp.MapShapesAndAncestors_s(
-            self.wrapped, ta.TopAbs_EDGE, ta.TopAbs_FACE, edge_face_map
-        )
+        native_edges = [e.wrapped for e in edgeList]
+        native_faces = [f.wrapped for f in facesList]
 
         # note: we prefer 'length' word to 'radius' as opposed to FreeCAD's API
         chamfer_builder = BRepFilletAPI_MakeChamfer(self.wrapped)
 
-        if length2:
-            d1 = length
-            d2 = length2
-        else:
-            d1 = length
-            d2 = length
+        # note: finding right face is very simple if only one fase selected
+        if len(native_faces) == 1:
+            for edge in native_edges:
+                chamfer_builder.Add(length, length2 or length, edge, TopoDS.Face_s(native_faces[0]))
+            return self.__class__(chamfer_builder.Shape())
 
-        for e in nativeEdges:
-            face = edge_face_map.FindFromKey(e).First()
-            chamfer_builder.Add(
-                d1, d2, e, TopoDS.Face_s(face)
-            )  # NB: edge_face_map return a generic TopoDS_Shape
+        if (len(native_faces) == 0) and (length2 is not None):
+            raise ValueError("If chamber length2 not None edges must be selected on faces")
+
+        # make a edge --> faces mapping
+        edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
+        TopExp.MapShapesAndAncestors_s(self.wrapped, ta.TopAbs_EDGE, ta.TopAbs_FACE, edge_face_map)
+
+        # note: if edges selected directly
+        if len(native_faces) == 0:
+            for edge in native_edges:
+                face = edge_face_map.FindFromKey(edge).First()
+                chamfer_builder.Add(length, length, edge, TopoDS.Face_s(face))
+            return self.__class__(chamfer_builder.Shape())
+
+        # note: selected multiple faces
+        # we need determinate face for each edge
+
+        for edge in native_edges:
+            faces = edge_face_map.FindFromKey(edge)
+            edge_selected_faces = []
+            for face in native_faces:
+                if any(face.IsSame(f) for f in faces):
+                    edge_selected_faces.append(face)
+
+            if len(edge_selected_faces) == 0:
+                raise ValueError("Unexpected error. Faces selected but dont contain current edge.")
+
+            elif len(edge_selected_faces) == 1:
+                chamfer_builder.Add(length, length2 or length, edge, TopoDS.Face_s(edge_selected_faces[0]))
+
+            else:
+                chamfer_builder.Add(length2 or length, length2 or length, edge, TopoDS.Face_s(edge_selected_faces[0]))
+
         return self.__class__(chamfer_builder.Shape())
 
     def shell(

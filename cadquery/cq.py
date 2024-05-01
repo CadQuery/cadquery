@@ -1320,6 +1320,7 @@ class Workplane(object):
         :param length2: optional parameter for asymmetrical chamfer
         :raises ValueError: if at least one edge is not selected
         :raises ValueError: if the solid containing the edge is not in the chain
+        :raises ValueError: if the asymmetric mode and can't find face in stack
         :returns: CQ object with the resulting solid selected.
 
         This example will create a unit cube, with the top edges chamfered::
@@ -1332,12 +1333,29 @@ class Workplane(object):
         """
         solid = self.findSolid()
 
-        edgeList = cast(List[Edge], self.edges().vals())
-        if len(edgeList) < 1:
+        edges_list = cast(List[Edge], self.edges().vals())
+        if len(edges_list) < 1:
             raise ValueError("Chamfer requires that edges be selected")
 
-        s = solid.chamfer(length, length2, edgeList)
+        def find_faces(x: T) -> List[Face]:
+            faces = []
+            for o in x.objects:
+                # filter faces
+                if isinstance(o, Face):
+                    faces.append(cast(Face, o))
+                # break if reached deeper stack level
+                elif any(isinstance(o, t) for t in [Solid, Compound]):
+                    return []
 
+            # return found faces
+            if len(faces) > 0:
+                return faces
+
+            # if faces not fond go to the next stack level
+            return find_faces(x.end())
+
+        faces_list = find_faces(self)
+        s = solid.chamfer(length, length2, edges_list, cast(List[Face], faces_list))
         return self.newObject([s])
 
     def transformed(
