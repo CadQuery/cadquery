@@ -2888,7 +2888,11 @@ class Mixin3D(object):
         return self.__class__(fillet_builder.Shape())
 
     def chamfer(
-        self: Any, length: float, length2: Optional[float], edgeList: Iterable[Edge], facesList: Iterable[Face]
+        self: Any,
+        length: float,
+        length2: Optional[float],
+        edgeList: Iterable[Edge],
+        facesList: Iterable[Face],
     ) -> Any:
         """
         Chamfers the specified edges of this solid.
@@ -2909,15 +2913,21 @@ class Mixin3D(object):
         # note: finding right face is very simple if only one fase selected
         if len(native_faces) == 1:
             for edge in native_edges:
-                chamfer_builder.Add(length, length2 or length, edge, TopoDS.Face_s(native_faces[0]))
+                chamfer_builder.Add(
+                    length, length2 or length, edge, TopoDS.Face_s(native_faces[0])
+                )
             return self.__class__(chamfer_builder.Shape())
 
         if (len(native_faces) == 0) and (length2 is not None):
-            raise ValueError("If chamber length2 not None edges must be selected on faces")
+            raise ValueError(
+                "If chamber length2 not None edges must be selected on faces"
+            )
 
         # make a edge --> faces mapping
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
-        TopExp.MapShapesAndAncestors_s(self.wrapped, ta.TopAbs_EDGE, ta.TopAbs_FACE, edge_face_map)
+        TopExp.MapShapesAndAncestors_s(
+            self.wrapped, ta.TopAbs_EDGE, ta.TopAbs_FACE, edge_face_map
+        )
 
         # note: if edges selected directly
         if len(native_faces) == 0:
@@ -2937,13 +2947,25 @@ class Mixin3D(object):
                     edge_selected_faces.append(face)
 
             if len(edge_selected_faces) == 0:
-                raise ValueError("Unexpected error. Faces selected but dont contain current edge.")
+                raise ValueError(
+                    "Unexpected error. Faces selected but dont contain current edge."
+                )
 
             elif len(edge_selected_faces) == 1:
-                chamfer_builder.Add(length, length2 or length, edge, TopoDS.Face_s(edge_selected_faces[0]))
+                chamfer_builder.Add(
+                    length,
+                    length2 or length,
+                    edge,
+                    TopoDS.Face_s(edge_selected_faces[0]),
+                )
 
             else:
-                chamfer_builder.Add(length2 or length, length2 or length, edge, TopoDS.Face_s(edge_selected_faces[0]))
+                chamfer_builder.Add(
+                    length2 or length,
+                    length2 or length,
+                    edge,
+                    TopoDS.Face_s(edge_selected_faces[0]),
+                )
 
         return self.__class__(chamfer_builder.Shape())
 
