@@ -4261,6 +4261,9 @@ def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
 
 
 def _pts_to_harray(ps: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
+    """
+    Convert a sequence of Vecotor to a TColgp harray (OCCT specific).
+    """
 
     rv = TColgp_HArray1OfPnt(1, len(ps))
 
@@ -4271,6 +4274,10 @@ def _pts_to_harray(ps: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
 
 
 def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
+    """
+    Convert an itrable of Shape to a TopTools list (OCCT specific).
+    """
+
     rv = TopTools_ListOfShape()
 
     for el in s:
@@ -4279,7 +4286,7 @@ def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
     return rv
 
 
-# %% alternative constructors
+#%% alternative constructors
 
 
 @multimethod
