@@ -58,14 +58,14 @@ It begins with defining few edges.
     edge3 = circle(r).moved(z=1.5*dh)
 
 
-Those edges are used to crate the side faces of the final solid using loft.
+Those edges are used to crate the side faces of the final solid using :meth:`~cadquery.occ_impl.shapes.loft`.
 
 .. code-block:: python
 
     side = loft(edge1, edge2, edge3)
 
-Once the side is there, cap and fill are used to define the top and bottom faces.
-Note that cap tries to maintain curvature continuity with respect to the context shape. This is not the case for fill.
+Once the side is there, :meth:`~cadquery.occ_impl.shapes.cap` and :meth:`~cadquery.occ_impl.shapes.fill` are used to define the top and bottom faces.
+Note that :meth:`~cadquery.occ_impl.shapes.cap` tries to maintain curvature continuity with respect to the context shape. This is not the case for :meth:`~cadquery.occ_impl.shapes.fill`.
 
 .. code-block:: python
 
@@ -81,7 +81,7 @@ Next, all the faces are assembled into a solid.
 
     s = solid(side, bottom, top)
 
-Finally, the solid is duplicated and placed in the desired locations creating the final compound object. Note various usages of moved.
+Finally, the solid is duplicated and placed in the desired locations creating the final compound object. Note various usages of :meth:`~cadquery.Shape.moved`.
 
 .. code-block:: python
 
@@ -114,6 +114,8 @@ Boolean operations
 ------------------
 
 Boolean operations are supported and implemented as operators and free functions.
+In general boolean operations are slow and it is advised to avoid them and not to perform the in a loop.
+One can for example union multiple solids at once by irst combining them into a compound.
 
 .. cadquery::
 
@@ -190,7 +192,7 @@ Constructing complex shapes from simple shapes is possible in various contexts.
 Operations
 ----------
 
-Free function API currently supports extrude, loft, revolve and sweep operations.
+Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, :meth:`~cadquery.occ_impl.shapes.loft`, :meth:`~cadquery.occ_impl.shapes.revolve` and :meth:`~cadquery.occ_impl.shapes.sweep` operations.
 
 .. cadquery::
 
@@ -222,7 +224,7 @@ Free function API currently supports extrude, loft, revolve and sweep operations
 Placement
 ---------
 
-Placement and creation of arrays is possible using `move` and `moved`.
+Placement and creation of arrays is possible using :meth:`~cadquery.Shape.move` and :meth:`~cadquery.Shape.moved`.
 
 .. cadquery::
 
