@@ -4330,7 +4330,7 @@ def face(s: Sequence[Shape]) -> Shape:
 @multimethod
 def shell(*s: Shape) -> Shape:
     """
-    Buld shell form faces
+    Build shell form faces
     """
 
     builder = BRepBuilderAPI_Sewing()
@@ -4399,7 +4399,7 @@ def compound(s: Sequence[Shape]) -> Shape:
 @multimethod
 def vertex(x: Real, y: Real, z: Real) -> Shape:
     """
-    Construct a vertex from cooridnates.
+    Construct a vertex from coordinates.
     """
 
     return _compound_or_shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
@@ -4735,7 +4735,7 @@ def split(s1: Shape, s2: Shape) -> Shape:
 
 def clean(s: Shape) -> Shape:
     """
-    Clean superflous edges and faces.
+    Clean superfluous edges and faces.
     """
 
     builder = ShapeUpgrade_UnifySameDomain(s.wrapped, True, True, True)
@@ -4913,7 +4913,7 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
 @sweep.register
 def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
     """
-    Sweep edges or wires along a path, chaning sections are supported.
+    Sweep edges or wires along a path, chaining sections are supported.
     """
 
     spine = _get_one_wire(path)

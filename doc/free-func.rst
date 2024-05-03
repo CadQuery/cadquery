@@ -6,7 +6,7 @@ Free function API
 
 .. warning:: The free function API is experimental and may change.
 
-For situations when more freedom in crating individual objects is required a free function API is provided.
+For situations when more freedom in crafting individual objects is required, a free function API is provided.
 This API has no hidden state, but may result in more verbose code. One can still use selectors as methods, but all other operations are implemented as free functions.
 Placement of objects and creation of patterns can be achieved using the various overloads of the moved method.
 
@@ -47,7 +47,7 @@ The purpose of this section is to demonstrate how to construct Shape objects usi
     result = s.moved((-3*r, 0, 0), (3*r, 0, 0))
 
 
-The code above builds non-trivial object by sequentially constructing individual faces, assembling them into a solid and finally generating a pattern.
+The code above builds a non-trivial object by sequentially constructing individual faces, assembling them into a solid and finally generating a pattern.
 
 It begins with defining few edges.
 
@@ -87,7 +87,7 @@ Finally, the solid is duplicated and placed in the desired locations creating th
 
     result = s.moved((-3*r, 0, 0), (3*r, 0, 0))
 
-In general all the operations are implemented as free functions, with the exception of placement and selection  which are strictly related to a specific shape.
+In general all the operations are implemented as free functions, with the exception of placement and selection which are strictly related to a specific shape.
 
 
 Primitives
@@ -190,7 +190,7 @@ Constructing complex shapes from simple shapes is possible in various contexts.
 Operations
 ----------
 
-Free function api currently supports extrude, loft, revolve and sweep operations.
+Free function API currently supports extrude, loft, revolve and sweep operations.
 
 .. cadquery::
 
