@@ -58,7 +58,7 @@ It begins with defining few edges.
     edge3 = circle(r).moved(z=1.5*dh)
 
 
-Those edges are used to crate the side faces of the final solid using :meth:`~cadquery.occ_impl.shapes.loft`.
+Those edges are used to create the side faces of the final solid using :meth:`~cadquery.occ_impl.shapes.loft`.
 
 .. code-block:: python
 
