@@ -115,7 +115,7 @@ Boolean operations
 
 Boolean operations are supported and implemented as operators and free functions.
 In general boolean operations are slow and it is advised to avoid them and not to perform the in a loop.
-One can for example union multiple solids at once by irst combining them into a compound.
+One can for example union multiple solids at once by first combining them into a compound.
 
 .. cadquery::
 

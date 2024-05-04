@@ -1560,7 +1560,7 @@ class Shape(object):
 
     def __mul__(self, other: "Shape") -> "Shape":
         """
-        Intersect slef and other.
+        Intersect self and other.
         """
 
         return intersect(self, other)
@@ -4129,7 +4129,7 @@ def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Iterable[Shape]:
 
 def _get_one(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Shape:
     """
-    Get one shape or raise an error
+    Get one shape or raise an error.
     """
 
     # convert input into tuple
@@ -4275,7 +4275,7 @@ def _pts_to_harray(ps: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
 
 def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
     """
-    Convert an itrable of Shape to a TopTools list (OCCT specific).
+    Convert an iterable of Shape to a TopTools list (OCCT specific).
     """
 
     rv = TopTools_ListOfShape()
@@ -4312,7 +4312,7 @@ def wire(s: Sequence[Shape]) -> Shape:
 @multimethod
 def face(*s: Shape) -> Shape:
     """
-    Builld face from edges or wires
+    Build face from edges or wires.
     """
 
     from OCP.BOPAlgo import BOPAlgo_Tools
@@ -4337,7 +4337,7 @@ def face(s: Sequence[Shape]) -> Shape:
 @multimethod
 def shell(*s: Shape) -> Shape:
     """
-    Build shell form faces
+    Build shell from faces.
     """
 
     builder = BRepBuilderAPI_Sewing()
@@ -4458,7 +4458,7 @@ def polygon(*pts: VectorLike) -> Shape:
 
 def rect(w: float, h: float) -> Shape:
     """
-    Construct a rectangle
+    Construct a rectangle.
     """
 
     return polygon(
