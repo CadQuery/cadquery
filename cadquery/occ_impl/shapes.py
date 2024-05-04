@@ -4160,7 +4160,7 @@ def _get_one(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Shape:
 
 def _get_one_wire(s: Shape) -> Wire:
     """
-    Get one wire or edge and convert to wire
+    Get one wire or edge and convert to wire.
     """
 
     rv = _get_one(s, ("Wire", "Edge"))
@@ -4173,7 +4173,7 @@ def _get_one_wire(s: Shape) -> Wire:
 
 def _get_wires(s: Shape) -> Iterable[Shape]:
     """
-    Get wires or wires from edges
+    Get wires or wires from edges.
     """
 
     t = s.ShapeType()
@@ -4191,7 +4191,7 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
 
 def _get_edges(s: Shape) -> Iterable[Shape]:
     """
-    Get wires or wires from edges
+    Get wires or wires from edges.
     """
 
     t = s.ShapeType()
@@ -4209,7 +4209,7 @@ def _get_edges(s: Shape) -> Iterable[Shape]:
 
 def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
     """
-    Get lists or wires for sweeping or lofting
+    Get lists or wires for sweeping or lofting.
     """
 
     wire_lists: List[List[Wire]] = []
@@ -4227,7 +4227,7 @@ def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
 def _normalize(s: Shape) -> Shape:
     """
     Apply some normalizations:
-    - Shell with only one Face -> Face
+    - Shell with only one Face -> Face.
     """
 
     t = s.ShapeType()
@@ -4360,7 +4360,7 @@ def shell(s: Sequence[Shape]) -> Shape:
 @multimethod
 def solid(*s: Shape) -> Shape:
     """
-    Build solid from faces
+    Build solid from faces.
     """
 
     builder = ShapeFix_Solid()
@@ -4380,7 +4380,7 @@ def solid(s: Sequence[Shape]) -> Shape:
 @multimethod
 def compound(*s: Shape) -> Shape:
     """
-    Build compound from shapes
+    Build compound from shapes.
     """
 
     rv = TopoDS_Compound()
