@@ -211,7 +211,7 @@ Or like this : ::
   It's then more difficult to debug as you cannot visualize each operation step by step, which is a functionality that is provided by the CQ-Editor debugger for example.
 
 The Direct API
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 While the fluent API exposes much functionality, you may find scenarios that require extra flexibility or require working with lower level objects.
 
@@ -229,7 +229,7 @@ The 9 topological classes are :
 8. :class:`~cadquery.Edge`
 9. :class:`~cadquery.Vertex`
 
-Each class has its own methods to create and/or edit shapes of their respective type. As already explained in :ref:`cadquery_concepts` there is also some kind of hierarchy in the
+Each class has its own methods to create and/or edit shapes of their respective type. One can also use the :ref:`freefuncapi` to create and modify shapes. As already explained in :ref:`cadquery_concepts` there is also some kind of hierarchy in the
 topological classes. A Wire is made of several edges which are themselves made of several vertices. This means you can create geometry from the bottom up and have a lot of control over it.
 
 For example we can create a circular face like so ::
@@ -246,7 +246,7 @@ It is more verbose than the fluent API and more tedious to work with, but as it 
 it is sometimes more convenient than the fluent API.
 
 The OCCT API
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Finally we are discussing about the OCCT API. The OCCT API is the lowest level of CadQuery. The direct API is built upon the OCCT API, where the OCCT API in CadQuery is available through OCP.
 OCP are the Python bindings of the OCCT C++ libraries CadQuery uses. This means you have access to (almost) all the OCCT C++ libraries in Python and in CadQuery.
