@@ -616,6 +616,12 @@ class TestCadObjects(BaseTest):
 
     def testLocation(self):
 
+        # empty
+        loc = Location()
+
+        T = loc.wrapped.Transformation().TranslationPart()
+        self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 0), 6)
+
         # Tuple
         loc0 = Location((0, 0, 1))
 
@@ -679,6 +685,14 @@ class TestCadObjects(BaseTest):
             Location([0, 0, 1])
         with self.assertRaises(TypeError):
             Location("xy_plane")
+
+        # test to tuple
+        loc8 = Location(z=2, ry=15)
+
+        trans, rot = loc8.toTuple()
+
+        self.assertTupleAlmostEquals(trans, (0, 0, 2), 6)
+        self.assertTupleAlmostEquals(rot, (0, 15, 0), 6)
 
     def testEdgeWrapperRadius(self):
 

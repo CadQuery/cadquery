@@ -24,7 +24,7 @@ requirements:
     - typing_extensions
     - nptyping >=2.0.1
     - nlopt
-    - multimethod ==1.9.1
+    - multimethod >=1.11,<2.0
     - casadi
 
 test:

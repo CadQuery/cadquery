@@ -19,7 +19,7 @@ dependencies:
   - nlopt
   - path
   - casadi
-  - multimethod ==1.9.1
+  - multimethod >=1.11,<2.0
   - typed-ast
   - regex
   - pathspec
