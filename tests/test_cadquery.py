@@ -5343,8 +5343,8 @@ class TestCadQuery(BaseTest):
             .eachpoint(wire)
             .cutThruAll()
         )
-        holeVolume = math.pi * holeRadius**2 * boxHeight
-        self.assertAlmostEqual(r.val().Volume(), ref.val().Volume() - holeVolume* 4)
+        holeVolume = math.pi * holeRadius ** 2 * boxHeight
+        self.assertAlmostEqual(r.val().Volume(), ref.val().Volume() - holeVolume * 4)
 
         # test eachpoint with a workplane
         box = Workplane().box(2, 2, 2)
@@ -5354,7 +5354,6 @@ class TestCadQuery(BaseTest):
         self.assertAlmostEqual(
             r.val().Volume(), box.val().Volume() + 3 * sph.val().Volume()
         )
-
 
     def testSketch(self):
 

@@ -132,6 +132,7 @@ class CQContext(object):
         self.pendingWires = []
         return out
 
+
 class Workplane(object):
     """
     Defines a coordinate system in space, in which 2D coordinates can be used.
