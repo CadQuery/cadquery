@@ -5346,11 +5346,35 @@ class TestCadQuery(BaseTest):
         holeVolume = math.pi * holeRadius ** 2 * boxHeight
         self.assertAlmostEqual(r.val().Volume(), ref.val().Volume() - holeVolume * 4)
 
+        # same with useLocalCoordinates, which should give the same result
+        holeRadius = 1
+        wire = Wire.makeCircle(holeRadius, (0, 0, 0), (0, 0, 1))
+        boxHeight = 1
+        ref = Workplane("XY").box(10, 10, boxHeight)
+        r = (
+            ref.faces(">Z")
+            .rect(7, 7, forConstruction=True)
+            .vertices()
+            .eachpoint(wire, useLocalCoordinates=True)
+            .cutThruAll()
+        )
+        holeVolume = math.pi * holeRadius ** 2 * boxHeight
+        self.assertAlmostEqual(r.val().Volume(), ref.val().Volume() - holeVolume * 4)
+
         # test eachpoint with a workplane
         box = Workplane().box(2, 2, 2)
         sph = Workplane().sphere(1.0)
         # Place the sphere in the center of each box face
         r = box.faces().eachpoint(sph, combine=True)
+        self.assertAlmostEqual(
+            r.val().Volume(), box.val().Volume() + 3 * sph.val().Volume()
+        )
+
+        # same with useLocalCoordinates which should give the same result
+        box = Workplane().box(2, 2, 2)
+        sph = Workplane().sphere(1.0)
+        # Place the sphere in the center of each box face
+        r = box.faces().eachpoint(sph, combine=True, useLocalCoordinates=True)
         self.assertAlmostEqual(
             r.val().Volume(), box.val().Volume() + 3 * sph.val().Volume()
         )
