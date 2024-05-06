@@ -3888,36 +3888,21 @@ class TestCadQuery(BaseTest):
 
     def testTextAlignment(self):
         left_bottom = Workplane().text(
-            "I",
-            10,
-            0,
-            halign="left",
-            valign="bottom",
-            fontPath=testFont,
+            "I", 10, 0, halign="left", valign="bottom", fontPath=testFont,
         )
         lb_bb = left_bottom.val().BoundingBox()
         self.assertGreaterEqual(lb_bb.xmin, 0)
         self.assertGreaterEqual(lb_bb.ymin, 0)
 
         centers = Workplane().text(
-            "I",
-            10,
-            0,
-            halign="center",
-            valign="center",
-            fontPath=testFont,
+            "I", 10, 0, halign="center", valign="center", fontPath=testFont,
         )
         c_bb = centers.val().BoundingBox()
         self.assertAlmostEqual(c_bb.center.x, 0, places=0)
         self.assertAlmostEqual(c_bb.center.y, 0, places=0)
 
         right_top = Workplane().text(
-            "I",
-            10,
-            0,
-            halign="right",
-            valign="top",
-            fontPath=testFont,
+            "I", 10, 0, halign="right", valign="top", fontPath=testFont,
         )
         rt_bb = right_top.val().BoundingBox()
         self.assertLessEqual(rt_bb.xmax, 0)
