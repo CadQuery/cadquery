@@ -4,6 +4,7 @@
 """
 # system modules
 import math, os.path, time, tempfile
+from pathlib import Path
 from random import random
 from random import randrange
 from itertools import product
@@ -24,7 +25,8 @@ from tests import (
 )
 
 # test data directory
-testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+testdataDir = Path(os.path.dirname(__file__), "testdata")
+testFont = str(testdataDir / "OpenSans-Regular.ttf")
 
 # where unit test output will be saved
 OUTDIR = tempfile.gettempdir()
@@ -3843,7 +3845,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
+                fontPath=testFont,
                 cut=False,
                 combine=False,
                 halign="right",
@@ -3863,7 +3865,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=os.path.join(testdataDir, "OpenSans-Irregular.ttf"),
+                fontPath=testFont,
                 cut=False,
                 combine=False,
                 halign="right",
@@ -3891,7 +3893,7 @@ class TestCadQuery(BaseTest):
             0,
             halign="left",
             valign="bottom",
-            fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
+            fontPath=testFont,
         )
         lb_bb = left_bottom.val().BoundingBox()
         self.assertGreaterEqual(lb_bb.xmin, 0)
@@ -3903,7 +3905,7 @@ class TestCadQuery(BaseTest):
             0,
             halign="center",
             valign="center",
-            fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
+            fontPath=testFont,
         )
         c_bb = centers.val().BoundingBox()
         self.assertAlmostEqual(c_bb.center.x, 0, places=0)
@@ -3915,7 +3917,7 @@ class TestCadQuery(BaseTest):
             0,
             halign="right",
             valign="top",
-            fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
+            fontPath=testFont,
         )
         rt_bb = right_top.val().BoundingBox()
         self.assertLessEqual(rt_bb.xmax, 0)
