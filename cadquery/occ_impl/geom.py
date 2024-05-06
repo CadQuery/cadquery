@@ -49,28 +49,22 @@ class Vector(object):
     _wrapped: gp_Vec
 
     @overload
-    def __init__(self, x: float, y: float, z: float) -> None:
-        ...
+    def __init__(self, x: float, y: float, z: float) -> None: ...
 
     @overload
-    def __init__(self, x: float, y: float) -> None:
-        ...
+    def __init__(self, x: float, y: float) -> None: ...
 
     @overload
-    def __init__(self, v: "Vector") -> None:
-        ...
+    def __init__(self, v: "Vector") -> None: ...
 
     @overload
-    def __init__(self, v: Sequence[float]) -> None:
-        ...
+    def __init__(self, v: Sequence[float]) -> None: ...
 
     @overload
-    def __init__(self, v: Union[gp_Vec, gp_Pnt, gp_Dir, gp_XYZ]) -> None:
-        ...
+    def __init__(self, v: Union[gp_Vec, gp_Pnt, gp_Dir, gp_XYZ]) -> None: ...
 
     @overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
     def __init__(self, *args):
         if len(args) == 3:
@@ -215,7 +209,7 @@ class Vector(object):
         base = plane.origin
         normal = plane.zDir
 
-        return self - normal * (((self - base).dot(normal)) / normal.Length ** 2)
+        return self - normal * (((self - base).dot(normal)) / normal.Length**2)
 
     def __neg__(self) -> "Vector":
         return self * -1
@@ -270,16 +264,13 @@ class Matrix:
     wrapped: gp_GTrsf
 
     @overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
     @overload
-    def __init__(self, matrix: Union[gp_GTrsf, gp_Trsf]) -> None:
-        ...
+    def __init__(self, matrix: Union[gp_GTrsf, gp_Trsf]) -> None: ...
 
     @overload
-    def __init__(self, matrix: Sequence[Sequence[float]]) -> None:
-        ...
+    def __init__(self, matrix: Sequence[Sequence[float]]) -> None: ...
 
     def __init__(self, matrix=None):
 
@@ -342,12 +333,10 @@ class Matrix:
         return Matrix(self.wrapped.Inverted())
 
     @overload
-    def multiply(self, other: Vector) -> Vector:
-        ...
+    def multiply(self, other: Vector) -> Vector: ...
 
     @overload
-    def multiply(self, other: "Matrix") -> "Matrix":
-        ...
+    def multiply(self, other: "Matrix") -> "Matrix": ...
 
     def multiply(self, other):
 

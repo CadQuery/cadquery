@@ -2,6 +2,7 @@
 The CadQuery Gateway Interface.
 Provides classes and tools for executing CadQuery scripts
 """
+
 import ast
 import traceback
 import time
@@ -524,7 +525,10 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
 
                 self.cqModel.add_script_parameter(
                     InputParameter.create(
-                        value_node, var_name, TupleParameterType, tup,
+                        value_node,
+                        var_name,
+                        TupleParameterType,
+                        tup,
                     )
                 )
             elif hasattr(ast, "NameConstant") and type(value_node) == ast.NameConstant:

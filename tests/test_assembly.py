@@ -555,7 +555,8 @@ def test_assembly(simple_assy, nested_assy):
 
 
 @pytest.mark.parametrize(
-    "assy_fixture, root_name", [("simple_assy", None), ("nested_assy", "TOP")],
+    "assy_fixture, root_name",
+    [("simple_assy", None), ("nested_assy", "TOP")],
 )
 def test_assy_root_name(assy_fixture, root_name, request):
     assy = request.getfixturevalue(assy_fixture)
@@ -738,7 +739,11 @@ def test_save_raises(nested_assy):
 
 @pytest.mark.parametrize(
     "assy_fixture, count",
-    [("simple_assy", 3), ("nested_assy", 3), ("empty_top_assy", 1),],
+    [
+        ("simple_assy", 3),
+        ("nested_assy", 3),
+        ("empty_top_assy", 1),
+    ],
 )
 def test_leaf_node_count(assy_fixture, count, request):
 
@@ -825,7 +830,12 @@ def test_colors_assy0(assy_fixture, expected, request):
                 ),
             ],
         ),
-        ("empty_top_assy", [([".*_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),]),
+        (
+            "empty_top_assy",
+            [
+                ([".*_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+            ],
+        ),
         (
             "boxes0_assy",
             [
@@ -1428,7 +1438,11 @@ def test_infinite_face_constraint_Plane(kind):
     assy = cq.Assembly(cq.Workplane().sphere(1), name="part0")
     assy.add(cq.Workplane().sphere(1), name="part1")
     assy.constrain(
-        "part0", cq.Face.makePlane(), "part1", cq.Face.makePlane(), kind,
+        "part0",
+        cq.Face.makePlane(),
+        "part1",
+        cq.Face.makePlane(),
+        kind,
     )
     assy.solve()
     assert solve_result_check(assy._solve_result)

@@ -44,6 +44,7 @@ ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
+
 # entity selector grammar definition
 def _define_grammar():
 
@@ -297,12 +298,12 @@ class Assembly(object):
     @overload
     def constrain(
         self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
-    ) -> "Assembly":
-        ...
+    ) -> "Assembly": ...
 
     @overload
-    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> "Assembly":
-        ...
+    def constrain(
+        self, q1: str, kind: ConstraintKind, param: Any = None
+    ) -> "Assembly": ...
 
     @overload
     def constrain(
@@ -313,14 +314,16 @@ class Assembly(object):
         s2: Shape,
         kind: ConstraintKind,
         param: Any = None,
-    ) -> "Assembly":
-        ...
+    ) -> "Assembly": ...
 
     @overload
     def constrain(
-        self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
-    ) -> "Assembly":
-        ...
+        self,
+        id1: str,
+        s1: Shape,
+        kind: ConstraintKind,
+        param: Any = None,
+    ) -> "Assembly": ...
 
     def constrain(self, *args, param=None):
         """
@@ -566,8 +569,12 @@ class Assembly(object):
         color = self.color if self.color else color
 
         if self.obj:
-            yield self.obj if isinstance(self.obj, Shape) else Compound.makeCompound(
-                s for s in self.obj.vals() if isinstance(s, Shape)
+            yield (
+                self.obj
+                if isinstance(self.obj, Shape)
+                else Compound.makeCompound(
+                    s for s in self.obj.vals() if isinstance(s, Shape)
+                )
             ), name, loc, color
 
         for ch in self.children:

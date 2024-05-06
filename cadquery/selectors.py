@@ -630,7 +630,8 @@ def _makeGrammar():
 
     # CQ type definition
     cqtype = oneOf(
-        set(geom_LUT_EDGE.values()) | set(geom_LUT_FACE.values()), caseless=True,
+        set(geom_LUT_EDGE.values()) | set(geom_LUT_FACE.values()),
+        caseless=True,
     )
     cqtype = cqtype.setParseAction(pyparsing_common.upcaseTokens)
 

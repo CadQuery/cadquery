@@ -1,6 +1,7 @@
 """
     Tests exporters
 """
+
 # core modules
 import os
 import io
@@ -331,7 +332,12 @@ class TestDxfDocument(BaseTest):
 
         expected_type, expected_attributes = (
             "ARC",
-            {"center": (1, 0, 0), "radius": 1, "start_angle": 90, "end_angle": 180,},
+            {
+                "center": (1, 0, 0),
+                "radius": 1,
+                "start_angle": 90,
+                "end_angle": 180,
+            },
         )
 
         self.assertEqual(expected_type, result_type)
@@ -490,7 +496,8 @@ class TestDxfDocument(BaseTest):
         dxf = DxfDocument(metadata=metadata)
 
         self.assertEqual(
-            metadata["CUSTOM_KEY"], dxf.document.ezdxf_metadata().get("CUSTOM_KEY"),
+            metadata["CUSTOM_KEY"],
+            dxf.document.ezdxf_metadata().get("CUSTOM_KEY"),
         )
 
     def test_add_shape_line(self):
@@ -501,7 +508,10 @@ class TestDxfDocument(BaseTest):
         result = dxf.msp.query("LINE")[0]
 
         expected = ezdxf.entities.line.Line.new(
-            dxfattribs={"start": (0.0, 0.0, 0.0), "end": (1.0, 1.0, 0.0),},
+            dxfattribs={
+                "start": (0.0, 0.0, 0.0),
+                "end": (1.0, 1.0, 0.0),
+            },
         )
 
         self.assertEqual(expected.dxf.start, result.dxf.start)
@@ -816,7 +826,9 @@ def test_assy_vtk_rotation(tmpdir):
 
     assy = Assembly()
     assy.add(
-        v0, name="v0", loc=Location(Vector(0, 0, 0), Vector(1, 0, 0), 90),
+        v0,
+        name="v0",
+        loc=Location(Vector(0, 0, 0), Vector(1, 0, 0), 90),
     )
 
     fwrl = Path(tmpdir, "v0.wrl")
@@ -900,7 +912,11 @@ def test_dxf_text(tmpdir, testdatadir):
         .faces("<Y")
         .workplane()
         .text(
-            ",,", 10, -1, True, fontPath=str(Path(testdatadir, "OpenSans-Regular.ttf")),
+            ",,",
+            10,
+            -1,
+            True,
+            fontPath=str(Path(testdatadir, "OpenSans-Regular.ttf")),
         )
     )
 
@@ -944,4 +960,4 @@ def test_dxf_ellipse_arc(tmpdir):
     w2 = Workplane("XZ", origin=(0, 0, 0)).placeSketch(s1).extrude(1)
 
     assert w2.val().isValid()
-    assert w2.val().Volume() == approx(math.pi * r ** 2 / 4)
+    assert w2.val().Volume() == approx(math.pi * r**2 / 4)

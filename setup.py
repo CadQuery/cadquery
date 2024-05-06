@@ -58,7 +58,9 @@ setup(
             "pytest",
             "black@git+https://github.com/cadquery/black.git@cq",
         ],
-        "ipython": ["ipython",],
+        "ipython": [
+            "ipython",
+        ],
     },
     include_package_data=True,
     zip_safe=False,

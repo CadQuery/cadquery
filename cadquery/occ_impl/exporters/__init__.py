@@ -45,7 +45,6 @@ def export(
     angularTolerance: float = 0.1,
     opt: Optional[Dict[str, Any]] = None,
 ):
-
     """
     Export Workplane or Shape to file. Multiple entities are converted to compound.
 

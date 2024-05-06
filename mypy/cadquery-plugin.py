@@ -59,7 +59,7 @@ def hook__get_one(ctx: FunctionContext) -> Type:
 def hook__get_wires(ctx: FunctionContext) -> Type:
     """
     Hook for cq.occ_impl.shapes._get_wires
-   """
+    """
 
     return_type = ctx.api.named_type("Wire")
 
@@ -69,7 +69,7 @@ def hook__get_wires(ctx: FunctionContext) -> Type:
 def hook__get_edges(ctx: FunctionContext) -> Type:
     """
     Hook for cq.occ_impl.shapes._get_edges
-   """
+    """
 
     return_type = ctx.api.named_type("Edge")
 

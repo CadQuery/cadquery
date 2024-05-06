@@ -17,16 +17,14 @@ TEMPLATE = """\
 
 
 def color_to_rgba_str(c: cq.Color) -> str:
-    """ Convert a Color object to a string for the HTML/CSS template.
-    """
+    """Convert a Color object to a string for the HTML/CSS template."""
     t = c.toTuple()
     vals = [int(v * 255) for v in t[:3]]
     return ",".join([str(v) for v in chain(vals, [t[3]])])
 
 
 def calc_text_color(c: cq.Color) -> str:
-    """ Calculate required overlay text color from background color.
-    """
+    """Calculate required overlay text color from background color."""
     val = sum(c.toTuple()[:3]) / 3
     if val < 0.5:
         rv = "255,255,255"
@@ -37,8 +35,7 @@ def calc_text_color(c: cq.Color) -> str:
 
 
 def get_colors() -> Dict[str, cq.Color]:
-    """ Scan OCP for colors and output to a dict.
-    """
+    """Scan OCP for colors and output to a dict."""
     colors = {}
     for name in dir(Quantity):
         splitted = name.rsplit(SEP, 1)
@@ -49,8 +46,7 @@ def get_colors() -> Dict[str, cq.Color]:
 
 
 def rst():
-    """ Produce the text for a Sphinx directive.
-    """
+    """Produce the text for a Sphinx directive."""
     lines = [
         ".. raw:: html",
         "",

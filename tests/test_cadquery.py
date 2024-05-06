@@ -2,6 +2,7 @@
     This module tests cadquery creation and manipulation functions
 
 """
+
 # system modules
 import math, os.path, time, tempfile
 from random import random
@@ -338,7 +339,7 @@ class TestCadQuery(BaseTest):
         """
         xdir = (1, 0, 0)
         normal = (0, 0, 1)
-        k = 2.0 ** 0.5 / 2.0
+        k = 2.0**0.5 / 2.0
         origin = (2, -1, 1)
         plane = Plane(origin=origin, xDir=xdir, normal=normal)
         plane = plane.rotated((0, 0, 45))
@@ -680,12 +681,20 @@ class TestCadQuery(BaseTest):
         self.assertTrue(path_closed.IsClosed())
 
         # attempt to build a valid face
-        w = Wire.assembleEdges([path_closed,])
+        w = Wire.assembleEdges(
+            [
+                path_closed,
+            ]
+        )
         f = Face.makeFromWires(w)
         self.assertTrue(f.isValid())
 
         # attempt to build an invalid face
-        w = Wire.assembleEdges([path,])
+        w = Wire.assembleEdges(
+            [
+                path,
+            ]
+        )
         f = Face.makeFromWires(w)
         self.assertFalse(f.isValid())
 
@@ -842,12 +851,16 @@ class TestCadQuery(BaseTest):
 
         with raises(ValueError):
             Workplane().spline(
-                points, periodic=False, parameters=[x for x in range(len(points) + 1)],
+                points,
+                periodic=False,
+                parameters=[x for x in range(len(points) + 1)],
             )
 
         with raises(ValueError):
             Workplane().spline(
-                points, periodic=True, parameters=[x for x in range(len(points))],
+                points,
+                periodic=True,
+                parameters=[x for x in range(len(points))],
             )
 
     def testRotatedEllipse(self):
@@ -1037,7 +1050,15 @@ class TestCadQuery(BaseTest):
 
     def testMakeEllipse(self):
         el = Wire.makeEllipse(
-            1, 2, Vector(0, 0, 0), Vector(0, 0, 1), Vector(1, 0, 0), 0, 90, 45, True,
+            1,
+            2,
+            Vector(0, 0, 0),
+            Vector(0, 0, 1),
+            Vector(1, 0, 0),
+            0,
+            90,
+            45,
+            True,
         )
 
         self.assertTrue(el.IsClosed())
@@ -1784,7 +1805,7 @@ class TestCadQuery(BaseTest):
 
     def testBoundBoxEnlarge(self):
         """
-        Tests BoundBox.enlarge(). Confirms that the 
+        Tests BoundBox.enlarge(). Confirms that the
         bounding box lengths are all enlarged by the
         correct amount.
         """
@@ -3880,7 +3901,13 @@ class TestCadQuery(BaseTest):
             box.faces(">Z")
             .workplane()
             .text(
-                "CQ 2.0", 10, -1, cut=True, halign="left", valign="bottom", font="Sans",
+                "CQ 2.0",
+                10,
+                -1,
+                cut=True,
+                halign="left",
+                valign="bottom",
+                font="Sans",
             )
         )
 
@@ -4173,9 +4200,11 @@ class TestCadQuery(BaseTest):
         r2 = 10.0
         fn = 6
         edge_points = [
-            [r1 * math.cos(i * math.pi / fn), r1 * math.sin(i * math.pi / fn)]
-            if i % 2 == 0
-            else [r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn)]
+            (
+                [r1 * math.cos(i * math.pi / fn), r1 * math.sin(i * math.pi / fn)]
+                if i % 2 == 0
+                else [r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn)]
+            )
             for i in range(2 * fn + 1)
         ]
         edge_wire = Workplane("XY").polyline(edge_points)
@@ -4380,9 +4409,11 @@ class TestCadQuery(BaseTest):
         fn = 6
         thickness = 0.1
         edge_points = [
-            (r1 * math.cos(i * math.pi / fn), r1 * math.sin(i * math.pi / fn))
-            if i % 2 == 0
-            else (r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn))
+            (
+                (r1 * math.cos(i * math.pi / fn), r1 * math.sin(i * math.pi / fn))
+                if i % 2 == 0
+                else (r2 * math.cos(i * math.pi / fn), r2 * math.sin(i * math.pi / fn))
+            )
             for i in range(2 * fn + 1)
         ]
         edge_wire = Workplane("XY").polyline(edge_points)
@@ -4530,7 +4561,7 @@ class TestCadQuery(BaseTest):
             .extrude(1)
         )
         area0 = s0.faces(">Z").val().Area()
-        self.assertAlmostEqual(area0, (1 + math.pi * 0.5 ** 2), 4)
+        self.assertAlmostEqual(area0, (1 + math.pi * 0.5**2), 4)
 
         # test relative coords
         s1 = (
@@ -4559,7 +4590,7 @@ class TestCadQuery(BaseTest):
             .extrude(1)
         )
         self.assertAlmostEqual(
-            s1.faces(">Z").val().Area(), 2 * 3 + 0.5 * math.pi * 0.5 ** 2, 4
+            s1.faces(">Z").val().Area(), 2 * 3 + 0.5 * math.pi * 0.5**2, 4
         )
 
         # tangentArc on the end of a spline
@@ -5100,12 +5131,24 @@ class TestCadQuery(BaseTest):
         assert f.isValid()
 
         with raises(ValueError):
-            w0 = Wire.assembleEdges([Edge.makeLine(Vector(), Vector(0, 1)),])
-            w1 = Wire.assembleEdges([Edge.makeLine(Vector(0, 1), Vector(1, 1)),])
+            w0 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(), Vector(0, 1)),
+                ]
+            )
+            w1 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(0, 1), Vector(1, 1)),
+                ]
+            )
             f = Face.makeFromWires(w0, [w1])
 
         with raises(ValueError):
-            w0 = Wire.assembleEdges([Edge.makeLine(Vector(), Vector(0, 1)),])
+            w0 = Wire.assembleEdges(
+                [
+                    Edge.makeLine(Vector(), Vector(0, 1)),
+                ]
+            )
             w1 = Wire.assembleEdges(
                 [
                     Edge.makeLine(Vector(), Vector(1, 1)),
@@ -5124,7 +5167,9 @@ class TestCadQuery(BaseTest):
                 ]
             )
             w1 = Wire.assembleEdges(
-                [Edge.makeLine(Vector(0.1, 0.1), Vector(0.2, 0.2)),]
+                [
+                    Edge.makeLine(Vector(0.1, 0.1), Vector(0.2, 0.2)),
+                ]
             )
             f = Face.makeFromWires(w0, [w1])
 
@@ -5231,7 +5276,17 @@ class TestCadQuery(BaseTest):
         self.assertTrue(w1 is w2)
 
     def test_close_3D_points(self):
-        r = Workplane().polyline([(0, 0, 10), (5, 0, 12), (0, 5, 10),]).close()
+        r = (
+            Workplane()
+            .polyline(
+                [
+                    (0, 0, 10),
+                    (5, 0, 12),
+                    (0, 5, 10),
+                ]
+            )
+            .close()
+        )
         assert r.wire().val().Closed()
 
     def testSplitShape(self):
@@ -5308,7 +5363,13 @@ class TestCadQuery(BaseTest):
             .add(
                 [
                     Vector(),
-                    Location(Vector(0, 0, -1,)),
+                    Location(
+                        Vector(
+                            0,
+                            0,
+                            -1,
+                        )
+                    ),
                     Sketch().rect(1, 1),
                     Face.makePlane(1, 1),
                 ]
@@ -5483,9 +5544,9 @@ class TestCadQuery(BaseTest):
         a = Workplane().box(4, 4, 4)
         b = Workplane(origin=(0, 0, 1)).box(2, 2, 2).faces("<Z").tag("box2_face").end()
         a = a.cut(b)
-        assert a.val().Volume() == approx(4 ** 3 - 2 ** 3)
+        assert a.val().Volume() == approx(4**3 - 2**3)
         a = a.faces(tag="box2_face").wires().toPending().extrude(4)
-        assert a.val().Volume() == approx(4 ** 3 + 2 ** 3)
+        assert a.val().Volume() == approx(4**3 + 2**3)
 
         a = Workplane().sphere(2)
         b = Workplane().cylinder(4, 1).tag("cyl")
@@ -5503,15 +5564,15 @@ class TestCadQuery(BaseTest):
         )
         a = a.split(b)
         a = a.solids("<X")
-        assert a.val().Volume() == approx((4 ** 3) / 2.0)
+        assert a.val().Volume() == approx((4**3) / 2.0)
         a = a.workplaneFromTagged("splitter").rect(4, 4).extrude(until="next")
-        assert a.val().Volume() == approx((4 ** 3))
+        assert a.val().Volume() == approx((4**3))
 
         a = Workplane().box(4, 4, 4)
         b = Workplane(origin=(0, 0, 3)).box(2, 2, 2).faces(">Z").tag("box2_face").end()
         a = a.union(b)
         a = a.faces(tag="box2_face").workplane(offset=0.5).box(1, 1, 1)
-        assert a.val().Volume() == approx(4 ** 3 + 2 ** 3 + 1)
+        assert a.val().Volume() == approx(4**3 + 2**3 + 1)
 
         # tag name conflict; keep tag from left side of boolean
         a = Workplane().box(1, 1, 1).faces(">Z").workplane().tag("zface").end(2)

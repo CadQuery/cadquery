@@ -1383,15 +1383,17 @@ class Shape(object):
             # add triangles
             triangles += [
                 (
-                    t.Value(1) + offset - 1,
-                    t.Value(3) + offset - 1,
-                    t.Value(2) + offset - 1,
-                )
-                if reverse
-                else (
-                    t.Value(1) + offset - 1,
-                    t.Value(2) + offset - 1,
-                    t.Value(3) + offset - 1,
+                    (
+                        t.Value(1) + offset - 1,
+                        t.Value(3) + offset - 1,
+                        t.Value(2) + offset - 1,
+                    )
+                    if reverse
+                    else (
+                        t.Value(1) + offset - 1,
+                        t.Value(2) + offset - 1,
+                        t.Value(3) + offset - 1,
+                    )
                 )
                 for t in poly.Triangles()
             ]
@@ -1521,7 +1523,10 @@ class Shape(object):
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
         TopExp.MapShapesAndAncestors_s(
-            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
+            shape.wrapped,
+            inverse_shape_LUT[kind],
+            shapetype(self.wrapped),
+            shape_map,
         )
         exclude = TopTools_MapOfShape()
 
@@ -1576,17 +1581,13 @@ class Shape(object):
 
 class ShapeProtocol(Protocol):
     @property
-    def wrapped(self) -> TopoDS_Shape:
-        ...
+    def wrapped(self) -> TopoDS_Shape: ...
 
-    def __init__(self, wrapped: TopoDS_Shape) -> None:
-        ...
+    def __init__(self, wrapped: TopoDS_Shape) -> None: ...
 
-    def Faces(self) -> List["Face"]:
-        ...
+    def Faces(self) -> List["Face"]: ...
 
-    def geomType(self) -> Geoms:
-        ...
+    def geomType(self) -> Geoms: ...
 
 
 class Vertex(Shape):
@@ -1623,16 +1624,15 @@ class Vertex(Shape):
 
 
 class Mixin1DProtocol(ShapeProtocol, Protocol):
-    def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
-        ...
+    def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]: ...
 
-    def paramAt(self, d: float) -> float:
-        ...
+    def paramAt(self, d: float) -> float: ...
 
     def positionAt(
-        self, d: float, mode: Literal["length", "parameter"] = "length",
-    ) -> Vector:
-        ...
+        self,
+        d: float,
+        mode: Literal["length", "parameter"] = "length",
+    ) -> Vector: ...
 
     def locationAt(
         self,
@@ -1640,8 +1640,7 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
         mode: Literal["length", "parameter"] = "length",
         frame: Literal["frenet", "corrected"] = "frenet",
         planar: bool = False,
-    ) -> Location:
-        ...
+    ) -> Location: ...
 
 
 T1D = TypeVar("T1D", bound=Mixin1DProtocol)
@@ -2428,7 +2427,7 @@ class Wire(Shape, Mixin1D):
         # 3. put it together into a wire
         n_turns = height / pitch
         u_start = geom_line.Value(0.0)
-        u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch ** 2))
+        u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch**2))
         geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
 
         e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf).Edge()
@@ -2755,13 +2754,11 @@ class Face(Shape):
 
     @overload
     @classmethod
-    def makeRuledSurface(cls, edgeOrWire1: Edge, edgeOrWire2: Edge) -> "Face":
-        ...
+    def makeRuledSurface(cls, edgeOrWire1: Edge, edgeOrWire2: Edge) -> "Face": ...
 
     @overload
     @classmethod
-    def makeRuledSurface(cls, edgeOrWire1: Wire, edgeOrWire2: Wire) -> "Face":
-        ...
+    def makeRuledSurface(cls, edgeOrWire1: Wire, edgeOrWire2: Wire) -> "Face": ...
 
     @classmethod
     def makeRuledSurface(cls, edgeOrWire1, edgeOrWire2):
@@ -3498,7 +3495,11 @@ class Solid(Shape, Mixin3D):
         """
         # make straight spine
         straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
-        straight_spine_w = Wire.combine([straight_spine_e,])[0].wrapped
+        straight_spine_w = Wire.combine(
+            [
+                straight_spine_e,
+            ]
+        )[0].wrapped
 
         # make an auxiliary spine
         pitch = 360.0 / angleDegrees * vecNormal.Length
@@ -3579,7 +3580,10 @@ class Solid(Shape, Mixin3D):
     @classmethod
     @extrudeLinear.register
     def extrudeLinear(
-        cls, face: Face, vecNormal: VectorLike, taper: Real = 0,
+        cls,
+        face: Face,
+        vecNormal: VectorLike,
+        taper: Real = 0,
     ) -> "Solid":
 
         if taper == 0:
@@ -3637,7 +3641,11 @@ class Solid(Shape, Mixin3D):
     @classmethod
     @revolve.register
     def revolve(
-        cls, face: Face, angleDegrees: Real, axisStart: VectorLike, axisEnd: VectorLike,
+        cls,
+        face: Face,
+        angleDegrees: Real,
+        axisStart: VectorLike,
+        axisEnd: VectorLike,
     ) -> "Solid":
 
         v1 = Vector(axisStart)
@@ -3680,7 +3688,11 @@ class Solid(Shape, Mixin3D):
     def _toWire(p: Union[Edge, Wire]) -> Wire:
 
         if isinstance(p, Edge):
-            rv = Wire.assembleEdges([p,])
+            rv = Wire.assembleEdges(
+                [
+                    p,
+                ]
+            )
         else:
             rv = p
 
@@ -3783,7 +3795,11 @@ class Solid(Shape, Mixin3D):
         :return: a Solid object
         """
         if isinstance(path, Edge):
-            w = Wire.assembleEdges([path,]).wrapped
+            w = Wire.assembleEdges(
+                [
+                    path,
+                ]
+            ).wrapped
         else:
             w = path.wrapped
 
@@ -4015,7 +4031,10 @@ class Compound(Shape, Mixin3D):
 
         for t in shapetypes:
             TopExp.MapShapesAndAncestors_s(
-                shape.wrapped, inverse_shape_LUT[kind], t, shape_map,
+                shape.wrapped,
+                inverse_shape_LUT[kind],
+                t,
+                shape_map,
             )
 
         exclude = TopTools_MapOfShape()
@@ -4068,7 +4087,12 @@ def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
 
     rv = []
     for face in faces.Faces():
-        rv.append([face.outerWire(),] + face.innerWires())
+        rv.append(
+            [
+                face.outerWire(),
+            ]
+            + face.innerWires()
+        )
 
     return rv
 
@@ -4097,7 +4121,7 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
     return [Wire(el) for el in wires_out]
 
 
-#%% utilities
+# %% utilities
 
 
 def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Iterable[Shape]:
@@ -4287,7 +4311,7 @@ def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
     return rv
 
 
-#%% alternative constructors
+# %% alternative constructors
 
 
 @multimethod
@@ -4401,7 +4425,7 @@ def compound(s: Sequence[Shape]) -> Shape:
     return compound(*s)
 
 
-#%% primitives
+# %% primitives
 
 
 @multimethod
@@ -4569,7 +4593,8 @@ def sphere(d: float) -> Shape:
 
     return _compound_or_shape(
         BRepPrimAPI_MakeSphere(
-            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), d / 2,
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
+            d / 2,
         ).Shape()
     )
 
@@ -4645,7 +4670,9 @@ def text(
         font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
 
     font_i = StdPrs_BRepFont(
-        NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, float(size),
+        NCollection_Utf8String(font_t.FontName().ToCString()),
+        font_kind,
+        float(size),
     )
 
     if halign == "left":
@@ -4669,7 +4696,7 @@ def text(
     return _compound_or_shape(rv)
 
 
-#%% ops
+# %% ops
 
 
 def _bool_op(
@@ -4806,7 +4833,9 @@ def fillet(s: Shape, e: Shape, r: float) -> Shape:
     Fillet selected edges in a given shell or solid.
     """
 
-    builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
+    builder = BRepFilletAPI_MakeFillet(
+        _get_one(s, ("Shell", "Solid")).wrapped,
+    )
 
     for el in _get_edges(e.edges()):
         builder.Add(r, el.wrapped)
@@ -4821,7 +4850,9 @@ def chamfer(s: Shape, e: Shape, d: float) -> Shape:
     Chamfer selected edges in a given shell or solid.
     """
 
-    builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
+    builder = BRepFilletAPI_MakeChamfer(
+        _get_one(s, ("Shell", "Solid")).wrapped,
+    )
 
     for el in _get_edges(e.edges()):
         builder.Add(d, el.wrapped)

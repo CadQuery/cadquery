@@ -419,7 +419,12 @@ class Sketch(object):
                     params = params_open
 
                 if rotate:
-                    locs.extend(el.locations(params, planar=True,))
+                    locs.extend(
+                        el.locations(
+                            params,
+                            planar=True,
+                        )
+                    )
                 else:
                     locs.extend(Location(v) for v in el.positions(params))
             else:
@@ -428,7 +433,9 @@ class Sketch(object):
         return self.push(locs)
 
     def push(
-        self: T, locs: Iterable[Union[Location, Point]], tag: Optional[str] = None,
+        self: T,
+        locs: Iterable[Union[Location, Point]],
+        tag: Optional[str] = None,
     ) -> T:
         """
         Set current selection to given locations or points.

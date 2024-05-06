@@ -46,10 +46,11 @@ class ThreeMFWriter(object):
         self.tessellations = [t for t in tessellations if all(t)]
 
     def write3mf(
-        self, outfile: Union[PathLike, str, IO[bytes]],
+        self,
+        outfile: Union[PathLike, str, IO[bytes]],
     ):
-        """ 
-        Write to the given file. 
+        """
+        Write to the given file.
         """
 
         try:
@@ -69,16 +70,21 @@ class ThreeMFWriter(object):
         no_meshes = len(self.tessellations)
 
         model = ET.Element(
-            "model", {"xml:lang": "en-US", "xmlns": SCHEMAS.CORE,}, unit=self.unit,
+            "model",
+            {
+                "xml:lang": "en-US",
+                "xmlns": SCHEMAS.CORE,
+            },
+            unit=self.unit,
         )
 
         # Add meta data
-        ET.SubElement(
-            model, "metadata", name="Application"
-        ).text = "CadQuery 3MF Exporter"
-        ET.SubElement(
-            model, "metadata", name="CreationDate"
-        ).text = datetime.now().isoformat()
+        ET.SubElement(model, "metadata", name="Application").text = (
+            "CadQuery 3MF Exporter"
+        )
+        ET.SubElement(model, "metadata", name="CreationDate").text = (
+            datetime.now().isoformat()
+        )
 
         resources = ET.SubElement(model, "resources")
 
@@ -99,7 +105,9 @@ class ThreeMFWriter(object):
         # Add all meshes to the component
         for i in range(no_meshes):
             ET.SubElement(
-                components, "component", objectid=str(i),
+                components,
+                "component",
+                objectid=str(i),
             )
 
         # Add the component to the build

@@ -186,12 +186,12 @@ def _pt_arc(p: Point, a: Arc) -> Tuple[float, float, float, float]:
     r = a.r
     xc, yc = a.c.x, a.c.y
     dx, dy = x - xc, y - yc
-    l = sqrt(dx ** 2 + dy ** 2)
+    l = sqrt(dx**2 + dy**2)
 
-    x1 = r ** 2 / l ** 2 * dx - r / l ** 2 * sqrt(l ** 2 - r ** 2) * dy + xc
-    y1 = r ** 2 / l ** 2 * dy + r / l ** 2 * sqrt(l ** 2 - r ** 2) * dx + yc
-    x2 = r ** 2 / l ** 2 * dx + r / l ** 2 * sqrt(l ** 2 - r ** 2) * dy + xc
-    y2 = r ** 2 / l ** 2 * dy - r / l ** 2 * sqrt(l ** 2 - r ** 2) * dx + yc
+    x1 = r**2 / l**2 * dx - r / l**2 * sqrt(l**2 - r**2) * dy + xc
+    y1 = r**2 / l**2 * dy + r / l**2 * sqrt(l**2 - r**2) * dx + yc
+    x2 = r**2 / l**2 * dx + r / l**2 * sqrt(l**2 - r**2) * dy + xc
+    y2 = r**2 / l**2 * dy - r / l**2 * sqrt(l**2 - r**2) * dx + yc
 
     return x1, y1, x2, y2
 
@@ -257,7 +257,7 @@ def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
     else:
         dx = xc2 - xc1
         dy = yc2 - yc1
-        l = sqrt(dx ** 2 + dy ** 2)
+        l = sqrt(dx**2 + dy**2)
 
         dx /= l
         dy /= l

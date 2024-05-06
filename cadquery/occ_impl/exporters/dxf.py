@@ -17,7 +17,14 @@ from .utils import toCompound
 
 ApproxOptions = Literal["spline", "arc"]
 DxfEntityAttributes = Tuple[
-    Literal["ARC", "CIRCLE", "ELLIPSE", "LINE", "SPLINE",], Dict[str, Any]
+    Literal[
+        "ARC",
+        "CIRCLE",
+        "ELLIPSE",
+        "LINE",
+        "SPLINE",
+    ],
+    Dict[str, Any],
 ]
 
 
@@ -201,7 +208,10 @@ class DxfDocument:
         """
         return (
             "LINE",
-            {"start": edge.startPoint().toTuple(), "end": edge.endPoint().toTuple(),},
+            {
+                "start": edge.startPoint().toTuple(),
+                "end": edge.endPoint().toTuple(),
+            },
         )
 
     @staticmethod

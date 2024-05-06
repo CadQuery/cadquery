@@ -262,9 +262,7 @@ class SketchConstraintSolver(object):
         # indices of x corresponding to the entities
         self.ixs = [0] + list(accumulate(len(e) for e in self.entities))
 
-    def _cost(
-        self, x0: Array[Any, Float]
-    ) -> Tuple[
+    def _cost(self, x0: Array[Any, Float]) -> Tuple[
         Callable[[Array[Any, Float]], float],
         Callable[[Array[Any, Float], Array[Any, Float]], None],
         Array[Any, Float],

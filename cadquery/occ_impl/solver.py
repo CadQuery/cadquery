@@ -86,7 +86,9 @@ CompoundConstraints: Dict[
 
 # constraint POD type
 Constraint = Tuple[
-    Tuple[ConstraintMarker, ...], ConstraintKind, Optional[Any],
+    Tuple[ConstraintMarker, ...],
+    ConstraintKind,
+    Optional[Any],
 ]
 
 NDOF_V = 3
@@ -257,14 +259,22 @@ class ConstraintSpec(object):
 
         # convert to marker objects
         if self.kind == "Axis":
-            markers = [(self._getAxis(args[0]), self._getAxis(args[1]),)]
+            markers = [
+                (
+                    self._getAxis(args[0]),
+                    self._getAxis(args[1]),
+                )
+            ]
 
         elif self.kind == "Point":
             markers = [(self._getPnt(args[0]), self._getPnt(args[1]))]
 
         elif self.kind == "Plane":
             markers = [
-                (self._getAxis(args[0]), self._getAxis(args[1]),),
+                (
+                    self._getAxis(args[0]),
+                    self._getAxis(args[1]),
+                ),
                 (self._getPnt(args[0]), self._getPnt(args[1])),
             ]
 
@@ -295,7 +305,9 @@ class ConstraintSpec(object):
         # specify kinds of the simple constraint
         if self.kind in CompoundConstraints:
             kinds, converter = CompoundConstraints[self.kind]
-            params = converter(self.param,)
+            params = converter(
+                self.param,
+            )
         else:
             kinds = (self.kind,)
             params = (self.param,)
@@ -319,7 +331,7 @@ def Rotate(v, R):
 
     s, u = Quaternion(R)
 
-    return 2 * ca.dot(u, v) * u + (s ** 2 - ca.dot(u, u)) * v + 2 * s * ca.cross(u, v)
+    return 2 * ca.dot(u, v) * u + (s**2 - ca.dot(u, u)) * v + 2 * s * ca.cross(u, v)
 
 
 def Transform(v, T, R):
@@ -393,7 +405,7 @@ def axis_cost(
 
     dummy = ca.dot(d1, d2) - ca.cos(val)
 
-    return dummy ** 2
+    return dummy**2
 
 
 def point_in_plane_cost(
@@ -431,7 +443,7 @@ def point_in_plane_cost(
         / scale
     )
 
-    return dummy ** 2
+    return dummy**2
 
 
 def point_on_line_cost(
@@ -593,9 +605,11 @@ class ConstraintSolver(object):
         self.scale = scale
         self.opti = opti = ca.Opti()
         self.variables = [
-            (scale * opti.variable(NDOF_V), opti.variable(NDOF_Q))
-            if i not in locked
-            else (opti.parameter(NDOF_V), opti.parameter(NDOF_Q))
+            (
+                (scale * opti.variable(NDOF_V), opti.variable(NDOF_Q))
+                if i not in locked
+                else (opti.parameter(NDOF_V), opti.parameter(NDOF_Q))
+            )
             for i, _ in enumerate(entities)
         ]
         self.start_points = [
@@ -646,11 +660,14 @@ class ConstraintSolver(object):
         rv = gp_Trsf()
 
         a, b, c = opti.value(R)
-        m = a ** 2 + b ** 2 + c ** 2
+        m = a**2 + b**2 + c**2
 
         rv.SetRotation(
             gp_Quaternion(
-                2 * a / (m + 1), 2 * b / (m + 1), 2 * c / (m + 1), (1 - m) / (m + 1),
+                2 * a / (m + 1),
+                2 * b / (m + 1),
+                2 * c / (m + 1),
+                (1 - m) / (m + 1),
             )
         )
         rv.SetTranslationPart(gp_Vec(*opti.value(T)))

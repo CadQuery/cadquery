@@ -44,7 +44,7 @@ from cadquery.occ_impl.shapes import (
 from pytest import approx, raises
 from math import pi
 
-#%% test utils
+# %% test utils
 
 
 def assert_all_valid(*objs: Shape):
@@ -58,7 +58,7 @@ def vector_equal(v1, v2):
     return v1.toTuple() == approx(v2.toTuple())
 
 
-#%% utils
+# %% utils
 
 
 def test_utils():
@@ -94,7 +94,7 @@ def test_utils():
         list(_get_edges(fill(circle(1))))
 
 
-#%% constructors
+# %% constructors
 
 
 def test_constructors():
@@ -150,12 +150,17 @@ def test_constructors():
         assert f.ShapeType() == "Face"
 
 
-#%% primitives
+# %% primitives
 
 
 def test_vertex():
 
-    v = vertex((1, 2,))
+    v = vertex(
+        (
+            1,
+            2,
+        )
+    )
 
     assert v.isValid()
     assert v.Center().toTuple() == approx((1, 2, 0))
@@ -255,7 +260,7 @@ def test_torus():
     s = torus(10, 2)
 
     assert s.isValid()
-    assert s.Volume() == approx(2 * pi ** 2 * 5)
+    assert s.Volume() == approx(2 * pi**2 * 5)
 
 
 def test_cone():
@@ -304,7 +309,7 @@ def test_text():
     assert r1.faces("<X").Center().y > r5.faces("<X").Center().x
 
 
-#%% bool ops
+# %% bool ops
 def test_operators():
 
     b1 = box(1, 1, 1).moved(Location(-0.5, -0.5, -0.5))  # small box
@@ -334,7 +339,7 @@ def test_operators():
     assert len(intersect(b1, b3, 1e-3).Faces()) == 6
 
 
-#%% moved
+# %% moved
 def test_moved():
 
     b = box(1, 1, 1)
@@ -377,7 +382,7 @@ def test_moved():
     assert vector_equal(bs9.edges(">Z").Center(), b.edges(">Z").Center())
 
 
-#%% ops
+# %% ops
 def test_clean():
 
     b1 = box(1, 1, 1)
@@ -480,7 +485,7 @@ def test_offset():
     r2 = offset(s, -0.25)
 
     assert r1.Volume() == approx(1)
-    assert r2.Volume() == approx(1 - 0.5 ** 3)
+    assert r2.Volume() == approx(1 - 0.5**3)
 
 
 def test_sweep():

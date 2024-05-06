@@ -166,8 +166,7 @@ class Workplane(object):
     _tag: Optional[str]
 
     @overload
-    def __init__(self, obj: CQObject) -> None:
-        ...
+    def __init__(self, obj: CQObject) -> None: ...
 
     @overload
     def __init__(
@@ -175,8 +174,7 @@ class Workplane(object):
         inPlane: Union[Plane, str] = "XY",
         origin: VectorLike = (0, 0, 0),
         obj: Optional[CQObject] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(self, inPlane="XY", origin=(0, 0, 0), obj=None):
         """
@@ -266,12 +264,10 @@ class Workplane(object):
         return list(rv.keys())
 
     @overload
-    def split(self: T, keepTop: bool = False, keepBottom: bool = False) -> T:
-        ...
+    def split(self: T, keepTop: bool = False, keepBottom: bool = False) -> T: ...
 
     @overload
-    def split(self: T, splitter: Union[T, Shape]) -> T:
-        ...
+    def split(self: T, splitter: Union[T, Shape]) -> T: ...
 
     def split(self: T, *args, **kwargs) -> T:
         """
@@ -426,16 +422,13 @@ class Workplane(object):
         return self.objects
 
     @overload
-    def add(self: T, obj: "Workplane") -> T:
-        ...
+    def add(self: T, obj: "Workplane") -> T: ...
 
     @overload
-    def add(self: T, obj: CQObject) -> T:
-        ...
+    def add(self: T, obj: CQObject) -> T: ...
 
     @overload
-    def add(self: T, obj: Iterable[CQObject]) -> T:
-        ...
+    def add(self: T, obj: Iterable[CQObject]) -> T: ...
 
     def add(self, obj):
         """
@@ -1163,9 +1156,11 @@ class Workplane(object):
         """
         return self.newObject(
             [
-                o.rotate(Vector(axisStartPoint), Vector(axisEndPoint), angleDegrees)
-                if isinstance(o, Shape)
-                else o
+                (
+                    o.rotate(Vector(axisStartPoint), Vector(axisEndPoint), angleDegrees)
+                    if isinstance(o, Shape)
+                    else o
+                )
                 for o in self.objects
             ]
         )
@@ -1921,9 +1916,11 @@ class Workplane(object):
 
         if tangents:
             tangents_g: Optional[Sequence[Vector]] = [
-                self.plane.toWorldCoords(t) - self.plane.origin
-                if t is not None
-                else None
+                (
+                    self.plane.toWorldCoords(t) - self.plane.origin
+                    if t is not None
+                    else None
+                )
                 for t in tangents
             ]
         else:
@@ -2143,7 +2140,10 @@ class Workplane(object):
         return self.newObject([rv_w if makeWire else e])
 
     def threePointArc(
-        self: T, point1: VectorLike, point2: VectorLike, forConstruction: bool = False,
+        self: T,
+        point1: VectorLike,
+        point2: VectorLike,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point, through point1, and ending at point2
@@ -2172,7 +2172,10 @@ class Workplane(object):
         return self.newObject([arc])
 
     def sagittaArc(
-        self: T, endPoint: VectorLike, sag: float, forConstruction: bool = False,
+        self: T,
+        endPoint: VectorLike,
+        sag: float,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point to endPoint with an arc defined by the sag (sagitta).
@@ -2210,7 +2213,10 @@ class Workplane(object):
         return self.threePointArc(sagPoint, endPoint, forConstruction)
 
     def radiusArc(
-        self: T, endPoint: VectorLike, radius: float, forConstruction: bool = False,
+        self: T,
+        endPoint: VectorLike,
+        radius: float,
+        forConstruction: bool = False,
     ) -> T:
         """
         Draw an arc from the current point to endPoint with an arc defined by the radius.
@@ -2232,7 +2238,7 @@ class Workplane(object):
         length = endPoint.sub(startPoint).Length / 2.0
         try:
             sag = abs(radius)
-            r_2_l_2 = radius ** 2 - length ** 2
+            r_2_l_2 = radius**2 - length**2
             # Float imprecision can lead slightly negative values: consider them as zeros
             if abs(r_2_l_2) >= TOL:
                 sag -= math.sqrt(r_2_l_2)
@@ -2719,7 +2725,13 @@ class Workplane(object):
             o = angle * i
             if circumscribed:
                 o += angle / 2.0
-            pnts.append(Vector(radius * math.cos(o), radius * math.sin(o), 0,))
+            pnts.append(
+                Vector(
+                    radius * math.cos(o),
+                    radius * math.sin(o),
+                    0,
+                )
+            )
         p = Wire.makePolygon(pnts, forConstruction)
 
         return self.eachpoint(lambda loc: p.moved(loc), True)
@@ -2968,7 +2980,10 @@ class Workplane(object):
     # TODO: almost all code duplicated!
     # but parameter list is different so a simple function pointer won't work
     def hole(
-        self: T, diameter: float, depth: Optional[float] = None, clean: bool = True,
+        self: T,
+        diameter: float,
+        depth: Optional[float] = None,
+        clean: bool = True,
     ) -> T:
         """
         Makes a hole for each item on the stack.
@@ -3315,7 +3330,10 @@ class Workplane(object):
         return self.newObject([r])
 
     def combine(
-        self: T, clean: bool = True, glue: bool = False, tol: Optional[float] = None,
+        self: T,
+        clean: bool = True,
+        glue: bool = False,
+        tol: Optional[float] = None,
     ) -> T:
         """
         Attempts to combine all of the items on the stack into a single item.
@@ -3745,7 +3763,11 @@ class Workplane(object):
                     limitFace = upToFace
 
                 res = res.dprism(
-                    None, [face], taper=taper, upToFace=limitFace, additive=additive,
+                    None,
+                    [face],
+                    taper=taper,
+                    upToFace=limitFace,
+                    additive=additive,
                 )
 
                 if both:

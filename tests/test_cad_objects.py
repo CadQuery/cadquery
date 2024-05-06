@@ -248,9 +248,9 @@ class TestCadObjects(BaseTest):
         moi = Shape.matrixOfInertia(cylinder)
         two_pi = 2 * math.pi
         true_moi = (
-            two_pi * (radius ** 2 / 4 + height ** 2 / 12),
-            two_pi * (radius ** 2 / 4 + height ** 2 / 12),
-            two_pi * radius ** 2 / 2,
+            two_pi * (radius**2 / 4 + height**2 / 12),
+            two_pi * (radius**2 / 4 + height**2 / 12),
+            two_pi * radius**2 / 2,
         )
         self.assertTupleAlmostEquals((moi[0][0], moi[1][1], moi[2][2]), true_moi, 3)
 
@@ -660,7 +660,7 @@ class TestCadObjects(BaseTest):
 
         loc5 = loc1 * loc4
         loc6 = loc4 * loc4
-        loc7 = loc4 ** 2
+        loc7 = loc4**2
 
         T = loc5.wrapped.Transformation().TranslationPart()
         self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 1), 6)
@@ -727,7 +727,13 @@ class TestCadObjects(BaseTest):
         self.assertAlmostEqual(w1.radius(), rad)
 
         # test value error from wire
-        w2 = Wire.makePolygon([Vector(-1, 0, 0), Vector(0, 1, 0), Vector(1, -1, 0),])
+        w2 = Wire.makePolygon(
+            [
+                Vector(-1, 0, 0),
+                Vector(0, 1, 0),
+                Vector(1, -1, 0),
+            ]
+        )
         with self.assertRaises(ValueError):
             w2.radius()
 

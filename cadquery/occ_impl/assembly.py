@@ -112,47 +112,37 @@ class Color(object):
 
 class AssemblyProtocol(Protocol):
     @property
-    def loc(self) -> Location:
-        ...
+    def loc(self) -> Location: ...
 
     @loc.setter
-    def loc(self, value: Location) -> None:
-        ...
+    def loc(self, value: Location) -> None: ...
 
     @property
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @property
-    def parent(self) -> Optional["AssemblyProtocol"]:
-        ...
+    def parent(self) -> Optional["AssemblyProtocol"]: ...
 
     @property
-    def color(self) -> Optional[Color]:
-        ...
+    def color(self) -> Optional[Color]: ...
 
     @property
-    def obj(self) -> AssemblyObjects:
-        ...
+    def obj(self) -> AssemblyObjects: ...
 
     @property
-    def shapes(self) -> Iterable[Shape]:
-        ...
+    def shapes(self) -> Iterable[Shape]: ...
 
     @property
-    def children(self) -> Iterable["AssemblyProtocol"]:
-        ...
+    def children(self) -> Iterable["AssemblyProtocol"]: ...
 
-    def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
-        ...
+    def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]: ...
 
     def __iter__(
         self,
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
-        ...
+    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]: ...
 
 
 def setName(l: TDF_Label, name: str, tool):
@@ -348,7 +338,9 @@ def toJSON(
 
 
 def toFusedCAF(
-    assy: AssemblyProtocol, glue: bool = False, tol: Optional[float] = None,
+    assy: AssemblyProtocol,
+    glue: bool = False,
+    tol: Optional[float] = None,
 ) -> Tuple[TDF_Label, TDocStd_Document]:
     """
     Converts the assembly to a fused compound and saves that within the document

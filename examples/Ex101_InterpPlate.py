@@ -45,9 +45,11 @@ r2 = 10.0
 fn = 6
 thickness = 0.1
 edge_points = [
-    (r1 * cos(i * pi / fn), r1 * sin(i * pi / fn))
-    if i % 2 == 0
-    else (r2 * cos(i * pi / fn), r2 * sin(i * pi / fn))
+    (
+        (r1 * cos(i * pi / fn), r1 * sin(i * pi / fn))
+        if i % 2 == 0
+        else (r2 * cos(i * pi / fn), r2 * sin(i * pi / fn))
+    )
     for i in range(2 * fn + 1)
 ]
 edge_wire = cq.Workplane("XY").polyline(edge_points)
