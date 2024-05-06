@@ -40,6 +40,7 @@ Table Of Contents
     primer.rst
     sketch.rst
     assy.rst
+    free-func.rst
     fileformat.rst
     examples.rst
     apireference.rst
