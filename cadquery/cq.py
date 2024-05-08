@@ -17,7 +17,6 @@
     License along with this library; If not, see <http://www.gnu.org/licenses/>
 """
 
-from __future__ import annotations
 import math
 from copy import copy
 from itertools import chain
@@ -2495,7 +2494,7 @@ class Workplane(object):
 
     def eachpoint(
         self: T,
-        arg: Shape | Workplane | Callable[[Location], Shape],
+        arg: Union[Shape, Workplane, Callable[[Location], Shape]],
         useLocalCoordinates: bool = False,
         combine: CombineMode = False,
         clean: bool = True,
@@ -2557,7 +2556,7 @@ class Workplane(object):
                 res = [arg.moved(p).move(loc) for p in pnts]
             else:
                 res = [arg.moved(p * loc) for p in pnts]
-        elif hasattr(arg, "__call__"):
+        elif isinstance(arg, Callable):
             if useLocalCoordinates:
                 res = [arg(p).move(loc) for p in pnts]
             else:
