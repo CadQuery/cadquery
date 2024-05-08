@@ -5380,7 +5380,7 @@ class TestCadQuery(BaseTest):
         )
 
         # Test that unknown types throw an exception
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(ValueError) as cm:
             box.faces().eachpoint(42)  # Integers not allowed
 
     def testSketch(self):
