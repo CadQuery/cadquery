@@ -2494,7 +2494,7 @@ class Workplane(object):
 
     def eachpoint(
         self: T,
-        arg: Union[Shape, Workplane, Callable[[Location], Shape]],
+        arg: Union[Shape, "Workplane", Callable[[Location], Shape]],
         useLocalCoordinates: bool = False,
         combine: CombineMode = False,
         clean: bool = True,
@@ -2556,13 +2556,13 @@ class Workplane(object):
                 res = [arg.moved(p).move(loc) for p in pnts]
             else:
                 res = [arg.moved(p * loc) for p in pnts]
-        elif isinstance(arg, Callable):
+        elif callable(arg):
             if useLocalCoordinates:
                 res = [arg(p).move(loc) for p in pnts]
             else:
                 res = [arg(p * loc) for p in pnts]
         else:
-            raise RuntimeError("Unknown argument type!")
+            raise ValueError(f"{arg} is not supported")
 
         for r in res:
             if isinstance(r, Wire) and not r.forConstruction:
