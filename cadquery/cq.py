@@ -2500,7 +2500,7 @@ class Workplane(object):
         clean: bool = True,
     ) -> T:
         """
-        Same as each(), except arg is translated by the positions on the stack. If arg is the a callback function, then the the function is called for each point on the stack, and the resulting shape is used.
+        Same as each(), except arg is translated by the positions on the stack. If arg is a callback function, then the function is called for each point on the stack, and the resulting shape is used.
         :return: CadQuery object which contains a list of  vectors (points ) on its stack.
 
         :param useLocalCoordinates: should points be in local or global coordinates
