@@ -2494,15 +2494,13 @@ class Workplane(object):
 
     def eachpoint(
         self: T,
-        callback: Callable[[Location], Shape],
+        arg: Union[Shape, "Workplane", Callable[[Location], Shape]],
         useLocalCoordinates: bool = False,
         combine: CombineMode = False,
         clean: bool = True,
     ) -> T:
         """
-        Same as each(), except each item on the stack is converted into a point before it
-        is passed into the callback function.
-
+        Same as each(), except arg is translated by the positions on the stack. If arg is a callback function, then the function is called for each point on the stack, and the resulting shape is used.
         :return: CadQuery object which contains a list of  vectors (points ) on its stack.
 
         :param useLocalCoordinates: should points be in local or global coordinates
@@ -2519,6 +2517,7 @@ class Workplane(object):
         If the stack has zero length, a single point is returned, which is the center of the current
         workplane/coordinate system
         """
+
         # convert stack to a list of points
         pnts = []
         plane = self.plane
@@ -2537,10 +2536,33 @@ class Workplane(object):
                 else:
                     pnts.append(o)
 
-        if useLocalCoordinates:
-            res = [callback(p).move(loc) for p in pnts]
+        if isinstance(arg, Workplane):
+            if useLocalCoordinates:
+                res = [
+                    v.moved(p).move(loc)
+                    for v in arg.vals()
+                    for p in pnts
+                    if isinstance(v, Shape)
+                ]
+            else:
+                res = [
+                    v.moved(p * loc)
+                    for v in arg.vals()
+                    for p in pnts
+                    if isinstance(v, Shape)
+                ]
+        elif isinstance(arg, Shape):
+            if useLocalCoordinates:
+                res = [arg.moved(p).move(loc) for p in pnts]
+            else:
+                res = [arg.moved(p * loc) for p in pnts]
+        elif callable(arg):
+            if useLocalCoordinates:
+                res = [arg(p).move(loc) for p in pnts]
+            else:
+                res = [arg(p * loc) for p in pnts]
         else:
-            res = [callback(p * loc) for p in pnts]
+            raise ValueError(f"{arg} is not supported")
 
         for r in res:
             if isinstance(r, Wire) and not r.forConstruction:
