@@ -11,7 +11,7 @@ from typing import (
     cast,
 )
 from typing_extensions import Protocol
-from math import degrees
+from math import degrees, radians
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
@@ -340,7 +340,7 @@ def toJSON(
         val["shape"] = data
         val["color"] = col_.toTuple() if col_ else color
         val["position"] = trans
-        val["orientation"] = rot
+        val["orientation"] = tuple(radians(r) for r in rot)
 
         rv.append(val)
 

@@ -27,7 +27,7 @@ from ..selectors import (
     StringSyntaxSelector,
 )
 
-from ..utils import cqmultimethod as multimethod
+from ..utils import multimethod
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -210,6 +210,15 @@ from OCP.Graphic3d import (
     Graphic3d_VTA_TOP,
 )
 
+from OCP.Graphic3d import (
+    Graphic3d_HTA_LEFT,
+    Graphic3d_HTA_CENTER,
+    Graphic3d_HTA_RIGHT,
+    Graphic3d_VTA_BOTTOM,
+    Graphic3d_VTA_CENTER,
+    Graphic3d_VTA_TOP,
+)
+
 from OCP.NCollection import NCollection_Utf8String
 
 from OCP.BRepFeat import BRepFeat_MakeDPrism
@@ -223,6 +232,10 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.GeomAbs import (
     GeomAbs_Shape,
     GeomAbs_C0,
+    GeomAbs_C1,
+    GeomAbs_C2,
+    GeomAbs_G2,
+    GeomAbs_G1,
     GeomAbs_Intersection,
     GeomAbs_JoinType,
 )
@@ -1047,6 +1060,7 @@ class Shape(object):
 
         return r
 
+    @multimethod
     def move(self: T, loc: Location) -> T:
         """
         Apply a location in relative sense (i.e. update current location) to self
@@ -1056,6 +1070,29 @@ class Shape(object):
 
         return self
 
+    @move.register
+    def move(
+        self: T,
+        x: Real = 0,
+        y: Real = 0,
+        z: Real = 0,
+        rx: Real = 0,
+        ry: Real = 0,
+        rz: Real = 0,
+    ) -> T:
+
+        self.wrapped.Move(Location(x, y, z, rx, ry, rz).wrapped)
+
+        return self
+
+    @move.register
+    def move(self: T, loc: VectorLike) -> T:
+
+        self.wrapped.Move(Location(loc).wrapped)
+
+        return self
+
+    @multimethod
     def moved(self: T, loc: Location) -> T:
         """
         Apply a location in relative sense (i.e. update current location) to a copy of self
@@ -1065,6 +1102,51 @@ class Shape(object):
         r.forConstruction = self.forConstruction
 
         return r
+
+    @moved.register
+    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> T:
+
+        return self.moved((loc1, loc2) + locs)
+
+    @moved.register
+    def moved(self: T, locs: Sequence[Location]) -> T:
+
+        rv = []
+
+        for l in locs:
+            rv.append(self.wrapped.Moved(l.wrapped))
+
+        return _compound_or_shape(rv)
+
+    @moved.register
+    def moved(
+        self: T,
+        x: Real = 0,
+        y: Real = 0,
+        z: Real = 0,
+        rx: Real = 0,
+        ry: Real = 0,
+        rz: Real = 0,
+    ) -> T:
+
+        return self.moved(Location(x, y, z, rx, ry, rz))
+
+    @moved.register
+    def moved(self: T, loc: VectorLike) -> T:
+
+        return self.moved(Location(loc))
+
+    @moved.register
+    def moved(self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike) -> T:
+
+        return self.moved(
+            (Location(loc1), Location(loc2)) + tuple(Location(loc) for loc in locs)
+        )
+
+    @moved.register
+    def moved(self: T, loc: Sequence[VectorLike]) -> T:
+
+        return self.moved(tuple(Location(l) for l in loc))
 
     def __hash__(self) -> int:
 
@@ -1462,6 +1544,34 @@ class Shape(object):
             return rv if level == 1 else _siblings(rv, level - 1)
 
         return Compound.makeCompound(_siblings([self], level))
+
+    def __add__(self, other: "Shape") -> "Shape":
+        """
+        Fuse self and other.
+        """
+
+        return fuse(self, other)
+
+    def __sub__(self, other: "Shape") -> "Shape":
+        """
+        Subtract other from self.
+        """
+
+        return cut(self, other)
+
+    def __mul__(self, other: "Shape") -> "Shape":
+        """
+        Intersect self and other.
+        """
+
+        return intersect(self, other)
+
+    def __truediv__(self, other: "Shape") -> "Shape":
+        """
+        Split self with other.
+        """
+
+        return split(self, other)
 
 
 class ShapeProtocol(Protocol):
@@ -3991,3 +4101,882 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
     ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edges_in, tol, False, wires_out)
 
     return [Wire(el) for el in wires_out]
+
+
+#%% utilities
+
+
+def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Iterable[Shape]:
+    """
+    Get desired shapes or raise an error.
+    """
+
+    # convert input into tuple
+    if isinstance(ts, tuple):
+        types = ts
+    else:
+        types = (ts,)
+
+    # validate the underlying shape, compounds are unpacked
+    t = s.ShapeType()
+
+    if t in types:
+        yield s
+    elif t == "Compound":
+        for el in s:
+            if el.ShapeType() in ts:
+                yield el
+            else:
+                raise ValueError(
+                    f"Required type(s): {types}; encountered {el.ShapeType()}"
+                )
+    else:
+        raise ValueError(f"Required type(s): {types}; encountered {t}")
+
+
+def _get_one(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Shape:
+    """
+    Get one shape or raise an error.
+    """
+
+    # convert input into tuple
+    if isinstance(ts, tuple):
+        types = ts
+    else:
+        types = (ts,)
+
+    # validate the underlying shape, compounds are unpacked
+    t = s.ShapeType()
+
+    if t in types:
+        rv = s
+    elif t == "Compound":
+        for el in s:
+            if el.ShapeType() in ts:
+                rv = el
+                break
+            else:
+                raise ValueError(
+                    f"Required type(s): {types}, encountered {el.ShapeType()}"
+                )
+    else:
+        raise ValueError(f"Required type(s): {types}; encountered {t}")
+
+    return rv
+
+
+def _get_one_wire(s: Shape) -> Wire:
+    """
+    Get one wire or edge and convert to wire.
+    """
+
+    rv = _get_one(s, ("Wire", "Edge"))
+
+    if isinstance(rv, Wire):
+        return rv
+    else:
+        return Wire.assembleEdges((rv,))
+
+
+def _get_wires(s: Shape) -> Iterable[Shape]:
+    """
+    Get wires or wires from edges.
+    """
+
+    t = s.ShapeType()
+
+    if t == "Wire":
+        yield s
+    elif t == "Edge":
+        yield Wire.assembleEdges((tcast(Edge, s),))
+    elif t == "Compound":
+        for el in s:
+            yield from _get_wires(el)
+    else:
+        raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+
+
+def _get_edges(s: Shape) -> Iterable[Shape]:
+    """
+    Get wires or wires from edges.
+    """
+
+    t = s.ShapeType()
+
+    if t == "Edge":
+        yield s
+    elif t == "Wire":
+        yield from _get_edges(s.edges())
+    elif t == "Compound":
+        for el in s:
+            yield from _get_edges(el)
+    else:
+        raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+
+
+def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
+    """
+    Get lists or wires for sweeping or lofting.
+    """
+
+    wire_lists: List[List[Wire]] = []
+
+    for el in s:
+        if not wire_lists:
+            wire_lists = [[w] for w in _get_wires(el)]
+        else:
+            for wire_list, w in zip(wire_lists, _get_wires(el)):
+                wire_list.append(w)
+
+    return wire_lists
+
+
+def _normalize(s: Shape) -> Shape:
+    """
+    Apply some normalizations:
+    - Shell with only one Face -> Face.
+    """
+
+    t = s.ShapeType()
+    rv = s
+
+    if t == "Shell":
+        faces = s.Faces()
+        if len(faces) == 1:
+            rv = faces[0]
+    elif t == "Compound":
+        objs = list(s)
+        if len(objs) == 1:
+            rv = objs[0]
+
+    return rv
+
+
+def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
+    """
+    Convert a list of TopoDS_Shape to a Shape or a Compound.
+    """
+
+    if isinstance(s, TopoDS_Shape):
+        rv = _normalize(Shape.cast(s))
+    elif len(s) == 1:
+        rv = _normalize(Shape.cast(s[0]))
+    else:
+        rv = Compound.makeCompound([_normalize(Shape.cast(el)) for el in s])
+
+    return rv
+
+
+def _pts_to_harray(ps: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
+    """
+    Convert a sequence of Vecotor to a TColgp harray (OCCT specific).
+    """
+
+    rv = TColgp_HArray1OfPnt(1, len(ps))
+
+    for i, p in enumerate(ps):
+        rv.SetValue(i + 1, Vector(p).toPnt())
+
+    return rv
+
+
+def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
+    """
+    Convert an iterable of Shape to a TopTools list (OCCT specific).
+    """
+
+    rv = TopTools_ListOfShape()
+
+    for el in s:
+        rv.Append(el.wrapped)
+
+    return rv
+
+
+#%% alternative constructors
+
+
+@multimethod
+def wire(*s: Shape) -> Shape:
+    """
+    Build wire from edges.
+    """
+
+    builder = BRepBuilderAPI_MakeWire()
+
+    edges = _shapes_to_toptools_list(e for el in s for e in _get_edges(el))
+    builder.Add(edges)
+
+    return _compound_or_shape(builder.Shape())
+
+
+@wire.register
+def wire(s: Sequence[Shape]) -> Shape:
+
+    return wire(*s)
+
+
+@multimethod
+def face(*s: Shape) -> Shape:
+    """
+    Build face from edges or wires.
+    """
+
+    from OCP.BOPAlgo import BOPAlgo_Tools
+
+    ws = Compound.makeCompound(w for el in s for w in _get_wires(el)).wrapped
+    rv = TopoDS_Compound()
+
+    status = BOPAlgo_Tools.WiresToFaces_s(ws, rv)
+
+    if not status:
+        raise ValueError("Face construction failed")
+
+    return _get_one(_compound_or_shape(rv), "Face")
+
+
+@face.register
+def face(s: Sequence[Shape]) -> Shape:
+
+    return face(*s)
+
+
+@multimethod
+def shell(*s: Shape) -> Shape:
+    """
+    Build shell from faces.
+    """
+
+    builder = BRepBuilderAPI_Sewing()
+
+    for el in s:
+        for f in _get(el, "Face"):
+            builder.Add(f.wrapped)
+
+    builder.Perform()
+
+    return _compound_or_shape(builder.SewedShape())
+
+
+@shell.register
+def shell(s: Sequence[Shape]) -> Shape:
+
+    return shell(*s)
+
+
+@multimethod
+def solid(*s: Shape) -> Shape:
+    """
+    Build solid from faces.
+    """
+
+    builder = ShapeFix_Solid()
+
+    faces = [f for el in s for f in _get(el, "Face")]
+    rv = builder.SolidFromShell(shell(*faces).wrapped)
+
+    return _compound_or_shape(rv)
+
+
+@solid.register
+def solid(s: Sequence[Shape]) -> Shape:
+
+    return solid(*s)
+
+
+@multimethod
+def compound(*s: Shape) -> Shape:
+    """
+    Build compound from shapes.
+    """
+
+    rv = TopoDS_Compound()
+
+    builder = TopoDS_Builder()
+    builder.MakeCompound(rv)
+
+    for el in s:
+        builder.Add(rv, el.wrapped)
+
+    return Compound(rv)
+
+
+@compound.register
+def compound(s: Sequence[Shape]) -> Shape:
+
+    return compound(*s)
+
+
+#%% primitives
+
+
+@multimethod
+def vertex(x: Real, y: Real, z: Real) -> Shape:
+    """
+    Construct a vertex from coordinates.
+    """
+
+    return _compound_or_shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
+
+
+@vertex.register
+def vertex(p: VectorLike):
+
+    return _compound_or_shape(BRepBuilderAPI_MakeVertex(Vector(p).toPnt()).Vertex())
+
+
+def segment(p1: VectorLike, p2: VectorLike) -> Shape:
+    """
+    Construct a segment from two points.
+    """
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeEdge(Vector(p1).toPnt(), Vector(p2).toPnt()).Edge()
+    )
+
+
+def polyline(*pts: VectorLike) -> Shape:
+    """
+    Construct a polyline from points.
+    """
+
+    builder = BRepBuilderAPI_MakePolygon()
+
+    for p in pts:
+        builder.Add(Vector(p).toPnt())
+
+    return _compound_or_shape(builder.Wire())
+
+
+def polygon(*pts: VectorLike) -> Shape:
+    """
+    Construct a polygon (closed polyline) from points.
+    """
+
+    builder = BRepBuilderAPI_MakePolygon()
+
+    for p in pts:
+        builder.Add(Vector(p).toPnt())
+
+    builder.Close()
+
+    return _compound_or_shape(builder.Wire())
+
+
+def rect(w: float, h: float) -> Shape:
+    """
+    Construct a rectangle.
+    """
+
+    return polygon(
+        (-w / 2, -h / 2, 0), (w / 2, -h / 2, 0), (w / 2, h / 2, 0), (-w / 2, h / 2, 0)
+    )
+
+
+@multimethod
+def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape:
+    """
+    Construct a polygon (closed polyline) from points.
+    """
+
+    data = _pts_to_harray(pts)
+
+    builder = GeomAPI_Interpolate(data, periodic, tol)
+    builder.Perform()
+
+    return _compound_or_shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge())
+
+
+@spline.register
+def spline(
+    pts: Sequence[VectorLike],
+    tgts: Sequence[VectorLike] = (),
+    tol: float = 1e-6,
+    periodic: bool = False,
+    scale: bool = True,
+) -> Shape:
+
+    data = _pts_to_harray(pts)
+
+    builder = GeomAPI_Interpolate(data, periodic, tol)
+
+    if tgts:
+        builder.Load(Vector(tgts[0]).wrapped, Vector(tgts[1]).wrapped, scale)
+
+    builder.Perform()
+
+    return _compound_or_shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge())
+
+
+def circle(r: float) -> Shape:
+    """
+    Construct a circle.
+    """
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeEdge(
+            gp_Circ(gp_Ax2(Vector().toPnt(), Vector(0, 0, 1).toDir()), r)
+        ).Edge()
+    )
+
+
+def ellipse(r1: float, r2: float) -> Shape:
+    """
+    Construct an ellipse.
+    """
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeEdge(
+            gp_Elips(gp_Ax2(Vector().toPnt(), Vector(0, 0, 1).toDir()), r1, r2)
+        ).Edge()
+    )
+
+
+def plane(w: float, l: float) -> Shape:
+    """
+    Construct a planar face.
+    """
+
+    pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeFace(pln_geom, -w / 2, w / 2, -l / 2, l / 2).Face()
+    )
+
+
+def box(w: float, l: float, h: float) -> Shape:
+    """
+    Construct a solid box.
+    """
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeBox(
+            gp_Ax2(Vector(-w / 2, -l / 2, 0).toPnt(), Vector(0, 0, 1).toDir()), w, l, h
+        ).Shape()
+    )
+
+
+def cylinder(d: float, h: float) -> Shape:
+    """
+    Construct a solid cylinder.
+    """
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeCylinder(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), d / 2, h, 2 * pi
+        ).Shape()
+    )
+
+
+def sphere(d: float) -> Shape:
+    """
+    Construct a solid sphere.
+    """
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeSphere(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), d / 2,
+        ).Shape()
+    )
+
+
+def torus(d1: float, d2: float) -> Shape:
+    """
+    Construct a solid torus.
+    """
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeTorus(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
+            d1 / 2,
+            d2 / 2,
+            0,
+            2 * pi,
+        ).Shape()
+    )
+
+
+@multimethod
+def cone(d1: Real, d2: Real, h: Real) -> Shape:
+    """
+    Construct a solid cone.
+    """
+
+    return _compound_or_shape(
+        BRepPrimAPI_MakeCone(
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
+            d1 / 2,
+            d2 / 2,
+            h,
+            2 * pi,
+        ).Shape()
+    )
+
+
+@cone.register
+def cone(d: Real, h: Real) -> Shape:
+
+    return cone(d, 0, h)
+
+
+def text(
+    txt: str,
+    size: float,
+    font: str = "Arial",
+    path: Optional[str] = None,
+    kind: Literal["regular", "bold", "italic"] = "regular",
+    halign: Literal["center", "left", "right"] = "center",
+    valign: Literal["center", "top", "bottom"] = "center",
+) -> Shape:
+    """
+    Create a flat text.
+    """
+
+    builder = Font_BRepTextBuilder()
+
+    font_kind = {
+        "regular": Font_FA_Regular,
+        "bold": Font_FA_Bold,
+        "italic": Font_FA_Italic,
+    }[kind]
+
+    mgr = Font_FontMgr.GetInstance_s()
+
+    if path and mgr.CheckFont(TCollection_AsciiString(path).ToCString()):
+        font_t = Font_SystemFont(TCollection_AsciiString(path))
+        font_t.SetFontPath(font_kind, TCollection_AsciiString(path))
+        mgr.RegisterFont(font_t, True)
+
+    else:
+        font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+
+    font_i = StdPrs_BRepFont(
+        NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, float(size),
+    )
+
+    if halign == "left":
+        theHAlign = Graphic3d_HTA_LEFT
+    elif halign == "center":
+        theHAlign = Graphic3d_HTA_CENTER
+    else:
+        theHAlign = Graphic3d_HTA_RIGHT
+
+    if valign == "bottom":
+        theVAlign = Graphic3d_VTA_BOTTOM
+    elif valign == "center":
+        theVAlign = Graphic3d_VTA_CENTER
+    else:
+        theVAlign = Graphic3d_VTA_TOP
+
+    rv = builder.Perform(
+        font_i, NCollection_Utf8String(txt), theHAlign=theHAlign, theVAlign=theVAlign
+    )
+
+    return _compound_or_shape(rv)
+
+
+#%% ops
+
+
+def _bool_op(
+    s1: Shape,
+    s2: Shape,
+    builder: Union[BRepAlgoAPI_BooleanOperation, BRepAlgoAPI_Splitter],
+    tol: float = 0.0,
+    parallel: bool = True,
+):
+
+    arg = TopTools_ListOfShape()
+    arg.Append(s1.wrapped)
+
+    tool = TopTools_ListOfShape()
+    tool.Append(s2.wrapped)
+
+    builder.SetArguments(arg)
+    builder.SetTools(tool)
+
+    builder.SetRunParallel(parallel)
+
+    if tol:
+        builder.SetFuzzyValue(tol)
+
+    builder.Build()
+
+
+def fuse(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+    """
+    Fuse two shapes.
+    """
+
+    builder = BRepAlgoAPI_Fuse()
+    _bool_op(s1, s2, builder, tol)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def cut(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+    """
+    Subtract two shapes.
+    """
+
+    builder = BRepAlgoAPI_Cut()
+    _bool_op(s1, s2, builder, tol)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def intersect(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+    """
+    Intersect two shapes.
+    """
+
+    builder = BRepAlgoAPI_Common()
+    _bool_op(s1, s2, builder, tol)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def split(s1: Shape, s2: Shape) -> Shape:
+    """
+    Split one shape with another.
+    """
+
+    builder = BRepAlgoAPI_Splitter()
+    _bool_op(s1, s2, builder)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def clean(s: Shape) -> Shape:
+    """
+    Clean superfluous edges and faces.
+    """
+
+    builder = ShapeUpgrade_UnifySameDomain(s.wrapped, True, True, True)
+    builder.AllowInternalEdges(False)
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def fill(s: Shape, constraints: Sequence[Union[Shape, VectorLike]] = ()) -> Shape:
+    """
+    Fill edges/wire possibly obeying constraints.
+    """
+
+    builder = BRepOffsetAPI_MakeFilling()
+
+    for e in _get_edges(s):
+        builder.Add(e.wrapped, GeomAbs_C0)
+
+    for c in constraints:
+        if isinstance(c, Shape):
+            for e in _get_edges(c):
+                builder.Add(e.wrapped, GeomAbs_C0, False)
+        else:
+            builder.Add(Vector(c).toPnt())
+
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def cap(
+    s: Shape, ctx: Shape, constraints: Sequence[Union[Shape, VectorLike]] = ()
+) -> Shape:
+    """
+    Fill edges/wire possibly obeying constraints and try to connect smoothly to the context shape.
+    """
+
+    builder = BRepOffsetAPI_MakeFilling()
+    builder.SetResolParam(2, 15, 5)
+
+    for e in _get_edges(s):
+        f = _get_one(e.ancestors(ctx, "Face"), "Face")
+        builder.Add(e.wrapped, f.wrapped, GeomAbs_G2, True)
+
+    for c in constraints:
+        if isinstance(c, Shape):
+            for e in _get_edges(c):
+                builder.Add(e.wrapped, GeomAbs_C0, False)
+        else:
+            builder.Add(Vector(c).toPnt())
+
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def fillet(s: Shape, e: Shape, r: float) -> Shape:
+    """
+    Fillet selected edges in a given shell or solid.
+    """
+
+    builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
+
+    for el in _get_edges(e.edges()):
+        builder.Add(r, el.wrapped)
+
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def chamfer(s: Shape, e: Shape, d: float) -> Shape:
+    """
+    Chamfer selected edges in a given shell or solid.
+    """
+
+    builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
+
+    for el in _get_edges(e.edges()):
+        builder.Add(d, el.wrapped)
+
+    builder.Build()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def extrude(s: Shape, d: VectorLike) -> Shape:
+    """
+    Extrude a shape.
+    """
+
+    results = []
+
+    for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
+
+        builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
+        builder.Build()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+def revolve(s: Shape, p: VectorLike, d: VectorLike, a: float = 360):
+    """
+    Revolve a shape.
+    """
+
+    results = []
+    ax = gp_Ax1(Vector(p).toPnt(), Vector(d).toDir())
+
+    for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
+
+        builder = BRepPrimAPI_MakeRevol(el.wrapped, ax, radians(a))
+        builder.Build()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
+    """
+    Offset or thicken faces or shells.
+    """
+
+    builder = BRepOffset_MakeOffset()
+
+    results = []
+
+    for el in _get(s, ("Face", "Shell")):
+
+        builder.Initialize(
+            el.wrapped,
+            t,
+            tol,
+            BRepOffset_Mode.BRepOffset_Skin,
+            False,
+            False,
+            GeomAbs_Intersection,
+            cap,
+        )
+
+        builder.MakeOffsetShape()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+@multimethod
+def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
+    """
+    Sweep edge or wire along a path.
+    """
+
+    spine = _get_one_wire(path)
+
+    results = []
+
+    for w in _get_wires(s):
+        builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+        builder.Add(w.wrapped, False, False)
+        builder.Build()
+
+        if cap:
+            builder.MakeSolid()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+@sweep.register
+def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
+    """
+    Sweep edges or wires along a path, chaining sections are supported.
+    """
+
+    spine = _get_one_wire(path)
+
+    results = []
+
+    # construct sweeps
+    for el in _get_wire_lists(s):
+        builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+
+        for w in el:
+            builder.Add(w.wrapped, False, False)
+
+        builder.Build()
+
+        if cap:
+            builder.MakeSolid()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+@multimethod
+def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
+    """
+    Loft edges or wires.
+    """
+
+    results = []
+
+    # construct lofts
+    builder = BRepOffsetAPI_ThruSections()
+
+    for el in _get_wire_lists(s):
+        builder.Init(cap, ruled)
+
+        for w in el:
+            builder.AddWire(w.wrapped)
+
+        builder.Build()
+        builder.Check()
+
+        results.append(builder.Shape())
+
+    return _compound_or_shape(results)
+
+
+@loft.register
+def loft(*s: Shape, cap: bool = False, ruled: bool = False) -> Shape:
+
+    return loft(s, cap, ruled)

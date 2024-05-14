@@ -131,6 +131,8 @@ TEMPLATE = (
     TEMPLATE_RENDER
     + """
 
+function load_and_render(parent_element)
+{{
 new Promise(
   function(resolve, reject)
   {{
@@ -148,10 +150,12 @@ new Promise(
     }} else {{ resolve() }};
  }}
 ).then(() => {{
-    var parent_element = {element};
     var data = {data};
     render(data, parent_element, {ratio});
 }});
+}}
+
+load_and_render({element});
 """
 )
 
