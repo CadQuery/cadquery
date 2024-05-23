@@ -4371,7 +4371,7 @@ class Workplane(object):
 
     def __getitem__(self: T, item: Union[int, Sequence[int], slice]) -> T:
 
-        if isiterable(item):
+        if isinstance(item, Iterable):
             rv = self.newObject(self.objects[i] for i in item)
         else:
             rv = self.newObject(self.objects[item])
