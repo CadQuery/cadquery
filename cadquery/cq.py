@@ -4382,36 +4382,36 @@ class Workplane(object):
 
     def filter(self: T, f: Callable[[CQObject], bool]) -> T:
         """
-        TODO
-        :param f:
-        :return:
+        Filter items using a boolean predicate.
+        :param f: Callable to be used for filtering.
+        :return: Workplane object with filtered items.
         """
 
         return self.newObject(filter(f, self.objects))
 
     def map(self: T, f: Callable[[CQObject], CQObject]):
         """
-        TODO
-        :param f: 
-        :return: 
+        Apply a callable to every item separately.
+        :param f: Callable to be applied to every item separately.
+        :return: Workplane object with f applied to all items.
         """
 
         return self.newObject(map(f, self.objects))
 
     def apply(self: T, f: Callable[[Iterable[CQObject]], Iterable[CQObject]]):
         """
-        TODO
-        :param f: 
-        :return: 
+        Apply a callable to all items at once.
+        :param f: Callable to be applied.
+        :return: Workplane object with f applied to all items.
         """
 
         return self.newObject(f(self.objects))
 
     def sort(self: T, key: Callable[[CQObject], Any]) -> T:
         """
-        TODO
-        :param key:
-        :return:
+        Sort items using a callable.
+        :param key: Callable to be used for sorting.
+        :return: Workplane object with items sorted.
         """
 
         return self.newObject(sorted(self.objects, key=key))
