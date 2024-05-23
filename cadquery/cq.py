@@ -4373,8 +4373,10 @@ class Workplane(object):
 
         if isinstance(item, Iterable):
             rv = self.newObject(self.objects[i] for i in item)
-        else:
+        elif isinstance(item, slice):
             rv = self.newObject(self.objects[item])
+        else:
+            rv = self.newObject([self.objects[item]])
 
         return rv
 
