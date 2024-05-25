@@ -27,7 +27,7 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
 5. CadQuery scripts can build STL, STEP, AMF and 3MF faster than OpenSCAD.
 
-CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts.  Options for visualziation are also available including CQ-Editor and JupyterLab.
+CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts.  Options for visualization are also available including CQ-Editor and JupyterLab.
 
 For those who are interested, the [OCP repository](https://github.com/CadQuery/OCP) contains the current OCCT wrapper used by CQ.
 
@@ -81,7 +81,7 @@ mamba install -c conda-forge -c cadquery cadquery=master
 
 ### CadQuery Installation Via Pip
 
-CadQuery has a complex set of dependencies including OCP, which is our set of bindings to the OpenCASCADE CAD kernel. OCP is distributed as binary wheels for Linux, MacOS and Windows. However, there are some limitations. Only Python 3.8 through 3.10 are currently supported, and some older Linux distributions such as Ubuntu 18.04 are not supported. If the pip installation method does not work for your system, you can try the conda installation method.
+CadQuery has a complex set of dependencies including OCP, which is our set of bindings to the OpenCASCADE CAD kernel. OCP is distributed as binary wheels for Linux, MacOS and Windows. However, there are some limitations. Only Python 3.9 through 3.12 are currently supported, and some older Linux distributions such as Ubuntu 18.04 are not supported. If the pip installation method does not work for your system, you can try the conda installation method.
 
 It is highly recommended that a virtual environment is used when installing CadQuery, although it is not strictly required. Installing CadQuery via pip requires a up-to-date version of pip, which can be obtained with the following command line (or a slight variation thereof).
 ```
@@ -210,7 +210,7 @@ If you are going to contribute code, make sure to follow this steps:
 - Consider adding an example to the documentation showing your cool new
   feature!
 - Make sure nothing is broken (run the complete test suite with `pytest`)
-- Run `black` to autoformat your code and make sure your code style complies
+- Run `black` from [our fork](https://github.com/CadQuery/black) to autoformat your code and make sure your code style complies
   with CadQuery's
 - Push the changes to your fork and open a pull-request upstream
 - Keep an eye on the automated feedback you will receive from the CI pipelines;

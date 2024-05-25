@@ -396,7 +396,7 @@ final solution. In an underconstrained system the solver may not move an object 
 contribute to the cost function, or if multiple solutions exist (ie. multiple instances
 where the cost function is at a minimum) initial locations can cause the solver to converge on one
 particular solution. For very complicated assemblies setting approximately correct initial locations
-can also reduce the computational time requred.
+can also reduce the computational time required.
 
 
 Constraints
@@ -405,7 +405,7 @@ Constraints
 Constraints are often a better representation of the real world relationship the user wants to
 model than directly supplying locations. In the above example the real world relationship is that
 the bottom face of each cone should touch, which can be modelled with a Plane constraint. When the
-user provides explicit locations (instead of constraints) then they are also reponsible for updating
+user provides explicit locations (instead of constraints) then they are also responsible for updating
 them when, for example, the location of ``cone1`` changes.
 
 When at least one constraint is supplied and the method :meth:`~cadquery.Assembly.solve` is run, an

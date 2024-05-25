@@ -1,6 +1,5 @@
 from . import Shape, Workplane, Assembly, Sketch, Compound, Color
 from .occ_impl.exporters.assembly import _vtkRenderWindow
-from .occ_impl.jupyter_tools import DEFAULT_COLOR
 
 from typing import Union
 
@@ -10,6 +9,8 @@ from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingCore import vtkMapper, vtkRenderWindowInteractor
+
+DEFAULT_COLOR = [1, 0.8, 0, 1]
 
 
 def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:

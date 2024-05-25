@@ -12,19 +12,19 @@ build:
 
 requirements:
   build:
-    - python >=3.8
+    - python >=3.9
     - setuptools
   run:
-    - python >=3.8
-    - ocp 7.7.1
-    - occt 7.7.1
+    - python >=3.9
+    - ocp 7.7.2
+    - vtk=*=qt*
     - pyparsing >=2.1.9
     - ezdxf
     - ipython
     - typing_extensions
     - nptyping >=2.0.1
     - nlopt
-    - multimethod ==1.9.1
+    - multimethod >=1.11,<2.0
     - casadi
 
 test:

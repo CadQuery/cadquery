@@ -238,6 +238,27 @@ class TestCadObjects(BaseTest):
 
         self.assertTupleAlmostEquals((0.0, 0.0, 1.0), mplane.normalAt().toTuple(), 3)
 
+    def testMatrixOfInertia(self):
+        """
+        Tests the calculation of the matrix of inertia for a solid
+        """
+        radius = 1.0
+        height = 2.0
+        cylinder = Solid.makeCylinder(radius=radius, height=height)
+        moi = Shape.matrixOfInertia(cylinder)
+        two_pi = 2 * math.pi
+        true_moi = (
+            two_pi * (radius ** 2 / 4 + height ** 2 / 12),
+            two_pi * (radius ** 2 / 4 + height ** 2 / 12),
+            two_pi * radius ** 2 / 2,
+        )
+        self.assertTupleAlmostEquals((moi[0][0], moi[1][1], moi[2][2]), true_moi, 3)
+
+    def testVertexMatrixOfInertiaNotImplemented(self):
+        with self.assertRaises(NotImplementedError):
+            vertex = Vertex.makeVertex(1, 1, 1)
+            Shape.matrixOfInertia(vertex)
+
     def testCenterOfBoundBox(self):
         pass
 
@@ -595,6 +616,12 @@ class TestCadObjects(BaseTest):
 
     def testLocation(self):
 
+        # empty
+        loc = Location()
+
+        T = loc.wrapped.Transformation().TranslationPart()
+        self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 0), 6)
+
         # Tuple
         loc0 = Location((0, 0, 1))
 
@@ -659,6 +686,14 @@ class TestCadObjects(BaseTest):
         with self.assertRaises(TypeError):
             Location("xy_plane")
 
+        # test to tuple
+        loc8 = Location(z=2, ry=15)
+
+        trans, rot = loc8.toTuple()
+
+        self.assertTupleAlmostEquals(trans, (0, 0, 2), 6)
+        self.assertTupleAlmostEquals(rot, (0, 15, 0), 6)
+
     def testEdgeWrapperRadius(self):
 
         # get a radius from a simple circle
@@ -720,6 +755,30 @@ class TestCadObjects(BaseTest):
             ]
         )
         self.assertAlmostEqual(many_rad.radius(), 1.0)
+
+    def testWireFillet(self):
+        points = [
+            (0.000, 0.000, 0.000),
+            (-0.287, 1.183, -0.592),
+            (-1.404, 4.113, -2.787),
+            (-1.332, 1.522, 0.553),
+            (7.062, 0.433, -0.097),
+            (8.539, -0.000, -0.000),
+        ]
+        wire = Wire.makePolygon(points, close=False)
+
+        # Fillet the wire
+        wfillet = wire.fillet(radius=0.560)
+        assert len(wfillet.Edges()) == 2 * len(points) - 3
+
+        # Fillet a single vertex
+        wfillet = wire.fillet(radius=0.560, vertices=wire.Vertices()[1:2])
+        assert len(wfillet.Edges()) == len(points)
+
+        # Assert exception if trying to fillet with too big
+        # a radius
+        with self.assertRaises(ValueError):
+            wfillet = wire.fillet(radius=1.0)
 
 
 @pytest.mark.parametrize(

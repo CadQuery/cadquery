@@ -1629,6 +1629,39 @@ class Workplane(object):
 
         return self.newObject([p])
 
+    def bezier(
+        self: T,
+        listOfXYTuple: Iterable[VectorLike],
+        forConstruction: bool = False,
+        includeCurrent: bool = False,
+        makeWire: bool = False,
+    ) -> T:
+        """
+        Make a cubic Bézier curve by the provided points (2D or 3D).
+
+        :param listOfXYTuple: Bezier control points and end point.
+            All points except the last point are Bezier control points,
+            and the last point is the end point
+        :param includeCurrent: Use the current point as a starting point of the curve
+        :param makeWire: convert the resulting bezier edge to a wire
+        :return: a Workplane object with the current point at the end of the bezier
+
+        The Bézier Will begin at either current point or the first point
+        of listOfXYTuple, and end with the last point of listOfXYTuple
+        """
+        allPoints = self._toVectors(listOfXYTuple, includeCurrent)
+
+        e = Edge.makeBezier(allPoints)
+
+        if makeWire:
+            rv_w = Wire.assembleEdges([e])
+            if not forConstruction:
+                self._addPendingWire(rv_w)
+        elif not forConstruction:
+            self._addPendingEdge(e)
+
+        return self.newObject([rv_w if makeWire else e])
+
     # line a specified incremental amount from current point
     def line(self: T, xDist: float, yDist: float, forConstruction: bool = False) -> T:
         """
@@ -2198,7 +2231,11 @@ class Workplane(object):
         # Calculate the sagitta from the radius
         length = endPoint.sub(startPoint).Length / 2.0
         try:
-            sag = abs(radius) - math.sqrt(radius ** 2 - length ** 2)
+            sag = abs(radius)
+            r_2_l_2 = radius ** 2 - length ** 2
+            # Float imprecision can lead slightly negative values: consider them as zeros
+            if abs(r_2_l_2) >= TOL:
+                sag -= math.sqrt(r_2_l_2)
         except ValueError:
             raise ValueError("Arc radius is not large enough to reach the end point.")
 
@@ -2457,15 +2494,13 @@ class Workplane(object):
 
     def eachpoint(
         self: T,
-        callback: Callable[[Location], Shape],
+        arg: Union[Shape, "Workplane", Callable[[Location], Shape]],
         useLocalCoordinates: bool = False,
         combine: CombineMode = False,
         clean: bool = True,
     ) -> T:
         """
-        Same as each(), except each item on the stack is converted into a point before it
-        is passed into the callback function.
-
+        Same as each(), except arg is translated by the positions on the stack. If arg is a callback function, then the function is called for each point on the stack, and the resulting shape is used.
         :return: CadQuery object which contains a list of  vectors (points ) on its stack.
 
         :param useLocalCoordinates: should points be in local or global coordinates
@@ -2482,6 +2517,7 @@ class Workplane(object):
         If the stack has zero length, a single point is returned, which is the center of the current
         workplane/coordinate system
         """
+
         # convert stack to a list of points
         pnts = []
         plane = self.plane
@@ -2500,10 +2536,33 @@ class Workplane(object):
                 else:
                     pnts.append(o)
 
-        if useLocalCoordinates:
-            res = [callback(p).move(loc) for p in pnts]
+        if isinstance(arg, Workplane):
+            if useLocalCoordinates:
+                res = [
+                    v.moved(p).move(loc)
+                    for v in arg.vals()
+                    for p in pnts
+                    if isinstance(v, Shape)
+                ]
+            else:
+                res = [
+                    v.moved(p * loc)
+                    for v in arg.vals()
+                    for p in pnts
+                    if isinstance(v, Shape)
+                ]
+        elif isinstance(arg, Shape):
+            if useLocalCoordinates:
+                res = [arg.moved(p).move(loc) for p in pnts]
+            else:
+                res = [arg.moved(p * loc) for p in pnts]
+        elif callable(arg):
+            if useLocalCoordinates:
+                res = [arg(p).move(loc) for p in pnts]
+            else:
+                res = [arg(p * loc) for p in pnts]
         else:
-            res = [callback(p * loc) for p in pnts]
+            raise ValueError(f"{arg} is not supported")
 
         for r in res:
             if isinstance(r, Wire) and not r.forConstruction:
@@ -2953,7 +3012,7 @@ class Workplane(object):
                 .workplane()
                 .rect(1.5, 3.5, forConstruction=True)
                 .vertices()
-                .hole(0.125, 0.25, 82, depth=None)
+                .hole(0.125, 82)
             )
 
         This sample creates a plate with a set of holes at the corners.
@@ -3333,6 +3392,8 @@ class Workplane(object):
             self._mergeTags(toUnion)
         elif isinstance(toUnion, (Solid, Compound)):
             newS = [toUnion]
+        elif toUnion is None:
+            newS = []
         else:
             raise ValueError("Cannot union type '{}'".format(type(toUnion)))
 
