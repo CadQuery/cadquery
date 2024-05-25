@@ -2603,15 +2603,22 @@ class TestCadQuery(BaseTest):
                 s0.val().Center().toTuple(), s1.val().Center().toTuple(), 3
             )
 
+
     def testCylinderCenteringAndDirection(self):
         radius = 10
         height = 40
 
-        for direction in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
+        for direction in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (-1, 0, 0), (0, -1, 0), (0, 0, -1)]:
             for centered in product([True, False], repeat=3):
-                s = Workplane("XY").cylinder(height, radius, direct=Vector(*direction), centered=centered)
+                s = Workplane("XY").cylinder(
+                    height,
+                    radius,
+                    direct=Vector(direction),
+                    centered=centered,
+                )
                 expected_xyz = tuple(
-                    radius * (1 - direction[i]) + 0.5 * height * direction[i] if not centered[i] else 0
+                    radius * (1 - abs(direction[i])) + 0.5 * height * direction[i]
+                    if not centered[i] else 0
                     for i in range(3)
                 )
                 self.assertTupleAlmostEquals(s.val().Center().toTuple(), expected_xyz, 3)
@@ -2915,7 +2922,7 @@ class TestCadQuery(BaseTest):
             .faces("<Z")
             .workplane()
             .cylinder(
-                2, 0.2, centered=(True, True, False), direct=(0, 0, -1), clean=True
+                2, 0.2, centered=(True, True, False), direct=Vector(0, 0, -1), clean=True
             )
         )
         assert len(s.edges().vals()) == 15
@@ -2982,7 +2989,7 @@ class TestCadQuery(BaseTest):
             .faces("<Z")
             .workplane()
             .cylinder(
-                2, 0.2, centered=(True, True, False), direct=(0, 0, -1), clean=False
+                2, 0.2, centered=(True, True, False), direct=Vector(0, 0, -1), clean=False
             )
         )
         assert len(s.edges().vals()) == 16
