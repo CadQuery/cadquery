@@ -4124,23 +4124,23 @@ class Workplane(object):
             centered = (centered, centered, centered)
 
         xyz = [
-            Vector(1, 0, 0),
-            Vector(0, 1, 0),
-            Vector(0, 0, 1),
-            Vector(-1, 0, 0),
-            Vector(0, -1, 0),
-            Vector(0, 0, -1),
+            (1, 0, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (-1, 0, 0),
+            (0, -1, 0),
+            (0, 0, -1),
         ]
 
         offset = Vector()
         if all(centered):
             offset = -0.5 * height * direct / direct.Length
-        elif not all(centered) and direct in xyz:
+        elif not all(centered) and direct.toTuple() in xyz:
             direction = direct.toTuple()
 
             # create centering offset in the direction of the cylinder if centered
             centering = tuple(
-                -0.5 * height * axis.toTuple()[i] * direction[i] if centered[i] else 0
+                -0.5 * height * axis[i] * direction[i] if centered[i] else 0
                 for i, axis in enumerate(xyz[:3])
             )
 
@@ -4148,7 +4148,7 @@ class Workplane(object):
             not_centering = tuple(
                 0
                 if centered[i]
-                else radius * axis.toTuple()[i] * (1 - abs(direction[i]))
+                else radius * axis[i] * (1 - abs(direction[i]))
                 for i, axis in enumerate(xyz[:3])
             )
             offset += Vector(centering)
