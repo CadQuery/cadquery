@@ -5671,24 +5671,24 @@ class TestCadQuery(BaseTest):
 
         res7 = list(fs.siblings(c, "Edge", 2))
         assert len(res7) == 2
-        
+
     def test_map_apply_filter_sort(self):
 
-        w = Workplane().box(1, 1, 1).moveTo(3,0).box(1, 1, 0)
-        
-        assert w.filter(lambda s: s.Volume()>2).size() == 1
-        assert w.filter(lambda s: s.Volume()>5).size() == 0
+        w = Workplane().box(1, 1, 1).moveTo(3, 0).box(1, 1, 0)
+
+        assert w.filter(lambda s: s.Volume() > 2).size() == 1
+        assert w.filter(lambda s: s.Volume() > 5).size() == 0
 
         assert w.sort(lambda s: -s.Volume())[-1].val().Volume() == approx(1)
 
         assert w.apply(lambda obj: []).size() == 0
 
-        assert w.map(lambda s: s.faces('>Z')).faces().size() == 2
+        assert w.map(lambda s: s.faces(">Z")).faces().size() == 2
 
     def test_getitem(self):
 
-        w = cq.Workplane().rarray(2,1,5,1).box(1,1,1, combine=False)
+        w = cq.Workplane().rarray(2, 1, 5, 1).box(1, 1, 1, combine=False)
 
         assert w[0].solids().size() == 1
         assert w[-2:].solids().size() == 2
-        assert w[[0,1]].solids().size() == 2
+        assert w[[0, 1]].solids().size() == 2
