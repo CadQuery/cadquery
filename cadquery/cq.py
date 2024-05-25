@@ -4079,14 +4079,15 @@ class Workplane(object):
 
             # create centering offset in the direction of the cylinder if centered
             centering = tuple(
-                -0.5 * height * axis.toTuple()[i] * direction[i]
-                if centered[i] else 0
+                -0.5 * height * axis.toTuple()[i] * direction[i] if centered[i] else 0
                 for i, axis in enumerate(xyz[:3])
             )
 
             # create radius offset in the other directions if not centered
             not_centering = tuple(
-                0 if centered[i] else radius * axis.toTuple()[i] * (1 - abs(direction[i]))
+                0
+                if centered[i]
+                else radius * axis.toTuple()[i] * (1 - abs(direction[i]))
                 for i, axis in enumerate(xyz[:3])
             )
             offset += Vector(centering)
