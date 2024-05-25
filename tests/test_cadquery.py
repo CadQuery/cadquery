@@ -5674,7 +5674,7 @@ class TestCadQuery(BaseTest):
 
     def test_map_apply_filter_sort(self):
 
-        w = Workplane().box(1, 1, 1).moveTo(3, 0).box(1, 1, 0)
+        w = Workplane().box(1, 1, 1).moveTo(3, 0).box(1, 1, 3)
 
         assert w.filter(lambda s: s.Volume() > 2).size() == 1
         assert w.filter(lambda s: s.Volume() > 5).size() == 0
