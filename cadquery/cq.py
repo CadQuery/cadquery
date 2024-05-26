@@ -4146,9 +4146,7 @@ class Workplane(object):
 
             # create radius offset in the other directions if not centered
             not_centering = tuple(
-                0
-                if centered[i]
-                else radius * axis[i] * (1 - abs(direction[i]))
+                0 if centered[i] else radius * axis[i] * (1 - abs(direction[i]))
                 for i, axis in enumerate(xyz[:3])
             )
             offset += Vector(centering)
