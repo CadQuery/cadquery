@@ -2635,6 +2635,11 @@ class TestCadQuery(BaseTest):
         expected_xyz = (0, 0, 0)
         self.assertTupleAlmostEquals(s.val().Center().toTuple(), expected_xyz, 3)
 
+        with raises(ValueError):
+            Workplane("XY").cylinder(
+                height, radius, direct=Vector(1, 1, 1), centered=False
+            )
+
     def testWedgeDefaults(self):
         s = Workplane("XY").wedge(10, 10, 10, 5, 5, 5, 5)
         self.saveModel(s)
