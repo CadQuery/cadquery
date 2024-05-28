@@ -224,7 +224,10 @@ def toCAF(
                 if coloredSTEP and current_color:
                     setColor(lab, current_color, ctool)
 
-            tool.AddComponent(subassy, lab, TopLoc_Location())
+            if ancestor:
+                tool.AddComponent(subassy, lab, TopLoc_Location())
+            else:
+                tool.AddComponent(subassy, lab, el.loc.wrapped)
 
         # handle colors when *not* exporting to STEP
         if not coloredSTEP and current_color:
@@ -236,7 +239,10 @@ def toCAF(
 
         if ancestor:
             # add the current subassy to the higher level assy
-            tool.AddComponent(ancestor, subassy, el.loc.wrapped)
+            if ancestor.Tag() == 1:
+                tool.AddComponent(ancestor, subassy, assy.loc.wrapped * el.loc.wrapped)
+            else:
+                tool.AddComponent(ancestor, subassy, el.loc.wrapped)
 
         return subassy
 
