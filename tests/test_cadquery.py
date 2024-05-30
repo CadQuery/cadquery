@@ -4,6 +4,7 @@
 """
 # system modules
 import math, os.path, time, tempfile
+from pathlib import Path
 from random import random
 from random import randrange
 from itertools import product
@@ -24,7 +25,8 @@ from tests import (
 )
 
 # test data directory
-testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+testdataDir = Path(__file__).parent.joinpath("testdata")
+testFont = str(testdataDir / "OpenSans-Regular.ttf")
 
 # where unit test output will be saved
 OUTDIR = tempfile.gettempdir()
@@ -3843,7 +3845,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
+                fontPath=testFont,
                 cut=False,
                 combine=False,
                 halign="right",
@@ -3863,7 +3865,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=os.path.join(testdataDir, "OpenSans-Irregular.ttf"),
+                fontPath=testFont,
                 cut=False,
                 combine=False,
                 halign="right",
@@ -3885,17 +3887,23 @@ class TestCadQuery(BaseTest):
         )
 
     def testTextAlignment(self):
-        left_bottom = Workplane().text("I", 10, 0, halign="left", valign="bottom")
+        left_bottom = Workplane().text(
+            "I", 10, 0, halign="left", valign="bottom", fontPath=testFont,
+        )
         lb_bb = left_bottom.val().BoundingBox()
         self.assertGreaterEqual(lb_bb.xmin, 0)
         self.assertGreaterEqual(lb_bb.ymin, 0)
 
-        centers = Workplane().text("I", 10, 0, halign="center", valign="center")
+        centers = Workplane().text(
+            "I", 10, 0, halign="center", valign="center", fontPath=testFont,
+        )
         c_bb = centers.val().BoundingBox()
         self.assertAlmostEqual(c_bb.center.x, 0, places=0)
         self.assertAlmostEqual(c_bb.center.y, 0, places=0)
 
-        right_top = Workplane().text("I", 10, 0, halign="right", valign="top")
+        right_top = Workplane().text(
+            "I", 10, 0, halign="right", valign="top", fontPath=testFont,
+        )
         rt_bb = right_top.val().BoundingBox()
         self.assertLessEqual(rt_bb.xmax, 0)
         self.assertLessEqual(rt_bb.ymax, 0)
