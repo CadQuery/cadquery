@@ -5732,3 +5732,16 @@ class TestCadQuery(BaseTest):
 
         res7 = list(fs.siblings(c, "Edge", 2))
         assert len(res7) == 2
+
+    def test_tessellate(self):
+
+        # happy flow
+        verts, tris = Face.makePlane(1, 1).tessellate(1e-3)
+
+        assert len(verts) == 4
+        assert len(tris) == 2
+
+        # this should not crash, but return no verts
+        verts, _ = Face.makePlane(1e-9, 1e-9).tessellate(1e-3)
+
+        assert len(verts) == 0
