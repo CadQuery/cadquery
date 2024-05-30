@@ -25,7 +25,7 @@ from tests import (
 )
 
 # test data directory
-testdataDir = Path(os.path.dirname(__file__), "testdata")
+testdataDir = Path(__file__).parent.joinpath("testdata")
 testFont = str(testdataDir / "OpenSans-Regular.ttf")
 
 # where unit test output will be saved
