@@ -4,6 +4,7 @@
 """
 # system modules
 import math, os.path, time, tempfile
+from pathlib import Path
 from random import random
 from random import randrange
 from itertools import product
@@ -24,7 +25,8 @@ from tests import (
 )
 
 # test data directory
-testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+testdataDir = Path(__file__).parent.joinpath("testdata")
+testFont = str(testdataDir / "OpenSans-Regular.ttf")
 
 # where unit test output will be saved
 OUTDIR = tempfile.gettempdir()
@@ -2797,6 +2799,15 @@ class TestCadQuery(BaseTest):
         objects2 = objects1.add(objects2).combine(glue=True, tol=None)
         self.assertEqual(11, objects2.faces().size())
 
+    def testUnionNoArgs(self):
+        # combine using union with no arguments
+        s = Workplane(Plane.XY())
+
+        objects1 = s.rect(2.0, 2.0).extrude(0.5)
+        objects2 = s.rect(1.0, 1.0).extrude(0.5).translate((0, 0, 0.5))
+        objects2 = objects1.add(objects2).union(glue=True, tol=None)
+        self.assertEqual(11, objects2.faces().size())
+
     def testCombineSolidsInLoop(self):
         # duplicates a memory problem of some kind reported when combining lots of objects
         s = Workplane("XY").rect(0.5, 0.5).extrude(5.0)
@@ -3834,7 +3845,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=os.path.join(testdataDir, "OpenSans-Regular.ttf"),
+                fontPath=testFont,
                 cut=False,
                 combine=False,
                 halign="right",
@@ -3854,7 +3865,7 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                fontPath=os.path.join(testdataDir, "OpenSans-Irregular.ttf"),
+                fontPath=testFont,
                 cut=False,
                 combine=False,
                 halign="right",
@@ -3876,17 +3887,23 @@ class TestCadQuery(BaseTest):
         )
 
     def testTextAlignment(self):
-        left_bottom = Workplane().text("I", 10, 0, halign="left", valign="bottom")
+        left_bottom = Workplane().text(
+            "I", 10, 0, halign="left", valign="bottom", fontPath=testFont,
+        )
         lb_bb = left_bottom.val().BoundingBox()
         self.assertGreaterEqual(lb_bb.xmin, 0)
         self.assertGreaterEqual(lb_bb.ymin, 0)
 
-        centers = Workplane().text("I", 10, 0, halign="center", valign="center")
+        centers = Workplane().text(
+            "I", 10, 0, halign="center", valign="center", fontPath=testFont,
+        )
         c_bb = centers.val().BoundingBox()
         self.assertAlmostEqual(c_bb.center.x, 0, places=0)
         self.assertAlmostEqual(c_bb.center.y, 0, places=0)
 
-        right_top = Workplane().text("I", 10, 0, halign="right", valign="top")
+        right_top = Workplane().text(
+            "I", 10, 0, halign="right", valign="top", fontPath=testFont,
+        )
         rt_bb = right_top.val().BoundingBox()
         self.assertLessEqual(rt_bb.xmax, 0)
         self.assertLessEqual(rt_bb.ymax, 0)
@@ -5322,6 +5339,58 @@ class TestCadQuery(BaseTest):
         r = ref.vertices().eachpoint(lambda loc: box.moved(loc), combine="cut")
         self.assertGreater(ref.val().Volume(), r.val().Volume())
 
+        # test eachpoint with a wire cutThru()
+        holeRadius = 1
+        wire = Wire.makeCircle(holeRadius, (0, 0, 0), (0, 0, 1))
+        boxHeight = 1
+        ref = Workplane("XY").box(10, 10, boxHeight)
+        r = (
+            ref.faces(">Z")
+            .rect(7, 7, forConstruction=True)
+            .vertices()
+            .eachpoint(wire)
+            .cutThruAll()
+        )
+        holeVolume = math.pi * holeRadius ** 2 * boxHeight
+        self.assertAlmostEqual(r.val().Volume(), ref.val().Volume() - holeVolume * 4)
+
+        # same with useLocalCoordinates, which should give the same result
+        holeRadius = 1
+        wire = Wire.makeCircle(holeRadius, (0, 0, 0), (0, 0, 1))
+        boxHeight = 1
+        ref = Workplane("XY").box(10, 10, boxHeight)
+        r = (
+            ref.faces(">Z")
+            .rect(7, 7, forConstruction=True)
+            .vertices()
+            .eachpoint(wire, useLocalCoordinates=True)
+            .cutThruAll()
+        )
+        holeVolume = math.pi * holeRadius ** 2 * boxHeight
+        self.assertAlmostEqual(r.val().Volume(), ref.val().Volume() - holeVolume * 4)
+
+        # test eachpoint with a workplane
+        box = Workplane().box(2, 2, 2)
+        sph = Workplane().sphere(1.0)
+        # Place the sphere in the center of each box face
+        r = box.faces().eachpoint(sph, combine=True)
+        self.assertAlmostEqual(
+            r.val().Volume(), box.val().Volume() + 3 * sph.val().Volume()
+        )
+
+        # same with useLocalCoordinates which should give the same result
+        box = Workplane().box(2, 2, 2)
+        sph = Workplane().sphere(1.0)
+        # Place the sphere in the center of each box face
+        r = box.faces().eachpoint(sph, combine=True, useLocalCoordinates=True)
+        self.assertAlmostEqual(
+            r.val().Volume(), box.val().Volume() + 3 * sph.val().Volume()
+        )
+
+        # Test that unknown types throw an exception
+        with self.assertRaises(ValueError) as cm:
+            box.faces().eachpoint(42)  # Integers not allowed
+
     def testSketch(self):
 
         r1 = (
@@ -5692,3 +5761,16 @@ class TestCadQuery(BaseTest):
         assert w[0].solids().size() == 1
         assert w[-2:].solids().size() == 2
         assert w[[0, 1]].solids().size() == 2
+
+    def test_tessellate(self):
+
+        # happy flow
+        verts, tris = Face.makePlane(1, 1).tessellate(1e-3)
+
+        assert len(verts) == 4
+        assert len(tris) == 2
+
+        # this should not crash, but return no verts
+        verts, _ = Face.makePlane(1e-9, 1e-9).tessellate(1e-3)
+
+        assert len(verts) == 0

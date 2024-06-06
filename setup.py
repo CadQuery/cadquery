@@ -28,7 +28,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
     reqs = [
         "cadquery-ocp>=7.7.0a0,<7.8",
         "ezdxf",
-        "multimethod==1.9.1",
+        "multimethod>=1.11,<2.0",
         "nlopt",
         "nptyping==2.0.1",
         "typish",
@@ -52,7 +52,12 @@ setup(
     setup_requires=setup_reqs,
     install_requires=reqs,
     extras_require={
-        "dev": ["docutils", "ipython", "pytest", "black==19.10b0", "click==8.0.4",],
+        "dev": [
+            "docutils",
+            "ipython",
+            "pytest",
+            "black@git+https://github.com/cadquery/black.git@cq",
+        ],
         "ipython": ["ipython",],
     },
     include_package_data=True,
