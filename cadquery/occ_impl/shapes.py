@@ -2507,7 +2507,7 @@ class Wire(Shape, Mixin1D):
         all_vertices = self.Vertices()
         n_edges = len(edges)
         n_vertices = len(all_vertices)
-        
+
         newEdges = []
         currentEdge = edges[0]
 
