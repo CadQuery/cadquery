@@ -2505,15 +2505,18 @@ class Wire(Shape, Mixin1D):
 
         edges = list(self)
         all_vertices = self.Vertices()
+        n_edges = len(edges)
+        n_vertices = len(all_vertices)
+        
         newEdges = []
         currentEdge = edges[0]
 
         verticesSet = set(vertices) if vertices else set()
 
-        for i in range(len(edges)):
-            if i == len(edges) - 1 and not self.IsClosed():
+        for i in range(n_edges):
+            if i == n_edges - 1 and not self.IsClosed():
                 break
-            nextEdge = edges[(i + 1) % len(edges)]
+            nextEdge = edges[(i + 1) % n_edges]
 
             # Create a plane that is spanned by currentEdge and nextEdge
             currentDir = currentEdge.tangentAt(1)
@@ -2524,7 +2527,7 @@ class Wire(Shape, Mixin1D):
             #  1. The edges are parallel
             #  2. The vertex is not in the vertices white list
             if normalDir.Length == 0 or (
-                all_vertices[(i + 1) % len(all_vertices)] not in verticesSet
+                all_vertices[(i + 1) % n_vertices] not in verticesSet
                 and bool(verticesSet)
             ):
                 newEdges.append(currentEdge)
