@@ -11,8 +11,9 @@ from typing import (
     overload,
     TypeVar,
     cast as tcast,
+    Literal,
+    Protocol
 )
-from typing_extensions import Literal, Protocol
 
 from io import BytesIO
 
