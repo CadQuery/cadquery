@@ -12,7 +12,7 @@ from typing import (
     TypeVar,
     cast as tcast,
     Literal,
-    Protocol
+    Protocol,
 )
 
 from io import BytesIO
