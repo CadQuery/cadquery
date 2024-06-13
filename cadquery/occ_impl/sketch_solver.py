@@ -1,5 +1,5 @@
 from typing import Tuple, Union, Any, Callable, List, Optional, Iterable, Dict, Sequence
-from typing_extensions import Literal
+from typing import Literal
 from nptyping import NDArray as Array
 from nptyping import Float
 from itertools import accumulate, chain
