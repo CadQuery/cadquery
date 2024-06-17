@@ -4477,6 +4477,30 @@ class Workplane(object):
 
         return self.newObject(sorted(self.objects, key=key))
 
+    def invoke(
+        self: T, f: Union[Callable[[T], T], Callable[[T], None], Callable[[], None]]
+    ):
+        """
+        Invoke a callable mapping Workplane to Workplane, Workplane to None or
+        without any parameters. In the two latter cases self is returned.
+        :param f: Callable to be invoked.
+        :return: Workplane object
+        """
+
+        arity = f.__code__.co_argcount  # NB: this is not understood by mypy
+        rv = self
+
+        if arity == 0:
+            f()  # type: ignore
+        elif arity == 1:
+            res = f(self)  # type: ignore
+            if res is not None:
+                rv = res
+        else:
+            raise ValueError("Provided function {f} accepts too many arguemnts")
+
+        return rv
+
 
 # alias for backward compatibility
 CQ = Workplane
