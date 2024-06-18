@@ -1786,7 +1786,7 @@ class TestCadQuery(BaseTest):
 
     def testBoundBoxEnlarge(self):
         """
-        Tests BoundBox.enlarge(). Confirms that the 
+        Tests BoundBox.enlarge(). Confirms that the
         bounding box lengths are all enlarged by the
         correct amount.
         """
@@ -5761,6 +5761,19 @@ class TestCadQuery(BaseTest):
         assert w[0].solids().size() == 1
         assert w[-2:].solids().size() == 2
         assert w[[0, 1]].solids().size() == 2
+
+    def test_invoke(self):
+
+        w = Workplane().rarray(2, 1, 5, 1).box(1, 1, 1, combine=False)
+
+        # builtin
+        assert w.invoke(print).size() == 5
+        # arity 0
+        assert w.invoke(lambda: 1).size() == 5
+        # arity 1 and no return
+        assert w.invoke(lambda x: None).size() == 5
+        # arity 1
+        assert w.invoke(lambda x: x.newObject([x.val()])).size() == 1
 
     def test_tessellate(self):
 
