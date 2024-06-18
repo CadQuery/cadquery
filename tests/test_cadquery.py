@@ -5774,6 +5774,9 @@ class TestCadQuery(BaseTest):
         assert w.invoke(lambda x: None).size() == 5
         # arity 1
         assert w.invoke(lambda x: x.newObject([x.val()])).size() == 1
+        # test exception with wrong arity
+        with raises(ValueError):
+            w.invoke(lambda x, y: 1)
 
     def test_tessellate(self):
 
