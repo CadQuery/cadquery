@@ -35,7 +35,7 @@ from typing import (
     Dict,
 )
 from typing_extensions import Literal
-from inspect import Parameter, Signature
+from inspect import Parameter, Signature, isbuiltin
 
 
 from .occ_impl.geom import Vector, Plane, Location
@@ -4487,7 +4487,11 @@ class Workplane(object):
         :return: Workplane object
         """
 
-        arity = f.__code__.co_argcount  # NB: this is not understood by mypy
+        if isbuiltin(f):
+            arity = 0  # assume 0 arity for builtins; they cannot be introspected
+        else:
+            arity = f.__code__.co_argcount  # NB: this is not understood by mypy
+
         rv = self
 
         if arity == 0:
