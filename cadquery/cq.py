@@ -1624,7 +1624,7 @@ class Workplane(object):
 
         if startPoint == endPoint:
             return self
-        
+
         p = Edge.makeLine(startPoint, endPoint)
 
         if not forConstruction:
