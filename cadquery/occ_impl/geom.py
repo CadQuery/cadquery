@@ -230,7 +230,10 @@ class Vector(object):
         return "Vector: " + str((self.x, self.y, self.z))
 
     def __eq__(self, other: "Vector") -> bool:  # type: ignore[override]
-        return self.wrapped.IsEqual(other.wrapped, 0.00001, 0.00001)
+        if isinstance(other, Vector):
+            return self.wrapped.IsEqual(other.wrapped, 0.00001, 0.00001)
+        else:
+            return NotImplemented
 
     def toPnt(self) -> gp_Pnt:
 
