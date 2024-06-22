@@ -805,5 +805,21 @@ def test_wire_makepolygon(points, close, expected_edges):
     assert len(Wire.makePolygon(points, False, close).Edges()) == expected_edges
 
 
+def test_equality():
+
+    # do not raise error comparing with other type
+    assert (Vector(0, 0, 0) == 0) == False
+    assert (Plane.XY() == 0) == False
+
+    list1 = [
+        Vector(0, 0, 0),
+        Plane.XY(),
+        Vertex.makeVertex(0, 0, 0),
+        "a string",
+        4,
+    ]
+    assert [list1.index(item) for item in list1] == [0, 1, 2, 3, 4]
+
+
 if __name__ == "__main__":
     unittest.main()
