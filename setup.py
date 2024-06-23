@@ -31,6 +31,10 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "multimethod>=1.11,<2.0",
         "nlopt",
         "nptyping==2.0.1",
+        # numpy 2.0 breaks the current release of nptyping. We need a pre-2.0
+        # numpy until nptyping is fixed, possibly by
+        # https://github.com/ramonhagenaars/nptyping/pull/114.
+        "numpy<2.0.0",
         "typish",
         "casadi",
         "path",
