@@ -213,7 +213,7 @@ Here is the same plugin rewritten using one of those methods.
 
         from cadquery.occ_impl.shapes import box
 
-        def makeCubes(self, length):
+        def makeCubes(length):
 
             # inner method that creates the cubes
             def callback(wp):
