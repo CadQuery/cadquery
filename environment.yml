@@ -18,6 +18,7 @@ dependencies:
   - nlopt
   - path
   - casadi
+  - typish
   - multimethod >=1.11,<2.0
   - typed-ast
   - regex
