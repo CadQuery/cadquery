@@ -15,7 +15,6 @@ dependencies:
   - pytest-cov
   - ezdxf
   - typing_extensions
-  - nptyping=2.0.1
   - nlopt
   - path
   - casadi
