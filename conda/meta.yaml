@@ -25,6 +25,7 @@ requirements:
     - nlopt
     - multimethod >=1.11,<2.0
     - casadi
+    - typish
 
 test:
   requires:
