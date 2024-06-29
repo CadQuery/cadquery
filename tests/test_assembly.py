@@ -14,7 +14,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face
+from cadquery.occ_impl.shapes import Face, box
 from cadquery.occ_impl.geom import Location
 
 from OCP.gp import gp_XYZ
@@ -282,6 +282,31 @@ def boxes7_assy():
         color=cq.Color(0.23, 0.26, 0.26, 0.6),
         loc=cq.Location((2, 0, 0)),
     )
+
+    return assy
+
+
+@pytest.fixture
+def boxes8_assy():
+
+    b0 = box(1, 1, 1)
+
+    assy = cq.Assembly(loc=cq.Location(0, 10, 0))
+    assy.add(b0, name="box0", color=cq.Color("red"))
+    assy.add(b0, name="box1", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes9_assy():
+
+    b0 = box(1, 1, 1)
+
+    assy = cq.Assembly(
+        b0, name="box0", loc=cq.Location(0, 10, 0), color=cq.Color("red")
+    )
+    assy.add(b0, name="box1", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
 
     return assy
 
@@ -587,11 +612,27 @@ def test_step_export(nested_assy, tmp_path_factory):
 
     # check that locations were applied correctly
     c = cq.Compound.makeCompound(w.solids().vals()).Center()
-    c.toTuple()
     assert pytest.approx(c.toTuple()) == (0, 4, 0)
     c2 = cq.Compound.makeCompound(o.solids().vals()).Center()
-    c2.toTuple()
     assert pytest.approx(c2.toTuple()) == (0, 4, 0)
+
+
+@pytest.mark.parametrize(
+    "assy_fixture, expected",
+    [
+        ("boxes8_assy", {"nsolids": 2, "center": (0.5, 10, 0.5)},),
+        ("boxes9_assy", {"nsolids": 2, "center": (0.5, 10, 0.5)},),
+    ],
+)
+def test_step_export_loc(assy_fixture, expected, request, tmpdir):
+    stepfile = Path(tmpdir, assy_fixture).with_suffix(".step")
+    if not stepfile.exists():
+        assy = request.getfixturevalue(assy_fixture)
+        assy.save(str(stepfile))
+    o = cq.importers.importStep(str(stepfile))
+    assert o.solids().size() == expected["nsolids"]
+    c = cq.Compound.makeCompound(o.solids().vals()).Center()
+    assert pytest.approx(c.toTuple()) == expected["center"]
 
 
 def test_native_export(simple_assy):
