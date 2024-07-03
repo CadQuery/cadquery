@@ -30,7 +30,6 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "ezdxf",
         "multimethod>=1.11,<2.0",
         "nlopt",
-        "nptyping==2.0.1",
         "typish",
         "casadi",
         "path",

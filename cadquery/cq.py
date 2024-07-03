@@ -35,7 +35,7 @@ from typing import (
     Dict,
 )
 from typing_extensions import Literal
-from inspect import Parameter, Signature
+from inspect import Parameter, Signature, isbuiltin
 
 
 from .occ_impl.geom import Vector, Plane, Location
@@ -4429,6 +4429,82 @@ class Workplane(object):
             return Compound.makeCompound(
                 _selectShapes(self.objects)
             )._repr_javascript_()
+
+    def __getitem__(self: T, item: Union[int, Sequence[int], slice]) -> T:
+
+        if isinstance(item, Iterable):
+            rv = self.newObject(self.objects[i] for i in item)
+        elif isinstance(item, slice):
+            rv = self.newObject(self.objects[item])
+        else:
+            rv = self.newObject([self.objects[item]])
+
+        return rv
+
+    def filter(self: T, f: Callable[[CQObject], bool]) -> T:
+        """
+        Filter items using a boolean predicate.
+        :param f: Callable to be used for filtering.
+        :return: Workplane object with filtered items.
+        """
+
+        return self.newObject(filter(f, self.objects))
+
+    def map(self: T, f: Callable[[CQObject], CQObject]):
+        """
+        Apply a callable to every item separately.
+        :param f: Callable to be applied to every item separately.
+        :return: Workplane object with f applied to all items.
+        """
+
+        return self.newObject(map(f, self.objects))
+
+    def apply(self: T, f: Callable[[Iterable[CQObject]], Iterable[CQObject]]):
+        """
+        Apply a callable to all items at once.
+        :param f: Callable to be applied.
+        :return: Workplane object with f applied to all items.
+        """
+
+        return self.newObject(f(self.objects))
+
+    def sort(self: T, key: Callable[[CQObject], Any]) -> T:
+        """
+        Sort items using a callable.
+        :param key: Callable to be used for sorting.
+        :return: Workplane object with items sorted.
+        """
+
+        return self.newObject(sorted(self.objects, key=key))
+
+    def invoke(
+        self: T, f: Union[Callable[[T], T], Callable[[T], None], Callable[[], None]]
+    ):
+        """
+        Invoke a callable mapping Workplane to Workplane or None. Supports also
+        callables that take no arguments such as breakpoint. Returns self if callable
+        returns None.
+        :param f: Callable to be invoked.
+        :return: Workplane object.
+        """
+
+        if isbuiltin(f):
+            arity = 0  # assume 0 arity for builtins; they cannot be introspected
+        else:
+            arity = f.__code__.co_argcount  # NB: this is not understood by mypy
+
+        rv = self
+
+        if arity == 0:
+            f()  # type: ignore
+        elif arity == 1:
+            res = f(self)  # type: ignore
+            if res is not None:
+                rv = res
+        else:
+            raise ValueError("Provided function {f} accepts too many arguments")
+
+        return rv
 
 
 # alias for backward compatibility

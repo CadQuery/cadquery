@@ -11,8 +11,9 @@ from typing import (
     overload,
     TypeVar,
     cast as tcast,
+    Literal,
+    Protocol,
 )
-from typing_extensions import Literal, Protocol
 
 from io import BytesIO
 
@@ -1365,6 +1366,8 @@ class Shape(object):
 
             loc = TopLoc_Location()
             poly = BRep_Tool.Triangulation_s(f.wrapped, loc)
+            if poly is None:
+                continue
             Trsf = loc.Transformation()
             reverse = (
                 True
@@ -2505,13 +2508,18 @@ class Wire(Shape, Mixin1D):
 
         edges = list(self)
         all_vertices = self.Vertices()
+        n_edges = len(edges)
+        n_vertices = len(all_vertices)
+
         newEdges = []
         currentEdge = edges[0]
 
         verticesSet = set(vertices) if vertices else set()
 
-        for i in range(len(edges) - 1):
-            nextEdge = edges[i + 1]
+        for i in range(n_edges):
+            if i == n_edges - 1 and not self.IsClosed():
+                break
+            nextEdge = edges[(i + 1) % n_edges]
 
             # Create a plane that is spanned by currentEdge and nextEdge
             currentDir = currentEdge.tangentAt(1)
@@ -2522,7 +2530,8 @@ class Wire(Shape, Mixin1D):
             #  1. The edges are parallel
             #  2. The vertex is not in the vertices white list
             if normalDir.Length == 0 or (
-                all_vertices[i + 1] not in verticesSet and bool(verticesSet)
+                all_vertices[(i + 1) % n_vertices] not in verticesSet
+                and bool(verticesSet)
             ):
                 newEdges.append(currentEdge)
                 currentEdge = nextEdge
@@ -2551,8 +2560,11 @@ class Wire(Shape, Mixin1D):
 
             currentEdge = nextEdge
 
-        # Add the last edge
-        newEdges.append(currentEdge)
+        # Add the last edge unless we are closed, since then
+        # currentEdge is the first edge, which was already added
+        # (and clipped)
+        if not self.IsClosed():
+            newEdges.append(currentEdge)
 
         return Wire.assembleEdges(newEdges)
 

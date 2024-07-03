@@ -163,7 +163,9 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
 
 (The cubes are off-center because the boxes have their lower left corner at the reference points.)
 
-.. code-block:: python
+.. cadquery::
+
+        from cadquery.occ_impl.shapes import box
 
         def makeCubes(self, length):
             # self refers to the CQ or Workplane object
@@ -172,7 +174,7 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
             def _singleCube(loc):
                 # loc is a location in local coordinates
                 # since we're using eachpoint with useLocalCoordinates=True
-                return cq.Solid.makeBox(length, length, length, pnt).locate(loc)
+                return box(length, length, length).locate(loc)
 
             # use CQ utility method to iterate over the stack, call our
             # method, and convert to/from local coordinates.
@@ -193,3 +195,42 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
             .combineSolids()
         )
 
+
+Extending CadQuery: Special Methods
+-----------------------------------
+
+The above-mentioned approach has one drawback, it requires monkey-patching or subclassing. To avoid this
+one can also use the following special methods of :py:class:`cadquery.Workplane`
+and write plugins in a more functional style.
+
+    * :py:meth:`cadquery.Workplane.map`
+    * :py:meth:`cadquery.Workplane.apply`
+    * :py:meth:`cadquery.Workplane.invoke`
+
+Here is the same plugin rewritten using one of those methods.
+
+.. cadquery::
+
+        from cadquery.occ_impl.shapes import box
+
+        def makeCubes(length):
+
+            # inner method that creates the cubes
+            def callback(wp):
+
+                return wp.eachpoint(box(length, length, length), True)
+
+            return callback
+
+        # use the plugin
+        result = (
+            cq.Workplane("XY")
+            .box(6.0, 8.0, 0.5)
+            .faces(">Z")
+            .rect(4.0, 4.0, forConstruction=True)
+            .vertices()
+            .invoke(makeCubes(1.0))
+            .combineSolids()
+        )
+
+Such an approach is more friendly for auto-completion and static analysis tools.

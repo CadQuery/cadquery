@@ -11,8 +11,8 @@ from typing import (
     Sequence,
     TypeVar,
     cast as tcast,
+    Literal,
 )
-from typing_extensions import Literal
 from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
 from multimethod import multimethod
