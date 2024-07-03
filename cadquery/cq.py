@@ -4481,10 +4481,11 @@ class Workplane(object):
         self: T, f: Union[Callable[[T], T], Callable[[T], None], Callable[[], None]]
     ):
         """
-        Invoke a callable mapping Workplane to Workplane, Workplane to None or
-        without any parameters. In the two latter cases self is returned.
+        Invoke a callable mapping Workplane to Workplane or None. Supports also
+        callables that take no arguments such as breakpoint. Returns self if callable
+        returns None.
         :param f: Callable to be invoked.
-        :return: Workplane object
+        :return: Workplane object.
         """
 
         if isbuiltin(f):
@@ -4501,7 +4502,7 @@ class Workplane(object):
             if res is not None:
                 rv = res
         else:
-            raise ValueError("Provided function {f} accepts too many arguemnts")
+            raise ValueError("Provided function {f} accepts too many arguments")
 
         return rv
 
