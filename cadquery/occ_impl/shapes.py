@@ -4917,15 +4917,32 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
 
     results = []
 
-    for w in _get_wires(s):
-        builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
-        builder.Add(w.wrapped, False, False)
-        builder.Build()
+    # try to get faces
+    faces = s.Faces()
 
-        if cap:
-            builder.MakeSolid()
+    # if faces were supplied
+    if faces:
+        for f in faces:
+            tmp = sweep(f.outerWire(), path, True)
 
-        results.append(builder.Shape())
+            # if needed subtract two sweeps
+            inner_wires = f.innerWires()
+            if inner_wires:
+                tmp -= sweep(compound(inner_wires), path, True)
+
+            results.append(tmp.wrapped)
+
+    # otherwise sweep wires
+    else:
+        for w in _get_wires(s):
+            builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+            builder.Add(w.wrapped, False, False)
+            builder.Build()
+
+            if cap:
+                builder.MakeSolid()
+
+            results.append(builder.Shape())
 
     return _compound_or_shape(results)
 
