@@ -1786,7 +1786,7 @@ class TestCadQuery(BaseTest):
 
     def testBoundBoxEnlarge(self):
         """
-        Tests BoundBox.enlarge(). Confirms that the 
+        Tests BoundBox.enlarge(). Confirms that the
         bounding box lengths are all enlarged by the
         correct amount.
         """
@@ -5740,6 +5740,43 @@ class TestCadQuery(BaseTest):
 
         res7 = list(fs.siblings(c, "Edge", 2))
         assert len(res7) == 2
+
+    def test_map_apply_filter_sort(self):
+
+        w = Workplane().box(1, 1, 1).moveTo(3, 0).box(1, 1, 3).solids()
+
+        assert w.filter(lambda s: s.Volume() > 2).size() == 1
+        assert w.filter(lambda s: s.Volume() > 5).size() == 0
+
+        assert w.sort(lambda s: -s.Volume())[-1].val().Volume() == approx(1)
+
+        assert w.apply(lambda obj: []).size() == 0
+
+        assert w.map(lambda s: s.faces(">Z")).faces().size() == 2
+
+    def test_getitem(self):
+
+        w = Workplane().rarray(2, 1, 5, 1).box(1, 1, 1, combine=False)
+
+        assert w[0].solids().size() == 1
+        assert w[-2:].solids().size() == 2
+        assert w[[0, 1]].solids().size() == 2
+
+    def test_invoke(self):
+
+        w = Workplane().rarray(2, 1, 5, 1).box(1, 1, 1, combine=False)
+
+        # builtin
+        assert w.invoke(print).size() == 5
+        # arity 0
+        assert w.invoke(lambda: 1).size() == 5
+        # arity 1 and no return
+        assert w.invoke(lambda x: None).size() == 5
+        # arity 1
+        assert w.invoke(lambda x: x.newObject([x.val()])).size() == 1
+        # test exception with wrong arity
+        with raises(ValueError):
+            w.invoke(lambda x, y: 1)
 
     def test_tessellate(self):
 
