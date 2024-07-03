@@ -227,6 +227,7 @@ def toCAF(
             if ancestor:
                 tool.AddComponent(subassy, lab, TopLoc_Location())
             else:
+                # root object of the assembly; apply assy.loc Location here
                 tool.AddComponent(subassy, lab, el.loc.wrapped)
 
         # handle colors when *not* exporting to STEP
@@ -240,6 +241,7 @@ def toCAF(
         if ancestor:
             # add the current subassy to the higher level assy
             if ancestor.Tag() == 1:
+                # apply assy.loc to immediate children of top
                 tool.AddComponent(ancestor, subassy, assy.loc.wrapped * el.loc.wrapped)
             else:
                 tool.AddComponent(ancestor, subassy, el.loc.wrapped)
