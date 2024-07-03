@@ -233,4 +233,4 @@ Here is the same plugin rewritten using one of those methods.
             .combineSolids()
         )
 
-Such an approach if more friendly for auto-completion and static analysis tools.
+Such an approach is more friendly for auto-completion and static analysis tools.
