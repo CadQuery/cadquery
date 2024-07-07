@@ -4924,7 +4924,6 @@ def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
     return _compound_or_shape(results)
 
 
-
 @multimethod
 def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
     """
