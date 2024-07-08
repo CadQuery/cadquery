@@ -235,10 +235,15 @@ def toCAF(
             _toCAF(child, subassy, current_color)
 
         if ancestor:
-            # add the current subassy to the higher level assy
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
+            rv = subassy
+        else:
+            # update the top level location
+            rv = TDF_Label()  # NB: additional label is needed to apply the location
+            tool.SetLocation(subassy, assy.loc.wrapped, rv)
+            setName(rv, assy.name, tool)
 
-        return subassy
+        return rv
 
     # process the whole assy recursively
     top = _toCAF(assy, None, None)
