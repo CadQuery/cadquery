@@ -4132,31 +4132,21 @@ class Workplane(object):
             (0, 0, -1),
         ]
 
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
+
         offset = Vector()
-        if all(centered):
-            offset = -0.5 * height * direct / direct.Length
-        elif not all(centered) and direct.toTuple() in xyz:
-            direction = direct.toTuple()
+        if not centered[0]:
+            offset += Vector(radius, 0, 0)
+        if not centered[1]:
+            offset += Vector(0, radius, 0)
+        if centered[2]:
+            offset += Vector(0, 0, -height / 2)
 
-            # create centering offset in the direction of the cylinder if centered
-            centering = tuple(
-                -0.5 * height * axis[i] * direction[i] if centered[i] else 0
-                for i, axis in enumerate(xyz[:3])
-            )
-
-            # create radius offset in the other directions if not centered
-            not_centering = tuple(
-                0 if centered[i] else radius * axis[i] * (1 - abs(direction[i]))
-                for i, axis in enumerate(xyz[:3])
-            )
-            offset += Vector(centering)
-            offset += Vector(not_centering)
-        else:
-            # not all(centered) and direct not in xyz
-            # What do we want in this case?
-            raise ValueError("Invalid centered argument")
-
-        s = Solid.makeCylinder(radius, height, offset, direct, angle)
+        # first center and then apply the direction
+        s = Solid.makeCylinder(radius, height, offset, Vector(0, 0, 1), angle).moved(
+            Plane(Vector(), normal=direct).location
+        )
 
         # We want a cylinder for each point on the workplane
         return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
