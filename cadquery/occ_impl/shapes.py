@@ -5035,20 +5035,55 @@ def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
     """
 
     results = []
-
-    # construct lofts
     builder = BRepOffsetAPI_ThruSections()
 
-    for el in _get_wire_lists(s):
-        builder.Init(cap, ruled)
+    # try to construct lofts using faces
+    for el in _get_face_lists(s):
+        # build outer part
+        builder.Init(True, ruled)
 
-        for w in el:
-            builder.AddWire(w.wrapped)
+        for f in el:
+            builder.AddWire(f.outerWire().wrapped)
 
         builder.Build()
         builder.Check()
 
-        results.append(builder.Shape())
+        builders_inner = []
+
+        # initialize builders
+        for w in el[0].innerWires():
+            builder_inner = BRepOffsetAPI_ThruSections()
+            builder_inner.Init(True, ruled)
+            builder_inner.AddWire(w.wrapped)
+            builders_inner.append(builder_inner)
+
+        # add remaining sections
+        for f in el[1:]:
+            for builder_inner, w in zip(builders_inner, f.innerWires()):
+                builder_inner.AddWire(w.wrapped)
+
+        # actually build
+        inner_parts = []
+
+        for builder_inner in builders_inner:
+            builder_inner.Build()
+            builder_inner.Check()
+            inner_parts.append(Shape(builder_inner.Shape()))
+
+        results.append((Shape(builder.Shape()) - compound(inner_parts)).wrapped)
+
+    # otherwise construct usig wires
+    if not results:
+        for el in _get_wire_lists(s):
+            builder.Init(cap, ruled)
+
+            for w in el:
+                builder.AddWire(w.wrapped)
+
+            builder.Build()
+            builder.Check()
+
+            results.append(builder.Shape())
 
     return _compound_or_shape(results)
 
