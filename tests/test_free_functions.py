@@ -490,6 +490,7 @@ def test_sweep():
 
     f1 = face(rect(1, 1), circle(0.25))
     f2 = face(rect(2, 1), ellipse(0.9, 0.45)).moved(x=2, z=2, ry=90)
+    f3 = face(rect(1, 1))
 
     p1 = segment((0, 0, 0), (0, 0, 1))
     p2 = spline((w1.Center(), w2.Center()), ((-0.5, 0, 1), (0.5, 0, 1)))
@@ -502,8 +503,9 @@ def test_sweep():
     r5 = sweep((w1, w2), p2, cap=True)  # see above
     r6 = sweep(f1, p3)  # simple face sweep
     r7 = sweep((f1, f2), p3)  # multi-section face sweep
+    r8 = sweep(f3, p3)  # simplest face sweep (no inner wires)
 
-    assert_all_valid(r1, r2, r3, r4, r5, r6, r7)
+    assert_all_valid(r1, r2, r3, r4, r5, r6, r7, r8)
 
     assert r1.Area() == approx(4)
     assert r2.Area() == approx(4)
@@ -513,6 +515,7 @@ def test_sweep():
     assert len(r5.Faces()) == 6
     assert len(r6.Faces()) == 7
     assert len(r7.Faces()) == 7
+    assert len(r8.Faces()) == 4
 
 
 def test_loft():
