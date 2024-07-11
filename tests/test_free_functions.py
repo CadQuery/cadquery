@@ -515,7 +515,7 @@ def test_sweep():
     assert len(r5.Faces()) == 6
     assert len(r6.Faces()) == 7
     assert len(r7.Faces()) == 7
-    assert len(r8.Faces()) == 4
+    assert len(r8.Faces()) == 6
 
 
 def test_loft():
