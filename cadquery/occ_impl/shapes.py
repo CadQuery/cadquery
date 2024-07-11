@@ -4927,7 +4927,7 @@ def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
 @multimethod
 def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
     """
-    Sweep edge, wire or face along a path.
+    Sweep edge, wire or face along a path. For faces cap has no effect.
     """
 
     spine = _get_one_wire(path)
@@ -4967,7 +4967,8 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
 @sweep.register
 def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
     """
-    Sweep edges, wires or faces along a path, multiple sections are supported.
+    Sweep edges, wires or faces along a path, multiple sections are supported. 
+    For faces cap has no effect.
     """
 
     spine = _get_one_wire(path)
@@ -5031,7 +5032,7 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
 @multimethod
 def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
     """
-    Loft edges or wires.
+    Loft edges, wires or faces. For faces cap has no effect.
     """
 
     results = []
