@@ -488,16 +488,22 @@ def test_sweep():
     w1 = rect(1, 1)
     w2 = w1.moved(Location(0, 0, 1))
 
+    f1 = face(rect(1, 1), circle(0.25))
+    f2 = face(rect(2, 1), ellipse(0.9, 0.45)).moved(x=2, z=2, ry=90)
+
     p1 = segment((0, 0, 0), (0, 0, 1))
     p2 = spline((w1.Center(), w2.Center()), ((-0.5, 0, 1), (0.5, 0, 1)))
+    p3 = spline((f1.Center(), f2.Center()), ((0, 0, 1), (1, 0, 0)))
 
-    r1 = sweep(w1, p1)
-    r2 = sweep((w1, w2), p1)
-    r3 = sweep(w1, p1, cap=True)
-    r4 = sweep((w1, w2), p1, cap=True)
-    r5 = sweep((w1, w2), p2, cap=True)
+    r1 = sweep(w1, p1)  # simple sweep
+    r2 = sweep((w1, w2), p1)  # multi-section sweep
+    r3 = sweep(w1, p1, cap=True)  # simple with cap
+    r4 = sweep((w1, w2), p1, cap=True)  # multi-section with cap
+    r5 = sweep((w1, w2), p2, cap=True)  # see above
+    r6 = sweep(f1, p3)  # simple face sweep
+    r7 = sweep((f1, f2), p3)  # multi-section face sweep
 
-    assert_all_valid(r1, r2, r3, r4, r5)
+    assert_all_valid(r1, r2, r3, r4, r5, r6, r7)
 
     assert r1.Area() == approx(4)
     assert r2.Area() == approx(4)
@@ -505,6 +511,8 @@ def test_sweep():
     assert r4.Volume() == approx(1)
     assert r5.Volume() > 0
     assert len(r5.Faces()) == 6
+    assert len(r6.Faces()) == 7
+    assert len(r7.Faces()) == 7
 
 
 def test_loft():
@@ -516,16 +524,23 @@ def test_loft():
     w4 = segment((0, 0), (1, 0))
     w5 = w4.moved(0, 0, 1)
 
+    f1 = face(rect(2, 1), rect(0.5, 0.2).moved(x=0.5), rect(0.5, 0.2).moved(x=-0.5))
+    f2 = face(rect(3, 2), circle(0.5).moved(x=0.7), circle(0.5).moved(x=-0.7)).moved(
+        z=1
+    )
+
     r1 = loft(w1, w2, w3)  # loft
     r2 = loft(w1, w2, w3, ruled=True)  # ruled loft
     r3 = loft([w1, w2, w3])  # overload
     r4 = loft(w1, w2, w3, cap=True)  # capped loft
     r5 = loft(w4, w5)  # loft with open edges
+    r6 = loft(f1, f2)  # loft with faces
 
-    assert_all_valid(r1, r2, r3, r4, r5)
+    assert_all_valid(r1, r2, r3, r4, r5, r6)
 
     assert len(r1.Faces()) == 1
     assert len(r2.Faces()) == 2
     assert len((r1 - r3).Faces()) == 0
     assert r4.Volume() > 0
     assert r5.Area() == approx(1)
+    assert len(r6.Faces()) == 16
