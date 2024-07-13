@@ -4499,7 +4499,7 @@ def rect(w: float, h: float) -> Shape:
 @multimethod
 def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape:
     """
-    Construct a polygon (closed polyline) from points.
+    Construct a spline from points.
     """
 
     data = _pts_to_harray(pts)
@@ -4928,6 +4928,7 @@ def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
 def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
     """
     Sweep edge, wire or face along a path. For faces cap has no effect.
+    Do not mix faces with other types.
     """
 
     spine = _get_one_wire(path)
@@ -4968,7 +4969,7 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
 def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
     """
     Sweep edges, wires or faces along a path, multiple sections are supported. 
-    For faces cap has no effect.
+    For faces cap has no effect. Do not mix faces with other types.
     """
 
     spine = _get_one_wire(path)
@@ -5032,7 +5033,7 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
 @multimethod
 def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
     """
-    Loft edges, wires or faces. For faces cap has no effect.
+    Loft edges, wires or faces. For faces cap has no effect. Do not mix faces with other types.
     """
 
     results = []
@@ -5073,7 +5074,7 @@ def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
 
         results.append((Shape(builder.Shape()) - compound(inner_parts)).wrapped)
 
-    # otherwise construct usig wires
+    # otherwise construct using wires
     if not results:
         for el in _get_wire_lists(s):
             builder.Init(cap, ruled)
