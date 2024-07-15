@@ -4222,7 +4222,7 @@ def _get_edges(s: Shape) -> Iterable[Shape]:
 
 def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
     """
-    Get lists or wires for sweeping or lofting.
+    Get lists of wires for sweeping or lofting.
     """
 
     wire_lists: List[List[Wire]] = []
@@ -4235,6 +4235,23 @@ def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
                 wire_list.append(w)
 
     return wire_lists
+
+
+def _get_face_lists(s: Sequence[Shape]) -> List[List[Face]]:
+    """
+    Get lists of faces for sweeping or lofting.
+    """
+
+    face_lists: List[List[Face]] = []
+
+    for el in s:
+        if not face_lists:
+            face_lists = [[f] for f in el.Faces()]
+        else:
+            for face_list, f in zip(face_lists, el.Faces()):
+                face_list.append(f)
+
+    return face_lists
 
 
 def _normalize(s: Shape) -> Shape:
@@ -4482,7 +4499,7 @@ def rect(w: float, h: float) -> Shape:
 @multimethod
 def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape:
     """
-    Construct a polygon (closed polyline) from points.
+    Construct a spline from points.
     """
 
     data = _pts_to_harray(pts)
@@ -4910,22 +4927,40 @@ def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
 @multimethod
 def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
     """
-    Sweep edge or wire along a path.
+    Sweep edge, wire or face along a path. For faces cap has no effect.
+    Do not mix faces with other types.
     """
 
     spine = _get_one_wire(path)
 
     results = []
 
-    for w in _get_wires(s):
-        builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
-        builder.Add(w.wrapped, False, False)
-        builder.Build()
+    # try to get faces
+    faces = s.Faces()
 
-        if cap:
-            builder.MakeSolid()
+    # if faces were supplied
+    if faces:
+        for f in faces:
+            tmp = sweep(f.outerWire(), path, True)
 
-        results.append(builder.Shape())
+            # if needed subtract two sweeps
+            inner_wires = f.innerWires()
+            if inner_wires:
+                tmp -= sweep(compound(inner_wires), path, True)
+
+            results.append(tmp.wrapped)
+
+    # otherwise sweep wires
+    else:
+        for w in _get_wires(s):
+            builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+            builder.Add(w.wrapped, False, False)
+            builder.Build()
+
+            if cap:
+                builder.MakeSolid()
+
+            results.append(builder.Shape())
 
     return _compound_or_shape(results)
 
@@ -4933,26 +4968,64 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
 @sweep.register
 def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
     """
-    Sweep edges or wires along a path, chaining sections are supported.
+    Sweep edges, wires or faces along a path, multiple sections are supported. 
+    For faces cap has no effect. Do not mix faces with other types.
     """
 
     spine = _get_one_wire(path)
 
     results = []
 
-    # construct sweeps
-    for el in _get_wire_lists(s):
+    # try to construct sweeps using faces
+    for el in _get_face_lists(s):
+        # build outer part
         builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
 
-        for w in el:
-            builder.Add(w.wrapped, False, False)
+        for f in el:
+            builder.Add(f.outerWire().wrapped, False, False)
 
         builder.Build()
+        builder.MakeSolid()
 
-        if cap:
-            builder.MakeSolid()
+        # build inner parts
+        builders_inner = []
 
-        results.append(builder.Shape())
+        # initialize builders
+        for w in el[0].innerWires():
+            builder_inner = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+            builder_inner.Add(w.wrapped, False, False)
+            builders_inner.append(builder_inner)
+
+        # add remaining sections
+        for f in el[1:]:
+            for builder_inner, w in zip(builders_inner, f.innerWires()):
+                builder_inner.Add(w.wrapped, False, False)
+
+        # actually build
+        inner_parts = []
+
+        for builder_inner in builders_inner:
+            builder_inner.Build()
+            builder_inner.MakeSolid()
+            inner_parts.append(Shape(builder_inner.Shape()))
+
+        results.append((Shape(builder.Shape()) - compound(inner_parts)).wrapped)
+
+    # if no faces were provided try with wires
+    if not results:
+        # construct sweeps
+        for el in _get_wire_lists(s):
+            builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+
+            for w in el:
+                builder.Add(w.wrapped, False, False)
+
+            builder.Build()
+
+            if cap:
+                builder.MakeSolid()
+
+            results.append(builder.Shape())
 
     return _compound_or_shape(results)
 
@@ -4960,24 +5033,59 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
 @multimethod
 def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
     """
-    Loft edges or wires.
+    Loft edges, wires or faces. For faces cap has no effect. Do not mix faces with other types.
     """
 
     results = []
-
-    # construct lofts
     builder = BRepOffsetAPI_ThruSections()
 
-    for el in _get_wire_lists(s):
-        builder.Init(cap, ruled)
+    # try to construct lofts using faces
+    for el in _get_face_lists(s):
+        # build outer part
+        builder.Init(True, ruled)
 
-        for w in el:
-            builder.AddWire(w.wrapped)
+        for f in el:
+            builder.AddWire(f.outerWire().wrapped)
 
         builder.Build()
         builder.Check()
 
-        results.append(builder.Shape())
+        builders_inner = []
+
+        # initialize builders
+        for w in el[0].innerWires():
+            builder_inner = BRepOffsetAPI_ThruSections()
+            builder_inner.Init(True, ruled)
+            builder_inner.AddWire(w.wrapped)
+            builders_inner.append(builder_inner)
+
+        # add remaining sections
+        for f in el[1:]:
+            for builder_inner, w in zip(builders_inner, f.innerWires()):
+                builder_inner.AddWire(w.wrapped)
+
+        # actually build
+        inner_parts = []
+
+        for builder_inner in builders_inner:
+            builder_inner.Build()
+            builder_inner.Check()
+            inner_parts.append(Shape(builder_inner.Shape()))
+
+        results.append((Shape(builder.Shape()) - compound(inner_parts)).wrapped)
+
+    # otherwise construct using wires
+    if not results:
+        for el in _get_wire_lists(s):
+            builder.Init(cap, ruled)
+
+            for w in el:
+                builder.AddWire(w.wrapped)
+
+            builder.Build()
+            builder.Check()
+
+            results.append(builder.Shape())
 
     return _compound_or_shape(results)
 
