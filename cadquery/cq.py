@@ -4444,24 +4444,27 @@ class Workplane(object):
     def filter(self: T, f: Callable[[CQObject], bool]) -> T:
         """
         Filter items using a boolean predicate.
+
         :param f: Callable to be used for filtering.
         :return: Workplane object with filtered items.
         """
 
         return self.newObject(filter(f, self.objects))
 
-    def map(self: T, f: Callable[[CQObject], CQObject]):
+    def map(self: T, f: Callable[[CQObject], CQObject]) -> T:
         """
         Apply a callable to every item separately.
+
         :param f: Callable to be applied to every item separately.
         :return: Workplane object with f applied to all items.
         """
 
         return self.newObject(map(f, self.objects))
 
-    def apply(self: T, f: Callable[[Iterable[CQObject]], Iterable[CQObject]]):
+    def apply(self: T, f: Callable[[Iterable[CQObject]], Iterable[CQObject]]) -> T:
         """
         Apply a callable to all items at once.
+
         :param f: Callable to be applied.
         :return: Workplane object with f applied to all items.
         """
@@ -4471,6 +4474,7 @@ class Workplane(object):
     def sort(self: T, key: Callable[[CQObject], Any]) -> T:
         """
         Sort items using a callable.
+
         :param key: Callable to be used for sorting.
         :return: Workplane object with items sorted.
         """
@@ -4479,11 +4483,12 @@ class Workplane(object):
 
     def invoke(
         self: T, f: Union[Callable[[T], T], Callable[[T], None], Callable[[], None]]
-    ):
+    ) -> T:
         """
         Invoke a callable mapping Workplane to Workplane or None. Supports also
         callables that take no arguments such as breakpoint. Returns self if callable
         returns None.
+
         :param f: Callable to be invoked.
         :return: Workplane object.
         """
