@@ -1608,3 +1608,27 @@ def test_imprinting(touching_assy, disjoint_assy):
 
     for s in r.Solids():
         assert s in o
+
+def test_order_of_transform():
+    cube = cq.Solid.makeBox(1, 1, 1)
+    inner = (
+        cq.Assembly()
+        .add(cube, name="c1")
+        .add(cube, name="c2", loc=cq.Location((0, 0, 1), (0, 1, 0), 45))
+    )
+    middle = (
+        cq.Assembly()
+        .add(inner, name="inner", loc=cq.Location((0, 1, 0), (0, 0, 1), 30))
+    )
+    outer = (
+        cq.Assembly()
+        .add(middle, name="middle", loc=cq.Location((0,0,0)))
+    )
+
+
+    name, _ = middle._query("inner/c2")
+    loc1, _ = middle._subloc(name)
+
+    name, _ = outer._query("middle/inner/c2")
+    loc2, _ = outer._subloc(name)
+    assert loc1.toTuple() == loc2.toTuple()
