@@ -193,8 +193,8 @@ Supported operations include :meth:`~cadquery.Workplane.extrude`,
 Sketches can be created as separate entities and reused, but also created ad-hoc
 in one fluent chain of calls as shown below.
 
-
-Note that the sketch is placed on all locations that are on the top of the stack.
+Sketches in-place
+=================
 
 Constructing sketches in-place can be accomplished as follows.
 
@@ -218,7 +218,34 @@ Constructing sketches in-place can be accomplished as follows.
 
 Sketch API is available after the :meth:`~cadquery.Workplane.sketch` call and original `workplane`.
 
+Placing an existing sketch on a workplane
+=========================================
+
+Sometimes it is desired to place an existing sketches as-is on a workplane. This can be done with :meth:`~cadquery.Workplane.placeSketch`
+
+.. cadquery::
+    :height: 600px
+
+    import cadquery as cq
+
+    s = cq.Sketch().trapezoid(3, 1, 110).vertices().fillet(0.2)
+
+    result = (
+        cq.Workplane()
+        .box(5, 5, 5)
+        .faces(">X")
+        .workplane()
+        .transformed((0, 0, -90))
+        .placeSketch(s)
+        .cutThruAll()
+    )
+
+Sketches spanning multiple elements
+===================================
+
 When multiple elements are selected before constructing the sketch, multiple sketches will be created.
+
+Note that the sketch is placed on all locations that are on the top of the stack.
 
 .. cadquery::
     :height: 600px
@@ -244,27 +271,10 @@ When multiple elements are selected before constructing the sketch, multiple ske
         .cutBlind(-0.5, taper=10)
     )
 
-Sometimes it is desired to reuse existing sketches and place them as-is on a workplane.
+Lofting between two sketches
+============================
 
-
-.. cadquery::
-    :height: 600px
-
-    import cadquery as cq
-
-    s = cq.Sketch().trapezoid(3, 1, 110).vertices().fillet(0.2)
-
-    result = (
-        cq.Workplane()
-        .box(5, 5, 5)
-        .faces(">X")
-        .workplane()
-        .transformed((0, 0, -90))
-        .placeSketch(s)
-        .cutThruAll()
-    )
-
-Reusing of existing sketches is needed when using :meth:`~cadquery.Workplane.loft`.
+Two sketches on different workplanes are needed when using :meth:`~cadquery.Workplane.loft`.
 
 .. cadquery::
     :height: 600px
@@ -278,3 +288,24 @@ Reusing of existing sketches is needed when using :meth:`~cadquery.Workplane.lof
     result = Workplane().placeSketch(s1, s2.moved(Location(Vector(0, 0, 3)))).loft()
 
 When lofting only outer wires are taken into account and inner wires are silently ignored. Note that only sketches on the top of stack are considered for the current operation (i.e. there are no pending sketches), so when lofting or sweeping all relevant sketches have to be added in one `placeSketch` call.
+
+Offsets made easy
+=================
+
+Conveniently, it is possible to reuse a sketch to create an :meth:`~cadquery.Sketch.offset` shape.
+
+.. cadquery::
+   :height: 600px
+
+   import cadquery as cq
+
+   sketch  = (cq.Sketch()
+   .rect(1.0, 4.0)
+   .circle(1.0)
+   .clean()
+   )
+
+   sketch_offset = sketch.copy().wires().offset(0.25)
+
+   result = cq.Workplane("front").placeSketch(sketch_offset).extrude(1.0)
+   result = result.faces(">Z").workplane().placeSketch(sketch).cutBlind(-0.50)
