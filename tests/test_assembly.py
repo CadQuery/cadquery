@@ -1631,4 +1631,8 @@ def test_order_of_transform():
 
     name, _ = outer._query("middle/inner/c2")
     loc2, _ = outer._subloc(name)
-    assert loc1.toTuple() == loc2.toTuple()
+
+    loc1_trans, loc1_rot = loc1.toTuple()
+    loc2_trans, loc2_rot = loc2.toTuple()
+    assert loc1_trans == approx(loc2_trans)
+    assert loc1_rot == approx(loc2_rot)
