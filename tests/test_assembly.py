@@ -1609,6 +1609,7 @@ def test_imprinting(touching_assy, disjoint_assy):
     for s in r.Solids():
         assert s in o
 
+
 def test_order_of_transform():
 
     part = cq.Workplane().box(1, 1, 1).faces(">Z").vertices("<XY").tag("vtag")
