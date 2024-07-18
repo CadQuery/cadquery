@@ -1610,29 +1610,33 @@ def test_imprinting(touching_assy, disjoint_assy):
         assert s in o
 
 def test_order_of_transform():
-    cube = cq.Solid.makeBox(1, 1, 1)
-    inner = (
-        cq.Assembly()
-        .add(cube, name="c1")
-        .add(cube, name="c2", loc=cq.Location((0, 0, 1), (0, 1, 0), 45))
-    )
-    middle = (
-        cq.Assembly()
-        .add(inner, name="inner", loc=cq.Location((0, 1, 0), (0, 0, 1), 30))
-    )
-    outer = (
-        cq.Assembly()
-        .add(middle, name="middle", loc=cq.Location((0,0,0)))
+
+    part = cq.Workplane().box(1, 1, 1).faces(">Z").vertices("<XY").tag("vtag")
+    marker = cq.Workplane().sphere(0.2)
+
+    assy0 = cq.Assembly().add(
+        part, name="part1", loc=cq.Location((0, 0, 1.5), (0, 0, 1), 45),
     )
 
+    assy1 = (
+        cq.Assembly()
+        .add(assy0, name="assy0", loc=cq.Location(2, 0, 0))
+        .add(marker, name="marker1")
+    )
 
-    name, _ = middle._query("inner/c2")
-    loc1, _ = middle._subloc(name)
+    # attach the first marker to the tagged corner
+    assy1.constrain("assy0/part1", "Fixed")
+    assy1.constrain("marker1", "assy0/part1?vtag", "Point")
+    assy1.solve()
 
-    name, _ = outer._query("middle/inner/c2")
-    loc2, _ = outer._subloc(name)
+    assy2 = cq.Assembly().add(assy1, name="assy1").add(marker, name="marker2")
 
-    loc1_trans, loc1_rot = loc1.toTuple()
-    loc2_trans, loc2_rot = loc2.toTuple()
-    assert loc1_trans == approx(loc2_trans)
-    assert loc1_rot == approx(loc2_rot)
+    # attach the second marker to the tagged corner, but this time with nesting
+    assy2.constrain("assy1/marker1", "Fixed")
+    assy2.constrain("marker2", "assy1/assy0/part1?vtag", "Point")
+    assy2.solve()
+
+    # marker1 and marer2 should coincide
+    m1, m2 = assy2.toCompound().Solids()
+
+    assert (m1.Center() - m2.Center()).Length == approx(0)
