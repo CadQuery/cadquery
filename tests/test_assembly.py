@@ -5,6 +5,7 @@ from math import degrees
 import copy
 from pathlib import Path, PurePath
 import re
+from pytest import approx
 
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
