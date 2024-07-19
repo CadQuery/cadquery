@@ -1070,11 +1070,11 @@ class Sketch(object):
         rv: List[SketchVal]
 
         if self._selection:
-            rv = list(*self._selection)
+            rv = list(self._selection)
         elif not self._faces and self._edges:
-            rv = list(*self._edges)
+            rv = list(self._edges)
         else:
-            rv = list(*self._faces)
+            rv = list(self._faces)
 
         return rv
 

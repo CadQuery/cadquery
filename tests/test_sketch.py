@@ -47,8 +47,8 @@ def test_face_interface():
     assert len(s7.vertices()._selection) == 3
     assert s7._faces.Area() == approx(0.5)
 
-    with raises(ValueError):
-        Sketch().face(Sketch().rect(1, 1)._faces)
+    s8 = Sketch().face(Sketch().rect(1, 1).val())
+    assert s8._faces.Area() == approx(1)
 
 
 def test_modes():
@@ -428,7 +428,7 @@ def test_selectors():
     assert s.val().toTuple() == approx((-2.5, -0.5, 0.0))
 
     s.reset().vertices(">>X[1] and <Y").val()
-    assert s.val().toTuple()[0] == approx((0, 0, 0))
+    assert len(s._selection) == 0
 
 
 def test_edge_interface():
