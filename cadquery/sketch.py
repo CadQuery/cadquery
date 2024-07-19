@@ -15,6 +15,7 @@ from typing import (
 )
 from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
+from inspect import isbuiltin
 from multimethod import multimethod
 from typish import instance_of, get_type
 
@@ -22,7 +23,16 @@ from .hull import find_hull
 from .selectors import StringSyntaxSelector, Selector
 from .types import Real
 
-from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, Vertex, edgesToWires
+from .occ_impl.shapes import (
+    Shape,
+    Face,
+    Edge,
+    Wire,
+    Compound,
+    Vertex,
+    edgesToWires,
+    compound,
+)
 from .occ_impl.geom import Location, Vector
 from .occ_impl.importers.dxf import _importDXF
 from .occ_impl.sketch_solver import (
@@ -95,7 +105,6 @@ class Sketch(object):
     locs: List[Location]
 
     _faces: Compound
-    _wires: List[Wire]
     _edges: List[Edge]
 
     _selection: List[SketchVal]
@@ -114,7 +123,6 @@ class Sketch(object):
         self.locs = list(locs)
 
         self._faces = Compound.makeCompound(())
-        self._wires = []
         self._edges = []
 
         self._selection = []
@@ -126,19 +134,23 @@ class Sketch(object):
 
     def __iter__(self) -> Iterator[Face]:
         """
-        Iterate over faces-locations combinations.
+        Iterate over faces-locations combinations. If not faces are present
+        iterate over edges:
         """
 
-        return iter(f for l in self.locs for f in self._faces.moved(l).Faces())
+        if self._faces:
+            return iter(f for l in self.locs for f in self._faces.moved(l).Faces())
+        else:
+            return iter(e.moved(l) for l in self.locs for e in self._edges)
 
-    def _tag(self: T, val: Sequence[Union[Shape, Location]], tag: str):
+    def _tag(self: T, val: Sequence[SketchVal], tag: str):
 
         self._tags[tag] = val
 
     # face construction
     def face(
         self: T,
-        b: Union[Wire, Iterable[Edge], Compound, T],
+        b: Union[Wire, Iterable[Edge], Shape, T],
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
@@ -152,9 +164,11 @@ class Sketch(object):
 
         if isinstance(b, Wire):
             res = Face.makeFromWires(b)
-        elif isinstance(b, (Sketch, Compound)):
+        elif isinstance(b, Sketch):
             res = b
-        elif isinstance(b, Iterable) and not isinstance(b, Shape):
+        elif isinstance(b, Shape):
+            res = compound(b.Faces())
+        elif isinstance(b, Iterable):
             wires = edgesToWires(tcast(Iterable[Edge], b))
             res = Face.makeFromWires(*(wires[0], wires[1:]))
         else:
@@ -506,10 +520,8 @@ class Sketch(object):
             rv = find_hull(el for el in self._selection if isinstance(el, Edge))
         elif self._faces:
             rv = find_hull(el for el in self._faces.Edges())
-        elif self._edges or self._wires:
-            rv = find_hull(
-                chain(self._edges, chain.from_iterable(w.Edges() for w in self._wires))
-            )
+        elif self._edges:
+            rv = find_hull(self._edges)
         else:
             raise ValueError("No objects available for hull construction")
 
@@ -690,8 +702,6 @@ class Sketch(object):
         for obj in self._selection:
             if isinstance(obj, Face):
                 self._faces.remove(obj)
-            elif isinstance(obj, Wire):
-                self._wires.remove(obj)
             elif isinstance(obj, Edge):
                 self._edges.remove(obj)
 
@@ -871,7 +881,7 @@ class Sketch(object):
         The edge will pass through the last points, and the inner points
         are bezier control points.
         """
-        p1 = self._endPoint()
+
         val = Edge.makeBezier([Vector(*p) for p in pts])
 
         return self.edge(val, tag, forConstruction)
@@ -1040,14 +1050,116 @@ class Sketch(object):
 
     def val(self: T) -> SketchVal:
         """
-        Return the first selected item or Location().
+        Return the first selected item, underlying compound or first edge.
         """
 
-        return self._selection[0] if self._selection else Location()
+        if self._selection:
+            rv = self._selection[0]
+        elif not self._faces and self._edges:
+            rv = self._edges[0]
+        else:
+            rv = self._faces
+
+        return rv
 
     def vals(self: T) -> List[SketchVal]:
         """
-        Return the list of selected items.
+        Return all selected items, underlying compound or all edges.
         """
 
-        return self._selection
+        rv: List[SketchVal]
+
+        if self._selection:
+            rv = list(*self._selection)
+        elif not self._faces and self._edges:
+            rv = list(*self._edges)
+        else:
+            rv = list(*self._faces)
+
+        return rv
+
+    def __getitem__(self: T, item: Union[int, Sequence[int], slice]) -> T:
+
+        vals = self.vals()
+
+        if isinstance(item, Iterable):
+            self._selection = [vals[i] for i in item]
+        elif isinstance(item, slice):
+            self._selection = vals[item]
+        else:
+            self._selection = [vals[item]]
+
+        return self
+
+    def filter(self: T, f: Callable[[SketchVal], bool]) -> T:
+        """
+        Filter items using a boolean predicate.
+        :param f: Callable to be used for filtering.
+        :return: Workplane object with filtered items.
+        """
+
+        self._selection = list(filter(f, self.vals()))
+
+        return self
+
+    def map(self: T, f: Callable[[SketchVal], SketchVal]):
+        """
+        Apply a callable to every item separately.
+        :param f: Callable to be applied to every item separately.
+        :return: Workplane object with f applied to all items.
+        """
+
+        self._selection = list(map(f, self.vals()))
+
+        return self
+
+    def apply(self: T, f: Callable[[Iterable[SketchVal]], Iterable[SketchVal]]):
+        """
+        Apply a callable to all items at once.
+        :param f: Callable to be applied.
+        :return: Workplane object with f applied to all items.
+        """
+
+        self._selection = list(f(self.vals()))
+
+        return self
+
+    def sort(self: T, key: Callable[[SketchVal], Any]) -> T:
+        """
+        Sort items using a callable.
+        :param key: Callable to be used for sorting.
+        :return: Workplane object with items sorted.
+        """
+
+        self._selection = list(sorted(self.vals(), key=key))
+
+        return self
+
+    def invoke(
+        self: T, f: Union[Callable[[T], T], Callable[[T], None], Callable[[], None]]
+    ):
+        """
+        Invoke a callable mapping Workplane to Workplane or None. Supports also
+        callables that take no arguments such as breakpoint. Returns self if callable
+        returns None.
+        :param f: Callable to be invoked.
+        :return: Workplane object.
+        """
+
+        if isbuiltin(f):
+            arity = 0  # assume 0 arity for builtins; they cannot be introspected
+        else:
+            arity = f.__code__.co_argcount  # NB: this is not understood by mypy
+
+        rv = self
+
+        if arity == 0:
+            f()  # type: ignore
+        elif arity == 1:
+            res = f(self)  # type: ignore
+            if res is not None:
+                rv = res
+        else:
+            raise ValueError("Provided function {f} accepts too many arguments")
+
+        return rv
