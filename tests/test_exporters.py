@@ -11,6 +11,8 @@ import math
 import pytest
 import ezdxf
 
+from uuid import uuid1
+
 from pytest import approx
 
 # my modules
@@ -27,6 +29,8 @@ from cadquery import (
     Vector,
     Color,
 )
+
+from cadquery.occ_impl.shapes import rect, face
 from cadquery.occ_impl.exporters.dxf import DxfDocument
 from cadquery.occ_impl.exporters.utils import toCompound
 from tests import BaseTest
@@ -47,6 +51,12 @@ def testdatadir():
 @pytest.fixture()
 def box123():
     return Workplane().box(1, 2, 3)
+
+
+@pytest.fixture()
+def fname(tmpdir):
+
+    return tmpdir / str(uuid1())
 
 
 def test_step_options(tmpdir):
@@ -945,3 +955,23 @@ def test_dxf_ellipse_arc(tmpdir):
 
     assert w2.val().isValid()
     assert w2.val().Volume() == approx(math.pi * r ** 2 / 4)
+
+
+def test_dxf_sketch(fname):
+
+    s = Sketch().rect(1, 2)
+    exporters.exportDXF(s, fname)
+
+    s_imported = Sketch().importDXF(fname)
+
+    assert (s._faces - s_imported._faces).Volume() == 0
+
+
+def test_dxf_shape(fname):
+
+    s = face(rect(10, 0.5))
+    exporters.exportDXF(s, fname)
+
+    s_imported = Sketch().importDXF(fname).val()
+
+    assert (s - s_imported).Volume() == 0
