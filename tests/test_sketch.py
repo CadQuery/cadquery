@@ -2,6 +2,7 @@ import os
 
 from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
+from cadquery import Edge, Vertex
 
 from pytest import approx, raises
 from math import pi, sqrt
@@ -745,3 +746,33 @@ def test_dxf_import():
     s5 = Sketch().importDXF(filename, tol=1e-3, exclude=["1"])
 
     assert s5._faces.isValid()
+
+
+def test_val():
+
+    s1 = Sketch().segment((0, 0), (0, 1))
+
+    assert isinstance(s1.val(), Edge)
+
+    s1.vertices()
+
+    assert isinstance(s1.val(), Vertex)
+
+    s2 = Sketch().circle(1)
+
+    assert len(s2.val().Faces()) == 1
+
+
+def test_vals():
+
+    s1 = Sketch().segment((0, 0), (0, 1))
+
+    assert len(s1.vals()) == 1
+
+    s1.vertices()
+
+    assert len(s1.vals()) == 2
+
+    s2 = Sketch().circle(1)
+
+    assert len(s2.val().Faces()) == 1
