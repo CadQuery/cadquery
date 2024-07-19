@@ -1,6 +1,6 @@
 """DXF export utilities."""
 
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, Iterable
 
 import ezdxf
 from ezdxf import units, zoom
@@ -125,14 +125,18 @@ class DxfDocument:
 
         return self
 
-    def add_shape(self, workplane: Workplane, layer: str = "") -> Self:
+    def add_shape(self, shape: Union[Workplane, Shape], layer: str = "") -> Self:
         """Add CadQuery shape to a DXF layer.
 
-        :param workplane: CadQuery Workplane
+        :param s: CadQuery Workplane or shape
         :param layer: layer definition name
         """
-        plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+
+        if isinstance(shape, Workplane):
+            plane = shape.plane
+            shape_ = toCompound(shape).transformShape(plane.fG)
+        elif isinstance(shape, Shape):
+            shape_ = shape
 
         general_attributes = {}
         if layer:
@@ -141,20 +145,20 @@ class DxfDocument:
         if self.approx == "spline":
             edges = [
                 e.toSplines() if e.geomType() == "BSPLINE" else e
-                for e in self._ordered_edges(shape)
+                for e in self._ordered_edges(shape_)
             ]
 
         elif self.approx == "arc":
             edges = []
 
             # this is needed to handle free wires
-            for el in shape.Wires():
+            for el in shape_.Wires():
                 edges.extend(
                     self._ordered_edges(Face.makeFromWires(el).toArcs(self.tolerance))
                 )
 
         else:
-            edges = self._ordered_edges(shape)
+            edges = self._ordered_edges(shape_)
 
         for edge in edges:
             converter = self._DISPATCH_MAP.get(edge.geomType(), None)
@@ -342,7 +346,7 @@ class DxfDocument:
 
 
 def exportDXF(
-    w: Workplane,
+    w: Union[Workplane, Shape, Iterable[Shape]],
     fname: str,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
@@ -362,5 +366,11 @@ def exportDXF(
     """
 
     dxf = DxfDocument(approx=approx, tolerance=tolerance, doc_units=doc_units)
-    dxf.add_shape(w)
+
+    if isinstance(w, (Workplane, Shape)):
+        dxf.add_shape(w)
+    else:
+        for s in w:
+            dxf.add_shape(s)
+
     dxf.document.saveas(fname)
