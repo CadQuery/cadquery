@@ -775,4 +775,4 @@ def test_vals():
 
     s2 = Sketch().circle(1)
 
-    assert len(s2.val().Faces()) == 1
+    assert len(s2.vals().Faces()) == 1
