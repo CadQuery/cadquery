@@ -1,6 +1,17 @@
 """DXF export utilities."""
 
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, Iterable
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    Iterable,
+    Protocol,
+    runtime_checkable,
+)
 
 import ezdxf
 from ezdxf import units, zoom
@@ -10,15 +21,25 @@ from OCP.gp import gp_Dir
 from OCP.GC import GC_MakeArcOfEllipse
 from typing_extensions import Self
 
-from ...cq import Face, Plane, Workplane
 from ...units import RAD2DEG
-from ..shapes import Edge, Shape, Compound
-from .utils import toCompound
+from ..shapes import Face, Edge, Shape, Compound, compound
+from ..geom import Plane
+
 
 ApproxOptions = Literal["spline", "arc"]
 DxfEntityAttributes = Tuple[
     Literal["ARC", "CIRCLE", "ELLIPSE", "LINE", "SPLINE",], Dict[str, Any]
 ]
+
+
+@runtime_checkable
+class WorkplaneLike(Protocol):
+    @property
+    def plane(self) -> Plane:
+        ...
+
+    def __iter__(self) -> Iterable[Shape]:
+        ...
 
 
 class DxfDocument:
@@ -125,16 +146,16 @@ class DxfDocument:
 
         return self
 
-    def add_shape(self, shape: Union[Workplane, Shape], layer: str = "") -> Self:
+    def add_shape(self, shape: Union[WorkplaneLike, Shape], layer: str = "") -> Self:
         """Add CadQuery shape to a DXF layer.
 
         :param s: CadQuery Workplane or shape
         :param layer: layer definition name
         """
 
-        if isinstance(shape, Workplane):
+        if isinstance(shape, WorkplaneLike):
             plane = shape.plane
-            shape_ = toCompound(shape).transformShape(plane.fG)
+            shape_ = compound(*shape).transformShape(plane.fG)
         else:
             shape_ = shape
 
@@ -346,7 +367,7 @@ class DxfDocument:
 
 
 def exportDXF(
-    w: Union[Workplane, Shape, Iterable[Shape]],
+    w: Union[WorkplaneLike, Shape, Iterable[Shape]],
     fname: str,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
@@ -367,7 +388,7 @@ def exportDXF(
 
     dxf = DxfDocument(approx=approx, tolerance=tolerance, doc_units=doc_units)
 
-    if isinstance(w, (Workplane, Shape)):
+    if isinstance(w, (WorkplaneLike, Shape)):
         dxf.add_shape(w)
     else:
         for s in w:

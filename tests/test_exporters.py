@@ -30,9 +30,8 @@ from cadquery import (
     Color,
 )
 
-from cadquery.occ_impl.shapes import rect, face
+from cadquery.occ_impl.shapes import rect, face, compound
 from cadquery.occ_impl.exporters.dxf import DxfDocument
-from cadquery.occ_impl.exporters.utils import toCompound
 from tests import BaseTest
 from OCP.GeomConvert import GeomConvert
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
@@ -308,7 +307,7 @@ class TestDxfDocument(BaseTest):
         workplane = Workplane().line(1, 1)
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result = DxfDocument._dxf_line(edges[0])
@@ -321,7 +320,7 @@ class TestDxfDocument(BaseTest):
         workplane = Workplane().circle(1)
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result = DxfDocument._dxf_circle(edges[0])
@@ -334,7 +333,7 @@ class TestDxfDocument(BaseTest):
         workplane = Workplane().radiusArc((1, 1), 1)
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result_type, result_attributes = DxfDocument._dxf_circle(edges[0])
@@ -362,7 +361,7 @@ class TestDxfDocument(BaseTest):
         workplane = Workplane().ellipse(2, 1, 0)
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result_type, result_attributes = DxfDocument._dxf_ellipse(edges[0])
@@ -398,7 +397,7 @@ class TestDxfDocument(BaseTest):
         )
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result_type, result_attributes = DxfDocument._dxf_spline(edges[0], plane)
@@ -653,9 +652,6 @@ class TestExporters(BaseTest):
     def testDXF(self):
 
         exporters.export(self._box().section(), "out.dxf")
-
-        with self.assertRaises(ValueError):
-            exporters.export(self._box().val(), "out.dxf")
 
         s1 = (
             Workplane("XZ")
