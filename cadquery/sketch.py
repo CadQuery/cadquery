@@ -1142,7 +1142,7 @@ class Sketch(object):
 
         return self
 
-    def __add__(self: T, other: T) -> T:
+    def __add__(self: T, other: "Sketch") -> T:
         """
         Fuse self and other.
         """
@@ -1151,7 +1151,7 @@ class Sketch(object):
 
         return self.__class__(obj=_to_compound(res))
 
-    def __sub__(self: T, other: T) -> T:
+    def __sub__(self: T, other: "Sketch") -> T:
         """
         Subtract other from self.
         """
@@ -1160,7 +1160,7 @@ class Sketch(object):
 
         return self.__class__(obj=_to_compound(res))
 
-    def __mul__(self: T, other: T) -> T:
+    def __mul__(self: T, other: "Sketch") -> T:
         """
         Intersect self and other.
         """
@@ -1169,7 +1169,7 @@ class Sketch(object):
 
         return self.__class__(obj=_to_compound(res))
 
-    def __truediv__(self: T, other: T) -> T:
+    def __truediv__(self: T, other: "Sketch") -> T:
         """
         Split self with other.
         """
