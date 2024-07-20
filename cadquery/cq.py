@@ -33,6 +33,7 @@ from typing import (
     List,
     cast,
     Dict,
+    Iterator,
 )
 from typing_extensions import Literal
 from inspect import Parameter, Signature, isbuiltin
@@ -51,6 +52,7 @@ from .occ_impl.shapes import (
 )
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
+from .occ_impl.exporters import export
 
 from .utils import deprecate, deprecate_kwarg_name
 
@@ -4478,7 +4480,7 @@ class Workplane(object):
 
         return rv
 
-    def __iter__(self: T) -> Iterable[Shape]:
+    def __iter__(self: T) -> Iterator[Shape]:
         """
         Special method for iterating over Shapes in objects
         """
@@ -4553,6 +4555,17 @@ class Workplane(object):
             raise ValueError("Provided function {f} accepts too many arguments")
 
         return rv
+
+    def export(self: T, fname: str) -> T:
+        """
+        Export Workplane to file.
+        :param path: Filename.
+        :return: Self.
+        """
+
+        export(self, fname)
+
+        return self
 
 
 # alias for backward compatibility

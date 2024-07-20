@@ -34,6 +34,7 @@ from .occ_impl.shapes import (
     compound,
 )
 from .occ_impl.geom import Location, Vector
+from .occ_impl.exporters import export
 from .occ_impl.importers.dxf import _importDXF
 from .occ_impl.sketch_solver import (
     SketchConstraintSolver,
@@ -1263,3 +1264,14 @@ class Sketch(object):
             raise ValueError("Provided function {f} accepts too many arguments")
 
         return rv
+
+    def export(self: T, fname: str) -> T:
+        """
+        Export Sketch to file.
+        :param path: Filename.
+        :return: Self.
+        """
+
+        export(self, fname)
+
+        return self

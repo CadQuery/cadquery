@@ -1576,6 +1576,15 @@ class Shape(object):
 
         return split(self, other)
 
+    def export(self, fname: str):
+        """
+        Export Shape to file.
+        """
+
+        from .exporters import export  # imported here to prevent circular imports
+
+        export(self, fname)
+
 
 class ShapeProtocol(Protocol):
     @property
@@ -4968,7 +4977,7 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
 @sweep.register
 def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
     """
-    Sweep edges, wires or faces along a path, multiple sections are supported. 
+    Sweep edges, wires or faces along a path, multiple sections are supported.
     For faces cap has no effect. Do not mix faces with other types.
     """
 
