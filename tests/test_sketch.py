@@ -776,3 +776,23 @@ def test_vals():
     s2 = Sketch().circle(1)
 
     assert len(s2.vals()) == 1
+
+
+def test_bool_ops():
+
+    s1 = Sketch().rect(0.5, 2)
+    s2 = Sketch().rect(1, 1)
+    s3 = Sketch().segment((-1, 0), (1, 0))
+
+    # sum
+    assert (s1 + s2).val().Area() == approx(1.5)
+    # diff
+    assert (s1 - s2).val().Area() == approx(0.5)
+    assert len((s1 - s2).val().Wires()) == 2
+    # common
+    assert (s1 * s2).val().Area() == approx(0.5)
+    assert len((s1 * s2).val().Wires()) == 1
+    # split
+    assert len((s1 / s3).val().Faces()) == 2
+    assert len((s1 / s2).val().Faces()) == 3
+    assert (s1 / s2).val().Area() == approx(1)

@@ -45,12 +45,39 @@ from .occ_impl.sketch_solver import (
     arc_point,
 )
 
+#%% types
+
 Modes = Literal["a", "s", "i", "c"]  # add, subtract, intersect, construct
 Point = Union[Vector, Tuple[Real, Real]]
 TOL = 1e-6
 
 T = TypeVar("T", bound="Sketch")
 SketchVal = Union[Shape, Location]
+
+
+# %% utilities
+
+
+def _sanitize_for_bool(obj: SketchVal) -> Shape:
+    """
+    Make sure that a Shape is selected
+    """
+
+    if isinstance(obj, Location):
+        raise ValueError("Location was provided, Shape is required.")
+
+    return obj
+
+
+def _to_compound(obj: Shape) -> Compound:
+
+    if isinstance(obj, Compound):
+        return obj
+    else:
+        return Compound.makeCompound((obj,))
+
+
+# %% Constraint
 
 
 class Constraint(object):
@@ -96,6 +123,9 @@ class Constraint(object):
         self.param = tcast(Any, converter)(param) if converter else param
 
 
+# %% Sketch
+
+
 class Sketch(object):
     """
     2D sketch. Supports faces, edges and edges with constraints based construction.
@@ -114,7 +144,12 @@ class Sketch(object):
 
     _solve_status: Optional[Dict[str, Any]]
 
-    def __init__(self: T, parent: Any = None, locs: Iterable[Location] = (Location(),)):
+    def __init__(
+        self: T,
+        parent: Any = None,
+        locs: Iterable[Location] = (Location(),),
+        obj: Optional[Compound] = None,
+    ):
         """
         Construct an empty sketch.
         """
@@ -122,7 +157,7 @@ class Sketch(object):
         self.parent = parent
         self.locs = list(locs)
 
-        self._faces = Compound.makeCompound(())
+        self._faces = obj if obj else Compound.makeCompound(())
         self._edges = []
 
         self._selection = []
@@ -1077,6 +1112,42 @@ class Sketch(object):
             rv = list(self._faces)
 
         return rv
+
+    def __add__(self, other: "Sketch") -> "Sketch":
+        """
+        Fuse self and other.
+        """
+
+        res = _sanitize_for_bool(self.val()) + _sanitize_for_bool(other.val())
+
+        return Sketch(obj=_to_compound(res))
+
+    def __sub__(self, other: "Sketch") -> "Sketch":
+        """
+        Subtract other from self.
+        """
+
+        res = _sanitize_for_bool(self.val()) - _sanitize_for_bool(other.val())
+
+        return Sketch(obj=_to_compound(res))
+
+    def __mul__(self, other: "Sketch") -> "Sketch":
+        """
+        Intersect self and other.
+        """
+
+        res = _sanitize_for_bool(self.val()) * _sanitize_for_bool(other.val())
+
+        return Sketch(obj=_to_compound(res))
+
+    def __truediv__(self, other: "Sketch") -> "Sketch":
+        """
+        Split self with other.
+        """
+
+        res = _sanitize_for_bool(self.val()) / _sanitize_for_bool(other.val())
+
+        return Sketch(obj=_to_compound(res))
 
     def __getitem__(self: T, item: Union[int, Sequence[int], slice]) -> T:
 
