@@ -4478,6 +4478,17 @@ class Workplane(object):
 
         return rv
 
+    def __iter__(self: T) -> Iterable[Shape]:
+        """
+        Special method for iterating over Shapes in objects
+        """
+
+        for el in self.objects:
+            if isinstance(el, Shape):
+                yield el
+            elif isinstance(el, Sketch):
+                yield from el
+
     def filter(self: T, f: Callable[[CQObject], bool]) -> T:
         """
         Filter items using a boolean predicate.
