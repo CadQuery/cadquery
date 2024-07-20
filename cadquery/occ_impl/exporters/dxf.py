@@ -135,7 +135,7 @@ class DxfDocument:
         if isinstance(shape, Workplane):
             plane = shape.plane
             shape_ = toCompound(shape).transformShape(plane.fG)
-        elif isinstance(shape, Shape):
+        else:
             shape_ = shape
 
         general_attributes = {}
