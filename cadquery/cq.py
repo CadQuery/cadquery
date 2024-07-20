@@ -270,7 +270,7 @@ class Workplane(object):
         ...
 
     @overload
-    def split(self: T, splitter: Union[T, Shape]) -> T:
+    def split(self: T, splitter: Union["Workplane", Shape]) -> T:
         ...
 
     def split(self: T, *args, **kwargs) -> T:
@@ -3414,7 +3414,7 @@ class Workplane(object):
 
         return self.newObject([r])
 
-    def __or__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
+    def __or__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for union.
 
@@ -3426,15 +3426,15 @@ class Workplane(object):
             Sphere = Workplane("XY").sphere(1)
             result = Box | Sphere
         """
-        return self.union(toUnion)
+        return self.union(other)
 
-    def __add__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
+    def __add__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for union.
 
         Notice that :code:`r = a + b` is equivalent to :code:`r = a.union(b)` and :code:`r = a | b`.
         """
-        return self.union(toUnion)
+        return self.union(other)
 
     def cut(
         self: T,
@@ -3472,7 +3472,7 @@ class Workplane(object):
 
         return self.newObject([newS])
 
-    def __sub__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
+    def __sub__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for cut.
 
@@ -3484,7 +3484,7 @@ class Workplane(object):
             Sphere = Workplane("XY").sphere(1)
             result = Box - Sphere
         """
-        return self.cut(toUnion)
+        return self.cut(other)
 
     def intersect(
         self: T,
@@ -3522,7 +3522,7 @@ class Workplane(object):
 
         return self.newObject([newS])
 
-    def __and__(self: T, toUnion: Union["Workplane", Solid, Compound]) -> T:
+    def __and__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for intersect.
 
@@ -3534,7 +3534,38 @@ class Workplane(object):
             Sphere = Workplane("XY").sphere(1)
             result = Box & Sphere
         """
-        return self.intersect(toUnion)
+
+        return self.intersect(other)
+
+    def __mul__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
+        """
+        Syntactic sugar for intersect.
+
+        Notice that :code:`r = a * b` is equivalent to :code:`r = a.intersect(b)`.
+
+        Example::
+
+            Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
+            Sphere = Workplane("XY").sphere(1)
+            result = Box * Sphere
+        """
+
+        return self.intersect(other)
+
+    def __truediv__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
+        """
+        Syntactic sugar for intersect.
+
+        Notice that :code:`r = a / b` is equivalent to :code:`r = a.split(b)`.
+
+        Example::
+
+            Box = Workplane("XY").box(1, 1, 1, centered=(False, False, False))
+            Sphere = Workplane("XY").sphere(1)
+            result = Box / Sphere
+        """
+
+        return self.split(other)
 
     def cutBlind(
         self: T,
