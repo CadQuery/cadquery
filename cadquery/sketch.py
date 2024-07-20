@@ -47,7 +47,7 @@ from .occ_impl.sketch_solver import (
 
 #%% types
 
-Modes = Literal["a", "s", "i", "c"]  # add, subtract, intersect, construct
+Modes = Literal["a", "s", "i", "c", "r"]  # add, subtract, intersect, construct, replace
 Point = Union[Vector, Tuple[Real, Real]]
 TOL = 1e-6
 
@@ -537,6 +537,8 @@ class Sketch(object):
             self._faces = self._faces.cut(*res)
         elif mode == "i":
             self._faces = self._faces.intersect(*res)
+        elif mode == "r":
+            self._faces = compound(res)
         elif mode == "c":
             if not tag:
                 raise ValueError("No tag specified - the geometry will be unreachable")
@@ -1112,6 +1114,33 @@ class Sketch(object):
             rv = list(self._faces)
 
         return rv
+
+    def add(self: T) -> T:
+        """
+        Add selection to the underlying faces.
+        """
+
+        self._faces += compound(self._selection).faces()
+
+        return self
+
+    def subtract(self: T) -> T:
+        """
+        Subtract selection from the underlying faces.
+        """
+
+        self._faces -= compound(self._selection).faces()
+
+        return self
+
+    def replace(self: T) -> T:
+        """
+        Replace the underlying faces with the selection.
+        """
+
+        self._faces = compound(self._selection).faces()
+
+        return self
 
     def __add__(self: T, other: T) -> T:
         """
