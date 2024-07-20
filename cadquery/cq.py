@@ -1470,7 +1470,7 @@ class Workplane(object):
           centering along each axis.
         """
 
-        if xSpacing <= 0 or ySpacing <= 0 or xCount < 1 or yCount < 1:
+        if (xSpacing <= 0 and ySpacing <= 0) or xCount < 1 or yCount < 1:
             raise ValueError("Spacing and count must be > 0 ")
 
         if isinstance(center, bool):
