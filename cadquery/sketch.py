@@ -1113,41 +1113,41 @@ class Sketch(object):
 
         return rv
 
-    def __add__(self, other: "Sketch") -> "Sketch":
+    def __add__(self: T, other: T) -> T:
         """
         Fuse self and other.
         """
 
         res = _sanitize_for_bool(self.val()) + _sanitize_for_bool(other.val())
 
-        return Sketch(obj=_to_compound(res))
+        return self.__class__(obj=_to_compound(res))
 
-    def __sub__(self, other: "Sketch") -> "Sketch":
+    def __sub__(self: T, other: T) -> T:
         """
         Subtract other from self.
         """
 
         res = _sanitize_for_bool(self.val()) - _sanitize_for_bool(other.val())
 
-        return Sketch(obj=_to_compound(res))
+        return self.__class__(obj=_to_compound(res))
 
-    def __mul__(self, other: "Sketch") -> "Sketch":
+    def __mul__(self: T, other: T) -> T:
         """
         Intersect self and other.
         """
 
         res = _sanitize_for_bool(self.val()) * _sanitize_for_bool(other.val())
 
-        return Sketch(obj=_to_compound(res))
+        return self.__class__(obj=_to_compound(res))
 
-    def __truediv__(self, other: "Sketch") -> "Sketch":
+    def __truediv__(self: T, other: T) -> T:
         """
         Split self with other.
         """
 
         res = _sanitize_for_bool(self.val()) / _sanitize_for_bool(other.val())
 
-        return Sketch(obj=_to_compound(res))
+        return self.__class__(obj=_to_compound(res))
 
     def __getitem__(self: T, item: Union[int, Sequence[int], slice]) -> T:
 
