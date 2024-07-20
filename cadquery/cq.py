@@ -3680,6 +3680,10 @@ class Workplane(object):
         for el in self.objects:
             if isinstance(el, Sketch):
                 rv.extend(el)
+            elif isinstance(el, Face):
+                rv.append(el)
+            elif isinstance(el, Compound):
+                rv.extend(subel for subel in el if isinstance(subel, Face))
 
         if not rv:
             rv.extend(wiresToFaces(self.ctx.popPendingWires()))
