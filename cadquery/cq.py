@@ -3414,6 +3414,7 @@ class Workplane(object):
 
         return self.newObject([r])
 
+    @deprecate()
     def __or__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for union.
@@ -3522,6 +3523,7 @@ class Workplane(object):
 
         return self.newObject([newS])
 
+    @deprecate()
     def __and__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
         """
         Syntactic sugar for intersect.
