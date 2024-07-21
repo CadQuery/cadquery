@@ -28,10 +28,11 @@ class ExportTypes:
     VRML = "VRML"
     VTP = "VTP"
     THREEMF = "3MF"
+    BREP = "BREP"
 
 
 ExportLiterals = Literal[
-    "STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP", "3MF"
+    "STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP", "3MF", "BREP"
 ]
 
 
@@ -123,6 +124,9 @@ def export(
 
     elif exportType == ExportTypes.VTP:
         exportVTP(shape, fname, tolerance, angularTolerance)
+
+    elif exportType == ExportTypes.BREP:
+        shape.exportBrep(fname)
 
     else:
         raise ValueError("Unknown export type")
