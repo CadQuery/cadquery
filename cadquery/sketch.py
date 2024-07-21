@@ -1265,13 +1265,24 @@ class Sketch(object):
 
         return rv
 
-    def export(self: T, fname: str) -> T:
+    def export(
+        self: T,
+        fname: str,
+        tolerance: float = 0.1,
+        angularTolerance: float = 0.1,
+        opt: Optional[Dict[str, Any]] = None,
+    ) -> T:
         """
         Export Sketch to file.
         :param path: Filename.
+        :param tolerance: the deflection tolerance, in model units. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Default 0.1.
+        :param opt: additional options passed to the specific exporter. Default None.
         :return: Self.
         """
 
-        export(self, fname)
+        export(
+            self, fname, tolerance=tolerance, angularTolerance=angularTolerance, opt=opt
+        )
 
         return self

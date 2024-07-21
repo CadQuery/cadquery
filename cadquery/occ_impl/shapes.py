@@ -1576,14 +1576,22 @@ class Shape(object):
 
         return split(self, other)
 
-    def export(self, fname: str):
+    def export(
+        self: T,
+        fname: str,
+        tolerance: float = 0.1,
+        angularTolerance: float = 0.1,
+        opt: Optional[Dict[str, Any]] = None,
+    ):
         """
         Export Shape to file.
         """
 
         from .exporters import export  # imported here to prevent circular imports
 
-        export(self, fname)
+        export(
+            self, fname, tolerance=tolerance, angularTolerance=angularTolerance, opt=opt
+        )
 
 
 class ShapeProtocol(Protocol):
