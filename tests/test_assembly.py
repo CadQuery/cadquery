@@ -688,6 +688,24 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
     assert os.path.exists(filename)
 
 
+@pytest.mark.parametrize(
+    "extension, args",
+    [
+        ("step", ()),
+        ("xml", ()),
+        ("stp", ("STEP",)),
+        ("caf", ("XML",)),
+        ("wrl", ("VRML",)),
+        ("stl", ("STL",)),
+    ],
+)
+def test_export(extension, args, nested_assy, nested_assy_sphere):
+
+    filename = "nested." + extension
+    nested_assy.export(filename, *args)
+    assert os.path.exists(filename)
+
+
 def test_save_stl_formats(nested_assy_sphere):
 
     # Binary export

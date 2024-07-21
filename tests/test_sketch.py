@@ -796,3 +796,11 @@ def test_bool_ops():
     assert len((s1 / s3).val().Faces()) == 2
     assert len((s1 / s2).val().Faces()) == 3
     assert (s1 / s2).val().Area() == approx(1)
+
+
+def test_export():
+
+    s1 = Sketch().rect(1, 1).export("sketch.dxf")
+    s2 = Sketch().importDXF("sketch.dxf")
+
+    assert (s1 - s2).val().Area() == approx(0)
