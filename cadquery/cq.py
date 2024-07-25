@@ -385,9 +385,7 @@ class Workplane(object):
             raise ValueError("Cannot Combine: at least one solid required!")
 
         # get context solid and we don't want to find our own objects
-        ctxSolid = self._findType(
-            (Solid, Compound), searchStack=False, searchParents=True
-        )
+        ctxSolid = self._findType((Solid,), searchStack=False, searchParents=True)
         if ctxSolid is None:
             ctxSolid = toCombine.pop(0)
 
@@ -750,8 +748,20 @@ class Workplane(object):
     def _findType(self, types, searchStack=True, searchParents=True):
 
         if searchStack:
-            rv = [s for s in self.objects if isinstance(s, types)]
-            if rv and types == (Solid, Compound):
+            rv = []
+            for obj in self.objects:
+                if isinstance(obj, types):
+                    rv.append(obj)
+                # unpack compounds in a special way when looking for Solids
+                elif isinstance(obj, Compound) and types == (Solid,):
+                    for T in types:
+                        # _entities(...) needed due to weird behavior with shelled object unpacking
+                        rv.extend(T(el) for el in obj._entities(T.__name__))
+                # otherwise unpack compounds normally
+                elif isinstance(obj, Compound):
+                    rv.extend(el for el in obj if isinstance(el, type))
+
+            if rv and types == (Solid,):
                 return Compound.makeCompound(rv)
             elif rv:
                 return rv[0]
@@ -783,7 +793,7 @@ class Workplane(object):
         results with an object already on the stack.
         """
 
-        found = self._findType((Solid, Compound), searchStack, searchParents)
+        found = self._findType((Solid,), searchStack, searchParents)
 
         if found is None:
             message = "on the stack or " if searchStack else ""
@@ -804,7 +814,7 @@ class Workplane(object):
         :returns: A face or None if no face is found.
         """
 
-        found = self._findType(Face, searchStack, searchParents)
+        found = self._findType((Face,), searchStack, searchParents)
 
         if found is None:
             message = "on the stack or " if searchStack else ""
@@ -3312,9 +3322,7 @@ class Workplane(object):
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-        baseSolid = self._findType(
-            (Solid, Compound), searchStack=True, searchParents=True
-        )
+        baseSolid = self._findType((Solid,), searchStack=True, searchParents=True)
         r = obj
         if baseSolid is not None:
             r = baseSolid.fuse(obj)
@@ -3330,7 +3338,7 @@ class Workplane(object):
         :return: a new object that represents the result of combining the base object with obj,
            or obj if one could not be found
         """
-        baseSolid = self._findType((Solid, Compound), True, True)
+        baseSolid = self._findType((Solid,), True, True)
 
         r = obj
         if baseSolid is not None:
@@ -3401,9 +3409,7 @@ class Workplane(object):
 
         # now combine with existing solid, if there is one
         # look for parents to cut from
-        solidRef = self._findType(
-            (Solid, Compound), searchStack=True, searchParents=True
-        )
+        solidRef = self._findType((Solid,), searchStack=True, searchParents=True)
         if solidRef is not None:
             r = solidRef.fuse(*newS, glue=glue, tol=tol)
         elif len(newS) > 1:
