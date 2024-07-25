@@ -12,7 +12,9 @@ from typing import (
     TypeVar,
     cast as tcast,
     Literal,
+    overload,
 )
+
 from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
 from inspect import isbuiltin
@@ -32,6 +34,7 @@ from .occ_impl.shapes import (
     Vertex,
     edgesToWires,
     compound,
+    VectorLike,
 )
 from .occ_impl.geom import Location, Vector
 from .occ_impl.exporters import export
@@ -1059,13 +1062,49 @@ class Sketch(object):
 
         return rv
 
+    @overload
     def moved(self: T, loc: Location) -> T:
+        ...
+
+    @overload
+    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> T:
+        ...
+
+    @overload
+    def moved(self: T, locs: Sequence[Location]) -> T:
+        ...
+
+    @overload
+    def moved(
+        self: T,
+        x: Real = 0,
+        y: Real = 0,
+        z: Real = 0,
+        rx: Real = 0,
+        ry: Real = 0,
+        rz: Real = 0,
+    ) -> T:
+        ...
+
+    @overload
+    def moved(self: T, loc: VectorLike) -> T:
+        ...
+
+    @overload
+    def moved(self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike) -> T:
+        ...
+
+    @overload
+    def moved(self: T, loc: Sequence[VectorLike]) -> T:
+        ...
+
+    def moved(self: T, *args, **kwargs) -> T:
         """
         Create a partial copy of the sketch with moved _faces.
         """
 
         rv = self.__class__()
-        rv._faces = self._faces.moved(loc)
+        rv._faces = self._faces.moved(*args, **kwargs)
 
         return rv
 
