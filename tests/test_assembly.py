@@ -5,6 +5,7 @@ from math import degrees
 import copy
 from pathlib import Path, PurePath
 import re
+from pytest import approx
 
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
@@ -1608,3 +1609,36 @@ def test_imprinting(touching_assy, disjoint_assy):
 
     for s in r.Solids():
         assert s in o
+
+
+def test_order_of_transform():
+
+    part = cq.Workplane().box(1, 1, 1).faces(">Z").vertices("<XY").tag("vtag")
+    marker = cq.Workplane().sphere(0.2)
+
+    assy0 = cq.Assembly().add(
+        part, name="part1", loc=cq.Location((0, 0, 1.5), (0, 0, 1), 45),
+    )
+
+    assy1 = (
+        cq.Assembly()
+        .add(assy0, name="assy0", loc=cq.Location(2, 0, 0))
+        .add(marker, name="marker1")
+    )
+
+    # attach the first marker to the tagged corner
+    assy1.constrain("assy0/part1", "Fixed")
+    assy1.constrain("marker1", "assy0/part1?vtag", "Point")
+    assy1.solve()
+
+    assy2 = cq.Assembly().add(assy1, name="assy1").add(marker, name="marker2")
+
+    # attach the second marker to the tagged corner, but this time with nesting
+    assy2.constrain("assy1/marker1", "Fixed")
+    assy2.constrain("marker2", "assy1/assy0/part1?vtag", "Point")
+    assy2.solve()
+
+    # marker1 and marker2 should coincide
+    m1, m2 = assy2.toCompound().Solids()
+
+    assert (m1.Center() - m2.Center()).Length == approx(0)

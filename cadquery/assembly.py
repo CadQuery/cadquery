@@ -290,7 +290,8 @@ class Assembly(object):
                 obj = cast(Assembly, obj.parent)
                 name_out = obj.name
 
-            rv = reduce(lambda l1, l2: l1 * l2, locs)
+            # This must reduce in the order of (parent, ..., child)
+            rv = reduce(lambda l1, l2: l2 * l1, locs)
 
         return (rv, name_out)
 
