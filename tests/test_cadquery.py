@@ -15,6 +15,7 @@ from pytest import approx, raises
 
 from cadquery import *
 from cadquery import occ_impl
+from cadquery.occ_impl.shapes import *
 from tests import (
     BaseTest,
     writeStringToFile,
@@ -5790,3 +5791,29 @@ class TestCadQuery(BaseTest):
         verts, _ = Face.makePlane(1e-9, 1e-9).tessellate(1e-3)
 
         assert len(verts) == 0
+
+    def test_export(self):
+
+        w = Workplane().box(1, 1, 1).export("box.brep")
+
+        assert (w - Shape.importBrep("box.brep")).val().Volume() == approx(0)
+
+    def test_bool_operators(self):
+
+        w1 = Workplane().box(1, 1, 2)
+        w2 = Workplane().box(2, 2, 1)
+
+        assert (w1 + w2).val().Volume() == approx(5)
+        assert (w1 - w2).val().Volume() == approx(1)
+        assert (w1 * w2).val().Volume() == approx(1)
+        assert (w1 / w2).solids().size() == 3
+
+    def test_extrude_face(self):
+
+        f = face(rect(1, 1))
+        c = compound(f)
+
+        # face
+        assert Workplane().add(f).extrude(1).val().Volume() == approx(1)
+        # compound with face
+        assert Workplane().add(c).extrude(1).val().Volume() == approx(1)
