@@ -1638,7 +1638,7 @@ def test_order_of_transform():
     assy2.constrain("marker2", "assy1/assy0/part1?vtag", "Point")
     assy2.solve()
 
-    # marker1 and marer2 should coincide
+    # marker1 and marker2 should coincide
     m1, m2 = assy2.toCompound().Solids()
 
     assert (m1.Center() - m2.Center()).Length == approx(0)
