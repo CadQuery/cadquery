@@ -17,13 +17,13 @@ from typing import (
 
 from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
-from inspect import isbuiltin
 from multimethod import multimethod
 from typish import instance_of, get_type
 
 from .hull import find_hull
 from .selectors import StringSyntaxSelector, Selector
 from .types import Real
+from .utils import get_arity
 
 from .occ_impl.shapes import (
     Shape,
@@ -1286,11 +1286,7 @@ class Sketch(object):
         :return: Workplane object.
         """
 
-        if isbuiltin(f):
-            arity = 0  # assume 0 arity for builtins; they cannot be introspected
-        else:
-            arity = f.__code__.co_argcount  # NB: this is not understood by mypy
-
+        arity = get_arity(f)
         rv = self
 
         if arity == 0:

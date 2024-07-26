@@ -36,7 +36,7 @@ from typing import (
     Iterator,
 )
 from typing_extensions import Literal
-from inspect import Parameter, Signature, isbuiltin
+from inspect import Parameter, Signature
 
 
 from .occ_impl.geom import Vector, Plane, Location
@@ -54,7 +54,7 @@ from .occ_impl.shapes import (
 from .occ_impl.exporters.svg import getSVG, exportSVG
 from .occ_impl.exporters import export
 
-from .utils import deprecate, deprecate_kwarg_name
+from .utils import deprecate, deprecate_kwarg_name, get_arity
 
 from .selectors import (
     Selector,
@@ -4544,11 +4544,7 @@ class Workplane(object):
         :return: Workplane object.
         """
 
-        if isbuiltin(f):
-            arity = 0  # assume 0 arity for builtins; they cannot be introspected
-        else:
-            arity = f.__code__.co_argcount  # NB: this is not understood by mypy
-
+        arity = get_arity(f)
         rv = self
 
         if arity == 0:
