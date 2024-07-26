@@ -5817,3 +5817,15 @@ class TestCadQuery(BaseTest):
         assert Workplane().add(f).extrude(1).val().Volume() == approx(1)
         # compound with face
         assert Workplane().add(c).extrude(1).val().Volume() == approx(1)
+
+    def test_workplane_iter(self):
+
+        s = Sketch().rarray(5, 0, 5, 1).rect(1, 1)
+        w1 = Workplane().pushPoints([(-10, 0), (10, 0)])
+        w2 = w1.box(1, 1, 1)  # NB this results in Compound of two Solids
+        w3 = w1.box(1, 1, 1, combine=False)
+
+        assert len(list(s)) == 5
+        assert len(list(w1)) == 0
+        assert len(list(w2)) == 2  # 2 beacuase __iter__ unpacks Compounds
+        assert len(list(w3)) == 2

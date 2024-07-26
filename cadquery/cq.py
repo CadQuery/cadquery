@@ -4492,7 +4492,9 @@ class Workplane(object):
         """
 
         for el in self.objects:
-            if isinstance(el, Shape):
+            if isinstance(el, Compound):
+                yield from el
+            elif isinstance(el, Shape):
                 yield el
             elif isinstance(el, Sketch):
                 yield from el
