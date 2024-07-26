@@ -4123,6 +4123,18 @@ class Workplane(object):
         if isinstance(centered, bool):
             centered = (centered, centered, centered)
 
+        xyz = [
+            (1, 0, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (-1, 0, 0),
+            (0, -1, 0),
+            (0, 0, -1),
+        ]
+
+        if isinstance(centered, bool):
+            centered = (centered, centered, centered)
+
         offset = Vector()
         if not centered[0]:
             offset += Vector(radius, 0, 0)
@@ -4131,7 +4143,10 @@ class Workplane(object):
         if centered[2]:
             offset += Vector(0, 0, -height / 2)
 
-        s = Solid.makeCylinder(radius, height, offset, direct, angle)
+        # first center and then apply the direction
+        s = Solid.makeCylinder(radius, height, offset, Vector(0, 0, 1), angle).moved(
+            Plane(Vector(), normal=direct).location
+        )
 
         # We want a cylinder for each point on the workplane
         return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
