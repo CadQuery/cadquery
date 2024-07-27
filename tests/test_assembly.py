@@ -694,7 +694,6 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
         ("step", (), {}),
         ("xml", (), {}),
         ("vrml", (), {}),
-        ("zip", ("VTKJS",), {}),
         ("gltf", (), {}),
         ("glb", (), {}),
         ("stl", (), {"ascii": False}),
@@ -705,13 +704,20 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
         ("stl", ("STL",), {}),
     ],
 )
-def test_export(extension, args, kwargs, tmpdir, nested_assy, nested_assy_sphere):
+def test_export(extension, args, kwargs, tmpdir, nested_assy):
 
     filename = "nested." + extension
 
     with tmpdir:
         nested_assy.export(filename, *args, **kwargs)
         assert os.path.exists(filename)
+
+
+def test_export_vtkjs(tmpdir, nested_assy):
+
+    with tmpdir:
+        nested_assy.export("nested.vtkjs")
+        assert os.path.exists("nested.vtkjs.zip")
 
 
 def test_export_errors(nested_assy):
