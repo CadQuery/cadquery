@@ -728,6 +728,9 @@ def test_export_errors(nested_assy):
     with pytest.raises(ValueError):
         nested_assy.export("nested.stl", "1234")
 
+    with pytest.raises(ValueError):
+        nested_assy.export("nested.step", mode="1234")
+
 
 def test_save_stl_formats(nested_assy_sphere):
 
