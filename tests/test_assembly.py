@@ -36,7 +36,7 @@ from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
 from OCP.TopAbs import TopAbs_ShapeEnum
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def tmpdir(tmp_path_factory):
     return tmp_path_factory.mktemp("assembly")
 
@@ -689,21 +689,38 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
 
 
 @pytest.mark.parametrize(
-    "extension, args",
+    "extension, args, kwargs",
     [
-        ("step", ()),
-        ("xml", ()),
-        ("stp", ("STEP",)),
-        ("caf", ("XML",)),
-        ("wrl", ("VRML",)),
-        ("stl", ("STL",)),
+        ("step", (), {}),
+        ("xml", (), {}),
+        ("vrml", (), {}),
+        ("zip", ("VTKJS",), {}),
+        ("gltf", (), {}),
+        ("glb", (), {}),
+        ("stl", (), {"ascii": False}),
+        ("stl", (), {"ascii": True}),
+        ("stp", ("STEP",), {}),
+        ("caf", ("XML",), {}),
+        ("wrl", ("VRML",), {}),
+        ("stl", ("STL",), {}),
     ],
 )
-def test_export(extension, args, nested_assy, nested_assy_sphere):
+def test_export(extension, args, kwargs, tmpdir, nested_assy, nested_assy_sphere):
 
     filename = "nested." + extension
-    nested_assy.export(filename, *args)
-    assert os.path.exists(filename)
+
+    with tmpdir:
+        nested_assy.export(filename, *args, **kwargs)
+        assert os.path.exists(filename)
+
+
+def test_export_errors(nested_assy):
+
+    with pytest.raises(ValueError):
+        nested_assy.export("nested.1234")
+
+    with pytest.raises(ValueError):
+        nested_assy.export("nested.stl", "1234")
 
 
 def test_save_stl_formats(nested_assy_sphere):
@@ -1385,7 +1402,6 @@ def test_constraint_getPln():
     nonplanar_spline = cq.Edge.makeSpline(points1, periodic=True)
     fail_this(nonplanar_spline)
 
-    # planar wire should succeed
     # make a triangle in the XZ plane
     points2 = [cq.Vector(x) for x in [(-1, 0, -1), (0, 0, 1), (1, 0, -1)]]
     points2.append(points2[0])
