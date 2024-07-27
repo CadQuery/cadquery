@@ -5820,7 +5820,7 @@ class TestCadQuery(BaseTest):
 
     def test_workplane_iter(self):
 
-        s = Sketch().rarray(5, 0, 5, 1).rect(1, 1)
+        s = Workplane().sketch().rarray(5, 0, 5, 1).rect(1, 1).finalize()
         w1 = Workplane().pushPoints([(-10, 0), (10, 0)])
         w2 = w1.box(1, 1, 1)  # NB this results in Compound of two Solids
         w3 = w1.box(1, 1, 1, combine=False)
