@@ -388,6 +388,9 @@ def test_delete():
 
     assert len(s2._edges) == 2
 
+    with raises(ValueError):
+        s2.vertices().delete()
+
 
 def test_selectors():
 

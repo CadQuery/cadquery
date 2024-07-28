@@ -759,6 +759,8 @@ class Sketch(object):
                     self._faces.remove(obj)
                 elif isinstance(obj, Edge):
                     self._edges.remove(obj)
+                else:
+                    raise ValueError(f"Deletion of {obj} not supported")
         else:
             raise ValueError("Selection is needed to delete")
 
