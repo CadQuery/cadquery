@@ -141,7 +141,7 @@ class Sketch(object):
     _faces: Compound
     _edges: List[Edge]
 
-    _selection: List[SketchVal]
+    _selection: Optional[List[SketchVal]]
     _constraints: List[Constraint]
 
     _tags: Dict[str, Sequence[SketchVal]]
@@ -164,7 +164,7 @@ class Sketch(object):
         self._faces = obj if obj else Compound.makeCompound(())
         self._edges = []
 
-        self._selection = []
+        self._selection = None
         self._constraints = []
 
         self._tags = {}
@@ -575,10 +575,15 @@ class Sketch(object):
         Offset selected wires or edges.
         """
 
-        rv = (el.offset2D(d) for el in self._selection if isinstance(el, Wire))
+        if self._selection:
+            rv = (el.offset2D(d) for el in self._selection if isinstance(el, Wire))
 
-        for el in chain.from_iterable(rv):
-            self.face(el, mode=mode, tag=tag, ignore_selection=bool(self._selection))
+            for el in chain.from_iterable(rv):
+                self.face(
+                    el, mode=mode, tag=tag, ignore_selection=bool(self._selection)
+                )
+        else:
+            raise ValueError("Selection is needed to offset")
 
         return self
 
@@ -586,12 +591,17 @@ class Sketch(object):
 
         rv = {}
 
-        for f in self._faces.Faces():
+        if self._selection:
+            for f in self._faces.Faces():
 
-            f_vertices = f.Vertices()
-            rv[f] = [
-                v for v in self._selection if isinstance(v, Vertex) and v in f_vertices
-            ]
+                f_vertices = f.Vertices()
+                rv[f] = [
+                    v
+                    for v in self._selection
+                    if isinstance(v, Vertex) and v in f_vertices
+                ]
+        else:
+            raise ValueError("Selection is needed to match vertices to faces")
 
         return rv
 
@@ -675,7 +685,10 @@ class Sketch(object):
         Tag current selection.
         """
 
-        self._tags[tag] = list(self._selection)
+        if self._selection:
+            self._tags[tag] = list(self._selection)
+        else:
+            raise ValueError("Selection is needed to tag")
 
         return self
 
@@ -732,7 +745,7 @@ class Sketch(object):
         Reset current selection.
         """
 
-        self._selection = []
+        self._selection = None
         return self
 
     def delete(self: T) -> T:
@@ -740,13 +753,16 @@ class Sketch(object):
         Delete selected object.
         """
 
-        for obj in self._selection:
-            if isinstance(obj, Face):
-                self._faces.remove(obj)
-            elif isinstance(obj, Edge):
-                self._edges.remove(obj)
+        if self._selection:
+            for obj in self._selection:
+                if isinstance(obj, Face):
+                    self._faces.remove(obj)
+                elif isinstance(obj, Edge):
+                    self._edges.remove(obj)
+        else:
+            raise ValueError("Selection is needed to delete")
 
-        self._selection = []
+        self.reset()
 
         return self
 
@@ -1130,7 +1146,7 @@ class Sketch(object):
         Return the first selected item, underlying compound or first edge.
         """
 
-        if self._selection:
+        if self._selection is not None:
             rv = self._selection[0]
         elif not self._faces and self._edges:
             rv = self._edges[0]
@@ -1146,7 +1162,7 @@ class Sketch(object):
 
         rv: List[SketchVal]
 
-        if self._selection:
+        if self._selection is not None:
             rv = list(self._selection)
         elif not self._faces and self._edges:
             rv = list(self._edges)
