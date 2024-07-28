@@ -375,4 +375,4 @@ Exporting and importing
 
 It is possible to export sketches using :meth:`~cadquery.Sketch.export`.
 See :ref:`importexport` for more details.
-Importing of DXF files is supported as well using :meth:`~cadquery.Sketch.impotDXF`.
+Importing of DXF files is supported as well using :meth:`~cadquery.Sketch.importDXF`.
