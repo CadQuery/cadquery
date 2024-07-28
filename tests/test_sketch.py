@@ -880,6 +880,7 @@ def test_invoke(s1, s2):
     with raises(ValueError):
         s2.invoke(lambda x, y: 1)
 
+
 @fixture
 def s3():
     """
