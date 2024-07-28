@@ -4,7 +4,7 @@ from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
 from cadquery import Edge, Vertex
 
-from pytest import approx, raises
+from pytest import approx, raises, fixture
 from math import pi, sqrt
 
 testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
@@ -804,3 +804,102 @@ def test_export():
     s2 = Sketch().importDXF("sketch.dxf")
 
     assert (s1 - s2).val().Area() == approx(0)
+
+
+@fixture
+def s1():
+    """
+    Sketch with 2 faces
+
+    """
+
+    return Sketch().rect(1, 1).push([(5, 0)]).rect(1, 4).reset()
+
+
+@fixture
+def s2():
+    """
+    Sketch with 5 faces
+
+    """
+
+    return Sketch().rarray(2, 1, 5, 1).rect(1, 1).reset()
+
+
+@fixture
+def f():
+    """
+    Single face
+    """
+
+    return Sketch().rect(0.1, 1).val()
+
+
+def test_filter(s1, f):
+
+    assert len(s1.filter(lambda x: x.Area() > 2).vals()) == 1
+    assert len(s1.reset().filter(lambda x: x.Area() >= 1).vals()) == 2
+    # this has to be fixed
+    assert len(s1.filter(lambda x: x.Area() < 1).vals()) == 2
+
+
+def test_sort(s1):
+
+    assert s1.sort(lambda x: -x.Area())[-1].val().Area() == approx(1)
+
+
+def test_apply(s1, f):
+
+    assert s1.apply(lambda x: [f]).val().Area() == approx(0.1)
+
+
+def test_map(s1, f):
+    assert s1.map(
+        lambda x: f.moved(x.Center())
+    ).replace().reset().val().Area() == approx(0.2)
+
+
+def test_getitem(s2):
+
+    assert len(s2[0].vals()) == 1
+    assert len(s2.reset()[-2:].vals()) == 2
+    assert len(s2.reset()[[0, 1]].vals()) == 2
+
+
+def test_invoke(s1, s2):
+
+    # builtin
+    assert len(s2.invoke(print).vals()) == 5
+    # arity 0
+    assert len(s2.invoke(lambda: 1).vals()) == 5
+    # arity 1 and no return
+    assert len(s2.invoke(lambda x: None).vals()) == 5
+    # arity 1
+    assert len(s2.invoke(lambda x: s1).vals()) == 2
+    # test exception with wrong arity
+    with raises(ValueError):
+        s2.invoke(lambda x, y: 1)
+
+@fixture
+def s3():
+    """
+    Simple sketch with one face.
+    """
+
+    return Sketch().rect(1, 1)
+
+
+def test_replace(s3, f):
+
+    assert s3.map(lambda x: f).replace().reset().val().Area() == approx(0.1)
+
+
+def test_add(s3, f):
+
+    # we do not clean, so adding will increase the number of edges
+    assert len(s3.map(lambda x: f).add().reset().val().Edges()) == 10
+
+
+def test_subtract(s3, f):
+
+    assert s3.map(lambda x: f).subtract().reset().val().Area() == approx(0.9)
