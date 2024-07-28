@@ -51,6 +51,12 @@ def test_face_interface():
     s8 = Sketch().face(Sketch().rect(1, 1).val())
     assert s8._faces.Area() == approx(1)
 
+    s9 = Sketch().face(Sketch().rect(1, 1))
+    assert s9._faces.Area() == approx(1)
+
+    with raises(ValueError):
+        Sketch().face(1234)
+
 
 def test_modes():
 
