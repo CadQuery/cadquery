@@ -41,13 +41,13 @@ Modes
 ^^^^^
 
 Every operation from the face API accepts a mode parameter to define
- how to combine the created object with existing ones. It can be fused (``mode='a'``),
-  cut (``mode='s'``), intersected (``mode='i'``), replaced (``mode='r'``)
-  or just stored for construction (``mode='c'``).
+how to combine the created object with existing ones. It can be fused (``mode='a'``),
+cut (``mode='s'``), intersected (``mode='i'``), replaced (``mode='r'``)
+or just stored for construction (``mode='c'``).
 In the last case, it is mandatory to specify a ``tag`` in order to be able to
- refer to the object later on. By default faces are fused together.
- Note the usage of the subtractive and additive modes in the example above.
- The additional two are demonstrated below.
+refer to the object later on. By default faces are fused together.
+Note the usage of the subtractive and additive modes in the example above.
+The additional two are demonstrated below.
 
 .. cadquery::
     :height: 600px
@@ -307,8 +307,8 @@ Sketches can be combined using :meth:`~cadquery.Sketch.face`.
 
    import cadquery as cq
 
-   s1 = cq.Sketch().rect(2,2)
-   s2 = cq.Sketch().circle(1)
+   s1 = cq.Sketch().rect(2, 2)
+   s2 = cq.Sketch().circle(0.5)
 
    result = s1.face(s2, mode='s')
 
@@ -320,11 +320,13 @@ It is also possible to use boolean operations to achieve the same effect.
 
    import cadquery as cq
 
-   s1 = cq.Sketch().rect(2,2)
-   s2 = cq.Sketch().circle(1)
+   s1 = cq.Sketch().rect(2, 2).vertices().fillet(0.25).reset()
+   s2 = cq.Sketch().rect(1, 1, angle=45).vertices().chamfer(0.1).reset()
 
    result = s1 - s2
 
+Boolean operations are selection sensitive, so in this example
+:meth:`~cadquery.Sketch.reset` call is needed.
 
 Offsets made easy
 =================
@@ -372,5 +374,5 @@ Exporting and importing
 =======================
 
 It is possible to export sketches using :meth:`~cadquery.Sketch.export`.
-See `importexport`_ for more details.
+See :ref:`importexport` for more details.
 Importing of DXF files is supported as well :meth:`~cadquery.Sketch.impotDXF`.
