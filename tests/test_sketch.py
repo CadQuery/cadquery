@@ -54,32 +54,41 @@ def test_face_interface():
 
 def test_modes():
 
+    # additive mode
     s1 = Sketch().rect(2, 2).rect(1, 1, mode="a")
 
     assert s1._faces.Area() == approx(4)
     assert len(s1._faces.Faces()) == 2
 
+    # subtraction mode
     s2 = Sketch().rect(2, 2).rect(1, 1, mode="s")
 
     assert s2._faces.Area() == approx(4 - 1)
     assert len(s2._faces.Faces()) == 1
 
+    # intersection mode
     s3 = Sketch().rect(2, 2).rect(1, 1, mode="i")
 
     assert s3._faces.Area() == approx(1)
     assert len(s3._faces.Faces()) == 1
 
+    # construction mode
     s4 = Sketch().rect(2, 2).rect(1, 1, mode="c", tag="t")
 
     assert s4._faces.Area() == approx(4)
     assert len(s4._faces.Faces()) == 1
     assert s4._tags["t"][0].Area() == approx(1)
 
+    # construction mode requires tagging
     with raises(ValueError):
         Sketch().rect(2, 2).rect(1, 1, mode="c")
 
     with raises(ValueError):
         Sketch().rect(2, 2).rect(1, 1, mode="dummy")
+
+    # replace mode
+    s5 = Sketch().rect(1, 1).wires().offset(-0.1, mode="r").reset()
+    assert s5.val().Area() == approx(0.8 ** 2)
 
 
 def test_distribute():
@@ -378,7 +387,7 @@ def test_selectors():
 
     s = Sketch().push([(-2, 0), (2, 0)]).rect(1, 1).rect(0.5, 0.5, mode="s").reset()
 
-    assert len(s._selection) == 0
+    assert s._selection is None
 
     s.vertices()
 
@@ -386,7 +395,7 @@ def test_selectors():
 
     s.reset()
 
-    assert len(s._selection) == 0
+    assert s._selection is None
 
     s.edges()
 
@@ -410,7 +419,7 @@ def test_selectors():
 
     s.tag("test").reset()
 
-    assert len(s._selection) == 0
+    assert s._selection is None
 
     s.select("test")
 
@@ -428,7 +437,8 @@ def test_selectors():
     s.reset().vertices("<X and <Y").val()
     assert s.val().toTuple() == approx((-2.5, -0.5, 0.0))
 
-    s.reset().vertices(">>X[1] and <Y").val()
+    with raises(IndexError):
+        s.reset().vertices(">>X[1] and <Y").val()
     assert len(s._selection) == 0
 
 
@@ -839,8 +849,7 @@ def test_filter(s1, f):
 
     assert len(s1.filter(lambda x: x.Area() > 2).vals()) == 1
     assert len(s1.reset().filter(lambda x: x.Area() >= 1).vals()) == 2
-    # this has to be fixed
-    assert len(s1.filter(lambda x: x.Area() < 1).vals()) == 2
+    assert len(s1.filter(lambda x: x.Area() < 1).vals()) == 0
 
 
 def test_sort(s1):
@@ -904,3 +913,38 @@ def test_add(s3, f):
 def test_subtract(s3, f):
 
     assert s3.map(lambda x: f).subtract().reset().val().Area() == approx(0.9)
+
+
+def test_iter(s1):
+
+    # __iter__ ofer face
+    assert len(list(s1)) == 2
+
+    # __iter__ over edges
+    assert len(list(Sketch().segment((0, 0), (1, 0)))) == 1
+
+
+def test_sanitize():
+
+    # it does not make sense to fuse faces and Locations
+    with raises(ValueError):
+        Sketch().rect(1, 1) + Sketch().rarray(1, 1, 1, 1)
+
+
+def test_missing_selection(s1):
+
+    # offset requires selected wires
+    with raises(ValueError):
+        s1.offset(0.1)
+
+    # fillet requires selected vertices
+    with raises(ValueError):
+        s1.fillet(0.1)
+
+    # cannot delete without selection
+    with raises(ValueError):
+        s1.delete()
+
+    # cannot tag without selection
+    with raises(ValueError):
+        s1.tag("name")
