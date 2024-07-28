@@ -200,12 +200,15 @@ Extending CadQuery: Special Methods
 -----------------------------------
 
 The above-mentioned approach has one drawback, it requires monkey-patching or subclassing. To avoid this
-one can also use the following special methods of :py:class:`cadquery.Workplane`
+one can also use the following special methods of :py:class:`cadquery.Workplane` and :py:class:`cadquery.Sketch`
 and write plugins in a more functional style.
 
     * :py:meth:`cadquery.Workplane.map`
     * :py:meth:`cadquery.Workplane.apply`
     * :py:meth:`cadquery.Workplane.invoke`
+    * :py:meth:`cadquery.Sketch.map`
+    * :py:meth:`cadquery.Sketch.apply`
+    * :py:meth:`cadquery.Sketch.invoke`
 
 Here is the same plugin rewritten using one of those methods.
 
