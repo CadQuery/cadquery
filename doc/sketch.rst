@@ -296,6 +296,36 @@ Two sketches on different workplanes are needed when using :meth:`~cadquery.Work
 
 When lofting only outer wires are taken into account and inner wires are silently ignored. Note that only sketches on the top of stack are considered for the current operation (i.e. there are no pending sketches), so when lofting or sweeping all relevant sketches have to be added in one `placeSketch` call.
 
+
+Combining sketches
+==================
+
+Sketches can be combined using :meth:`~cadquery.Sketch.face`.
+
+.. cadquery::
+   :height: 600px
+
+   import cadquery as cq
+
+   s1 = cq.Sketch().rect(2,2)
+   s2 = cq.Sketch().circle(1)
+
+   result = s1.face(s2, mode='s')
+
+
+It is also possible to use boolean operations to achieve the same effect.
+
+.. cadquery::
+   :height: 600px
+
+   import cadquery as cq
+
+   s1 = cq.Sketch().rect(2,2)
+   s2 = cq.Sketch().circle(1)
+
+   result = s1 - s2
+
+
 Offsets made easy
 =================
 
@@ -336,3 +366,11 @@ of the offset operation. Usually one wants to replace the original face, hence `
 
    result = cq.Workplane("front").placeSketch(sketch).extrude(1.0)
    result = result.faces(">Z").workplane().placeSketch(sketch_offset).cutBlind(-0.50)
+
+
+Exporting and importing
+=======================
+
+It is possible to export sketches using :meth:`~cadquery.Sketch.export`.
+See `importexport`_ for more details.
+Importing of DXF files is supported as well :meth:`~cadquery.Sketch.impotDXF`.
