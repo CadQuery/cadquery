@@ -7,6 +7,8 @@ from OCP.STEPControl import STEPControl_Reader
 from ... import cq
 from ..shapes import Shape
 from .dxf import _importDXF
+from .. import message
+from ...utils import cqmultimethod as multimethod
 
 RAD2DEG = 360.0 / (2 * pi)
 
@@ -60,7 +62,20 @@ def importBrep(fileName: str) -> "cq.Workplane":
     return cq.Workplane("XY").newObject([shape])
 
 
-# Loads a STEP file into a CQ.Workplane object
+def readStep(fileName: str) -> STEPControl_Reader:
+    """
+    Read STEP file, return STEPControl_Reader
+
+    :param fileName: The path and name of the STEP file
+    """
+    reader = STEPControl_Reader()
+    readStatus = reader.ReadFile(fileName)
+    if readStatus != OCP.IFSelect.IFSelect_RetDone:
+        raise ValueError("STEP File could not be loaded")
+    return reader
+
+
+@multimethod
 def importStep(fileName: str) -> "cq.Workplane":
     """
     Accepts a file name and loads the STEP file into a cadquery Workplane
@@ -68,11 +83,19 @@ def importStep(fileName: str) -> "cq.Workplane":
     :param fileName: The path and name of the STEP file to be imported
     """
 
-    # Now read and return the shape
-    reader = STEPControl_Reader()
-    readStatus = reader.ReadFile(fileName)
-    if readStatus != OCP.IFSelect.IFSelect_RetDone:
-        raise ValueError("STEP File could not be loaded")
+    return importStep(readStep(fileName))
+
+
+@importStep.register
+def importStep(reader: STEPControl_Reader) -> "cq.Workplane":
+    """
+    Import STEP given a STEPControl_Reader.
+
+    :param reader: STEPControl_Reader with loaded file
+    """
+    if reader.WS().LoadedFile() == "":
+        raise ValueError("STEP reader has no loaded file")
+
     for i in range(reader.NbRootsForTransfer()):
         reader.TransferRoot(i + 1)
 
