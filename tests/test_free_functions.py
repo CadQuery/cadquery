@@ -547,3 +547,14 @@ def test_loft():
     assert r4.Volume() > 0
     assert r5.Area() == approx(1)
     assert len(r6.Faces()) == 16
+
+
+# %% export
+def test_export():
+
+    b1 = box(1, 1, 1)
+    b1.export("box.brep")
+
+    b2 = Shape.importBrep("box.brep")
+
+    assert (b1 - b2).Volume() == approx(0)

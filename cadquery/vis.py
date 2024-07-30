@@ -21,9 +21,7 @@ def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:
         if isinstance(obj, (Shape, Workplane, Assembly)):
             assy.add(obj)
         elif isinstance(obj, Sketch):
-            assy.add(obj._faces)
-            assy.add(Compound.makeCompound(obj._edges))
-            assy.add(Compound.makeCompound(obj._wires))
+            assy.add(Compound.makeCompound(obj))
         elif isinstance(obj, TopoDS_Shape):
             assy.add(Shape(obj))
         else:

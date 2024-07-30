@@ -11,6 +11,8 @@ import math
 import pytest
 import ezdxf
 
+from uuid import uuid1
+
 from pytest import approx
 
 # my modules
@@ -27,8 +29,9 @@ from cadquery import (
     Vector,
     Color,
 )
+
+from cadquery.occ_impl.shapes import rect, face, compound
 from cadquery.occ_impl.exporters.dxf import DxfDocument
-from cadquery.occ_impl.exporters.utils import toCompound
 from tests import BaseTest
 from OCP.GeomConvert import GeomConvert
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
@@ -47,6 +50,12 @@ def testdatadir():
 @pytest.fixture()
 def box123():
     return Workplane().box(1, 2, 3)
+
+
+@pytest.fixture()
+def fname(tmpdir):
+
+    return tmpdir / str(uuid1())
 
 
 def test_step_options(tmpdir):
@@ -298,7 +307,7 @@ class TestDxfDocument(BaseTest):
         workplane = Workplane().line(1, 1)
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result = DxfDocument._dxf_line(edges[0])
@@ -311,7 +320,7 @@ class TestDxfDocument(BaseTest):
         workplane = Workplane().circle(1)
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result = DxfDocument._dxf_circle(edges[0])
@@ -324,7 +333,7 @@ class TestDxfDocument(BaseTest):
         workplane = Workplane().radiusArc((1, 1), 1)
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result_type, result_attributes = DxfDocument._dxf_circle(edges[0])
@@ -352,7 +361,7 @@ class TestDxfDocument(BaseTest):
         workplane = Workplane().ellipse(2, 1, 0)
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result_type, result_attributes = DxfDocument._dxf_ellipse(edges[0])
@@ -388,7 +397,7 @@ class TestDxfDocument(BaseTest):
         )
 
         plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+        shape = compound(*workplane).transformShape(plane.fG)
         edges = shape.Edges()
 
         result_type, result_attributes = DxfDocument._dxf_spline(edges[0], plane)
@@ -643,9 +652,6 @@ class TestExporters(BaseTest):
     def testDXF(self):
 
         exporters.export(self._box().section(), "out.dxf")
-
-        with self.assertRaises(ValueError):
-            exporters.export(self._box().val(), "out.dxf")
 
         s1 = (
             Workplane("XZ")
@@ -945,3 +951,23 @@ def test_dxf_ellipse_arc(tmpdir):
 
     assert w2.val().isValid()
     assert w2.val().Volume() == approx(math.pi * r ** 2 / 4)
+
+
+def test_dxf_sketch(fname):
+
+    s = Sketch().rect(1, 2)
+    exporters.exportDXF(s, fname)
+
+    s_imported = Sketch().importDXF(fname)
+
+    assert (s._faces - s_imported._faces).Volume() == 0
+
+
+def test_dxf_shape(fname):
+
+    s = face(rect(10, 0.5))
+    exporters.exportDXF(s, fname)
+
+    s_imported = Sketch().importDXF(fname).val()
+
+    assert (s - s_imported).Volume() == 0
