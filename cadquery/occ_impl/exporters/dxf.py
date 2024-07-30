@@ -149,7 +149,7 @@ class DxfDocument:
     def add_shape(self, shape: Union[WorkplaneLike, Shape], layer: str = "") -> Self:
         """Add CadQuery shape to a DXF layer.
 
-        :param s: CadQuery Workplane or shape
+        :param s: CadQuery Workplane or Shape
         :param layer: layer definition name
         """
 
