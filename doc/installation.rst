@@ -274,8 +274,8 @@ If all has gone well, you can open a command line/prompt, and type:
 .. code-block::
 
       $ python
-      $ import cadquery
-      $ cadquery.Workplane('XY').box(1,2,3).toSvg()
+      >>> import cadquery
+      >>> cadquery.Workplane('XY').box(1,2,3).toSvg()
 
 You should see raw SVG output displayed on the command line if the CadQuery installation was successful.
 
