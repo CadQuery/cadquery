@@ -431,7 +431,7 @@ Options
     # or
     result.export("/path/to/file/object.dxf")
 
-Sketches can be also directly exported to DXF.
+Sketches can also be directly exported to DXF.
 
 .. code-block:: python
     :caption: DXF export of sketches.
