@@ -1252,8 +1252,9 @@ class Sketch(object):
     def filter(self: T, f: Callable[[SketchVal], bool]) -> T:
         """
         Filter items using a boolean predicate.
+        
         :param f: Callable to be used for filtering.
-        :return: Workplane object with filtered items.
+        :return: Sketch object with filtered items.
         """
 
         self._selection = list(filter(f, self.vals()))
@@ -1263,8 +1264,9 @@ class Sketch(object):
     def map(self: T, f: Callable[[SketchVal], SketchVal]):
         """
         Apply a callable to every item separately.
+        
         :param f: Callable to be applied to every item separately.
-        :return: Workplane object with f applied to all items.
+        :return: Sketch object with f applied to all items.
         """
 
         self._selection = list(map(f, self.vals()))
@@ -1274,8 +1276,9 @@ class Sketch(object):
     def apply(self: T, f: Callable[[Iterable[SketchVal]], Iterable[SketchVal]]):
         """
         Apply a callable to all items at once.
+        
         :param f: Callable to be applied.
-        :return: Workplane object with f applied to all items.
+        :return: Sketch object with f applied to all items.
         """
 
         self._selection = list(f(self.vals()))
@@ -1285,8 +1288,9 @@ class Sketch(object):
     def sort(self: T, key: Callable[[SketchVal], Any]) -> T:
         """
         Sort items using a callable.
+        
         :param key: Callable to be used for sorting.
-        :return: Workplane object with items sorted.
+        :return: Sketch object with items sorted.
         """
 
         self._selection = list(sorted(self.vals(), key=key))
@@ -1297,11 +1301,12 @@ class Sketch(object):
         self: T, f: Union[Callable[[T], T], Callable[[T], None], Callable[[], None]]
     ):
         """
-        Invoke a callable mapping Workplane to Workplane or None. Supports also
+        Invoke a callable mapping Sketch to Sketch or None. Supports also
         callables that take no arguments such as breakpoint. Returns self if callable
         returns None.
+        
         :param f: Callable to be invoked.
-        :return: Workplane object.
+        :return: Sketch object.
         """
 
         arity = get_arity(f)
@@ -1327,6 +1332,7 @@ class Sketch(object):
     ) -> T:
         """
         Export Sketch to file.
+        
         :param path: Filename.
         :param tolerance: the deflection tolerance, in model units. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Default 0.1.
