@@ -1472,8 +1472,8 @@ class Workplane(object):
         If you want to position the array at another point, create another workplane
         that is shifted to the position you would like to use as a reference
 
-        :param xSpacing: spacing between points in the x direction ( must be > 0)
-        :param ySpacing: spacing between points in the y direction ( must be > 0)
+        :param xSpacing: spacing between points in the x direction ( must be >= 0)
+        :param ySpacing: spacing between points in the y direction ( must be >= 0)
         :param xCount: number of points ( > 0 )
         :param yCount: number of points ( > 0 )
         :param center: If True, the array will be centered around the workplane center.
@@ -1483,7 +1483,7 @@ class Workplane(object):
         """
 
         if (xSpacing <= 0 and ySpacing <= 0) or xCount < 1 or yCount < 1:
-            raise ValueError("Spacing and count must be > 0 ")
+            raise ValueError("Spacing and count must be > 0 in at least one direction")
 
         if isinstance(center, bool):
             center = (center, center)
@@ -4569,6 +4569,7 @@ class Workplane(object):
     ) -> T:
         """
         Export Workplane to file.
+        
         :param path: Filename.
         :param tolerance: the deflection tolerance, in model units. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Default 0.1.
