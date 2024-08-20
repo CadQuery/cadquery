@@ -5757,7 +5757,7 @@ class TestCadQuery(BaseTest):
 
     def test_getitem(self):
 
-        w = Workplane().rarray(2, 1, 5, 1).box(1, 1, 1, combine=False)
+        w = Workplane().rarray(2, 0, 5, 1).box(1, 1, 1, combine=False)
 
         assert w[0].solids().size() == 1
         assert w[-2:].solids().size() == 2
@@ -5765,7 +5765,7 @@ class TestCadQuery(BaseTest):
 
     def test_invoke(self):
 
-        w = Workplane().rarray(2, 1, 5, 1).box(1, 1, 1, combine=False)
+        w = Workplane().rarray(2, 0, 5, 1).box(1, 1, 1, combine=False)
 
         # builtin
         assert w.invoke(print).size() == 5
