@@ -33,10 +33,10 @@ from .occ_impl.exporters.assembly import (
     exportVRML,
     exportGLTF,
     STEPExportModeLiterals,
-    ExportModes,
 )
 
 from .selectors import _expression_grammar as _selector_grammar
+from .utils import deprecate
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -451,7 +451,64 @@ class Assembly(object):
 
         return self
 
+    @deprecate()
     def save(
+        self,
+        path: str,
+        exportType: Optional[ExportLiterals] = None,
+        mode: STEPExportModeLiterals = "default",
+        tolerance: float = 0.1,
+        angularTolerance: float = 0.1,
+        **kwargs,
+    ) -> "Assembly":
+        """
+        Save assembly to a file.
+
+        :param path: Path and filename for writing.
+        :param exportType: export format (default: None, results in format being inferred form the path)
+        :param mode: STEP only - See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
+        :param tolerance: the deflection tolerance, in model units. Only used for glTF, VRML. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Only used for glTF, VRML. Default 0.1.
+        :param \\**kwargs: Additional keyword arguments.  Only used for STEP, glTF and STL.
+            See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
+        :param ascii: STL only - Sets whether or not STL export should be text or binary
+        :type ascii: bool
+        """
+
+        # Make sure the export mode setting is correct
+        if mode not in get_args(STEPExportModeLiterals):
+            raise ValueError(f"Unknown assembly export mode {mode} for STEP")
+
+        if exportType is None:
+            t = path.split(".")[-1].upper()
+            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
+                exportType = cast(ExportLiterals, t)
+            else:
+                raise ValueError("Unknown extension, specify export type explicitly")
+
+        if exportType == "STEP":
+            exportAssembly(self, path, mode, **kwargs)
+        elif exportType == "XML":
+            exportCAF(self, path)
+        elif exportType == "VRML":
+            exportVRML(self, path, tolerance, angularTolerance)
+        elif exportType == "GLTF" or exportType == "GLB":
+            exportGLTF(self, path, None, tolerance, angularTolerance)
+        elif exportType == "VTKJS":
+            exportVTKJS(self, path)
+        elif exportType == "STL":
+            # Handle the ascii setting for STL export
+            export_ascii = False
+            if "ascii" in kwargs:
+                export_ascii = bool(kwargs.get("ascii"))
+
+            self.toCompound().exportStl(path, tolerance, angularTolerance, export_ascii)
+        else:
+            raise ValueError(f"Unknown format: {exportType}")
+
+        return self
+
+    def export(
         self,
         path: str,
         exportType: Optional[ExportLiterals] = None,

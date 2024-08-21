@@ -12,7 +12,9 @@ from typing import (
     TypeVar,
     cast as tcast,
     Literal,
+    overload,
 )
+
 from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
 from multimethod import multimethod
@@ -21,9 +23,21 @@ from typish import instance_of, get_type
 from .hull import find_hull
 from .selectors import StringSyntaxSelector, Selector
 from .types import Real
+from .utils import get_arity
 
-from .occ_impl.shapes import Shape, Face, Edge, Wire, Compound, Vertex, edgesToWires
+from .occ_impl.shapes import (
+    Shape,
+    Face,
+    Edge,
+    Wire,
+    Compound,
+    Vertex,
+    edgesToWires,
+    compound,
+    VectorLike,
+)
 from .occ_impl.geom import Location, Vector
+from .occ_impl.exporters import export
 from .occ_impl.importers.dxf import _importDXF
 from .occ_impl.sketch_solver import (
     SketchConstraintSolver,
@@ -35,12 +49,39 @@ from .occ_impl.sketch_solver import (
     arc_point,
 )
 
-Modes = Literal["a", "s", "i", "c"]  # add, subtract, intersect, construct
+#%% types
+
+Modes = Literal["a", "s", "i", "c", "r"]  # add, subtract, intersect, construct, replace
 Point = Union[Vector, Tuple[Real, Real]]
 TOL = 1e-6
 
 T = TypeVar("T", bound="Sketch")
 SketchVal = Union[Shape, Location]
+
+
+# %% utilities
+
+
+def _sanitize_for_bool(obj: SketchVal) -> Shape:
+    """
+    Make sure that a Shape is selected
+    """
+
+    if isinstance(obj, Location):
+        raise ValueError("Location was provided, Shape is required.")
+
+    return obj
+
+
+def _to_compound(obj: Shape) -> Compound:
+
+    if isinstance(obj, Compound):
+        return obj
+    else:
+        return Compound.makeCompound((obj,))
+
+
+# %% Constraint
 
 
 class Constraint(object):
@@ -86,6 +127,9 @@ class Constraint(object):
         self.param = tcast(Any, converter)(param) if converter else param
 
 
+# %% Sketch
+
+
 class Sketch(object):
     """
     2D sketch. Supports faces, edges and edges with constraints based construction.
@@ -95,17 +139,21 @@ class Sketch(object):
     locs: List[Location]
 
     _faces: Compound
-    _wires: List[Wire]
     _edges: List[Edge]
 
-    _selection: List[SketchVal]
+    _selection: Optional[List[SketchVal]]
     _constraints: List[Constraint]
 
     _tags: Dict[str, Sequence[SketchVal]]
 
     _solve_status: Optional[Dict[str, Any]]
 
-    def __init__(self: T, parent: Any = None, locs: Iterable[Location] = (Location(),)):
+    def __init__(
+        self: T,
+        parent: Any = None,
+        locs: Iterable[Location] = (Location(),),
+        obj: Optional[Compound] = None,
+    ):
         """
         Construct an empty sketch.
         """
@@ -113,11 +161,10 @@ class Sketch(object):
         self.parent = parent
         self.locs = list(locs)
 
-        self._faces = Compound.makeCompound(())
-        self._wires = []
+        self._faces = obj if obj else Compound.makeCompound(())
         self._edges = []
 
-        self._selection = []
+        self._selection = None
         self._constraints = []
 
         self._tags = {}
@@ -126,19 +173,23 @@ class Sketch(object):
 
     def __iter__(self) -> Iterator[Face]:
         """
-        Iterate over faces-locations combinations.
+        Iterate over faces-locations combinations. If not faces are present
+        iterate over edges:
         """
 
-        return iter(f for l in self.locs for f in self._faces.moved(l).Faces())
+        if self._faces:
+            return iter(f for l in self.locs for f in self._faces.moved(l).Faces())
+        else:
+            return iter(e.moved(l) for l in self.locs for e in self._edges)
 
-    def _tag(self: T, val: Sequence[Union[Shape, Location]], tag: str):
+    def _tag(self: T, val: Sequence[SketchVal], tag: str):
 
         self._tags[tag] = val
 
     # face construction
     def face(
         self: T,
-        b: Union[Wire, Iterable[Edge], Compound, T],
+        b: Union[Wire, Iterable[Edge], Shape, T],
         angle: Real = 0,
         mode: Modes = "a",
         tag: Optional[str] = None,
@@ -152,9 +203,11 @@ class Sketch(object):
 
         if isinstance(b, Wire):
             res = Face.makeFromWires(b)
-        elif isinstance(b, (Sketch, Compound)):
+        elif isinstance(b, Sketch):
             res = b
-        elif isinstance(b, Iterable) and not isinstance(b, Shape):
+        elif isinstance(b, Shape):
+            res = compound(b.Faces())
+        elif isinstance(b, Iterable):
             wires = edgesToWires(tcast(Iterable[Edge], b))
             res = Face.makeFromWires(*(wires[0], wires[1:]))
         else:
@@ -488,6 +541,8 @@ class Sketch(object):
             self._faces = self._faces.cut(*res)
         elif mode == "i":
             self._faces = self._faces.intersect(*res)
+        elif mode == "r":
+            self._faces = compound(res)
         elif mode == "c":
             if not tag:
                 raise ValueError("No tag specified - the geometry will be unreachable")
@@ -506,10 +561,8 @@ class Sketch(object):
             rv = find_hull(el for el in self._selection if isinstance(el, Edge))
         elif self._faces:
             rv = find_hull(el for el in self._faces.Edges())
-        elif self._edges or self._wires:
-            rv = find_hull(
-                chain(self._edges, chain.from_iterable(w.Edges() for w in self._wires))
-            )
+        elif self._edges:
+            rv = find_hull(self._edges)
         else:
             raise ValueError("No objects available for hull construction")
 
@@ -522,10 +575,15 @@ class Sketch(object):
         Offset selected wires or edges.
         """
 
-        rv = (el.offset2D(d) for el in self._selection if isinstance(el, Wire))
+        if self._selection:
+            rv = (el.offset2D(d) for el in self._selection if isinstance(el, Wire))
 
-        for el in chain.from_iterable(rv):
-            self.face(el, mode=mode, tag=tag, ignore_selection=bool(self._selection))
+            for el in chain.from_iterable(rv):
+                self.face(
+                    el, mode=mode, tag=tag, ignore_selection=bool(self._selection)
+                )
+        else:
+            raise ValueError("Selection is needed to offset")
 
         return self
 
@@ -533,12 +591,17 @@ class Sketch(object):
 
         rv = {}
 
-        for f in self._faces.Faces():
+        if self._selection:
+            for f in self._faces.Faces():
 
-            f_vertices = f.Vertices()
-            rv[f] = [
-                v for v in self._selection if isinstance(v, Vertex) and v in f_vertices
-            ]
+                f_vertices = f.Vertices()
+                rv[f] = [
+                    v
+                    for v in self._selection
+                    if isinstance(v, Vertex) and v in f_vertices
+                ]
+        else:
+            raise ValueError("Selection is needed to match vertices to faces")
 
         return rv
 
@@ -622,7 +685,10 @@ class Sketch(object):
         Tag current selection.
         """
 
-        self._tags[tag] = list(self._selection)
+        if self._selection:
+            self._tags[tag] = list(self._selection)
+        else:
+            raise ValueError("Selection is needed to tag")
 
         return self
 
@@ -679,7 +745,7 @@ class Sketch(object):
         Reset current selection.
         """
 
-        self._selection = []
+        self._selection = None
         return self
 
     def delete(self: T) -> T:
@@ -687,15 +753,18 @@ class Sketch(object):
         Delete selected object.
         """
 
-        for obj in self._selection:
-            if isinstance(obj, Face):
-                self._faces.remove(obj)
-            elif isinstance(obj, Wire):
-                self._wires.remove(obj)
-            elif isinstance(obj, Edge):
-                self._edges.remove(obj)
+        if self._selection:
+            for obj in self._selection:
+                if isinstance(obj, Face):
+                    self._faces.remove(obj)
+                elif isinstance(obj, Edge):
+                    self._edges.remove(obj)
+                else:
+                    raise ValueError(f"Deletion of {obj} not supported")
+        else:
+            raise ValueError("Selection is needed to delete")
 
-        self._selection = []
+        self.reset()
 
         return self
 
@@ -871,7 +940,7 @@ class Sketch(object):
         The edge will pass through the last points, and the inner points
         are bezier control points.
         """
-        p1 = self._endPoint()
+
         val = Edge.makeBezier([Vector(*p) for p in pts])
 
         return self.edge(val, tag, forConstruction)
@@ -1011,13 +1080,49 @@ class Sketch(object):
 
         return rv
 
+    @overload
     def moved(self: T, loc: Location) -> T:
+        ...
+
+    @overload
+    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> T:
+        ...
+
+    @overload
+    def moved(self: T, locs: Sequence[Location]) -> T:
+        ...
+
+    @overload
+    def moved(
+        self: T,
+        x: Real = 0,
+        y: Real = 0,
+        z: Real = 0,
+        rx: Real = 0,
+        ry: Real = 0,
+        rz: Real = 0,
+    ) -> T:
+        ...
+
+    @overload
+    def moved(self: T, loc: VectorLike) -> T:
+        ...
+
+    @overload
+    def moved(self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike) -> T:
+        ...
+
+    @overload
+    def moved(self: T, loc: Sequence[VectorLike]) -> T:
+        ...
+
+    def moved(self: T, *args, **kwargs) -> T:
         """
         Create a partial copy of the sketch with moved _faces.
         """
 
         rv = self.__class__()
-        rv._faces = self._faces.moved(loc)
+        rv._faces = self._faces.moved(*args, **kwargs)
 
         return rv
 
@@ -1040,14 +1145,203 @@ class Sketch(object):
 
     def val(self: T) -> SketchVal:
         """
-        Return the first selected item or Location().
+        Return the first selected item, underlying compound or first edge.
         """
 
-        return self._selection[0] if self._selection else Location()
+        if self._selection is not None:
+            rv = self._selection[0]
+        elif not self._faces and self._edges:
+            rv = self._edges[0]
+        else:
+            rv = self._faces
+
+        return rv
 
     def vals(self: T) -> List[SketchVal]:
         """
-        Return the list of selected items.
+        Return all selected items, underlying compound or all edges.
         """
 
-        return self._selection
+        rv: List[SketchVal]
+
+        if self._selection is not None:
+            rv = list(self._selection)
+        elif not self._faces and self._edges:
+            rv = list(self._edges)
+        else:
+            rv = list(self._faces)
+
+        return rv
+
+    def add(self: T) -> T:
+        """
+        Add selection to the underlying faces.
+        """
+
+        self._faces += compound(self._selection).faces()
+
+        return self
+
+    def subtract(self: T) -> T:
+        """
+        Subtract selection from the underlying faces.
+        """
+
+        self._faces -= compound(self._selection).faces()
+
+        return self
+
+    def replace(self: T) -> T:
+        """
+        Replace the underlying faces with the selection.
+        """
+
+        self._faces = compound(self._selection).faces()
+
+        return self
+
+    def __add__(self: T, other: "Sketch") -> T:
+        """
+        Fuse self and other.
+        """
+
+        res = _sanitize_for_bool(self.val()) + _sanitize_for_bool(other.val())
+
+        return self.__class__(obj=_to_compound(res))
+
+    def __sub__(self: T, other: "Sketch") -> T:
+        """
+        Subtract other from self.
+        """
+
+        res = _sanitize_for_bool(self.val()) - _sanitize_for_bool(other.val())
+
+        return self.__class__(obj=_to_compound(res))
+
+    def __mul__(self: T, other: "Sketch") -> T:
+        """
+        Intersect self and other.
+        """
+
+        res = _sanitize_for_bool(self.val()) * _sanitize_for_bool(other.val())
+
+        return self.__class__(obj=_to_compound(res))
+
+    def __truediv__(self: T, other: "Sketch") -> T:
+        """
+        Split self with other.
+        """
+
+        res = _sanitize_for_bool(self.val()) / _sanitize_for_bool(other.val())
+
+        return self.__class__(obj=_to_compound(res))
+
+    def __getitem__(self: T, item: Union[int, Sequence[int], slice]) -> T:
+
+        vals = self.vals()
+
+        if isinstance(item, Iterable):
+            self._selection = [vals[i] for i in item]
+        elif isinstance(item, slice):
+            self._selection = vals[item]
+        else:
+            self._selection = [vals[item]]
+
+        return self
+
+    def filter(self: T, f: Callable[[SketchVal], bool]) -> T:
+        """
+        Filter items using a boolean predicate.
+        
+        :param f: Callable to be used for filtering.
+        :return: Sketch object with filtered items.
+        """
+
+        self._selection = list(filter(f, self.vals()))
+
+        return self
+
+    def map(self: T, f: Callable[[SketchVal], SketchVal]):
+        """
+        Apply a callable to every item separately.
+        
+        :param f: Callable to be applied to every item separately.
+        :return: Sketch object with f applied to all items.
+        """
+
+        self._selection = list(map(f, self.vals()))
+
+        return self
+
+    def apply(self: T, f: Callable[[Iterable[SketchVal]], Iterable[SketchVal]]):
+        """
+        Apply a callable to all items at once.
+        
+        :param f: Callable to be applied.
+        :return: Sketch object with f applied to all items.
+        """
+
+        self._selection = list(f(self.vals()))
+
+        return self
+
+    def sort(self: T, key: Callable[[SketchVal], Any]) -> T:
+        """
+        Sort items using a callable.
+        
+        :param key: Callable to be used for sorting.
+        :return: Sketch object with items sorted.
+        """
+
+        self._selection = list(sorted(self.vals(), key=key))
+
+        return self
+
+    def invoke(
+        self: T, f: Union[Callable[[T], T], Callable[[T], None], Callable[[], None]]
+    ):
+        """
+        Invoke a callable mapping Sketch to Sketch or None. Supports also
+        callables that take no arguments such as breakpoint. Returns self if callable
+        returns None.
+        
+        :param f: Callable to be invoked.
+        :return: Sketch object.
+        """
+
+        arity = get_arity(f)
+        rv = self
+
+        if arity == 0:
+            f()  # type: ignore
+        elif arity == 1:
+            res = f(self)  # type: ignore
+            if res is not None:
+                rv = res
+        else:
+            raise ValueError("Provided function {f} accepts too many arguments")
+
+        return rv
+
+    def export(
+        self: T,
+        fname: str,
+        tolerance: float = 0.1,
+        angularTolerance: float = 0.1,
+        opt: Optional[Dict[str, Any]] = None,
+    ) -> T:
+        """
+        Export Sketch to file.
+        
+        :param path: Filename.
+        :param tolerance: the deflection tolerance, in model units. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Default 0.1.
+        :param opt: additional options passed to the specific exporter. Default None.
+        :return: Self.
+        """
+
+        export(
+            self, fname, tolerance=tolerance, angularTolerance=angularTolerance, opt=opt
+        )
+
+        return self

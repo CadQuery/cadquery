@@ -15,6 +15,7 @@ from pytest import approx, raises
 
 from cadquery import *
 from cadquery import occ_impl
+from cadquery.occ_impl.shapes import *
 from tests import (
     BaseTest,
     writeStringToFile,
@@ -5756,7 +5757,7 @@ class TestCadQuery(BaseTest):
 
     def test_getitem(self):
 
-        w = Workplane().rarray(2, 1, 5, 1).box(1, 1, 1, combine=False)
+        w = Workplane().rarray(2, 0, 5, 1).box(1, 1, 1, combine=False)
 
         assert w[0].solids().size() == 1
         assert w[-2:].solids().size() == 2
@@ -5764,7 +5765,7 @@ class TestCadQuery(BaseTest):
 
     def test_invoke(self):
 
-        w = Workplane().rarray(2, 1, 5, 1).box(1, 1, 1, combine=False)
+        w = Workplane().rarray(2, 0, 5, 1).box(1, 1, 1, combine=False)
 
         # builtin
         assert w.invoke(print).size() == 5
@@ -5790,3 +5791,41 @@ class TestCadQuery(BaseTest):
         verts, _ = Face.makePlane(1e-9, 1e-9).tessellate(1e-3)
 
         assert len(verts) == 0
+
+    def test_export(self):
+
+        w = Workplane().box(1, 1, 1).export("box.brep")
+
+        assert (w - Shape.importBrep("box.brep")).val().Volume() == approx(0)
+
+    def test_bool_operators(self):
+
+        w1 = Workplane().box(1, 1, 2)
+        w2 = Workplane().box(2, 2, 1)
+
+        assert (w1 + w2).val().Volume() == approx(5)
+        assert (w1 - w2).val().Volume() == approx(1)
+        assert (w1 * w2).val().Volume() == approx(1)
+        assert (w1 / w2).solids().size() == 3
+
+    def test_extrude_face(self):
+
+        f = face(rect(1, 1))
+        c = compound(f)
+
+        # face
+        assert Workplane().add(f).extrude(1).val().Volume() == approx(1)
+        # compound with face
+        assert Workplane().add(c).extrude(1).val().Volume() == approx(1)
+
+    def test_workplane_iter(self):
+
+        s = Workplane().sketch().rarray(5, 0, 5, 1).rect(1, 1).finalize()
+        w1 = Workplane().pushPoints([(-10, 0), (10, 0)])
+        w2 = w1.box(1, 1, 1)  # NB this results in Compound of two Solids
+        w3 = w1.box(1, 1, 1, combine=False)
+
+        assert len(list(s)) == 5
+        assert len(list(w1)) == 0
+        assert len(list(w2)) == 2  # 2 beacuase __iter__ unpacks Compounds
+        assert len(list(w3)) == 2
