@@ -4583,6 +4583,49 @@ class Workplane(object):
 
         return self
 
+    def firstSolid(self : T, start:Vector, end:Vector, workplanes_to_consider) -> Vector:
+        """
+        Finds the first point with a solid bestween start and end points
 
+        :param start: the start point.
+        :param end: the end point.
+        :param workplanes_to_consider: Workplanes to include while searching for a solid
+
+        :return: the first point with a solid with tolerance 1e-4, returns Vector(inf, inf, inf) if no solid found
+        """
+        point_on_vector = lambda start, end, param : start + param * (end-start)
+        low: float = 0
+        high: float = 1
+        while high-low > 1e-4:
+            mid = (low+high)/2
+            low_to_point = point_on_vector(start, end, low)
+            mid_to_point = point_on_vector(start, end, mid)
+            high_to_point = point_on_vector(start, end, high)
+            path = Edge.makeLine(low_to_point, mid_to_point)
+            tube1 = Workplane().circle(0.1).sweep(path)
+            faces = tube1.faces().objects
+            center = faces[-1].Center()
+            tube1 = tube1.translate(mid_to_point-center)
+            path = Edge.makeLine(high_to_point, mid_to_point)
+            tube2 = Workplane().circle(0.1).sweep(path)
+            faces = tube2.faces().objects
+            center = faces[-1].Center()
+            tube2 = tube2.translate(mid_to_point-center)
+            found_solid = False
+            for workplane in workplanes_to_consider:
+                if workplane.intersect(tube1).val().Volume() > 0:
+                    high = mid
+                    found_solid = True
+                    break
+            if found_solid:
+                continue
+            for workplane in workplanes_to_consider:
+                if workplane.intersect(tube2).val().Volume() > 0:
+                    low = mid
+                    found_solid = True
+                    break
+            if not found_solid:
+                return Vector(math.inf, math.inf, math.inf)
+        return mid_to_point
 # alias for backward compatibility
 CQ = Workplane
