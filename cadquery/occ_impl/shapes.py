@@ -289,7 +289,6 @@ from ..utils import deprecate
 Real = Union[float, int]
 
 TOLERANCE = 1e-6
-HASH_CODE_MAX = 2147483647  # max 32bit signed int, required by OCC.Core.HashCode
 
 shape_LUT = {
     ta.TopAbs_VERTEX: "Vertex",
@@ -565,7 +564,7 @@ class Shape(object):
         Returns a hashed value denoting this shape. It is computed from the
         TShape and the Location. The Orientation is not used.
         """
-        return self.wrapped.HashCode(HASH_CODE_MAX)
+        return hash(self.wrapped)
 
     def isNull(self) -> bool:
         """
