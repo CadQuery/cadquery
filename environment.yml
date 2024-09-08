@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python>=3.9,<=3.12
   - ipython
-  - ocp=7.7.2
+  - cadquery/label/dev::ocp=7.8.1
   - vtk=*=qt*
   - pyparsing>=2.1.9
   - sphinx=5.0.1
