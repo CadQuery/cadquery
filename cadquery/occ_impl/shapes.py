@@ -5147,6 +5147,6 @@ def check(s: Shape) -> bool:
     """
 
     analyzer = BRepAlgoAPI_Check(s.wrapped)
-    rv = analyzer.isValid()
+    rv = analyzer.IsValid()
 
     return rv
