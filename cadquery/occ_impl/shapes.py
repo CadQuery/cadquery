@@ -1711,16 +1711,16 @@ class Mixin1D(object):
 
         curve = self._geomAdaptor()
 
-        if isinstance(d, Real):
-            l = GCPnts_AbscissaPoint.Length_s(curve)
-            rv = GCPnts_AbscissaPoint(curve, l * d, curve.FirstParameter()).Parameter()
-        else:
+        if isinstance(d, Vector):
             rv = GeomAPI_ProjectPointOnCurve(
                 d.toPnt(),
                 curve.Curve().Curve(),
                 curve.FirstParameter(),
                 curve.LastParameter(),
             ).LowerDistanceParameter()
+        else:
+            l = GCPnts_AbscissaPoint.Length_s(curve)
+            rv = GCPnts_AbscissaPoint(curve, l * d, curve.FirstParameter()).Parameter()
 
         return rv
 
