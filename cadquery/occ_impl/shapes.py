@@ -3312,8 +3312,8 @@ class Solid(Shape, Mixin3D):
         Returns true if the object is a solid, false otherwise
         """
         if hasattr(obj, "ShapeType"):
-            if obj.ShapeType == "Solid" or (
-                obj.ShapeType == "Compound" and len(obj.Solids()) > 0
+            if obj.ShapeType() == "Solid" or (
+                obj.ShapeType() == "Compound" and len(obj.Solids()) > 0
             ):
                 return True
         return False
