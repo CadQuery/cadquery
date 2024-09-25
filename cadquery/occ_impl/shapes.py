@@ -213,15 +213,6 @@ from OCP.Graphic3d import (
     Graphic3d_VTA_TOP,
 )
 
-from OCP.Graphic3d import (
-    Graphic3d_HTA_LEFT,
-    Graphic3d_HTA_CENTER,
-    Graphic3d_HTA_RIGHT,
-    Graphic3d_VTA_BOTTOM,
-    Graphic3d_VTA_CENTER,
-    Graphic3d_VTA_TOP,
-)
-
 from OCP.NCollection import NCollection_Utf8String
 
 from OCP.BRepFeat import BRepFeat_MakeDPrism
@@ -235,10 +226,7 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.GeomAbs import (
     GeomAbs_Shape,
     GeomAbs_C0,
-    GeomAbs_C1,
-    GeomAbs_C2,
     GeomAbs_G2,
-    GeomAbs_G1,
     GeomAbs_Intersection,
     GeomAbs_JoinType,
 )
