@@ -132,6 +132,7 @@ from OCP.gce import gce_MakeLin, gce_MakeDir
 from OCP.GeomAPI import (
     GeomAPI_Interpolate,
     GeomAPI_ProjectPointOnSurf,
+    GeomAPI_ProjectPointOnCurve,
     GeomAPI_PointsToBSpline,
     GeomAPI_PointsToBSplineSurface,
 )
@@ -144,6 +145,7 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Cut,
     BRepAlgoAPI_BooleanOperation,
     BRepAlgoAPI_Splitter,
+    BRepAlgoAPI_Check,
 )
 
 from OCP.Geom import (
@@ -1699,18 +1701,28 @@ class Mixin1D(object):
 
         return Vector(curve.Value(umax))
 
-    def paramAt(self: Mixin1DProtocol, d: float) -> float:
+    def paramAt(self: Mixin1DProtocol, d: Union[Real, Vector]) -> float:
         """
-        Compute parameter value at the specified normalized distance.
+        Compute parameter value at the specified normalized distance or a point.
 
-        :param d: normalized distance [0, 1]
+        :param d: normalized distance [0, 1] or a point
         :return: parameter value
         """
 
         curve = self._geomAdaptor()
 
-        l = GCPnts_AbscissaPoint.Length_s(curve)
-        return GCPnts_AbscissaPoint(curve, l * d, curve.FirstParameter()).Parameter()
+        if isinstance(d, Real):
+            l = GCPnts_AbscissaPoint.Length_s(curve)
+            rv = GCPnts_AbscissaPoint(curve, l * d, curve.FirstParameter()).Parameter()
+        else:
+            rv = GeomAPI_ProjectPointOnCurve(
+                d.toPnt(),
+                curve.Curve().Curve(),
+                curve.FirstParameter(),
+                curve.LastParameter(),
+            ).LowerDistanceParameter()
+
+        return rv
 
     def tangentAt(
         self: Mixin1DProtocol,
@@ -2517,7 +2529,7 @@ class Wire(Shape, Mixin1D):
     ) -> "Wire":
         """
         Apply 2D or 3D fillet to a wire
-
+        :param wire: The input wire to fillet. Currently only open wires are supported
         :param radius: the radius of the fillet, must be > zero
         :param vertices: Optional list of vertices to fillet. By default all vertices are fillet.
         :return: A wire with filleted corners
@@ -4419,9 +4431,18 @@ def solid(*s: Shape) -> Shape:
 
 
 @solid.register
-def solid(s: Sequence[Shape]) -> Shape:
+def solid(s: Sequence[Shape], inner: Optional[Sequence[Shape]] = None) -> Shape:
 
-    return solid(*s)
+    builder = BRepBuilderAPI_MakeSolid()
+    builder.Add(shell(*s).wrapped)
+
+    if inner:
+        for sh in _get(shell(*s), "Shell"):
+            builder.Add(sh.wrapped)
+
+    rv = builder.Solid()
+
+    return _compound_or_shape(rv)
 
 
 @multimethod
@@ -5111,3 +5132,17 @@ def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
 def loft(*s: Shape, cap: bool = False, ruled: bool = False) -> Shape:
 
     return loft(s, cap, ruled)
+
+
+#%% diagnotics
+
+
+def check(s: Shape) -> bool:
+    """
+    Check if a shape is valid.
+    """
+
+    analyzer = BRepAlgoAPI_Check(s.wrapped)
+    rv = analyzer.isValid()
+
+    return rv
