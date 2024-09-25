@@ -226,7 +226,7 @@ from OCP.NCollection import NCollection_Utf8String
 
 from OCP.BRepFeat import BRepFeat_MakeDPrism
 
-from OCP.BRepClass3d import BRepClass3d_SolidClassifier
+from OCP.BRepClass3d import BRepClass3d_SolidClassifier, BRepClass3d
 
 from OCP.TCollection import TCollection_AsciiString
 
@@ -3848,6 +3848,22 @@ class Solid(Shape, Mixin3D):
             builder.MakeSolid()
 
         return cls(builder.Shape())
+
+    def outerShell(self) -> Shell:
+        """
+        Returns outer shell.
+        """
+
+        return Shell(BRepClass3d.OuterShell_s(self.wrapped))
+
+    def innerShells(self) -> List[Shell]:
+        """
+        Returns inner shells.
+        """
+
+        outer = self.outerShell()
+
+        return [s for s in self.Shells() if not s.isSame(outer)]
 
 
 class CompSolid(Shape, Mixin3D):
