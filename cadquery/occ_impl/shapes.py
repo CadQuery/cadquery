@@ -154,6 +154,7 @@ from OCP.Geom import (
     Geom_CylindricalSurface,
     Geom_Surface,
     Geom_Plane,
+    Geom_BSplineCurve,
 )
 from OCP.Geom2d import Geom2d_Line
 
@@ -227,6 +228,7 @@ from OCP.GeomAbs import (
     GeomAbs_Shape,
     GeomAbs_C0,
     GeomAbs_G2,
+    GeomAbs_C2,
     GeomAbs_Intersection,
     GeomAbs_JoinType,
 )
@@ -239,7 +241,7 @@ from OCP.IFSelect import IFSelect_ReturnStatus
 
 from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 
-from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
+from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds, ShapeAnalysis_Wire
 from OCP.TopTools import TopTools_HSequenceOfShape
 
 from OCP.GCPnts import GCPnts_AbscissaPoint
@@ -270,6 +272,8 @@ from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
 from OCP.BRepAlgo import BRepAlgo
 
 from OCP.ChFi2d import ChFi2d_FilletAPI  # For Wire.Fillet()
+
+from OCP.GeomConvert import GeomConvert_ApproxCurve
 
 from math import pi, sqrt, inf, radians, cos
 
@@ -1633,6 +1637,9 @@ class Vertex(Shape):
 
 
 class Mixin1DProtocol(ShapeProtocol, Protocol):
+    def _approxCurve(self) -> Geom_BSplineCurve:
+        ...
+
     def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         ...
 
@@ -1689,6 +1696,18 @@ class Mixin1D(object):
 
         return Vector(curve.Value(umax))
 
+    def _approxCurve(self: Mixin1DProtocol) -> Geom_BSplineCurve:
+        """
+        Approximate curve adaptor into a real b-spline. Meant for handling of
+        BRepAdaptor_CompCurve.
+        """
+
+        rv = GeomConvert_ApproxCurve(
+            self._geomAdaptor(), TOLERANCE, GeomAbs_C2, MaxSegments=100, MaxDegree=3
+        ).Curve()
+
+        return rv
+
     def paramAt(self: Mixin1DProtocol, d: Union[Real, Vector]) -> float:
         """
         Compute parameter value at the specified normalized distance or a point.
@@ -1700,12 +1719,16 @@ class Mixin1D(object):
         curve = self._geomAdaptor()
 
         if isinstance(d, Vector):
+            # handle comp curves (i.e. wire adaptors)
+            if isinstance(curve, BRepAdaptor_Curve):
+                curve_ = curve.Curve().Curve()  # get the underlying curve object
+            else:
+                curve_ = self._approxCurve()  # approximate the adaptor as a real curve
+
             rv = GeomAPI_ProjectPointOnCurve(
-                d.toPnt(),
-                curve.Curve().Curve(),
-                curve.FirstParameter(),
-                curve.LastParameter(),
+                d.toPnt(), curve_, curve.FirstParameter(), curve.LastParameter(),
             ).LowerDistanceParameter()
+
         else:
             l = GCPnts_AbscissaPoint.Length_s(curve)
             rv = GCPnts_AbscissaPoint(curve, l * d, curve.FirstParameter()).Parameter()
@@ -2253,12 +2276,27 @@ class Wire(Shape, Mixin1D):
 
     wrapped: TopoDS_Wire
 
-    def _geomAdaptor(self) -> BRepAdaptor_CompCurve:
+    def _nbEdges(self) -> int:
         """
-        Return the underlying geometry
+        Number of edges.
         """
 
-        return BRepAdaptor_CompCurve(self.wrapped)
+        sa = ShapeAnalysis_Wire()
+        sa.Load(self.wrapped)
+
+        return sa.nbEdges()
+
+    def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
+        """
+        Return the underlying geometry.
+        """
+
+        if self._nbEdges() == 1:
+            rv = self.Edges()[-1]._geomAdaptor()
+        else:
+            rv = BRepAdaptor_CompCurve(self.wrapped)
+
+        return rv
 
     def close(self) -> "Wire":
         """
@@ -2948,7 +2986,7 @@ class Face(Shape):
             False,
             GeomAbs_Intersection,
             True,
-        )  # The last True is important to make solid
+        )  # The last True is important to make a solid
 
         builder.MakeOffsetShape()
 
