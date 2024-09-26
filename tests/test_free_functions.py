@@ -140,6 +140,13 @@ def test_constructors():
     assert s1.Volume() == approx(1)
     assert s2.Volume() == approx(1)
 
+    # solid with voids
+    b1 = box(0.1, 0.1, 0.1)
+
+    s3 = solid(b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces())
+
+    assert s3.Volume() == approx(1 - 2 * 0.1 ** 3)
+
     # compound
     c1 = compound(b.Faces())
     c2 = compound(*b.Faces())
