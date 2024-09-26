@@ -2284,12 +2284,14 @@ class Wire(Shape, Mixin1D):
         sa = ShapeAnalysis_Wire()
         sa.Load(self.wrapped)
 
-        return sa.nbEdges()
+        return sa.NbEdges()
 
     def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         """
         Return the underlying geometry.
         """
+
+        rv: Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]
 
         if self._nbEdges() == 1:
             rv = self.Edges()[-1]._geomAdaptor()
