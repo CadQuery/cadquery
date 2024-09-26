@@ -4481,8 +4481,11 @@ def solid(s: Sequence[Shape], inner: Optional[Sequence[Shape]] = None) -> Shape:
     builder.Add(shell(*s).wrapped)
 
     if inner:
-        for sh in _get(shell(*s), "Shell"):
-            builder.Add(sh.wrapped)
+        for sh in _get(shell(*inner), "Shell"):
+            sh_inverted = TopoDS.Shell_s(
+                sh.wrapped.Oriented(TopAbs_Orientation.TopAbs_REVERSED)
+            )
+            builder.Add(sh_inverted)
 
     rv = builder.Solid()
 
