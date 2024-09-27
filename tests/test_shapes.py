@@ -1,4 +1,12 @@
-from cadquery.occ_impl.shapes import wire, segment, polyline, Vector
+from cadquery.occ_impl.shapes import (
+    wire,
+    segment,
+    polyline,
+    Vector,
+    box,
+    Solid,
+    compound,
+)
 
 from pytest import approx
 
@@ -35,3 +43,21 @@ def test_paramAt():
     assert p6 == approx(w2.paramAt(0))
     assert p7 == approx(w2.paramAt(0.5))
     assert p8 == approx(w2.paramAt(0.1 / 2))
+
+
+def test_isSolid():
+
+    s = box(1, 1, 1)
+
+    assert Solid.isSolid(s)
+    assert Solid.isSolid(compound(s))
+    assert not Solid.isSolid(s.faces())
+
+
+def test_shells():
+
+    s = box(2, 2, 2) - box(1, 1, 1).moved(z=0.5)
+
+    assert s.outerShell().Area() == approx(6 * 4)
+    assert len(s.innerShells()) == 1
+    assert s.innerShells()[0].Area() == approx(6 * 1)
