@@ -4482,14 +4482,13 @@ def solid(s: Sequence[Shape], inner: Optional[Sequence[Shape]] = None) -> Shape:
 
     if inner:
         for sh in _get(shell(*inner), "Shell"):
-            sh_inverted = TopoDS.Shell_s(
-                sh.wrapped.Oriented(TopAbs_Orientation.TopAbs_REVERSED)
-            )
-            builder.Add(sh_inverted)
+            builder.Add(sh.wrapped)
 
-    rv = builder.Solid()
+    # fix orientations
+    sf = ShapeFix_Solid(builder.Solid())
+    sf.Perform()
 
-    return _compound_or_shape(rv)
+    return _compound_or_shape(sf.Solid())
 
 
 @multimethod
@@ -5190,6 +5189,11 @@ def check(s: Shape) -> bool:
     """
 
     analyzer = BRepAlgoAPI_Check(s.wrapped)
+    analyzer.SetRunParallel(True)
+    analyzer.SetUseOBB(True)
+
+    analyzer.Perform()
+
     rv = analyzer.IsValid()
 
     return rv
