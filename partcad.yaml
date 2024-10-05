@@ -1,0 +1,62 @@
+name: /pub/examples/script/cadquery
+desc: CadQuery examples
+url: https://github.com/CadQuery/cadquery
+
+parts:
+  examples/Ex001_Simple_Block:
+    type: cadquery
+  examples/Ex002_Block_With_Bored_Center_Hole:
+    type: cadquery
+  examples/Ex003_Pillow_Block_With_Counterbored_Holes:
+    type: cadquery
+  examples/Ex004_Extruded_Cylindrical_Plate:
+    type: cadquery
+  examples/Ex005_Extruded_Lines_and_Arcs:
+    type: cadquery
+  examples/Ex006_Moving_the_Current_Working_Point:
+    type: cadquery
+  examples/Ex007_Using_Point_Lists:
+    type: cadquery
+  examples/Ex008_Polygon_Creation:
+    type: cadquery
+  examples/Ex009_Polylines:
+    type: cadquery
+  examples/Ex010_Defining_an_Edge_with_a_Spline:
+    type: cadquery
+  examples/Ex011_Mirroring_Symmetric_Geometry:
+    type: cadquery
+  examples/Ex012_Creating_Workplanes_on_Faces:
+    type: cadquery
+  examples/Ex013_Locating_a_Workplane_on_a_Vertex:
+    type: cadquery
+  examples/Ex014_Offset_Workplanes:
+    type: cadquery
+  examples/Ex015_Rotated_Workplanes:
+    type: cadquery
+  examples/Ex016_Using_Construction_Geometry:
+    type: cadquery
+  examples/Ex017_Shelling_to_Create_Thin_Features:
+    type: cadquery
+  examples/Ex018_Making_Lofts:
+    type: cadquery
+  examples/Ex019_Counter_Sunk_Holes:
+    type: cadquery
+  examples/Ex020_Rounding_Corners_with_Fillets:
+    type: cadquery
+  examples/Ex021_Splitting_an_Object:
+    type: cadquery
+  examples/Ex022_Revolution:
+    type: cadquery
+  examples/Ex023_Sweep:
+    type: cadquery
+  examples/Ex024_Sweep_With_Multiple_Sections:
+    type: cadquery
+  examples/Ex025_Swept_Helix:
+    type: cadquery
+  examples/Ex026_Case_Seam_Lip:
+    type: cadquery
+  examples/Ex100_Lego_Brick:
+    type: cadquery
+  # examples/Ex101_InterpPlate uses `show_object()` multiple times which is not supported by PartCAD yet
+  #examples/Ex101_InterpPlate:
+  #    type: cadquery
