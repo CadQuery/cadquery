@@ -39,6 +39,7 @@ from cadquery.occ_impl.shapes import (
     _get,
     _get_one,
     _get_edges,
+    check,
 )
 
 from pytest import approx, raises
@@ -138,6 +139,13 @@ def test_constructors():
 
     assert s1.Volume() == approx(1)
     assert s2.Volume() == approx(1)
+
+    # solid with voids
+    b1 = box(0.1, 0.1, 0.1)
+
+    s3 = solid(b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces())
+
+    assert s3.Volume() == approx(1 - 2 * 0.1 ** 3)
 
     # compound
     c1 = compound(b.Faces())
@@ -558,3 +566,15 @@ def test_export():
     b2 = Shape.importBrep("box.brep")
 
     assert (b1 - b2).Volume() == approx(0)
+
+
+# %% diagnostics
+def test_check():
+
+    s1 = box(1, 1, 1)
+
+    assert check(s1)
+
+    s2 = sweep(rect(1, 1), segment((0, 0), (1, 1)))
+
+    assert not check(s2)
