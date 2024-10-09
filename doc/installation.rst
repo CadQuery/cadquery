@@ -18,32 +18,45 @@ Begin by installing the conda package manager.  If conda is already installed sk
 Install the Conda Package Manager
 ``````````````````````````````````
 
-In principle, any Conda distribution will work, but it is probably best to install `Mambaforge <https://github.com/conda-forge/miniforge#mambaforge>`_ to a local directory and to avoid running `conda init`. After performing a local directory installation, Mambaforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation.
+In principle, any Conda distribution will work, but it is probably best to install `Miniforge <https://github.com/conda-forge/miniforge>`_ to a local directory and to avoid running `conda init`.  After performing a local directory installation, Miniforge can be activated via the [scripts,bin]/activate scripts. This will help avoid polluting and breaking the local Python installation.
 
-Mambaforge is a minimal installer that sets *conda-forge* as the default channel for package installation and provides `mamba <https://mamba.readthedocs.io/en/latest/user_guide/mamba.html>`_.  You can swap almost all commands between conda & mamba.
+Miniforge is a minimal installer that sets *conda-forge* as the default channel for package installation and provides `mamba <https://mamba.readthedocs.io/en/latest/user_guide/mamba.html>`_.  You can swap almost all commands between conda & mamba.
 
 In Linux/MacOS, the local directory installation method looks something like this:
 
 .. code-block::
 
-    # Install to ~/mambaforge
-    curl -L -o mambaforge.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
-    bash mambaforge.sh -b -p $HOME/mambaforge
+    # Install to ~/miniforge
+    curl -L -o miniforge.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+    bash miniforge.sh -b -p $HOME/miniforge
 
     # Activate
-    source $HOME/mambaforge/bin/activate
+    source $HOME/miniforge/bin/activate
 
 
 On Windows, download the installer and double click it on the file browser or install non-interactively as follows:
 
 .. code-block::
+    :caption:  Windows CMD
 
-    :: Install to %USERPROFILE%\Mambaforge
-    curl -L -o mambaforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe
-    start /wait "" mambaforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegistry=1 /NoScripts=1 /S /D=%USERPROFILE%\Mambaforge
+    :: Install to %USERPROFILE%\Miniforge
+    curl -L -o miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
+    start "" /wait miniforge.exe /InstallationType=JustMe /RegisterPython=0 /NoRegistry=1 /NoScripts=1 /S /D=%USERPROFILE%\Miniforge
 
     :: Activate
-    cmd /K ""%USERPROFILE%/Mambaforge/Scripts/activate.bat" "%USERPROFILE%/Mambaforge""
+    cmd /K ""%USERPROFILE%/Miniforge/Scripts/activate.bat" "%USERPROFILE%/Miniforge""
+
+
+.. code-block::
+    :caption:  PowerShell
+
+    # Install to $env:USERPROFILE\Miniforge
+    curl.exe -L -o miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
+    Start-Process -Wait -FilePath miniforge.exe -ArgumentList @("/InstallationType=JustMe", "/RegisterPython=0", "/NoRegistry=1", "/NoScripts=1", "/S", "/D=$env:USERPROFILE\Miniforge")
+
+    # Activate
+    . $env:USERPROFILE\Miniforge\shell\condabin\conda-hook.ps1
+    conda activate
 
 It might be worthwhile to consider using ``/NoScripts=0`` to have an activation shortcut added to the start menu.
 
