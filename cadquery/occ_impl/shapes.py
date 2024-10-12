@@ -2559,7 +2559,8 @@ class Wire(Shape, Mixin1D):
         Apply 2D or 3D fillet to a wire
 
         :param radius: the radius of the fillet, must be > zero
-        :param vertices: Optional list of vertices to fillet. By default all vertices are fillet.
+        :param vertices: the vertices to delete (where there fillet will be applied).  By default
+          all vertices are deleted except ends of open wires.
         :return: A wire with filleted corners
         """
 
