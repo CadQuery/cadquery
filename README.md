@@ -61,7 +61,7 @@ There are also videos covering installation:
 
 ### CadQuery Installation Via Conda
 
-To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager), and [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) for a minimal installer.
+To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager), and [Miniforge](https://github.com/conda-forge/miniforge) for a minimal installer.
 
 ``mamba install`` is recommended over ``conda install`` for faster and less memory intensive cadquery installation.
 
