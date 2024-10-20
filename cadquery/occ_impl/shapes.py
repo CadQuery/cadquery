@@ -4803,6 +4803,7 @@ def _bool_op(
     builder.SetTools(tool)
 
     builder.SetRunParallel(parallel)
+    builder.SetUseOBB(True)
 
     if tol:
         builder.SetFuzzyValue(tol)
@@ -5038,6 +5039,7 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
     else:
         for w in _get_wires(s):
             builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+            builder.SetMode(False)
             builder.Add(w.wrapped, False, False)
             builder.Build()
 
@@ -5064,6 +5066,7 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
     for el in _get_face_lists(s):
         # build outer part
         builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+        builder.SetMode(False)
 
         for f in el:
             builder.Add(f.outerWire().wrapped, False, False)
@@ -5077,6 +5080,7 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
         # initialize builders
         for w in el[0].innerWires():
             builder_inner = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+            builder_inner.SetMode(False)
             builder_inner.Add(w.wrapped, False, False)
             builders_inner.append(builder_inner)
 
