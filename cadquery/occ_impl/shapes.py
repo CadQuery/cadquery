@@ -2557,6 +2557,7 @@ class Wire(Shape, Mixin1D):
     ) -> "Wire":
         """
         Apply 2D or 3D fillet to a wire
+
         :param wire: The input wire to fillet. Currently only open wires are supported
         :param radius: the radius of the fillet, must be > zero
         :param vertices: Optional list of vertices to fillet. By default all vertices are fillet.
