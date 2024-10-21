@@ -2677,6 +2677,7 @@ class Face(Shape):
 
         return BRepTools.UVBounds_s(self.wrapped)
 
+    @multimethod
     def normalAt(self, locationVector: Optional[Vector] = None) -> Vector:
         """
         Computes the normal vector at the desired location on the face.
@@ -2703,6 +2704,24 @@ class Face(Shape):
         BRepGProp_Face(self.wrapped).Normal(u, v, p, vn)
 
         return Vector(vn)
+
+    @normalAt.register
+    def normalAt(self, u: Real, v: Real) -> Tuple[Vector, Vector]:
+        """
+        Computes the normal vector at the desired location in the u,v parameter space.
+
+        :returns: a vector representing the normal direction and the position
+        :param u: the u parametric location to compute the normal at.
+        :type u: real.
+        :param v: the v parametric location to compute the normal at.
+        :type u: real.
+        """
+
+        p = gp_Pnt()
+        vn = gp_Vec()
+        BRepGProp_Face(self.wrapped).Normal(u, v, p, vn)
+
+        return Vector(vn).normalized(), Vector(p)
 
     def Center(self) -> Vector:
 
