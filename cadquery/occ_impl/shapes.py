@@ -2712,9 +2712,7 @@ class Face(Shape):
 
         :returns: a vector representing the normal direction and the position
         :param u: the u parametric location to compute the normal at.
-        :type u: real.
         :param v: the v parametric location to compute the normal at.
-        :type u: real.
         """
 
         p = gp_Pnt()
@@ -2722,6 +2720,33 @@ class Face(Shape):
         BRepGProp_Face(self.wrapped).Normal(u, v, p, vn)
 
         return Vector(vn).normalized(), Vector(p)
+
+    def normals(
+        self, us: Iterable[Real], vs: Iterable[Real]
+    ) -> Tuple[List[Vector], List[Vector]]:
+        """
+        Computes the normal vectors at the desired locations in the u,v parameter space.
+
+        :returns: a tuple of list of vectors representing the normal directions and the positions
+        :param us: the u parametric locations to compute the normal at.
+        :param vs: the v parametric locations to compute the normal at.
+        """
+
+        rv_n = []
+        rv_p = []
+
+        p = gp_Pnt()
+        vn = gp_Vec()
+        BGP = BRepGProp_Face()
+
+        for u, v in zip(us, vs):
+            BGP.Load(self.wrapped)
+            BGP.Normal(u, v, p, vn)
+
+            rv_n.append(Vector(vn).normalized())
+            rv_p.append(Vector(p))
+
+        return rv_n, rv_p
 
     def Center(self) -> Vector:
 
