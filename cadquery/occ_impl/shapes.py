@@ -4825,7 +4825,7 @@ def text(
         font_i, NCollection_Utf8String(txt), theHAlign=theHAlign, theVAlign=theVAlign
     )
 
-    return _compound_or_shape(rv)
+    return clean(fuse(_compound_or_shape(rv).faces()))
 
 
 #%% ops
