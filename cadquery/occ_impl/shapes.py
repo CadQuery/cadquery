@@ -2001,6 +2001,15 @@ class Edge(Shape, Mixin1D):
 
         return rv
 
+    def trim(self, u0: Real, u1: Real) -> "Edge":
+        """
+        Trim the edge in the parametric space to (u0, u1).
+        """
+
+        bldr = BRepBuilderAPI_MakeEdge(self._geomAdaptor().Curve().Curve(), u0, u1)
+
+        return self.__class__(bldr.Shape())
+
     @classmethod
     def makeCircle(
         cls,
@@ -2737,10 +2746,9 @@ class Face(Shape):
 
         p = gp_Pnt()
         vn = gp_Vec()
-        BGP = BRepGProp_Face()
+        BGP = BRepGProp_Face(self.wrapped)
 
         for u, v in zip(us, vs):
-            BGP.Load(self.wrapped)
             BGP.Normal(u, v, p, vn)
 
             rv_n.append(Vector(vn).normalized())
@@ -3065,6 +3073,15 @@ class Face(Shape):
         """
 
         return self.__class__(BRepAlgo.ConvertFace_s(self.wrapped, tolerance))
+
+    def trim(self, u0: Real, u1: Real, v0: Real, v1: Real, tol: Real = 1e-6) -> "Face":
+        """
+        Trim the face in the parametric space to (u0, u1).
+        """
+
+        bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), u0, u1, v0, v1, tol)
+
+        return self.__class__(bldr.Shape())
 
 
 class Shell(Shape):
@@ -4344,11 +4361,32 @@ def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
     Get lists of wires for sweeping or lofting.
     """
 
-    wire_lists: List[List[Wire]] = []
+    wire_lists: List[List[Union[Wire, Vertex]]] = []
 
-    for el in s:
-        if not wire_lists:
-            wire_lists = [[w] for w in _get_wires(el)]
+    ix_last = len(s) - 1
+
+    for i, el in enumerate(s):
+        if i == 0:
+
+            try:
+                wire_lists = [[w] for w in _get_wires(el)]
+            except ValueError:
+                # if no wires were detected, try vertices
+                wire_lists = [[v] for v in el.Vertices()]
+
+            # if not faces and vertices were detected return an empty list
+            if not wire_lists:
+                break
+
+        elif i == ix_last:
+
+            try:
+                for wire_list, w in zip(wire_lists, _get_wires(el)):
+                    wire_list.append(w)
+            except ValueError:
+                for wire_list, v in zip(wire_lists, el.Vertices()):
+                    wire_list.append(v)
+
         else:
             for wire_list, w in zip(wire_lists, _get_wires(el)):
                 wire_list.append(w)
@@ -4358,7 +4396,7 @@ def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
 
 def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
     """
-    Get lists of faces for sweeping or lofting. First and last shape can be a vertex
+    Get lists of faces for sweeping or lofting. First and last shape can be a vertex.
     """
 
     face_lists: List[List[Union[Face, Vertex]]] = []
@@ -4371,12 +4409,12 @@ def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
             face_lists = [[f] for f in el.Faces()]
 
             # if no faces were detected, try vertices
-            if not face_lists:
+            if not face_lists and not el.edges():
                 face_lists = [[v] for v in el.Vertices()]
 
-            # if not faces and vertices were detected throw
+            # if not faces and vertices were detected return an empty list
             if not face_lists:
-                raise ValueError("Either Faces of Verties are required in {*el}")
+                break
 
         elif i == ix_last:
 
@@ -4393,6 +4431,12 @@ def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
         else:
             for face_list, f in zip(face_lists, el.Faces()):
                 face_list.append(f)
+
+    # check if the result makes sense
+    if any(
+        isinstance(el[0], Vertex) and isinstance(el[1], Vertex) for el in face_lists
+    ):
+        return []
 
     return face_lists
 
@@ -5247,7 +5291,10 @@ def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
             builder.Init(cap, ruled)
 
             for w in el:
-                builder.AddWire(w.wrapped)
+                if isinstance(w, Wire):
+                    builder.AddWire(w.wrapped)
+                else:
+                    builder.AddVertex(w.wrapped)
 
             builder.Build()
             builder.Check()
