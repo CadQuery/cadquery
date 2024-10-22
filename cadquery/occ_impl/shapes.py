@@ -4356,16 +4356,40 @@ def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
     return wire_lists
 
 
-def _get_face_lists(s: Sequence[Shape]) -> List[List[Face]]:
+def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
     """
-    Get lists of faces for sweeping or lofting.
+    Get lists of faces for sweeping or lofting. First and last shape can be a vertex
     """
 
-    face_lists: List[List[Face]] = []
+    face_lists: List[List[Union[Face, Vertex]]] = []
 
-    for el in s:
-        if not face_lists:
+    ix_last = len(s) - 1
+
+    for i, el in enumerate(s):
+        if i == 0:
+
             face_lists = [[f] for f in el.Faces()]
+
+            # if no faces were detected, try vertices
+            if not face_lists:
+                face_lists = [[v] for v in el.Vertices()]
+
+            # if not faces and vertices were detected throw
+            if not face_lists:
+                raise ValueError("Either Faces of Verties are required in {*el}")
+
+        elif i == ix_last:
+
+            # try to add faces
+            faces = el.Faces()
+
+            if len(faces) == len(face_lists):
+                for face_list, f in zip(face_lists, faces):
+                    face_list.append(f)
+            else:
+                for face_list, f in zip(face_lists, el.Vertices()):
+                    face_list.append(f)
+
         else:
             for face_list, f in zip(face_lists, el.Faces()):
                 face_list.append(f)
@@ -5178,25 +5202,34 @@ def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
         # build outer part
         builder.Init(True, ruled)
 
+        # used to check is building inner parts makes sense
+        has_vertex = False
+
         for f in el:
-            builder.AddWire(f.outerWire().wrapped)
+            if isinstance(f, Face):
+                builder.AddWire(f.outerWire().wrapped)
+            else:
+                builder.AddVertex(f.wrapped)
+                has_vertex = True
 
         builder.Build()
         builder.Check()
 
         builders_inner = []
 
-        # initialize builders
-        for w in el[0].innerWires():
-            builder_inner = BRepOffsetAPI_ThruSections()
-            builder_inner.Init(True, ruled)
-            builder_inner.AddWire(w.wrapped)
-            builders_inner.append(builder_inner)
-
-        # add remaining sections
-        for f in el[1:]:
-            for builder_inner, w in zip(builders_inner, f.innerWires()):
+        # only initialize inner builders if no vertex was encountered
+        if not has_vertex:
+            # initialize builders
+            for w in el[0].innerWires():
+                builder_inner = BRepOffsetAPI_ThruSections()
+                builder_inner.Init(True, ruled)
                 builder_inner.AddWire(w.wrapped)
+                builders_inner.append(builder_inner)
+
+            # add remaining sections
+            for f in el[1:]:
+                for builder_inner, w in zip(builders_inner, f.innerWires()):
+                    builder_inner.AddWire(w.wrapped)
 
         # actually build
         inner_parts = []
