@@ -4356,7 +4356,7 @@ def _get_edges(s: Shape) -> Iterable[Shape]:
         raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
 
 
-def _get_wire_lists(s: Sequence[Shape]) -> List[List[Wire]]:
+def _get_wire_lists(s: Sequence[Shape]) -> List[List[Union[Wire, Vertex]]]:
     """
     Get lists of wires for sweeping or lofting.
     """
@@ -4425,8 +4425,8 @@ def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
                 for face_list, f in zip(face_lists, faces):
                     face_list.append(f)
             else:
-                for face_list, f in zip(face_lists, el.Vertices()):
-                    face_list.append(f)
+                for face_list, v in zip(face_lists, el.Vertices()):
+                    face_list.append(v)
 
         else:
             for face_list, f in zip(face_lists, el.Faces()):
@@ -4893,7 +4893,7 @@ def text(
         font_i, NCollection_Utf8String(txt), theHAlign=theHAlign, theVAlign=theVAlign
     )
 
-    return clean(fuse(_compound_or_shape(rv).faces()))
+    return clean(_compound_or_shape(rv).faces().fuse())
 
 
 #%% ops
