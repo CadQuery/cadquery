@@ -1,7 +1,7 @@
 from . import Shape, Workplane, Assembly, Sketch, Compound, Color
 from .occ_impl.exporters.assembly import _vtkRenderWindow
 
-from typing import Union
+from typing import Union, Any
 
 from OCP.TopoDS import TopoDS_Shape
 
@@ -30,13 +30,15 @@ def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:
     return assy
 
 
-def show(*objs: Union[Shape, Workplane, Assembly, Sketch]):
+def show(*objs: Union[Shape, Workplane, Assembly, Sketch], **kwargs: Any):
     """
     Show CQ objects using VTK
     """
 
     # construct the assy
-    assy = _to_assy(*objs)
+    assy = _to_assy(
+        *(obj for obj in objs if isinstance(obj, (Shape, Workplane, Assembly, Sketch)))
+    )
 
     # create a VTK window
     win = _vtkRenderWindow(assy)
