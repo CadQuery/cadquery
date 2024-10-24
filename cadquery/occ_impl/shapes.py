@@ -4503,6 +4503,25 @@ def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
     return rv
 
 
+_geomabsshape_dict = dict(
+    C0=GeomAbs_Shape.GeomAbs_C0,
+    C1=GeomAbs_Shape.GeomAbs_C1,
+    C2=GeomAbs_Shape.GeomAbs_C2,
+    C3=GeomAbs_Shape.GeomAbs_C3,
+    CN=GeomAbs_Shape.GeomAbs_CN,
+    G1=GeomAbs_Shape.GeomAbs_G1,
+    G2=GeomAbs_Shape.GeomAbs_G2,
+)
+
+
+def _to_geomabshape(name: str) -> GeomAbs_Shape:
+    """
+    Convert a literal to GeomAbs_Shape enum (OCCT specific).
+    """
+
+    return _geomabsshape_dict[name.upper()]
+
+
 #%% alternative constructors
 
 
@@ -4567,7 +4586,7 @@ def shell(*s: Shape, tol: float = 1e-6) -> Shape:
 
     sewed = builder.SewedShape()
 
-    # for one fase sewing will not produce a shell
+    # for one face sewing will not produce a shell
     if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
         rv = TopoDS_Shell()
 
@@ -5250,6 +5269,7 @@ def loft(
     s: Sequence[Shape],
     cap: bool = False,
     ruled: bool = False,
+    continuity: Literal["C1", "C2", "C3"] = "C2",
     degree: int = 3,
     compat: bool = True,
 ) -> Shape:
@@ -5263,6 +5283,7 @@ def loft(
         rv = BRepOffsetAPI_ThruSections()
         rv.SetMaxDegree(degree)
         rv.CheckCompatibility(compat)
+        rv.SetContinuity(_to_geomabshape(continuity))
 
         return rv
 
@@ -5337,6 +5358,7 @@ def loft(
     *s: Shape,
     cap: bool = False,
     ruled: bool = False,
+    continuity: Literal["C1", "C2", "C3"] = "C2",
     degree: int = 3,
     compat: bool = True,
 ) -> Shape:
