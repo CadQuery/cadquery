@@ -4452,7 +4452,7 @@ def _normalize(s: Shape) -> Shape:
 
     if t == "Shell":
         faces = s.Faces()
-        if len(faces) == 1:
+        if len(faces) == 1 and not BRep_Tool.IsClosed_s(s.wrapped):
             rv = faces[0]
     elif t == "Compound":
         objs = list(s)
@@ -4552,12 +4552,12 @@ def face(s: Sequence[Shape]) -> Shape:
 
 
 @multimethod
-def shell(*s: Shape) -> Shape:
+def shell(*s: Shape, tol: float = 1e-6) -> Shape:
     """
     Build shell from faces.
     """
 
-    builder = BRepBuilderAPI_Sewing()
+    builder = BRepBuilderAPI_Sewing(tol)
 
     for el in s:
         for f in _get(el, "Face"):
@@ -4565,7 +4565,20 @@ def shell(*s: Shape) -> Shape:
 
     builder.Perform()
 
-    return _compound_or_shape(builder.SewedShape())
+    sewed = builder.SewedShape()
+
+    # for one fase sewing will not produce a shell
+    if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
+        rv = TopoDS_Shell()
+
+        builder = TopoDS_Builder()
+        builder.MakeShell(rv)
+        builder.Add(rv, sewed)
+
+    else:
+        rv = sewed
+
+    return _compound_or_shape(rv)
 
 
 @shell.register
@@ -5233,13 +5246,27 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
 
 
 @multimethod
-def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
+def loft(
+    s: Sequence[Shape],
+    cap: bool = False,
+    ruled: bool = False,
+    degree: int = 3,
+    compat: bool = True,
+) -> Shape:
     """
     Loft edges, wires or faces. For faces cap has no effect. Do not mix faces with other types.
     """
 
     results = []
-    builder = BRepOffsetAPI_ThruSections()
+
+    def _make_builder():
+        rv = BRepOffsetAPI_ThruSections()
+        rv.SetMaxDegree(degree)
+        rv.CheckCompatibility(compat)
+
+        return rv
+
+    builder = _make_builder()
 
     # try to construct lofts using faces
     for el in _get_face_lists(s):
@@ -5265,7 +5292,8 @@ def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
         if not has_vertex:
             # initialize builders
             for w in el[0].innerWires():
-                builder_inner = BRepOffsetAPI_ThruSections()
+                builder_inner = _make_builder()
+
                 builder_inner.Init(True, ruled)
                 builder_inner.AddWire(w.wrapped)
                 builders_inner.append(builder_inner)
@@ -5305,9 +5333,15 @@ def loft(s: Sequence[Shape], cap: bool = False, ruled: bool = False) -> Shape:
 
 
 @loft.register
-def loft(*s: Shape, cap: bool = False, ruled: bool = False) -> Shape:
+def loft(
+    *s: Shape,
+    cap: bool = False,
+    ruled: bool = False,
+    degree: int = 3,
+    compat: bool = True,
+) -> Shape:
 
-    return loft(s, cap, ruled)
+    return loft(s, cap, ruled, degree, compat)
 
 
 #%% diagnotics
