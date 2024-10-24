@@ -42,6 +42,7 @@ from inspect import Parameter, Signature
 from .occ_impl.geom import Vector, Plane, Location
 from .occ_impl.shapes import (
     Shape,
+    Vertex,
     Edge,
     Wire,
     Face,
@@ -49,6 +50,7 @@ from .occ_impl.shapes import (
     Compound,
     wiresToFaces,
     Shapes,
+    loft,
 )
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
@@ -3697,15 +3699,20 @@ class Workplane(object):
 
         """
 
-        if self.ctx.pendingWires:
-            wiresToLoft = self.ctx.popPendingWires()
-        else:
-            wiresToLoft = [f.outerWire() for f in self._getFaces()]
+        toLoft: List[Union[Wire, Vertex]] = []
 
-        if not wiresToLoft:
+        if self.ctx.pendingWires:
+            toLoft.extend(self.ctx.popPendingWires())
+        else:
+            toLoft = [
+                el if isinstance(el, Vertex) else el.outerWire()
+                for el in self._getFacesVertices()
+            ]
+
+        if not toLoft:
             raise ValueError("Nothing to loft")
 
-        r: Shape = Solid.makeLoft(wiresToLoft, ruled)
+        r: Shape = loft(toLoft, ruled)
 
         newS = self._combineWithBase(r, combine, clean)
 
@@ -3725,6 +3732,26 @@ class Workplane(object):
                 rv.append(el)
             elif isinstance(el, Compound):
                 rv.extend(subel for subel in el if isinstance(subel, Face))
+
+        if not rv:
+            rv.extend(wiresToFaces(self.ctx.popPendingWires()))
+
+        return rv
+
+    def _getFacesVertices(self) -> List[Union[Face, Vertex]]:
+        """
+        Convert pending wires or sketches to faces/vertices for subsequent operation
+        """
+
+        rv: List[Union[Face, Vertex]] = []
+
+        for el in self.objects:
+            if isinstance(el, Sketch):
+                rv.extend(el)
+            elif isinstance(el, (Face, Vertex)):
+                rv.append(el)
+            elif isinstance(el, Compound):
+                rv.extend(subel for subel in el if isinstance(subel, (Face, Vertex)))
 
         if not rv:
             rv.extend(wiresToFaces(self.ctx.popPendingWires()))
@@ -4574,7 +4601,7 @@ class Workplane(object):
     ) -> T:
         """
         Export Workplane to file.
-        
+
         :param path: Filename.
         :param tolerance: the deflection tolerance, in model units. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Default 0.1.
