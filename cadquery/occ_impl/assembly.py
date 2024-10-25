@@ -195,7 +195,7 @@ def toCAF(
         setName(subassy, el.name, tool)
 
         # define the current color
-        current_color = el.color if el.color else color
+        current_color = el.color.toTuple() if el.color else color
 
         # add a leaf with the actual part if needed
         if el.obj:
@@ -222,13 +222,13 @@ def toCAF(
 
                 # handle colors when exporting to STEP
                 if coloredSTEP and current_color:
-                    setColor(lab, current_color, ctool)
+                    setColor(lab, Color(*current_color), ctool)
 
             tool.AddComponent(subassy, lab, TopLoc_Location())
 
         # handle colors when *not* exporting to STEP
         if not coloredSTEP and current_color:
-            setColor(subassy, current_color, ctool)
+            setColor(subassy, Color(*current_color), ctool)
 
         # add children recursively
         for child in el.children:
