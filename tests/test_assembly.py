@@ -16,7 +16,6 @@ from cadquery.occ_impl.exporters.assembly import (
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
 from cadquery.occ_impl.shapes import Face, box
-from cadquery.occ_impl.geom import Location
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -1698,10 +1697,11 @@ def test_step_export_filesize(tmpdir):
     for i, color in enumerate((None, cq.Color("red"))):
         assy = cq.Assembly()
         for j in range(1, N + 1):
-            assy.add(part, name=f"part{j}", loc=cq.Location(x=j * 1), color=copy.copy(color))
+            assy.add(
+                part, name=f"part{j}", loc=cq.Location(x=j * 1), color=copy.copy(color)
+            )
         stepfile = Path(tmpdir, f"assy_step_filesize{i}.step")
         assy.export(str(stepfile))
         filesize[i] = stepfile.stat().st_size
 
     assert filesize[1] < 1.2 * filesize[0]
-
