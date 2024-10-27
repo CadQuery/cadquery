@@ -4479,15 +4479,28 @@ def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
     return rv
 
 
-def _pts_to_harray(ps: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
+def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
     """
     Convert a sequence of Vecotor to a TColgp harray (OCCT specific).
     """
 
-    rv = TColgp_HArray1OfPnt(1, len(ps))
+    rv = TColgp_HArray1OfPnt(1, len(pts))
 
-    for i, p in enumerate(ps):
+    for i, p in enumerate(pts):
         rv.SetValue(i + 1, Vector(p).toPnt())
+
+    return rv
+
+
+def _floats_to_harray(vals: Sequence[float]) -> TColStd_HArray1OfReal:
+    """
+    Convert a sequence of floats to a TColstd harray (OCCT specific).
+    """
+
+    rv = TColStd_HArray1OfReal(1, len(vals))
+
+    for i, val in enumerate(vals):
+        rv.SetValue(i + 1, val)
 
     return rv
 
@@ -4761,6 +4774,7 @@ def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape
 def spline(
     pts: Sequence[VectorLike],
     tgts: Sequence[VectorLike] = (),
+    params: Sequence[float] = (),
     tol: float = 1e-6,
     periodic: bool = False,
     scale: bool = True,
@@ -4768,7 +4782,12 @@ def spline(
 
     data = _pts_to_harray(pts)
 
-    builder = GeomAPI_Interpolate(data, periodic, tol)
+    if params:
+        args = (data, _floats_to_harray(params), periodic, tol)
+    else:
+        args = (data, periodic, tol)
+
+    builder = GeomAPI_Interpolate(*args)
 
     if tgts:
         builder.Load(Vector(tgts[0]).wrapped, Vector(tgts[1]).wrapped, scale)
