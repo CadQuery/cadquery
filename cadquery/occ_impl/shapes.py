@@ -275,6 +275,8 @@ from OCP.ChFi2d import ChFi2d_FilletAPI  # For Wire.Fillet()
 
 from OCP.GeomConvert import GeomConvert_ApproxCurve
 
+from OCP.Approx import Approx_ParametrizationType
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -4522,6 +4524,21 @@ def _to_geomabshape(name: str) -> GeomAbs_Shape:
     return _geomabsshape_dict[name.upper()]
 
 
+_parametrization_dict = dict(
+    uniform=Approx_ParametrizationType.Approx_IsoParametric,
+    chordal=Approx_ParametrizationType.Approx_ChordLength,
+    centripetal=Approx_ParametrizationType.Approx_Centripetal,
+)
+
+
+def _to_parametrization(name: str) -> Approx_ParametrizationType:
+    """
+    Convert a literal to Approx_ParametrizationType enum (OCCT specific).
+    """
+
+    return _parametrization_dict[name.lower()]
+
+
 #%% alternative constructors
 
 
@@ -5156,7 +5173,9 @@ def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
 
 
 @multimethod
-def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
+def sweep(
+    s: Shape, path: Shape, aux: Optional[Shape] = None, cap: bool = False
+) -> Shape:
     """
     Sweep edge, wire or face along a path. For faces cap has no effect.
     Do not mix faces with other types.
@@ -5166,26 +5185,36 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
 
     results = []
 
+    def _make_builder():
+
+        rv = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+        if aux:
+            rv.SetMode(_get_one_wire(aux).wrapped, True)
+        else:
+            rv.SetMode(False)
+
+        return rv
+
     # try to get faces
     faces = s.Faces()
 
     # if faces were supplied
     if faces:
         for f in faces:
-            tmp = sweep(f.outerWire(), path, True)
+            tmp = sweep(f.outerWire(), path, aux, True)
 
             # if needed subtract two sweeps
             inner_wires = f.innerWires()
             if inner_wires:
-                tmp -= sweep(compound(inner_wires), path, True)
+                tmp -= sweep(compound(inner_wires), path, aux, True)
 
             results.append(tmp.wrapped)
 
     # otherwise sweep wires
     else:
         for w in _get_wires(s):
-            builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
-            builder.SetMode(False)
+            builder = _make_builder()
+
             builder.Add(w.wrapped, False, False)
             builder.Build()
 
@@ -5198,7 +5227,9 @@ def sweep(s: Shape, path: Shape, cap: bool = False) -> Shape:
 
 
 @sweep.register
-def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
+def sweep(
+    s: Sequence[Shape], path: Shape, aux: Optional[Shape] = None, cap: bool = False
+) -> Shape:
     """
     Sweep edges, wires or faces along a path, multiple sections are supported.
     For faces cap has no effect. Do not mix faces with other types.
@@ -5208,11 +5239,20 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
 
     results = []
 
+    def _make_builder():
+
+        rv = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+        if aux:
+            rv.SetMode(_get_one_wire(aux).wrapped, True)
+        else:
+            rv.SetMode(False)
+
+        return rv
+
     # try to construct sweeps using faces
     for el in _get_face_lists(s):
         # build outer part
-        builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
-        builder.SetMode(False)
+        builder = _make_builder()
 
         for f in el:
             builder.Add(f.outerWire().wrapped, False, False)
@@ -5225,8 +5265,7 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
 
         # initialize builders
         for w in el[0].innerWires():
-            builder_inner = BRepOffsetAPI_MakePipeShell(spine.wrapped)
-            builder_inner.SetMode(False)
+            builder_inner = _make_builder()
             builder_inner.Add(w.wrapped, False, False)
             builders_inner.append(builder_inner)
 
@@ -5249,7 +5288,7 @@ def sweep(s: Sequence[Shape], path: Shape, cap: bool = False) -> Shape:
     if not results:
         # construct sweeps
         for el in _get_wire_lists(s):
-            builder = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+            builder = _make_builder()
 
             for w in el:
                 builder.Add(w.wrapped, False, False)
@@ -5270,6 +5309,7 @@ def loft(
     cap: bool = False,
     ruled: bool = False,
     continuity: Literal["C1", "C2", "C3"] = "C2",
+    parametrization: Literal["uniform", "chordal", "centripetal"] = "uniform",
     degree: int = 3,
     compat: bool = True,
 ) -> Shape:
@@ -5284,6 +5324,7 @@ def loft(
         rv.SetMaxDegree(degree)
         rv.CheckCompatibility(compat)
         rv.SetContinuity(_to_geomabshape(continuity))
+        rv.SetParType(_to_parametrization(parametrization))
 
         return rv
 
