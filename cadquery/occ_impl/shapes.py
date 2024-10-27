@@ -5280,19 +5280,17 @@ def loft(
     results = []
 
     def _make_builder():
-        rv = BRepOffsetAPI_ThruSections()
+        rv = BRepOffsetAPI_ThruSections(cap, ruled)
         rv.SetMaxDegree(degree)
         rv.CheckCompatibility(compat)
         rv.SetContinuity(_to_geomabshape(continuity))
 
         return rv
 
-    builder = _make_builder()
-
     # try to construct lofts using faces
     for el in _get_face_lists(s):
         # build outer part
-        builder.Init(True, ruled)
+        builder = _make_builder()
 
         # used to check is building inner parts makes sense
         has_vertex = False
@@ -5315,7 +5313,6 @@ def loft(
             for w in el[0].innerWires():
                 builder_inner = _make_builder()
 
-                builder_inner.Init(True, ruled)
                 builder_inner.AddWire(w.wrapped)
                 builders_inner.append(builder_inner)
 
@@ -5337,7 +5334,7 @@ def loft(
     # otherwise construct using wires
     if not results:
         for el in _get_wire_lists(s):
-            builder.Init(cap, ruled)
+            builder = _make_builder()
 
             for w in el:
                 if isinstance(w, Wire):
@@ -5363,7 +5360,7 @@ def loft(
     compat: bool = True,
 ) -> Shape:
 
-    return loft(s, cap, ruled, degree, compat)
+    return loft(s, cap, ruled, continuity, degree, compat)
 
 
 #%% diagnotics
