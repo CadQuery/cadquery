@@ -398,7 +398,6 @@ def get_doc_nodes(doc, leaf=False):
 
         name_att = TDataStd_Name()
         label.FindAttribute(TDataStd_Name.GetID_s(), name_att)
-        # name = TCollection_ExtendedString(name_att.Get()).ToExtString()
 
         color = style.GetColorSurfRGBA()
         shape = expl.FindShapeFromPathId_s(doc, node.Id)
