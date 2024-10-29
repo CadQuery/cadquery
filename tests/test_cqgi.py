@@ -15,7 +15,7 @@ import textwrap
 TESTSCRIPT = textwrap.dedent(
     """
         height=2.0
-        width=3.0
+        width:float=3.0
         (a,b) = (1.0,1.0)
         o = (2, 2, 0)
         foo="bar"
@@ -31,7 +31,7 @@ TEST_DEBUG_SCRIPT = textwrap.dedent(
         width=3.0
         (a,b) = (1.0,1.0)
         o = (2, 2, 0)
-        foo="bar"
+        foo:str="bar"
         debug(foo, { "color": 'yellow' } )
         result =  "%s|%s|%s|%s|%s" % ( str(height) , str(width) , foo , str(a) , str(o) )
         show_object(result)
@@ -135,7 +135,7 @@ class TestCQGI(BaseTest):
             """
                 h = 1
                 show_object(h)
-                h = 2
+                h: int = 2
                 show_object(h)
             """
         )

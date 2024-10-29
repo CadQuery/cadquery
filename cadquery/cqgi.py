@@ -2,6 +2,7 @@
 The CadQuery Gateway Interface.
 Provides classes and tools for executing CadQuery scripts
 """
+import sys
 import ast
 import traceback
 import time
@@ -65,7 +66,9 @@ class CQModel(object):
         assignment_finder = ConstantAssignmentFinder(self.metadata)
 
         for node in self.ast_tree.body:
-            if isinstance(node, ast.Assign):
+            if isinstance(node, ast.AnnAssign):
+                assignment_finder.visit_AnnAssign(node)
+            elif isinstance(node, ast.Assign):
                 assignment_finder.visit_Assign(node)
 
     def _find_descriptions(self):
@@ -564,6 +567,31 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             print("Unable to handle assignment for variable '%s'" % var_name)
             pass
 
+    def handle_ann_assignment(self, var_name, annotation_id, value_node):
+        try:
+            if annotation_id == "int" or annotation_id == "float":
+                self.cqModel.add_script_parameter(
+                    InputParameter.create(
+                        value_node, var_name, NumberParameterType, value_node.n
+                    )
+                )
+            elif annotation_id == "str":
+                self.cqModel.add_script_parameter(
+                    InputParameter.create(
+                        value_node, var_name, StringParameterType, value_node.s
+                    )
+                )
+            elif annotation_id == "bool":
+                self.cqModel.add_script_parameter(
+                    InputParameter.create(
+                        value_node, var_name, BooleanParameterType, value_node.s
+                    )
+                )
+
+        except:
+            print("Unable to handle annotated assignment for variable '%s'" % var_name)
+            pass
+
     def visit_Assign(self, node):
 
         try:
@@ -593,5 +621,24 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
         except:
             traceback.print_exc()
             print("Unable to handle assignment for node '%s'" % ast.dump(left_side))
+
+        return node
+
+    def visit_AnnAssign(self, node):
+
+        try:
+            left_side = node.target
+
+            # do not handle attribute assignments
+            if isinstance(left_side, ast.Attribute):
+                return
+
+            annTypes = ["int", "float", "str", "bool"]
+
+            if hasattr(node, "annotation") and node.annotation.id in annTypes:
+                self.handle_ann_assignment(left_side.id, node.annotation.id, node.value)
+        except:
+            traceback.print_exc()
+            print("Unable to handle annotated assignment for node '%s'" % ast.dump(left_side))
 
         return node
