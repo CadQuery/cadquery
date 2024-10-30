@@ -639,6 +639,9 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                 self.handle_ann_assignment(left_side.id, node.annotation.id, node.value)
         except:
             traceback.print_exc()
-            print("Unable to handle annotated assignment for node '%s'" % ast.dump(left_side))
+            print(
+                "Unable to handle annotated assignment for node '%s'"
+                % ast.dump(left_side)
+            )
 
         return node
