@@ -5416,11 +5416,12 @@ def loft(
     cap: bool = False,
     ruled: bool = False,
     continuity: Literal["C1", "C2", "C3"] = "C2",
+    parametrization: Literal["uniform", "chordal", "centripetal"] = "uniform",
     degree: int = 3,
     compat: bool = True,
 ) -> Shape:
 
-    return loft(s, cap, ruled, continuity, degree, compat)
+    return loft(s, cap, ruled, continuity, parametrization, degree, compat)
 
 
 #%% diagnotics
