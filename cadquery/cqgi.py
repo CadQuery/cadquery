@@ -625,23 +625,15 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
         return node
 
     def visit_AnnAssign(self, node):
+        left_side = node.target
 
-        try:
-            left_side = node.target
+        # do not handle Attribute or Subscript
+        if not isinstance(left_side, ast.Name):
+            return
 
-            # do not handle attribute assignments
-            if isinstance(left_side, ast.Attribute):
-                return
+        annTypes = ["int", "float", "str", "bool"]
 
-            annTypes = ["int", "float", "str", "bool"]
-
-            if hasattr(node, "annotation") and node.annotation.id in annTypes:
-                self.handle_ann_assignment(left_side.id, node.annotation.id, node.value)
-        except:
-            traceback.print_exc()
-            print(
-                "Unable to handle annotated assignment for node '%s'"
-                % ast.dump(left_side)
-            )
+        if hasattr(node, "annotation") and isinstance(node.annotation, ast.Name) and node.annotation.id in annTypes:
+            self.handle_ann_assignment(left_side.id, node.annotation.id, node.value)
 
         return node
