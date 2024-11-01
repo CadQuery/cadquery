@@ -633,7 +633,11 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
 
         annTypes = ["int", "float", "str", "bool"]
 
-        if hasattr(node, "annotation") and isinstance(node.annotation, ast.Name) and node.annotation.id in annTypes:
+        if (
+            hasattr(node, "annotation")
+            and isinstance(node.annotation, ast.Name)
+            and node.annotation.id in annTypes
+        ):
             self.handle_ann_assignment(left_side.id, node.annotation.id, node.value)
 
         return node
