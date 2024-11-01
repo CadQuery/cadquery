@@ -48,7 +48,7 @@ class TestCQGI(BaseTest):
         metadata = model.metadata
         self.assertEqual(
             set(metadata.parameters.keys()),
-            {"height", "width", "transparent", "a", "b", "foo", "o"}
+            {"height", "width", "transparent", "a", "b", "foo", "o"},
         )
 
     def test_build_with_debug(self):
