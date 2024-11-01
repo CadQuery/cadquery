@@ -4631,13 +4631,13 @@ def shell(*s: Shape, tol: float = 1e-6) -> Shape:
 
 
 @shell.register
-def shell(s: Sequence[Shape]) -> Shape:
+def shell(s: Sequence[Shape], tol: float = 1e-6) -> Shape:
 
-    return shell(*s)
+    return shell(*s, tol=tol)
 
 
 @multimethod
-def solid(*s: Shape) -> Shape:
+def solid(*s: Shape, tol: float = 1e-6) -> Shape:
     """
     Build solid from faces.
     """
@@ -4645,19 +4645,21 @@ def solid(*s: Shape) -> Shape:
     builder = ShapeFix_Solid()
 
     faces = [f for el in s for f in _get(el, "Face")]
-    rv = builder.SolidFromShell(shell(*faces).wrapped)
+    rv = builder.SolidFromShell(shell(*faces, tol=tol).wrapped)
 
     return _compound_or_shape(rv)
 
 
 @solid.register
-def solid(s: Sequence[Shape], inner: Optional[Sequence[Shape]] = None) -> Shape:
+def solid(
+    s: Sequence[Shape], inner: Optional[Sequence[Shape]] = None, tol: float = 1e-6
+) -> Shape:
 
     builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(shell(*s).wrapped)
+    builder.Add(shell(*s, tol=tol).wrapped)
 
     if inner:
-        for sh in _get(shell(*inner), "Shell"):
+        for sh in _get(shell(*inner, tol=tol), "Shell"):
             builder.Add(sh.wrapped)
 
     # fix orientations
@@ -5331,6 +5333,8 @@ def loft(
     parametrization: Literal["uniform", "chordal", "centripetal"] = "uniform",
     degree: int = 3,
     compat: bool = True,
+    smoothing: bool = False,
+    weights: Tuple[float, float, float] = (1, 1, 1),
 ) -> Shape:
     """
     Loft edges, wires or faces. For faces cap has no effect. Do not mix faces with other types.
@@ -5344,6 +5348,8 @@ def loft(
         rv.CheckCompatibility(compat)
         rv.SetContinuity(_to_geomabshape(continuity))
         rv.SetParType(_to_parametrization(parametrization))
+        rv.SetSmoothing(smoothing)
+        rv.SetCriteriumWeight(*weights)
 
         return rv
 
@@ -5419,6 +5425,8 @@ def loft(
     parametrization: Literal["uniform", "chordal", "centripetal"] = "uniform",
     degree: int = 3,
     compat: bool = True,
+    smoothing: bool = False,
+    weights: Tuple[float, float, float] = (1, 1, 1),
 ) -> Shape:
 
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
