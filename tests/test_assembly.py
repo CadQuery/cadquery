@@ -16,7 +16,6 @@ from cadquery.occ_impl.exporters.assembly import (
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
 from cadquery.occ_impl.shapes import Face, box
-from cadquery.occ_impl.geom import Location
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -399,7 +398,6 @@ def get_doc_nodes(doc, leaf=False):
 
         name_att = TDataStd_Name()
         label.FindAttribute(TDataStd_Name.GetID_s(), name_att)
-        name = TCollection_ExtendedString(name_att.Get()).ToExtString()
 
         color = style.GetColorSurfRGBA()
         shape = expl.FindShapeFromPathId_s(doc, node.Id)
@@ -412,7 +410,6 @@ def get_doc_nodes(doc, leaf=False):
         faces = []
         if not node.IsAssembly:
             it = TDF_ChildIterator(label)
-            i = 0
             while it.More():
                 child = it.Value()
                 child_shape = tool.GetShape_s(child)
@@ -916,7 +913,7 @@ def test_colors_assy0(assy_fixture, expected, request):
             "boxes0_assy",
             [
                 (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box1_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
             ],
         ),
         (
@@ -983,7 +980,7 @@ def test_colors_assy0(assy_fixture, expected, request):
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-front", "wheel:right", "wheel:right_part"],
+                    ["chassis", "wheel-axle-front", "wheel:right", "wheel:left_part"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
@@ -991,7 +988,7 @@ def test_colors_assy0(assy_fixture, expected, request):
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel:right_part"],
+                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel:left_part"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
@@ -1685,3 +1682,25 @@ def test_order_of_transform():
     m1, m2 = assy2.toCompound().Solids()
 
     assert (m1.Center() - m2.Center()).Length == approx(0)
+
+
+def test_step_export_filesize(tmpdir):
+    """A sanity check of STEP file size.
+    Multiple instances of a shape with same color is not expected to result
+    in significant file size increase.
+    """
+    part = box(1, 1, 1)
+    N = 10
+    filesize = {}
+
+    for i, color in enumerate((None, cq.Color("red"))):
+        assy = cq.Assembly()
+        for j in range(1, N + 1):
+            assy.add(
+                part, name=f"part{j}", loc=cq.Location(x=j * 1), color=copy.copy(color)
+            )
+        stepfile = Path(tmpdir, f"assy_step_filesize{i}.step")
+        assy.export(str(stepfile))
+        filesize[i] = stepfile.stat().st_size
+
+    assert filesize[1] < 1.2 * filesize[0]
