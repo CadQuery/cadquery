@@ -3714,7 +3714,7 @@ class Workplane(object):
         elif len(toLoft) == 1:
             raise ValueError("More than one wire for face is required")
 
-        r: Shape = loft(toLoft, ruled)
+        r: Shape = loft(toLoft, cap=True, ruled=ruled)
 
         newS = self._combineWithBase(r, combine, clean)
 
