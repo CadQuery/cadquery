@@ -69,9 +69,6 @@ def test_show(wp, assy, sk, monkeypatch):
     show(wp, sk, assy, wp.val())
     show()
 
-    with raises(ValueError):
-        show(1)
-
     show_object(wp)
     show_object(wp.val())
     show_object(assy)
@@ -81,3 +78,6 @@ def test_show(wp, assy, sk, monkeypatch):
 
     # for compatibility with CQ-editor
     show_object(wp, "a")
+
+    # for now a workaround to be compatibile with more complaicated CQ-editor invocations
+    show(1)
