@@ -509,7 +509,7 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError) as cm:
             s1.loft()
         err = cm.exception
-        self.assertEqual(str(err), "More than one wire is required")
+        self.assertEqual(str(err), "More than one wire or face is required")
 
     def testLoftCombine(self):
         """
