@@ -3711,6 +3711,8 @@ class Workplane(object):
 
         if not toLoft:
             raise ValueError("Nothing to loft")
+        elif len(toLoft) == 1:
+            raise ValueError("More than one wire for face is required")
 
         r: Shape = loft(toLoft, ruled)
 
