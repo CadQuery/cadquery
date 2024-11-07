@@ -6,6 +6,7 @@
 [![codecov](https://codecov.io/gh/CadQuery/cadquery/branch/master/graph/badge.svg)](https://codecov.io/gh/CadQuery/cadquery)
 [![Documentation Status](https://readthedocs.org/projects/cadquery/badge/?version=latest)](https://cadquery.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4498634.svg)](https://doi.org/10.5281/zenodo.4498634)
+[![Gurubase](https://img.shields.io/badge/Gurubase-Ask%20CadQuery%20Guru-006BFF)](https://gurubase.io/g/cadquery)
 
 
 ---
