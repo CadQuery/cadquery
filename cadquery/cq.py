@@ -3755,9 +3755,6 @@ class Workplane(object):
             elif isinstance(el, Compound):
                 rv.extend(subel for subel in el if isinstance(subel, (Face, Vertex)))
 
-        if not rv:
-            rv.extend(wiresToFaces(self.ctx.popPendingWires()))
-
         return rv
 
     def _extrude(
