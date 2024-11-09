@@ -1,16 +1,34 @@
-from . import Shape, Workplane, Assembly, Sketch, Compound, Color
+from . import Shape, Workplane, Assembly, Sketch, Compound, Color, Vector, Location
 from .occ_impl.exporters.assembly import _vtkRenderWindow
+from .occ_impl.assembly import _loc2vtk
 
-from typing import Union, Any
+from typing import Union, Any, List, Tuple
+
+from typish import instance_of
 
 from OCP.TopoDS import TopoDS_Shape
 
 from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
-from vtkmodules.vtkRenderingCore import vtkMapper, vtkRenderWindowInteractor
+from vtkmodules.vtkRenderingCore import (
+    vtkMapper,
+    vtkRenderWindowInteractor,
+    vtkActor,
+    vtkPolyDataMapper,
+    vtkAssembly,
+)
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkPolyData
+from vtkmodules.vtkCommonColor import vtkNamedColors
+
 
 DEFAULT_COLOR = [1, 0.8, 0, 1]
+DEFAULT_PT_SIZE = 7.5
+DEFAULT_PT_COLOR = "darkviolet"
+
+ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
+Showable = Union[ShapeLike, List[ShapeLike], Vector, List[Vector]]
 
 
 def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:
@@ -30,15 +48,99 @@ def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:
     return assy
 
 
-def show(*objs: Union[Shape, Workplane, Assembly, Sketch], **kwargs: Any):
+def _split_showables(objs) -> Tuple[List[ShapeLike], List[Vector], List[Location]]:
     """
-    Show CQ objects using VTK
+    Split into showables and others.
     """
 
+    rv_s: List[ShapeLike] = []
+    rv_v: List[Vector] = []
+    rv_l: List[Location] = []
+
+    for el in objs:
+        if instance_of(el, ShapeLike):
+            rv_s.append(el)
+        elif isinstance(el, Vector):
+            rv_v.append(el)
+        elif isinstance(el, Location):
+            rv_l.append(el)
+        elif isinstance(el, list):
+            tmp1, tmp2, tmp3 = _split_showables(el)  # split recursively
+
+            rv_s.extend(tmp1)
+            rv_v.extend(tmp2)
+            rv_l.extend(tmp3)
+
+    return rv_s, rv_v, rv_l
+
+
+def _to_vtk_pts(
+    vecs: List[Vector], size: float = DEFAULT_PT_SIZE, color: str = DEFAULT_PT_COLOR
+) -> vtkActor:
+    """
+    Convert vectors to vtkActor.
+    """
+
+    rv = vtkActor()
+
+    mapper = vtkPolyDataMapper()
+    points = vtkPoints()
+    verts = vtkCellArray()
+    data = vtkPolyData()
+
+    data.SetPoints(points)
+    data.SetVerts(verts)
+
+    for v in vecs:
+        ix = points.InsertNextPoint(*v.toTuple())
+        verts.InsertNextCell(1)
+        verts.InsertCellPoint(ix)
+
+    mapper.SetInputData(data)
+
+    rv.SetMapper(mapper)
+
+    rv.GetProperty().SetColor(vtkNamedColors().GetColor3d(color))
+    rv.GetProperty().SetPointSize(size)
+
+    return rv
+
+
+def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkActor:
+    """
+    Convert vectors to vtkActor.
+    """
+
+    rv = vtkAssembly()
+
+    for l in locs:
+        trans, rot = _loc2vtk(l)
+        ax = vtkAxesActor()
+        ax.SetAxisLabels(0)
+
+        ax.SetPosition(*trans)
+        ax.SetOrientation(*rot)
+        ax.SetScale(scale)
+
+        rv.AddPart(ax)
+
+    return rv
+
+
+def show(*objs: Showable, scale: float = 0.2, **kwargs: Any):
+    """
+    Show CQ objects using VTK.
+    """
+
+    # split objects
+    shapes, vecs, locs = _split_showables(objs)
+
     # construct the assy
-    assy = _to_assy(
-        *(obj for obj in objs if isinstance(obj, (Shape, Workplane, Assembly, Sketch)))
-    )
+    assy = _to_assy(*shapes)
+
+    # construct the points and locs
+    pts = _to_vtk_pts(vecs)
+    axs = _to_vtk_axs(locs, scale=scale)
 
     # create a VTK window
     win = _vtkRenderWindow(assy)
@@ -84,6 +186,10 @@ def show(*objs: Union[Shape, Workplane, Assembly, Sketch], **kwargs: Any):
     camera.Roll(-35)
     camera.Elevation(-45)
     renderer.ResetCamera()
+
+    # add pts and locs
+    renderer.AddActor(pts)
+    renderer.AddActor(axs)
 
     # initialize and set size
     inter.Initialize()

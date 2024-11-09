@@ -253,6 +253,23 @@ def toCAF(
     return top, doc
 
 
+def _loc2vtk(
+    loc: Location,
+) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
+    """
+    Convert location to t,rot pair following vtk conventions
+    """
+
+    T = loc.wrapped.Transformation()
+
+    trans = T.TranslationPart().Coord()
+    rot = tuple(
+        map(degrees, T.GetRotation().GetEulerAngles(gp_EulerSequence.gp_Intrinsic_ZXY),)
+    )
+
+    return trans, rot
+
+
 def toVTK(
     assy: AssemblyProtocol,
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
@@ -265,14 +282,8 @@ def toVTK(
     for shape, _, loc, col_ in assy:
 
         col = col_.toTuple() if col_ else color
-        T = loc.wrapped.Transformation()
-        trans = T.TranslationPart().Coord()
-        rot = tuple(
-            map(
-                degrees,
-                T.GetRotation().GetEulerAngles(gp_EulerSequence.gp_Intrinsic_ZXY),
-            )
-        )
+
+        trans, rot = _loc2vtk(loc)
 
         data = shape.toVtkPolyData(tolerance, angularTolerance)
 
