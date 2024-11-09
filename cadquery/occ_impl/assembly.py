@@ -253,7 +253,9 @@ def toCAF(
     return top, doc
 
 
-def _loc2vtk(loc: Location,) -> Tuple[Tuple[float, float, float], Tuple[float, ...]]:
+def _loc2vtk(
+    loc: Location,
+) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
     """
     Convert location to t,rot pair following vtk conventions
     """
@@ -265,7 +267,7 @@ def _loc2vtk(loc: Location,) -> Tuple[Tuple[float, float, float], Tuple[float, .
         map(degrees, T.GetRotation().GetEulerAngles(gp_EulerSequence.gp_Intrinsic_ZXY),)
     )
 
-    return trans, rot
+    return trans, (rot[1], rot[2], rot[0])
 
 
 def toVTK(
@@ -312,7 +314,7 @@ def toVTK(
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
-        actor.SetOrientation(rot[1], rot[2], rot[0])
+        actor.SetOrientation(*rot)
         actor.GetProperty().SetColor(*col[:3])
         actor.GetProperty().SetOpacity(col[3])
 
