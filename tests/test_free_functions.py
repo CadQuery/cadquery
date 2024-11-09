@@ -569,6 +569,7 @@ def test_loft():
     r4 = loft(w1, w2, w3, cap=True)  # capped loft
     r5 = loft(w4, w5)  # loft with open edges
     r6 = loft(f1, f2)  # loft with faces
+    r7 = loft()  # returns an empty compound
 
     assert_all_valid(r1, r2, r3, r4, r5, r6)
 
@@ -578,6 +579,24 @@ def test_loft():
     assert r4.Volume() > 0
     assert r5.Area() == approx(1)
     assert len(r6.Faces()) == 16
+    assert len(r6.Faces()) == 16
+    assert not bool(r7)
+
+
+def test_loft_vertex():
+
+    r1 = loft(rect(1, 1), vertex(0, 0, 1))
+    r2 = loft(plane(1, 1), vertex(0, 0, 1))
+    r3 = loft(vertex(0, 0, -1), plane(1, 1), vertex(0, 0, 1))
+    r4 = loft(vertex(0, 0, -1), plane(1, 1) - plane(0.5, 0.5), vertex(0, 0, 1))
+
+    assert len(r1.Faces()) == 4
+    assert len(r2.Faces()) == 5
+    assert len(r3.Faces()) == 4
+    assert len(r3.Solids()) == 1
+    assert len(r4.Faces()) == 4
+    assert len(r4.Solids()) == 1
+    assert r4.Volume() == approx(r3.Volume())  # inner features are ignored
 
 
 # %% export
