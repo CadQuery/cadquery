@@ -277,6 +277,8 @@ from OCP.GeomConvert import GeomConvert_ApproxCurve
 
 from OCP.Approx import Approx_ParametrizationType
 
+from OCP.LProp3d import LProp3d_CLProps
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -1638,6 +1640,10 @@ class Vertex(Shape):
         return cls(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
 
+ParamMode = Literal["length", "parameter"]
+FrameMode = Literal["frenet", "corrected"]
+
+
 class Mixin1DProtocol(ShapeProtocol, Protocol):
     def _approxCurve(self) -> Geom_BSplineCurve:
         ...
@@ -1645,21 +1651,29 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         ...
 
+    def _curve_and_param(
+        self, d: float, mode: ParamMode
+    ) -> Tuple[Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve], float]:
+        ...
+
     def paramAt(self, d: float) -> float:
         ...
 
-    def positionAt(
-        self, d: float, mode: Literal["length", "parameter"] = "length",
-    ) -> Vector:
+    def positionAt(self, d: float, mode: ParamMode = "length",) -> Vector:
         ...
 
     def locationAt(
         self,
         d: float,
-        mode: Literal["length", "parameter"] = "length",
-        frame: Literal["frenet", "corrected"] = "frenet",
+        mode: ParamMode = "length",
+        frame: FrameMode = "frenet",
         planar: bool = False,
     ) -> Location:
+        ...
+
+    def curvatureAt(
+        self, d: float, mode: ParamMode = "length", resolution: float = 1e-6,
+    ) -> float:
         ...
 
 
@@ -1738,9 +1752,7 @@ class Mixin1D(object):
         return rv
 
     def tangentAt(
-        self: Mixin1DProtocol,
-        locationParam: float = 0.5,
-        mode: Literal["length", "parameter"] = "length",
+        self: Mixin1DProtocol, locationParam: float = 0.5, mode: ParamMode = "length",
     ) -> Vector:
         """
         Compute tangent vector at the specified location.
@@ -1823,16 +1835,11 @@ class Mixin1D(object):
 
         return BRep_Tool.IsClosed_s(self.wrapped)
 
-    def positionAt(
-        self: Mixin1DProtocol,
-        d: float,
-        mode: Literal["length", "parameter"] = "length",
-    ) -> Vector:
-        """Generate a position along the underlying curve.
-
-        :param d: distance or parameter value
-        :param mode: position calculation mode (default: length)
-        :return: A Vector on the underlying curve located at the specified d value.
+    def _curve_and_param(
+        self: Mixin1DProtocol, d: float, mode: ParamMode
+    ) -> Tuple[Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve], float]:
+        """
+        Helper that reurns the curve and u value
         """
 
         curve = self._geomAdaptor()
@@ -1842,12 +1849,24 @@ class Mixin1D(object):
         else:
             param = d
 
+        return curve, param
+
+    def positionAt(
+        self: Mixin1DProtocol, d: float, mode: ParamMode = "length",
+    ) -> Vector:
+        """Generate a position along the underlying curve.
+
+        :param d: distance or parameter value
+        :param mode: position calculation mode (default: length)
+        :return: A Vector on the underlying curve located at the specified d value.
+        """
+
+        curve, param = self._curve_and_param(d, mode)
+
         return Vector(curve.Value(param))
 
     def positions(
-        self: Mixin1DProtocol,
-        ds: Iterable[float],
-        mode: Literal["length", "parameter"] = "length",
+        self: Mixin1DProtocol, ds: Iterable[float], mode: ParamMode = "length",
     ) -> List[Vector]:
         """Generate positions along the underlying curve
 
@@ -1861,8 +1880,8 @@ class Mixin1D(object):
     def locationAt(
         self: Mixin1DProtocol,
         d: float,
-        mode: Literal["length", "parameter"] = "length",
-        frame: Literal["frenet", "corrected"] = "frenet",
+        mode: ParamMode = "length",
+        frame: FrameMode = "frenet",
         planar: bool = False,
     ) -> Location:
         """Generate a location along the underlying curve.
@@ -1874,12 +1893,7 @@ class Mixin1D(object):
         :return: A Location object representing local coordinate system at the specified distance.
         """
 
-        curve = self._geomAdaptor()
-
-        if mode == "length":
-            param = self.paramAt(d)
-        else:
-            param = d
+        curve, param = self._curve_and_param(d, mode)
 
         law: GeomFill_TrihedronLaw
         if frame == "frenet":
@@ -1909,8 +1923,8 @@ class Mixin1D(object):
     def locations(
         self: Mixin1DProtocol,
         ds: Iterable[float],
-        mode: Literal["length", "parameter"] = "length",
-        frame: Literal["frenet", "corrected"] = "frenet",
+        mode: ParamMode = "length",
+        frame: FrameMode = "frenet",
         planar: bool = False,
     ) -> List[Location]:
         """Generate location along the curve
@@ -1957,6 +1971,44 @@ class Mixin1D(object):
             rv = [tcast(T1D, el) for el in shapes]
 
         return rv
+
+    def curvatureAt(
+        self: Mixin1DProtocol,
+        d: float,
+        mode: ParamMode = "length",
+        resolution: float = 1e-6,
+    ) -> float:
+        """
+        Caulcate mean curvature along the underlying curve.
+
+        :param d: distance or parameter value
+        :param mode: position calculation mode (default: length)
+        :param resolution: resolution of the calculation (default: 1e-6)
+        :return: mean curvature value at the specified d value.
+        """
+
+        curve, param = self._curve_and_param(d, mode)
+
+        props = LProp3d_CLProps(curve, param, 2, resolution)
+
+        return props.Curvature()
+
+    def curvatures(
+        self: Mixin1DProtocol,
+        ds: Iterable[float],
+        mode: ParamMode = "length",
+        resolution: float = 1e-6,
+    ) -> List[float]:
+        """
+        Caulcate mean curvatures along the underlying curve.
+
+        :param d: distance or parameter values
+        :param mode: position calculation mode (default: length)
+        :param resolution: resolution of the calculation (default: 1e-6)
+        :return: mean curvature value at the specified d value.
+        """
+
+        return [self.curvatureAt(d, mode, resolution) for d in ds]
 
 
 class Edge(Shape, Mixin1D):
@@ -4775,8 +4827,8 @@ def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape
 @spline.register
 def spline(
     pts: Sequence[VectorLike],
-    tgts: Sequence[VectorLike] = (),
-    params: Sequence[float] = (),
+    tgts: Optional[Sequence[VectorLike]] = None,
+    params: Optional[Sequence[float]] = None,
     tol: float = 1e-6,
     periodic: bool = False,
     scale: bool = True,
@@ -4784,14 +4836,14 @@ def spline(
 
     data = _pts_to_harray(pts)
 
-    if params:
+    if params is not None:
         args = (data, _floats_to_harray(params), periodic, tol)
     else:
         args = (data, periodic, tol)
 
     builder = GeomAPI_Interpolate(*args)
 
-    if tgts:
+    if tgts is not None:
         builder.Load(Vector(tgts[0]).wrapped, Vector(tgts[1]).wrapped, scale)
 
     builder.Perform()
