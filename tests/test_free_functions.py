@@ -34,6 +34,7 @@ from cadquery.occ_impl.shapes import (
     compound,
     Location,
     Shape,
+    Compound,
     _get_one_wire,
     _get_wires,
     _get,
@@ -129,9 +130,11 @@ def test_constructors():
 
     sh1 = shell(b.Faces())
     sh2 = shell(*b.Faces())
+    sh3 = shell(torus(1, 0.1).Faces())  # check for issues when sewing single face
 
     assert sh1.Area() == approx(6)
     assert sh2.Area() == approx(6)
+    assert sh3.isValid()
 
     # solid
     s1 = solid(b.Faces())
@@ -570,6 +573,7 @@ def test_loft():
     r5 = loft(w4, w5)  # loft with open edges
     r6 = loft(f1, f2)  # loft with faces
     r7 = loft()  # returns an empty compound
+    r8 = loft(compound(), compound())  # returns an empty compound
 
     assert_all_valid(r1, r2, r3, r4, r5, r6)
 
@@ -580,7 +584,8 @@ def test_loft():
     assert r5.Area() == approx(1)
     assert len(r6.Faces()) == 16
     assert len(r6.Faces()) == 16
-    assert not bool(r7)
+    assert not bool(r7) and isinstance(r7, Compound)
+    assert not bool(r8) and isinstance(r8, Compound)
 
 
 def test_loft_vertex():
