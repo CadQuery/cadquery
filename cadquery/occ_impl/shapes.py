@@ -1042,7 +1042,7 @@ class Shape(object):
 
     def locate(self: T, loc: Location) -> T:
         """
-        Apply a location in absolute sense to self
+        Apply a location in absolute sense to self.
         """
 
         self.wrapped.Location(loc.wrapped)
@@ -1051,7 +1051,7 @@ class Shape(object):
 
     def located(self: T, loc: Location) -> T:
         """
-        Apply a location in absolute sense to a copy of self
+        Apply a location in absolute sense to a copy of self.
         """
 
         r = self.__class__(self.wrapped.Located(loc.wrapped))
@@ -1062,7 +1062,7 @@ class Shape(object):
     @multimethod
     def move(self: T, loc: Location) -> T:
         """
-        Apply a location in relative sense (i.e. update current location) to self
+        Apply a location in relative sense (i.e. update current location) to self.
         """
 
         self.wrapped.Move(loc.wrapped)
@@ -1079,6 +1079,9 @@ class Shape(object):
         ry: Real = 0,
         rz: Real = 0,
     ) -> T:
+        """
+        Apply translation and rotation in relative sense (i.e. update current location) to self.
+        """
 
         self.wrapped.Move(Location(x, y, z, rx, ry, rz).wrapped)
 
@@ -1086,6 +1089,9 @@ class Shape(object):
 
     @move.register
     def move(self: T, loc: VectorLike) -> T:
+        """
+        Apply a VectorLike in relative sense (i.e. update current location) to self.
+        """
 
         self.wrapped.Move(Location(loc).wrapped)
 
@@ -1094,7 +1100,7 @@ class Shape(object):
     @multimethod
     def moved(self: T, loc: Location) -> T:
         """
-        Apply a location in relative sense (i.e. update current location) to a copy of self
+        Apply a location in relative sense (i.e. update current location) to a copy of self.
         """
 
         r = self.__class__(self.wrapped.Moved(loc.wrapped))
@@ -1104,11 +1110,17 @@ class Shape(object):
 
     @moved.register
     def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> T:
+        """
+        Apply multiple locations.
+        """
 
         return self.moved((loc1, loc2) + locs)
 
     @moved.register
     def moved(self: T, locs: Sequence[Location]) -> T:
+        """
+        Apply multiple locations.
+        """
 
         rv = []
 
@@ -1127,16 +1139,25 @@ class Shape(object):
         ry: Real = 0,
         rz: Real = 0,
     ) -> T:
+        """
+        Apply translation and rotation in relative sense to a copy of self.
+        """
 
         return self.moved(Location(x, y, z, rx, ry, rz))
 
     @moved.register
     def moved(self: T, loc: VectorLike) -> T:
+        """
+        Apply a VectorLike in relative sense to a copy of self.
+        """
 
         return self.moved(Location(loc))
 
     @moved.register
     def moved(self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike) -> T:
+        """
+        Apply multiple VectorLikes in relative sense to a copy of self.
+        """
 
         return self.moved(
             (Location(loc1), Location(loc2)) + tuple(Location(loc) for loc in locs)
@@ -1144,6 +1165,9 @@ class Shape(object):
 
     @moved.register
     def moved(self: T, loc: Sequence[VectorLike]) -> T:
+        """
+        Apply multiple VectorLikes in relative sense to a copy of self.
+        """
 
         return self.moved(tuple(Location(l) for l in loc))
 
@@ -4648,6 +4672,9 @@ def face(*s: Shape) -> Shape:
 
 @face.register
 def face(s: Sequence[Shape]) -> Shape:
+    """
+    Build face from a sequence of edges or wires.
+    """
 
     return face(*s)
 
@@ -4684,6 +4711,9 @@ def shell(*s: Shape, tol: float = 1e-6) -> Shape:
 
 @shell.register
 def shell(s: Sequence[Shape], tol: float = 1e-6) -> Shape:
+    """
+    Build shell from a sequence of faces.
+    """
 
     return shell(*s, tol=tol)
 
@@ -4706,6 +4736,9 @@ def solid(*s: Shape, tol: float = 1e-6) -> Shape:
 def solid(
     s: Sequence[Shape], inner: Optional[Sequence[Shape]] = None, tol: float = 1e-6
 ) -> Shape:
+    """
+    Build solid from a sequence of faces.
+    """
 
     builder = BRepBuilderAPI_MakeSolid()
     builder.Add(shell(*s, tol=tol).wrapped)
@@ -4740,6 +4773,9 @@ def compound(*s: Shape) -> Shape:
 
 @compound.register
 def compound(s: Sequence[Shape]) -> Shape:
+    """
+    Build compound from a sequence of shapes.
+    """
 
     return compound(*s)
 
@@ -4758,6 +4794,9 @@ def vertex(x: Real, y: Real, z: Real) -> Shape:
 
 @vertex.register
 def vertex(p: VectorLike):
+    """
+    Construct a vertex from VectorLike.
+    """
 
     return _compound_or_shape(BRepBuilderAPI_MakeVertex(Vector(p).toPnt()).Vertex())
 
@@ -4833,6 +4872,9 @@ def spline(
     periodic: bool = False,
     scale: bool = True,
 ) -> Shape:
+    """
+    Construct a spline from a sequence points.
+    """
 
     data = _pts_to_harray(pts)
 
@@ -4942,7 +4984,7 @@ def torus(d1: float, d2: float) -> Shape:
 @multimethod
 def cone(d1: Real, d2: Real, h: Real) -> Shape:
     """
-    Construct a solid cone.
+    Construct a partial solid cone.
     """
 
     return _compound_or_shape(
@@ -4958,6 +5000,9 @@ def cone(d1: Real, d2: Real, h: Real) -> Shape:
 
 @cone.register
 def cone(d: Real, h: Real) -> Shape:
+    """
+    Construct a full solid cone.
+    """
 
     return cone(d, 0, h)
 
@@ -5480,6 +5525,9 @@ def loft(
     smoothing: bool = False,
     weights: Tuple[float, float, float] = (1, 1, 1),
 ) -> Shape:
+    """
+    Variadic loft overload.
+    """
 
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
 
