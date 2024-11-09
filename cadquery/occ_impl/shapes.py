@@ -2765,7 +2765,7 @@ class Face(Shape):
         return BRepTools.UVBounds_s(self.wrapped)
 
     @multimethod
-    def normalAt(self, locationVector: Optional[Vector] = None) -> Vector:
+    def normalAt(self, locationVector: Optional[VectorLike] = None) -> Vector:
         """
         Computes the normal vector at the desired location on the face.
 
@@ -2782,7 +2782,9 @@ class Face(Shape):
             v = 0.5 * (v0 + v1)
         else:
             # project point on surface
-            projector = GeomAPI_ProjectPointOnSurf(locationVector.toPnt(), surface)
+            projector = GeomAPI_ProjectPointOnSurf(
+                Vector(locationVector).toPnt(), surface
+            )
 
             u, v = projector.LowerDistanceParameters()
 
@@ -2790,7 +2792,7 @@ class Face(Shape):
         vn = gp_Vec()
         BRepGProp_Face(self.wrapped).Normal(u, v, p, vn)
 
-        return Vector(vn)
+        return Vector(vn).normalized()
 
     @normalAt.register
     def normalAt(self, u: Real, v: Real) -> Tuple[Vector, Vector]:

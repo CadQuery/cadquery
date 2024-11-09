@@ -13,6 +13,8 @@ from cadquery.occ_impl.shapes import (
 
 from pytest import approx
 
+from math import pi
+
 
 def test_paramAt():
 
@@ -84,21 +86,26 @@ def test_curvature():
 
 def test_normals():
 
-    d1 = 10
-    d2 = 1
+    r1 = 10
+    r2 = 1
 
-    (t,) = torus(d1, d2).faces()
+    t = torus(2 * r1, 2 * r2).faces()
 
-    n1 = t.normalAt((d1, d2))
-    n2 = t.normalAt((d1 + d2, 0))
+    n1 = t.normalAt((r1, 0, r2))
+    n2 = t.normalAt((r1 + r2, 0))
 
-    assert approx(n1.toTuple()) == (0, 0, 1)
-    assert approx(n2.toTuple()) == (1, 0, 0)
+    assert n1.toTuple() == approx((0, 0, 1))
+    assert n2.toTuple() == approx((1, 0, 0))
 
-    n2, n3 = t.normals([(d1, d2), (d1 + d2, 0)])
+    n3, p3 = t.normalAt(0, 0)
 
-    assert approx(n2.toTuple()) == (0, 0, 1)
-    assert approx(n3.toTuple()) == (1, 0, 0)
+    assert n3.toTuple() == approx((1, 0, 0))
+    assert p3.toTuple() == approx((r1 + r2, 0, 0))
+
+    (n4, n5), _ = t.normals((0, 0), (0, pi / 2))
+
+    assert n4.toTuple() == approx((1, 0, 0))
+    assert n5.toTuple() == approx((0, 0, 1))
 
 
 def test_trimming():
@@ -106,5 +113,5 @@ def test_trimming():
     e = segment((0, 0), (0, 1))
     f = plane(1, 1)
 
-    assert e.trim(0, 0.5).Length() == approx(e.Lengnth() / 2)
+    assert e.trim(0, 0.5).Length() == approx(e.Length() / 2)
     assert f.trim(0, 0.5, -0.5, 0.5).Area() == approx(f.Area() / 2)
