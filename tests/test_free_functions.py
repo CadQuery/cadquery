@@ -541,8 +541,11 @@ def test_sweep_aux():
     aux = spline([(1, 0, 0), (1, 0, 1)], tgts=((0, 1, 0), (0, -1, 0)))
 
     r1 = sweep(p, spine, aux)
+    r2 = sweep([p], spine, aux)
 
     assert r1.isValid()
+    assert len(r1.faces("%PLANE").Faces()) == 2  # only two planar faces are expected
+    assert r2.isValid()
     assert len(r1.faces("%PLANE").Faces()) == 2  # only two planar faces are expected
 
 
