@@ -326,7 +326,7 @@ def toVTK(
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
-        actor.SetOrientation(rot[1], rot[2], rot[0])
+        actor.SetOrientation(*rot)
         actor.GetProperty().SetColor(0, 0, 0)
         actor.GetProperty().SetLineWidth(2)
 
