@@ -292,6 +292,14 @@ def test_spline():
     assert s3.tangentAt(1).toTuple() == approx((-1, 0, 0))
 
 
+def test_spline_params():
+
+    s1 = spline([(0, 0), (0, 1), (1, 1)], params=[0, 1, 2])
+    p1 = s1.positionAt(1, mode="parameter")
+
+    assert p1.toTuple() == approx((0, 1, 0))
+
+
 def test_text():
 
     r1 = text("CQ", 10)
@@ -524,6 +532,18 @@ def test_sweep():
     assert len(r6.Faces()) == 7
     assert len(r7.Faces()) == 7
     assert len(r8.Faces()) == 6
+
+
+def test_sweep_aux():
+
+    p = plane(1, 1)
+    spine = spline((0, 0, 0), (0, 0, 1))
+    aux = spline([(1, 0, 0), (1, 0, 1)], tgts=((0, 1, 0), (0, -1, 0)))
+
+    r1 = sweep(p, spine, aux)
+
+    assert r1.isValid()
+    assert len(r1.faces("%PLANE").Faces()) == 2  # only two planar faces are expected
 
 
 def test_loft():
