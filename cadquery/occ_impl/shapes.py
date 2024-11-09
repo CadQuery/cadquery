@@ -4512,6 +4512,12 @@ def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
             for face_list, f in zip(face_lists, el.Faces()):
                 face_list.append(f)
 
+    # check if the result makes sense - needed in loft to switch to wire mode
+    if any(
+        isinstance(el[0], Vertex) and isinstance(el[1], Vertex) for el in face_lists
+    ):
+        return []
+
     return face_lists
 
 
