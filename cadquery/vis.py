@@ -31,7 +31,7 @@ ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
 Showable = Union[ShapeLike, List[ShapeLike], Vector, List[Vector]]
 
 
-def _to_assy(*objs: Union[Shape, Workplane, Assembly, Sketch]) -> Assembly:
+def _to_assy(*objs: ShapeLike) -> Assembly:
 
     assy = Assembly(color=Color(*DEFAULT_COLOR))
 
@@ -127,7 +127,7 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkActor:
     return rv
 
 
-def show(*objs: Showable, scale: float = 0.2, **kwargs: Any):
+def show(*objs: Showable, scale: float = 0.2, **kwrags: Any):
     """
     Show CQ objects using VTK.
     """

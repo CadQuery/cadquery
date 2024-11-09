@@ -253,9 +253,7 @@ def toCAF(
     return top, doc
 
 
-def _loc2vtk(
-    loc: Location,
-) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
+def _loc2vtk(loc: Location,) -> Tuple[Tuple[float, float, float], Tuple[float, ...]]:
     """
     Convert location to t,rot pair following vtk conventions
     """
