@@ -33,7 +33,9 @@ Showable = Union[ShapeLike, List[ShapeLike], Vector, List[Vector]]
 
 def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
 
-    assy = Assembly(color=Color(*DEFAULT_COLOR[:3], alpha))
+    assy = Assembly(
+        color=Color(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2], alpha)
+    )
 
     for obj in objs:
         if isinstance(obj, (Shape, Workplane, Assembly)):
