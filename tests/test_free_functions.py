@@ -590,10 +590,11 @@ def test_loft():
 
 def test_loft_vertex():
 
-    r1 = loft(rect(1, 1), vertex(0, 0, 1))
+    r1 = loft(vertex(0, 0, 1), rect(1, 1))
     r2 = loft(plane(1, 1), vertex(0, 0, 1))
     r3 = loft(vertex(0, 0, -1), plane(1, 1), vertex(0, 0, 1))
     r4 = loft(vertex(0, 0, -1), plane(1, 1) - plane(0.5, 0.5), vertex(0, 0, 1))
+    r5 = loft(vertex(0, 0, -1), rect(1, 1), vertex(0, 0, 1))
 
     assert len(r1.Faces()) == 4
     assert len(r2.Faces()) == 5
@@ -602,6 +603,7 @@ def test_loft_vertex():
     assert len(r4.Faces()) == 4
     assert len(r4.Solids()) == 1
     assert r4.Volume() == approx(r3.Volume())  # inner features are ignored
+    assert len(r5.Faces()) == 4
 
 
 # %% export
