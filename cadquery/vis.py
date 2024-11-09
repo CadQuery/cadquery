@@ -31,9 +31,9 @@ ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
 Showable = Union[ShapeLike, List[ShapeLike], Vector, List[Vector]]
 
 
-def _to_assy(*objs: ShapeLike) -> Assembly:
+def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
 
-    assy = Assembly(color=Color(*DEFAULT_COLOR))
+    assy = Assembly(color=Color(*DEFAULT_COLOR[:3], alpha))
 
     for obj in objs:
         if isinstance(obj, (Shape, Workplane, Assembly)):
@@ -127,7 +127,7 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkActor:
     return rv
 
 
-def show(*objs: Showable, scale: float = 0.2, **kwrags: Any):
+def show(*objs: Showable, scale: float = 0.2, alpha: float = 1, **kwrags: Any):
     """
     Show CQ objects using VTK.
     """
@@ -136,7 +136,7 @@ def show(*objs: Showable, scale: float = 0.2, **kwrags: Any):
     shapes, vecs, locs = _split_showables(objs)
 
     # construct the assy
-    assy = _to_assy(*shapes)
+    assy = _to_assy(*shapes, alpha=alpha)
 
     # construct the points and locs
     pts = _to_vtk_pts(vecs)
@@ -180,6 +180,9 @@ def show(*objs: Showable, scale: float = 0.2, **kwrags: Any):
     # use gradient background
     renderer = win.GetRenderers().GetFirstRenderer()
     renderer.GradientBackgroundOn()
+
+    # use FXXAA
+    renderer.UseFXAAOn()
 
     # set camera
     camera = renderer.GetActiveCamera()
