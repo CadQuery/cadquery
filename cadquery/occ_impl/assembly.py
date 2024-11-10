@@ -100,6 +100,14 @@ class Color(object):
         else:
             raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
 
+    def __hash__(self):
+
+        return hash(self.toTuple())
+
+    def __eq__(self, other):
+
+        return self.toTuple() == other.toTuple()
+
     def toTuple(self) -> Tuple[float, float, float, float]:
         """
         Convert Color to RGB tuple.
