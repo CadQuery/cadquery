@@ -42,6 +42,7 @@ from inspect import Parameter, Signature
 from .occ_impl.geom import Vector, Plane, Location
 from .occ_impl.shapes import (
     Shape,
+    Vertex,
     Edge,
     Wire,
     Face,
@@ -49,6 +50,7 @@ from .occ_impl.shapes import (
     Compound,
     wiresToFaces,
     Shapes,
+    loft,
 )
 
 from .occ_impl.exporters.svg import getSVG, exportSVG
@@ -3697,15 +3699,22 @@ class Workplane(object):
 
         """
 
+        toLoft: List[Union[Wire, Vertex]] = []
+
         if self.ctx.pendingWires:
-            wiresToLoft = self.ctx.popPendingWires()
+            toLoft.extend(self.ctx.popPendingWires())
         else:
-            wiresToLoft = [f.outerWire() for f in self._getFaces()]
+            toLoft = [
+                el if isinstance(el, Vertex) else el.outerWire()
+                for el in self._getFacesVertices()
+            ]
 
-        if not wiresToLoft:
+        if not toLoft:
             raise ValueError("Nothing to loft")
+        elif len(toLoft) == 1:
+            raise ValueError("More than one wire or face is required")
 
-        r: Shape = Solid.makeLoft(wiresToLoft, ruled)
+        r: Shape = loft(toLoft, cap=True, ruled=ruled)
 
         newS = self._combineWithBase(r, combine, clean)
 
@@ -3728,6 +3737,23 @@ class Workplane(object):
 
         if not rv:
             rv.extend(wiresToFaces(self.ctx.popPendingWires()))
+
+        return rv
+
+    def _getFacesVertices(self) -> List[Union[Face, Vertex]]:
+        """
+        Convert pending wires or sketches to faces/vertices for subsequent operation
+        """
+
+        rv: List[Union[Face, Vertex]] = []
+
+        for el in self.objects:
+            if isinstance(el, Sketch):
+                rv.extend(el)
+            elif isinstance(el, (Face, Vertex)):
+                rv.append(el)
+            elif isinstance(el, Compound):
+                rv.extend(subel for subel in el if isinstance(subel, (Face, Vertex)))
 
         return rv
 
@@ -4574,7 +4600,7 @@ class Workplane(object):
     ) -> T:
         """
         Export Workplane to file.
-        
+
         :param path: Filename.
         :param tolerance: the deflection tolerance, in model units. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Default 0.1.

@@ -509,7 +509,7 @@ class TestCadQuery(BaseTest):
         with self.assertRaises(ValueError) as cm:
             s1.loft()
         err = cm.exception
-        self.assertEqual(str(err), "More than one wire is required")
+        self.assertEqual(str(err), "More than one wire or face is required")
 
     def testLoftCombine(self):
         """
@@ -5829,3 +5829,31 @@ class TestCadQuery(BaseTest):
         assert len(list(w1)) == 0
         assert len(list(w2)) == 2  # 2 beacuase __iter__ unpacks Compounds
         assert len(list(w3)) == 2
+
+    def test_loft_face(self):
+
+        f1 = plane(1, 1)
+        f2 = face(circle(1)).moved(z=1)
+
+        c = compound(f1, f2)
+
+        w1 = Workplane().add(f1).add(f2).loft()
+        w2 = Workplane().add(c).loft()
+
+        # in both cases we get a solid
+        assert w1.solids().size() == 1
+        assert w2.solids().size() == 1
+
+    def test_loft_to_vertex(self):
+
+        f1 = plane(1, 1)
+        v1 = vertex(0, 0, 1)
+
+        c = compound(f1, v1)
+
+        w1 = Workplane().add(f1).add(v1).loft()
+        w2 = Workplane().add(c).loft()
+
+        # in both cases we get a solid
+        assert w1.solids().size() == 1
+        assert w2.solids().size() == 1

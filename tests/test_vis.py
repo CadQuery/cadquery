@@ -1,4 +1,4 @@
-from cadquery import Workplane, Assembly, Sketch
+from cadquery import Workplane, Assembly, Sketch, Location, Vector, Location
 from cadquery.vis import show, show_object
 
 import cadquery.occ_impl.exporters.assembly as assembly
@@ -64,13 +64,15 @@ def test_show(wp, assy, sk, monkeypatch):
     # simple smoke test
     show(wp)
     show(wp.val())
+    show(wp.val().wrapped)
     show(assy)
     show(sk)
     show(wp, sk, assy, wp.val())
+    show(Vector())
+    show(Location())
+    show([Vector, Vector, Location])
+    show([wp, assy])
     show()
-
-    with raises(ValueError):
-        show(1)
 
     show_object(wp)
     show_object(wp.val())
@@ -79,5 +81,8 @@ def test_show(wp, assy, sk, monkeypatch):
     show_object(wp, sk, assy, wp.val())
     show_object()
 
-    with raises(ValueError):
-        show_object("a")
+    # for compatibility with CQ-editor
+    show_object(wp, "a")
+
+    # for now a workaround to be compatible with more complicated CQ-editor invocations
+    show(1)

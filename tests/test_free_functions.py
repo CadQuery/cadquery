@@ -34,6 +34,7 @@ from cadquery.occ_impl.shapes import (
     compound,
     Location,
     Shape,
+    Compound,
     _get_one_wire,
     _get_wires,
     _get,
@@ -129,9 +130,11 @@ def test_constructors():
 
     sh1 = shell(b.Faces())
     sh2 = shell(*b.Faces())
+    sh3 = shell(torus(1, 0.1).Faces())  # check for issues when sewing single face
 
     assert sh1.Area() == approx(6)
     assert sh2.Area() == approx(6)
+    assert sh3.isValid()
 
     # solid
     s1 = solid(b.Faces())
@@ -290,6 +293,14 @@ def test_spline():
     assert s3.Length() > 0
     assert s3.tangentAt(0).toTuple() == approx((1, 0, 0))
     assert s3.tangentAt(1).toTuple() == approx((-1, 0, 0))
+
+
+def test_spline_params():
+
+    s1 = spline([(0, 0), (0, 1), (1, 1)], params=[0, 1, 2])
+    p1 = s1.positionAt(1, mode="parameter")
+
+    assert p1.toTuple() == approx((0, 1, 0))
 
 
 def test_text():
@@ -526,6 +537,21 @@ def test_sweep():
     assert len(r8.Faces()) == 6
 
 
+def test_sweep_aux():
+
+    p = plane(1, 1)
+    spine = spline((0, 0, 0), (0, 0, 1))
+    aux = spline([(1, 0, 0), (1, 0, 1)], tgts=((0, 1, 0), (0, -1, 0)))
+
+    r1 = sweep(p, spine, aux)
+    r2 = sweep([p], spine, aux)
+
+    assert r1.isValid()
+    assert len(r1.faces("%PLANE").Faces()) == 2  # only two planar faces are expected
+    assert r2.isValid()
+    assert len(r1.faces("%PLANE").Faces()) == 2  # only two planar faces are expected
+
+
 def test_loft():
 
     w1 = circle(1)
@@ -546,6 +572,8 @@ def test_loft():
     r4 = loft(w1, w2, w3, cap=True)  # capped loft
     r5 = loft(w4, w5)  # loft with open edges
     r6 = loft(f1, f2)  # loft with faces
+    r7 = loft()  # returns an empty compound
+    r8 = loft(compound(), compound())  # returns an empty compound
 
     assert_all_valid(r1, r2, r3, r4, r5, r6)
 
@@ -555,6 +583,27 @@ def test_loft():
     assert r4.Volume() > 0
     assert r5.Area() == approx(1)
     assert len(r6.Faces()) == 16
+    assert len(r6.Faces()) == 16
+    assert not bool(r7) and isinstance(r7, Compound)
+    assert not bool(r8) and isinstance(r8, Compound)
+
+
+def test_loft_vertex():
+
+    r1 = loft(vertex(0, 0, 1), rect(1, 1))
+    r2 = loft(plane(1, 1), vertex(0, 0, 1))
+    r3 = loft(vertex(0, 0, -1), plane(1, 1), vertex(0, 0, 1))
+    r4 = loft(vertex(0, 0, -1), plane(1, 1) - plane(0.5, 0.5), vertex(0, 0, 1))
+    r5 = loft(vertex(0, 0, -1), rect(1, 1), vertex(0, 0, 1))
+
+    assert len(r1.Faces()) == 4
+    assert len(r2.Faces()) == 5
+    assert len(r3.Faces()) == 4
+    assert len(r3.Solids()) == 1
+    assert len(r4.Faces()) == 4
+    assert len(r4.Solids()) == 1
+    assert r4.Volume() == approx(r3.Volume())  # inner features are ignored
+    assert len(r5.Faces()) == 4
 
 
 # %% export
