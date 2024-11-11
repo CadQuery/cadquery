@@ -2003,7 +2003,7 @@ class Mixin1D(object):
         resolution: float = 1e-6,
     ) -> float:
         """
-        Caulcate mean curvature along the underlying curve.
+        Calculate mean curvature along the underlying curve.
 
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
@@ -2024,7 +2024,7 @@ class Mixin1D(object):
         resolution: float = 1e-6,
     ) -> List[float]:
         """
-        Caulcate mean curvatures along the underlying curve.
+        Calculate mean curvatures along the underlying curve.
 
         :param d: distance or parameter values
         :param mode: position calculation mode (default: length)
@@ -2082,6 +2082,8 @@ class Edge(Shape, Mixin1D):
     def trim(self, u0: Real, u1: Real) -> "Edge":
         """
         Trim the edge in the parametric space to (u0, u1).
+
+        NB: this operation is done on the base geometry.
         """
 
         bldr = BRepBuilderAPI_MakeEdge(self._geomAdaptor().Curve().Curve(), u0, u1)
@@ -2645,7 +2647,6 @@ class Wire(Shape, Mixin1D):
         """
         Apply 2D or 3D fillet to a wire
 
-        :param wire: The input wire to fillet. Currently only open wires are supported
         :param radius: the radius of the fillet, must be > zero
         :param vertices: the vertices to delete (where the fillet will be applied).  By default
           all vertices are deleted except ends of open wires.
@@ -3157,6 +3158,8 @@ class Face(Shape):
     def trim(self, u0: Real, u1: Real, v0: Real, v1: Real, tol: Real = 1e-6) -> "Face":
         """
         Trim the face in the parametric space to (u0, u1).
+
+        NB: this operation is done on the base geometry.
         """
 
         bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), u0, u1, v0, v1, tol)
@@ -5457,7 +5460,7 @@ def loft(
         # build outer part
         builder = _make_builder(True)
 
-        # used to check is building inner parts makes sense
+        # used to check if building inner parts makes sense
         has_vertex = False
 
         for f in el:

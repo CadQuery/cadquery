@@ -84,5 +84,5 @@ def test_show(wp, assy, sk, monkeypatch):
     # for compatibility with CQ-editor
     show_object(wp, "a")
 
-    # for now a workaround to be compatibile with more complaicated CQ-editor invocations
+    # for now a workaround to be compatible with more complicated CQ-editor invocations
     show(1)
