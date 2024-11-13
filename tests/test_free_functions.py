@@ -322,6 +322,12 @@ def test_text():
     assert r4.faces("<X").Center().y > r1.faces("<X").Center().y
     assert r1.faces("<X").Center().y > r5.faces("<X").Center().x
 
+    # test single letter
+    r6 = text("C", 1)
+
+    assert len(r6.Faces()) == 1
+    assert len(r6.Wires()) == 1
+
 
 #%% bool ops
 def test_operators():
