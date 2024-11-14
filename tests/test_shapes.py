@@ -9,6 +9,7 @@ from cadquery.occ_impl.shapes import (
     circle,
     plane,
     torus,
+    Shape,
 )
 
 from pytest import approx
@@ -115,3 +116,20 @@ def test_trimming():
 
     assert e.trim(0, 0.5).Length() == approx(e.Length() / 2)
     assert f.trim(0, 0.5, -0.5, 0.5).Area() == approx(f.Area() / 2)
+
+
+def test_bin_import_export():
+
+    b = box(1, 1, 1)
+
+    from io import BytesIO
+
+    bio = BytesIO()
+
+    b.exportBin(bio)
+    bio.seek(0)
+
+    r = Shape.importBin(bio)
+
+    assert r.isValid()
+    assert r.Volume() == approx(1)
