@@ -279,6 +279,8 @@ from OCP.Approx import Approx_ParametrizationType
 
 from OCP.LProp3d import LProp3d_CLProps
 
+from OCP.BinTools import BinTools
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -514,6 +516,29 @@ class Shape(object):
         builder = BRep_Builder()
 
         BRepTools.Read_s(s, f, builder)
+
+        if s.IsNull():
+            raise ValueError(f"Could not import {f}")
+
+        return cls.cast(s)
+
+    def exportBin(self, f: Union[str, BytesIO]) -> bool:
+        """
+        Export this shape to a binary BREP file
+        """
+
+        rv = BinTools.Write_s(self.wrapped, f)
+
+        return True if rv is None else rv
+
+    @classmethod
+    def importBin(cls, f: Union[str, BytesIO]) -> "Shape":
+        """
+        Import shape from a binary BREP file
+        """
+        s = TopoDS_Shape()
+
+        BinTools.Read_s(s, f)
 
         if s.IsNull():
             raise ValueError(f"Could not import {f}")
@@ -4528,6 +4553,7 @@ def _normalize(s: Shape) -> Shape:
     """
     Apply some normalizations:
     - Shell with only one Face -> Face.
+    - Compound with only one element -> element.
     """
 
     t = s.ShapeType()
@@ -4726,15 +4752,23 @@ def shell(s: Sequence[Shape], tol: float = 1e-6) -> Shape:
 @multimethod
 def solid(*s: Shape, tol: float = 1e-6) -> Shape:
     """
-    Build solid from faces.
+    Build solid from faces or shells.
     """
 
     builder = ShapeFix_Solid()
 
-    faces = [f for el in s for f in _get(el, "Face")]
-    rv = builder.SolidFromShell(shell(*faces, tol=tol).wrapped)
+    # get both Shells and Faces
+    shells_faces = [f for el in s for f in _get(el, ("Shell", "Face"))]
 
-    return _compound_or_shape(rv)
+    # if no shells are present, use faces to construct them
+    shells = [el for el in shells_faces if el.ShapeType() == "Shell"]
+    if not shells:
+        faces = [el for el in shells_faces]
+        shells = [shell(*faces, tol=tol).wrapped]
+
+    rvs = [builder.SolidFromShell(sh) for sh in shells]
+
+    return _compound_or_shape(rvs)
 
 
 @solid.register
@@ -4750,6 +4784,29 @@ def solid(
 
     if inner:
         for sh in _get(shell(*inner, tol=tol), "Shell"):
+            builder.Add(sh.wrapped)
+
+    # fix orientations
+    sf = ShapeFix_Solid(builder.Solid())
+    sf.Perform()
+
+    return _compound_or_shape(sf.Solid())
+
+
+@solid.register
+def solid(s: Shape, inner: Optional[Union[Shape, Sequence[Shape]]] = None) -> Shape:
+    """
+    Build solid from a shell and inner shells.
+    """
+
+    builder = BRepBuilderAPI_MakeSolid()
+    builder.Add(_get_one(s, "Shell").wrapped)
+
+    if inner:
+        inner_shells = (
+            inner if isinstance(inner, Shape) else compound(*inner)
+        ).shells()
+        for sh in inner_shells:
             builder.Add(sh.wrapped)
 
     # fix orientations
@@ -5012,6 +5069,7 @@ def cone(d: Real, h: Real) -> Shape:
     return cone(d, 0, h)
 
 
+@multimethod
 def text(
     txt: str,
     size: float,
@@ -5066,6 +5124,66 @@ def text(
     )
 
     return clean(compound(_compound_or_shape(rv).faces()).fuse())
+
+
+@text.register
+def text(
+    txt: str,
+    size: float,
+    spine: Shape,
+    planar: bool = False,
+    font: str = "Arial",
+    path: Optional[str] = None,
+    kind: Literal["regular", "bold", "italic"] = "regular",
+    halign: Literal["center", "left", "right"] = "center",
+    valign: Literal["center", "top", "bottom"] = "center",
+) -> Shape:
+    """
+    Create a text on a spine.
+    """
+
+    spine = _get_one_wire(spine)
+    L = spine.Length()
+
+    rv = []
+    for el in text(txt, size, font, path, kind, halign, valign):
+        pos = el.BoundingBox().center.x
+
+        # position
+        rv.append(
+            el.moved(-pos)
+            .moved(rx=-90 if planar else 0, ry=-90)
+            .moved(spine.locationAt(pos / L))
+        )
+
+    return _normalize(compound(rv))
+
+
+@text.register
+def text(
+    txt: str,
+    size: float,
+    spine: Shape,
+    base: Shape,
+    font: str = "Arial",
+    path: Optional[str] = None,
+    kind: Literal["regular", "bold", "italic"] = "regular",
+    halign: Literal["center", "left", "right"] = "center",
+    valign: Literal["center", "top", "bottom"] = "center",
+) -> Shape:
+    """
+    Create a text on a spine and a base surface.
+    """
+
+    base = _get_one(base, "Face")
+
+    tmp = text(txt, size, spine, False, font, path, kind, halign, valign)
+
+    rv = []
+    for f in tmp.faces():
+        rv.append(f.project(base, f.normalAt()))
+
+    return _normalize(compound(rv))
 
 
 #%% ops
@@ -5266,33 +5384,56 @@ def revolve(s: Shape, p: VectorLike, d: VectorLike, a: float = 360):
     return _compound_or_shape(results)
 
 
-def offset(s: Shape, t: float, cap=True, tol: float = 1e-6) -> Shape:
+def offset(
+    s: Shape, t: float, cap=True, both: bool = False, tol: float = 1e-6
+) -> Shape:
     """
     Offset or thicken faces or shells.
     """
 
-    builder = BRepOffset_MakeOffset()
+    def _offset(t):
 
-    results = []
+        results = []
 
-    for el in _get(s, ("Face", "Shell")):
+        for el in _get(s, ("Face", "Shell")):
 
-        builder.Initialize(
-            el.wrapped,
-            t,
-            tol,
-            BRepOffset_Mode.BRepOffset_Skin,
-            False,
-            False,
-            GeomAbs_Intersection,
-            cap,
-        )
+            builder = BRepOffset_MakeOffset()
 
-        builder.MakeOffsetShape()
+            builder.Initialize(
+                el.wrapped,
+                t,
+                tol,
+                BRepOffset_Mode.BRepOffset_Skin,
+                False,
+                False,
+                GeomAbs_Intersection,
+                cap,
+            )
 
-        results.append(builder.Shape())
+            builder.MakeOffsetShape()
 
-    return _compound_or_shape(results)
+            results.append(builder.Shape())
+
+        return results
+
+    if both:
+        results_pos = _offset(t)
+        results_neg = _offset(-t)
+
+        results_both = [
+            Shape(el1) + Shape(el2) for el1, el2 in zip(results_pos, results_neg)
+        ]
+
+        if len(results_both) == 1:
+            rv = results_both[0]
+        else:
+            rv = Compound.makeCompound(results_both)
+
+    else:
+        results = _offset(t)
+        rv = _compound_or_shape(results)
+
+    return rv
 
 
 @multimethod
