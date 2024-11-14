@@ -4793,29 +4793,6 @@ def solid(
     return _compound_or_shape(sf.Solid())
 
 
-@solid.register
-def solid(s: Shape, *, inner: Optional[Union[Shape, Sequence[Shape]]] = None) -> Shape:
-    """
-    Build solid from a shell and inner shells.
-    """
-
-    builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(_get_one(s, "Shell").wrapped)
-
-    if inner:
-        inner_shells = (
-            inner if isinstance(inner, Shape) else compound(*inner)
-        ).shells()
-        for sh in inner_shells:
-            builder.Add(sh.wrapped)
-
-    # fix orientations
-    sf = ShapeFix_Solid(builder.Solid())
-    sf.Perform()
-
-    return _compound_or_shape(sf.Solid())
-
-
 @multimethod
 def compound(*s: Shape) -> Shape:
     """
