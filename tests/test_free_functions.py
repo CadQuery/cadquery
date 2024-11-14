@@ -152,11 +152,9 @@ def test_constructors():
     assert s3.Volume() == approx(1 - 2 * 0.1 ** 3)
 
     # solid from shells
-    s4 = solid(b.Shells())
-    s5 = solid(b.shells())
+    s4 = solid(b.shells())
 
     assert s4.Volume() == approx(1)
-    assert s5.Volume() == approx(1)
 
     # compound
     c1 = compound(b.Faces())

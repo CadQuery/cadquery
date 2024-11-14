@@ -4750,7 +4750,7 @@ def shell(s: Sequence[Shape], tol: float = 1e-6) -> Shape:
 
 
 @multimethod
-def solid(*s: Shape, tol: float = 1e-6) -> Shape:
+def solid(s1: Shape, *sn: Shape, tol: float = 1e-6) -> Shape:
     """
     Build solid from faces or shells.
     """
@@ -4758,10 +4758,11 @@ def solid(*s: Shape, tol: float = 1e-6) -> Shape:
     builder = ShapeFix_Solid()
 
     # get both Shells and Faces
+    s = [s1, *sn]
     shells_faces = [f for el in s for f in _get(el, ("Shell", "Face"))]
 
     # if no shells are present, use faces to construct them
-    shells = [el for el in shells_faces if el.ShapeType() == "Shell"]
+    shells = [el.wrapped for el in shells_faces if el.ShapeType() == "Shell"]
     if not shells:
         faces = [el for el in shells_faces]
         shells = [shell(*faces, tol=tol).wrapped]
