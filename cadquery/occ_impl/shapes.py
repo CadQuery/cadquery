@@ -540,9 +540,6 @@ class Shape(object):
 
         BinTools.Read_s(s, f)
 
-        if s.IsNull():
-            raise ValueError(f"Could not import {f}")
-
         return cls.cast(s)
 
     def geomType(self) -> Geoms:
