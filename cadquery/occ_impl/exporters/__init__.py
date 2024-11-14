@@ -14,7 +14,7 @@ from .svg import getSVG
 from .json import JsonMesh
 from .amf import AmfWriter
 from .threemf import ThreeMFWriter
-from .dxf import exportDXF, DxfDocument
+from .dxf import exportDXF
 from .vtk import exportVTP
 
 
@@ -29,10 +29,11 @@ class ExportTypes:
     VTP = "VTP"
     THREEMF = "3MF"
     BREP = "BREP"
+    BIN = "BIN"
 
 
 ExportLiterals = Literal[
-    "STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP", "3MF", "BREP"
+    "STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP", "3MF", "BREP", "BIN"
 ]
 
 
@@ -127,6 +128,9 @@ def export(
 
     elif exportType == ExportTypes.BREP:
         shape.exportBrep(fname)
+
+    elif exportType == ExportTypes.BIN:
+        shape.exportBin(fname)
 
     else:
         raise ValueError("Unknown export type")
