@@ -530,9 +530,11 @@ def test_offset():
 
     r1 = offset(f, 1)
     r2 = offset(s, -0.25)
+    r3 = offset(f, 1, both=True)
 
     assert r1.Volume() == approx(1)
     assert r2.Volume() == approx(1 - 0.5 ** 3)
+    assert r3.Volume() == approx(2)
 
 
 def test_sweep():
