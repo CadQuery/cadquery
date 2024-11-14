@@ -4794,7 +4794,7 @@ def solid(
 
 
 @solid.register
-def solid(s: Shape, inner: Optional[Union[Shape, Sequence[Shape]]] = None) -> Shape:
+def solid(s: Shape, *, inner: Optional[Union[Shape, Sequence[Shape]]] = None) -> Shape:
     """
     Build solid from a shell and inner shells.
     """
@@ -5072,7 +5072,7 @@ def cone(d: Real, h: Real) -> Shape:
 @multimethod
 def text(
     txt: str,
-    size: float,
+    size: Real,
     font: str = "Arial",
     path: Optional[str] = None,
     kind: Literal["regular", "bold", "italic"] = "regular",
@@ -5129,7 +5129,7 @@ def text(
 @text.register
 def text(
     txt: str,
-    size: float,
+    size: Real,
     spine: Shape,
     planar: bool = False,
     font: str = "Arial",
@@ -5162,7 +5162,7 @@ def text(
 @text.register
 def text(
     txt: str,
-    size: float,
+    size: Real,
     spine: Shape,
     base: Shape,
     font: str = "Arial",

@@ -14,7 +14,7 @@ from .svg import getSVG
 from .json import JsonMesh
 from .amf import AmfWriter
 from .threemf import ThreeMFWriter
-from .dxf import exportDXF
+from .dxf import exportDXF, DxfDocument  # DxfDocument is needed
 from .vtk import exportVTP
 
 

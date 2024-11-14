@@ -346,7 +346,7 @@ def test_text():
     # test text on path
     c = cylinder(10, 10).moved(rz=180)
     cf = c.faces("%CYLINDER")
-    spine = c / plane(20, 20).moved(z=5)
+    spine = c.edges('<Z').moved(z=5)
 
     r7 = text("CQ", 1, spine)  # normal
     r8 = text("CQ", 1, spine, planar=True)  # planar
@@ -356,7 +356,7 @@ def test_text():
     assert r7.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
     assert r7.faces("<<X").geomType() == "PLANE"
 
-    assert r8.Center().z > 0
+    assert r8.Center().z == approx(0)
     assert (r8.faces("<<X").normalAt() - Vector(0, 0, 1)).Length == approx(0)
     assert r8.faces("<<X").geomType() == "PLANE"
 
