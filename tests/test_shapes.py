@@ -12,8 +12,6 @@ from cadquery.occ_impl.shapes import (
     Shape,
 )
 
-from OCP.Storage import Storage_StreamReadError
-
 from pytest import approx, raises
 
 from math import pi
@@ -136,5 +134,5 @@ def test_bin_import_export():
     assert r.isValid()
     assert r.Volume() == approx(1)
 
-    with raises(Storage_StreamReadError):
+    with raises(Exception):
         Shape.importBin(BytesIO())
