@@ -337,21 +337,21 @@ def test_text():
     # test text on path
     c = cylinder(10, 10).moved(rz=180)
     cf = c.faces("%CYLINDER")
-    spine = c.edges("<Z").moved(z=5)
+    spine = c.edges("<Z")
 
     r7 = text("CQ", 1, spine)  # normal
     r8 = text("CQ", 1, spine, planar=True)  # planar
     r9 = text("CQ", 1, spine, cf)  # projected
 
-    assert r7.Center().z > 0
+    assert r7.faces(">>Z").Center().z > 0
     assert r7.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
     assert r7.faces("<<X").geomType() == "PLANE"
 
-    assert r8.Center().z == approx(0)
+    assert r8.faces(">>Z").Center().z == approx(0)
     assert (r8.faces("<<X").normalAt() - Vector(0, 0, 1)).Length == approx(0)
     assert r8.faces("<<X").geomType() == "PLANE"
 
-    assert r9.Center().z > 0
+    assert r9.faces(">>Z").Center().z > 0
     assert r9.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
     assert r9.faces("<<X").geomType() == "CYLINDER"
 
