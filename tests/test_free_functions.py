@@ -346,7 +346,7 @@ def test_text():
     # test text on path
     c = cylinder(10, 10).moved(rz=180)
     cf = c.faces("%CYLINDER")
-    spine = c.edges('<Z').moved(z=5)
+    spine = c.edges("<Z").moved(z=5)
 
     r7 = text("CQ", 1, spine)  # normal
     r8 = text("CQ", 1, spine, planar=True)  # planar
