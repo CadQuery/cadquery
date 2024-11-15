@@ -139,9 +139,9 @@ class TestImporters(BaseTest):
         """
         Test binary BREP file import.
         """
-        self.importBox(importers.ImportTypes.BIN, os.path.join(OUTDIR, "tempBIN.brep"))
+        self.importBox(importers.ImportTypes.BIN, os.path.join(OUTDIR, "tempBIN.bin"))
         self.importCompound(
-            importers.ImportTypes.BIN, os.path.join(OUTDIR, "tempBIN.brep")
+            importers.ImportTypes.BIN, os.path.join(OUTDIR, "tempBIN.bin")
         )
 
     def testSTEP(self):
