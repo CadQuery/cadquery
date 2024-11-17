@@ -15,7 +15,7 @@ from typing import (
     overload,
 )
 
-from math import tan, sin, cos, pi, radians, remainder
+from math import tan, sin, cos, pi, radians, remainder, sqrt
 from itertools import product, chain
 from multimethod import multimethod
 from typish import instance_of, get_type
@@ -871,6 +871,26 @@ class Sketch(object):
     ) -> T:
 
         p1 = self._endPoint()
+        val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
+
+        return self.edge(val, tag, forConstruction)
+
+    @arc.register
+    def arc(
+        self: T,
+        p3: Point,
+        r: Real,
+        ccw: bool = False,
+        tag: Optional[str] = None,
+        forConstruction: bool = False,
+    ) -> T:
+
+        p1 = self._endPoint()
+        z = Vector(0, 0, -1) if ccw else Vector(0, 0, 1)
+        cord = -Vector(p1) + Vector(p3)
+        sagitta = r - sqrt(r ** 2 - (cord.Length / 2) ** 2)
+        p2 = (Vector(p1) + Vector(p3)) / 2 + sagitta * cord.cross(z).normalized()
+
         val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
 
         return self.edge(val, tag, forConstruction)
