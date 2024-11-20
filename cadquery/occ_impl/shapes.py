@@ -4976,7 +4976,7 @@ def plane() -> Shape:
     expected in all contexts.
     """
 
-    INF = 1e+60
+    INF = 1e60
 
     pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
 
