@@ -237,3 +237,8 @@ Placement and creation of arrays is possible using :meth:`~cadquery.Shape.move` 
     c = cylinder(1,2).move(rx=15).moved(*locs)
 
     result = compound(s, c.moved(2))
+
+Text
+----
+
+The free functon API has extensive text creation capabilities including text on planar curves and text on surfaces.
