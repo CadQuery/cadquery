@@ -197,27 +197,27 @@ Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, 
 .. cadquery::
 
     from cadquery.occ_impl.shapes import *
-    
+
     r = rect(1,0.5)
     f = face(r, circle(0.2).moved(0.2), rect(0.2, 0.4).moved(-0.2))
     c = circle(0.2)
     p = spline([(0,0,0), (0,-1,2)], [(0,0,1), (0,-1,1)])
-    
+
     # extrude
     s1 = extrude(r, (0,0,2))
     s2 = extrude(fill(r), (0,0,1))
-    
+
     # sweep
     s3 = sweep(r, p)
     s4 = sweep(f, p)
-    
+
     # loft
     s5 = loft(r, c.moved(z=2))
     s6 = loft(r, c.moved(z=1), cap=True)\
-    
+
     # revolve
     s7 = revolve(fill(r), (0.5, 0, 0), (0, 1, 0), 90)
-    
+
     results = (s1, s2, s3, s4, s5, s6, s7)
     result = compound([el.moved(2*i) for i,el in enumerate(results)])
 
@@ -242,3 +242,36 @@ Text
 ----
 
 The free functon API has extensive text creation capabilities including text on planar curves and text on surfaces.
+
+
+.. cadquery::
+
+    from cadquery.occ_impl.shapes import *
+
+    from math import pi
+
+    # parameters
+    D = 5
+    H = 2*D
+    S = H/10
+    TH = S/10
+    TXT = "CadQuery"
+
+    # base and spine
+    c = cylinder(D, H).moved(rz=-135)
+    cf = c.faces("%CYLINDER")
+    spine = (c*plane().moved(z=D)).edges().trim(pi/2, pi)
+
+    # planar
+    r1 = text(TXT, 1, spine, planar=True).moved(z=-S)
+
+    # normal
+    r2 = text(TXT, 1, spine)
+
+    # projected
+    r3 = text(TXT, 1, spine, cf).moved(z=S)
+
+    # projected and thickend
+    r4 = offset(r3, TH).moved(z=S)
+
+    result = compound(r1, r2, r3, r4)
