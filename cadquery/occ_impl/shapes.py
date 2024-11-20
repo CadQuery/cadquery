@@ -4954,15 +4954,34 @@ def ellipse(r1: float, r2: float) -> Shape:
     )
 
 
-def plane(w: float, l: float) -> Shape:
+@multimethod
+def plane(w: Real, l: Real) -> Shape:
     """
-    Construct a planar face.
+    Construct a finite planar face.
     """
 
     pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
 
     return _compound_or_shape(
         BRepBuilderAPI_MakeFace(pln_geom, -w / 2, w / 2, -l / 2, l / 2).Face()
+    )
+
+
+@plane.register
+def plane() -> Shape:
+    """
+    Construct an infinite planar face.
+
+    This is a crude approximation. Truly infinite faces in OCCT do not work as
+    expected in all contexts.
+    """
+
+    INF = 1e+60
+
+    pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
+
+    return _compound_or_shape(
+        BRepBuilderAPI_MakeFace(pln_geom, -INF, INF, -INF, INF).Face()
     )
 
 
