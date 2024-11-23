@@ -156,7 +156,7 @@ def show(
 
     win.SetWindowName("CQ viewer")
 
-    # get renderer and actor`
+    # get renderer and actor
     if edges:
         ren = win.GetRenderers().GetFirstRenderer()
         for act in ren.GetActors():

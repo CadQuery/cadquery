@@ -524,7 +524,7 @@ class Shape(object):
 
     def exportBin(self, f: Union[str, BytesIO]) -> bool:
         """
-        Export this shape to a binary BREP file
+        Export this shape to a binary BREP file.
         """
 
         rv = BinTools.Write_s(self.wrapped, f)
@@ -534,7 +534,7 @@ class Shape(object):
     @classmethod
     def importBin(cls, f: Union[str, BytesIO]) -> "Shape":
         """
-        Import shape from a binary BREP file
+        Import shape from a binary BREP file.
         """
         s = TopoDS_Shape()
 
