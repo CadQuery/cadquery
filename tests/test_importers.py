@@ -31,6 +31,8 @@ class TestImporters(BaseTest):
             shape.exportStep(fileName)
         elif importType == importers.ImportTypes.BREP:
             shape.exportBrep(fileName)
+        elif importType == importers.ImportTypes.BIN:
+            shape.exportBin(fileName)
 
         # Reimport the shape from the new file
         importedShape = importers.importShape(importType, fileName)
@@ -62,6 +64,8 @@ class TestImporters(BaseTest):
             shape.exportStep(fileName)
         elif importType == importers.ImportTypes.BREP:
             shape.exportBrep(fileName)
+        elif importType == importers.ImportTypes.BIN:
+            shape.exportBin(fileName)
 
         # Reimport the shape from the new file
         importedShape = importers.importShape(importType, fileName)
@@ -129,6 +133,15 @@ class TestImporters(BaseTest):
         )
         self.importCompound(
             importers.ImportTypes.BREP, os.path.join(OUTDIR, "tempBREP.brep")
+        )
+
+    def testBIN(self):
+        """
+        Test binary BREP file import.
+        """
+        self.importBox(importers.ImportTypes.BIN, os.path.join(OUTDIR, "tempBIN.bin"))
+        self.importCompound(
+            importers.ImportTypes.BIN, os.path.join(OUTDIR, "tempBIN.bin")
         )
 
     def testSTEP(self):

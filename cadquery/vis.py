@@ -129,7 +129,14 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkActor:
     return rv
 
 
-def show(*objs: Showable, scale: float = 0.2, alpha: float = 1, **kwrags: Any):
+def show(
+    *objs: Showable,
+    scale: float = 0.2,
+    alpha: float = 1,
+    tolerance: float = 1e-3,
+    edges: bool = False,
+    **kwrags: Any,
+):
     """
     Show CQ objects using VTK.
     """
@@ -145,9 +152,15 @@ def show(*objs: Showable, scale: float = 0.2, alpha: float = 1, **kwrags: Any):
     axs = _to_vtk_axs(locs, scale=scale)
 
     # create a VTK window
-    win = _vtkRenderWindow(assy)
+    win = _vtkRenderWindow(assy, tolerance=tolerance)
 
     win.SetWindowName("CQ viewer")
+
+    # get renderer and actor
+    if edges:
+        ren = win.GetRenderers().GetFirstRenderer()
+        for act in ren.GetActors():
+            act.GetProperty().EdgeVisibilityOn()
 
     # rendering related settings
     win.SetMultiSamples(16)

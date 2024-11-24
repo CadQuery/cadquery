@@ -74,6 +74,9 @@ def test_show(wp, assy, sk, monkeypatch):
     show([wp, assy])
     show()
 
+    # show with edges
+    show(wp, edges=True)
+
     show_object(wp)
     show_object(wp.val())
     show_object(assy)

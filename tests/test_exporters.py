@@ -28,6 +28,7 @@ from cadquery import (
     Location,
     Vector,
     Color,
+    Shape,
 )
 
 from cadquery.occ_impl.shapes import rect, face, compound
@@ -743,6 +744,13 @@ class TestExporters(BaseTest):
         s5_i = importers.importDXF("res7.dxf")
 
         self.assertAlmostEqual(s5.val().Area(), s5_i.val().Area(), 4)
+
+    def testBIN(self):
+
+        exporters.export(self._box(), "out.bin")
+
+        s = Shape.importBin("out.bin")
+        assert s.isValid()
 
     def testTypeHandling(self):
 

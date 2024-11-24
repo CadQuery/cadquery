@@ -41,6 +41,7 @@ from cadquery.occ_impl.shapes import (
     _get_one,
     _get_edges,
     check,
+    Vector,
 )
 
 from pytest import approx, raises
@@ -149,6 +150,11 @@ def test_constructors():
     s3 = solid(b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces())
 
     assert s3.Volume() == approx(1 - 2 * 0.1 ** 3)
+
+    # solid from shells
+    s4 = solid(b.shells())
+
+    assert s4.Volume() == approx(1)
 
     # compound
     c1 = compound(b.Faces())
@@ -321,6 +327,33 @@ def test_text():
     assert r1.faces("<X").Center().x > r3.faces("<X").Center().x
     assert r4.faces("<X").Center().y > r1.faces("<X").Center().y
     assert r1.faces("<X").Center().y > r5.faces("<X").Center().x
+
+    # test single letter
+    r6 = text("C", 1)
+
+    assert len(r6.Faces()) == 1
+    assert len(r6.Wires()) == 1
+
+    # test text on path
+    c = cylinder(10, 10).moved(rz=180)
+    cf = c.faces("%CYLINDER")
+    spine = c.edges("<Z")
+
+    r7 = text("CQ", 1, spine)  # normal
+    r8 = text("CQ", 1, spine, planar=True)  # planar
+    r9 = text("CQ", 1, spine, cf)  # projected
+
+    assert r7.faces(">>Z").Center().z > 0
+    assert r7.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
+    assert r7.faces("<<X").geomType() == "PLANE"
+
+    assert r8.faces(">>Z").Center().z == approx(0)
+    assert (r8.faces("<<X").normalAt() - Vector(0, 0, 1)).Length == approx(0)
+    assert r8.faces("<<X").geomType() == "PLANE"
+
+    assert r9.faces(">>Z").Center().z > 0
+    assert r9.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
+    assert r9.faces("<<X").geomType() == "CYLINDER"
 
 
 #%% bool ops
@@ -497,9 +530,13 @@ def test_offset():
 
     r1 = offset(f, 1)
     r2 = offset(s, -0.25)
+    r3 = offset(f, 1, both=True)
+    r4 = offset(f.moved((0, 0), (5, 5)), 1, both=True)
 
     assert r1.Volume() == approx(1)
     assert r2.Volume() == approx(1 - 0.5 ** 3)
+    assert r3.Volume() == approx(2)
+    assert r4.Volume() == approx(4)
 
 
 def test_sweep():
