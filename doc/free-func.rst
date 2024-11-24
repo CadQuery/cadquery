@@ -241,7 +241,7 @@ Placement and creation of arrays is possible using :meth:`~cadquery.Shape.move` 
 Text
 ----
 
-The free functon API has extensive text creation capabilities including text on planar curves and text on surfaces.
+The free function API has extensive text creation capabilities including text on planar curves and text on surfaces.
 
 
 .. cadquery::
@@ -271,7 +271,7 @@ The free functon API has extensive text creation capabilities including text on 
     # projected
     r3 = text(TXT, 1, spine, cf).moved(z=S)
 
-    # projected and thickend
+    # projected and thickened
     r4 = offset(r3, TH).moved(z=S)
 
     result = compound(r1, r2, r3, r4)
