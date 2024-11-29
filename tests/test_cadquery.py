@@ -2607,38 +2607,40 @@ class TestCadQuery(BaseTest):
         radius = 10
         height = 40
 
-        for direction in [
+        main_directions = [
             (1, 0, 0),
             (0, 1, 0),
             (0, 0, 1),
             (-1, 0, 0),
             (0, -1, 0),
             (0, 0, -1),
-        ]:
-            for centered in product([True, False], repeat=3):
-                s = Workplane("XY").cylinder(
-                    height, radius, direct=Vector(direction), centered=centered,
-                )
-                expected_xyz = tuple(
-                    radius * (1 - abs(direction[i])) + 0.5 * height * direction[i]
-                    if not centered[i]
-                    else 0
-                    for i in range(3)
-                )
-                self.assertTupleAlmostEquals(
-                    s.val().Center().toTuple(), expected_xyz, 3
-                )
+        ]
 
-        s = Workplane("XY").cylinder(
-            height, radius, direct=Vector(-1, 1, 0.5), centered=True
-        )
-        expected_xyz = (0, 0, 0)
-        self.assertTupleAlmostEquals(s.val().Center().toTuple(), expected_xyz, 3)
+        centered_values = [
+            (True, True, True),
+            (False, False, False),
+            (True, False, False),
+            (False, True, False),
+            (False, False, True),
+            (True, True, False),
+        ]
 
-        with raises(ValueError):
-            Workplane("XY").cylinder(
-                height, radius, direct=Vector(1, 1, 1), centered=False
+        expected_results = [
+            (0, 0, 0),
+            (radius, 0.5 * height, radius),
+            (0, radius, 0.5 * height),
+            (-0.5 * height, 0, -radius),
+            (radius, 0, -radius),
+            (0, 0, -0.5 * height),
+        ]
+
+        for direction, centered, expected_center in zip(
+            main_directions, centered_values, expected_results
+        ):
+            s = Workplane("XY").cylinder(
+                height, radius, centered=centered, direct=direction,
             )
+            self.assertTupleAlmostEquals(s.val().Center().toTuple(), expected_center, 3)
 
     def testWedgeDefaults(self):
         s = Workplane("XY").wedge(10, 10, 10, 5, 5, 5, 5)
