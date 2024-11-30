@@ -5684,7 +5684,7 @@ def loft(
 
 
 @loft.register
-def loft(
+def _(
     *s: Shape,
     cap: bool = False,
     ruled: bool = False,
