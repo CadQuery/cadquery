@@ -29,7 +29,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "cadquery-ocp>=7.7.0a0,<7.8",
         "ezdxf",
         "multimethod>=1.11,<2.0",
-        "nlopt",
+        "nlopt>=2.9.0,<3.0",
         "typish",
         "casadi",
         "path",
