@@ -58,6 +58,7 @@ def _split_showables(objs) -> Tuple[List[ShapeLike], List[Vector], List[Location
     rv_s: List[ShapeLike] = []
     rv_v: List[Vector] = []
     rv_l: List[Location] = []
+    rv_a: List[vtkActor] = []
 
     for el in objs:
         if instance_of(el, ShapeLike):
@@ -66,21 +67,24 @@ def _split_showables(objs) -> Tuple[List[ShapeLike], List[Vector], List[Location
             rv_v.append(el)
         elif isinstance(el, Location):
             rv_l.append(el)
+        elif isinstance(el, vtkActor):
+            rv_a.append(el)
         elif isinstance(el, list):
-            tmp1, tmp2, tmp3 = _split_showables(el)  # split recursively
+            tmp1, tmp2, tmp3, tmp4 = _split_showables(el)  # split recursively
 
             rv_s.extend(tmp1)
             rv_v.extend(tmp2)
             rv_l.extend(tmp3)
+            rv_a.extend(tmp4)
 
-    return rv_s, rv_v, rv_l
+    return rv_s, rv_v, rv_l, rv_a
 
 
 def _to_vtk_pts(
     vecs: List[Vector], size: float = DEFAULT_PT_SIZE, color: str = DEFAULT_PT_COLOR
 ) -> vtkActor:
     """
-    Convert vectors to vtkActor.
+    Convert Vectors to vtkActor.
     """
 
     rv = vtkActor()
@@ -110,7 +114,7 @@ def _to_vtk_pts(
 
 def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkActor:
     """
-    Convert vectors to vtkActor.
+    Convert Locations to vtkActor.
     """
 
     rv = vtkAssembly()
@@ -142,7 +146,7 @@ def show(
     """
 
     # split objects
-    shapes, vecs, locs = _split_showables(objs)
+    shapes, vecs, locs, acts = _split_showables(objs)
 
     # construct the assy
     assy = _to_assy(*shapes, alpha=alpha)
@@ -208,6 +212,10 @@ def show(
     # add pts and locs
     renderer.AddActor(pts)
     renderer.AddActor(axs)
+
+    # add other vtk actors
+    for a in acts:
+        renderer.AddActor(a)
 
     # initialize and set size
     inter.Initialize()
