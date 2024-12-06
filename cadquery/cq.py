@@ -4085,7 +4085,7 @@ class Workplane(object):
         self: T,
         height: float,
         radius: float,
-        direct: Vector = Vector(0, 0, 1),
+        direct: Union[Tuple[float, float, float], Vector] = Vector(0, 0, 1),
         angle: float = 360,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: CombineMode = True,
@@ -4119,19 +4119,6 @@ class Workplane(object):
 
         If combine is false, the result will be a list of the cylinders produced.
         """
-
-        if isinstance(centered, bool):
-            centered = (centered, centered, centered)
-
-        xyz = [
-            (1, 0, 0),
-            (0, 1, 0),
-            (0, 0, 1),
-            (-1, 0, 0),
-            (0, -1, 0),
-            (0, 0, -1),
-        ]
-
         if isinstance(centered, bool):
             centered = (centered, centered, centered)
 
