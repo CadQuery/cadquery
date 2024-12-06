@@ -50,7 +50,9 @@ def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
     return assy
 
 
-def _split_showables(objs) -> Tuple[List[ShapeLike], List[Vector], List[Location]]:
+def _split_showables(
+    objs,
+) -> Tuple[List[ShapeLike], List[Vector], List[Location], List[vtkActor]]:
     """
     Split into showables and others.
     """
