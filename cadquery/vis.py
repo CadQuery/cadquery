@@ -15,6 +15,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkMapper,
     vtkRenderWindowInteractor,
     vtkActor,
+    vtkProp,
     vtkPolyDataMapper,
     vtkAssembly,
 )
@@ -27,9 +28,13 @@ DEFAULT_COLOR = [1, 0.8, 0, 1]
 DEFAULT_PT_SIZE = 7.5
 DEFAULT_PT_COLOR = "darkviolet"
 
+SPECULAR = 0.3
+SPECULAR_POWER = 100
+SPECULAR_COLOR = vtkNamedColors().GetColor3d("White")
+
 ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
 Showable = Union[
-    ShapeLike, List[ShapeLike], Vector, List[Vector], vtkActor, List[vtkActor]
+    ShapeLike, List[ShapeLike], Vector, List[Vector], vtkProp, List[vtkProp]
 ]
 
 
@@ -54,7 +59,7 @@ def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
 
 def _split_showables(
     objs,
-) -> Tuple[List[ShapeLike], List[Vector], List[Location], List[vtkActor]]:
+) -> Tuple[List[ShapeLike], List[Vector], List[Location], List[vtkProp]]:
     """
     Split into showables and others.
     """
@@ -62,7 +67,7 @@ def _split_showables(
     rv_s: List[ShapeLike] = []
     rv_v: List[Vector] = []
     rv_l: List[Location] = []
-    rv_a: List[vtkActor] = []
+    rv_a: List[vtkProp] = []
 
     for el in objs:
         if instance_of(el, ShapeLike):
@@ -71,7 +76,7 @@ def _split_showables(
             rv_v.append(el)
         elif isinstance(el, Location):
             rv_l.append(el)
-        elif isinstance(el, vtkActor):
+        elif isinstance(el, vtkProp):
             rv_a.append(el)
         elif isinstance(el, list):
             tmp1, tmp2, tmp3, tmp4 = _split_showables(el)  # split recursively
@@ -143,6 +148,7 @@ def show(
     alpha: float = 1,
     tolerance: float = 1e-3,
     edges: bool = False,
+    specular: bool = True,
     **kwrags: Any,
 ):
     """
@@ -150,7 +156,7 @@ def show(
     """
 
     # split objects
-    shapes, vecs, locs, acts = _split_showables(objs)
+    shapes, vecs, locs, props = _split_showables(objs)
 
     # construct the assy
     assy = _to_assy(*shapes, alpha=alpha)
@@ -165,10 +171,18 @@ def show(
     win.SetWindowName("CQ viewer")
 
     # get renderer and actor
-    if edges:
-        ren = win.GetRenderers().GetFirstRenderer()
-        for act in ren.GetActors():
-            act.GetProperty().EdgeVisibilityOn()
+    ren = win.GetRenderers().GetFirstRenderer()
+    for act in ren.GetActors():
+
+        propt = act.GetProperty()
+
+        if edges:
+            propt.EdgeVisibilityOn()
+
+        if specular:
+            propt.SetSpecular(SPECULAR)
+            propt.SetSpecularPower(SPECULAR_POWER)
+            propt.SetSpecularColor(SPECULAR_COLOR)
 
     # rendering related settings
     win.SetMultiSamples(16)
@@ -218,8 +232,8 @@ def show(
     renderer.AddActor(axs)
 
     # add other vtk actors
-    for a in acts:
-        renderer.AddActor(a)
+    for p in props:
+        renderer.AddActor(p)
 
     # initialize and set size
     inter.Initialize()
