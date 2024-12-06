@@ -28,7 +28,9 @@ DEFAULT_PT_SIZE = 7.5
 DEFAULT_PT_COLOR = "darkviolet"
 
 ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
-Showable = Union[ShapeLike, List[ShapeLike], Vector, List[Vector]]
+Showable = Union[
+    ShapeLike, List[ShapeLike], Vector, List[Vector], vtkActor, List[vtkActor]
+]
 
 
 def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
