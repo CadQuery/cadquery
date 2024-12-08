@@ -174,7 +174,7 @@ def show(
 
     # QT+VTK window boilerplate
     qwin = QMainWindow()
-    widget = QVTKRenderWindowInteractor()
+    widget = QVTKRenderWindowInteractor(qwin)
     qwin.setCentralWidget(widget)
 
     widget.GetRenderWindow().AddRenderer(renderer)
@@ -214,8 +214,8 @@ def show(
     # add to an orientation widget
     orient_widget = vtkOrientationMarkerWidget()
     orient_widget.SetOrientationMarker(axes)
-    orient_widget.SetViewport(0.9, 0.0, 1.0, 0.2)
-    orient_widget.SetZoom(1.1)
+    orient_widget.SetViewport(0.9, 0, 1.0, 0.2)
+    orient_widget.SetZoom(1.5)
     orient_widget.SetInteractor(inter)
     orient_widget.EnabledOn()
     orient_widget.InteractiveOff()
@@ -251,9 +251,7 @@ def show(
     widget.Initialize()
     widget.Start()
 
-    widget.qwin = qwin
-
-    return widget
+    return qwin
 
 
 # alias
