@@ -1,6 +1,6 @@
 from . import Shape, Workplane, Assembly, Sketch, Compound, Color, Vector, Location
 from .occ_impl.exporters.assembly import _vtkRenderWindow
-from .occ_impl.assembly import _loc2vtk
+from .occ_impl.assembly import _loc2vtk, toVTK
 
 from typing import Union, Any, List, Tuple
 
@@ -22,7 +22,10 @@ from vtkmodules.vtkRenderingCore import (
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkPolyData
 from vtkmodules.vtkCommonColor import vtkNamedColors
-
+from vtkmodules.qt.QVTKRenderWindowInteractor import (
+    QVTKRenderWindowInteractor,
+    QMainWindow,
+)
 
 DEFAULT_COLOR = [1, 0.8, 0, 1]
 DEFAULT_PT_SIZE = 7.5
@@ -149,6 +152,7 @@ def show(
     tolerance: float = 1e-3,
     edges: bool = False,
     specular: bool = True,
+    title: str = "CQ viewer",
     **kwrags: Any,
 ):
     """
@@ -165,14 +169,18 @@ def show(
     pts = _to_vtk_pts(vecs)
     axs = _to_vtk_axs(locs, scale=scale)
 
-    # create a VTK window
-    win = _vtkRenderWindow(assy, tolerance=tolerance)
+    # assy+renderer
+    renderer = toVTK(assy, tolerance=tolerance)
 
-    win.SetWindowName("CQ viewer")
+    # QT+VTK window boilerplate
+    qwin = QMainWindow()
+    widget = QVTKRenderWindowInteractor()
+    qwin.setCentralWidget(widget)
+
+    widget.GetRenderWindow().AddRenderer(renderer)
 
     # get renderer and actor
-    ren = win.GetRenderers().GetFirstRenderer()
-    for act in ren.GetActors():
+    for act in renderer.GetActors():
 
         propt = act.GetProperty()
 
@@ -185,15 +193,13 @@ def show(
             propt.SetSpecularColor(SPECULAR_COLOR)
 
     # rendering related settings
-    win.SetMultiSamples(16)
     vtkMapper.SetResolveCoincidentTopologyToPolygonOffset()
     vtkMapper.SetResolveCoincidentTopologyPolygonOffsetParameters(1, 0)
     vtkMapper.SetResolveCoincidentTopologyLineOffsetParameters(-1, 0)
 
     # create a VTK interactor
-    inter = vtkRenderWindowInteractor()
+    inter = widget.GetRenderWindow().GetInteractor()
     inter.SetInteractorStyle(vtkInteractorStyleTrackballCamera())
-    inter.SetRenderWindow(win)
 
     # construct an axes indicator
     axes = vtkAxesActor()
@@ -214,8 +220,11 @@ def show(
     orient_widget.EnabledOn()
     orient_widget.InteractiveOff()
 
+    # store the widget to prevent it being GCed
+    widget.axes = orient_widget
+
     # use gradient background
-    renderer = win.GetRenderers().GetFirstRenderer()
+    renderer.SetBackground(vtkNamedColors().GetColor3d("white"))
     renderer.GradientBackgroundOn()
 
     # use FXXAA
@@ -235,14 +244,16 @@ def show(
     for p in props:
         renderer.AddActor(p)
 
-    # initialize and set size
-    inter.Initialize()
-    win.SetSize(*win.GetScreenSize())
-    win.SetPosition(-10, 0)
-
     # show and return
-    win.Render()
-    inter.Start()
+    qwin.setWindowTitle(title)
+    qwin.showMaximized()
+
+    widget.Initialize()
+    widget.Start()
+
+    widget.qwin = qwin
+
+    return widget
 
 
 # alias
