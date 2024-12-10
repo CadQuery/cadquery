@@ -1,5 +1,4 @@
 from . import Shape, Workplane, Assembly, Sketch, Compound, Color, Vector, Location
-from .occ_impl.exporters.assembly import _vtkRenderWindow
 from .occ_impl.assembly import _loc2vtk, toVTK
 
 from typing import Union, Any, List, Tuple
@@ -18,14 +17,12 @@ from vtkmodules.vtkRenderingCore import (
     vtkProp,
     vtkPolyDataMapper,
     vtkAssembly,
+    vtkRenderWindow,
 )
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkPolyData
 from vtkmodules.vtkCommonColor import vtkNamedColors
-from vtkmodules.qt.QVTKRenderWindowInteractor import (
-    QVTKRenderWindowInteractor,
-    QMainWindow,
-)
+
 
 DEFAULT_COLOR = [1, 0.8, 0, 1]
 DEFAULT_PT_SIZE = 7.5
@@ -172,12 +169,10 @@ def show(
     # assy+renderer
     renderer = toVTK(assy, tolerance=tolerance)
 
-    # QT+VTK window boilerplate
-    qwin = QMainWindow()
-    widget = QVTKRenderWindowInteractor(qwin)
-    qwin.setCentralWidget(widget)
-
-    widget.GetRenderWindow().AddRenderer(renderer)
+    # VTK window boilerplate
+    win = vtkRenderWindow()
+    win.SetWindowName(title)
+    win.AddRenderer(renderer)
 
     # get renderer and actor
     for act in renderer.GetActors():
@@ -198,8 +193,9 @@ def show(
     vtkMapper.SetResolveCoincidentTopologyLineOffsetParameters(-1, 0)
 
     # create a VTK interactor
-    inter = widget.GetRenderWindow().GetInteractor()
+    inter = vtkRenderWindowInteractor()
     inter.SetInteractorStyle(vtkInteractorStyleTrackballCamera())
+    inter.SetRenderWindow(win)
 
     # construct an axes indicator
     axes = vtkAxesActor()
@@ -214,17 +210,14 @@ def show(
     # add to an orientation widget
     orient_widget = vtkOrientationMarkerWidget()
     orient_widget.SetOrientationMarker(axes)
-    orient_widget.SetViewport(0.9, 0, 1.0, 0.2)
-    orient_widget.SetZoom(1.5)
+    orient_widget.SetViewport(0.9, 0.0, 1.0, 0.2)
+    orient_widget.SetZoom(1.1)
     orient_widget.SetInteractor(inter)
     orient_widget.EnabledOn()
     orient_widget.InteractiveOff()
 
-    # store the widget to prevent it being GCed
-    widget.axes = orient_widget
-
     # use gradient background
-    renderer.SetBackground(vtkNamedColors().GetColor3d("white"))
+    renderer.SetBackground(1, 1, 1)
     renderer.GradientBackgroundOn()
 
     # use FXXAA
@@ -244,14 +237,14 @@ def show(
     for p in props:
         renderer.AddActor(p)
 
+    # initialize and set size
+    inter.Initialize()
+    win.SetSize(*win.GetScreenSize())
+    win.SetPosition(-10, 0)
+
     # show and return
-    qwin.setWindowTitle(title)
-    qwin.showMaximized()
-
-    widget.Initialize()
-    widget.Start()
-
-    return qwin
+    win.Render()
+    inter.Start()
 
 
 # alias
