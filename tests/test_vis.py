@@ -1,12 +1,12 @@
-from cadquery import Workplane, Assembly, Sketch, Location, Vector, Location
-from cadquery.vis import show, show_object
+from cadquery import Workplane, Assembly, Sketch, Location, Vector
+from cadquery.vis import show, show_object, vtkAxesActor
 
-import cadquery.occ_impl.exporters.assembly as assembly
 import cadquery.vis as vis
 
 from vtkmodules.vtkRenderingCore import vtkRenderWindow, vtkRenderWindowInteractor
+from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 
-from pytest import fixture, raises
+from pytest import fixture
 
 
 @fixture
@@ -89,3 +89,6 @@ def test_show(wp, assy, sk, monkeypatch):
 
     # for now a workaround to be compatible with more complicated CQ-editor invocations
     show(1)
+
+    # show a raw vtkProp
+    show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
