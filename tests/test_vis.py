@@ -59,7 +59,7 @@ def test_show(wp, assy, sk, monkeypatch):
 
     # use some dummy vtk objects
     monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
-    monkeypatch.setattr(assembly, "vtkRenderWindow", FakeWindow)
+    monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
 
     # simple smoke test
     show(wp)
