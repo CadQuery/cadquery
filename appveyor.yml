@@ -26,7 +26,7 @@ init:
     - sh: source $HOME/miniconda/bin/activate
 
 install:
-    - mamba env create -f environment.yml
+    - mamba env create -q -f environment.yml
     - conda activate cadquery
     - conda list
 
