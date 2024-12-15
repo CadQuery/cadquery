@@ -16,10 +16,11 @@ and are not tied to any external tool.
     from cadquery import *
     from cadquery.vis import show
 
-    w = Workplane().sphere(1).split(keepTop=True) - Workplane().sphere(0.5)
+    w = Workplane().sphere(1).split(keepBottom=True) - Workplane().sphere(0.5)
+    r = w.faces('>Z').fillet(0.1)
 
     # Show the result
-    show(w, alpha=0.5)
+    show(r, alpha=0.5)
 
 
 ..  image:: _static/show.PNG
@@ -31,7 +32,7 @@ One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquer
 
 .. code-block:: python
 
-   adquery import *
+   from cadquery import *
    from cadquery.occ_impl.shapes import *
    from cadquery.vis import show
 
@@ -87,9 +88,7 @@ There is also more limited support for displaying :class:`~cadquery.Workplane`, 
 
     from cadquery import *
 
-    w = Workplane().sphere(1).split(keepTop=True)
-
-    w
+    Workplane().sphere(1).split(keepTop=True)
 
 ..  image:: _static/show_jupyter.PNG
 
