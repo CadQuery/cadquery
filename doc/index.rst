@@ -41,6 +41,7 @@ Table Of Contents
     sketch.rst
     assy.rst
     free-func.rst
+    vis.rst
     fileformat.rst
     examples.rst
     apireference.rst
