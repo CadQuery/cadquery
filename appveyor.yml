@@ -26,6 +26,7 @@ init:
     - sh: source $HOME/miniconda/bin/activate
 
 install:
+    - conda config --set always_yes yes
     - mamba env create -q -f environment.yml
     - conda activate cadquery
     - conda list
