@@ -20,10 +20,12 @@ init:
     - cmd: Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=%MINICONDA_DIRNAME%
     - cmd: set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
     - cmd: activate
+    - cmd: set MAMBA_ROOT_PREFIX=C:/Miniforge/Library
     - sh: curl -sL https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$OS-x86_64.sh > miniconda.sh
     - sh: bash miniconda.sh -b -p $HOME/miniconda;
     - sh: export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
     - sh: source $HOME/miniconda/bin/activate
+    - sh: export MAMBA_ROOT_PREFIX=/home/appveyor/miniconda
 
 install:
     - conda config --set always_yes yes
