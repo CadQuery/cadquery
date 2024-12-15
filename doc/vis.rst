@@ -26,7 +26,8 @@ and are not tied to any external tool.
 ..  image:: _static/show.png
 
 
-One can visualize objects of type Workplanes, Sketches, Assemblies, Shapes, Vectors, Locations and lists thereof.
+One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquery.Sketch`, :class:`~cadquery.Assembly`, :class:`~cadquery.Shape`, 
+:class:`~cadquery.Vector`, :class:`~cadquery.Location` and lists thereof.
 
 
 .. code-block:: python
@@ -80,8 +81,8 @@ Note that currently the show functions is blocking.
 Jupyter/JupterLab
 =================
 
-There is also more limited support for displaying Shapes, Workplanes, Sketches and Assemblies in Jupyter and JupyterLab.
-This functionality is implemented using VTK.js.
+There is also more limited support for displaying :class:`~cadquery.Workplane`, :class:`~cadquery.Sketch`, :class:`~cadquery.Assembly`,
+:class:`~cadquery.Shape` in Jupyter and JupyterLab. This functionality is implemented using VTK.js.
 
 .. code-block:: python
 
