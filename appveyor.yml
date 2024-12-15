@@ -28,18 +28,17 @@ init:
 install:
     - conda config --set always_yes yes
     - mamba env create -f environment.yml
-    - mamba activate cadquery
-    - mamba list
+    - mamba list -n cadquery
 
 build: false
 
 test_script:
-    - black . --diff --check
-    - mypy cadquery
-    - pytest -v --cov
+    - mamba run -n cadquery black . --diff --check
+    - mamba run -n cadquery mypy cadquery
+    - mamba run -n cadquery pytest -v --cov
 
 on_success:
-    - codecov
+    - mamba run -n cadquery codecov
 
 #on_finish:
 #    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
