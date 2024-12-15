@@ -28,8 +28,8 @@ init:
 install:
     - conda config --set always_yes yes
     - mamba env create -f environment.yml
-    - conda activate cadquery
-    - conda list
+    - mamba activate cadquery
+    - mamba list
 
 build: false
 
