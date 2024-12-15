@@ -25,7 +25,7 @@ init:
     - sh: bash miniconda.sh -b -p $HOME/miniconda;
     - sh: export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
     - sh: source $HOME/miniconda/bin/activate
-    - sh: export MAMBA_ROOT_PREFIX=/home/appveyor/miniconda
+    - sh: export MAMBA_ROOT_PREFIX=$HOME/miniconda
 
 install:
     - conda config --set always_yes yes
