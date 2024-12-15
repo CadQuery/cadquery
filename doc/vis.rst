@@ -1,8 +1,7 @@
 .. _vis:
 
-
 ===========================
-Visualization facilities
+Visualization
 ===========================
 
 
@@ -23,7 +22,7 @@ and are not tied to any external tool.
     show(w, alpha=0.5)
 
 
-..  image:: _static/show.png
+..  image:: _static/show.PNG
 
 
 One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquery.Sketch`, :class:`~cadquery.Assembly`, :class:`~cadquery.Shape`, 
@@ -53,7 +52,7 @@ One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquer
    show(w, sk, sh, vecs, locs)
 
 
-..  image:: _static/show_demo.png
+..  image:: _static/show_demo.PNG
 
 
 Additionally it is possibly to integrate with other libraries using VTK and display any `vtkProp` object.
@@ -72,7 +71,7 @@ Additionally it is possibly to integrate with other libraries using VTK and disp
 
     show(t, a)
 
-..  image:: _static/show_vtk.png
+..  image:: _static/show_vtk.PNG
 
 
 Note that currently the show functions is blocking.
@@ -92,5 +91,5 @@ There is also more limited support for displaying :class:`~cadquery.Workplane`, 
 
     w
 
-..  image:: _static/show_jupyter.png
+..  image:: _static/show_jupyter.PNG
 
