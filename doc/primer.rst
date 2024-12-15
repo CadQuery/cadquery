@@ -40,7 +40,7 @@ CadQuery is composed of 4 different API, which are implemented on top of each ot
     #. :class:`~cadquery.Sketch` 
     #. :class:`~cadquery.Assembly`
 2. The Direct API
-    #. :class:`~cadquery.Shape`, 
+    #. :class:`~cadquery.Shape` 
 2. The Geometry API
     #. :class:`~cadquery.Vector`
     #. :class:`~cadquery.Plane`
