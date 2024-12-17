@@ -8,7 +8,7 @@ Visualization
 Pure Python
 ===========
 
-Since version 2.5 CadQuery supports visualization without any external tools. Those facilities are based on the VTK library
+Since version 2.4 CadQuery supports visualization without any external tools. Those facilities are based on the VTK library
 and are not tied to any external tool.
 
 .. code-block:: python
@@ -26,7 +26,7 @@ and are not tied to any external tool.
 ..  image:: _static/show.PNG
 
 
-One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquery.Sketch`, :class:`~cadquery.Assembly`, :class:`~cadquery.Shape`, 
+One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquery.Sketch`, :class:`~cadquery.Assembly`, :class:`~cadquery.Shape`,
 :class:`~cadquery.Vector`, :class:`~cadquery.Location` and lists thereof.
 
 
