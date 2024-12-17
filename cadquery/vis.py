@@ -239,7 +239,9 @@ def show(
 
     # initialize and set size
     inter.Initialize()
-    win.SetSize(*win.GetScreenSize())
+
+    w, h = win.GetScreenSize()
+    win.SetSize((w // 2, h // 2))
     win.SetPosition(-10, 0)
 
     # show and return
