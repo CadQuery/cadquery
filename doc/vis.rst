@@ -8,7 +8,7 @@ Visualization
 Pure Python
 ===========
 
-Since version 2.5 CadQuery support visualization without any external tools. Those facilities are based on the VTK library
+Since version 2.5 CadQuery supports visualization without any external tools. Those facilities are based on the VTK library
 and are not tied to any external tool.
 
 .. code-block:: python
@@ -56,7 +56,7 @@ One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquer
 ..  image:: _static/show_demo.PNG
 
 
-Additionally it is possibly to integrate with other libraries using VTK and display any `vtkProp` object.
+Additionally it is possible to integrate with other libraries using VTK and display any `vtkProp` object.
 
 
 .. code-block:: python
@@ -75,7 +75,7 @@ Additionally it is possibly to integrate with other libraries using VTK and disp
 ..  image:: _static/show_vtk.PNG
 
 
-Note that currently the show functions is blocking.
+Note that currently the show function is blocking.
 
 
 Jupyter/JupterLab

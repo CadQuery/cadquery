@@ -689,7 +689,7 @@ coordinate system. Most methods that create an object do so relative to the curr
 
 Usually the first workplane created is the "XY" plane, also known as the "front" plane. Once a solid is defined the most
 common way to create a workplane is to select a face on the solid that you intend to modify and create a new workplane
-relative to it. You can also create new workplanes in anywhere in world coordinate system, or relative to other planes
+relative to it. You can also create new workplanes anywhere in the world coordinate system, or relative to other planes
 using offsets or rotations.
 
 The most powerful feature of workplanes is that they allow you to work in 2D space in the coordinate system of the
@@ -780,7 +780,7 @@ The Context Solid
 Most of the time, you are building a single object, and adding features to that single object.  CadQuery watches
 your operations, and defines the first solid object created as the 'context solid'.  After that, any features
 you create are automatically combined (unless you specify otherwise) with that solid.  This happens even if the
-solid was created  a long way up in the stack.  For example::
+solid was created a long way up in the stack.  For example::
 
     Workplane("XY").box(1, 2, 3).faces(">Z").circle(0.25).extrude(1)
 
@@ -804,7 +804,7 @@ For example, this::
 Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a rectangular face, and the ``circle()`` method
 iterates on each member of the stack.
 
-This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.Workplane.each` is useful for this purpose.
+This is really useful to remember when you author your own plugins. :py:meth:`cadquery.Workplane.each` is useful for this purpose.
 
 
 
