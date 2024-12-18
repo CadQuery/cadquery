@@ -1,6 +1,5 @@
 from . import Shape, Workplane, Assembly, Sketch, Compound, Color, Vector, Location
-from .occ_impl.exporters.assembly import _vtkRenderWindow
-from .occ_impl.assembly import _loc2vtk
+from .occ_impl.assembly import _loc2vtk, toVTK
 
 from typing import Union, Any, List, Tuple
 
@@ -15,8 +14,10 @@ from vtkmodules.vtkRenderingCore import (
     vtkMapper,
     vtkRenderWindowInteractor,
     vtkActor,
+    vtkProp,
     vtkPolyDataMapper,
     vtkAssembly,
+    vtkRenderWindow,
 )
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkPolyData
@@ -27,8 +28,14 @@ DEFAULT_COLOR = [1, 0.8, 0, 1]
 DEFAULT_PT_SIZE = 7.5
 DEFAULT_PT_COLOR = "darkviolet"
 
+SPECULAR = 0.3
+SPECULAR_POWER = 100
+SPECULAR_COLOR = vtkNamedColors().GetColor3d("White")
+
 ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
-Showable = Union[ShapeLike, List[ShapeLike], Vector, List[Vector]]
+Showable = Union[
+    ShapeLike, List[ShapeLike], Vector, List[Vector], vtkProp, List[vtkProp]
+]
 
 
 def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
@@ -50,7 +57,9 @@ def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
     return assy
 
 
-def _split_showables(objs) -> Tuple[List[ShapeLike], List[Vector], List[Location]]:
+def _split_showables(
+    objs,
+) -> Tuple[List[ShapeLike], List[Vector], List[Location], List[vtkProp]]:
     """
     Split into showables and others.
     """
@@ -58,6 +67,7 @@ def _split_showables(objs) -> Tuple[List[ShapeLike], List[Vector], List[Location
     rv_s: List[ShapeLike] = []
     rv_v: List[Vector] = []
     rv_l: List[Location] = []
+    rv_a: List[vtkProp] = []
 
     for el in objs:
         if instance_of(el, ShapeLike):
@@ -66,21 +76,24 @@ def _split_showables(objs) -> Tuple[List[ShapeLike], List[Vector], List[Location
             rv_v.append(el)
         elif isinstance(el, Location):
             rv_l.append(el)
+        elif isinstance(el, vtkProp):
+            rv_a.append(el)
         elif isinstance(el, list):
-            tmp1, tmp2, tmp3 = _split_showables(el)  # split recursively
+            tmp1, tmp2, tmp3, tmp4 = _split_showables(el)  # split recursively
 
             rv_s.extend(tmp1)
             rv_v.extend(tmp2)
             rv_l.extend(tmp3)
+            rv_a.extend(tmp4)
 
-    return rv_s, rv_v, rv_l
+    return rv_s, rv_v, rv_l, rv_a
 
 
 def _to_vtk_pts(
     vecs: List[Vector], size: float = DEFAULT_PT_SIZE, color: str = DEFAULT_PT_COLOR
 ) -> vtkActor:
     """
-    Convert vectors to vtkActor.
+    Convert Vectors to vtkActor.
     """
 
     rv = vtkActor()
@@ -110,7 +123,7 @@ def _to_vtk_pts(
 
 def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkActor:
     """
-    Convert vectors to vtkActor.
+    Convert Locations to vtkActor.
     """
 
     rv = vtkAssembly()
@@ -135,6 +148,8 @@ def show(
     alpha: float = 1,
     tolerance: float = 1e-3,
     edges: bool = False,
+    specular: bool = True,
+    title: str = "CQ viewer",
     **kwrags: Any,
 ):
     """
@@ -142,7 +157,7 @@ def show(
     """
 
     # split objects
-    shapes, vecs, locs = _split_showables(objs)
+    shapes, vecs, locs, props = _split_showables(objs)
 
     # construct the assy
     assy = _to_assy(*shapes, alpha=alpha)
@@ -151,19 +166,28 @@ def show(
     pts = _to_vtk_pts(vecs)
     axs = _to_vtk_axs(locs, scale=scale)
 
-    # create a VTK window
-    win = _vtkRenderWindow(assy, tolerance=tolerance)
+    # assy+renderer
+    renderer = toVTK(assy, tolerance=tolerance)
 
-    win.SetWindowName("CQ viewer")
+    # VTK window boilerplate
+    win = vtkRenderWindow()
+    win.SetWindowName(title)
+    win.AddRenderer(renderer)
 
     # get renderer and actor
-    if edges:
-        ren = win.GetRenderers().GetFirstRenderer()
-        for act in ren.GetActors():
-            act.GetProperty().EdgeVisibilityOn()
+    for act in renderer.GetActors():
+
+        propt = act.GetProperty()
+
+        if edges:
+            propt.EdgeVisibilityOn()
+
+        if specular:
+            propt.SetSpecular(SPECULAR)
+            propt.SetSpecularPower(SPECULAR_POWER)
+            propt.SetSpecularColor(SPECULAR_COLOR)
 
     # rendering related settings
-    win.SetMultiSamples(16)
     vtkMapper.SetResolveCoincidentTopologyToPolygonOffset()
     vtkMapper.SetResolveCoincidentTopologyPolygonOffsetParameters(1, 0)
     vtkMapper.SetResolveCoincidentTopologyLineOffsetParameters(-1, 0)
@@ -193,7 +217,7 @@ def show(
     orient_widget.InteractiveOff()
 
     # use gradient background
-    renderer = win.GetRenderers().GetFirstRenderer()
+    renderer.SetBackground(1, 1, 1)
     renderer.GradientBackgroundOn()
 
     # use FXXAA
@@ -209,9 +233,15 @@ def show(
     renderer.AddActor(pts)
     renderer.AddActor(axs)
 
+    # add other vtk actors
+    for p in props:
+        renderer.AddActor(p)
+
     # initialize and set size
     inter.Initialize()
-    win.SetSize(*win.GetScreenSize())
+
+    w, h = win.GetScreenSize()
+    win.SetSize((w // 2, h // 2))
     win.SetPosition(-10, 0)
 
     # show and return
