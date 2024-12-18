@@ -244,7 +244,11 @@ from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds, ShapeAnalysis_Wire
 from OCP.TopTools import TopTools_HSequenceOfShape
 
-from OCP.GCPnts import GCPnts_AbscissaPoint
+from OCP.GCPnts import (
+    GCPnts_AbscissaPoint,
+    GCPnts_QuasiUniformAbscissa,
+    GCPnts_QuasiUniformDeflection,
+)
 
 from OCP.GeomFill import (
     GeomFill_Frenet,
@@ -1922,6 +1926,26 @@ class Mixin1D(object):
         """
 
         return [self.positionAt(d, mode) for d in ds]
+
+    def sample(self: Mixin1DProtocol, n: Union[int, float]) -> List[Vector]:
+        """Sample a curve based on a number of points of deflection.
+
+        :param n: number of positions or deflection
+        :return: A list of Vector objects.
+        """
+
+        if isinstance(n, int):
+            crv = self._geomAdaptor()
+            params = GCPnts_QuasiUniformAbscissa(crv, n)
+        else:
+            crv = self._geomAdaptor()
+            params = GCPnts_QuasiUniformDeflection(crv, n)
+
+        rv = [
+            Vector(crv.Value(params.Parameter(i))) for i in range(1, params.NbPoints())
+        ]
+
+        return rv
 
     def locationAt(
         self: Mixin1DProtocol,
