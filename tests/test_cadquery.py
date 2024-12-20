@@ -2606,6 +2606,45 @@ class TestCadQuery(BaseTest):
                 s0.val().Center().toTuple(), s1.val().Center().toTuple(), 3
             )
 
+    def testCylinderCenteringAndDirection(self):
+        radius = 10
+        height = 40
+
+        main_directions = [
+            (1, 0, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (-1, 0, 0),
+            (0, -1, 0),
+            (0, 0, -1),
+        ]
+
+        centered_values = [
+            (True, True, True),
+            (False, False, False),
+            (True, False, False),
+            (False, True, False),
+            (False, False, True),
+            (True, True, False),
+        ]
+
+        expected_results = [
+            (0, 0, 0),
+            (radius, 0.5 * height, radius),
+            (0, radius, 0.5 * height),
+            (-0.5 * height, 0, -radius),
+            (radius, 0, -radius),
+            (0, 0, -0.5 * height),
+        ]
+
+        for direction, centered, expected_center in zip(
+            main_directions, centered_values, expected_results
+        ):
+            s = Workplane("XY").cylinder(
+                height, radius, centered=centered, direct=direction,
+            )
+            self.assertTupleAlmostEquals(s.val().Center().toTuple(), expected_center, 3)
+
     def testWedgeDefaults(self):
         s = Workplane("XY").wedge(10, 10, 10, 5, 5, 5, 5)
         self.saveModel(s)
@@ -2909,7 +2948,11 @@ class TestCadQuery(BaseTest):
             .faces("<Z")
             .workplane()
             .cylinder(
-                2, 0.2, centered=(True, True, False), direct=(0, 0, -1), clean=True
+                2,
+                0.2,
+                centered=(True, True, False),
+                direct=Vector(0, 0, -1),
+                clean=True,
             )
         )
         assert len(s.edges().vals()) == 15
@@ -2976,7 +3019,11 @@ class TestCadQuery(BaseTest):
             .faces("<Z")
             .workplane()
             .cylinder(
-                2, 0.2, centered=(True, True, False), direct=(0, 0, -1), clean=False
+                2,
+                0.2,
+                centered=(True, True, False),
+                direct=Vector(0, 0, -1),
+                clean=False,
             )
         )
         assert len(s.edges().vals()) == 16

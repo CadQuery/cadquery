@@ -4156,7 +4156,7 @@ class Workplane(object):
         self: T,
         height: float,
         radius: float,
-        direct: Vector = Vector(0, 0, 1),
+        direct: Union[Tuple[float, float, float], Vector] = Vector(0, 0, 1),
         angle: float = 360,
         centered: Union[bool, Tuple[bool, bool, bool]] = True,
         combine: CombineMode = True,
@@ -4190,7 +4190,6 @@ class Workplane(object):
 
         If combine is false, the result will be a list of the cylinders produced.
         """
-
         if isinstance(centered, bool):
             centered = (centered, centered, centered)
 
@@ -4202,7 +4201,10 @@ class Workplane(object):
         if centered[2]:
             offset += Vector(0, 0, -height / 2)
 
-        s = Solid.makeCylinder(radius, height, offset, direct, angle)
+        # first center and then apply the direction
+        s = Solid.makeCylinder(radius, height, offset, Vector(0, 0, 1), angle).moved(
+            Plane(Vector(), normal=direct).location
+        )
 
         # We want a cylinder for each point on the workplane
         return self.eachpoint(lambda loc: s.moved(loc), True, combine, clean)
