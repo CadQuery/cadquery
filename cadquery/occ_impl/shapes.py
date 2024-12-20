@@ -231,6 +231,7 @@ from OCP.GeomAbs import (
     GeomAbs_C2,
     GeomAbs_Intersection,
     GeomAbs_JoinType,
+    GeomAbs_IsoType,
 )
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
@@ -284,6 +285,10 @@ from OCP.Approx import Approx_ParametrizationType
 from OCP.LProp3d import LProp3d_CLProps
 
 from OCP.BinTools import BinTools
+
+from OCP.Adaptor3d import Adaptor3d_IsoCurve
+
+from OCP.GeomAdaptor import GeomAdaptor_Surface
 
 from math import pi, sqrt, inf, radians, cos
 
@@ -3213,6 +3218,23 @@ class Face(Shape):
         bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), u0, u1, v0, v1, tol)
 
         return self.__class__(bldr.Shape())
+
+    def isoline(self, param: float, direction: Literal["u", "v"] = "u") -> Edge:
+        """
+        Construct an isoline.
+        """
+
+        iso = (
+            GeomAbs_IsoType.GeomAbs_IsoU
+            if direction == "u"
+            else GeomAbs_IsoType.GeomAbs_IsoV
+        )
+
+        adaptor = Adaptor3d_IsoCurve(
+            GeomAdaptor_Surface(self._geomAdaptor()), iso, param
+        )
+
+        return Edge(BRepBuilderAPI_MakeEdge(adaptor.BSpline()).Edge())
 
 
 class Shell(Shape):
