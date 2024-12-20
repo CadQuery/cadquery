@@ -1934,6 +1934,8 @@ class Mixin1D(object):
         :return: A list of Vector objects.
         """
 
+        params: Union[GCPnts_QuasiUniformAbscissa, GCPnts_QuasiUniformDeflection]
+
         if isinstance(n, int):
             crv = self._geomAdaptor()
             params = GCPnts_QuasiUniformAbscissa(crv, n)
