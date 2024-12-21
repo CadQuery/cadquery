@@ -4685,6 +4685,14 @@ def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
     return rv
 
 
+def _toptools_list_to_shapes(tl: TopTools_ListOfShape) -> List[Shape]:
+    """
+    Convert a TopTools list (OCCT specific) to a compound.
+    """
+
+    return [_normalize(Shape.cast(el)) for el in tl]
+
+
 _geomabsshape_dict = dict(
     C0=GeomAbs_Shape.GeomAbs_C0,
     C1=GeomAbs_Shape.GeomAbs_C1,
@@ -5738,7 +5746,7 @@ def loft(
 #%% diagnotics
 
 
-def check(s: Shape) -> bool:
+def check(s: Shape, results: Optional[List[Tuple[List[Shape], Any]]] = None) -> bool:
     """
     Check if a shape is valid.
     """
@@ -5750,5 +5758,14 @@ def check(s: Shape) -> bool:
     analyzer.Perform()
 
     rv = analyzer.IsValid()
+
+    # output detailed results if requested
+    if results is not None:
+        results.clear()
+
+        for r in analyzer.Result():
+            results.append(
+                (_toptools_list_to_shapes(r.GetFaultyShapes1()), r.GetCheckStatus())
+            )
 
     return rv
