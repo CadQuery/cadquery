@@ -1909,7 +1909,8 @@ class Mixin1D(object):
     def positionAt(
         self: Mixin1DProtocol, d: float, mode: ParamMode = "length",
     ) -> Vector:
-        """Generate a position along the underlying curve.
+        """
+        Generate a position along the underlying curve.
 
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
@@ -1923,7 +1924,8 @@ class Mixin1D(object):
     def positions(
         self: Mixin1DProtocol, ds: Iterable[float], mode: ParamMode = "length",
     ) -> List[Vector]:
-        """Generate positions along the underlying curve
+        """
+        Generate positions along the underlying curve
 
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
@@ -1932,27 +1934,29 @@ class Mixin1D(object):
 
         return [self.positionAt(d, mode) for d in ds]
 
-    def sample(self: Mixin1DProtocol, n: Union[int, float]) -> List[Vector]:
-        """Sample a curve based on a number of points of deflection.
+    def sample(
+        self: Mixin1DProtocol, n: Union[int, float]
+    ) -> Tuple[List[Vector], List[float]]:
+        """
+        Sample a curve based on a number of points or deflection.
 
         :param n: number of positions or deflection
-        :return: A list of Vector objects.
+        :return: A list of Vectors and a list of parameters.
         """
 
-        params: Union[GCPnts_QuasiUniformAbscissa, GCPnts_QuasiUniformDeflection]
+        gcpnts: Union[GCPnts_QuasiUniformAbscissa, GCPnts_QuasiUniformDeflection]
 
         if isinstance(n, int):
             crv = self._geomAdaptor()
-            params = GCPnts_QuasiUniformAbscissa(crv, n)
+            gcpnts = GCPnts_QuasiUniformAbscissa(crv, n)
         else:
             crv = self._geomAdaptor()
-            params = GCPnts_QuasiUniformDeflection(crv, n)
+            gcpnts = GCPnts_QuasiUniformDeflection(crv, n)
 
-        rv = [
-            Vector(crv.Value(params.Parameter(i))) for i in range(1, params.NbPoints())
-        ]
+        params = [gcpnts.Parameter(i) for i in range(1, gcpnts.NbPoints())]
+        pnts = [Vector(crv.Value(p)) for p in params]
 
-        return rv
+        return pnts, params
 
     def locationAt(
         self: Mixin1DProtocol,
@@ -1961,7 +1965,8 @@ class Mixin1D(object):
         frame: FrameMode = "frenet",
         planar: bool = False,
     ) -> Location:
-        """Generate a location along the underlying curve.
+        """
+        Generate a location along the underlying curve.
 
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
@@ -2004,7 +2009,8 @@ class Mixin1D(object):
         frame: FrameMode = "frenet",
         planar: bool = False,
     ) -> List[Location]:
-        """Generate location along the curve
+        """
+        Generate location along the curve
 
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
@@ -3219,7 +3225,7 @@ class Face(Shape):
 
         return self.__class__(bldr.Shape())
 
-    def isoline(self, param: float, direction: Literal["u", "v"] = "u") -> Edge:
+    def isoline(self, param: Real, direction: Literal["u", "v"] = "u") -> Edge:
         """
         Construct an isoline.
         """
@@ -3235,6 +3241,15 @@ class Face(Shape):
         )
 
         return Edge(BRepBuilderAPI_MakeEdge(adaptor.BSpline()).Edge())
+
+    def isolines(
+        self, params: Iterable[Real], direction: Literal["u", "v"] = "u"
+    ) -> List[Edge]:
+        """
+        Construct multiple isolines.
+        """
+
+        return [self.isoline(p, direction) for p in params]
 
 
 class Shell(Shape):
