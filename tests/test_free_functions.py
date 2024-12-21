@@ -44,6 +44,8 @@ from cadquery.occ_impl.shapes import (
     Vector,
 )
 
+from OCP.BOPAlgo import BOPAlgo_CheckStatus
+
 from pytest import approx, raises
 from math import pi
 
@@ -657,6 +659,7 @@ def test_export():
 # %% diagnostics
 def test_check():
 
+    # correct shape
     s1 = box(1, 1, 1)
 
     assert check(s1)
@@ -664,3 +667,8 @@ def test_check():
     s2 = sweep(rect(1, 1), segment((0, 0), (1, 1)))
 
     assert not check(s2)
+
+    res = []
+
+    assert not check(s2, res)
+    assert res[0][1] == BOPAlgo_CheckStatus.BOPAlgo_SelfIntersect
