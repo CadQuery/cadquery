@@ -9,7 +9,7 @@ JSON_TEMPLATE = """\
     "metadata" :
     {
         "formatVersion" : 3,
-        "generatedBy"   : "ParametricParts",
+        "generatedBy"   : "cadquery",
         "vertices"      : %(nVertices)d,
         "faces"         : %(nFaces)d,
         "normals"       : 0,
