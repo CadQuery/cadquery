@@ -10,6 +10,8 @@ from cadquery.occ_impl.shapes import (
     plane,
     torus,
     Shape,
+    cylinder,
+    ellipse,
 )
 
 from pytest import approx, raises
@@ -136,3 +138,36 @@ def test_bin_import_export():
 
     with raises(Exception):
         Shape.importBin(BytesIO())
+
+
+def test_sample():
+
+    e = ellipse(10, 1)
+    s = segment((0, 0), (1, 0))
+
+    pts1, params1 = e.sample(10)  # equidistant
+    pts2, params2 = e.sample(0.1)  # deflection based
+    pts3, params3 = s.sample(10)  # equidistant, open
+
+    assert len(pts1) == len(params1)
+    assert len(pts1) == 10 - 1  # e is closed
+
+    assert len(pts2) == len(params2)
+    assert len(pts2) == 16
+
+    assert len(pts3) == len(params3)
+    assert len(pts3) == 10  # s is open
+
+
+def test_isolines():
+
+    c = cylinder(1, 2).faces("%CYLINDER")
+
+    isos_v = c.isolines([0, 1])
+    isos_u = c.isolines([0, 1], "u")
+
+    assert len(isos_u) == 2
+    assert len(isos_v) == 2
+
+    assert isos_u[0].Length() == approx(2)
+    assert isos_v[0].Length() == approx(pi)

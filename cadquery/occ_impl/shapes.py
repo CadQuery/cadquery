@@ -1954,7 +1954,12 @@ class Mixin1D(object):
             crv = self._geomAdaptor()
             gcpnts = GCPnts_QuasiUniformDeflection(crv, n)
 
-        params = [gcpnts.Parameter(i) for i in range(1, gcpnts.NbPoints())]
+        N_pts = gcpnts.NbPoints()
+
+        params = [
+            gcpnts.Parameter(i)
+            for i in range(1, N_pts if crv.IsClosed() else N_pts + 1)
+        ]
         pnts = [Vector(crv.Value(p)) for p in params]
 
         return pnts, params
