@@ -232,6 +232,7 @@ from OCP.GeomAbs import (
     GeomAbs_Intersection,
     GeomAbs_JoinType,
     GeomAbs_IsoType,
+    GeomAbs_CurveType,
 )
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
@@ -286,7 +287,7 @@ from OCP.LProp3d import LProp3d_CLProps
 
 from OCP.BinTools import BinTools
 
-from OCP.Adaptor3d import Adaptor3d_IsoCurve
+from OCP.Adaptor3d import Adaptor3d_IsoCurve, Adaptor3d_Curve
 
 from OCP.GeomAdaptor import GeomAdaptor_Surface
 
@@ -3225,25 +3226,28 @@ class Face(Shape):
 
         return self.__class__(bldr.Shape())
 
-    def isoline(self, param: Real, direction: Literal["u", "v"] = "u") -> Edge:
+    def isoline(self, param: Real, direction: Literal["u", "v"] = "v") -> Edge:
         """
         Construct an isoline.
         """
 
-        iso = (
-            GeomAbs_IsoType.GeomAbs_IsoU
-            if direction == "u"
-            else GeomAbs_IsoType.GeomAbs_IsoV
-        )
+        u1, u2, v1, v2 = self._uvBounds()
+
+        if direction == "u":
+            iso = GeomAbs_IsoType.GeomAbs_IsoU
+            p1, p2 = v1, v2
+        else:
+            iso = GeomAbs_IsoType.GeomAbs_IsoV
+            p1, p2 = u1, u2
 
         adaptor = Adaptor3d_IsoCurve(
             GeomAdaptor_Surface(self._geomAdaptor()), iso, param
         )
 
-        return Edge(BRepBuilderAPI_MakeEdge(adaptor.BSpline()).Edge())
+        return Edge(_adaptor_curve_to_edge(adaptor, p1, p2))
 
     def isolines(
-        self, params: Iterable[Real], direction: Literal["u", "v"] = "u"
+        self, params: Iterable[Real], direction: Literal["u", "v"] = "v"
     ) -> List[Edge]:
         """
         Construct multiple isolines.
@@ -4725,6 +4729,34 @@ def _to_parametrization(name: str) -> Approx_ParametrizationType:
     """
 
     return _parametrization_dict[name.lower()]
+
+
+def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS_Edge:
+
+    GCT = GeomAbs_CurveType
+
+    t = crv.GetType()
+
+    if t == GCT.GeomAbs_BSplineCurve:
+        bldr = BRepBuilderAPI_MakeEdge(crv.BSpline(), p1, p2)
+    elif t == GCT.GeomAbs_BezierCurve:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Bezier(), p1, p2)
+    elif t == GCT.GeomAbs_Circle:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Circle(), p1, p2)
+    elif t == GCT.GeomAbs_Line:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Line(), p1, p2)
+    elif t == GCT.GeomAbs_Ellipse:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Ellipse(), p1, p2)
+    elif t == GCT.GeomAbs_Hyperbola:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Hyperbola(), p1, p2)
+    elif t == GCT.GeomAbs_Parabola:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Parabola(), p1, p2)
+    elif t == GCT.GeomAbs_OffsetCurve:
+        bldr = BRepBuilderAPI_MakeEdge(crv.OffsetCurve(), p1, p2)
+    else:
+        raise ValueError(r"{t} is not a supported curve type")
+
+    return bldr.Edge()
 
 
 #%% alternative constructors
