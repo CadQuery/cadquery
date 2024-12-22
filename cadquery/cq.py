@@ -1,8 +1,5 @@
-"""
-    Copyright (C) 2011-2015  Parametric Products Intellectual Holdings, LLC
-    Copyright (C) CadQuery Development Team.
-    Distributed under the Apache License.
-"""
+# Copyright (c) CadQuery Development Team.
+# Distributed under the terms of the Apache 2 License.
 
 import math
 from copy import copy
