@@ -35,11 +35,13 @@ from cadquery.occ_impl.shapes import (
     Location,
     Shape,
     Compound,
+    Edge,
     _get_one_wire,
     _get_wires,
     _get,
     _get_one,
     _get_edges,
+    _adaptor_curve_to_edge,
     check,
     Vector,
 )
@@ -97,6 +99,29 @@ def test_utils():
 
     with raises(ValueError):
         list(_get_edges(fill(circle(1))))
+
+
+def test_adaptor_curve_to_edge():
+
+    from OCP.gp import gp_Hypr, gp_Parab
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+    from OCP.TopoDS import TopoDS_Edge
+
+    # make some dummy edges with different geometries
+    lin = segment(Vector(), Vector(0, 1))
+    bez = Edge.makeBezier([Vector(), Vector(0, 0, 1)])
+    spl = spline([Vector(), Vector(0, 0, 1)])
+    circ = circle(1)
+    el = ellipse(2, 1)
+    off = wire(el).offset2D(-0.1, kind="tangent")[0].edges()
+    hypr = Edge(BRepBuilderAPI_MakeEdge(gp_Hypr()).Edge())
+    parab = Edge(BRepBuilderAPI_MakeEdge(gp_Parab()).Edge())
+
+    # smoke test
+    for s in (lin, bez, spl, circ, el, off, hypr, parab):
+        e = _adaptor_curve_to_edge(el._geomAdaptor().Curve(), 0, 1)
+
+        assert isinstance(e, TopoDS_Edge)
 
 
 #%% constructors
