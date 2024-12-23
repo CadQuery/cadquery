@@ -1949,7 +1949,7 @@ class Mixin1D(object):
 
         if isinstance(n, int):
             crv = self._geomAdaptor()
-            gcpnts = GCPnts_QuasiUniformAbscissa(crv, n)
+            gcpnts = GCPnts_QuasiUniformAbscissa(crv, n + 1 if crv.IsClosed() else n)
         else:
             crv = self._geomAdaptor()
             gcpnts = GCPnts_QuasiUniformDeflection(crv, n)

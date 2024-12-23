@@ -150,7 +150,7 @@ def test_sample():
     pts3, params3 = s.sample(10)  # equidistant, open
 
     assert len(pts1) == len(params1)
-    assert len(pts1) == 10 - 1  # e is closed
+    assert len(pts1) == 10  # e is closed
 
     assert len(pts2) == len(params2)
     assert len(pts2) == 16
