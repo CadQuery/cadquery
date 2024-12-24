@@ -1926,7 +1926,7 @@ class Mixin1D(object):
         self: Mixin1DProtocol, ds: Iterable[float], mode: ParamMode = "length",
     ) -> List[Vector]:
         """
-        Generate positions along the underlying curve
+        Generate positions along the underlying curve.
 
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
@@ -2016,7 +2016,7 @@ class Mixin1D(object):
         planar: bool = False,
     ) -> List[Location]:
         """
-        Generate location along the curve
+        Generate locations along the curve.
 
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
