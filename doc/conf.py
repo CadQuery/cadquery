@@ -62,7 +62,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "CadQuery"
-copyright = "Parametric Products Intellectual Holdings LLC, All Rights Reserved"
+copyright = "CadQuery Development Team"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
