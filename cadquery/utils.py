@@ -58,7 +58,7 @@ class deprecate_kwarg_name:
         self.name = name
         self.new_name = new_name
 
-    def __call__(self, f):
+    def __call__(self, f: TCallable) -> TCallable:
         @wraps(f)
         def wrapped(*args, **kwargs):
 
@@ -70,7 +70,7 @@ class deprecate_kwarg_name:
 
             return f(*args, **kwargs)
 
-        return wrapped
+        return cast(TCallable, wrapped)
 
 
 def get_arity(f: TCallable) -> int:
