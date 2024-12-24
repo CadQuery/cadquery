@@ -35,14 +35,18 @@ from cadquery.occ_impl.shapes import (
     Location,
     Shape,
     Compound,
+    Edge,
     _get_one_wire,
     _get_wires,
     _get,
     _get_one,
     _get_edges,
+    _adaptor_curve_to_edge,
     check,
     Vector,
 )
+
+from OCP.BOPAlgo import BOPAlgo_CheckStatus
 
 from pytest import approx, raises
 from math import pi
@@ -95,6 +99,29 @@ def test_utils():
 
     with raises(ValueError):
         list(_get_edges(fill(circle(1))))
+
+
+def test_adaptor_curve_to_edge():
+
+    from OCP.gp import gp_Hypr, gp_Parab, gp_Ax2
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+    from OCP.TopoDS import TopoDS_Edge
+
+    # make some dummy edges with different geometries
+    lin = segment(Vector(), Vector(0, 1))
+    bez = Edge.makeBezier([Vector(), Vector(0, 0, 1)])
+    spl = spline([Vector(), Vector(0, 0, 1)])
+    circ = circle(1)
+    el = ellipse(2, 1)
+    off = wire(el).offset2D(-0.1, kind="tangent")[0].Edges()[0]
+    hypr = Edge(BRepBuilderAPI_MakeEdge(gp_Hypr(gp_Ax2(), 2, 1)).Edge())
+    parab = Edge(BRepBuilderAPI_MakeEdge(gp_Parab()).Edge())
+
+    # smoke test
+    for s in (lin, bez, spl, circ, el, off, hypr, parab):
+        e = _adaptor_curve_to_edge(s._geomAdaptor().Curve(), 0, 1)
+
+        assert isinstance(e, TopoDS_Edge)
 
 
 #%% constructors
@@ -657,6 +684,7 @@ def test_export():
 # %% diagnostics
 def test_check():
 
+    # correct shape
     s1 = box(1, 1, 1)
 
     assert check(s1)
@@ -664,3 +692,8 @@ def test_check():
     s2 = sweep(rect(1, 1), segment((0, 0), (1, 1)))
 
     assert not check(s2)
+
+    res = []
+
+    assert not check(s2, res)
+    assert res[0][1] == BOPAlgo_CheckStatus.BOPAlgo_SelfIntersect
