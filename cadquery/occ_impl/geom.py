@@ -1,6 +1,6 @@
 from math import pi, radians, degrees
 
-from typing import overload, Sequence, Union, Tuple, Type, Optional
+from typing import overload, Sequence, Union, Tuple, Type, Optional, Iterator
 
 from OCP.gp import (
     gp_Vec,
@@ -235,6 +235,10 @@ class Vector(object):
             if isinstance(other, Vector)
             else False
         )
+
+    def __iter__(self) -> Iterator[float]:
+
+        yield from (self.x, self.y, self.z)
 
     def toPnt(self) -> gp_Pnt:
 

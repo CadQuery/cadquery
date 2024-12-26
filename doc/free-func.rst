@@ -21,7 +21,7 @@ The purpose of this section is to demonstrate how to construct Shape objects usi
 .. cadquery::
     :height: 600px
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     dh = 2
     r = 1
@@ -97,7 +97,7 @@ Various 1D, 2D and 3D primitives are supported.
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     e = segment((0,0), (0,1))
 
@@ -119,7 +119,7 @@ One can for example union multiple solids at once by first combining them into a
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     c1 = cylinder(1, 2)
     c2 = cylinder(0.5, 3)
@@ -158,7 +158,7 @@ Constructing complex shapes from simple shapes is possible in various contexts.
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     e1 = segment((0,0), (1,0))
     e2 = segment((1,0), (1,1))
@@ -196,7 +196,7 @@ Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, 
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     r = rect(1,0.5)
     f = face(r, circle(0.2).moved(0.2), rect(0.2, 0.4).moved(-0.2))
@@ -229,7 +229,7 @@ Placement and creation of arrays is possible using :meth:`~cadquery.Shape.move` 
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     locs = [(0,-1,0), (0,1,0)]
 
@@ -246,7 +246,7 @@ The free function API has extensive text creation capabilities including text on
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     from math import pi
 

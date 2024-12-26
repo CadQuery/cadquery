@@ -231,6 +231,8 @@ from OCP.GeomAbs import (
     GeomAbs_C2,
     GeomAbs_Intersection,
     GeomAbs_JoinType,
+    GeomAbs_IsoType,
+    GeomAbs_CurveType,
 )
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
@@ -244,7 +246,11 @@ from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds, ShapeAnalysis_Wire
 from OCP.TopTools import TopTools_HSequenceOfShape
 
-from OCP.GCPnts import GCPnts_AbscissaPoint
+from OCP.GCPnts import (
+    GCPnts_AbscissaPoint,
+    GCPnts_QuasiUniformAbscissa,
+    GCPnts_QuasiUniformDeflection,
+)
 
 from OCP.GeomFill import (
     GeomFill_Frenet,
@@ -280,6 +286,10 @@ from OCP.Approx import Approx_ParametrizationType
 from OCP.LProp3d import LProp3d_CLProps
 
 from OCP.BinTools import BinTools
+
+from OCP.Adaptor3d import Adaptor3d_IsoCurve, Adaptor3d_Curve
+
+from OCP.GeomAdaptor import GeomAdaptor_Surface
 
 from math import pi, sqrt, inf, radians, cos
 
@@ -1900,7 +1910,8 @@ class Mixin1D(object):
     def positionAt(
         self: Mixin1DProtocol, d: float, mode: ParamMode = "length",
     ) -> Vector:
-        """Generate a position along the underlying curve.
+        """
+        Generate a position along the underlying curve.
 
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
@@ -1914,7 +1925,8 @@ class Mixin1D(object):
     def positions(
         self: Mixin1DProtocol, ds: Iterable[float], mode: ParamMode = "length",
     ) -> List[Vector]:
-        """Generate positions along the underlying curve
+        """
+        Generate positions along the underlying curve.
 
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
@@ -1923,6 +1935,35 @@ class Mixin1D(object):
 
         return [self.positionAt(d, mode) for d in ds]
 
+    def sample(
+        self: Mixin1DProtocol, n: Union[int, float]
+    ) -> Tuple[List[Vector], List[float]]:
+        """
+        Sample a curve based on a number of points or deflection.
+
+        :param n: Number of positions or deflection
+        :return: A list of Vectors and a list of parameters.
+        """
+
+        gcpnts: Union[GCPnts_QuasiUniformAbscissa, GCPnts_QuasiUniformDeflection]
+
+        if isinstance(n, int):
+            crv = self._geomAdaptor()
+            gcpnts = GCPnts_QuasiUniformAbscissa(crv, n + 1 if crv.IsClosed() else n)
+        else:
+            crv = self._geomAdaptor()
+            gcpnts = GCPnts_QuasiUniformDeflection(crv, n)
+
+        N_pts = gcpnts.NbPoints()
+
+        params = [
+            gcpnts.Parameter(i)
+            for i in range(1, N_pts if crv.IsClosed() else N_pts + 1)
+        ]
+        pnts = [Vector(crv.Value(p)) for p in params]
+
+        return pnts, params
+
     def locationAt(
         self: Mixin1DProtocol,
         d: float,
@@ -1930,7 +1971,8 @@ class Mixin1D(object):
         frame: FrameMode = "frenet",
         planar: bool = False,
     ) -> Location:
-        """Generate a location along the underlying curve.
+        """
+        Generate a location along the underlying curve.
 
         :param d: distance or parameter value
         :param mode: position calculation mode (default: length)
@@ -1973,7 +2015,8 @@ class Mixin1D(object):
         frame: FrameMode = "frenet",
         planar: bool = False,
     ) -> List[Location]:
-        """Generate location along the curve
+        """
+        Generate locations along the curve.
 
         :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
@@ -3187,6 +3230,35 @@ class Face(Shape):
         bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), u0, u1, v0, v1, tol)
 
         return self.__class__(bldr.Shape())
+
+    def isoline(self, param: Real, direction: Literal["u", "v"] = "v") -> Edge:
+        """
+        Construct an isoline.
+        """
+
+        u1, u2, v1, v2 = self._uvBounds()
+
+        if direction == "u":
+            iso = GeomAbs_IsoType.GeomAbs_IsoU
+            p1, p2 = v1, v2
+        else:
+            iso = GeomAbs_IsoType.GeomAbs_IsoV
+            p1, p2 = u1, u2
+
+        adaptor = Adaptor3d_IsoCurve(
+            GeomAdaptor_Surface(self._geomAdaptor()), iso, param
+        )
+
+        return Edge(_adaptor_curve_to_edge(adaptor, p1, p2))
+
+    def isolines(
+        self, params: Iterable[Real], direction: Literal["u", "v"] = "v"
+    ) -> List[Edge]:
+        """
+        Construct multiple isolines.
+        """
+
+        return [self.isoline(p, direction) for p in params]
 
 
 class Shell(Shape):
@@ -4622,6 +4694,14 @@ def _shapes_to_toptools_list(s: Iterable[Shape]) -> TopTools_ListOfShape:
     return rv
 
 
+def _toptools_list_to_shapes(tl: TopTools_ListOfShape) -> List[Shape]:
+    """
+    Convert a TopTools list (OCCT specific) to a compound.
+    """
+
+    return [_normalize(Shape.cast(el)) for el in tl]
+
+
 _geomabsshape_dict = dict(
     C0=GeomAbs_Shape.GeomAbs_C0,
     C1=GeomAbs_Shape.GeomAbs_C1,
@@ -4654,6 +4734,34 @@ def _to_parametrization(name: str) -> Approx_ParametrizationType:
     """
 
     return _parametrization_dict[name.lower()]
+
+
+def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS_Edge:
+
+    GCT = GeomAbs_CurveType
+
+    t = crv.GetType()
+
+    if t == GCT.GeomAbs_BSplineCurve:
+        bldr = BRepBuilderAPI_MakeEdge(crv.BSpline(), p1, p2)
+    elif t == GCT.GeomAbs_BezierCurve:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Bezier(), p1, p2)
+    elif t == GCT.GeomAbs_Circle:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Circle(), p1, p2)
+    elif t == GCT.GeomAbs_Line:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Line(), p1, p2)
+    elif t == GCT.GeomAbs_Ellipse:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Ellipse(), p1, p2)
+    elif t == GCT.GeomAbs_Hyperbola:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Hyperbola(), p1, p2)
+    elif t == GCT.GeomAbs_Parabola:
+        bldr = BRepBuilderAPI_MakeEdge(crv.Parabola(), p1, p2)
+    elif t == GCT.GeomAbs_OffsetCurve:
+        bldr = BRepBuilderAPI_MakeEdge(crv.OffsetCurve(), p1, p2)
+    else:
+        raise ValueError(r"{t} is not a supported curve type")
+
+    return bldr.Edge()
 
 
 #%% alternative constructors
@@ -5675,7 +5783,7 @@ def loft(
 #%% diagnotics
 
 
-def check(s: Shape) -> bool:
+def check(s: Shape, results: Optional[List[Tuple[List[Shape], Any]]] = None) -> bool:
     """
     Check if a shape is valid.
     """
@@ -5687,5 +5795,14 @@ def check(s: Shape) -> bool:
     analyzer.Perform()
 
     rv = analyzer.IsValid()
+
+    # output detailed results if requested
+    if results is not None:
+        results.clear()
+
+        for r in analyzer.Result():
+            results.append(
+                (_toptools_list_to_shapes(r.GetFaultyShapes1()), r.GetCheckStatus())
+            )
 
     return rv
