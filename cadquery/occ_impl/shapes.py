@@ -1941,7 +1941,7 @@ class Mixin1D(object):
         """
         Sample a curve based on a number of points or deflection.
 
-        :param n: number of positions or deflection
+        :param n: Number of positions or deflection
         :return: A list of Vectors and a list of parameters.
         """
 
