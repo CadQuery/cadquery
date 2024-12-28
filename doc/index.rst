@@ -52,6 +52,7 @@ Table Of Contents
     importexport.rst
     cqgi.rst
     extending.rst
+    citing.rst
 
 
 
