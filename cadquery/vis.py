@@ -87,7 +87,7 @@ def show(*objs: Union[Shape, Workplane, Assembly, Sketch]):
 
     # initialize and set size
     inter.Initialize()
-    win.SetSize(*win.GetScreenSize())
+    #win.SetSize(*win.GetScreenSize())
     win.SetPosition(-10, 0)
 
     # show and return
