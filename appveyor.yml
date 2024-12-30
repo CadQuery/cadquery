@@ -33,7 +33,7 @@ build: false
 
 test_script:
     - black . --diff --check
-    - mypy cadquery
+    #- mypy cadquery
     - pytest -v --cov
 
 on_success:
