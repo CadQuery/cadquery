@@ -11,7 +11,7 @@ coordinate system. Most methods that create an object do so relative to the curr
 
 Usually the first workplane created is the "XY" plane, also known as the "front" plane. Once a solid is defined the most
 common way to create a workplane is to select a face on the solid that you intend to modify and create a new workplane
-relative to it. You can also create new workplanes in anywhere in world coordinate system, or relative to other planes
+relative to it. You can also create new workplanes anywhere in the world coordinate system, or relative to other planes
 using offsets or rotations.
 
 The most powerful feature of workplanes is that they allow you to work in 2D space in the coordinate system of the
@@ -67,7 +67,7 @@ The Stack
 ---------------------------
 
 As you work in CadQuery, each operation returns a new Workplane object with the result of that
-operations. Each Workplane object has a list of objects, and a reference to its parent.
+operation. Each Workplane object has a list of objects, and a reference to its parent.
 
 You can always go backwards to older operations by removing the current object from the stack.  For example::
 
@@ -102,7 +102,7 @@ The Context Solid
 Most of the time, you are building a single object, and adding features to that single object.  CadQuery watches
 your operations, and defines the first solid object created as the 'context solid'.  After that, any features
 you create are automatically combined (unless you specify otherwise) with that solid.  This happens even if the
-solid was created  a long way up in the stack.  For example::
+solid was created a long way up in the stack.  For example::
 
     Workplane("XY").box(1, 2, 3).faces(">Z").circle(0.25).extrude(1)
 
@@ -117,7 +117,7 @@ If you want to avoid this, you can specify ``combine=False``, and CadQuery will 
 Iteration
 ---------------------------
 
-CAD models often have repeated geometry, and its really annoying to resort to for loops to construct features.
+CAD models often have repeated geometry, and it's really annoying to resort to for loops to construct features.
 Many CadQuery methods operate automatically on each element on the stack, so that you don't have to write loops.
 For example, this::
 
@@ -126,7 +126,7 @@ For example, this::
 Will actually create 4 circles, because ``vertices()`` selects 4 vertices of a rectangular face, and the ``circle()`` method
 iterates on each member of the stack.
 
-This is really useful to remember  when you author your own plugins. :py:meth:`cadquery.Workplane.each` is useful for this purpose.
+This is really useful to remember when you author your own plugins. :py:meth:`cadquery.Workplane.each` is useful for this purpose.
 
 
 An Introspective Example
@@ -137,7 +137,7 @@ An Introspective Example
     some experience with creating CadQuery models and now you want to read the CadQuery source to
     better understand what your code does, then it is recommended you read this example first.
 
-To demonstrate the above concepts, we can define more detailed string representations for the
+To demonstrate the above concepts, we can define a more detailed string representations for the
 :class:`~cadquery.Workplane`, :class:`~cadquery.Plane` and :class:`~cadquery.CQContext` classes and
 patch them in::
 
@@ -322,7 +322,7 @@ The output is:
 
 Our selection method has taken the :class:`~cadquery.Solid` from the
 :attr:`~cadquery.Workplane.objects` list of the previous :class:`~cadquery.Workplane`, found the
-face with it's center furthest in the Z direction, and placed that face into the
+face with its center furthest in the Z direction, and placed that face into the
 :attr:`~cadquery.Workplane.objects` attribute. The :class:`~cadquery.Solid` representing the box we
 are modelling is gone, and when a :class:`~cadquery.Workplane` method needs to access that solid it
 searches through the parent chain for the nearest solid. This action can also be done by a user
