@@ -34,7 +34,7 @@ build: false
 test_script:
     - black . --diff --check
     #- mypy cadquery
-    - pytest -v --cov tests/test_exporters.py
+    - pytest tests/test_exporters.py
 
 on_success:
     - codecov
