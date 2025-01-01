@@ -108,7 +108,7 @@ solid was created a long way up in the stack.  For example::
 
 Will create a 1x2x3 box, with a cylindrical boss extending from the top face.  It was not necessary to manually
 combine the cylinder created by extruding the circle with the box, because the default behavior for extrude is
-to combine the result with the context solid. The hole() method works similarly -- CadQuery presumes that you want
+to combine the result with the context solid. The :py:meth:`cadquery.Workplane.hole` method works similarly -- CadQuery presumes that you want
 to subtract the hole from the context solid.
 
 If you want to avoid this, you can specify ``combine=False``, and CadQuery will create the solid separately.
@@ -435,7 +435,7 @@ After the loft operation, our Workplane looks quite different:
         pendingEdges: []
         tags: {'base': <cadquery.cq.Workplane object at 0xaa90>}
 
-In the :attr:`cq.Workplane.objects` attribute we now have one Compound object and the modelling
+In the :attr:`cq.Workplane.objects` attribute we now have one :class:`~cadquery.Compound` object and the modelling
 context's :attr:`~cadquery.cq.CQContext.pendingWires` has been cleared by
 :meth:`~cadquery.Workplane.loft`.
 
