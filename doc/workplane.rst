@@ -108,7 +108,7 @@ solid was created a long way up in the stack.  For example::
 
 Will create a 1x2x3 box, with a cylindrical boss extending from the top face.  It was not necessary to manually
 combine the cylinder created by extruding the circle with the box, because the default behavior for extrude is
-to combine the result with the context solid. The :py:meth:`cadquery.Workplane.hole` method works similarly -- CadQuery presumes that you want
+to combine the result with the context solid. The :meth:`~cadquery.Workplane.hole` method works similarly -- CadQuery presumes that you want
 to subtract the hole from the context solid.
 
 If you want to avoid this, you can specify ``combine=False``, and CadQuery will create the solid separately.
