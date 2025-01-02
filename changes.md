@@ -1,6 +1,11 @@
 Changes
 =======
 
+2.5.1
+-----
+
+Fixing pip package uploading issue.
+
 2.5.0 
 ------
 
