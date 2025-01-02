@@ -55,7 +55,7 @@ setup(
             "docutils",
             "ipython",
             "pytest",
-            #"black@git+https://github.com/cadquery/black.git@cq",
+            # "black@git+https://github.com/cadquery/black.git@cq",
         ],
         "ipython": ["ipython",],
     },
