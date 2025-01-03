@@ -1,6 +1,11 @@
 Changes
 =======
 
+2.5.2
+-----
+
+Fixing pip package dependency issue.
+
 2.5.1
 -----
 
