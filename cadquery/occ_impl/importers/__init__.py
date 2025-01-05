@@ -15,6 +15,7 @@ class ImportTypes:
     STEP = "STEP"
     DXF = "DXF"
     BREP = "BREP"
+    BIN = "BIN"
 
 
 class UNITS:
@@ -23,7 +24,7 @@ class UNITS:
 
 
 def importShape(
-    importType: Literal["STEP", "DXF", "BREP"], fileName: str, *args, **kwargs
+    importType: Literal["STEP", "DXF", "BREP", "BIN"], fileName: str, *args, **kwargs
 ) -> "cq.Workplane":
     """
     Imports a file based on the type (STEP, STL, etc)
@@ -39,6 +40,8 @@ def importShape(
         return importDXF(fileName, *args, **kwargs)
     elif importType == ImportTypes.BREP:
         return importBrep(fileName)
+    elif importType == ImportTypes.BIN:
+        return importBin(fileName)
     else:
         raise RuntimeError("Unsupported import type: {!r}".format(importType))
 
@@ -57,6 +60,18 @@ def importBrep(fileName: str) -> "cq.Workplane":
     # shape is a compound, it will be stored as a compound on the workplane. In
     # some cases it may be desirable for the compound to be broken into its
     # constituent solids. To do this, use list(shape) or shape.Solids().
+    return cq.Workplane("XY").newObject([shape])
+
+
+def importBin(fileName: str) -> "cq.Workplane":
+    """
+    Loads the binary BREP file as a single shape into a cadquery Workplane.
+
+    :param fileName: The path and name of the BREP file to be imported
+
+    """
+    shape = Shape.importBin(fileName)
+
     return cq.Workplane("XY").newObject([shape])
 
 

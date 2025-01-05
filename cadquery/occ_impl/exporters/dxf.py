@@ -1,6 +1,17 @@
 """DXF export utilities."""
 
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    Iterable,
+    Protocol,
+    runtime_checkable,
+)
 
 import ezdxf
 from ezdxf import units, zoom
@@ -10,15 +21,25 @@ from OCP.gp import gp_Dir
 from OCP.GC import GC_MakeArcOfEllipse
 from typing_extensions import Self
 
-from ...cq import Face, Plane, Workplane
 from ...units import RAD2DEG
-from ..shapes import Edge, Shape, Compound
-from .utils import toCompound
+from ..shapes import Face, Edge, Shape, Compound, compound
+from ..geom import Plane
+
 
 ApproxOptions = Literal["spline", "arc"]
 DxfEntityAttributes = Tuple[
     Literal["ARC", "CIRCLE", "ELLIPSE", "LINE", "SPLINE",], Dict[str, Any]
 ]
+
+
+@runtime_checkable
+class WorkplaneLike(Protocol):
+    @property
+    def plane(self) -> Plane:
+        ...
+
+    def __iter__(self) -> Iterable[Shape]:
+        ...
 
 
 class DxfDocument:
@@ -125,14 +146,18 @@ class DxfDocument:
 
         return self
 
-    def add_shape(self, workplane: Workplane, layer: str = "") -> Self:
+    def add_shape(self, shape: Union[WorkplaneLike, Shape], layer: str = "") -> Self:
         """Add CadQuery shape to a DXF layer.
 
-        :param workplane: CadQuery Workplane
+        :param s: CadQuery Workplane or Shape
         :param layer: layer definition name
         """
-        plane = workplane.plane
-        shape = toCompound(workplane).transformShape(plane.fG)
+
+        if isinstance(shape, WorkplaneLike):
+            plane = shape.plane
+            shape_ = compound(*shape).transformShape(plane.fG)
+        else:
+            shape_ = shape
 
         general_attributes = {}
         if layer:
@@ -141,20 +166,20 @@ class DxfDocument:
         if self.approx == "spline":
             edges = [
                 e.toSplines() if e.geomType() == "BSPLINE" else e
-                for e in self._ordered_edges(shape)
+                for e in self._ordered_edges(shape_)
             ]
 
         elif self.approx == "arc":
             edges = []
 
             # this is needed to handle free wires
-            for el in shape.Wires():
+            for el in shape_.Wires():
                 edges.extend(
                     self._ordered_edges(Face.makeFromWires(el).toArcs(self.tolerance))
                 )
 
         else:
-            edges = self._ordered_edges(shape)
+            edges = self._ordered_edges(shape_)
 
         for edge in edges:
             converter = self._DISPATCH_MAP.get(edge.geomType(), None)
@@ -342,7 +367,7 @@ class DxfDocument:
 
 
 def exportDXF(
-    w: Workplane,
+    w: Union[WorkplaneLike, Shape, Iterable[Shape]],
     fname: str,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
@@ -362,5 +387,11 @@ def exportDXF(
     """
 
     dxf = DxfDocument(approx=approx, tolerance=tolerance, doc_units=doc_units)
-    dxf.add_shape(w)
+
+    if isinstance(w, (WorkplaneLike, Shape)):
+        dxf.add_shape(w)
+    else:
+        for s in w:
+            dxf.add_shape(s)
+
     dxf.document.saveas(fname)

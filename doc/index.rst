@@ -38,9 +38,11 @@ Table Of Contents
     quickstart.rst
     designprinciples.rst
     primer.rst
+    workplane.rst
     sketch.rst
     assy.rst
     free-func.rst
+    vis.rst
     fileformat.rst
     examples.rst
     apireference.rst
@@ -50,7 +52,7 @@ Table Of Contents
     importexport.rst
     cqgi.rst
     extending.rst
-    roadmap.rst
+    citing.rst
 
 
 

@@ -34,12 +34,19 @@ from cadquery.occ_impl.shapes import (
     compound,
     Location,
     Shape,
+    Compound,
+    Edge,
     _get_one_wire,
     _get_wires,
     _get,
     _get_one,
     _get_edges,
+    _adaptor_curve_to_edge,
+    check,
+    Vector,
 )
+
+from OCP.BOPAlgo import BOPAlgo_CheckStatus
 
 from pytest import approx, raises
 from math import pi
@@ -94,6 +101,29 @@ def test_utils():
         list(_get_edges(fill(circle(1))))
 
 
+def test_adaptor_curve_to_edge():
+
+    from OCP.gp import gp_Hypr, gp_Parab, gp_Ax2
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+    from OCP.TopoDS import TopoDS_Edge
+
+    # make some dummy edges with different geometries
+    lin = segment(Vector(), Vector(0, 1))
+    bez = Edge.makeBezier([Vector(), Vector(0, 0, 1)])
+    spl = spline([Vector(), Vector(0, 0, 1)])
+    circ = circle(1)
+    el = ellipse(2, 1)
+    off = wire(el).offset2D(-0.1, kind="tangent")[0].Edges()[0]
+    hypr = Edge(BRepBuilderAPI_MakeEdge(gp_Hypr(gp_Ax2(), 2, 1)).Edge())
+    parab = Edge(BRepBuilderAPI_MakeEdge(gp_Parab()).Edge())
+
+    # smoke test
+    for s in (lin, bez, spl, circ, el, off, hypr, parab):
+        e = _adaptor_curve_to_edge(s._geomAdaptor().Curve(), 0, 1)
+
+        assert isinstance(e, TopoDS_Edge)
+
+
 #%% constructors
 
 
@@ -128,9 +158,11 @@ def test_constructors():
 
     sh1 = shell(b.Faces())
     sh2 = shell(*b.Faces())
+    sh3 = shell(torus(1, 0.1).Faces())  # check for issues when sewing single face
 
     assert sh1.Area() == approx(6)
     assert sh2.Area() == approx(6)
+    assert sh3.isValid()
 
     # solid
     s1 = solid(b.Faces())
@@ -138,6 +170,18 @@ def test_constructors():
 
     assert s1.Volume() == approx(1)
     assert s2.Volume() == approx(1)
+
+    # solid with voids
+    b1 = box(0.1, 0.1, 0.1)
+
+    s3 = solid(b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces())
+
+    assert s3.Volume() == approx(1 - 2 * 0.1 ** 3)
+
+    # solid from shells
+    s4 = solid(b.shells())
+
+    assert s4.Volume() == approx(1)
 
     # compound
     c1 = compound(b.Faces())
@@ -284,6 +328,14 @@ def test_spline():
     assert s3.tangentAt(1).toTuple() == approx((-1, 0, 0))
 
 
+def test_spline_params():
+
+    s1 = spline([(0, 0), (0, 1), (1, 1)], params=[0, 1, 2])
+    p1 = s1.positionAt(1, mode="parameter")
+
+    assert p1.toTuple() == approx((0, 1, 0))
+
+
 def test_text():
 
     r1 = text("CQ", 10)
@@ -302,6 +354,33 @@ def test_text():
     assert r1.faces("<X").Center().x > r3.faces("<X").Center().x
     assert r4.faces("<X").Center().y > r1.faces("<X").Center().y
     assert r1.faces("<X").Center().y > r5.faces("<X").Center().x
+
+    # test single letter
+    r6 = text("C", 1)
+
+    assert len(r6.Faces()) == 1
+    assert len(r6.Wires()) == 1
+
+    # test text on path
+    c = cylinder(10, 10).moved(rz=180)
+    cf = c.faces("%CYLINDER")
+    spine = c.edges("<Z")
+
+    r7 = text("CQ", 1, spine)  # normal
+    r8 = text("CQ", 1, spine, planar=True)  # planar
+    r9 = text("CQ", 1, spine, cf)  # projected
+
+    assert r7.faces(">>Z").Center().z > 0
+    assert r7.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
+    assert r7.faces("<<X").geomType() == "PLANE"
+
+    assert r8.faces(">>Z").Center().z == approx(0)
+    assert (r8.faces("<<X").normalAt() - Vector(0, 0, 1)).Length == approx(0)
+    assert r8.faces("<<X").geomType() == "PLANE"
+
+    assert r9.faces(">>Z").Center().z > 0
+    assert r9.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
+    assert r9.faces("<<X").geomType() == "CYLINDER"
 
 
 #%% bool ops
@@ -478,9 +557,13 @@ def test_offset():
 
     r1 = offset(f, 1)
     r2 = offset(s, -0.25)
+    r3 = offset(f, 1, both=True)
+    r4 = offset(f.moved((0, 0), (5, 5)), 1, both=True)
 
     assert r1.Volume() == approx(1)
     assert r2.Volume() == approx(1 - 0.5 ** 3)
+    assert r3.Volume() == approx(2)
+    assert r4.Volume() == approx(4)
 
 
 def test_sweep():
@@ -488,16 +571,24 @@ def test_sweep():
     w1 = rect(1, 1)
     w2 = w1.moved(Location(0, 0, 1))
 
+    f1 = face(rect(1, 1), circle(0.25))
+    f2 = face(rect(2, 1), ellipse(0.9, 0.45)).moved(x=2, z=2, ry=90)
+    f3 = face(rect(1, 1))
+
     p1 = segment((0, 0, 0), (0, 0, 1))
     p2 = spline((w1.Center(), w2.Center()), ((-0.5, 0, 1), (0.5, 0, 1)))
+    p3 = spline((f1.Center(), f2.Center()), ((0, 0, 1), (1, 0, 0)))
 
-    r1 = sweep(w1, p1)
-    r2 = sweep((w1, w2), p1)
-    r3 = sweep(w1, p1, cap=True)
-    r4 = sweep((w1, w2), p1, cap=True)
-    r5 = sweep((w1, w2), p2, cap=True)
+    r1 = sweep(w1, p1)  # simple sweep
+    r2 = sweep((w1, w2), p1)  # multi-section sweep
+    r3 = sweep(w1, p1, cap=True)  # simple with cap
+    r4 = sweep((w1, w2), p1, cap=True)  # multi-section with cap
+    r5 = sweep((w1, w2), p2, cap=True)  # see above
+    r6 = sweep(f1, p3)  # simple face sweep
+    r7 = sweep((f1, f2), p3)  # multi-section face sweep
+    r8 = sweep(f3, p3)  # simplest face sweep (no inner wires)
 
-    assert_all_valid(r1, r2, r3, r4, r5)
+    assert_all_valid(r1, r2, r3, r4, r5, r6, r7, r8)
 
     assert r1.Area() == approx(4)
     assert r2.Area() == approx(4)
@@ -505,6 +596,24 @@ def test_sweep():
     assert r4.Volume() == approx(1)
     assert r5.Volume() > 0
     assert len(r5.Faces()) == 6
+    assert len(r6.Faces()) == 7
+    assert len(r7.Faces()) == 7
+    assert len(r8.Faces()) == 6
+
+
+def test_sweep_aux():
+
+    p = plane(1, 1)
+    spine = spline((0, 0, 0), (0, 0, 1))
+    aux = spline([(1, 0, 0), (1, 0, 1)], tgts=((0, 1, 0), (0, -1, 0)))
+
+    r1 = sweep(p, spine, aux)
+    r2 = sweep([p], spine, aux)
+
+    assert r1.isValid()
+    assert len(r1.faces("%PLANE").Faces()) == 2  # only two planar faces are expected
+    assert r2.isValid()
+    assert len(r1.faces("%PLANE").Faces()) == 2  # only two planar faces are expected
 
 
 def test_loft():
@@ -516,16 +625,75 @@ def test_loft():
     w4 = segment((0, 0), (1, 0))
     w5 = w4.moved(0, 0, 1)
 
+    f1 = face(rect(2, 1), rect(0.5, 0.2).moved(x=0.5), rect(0.5, 0.2).moved(x=-0.5))
+    f2 = face(rect(3, 2), circle(0.5).moved(x=0.7), circle(0.5).moved(x=-0.7)).moved(
+        z=1
+    )
+
     r1 = loft(w1, w2, w3)  # loft
     r2 = loft(w1, w2, w3, ruled=True)  # ruled loft
     r3 = loft([w1, w2, w3])  # overload
     r4 = loft(w1, w2, w3, cap=True)  # capped loft
     r5 = loft(w4, w5)  # loft with open edges
+    r6 = loft(f1, f2)  # loft with faces
+    r7 = loft()  # returns an empty compound
+    r8 = loft(compound(), compound())  # returns an empty compound
 
-    assert_all_valid(r1, r2, r3, r4, r5)
+    assert_all_valid(r1, r2, r3, r4, r5, r6)
 
     assert len(r1.Faces()) == 1
     assert len(r2.Faces()) == 2
     assert len((r1 - r3).Faces()) == 0
     assert r4.Volume() > 0
     assert r5.Area() == approx(1)
+    assert len(r6.Faces()) == 16
+    assert len(r6.Faces()) == 16
+    assert not bool(r7) and isinstance(r7, Compound)
+    assert not bool(r8) and isinstance(r8, Compound)
+
+
+def test_loft_vertex():
+
+    r1 = loft(vertex(0, 0, 1), rect(1, 1))
+    r2 = loft(plane(1, 1), vertex(0, 0, 1))
+    r3 = loft(vertex(0, 0, -1), plane(1, 1), vertex(0, 0, 1))
+    r4 = loft(vertex(0, 0, -1), plane(1, 1) - plane(0.5, 0.5), vertex(0, 0, 1))
+    r5 = loft(vertex(0, 0, -1), rect(1, 1), vertex(0, 0, 1))
+
+    assert len(r1.Faces()) == 4
+    assert len(r2.Faces()) == 5
+    assert len(r3.Faces()) == 4
+    assert len(r3.Solids()) == 1
+    assert len(r4.Faces()) == 4
+    assert len(r4.Solids()) == 1
+    assert r4.Volume() == approx(r3.Volume())  # inner features are ignored
+    assert len(r5.Faces()) == 4
+
+
+# %% export
+def test_export():
+
+    b1 = box(1, 1, 1)
+    b1.export("box.brep")
+
+    b2 = Shape.importBrep("box.brep")
+
+    assert (b1 - b2).Volume() == approx(0)
+
+
+# %% diagnostics
+def test_check():
+
+    # correct shape
+    s1 = box(1, 1, 1)
+
+    assert check(s1)
+
+    s2 = sweep(rect(1, 1), segment((0, 0), (1, 1)))
+
+    assert not check(s2)
+
+    res = []
+
+    assert not check(s2, res)
+    assert res[0][1] == BOPAlgo_CheckStatus.BOPAlgo_SelfIntersect

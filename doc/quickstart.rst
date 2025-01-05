@@ -134,7 +134,7 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 5,11-17
+   :emphasize-lines: 5,14-17
 
     height = 60.0
     width = 80.0
@@ -204,7 +204,7 @@ We can do that using the preset dictionaries in the parameter definition:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 17-18
+   :emphasize-lines: 19-20
 
     height = 60.0
     width = 80.0
@@ -249,7 +249,7 @@ This can be easily accomplished using the :py:meth:`cadquery.exporters.export` f
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 17-18
+   :emphasize-lines: 27-29
 
     height = 60.0
     width = 80.0

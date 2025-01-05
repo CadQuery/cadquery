@@ -1,4 +1,4 @@
-# Copyright 2015 Parametric Products Intellectual Holdings, LLC
+# Copyright (c) CadQuery Development Team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,16 +21,15 @@ setup_reqs = []
 is_rtd = "READTHEDOCS" in os.environ
 is_appveyor = "APPVEYOR" in os.environ
 is_azure = "CONDA_PY" in os.environ
-is_conda = "CONDA_PREFIX_1" in os.environ
+is_conda = "CONDA_PREFIX" in os.environ
 
 # Only include the installation dependencies if we are not running on RTD or AppVeyor or in a conda env
 if not is_rtd and not is_appveyor and not is_azure and not is_conda:
     reqs = [
-        "cadquery-ocp>=7.7.0a0,<7.8",
+        "cadquery-ocp>=7.7.0,<7.8",
         "ezdxf",
         "multimethod>=1.11,<2.0",
-        "nlopt",
-        "nptyping==2.0.1",
+        "nlopt>=2.9.0,<3.0",
         "typish",
         "casadi",
         "path",
@@ -39,7 +38,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
 
 setup(
     name="cadquery",
-    version="2.5.0dev",  # Update this for the next release
+    version="2.5.2",  # Update this for the next release
     url="https://github.com/CadQuery/cadquery",
     license="Apache Public License 2.0",
     author="David Cowden",
@@ -56,7 +55,7 @@ setup(
             "docutils",
             "ipython",
             "pytest",
-            "black@git+https://github.com/cadquery/black.git@cq",
+            # "black@git+https://github.com/cadquery/black.git@cq",
         ],
         "ipython": ["ipython",],
     },

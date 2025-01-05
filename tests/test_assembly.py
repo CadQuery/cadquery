@@ -5,6 +5,7 @@ from math import degrees
 import copy
 from pathlib import Path, PurePath
 import re
+from pytest import approx
 
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
@@ -14,8 +15,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face
-from cadquery.occ_impl.geom import Location
+from cadquery.occ_impl.shapes import Face, box
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -36,7 +36,7 @@ from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
 from OCP.TopAbs import TopAbs_ShapeEnum
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def tmpdir(tmp_path_factory):
     return tmp_path_factory.mktemp("assembly")
 
@@ -287,6 +287,31 @@ def boxes7_assy():
 
 
 @pytest.fixture
+def boxes8_assy():
+
+    b0 = box(1, 1, 1)
+
+    assy = cq.Assembly(loc=cq.Location(0, 10, 0))
+    assy.add(b0, name="box0", color=cq.Color("red"))
+    assy.add(b0, name="box1", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
+def boxes9_assy():
+
+    b0 = box(1, 1, 1)
+
+    assy = cq.Assembly(
+        b0, name="box0", loc=cq.Location(0, 10, 0), color=cq.Color("red")
+    )
+    assy.add(b0, name="box1", color=cq.Color("green"), loc=cq.Location((1, 0, 0)))
+
+    return assy
+
+
+@pytest.fixture
 def spheres0_assy():
 
     b0 = cq.Workplane().sphere(1)
@@ -373,7 +398,6 @@ def get_doc_nodes(doc, leaf=False):
 
         name_att = TDataStd_Name()
         label.FindAttribute(TDataStd_Name.GetID_s(), name_att)
-        name = TCollection_ExtendedString(name_att.Get()).ToExtString()
 
         color = style.GetColorSurfRGBA()
         shape = expl.FindShapeFromPathId_s(doc, node.Id)
@@ -386,7 +410,6 @@ def get_doc_nodes(doc, leaf=False):
         faces = []
         if not node.IsAssembly:
             it = TDF_ChildIterator(label)
-            i = 0
             while it.More():
                 child = it.Value()
                 child_shape = tool.GetShape_s(child)
@@ -587,11 +610,27 @@ def test_step_export(nested_assy, tmp_path_factory):
 
     # check that locations were applied correctly
     c = cq.Compound.makeCompound(w.solids().vals()).Center()
-    c.toTuple()
     assert pytest.approx(c.toTuple()) == (0, 4, 0)
     c2 = cq.Compound.makeCompound(o.solids().vals()).Center()
-    c2.toTuple()
     assert pytest.approx(c2.toTuple()) == (0, 4, 0)
+
+
+@pytest.mark.parametrize(
+    "assy_fixture, expected",
+    [
+        ("boxes8_assy", {"nsolids": 2, "center": (0.5, 10, 0.5)},),
+        ("boxes9_assy", {"nsolids": 2, "center": (0.5, 10, 0.5)},),
+    ],
+)
+def test_step_export_loc(assy_fixture, expected, request, tmpdir):
+    stepfile = Path(tmpdir, assy_fixture).with_suffix(".step")
+    if not stepfile.exists():
+        assy = request.getfixturevalue(assy_fixture)
+        assy.save(str(stepfile))
+    o = cq.importers.importStep(str(stepfile))
+    assert o.solids().size() == expected["nsolids"]
+    c = cq.Compound.makeCompound(o.solids().vals()).Center()
+    assert pytest.approx(c.toTuple()) == expected["center"]
 
 
 def test_native_export(simple_assy):
@@ -645,6 +684,50 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
     filename = "nested." + extension
     nested_assy.save(filename, *args)
     assert os.path.exists(filename)
+
+
+@pytest.mark.parametrize(
+    "extension, args, kwargs",
+    [
+        ("step", (), {}),
+        ("xml", (), {}),
+        ("vrml", (), {}),
+        ("gltf", (), {}),
+        ("glb", (), {}),
+        ("stl", (), {"ascii": False}),
+        ("stl", (), {"ascii": True}),
+        ("stp", ("STEP",), {}),
+        ("caf", ("XML",), {}),
+        ("wrl", ("VRML",), {}),
+        ("stl", ("STL",), {}),
+    ],
+)
+def test_export(extension, args, kwargs, tmpdir, nested_assy):
+
+    filename = "nested." + extension
+
+    with tmpdir:
+        nested_assy.export(filename, *args, **kwargs)
+        assert os.path.exists(filename)
+
+
+def test_export_vtkjs(tmpdir, nested_assy):
+
+    with tmpdir:
+        nested_assy.export("nested.vtkjs")
+        assert os.path.exists("nested.vtkjs.zip")
+
+
+def test_export_errors(nested_assy):
+
+    with pytest.raises(ValueError):
+        nested_assy.export("nested.1234")
+
+    with pytest.raises(ValueError):
+        nested_assy.export("nested.stl", "1234")
+
+    with pytest.raises(ValueError):
+        nested_assy.export("nested.step", mode="1234")
 
 
 def test_save_stl_formats(nested_assy_sphere):
@@ -830,7 +913,7 @@ def test_colors_assy0(assy_fixture, expected, request):
             "boxes0_assy",
             [
                 (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box1_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
             ],
         ),
         (
@@ -897,7 +980,7 @@ def test_colors_assy0(assy_fixture, expected, request):
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-front", "wheel:right", "wheel:right_part"],
+                    ["chassis", "wheel-axle-front", "wheel:right", "wheel:left_part"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
@@ -905,7 +988,7 @@ def test_colors_assy0(assy_fixture, expected, request):
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel:right_part"],
+                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel:left_part"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
@@ -1326,7 +1409,6 @@ def test_constraint_getPln():
     nonplanar_spline = cq.Edge.makeSpline(points1, periodic=True)
     fail_this(nonplanar_spline)
 
-    # planar wire should succeed
     # make a triangle in the XZ plane
     points2 = [cq.Vector(x) for x in [(-1, 0, -1), (0, 0, 1), (1, 0, -1)]]
     points2.append(points2[0])
@@ -1567,3 +1649,58 @@ def test_imprinting(touching_assy, disjoint_assy):
 
     for s in r.Solids():
         assert s in o
+
+
+def test_order_of_transform():
+
+    part = cq.Workplane().box(1, 1, 1).faces(">Z").vertices("<XY").tag("vtag")
+    marker = cq.Workplane().sphere(0.2)
+
+    assy0 = cq.Assembly().add(
+        part, name="part1", loc=cq.Location((0, 0, 1.5), (0, 0, 1), 45),
+    )
+
+    assy1 = (
+        cq.Assembly()
+        .add(assy0, name="assy0", loc=cq.Location(2, 0, 0))
+        .add(marker, name="marker1")
+    )
+
+    # attach the first marker to the tagged corner
+    assy1.constrain("assy0/part1", "Fixed")
+    assy1.constrain("marker1", "assy0/part1?vtag", "Point")
+    assy1.solve()
+
+    assy2 = cq.Assembly().add(assy1, name="assy1").add(marker, name="marker2")
+
+    # attach the second marker to the tagged corner, but this time with nesting
+    assy2.constrain("assy1/marker1", "Fixed")
+    assy2.constrain("marker2", "assy1/assy0/part1?vtag", "Point")
+    assy2.solve()
+
+    # marker1 and marker2 should coincide
+    m1, m2 = assy2.toCompound().Solids()
+
+    assert (m1.Center() - m2.Center()).Length == approx(0)
+
+
+def test_step_export_filesize(tmpdir):
+    """A sanity check of STEP file size.
+    Multiple instances of a shape with same color is not expected to result
+    in significant file size increase.
+    """
+    part = box(1, 1, 1)
+    N = 10
+    filesize = {}
+
+    for i, color in enumerate((None, cq.Color("red"))):
+        assy = cq.Assembly()
+        for j in range(1, N + 1):
+            assy.add(
+                part, name=f"part{j}", loc=cq.Location(x=j * 1), color=copy.copy(color)
+            )
+        stepfile = Path(tmpdir, f"assy_step_filesize{i}.step")
+        assy.export(str(stepfile))
+        filesize[i] = stepfile.stat().st_size
+
+    assert filesize[1] < 1.2 * filesize[0]

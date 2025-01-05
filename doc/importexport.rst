@@ -8,10 +8,10 @@ Importing and Exporting Files
 Introduction
 #############
 
-The purpose of this section is to explain how to import external file formats into CadQuery, and export files from 
-it as well. While the external file formats can be used to interchange CAD model data with other software, CadQuery 
-does not support any formats that carry parametric data with them at this time. The only format that is fully 
-parametric is CadQuery's own Python format. Below are lists of the import and export file formats that CadQuery 
+The purpose of this section is to explain how to import external file formats into CadQuery, and export files from
+it as well. While the external file formats can be used to interchange CAD model data with other software, CadQuery
+does not support any formats that carry parametric data with them at this time. The only format that is fully
+parametric is CadQuery's own Python format. Below are lists of the import and export file formats that CadQuery
 supports.
 
 Import Formats
@@ -64,7 +64,7 @@ Importing a DXF profile with default settings and using it within a CadQuery scr
     )
 
 Note the use of the :meth:`Workplane.wires` and :meth:`Workplane.toPending` methods to make the DXF profile
-ready for use during subsequent operations. Calling ``toPending()`` tells CadQuery to make the edges/wires available 
+ready for use during subsequent operations. Calling ``toPending()`` tells CadQuery to make the edges/wires available
 to the next modelling operation that is called in the chain.
 
 Importing STEP
@@ -96,7 +96,7 @@ since it will be determined from the file extension. Below is an example.
     box = cq.Workplane().box(10, 10, 10)
 
     # Export the box
-    cq.exporters.export(box, "/path/to/step/box.step")
+    box.export("/path/to/step/box.step")
 
 Non-Default File Extensions
 ----------------------------
@@ -110,10 +110,10 @@ not recognize the file extension. In that case the export type has to be specifi
     box = cq.Workplane().box(10, 10, 10)
 
     # Export the box
-    cq.exporters.export(box, "/path/to/step/box.stp", cq.exporters.ExportTypes.STEP)
+    box.export("/path/to/step/box.stp", cq.exporters.ExportTypes.STEP)
 
     # The export type may also be specified as a literal
-    cq.exporters.export(box, "/path/to/step/box2.stp", "STEP")
+    box.export("/path/to/step/box2.stp", "STEP")
 
 Setting Extra Options
 ----------------------
@@ -128,10 +128,10 @@ or the :meth:`Assembly.exportAssembly`` method.
     box = cq.Workplane().box(10, 10, 10)
 
     # Export the box, provide additional options with the opt dict
-    cq.exporters.export(box, "/path/to/step/box.step", opt={"write_pcurves": False})
+    box.export("/path/to/step/box.step", opt={"write_pcurves": False})
 
     # or equivalently when exporting a lower level Shape object
-    box.val().exportStep("/path/to/step/box2.step", write_pcurves=False)
+    box.val().export("/path/to/step/box2.step", opt={"write_pcurves": False})
 
 
 Exporting Assemblies to STEP
@@ -159,7 +159,7 @@ export with all defaults is shown below.
     assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
     # Save the assembly to STEP
-    assy.save("out.step")
+    assy.export("out.step")
 
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
@@ -183,10 +183,10 @@ fused solids.
     assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
     # Save the assembly to STEP
-    assy.save("out.stp", "STEP", mode="fused")
+    assy.export("out.stp", "STEP", mode="fused")
 
     # Specify additional options such as glue as keyword arguments
-    assy.save("out_glue.step", mode="fused", glue=True, write_pcurves=False)
+    assy.export("out_glue.step", mode="fused", glue=True, write_pcurves=False)
 
 Naming
 -------
@@ -197,7 +197,7 @@ This is done by setting the name property of the assembly before calling :meth:`
 .. code-block:: python
 
     assy = Assembly(name="my_assembly")
-    assy.save(
+    assy.export(
         "out.stp",
         cq.exporters.ExportTypes.STEP,
         mode=cq.exporters.assembly.ExportModes.FUSED,
@@ -224,13 +224,13 @@ export with all defaults is shown below. To export to a binary glTF file, change
     pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
     assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
-    # Save the assembly to STEP
-    assy.save("out.gltf")
+    # Save the assembly to GLTF
+    assy.export("out.gltf")
 
 Exporting SVG
 ###############
 
-The SVG exporter has several options which can be useful for achieving the desired final output. Those 
+The SVG exporter has several options which can be useful for achieving the desired final output. Those
 options are as follows.
 
 * *width* - Width of the resulting image (None to fit based on height).
@@ -245,7 +245,7 @@ options are as follows.
 * *showHidden* - Whether or not to show hidden lines.
 * *focus* - If specified, creates a perspective SVG with the projector at the distance specified.
 
-The options are passed to the exporter in a dictionary, and can be left out to force the SVG to be created with default options. 
+The options are passed to the exporter in a dictionary, and can be left out to force the SVG to be created with default options.
 Below are examples with and without options set.
 
 Without options:
@@ -257,13 +257,13 @@ Without options:
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, "/path/to/file/box.svg")
+    result.export("/path/to/file/box.svg")
 
 Results in:
 
 ..  image:: _static/importexport/box_default_options.svg
 
-Note that the exporters API figured out the format type from the file extension. The format 
+Note that the exporters API figured out the format type from the file extension. The format
 type can be set explicitly by using :py:class:`exporters.ExportTypes`.
 
 The following is an example of using options to alter the resulting SVG output by passing in the ``opt`` parameter.
@@ -275,8 +275,7 @@ The following is an example of using options to alter the resulting SVG output b
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(
-        result,
+    result.export(
         "/path/to/file/box_custom_options.svg",
         opt={
             "width": 300,
@@ -308,7 +307,7 @@ The STL exporter is capable of adjusting the quality of the resulting mesh, and 
 .. automethod::
     cadquery.occ_impl.shapes.Shape.exportStl
 
-For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the 
+For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the
 optimum values that will produce an acceptable mesh.
 
 .. code-block:: python
@@ -318,7 +317,7 @@ optimum values that will produce an acceptable mesh.
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, "/path/to/file/mesh.stl")
+    result.export("/path/to/file/mesh.stl")
 
 Exporting AMF and 3MF
 ######################
@@ -329,7 +328,7 @@ The AMF and 3MF exporters are capable of adjusting the quality of the resulting 
 * ``tolerance`` - A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
 * ``angularTolerance`` - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
 
-For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the 
+For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the
 optimum values that will produce an acceptable mesh. Note that parameters for color and material are absent.
 
 .. code-block:: python
@@ -339,7 +338,7 @@ optimum values that will produce an acceptable mesh. Note that parameters for co
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, "/path/to/file/mesh.amf", tolerance=0.01, angularTolerance=0.1)
+    result.export("/path/to/file/mesh.amf", tolerance=0.01, angularTolerance=0.1)
 
 
 Exporting TJS
@@ -351,7 +350,7 @@ The TJS (ThreeJS) exporter produces a file in JSON format that describes a scene
 * ``tolerance`` - A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
 * ``angularTolerance`` - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
 
-For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the 
+For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the
 optimum values that will produce an acceptable mesh.
 
 .. code-block:: python
@@ -361,15 +360,14 @@ optimum values that will produce an acceptable mesh.
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(
-        result,
+    result.export(
         "/path/to/file/mesh.json",
         tolerance=0.01,
         angularTolerance=0.1,
         exportType=exporters.ExportTypes.TJS,
     )
 
-Note that the export type was explicitly specified as ``TJS`` because the extension that was used for the file name was ``.json``. If the extension ``.tjs`` 
+Note that the export type was explicitly specified as ``TJS`` because the extension that was used for the file name was ``.json``. If the extension ``.tjs``
 had been used, CadQuery would have understood to use the ``TJS`` export format.
 
 Exporting VRML
@@ -381,7 +379,7 @@ The VRML exporter is capable of adjusting the quality of the resulting mesh, and
 * ``tolerance`` - A linear deflection setting which limits the distance between a curve and its tessellation. Setting this value too low will result in large meshes that can consume computing resources. Setting the value too high can result in meshes with a level of detail that is too low. Default is 0.1, which is good starting point for a range of cases.
 * ``angularTolerance`` - Angular deflection setting which limits the angle between subsequent segments in a polyline. Default is 0.1.
 
-For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the 
+For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the
 optimum values that will produce an acceptable mesh.
 
 .. code-block:: python
@@ -391,8 +389,8 @@ optimum values that will produce an acceptable mesh.
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(
-        result, "/path/to/file/mesh.vrml", tolerance=0.01, angularTolerance=0.1
+    result.export(
+        "/path/to/file/mesh.vrml", tolerance=0.01, angularTolerance=0.1
     )
 
 Exporting DXF
@@ -423,16 +421,26 @@ Options
     See `Units`_.
 
 .. code-block:: python
-    :caption: DXF document without options.
+    :caption: DXF of workplanes.
 
     import cadquery as cq
-    from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+    result = cq.Workplane().box(10, 10, 10).section()
 
     exporters.exportDXF(result, "/path/to/file/object.dxf")
     # or
-    exporters.export(result, "/path/to/file/object.dxf")
+    result.export("/path/to/file/object.dxf")
+
+Sketches can also be directly exported to DXF.
+
+.. code-block:: python
+    :caption: DXF export of sketches.
+
+    import cadquery as cq
+
+    result = cq.Sketch().rect(1,1)
+
+    result.export("/path/to/file/object.dxf")
 
 
 Units
@@ -460,7 +468,7 @@ Document units can be set to any :doc:`unit supported by ezdxf <ezdxf-stable:con
     import cadquery as cq
     from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+    result = cq.Workplane().box(10, 10, 10).section()
 
     exporters.exportDXF(
         result,
@@ -470,8 +478,7 @@ Document units can be set to any :doc:`unit supported by ezdxf <ezdxf-stable:con
 
     # or
 
-    exporters.export(
-        result,
+    result.export(
         "/path/to/file/object.dxf",
         opt={"doc_units": 6},  # set DXF document units to meters
     )
@@ -496,7 +503,7 @@ By default, the DXF exporter will output splines exactly as they are represented
 Exporting Other Formats
 ########################
 
-The remaining export formats do not accept any additional parameters other than file name, and can be exported 
+The remaining export formats do not accept any additional parameters other than file name, and can be exported
 using the following structure.
 
 .. code-block:: python
@@ -506,9 +513,9 @@ using the following structure.
 
     result = cq.Workplane().box(10, 10, 10)
 
-    exporters.export(result, "/path/to/file/object.[file_extension]")
+    result.export("/path/to/file/object.[file_extension]")
 
-Be sure to use the correct file extension so that CadQuery can determine the export format. If in doubt, fall 
+Be sure to use the correct file extension so that CadQuery can determine the export format. If in doubt, fall
 back to setting the type explicitly by using :py:class:`exporters.ExportTypes`.
 
 For example:
@@ -518,6 +525,6 @@ For example:
     import cadquery as cq
     from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+    result = cq.Workplane().box(10, 10, 10).section()
 
-    exporters.export(result, "/path/to/file/object.dxf", exporters.ExportTypes.DXF)
+    result.export("/path/to/file/object.dxf", exporters.ExportTypes.DXF)

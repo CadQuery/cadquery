@@ -21,7 +21,7 @@ The purpose of this section is to demonstrate how to construct Shape objects usi
 .. cadquery::
     :height: 600px
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     dh = 2
     r = 1
@@ -97,7 +97,7 @@ Various 1D, 2D and 3D primitives are supported.
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     e = segment((0,0), (0,1))
 
@@ -119,7 +119,7 @@ One can for example union multiple solids at once by first combining them into a
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     c1 = cylinder(1, 2)
     c2 = cylinder(0.5, 3)
@@ -158,7 +158,7 @@ Constructing complex shapes from simple shapes is possible in various contexts.
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     e1 = segment((0,0), (1,0))
     e2 = segment((1,0), (1,1))
@@ -196,11 +196,12 @@ Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, 
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     r = rect(1,0.5)
+    f = face(r, circle(0.2).moved(0.2), rect(0.2, 0.4).moved(-0.2))
     c = circle(0.2)
-    p = spline([(0,0,0), (0,1,2)], [(0,0,1), (0,1,1)])
+    p = spline([(0,0,0), (0,-1,2)], [(0,0,1), (0,-1,1)])
 
     # extrude
     s1 = extrude(r, (0,0,2))
@@ -208,7 +209,7 @@ Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, 
 
     # sweep
     s3 = sweep(r, p)
-    s4 = sweep(r, p, cap=True)
+    s4 = sweep(f, p)
 
     # loft
     s5 = loft(r, c.moved(z=2))
@@ -228,7 +229,7 @@ Placement and creation of arrays is possible using :meth:`~cadquery.Shape.move` 
 
 .. cadquery::
 
-    from cadquery.occ_impl.shapes import *
+    from cadquery.func import *
 
     locs = [(0,-1,0), (0,1,0)]
 
@@ -236,3 +237,41 @@ Placement and creation of arrays is possible using :meth:`~cadquery.Shape.move` 
     c = cylinder(1,2).move(rx=15).moved(*locs)
 
     result = compound(s, c.moved(2))
+
+Text
+----
+
+The free function API has extensive text creation capabilities including text on planar curves and text on surfaces.
+
+
+.. cadquery::
+
+    from cadquery.func import *
+
+    from math import pi
+
+    # parameters
+    D = 5
+    H = 2*D
+    S = H/10
+    TH = S/10
+    TXT = "CadQuery"
+
+    # base and spine
+    c = cylinder(D, H).moved(rz=-135)
+    cf = c.faces("%CYLINDER")
+    spine = (c*plane().moved(z=D)).edges().trim(pi/2, pi)
+
+    # planar
+    r1 = text(TXT, 1, spine, planar=True).moved(z=-S)
+
+    # normal
+    r2 = text(TXT, 1, spine)
+
+    # projected
+    r3 = text(TXT, 1, spine, cf).moved(z=S)
+
+    # projected and thickened
+    r4 = offset(r3, TH).moved(z=S)
+
+    result = compound(r1, r2, r3, r4)

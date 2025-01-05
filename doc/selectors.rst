@@ -185,3 +185,48 @@ objects. This includes chaining and combining.
     # select top and bottom wires
     result = box.faces(">Z or <Z").wires()
 
+
+
+
+Additional special methods
+--------------------------
+
+:py:class:`cadquery.Workplane` and :py:class:`cadquery.Sketch` provide the following special methods that can be used
+for quick prototyping of selectors when implementing a complete selector via subclassing of
+:py:class:`cadquery.Selector` is not desirable.
+
+    * :py:meth:`cadquery.Workplane.filter`
+    * :py:meth:`cadquery.Workplane.sort`
+    * :py:meth:`cadquery.Workplane.__getitem__`
+    * :py:meth:`cadquery.Sketch.filter`
+    * :py:meth:`cadquery.Sketch.sort`
+    * :py:meth:`cadquery.Sketch.__getitem__`
+
+For example, one could use those methods for selecting objects within a certain range of volumes.
+
+.. cadquery::
+
+    from cadquery.occ_impl.shapes import box
+
+    result = (
+        cq.Workplane()
+        .add([box(1,1,i+1).moved(x=2*i) for i in range(5)])
+    )
+
+    # select boxes with volume <= 3
+    result = result.filter(lambda s: s.Volume() <= 3)
+
+
+The same can be achieved using sorting.
+
+.. cadquery::
+
+    from cadquery.occ_impl.shapes import box
+
+    result = (
+        cq.Workplane()
+        .add([box(1,1,i+1).moved(x=2*i) for i in range(5)])
+    )
+
+    # select boxes with volume <= 3
+    result = result.sort(lambda s: s.Volume())[:3]

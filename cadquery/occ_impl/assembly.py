@@ -100,6 +100,14 @@ class Color(object):
         else:
             raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
 
+    def __hash__(self):
+
+        return hash(self.toTuple())
+
+    def __eq__(self, other):
+
+        return self.toTuple() == other.toTuple()
+
     def toTuple(self) -> Tuple[float, float, float, float]:
         """
         Convert Color to RGB tuple.
@@ -235,10 +243,15 @@ def toCAF(
             _toCAF(child, subassy, current_color)
 
         if ancestor:
-            # add the current subassy to the higher level assy
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
+            rv = subassy
+        else:
+            # update the top level location
+            rv = TDF_Label()  # NB: additional label is needed to apply the location
+            tool.SetLocation(subassy, assy.loc.wrapped, rv)
+            setName(rv, assy.name, tool)
 
-        return subassy
+        return rv
 
     # process the whole assy recursively
     top = _toCAF(assy, None, None)
@@ -246,6 +259,23 @@ def toCAF(
     tool.UpdateAssemblies()
 
     return top, doc
+
+
+def _loc2vtk(
+    loc: Location,
+) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
+    """
+    Convert location to t,rot pair following vtk conventions
+    """
+
+    T = loc.wrapped.Transformation()
+
+    trans = T.TranslationPart().Coord()
+    rot = tuple(
+        map(degrees, T.GetRotation().GetEulerAngles(gp_EulerSequence.gp_Intrinsic_ZXY),)
+    )
+
+    return trans, (rot[1], rot[2], rot[0])
 
 
 def toVTK(
@@ -260,14 +290,8 @@ def toVTK(
     for shape, _, loc, col_ in assy:
 
         col = col_.toTuple() if col_ else color
-        T = loc.wrapped.Transformation()
-        trans = T.TranslationPart().Coord()
-        rot = tuple(
-            map(
-                degrees,
-                T.GetRotation().GetEulerAngles(gp_EulerSequence.gp_Intrinsic_ZXY),
-            )
-        )
+
+        trans, rot = _loc2vtk(loc)
 
         data = shape.toVtkPolyData(tolerance, angularTolerance)
 
@@ -298,7 +322,7 @@ def toVTK(
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
-        actor.SetOrientation(rot[1], rot[2], rot[0])
+        actor.SetOrientation(*rot)
         actor.GetProperty().SetColor(*col[:3])
         actor.GetProperty().SetOpacity(col[3])
 
@@ -310,7 +334,7 @@ def toVTK(
         actor = vtkActor()
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
-        actor.SetOrientation(rot[1], rot[2], rot[0])
+        actor.SetOrientation(*rot)
         actor.GetProperty().SetColor(0, 0, 0)
         actor.GetProperty().SetLineWidth(2)
 

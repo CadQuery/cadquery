@@ -7,7 +7,7 @@ dependencies:
   - cadquery/label/dev::ocp=7.8.1
   - vtk=*=qt*
   - pyparsing>=2.1.9
-  - sphinx=5.0.1
+  - sphinx=8.1.3
   - sphinx_rtd_theme
   - mypy
   - codecov
@@ -15,10 +15,10 @@ dependencies:
   - pytest-cov
   - ezdxf
   - typing_extensions
-  - nptyping=2.0.1
   - nlopt
   - path
   - casadi
+  - typish
   - multimethod >=1.11,<2.0
   - typed-ast
   - regex

@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+doi: 10.5281/zenodo.10513848
+license: "Apache 2.0"
+url: https://github.com/CadQuery/cadquery
+title: "CadQuery"
+message: "If you use this software, please cite it using these metadata."
+authors:
+  - name: "CadQuery contributors"
