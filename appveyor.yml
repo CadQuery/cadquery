@@ -37,7 +37,7 @@ build: false
 test_script:
     - mamba run -n cadquery black . --diff --check
     #- mamba run -n cadquery mypy cadquery
-    - mamba run -n cadquery pytest tests/test_exporters.py>>>>>>> master
+    - mamba run -n cadquery pytest tests/test_exporters.py
 
 on_success:
     - mamba run -n cadquery codecov
