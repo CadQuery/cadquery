@@ -27,7 +27,7 @@ is_conda = "CONDA_PREFIX" in os.environ
 if not is_rtd and not is_appveyor and not is_azure and not is_conda:
     reqs = [
         "cadquery-ocp>=7.7.0,<7.8",
-        "ezdxf",
+        "ezdxf>=1.3.0",
         "multimethod>=1.11,<2.0",
         "nlopt>=2.9.0,<3.0",
         "typish",
