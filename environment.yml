@@ -13,7 +13,7 @@ dependencies:
   - codecov
   - pytest
   - pytest-cov
-  - ezdxf
+  - ezdxf>=1.3.0
   - typing_extensions
   - nlopt
   - path
