@@ -1,7 +1,7 @@
 from . import Shape, Workplane, Assembly, Sketch, Compound, Color, Vector, Location
 from .occ_impl.assembly import _loc2vtk, toVTK
 
-from typing import Union, Any, List, Tuple
+from typing import Union, Any, List, Tuple, Iterable, cast
 
 from typish import instance_of
 
@@ -121,7 +121,7 @@ def _to_vtk_pts(
     return rv
 
 
-def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkActor:
+def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkAssembly:
     """
     Convert Locations to vtkActor.
     """
@@ -175,7 +175,7 @@ def show(
     win.AddRenderer(renderer)
 
     # get renderer and actor
-    for act in renderer.GetActors():
+    for act in cast(Iterable[vtkActor], renderer.GetActors()):
 
         propt = act.GetProperty()
 
@@ -241,7 +241,7 @@ def show(
     inter.Initialize()
 
     w, h = win.GetScreenSize()
-    win.SetSize((w // 2, h // 2))
+    win.SetSize(w // 2, h // 2)
     win.SetPosition(-10, 0)
 
     # show and return
