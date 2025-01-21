@@ -359,8 +359,8 @@ STEP can be loaded in all CAD tool, e.g. in FreeCAD and the XML be used in other
 .. code-block:: python
    :linenos:
 
-    door.save("door.step")
-    door.save("door.xml")
+    door.export("door.step")
+    door.export("door.xml")
 ..  image:: _static/door_assy_freecad.png
 
 
