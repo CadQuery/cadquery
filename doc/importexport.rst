@@ -144,7 +144,7 @@ preserve the color information from the assembly.
 Default
 --------
 
-CadQuery assemblies have a :meth:`Assembly.save` method which can write an assembly to a STEP file. An example assembly
+CadQuery assemblies have a :meth:`Assembly.export` method which can write an assembly to a STEP file. An example assembly
 export with all defaults is shown below.
 
 .. code-block:: python
@@ -192,7 +192,7 @@ Naming
 -------
 
 It is also possible to set the name of the top level assembly object in the STEP file with either the DEFAULT or FUSED methods.
-This is done by setting the name property of the assembly before calling :meth:`Assembly.save`.
+This is done by setting the name property of the assembly before calling :meth:`Assembly.export`.
 
 .. code-block:: python
 
@@ -210,7 +210,7 @@ Exporting Assemblies to glTF
 
 It is possible to export CadQuery assemblies to glTF format. glTF is a mesh-based format useful for viewing models on the web. Whether the resulting glTF file is binary (.glb) or text (.gltf) is set by the file extension.
 
-CadQuery assemblies have a :meth:`Assembly.save` method which can write an assembly to a glTF file. An example assembly
+CadQuery assemblies have a :meth:`Assembly.export` method which can write an assembly to a glTF file. An example assembly
 export with all defaults is shown below. To export to a binary glTF file, change the extension to ``glb``.
 
 .. code-block:: python
