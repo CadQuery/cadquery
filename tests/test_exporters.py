@@ -833,7 +833,7 @@ def test_assy_vtk_rotation(tmpdir):
         v0, name="v0", loc=Location(Vector(0, 0, 0), Vector(1, 0, 0), 90),
     )
 
-    fwrl = Path(tmpdir, "v0.wrl")
+    fwrl = Path(tmpdir) / "v0.wrl"
     assert not fwrl.exists()
     assy.save(str(fwrl), "VRML")
     assert fwrl.exists()
@@ -914,7 +914,7 @@ def test_dxf_text(tmpdir, testdatadir):
         .faces("<Y")
         .workplane()
         .text(
-            ",,", 10, -1, True, fontPath=str(Path(testdatadir, "OpenSans-Regular.ttf")),
+            ",,", 10, -1, True, fontPath=str(Path(testdatadir) / "OpenSans-Regular.ttf"),
         )
     )
 
