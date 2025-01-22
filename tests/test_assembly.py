@@ -3,7 +3,7 @@ import os
 from itertools import product
 from math import degrees
 import copy
-from pathlib import Path, PurePath
+from path import Path
 import re
 from pytest import approx
 
@@ -450,7 +450,7 @@ def get_doc_nodes(doc, leaf=False):
 
         nodes.append(
             {
-                "path": PurePath(node.Id.ToCString()),
+                "path": Path(node.Id.ToCString()),
                 "name": TCollection_ExtendedString(name_att.Get()).ToExtString(),
                 "color": (*color.GetRGB().Values(Quantity_TOC_RGB), color.Alpha()),
                 "color_shape": (
@@ -623,7 +623,7 @@ def test_step_export(nested_assy, tmp_path_factory):
     ],
 )
 def test_step_export_loc(assy_fixture, expected, request, tmpdir):
-    stepfile = Path(tmpdir, assy_fixture).with_suffix(".step")
+    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(".step")
     if not stepfile.exists():
         assy = request.getfixturevalue(assy_fixture)
         assy.save(str(stepfile))
@@ -797,7 +797,7 @@ def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):
     RWGltf_CafWriter skipped node '<name>' without triangulation data
     """
 
-    boxes2_assy.save(str(Path(tmpdir, "boxes2_assy.glb")), "GLTF")
+    boxes2_assy.save(str(Path(tmpdir) / "boxes2_assy.glb"), "GLTF")
 
     output = capfd.readouterr()
     assert output.out == ""
@@ -1037,7 +1037,7 @@ def test_colors_assy1(assy_fixture, expected, request, tmpdir):
     check_nodes(doc, expected)
 
     # repeat color check again - after STEP export round trip
-    stepfile = Path(tmpdir, assy_fixture).with_suffix(".step")
+    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(".step")
     if not stepfile.exists():
         assy.save(str(stepfile))
     doc = read_step(stepfile)
@@ -1699,7 +1699,7 @@ def test_step_export_filesize(tmpdir):
             assy.add(
                 part, name=f"part{j}", loc=cq.Location(x=j * 1), color=copy.copy(color)
             )
-        stepfile = Path(tmpdir, f"assy_step_filesize{i}.step")
+        stepfile = Path(tmpdir) / f"assy_step_filesize{i}.step"
         assy.export(str(stepfile))
         filesize[i] = stepfile.stat().st_size
 
