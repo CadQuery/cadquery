@@ -914,7 +914,11 @@ def test_dxf_text(tmpdir, testdatadir):
         .faces("<Y")
         .workplane()
         .text(
-            ",,", 10, -1, True, fontPath=str(Path(testdatadir) / "OpenSans-Regular.ttf"),
+            ",,",
+            10,
+            -1,
+            True,
+            fontPath=str(Path(testdatadir) / "OpenSans-Regular.ttf"),
         )
     )
 

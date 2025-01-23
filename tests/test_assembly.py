@@ -4,6 +4,7 @@ from itertools import product
 from math import degrees
 import copy
 from path import Path
+from pathlib import PurePath
 import re
 from pytest import approx
 
@@ -450,7 +451,7 @@ def get_doc_nodes(doc, leaf=False):
 
         nodes.append(
             {
-                "path": Path(node.Id.ToCString()),
+                "path": PurePath(node.Id.ToCString()),
                 "name": TCollection_ExtendedString(name_att.Get()).ToExtString(),
                 "color": (*color.GetRGB().Values(Quantity_TOC_RGB), color.Alpha()),
                 "color_shape": (
@@ -1168,7 +1169,7 @@ def test_colors_fused_assy(assy_fixture, expected, request, tmpdir):
     check_nodes(doc, expected)
 
     # repeat color check again - after STEP export round trip
-    stepfile = Path(tmpdir, f"{assy_fixture}_fused").with_suffix(".step")
+    stepfile = (Path(tmpdir) / f"{assy_fixture}_fused").with_suffix(".step")
     if not stepfile.exists():
         assy.save(str(stepfile), mode=cq.exporters.assembly.ExportModes.FUSED)
     doc = read_step(stepfile)
