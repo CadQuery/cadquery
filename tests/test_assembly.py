@@ -39,7 +39,7 @@ from OCP.TopAbs import TopAbs_ShapeEnum
 
 @pytest.fixture(scope="function")
 def tmpdir(tmp_path_factory):
-    return tmp_path_factory.mktemp("assembly")
+    return Path(tmp_path_factory.mktemp("assembly"))
 
 
 @pytest.fixture
