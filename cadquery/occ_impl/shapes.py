@@ -2829,6 +2829,24 @@ class Face(Shape):
 
         return BRepTools.UVBounds_s(self.wrapped)
 
+    def paramAt(self, locationVector: VectorLike) -> Tuple[float, float]:
+        """
+        Computes the (u,v) pair closes to a give vector.
+
+        :returns: (u, v) tuple
+        :param locationVector: the location to compute the normal at.
+        :type locationVector: a vector that lies on the surface.
+        """
+        # get the geometry
+        surface = self._geomAdaptor()
+
+        # project point on surface
+        projector = GeomAPI_ProjectPointOnSurf(Vector(locationVector).toPnt(), surface)
+
+        u, v = projector.LowerDistanceParameters()
+
+        return u, v
+
     @multimethod
     def normalAt(self, locationVector: Optional[VectorLike] = None) -> Vector:
         """
@@ -2858,6 +2876,21 @@ class Face(Shape):
         BRepGProp_Face(self.wrapped).Normal(u, v, p, vn)
 
         return Vector(vn).normalized()
+
+    @normalAt.register
+    def positionAt(self, u: Real, v: Real) -> Vector:
+        """
+        Computes the position vector at the desired location in the u,v parameter space.
+
+        :returns: a vector representing the position
+        :param u: the u parametric location to compute the normal at.
+        :param v: the v parametric location to compute the normal at.
+        """
+        p = gp_Pnt()
+        vn = gp_Vec()
+        BRepGProp_Face(self.wrapped).Normal(u, v, p, vn)
+
+        return Vector(p)
 
     @normalAt.register
     def normalAt(self, u: Real, v: Real) -> Tuple[Vector, Vector]:
