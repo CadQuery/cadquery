@@ -5891,3 +5891,15 @@ def check(s: Shape, results: Optional[List[Tuple[List[Shape], Any]]] = None) -> 
             )
 
     return rv
+
+
+#%% properties
+
+
+def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
+    """
+    Closest points between two shapes.
+    """
+    ext = BRepExtrema_DistShapeShape(s1.wrapped, s2.wrapped)
+
+    return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))
