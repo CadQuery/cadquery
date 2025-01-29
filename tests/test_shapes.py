@@ -19,7 +19,7 @@ from pytest import approx, raises
 from math import pi
 
 
-def test_paramAt():
+def test_edge_paramAt():
 
     # paramAt for a segment
     e = segment((0, 0), (0, 1))
@@ -51,6 +51,27 @@ def test_paramAt():
     assert p6 == approx(w2.paramAt(0))
     assert p7 == approx(w2.paramAt(0.5))
     assert p8 == approx(w2.paramAt(0.1 / 2))
+
+
+def test_face_paramAt():
+
+    f = plane(1, 1)
+
+    u, v = f.paramAt((0.5, 0))
+
+    assert u == approx(0.5)
+    assert v == approx(0.0)
+
+
+def test_face_positionAt():
+
+    f = plane(1, 1)
+
+    p = f.positionAt(0.5, 0.5)
+
+    assert p.x == approx(0.5)
+    assert p.y == approx(0.5)
+    assert p.z == approx(0)
 
 
 def test_isSolid():
