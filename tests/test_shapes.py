@@ -1,17 +1,18 @@
 from cadquery.occ_impl.shapes import (
+    Vector,
+    Shape,
+    Solid,
     wire,
     segment,
     polyline,
-    Vector,
     box,
-    Solid,
     compound,
     circle,
     plane,
     torus,
-    Shape,
     cylinder,
     ellipse,
+    closest,
 )
 
 from pytest import approx, raises
