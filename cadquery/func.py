@@ -44,4 +44,5 @@ from .occ_impl.shapes import (
     sweep,
     loft,
     check,
+    closest,
 )

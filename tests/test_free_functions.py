@@ -44,6 +44,7 @@ from cadquery.occ_impl.shapes import (
     _adaptor_curve_to_edge,
     check,
     Vector,
+    closest,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -697,3 +698,14 @@ def test_check():
 
     assert not check(s2, res)
     assert res[0][1] == BOPAlgo_CheckStatus.BOPAlgo_SelfIntersect
+
+
+# %% properties
+def test_closest():
+
+    s1 = plane(1, 1)
+    s2 = plane(1, 1).moved(x=5, y=0.5)
+
+    p1, p2 = closest(s1, s2)
+
+    assert (p1 - p2).Length == approx(4)

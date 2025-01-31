@@ -1,17 +1,18 @@
 from cadquery.occ_impl.shapes import (
+    Vector,
+    Shape,
+    Solid,
     wire,
     segment,
     polyline,
-    Vector,
     box,
-    Solid,
     compound,
     circle,
     plane,
     torus,
-    Shape,
     cylinder,
     ellipse,
+    closest,
 )
 
 from pytest import approx, raises
@@ -19,7 +20,7 @@ from pytest import approx, raises
 from math import pi
 
 
-def test_paramAt():
+def test_edge_paramAt():
 
     # paramAt for a segment
     e = segment((0, 0), (0, 1))
@@ -51,6 +52,60 @@ def test_paramAt():
     assert p6 == approx(w2.paramAt(0))
     assert p7 == approx(w2.paramAt(0.5))
     assert p8 == approx(w2.paramAt(0.1 / 2))
+
+
+def test_face_paramAt():
+
+    f = plane(1, 1)
+
+    u, v = f.paramAt((0.5, 0))
+
+    assert u == approx(0.5)
+    assert v == approx(0.0)
+
+
+def test_face_params():
+
+    f = plane(1, 1)
+
+    us, vs = f.params([(0.49, 0.0), (0.5, 0)])
+
+    u1, u2 = us
+    v1, v2 = vs
+
+    assert u1 == approx(0.49)
+    assert v1 == approx(0.0)
+
+    assert u2 == approx(0.5)
+    assert v2 == approx(0.0)
+
+
+def test_face_positionAt():
+
+    f = plane(1, 1)
+
+    p = f.positionAt(0.5, 0.5)
+
+    assert p.x == approx(0.5)
+    assert p.y == approx(0.5)
+    assert p.z == approx(0)
+
+
+def test_face_positions():
+
+    f = plane(1, 1)
+
+    ps = f.positions([(0, 0), (0.5, 0.5)])
+
+    p1, p2 = ps
+
+    assert p1.x == approx(0)
+    assert p1.y == approx(0)
+    assert p1.z == approx(0)
+
+    assert p2.x == approx(0.5)
+    assert p2.y == approx(0.5)
+    assert p2.z == approx(0)
 
 
 def test_isSolid():
