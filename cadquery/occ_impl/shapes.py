@@ -2835,7 +2835,7 @@ class Face(Shape):
 
     def paramAt(self, pt: VectorLike) -> Tuple[float, float]:
         """
-        Computes the (u,v) pair closest to a give vector.
+        Computes the (u,v) pair closest to a given vector.
 
         :returns: (u, v) tuple
         :param pt: the location to compute the normal at.
