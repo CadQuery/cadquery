@@ -2853,7 +2853,7 @@ class Face(Shape):
 
     def params(
         self, pts: Iterable[VectorLike], tol: float = 1e-9
-    ) -> List[Tuple[float, float]]:
+    ) -> Tuple[List[float], List[float]]:
         """
         Computes (u,v) pairs closest to given vectors.
 
@@ -2862,7 +2862,8 @@ class Face(Shape):
         :type pts: a list of vectors that lie on the surface.
         """
 
-        rv = []
+        us = []
+        vs = []
 
         # get the geometry
         surface = self._geomAdaptor()
@@ -2875,13 +2876,15 @@ class Face(Shape):
         pt = next(it)
 
         uv = projector.ValueOfUV(Vector(pt).toPnt(), tol)
-        rv.append((uv.X(), uv.Y()))
+        us.append(uv.X())
+        vs.append(uv.Y())
 
         for pt in it:
             uv = projector.NextValueOfUV(uv, Vector(pt).toPnt(), tol)
-            rv.append((uv.X(), uv.Y()))
+            us.append(uv.X())
+            vs.append(uv.Y())
 
-        return rv
+        return us, vs
 
     def positionAt(self, u: Real, v: Real) -> Vector:
         """

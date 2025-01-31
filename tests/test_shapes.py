@@ -68,9 +68,10 @@ def test_face_params():
 
     f = plane(1, 1)
 
-    uvs = f.params([(0.49, 0.0), (0.5, 0)])
+    us, vs = f.params([(0.49, 0.0), (0.5, 0)])
 
-    (u1, v1), (u2, v2) = uvs
+    u1, u2 = us
+    v1, v2 = vs
 
     assert u1 == approx(0.49)
     assert v1 == approx(0.0)
