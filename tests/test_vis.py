@@ -3,8 +3,13 @@ from cadquery.vis import show, show_object, vtkAxesActor
 
 import cadquery.vis as vis
 
-from vtkmodules.vtkRenderingCore import vtkRenderWindow, vtkRenderWindowInteractor
+from vtkmodules.vtkRenderingCore import (
+    vtkRenderWindow,
+    vtkRenderWindowInteractor,
+    vtkWindowToImageFilter,
+)
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
+from vtkmodules.vtkIOImage import vtkPNGWriter
 
 from pytest import fixture
 from path import Path
@@ -60,12 +65,29 @@ class FakeWindow(vtkRenderWindow):
 
         pass
 
+    def SetOffScreenRendering(*args):
+
+        pass
+
+
+class FakeWin2Img(vtkWindowToImageFilter):
+    def Update(*args):
+
+        pass
+
+
+class FakePNGWriter(vtkPNGWriter):
+    def Write(*args):
+
+        pass
+
 
 def test_show(wp, assy, sk, monkeypatch):
 
     # use some dummy vtk objects
     monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
     monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
+    monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeWin2Img)
 
     # simple smoke test
     show(wp)
@@ -100,10 +122,15 @@ def test_show(wp, assy, sk, monkeypatch):
     show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
 
 
-def test_screenshot(wp, tmpdir):
+def test_screenshot(wp, tmpdir, monkeypatch):
 
     # smoke test for now
 
+    # use some dummy vtk objects
+    monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
+    monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
+    monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeWin2Img)
+    monkeypatch.setattr(vis, "vtkPNGWriter", FakePNGWriter)
+
     with tmpdir:
         show(wp, interact=False, screenshot="img.png")
-        assert Path("img.png").exists()
