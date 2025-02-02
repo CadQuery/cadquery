@@ -7,6 +7,12 @@ from vtkmodules.vtkRenderingCore import vtkRenderWindow, vtkRenderWindowInteract
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 
 from pytest import fixture
+from path import Path
+
+
+@fixture(scope="module")
+def tmpdir(tmp_path_factory):
+    return Path(tmp_path_factory.mktemp("screenshots"))
 
 
 @fixture
@@ -92,3 +98,12 @@ def test_show(wp, assy, sk, monkeypatch):
 
     # show a raw vtkProp
     show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
+
+
+def test_screenshot(wp, tmpdir):
+
+    # smoke test for now
+
+    with tmpdir:
+        show(wp, interact=False, screenshot="img.png")
+        assert Path("img.png").exists()
