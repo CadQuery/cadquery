@@ -183,6 +183,11 @@ def show(
 
     # VTK window boilerplate
     win = vtkRenderWindow()
+
+    # Render off-screen when not interacting
+    if not interact:
+        win.SetOffScreenRendering(1)
+
     win.SetWindowName(title)
     win.AddRenderer(renderer)
 
