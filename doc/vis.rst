@@ -33,7 +33,7 @@ One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquer
 .. code-block:: python
 
    from cadquery import *
-   from cadquery.occ_impl.shapes import *
+   from cadquery.func import *
    from cadquery.vis import show
 
    w = Workplane().sphere(0.5).split(keepTop=True)
@@ -62,7 +62,7 @@ Additionally it is possible to integrate with other libraries using VTK and disp
 .. code-block:: python
 
     from cadquery.vis import show
-    from cadquery.occ_impl.shapes import torus
+    from cadquery.func import torus
 
     from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 
@@ -76,6 +76,21 @@ Additionally it is possible to integrate with other libraries using VTK and disp
 
 
 Note that currently the show function is blocking.
+
+Screenshots
+===========
+
+`:meth:~cadquery.vis.show` allows additionally to take screenshots in `png` format. One can specify zoom,
+camera position and windows size.
+
+.. code-block:: python
+
+    from cadquery.vis import show
+    from cadquery.func import box
+
+    b = box(1,1,1)
+
+    show(, width=800, height=800, screenshot='img.png', zoom=2, roll=-20, elevation=-30, interact=False)
 
 
 Jupyter/JupterLab
