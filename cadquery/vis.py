@@ -156,7 +156,7 @@ def show(
     interact: bool = True,
     zoom: float = 1.0,
     roll: float = -35,
-    elevation: float = -30,
+    elevation: float = -45,
     width: Union[int, float] = 0.5,
     height: Union[int, float] = 0.5,
     trihedron: bool = True,
