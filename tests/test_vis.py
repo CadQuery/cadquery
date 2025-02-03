@@ -133,4 +133,4 @@ def test_screenshot(wp, tmpdir, monkeypatch):
     monkeypatch.setattr(vis, "vtkPNGWriter", FakePNGWriter)
 
     with tmpdir:
-        show(wp, interact=False, screenshot="img.png")
+        show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
