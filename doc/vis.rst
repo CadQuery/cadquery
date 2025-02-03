@@ -92,6 +92,8 @@ camera position and windows size.
 
     show(, width=800, height=800, screenshot='img.png', zoom=2, roll=-20, elevation=-30, interact=False)
 
+NB: intermittent issues were observed with this functionality, please submit detailed bug reports in case
+of problems.
 
 Jupyter/JupterLab
 =================
