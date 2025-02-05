@@ -603,6 +603,7 @@ class Plane(object):
             xDir = Vector(xDir)
             if xDir.Length == 0.0:
                 raise ValueError("xDir should be non null")
+
         self._setPlaneDir(xDir)
         self.origin = Vector(origin)
 
@@ -819,7 +820,7 @@ class Plane(object):
 
     def __setstate__(self, data: Tuple[Vector, Vector, Vector, Vector]):
 
-        self.xDir, self.yDir, self.zDir, self._origin = data
+        self.xDir, self.yDir, self.zDir, self.origin = data
 
 
 class BoundBox(object):
