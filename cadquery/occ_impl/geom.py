@@ -265,6 +265,8 @@ class Vector(object):
 
     def __setstate__(self, state: tuple[float, float, float]):
 
+        self._wrapped = gp_Vec()
+
         self.x, self.y, self.z = state
 
 
