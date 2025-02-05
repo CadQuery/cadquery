@@ -1646,6 +1646,23 @@ class Shape(object):
             self, fname, tolerance=tolerance, angularTolerance=angularTolerance, opt=opt
         )
 
+    def __getstate__(self) -> BytesIO:
+
+        rv = BytesIO()
+
+        BinTools.Write_s(self.wrapped, rv)
+        rv.seek(0)
+
+        return rv
+
+    def __setstate__(self, data: BytesIO):
+
+        wrapped = TopoDS_Shape()
+
+        BinTools.Read_s(wrapped, data)
+
+        self.wrapped = wrapped
+
 
 class ShapeProtocol(Protocol):
     @property

@@ -2,6 +2,8 @@ from math import pi, radians, degrees
 
 from typing import overload, Sequence, Union, Tuple, Type, Optional, Iterator
 
+from io import BytesIO
+
 from OCP.gp import (
     gp_Vec,
     gp_Ax1,
@@ -22,6 +24,7 @@ from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
+from OCP.BinTools import BinTools_LocationSet
 
 from ..types import Real
 from ..utils import multimethod
@@ -256,6 +259,14 @@ class Vector(object):
 
         return Vector(gp_Vec(pnt_t.XYZ()))
 
+    def __getstate__(self) -> tuple[float, float, float]:
+
+        return (self.x, self.y, self.z)
+
+    def __setstate__(self, state: tuple[float, float, float]):
+
+        self.x, self.y, self.z = state
+
 
 class Matrix:
     """A 3d , 4x4 transformation matrix.
@@ -399,6 +410,19 @@ class Matrix:
         matrix_transposed = self.transposed_list()
         matrix_str = ",\n        ".join(str(matrix_transposed[i::4]) for i in range(4))
         return f"Matrix([{matrix_str}])"
+
+    def __getstate__(self) -> list[list[float]]:
+
+        trsf = self.wrapped
+        return [[trsf.Value(i, j) for j in range(1, 5)] for i in range(1, 4)]
+
+    def __setstate__(self, state: list[list[float]]):
+
+        trsf = self.wrapped = gp_GTrsf()
+
+        for i in range(3):
+            for j in range(4):
+                trsf.SetValue(i + 1, j + 1, state[i][j])
 
 
 class Plane(object):
@@ -1065,3 +1089,22 @@ class Location(object):
         rx, ry, rz = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
 
         return rv_trans, (degrees(rx), degrees(ry), degrees(rz))
+
+    def __getstate__(self) -> BytesIO:
+
+        rv = BytesIO()
+
+        ls = BinTools_LocationSet()
+        ls.Add(self.wrapped)
+        ls.Write(rv)
+
+        rv.seek(0)
+
+        return rv
+
+    def __setstate__(self, data: BytesIO):
+
+        ls = BinTools_LocationSet()
+        ls.Read(data)
+
+        self.wrapped = ls.Location(1)
