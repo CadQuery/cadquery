@@ -1,6 +1,16 @@
 from pickle import loads, dumps
 
-from cadquery import Vector, Plane, Location, Shape, Sketch, Assembly, Color, Workplane
+from cadquery import (
+    Vector,
+    Matrix,
+    Plane,
+    Location,
+    Shape,
+    Sketch,
+    Assembly,
+    Color,
+    Workplane,
+)
 from cadquery.func import box
 
 from pytest import mark
@@ -10,6 +20,7 @@ from pytest import mark
     "obj",
     [
         Vector(2, 3, 4),
+        Matrix(),
         Plane((-2, 1, 1)),
         Location(1, 2, 4),
         Sketch().rect(1, 1),
