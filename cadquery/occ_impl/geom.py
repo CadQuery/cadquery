@@ -811,6 +811,14 @@ class Plane(object):
 
         return gp_Pln(gp_Ax3(self.origin.toPnt(), self.zDir.toDir(), self.xDir.toDir()))
 
+    def __getstate__(self) -> Tuple[Vector, Vector, Vector, Vector]:
+
+        return (self.xDir, self.yDir, self.zDir, self._origin)
+
+    def __setstate__(self, data: Tuple[Vector, Vector, Vector, Vector]):
+
+        self.xDir, self.yDir, self.zDir, self._origin = data
+
 
 class BoundBox(object):
     """A BoundingBox for an object or set of objects. Wraps the OCP one"""
