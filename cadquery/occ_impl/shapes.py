@@ -2904,9 +2904,8 @@ class Face(Shape):
         """
         Computes position vectors at the desired locations in the u,v parameter space.
 
-        :returns: a vector representing the position
-        :param u: the u parametric location to compute the normal at.
-        :param v: the v parametric location to compute the normal at.
+        :returns: list of vectors corresponding to the requested u,v positions
+        :param uvs: iterable of u,v pairs.
         """
         p = gp_Pnt()
         vn = gp_Vec()
