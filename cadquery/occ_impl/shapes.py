@@ -243,7 +243,11 @@ from OCP.IFSelect import IFSelect_ReturnStatus
 
 from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 
-from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds, ShapeAnalysis_Wire
+from OCP.ShapeAnalysis import (
+    ShapeAnalysis_FreeBounds,
+    ShapeAnalysis_Wire,
+    ShapeAnalysis_Surface,
+)
 from OCP.TopTools import TopTools_HSequenceOfShape
 
 from OCP.GCPnts import (
@@ -2828,6 +2832,90 @@ class Face(Shape):
     def _uvBounds(self) -> Tuple[float, float, float, float]:
 
         return BRepTools.UVBounds_s(self.wrapped)
+
+    def paramAt(self, pt: VectorLike) -> Tuple[float, float]:
+        """
+        Computes the (u,v) pair closest to a given vector.
+
+        :returns: (u, v) tuple
+        :param pt: the location to compute the normal at.
+        :type pt: a vector that lies on or close to the surface.
+        """
+        # get the geometry
+        surface = self._geomAdaptor()
+
+        # project point on surface
+        projector = GeomAPI_ProjectPointOnSurf(Vector(pt).toPnt(), surface)
+
+        u, v = projector.LowerDistanceParameters()
+
+        return u, v
+
+    def params(
+        self, pts: Iterable[VectorLike], tol: float = 1e-9
+    ) -> Tuple[List[float], List[float]]:
+        """
+        Computes (u,v) pairs closest to given vectors.
+
+        :returns: list of (u, v) tuples
+        :param pts: the points to compute the normals at.
+        :type pts: a list of vectors that lie on the surface.
+        """
+
+        us = []
+        vs = []
+
+        # get the geometry
+        surface = self._geomAdaptor()
+
+        # construct the projector
+        projector = ShapeAnalysis_Surface(surface)
+
+        # get the first point
+        it = iter(pts)
+        pt = next(it)
+
+        uv = projector.ValueOfUV(Vector(pt).toPnt(), tol)
+        us.append(uv.X())
+        vs.append(uv.Y())
+
+        for pt in it:
+            uv = projector.NextValueOfUV(uv, Vector(pt).toPnt(), tol)
+            us.append(uv.X())
+            vs.append(uv.Y())
+
+        return us, vs
+
+    def positionAt(self, u: Real, v: Real) -> Vector:
+        """
+        Computes the position vector at the desired location in the u,v parameter space.
+
+        :returns: a vector representing the position
+        :param u: the u parametric location to compute the normal at.
+        :param v: the v parametric location to compute the normal at.
+        """
+        p = gp_Pnt()
+        vn = gp_Vec()
+        BRepGProp_Face(self.wrapped).Normal(u, v, p, vn)
+
+        return Vector(p)
+
+    def positions(self, uvs: Iterable[Tuple[Real, Real]]) -> List[Vector]:
+        """
+        Computes position vectors at the desired locations in the u,v parameter space.
+
+        :returns: list of vectors corresponding to the requested u,v positions
+        :param uvs: iterable of u,v pairs.
+        """
+        p = gp_Pnt()
+        vn = gp_Vec()
+        rv = []
+
+        for u, v in uvs:
+            BRepGProp_Face(self.wrapped).Normal(u, v, p, vn)
+            rv.append(Vector(p))
+
+        return rv
 
     @multimethod
     def normalAt(self, locationVector: Optional[VectorLike] = None) -> Vector:
@@ -5805,3 +5893,15 @@ def check(s: Shape, results: Optional[List[Tuple[List[Shape], Any]]] = None) -> 
             )
 
     return rv
+
+
+#%% properties
+
+
+def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
+    """
+    Closest points between two shapes.
+    """
+    ext = BRepExtrema_DistShapeShape(s1.wrapped, s2.wrapped)
+
+    return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))
