@@ -162,6 +162,8 @@ def show(
     trihedron: bool = True,
     bgcolor: tuple[float, float, float] = (1, 1, 1),
     gradient: bool = True,
+    xpos: Union[int, float] = 0,
+    ypos: Union[int, float] = 0,
     **kwrags: Any,
 ):
     """
@@ -266,7 +268,12 @@ def show(
         int(w * width) if isinstance(width, float) else width,
         int(h * height) if isinstance(height, float) else height,
     )  # is height, width specified as float assume it is relative
-    win.SetPosition(-10, 0)
+
+    # set position
+    win.SetPosition(
+        int(w * xpos) if isinstance(xpos, float) else xpos,
+        int(h * ypos) if isinstance(ypos, float) else ypos,
+    )
 
     # show and return
     win.Render()
