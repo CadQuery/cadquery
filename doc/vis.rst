@@ -90,7 +90,7 @@ camera position and windows size.
 
     b = box(1,1,1)
 
-    show(, width=800, height=800, screenshot='img.png', zoom=2, roll=-20, elevation=-30, interact=False)
+    show(b, width=800, height=800, screenshot='img.png', zoom=2, roll=-20, elevation=-30, interact=False)
 
 NB: intermittent issues were observed with this functionality, please submit detailed bug reports in case
 of problems.
