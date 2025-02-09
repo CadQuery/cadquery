@@ -1,7 +1,7 @@
 from . import Shape, Workplane, Assembly, Sketch, Compound, Color, Vector, Location
 from .occ_impl.assembly import _loc2vtk, toVTK
 
-from typing import Union, Any, List, Tuple, Iterable, cast
+from typing import Union, Any, List, Tuple, Iterable, cast, Optional
 
 from typish import instance_of
 
@@ -18,10 +18,12 @@ from vtkmodules.vtkRenderingCore import (
     vtkPolyDataMapper,
     vtkAssembly,
     vtkRenderWindow,
+    vtkWindowToImageFilter,
 )
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkPolyData
 from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkIOImage import vtkPNGWriter
 
 
 DEFAULT_COLOR = [1, 0.8, 0, 1]
@@ -150,10 +152,22 @@ def show(
     edges: bool = False,
     specular: bool = True,
     title: str = "CQ viewer",
+    screenshot: Optional[str] = None,
+    interact: bool = True,
+    zoom: float = 1.0,
+    roll: float = -35,
+    elevation: float = -45,
+    width: Union[int, float] = 0.5,
+    height: Union[int, float] = 0.5,
+    trihedron: bool = True,
+    bgcolor: tuple[float, float, float] = (1, 1, 1),
+    gradient: bool = True,
+    xpos: Union[int, float] = 0,
+    ypos: Union[int, float] = 0,
     **kwrags: Any,
 ):
     """
-    Show CQ objects using VTK.
+    Show CQ objects using VTK. This functions optionally allows to make screenshots.
     """
 
     # split objects
@@ -171,6 +185,11 @@ def show(
 
     # VTK window boilerplate
     win = vtkRenderWindow()
+
+    # Render off-screen when not interacting
+    if not interact:
+        win.SetOffScreenRendering(1)
+
     win.SetWindowName(title)
     win.AddRenderer(renderer)
 
@@ -208,26 +227,30 @@ def show(
     axes.GetZAxisCaptionActor2D().GetCaptionTextProperty().ShallowCopy(tp)
 
     # add to an orientation widget
-    orient_widget = vtkOrientationMarkerWidget()
-    orient_widget.SetOrientationMarker(axes)
-    orient_widget.SetViewport(0.9, 0.0, 1.0, 0.2)
-    orient_widget.SetZoom(1.1)
-    orient_widget.SetInteractor(inter)
-    orient_widget.EnabledOn()
-    orient_widget.InteractiveOff()
+    if trihedron:
+        orient_widget = vtkOrientationMarkerWidget()
+        orient_widget.SetOrientationMarker(axes)
+        orient_widget.SetViewport(0.9, 0.0, 1.0, 0.2)
+        orient_widget.SetZoom(1.1)
+        orient_widget.SetInteractor(inter)
+        orient_widget.EnabledOn()
+        orient_widget.InteractiveOff()
 
     # use gradient background
-    renderer.SetBackground(1, 1, 1)
-    renderer.GradientBackgroundOn()
+    renderer.SetBackground(*bgcolor)
+
+    if gradient:
+        renderer.GradientBackgroundOn()
 
     # use FXXAA
     renderer.UseFXAAOn()
 
     # set camera
     camera = renderer.GetActiveCamera()
-    camera.Roll(-35)
-    camera.Elevation(-45)
+    camera.Roll(roll)
+    camera.Elevation(elevation)
     renderer.ResetCamera()
+    camera.Zoom(zoom)
 
     # add pts and locs
     renderer.AddActor(pts)
@@ -241,12 +264,36 @@ def show(
     inter.Initialize()
 
     w, h = win.GetScreenSize()
-    win.SetSize(w // 2, h // 2)
-    win.SetPosition(-10, 0)
+    win.SetSize(
+        int(w * width) if isinstance(width, float) else width,
+        int(h * height) if isinstance(height, float) else height,
+    )  # is height, width specified as float assume it is relative
+
+    # set position
+    win.SetPosition(
+        int(w * xpos) if isinstance(xpos, float) else xpos,
+        int(h * ypos) if isinstance(ypos, float) else ypos,
+    )
 
     # show and return
     win.Render()
-    inter.Start()
+
+    # make a screenshot
+    if screenshot:
+        win2image = vtkWindowToImageFilter()
+        win2image.SetInput(win)
+        win2image.SetInputBufferTypeToRGB()
+        win2image.ReadFrontBufferOff()
+        win2image.Update()
+
+        writer = vtkPNGWriter()
+        writer.SetFileName(screenshot)
+        writer.SetInputConnection(win2image.GetOutputPort())
+        writer.Write()
+
+    # start interaction
+    if interact:
+        inter.Start()
 
 
 # alias
