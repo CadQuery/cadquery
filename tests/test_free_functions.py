@@ -692,7 +692,7 @@ def test_check():
 
     s2 = sweep(rect(1, 1), segment((0, 0), (1, 1)))
 
-    assert not check(s2)
+    assert not check(s2, tol=1e-5)
 
     res = []
 

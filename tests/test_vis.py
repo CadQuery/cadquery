@@ -1,5 +1,5 @@
 from cadquery import Workplane, Assembly, Sketch, Location, Vector
-from cadquery.func import circle, sweep, spline, plane
+from cadquery.func import circle, sweep, spline, plane, torus
 from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts
 
 import cadquery.vis as vis
@@ -156,4 +156,8 @@ def test_ctrlPts():
 
     # contorl points of a surface
     a2 = ctrlPts(sweep(c, spline((0, 0, 0), (0, 0, 1))))
+    assert isinstance(a2, vtkActor)
+
+    # control points of a u,v periodic surface
+    a3 = ctrlPts(torus(5, 1).toNURBS())
     assert isinstance(a2, vtkActor)
