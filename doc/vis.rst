@@ -80,7 +80,7 @@ Note that currently the show function is blocking.
 Screenshots
 ===========
 
-`:meth:~cadquery.vis.show` allows additionally to take screenshots in `png` format. One can specify zoom,
+:meth:`~cadquery.vis.show` allows additionally to take screenshots in `png` format. One can specify zoom,
 camera position and windows size.
 
 .. code-block:: python
@@ -94,6 +94,31 @@ camera position and windows size.
 
 NB: intermittent issues were observed with this functionality, please submit detailed bug reports in case
 of problems.
+
+Control points
+==============
+
+:meth:`~cadquery.vis.ctrlPts` allows to visualize control points of surfaces and curves.
+
+.. code-block:: python
+
+    from cadquery.func import *
+    from cadquery.vis import *
+
+    c = circle(1).toSplines()
+    spine = spline([(0, 0, 0), (-3, -3, 5)], tgts=[(0, 0, 1), (0, -1, 0)])
+    f = sweep(c, spine)
+
+    show(
+        f,
+        ctrlPts(f.toNURBS()),
+        spine.moved(x=7),
+        ctrlPts(spine.moved(x=7), color="green"),
+        alpha=0.0,
+    )
+
+..  image:: _static/ctrl_pts.png
+
 
 Jupyter/JupterLab
 =================
