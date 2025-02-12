@@ -88,6 +88,7 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_RightCorner,
     BRepBuilderAPI_RoundCorner,
     BRepBuilderAPI_MakeSolid,
+    BRepBuilderAPI_NurbsConvert,
 )
 
 # properties used to store mass calculation result
@@ -1487,6 +1488,15 @@ class Shape(object):
         )
 
         return self.__class__(result)
+
+    def toNURBS(self: T,) -> T:
+        """
+        Return a NURBS representatio of a given shape.
+        """
+
+        bldr = BRepBuilderAPI_NurbsConvert(self.wrapped, Copy=True)
+
+        return self.__class__(bldr.Shape())
 
     def toVtkPolyData(
         self,
@@ -5870,7 +5880,11 @@ def loft(
 #%% diagnotics
 
 
-def check(s: Shape, results: Optional[List[Tuple[List[Shape], Any]]] = None) -> bool:
+def check(
+    s: Shape,
+    results: Optional[List[Tuple[List[Shape], Any]]] = None,
+    tol: Optional[float] = None,
+) -> bool:
     """
     Check if a shape is valid.
     """
@@ -5882,6 +5896,9 @@ def check(s: Shape, results: Optional[List[Tuple[List[Shape], Any]]] = None) -> 
     analyzer.Perform()
 
     rv = analyzer.IsValid()
+
+    if tol:
+        analyzer.SetFuzzyValue(tol)
 
     # output detailed results if requested
     if results is not None:
