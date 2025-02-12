@@ -159,5 +159,5 @@ def test_ctrlPts():
     assert isinstance(a2, vtkActor)
 
     # control points of a u,v periodic surface
-    a3 = ctrlPts(torus(5, 1).toNURBS())
-    assert isinstance(a2, vtkActor)
+    a3 = ctrlPts(torus(5, 1).faces().toNURBS())
+    assert isinstance(a3, vtkActor)
