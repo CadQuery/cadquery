@@ -143,7 +143,7 @@ def test_ctrlPts():
     c = circle(1)
 
     # non-NURBS objects throw
-    with raises(Exception):
+    with raises(ValueError):
         ctrlPts(c)
 
     # contorl points of a curve
@@ -151,7 +151,7 @@ def test_ctrlPts():
     assert isinstance(a1, vtkActor)
 
     # non-NURBS objects throw
-    with raises(Exception):
+    with raises(ValueError):
         ctrlPts(plane(1, 1))
 
     # contorl points of a surface

@@ -216,7 +216,14 @@ def ctrlPts(
                 cells.InsertNextCell(2, (Nv * i + j + 1, Nv * i + 0))
 
     else:
-        curve = s._geomAdaptor().BSpline()
+
+        if s.geomType() == "BSPLINE":
+            curve = s._geomAdaptor().BSpline()
+
+        else:
+            raise ValueError(
+                f"Only NURBS curves are supported, encountered {s.geomType()}"
+            )
 
         for pt in curve.Poles():
             points.InsertNextPoint(pt.X(), pt.Y(), pt.Z())
