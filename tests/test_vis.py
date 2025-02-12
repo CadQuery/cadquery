@@ -1,5 +1,5 @@
 from cadquery import Workplane, Assembly, Sketch, Location, Vector
-from cadquery.func import circle, sweep, spline, plane, torus
+from cadquery.func import circle, sweep, spline, plane, torus, loft
 from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts
 
 import cadquery.vis as vis
@@ -150,14 +150,18 @@ def test_ctrlPts():
     a1 = ctrlPts(c.toNURBS())
     assert isinstance(a1, vtkActor)
 
+    # contorl points of a non-periodic curve
+    a2 = ctrlPts(c.trim(0, 1).toNURBS())
+    assert isinstance(a2, vtkActor)
+
     # non-NURBS objects throw
     with raises(ValueError):
         ctrlPts(plane(1, 1))
 
     # contorl points of a surface
-    a2 = ctrlPts(sweep(c, spline((0, 0, 0), (0, 0, 1))))
-    assert isinstance(a2, vtkActor)
+    a3 = ctrlPts(sweep(c.trim(0, 1), spline((0, 0, 0), (0, 0, 1))))
+    assert isinstance(a3, vtkActor)
 
     # control points of a u,v periodic surface
-    a3 = ctrlPts(torus(5, 1).faces().toNURBS())
-    assert isinstance(a3, vtkActor)
+    a4 = ctrlPts(torus(5, 1).faces().toNURBS())
+    assert isinstance(a4, vtkActor)
