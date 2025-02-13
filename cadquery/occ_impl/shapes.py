@@ -1491,7 +1491,7 @@ class Shape(object):
 
     def toNURBS(self: T,) -> T:
         """
-        Return a NURBS representatio of a given shape.
+        Return a NURBS representation of a given shape.
         """
 
         bldr = BRepBuilderAPI_NurbsConvert(self.wrapped, Copy=True)

@@ -150,7 +150,7 @@ def test_ctrlPts():
     a1 = ctrlPts(c.toNURBS())
     assert isinstance(a1, vtkActor)
 
-    # contorl points of a non-periodic curve
+    # control points of a non-periodic curve
     a2 = ctrlPts(c.trim(0, 1).toNURBS())
     assert isinstance(a2, vtkActor)
 
@@ -158,7 +158,7 @@ def test_ctrlPts():
     with raises(ValueError):
         ctrlPts(plane(1, 1))
 
-    # contorl points of a surface
+    # control points of a surface
     a3 = ctrlPts(sweep(c.trim(0, 1), spline((0, 0, 0), (0, 0, 1))))
     assert isinstance(a3, vtkActor)
 
