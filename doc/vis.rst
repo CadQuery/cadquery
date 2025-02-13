@@ -111,13 +111,17 @@ Control points
 
     show(
         f,
-        ctrlPts(f.toNURBS()),
+        ctrlPts(f),
         spine.moved(x=7),
         ctrlPts(spine.moved(x=7), color="green"),
         alpha=0.0,
     )
 
 ..  image:: _static/ctrl_pts.png
+
+Note that for some geometries explicit conversion to spline representation might be needed.
+:meth:`~cadquery.Shape.toSplines` performs approximate conversion and :meth:`~cadquery.vis.toNURBS`
+performs exact one.
 
 
 Jupyter/JupterLab
