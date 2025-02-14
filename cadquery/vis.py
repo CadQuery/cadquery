@@ -1,4 +1,15 @@
-from . import Shape, Workplane, Assembly, Sketch, Compound, Color, Vector, Location
+from . import (
+    Shape,
+    Workplane,
+    Assembly,
+    Sketch,
+    Compound,
+    Color,
+    Vector,
+    Location,
+    Face,
+    Edge,
+)
 from .occ_impl.assembly import _loc2vtk, toVTK
 
 from typing import Union, Any, List, Tuple, Iterable, cast, Optional
@@ -6,6 +17,7 @@ from typing import Union, Any, List, Tuple, Iterable, cast, Optional
 from typish import instance_of
 
 from OCP.TopoDS import TopoDS_Shape
+from OCP.Geom import Geom_BSplineSurface
 
 from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
@@ -29,6 +41,8 @@ from vtkmodules.vtkIOImage import vtkPNGWriter
 DEFAULT_COLOR = [1, 0.8, 0, 1]
 DEFAULT_PT_SIZE = 7.5
 DEFAULT_PT_COLOR = "darkviolet"
+DEFAULT_CTRL_PT_COLOR = "crimson"
+DEFAULT_CTRL_PT_SIZE = 7.5
 
 SPECULAR = 0.3
 SPECULAR_POWER = 100
@@ -140,6 +154,97 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkAssembly:
         ax.SetScale(scale)
 
         rv.AddPart(ax)
+
+    return rv
+
+
+def ctrlPts(
+    s: Union[Face, Edge],
+    size: float = DEFAULT_CTRL_PT_SIZE,
+    color: str = DEFAULT_CTRL_PT_COLOR,
+) -> vtkActor:
+    """
+    Convert Edge or Face to a vtkActor representing control points.
+    """
+
+    rv = vtkActor()
+
+    mapper = vtkPolyDataMapper()
+    points = vtkPoints()
+    cells = vtkCellArray()
+    data = vtkPolyData()
+
+    data.SetPoints(points)
+    data.SetVerts(cells)
+    data.SetLines(cells)
+
+    if isinstance(s, Face):
+
+        if isinstance(s._geomAdaptor(), Geom_BSplineSurface):
+            surf = cast(Geom_BSplineSurface, s._geomAdaptor())
+        else:
+            raise ValueError(
+                f"Only NURBS surfaces are supported, encountered {s._geomAdaptor()}"
+            )
+
+        Nu = surf.NbUPoles()
+        Nv = surf.NbVPoles()
+
+        u_periodic = surf.IsUPeriodic()
+        v_periodic = surf.IsVPeriodic()
+
+        # add points
+        for i in range(Nu):
+            for j in range(Nv):
+                pt = surf.Pole(i + 1, j + 1)
+                points.InsertNextPoint(pt.X(), pt.Y(), pt.Z())
+
+        # u edges
+        for j in range(Nv):
+            for i in range(Nu - 1):
+                cells.InsertNextCell(2, (Nv * i + j, Nv * (i + 1) + j))
+
+            if u_periodic:
+                cells.InsertNextCell(2, (Nv * (i + 1) + j, 0 + j))
+
+        # v edges
+        for i in range(Nu):
+            for j in range(Nv - 1):
+                cells.InsertNextCell(2, (Nv * i + j, Nv * i + j + 1))
+
+            if v_periodic:
+                cells.InsertNextCell(2, (Nv * i + j + 1, Nv * i + 0))
+
+    else:
+
+        if s.geomType() == "BSPLINE":
+            curve = s._geomAdaptor().BSpline()
+
+        else:
+            raise ValueError(
+                f"Only NURBS curves are supported, encountered {s.geomType()}"
+            )
+
+        for pt in curve.Poles():
+            points.InsertNextPoint(pt.X(), pt.Y(), pt.Z())
+
+        N = curve.NbPoles()
+
+        for i in range(N - 1):
+            cells.InsertNextCell(2, (i, i + 1))
+
+        if curve.IsPeriodic():
+            cells.InsertNextCell(2, (i + 1, 0))
+
+    mapper.SetInputData(data)
+
+    rv.SetMapper(mapper)
+
+    props = rv.GetProperty()
+    props.SetColor(vtkNamedColors().GetColor3d(color))
+    props.SetPointSize(size)
+    props.SetLineWidth(size / 3)
+    props.SetRenderPointsAsSpheres(True)
 
     return rv
 

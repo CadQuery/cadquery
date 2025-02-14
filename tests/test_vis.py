@@ -1,5 +1,6 @@
 from cadquery import Workplane, Assembly, Sketch, Location, Vector
-from cadquery.vis import show, show_object, vtkAxesActor
+from cadquery.func import circle, sweep, spline, plane, torus, loft
+from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts
 
 import cadquery.vis as vis
 
@@ -7,11 +8,12 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkWindowToImageFilter,
+    vtkActor,
 )
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkIOImage import vtkPNGWriter
 
-from pytest import fixture
+from pytest import fixture, raises
 from path import Path
 
 
@@ -134,3 +136,32 @@ def test_screenshot(wp, tmpdir, monkeypatch):
 
     with tmpdir:
         show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
+
+
+def test_ctrlPts():
+
+    c = circle(1)
+
+    # non-NURBS objects throw
+    with raises(ValueError):
+        ctrlPts(c)
+
+    # control points of a curve
+    a1 = ctrlPts(c.toNURBS())
+    assert isinstance(a1, vtkActor)
+
+    # control points of a non-periodic curve
+    a2 = ctrlPts(c.trim(0, 1).toNURBS())
+    assert isinstance(a2, vtkActor)
+
+    # non-NURBS objects throw
+    with raises(ValueError):
+        ctrlPts(plane(1, 1))
+
+    # control points of a surface
+    a3 = ctrlPts(sweep(c.trim(0, 1), spline((0, 0, 0), (0, 0, 1))))
+    assert isinstance(a3, vtkActor)
+
+    # control points of a u,v periodic surface
+    a4 = ctrlPts(torus(5, 1).faces().toNURBS())
+    assert isinstance(a4, vtkActor)
