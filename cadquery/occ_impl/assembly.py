@@ -117,6 +117,14 @@ class Color(object):
 
         return (rgb.Red(), rgb.Green(), rgb.Blue(), a)
 
+    def __getstate__(self) -> Tuple[float, float, float, float]:
+
+        return self.toTuple()
+
+    def __setstate__(self, data: Tuple[float, float, float, float]):
+
+        self.wrapped = Quantity_ColorRGBA(*data)
+
 
 class AssemblyProtocol(Protocol):
     @property
