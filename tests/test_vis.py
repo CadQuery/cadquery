@@ -146,7 +146,7 @@ def test_ctrlPts():
     with raises(ValueError):
         ctrlPts(c)
 
-    # contorl points of a curve
+    # control points of a curve
     a1 = ctrlPts(c.toNURBS())
     assert isinstance(a1, vtkActor)
 
