@@ -18,7 +18,7 @@ parameters:
   - name: minor
     type: object
     default:
-      - 13
+      - 12
 
 jobs:
 - ${{ each minor in parameters.minor }}:
