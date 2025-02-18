@@ -26,6 +26,7 @@ dependencies:
   - click
   - appdirs
   - pip
+  - scipy=1.15.1
   - pip:
     - --editable=.
     - git+https://github.com/cadquery/black.git@cq
