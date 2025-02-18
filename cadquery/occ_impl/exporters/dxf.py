@@ -197,8 +197,6 @@ class DxfDocument:
                     dxfattribs=general_attributes
                 ).apply_construction_tool(entity)
 
-        zoom.extents(self.msp)
-
         return self
 
     @staticmethod
@@ -394,4 +392,5 @@ def exportDXF(
         for s in w:
             dxf.add_shape(s)
 
+    zoom.extents(dxf.msp)
     dxf.document.saveas(fname)
