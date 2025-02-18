@@ -1705,3 +1705,50 @@ def test_step_export_filesize(tmpdir):
         filesize[i] = stepfile.stat().st_size
 
     assert filesize[1] < 1.2 * filesize[0]
+
+def test_part_remove():
+    """
+    Tests the ability to remove a part from an assembly.
+    """
+    assy = cq.Assembly()
+    assy.add(box(1, 1, 1), name="part1")
+    assy.add(box(2, 2, 2), name="part2", loc=cq.Location(5.0, 5.0, 5.0))
+
+    # Make sure we have the correct number of children (2 parts)
+    assert len(assy.children) == 2
+    assert len(assy.objects) == 3
+
+    # Remove the first part
+    assy.remove("part1")
+
+    # Make sure we have the correct number of children (1 part)
+    assert len(assy.children) == 1
+    assert len(assy.objects) == 2
+
+def test_subassy_remove():
+    """
+    Tests the ability to remove a subassembly from an assembly.
+    """
+
+    # Create the top-level assembly
+    assy = cq.Assembly()
+    assy.add(box(1, 1, 1), name="loplevel_part1")
+
+    # Create the subassembly
+    subassy = cq.Assembly()
+    subassy.add(box(1, 1, 1), name="part1")
+    subassy.add(box(2, 2, 2), name="part2", loc=cq.Location(5.0, 5.0, 5.0))
+
+    # Add the subassembly to the top-level assembly
+    assy.add(subassy, name="subassy")
+
+    # Make sure we have the 1 top-level part and the subassembly
+    assert len(assy.children) == 2
+    assert len(assy.objects) == 5
+
+    # Remove the subassembly
+    assy.remove("subassy")
+
+    # Make sure we have the correct number of children (1 part)
+    assert len(assy.children) == 1
+    assert len(assy.objects) == 2
