@@ -12,7 +12,7 @@ build:
 
 requirements:
   build:
-    - python >=3.9
+    - python >=3.9,<=3.12
     - setuptools
   run:
     - python >=3.9
@@ -26,8 +26,6 @@ requirements:
     - multimethod >=1.11,<2.0
     - casadi
     - typish
-    - scipy=1.15.1
-    - sdl2=2.30.10
 
 test:
   requires:
