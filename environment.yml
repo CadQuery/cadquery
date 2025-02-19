@@ -26,6 +26,7 @@ dependencies:
   - click
   - appdirs
   - pip
+  - libiconv=1.17
   - pip:
     - --editable=.
     - git+https://github.com/cadquery/black.git@cq
