@@ -1707,7 +1707,20 @@ def test_step_export_filesize(tmpdir):
     assert filesize[1] < 1.2 * filesize[0]
 
 
-def test_part_remove():
+def test_assembly_remove_no_name_match():
+    """
+    Tests to make sure that removing a part/subassembly with a name that does not exist fails.
+    """
+
+    assy = cq.Assembly()
+    assy.add(box(1, 1, 1), name="part1")
+    assy.add(box(2, 2, 2), name="part2")
+
+    with pytest.raises(ValueError):
+        assy.remove("part3")
+
+
+def test_assembly_remove_part():
     """
     Tests the ability to remove a part from an assembly.
     """
@@ -1727,7 +1740,7 @@ def test_part_remove():
     assert len(assy.objects) == 2
 
 
-def test_subassy_remove():
+def test_assembly_remove_subassy():
     """
     Tests the ability to remove a subassembly from an assembly.
     """
