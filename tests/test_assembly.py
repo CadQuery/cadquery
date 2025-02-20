@@ -1706,6 +1706,7 @@ def test_step_export_filesize(tmpdir):
 
     assert filesize[1] < 1.2 * filesize[0]
 
+
 def test_part_remove():
     """
     Tests the ability to remove a part from an assembly.
@@ -1724,6 +1725,7 @@ def test_part_remove():
     # Make sure we have the correct number of children (1 part)
     assert len(assy.children) == 1
     assert len(assy.objects) == 2
+
 
 def test_subassy_remove():
     """
