@@ -656,7 +656,7 @@ class Workplane(object):
         # a new workplane has the center of the workplane on the stack
         return s
 
-    def copyWorkplane(self, obj: T) -> T:
+    def copyWorkplane(self, obj: "Workplane") -> "Workplane":
         """
         Copies the workplane from obj.
 
@@ -664,7 +664,7 @@ class Workplane(object):
         :type obj: a CQ object
         :returns: a CQ object with obj's workplane
         """
-        out = obj.__class__(obj.plane)
+        out = copy(obj)
         out.parent = self
         out.ctx = self.ctx
         return out
