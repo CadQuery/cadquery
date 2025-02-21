@@ -248,7 +248,8 @@ class Assembly(object):
         to_remove = self.objects[name]
 
         # Remove the part/assembly from the parent's children list
-        to_remove.parent.children.remove(to_remove)
+        if to_remove.parent:
+            to_remove.parent.children.remove(to_remove)
 
         # Remove the part/assembly from the assembly's object dictionary
         del self.objects[name]

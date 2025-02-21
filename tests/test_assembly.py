@@ -1767,3 +1767,26 @@ def test_assembly_remove_subassy():
     # Make sure we have the correct number of children (1 part)
     assert len(assy.children) == 1
     assert len(assy.objects) == 2
+
+
+def test_remove_without_parent():
+    """
+    Tests the ability to remove a part from an assembly when the part has no parent.
+    This may never happen in practice, but the case has to be covered for mypy to pass.
+    """
+
+    # Create a root assembly
+    assy = cq.Assembly(name="root")
+
+    # Create a part and add it to the assembly
+    part = cq.Workplane().box(1, 1, 1)
+    assy.add(part, name="part")
+
+    # Artificially remove the parent to cover a branching test case
+    assy.children[0].parent = None
+
+    # Remove the part
+    assy.remove("part")
+
+    assert len(assy.children) == 1
+    assert len(assy.objects) == 1
