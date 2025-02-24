@@ -10,7 +10,7 @@ from . import (
     Face,
     Edge,
 )
-from .occ_impl.assembly import _loc2vtk, toVTK
+from .occ_impl.assembly import _loc2vtk, toVTKAssy
 
 from typing import Union, Any, List, Tuple, Iterable, cast, Optional
 
@@ -26,11 +26,13 @@ from vtkmodules.vtkRenderingCore import (
     vtkMapper,
     vtkRenderWindowInteractor,
     vtkActor,
-    vtkProp,
+    vtkProp3D,
     vtkPolyDataMapper,
     vtkAssembly,
     vtkRenderWindow,
     vtkWindowToImageFilter,
+    vtkRenderer,
+    vtkPropCollection,
 )
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkPolyData
@@ -50,7 +52,7 @@ SPECULAR_COLOR = vtkNamedColors().GetColor3d("White")
 
 ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
 Showable = Union[
-    ShapeLike, List[ShapeLike], Vector, List[Vector], vtkProp, List[vtkProp]
+    ShapeLike, List[ShapeLike], Vector, List[Vector], vtkProp3D, List[vtkProp3D]
 ]
 
 
@@ -75,7 +77,7 @@ def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
 
 def _split_showables(
     objs,
-) -> Tuple[List[ShapeLike], List[Vector], List[Location], List[vtkProp]]:
+) -> Tuple[List[ShapeLike], List[Vector], List[Location], List[vtkProp3D]]:
     """
     Split into showables and others.
     """
@@ -83,7 +85,7 @@ def _split_showables(
     rv_s: List[ShapeLike] = []
     rv_v: List[Vector] = []
     rv_l: List[Location] = []
-    rv_a: List[vtkProp] = []
+    rv_a: List[vtkProp3D] = []
 
     for el in objs:
         if instance_of(el, ShapeLike):
@@ -92,7 +94,7 @@ def _split_showables(
             rv_v.append(el)
         elif isinstance(el, Location):
             rv_l.append(el)
-        elif isinstance(el, vtkProp):
+        elif isinstance(el, vtkProp3D):
             rv_a.append(el)
         elif isinstance(el, list):
             tmp1, tmp2, tmp3, tmp4 = _split_showables(el)  # split recursively
@@ -156,6 +158,11 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkAssembly:
         rv.AddPart(ax)
 
     return rv
+
+
+def _to_vtk_shapes(obj: List[ShapeLike], tolerance: float = 1e-3) -> vtkAssembly:
+
+    return toVTKAssy(_to_assy(*obj), tolerance=tolerance)
 
 
 def ctrlPts(
@@ -249,6 +256,73 @@ def ctrlPts(
     return rv
 
 
+def style(
+    *objs: Showable,
+    scale: float = 0.2,
+    alpha: float = 1,
+    tolerance: float = 1e-3,
+    edges: bool = False,
+    specular: bool = True,
+    markersize: float = 5,
+    linewidth: float = 2,
+    spheres: bool = False,
+    tubes: bool = False,
+    color: str = "gold",
+    edgecolor: str = "blue",
+    vertexcolor: str = "cyan",
+    **kwargs,
+) -> Union[vtkActor, vtkAssembly]:
+
+    # styling function
+    def _apply_style(actor):
+        props = actor.GetProperty()
+        props.SetColor(vtkNamedColors().GetColor3d(color))
+        props.SetEdgeColor(vtkNamedColors().GetColor3d(edgecolor))
+        props.SetVertexColor(vtkNamedColors().GetColor3d(vertexcolor))
+        props.SetPointSize(markersize)
+        props.SetLineWidth(linewidth)
+        props.SetRenderPointsAsSpheres(spheres)
+        props.SetRenderLinesAsTubes(tubes)
+        props.SetEdgeVisibility(edges)
+
+        if specular:
+            props.SetSpecular(SPECULAR)
+            props.SetSpecularPower(SPECULAR_POWER)
+            props.SetSpecularColor(SPECULAR_COLOR)
+
+    # split showable
+    shapes, vecs, locs, actors = _split_showables(objs)
+
+    # convert to prop
+    actor: Union[vtkActor, vtkAssembly]
+
+    if shapes:
+        actor = _to_vtk_shapes(shapes, tolerance=tolerance)
+    elif vecs:
+        actor = _to_vtk_pts(vecs)
+    elif locs:
+        actor = _to_vtk_axs(locs)
+    else:
+        actor = vtkAssembly()
+        for p in actors:
+            actor.AddPart(p)
+
+    if isinstance(actor, vtkActor):
+        _apply_style(actor)
+    else:
+        coll = vtkPropCollection()
+        actor.GetActors(coll)
+
+        coll.InitTraversal()
+        for i in range(0, coll.GetNumberOfItems()):
+            a = coll.GetNextProp()
+
+            if isinstance(a, vtkActor):
+                _apply_style(a)
+
+    return actor
+
+
 def show(
     *objs: Showable,
     scale: float = 0.2,
@@ -262,6 +336,8 @@ def show(
     zoom: float = 1.0,
     roll: float = -35,
     elevation: float = -45,
+    position: Optional[Tuple[float, float, float]] = None,
+    focus: Optional[Tuple[float, float, float]] = None,
     width: Union[int, float] = 0.5,
     height: Union[int, float] = 0.5,
     trihedron: bool = True,
@@ -286,7 +362,8 @@ def show(
     axs = _to_vtk_axs(locs, scale=scale)
 
     # assy+renderer
-    renderer = toVTK(assy, tolerance=tolerance)
+    renderer = vtkRenderer()
+    renderer.AddActor(toVTKAssy(assy, tolerance=tolerance))
 
     # VTK window boilerplate
     win = vtkRenderWindow()
@@ -350,13 +427,6 @@ def show(
     # use FXXAA
     renderer.UseFXAAOn()
 
-    # set camera
-    camera = renderer.GetActiveCamera()
-    camera.Roll(roll)
-    camera.Elevation(elevation)
-    renderer.ResetCamera()
-    camera.Zoom(zoom)
-
     # add pts and locs
     renderer.AddActor(pts)
     renderer.AddActor(axs)
@@ -364,6 +434,20 @@ def show(
     # add other vtk actors
     for p in props:
         renderer.AddActor(p)
+
+    # set camera
+    camera = renderer.GetActiveCamera()
+    camera.Roll(roll)
+    camera.Elevation(elevation)
+    camera.Zoom(zoom)
+
+    if position or focus:
+        if position:
+            camera.SetPosition(*position)
+        if focus:
+            camera.SetFocalPoint(*focus)
+    else:
+        renderer.ResetCamera()
 
     # initialize and set size
     inter.Initialize()
