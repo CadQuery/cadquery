@@ -10,7 +10,7 @@
 ---
 
 ### Quick Links
-[***Documentation***](https://cadquery.readthedocs.io/en/latest/) | [***Cheatsheet***](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html) | [***Discord***](https://discord.com/invite/Bj9AQPsCfx) | [***Google Group***](https://groups.google.com/g/cadquery) | [***GUI Editor***](https://github.com/CadQuery/CQ-editor)
+[***Documentation***](https://cadquery.readthedocs.io/en/latest/) | [***Cheatsheet***](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html) | [***GitHub Discussions***](https://github.com/CadQuery/cadquery/discussions) | [***Google Group***](https://groups.google.com/g/cadquery) | [***GUI Editor***](https://github.com/CadQuery/CQ-editor)
 
 ---
 
@@ -125,7 +125,9 @@ You can find the full CadQuery documentation at [cadquery.readthedocs.io](https:
 
 We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) to make it easy to get help from other CadQuery users. We want you to feel welcome and encourage you to join the group and introduce yourself. We would also love to hear what you are doing with CadQuery.
 
-There is a [Discord server](https://discord.gg/Bj9AQPsCfx) as well. You can ask for help in the _general_ channel.
+[GitHub Discussions](https://github.com/CadQuery/cadquery/discussions) is a good place to ask general questions that are not tied to a bug report or feature request.
+
+There is also a [Discord](https://discord.com/invite/Bj9AQPsCfx) server, but the other methods of getting help are much better for newcomers.
 
 ## Projects using CadQuery
 
