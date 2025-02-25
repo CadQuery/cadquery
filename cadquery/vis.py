@@ -56,11 +56,16 @@ Showable = Union[
 ]
 
 
-def _to_assy(*objs: ShapeLike, alpha: float = 1) -> Assembly:
+def _to_assy(
+    *objs: ShapeLike,
+    color: Tuple[float, float, float] = DEFAULT_COLOR[:3],
+    alpha: float = 1,
+) -> Assembly:
+    """
+    Convert shapes to Assembly.
+    """
 
-    assy = Assembly(
-        color=Color(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2], alpha)
-    )
+    assy = Assembly(color=Color(*color, alpha))
 
     for obj in objs:
         if isinstance(obj, (Shape, Workplane, Assembly)):
@@ -160,9 +165,17 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkAssembly:
     return rv
 
 
-def _to_vtk_shapes(obj: List[ShapeLike], tolerance: float = 1e-3) -> vtkAssembly:
+def _to_vtk_shapes(
+    obj: List[ShapeLike],
+    color: Tuple[float, float, float, float] = DEFAULT_COLOR,
+    alpha: float = 1,
+    tolerance: float = 1e-3,
+) -> vtkAssembly:
+    """
+    Convert Shapes to vtkAssembly.
+    """
 
-    return toVTKAssy(_to_assy(*obj), tolerance=tolerance)
+    return toVTKAssy(_to_assy(*obj, color=color, alpha=alpha), tolerance=tolerance)
 
 
 def ctrlPts(
@@ -272,11 +285,13 @@ def style(
     vertexcolor: str = "cyan",
     **kwargs,
 ) -> Union[vtkActor, vtkAssembly]:
+    """
+    Apply styling to CQ objects. To be used in conjuction with show.
+    """
 
-    # styling function
+    # styling functions
     def _apply_style(actor):
         props = actor.GetProperty()
-        props.SetColor(vtkNamedColors().GetColor3d(color))
         props.SetEdgeColor(vtkNamedColors().GetColor3d(edgecolor))
         props.SetVertexColor(vtkNamedColors().GetColor3d(vertexcolor))
         props.SetPointSize(markersize)
@@ -290,26 +305,25 @@ def style(
             props.SetSpecularPower(SPECULAR_POWER)
             props.SetSpecularColor(SPECULAR_COLOR)
 
-    # split showable
+    def _apply_color(actor):
+        props = actor.GetProperty()
+        props.SetColor(vtkNamedColors().GetColor3d(color))
+
+    # split showables
     shapes, vecs, locs, actors = _split_showables(objs)
 
-    # convert to prop
+    # convert to a prop
     actor: Union[vtkActor, vtkAssembly]
 
     if shapes:
-        actor = _to_vtk_shapes(shapes, tolerance=tolerance)
-    elif vecs:
-        actor = _to_vtk_pts(vecs)
-    elif locs:
-        actor = _to_vtk_axs(locs)
-    else:
-        actor = vtkAssembly()
-        for p in actors:
-            actor.AddPart(p)
+        actor = _to_vtk_shapes(
+            shapes,
+            color=vtkNamedColors().GetColor3d(color),
+            alpha=alpha,
+            tolerance=tolerance,
+        )
 
-    if isinstance(actor, vtkActor):
-        _apply_style(actor)
-    else:
+        # apply style to eveyr actor
         coll = vtkPropCollection()
         actor.GetActors(coll)
 
@@ -319,6 +333,21 @@ def style(
 
             if isinstance(a, vtkActor):
                 _apply_style(a)
+
+    elif vecs:
+        actor = _to_vtk_pts(vecs)
+        _apply_style(actor)
+        _apply_color(actor)
+    elif locs:
+        actor = _to_vtk_axs(locs)
+        _apply_style(actor)
+    else:
+        actor = vtkAssembly()
+
+        for p in actors:
+            _apply_style(p)
+            _apply_color(p)
+            actor.AddPart(p)
 
     return actor
 
