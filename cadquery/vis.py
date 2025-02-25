@@ -40,7 +40,7 @@ from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkIOImage import vtkPNGWriter
 
 
-DEFAULT_COLOR = [1, 0.8, 0, 1]
+DEFAULT_COLOR = (1, 0.8, 0)
 DEFAULT_PT_SIZE = 7.5
 DEFAULT_PT_COLOR = "darkviolet"
 DEFAULT_CTRL_PT_COLOR = "crimson"
@@ -58,7 +58,7 @@ Showable = Union[
 
 def _to_assy(
     *objs: ShapeLike,
-    color: Tuple[float, float, float] = DEFAULT_COLOR[:3],
+    color: Tuple[float, float, float] = DEFAULT_COLOR,
     alpha: float = 1,
 ) -> Assembly:
     """
@@ -167,7 +167,7 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkAssembly:
 
 def _to_vtk_shapes(
     obj: List[ShapeLike],
-    color: Tuple[float, float, float, float] = DEFAULT_COLOR,
+    color: Tuple[float, float, float] = DEFAULT_COLOR,
     alpha: float = 1,
     tolerance: float = 1e-3,
 ) -> vtkAssembly:
