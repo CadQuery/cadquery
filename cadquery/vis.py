@@ -325,6 +325,7 @@ def style(
     def _apply_color(actor):
         props = actor.GetProperty()
         props.SetColor(vtkNamedColors().GetColor3d(color))
+        props.SetOpacity(alpha)
 
     # split showables
     shapes, vecs, locs, actors = _split_showables([obj,])
