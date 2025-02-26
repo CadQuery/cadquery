@@ -34,6 +34,7 @@ from .occ_impl.exporters.assembly import (
     exportGLTF,
     STEPExportModeLiterals,
 )
+from .occ_impl.importers.assembly import importStep as importStepTopLevel
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate
@@ -563,6 +564,19 @@ class Assembly(object):
             raise ValueError(f"Unknown format: {exportType}")
 
         return self
+
+    @staticmethod
+    def importStep(path: str) -> "Assembly":
+        """
+        Reads an assembly from a STEP file.
+
+        :param path: Path and filename for writing.
+        :return: An Assembly object.
+        """
+
+        assy = importStepTopLevel(path)
+
+        return assy
 
     @classmethod
     def load(cls, path: str) -> "Assembly":
