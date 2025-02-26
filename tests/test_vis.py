@@ -198,3 +198,14 @@ def test_style(wp, assy):
 
     act = style(style(t))
     assert isinstance(act, (vtkActor, vtkAssembly))
+
+
+def test_camera_position(wp, monkeypatch):
+
+    # use some dummy vtk objects
+    monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
+    monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
+
+    show(wp, camera=(0, 0, 1), focus=(0, 0.1, 0))
+    show(wp, focus=(0, 0.1, 0))
+    show(wp, camera=(0, 0, 1))
