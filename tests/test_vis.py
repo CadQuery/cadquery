@@ -1,6 +1,6 @@
 from cadquery import Workplane, Assembly, Sketch, Location, Vector
 from cadquery.func import circle, sweep, spline, plane, torus, loft
-from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts
+from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts, style
 
 import cadquery.vis as vis
 
@@ -9,6 +9,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindowInteractor,
     vtkWindowToImageFilter,
     vtkActor,
+    vtkAssembly,
 )
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkIOImage import vtkPNGWriter
@@ -165,3 +166,35 @@ def test_ctrlPts():
     # control points of a u,v periodic surface
     a4 = ctrlPts(torus(5, 1).faces().toNURBS())
     assert isinstance(a4, vtkActor)
+
+
+def test_style(wp, assy):
+
+    t = torus(10, 1)
+    e = t.Edges()[0]
+    pts = e.sample(10)[0]
+    locs = e.locations([0, 0.5, 0.75])
+
+    # Shape
+    act = style(t, color="red", alpha=0.5, tubes=True, spheres=True)
+    assert isinstance(act, (vtkActor, vtkAssembly))
+
+    # Assy
+    act = style(assy, color="red", alpha=0.5, tubes=True, spheres=True)
+    assert isinstance(act, (vtkActor, vtkAssembly))
+
+    # Workplane
+    act = style(wp, color="red", alpha=0.5, tubes=True, spheres=True)
+    assert isinstance(act, (vtkActor, vtkAssembly))
+
+    act = style(e)
+    assert isinstance(act, (vtkActor, vtkAssembly))
+
+    act = style(pts)
+    assert isinstance(act, (vtkActor, vtkAssembly))
+
+    act = style(locs)
+    assert isinstance(act, (vtkActor, vtkAssembly))
+
+    act = style(style(t))
+    assert isinstance(act, (vtkActor, vtkAssembly))

@@ -269,8 +269,25 @@ def ctrlPts(
     return rv
 
 
+def _iterate_actors(obj: Union[vtkProp3D, vtkActor, vtkAssembly]) -> Iterable[vtkActor]:
+    """
+    Iterate over vtkActors, other props are ignored.
+    """
+    if isinstance(obj, vtkActor):
+        yield obj
+    elif isinstance(obj, vtkAssembly):
+        coll = vtkPropCollection()
+        obj.GetActors(coll)
+
+        coll.InitTraversal()
+        for i in range(0, coll.GetNumberOfItems()):
+            prop = coll.GetNextProp()
+            if isinstance(prop, vtkActor):
+                yield prop
+
+
 def style(
-    *objs: Showable,
+    obj: Showable,
     scale: float = 0.2,
     alpha: float = 1,
     tolerance: float = 1e-3,
@@ -310,13 +327,13 @@ def style(
         props.SetColor(vtkNamedColors().GetColor3d(color))
 
     # split showables
-    shapes, vecs, locs, actors = _split_showables(objs)
+    shapes, vecs, locs, actors = _split_showables([obj,])
 
     # convert to a prop
-    actor: Union[vtkActor, vtkAssembly]
+    rv: Union[vtkActor, vtkAssembly]
 
     if shapes:
-        actor = _to_vtk_shapes(
+        rv = _to_vtk_shapes(
             shapes,
             color=vtkNamedColors().GetColor3d(color),
             alpha=alpha,
@@ -324,32 +341,25 @@ def style(
         )
 
         # apply style to eveyr actor
-        coll = vtkPropCollection()
-        actor.GetActors(coll)
-
-        coll.InitTraversal()
-        for i in range(0, coll.GetNumberOfItems()):
-            a = coll.GetNextProp()
-
-            if isinstance(a, vtkActor):
-                _apply_style(a)
+        for a in _iterate_actors(rv):
+            _apply_style(a)
 
     elif vecs:
-        actor = _to_vtk_pts(vecs)
-        _apply_style(actor)
-        _apply_color(actor)
+        rv = _to_vtk_pts(vecs)
+        _apply_style(rv)
+        _apply_color(rv)
     elif locs:
-        actor = _to_vtk_axs(locs)
-        _apply_style(actor)
+        rv = _to_vtk_axs(locs, scale=scale)
     else:
-        actor = vtkAssembly()
+        rv = vtkAssembly()
 
         for p in actors:
-            _apply_style(p)
-            _apply_color(p)
-            actor.AddPart(p)
+            for a in _iterate_actors(p):
+                _apply_style(a)
+                _apply_color(a)
+                rv.AddPart(a)
 
-    return actor
+    return rv
 
 
 def show(
