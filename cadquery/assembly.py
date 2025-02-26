@@ -574,7 +574,7 @@ class Assembly(object):
         :return: An Assembly object.
         """
 
-        assy = importStepTopLevel(path)
+        assy = cast(Assembly, importStepTopLevel(path))
 
         return assy
 

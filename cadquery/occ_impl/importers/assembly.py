@@ -7,9 +7,9 @@ from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen, XCAFDoc_ColorSur
 from OCP.TDF import TDF_Label, TDF_LabelSequence
 
 import cadquery as cq
+from ..assembly import AssemblyProtocol
 
-
-def importStep(path: str) -> "Assembly":
+def importStep(path: str) -> AssemblyProtocol:
     """
     Import a step file into an assembly.
     """
