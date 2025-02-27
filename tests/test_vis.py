@@ -1,5 +1,5 @@
 from cadquery import Workplane, Assembly, Sketch, Location, Vector
-from cadquery.func import circle, sweep, spline, plane, torus, loft
+from cadquery.func import circle, sweep, spline, plane, torus
 from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts, style
 
 import cadquery.vis as vis
@@ -85,12 +85,20 @@ class FakePNGWriter(vtkPNGWriter):
         pass
 
 
-def test_show(wp, assy, sk, monkeypatch):
+@fixture
+def patch_vtk(monkeypatch):
+    """
+    Fixture needed to not show anything during testing / prevent crashes in CI.
+    """
 
     # use some dummy vtk objects
     monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
     monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
     monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeWin2Img)
+    monkeypatch.setattr(vis, "vtkPNGWriter", FakePNGWriter)
+
+
+def test_show(wp, assy, sk, patch_vtk):
 
     # simple smoke test
     show(wp)
@@ -125,16 +133,9 @@ def test_show(wp, assy, sk, monkeypatch):
     show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
 
 
-def test_screenshot(wp, tmpdir, monkeypatch):
+def test_screenshot(wp, tmpdir, patch_vtk):
 
     # smoke test for now
-
-    # use some dummy vtk objects
-    monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
-    monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
-    monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeWin2Img)
-    monkeypatch.setattr(vis, "vtkPNGWriter", FakePNGWriter)
-
     with tmpdir:
         show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
 
@@ -200,11 +201,7 @@ def test_style(wp, assy):
     assert isinstance(act, (vtkActor, vtkAssembly))
 
 
-def test_camera_position(wp, monkeypatch):
-
-    # use some dummy vtk objects
-    monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
-    monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
+def test_camera_position(wp, patch_vtk):
 
     show(wp, camera=(0, 0, 1), focus=(0, 0.1, 0))
     show(wp, focus=(0, 0.1, 0))
