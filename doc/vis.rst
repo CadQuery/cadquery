@@ -113,7 +113,7 @@ Sometimes it is desirable to control the camera position precisely. This cane be
     show(t, position=(R, -R, R/h), roll=-45, zoom=0.9)
 
 
-..  image:: _static/show_camera_position.PNG
+..  image:: _static/show_camera_position.png
 
 
 Control points
