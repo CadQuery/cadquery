@@ -239,7 +239,8 @@ class Assembly(object):
         :param name: Name of the part/subassembly to be removed
         :return: The modified assembly
 
-        *NOTE* This method can cause problems with deeply nested assemblies.
+        *NOTE* This method can cause problems with deeply nested assemblies and does not remove
+        constraints associated with the removed part/subassembly.
         """
 
         # Make sure the part/subassembly is actually part of the assembly
