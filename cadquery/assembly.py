@@ -238,6 +238,8 @@ class Assembly(object):
 
         :param name: Name of the part/subassembly to be removed
         :return: The modified assembly
+
+        *NOTE* This method can cause problems with deeply nested assemblies.
         """
 
         # Make sure the part/subassembly is actually part of the assembly
@@ -255,9 +257,17 @@ class Assembly(object):
         del self.objects[name]
 
         # Remove all descendants from the objects dictionary
-        for descendant_name in to_remove._flatten().keys():
+        descendants = to_remove._flatten().keys()
+        for descendant_name in descendants:
             if descendant_name in self.objects:
                 del self.objects[descendant_name]
+
+        # Remove any constraints involving the removed part/assembly
+        self.constraints = [
+            constraint
+            for constraint in self.constraints
+            if not any(obj in descendants for obj in constraint.objects)
+        ]
 
         # Update the parent reference
         to_remove.parent = None
