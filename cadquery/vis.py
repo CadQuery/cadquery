@@ -385,7 +385,6 @@ def show(
     gradient: bool = True,
     xpos: Union[int, float] = 0,
     ypos: Union[int, float] = 0,
-    **kwrags: Any,
 ):
     """
     Show CQ objects using VTK. This functions optionally allows to make screenshots.

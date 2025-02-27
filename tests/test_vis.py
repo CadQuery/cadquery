@@ -215,6 +215,6 @@ def test_style(wp, assy):
 
 def test_camera_position(wp, patch_vtk):
 
-    show(wp, camera=(0, 0, 1), focus=(0, 0.1, 0))
+    show(wp, position=(0, 0, 1), focus=(0, 0.1, 0))
     show(wp, focus=(0, 0.1, 0))
-    show(wp, camera=(0, 0, 1))
+    show(wp, position=(0, 0, 1))
