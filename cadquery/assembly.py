@@ -257,17 +257,9 @@ class Assembly(object):
         del self.objects[name]
 
         # Remove all descendants from the objects dictionary
-        descendants = to_remove._flatten().keys()
-        for descendant_name in descendants:
+        for descendant_name in to_remove._flatten().keys():
             if descendant_name in self.objects:
                 del self.objects[descendant_name]
-
-        # Remove any constraints involving the removed part/assembly
-        self.constraints = [
-            constraint
-            for constraint in self.constraints
-            if not any(obj in descendants for obj in constraint.objects)
-        ]
 
         # Update the parent reference
         to_remove.parent = None
