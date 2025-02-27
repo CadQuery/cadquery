@@ -10,13 +10,15 @@ import cadquery as cq
 from ..assembly import AssemblyProtocol
 
 
-def importStep(path: str) -> AssemblyProtocol:
+def importStep(assy: AssemblyProtocol, path: str):
     """
     Import a step file into an assembly.
-    """
 
-    # The assembly that is being built from the step file
-    assy = cq.Assembly()
+    :param assy: An Assembly object that will be packed with the contents of the STEP file.
+    :param path: Path and filename to the STEP file to read.
+
+    :return: None
+    """
 
     # Document that the step file will be read into
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
@@ -115,5 +117,3 @@ def importStep(path: str) -> AssemblyProtocol:
 
     else:
         raise ValueError("Step file does not contain an assembly")
-
-    return assy
