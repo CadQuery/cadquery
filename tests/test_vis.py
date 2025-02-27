@@ -188,16 +188,28 @@ def test_style(wp, assy):
     act = style(wp, color="red", alpha=0.5, tubes=True, spheres=True)
     assert isinstance(act, (vtkActor, vtkAssembly))
 
+    # Shape
     act = style(e)
     assert isinstance(act, (vtkActor, vtkAssembly))
 
+    # Sketch
+    act = style(Sketch().circle(1))
+    assert isinstance(act, (vtkActor, vtkAssembly))
+
+    # list[Vector]
     act = style(pts)
     assert isinstance(act, (vtkActor, vtkAssembly))
 
+    # list[Location]
     act = style(locs)
     assert isinstance(act, (vtkActor, vtkAssembly))
 
+    # vtkAssembly
     act = style(style(t))
+    assert isinstance(act, (vtkActor, vtkAssembly))
+
+    # vtkActor
+    act = style(ctrlPts(e.toNURBS()))
     assert isinstance(act, (vtkActor, vtkAssembly))
 
 
