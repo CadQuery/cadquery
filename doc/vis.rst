@@ -97,7 +97,7 @@ camera position and windows size.
     Intermittent issues were observed with this functionality, please submit detailed bug reports in case
     of problems.
 
-Sometimes it is desirable to control the camera position precisely. This cane be achieved as follows.
+Sometimes it is desirable to control the camera position precisely. This can be achieved as follows.
 
 .. code-block:: python
 

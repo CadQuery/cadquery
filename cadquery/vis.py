@@ -303,7 +303,7 @@ def style(
     **kwargs,
 ) -> Union[vtkActor, vtkAssembly]:
     """
-    Apply styling to CQ objects. To be used in conjuction with show.
+    Apply styling to CQ objects. To be used in conjunction with show.
     """
 
     # styling functions
@@ -341,7 +341,7 @@ def style(
             tolerance=tolerance,
         )
 
-        # apply style to eveyr actor
+        # apply style to every actor
         for a in _iterate_actors(rv):
             _apply_style(a)
 
