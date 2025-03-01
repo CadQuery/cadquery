@@ -5477,7 +5477,10 @@ def split(s1: Shape, s2: Shape) -> Shape:
 
 
 def imprint(
-    *shapes: Shape, tol: float = 0.0, glue: Literal["partial", "full", None] = "full"
+    *shapes: Shape,
+    tol: float = 0.0,
+    glue: Literal["partial", "full", None] = "full",
+    history: Optional[Dict[Union[Shape, str], Shape]] = None,
 ) -> Shape:
     """
     Imprint arbitrary number of shapes.
@@ -5503,6 +5506,19 @@ def imprint(
         builder.SetFuzzyValue(tol)
 
     builder.Perform()
+
+    # fill history if provided
+    if history is not None:
+        images = builder.Images()
+
+        # collect shapes presen in the history dict
+        for k, v in history.items():
+            if isinstance(k, str):
+                history[k] = _compound_or_shape(list(images.Find(v.wrapped)))
+
+        # store all top-level shape relations
+        for s in shapes:
+            history[s] = _compound_or_shape(list(images.Find(s.wrapped)))
 
     return _compound_or_shape(builder.Shape())
 
