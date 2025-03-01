@@ -32,6 +32,7 @@ from .occ_impl.shapes import (
     fuse,
     cut,
     intersect,
+    imprint,
     split,
     fill,
     clean,

@@ -238,7 +238,7 @@ from OCP.GeomAbs import (
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
 
-from OCP.BOPAlgo import BOPAlgo_GlueEnum
+from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_Builder
 
 from OCP.IFSelect import IFSelect_ReturnStatus
 
@@ -5472,6 +5472,37 @@ def split(s1: Shape, s2: Shape) -> Shape:
 
     builder = BRepAlgoAPI_Splitter()
     _bool_op(s1, s2, builder)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def imprint(
+    *shapes: Shape, tol: float = 0.0, glue: Literal["partial", "full", None] = "full"
+) -> Shape:
+    """
+    Imprint arbitrary number of shapes.
+    """
+
+    builder = BOPAlgo_Builder()
+
+    for s in shapes:
+        builder.AddArgument(s.wrapped)
+
+    if glue:
+        builder.SetGlue(
+            BOPAlgo_GlueEnum.BOPAlgo_GlueFull
+            if glue == "full"
+            else BOPAlgo_GlueEnum.BOPAlgo_GlueShift
+        )
+
+    builder.SetRunParallel(True)
+    builder.SetUseOBB(True)
+    builder.SetNonDestructive(True)
+
+    if tol:
+        builder.SetFuzzyValue(tol)
+
+    builder.Perform()
 
     return _compound_or_shape(builder.Shape())
 
