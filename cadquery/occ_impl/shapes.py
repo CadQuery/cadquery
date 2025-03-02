@@ -5578,7 +5578,7 @@ def setThreads(n: int):
     pool.Init(n)
 
 
-def fuse(
+def fuseBOP(
     s1: Shape, s2: Shape, *shapes: Shape, tol: float = 0.0, glue: GlueLiteral = None,
 ) -> Shape:
     """
@@ -5602,7 +5602,7 @@ def fuse(
     return _compound_or_shape(builder.Shape())
 
 
-def cut(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Shape:
+def cutBOP(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Shape:
     """
     Subtract two shapes.
     """
@@ -5617,6 +5617,28 @@ def cut(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Sha
     builder.AddTool(s2.wrapped)
 
     builder.Perform()
+
+    return _compound_or_shape(builder.Shape())
+
+
+def fuse(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+    """
+    Fuse two shapes.
+    """
+
+    builder = BRepAlgoAPI_Fuse()
+    _bool_op(s1, s2, builder, tol)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def cut(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+    """
+    Subtract two shapes.
+    """
+
+    builder = BRepAlgoAPI_Cut()
+    _bool_op(s1, s2, builder, tol)
 
     return _compound_or_shape(builder.Shape())
 
