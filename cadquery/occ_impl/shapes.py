@@ -1770,6 +1770,9 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     ) -> float:
         ...
 
+    def paramsLength(self, locations: Iterable[float]) -> List[float]:
+        ...
+
 
 T1D = TypeVar("T1D", bound=Mixin1DProtocol)
 
@@ -1894,6 +1897,27 @@ class Mixin1D(object):
 
         return us
 
+    def paramsLength(self: Mixin1DProtocol, locations: Iterable[float]) -> List[float]:
+        """
+        Computes u values at given relative lengths.
+
+        :param locations: list of distances.
+        :returns: list of u values.
+        :param pts: the points to compute the parameters at.
+        """
+
+        us = []
+
+        curve = self._geomAdaptor()
+
+        L = GCPnts_AbscissaPoint.Length_s(curve)
+
+        for d in locations:
+            u = GCPnts_AbscissaPoint(curve, L * d, curve.FirstParameter()).Parameter()
+            us.append(u)
+
+        return us
+
     def tangentAt(
         self: Mixin1DProtocol, locationParam: float = 0.5, mode: ParamMode = "length",
     ) -> Vector:
@@ -1918,6 +1942,35 @@ class Mixin1D(object):
         curve.D1(param, tmp, res)
 
         return Vector(gp_Dir(res))
+
+    def tangents(
+        self: Mixin1DProtocol, locations: Iterable[float], mode: ParamMode = "length",
+    ) -> List[Vector]:
+        """
+        Compute tangent vectors at the specified locations.
+
+        :param locations: list of distances or parameters.
+        :param mode: position calculation mode (default: parameter).
+        :return: list of tangent vectors
+        """
+
+        curve = self._geomAdaptor()
+        params: Iterable[float]
+
+        if mode == "length":
+            params = self.paramsLength(locations)
+        else:
+            params = locations
+
+        rv = []
+        tmp = gp_Pnt()
+        res = gp_Vec()
+
+        for param in params:
+            curve.D1(param, tmp, res)
+            rv.append(Vector(gp_Dir(res)))
+
+        return rv
 
     def normal(self: Mixin1DProtocol) -> Vector:
         """
