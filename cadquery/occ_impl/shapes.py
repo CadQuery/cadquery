@@ -239,7 +239,13 @@ from OCP.GeomAbs import (
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
 
-from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_Builder
+from OCP.BOPAlgo import (
+    BOPAlgo_GlueEnum,
+    BOPAlgo_Builder,
+    BOPAlgo_BOP,
+    BOPAlgo_FUSE,
+    BOPAlgo_CUT,
+)
 
 from OCP.IFSelect import IFSelect_ReturnStatus
 
@@ -249,7 +255,6 @@ from OCP.ShapeAnalysis import (
     ShapeAnalysis_FreeBounds,
     ShapeAnalysis_Wire,
     ShapeAnalysis_Surface,
-    ShapeAnalysis_Curve,
 )
 from OCP.TopTools import TopTools_HSequenceOfShape
 
@@ -300,6 +305,8 @@ from OCP.GeomAdaptor import GeomAdaptor_Surface
 
 from OCP.Extrema import Extrema_LocateExtPC
 
+from OCP.OSD import OSD_ThreadPool
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -307,6 +314,7 @@ import warnings
 from ..utils import deprecate
 
 Real = Union[float, int]
+GlueLiteral = Literal["partial", "full", None]
 
 TOLERANCE = 1e-6
 
@@ -5541,24 +5549,74 @@ def _bool_op(
     builder.Build()
 
 
-def fuse(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+def _set_glue(builder: BOPAlgo_Builder, glue: GlueLiteral):
+
+    if glue:
+        builder.SetGlue(
+            BOPAlgo_GlueEnum.BOPAlgo_GlueFull
+            if glue == "full"
+            else BOPAlgo_GlueEnum.BOPAlgo_GlueShift
+        )
+
+
+def _set_builder_options(builder: BOPAlgo_Builder, tol: float):
+
+    builder.SetRunParallel(True)
+    builder.SetUseOBB(True)
+    builder.SetNonDestructive(True)
+
+    if tol:
+        builder.SetFuzzyValue(tol)
+
+
+def setThreads(n: int):
     """
-    Fuse two shapes.
+    Set number of threads to be used by boolean operations.
     """
 
-    builder = BRepAlgoAPI_Fuse()
-    _bool_op(s1, s2, builder, tol)
+    pool = OSD_ThreadPool.DefaultPool_s()
+    pool.Init(n)
+
+
+def fuse(
+    s1: Shape, s2: Shape, *shapes: Shape, tol: float = 0.0, glue: GlueLiteral = None,
+) -> Shape:
+    """
+    Fuse at least two shapes.
+    """
+
+    builder = BOPAlgo_BOP()
+    builder.SetOperation(BOPAlgo_FUSE)
+
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
+
+    builder.AddArgument(s1.wrapped)
+    builder.AddArgument(s2.wrapped)
+
+    for s in shapes:
+        builder.AddArgument(s.wrapped)
+
+    builder.Perform()
 
     return _compound_or_shape(builder.Shape())
 
 
-def cut(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+def cut(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Shape:
     """
     Subtract two shapes.
     """
 
-    builder = BRepAlgoAPI_Cut()
-    _bool_op(s1, s2, builder, tol)
+    builder = BOPAlgo_BOP()
+    builder.SetOperation(BOPAlgo_CUT)
+
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
+
+    builder.AddArgument(s1.wrapped)
+    builder.AddTool(s2.wrapped)
+
+    builder.Perform()
 
     return _compound_or_shape(builder.Shape())
 
@@ -5588,7 +5646,7 @@ def split(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
 def imprint(
     *shapes: Shape,
     tol: float = 0.0,
-    glue: Literal["partial", "full", None] = "full",
+    glue: GlueLiteral = "full",
     history: Optional[Dict[Union[Shape, str], Shape]] = None,
 ) -> Shape:
     """
@@ -5599,13 +5657,6 @@ def imprint(
 
     for s in shapes:
         builder.AddArgument(s.wrapped)
-
-    if glue:
-        builder.SetGlue(
-            BOPAlgo_GlueEnum.BOPAlgo_GlueFull
-            if glue == "full"
-            else BOPAlgo_GlueEnum.BOPAlgo_GlueShift
-        )
 
     builder.SetRunParallel(True)
     builder.SetUseOBB(True)
