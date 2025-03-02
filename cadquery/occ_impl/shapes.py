@@ -5655,15 +5655,11 @@ def imprint(
 
     builder = BOPAlgo_Builder()
 
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
+
     for s in shapes:
         builder.AddArgument(s.wrapped)
-
-    builder.SetRunParallel(True)
-    builder.SetUseOBB(True)
-    builder.SetNonDestructive(True)
-
-    if tol:
-        builder.SetFuzzyValue(tol)
 
     builder.Perform()
 

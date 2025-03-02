@@ -46,4 +46,5 @@ from .occ_impl.shapes import (
     loft,
     check,
     closest,
+    setThreads,
 )
