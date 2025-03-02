@@ -248,6 +248,7 @@ from OCP.ShapeAnalysis import (
     ShapeAnalysis_FreeBounds,
     ShapeAnalysis_Wire,
     ShapeAnalysis_Surface,
+    ShapeAnalysis_Curve,
 )
 from OCP.TopTools import TopTools_HSequenceOfShape
 
@@ -1837,6 +1838,42 @@ class Mixin1D(object):
             rv = GCPnts_AbscissaPoint(curve, l * d, curve.FirstParameter()).Parameter()
 
         return rv
+
+    def params(self: Mixin1DProtocol, pts: Iterable[Vector]) -> List[float]:
+        """
+        Computes u values closest to given vectors.
+
+        :returns: list of u values.
+        :param pts: the points to compute the parameters at.
+        """
+
+        us = []
+
+        curve = self._geomAdaptor()
+
+        # handle comp curves (i.e. wire adaptors)
+        if isinstance(curve, BRepAdaptor_Curve):
+            curve_ = curve.Curve().Curve()  # get the underlying curve object
+        else:
+            curve_ = self._approxCurve()  # approximate the adaptor as a real curve
+
+        # get the first point
+        it = iter(pts)
+        pt = next(it)
+
+        proj = GeomAPI_ProjectPointOnCurve(
+            pt.toPnt(), curve_, curve.FirstParameter(), curve.LastParameter(),
+        )
+
+        us.append(proj.LowerDistanceParameter())
+
+        for pt in it:
+            proj.Perform(pt.toPnt())
+            u = proj.LowerDistanceParameter()
+
+            us.append(u)
+
+        return us
 
     def tangentAt(
         self: Mixin1DProtocol, locationParam: float = 0.5, mode: ParamMode = "length",
@@ -5465,13 +5502,13 @@ def intersect(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
     return _compound_or_shape(builder.Shape())
 
 
-def split(s1: Shape, s2: Shape) -> Shape:
+def split(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
     """
     Split one shape with another.
     """
 
     builder = BRepAlgoAPI_Splitter()
-    _bool_op(s1, s2, builder)
+    _bool_op(s1, s2, builder, tol)
 
     return _compound_or_shape(builder.Shape())
 
