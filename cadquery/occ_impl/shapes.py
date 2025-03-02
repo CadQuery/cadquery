@@ -298,6 +298,8 @@ from OCP.Adaptor3d import Adaptor3d_IsoCurve, Adaptor3d_Curve
 
 from OCP.GeomAdaptor import GeomAdaptor_Surface
 
+from OCP.Extrema import Extrema_LocateExtPC
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -1853,7 +1855,7 @@ class Mixin1D(object):
 
         return rv
 
-    def params(self: Mixin1DProtocol, pts: Iterable[Vector]) -> List[float]:
+    def params(self: Mixin1DProtocol, pts: Iterable[Vector], tol=1e-6) -> List[float]:
         """
         Computes u values closest to given vectors.
 
@@ -1865,20 +1867,28 @@ class Mixin1D(object):
 
         curve = self._geomAdaptor()
         curve_ = self._curve()
+        umin = curve.FirstParameter()
+        umax = curve.LastParameter()
 
         # get the first point
         it = iter(pts)
         pt = next(it)
 
-        proj = GeomAPI_ProjectPointOnCurve(
-            pt.toPnt(), curve_, curve.FirstParameter(), curve.LastParameter(),
-        )
+        proj = GeomAPI_ProjectPointOnCurve(pt.toPnt(), curve_, umin, umax)
 
-        us.append(proj.LowerDistanceParameter())
+        u = proj.LowerDistanceParameter()
+        us.append(u)
+
+        ext = Extrema_LocateExtPC()
+        ext.Initialize(curve, umin, umax, tol)
 
         for pt in it:
-            proj.Perform(pt.toPnt())
-            u = proj.LowerDistanceParameter()
+            ext.Perform(pt.toPnt(), u)
+            if ext.IsDone():
+                u = ext.Point().Parameter()
+            else:
+                proj.Perform(pt.toPnt())
+                u = proj.LowerDistanceParameter()
 
             us.append(u)
 
