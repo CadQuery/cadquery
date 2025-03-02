@@ -156,6 +156,7 @@ from OCP.Geom import (
     Geom_Surface,
     Geom_Plane,
     Geom_BSplineCurve,
+    Geom_Curve,
 )
 from OCP.Geom2d import Geom2d_Line
 
@@ -1736,6 +1737,9 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     def _approxCurve(self) -> Geom_BSplineCurve:
         ...
 
+    def _curve(self) -> Geom_Curve:
+        ...
+
     def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         ...
 
@@ -1812,6 +1816,20 @@ class Mixin1D(object):
 
         return rv
 
+    def _curve(self: Mixin1DProtocol) -> Geom_Curve:
+        """
+        Return the undeerlying curve.
+        """
+
+        curve = self._geomAdaptor()
+
+        if isinstance(curve, BRepAdaptor_Curve):
+            rv = curve.Curve().Curve()  # get the underlying curve object
+        else:
+            rv = self._approxCurve()  # approximate the adaptor as a real curve
+
+        return rv
+
     def paramAt(self: Mixin1DProtocol, d: Union[Real, Vector]) -> float:
         """
         Compute parameter value at the specified normalized distance or a point.
@@ -1823,11 +1841,7 @@ class Mixin1D(object):
         curve = self._geomAdaptor()
 
         if isinstance(d, Vector):
-            # handle comp curves (i.e. wire adaptors)
-            if isinstance(curve, BRepAdaptor_Curve):
-                curve_ = curve.Curve().Curve()  # get the underlying curve object
-            else:
-                curve_ = self._approxCurve()  # approximate the adaptor as a real curve
+            curve_ = self._curve()
 
             rv = GeomAPI_ProjectPointOnCurve(
                 d.toPnt(), curve_, curve.FirstParameter(), curve.LastParameter(),
@@ -1850,12 +1864,7 @@ class Mixin1D(object):
         us = []
 
         curve = self._geomAdaptor()
-
-        # handle comp curves (i.e. wire adaptors)
-        if isinstance(curve, BRepAdaptor_Curve):
-            curve_ = curve.Curve().Curve()  # get the underlying curve object
-        else:
-            curve_ = self._approxCurve()  # approximate the adaptor as a real curve
+        curve_ = self._curve()
 
         # get the first point
         it = iter(pts)
