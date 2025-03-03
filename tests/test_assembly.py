@@ -11,6 +11,7 @@ from pytest import approx
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
     exportAssembly,
+    exportMetaStep,
     exportCAF,
     exportVTKJS,
     exportVRML,
@@ -614,6 +615,64 @@ def test_step_export(nested_assy, tmp_path_factory):
     assert pytest.approx(c.toTuple()) == (0, 4, 0)
     c2 = cq.Compound.makeCompound(o.solids().vals()).Center()
     assert pytest.approx(c2.toTuple()) == (0, 4, 0)
+
+
+def test_meta_step_export(tmp_path_factory):
+    """
+    Tests that an assembly can be exported to a STEP file with faces tagged with names and colors,
+    and layers added.
+    """
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    meta_path = os.path.join(tmpdir, "meta.step")
+
+    # Simple cubes for this assembly
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    cube_2 = cq.Workplane().box(5, 5, 5)
+
+    # Find a face on each part to attach the metadata to
+    face_1 = cube_1.faces(">Z").val()
+    face_2 = cube_2.faces("<Z").val()
+
+    # Create a simple assembly
+    assy = cq.Assembly(name="cubes")
+    assy.add(cube_1, name="cube_1", color=(0, 0, 1.0))
+    assy.add(cube_2, name="cube_2", color=(0, 1.0, 0), loc=cq.Location((10, 10, 10)))
+
+    # Create the metadata to help test the export
+    names = {face_1: "cube_1_top_face", face_2: "cube_2_bottom_face"}
+    colors = {face_1: (1.0, 0, 0), face_2: (0, 0.0, 1.0)}
+    layers = {face_1: "cube_1_top_face", face_2: "cube_2_bottom_face"}
+
+    # Export the step file
+    success = exportMetaStep(assy, meta_path, names, colors, layers)
+
+    # Make sure there was no error while writing the file
+    assert success
+
+    # Make sure the step file exists
+    assert os.path.exists(meta_path)
+
+    # Read the contents as a step file as a string so we can check the outputs
+    with open(meta_path, "r") as f:
+        step_contents = f.read()
+
+        # Make sure that the face name strings were applied in ADVACED_FACE entries
+        assert "ADVANCED_FACE('cube_1_top_face'" in step_contents
+        assert "ADVANCED_FACE('cube_2_bottom_face'" in step_contents
+
+        # Make reasonably sure that the colors were applied to the faces
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('red')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('blue')" in step_contents
+
+        # Make sure that the layers were created
+        assert (
+            "PRESENTATION_LAYER_ASSIGNMENT('cube_1_top_face','visible'" in step_contents
+        )
+        assert (
+            "PRESENTATION_LAYER_ASSIGNMENT('cube_2_bottom_face','visible'"
+            in step_contents
+        )
 
 
 @pytest.mark.parametrize(

@@ -14,7 +14,10 @@ from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_StepModelType
 from OCP.IFSelect import IFSelect_ReturnStatus
+from OCP.TDataStd import TDataStd_Name
+from OCP.TDocStd import TDocStd_Document
 from OCP.XCAFApp import XCAFApp_Application
+from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen
 from OCP.XmlDrivers import (
     XmlDrivers_DocumentStorageDriver,
     XmlDrivers_DocumentRetrievalDriver,
@@ -28,6 +31,8 @@ from OCP.Interface import Interface_Static
 
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
+from ..shapes import Face
+from ..assembly import Color
 
 
 class ExportModes:
@@ -42,7 +47,7 @@ def exportAssembly(
     assy: AssemblyProtocol,
     path: str,
     mode: STEPExportModeLiterals = "default",
-    **kwargs
+    **kwargs,
 ) -> bool:
     """
     Export an assembly to a STEP file.
@@ -92,6 +97,115 @@ def exportAssembly(
     writer.SetNameMode(True)
     Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
     Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
+    writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
+
+    status = writer.Write(path)
+
+    return status == IFSelect_ReturnStatus.IFSelect_RetDone
+
+
+def exportMetaStep(
+    assy: AssemblyProtocol,
+    path: str,
+    names: dict[Face, str],
+    colors: dict[Face, tuple[float, float, float]],
+    layers: dict[Face, str],
+) -> bool:
+    """
+    Export an assembly to a STEP file with faces tagged with names and colors. This is done as a
+    separate method from the main STEP export because this is not compatible with the fused mode
+    and also flattens the hierarchy of the STEP.
+
+    Layers are used because some software does not understand the ADVANCED_FACE entity and needs
+    names attached to layers instead.
+
+    :param assy: assembly
+    :param path: Path and filename for writing
+    :param names: A dictionary of that specifies faces that need to have string names attached.
+    :param colors: A dictionary of that specifies faces that need to have RGB colors attached.
+    :param layers: A dictionary of that specifies faces that need to have string layer names attached.
+    :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
+        If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
+    :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
+        See OCCT documentation.
+    """
+
+    # Use the assembly name if the user set it
+    assembly_name = assy.name if assy.name else str(uuid.uuid1())
+
+    # Initialize the XCAF document that will allow the STEP export
+    app = XCAFApp_Application.GetApplication_s()
+    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    app.InitDocument(doc)
+
+    # Shape and color tools
+    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    layer_tool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
+
+    # Create the top level object that will hold all the subassembly parts
+    subassy_label = shape_tool.NewShape()
+    TDataStd_Name.Set_s(subassy_label, TCollection_ExtendedString(assembly_name))
+
+    # Process the shape
+    for shape, name, loc, color in assy:
+        # Add the current shape to the document in a way that allows us to locate it
+        shape_label = shape_tool.NewShape()
+        shape_tool.SetShape(shape_label, shape.wrapped)
+
+        # Include the name and color of the part within the assembly
+        color_tool.SetColor(
+            shape_label, Color(color[0], color[1], color[2]).wrapped, XCAFDoc_ColorGen
+        )
+        TDataStd_Name.Set_s(
+            shape_label, TCollection_ExtendedString(name.split("/")[-1])
+        )
+
+        # Step through every face in the shape, and see if any metadata needs to be attached to it
+        for face in shape.Faces():
+            if face in names or face in colors or face in layers:
+                # Add the face as a subshape
+                face_label = shape_tool.AddSubShape(shape_label, face.wrapped)
+
+                # In some cases the face may not be considered part of the shape, so protect
+                # against that
+                if not face_label.IsNull():
+                    # Set the ADVANCED_FACE label
+                    if face in names:
+                        face_str = names[face]
+                        TDataStd_Name.Set_s(
+                            face_label, TCollection_ExtendedString(face_str)
+                        )
+
+                    # Set the individual face color
+                    if face in colors:
+                        color = colors[face]
+                        color_tool.SetColor(
+                            face_label, Color(*color).wrapped, XCAFDoc_ColorGen
+                        )
+
+                    # Also add a layer to hold the face label data
+                    if face in layers:
+                        layer_str = layers[face]
+                        layer_label = layer_tool.AddLayer(
+                            TCollection_ExtendedString(layer_str)
+                        )
+                        layer_tool.SetLayer(face_label, layer_label)
+                else:
+                    print(f"WARNING: Face {face} did not have its metadata added")
+
+    # Update the assemblies
+    shape_tool.UpdateAssemblies()
+
+    # Set up the writer and write the STEP file
+    session = XSControl_WorkSession()
+    writer = STEPCAFControl_Writer(session, False)
+    Interface_Static.SetIVal_s("write.stepcaf.subshapes.name", 1)
+    writer.SetColorMode(True)
+    writer.SetLayerMode(True)
+    writer.SetNameMode(True)
+    # Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
+    # Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)
