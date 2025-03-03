@@ -446,6 +446,14 @@ def test_setThreads():
     setThreads(5)
 
 
+def test_fuse_multi():
+
+    b = box(1, 1, 1)
+    res = fuse(b, b.moved(x=0.1), b.moved(x=0.2))
+
+    assert len(res.Solids()) == 1
+
+
 #%% moved
 def test_moved():
 
