@@ -79,6 +79,7 @@ def _define_grammar():
 
 _grammar = _define_grammar()
 
+
 class Assembly(object):
     """Nested assembly of Workplane and Shape objects defining their relative positions."""
 
