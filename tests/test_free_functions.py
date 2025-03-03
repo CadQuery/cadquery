@@ -46,6 +46,7 @@ from cadquery.occ_impl.shapes import (
     Vector,
     closest,
     imprint,
+    setThreads,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -437,6 +438,12 @@ def test_imprint():
 
     assert len(b1_imp.Faces()) == len(b1.Faces()) + 1
     assert len(res_glue_partial.Faces()) == len(b1_imp.Faces() + b3_imp.Faces()) - 1
+
+
+def test_setThreads():
+
+    # smoke test for now
+    setThreads(5)
 
 
 #%% moved
