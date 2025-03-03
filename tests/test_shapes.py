@@ -108,6 +108,32 @@ def test_face_positions():
     assert p2.z == approx(0)
 
 
+def test_edge_params():
+
+    pts = [Vector(0, 0), Vector(0, 1)]
+    e = segment(*pts)
+
+    ps = e.params(pts)
+
+    assert ps[0] == approx(0)
+    assert ps[1] == approx(1)
+
+
+def test_edge_tangets():
+
+    e = circle(1)
+
+    tgts = e.tangents([0, 1], mode="length")
+
+    assert (tgts[0] - Vector(0, 1, 0)).Length == approx(0)
+    assert (tgts[0] - tgts[1]).Length == approx(0)
+
+    tgts = e.tangents([0, pi], mode="parameter")
+
+    assert (tgts[1] - Vector(0, -1, 0)).Length == approx(0)
+    assert (tgts[0] - tgts[1]).Length == approx(2)
+
+
 def test_isSolid():
 
     s = box(1, 1, 1)
