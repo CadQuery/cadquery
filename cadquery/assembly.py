@@ -233,6 +233,41 @@ class Assembly(object):
 
         return self
 
+    def remove(self, name: str) -> "Assembly":
+        """
+        Remove a part/subassembly from the current assembly.
+
+        :param name: Name of the part/subassembly to be removed
+        :return: The modified assembly
+
+        *NOTE* This method can cause problems with deeply nested assemblies and does not remove
+        constraints associated with the removed part/subassembly.
+        """
+
+        # Make sure the part/subassembly is actually part of the assembly
+        if name not in self.objects:
+            raise ValueError(f"No object with name '{name}' found in the assembly")
+
+        # Get the part/assembly to be removed
+        to_remove = self.objects[name]
+
+        # Remove the part/assembly from the parent's children list
+        if to_remove.parent:
+            to_remove.parent.children.remove(to_remove)
+
+        # Remove the part/assembly from the assembly's object dictionary
+        del self.objects[name]
+
+        # Remove all descendants from the objects dictionary
+        for descendant_name in to_remove._flatten().keys():
+            if descendant_name in self.objects:
+                del self.objects[descendant_name]
+
+        # Update the parent reference
+        to_remove.parent = None
+
+        return self
+
     def _query(self, q: str) -> Tuple[str, Optional[Shape]]:
         """
         Execute a selector query on the assembly.
