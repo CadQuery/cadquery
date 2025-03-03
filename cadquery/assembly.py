@@ -11,7 +11,7 @@ from typing import (
     cast,
     get_args,
 )
-from typing_extensions import Literal
+from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
 
@@ -79,7 +79,6 @@ def _define_grammar():
 
 _grammar = _define_grammar()
 
-
 class Assembly(object):
     """Nested assembly of Workplane and Shape objects defining their relative positions."""
 
@@ -140,7 +139,7 @@ class Assembly(object):
 
         self._solve_result = None
 
-    def _copy(self) -> "Assembly":
+    def _copy(self) -> Self:
         """
         Make a deep copy of an assembly
         """
@@ -164,7 +163,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Add a subassembly to the current assembly.
 
@@ -186,7 +185,7 @@ class Assembly(object):
         name: Optional[str] = None,
         color: Optional[Color] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Add a subassembly to the current assembly with explicit location and name.
 
@@ -299,11 +298,11 @@ class Assembly(object):
     @overload
     def constrain(
         self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     @overload
-    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> "Assembly":
+    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> Self:
         ...
 
     @overload
@@ -315,13 +314,13 @@ class Assembly(object):
         s2: Shape,
         kind: ConstraintKind,
         param: Any = None,
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     @overload
     def constrain(
         self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     def constrain(self, *args, param=None):
@@ -366,7 +365,7 @@ class Assembly(object):
 
         return self
 
-    def solve(self, verbosity: int = 0) -> "Assembly":
+    def solve(self, verbosity: int = 0) -> Self:
         """
         Solve the constraints.
         """
@@ -461,7 +460,7 @@ class Assembly(object):
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Save assembly to a file.
 
@@ -517,7 +516,7 @@ class Assembly(object):
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Save assembly to a file.
 
@@ -565,8 +564,8 @@ class Assembly(object):
 
         return self
 
-    @staticmethod
-    def importStep(path: str) -> "Assembly":
+    @classmethod
+    def importStep(cls, path: str) -> Self:
         """
         Reads an assembly from a STEP file.
 
@@ -574,13 +573,13 @@ class Assembly(object):
         :return: An Assembly object.
         """
 
-        assy = Assembly()
+        assy = cls()
         importStepTopLevel(assy, path)
 
         return assy
 
     @classmethod
-    def load(cls, path: str) -> "Assembly":
+    def load(cls, path: str) -> Self:
 
         raise NotImplementedError
 
