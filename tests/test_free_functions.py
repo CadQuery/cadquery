@@ -409,9 +409,9 @@ def test_operators():
     assert (b1 - b3).Volume() > 0
     assert (b1 * b3).Volume() < 1
 
-    assert len(fuse(b1, b3, 1e-3).Faces()) == 6
-    assert len(cut(b1, b3, 1e-3).Faces()) == 0
-    assert len(intersect(b1, b3, 1e-3).Faces()) == 6
+    assert len(fuse(b1, b3, tol=1e-3).Faces()) == 6
+    assert len(cut(b1, b3, tol=1e-3).Faces()) == 0
+    assert len(intersect(b1, b3, tol=1e-3).Faces()) == 6
 
 
 #%% moved
