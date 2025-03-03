@@ -245,6 +245,7 @@ from OCP.BOPAlgo import (
     BOPAlgo_BOP,
     BOPAlgo_FUSE,
     BOPAlgo_CUT,
+    BOPAlgo_COMMON,
 )
 
 from OCP.IFSelect import IFSelect_ReturnStatus
@@ -5578,7 +5579,7 @@ def setThreads(n: int):
     pool.Init(n)
 
 
-def fuseBOP(
+def fuse(
     s1: Shape, s2: Shape, *shapes: Shape, tol: float = 0.0, glue: GlueLiteral = None,
 ) -> Shape:
     """
@@ -5592,17 +5593,17 @@ def fuseBOP(
     _set_builder_options(builder, tol)
 
     builder.AddArgument(s1.wrapped)
-    builder.AddArgument(s2.wrapped)
+    builder.AddTool(s2.wrapped)
 
     for s in shapes:
-        builder.AddArgument(s.wrapped)
+        builder.AddTool(s.wrapped)
 
     builder.Perform()
 
     return _compound_or_shape(builder.Shape())
 
 
-def cutBOP(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Shape:
+def cut(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Shape:
     """
     Subtract two shapes.
     """
@@ -5621,35 +5622,23 @@ def cutBOP(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> 
     return _compound_or_shape(builder.Shape())
 
 
-def fuse(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
-    """
-    Fuse two shapes.
-    """
-
-    builder = BRepAlgoAPI_Fuse()
-    _bool_op(s1, s2, builder, tol)
-
-    return _compound_or_shape(builder.Shape())
-
-
-def cut(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+def intersect(
+    s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None
+) -> Shape:
     """
     Subtract two shapes.
     """
 
-    builder = BRepAlgoAPI_Cut()
-    _bool_op(s1, s2, builder, tol)
+    builder = BOPAlgo_BOP()
+    builder.SetOperation(BOPAlgo_COMMON)
 
-    return _compound_or_shape(builder.Shape())
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
 
+    builder.AddArgument(s1.wrapped)
+    builder.AddTool(s2.wrapped)
 
-def intersect(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
-    """
-    Intersect two shapes.
-    """
-
-    builder = BRepAlgoAPI_Common()
-    _bool_op(s1, s2, builder, tol)
+    builder.Perform()
 
     return _compound_or_shape(builder.Shape())
 
