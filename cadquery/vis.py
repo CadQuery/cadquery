@@ -41,6 +41,7 @@ from vtkmodules.vtkIOImage import vtkPNGWriter
 
 
 DEFAULT_COLOR = (1, 0.8, 0)
+DEFAULT_EDGE_COLOR = (0, 0, 0)
 DEFAULT_PT_SIZE = 7.5
 DEFAULT_PT_COLOR = "darkviolet"
 DEFAULT_CTRL_PT_COLOR = "crimson"
@@ -168,6 +169,9 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkAssembly:
 def _to_vtk_shapes(
     obj: List[ShapeLike],
     color: Tuple[float, float, float] = DEFAULT_COLOR,
+    edgecolor: Tuple[float, float, float] = DEFAULT_EDGE_COLOR,
+    edges: bool = True,
+    linewidth: float = 2,
     alpha: float = 1,
     tolerance: float = 1e-3,
 ) -> vtkAssembly:
@@ -175,7 +179,13 @@ def _to_vtk_shapes(
     Convert Shapes to vtkAssembly.
     """
 
-    return toVTKAssy(_to_assy(*obj, color=color, alpha=alpha), tolerance=tolerance)
+    return toVTKAssy(
+        _to_assy(*obj, color=color, alpha=alpha),
+        edgecolor=(*edgecolor, 1),
+        edges=edges,
+        linewidth=linewidth,
+        tolerance=tolerance,
+    )
 
 
 def ctrlPts(
@@ -290,15 +300,17 @@ def style(
     obj: Showable,
     scale: float = 0.2,
     alpha: float = 1,
-    tolerance: float = 1e-3,
-    edges: bool = False,
+    tolerance: float = 1e-2,
+    edges: bool = True,
+    mesh: bool = False,
     specular: bool = True,
     markersize: float = 5,
     linewidth: float = 2,
     spheres: bool = False,
     tubes: bool = False,
     color: str = "gold",
-    edgecolor: str = "blue",
+    edgecolor: str = "black",
+    meshcolor: str = "lightgrey",
     vertexcolor: str = "cyan",
     **kwargs,
 ) -> Union[vtkActor, vtkAssembly]:
@@ -309,13 +321,13 @@ def style(
     # styling functions
     def _apply_style(actor):
         props = actor.GetProperty()
-        props.SetEdgeColor(vtkNamedColors().GetColor3d(edgecolor))
+        props.SetEdgeColor(vtkNamedColors().GetColor3d(meshcolor))
         props.SetVertexColor(vtkNamedColors().GetColor3d(vertexcolor))
         props.SetPointSize(markersize)
         props.SetLineWidth(linewidth)
         props.SetRenderPointsAsSpheres(spheres)
         props.SetRenderLinesAsTubes(tubes)
-        props.SetEdgeVisibility(edges)
+        props.SetEdgeVisibility(mesh)
 
         if specular:
             props.SetSpecular(SPECULAR)
@@ -337,6 +349,9 @@ def style(
         rv = _to_vtk_shapes(
             shapes,
             color=vtkNamedColors().GetColor3d(color),
+            edgecolor=vtkNamedColors().GetColor3d(edgecolor),
+            edges=edges,
+            linewidth=linewidth,
             alpha=alpha,
             tolerance=tolerance,
         )
