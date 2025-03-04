@@ -616,6 +616,43 @@ def test_step_export(nested_assy, tmp_path_factory):
     assert pytest.approx(c2.toTuple()) == (0, 4, 0)
 
 
+def test_step_import(tmp_path_factory):
+    """
+    Exports a simple assembly to step with locations and colors and ensures that information is
+    preserved when the assembly is re-imported from the step file.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    metadata_path = os.path.join(tmpdir, "metadata.step")
+
+    # Assembly with all the metadata added that needs to be read by the STEP importer
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    cube_2 = cq.Workplane().box(15, 15, 15)
+    assy = cq.Assembly()
+    assy.add(cube_1, name="cube_1", color=cq.Color(1.0, 0.0, 0.0))
+    assy.add(
+        cube_2,
+        name="cube_2",
+        color=cq.Color(0.0, 1.0, 0.0),
+        loc=cq.Location((15, 15, 15)),
+    )
+    exportAssembly(assy, metadata_path)
+
+    assy = cq.Assembly.importStep(path=metadata_path)
+
+    # Make sure that there are the correct number of parts in the assembly
+    assert len(assy.children) == 2
+
+    # Make sure that the colors are correct
+    assert assy.children[0].color == cq.Color(1.0, 0.0, 0.0)
+    assert assy.children[1].color == cq.Color(0.0, 1.0, 0.0)
+
+    # Make sure that the locations are correct
+    assert assy.children[0].loc.toTuple()[0] == (0, 0, 0)
+    assert assy.children[1].loc.toTuple()[0] == (15, 15, 15)
+
+
 @pytest.mark.parametrize(
     "assy_fixture, expected",
     [
