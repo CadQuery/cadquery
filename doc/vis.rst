@@ -92,8 +92,29 @@ camera position and windows size.
 
     show(b, width=800, height=800, screenshot='img.png', zoom=2, roll=-20, elevation=-30, interact=False)
 
-NB: intermittent issues were observed with this functionality, please submit detailed bug reports in case
-of problems.
+
+.. warning::
+    Intermittent issues were observed with this functionality, please submit detailed bug reports in case
+    of problems.
+
+Sometimes it is desirable to control the camera position precisely. This can be achieved as follows.
+
+.. code-block:: python
+
+    from cadquery.vis import show
+    from cadquery.func import torus
+
+    R = 10
+    r = 1
+    h = 2
+
+    t = torus(R, r)
+
+    show(t, position=(R, -R, R/h), roll=-45, zoom=0.9)
+
+
+..  image:: _static/show_camera_position.png
+
 
 Control points
 ==============
@@ -120,8 +141,35 @@ Control points
 ..  image:: _static/ctrl_pts.png
 
 Note that for some geometries explicit conversion to spline representation might be needed.
-:meth:`~cadquery.Shape.toSplines` performs approximate conversion and :meth:`~cadquery.vis.toNURBS`
+:meth:`~cadquery.Shape.toSplines` performs approximate conversion and :meth:`~cadquery.Shape.toNURBS`
 performs exact one.
+
+
+Styling
+=======
+
+Fine-grained control of the appearance of every item can be achieved using :meth:`~cadquery.vis.style`. 
+
+.. code-block:: python
+
+    from cadquery.vis import *
+    from cadquery.func import *
+
+    show(
+        style(
+            torus(10, 2),
+            color="crimson",
+            tubes=True,
+            linewidth=5,
+            mesh=True,
+            meshcolor="blue",
+            tolerance=0.1,
+        ),
+        style(box(3, 3, 3), color="green", markersize=0.1, alpha=0.5),
+    )
+
+
+..  image:: _static/show_styling.png
 
 
 Jupyter/JupterLab
