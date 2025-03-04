@@ -104,10 +104,7 @@ def exportAssembly(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportMetaStep(
-    assy: AssemblyProtocol,
-    path: str,
-) -> bool:
+def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
     """
     Export an assembly to a STEP file with faces tagged with names and colors. This is done as a
     separate method from the main STEP export because this is not compatible with the fused mode
