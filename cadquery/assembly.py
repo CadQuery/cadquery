@@ -96,6 +96,11 @@ class Assembly(object):
 
     _solve_result: Optional[Dict[str, Any]]
 
+    # Allows metadata to be stored for exports
+    _subshape_names: dict[Shape, str]
+    _subshape_colors: dict[Shape, Color]
+    _subshape_layers: dict[Shape, str]
+
     def __init__(
         self,
         obj: AssemblyObjects = None,
@@ -138,6 +143,10 @@ class Assembly(object):
         self.objects = {self.name: self}
 
         self._solve_result = None
+
+        self._subshape_names = {}
+        self._subshape_colors = {}
+        self._subshape_layers = {}
 
     def _copy(self) -> "Assembly":
         """
@@ -685,3 +694,57 @@ class Assembly(object):
         from .occ_impl.jupyter_tools import display
 
         return display(self)._repr_javascript_()
+
+    @overload
+    def addSubshape(self, s: Shape, name: str) -> "Assembly":
+        """
+        Handles name data for subshapes.
+
+        :param s: The subshape to add metadata to.
+        :param name: The name to assign to the subshape.
+        :return: The modified assembly.
+        """
+        ...
+
+    @overload
+    def addSubshape(self, s: Shape, color: Color) -> "Assembly":
+        """
+        Handles color data for subshapes.
+
+        :param s: The subshape to add metadata to.
+        :param color: The color to assign to the subshape.
+        :return: The modified assembly
+        """
+        ...
+
+    @overload
+    def addSubshape(self, s: Shape, layer: str) -> "Assembly":
+        """
+        Handles layer data for subshapes.
+
+        :param s: The subshape to add metadata to.
+        :param layer: The layer to assign to the subshape.
+        :return: The modified assembly.
+        """
+        ...
+
+    def addSubshape(
+        self, s: Shape, name: str = None, color: Color = None, layer: str = None
+    ) -> "Assembly":
+        """
+        Handles name, color and layer metadata for subshapes.
+
+        :param s: The subshape to add metadata to.
+        :param name: The name to assign to the subshape.
+        :param color: The color to assign to the subshape.
+        :param layer: The layer to assign to the subshape.
+        :return: The modified assembly.
+        """
+
+        # Handle any metadata we were passed
+        if name:
+            self._subshape_names[s] = name
+        if color:
+            self._subshape_colors[s] = color
+        if layer:
+            self._subshape_layers[s] = layer

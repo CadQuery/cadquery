@@ -622,6 +622,7 @@ def test_meta_step_export(tmp_path_factory):
     Tests that an assembly can be exported to a STEP file with faces tagged with names and colors,
     and layers added.
     """
+
     # Use a temporary directory
     tmpdir = tmp_path_factory.mktemp("out")
     meta_path = os.path.join(tmpdir, "meta.step")
@@ -639,15 +640,19 @@ def test_meta_step_export(tmp_path_factory):
     assy.add(cube_1, name="cube_1", color=(0, 0, 1.0))
     assy.add(cube_2, name="cube_2", color=(0, 1.0, 0), loc=cq.Location((10, 10, 10)))
 
-    # Create the metadata to help test the export
-    names = {face_1: "cube_1_top_face", face_2: "cube_2_bottom_face"}
-    colors = {face_1: (1.0, 0, 0), face_2: (0, 0.0, 1.0)}
-    layers = {face_1: "cube_1_top_face", face_2: "cube_2_bottom_face"}
+    # Test subshape name metadata
+    assy.addSubshape(face_1, name="cube_1_top_face")
+    assy.addSubshape(face_2, name="cube_2_bottom_face")
 
-    # Export the step file
-    success = exportMetaStep(assy, meta_path, names, colors, layers)
+    # Test subshape color metadata
+    assy.addSubshape(face_1, color=(1.0, 0, 0))
+    assy.addSubshape(face_2, color=(0, 0.0, 1.0))
 
-    # Make sure there was no error while writing the file
+    # Test subshape layer metadata
+    assy.addSubshape(face_1, layer="cube_1_top_face")
+    assy.addSubshape(face_2, layer="cube_2_bottom_face")
+
+    success = exportMetaStep(assy, meta_path)
     assert success
 
     # Make sure the step file exists
