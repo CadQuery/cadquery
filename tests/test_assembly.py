@@ -1705,3 +1705,101 @@ def test_step_export_filesize(tmpdir):
         filesize[i] = stepfile.stat().st_size
 
     assert filesize[1] < 1.2 * filesize[0]
+
+
+def test_assembly_remove_no_name_match():
+    """
+    Tests to make sure that removing a part/subassembly with a name that does not exist fails.
+    """
+
+    assy = cq.Assembly()
+    assy.add(box(1, 1, 1), name="part1")
+    assy.add(box(2, 2, 2), name="part2")
+
+    with pytest.raises(ValueError):
+        assy.remove("part3")
+
+
+def test_assembly_remove_part():
+    """
+    Tests the ability to remove a part from an assembly.
+    """
+    assy = cq.Assembly()
+    assy.add(box(1, 1, 1), name="part1")
+    assy.add(box(2, 2, 2), name="part2", loc=cq.Location(5.0, 5.0, 5.0))
+
+    # Make sure we have the correct number of children (2 parts)
+    assert len(assy.children) == 2
+    assert len(assy.objects) == 3
+
+    # Remove the first part
+    assy.remove("part1")
+
+    # Make sure we have the correct number of children (1 part)
+    assert len(assy.children) == 1
+    assert len(assy.objects) == 2
+
+
+def test_assembly_remove_subassy():
+    """
+    Tests the ability to remove a subassembly from an assembly.
+    """
+
+    # Create the top-level assembly
+    assy = cq.Assembly()
+    assy.add(box(1, 1, 1), name="loplevel_part1")
+
+    # Create the subassembly
+    subassy = cq.Assembly()
+    subassy.add(box(1, 1, 1), name="part1")
+    subassy.add(box(2, 2, 2), name="part2", loc=cq.Location(5.0, 5.0, 5.0))
+
+    # Add the subassembly to the top-level assembly
+    assy.add(subassy, name="subassy")
+
+    # Make sure we have the 1 top-level part and the subassembly
+    assert len(assy.children) == 2
+    assert len(assy.objects) == 5
+
+    # Remove the subassembly
+    assy.remove("subassy")
+
+    # Make sure we have the correct number of children (1 part)
+    assert len(assy.children) == 1
+    assert len(assy.objects) == 2
+
+    # Recreate the assembly with a nested subassembly
+    assy = cq.Assembly()
+    assy.add(box(1, 1, 1), name="loplevel_part1")
+    subassy = cq.Assembly()
+    subassy.add(box(1, 1, 1), name="part1")
+    subassy.add(box(2, 2, 2), name="part2", loc=cq.Location(2.0, 2.0, 2.0))
+    assy.add(subassy, name="subassy")
+
+    # Try to remove a part from a subassembly by using the path string
+    assert len(assy.children[1].children) == 2
+    assy.remove("subassy/part2")
+    assert len(assy.children[1].children) == 1
+
+
+def test_remove_without_parent():
+    """
+    Tests the ability to remove a part from an assembly when the part has no parent.
+    This may never happen in practice, but the case has to be covered for mypy to pass.
+    """
+
+    # Create a root assembly
+    assy = cq.Assembly(name="root")
+
+    # Create a part and add it to the assembly
+    part = cq.Workplane().box(1, 1, 1)
+    assy.add(part, name="part")
+
+    # Artificially remove the parent to cover a branching test case
+    assy.children[0].parent = None
+
+    # Remove the part
+    assy.remove("part")
+
+    assert len(assy.children) == 1
+    assert len(assy.objects) == 1

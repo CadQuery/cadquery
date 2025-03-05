@@ -102,7 +102,7 @@ Sometimes it is desirable to control the camera position precisely. This can be 
 .. code-block:: python
 
     from cadquery.vis import show
-    from cadquery.func import box
+    from cadquery.func import torus
 
     R = 10
     r = 1
@@ -159,9 +159,10 @@ Fine-grained control of the appearance of every item can be achieved using :meth
         style(
             torus(10, 2),
             color="crimson",
-            edges=True,
             tubes=True,
             linewidth=5,
+            mesh=True,
+            meshcolor="blue",
             tolerance=0.1,
         ),
         style(box(3, 3, 3), color="green", markersize=0.1, alpha=0.5),

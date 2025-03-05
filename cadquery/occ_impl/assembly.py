@@ -290,6 +290,9 @@ def _loc2vtk(
 def toVTKAssy(
     assy: AssemblyProtocol,
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
+    edgecolor: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
+    edges: bool = True,
+    linewidth: float = 2,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ) -> vtkAssembly:
@@ -344,8 +347,10 @@ def toVTKAssy(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
-        actor.GetProperty().SetColor(0, 0, 0)
-        actor.GetProperty().SetLineWidth(2)
+        actor.GetProperty().SetLineWidth(linewidth)
+        actor.SetVisibility(edges)
+        actor.GetProperty().SetColor(*edgecolor[:3])
+        actor.GetProperty().SetLineWidth(edgecolor[3])
 
         rv.AddPart(actor)
 
@@ -409,8 +414,6 @@ def toVTK(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
-        actor.GetProperty().SetColor(0, 0, 0)
-        actor.GetProperty().SetLineWidth(2)
 
         renderer.AddActor(actor)
 
