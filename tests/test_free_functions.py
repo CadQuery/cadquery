@@ -45,6 +45,8 @@ from cadquery.occ_impl.shapes import (
     check,
     Vector,
     closest,
+    imprint,
+    setThreads,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -409,9 +411,47 @@ def test_operators():
     assert (b1 - b3).Volume() > 0
     assert (b1 * b3).Volume() < 1
 
-    assert len(fuse(b1, b3, 1e-3).Faces()) == 6
-    assert len(cut(b1, b3, 1e-3).Faces()) == 0
-    assert len(intersect(b1, b3, 1e-3).Faces()) == 6
+    assert len(fuse(b1, b3, tol=1e-3).Faces()) == 6
+    assert len(cut(b1, b3, tol=1e-3).Faces()) == 0
+    assert len(intersect(b1, b3, tol=1e-3).Faces()) == 6
+
+
+def test_imprint():
+
+    b1 = box(1, 1, 1)
+    b2 = b1.moved(x=1)
+    b3 = box(0.5, 0.5, 0.5).moved(x=0.75)
+
+    res = imprint(b1, b2)
+
+    assert len(res.Faces()) == len(compound(b1, b2).Faces()) - 1
+
+    res_glue_full = imprint(b1, b2, glue="full")
+
+    assert len(res_glue_full.Faces()) == len(compound(b1, b2).Faces()) - 1
+
+    history = dict(b1=b1, b3=b3)
+    res_glue_partial = imprint(b1, b3, glue="partial", history=history)
+
+    b1_imp = history["b1"]
+    b3_imp = history[b3]
+
+    assert len(b1_imp.Faces()) == len(b1.Faces()) + 1
+    assert len(res_glue_partial.Faces()) == len(b1_imp.Faces() + b3_imp.Faces()) - 1
+
+
+def test_setThreads():
+
+    # smoke test for now
+    setThreads(5)
+
+
+def test_fuse_multi():
+
+    b = box(1, 1, 1)
+    res = fuse(b, b.moved(x=0.1), b.moved(x=0.2))
+
+    assert len(res.Solids()) == 1
 
 
 #%% moved
