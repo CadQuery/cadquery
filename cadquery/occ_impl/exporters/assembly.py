@@ -147,9 +147,9 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
         """
         for child in assy.children:
             # We combine these because the metadata could be stored at the parent or child level
-            combined_names = {**assy._subshape_names, **child._subshape_names}
-            combined_colors = {**assy._subshape_colors, **child._subshape_colors}
-            combined_layers = {**assy._subshape_layers, **child._subshape_layers}
+            combined_names = {**assy.subshape_names, **child.subshape_names}
+            combined_colors = {**assy.subshape_colors, **child.subshape_colors}
+            combined_layers = {**assy.subshape_layers, **child.subshape_layers}
 
             # for shape, name, loc, color in assy:
             for shape in child.shapes:
@@ -158,11 +158,10 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
                 shape_tool.SetShape(shape_label, shape.wrapped)
 
                 # Include the name and color of the part within the assembly
-                color_tool.SetColor(
-                    shape_label,
-                    Color(child.color[0], child.color[1], child.color[2]).wrapped,
-                    XCAFDoc_ColorGen,
-                )
+                if child.color:
+                    color_tool.SetColor(
+                        shape_label, child.color.wrapped, XCAFDoc_ColorGen,
+                    )
                 TDataStd_Name.Set_s(
                     shape_label, TCollection_ExtendedString(child.name.split("/")[-1])
                 )
@@ -173,9 +172,9 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
                     or len(combined_colors) > 0
                     or len(combined_layers) > 0
                 ):
-                    names = assy._subshape_names
-                    colors = assy._subshape_colors
-                    layers = assy._subshape_layers
+                    names = assy.subshape_names
+                    colors = assy.subshape_colors
+                    layers = assy.subshape_layers
 
                     # Step through every face in the shape, and see if any metadata needs to be attached to it
                     for face in shape.Faces():
@@ -200,7 +199,7 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
                                     color = colors[face]
                                     color_tool.SetColor(
                                         face_label,
-                                        Color(*color).wrapped,
+                                        Color(*color.toTuple()).wrapped,
                                         XCAFDoc_ColorGen,
                                     )
 
@@ -217,7 +216,7 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
                                 )
 
             # Handle any subassemblies
-            if len(child.children) > 0:
+            if len(tuple(child.children)) > 0:
                 _process_child(child)
 
     _process_child(assy)

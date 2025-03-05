@@ -637,16 +637,18 @@ def test_meta_step_export(tmp_path_factory):
 
     # Create a simple assembly
     assy = cq.Assembly(name="cubes")
-    assy.add(cube_1, name="cube_1", color=(0, 0, 1.0))
-    assy.add(cube_2, name="cube_2", color=(0, 1.0, 0), loc=cq.Location((10, 10, 10)))
+    assy.add(cube_1, name="cube_1", color=cq.Color(0, 0, 1.0))
+    assy.add(
+        cube_2, name="cube_2", color=cq.Color(0, 1.0, 0), loc=cq.Location((10, 10, 10))
+    )
 
     # Test subshape name metadata
     assy.addSubshape(face_1, name="cube_1_top_face")
     assy.addSubshape(face_2, name="cube_2_bottom_face")
 
     # Test subshape color metadata
-    assy.addSubshape(face_1, color=(1.0, 0, 0))
-    assy.addSubshape(face_2, color=(0, 0.0, 1.0))
+    assy.addSubshape(face_1, color=cq.Color(1.0, 0, 0))
+    assy.addSubshape(face_2, color=cq.Color(0, 0.0, 1.0))
 
     # Test subshape layer metadata
     assy.addSubshape(face_1, layer="cube_1_top_face")

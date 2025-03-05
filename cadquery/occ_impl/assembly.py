@@ -159,6 +159,18 @@ class AssemblyProtocol(Protocol):
     def children(self) -> Iterable["AssemblyProtocol"]:
         ...
 
+    @property
+    def subshape_names(self) -> Dict[Shape, str]:
+        ...
+
+    @property
+    def subshape_colors(self) -> Dict[Shape, Color]:
+        ...
+
+    @property
+    def subshape_layers(self) -> Dict[Shape, str]:
+        ...
+
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 
