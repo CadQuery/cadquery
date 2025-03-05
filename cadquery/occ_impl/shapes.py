@@ -1891,16 +1891,9 @@ class Mixin1D(object):
         u = proj.LowerDistanceParameter()
         us.append(u)
 
-        ext = Extrema_LocateExtPC()
-        ext.Initialize(curve, umin, umax, tol)
-
         for pt in it:
-            ext.Perform(pt.toPnt(), u)
-            if ext.IsDone():
-                u = ext.Point().Parameter()
-            else:
-                proj.Perform(pt.toPnt())
-                u = proj.LowerDistanceParameter()
+            proj.Perform(pt.toPnt())
+            u = proj.LowerDistanceParameter()
 
             us.append(u)
 

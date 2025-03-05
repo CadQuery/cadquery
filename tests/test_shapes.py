@@ -12,7 +12,7 @@ from cadquery.occ_impl.shapes import (
     torus,
     cylinder,
     ellipse,
-    closest,
+    spline,
 )
 
 from pytest import approx, raises
@@ -110,13 +110,16 @@ def test_face_positions():
 
 def test_edge_params():
 
-    pts = [Vector(0, 0), Vector(0, 1)]
-    e = segment(*pts)
+    e = spline([(0, 0), (1, 0), (1, 1), (2, 0), (2, -1)], periodic=True)
+    N = 5
+
+    pts_orig = e.sample(N)[0]
+    pts = [pt + Vector(0, 0, 1e-1) for pt in pts_orig]
 
     ps = e.params(pts)
 
-    assert ps[0] == approx(0)
-    assert ps[1] == approx(1)
+    for i in range(N):
+        assert (e.positionAt(ps[i], mode="parameter") - pts_orig[i]).Length == approx(0)
 
 
 def test_edge_tangets():
