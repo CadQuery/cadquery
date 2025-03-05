@@ -304,8 +304,6 @@ from OCP.Adaptor3d import Adaptor3d_IsoCurve, Adaptor3d_Curve
 
 from OCP.GeomAdaptor import GeomAdaptor_Surface
 
-from OCP.Extrema import Extrema_LocateExtPC
-
 from OCP.OSD import OSD_ThreadPool
 
 from math import pi, sqrt, inf, radians, cos
