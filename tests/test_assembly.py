@@ -11,6 +11,7 @@ from pytest import approx
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
     exportAssembly,
+    exportMetaStep,
     exportCAF,
     exportVTKJS,
     exportVRML,
@@ -615,6 +616,98 @@ def test_step_export(nested_assy, tmp_path_factory):
     c2 = cq.Compound.makeCompound(o.solids().vals()).Center()
     assert pytest.approx(c2.toTuple()) == (0, 4, 0)
 
+
+def test_meta_step_export(tmp_path_factory):
+    """
+    Tests that an assembly can be exported to a STEP file with faces tagged with names and colors,
+    and layers added.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    meta_path = os.path.join(tmpdir, "meta.step")
+
+    # Simple cubes for the top-level assembly
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    cube_2 = cq.Workplane().box(5, 5, 5)
+
+    # Find a face on each part to attach the metadata to for the top-level
+    face_1 = cube_1.faces(">Z").val()
+    face_2 = cube_2.faces("<Z").val()
+
+    # Cubes for the nested assembly
+    cube_3_nested = cq.Workplane().box(10, 10, 10)
+    cube_4_nested = cq.Workplane().box(5, 5, 5)
+
+    # Find a face on each part to attach the metadata to for the nested assembly
+    face_3_nested = cube_3_nested.faces(">X").val()
+    face_4_nested = cube_4_nested.faces("<X").val()
+
+    # Create a nested assembly
+    nested_assy = cq.Assembly(name="nested")
+    nested_assy.add(cube_3_nested, name="cube_3", color=cq.Color(1.0, 0, 1.0))
+    nested_assy.add(
+        cube_4_nested, name="cube_4", color=cq.Color(0.5, 1.0, 0.5), loc=cq.Location((10, 10, 10))
+    )
+
+    # Test nested subshape name and color metadata
+    nested_assy.addSubshape(face_3_nested, name="cube_3_right_face")
+    nested_assy.addSubshape(face_4_nested, name="cube_4_left_face")
+    nested_assy.addSubshape(face_3_nested, color=cq.Color(1.0, 1.0, 0.0))
+    nested_assy.addSubshape(face_4_nested, color=cq.Color(0.0, 1.0, 1.0))
+
+    # Create a simple assembly
+    assy = cq.Assembly(name="cubes")
+    assy.add(cube_1, name="cube_1", color=cq.Color(0, 0, 1.0))
+    assy.add(
+        cube_2, name="cube_2", color=cq.Color(0, 1.0, 0), loc=cq.Location((10, 10, 10))
+    )
+    assy.add(nested_assy, name="nested", loc=cq.Location((20, 20, 20)))
+
+    # Test subshape name metadata
+    assy.addSubshape(face_1, name="cube_1_top_face")
+    assy.addSubshape(face_2, name="cube_2_bottom_face")
+
+    # Test subshape color metadata
+    assy.addSubshape(face_1, color=cq.Color(1.0, 0, 0))
+    assy.addSubshape(face_2, color=cq.Color(0, 0.0, 1.0))
+
+    # Test subshape layer metadata
+    assy.addSubshape(face_1, layer="cube_1_top_face")
+    assy.addSubshape(face_2, layer="cube_2_bottom_face")
+
+    # Test nested subshape name and color metadata
+    assy.children[2].addSubshape(face_3_nested, name="cube_3_right_face")
+    assy.children[2].addSubshape(face_4_nested, name="cube_4_left_face")
+    assy.children[2].addSubshape(face_3_nested, color=cq.Color(1.0, 1.0, 0.0))
+    assy.children[2].addSubshape(face_4_nested, color=cq.Color(0.0, 1.0, 1.0))
+
+    success = exportMetaStep(assy, meta_path)
+    assert success
+
+    # Make sure the step file exists
+    assert os.path.exists(meta_path)
+
+    # Read the contents as a step file as a string so we can check the outputs
+    with open(meta_path, "r") as f:
+        step_contents = f.read()
+
+        # Make sure that the face name strings were applied in ADVACED_FACE entries
+        assert "ADVANCED_FACE('cube_1_top_face'" in step_contents
+        assert "ADVANCED_FACE('cube_2_bottom_face'" in step_contents
+
+        # Make reasonably sure that the colors were applied to the faces
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('red')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('blue')" in step_contents
+
+        # Make sure that the layers were created
+        assert (
+            "PRESENTATION_LAYER_ASSIGNMENT('cube_1_top_face','visible'" in step_contents
+        )
+        assert (
+            "PRESENTATION_LAYER_ASSIGNMENT('cube_2_bottom_face','visible'"
+            in step_contents
+        )
 
 @pytest.mark.parametrize(
     "assy_fixture, expected",
