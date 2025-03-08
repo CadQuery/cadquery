@@ -14,6 +14,7 @@ from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_StepModelType
 from OCP.IFSelect import IFSelect_ReturnStatus
+from OCP.TDF import TDF_Label
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDocStd import TDocStd_Document
 from OCP.XCAFApp import XCAFApp_Application
@@ -104,7 +105,12 @@ def exportAssembly(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
+def exportMetaStep(
+    assy: AssemblyProtocol,
+    path: str,
+    write_pcurves: bool = True,
+    precision_mode: int = 0,
+) -> bool:
     """
     Export an assembly to a STEP file with faces tagged with names and colors. This is done as a
     separate method from the main STEP export because this is not compatible with the fused mode
@@ -124,6 +130,10 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
         See OCCT documentation.
     """
 
+    pcurves = 1
+    if not write_pcurves:
+        pcurves = 0
+
     # Use the assembly name if the user set it
     assembly_name = assy.name if assy.name else str(uuid.uuid1())
 
@@ -138,8 +148,8 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
     layer_tool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
 
     # Create the top level object that will hold all the subassembly parts
-    subassy_label = shape_tool.NewShape()
-    TDataStd_Name.Set_s(subassy_label, TCollection_ExtendedString(assembly_name))
+    assy_label = shape_tool.NewShape()
+    TDataStd_Name.Set_s(assy_label, TCollection_ExtendedString(assembly_name))
 
     def _process_child(assy: AssemblyProtocol):
         """
@@ -155,7 +165,7 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
             for shape in child.shapes:
                 # Add the current shape to the document in a way that allows us to locate it
                 shape_label = shape_tool.NewShape()
-                shape_tool.SetShape(shape_label, shape.wrapped)
+                shape_tool.SetShape(shape_label, shape.wrapped.Located(child.loc.wrapped))
 
                 # Include the name and color of the part within the assembly
                 if child.color:
@@ -172,9 +182,9 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
                     or len(combined_colors) > 0
                     or len(combined_layers) > 0
                 ):
-                    names = assy.subshape_names
-                    colors = assy.subshape_colors
-                    layers = assy.subshape_layers
+                    names = combined_names
+                    colors = combined_colors
+                    layers = combined_layers
 
                     # Step through every face in the shape, and see if any metadata needs to be attached to it
                     for face in shape.Faces():
@@ -210,10 +220,6 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
                                         TCollection_ExtendedString(layer_str)
                                     )
                                     layer_tool.SetLayer(face_label, layer_label)
-                            else:
-                                print(
-                                    f"WARNING: Face {face} did not have its metadata added"
-                                )
 
             # Handle any subassemblies
             if len(tuple(child.children)) > 0:
@@ -231,8 +237,8 @@ def exportMetaStep(assy: AssemblyProtocol, path: str,) -> bool:
     writer.SetColorMode(True)
     writer.SetLayerMode(True)
     writer.SetNameMode(True)
-    # Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
-    # Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
+    Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
+    Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)

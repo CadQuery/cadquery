@@ -695,41 +695,6 @@ class Assembly(object):
 
         return display(self)._repr_javascript_()
 
-    # @overload
-    # def addSubshape(self, s: Shape, name: str) -> "Assembly":
-    #     """
-    #     Handles name data for subshapes.
-
-    #     :param s: The subshape to add metadata to.
-    #     :param name: The name to assign to the subshape.
-    #     :return: The modified assembly.
-    #     """
-    #     ...
-
-    # @overload
-    # def addSubshape(self, s: Shape, color: Color) -> "Assembly":
-    #     """
-    #     Handles color data for subshapes.
-
-    #     :param s: The subshape to add metadata to.
-    #     :param color: The color to assign to the subshape.
-    #     :return: The modified assembly
-    #     """
-    #     self.subshape_colors[s] = color
-
-    #     return self
-
-    # @overload
-    # def addSubshape(self, s: Shape, layer: str) -> "Assembly":
-    #     """
-    #     Handles layer data for subshapes.
-
-    #     :param s: The subshape to add metadata to.
-    #     :param layer: The layer to assign to the subshape.
-    #     :return: The modified assembly.
-    #     """
-    #     ...
-
     def addSubshape(
         self,
         s: Shape,
