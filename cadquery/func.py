@@ -32,6 +32,7 @@ from .occ_impl.shapes import (
     fuse,
     cut,
     intersect,
+    imprint,
     split,
     fill,
     clean,
@@ -45,4 +46,5 @@ from .occ_impl.shapes import (
     loft,
     check,
     closest,
+    setThreads,
 )

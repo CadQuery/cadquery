@@ -12,7 +12,7 @@ from cadquery.occ_impl.shapes import (
     torus,
     cylinder,
     ellipse,
-    closest,
+    spline,
 )
 
 from pytest import approx, raises
@@ -106,6 +106,35 @@ def test_face_positions():
     assert p2.x == approx(0.5)
     assert p2.y == approx(0.5)
     assert p2.z == approx(0)
+
+
+def test_edge_params():
+
+    e = spline([(0, 0), (1, 0), (1, 1), (2, 0), (2, -1)], periodic=True)
+    N = 5
+
+    pts_orig = e.sample(N)[0]
+    pts = [pt + Vector(0, 0, 1e-1) for pt in pts_orig]
+
+    ps = e.params(pts)
+
+    for i in range(N):
+        assert (e.positionAt(ps[i], mode="parameter") - pts_orig[i]).Length == approx(0)
+
+
+def test_edge_tangents():
+
+    e = circle(1)
+
+    tgts = e.tangents([0, 1], mode="length")
+
+    assert (tgts[0] - Vector(0, 1, 0)).Length == approx(0)
+    assert (tgts[0] - tgts[1]).Length == approx(0)
+
+    tgts = e.tangents([0, pi], mode="parameter")
+
+    assert (tgts[1] - Vector(0, -1, 0)).Length == approx(0)
+    assert (tgts[0] - tgts[1]).Length == approx(2)
 
 
 def test_isSolid():
