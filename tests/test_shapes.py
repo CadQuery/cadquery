@@ -122,7 +122,7 @@ def test_edge_params():
         assert (e.positionAt(ps[i], mode="parameter") - pts_orig[i]).Length == approx(0)
 
 
-def test_edge_tangets():
+def test_edge_tangents():
 
     e = circle(1)
 

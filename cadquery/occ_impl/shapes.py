@@ -1830,7 +1830,7 @@ class Mixin1D(object):
 
     def _curve(self: Mixin1DProtocol) -> Geom_Curve:
         """
-        Return the undeerlying curve.
+        Return the underlying curve.
         """
 
         curve = self._geomAdaptor()
@@ -1869,8 +1869,8 @@ class Mixin1D(object):
         """
         Computes u values closest to given vectors.
 
-        :returns: list of u values.
         :param pts: the points to compute the parameters at.
+        :return: list of u values.
         """
 
         us = []
@@ -1925,7 +1925,7 @@ class Mixin1D(object):
         Compute tangent vector at the specified location.
 
         :param locationParam: distance or parameter value (default: 0.5)
-        :param mode: position calculation mode (default: parameter)
+        :param mode: position calculation mode (default: length)
         :return: tangent vector
         """
 
@@ -1950,7 +1950,7 @@ class Mixin1D(object):
         Compute tangent vectors at the specified locations.
 
         :param locations: list of distances or parameters.
-        :param mode: position calculation mode (default: parameter).
+        :param mode: position calculation mode (default: length).
         :return: list of tangent vectors
         """
 
@@ -5617,7 +5617,7 @@ def intersect(
     s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None
 ) -> Shape:
     """
-    Subtract two shapes.
+    Intersect two shapes.
     """
 
     builder = BOPAlgo_BOP()
@@ -5669,7 +5669,7 @@ def imprint(
     if history is not None:
         images = builder.Images()
 
-        # collect shapes presen in the history dict
+        # collect shapes present in the history dict
         for k, v in history.items():
             if isinstance(k, str):
                 history[k] = _compound_or_shape(list(images.Find(v.wrapped)))
