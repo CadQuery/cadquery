@@ -156,6 +156,7 @@ from OCP.Geom import (
     Geom_Surface,
     Geom_Plane,
     Geom_BSplineCurve,
+    Geom_Curve,
 )
 from OCP.Geom2d import Geom2d_Line
 
@@ -238,7 +239,14 @@ from OCP.GeomAbs import (
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Mode
 
-from OCP.BOPAlgo import BOPAlgo_GlueEnum
+from OCP.BOPAlgo import (
+    BOPAlgo_GlueEnum,
+    BOPAlgo_Builder,
+    BOPAlgo_BOP,
+    BOPAlgo_FUSE,
+    BOPAlgo_CUT,
+    BOPAlgo_COMMON,
+)
 
 from OCP.IFSelect import IFSelect_ReturnStatus
 
@@ -296,6 +304,8 @@ from OCP.Adaptor3d import Adaptor3d_IsoCurve, Adaptor3d_Curve
 
 from OCP.GeomAdaptor import GeomAdaptor_Surface
 
+from OCP.OSD import OSD_ThreadPool
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -303,6 +313,7 @@ import warnings
 from ..utils import deprecate
 
 Real = Union[float, int]
+GlueLiteral = Literal["partial", "full", None]
 
 TOLERANCE = 1e-6
 
@@ -1735,6 +1746,9 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     def _approxCurve(self) -> Geom_BSplineCurve:
         ...
 
+    def _curve(self) -> Geom_Curve:
+        ...
+
     def _geomAdaptor(self) -> Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve]:
         ...
 
@@ -1761,6 +1775,9 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     def curvatureAt(
         self, d: float, mode: ParamMode = "length", resolution: float = 1e-6,
     ) -> float:
+        ...
+
+    def paramsLength(self, locations: Iterable[float]) -> List[float]:
         ...
 
 
@@ -1811,6 +1828,20 @@ class Mixin1D(object):
 
         return rv
 
+    def _curve(self: Mixin1DProtocol) -> Geom_Curve:
+        """
+        Return the underlying curve.
+        """
+
+        curve = self._geomAdaptor()
+
+        if isinstance(curve, BRepAdaptor_Curve):
+            rv = curve.Curve().Curve()  # get the underlying curve object
+        else:
+            rv = self._approxCurve()  # approximate the adaptor as a real curve
+
+        return rv
+
     def paramAt(self: Mixin1DProtocol, d: Union[Real, Vector]) -> float:
         """
         Compute parameter value at the specified normalized distance or a point.
@@ -1822,11 +1853,7 @@ class Mixin1D(object):
         curve = self._geomAdaptor()
 
         if isinstance(d, Vector):
-            # handle comp curves (i.e. wire adaptors)
-            if isinstance(curve, BRepAdaptor_Curve):
-                curve_ = curve.Curve().Curve()  # get the underlying curve object
-            else:
-                curve_ = self._approxCurve()  # approximate the adaptor as a real curve
+            curve_ = self._curve()
 
             rv = GeomAPI_ProjectPointOnCurve(
                 d.toPnt(), curve_, curve.FirstParameter(), curve.LastParameter(),
@@ -1838,6 +1865,59 @@ class Mixin1D(object):
 
         return rv
 
+    def params(self: Mixin1DProtocol, pts: Iterable[Vector], tol=1e-6) -> List[float]:
+        """
+        Computes u values closest to given vectors.
+
+        :param pts: the points to compute the parameters at.
+        :return: list of u values.
+        """
+
+        us = []
+
+        curve = self._geomAdaptor()
+        curve_ = self._curve()
+        umin = curve.FirstParameter()
+        umax = curve.LastParameter()
+
+        # get the first point
+        it = iter(pts)
+        pt = next(it)
+
+        proj = GeomAPI_ProjectPointOnCurve(pt.toPnt(), curve_, umin, umax)
+
+        u = proj.LowerDistanceParameter()
+        us.append(u)
+
+        for pt in it:
+            proj.Perform(pt.toPnt())
+            u = proj.LowerDistanceParameter()
+
+            us.append(u)
+
+        return us
+
+    def paramsLength(self: Mixin1DProtocol, locations: Iterable[float]) -> List[float]:
+        """
+        Computes u values at given relative lengths.
+
+        :param locations: list of distances.
+        :returns: list of u values.
+        :param pts: the points to compute the parameters at.
+        """
+
+        us = []
+
+        curve = self._geomAdaptor()
+
+        L = GCPnts_AbscissaPoint.Length_s(curve)
+
+        for d in locations:
+            u = GCPnts_AbscissaPoint(curve, L * d, curve.FirstParameter()).Parameter()
+            us.append(u)
+
+        return us
+
     def tangentAt(
         self: Mixin1DProtocol, locationParam: float = 0.5, mode: ParamMode = "length",
     ) -> Vector:
@@ -1845,7 +1925,7 @@ class Mixin1D(object):
         Compute tangent vector at the specified location.
 
         :param locationParam: distance or parameter value (default: 0.5)
-        :param mode: position calculation mode (default: parameter)
+        :param mode: position calculation mode (default: length)
         :return: tangent vector
         """
 
@@ -1862,6 +1942,35 @@ class Mixin1D(object):
         curve.D1(param, tmp, res)
 
         return Vector(gp_Dir(res))
+
+    def tangents(
+        self: Mixin1DProtocol, locations: Iterable[float], mode: ParamMode = "length",
+    ) -> List[Vector]:
+        """
+        Compute tangent vectors at the specified locations.
+
+        :param locations: list of distances or parameters.
+        :param mode: position calculation mode (default: length).
+        :return: list of tangent vectors
+        """
+
+        curve = self._geomAdaptor()
+        params: Iterable[float]
+
+        if mode == "length":
+            params = self.paramsLength(locations)
+        else:
+            params = locations
+
+        rv = []
+        tmp = gp_Pnt()
+        res = gp_Vec()
+
+        for param in params:
+            curve.D1(param, tmp, res)
+            rv.append(Vector(gp_Dir(res)))
+
+        return rv
 
     def normal(self: Mixin1DProtocol) -> Vector:
         """
@@ -5432,46 +5541,142 @@ def _bool_op(
     builder.Build()
 
 
-def fuse(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+def _set_glue(builder: BOPAlgo_Builder, glue: GlueLiteral):
+
+    if glue:
+        builder.SetGlue(
+            BOPAlgo_GlueEnum.BOPAlgo_GlueFull
+            if glue == "full"
+            else BOPAlgo_GlueEnum.BOPAlgo_GlueShift
+        )
+
+
+def _set_builder_options(builder: BOPAlgo_Builder, tol: float):
+
+    builder.SetRunParallel(True)
+    builder.SetUseOBB(True)
+    builder.SetNonDestructive(True)
+
+    if tol:
+        builder.SetFuzzyValue(tol)
+
+
+def setThreads(n: int):
     """
-    Fuse two shapes.
+    Set number of threads to be used by boolean operations.
     """
 
-    builder = BRepAlgoAPI_Fuse()
-    _bool_op(s1, s2, builder, tol)
+    pool = OSD_ThreadPool.DefaultPool_s()
+    pool.Init(n)
+
+
+def fuse(
+    s1: Shape, s2: Shape, *shapes: Shape, tol: float = 0.0, glue: GlueLiteral = None,
+) -> Shape:
+    """
+    Fuse at least two shapes.
+    """
+
+    builder = BOPAlgo_BOP()
+    builder.SetOperation(BOPAlgo_FUSE)
+
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
+
+    builder.AddArgument(s1.wrapped)
+    builder.AddTool(s2.wrapped)
+
+    for s in shapes:
+        builder.AddTool(s.wrapped)
+
+    builder.Perform()
 
     return _compound_or_shape(builder.Shape())
 
 
-def cut(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+def cut(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Shape:
     """
     Subtract two shapes.
     """
 
-    builder = BRepAlgoAPI_Cut()
-    _bool_op(s1, s2, builder, tol)
+    builder = BOPAlgo_BOP()
+    builder.SetOperation(BOPAlgo_CUT)
+
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
+
+    builder.AddArgument(s1.wrapped)
+    builder.AddTool(s2.wrapped)
+
+    builder.Perform()
 
     return _compound_or_shape(builder.Shape())
 
 
-def intersect(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+def intersect(
+    s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None
+) -> Shape:
     """
     Intersect two shapes.
     """
 
-    builder = BRepAlgoAPI_Common()
-    _bool_op(s1, s2, builder, tol)
+    builder = BOPAlgo_BOP()
+    builder.SetOperation(BOPAlgo_COMMON)
+
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
+
+    builder.AddArgument(s1.wrapped)
+    builder.AddTool(s2.wrapped)
+
+    builder.Perform()
 
     return _compound_or_shape(builder.Shape())
 
 
-def split(s1: Shape, s2: Shape) -> Shape:
+def split(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
     """
     Split one shape with another.
     """
 
     builder = BRepAlgoAPI_Splitter()
-    _bool_op(s1, s2, builder)
+    _bool_op(s1, s2, builder, tol)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def imprint(
+    *shapes: Shape,
+    tol: float = 0.0,
+    glue: GlueLiteral = "full",
+    history: Optional[Dict[Union[Shape, str], Shape]] = None,
+) -> Shape:
+    """
+    Imprint arbitrary number of shapes.
+    """
+
+    builder = BOPAlgo_Builder()
+
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
+
+    for s in shapes:
+        builder.AddArgument(s.wrapped)
+
+    builder.Perform()
+
+    # fill history if provided
+    if history is not None:
+        images = builder.Images()
+
+        # collect shapes present in the history dict
+        for k, v in history.items():
+            if isinstance(k, str):
+                history[k] = _compound_or_shape(list(images.Find(v.wrapped)))
+
+        # store all top-level shape relations
+        for s in shapes:
+            history[s] = _compound_or_shape(list(images.Find(s.wrapped)))
 
     return _compound_or_shape(builder.Shape())
 
