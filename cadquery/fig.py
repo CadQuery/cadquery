@@ -1,3 +1,7 @@
+import asyncio
+
+from typing import Any, cast
+
 from trame.app import get_server, Server
 from trame.widgets import html, vtk as vtk_widgets, client
 from trame.ui.html import DivLayout
@@ -10,7 +14,14 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkActor,
+    vtkProp3D,
 )
+
+
+from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
+from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
+
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 
 FULL_SCREEN = "position:absolute; left:0; top:0; width:100vw; height:100vh;"
 
@@ -20,21 +31,44 @@ class Figure:
     server: Server
     win: vtkRenderWindow
     ren: vtkRenderer
-    shapes: dict[Shape, tuple[vtkActor, ...]]
-    actors: list[vtkActor]
+    view: vtk_widgets.VtkRemoteView
+    shapes: dict[Shape, vtkProp3D]
+    actors: list[vtkProp3D]
+    loop: Any
 
     def __init__(self, port: int):
+
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
 
         # vtk boilerplate
         renderer = vtkRenderer()
         win = vtkRenderWindow()
+        w, h = win.GetScreenSize()
+        win.SetSize(w, h)
         win.AddRenderer(renderer)
         win.OffScreenRenderingOn()
 
         inter = vtkRenderWindowInteractor()
+        inter.SetInteractorStyle(vtkInteractorStyleTrackballCamera())
         inter.SetRenderWindow(win)
-        inter.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
 
+        # axes
+        axes = vtkAxesActor()
+        axes.SetDragable(0)
+
+        orient_widget = vtkOrientationMarkerWidget()
+
+        orient_widget.SetOrientationMarker(axes)
+        orient_widget.SetViewport(0.9, 0.0, 1.0, 0.2)
+        orient_widget.SetZoom(1.1)
+        orient_widget.SetInteractor(inter)
+        orient_widget.SetCurrentRenderer(renderer)
+        orient_widget.EnabledOn()
+        orient_widget.InteractiveOff()
+
+        self.axes = axes
+        self.orient_widget = orient_widget
         self.win = win
         self.ren = renderer
 
@@ -50,7 +84,7 @@ class Figure:
             client.Style("body { margin: 0; }")
 
             with html.Div(style=FULL_SCREEN):
-                vtk_widgets.VtkRemoteView(
+                self.view = vtk_widgets.VtkRemoteView(
                     win, interactive_ratio=1, interactive_quality=100
                 )
 
@@ -59,27 +93,29 @@ class Figure:
 
         self.server = server
 
-    def show(self, s: Shape | vtkActor, *args, **kwargs):
+    def show(self, s: Shape | vtkActor | list[vtkProp3D], *args, **kwargs):
 
         if isinstance(s, Shape):
-            actors = style(s, *args, **kwargs)
-            self.shapes[s] = actors
-
-            for a in actors:
-                self.ren.AddActor(a)
-        else:
+            actor = style(s, *args, **kwargs)[0]
+            self.shapes[s] = actor
+            self.ren.AddActor(actor)
+        elif isinstance(s, vtkActor):
             self.actors.append(s)
             self.ren.AddActor(s)
+        else:
+            self.actors.extend(s)
+
+            for el in s:
+                self.ren.AddActor(el)
 
         self.ren.ResetCamera()
+        self.view.update()
 
-    def hide(self, s: Shape | vtkActor):
+    def clear(self, s: Shape | vtkActor):
 
         if isinstance(s, Shape):
-            actors = self.shapes[s]
-
-            for a in actors:
-                self.ren.RemoveActor(a)
+            actor = self.shapes[s]
+            self.ren.RemoveActor(actor)
 
             del self.shapes[s]
 
@@ -88,3 +124,4 @@ class Figure:
             self.ren.RemoveActor(s)
 
         self.ren.ResetCamera()
+        self.view.update()
