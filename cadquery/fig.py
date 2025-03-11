@@ -1,6 +1,10 @@
-import asyncio
-
-from typing import Any, cast
+from asyncio import (
+    new_event_loop,
+    set_event_loop,
+    run_coroutine_threadsafe,
+    AbstractEventLoop,
+)
+from threading import Thread
 
 from trame.app import get_server, Server
 from trame.widgets import html, vtk as vtk_widgets, client
@@ -32,14 +36,15 @@ class Figure:
     win: vtkRenderWindow
     ren: vtkRenderer
     view: vtk_widgets.VtkRemoteView
-    shapes: dict[Shape, vtkProp3D]
+    shapes: dict[Shape, list[vtkProp3D]]
     actors: list[vtkProp3D]
-    loop: Any
+    loop: AbstractEventLoop
+    thread: Thread
 
     def __init__(self, port: int):
 
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
+        self.loop = new_event_loop()
+        set_event_loop(self.loop)
 
         # vtk boilerplate
         renderer = vtkRenderer()
@@ -76,7 +81,7 @@ class Figure:
         self.actors = []
 
         # server
-        server = get_server(123)
+        server = get_server("CQ")
         server.client_type = "vue3"
 
         # layout
@@ -89,39 +94,76 @@ class Figure:
                 )
 
         server.state.flush()
-        server.start(thread=True, exec_mode="task", port=port, open_browser=True)
+        coro = server.start(
+            thread=True, exec_mode="coroutine", port=port, open_browser=True
+        )
 
         self.server = server
+        self.loop = new_event_loop()
+
+        def _run():
+            set_event_loop(self.loop)
+            self.loop.run_forever()
+
+        self.thread = Thread(target=_run, daemon=True)
+        self.thread.start()
+
+        run_coroutine_threadsafe(coro, self.loop)
+
+    def _run(self, coro):
+
+        run_coroutine_threadsafe(coro, self.loop)
 
     def show(self, s: Shape | vtkActor | list[vtkProp3D], *args, **kwargs):
+        async def _show():
 
-        if isinstance(s, Shape):
-            actor = style(s, *args, **kwargs)[0]
-            self.shapes[s] = actor
-            self.ren.AddActor(actor)
-        elif isinstance(s, vtkActor):
-            self.actors.append(s)
-            self.ren.AddActor(s)
-        else:
-            self.actors.extend(s)
+            if isinstance(s, Shape):
+                # do not show markers by default
+                if "markersize" not in kwargs:
+                    kwargs["markersize"] = 0
 
-            for el in s:
-                self.ren.AddActor(el)
+                actors = style(s, *args, **kwargs)
+                self.shapes[s] = actors
 
-        self.ren.ResetCamera()
-        self.view.update()
+                for actor in actors:
+                    self.ren.AddActor(actor)
 
-    def clear(self, s: Shape | vtkActor):
+            elif isinstance(s, vtkActor):
+                self.actors.append(s)
+                self.ren.AddActor(s)
+            else:
+                self.actors.extend(s)
 
-        if isinstance(s, Shape):
-            actor = self.shapes[s]
-            self.ren.RemoveActor(actor)
+                for el in s:
+                    self.ren.AddActor(el)
 
-            del self.shapes[s]
+            self.ren.ResetCamera()
+            self.view.update()
 
-        else:
-            self.actors.remove(s)
-            self.ren.RemoveActor(s)
+        self._run(_show())
 
-        self.ren.ResetCamera()
-        self.view.update()
+    def clear(self, *shapes: Shape | vtkActor):
+        async def _clear():
+
+            if len(shapes) == 0:
+                for a in self.actors:
+                    self.ren.RemoveActor(a)
+
+                for actors in self.shapes.values():
+                    for a in actors:
+                        self.ren.RemoveActor(a)
+
+            for s in shapes:
+                if isinstance(s, Shape):
+                    for a in self.shapes[s]:
+                        self.ren.RemoveActor(a)
+
+                    del self.shapes[s]
+                else:
+                    self.actors.remove(s)
+                    self.ren.RemoveActor(s)
+
+            self.ren.ResetCamera()
+            self.view.update()
+
+        self._run(_clear())
