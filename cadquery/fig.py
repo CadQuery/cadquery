@@ -17,7 +17,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
-    vtkActor,
     vtkProp3D,
 )
 
@@ -58,6 +57,10 @@ class Figure:
         inter.SetInteractorStyle(vtkInteractorStyleTrackballCamera())
         inter.SetRenderWindow(win)
 
+        # background
+        renderer.SetBackground(1, 1, 1)
+        renderer.GradientBackgroundOn()
+
         # axes
         axes = vtkAxesActor()
         axes.SetDragable(0)
@@ -94,55 +97,56 @@ class Figure:
                 )
 
         server.state.flush()
-        coro = server.start(
-            thread=True, exec_mode="coroutine", port=port, open_browser=True
-        )
 
         self.server = server
         self.loop = new_event_loop()
 
-        def _run():
+        def _run_loop():
             set_event_loop(self.loop)
             self.loop.run_forever()
 
-        self.thread = Thread(target=_run, daemon=True)
+        self.thread = Thread(target=_run_loop, daemon=True)
         self.thread.start()
 
-        run_coroutine_threadsafe(coro, self.loop)
+        coro = server.start(
+            thread=True, exec_mode="coroutine", port=port, open_browser=True
+        )
+
+        self._run(coro)
 
     def _run(self, coro):
 
         run_coroutine_threadsafe(coro, self.loop)
 
-    def show(self, s: Shape | vtkActor | list[vtkProp3D], *args, **kwargs):
+    def show(self, s: Shape | vtkProp3D | list[vtkProp3D], *args, **kwargs):
+
+        if isinstance(s, Shape):
+            # do not show markers by default
+            if "markersize" not in kwargs:
+                kwargs["markersize"] = 0
+
+            actors = style(s, *args, **kwargs)
+            self.shapes[s] = actors
+
+            for actor in actors:
+                self.ren.AddActor(actor)
+
+        elif isinstance(s, vtkProp3D):
+            self.actors.append(s)
+            self.ren.AddActor(s)
+        else:
+            self.actors.extend(s)
+
+            for el in s:
+                self.ren.AddActor(el)
+
         async def _show():
-
-            if isinstance(s, Shape):
-                # do not show markers by default
-                if "markersize" not in kwargs:
-                    kwargs["markersize"] = 0
-
-                actors = style(s, *args, **kwargs)
-                self.shapes[s] = actors
-
-                for actor in actors:
-                    self.ren.AddActor(actor)
-
-            elif isinstance(s, vtkActor):
-                self.actors.append(s)
-                self.ren.AddActor(s)
-            else:
-                self.actors.extend(s)
-
-                for el in s:
-                    self.ren.AddActor(el)
-
             self.ren.ResetCamera()
             self.view.update()
 
         self._run(_show())
 
-    def clear(self, *shapes: Shape | vtkActor):
+    def clear(self, *shapes: Shape | vtkProp3D):
         async def _clear():
 
             if len(shapes) == 0:
