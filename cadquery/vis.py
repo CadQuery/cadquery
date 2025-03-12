@@ -150,7 +150,7 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> List[vtkProp3D]:
     Convert Locations to vtkActor.
     """
 
-    rv: List[vtkProp3D] = []
+    rv = vtkAssembly()
 
     for l in locs:
         trans, rot = _loc2vtk(l)
@@ -161,9 +161,9 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> List[vtkProp3D]:
         ax.SetOrientation(*rot)
         ax.SetScale(scale)
 
-        rv.append(ax)
+        rv.AddPart(ax)
 
-    return rv
+    return [rv]
 
 
 def _to_vtk_shapes(
@@ -400,7 +400,7 @@ def show(
     gradient: bool = True,
     xpos: Union[int, float] = 0,
     ypos: Union[int, float] = 0,
-) -> vtkRenderWindow:
+):
     """
     Show CQ objects using VTK. This functions optionally allows to make screenshots.
     """
@@ -458,11 +458,11 @@ def show(
     axes = vtkAxesActor()
     axes.SetDragable(0)
     axes.SetAxisLabels(0)
-    # tp = axes.GetXAxisCaptionActor2D().GetCaptionTextProperty()
-    # tp.SetColor(0, 0, 0)
+    tp = axes.GetXAxisCaptionActor2D().GetCaptionTextProperty()
+    tp.SetColor(0, 0, 0)
 
-    # axes.GetYAxisCaptionActor2D().GetCaptionTextProperty().ShallowCopy(tp)
-    # axes.GetZAxisCaptionActor2D().GetCaptionTextProperty().ShallowCopy(tp)
+    axes.GetYAxisCaptionActor2D().GetCaptionTextProperty().ShallowCopy(tp)
+    axes.GetZAxisCaptionActor2D().GetCaptionTextProperty().ShallowCopy(tp)
 
     # add to an orientation widget
     if trihedron:
@@ -541,8 +541,6 @@ def show(
     # start interaction
     if interact:
         inter.Start()
-
-    return win
 
 
 # alias
