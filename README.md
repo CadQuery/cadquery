@@ -72,10 +72,10 @@ conda create -n cadquery
 conda activate cadquery
 
 # Install the latest released version
-mamba install -c conda-forge cadquery
+conda install -c conda-forge cadquery
 
 # Or install the dev version to get the latest changes
-mamba install -c conda-forge -c cadquery cadquery=master
+conda install -c conda-forge -c cadquery cadquery=master
 ```
 
 ### CadQuery Installation Via Pip
