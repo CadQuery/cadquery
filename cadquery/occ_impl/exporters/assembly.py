@@ -218,7 +218,9 @@ def exportMetaStep(
                                 )
                                 layer_tool.SetLayer(face_label, layer_label)
 
-    def _process_assembly(assy: AssemblyProtocol, parent_label: TDF_Label = None):
+    def _process_assembly(
+        assy: AssemblyProtocol, parent_label: Optional[TDF_Label] = None
+    ):
         """
         Recursively process the assembly and its children.
         :param assy: Assembly to process
