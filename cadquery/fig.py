@@ -5,13 +5,15 @@ from asyncio import (
     AbstractEventLoop,
 )
 from threading import Thread
+from itertools import chain
+from uuid import uuid1 as uuid
 
 from trame.app import get_server, Server
 from trame.widgets import html, vtk as vtk_widgets, client
 from trame.ui.html import DivLayout
 
-from cadquery import Shape
-from cadquery.vis import style
+from . import Shape
+from .vis import style, Showable, ShapeLike, _split_showables, _to_vtk_pts, _to_vtk_axs
 
 from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
@@ -35,12 +37,26 @@ class Figure:
     win: vtkRenderWindow
     ren: vtkRenderer
     view: vtk_widgets.VtkRemoteView
-    shapes: dict[Shape, list[vtkProp3D]]
+    shapes: dict[ShapeLike, list[vtkProp3D]]
     actors: list[vtkProp3D]
     loop: AbstractEventLoop
     thread: Thread
+    empty: bool
 
-    def __init__(self, port: int):
+    _instance = None
+    _initialized: bool = False
+
+    def __new__(cls, *args, **kwargs):
+
+        if not cls._instance:
+            cls._instance = object.__new__(cls)
+
+        return cls._instance
+
+    def __init__(self, port: int = 18081):
+
+        if self._initialized:
+            return
 
         self.loop = new_event_loop()
         set_event_loop(self.loop)
@@ -84,7 +100,7 @@ class Figure:
         self.actors = []
 
         # server
-        server = get_server("CQ")
+        server = get_server("CQ-server")
         server.client_type = "vue3"
 
         # layout
@@ -112,33 +128,65 @@ class Figure:
             thread=True, exec_mode="coroutine", port=port, open_browser=True
         )
 
-        self._run(coro)
+        if coro:
+            self._run(coro)
+
+        # prevent reinitialization
+        self._initialized = True
+
+        # view is initialized as empty
+        self.empty = True
 
     def _run(self, coro):
 
         run_coroutine_threadsafe(coro, self.loop)
 
-    def show(self, s: Shape | vtkProp3D | list[vtkProp3D], *args, **kwargs):
+    def show(self, *showables: Showable | vtkProp3D | list[vtkProp3D], **kwargs):
+        """
+        Show objects.
+        """
 
-        if isinstance(s, Shape):
+        # split objects
+        shapes, vecs, locs, props = _split_showables(showables)
+
+        pts = _to_vtk_pts(vecs)
+        axs = _to_vtk_axs(locs)
+
+        for s in shapes:
             # do not show markers by default
             if "markersize" not in kwargs:
                 kwargs["markersize"] = 0
 
-            actors = style(s, *args, **kwargs)
+            actors = style(s, **kwargs)
             self.shapes[s] = actors
 
             for actor in actors:
                 self.ren.AddActor(actor)
 
-        elif isinstance(s, vtkProp3D):
-            self.actors.append(s)
-            self.ren.AddActor(s)
-        else:
-            self.actors.extend(s)
+        for prop in chain(props, axs):
+            self.actors.append(prop)
+            self.ren.AddActor(prop)
 
-            for el in s:
-                self.ren.AddActor(el)
+        if vecs:
+            self.actors.append(pts)
+            self.ren.AddActor(pts)
+
+        async def _show():
+            self.view.update()
+
+        self._run(_show())
+
+        # zoom to fit on 1st object added
+        if self.empty:
+            self.fit()
+            self.empty = False
+
+        return self
+
+    def fit(self):
+        """
+        Update view to fit all objects.
+        """
 
         async def _show():
             self.ren.ResetCamera()
@@ -146,16 +194,23 @@ class Figure:
 
         self._run(_show())
 
+        return self
+
     def clear(self, *shapes: Shape | vtkProp3D):
+        """
+        Clear specified objects. If no arguments are passed, clears all objects.
+        """
+
         async def _clear():
 
             if len(shapes) == 0:
-                for a in self.actors:
+                for a in self.ren.GetActors():
                     self.ren.RemoveActor(a)
 
-                for actors in self.shapes.values():
-                    for a in actors:
-                        self.ren.RemoveActor(a)
+                self.actors.clear()
+                self.shapes.clear()
+
+                self.empty = True
 
             for s in shapes:
                 if isinstance(s, Shape):
@@ -167,7 +222,8 @@ class Figure:
                     self.actors.remove(s)
                     self.ren.RemoveActor(s)
 
-            self.ren.ResetCamera()
             self.view.update()
 
         self._run(_clear())
+
+        return self
