@@ -26,6 +26,8 @@ requirements:
     - multimethod >=1.11,<2.0
     - casadi
     - typish
+    - trame
+    - trame-vtk
 
 test:
   requires:
