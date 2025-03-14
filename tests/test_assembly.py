@@ -17,7 +17,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box
+from cadquery.occ_impl.shapes import Face, box, cone
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -627,60 +627,73 @@ def test_meta_step_export(tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("out")
     meta_path = os.path.join(tmpdir, "meta.step")
 
-    # Simple cubes for the top-level assembly
-    cube_1 = cq.Workplane().box(10, 10, 10)
-    cube_2 = cq.Workplane().box(5, 5, 5)
-
-    # Find a face on each part to attach the metadata to for the top-level
-    face_1 = cube_1.faces(">Z").val()
-    face_2 = cube_2.faces("<Z").val()
-
-    # Cubes for the nested assembly
-    cube_3_nested = cq.Workplane().box(10, 10, 10)
-    cube_4_nested = cq.Workplane().box(5, 5, 5)
-
-    # Find a face on each part to attach the metadata to for the nested assembly
-    face_3_nested = cube_3_nested.faces(">X").val()
-    face_4_nested = cube_4_nested.faces("<X").val()
-
-    # Create a nested assembly
-    nested_assy = cq.Assembly(name="nested")
-    nested_assy.add(cube_3_nested, name="cube_3", color=cq.Color(1.0, 0, 1.0))
-    nested_assy.add(
-        cube_4_nested, name="cube_4", color=cq.Color(0.5, 1.0, 0.5), loc=cq.Location((10, 10, 10))
+    # Most nested level of the assembly
+    subsubassy = cq.Assembly(name="third-level")
+    cone_1 = cq.Workplane(cone(5.0, 10.0, 5.0))
+    cone_2 = cq.Workplane(cone(2.5, 5.0, 2.5))
+    subsubassy.add(
+        cone_1,
+        name="cone_1",
+        color=cq.Color(1.0, 1.0, 1.0),
+        loc=cq.Location(-15.0, 10.0, 0.0),
+    )
+    subsubassy.add(
+        cone_2,
+        name="cone_2",
+        color=cq.Color(0.0, 0.0, 0.0),
+        loc=cq.Location((15.0, 10.0, -5.0)),
     )
 
-    # Test nested subshape name and color metadata
-    nested_assy.addSubshape(face_3_nested, name="cube_3_right_face")
-    nested_assy.addSubshape(face_4_nested, name="cube_4_left_face")
-    nested_assy.addSubshape(face_3_nested, color=cq.Color(1.0, 1.0, 0.0))
-    nested_assy.addSubshape(face_4_nested, color=cq.Color(0.0, 1.0, 1.0))
+    # First layer of nested assembly
+    subassy = cq.Assembly(name="second-level")
+    cylinder_1 = cq.Workplane().cylinder(radius=5.0, height=10.0)
+    cylinder_2 = cq.Workplane().cylinder(radius=2.5, height=5.0)
+    subassy.add(
+        cylinder_1,
+        name="cylinder_1",
+        color=cq.Color(1.0, 1.0, 0.0),
+        loc=cq.Location(-15.0, 0.0, 0.0),
+    )
+    subassy.add(
+        cylinder_2,
+        name="cylinder_2",
+        color=cq.Color(0.0, 1.0, 1.0),
+        loc=cq.Location((15.0, -10.0, -5.0)),
+    )
+    subassy.add(subsubassy)
 
-    # Create a simple assembly
-    assy = cq.Assembly(name="cubes")
-    assy.add(cube_1, name="cube_1", color=cq.Color(0, 0, 1.0))
+    # Top level of the assembly
+    assy = cq.Assembly(name="top-level")
+    cube_1 = cq.Workplane().box(10.0, 10.0, 10.0)
+    assy.add(cube_1, name="cube_1", color=cq.Color(0.5, 0.0, 0.5))
+    cube_2 = cq.Workplane().box(5.0, 5.0, 5.0)
     assy.add(
-        cube_2, name="cube_2", color=cq.Color(0, 1.0, 0), loc=cq.Location((10, 10, 10))
+        cube_2,
+        name="cube_2",
+        color=cq.Color(0.0, 0.5, 0.0),
+        loc=cq.Location(10.0, 10.0, 10.0),
     )
-    assy.add(nested_assy, name="nested", loc=cq.Location((20, 20, 20)))
+    assy.add(subassy)
 
-    # Test subshape name metadata
-    assy.addSubshape(face_1, name="cube_1_top_face")
-    assy.addSubshape(face_2, name="cube_2_bottom_face")
-
-    # Test subshape color metadata
-    assy.addSubshape(face_1, color=cq.Color(1.0, 0, 0))
-    assy.addSubshape(face_2, color=cq.Color(0, 0.0, 1.0))
-
-    # Test subshape layer metadata
-    assy.addSubshape(face_1, layer="cube_1_top_face")
-    assy.addSubshape(face_2, layer="cube_2_bottom_face")
-
-    # Test nested subshape name and color metadata
-    assy.children[2].addSubshape(face_3_nested, name="cube_3_right_face")
-    assy.children[2].addSubshape(face_4_nested, name="cube_4_left_face")
-    assy.children[2].addSubshape(face_3_nested, color=cq.Color(1.0, 1.0, 0.0))
-    assy.children[2].addSubshape(face_4_nested, color=cq.Color(0.0, 1.0, 1.0))
+    # Tag faces to test from all levels of the assembly
+    assy.addSubshape(cube_1.faces(">Z").val(), name="cube_1_top_face")
+    assy.addSubshape(cube_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cube_1.faces(">Z").val(), layer="cube_1_top_face")
+    assy.addSubshape(cube_2.faces("<Z").val(), name="cube_2_bottom_face")
+    assy.addSubshape(cube_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cube_2.faces("<Z").val(), layer="cube_2_bottom_face")
+    assy.addSubshape(cylinder_1.faces(">Z").val(), name="cylinder_1_top_face")
+    assy.addSubshape(cylinder_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cylinder_1.faces(">Z").val(), layer="cylinder_1_top_face")
+    assy.addSubshape(cylinder_2.faces("<Z").val(), name="cylinder_2_bottom_face")
+    assy.addSubshape(cylinder_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cylinder_2.faces("<Z").val(), layer="cylinder_2_bottom_face")
+    assy.addSubshape(cone_1.faces(">Z").val(), name="cone_1_top_face")
+    assy.addSubshape(cone_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cone_1.faces(">Z").val(), layer="cone_1_top_face")
+    assy.addSubshape(cone_2.faces("<Z").val(), name="cone_2_bottom_face")
+    assy.addSubshape(cone_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
 
     success = exportMetaStep(assy, meta_path)
     assert success
@@ -697,8 +710,10 @@ def test_meta_step_export(tmp_path_factory):
         assert "ADVANCED_FACE('cube_2_bottom_face'" in step_contents
 
         # Make reasonably sure that the colors were applied to the faces
-        assert "DRAUGHTING_PRE_DEFINED_COLOUR('red')" in step_contents
-        assert "DRAUGHTING_PRE_DEFINED_COLOUR('blue')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('black')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('white')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('cyan')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('yellow')" in step_contents
 
         # Make sure that the layers were created
         assert (
@@ -708,6 +723,7 @@ def test_meta_step_export(tmp_path_factory):
             "PRESENTATION_LAYER_ASSIGNMENT('cube_2_bottom_face','visible'"
             in step_contents
         )
+
 
 @pytest.mark.parametrize(
     "assy_fixture, expected",

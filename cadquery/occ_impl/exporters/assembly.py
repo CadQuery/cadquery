@@ -32,7 +32,7 @@ from OCP.Interface import Interface_Static
 
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
-from ..shapes import Face
+from ..shapes import Shape, Compound
 from ..assembly import Color
 
 
@@ -134,9 +134,6 @@ def exportMetaStep(
     if not write_pcurves:
         pcurves = 0
 
-    # Use the assembly name if the user set it
-    assembly_name = assy.name if assy.name else str(uuid.uuid1())
-
     # Initialize the XCAF document that will allow the STEP export
     app = XCAFApp_Application.GetApplication_s()
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
@@ -147,85 +144,108 @@ def exportMetaStep(
     color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
     layer_tool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
 
-    # Create the top level object that will hold all the subassembly parts
-    assy_label = shape_tool.NewShape()
-    TDataStd_Name.Set_s(assy_label, TCollection_ExtendedString(assembly_name))
+    def _process_child(child: AssemblyProtocol, assy_label: TDF_Label):
+        """
+        Process a child part which is not a subassembly.
+        :param child: Child part to process (we should already have filtered out subassemblies)
+        :param assy_label: The label for the assembly to add this part to
+        :return: None
+        """
 
-    def _process_child(assy: AssemblyProtocol):
+        # We combine these because the metadata could be stored at the parent or child level
+        combined_names = {**assy.subshape_names, **child.subshape_names}
+        combined_colors = {**assy.subshape_colors, **child.subshape_colors}
+        combined_layers = {**assy.subshape_layers, **child.subshape_layers}
+
+        # Collect all of the shapes in the child object
+        if child.obj:
+            child_items = (
+                child.obj
+                if isinstance(child.obj, Shape)
+                else Compound.makeCompound(
+                    s for s in child.obj.vals() if isinstance(s, Shape)
+                ),
+                child.name,
+                child.loc,
+                child.color,
+            )
+
+        if child_items:
+            shape, name, loc, color = child_items
+
+            # Handle shape name, color and location
+            part_label = shape_tool.AddShape(shape.wrapped, False)
+            TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name))
+            if color:
+                color_tool.SetColor(part_label, color.wrapped, XCAFDoc_ColorGen)
+            shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
+
+            # If this assembly has shape metadata, add it to the shape
+            if (
+                len(combined_names) > 0
+                or len(combined_colors) > 0
+                or len(combined_layers) > 0
+            ):
+                names = combined_names
+                colors = combined_colors
+                layers = combined_layers
+
+                # Step through every face in the shape, and see if any metadata needs to be attached to it
+                for face in shape.Faces():
+                    if face in names or face in shape in colors or face in layers:
+                        # Add the face as a subshape
+                        face_label = shape_tool.AddSubShape(part_label, face.wrapped)
+
+                        # In some cases the face may not be considered part of the shape, so protect
+                        # against that
+                        if not face_label.IsNull():
+                            # Set the ADVANCED_FACE label, even though the layer holds the same data
+                            if face in names:
+                                TDataStd_Name.Set_s(
+                                    face_label, TCollection_ExtendedString(names[face])
+                                )
+
+                            # Set the individual face color
+                            if face in colors:
+                                color_tool.SetColor(
+                                    face_label, colors[face].wrapped, XCAFDoc_ColorGen,
+                                )
+
+                            # Also add a layer to hold the face label data
+                            if face in layers:
+                                layer_label = layer_tool.AddLayer(
+                                    TCollection_ExtendedString(layers[face])
+                                )
+                                layer_tool.SetLayer(face_label, layer_label)
+
+    def _process_assembly(assy: AssemblyProtocol, parent_label: TDF_Label = None):
         """
-        Recursive function to process nested subassemblies.
+        Recursively process the assembly and its children.
+        :param assy: Assembly to process
+        :param parent_label: The parent label for the assembly
+        :return: None
         """
+        # Use the assembly name if the user set it
+        assembly_name = assy.name if assy.name else str(uuid.uuid1())
+
+        # Create the top level object that will hold all the subassemblies and parts
+        assy_label = shape_tool.NewShape()
+        TDataStd_Name.Set_s(assy_label, TCollection_ExtendedString(assembly_name))
+
+        # Handle subassemblies
+        if parent_label:
+            shape_tool.AddComponent(parent_label, assy_label, assy.loc.wrapped)
+
+        # The children may be parts or assemblies
         for child in assy.children:
-            # We combine these because the metadata could be stored at the parent or child level
-            combined_names = {**assy.subshape_names, **child.subshape_names}
-            combined_colors = {**assy.subshape_colors, **child.subshape_colors}
-            combined_layers = {**assy.subshape_layers, **child.subshape_layers}
+            # Child is a part
+            if len(list(child.children)) == 0:
+                _process_child(child, assy_label)
+            # Child is a subassembly
+            else:
+                _process_assembly(child, assy_label)
 
-            # for shape, name, loc, color in assy:
-            for shape in child.shapes:
-                # Add the current shape to the document in a way that allows us to locate it
-                shape_label = shape_tool.NewShape()
-                shape_tool.SetShape(shape_label, shape.wrapped.Located(child.loc.wrapped))
-
-                # Include the name and color of the part within the assembly
-                if child.color:
-                    color_tool.SetColor(
-                        shape_label, child.color.wrapped, XCAFDoc_ColorGen,
-                    )
-                TDataStd_Name.Set_s(
-                    shape_label, TCollection_ExtendedString(child.name.split("/")[-1])
-                )
-
-                # If this assembly has shape metadata, add it to the shape
-                if (
-                    len(combined_names) > 0
-                    or len(combined_colors) > 0
-                    or len(combined_layers) > 0
-                ):
-                    names = combined_names
-                    colors = combined_colors
-                    layers = combined_layers
-
-                    # Step through every face in the shape, and see if any metadata needs to be attached to it
-                    for face in shape.Faces():
-                        if face in names or face in shape in colors or face in layers:
-                            # Add the face as a subshape
-                            face_label = shape_tool.AddSubShape(
-                                shape_label, face.wrapped
-                            )
-
-                            # In some cases the face may not be considered part of the shape, so protect
-                            # against that
-                            if not face_label.IsNull():
-                                # Set the ADVANCED_FACE label
-                                if face in names:
-                                    face_str = names[face]
-                                    TDataStd_Name.Set_s(
-                                        face_label, TCollection_ExtendedString(face_str)
-                                    )
-
-                                # Set the individual face color
-                                if face in colors:
-                                    color = colors[face]
-                                    color_tool.SetColor(
-                                        face_label,
-                                        Color(*color.toTuple()).wrapped,
-                                        XCAFDoc_ColorGen,
-                                    )
-
-                                # Also add a layer to hold the face label data
-                                if face in layers:
-                                    layer_str = layers[face]
-                                    layer_label = layer_tool.AddLayer(
-                                        TCollection_ExtendedString(layer_str)
-                                    )
-                                    layer_tool.SetLayer(face_label, layer_label)
-
-            # Handle any subassemblies
-            if len(tuple(child.children)) > 0:
-                _process_child(child)
-
-    _process_child(assy)
+    _process_assembly(assy)
 
     # Update the assemblies
     shape_tool.UpdateAssemblies()
