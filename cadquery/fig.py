@@ -4,9 +4,9 @@ from asyncio import (
     run_coroutine_threadsafe,
     AbstractEventLoop,
 )
+from typing import Optional
 from threading import Thread
 from itertools import chain
-from uuid import uuid1 as uuid
 
 from trame.app import get_server, Server
 from trame.widgets import html, vtk as vtk_widgets, client
@@ -20,6 +20,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkProp3D,
+    vtkActor,
 )
 
 
@@ -42,6 +43,9 @@ class Figure:
     loop: AbstractEventLoop
     thread: Thread
     empty: bool
+    last: Optional[
+        tuple[list[ShapeLike], list[vtkProp3D], Optional[vtkActor], list[vtkProp3D]]
+    ]
 
     _instance = None
     _initialized: bool = False
@@ -136,6 +140,7 @@ class Figure:
 
         # view is initialized as empty
         self.empty = True
+        self.last = None
 
     def _run(self, coro):
 
@@ -150,7 +155,9 @@ class Figure:
         shapes, vecs, locs, props = _split_showables(showables)
 
         pts = _to_vtk_pts(vecs)
-        axs = _to_vtk_axs(locs)
+        axs = _to_vtk_axs(
+            locs, **({"scale": kwargs["scale"]} if "scale" in kwargs else {})
+        )
 
         for s in shapes:
             # do not show markers by default
@@ -170,6 +177,9 @@ class Figure:
         if vecs:
             self.actors.append(pts)
             self.ren.AddActor(pts)
+
+        # store to enable pop
+        self.last = (shapes, axs, pts if vecs else None, props)
 
         async def _show():
             self.view.update()
@@ -204,8 +214,7 @@ class Figure:
         async def _clear():
 
             if len(shapes) == 0:
-                for a in self.ren.GetActors():
-                    self.ren.RemoveActor(a)
+                self.ren.RemoveAllViewProps()
 
                 self.actors.clear()
                 self.shapes.clear()
@@ -224,6 +233,35 @@ class Figure:
 
             self.view.update()
 
+        # reset last, bc we don't want to keep track of what was removed
+        self.last = None
         self._run(_clear())
+
+        return self
+
+    def pop(self):
+        """
+        Clear the last showable.
+        """
+
+        async def _pop():
+
+            (shapes, axs, pts, props) = self.last
+
+            for s in shapes:
+                for act in self.shapes.pop(s):
+                    self.ren.RemoveActor(act)
+
+            for act in chain(axs, props):
+                self.ren.RemoveActor(act)
+                self.actors.remove(act)
+
+            if pts:
+                self.ren.RemoveActor(pts)
+                self.actors.remove(pts)
+
+            self.view.update()
+
+        self._run(_pop())
 
         return self
