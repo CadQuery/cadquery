@@ -257,8 +257,8 @@ class Figure:
                 self.actors.remove(act)
 
             if pts:
-                self.ren.RemoveActor(pts)
-                self.actors.remove(pts)
+                self.ren.RemoveActor(*pts)
+                self.actors.remove(*pts)
 
             self.view.update()
 
