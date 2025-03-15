@@ -44,7 +44,9 @@ class Figure:
     thread: Thread
     empty: bool
     last: Optional[
-        tuple[list[ShapeLike], list[vtkProp3D], Optional[vtkActor], list[vtkProp3D]]
+        tuple[
+            list[ShapeLike], list[vtkProp3D], Optional[list[vtkProp3D]], list[vtkProp3D]
+        ]
     ]
 
     _instance = None
@@ -154,10 +156,8 @@ class Figure:
         # split objects
         shapes, vecs, locs, props = _split_showables(showables)
 
-        pts = _to_vtk_pts(vecs)
-        axs = _to_vtk_axs(
-            locs, **({"scale": kwargs["scale"]} if "scale" in kwargs else {})
-        )
+        pts = style(vecs, **kwargs)
+        axs = style(locs, **kwargs)
 
         for s in shapes:
             # do not show markers by default
@@ -175,8 +175,8 @@ class Figure:
             self.ren.AddActor(prop)
 
         if vecs:
-            self.actors.append(pts)
-            self.ren.AddActor(pts)
+            self.actors.append(*pts)
+            self.ren.AddActor(*pts)
 
         # store to enable pop
         self.last = (shapes, axs, pts if vecs else None, props)

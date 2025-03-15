@@ -53,7 +53,14 @@ SPECULAR_COLOR = vtkNamedColors().GetColor3d("White")
 
 ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
 Showable = Union[
-    ShapeLike, List[ShapeLike], Vector, List[Vector], vtkProp3D, List[vtkProp3D]
+    ShapeLike,
+    List[ShapeLike],
+    Vector,
+    List[Vector],
+    vtkProp3D,
+    List[vtkProp3D],
+    Location,
+    List[Location],
 ]
 
 
