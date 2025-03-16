@@ -34,7 +34,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "casadi",
         "path",
         "trame",
-        "trame-vtk"
+        "trame-vtk",
     ]
 
 
