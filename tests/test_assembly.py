@@ -695,7 +695,12 @@ def test_meta_step_export(tmp_path_factory):
     assy.addSubshape(cone_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
     assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
 
+    # Write once with pcurves turned on
     success = exportMetaStep(assy, meta_path)
+    assert success
+
+    # Write again with pcurves turned off
+    success = exportMetaStep(assy, meta_path, write_pcurves=False)
     assert success
 
     # Make sure the step file exists
