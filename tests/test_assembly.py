@@ -730,6 +730,58 @@ def test_meta_step_export(tmp_path_factory):
         )
 
 
+def test_meta_step_export_edge_cases(tmp_path_factory):
+    """
+    Test all the edge cases of the STEP export function.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    meta_path = os.path.join(tmpdir, "meta_edges_cases.step")
+
+    assy = cq.Assembly(name="top-level")
+
+    # Write an assembly with no children
+    success = exportMetaStep(assy, meta_path)
+    assert success
+
+    # Test an object with no color set
+    cube = cq.Workplane().box(10.0, 10.0, 10.0)
+    assy.add(cube, name="cube")
+    success = exportMetaStep(assy, meta_path)
+    assert success
+
+    # Tag a face that does not match the object
+    assy.addSubshape(None, name="cube_top_face")
+    success = exportMetaStep(assy, meta_path)
+    assert success
+
+    # Tag the name but nothing else
+    assy.addSubshape(cube.faces(">Z").val(), name="cube_top_face")
+    success = exportMetaStep(assy, meta_path)
+    assert success
+
+    # Reset the assembly
+    assy.remove("cube")
+    cube = cq.Workplane().box(9.9, 9.9, 9.9)
+    assy.add(cube, name="cube")
+
+    # Tag the color but nothing else
+    assy.addSubshape(cube.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    success = exportMetaStep(assy, meta_path)
+    assert success
+
+    # Reset the assembly
+    assy.remove("cube")
+    cube = cq.Workplane().box(9.8, 9.8, 9.8)
+    assy.add(cube, name="cube")
+
+    # Tag the layer but nothing else
+    assy.addSubshape(cube.faces(">Z").val(), layer="cube_top_face")
+    success = exportMetaStep(assy, meta_path)
+    assert success
+
+
 @pytest.mark.parametrize(
     "assy_fixture, expected",
     [
