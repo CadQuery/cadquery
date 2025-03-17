@@ -7,6 +7,7 @@ from asyncio import (
 from typing import Optional
 from threading import Thread
 from itertools import chain
+from webbrowser import open_new_tab
 
 from trame.app import get_server, Server
 from trame.widgets import html, vtk as vtk_widgets, client
@@ -131,7 +132,11 @@ class Figure:
         self.thread.start()
 
         coro = server.start(
-            thread=True, exec_mode="coroutine", port=port, open_browser=True
+            thread=True,
+            exec_mode="coroutine",
+            port=port,
+            open_browser=False,
+            show_connection_info=False,
         )
 
         if coro:
@@ -143,6 +148,9 @@ class Figure:
         # view is initialized as empty
         self.empty = True
         self.last = None
+
+        # open webbrowser
+        open_new_tab(f"http://localhost:{port}")
 
     def _run(self, coro):
 
