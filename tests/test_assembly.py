@@ -653,6 +653,21 @@ def test_step_import(tmp_path_factory):
     assert assy.children[1].loc.toTuple()[0] == (15, 15, 15)
 
 
+def test_assembly_meta_step_import(tmp_path_factory):
+    """
+    Test import of an assembly with metadata from a STEP file.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    metadata_path = os.path.join(tmpdir, "metadata.step")
+
+    assy = cq.Assembly.importStep(path=metadata_path)
+
+    # Make sure we got the correct number of children
+    assert len(assy.children) == 6
+
+
 @pytest.mark.parametrize(
     "assy_fixture, expected",
     [
