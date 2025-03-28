@@ -396,7 +396,7 @@ optimum values that will produce an acceptable mesh.
 Exporting DXF
 ##############
 
-.. warning:: DXF exporting works only with 2D sections on the current workplane.
+.. warning:: DXF exporting works only with 2D sections on the current workplane or sketches.
 
 .. seealso::
 
