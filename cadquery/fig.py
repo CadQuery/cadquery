@@ -3,6 +3,7 @@ from asyncio import (
     set_event_loop,
     run_coroutine_threadsafe,
     AbstractEventLoop,
+    Future,
 )
 from typing import Optional
 from threading import Thread
@@ -152,9 +153,9 @@ class Figure:
         # open webbrowser
         open_new_tab(f"http://localhost:{port}")
 
-    def _run(self, coro):
+    def _run(self, coro) -> Future:
 
-        run_coroutine_threadsafe(coro, self.loop)
+        return run_coroutine_threadsafe(coro, self.loop)
 
     def show(self, *showables: Showable | vtkProp3D | list[vtkProp3D], **kwargs):
         """
@@ -243,7 +244,8 @@ class Figure:
 
         # reset last, bc we don't want to keep track of what was removed
         self.last = None
-        self._run(_clear())
+        future = self._run(_clear())
+        future.result()
 
         return self
 
