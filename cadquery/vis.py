@@ -464,7 +464,7 @@ def show(
     # construct an axes indicator
     axes = vtkAxesActor()
     axes.SetDragable(0)
-    axes.SetAxisLabels(0)
+
     tp = axes.GetXAxisCaptionActor2D().GetCaptionTextProperty()
     tp.SetColor(0, 0, 0)
 
