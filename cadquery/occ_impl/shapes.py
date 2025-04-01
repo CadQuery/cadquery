@@ -3486,7 +3486,12 @@ class Face(Shape):
         return [self.isoline(p, direction) for p in params]
 
     def extend(
-        self, d: float, umin: bool, umax: bool, vmin: bool, vmax: bool
+        self,
+        d: float,
+        umin: bool = True,
+        umax: bool = True,
+        vmin: bool = True,
+        vmax: bool = True,
     ) -> "Face":
         """
         Extend a face. Does not work well in periodic directions.

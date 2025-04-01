@@ -13,6 +13,7 @@ from cadquery.occ_impl.shapes import (
     cylinder,
     ellipse,
     spline,
+    sweep,
 )
 
 from pytest import approx, raises
@@ -255,3 +256,11 @@ def test_isolines():
 
     assert isos_u[0].Length() == approx(2)
     assert isos_v[0].Length() == approx(pi)
+
+
+def test_extend():
+
+    f = sweep(spline((0, 0), (0, 1), (2, 0)), spline((0, 0, 0), (0, 1, 1), (0, 1, 5)))
+    f_ext = f.extend(1)
+
+    assert f_ext.Area() > f.Area()
