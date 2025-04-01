@@ -3485,14 +3485,23 @@ class Face(Shape):
         return [self.isoline(p, direction) for p in params]
 
     def extend(
-        self, umin: bool, umax: bool, vmin: bool, vmax: bool, d: float
+        self, d: float, umin: bool, umax: bool, vmin: bool, vmax: bool
     ) -> "Face":
         """
-        Extend a face.
+        Extend a face. Does not work well in periodic directions.
+        
+        :param d: length of the extension.
+        :param umin: extend along the umin isoline.
+        :param umax: extend along the umax isoline.
+        :param vmin: extend along the vmin isoline.
+        :param umax: extend along the umax isoline.
         """
 
+        # convert to NURBS first
+        tmp = self.toNURBS().wrapped
+
         rv = TopoDS_Face()
-        BRepLib.ExtendFace_s(self.wrapped, d, umin, umax, vmin, vmax, rv)
+        BRepLib.ExtendFace_s(tmp, d, umin, umax, vmin, vmax, rv)
 
         return self.__class__(rv)
 
