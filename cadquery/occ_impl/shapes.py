@@ -3501,12 +3501,6 @@ class Face(Shape):
         # convert to NURBS if needed
         tmp = self.toNURBS() if self.geomType() != "BSPLINE" else self
 
-        # check min degree
-        ga = tcast(Geom_BSplineSurface, tmp._geomAdaptor())
-        min_deg = min(ga.UDegree(), ga.VDegree())
-
-        assert min_deg >= 3, "At least degree 3 surface required"
-
         rv = TopoDS_Face()
         BRepLib.ExtendFace_s(tmp.wrapped, d, umin, umax, vmin, vmax, rv)
 
