@@ -53,7 +53,14 @@ SPECULAR_COLOR = vtkNamedColors().GetColor3d("White")
 
 ShapeLike = Union[Shape, Workplane, Assembly, Sketch, TopoDS_Shape]
 Showable = Union[
-    ShapeLike, List[ShapeLike], Vector, List[Vector], vtkProp3D, List[vtkProp3D]
+    ShapeLike,
+    List[ShapeLike],
+    Vector,
+    List[Vector],
+    vtkProp3D,
+    List[vtkProp3D],
+    Location,
+    List[Location],
 ]
 
 
@@ -145,7 +152,7 @@ def _to_vtk_pts(
     return rv
 
 
-def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkAssembly:
+def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> List[vtkProp3D]:
     """
     Convert Locations to vtkActor.
     """
@@ -163,7 +170,7 @@ def _to_vtk_axs(locs: List[Location], scale: float = 0.1) -> vtkAssembly:
 
         rv.AddPart(ax)
 
-    return rv
+    return [rv]
 
 
 def _to_vtk_shapes(
@@ -174,7 +181,7 @@ def _to_vtk_shapes(
     linewidth: float = 2,
     alpha: float = 1,
     tolerance: float = 1e-3,
-) -> vtkAssembly:
+) -> List[vtkProp3D]:
     """
     Convert Shapes to vtkAssembly.
     """
@@ -279,21 +286,18 @@ def ctrlPts(
     return rv
 
 
-def _iterate_actors(obj: Union[vtkProp3D, vtkActor, vtkAssembly]) -> Iterable[vtkActor]:
+def _iterate_actors(
+    obj: Union[vtkProp3D, vtkActor, List[vtkProp3D]]
+) -> Iterable[vtkActor]:
     """
     Iterate over vtkActors, other props are ignored.
     """
     if isinstance(obj, vtkActor):
         yield obj
-    elif isinstance(obj, vtkAssembly):
-        coll = vtkPropCollection()
-        obj.GetActors(coll)
-
-        coll.InitTraversal()
-        for i in range(0, coll.GetNumberOfItems()):
-            prop = coll.GetNextProp()
-            if isinstance(prop, vtkActor):
-                yield prop
+    elif isinstance(obj, list):
+        for el in obj:
+            if isinstance(el, vtkActor):
+                yield el
 
 
 def style(
@@ -313,7 +317,7 @@ def style(
     meshcolor: str = "lightgrey",
     vertexcolor: str = "cyan",
     **kwargs,
-) -> Union[vtkActor, vtkAssembly]:
+) -> List[vtkProp3D]:
     """
     Apply styling to CQ objects. To be used in conjunction with show.
     """
@@ -343,7 +347,7 @@ def style(
     shapes, vecs, locs, actors = _split_showables([obj,])
 
     # convert to a prop
-    rv: Union[vtkActor, vtkAssembly]
+    rv: Union[vtkActor, List[vtkProp3D]]
 
     if shapes:
         rv = _to_vtk_shapes(
@@ -361,19 +365,22 @@ def style(
             _apply_style(a)
 
     elif vecs:
-        rv = _to_vtk_pts(vecs)
-        _apply_style(rv)
-        _apply_color(rv)
+        tmp = _to_vtk_pts(vecs)
+        _apply_style(tmp)
+        _apply_color(tmp)
+        rv = [tmp]
+
     elif locs:
         rv = _to_vtk_axs(locs, scale=scale)
+
     else:
-        rv = vtkAssembly()
+        rv = []
 
         for p in actors:
             for a in _iterate_actors(p):
                 _apply_style(a)
                 _apply_color(a)
-                rv.AddPart(a)
+                rv.append(a)
 
     return rv
 
@@ -417,7 +424,9 @@ def show(
 
     # assy+renderer
     renderer = vtkRenderer()
-    renderer.AddActor(toVTKAssy(assy, tolerance=tolerance))
+
+    for act in toVTKAssy(assy, tolerance=tolerance):
+        renderer.AddActor(act)
 
     # VTK window boilerplate
     win = vtkRenderWindow()
@@ -483,7 +492,9 @@ def show(
 
     # add pts and locs
     renderer.AddActor(pts)
-    renderer.AddActor(axs)
+
+    for ax in axs:
+        renderer.AddActor(ax)
 
     # add other vtk actors
     for p in props:
