@@ -157,6 +157,7 @@ from OCP.Geom import (
     Geom_Plane,
     Geom_BSplineCurve,
     Geom_Curve,
+    Geom_BSplineSurface,
 )
 from OCP.Geom2d import Geom2d_Line
 
@@ -3497,11 +3498,17 @@ class Face(Shape):
         :param umax: extend along the umax isoline.
         """
 
-        # convert to NURBS first
-        tmp = self.toNURBS().wrapped
+        # convert to NURBS if needed
+        tmp = self.toNURBS() if self.geomType() != "BSPLINE" else self
+
+        # check min degree
+        ga = tcast(Geom_BSplineSurface, tmp._geomAdaptor())
+        min_deg = min(ga.UDegree(), ga.VDegree())
+
+        assert min_deg >= 3, "At least degree 3 surface required"
 
         rv = TopoDS_Face()
-        BRepLib.ExtendFace_s(tmp, d, umin, umax, vmin, vmax, rv)
+        BRepLib.ExtendFace_s(tmp.wrapped, d, umin, umax, vmin, vmax, rv)
 
         return self.__class__(rv)
 
@@ -5955,6 +5962,7 @@ def sweep(
     def _make_builder():
 
         rv = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+
         if aux:
             rv.SetMode(_get_one_wire(aux).wrapped, True)
         else:
