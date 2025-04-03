@@ -157,6 +157,7 @@ from OCP.Geom import (
     Geom_Plane,
     Geom_BSplineCurve,
     Geom_Curve,
+    Geom_BSplineSurface,
 )
 from OCP.Geom2d import Geom2d_Line
 
@@ -3484,6 +3485,32 @@ class Face(Shape):
 
         return [self.isoline(p, direction) for p in params]
 
+    def extend(
+        self,
+        d: float,
+        umin: bool = True,
+        umax: bool = True,
+        vmin: bool = True,
+        vmax: bool = True,
+    ) -> "Face":
+        """
+        Extend a face. Does not work well in periodic directions.
+        
+        :param d: length of the extension.
+        :param umin: extend along the umin isoline.
+        :param umax: extend along the umax isoline.
+        :param vmin: extend along the vmin isoline.
+        :param umax: extend along the umax isoline.
+        """
+
+        # convert to NURBS if needed
+        tmp = self.toNURBS() if self.geomType() != "BSPLINE" else self
+
+        rv = TopoDS_Face()
+        BRepLib.ExtendFace_s(tmp.wrapped, d, umin, umax, vmin, vmax, rv)
+
+        return self.__class__(rv)
+
 
 class Shell(Shape):
     """
@@ -5672,11 +5699,17 @@ def imprint(
         # collect shapes present in the history dict
         for k, v in history.items():
             if isinstance(k, str):
-                history[k] = _compound_or_shape(list(images.Find(v.wrapped)))
+                try:
+                    history[k] = _compound_or_shape(list(images.Find(v.wrapped)))
+                except Standard_NoSuchObject:
+                    pass
 
         # store all top-level shape relations
         for s in shapes:
-            history[s] = _compound_or_shape(list(images.Find(s.wrapped)))
+            try:
+                history[s] = _compound_or_shape(list(images.Find(s.wrapped)))
+            except Standard_NoSuchObject:  # pragma: no cover
+                pass
 
     return _compound_or_shape(builder.Shape())
 
@@ -5928,6 +5961,7 @@ def sweep(
     def _make_builder():
 
         rv = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+
         if aux:
             rv.SetMode(_get_one_wire(aux).wrapped, True)
         else:
@@ -6142,6 +6176,15 @@ def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
     """
     Closest points between two shapes.
     """
-    ext = BRepExtrema_DistShapeShape(s1.wrapped, s2.wrapped)
+    # configure
+    ext = BRepExtrema_DistShapeShape()
+    ext.SetMultiThread(True)
+
+    # load shapes
+    ext.LoadS1(s1.wrapped)
+    ext.LoadS2(s2.wrapped)
+
+    # perform
+    assert ext.Perform()
 
     return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))

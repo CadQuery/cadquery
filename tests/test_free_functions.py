@@ -430,6 +430,7 @@ def test_imprint():
 
     assert len(res_glue_full.Faces()) == len(compound(b1, b2).Faces()) - 1
 
+    # imprint with history
     history = dict(b1=b1, b3=b3)
     res_glue_partial = imprint(b1, b3, glue="partial", history=history)
 
@@ -438,6 +439,13 @@ def test_imprint():
 
     assert len(b1_imp.Faces()) == len(b1.Faces()) + 1
     assert len(res_glue_partial.Faces()) == len(b1_imp.Faces() + b3_imp.Faces()) - 1
+
+    # imprint with faulty history
+    history = dict(b2=b2)
+    # this does not raise!
+    res_glue_partial = imprint(b1, b3, glue="partial", history=history)
+
+    assert b2 not in history
 
 
 def test_setThreads():
