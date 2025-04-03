@@ -1,3 +1,6 @@
+# This is a PartCAD package.
+# See https://partcad.org/ and https://github.com/openvmp/partcad for more information.
+
 name: /pub/examples/script/cadquery
 desc: CadQuery examples
 url: https://github.com/CadQuery/cadquery
