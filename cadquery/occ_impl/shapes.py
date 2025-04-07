@@ -5708,7 +5708,7 @@ def imprint(
         for s in shapes:
             try:
                 history[s] = _compound_or_shape(list(images.Find(s.wrapped)))
-            except Standard_NoSuchObject:  # pragma: no cover
+            except Standard_NoSuchObject:
                 pass
 
     return _compound_or_shape(builder.Shape())
