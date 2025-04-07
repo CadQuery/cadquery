@@ -450,8 +450,10 @@ def test_imprint():
 
 @fixture
 def patch_find(monkeypatch):
+    """
+    Fixture for throwing exception during imprinting.
+    """
 
-    import OCP
     from OCP.TopTools import TopTools_DataMapOfShapeListOfShape
     from OCP.Standard import Standard_NoSuchObject
     from OCP.BOPAlgo import BOPAlgo_Builder
