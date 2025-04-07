@@ -51,7 +51,7 @@ from cadquery.occ_impl.shapes import (
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
 
-from pytest import approx, raises
+from pytest import approx, raises, fixture
 from math import pi
 
 #%% test utils
@@ -446,6 +446,36 @@ def test_imprint():
     res_glue_partial = imprint(b1, b3, glue="partial", history=history)
 
     assert b2 not in history
+
+
+@fixture
+def patch_find(monkeypatch):
+
+    import OCP
+    from OCP.TopTools import TopTools_DataMapOfShapeListOfShape
+    from OCP.Standard import Standard_NoSuchObject
+    from OCP.BOPAlgo import BOPAlgo_Builder
+
+    def dummy(x):
+
+        raise ValueError("A")
+        raise Standard_NoSuchObject
+
+    class DummyMap(TopTools_DataMapOfShapeListOfShape):
+        def Find(self, x):
+            raise Standard_NoSuchObject
+
+    monkeypatch.setattr(BOPAlgo_Builder, "Images", lambda x: DummyMap())
+
+
+def test_imprint_error(patch_find):
+
+    b1 = box(1, 1, 1)
+    b2 = b1.moved(x=1)
+
+    history = {}
+
+    _ = imprint(b1, b2, history=history)
 
 
 def test_setThreads():
