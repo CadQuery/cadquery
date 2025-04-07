@@ -159,7 +159,6 @@ from OCP.Geom import (
     Geom_Plane,
     Geom_BSplineCurve,
     Geom_Curve,
-    Geom_BSplineSurface,
 )
 from OCP.Geom2d import Geom2d_Line
 
@@ -195,7 +194,11 @@ from OCP.StlAPI import StlAPI_Writer
 
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
-from OCP.BRepTools import BRepTools, BRepTools_WireExplorer, BRepTools_Substitution
+from OCP.BRepTools import (
+    BRepTools,
+    BRepTools_WireExplorer,
+    BRepTools_ReShape,
+)
 
 from OCP.LocOpe import LocOpe_DPrism
 
@@ -1694,15 +1697,37 @@ class Shape(object):
 
     def replace(self, old: "Shape", *new: "Shape") -> Self:
         """
-        Replace old Subshape with new subshapes.
+        Replace old subshape with new subshapes.
         """
 
-        bldr = BRepTools_Substitution()
-        bldr.Substitute(old.wrapped, _shapes_to_toptools_list(new))
+        tools: List[Shape] = []
 
-        bldr.Build(self.wrapped)
+        for el in new:
+            if isinstance(el, Compound):
+                tools.extend(el)
+            else:
+                tools.append(el)
 
-        return self
+        bldr = BRepTools_ReShape()
+        bldr.Replace(old.wrapped, compound(tools).wrapped)
+
+        rv = bldr.Apply(self.wrapped)
+
+        return self.__class__(rv)
+
+    def remove(self, *subshape: "Shape") -> Self:
+        """
+        Remove subshapes.
+        """
+
+        bldr = BRepTools_ReShape()
+
+        for el in subshape:
+            bldr.Remove(el.wrapped)
+
+        rv = bldr.Apply(self.wrapped)
+
+        return self.__class__(rv)
 
 
 class ShapeProtocol(Protocol):
@@ -4426,13 +4451,15 @@ class Compound(Shape, Mixin3D):
 
         return comp
 
-    def remove(self, shape: Shape):
+    def remove(self, *shape: Shape):
         """
         Remove the specified shape.
         """
 
         comp_builder = TopoDS_Builder()
-        comp_builder.Remove(self.wrapped, shape.wrapped)
+
+        for s in shape:
+            comp_builder.Remove(self.wrapped, s.wrapped)
 
     @classmethod
     def makeCompound(cls, listOfShapes: Iterable[Shape]) -> "Compound":
