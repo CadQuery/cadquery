@@ -15,6 +15,8 @@ from typing import (
     Protocol,
 )
 
+from typing_extensions import Self
+
 from io import BytesIO
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
@@ -193,7 +195,7 @@ from OCP.StlAPI import StlAPI_Writer
 
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
-from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
+from OCP.BRepTools import BRepTools, BRepTools_WireExplorer, BRepTools_Substitution
 
 from OCP.LocOpe import LocOpe_DPrism
 
@@ -1689,6 +1691,18 @@ class Shape(object):
 
         self.wrapped = wrapped
         self.forConstruction = data[1]
+
+    def replace(self, old: "Shape", *new: "Shape") -> Self:
+        """
+        Replace old Subshape with new subshapes.
+        """
+
+        bldr = BRepTools_Substitution()
+        bldr.Substitute(old.wrapped, _shapes_to_toptools_list(new))
+
+        bldr.Build(self.wrapped)
+
+        return self
 
 
 class ShapeProtocol(Protocol):
