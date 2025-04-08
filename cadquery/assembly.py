@@ -95,9 +95,9 @@ class Assembly(object):
     constraints: List[Constraint]
 
     # Allows metadata to be stored for exports
-    subshape_names: dict[Shape, str]
-    subshape_colors: dict[Shape, Color]
-    subshape_layers: dict[Shape, str]
+    _subshape_names: dict[Shape, str]
+    _subshape_colors: dict[Shape, Color]
+    _subshape_layers: dict[Shape, str]
 
     _solve_result: Optional[Dict[str, Any]]
 
@@ -144,9 +144,9 @@ class Assembly(object):
 
         self._solve_result = None
 
-        self.subshape_names = {}
-        self.subshape_colors = {}
-        self.subshape_layers = {}
+        self._subshape_names = {}
+        self._subshape_colors = {}
+        self._subshape_layers = {}
 
     def _copy(self) -> "Assembly":
         """
@@ -627,6 +627,30 @@ class Assembly(object):
             rv = [el for el in self.obj.vals() if isinstance(el, Shape)]
 
         return rv
+
+    @property
+    def subshape_names(self) -> Dict[Shape, str]:
+        """
+        Returns a dictionary of subshape names
+        """
+
+        return self._subshape_names
+
+    @property
+    def subshape_colors(self) -> Dict[Shape, Color]:
+        """
+        Returns a dictionary of subshape colors
+        """
+
+        return self._subshape_colors
+
+    @property
+    def subshape_layers(self) -> Dict[Shape, str]:
+        """
+        Returns a dictionary of subshape layers
+        """
+
+        return self._subshape_layers
 
     def traverse(self) -> Iterator[Tuple[str, "Assembly"]]:
         """

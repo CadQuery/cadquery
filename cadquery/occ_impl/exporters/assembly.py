@@ -105,7 +105,7 @@ def exportAssembly(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportMetaStep(
+def exportStepMeta(
     assy: AssemblyProtocol,
     path: str,
     write_pcurves: bool = True,
@@ -151,6 +151,8 @@ def exportMetaStep(
         :param assy_label: The label for the assembly to add this part to
         :return: None
         """
+
+        child_items = None
 
         # We combine these because the metadata could be stored at the parent or child level
         combined_names = {**assy.subshape_names, **child.subshape_names}

@@ -11,7 +11,7 @@ from pytest import approx
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
     exportAssembly,
-    exportMetaStep,
+    exportStepMeta,
     exportCAF,
     exportVTKJS,
     exportVRML,
@@ -696,11 +696,11 @@ def test_meta_step_export(tmp_path_factory):
     assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
 
     # Write once with pcurves turned on
-    success = exportMetaStep(assy, meta_path)
+    success = exportStepMeta(assy, meta_path)
     assert success
 
     # Write again with pcurves turned off
-    success = exportMetaStep(assy, meta_path, write_pcurves=False)
+    success = exportStepMeta(assy, meta_path, write_pcurves=False)
     assert success
 
     # Make sure the step file exists
@@ -742,23 +742,23 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assy = cq.Assembly(name="top-level")
 
     # Write an assembly with no children
-    success = exportMetaStep(assy, meta_path)
+    success = exportStepMeta(assy, meta_path)
     assert success
 
     # Test an object with no color set
     cube = cq.Workplane().box(10.0, 10.0, 10.0)
     assy.add(cube, name="cube")
-    success = exportMetaStep(assy, meta_path)
+    success = exportStepMeta(assy, meta_path)
     assert success
 
     # Tag a face that does not match the object
     assy.addSubshape(None, name="cube_top_face")
-    success = exportMetaStep(assy, meta_path)
+    success = exportStepMeta(assy, meta_path)
     assert success
 
     # Tag the name but nothing else
     assy.addSubshape(cube.faces(">Z").val(), name="cube_top_face")
-    success = exportMetaStep(assy, meta_path)
+    success = exportStepMeta(assy, meta_path)
     assert success
 
     # Reset the assembly
@@ -768,7 +768,7 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
 
     # Tag the color but nothing else
     assy.addSubshape(cube.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    success = exportMetaStep(assy, meta_path)
+    success = exportStepMeta(assy, meta_path)
     assert success
 
     # Reset the assembly
@@ -778,7 +778,7 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
 
     # Tag the layer but nothing else
     assy.addSubshape(cube.faces(">Z").val(), layer="cube_top_face")
-    success = exportMetaStep(assy, meta_path)
+    success = exportStepMeta(assy, meta_path)
     assert success
 
 
