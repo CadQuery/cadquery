@@ -4423,6 +4423,25 @@ class Solid(Shape, Mixin3D):
 
         return [s for s in self.Shells() if not s.isSame(outer)]
 
+    def addCavity(self, *shells: Union[Shell, "Solid"]) -> Self:
+        """
+        Add one or more cavities.
+        """
+
+        builder = BRepBuilderAPI_MakeSolid(self.wrapped)
+
+        # if a solid is provided only outer shell is added
+        for sh in shells:
+            builder.Add(
+                sh.wrapped if isinstance(sh, Shell) else sh.outerShell().wrapped
+            )
+
+        # fix orientations
+        sf = ShapeFix_Solid(builder.Solid())
+        sf.Perform()
+
+        return self.__class__(sf.Solid())
+
 
 class CompSolid(Shape, Mixin3D):
     """
