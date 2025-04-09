@@ -739,7 +739,10 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("out")
     meta_path = os.path.join(tmpdir, "meta_edges_cases.step")
 
+    # Create an assembly where the child is empty
     assy = cq.Assembly(name="top-level")
+    subassy = cq.Assembly(name="second-level")
+    assy.add(subassy)
 
     # Write an assembly with no children
     success = exportStepMeta(assy, meta_path)
