@@ -296,7 +296,12 @@ def test_replace():
     f_top = b.faces(">Z")
     f_top_split = f_top / plane(0.5, 0.5).moved(f_top.Center())
 
-    br = b.replace(f_top, f_top_split)
+    br1 = b.replace(f_top, f_top_split)
 
-    assert len(br.Faces()) == len(b.Faces()) + 1
-    assert br.isValid()
+    assert len(br1.Faces()) == len(b.Faces()) + 1
+    assert br1.isValid()
+
+    br2 = b.replace(f_top, *f_top_split)  # invoke with individual faces
+
+    assert len(br2.Faces()) == len(b.Faces()) + 1
+    assert br2.isValid()
