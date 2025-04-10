@@ -628,13 +628,6 @@ class Assembly(object):
 
         return rv
 
-    @property
-    def subshape_names(self) -> Dict[Shape, str]:
-        """
-        Returns a dictionary of subshape names
-        """
-
-        return self._subshape_names
 
     @property
     def subshape_colors(self) -> Dict[Shape, Color]:
