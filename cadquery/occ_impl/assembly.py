@@ -161,7 +161,7 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
-    def subshape_names(self) -> Dict[Shape, str]:
+    def _subshape_names(self) -> Dict[Shape, str]:
         ...
 
     @property
