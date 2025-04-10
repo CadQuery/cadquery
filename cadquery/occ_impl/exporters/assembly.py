@@ -155,9 +155,9 @@ def exportStepMeta(
         child_items = None
 
         # We combine these because the metadata could be stored at the parent or child level
-        combined_names = {**assy.subshape_names, **child.subshape_names}
-        combined_colors = {**assy.subshape_colors, **child.subshape_colors}
-        combined_layers = {**assy.subshape_layers, **child.subshape_layers}
+        combined_names = {**assy._subshape_names, **child._subshape_names}
+        combined_colors = {**assy._subshape_colors, **child._subshape_colors}
+        combined_layers = {**assy._subshape_layers, **child._subshape_layers}
 
         # Collect all of the shapes in the child object
         if child.obj:
