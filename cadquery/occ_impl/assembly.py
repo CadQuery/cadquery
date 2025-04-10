@@ -169,7 +169,7 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
-    def subshape_layers(self) -> Dict[Shape, str]:
+    def _subshape_layers(self) -> Dict[Shape, str]:
         ...
 
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
