@@ -738,7 +738,7 @@ class Assembly(object):
 
         # Handle any metadata we were passed
         if name:
-            self.subshape_names[s] = name
+            self._subshape_names[s] = name
         if color:
             self.subshape_colors[s] = color
         if layer:
