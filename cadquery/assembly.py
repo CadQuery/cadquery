@@ -628,23 +628,6 @@ class Assembly(object):
 
         return rv
 
-
-    @property
-    def subshape_colors(self) -> Dict[Shape, Color]:
-        """
-        Returns a dictionary of subshape colors
-        """
-
-        return self._subshape_colors
-
-    @property
-    def subshape_layers(self) -> Dict[Shape, str]:
-        """
-        Returns a dictionary of subshape layers
-        """
-
-        return self._subshape_layers
-
     def traverse(self) -> Iterator[Tuple[str, "Assembly"]]:
         """
         Yield (name, child) pairs in a bottom-up manner
