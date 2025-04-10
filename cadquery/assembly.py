@@ -740,8 +740,8 @@ class Assembly(object):
         if name:
             self._subshape_names[s] = name
         if color:
-            self.subshape_colors[s] = color
+            self._subshape_colors[s] = color
         if layer:
-            self.subshape_layers[s] = layer
+            self._subshape_layers[s] = layer
 
         return self
