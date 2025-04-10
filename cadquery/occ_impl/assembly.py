@@ -165,7 +165,7 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
-    def subshape_colors(self) -> Dict[Shape, Color]:
+    def _subshape_colors(self) -> Dict[Shape, Color]:
         ...
 
     @property
