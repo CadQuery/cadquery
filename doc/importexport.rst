@@ -211,6 +211,7 @@ Exporting Assemblies to STEP with Metadata
 It is possible to attach metadata to the assembly that will be included in the STEP file. This metadata can be attached to arbitrary shapes and includes names, colors and layers. This is done by using the :meth:`Assembly.addSubshape` method before calling :meth:`cadquery.occ_impl.exporters.assembly.exportStepMeta`.
 
 .. code-block:: python
+
     import cadquery as cq
     from cadquery.occ_impl.exporters.assembly import exportStepMeta
 
