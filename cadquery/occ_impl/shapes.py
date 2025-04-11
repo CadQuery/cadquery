@@ -1403,7 +1403,10 @@ class Shape(object):
         Minimal distance between two shapes
         """
 
-        return BRepExtrema_DistShapeShape(self.wrapped, other.wrapped).Value()
+        dist_calc = BRepExtrema_DistShapeShape(self.wrapped, other.wrapped)
+        dist_calc.SetMultiThread(True)
+
+        return dist_calc.Value()
 
     def distances(self, *others: "Shape") -> Iterator[float]:
         """
@@ -1411,6 +1414,8 @@ class Shape(object):
         """
 
         dist_calc = BRepExtrema_DistShapeShape()
+        dist_calc.SetMultiThread(True)
+
         dist_calc.LoadS1(self.wrapped)
 
         for s in others:
