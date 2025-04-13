@@ -5132,20 +5132,44 @@ def face(s: Sequence[Shape]) -> Shape:
 
 
 @multimethod
-def shell(*s: Shape, tol: float = 1e-6) -> Shape:
+def shell(
+    *s: Shape,
+    tol: float = 1e-6,
+    manifold: bool = True,
+    history: Optional[Dict[Union[Face, str], Face]] = None,
+) -> Shape:
     """
     Build shell from faces.
     """
 
-    builder = BRepBuilderAPI_Sewing(tol)
+    builder = BRepBuilderAPI_Sewing(tol, option4=not manifold)
+    faces: list[Face] = []
 
     for el in s:
         for f in _get(el, "Face"):
             builder.Add(f.wrapped)
+            faces.append(f)
 
     builder.Perform()
 
     sewed = builder.SewedShape()
+
+    # fill history if provided
+    if history is not None:
+        # collect shapes present in the history dict
+        for k, v in history.items():
+            if isinstance(k, str):
+                try:
+                    history[k] = Face(builder.Modified(v.wrapped))
+                except Standard_NoSuchObject:
+                    pass
+
+        # store all top-level shape relations
+        for f in faces:
+            try:
+                history[f] = Face(builder.Modified(f.wrapped))
+            except Standard_NoSuchObject:
+                pass
 
     # for one face sewing will not produce a shell
     if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
@@ -5162,12 +5186,17 @@ def shell(*s: Shape, tol: float = 1e-6) -> Shape:
 
 
 @shell.register
-def shell(s: Sequence[Shape], tol: float = 1e-6) -> Shape:
+def shell(
+    s: Sequence[Shape],
+    tol: float = 1e-6,
+    manifold: bool = True,
+    history: Optional[Dict[Union[Shape, str], Shape]] = None,
+) -> Shape:
     """
     Build shell from a sequence of faces.
     """
 
-    return shell(*s, tol=tol)
+    return shell(*s, tol=tol, manifold=manifold)
 
 
 @multimethod
@@ -6197,6 +6226,25 @@ def loft(
     """
 
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
+
+
+def sew(ctx: Shape, *s: Shape, tol: float = 1e-6, manifold: bool = True):
+    """
+    Local sewing.
+    """
+
+    builder = BRepBuilderAPI_Sewing(tol, option4=not manifold)
+    builder.Load(ctx.wrapped)
+
+    for el in s:
+        for f in _get(el, "Face"):
+            builder.Add(f.wrapped)
+
+    builder.Perform()
+
+    sewed = builder.SewedShape()
+
+    return _compound_or_shape(sewed)
 
 
 #%% diagnotics
