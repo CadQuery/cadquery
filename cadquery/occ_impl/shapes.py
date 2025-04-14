@@ -4477,7 +4477,7 @@ class Compound(Shape, Mixin3D):
 
     def remove(self, *shape: Shape):
         """
-        Remove the specified shape.
+        Remove the specified shapes.
         """
 
         comp_builder = TopoDS_Builder()
