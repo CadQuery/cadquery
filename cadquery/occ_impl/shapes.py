@@ -5131,6 +5131,33 @@ def face(s: Sequence[Shape]) -> Shape:
     return face(*s)
 
 
+def _process_sewing_history(
+    builder: BRepBuilderAPI_Sewing,
+    faces: List[Face],
+    history: Optional[Dict[Union[Face, str], Face]],
+):
+    """
+    Reusable helper for processing sewing history.
+    """
+
+    # fill history if provided
+    if history is not None:
+        # collect shapes present in the history dict
+        for k, v in history.items():
+            if isinstance(k, str):
+                try:
+                    history[k] = Face(builder.Modified(v.wrapped))
+                except Standard_NoSuchObject:
+                    pass
+
+        # store all top-level shape relations
+        for f in faces:
+            try:
+                history[f] = Face(builder.Modified(f.wrapped))
+            except Standard_NoSuchObject:
+                pass
+
+
 @multimethod
 def shell(
     *s: Shape,
@@ -5151,25 +5178,8 @@ def shell(
             faces.append(f)
 
     builder.Perform()
-
     sewed = builder.SewedShape()
-
-    # fill history if provided
-    if history is not None:
-        # collect shapes present in the history dict
-        for k, v in history.items():
-            if isinstance(k, str):
-                try:
-                    history[k] = Face(builder.Modified(v.wrapped))
-                except Standard_NoSuchObject:
-                    pass
-
-        # store all top-level shape relations
-        for f in faces:
-            try:
-                history[f] = Face(builder.Modified(f.wrapped))
-            except Standard_NoSuchObject:
-                pass
+    _process_sewing_history(builder, faces, history)
 
     # for one face sewing will not produce a shell
     if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
@@ -5196,7 +5206,7 @@ def shell(
     Build shell from a sequence of faces.
     """
 
-    return shell(*s, tol=tol, manifold=manifold)
+    return shell(*s, tol=tol, manifold=manifold, history=history)
 
 
 @multimethod
@@ -6228,7 +6238,13 @@ def loft(
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
 
 
-def sew(ctx: Shape, *s: Shape, tol: float = 1e-6, manifold: bool = True):
+def sew(
+    ctx: Shape,
+    *s: Shape,
+    tol: float = 1e-6,
+    manifold: bool = True,
+    history: Optional[Dict[Union[Face, str], Face]] = None,
+):
     """
     Local sewing.
     """
@@ -6236,13 +6252,18 @@ def sew(ctx: Shape, *s: Shape, tol: float = 1e-6, manifold: bool = True):
     builder = BRepBuilderAPI_Sewing(tol, option4=not manifold)
     builder.Load(ctx.wrapped)
 
+    faces = []
+
     for el in s:
         for f in _get(el, "Face"):
             builder.Add(f.wrapped)
+            faces.append(f)
 
     builder.Perform()
 
     sewed = builder.SewedShape()
+
+    _process_sewing_history(builder, faces, history)
 
     return _compound_or_shape(sewed)
 
