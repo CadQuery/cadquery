@@ -121,9 +121,6 @@ def exportStepMeta(
 
     :param assy: assembly
     :param path: Path and filename for writing
-    :param names: A dictionary of that specifies faces that need to have string names attached.
-    :param colors: A dictionary of that specifies faces that need to have RGB colors attached.
-    :param layers: A dictionary of that specifies faces that need to have string layer names attached.
     :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
         If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
