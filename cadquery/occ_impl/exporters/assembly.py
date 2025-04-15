@@ -30,10 +30,9 @@ from OCP.TColStd import TColStd_IndexedDataMapOfStringString
 from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
-from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
+from ..assembly import AssemblyProtocol, color_to_occt, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
-from ..assembly import Color
 
 
 class ExportModes:
@@ -176,7 +175,7 @@ def exportStepMeta(
             part_label = shape_tool.AddShape(shape.wrapped, False)
             TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name))
             if color:
-                color_tool.SetColor(part_label, color.wrapped, XCAFDoc_ColorGen)
+                color_tool.SetColor(part_label, color_to_occt(color), XCAFDoc_ColorGen)
             shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
 
             # If this assembly has shape metadata, add it to the shape
@@ -207,7 +206,9 @@ def exportStepMeta(
                             # Set the individual face color
                             if face in colors:
                                 color_tool.SetColor(
-                                    face_label, colors[face].wrapped, XCAFDoc_ColorGen,
+                                    face_label,
+                                    color_to_occt(colors[face]),
+                                    XCAFDoc_ColorGen,
                                 )
 
                             # Also add a layer to hold the face label data

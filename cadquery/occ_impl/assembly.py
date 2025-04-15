@@ -4,7 +4,6 @@ from typing import (
     Iterator,
     Tuple,
     Dict,
-    overload,
     Optional,
     Any,
     List,
@@ -12,10 +11,23 @@ from typing import (
 )
 from typing_extensions import Protocol
 from math import degrees, radians
+from dataclasses import dataclass
 
 from OCP.TDocStd import TDocStd_Document
-from OCP.TCollection import TCollection_ExtendedString
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType, XCAFDoc_ColorGen
+from OCP.TCollection import (
+    TCollection_ExtendedString,
+    TCollection_AsciiString,
+    TCollection_HAsciiString,
+)
+from OCP.XCAFDoc import (
+    XCAFDoc_DocumentTool,
+    XCAFDoc_ColorType,
+    XCAFDoc_ColorGen,
+    XCAFDoc_VisMaterial,
+    XCAFDoc_VisMaterialPBR,
+    XCAFDoc_VisMaterialCommon,
+    XCAFDoc_Material,
+)
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
@@ -29,7 +41,7 @@ from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
-from OCP.gp import gp_EulerSequence
+from OCP.gp import gp_EulerSequence, gp_Vec3f
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -45,94 +57,22 @@ from .geom import Location
 from .shapes import Shape, Solid, Compound
 from .exporters.vtk import toString
 from ..cq import Workplane
+from ..materials import Material, Color
+
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
 
 
-class Color(object):
-    """
-    Wrapper for the OCCT color object Quantity_ColorRGBA.
-    """
+@dataclass
+class AssemblyElement:
+    """A dataclass representing an element in an assembly iterator."""
 
-    wrapped: Quantity_ColorRGBA
-
-    @overload
-    def __init__(self, name: str):
-        """
-        Construct a Color from a name.
-
-        :param name: name of the color, e.g. green
-        """
-        ...
-
-    @overload
-    def __init__(self, r: float, g: float, b: float, a: float = 0):
-        """
-        Construct a Color from RGB(A) values.
-
-        :param r: red value, 0-1
-        :param g: green value, 0-1
-        :param b: blue value, 0-1
-        :param a: alpha value, 0-1 (default: 0)
-        """
-        ...
-
-    @overload
-    def __init__(self):
-        """
-        Construct a Color with default value.
-        """
-        ...
-
-    def __init__(self, *args, **kwargs):
-
-        if len(args) == 0:
-            self.wrapped = Quantity_ColorRGBA()
-        elif len(args) == 1:
-            self.wrapped = Quantity_ColorRGBA()
-            exists = Quantity_ColorRGBA.ColorFromName_s(args[0], self.wrapped)
-            if not exists:
-                raise ValueError(f"Unknown color name: {args[0]}")
-        elif len(args) == 3:
-            r, g, b = args
-            self.wrapped = Quantity_ColorRGBA(
-                Quantity_Color(r, g, b, Quantity_TOC_sRGB), 1
-            )
-            if kwargs.get("a"):
-                self.wrapped.SetAlpha(kwargs.get("a"))
-        elif len(args) == 4:
-            r, g, b, a = args
-            self.wrapped = Quantity_ColorRGBA(
-                Quantity_Color(r, g, b, Quantity_TOC_sRGB), a
-            )
-        else:
-            raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
-
-    def __hash__(self):
-
-        return hash(self.toTuple())
-
-    def __eq__(self, other):
-
-        return self.toTuple() == other.toTuple()
-
-    def toTuple(self) -> Tuple[float, float, float, float]:
-        """
-        Convert Color to RGB tuple.
-        """
-        a = self.wrapped.Alpha()
-        rgb = self.wrapped.GetRGB().Values(Quantity_TOC_sRGB)
-
-        return (*rgb, a)
-
-    def __getstate__(self) -> Tuple[float, float, float, float]:
-
-        return self.toTuple()
-
-    def __setstate__(self, data: Tuple[float, float, float, float]):
-
-        self.wrapped = Quantity_ColorRGBA(*data)
+    shape: Shape
+    name: str
+    location: Location
+    color: Optional[Color] = None
+    material: Optional[Material] = None
 
 
 class AssemblyProtocol(Protocol):
@@ -154,6 +94,10 @@ class AssemblyProtocol(Protocol):
 
     @property
     def color(self) -> Optional[Color]:
+        ...
+
+    @property
+    def material(self) -> Optional[Material]:
         ...
 
     @property
@@ -188,18 +132,81 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        material: Optional[Material] = None,
+    ) -> Iterator[AssemblyElement]:
         ...
 
 
-def setName(l: TDF_Label, name: str, tool):
+def color_from_name(name: str) -> Color:
+    """Create a Color from a name using OCCT's color system."""
+    color = Quantity_ColorRGBA()
+    exists = Quantity_ColorRGBA.ColorFromName_s(name, color)
+    if not exists:
+        raise ValueError(f"Unknown color name: {name}")
+    rgb = color.GetRGB()
+    return Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
 
+
+def color_to_occt(color: Color) -> Quantity_ColorRGBA:
+    """Convert a Color to an OCCT color object."""
+    rgb = Quantity_Color(color.r, color.g, color.b, Quantity_TOC_sRGB)
+    rgba = Quantity_ColorRGBA(rgb, color.a)
+    return rgba
+
+
+def material_to_occt(
+    material: Material,
+) -> Tuple[XCAFDoc_Material, XCAFDoc_VisMaterial]:
+    """Convert a Material to OCCT material objects."""
+    # Create material object
+    occt_material = XCAFDoc_Material()
+    occt_material.Set(
+        TCollection_HAsciiString(material.name),
+        TCollection_HAsciiString(material.description),
+        material.density,
+        TCollection_HAsciiString("kg/m³"),
+        TCollection_HAsciiString("DENSITY"),
+    )
+
+    # Create visualization material
+    vis_mat = XCAFDoc_VisMaterial()
+
+    # Set up PBR material if provided
+    if material.pbr:
+        pbr_mat = XCAFDoc_VisMaterialPBR()
+        pbr_mat.BaseColor = color_to_occt(material.pbr.base_color)
+        pbr_mat.Metallic = material.pbr.metallic
+        pbr_mat.Roughness = material.pbr.roughness
+        pbr_mat.RefractionIndex = material.pbr.refraction_index
+        pbr_mat.EmissiveFactor = gp_Vec3f(*material.pbr.emissive_factor.rgb())
+        vis_mat.SetPbrMaterial(pbr_mat)
+
+    # Set up common material if provided
+    if material.common:
+        common_mat = XCAFDoc_VisMaterialCommon()
+        common_mat.AmbientColor = color_to_occt(material.common.ambient_color).GetRGB()
+        common_mat.DiffuseColor = color_to_occt(material.common.diffuse_color).GetRGB()
+        common_mat.SpecularColor = color_to_occt(
+            material.common.specular_color
+        ).GetRGB()
+        common_mat.EmissiveColor = color_to_occt(
+            material.common.emissive_color
+        ).GetRGB()
+        common_mat.Shininess = material.common.shininess
+        common_mat.Transparency = material.common.transparency
+        vis_mat.SetCommonMaterial(common_mat)
+
+    return occt_material, vis_mat
+
+
+def setName(l: TDF_Label, name: str, tool):
+    """Set the name of a label in the document."""
     TDataStd_Name.Set_s(l, TCollection_ExtendedString(name))
 
 
 def setColor(l: TDF_Label, color: Color, tool):
-
-    tool.SetColor(l, color.wrapped, XCAFDoc_ColorType.XCAFDoc_ColorSurf)
+    """Set the color of a label in the document."""
+    tool.SetColor(l, color_to_occt(color), XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
 
 def toCAF(
@@ -219,25 +226,30 @@ def toCAF(
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    mtool = XCAFDoc_DocumentTool.MaterialTool_s(doc.Main())
+    vmtool = XCAFDoc_DocumentTool.VisMaterialTool_s(doc.Main())
 
-    # used to store labels with unique part-color combinations
-    unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
+    # used to store labels with unique part-color-material combinations
+    unique_objs: Dict[
+        Tuple[Optional[Color], Optional[Material], AssemblyObjects], TDF_Label
+    ] = {}
     # used to cache unique, possibly meshed, compounds; allows to avoid redundant meshing operations if same object is referenced multiple times in an assy
     compounds: Dict[AssemblyObjects, Compound] = {}
 
-    def _toCAF(el, ancestor, color) -> TDF_Label:
+    def _toCAF(el, ancestor, color, material) -> TDF_Label:
 
         # create a subassy
         subassy = tool.NewShape()
         setName(subassy, el.name, tool)
 
-        # define the current color
+        # define the current color and material
         current_color = el.color if el.color else color
+        current_material: Optional[Material] = el.material if el.material else material
 
         # add a leaf with the actual part if needed
         if el.obj:
             # get/register unique parts referenced in the assy
-            key0 = (current_color, el.obj)  # (color, shape)
+            key0 = (current_color, current_material, el.obj)  # (color, material, shape)
             key1 = el.obj  # shape
 
             if key0 in unique_objs:
@@ -261,6 +273,35 @@ def toCAF(
                 if coloredSTEP and current_color:
                     setColor(lab, current_color, ctool)
 
+                # handle materials
+                if current_material:
+                    # Assign color directly to the shape
+                    if current_material.color:
+                        ctool.SetColor(
+                            lab,
+                            color_to_occt(current_material.color),
+                            XCAFDoc_ColorType.XCAFDoc_ColorSurf,
+                        )
+
+                    # Convert material to OCCT format and add to document
+                    mat, vis_mat = material_to_occt(current_material)
+
+                    # Create material label
+                    mat_lab = mtool.AddMaterial(
+                        mat.GetName(),
+                        mat.GetDescription(),
+                        mat.GetDensity(),
+                        mat.GetDensName(),
+                        mat.GetDensValType(),
+                    )
+                    mtool.SetMaterial(lab, mat_lab)
+
+                    # Add visualization material to the document
+                    vis_mat_lab = vmtool.AddMaterial(
+                        vis_mat, TCollection_AsciiString(current_material.name)
+                    )
+                    vmtool.SetShapeMaterial(lab, vis_mat_lab)
+
             tool.AddComponent(subassy, lab, TopLoc_Location())
 
         # handle colors when *not* exporting to STEP
@@ -269,7 +310,7 @@ def toCAF(
 
         # add children recursively
         for child in el.children:
-            _toCAF(child, subassy, current_color)
+            _toCAF(child, subassy, current_color, current_material)
 
         if ancestor:
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
@@ -283,7 +324,7 @@ def toCAF(
         return rv
 
     # process the whole assy recursively
-    top = _toCAF(assy, None, None)
+    top = _toCAF(assy, None, None, None)
 
     tool.UpdateAssemblies()
 
@@ -319,13 +360,12 @@ def toVTKAssy(
 
     rv = vtkAssembly()
 
-    for shape, _, loc, col_ in assy:
+    for element in assy:
+        col = element.color.toTuple() if element.color else color
 
-        col = col_.toTuple() if col_ else color
+        trans, rot = _loc2vtk(element.location)
 
-        trans, rot = _loc2vtk(loc)
-
-        data = shape.toVtkPolyData(tolerance, angularTolerance)
+        data = element.shape.toVtkPolyData(tolerance, angularTolerance)
 
         # extract faces
         extr = vtkExtractCellsByType()
@@ -358,6 +398,19 @@ def toVTKAssy(
         actor.GetProperty().SetColor(*col[:3])
         actor.GetProperty().SetOpacity(col[3])
 
+        # Apply material properties if available
+        if element.material:
+            if element.material.pbr:
+                actor.GetProperty().SetMetallic(element.material.pbr.metallic)
+                actor.GetProperty().SetRoughness(element.material.pbr.roughness)
+                actor.GetProperty().SetRefractionIndex(
+                    element.material.pbr.refraction_index
+                )
+                if element.material.pbr.emissive_factor:
+                    actor.GetProperty().SetEmissiveFactor(
+                        *element.material.pbr.emissive_factor.rgb()
+                    )
+
         rv.AddPart(actor)
 
         mapper = vtkMapper()
@@ -386,13 +439,12 @@ def toVTK(
 
     renderer = vtkRenderer()
 
-    for shape, _, loc, col_ in assy:
+    for element in assy:
+        col = element.color.toTuple() if element.color else color
 
-        col = col_.toTuple() if col_ else color
+        trans, rot = _loc2vtk(element.location)
 
-        trans, rot = _loc2vtk(loc)
-
-        data = shape.toVtkPolyData(tolerance, angularTolerance)
+        data = element.shape.toVtkPolyData(tolerance, angularTolerance)
 
         # extract faces
         extr = vtkExtractCellsByType()
@@ -425,6 +477,17 @@ def toVTK(
         actor.GetProperty().SetColor(*col[:3])
         actor.GetProperty().SetOpacity(col[3])
 
+        # Apply material properties if available
+        if element.material:
+            if element.material.pbr:
+                actor.GetProperty().SetMetallic(element.material.pbr.metallic)
+                actor.GetProperty().SetRoughness(element.material.pbr.roughness)
+                actor.GetProperty().SetBaseIOR(element.material.pbr.refraction_index)
+                if element.material.pbr.emissive_factor:
+                    actor.GetProperty().SetEmissiveFactor(
+                        *element.material.pbr.emissive_factor.rgb()
+                    )
+
         renderer.AddActor(actor)
 
         mapper = vtkMapper()
@@ -451,17 +514,35 @@ def toJSON(
 
     rv = []
 
-    for shape, _, loc, col_ in assy:
-
+    for element in assy:
         val: Any = {}
 
-        data = toString(shape, tolerance)
-        trans, rot = loc.toTuple()
+        data = toString(element.shape, tolerance)
+        trans, rot = element.location.toTuple()
 
         val["shape"] = data
-        val["color"] = col_.toTuple() if col_ else color
+        val["color"] = element.color.toTuple() if element.color else color
         val["position"] = trans
         val["orientation"] = tuple(radians(r) for r in rot)
+
+        # Add material properties if available
+        if element.material:
+            val["material"] = {
+                "name": element.material.name,
+                "description": element.material.description,
+                "density": element.material.density,
+            }
+            if element.material.pbr:
+                val["material"]["pbr"] = {
+                    "base_color": element.material.pbr.base_color.rgba(),
+                    "metallic": element.material.pbr.metallic,
+                    "roughness": element.material.pbr.roughness,
+                    "refraction_index": element.material.pbr.refraction_index,
+                }
+                if element.material.pbr.emissive_factor:
+                    val["material"]["pbr"][
+                        "emissive_factor"
+                    ] = element.material.pbr.emissive_factor.rgba()
 
         rv.append(val)
 
@@ -500,9 +581,9 @@ def toFusedCAF(
     shapes: List[Shape] = []
     colors = []
 
-    for shape, _, loc, color in assy:
-        shapes.append(shape.moved(loc).copy())
-        colors.append(color)
+    for element in assy:
+        shapes.append(element.shape.moved(element.location).copy())
+        colors.append(element.color)
 
     # Initialize with a dummy value for mypy
     top_level_shape = cast(TopoDS_Shape, None)
@@ -549,7 +630,7 @@ def toFusedCAF(
             # See if the face can be treated as-is
             cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
             if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(face.wrapped):
-                color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+                color_tool.SetColor(cur_lbl, color_to_occt(color), XCAFDoc_ColorGen)
 
             # Handle any modified faces
             modded_list = fuse_op.Modified(face.wrapped)
@@ -558,7 +639,7 @@ def toFusedCAF(
                 # Add the face as a subshape and set its color to match the parent assembly component
                 cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
                 if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(mod):
-                    color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+                    color_tool.SetColor(cur_lbl, color_to_occt(color), XCAFDoc_ColorGen)
 
             # Handle any generated faces
             gen_list = fuse_op.Generated(face.wrapped)
@@ -567,7 +648,7 @@ def toFusedCAF(
                 # Add the face as a subshape and set its color to match the parent assembly component
                 cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
                 if color and not cur_lbl.IsNull():
-                    color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+                    color_tool.SetColor(cur_lbl, color_to_occt(color), XCAFDoc_ColorGen)
 
     return top_level_lbl, doc
 
@@ -580,9 +661,9 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
     # make the id map
     id_map = {}
 
-    for obj, name, loc, _ in assy:
-        for s in obj.moved(loc).Solids():
-            id_map[s] = name
+    for element in assy:
+        for s in element.shape.moved(element.location).Solids():
+            id_map[s] = element.name
 
     # connect topologically
     bldr = BOPAlgo_MakeConnected()

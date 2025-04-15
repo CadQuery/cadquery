@@ -18,7 +18,7 @@ from uuid import uuid1 as uuid
 from .cq import Workplane
 from .occ_impl.shapes import Shape, Compound
 from .occ_impl.geom import Location
-from .occ_impl.assembly import Color
+from .occ_impl.assembly import Color, Material, AssemblyElement
 from .occ_impl.solver import (
     ConstraintKind,
     ConstraintSolver,
@@ -85,6 +85,7 @@ class Assembly(object):
     loc: Location
     name: str
     color: Optional[Color]
+    material: Optional[Material]
     metadata: Dict[str, Any]
 
     obj: AssemblyObjects
@@ -107,6 +108,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -116,6 +118,7 @@ class Assembly(object):
         :param loc: location of the root object (default: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, resulting in an UUID being generated)
         :param color: color of the added object (default: None)
+        :param material: material of the added object (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         :return: An Assembly object.
 
@@ -135,6 +138,7 @@ class Assembly(object):
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
         self.color = color if color else None
+        self.material = material if material else None
         self.metadata = metadata if metadata else {}
         self.parent = None
 
@@ -153,7 +157,9 @@ class Assembly(object):
         Make a deep copy of an assembly
         """
 
-        rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
+        rv = self.__class__(
+            self.obj, self.loc, self.name, self.color, self.material, self.metadata
+        )
 
         for ch in self.children:
             ch_copy = ch._copy()
@@ -172,6 +178,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
     ) -> "Assembly":
         """
         Add a subassembly to the current assembly.
@@ -183,6 +190,8 @@ class Assembly(object):
           the subassembly being used)
         :param color: color of the added object (default: None, resulting in the color stored in the
           subassembly being used)
+        :param material: material of the added object (default: None, resulting in the material stored in the
+          subassembly being used)
         """
         ...
 
@@ -193,6 +202,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> "Assembly":
         """
@@ -204,6 +214,7 @@ class Assembly(object):
         :param name: unique name of the root object (default: None, resulting in an UUID being
           generated)
         :param color: color of the added object (default: None)
+        :param material: material of the added object (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         """
         ...
@@ -225,6 +236,9 @@ class Assembly(object):
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.material = (
+                kwargs["material"] if kwargs.get("material") else arg.material
+            )
             subassy.metadata = (
                 kwargs["metadata"] if kwargs.get("metadata") else arg.metadata
             )
@@ -658,22 +672,31 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        material: Optional[Material] = None,
+    ) -> Iterator[AssemblyElement]:
         """
-        Assembly iterator yielding shapes, names, locations and colors.
+        Assembly iterator yielding shapes, names, locations, colors and materials.
         """
 
         name = f"{name}/{self.name}" if name else self.name
         loc = loc * self.loc if loc else self.loc
         color = self.color if self.color else color
+        material = self.material if self.material else material
 
         if self.obj:
-            yield self.obj if isinstance(self.obj, Shape) else Compound.makeCompound(
-                s for s in self.obj.vals() if isinstance(s, Shape)
-            ), name, loc, color
+            shape = (
+                self.obj
+                if isinstance(self.obj, Shape)
+                else Compound.makeCompound(
+                    s for s in self.obj.vals() if isinstance(s, Shape)
+                )
+            )
+            yield AssemblyElement(
+                shape=shape, name=name, location=loc, color=color, material=material
+            )
 
         for ch in self.children:
-            yield from ch.__iter__(loc, name, color)
+            yield from ch.__iter__(loc, name, color, material)
 
     def toCompound(self) -> Compound:
         """
