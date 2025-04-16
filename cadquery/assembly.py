@@ -95,6 +95,11 @@ class Assembly(object):
     objects: Dict[str, "Assembly"]
     constraints: List[Constraint]
 
+    # Allows metadata to be stored for exports
+    _subshape_names: dict[Shape, str]
+    _subshape_colors: dict[Shape, Color]
+    _subshape_layers: dict[Shape, str]
+
     _solve_result: Optional[Dict[str, Any]]
 
     def __init__(
@@ -140,7 +145,11 @@ class Assembly(object):
 
         self._solve_result = None
 
-    def _copy(self) -> Self:
+        self._subshape_names = {}
+        self._subshape_colors = {}
+        self._subshape_layers = {}
+
+    def _copy(self) -> "Assembly":
         """
         Make a deep copy of an assembly
         """
@@ -700,3 +709,30 @@ class Assembly(object):
         from .occ_impl.jupyter_tools import display
 
         return display(self)._repr_javascript_()
+
+    def addSubshape(
+        self,
+        s: Shape,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        layer: Optional[str] = None,
+    ) -> "Assembly":
+        """
+        Handles name, color and layer metadata for subshapes.
+
+        :param s: The subshape to add metadata to.
+        :param name: The name to assign to the subshape.
+        :param color: The color to assign to the subshape.
+        :param layer: The layer to assign to the subshape.
+        :return: The modified assembly.
+        """
+
+        # Handle any metadata we were passed
+        if name:
+            self._subshape_names[s] = name
+        if color:
+            self._subshape_colors[s] = color
+        if layer:
+            self._subshape_layers[s] = layer
+
+        return self
