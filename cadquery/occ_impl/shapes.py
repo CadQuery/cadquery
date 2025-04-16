@@ -3544,7 +3544,7 @@ class Face(Shape):
         :param umin: extend along the umin isoline.
         :param umax: extend along the umax isoline.
         :param vmin: extend along the vmin isoline.
-        :param umax: extend along the umax isoline.
+        :param vmax: extend along the vmax isoline.
         """
 
         # convert to NURBS if needed
