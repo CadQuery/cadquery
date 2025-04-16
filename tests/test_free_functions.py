@@ -36,6 +36,7 @@ from cadquery.occ_impl.shapes import (
     Shape,
     Compound,
     Edge,
+    Shell,
     _get_one_wire,
     _get_wires,
     _get,
@@ -195,6 +196,33 @@ def test_constructors():
 
     for f in list(c1) + list(c2):
         assert f.ShapeType() == "Face"
+
+
+def test_sewing():
+
+    b = box(1, 1, 1)
+    ftop = b.faces(">Z")
+    sh = b.remove(ftop)
+
+    # regular local sewing
+    history1 = {}
+    res1 = shell(sh.faces("not <Z"), ftop, ctx=(sh, ftop), history=history1)
+
+    assert res1.isValid()
+    assert res1.Area() == approx(6)
+
+    # non-manifold sewing
+    res2 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=False)
+
+    assert res2.isValid()
+    assert not solid(res2).isValid()
+    assert isinstance(res2, Shell)
+
+    # manifold sewing (default) - results in a compound
+    res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=True)
+
+    assert res3.isValid()
+    assert isinstance(res3, Compound)
 
 
 #%% primitives

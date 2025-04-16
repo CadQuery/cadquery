@@ -5163,13 +5163,20 @@ def shell(
     *s: Shape,
     tol: float = 1e-6,
     manifold: bool = True,
+    ctx: Optional[Sequence[Shape] | Shape] = None,
     history: Optional[Dict[Union[Face, str], Face]] = None,
 ) -> Shape:
     """
-    Build shell from faces.
+    Build shell from faces. If ctx is specified, local sewing is performed.
     """
 
     builder = BRepBuilderAPI_Sewing(tol, option4=not manifold)
+    if ctx:
+        if isinstance(ctx, Shape):
+            builder.Load(ctx.wrapped)
+        else:
+            builder.Load(compound(ctx).wrapped)
+
     faces: list[Face] = []
 
     for el in s:
@@ -5200,13 +5207,14 @@ def shell(
     s: Sequence[Shape],
     tol: float = 1e-6,
     manifold: bool = True,
+    ctx: Optional[Sequence[Shape] | Shape] = None,
     history: Optional[Dict[Union[Shape, str], Shape]] = None,
 ) -> Shape:
     """
-    Build shell from a sequence of faces.
+    Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
     """
 
-    return shell(*s, tol=tol, manifold=manifold, history=history)
+    return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history)
 
 
 @multimethod
@@ -6236,36 +6244,6 @@ def loft(
     """
 
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
-
-
-def sew(
-    ctx: Shape,
-    *s: Shape,
-    tol: float = 1e-6,
-    manifold: bool = True,
-    history: Optional[Dict[Union[Face, str], Face]] = None,
-):
-    """
-    Local sewing.
-    """
-
-    builder = BRepBuilderAPI_Sewing(tol, option4=not manifold)
-    builder.Load(ctx.wrapped)
-
-    faces = []
-
-    for el in s:
-        for f in _get(el, "Face"):
-            builder.Add(f.wrapped)
-            faces.append(f)
-
-    builder.Perform()
-
-    sewed = builder.SewedShape()
-
-    _process_sewing_history(builder, faces, history)
-
-    return _compound_or_shape(sewed)
 
 
 #%% diagnotics
