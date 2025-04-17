@@ -3555,6 +3555,20 @@ class Face(Shape):
 
         return self.__class__(rv)
 
+    def addHole(self, *inner: Wire | Edge) -> Self:
+        """
+        Add one or more holes.
+        """
+
+        bldr = BRepBuilderAPI_MakeFace(self.wrapped)
+
+        for w in inner:
+            bldr.Add(
+                TopoDS.Wire_s(w.wrapped if isinstance(w, Wire) else wire(w).wrapped)
+            )
+
+        return self.__class__(bldr.Face()).fix()
+
 
 class Shell(Shape):
     """
