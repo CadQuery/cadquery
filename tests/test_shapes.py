@@ -13,6 +13,7 @@ from cadquery.occ_impl.shapes import (
     cylinder,
     ellipse,
     spline,
+    sweep,
 )
 
 from pytest import approx, raises
@@ -255,3 +256,52 @@ def test_isolines():
 
     assert isos_u[0].Length() == approx(2)
     assert isos_v[0].Length() == approx(pi)
+
+
+def test_extend():
+
+    f = sweep(spline((0, 0), (0, 1), (2, 0)), spline((0, 0, 0), (0, 1, 1), (0, 1, 5)))
+    f_ext = f.extend(1)
+
+    assert f_ext.Area() > f.Area()
+
+
+def test_remove():
+
+    b = box(2, 2, 2) - box(1, 1, 1).moved(z=0.5)
+
+    assert len(b.Faces()) == 12
+
+    br = b.remove(*b.innerShells())
+
+    assert len(br.Faces()) == 6
+    assert br.isValid()
+
+
+def test_addCavity():
+
+    b1 = box(2, 2, 2)
+    b2 = box(1, 1, 1).moved(z=0.5)
+
+    br = b1.addCavity(b2)
+
+    assert len(br.Faces()) == 12
+    assert len(br.Shells()) == 2
+    assert br.isValid()
+
+
+def test_replace():
+
+    b = box(1, 1, 1)
+    f_top = b.faces(">Z")
+    f_top_split = f_top / plane(0.5, 0.5).moved(f_top.Center())
+
+    br1 = b.replace(f_top, f_top_split)
+
+    assert len(br1.Faces()) == len(b.Faces()) + 1
+    assert br1.isValid()
+
+    br2 = b.replace(f_top, *f_top_split)  # invoke with individual faces
+
+    assert len(br2.Faces()) == len(b.Faces()) + 1
+    assert br2.isValid()
