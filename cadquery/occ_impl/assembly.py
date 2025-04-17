@@ -403,9 +403,7 @@ def toVTKAssy(
             if element.material.pbr:
                 actor.GetProperty().SetMetallic(element.material.pbr.metallic)
                 actor.GetProperty().SetRoughness(element.material.pbr.roughness)
-                actor.GetProperty().SetRefractionIndex(
-                    element.material.pbr.refraction_index
-                )
+                actor.GetProperty().SetBaseIOR(element.material.pbr.refraction_index)
                 if element.material.pbr.emissive_factor:
                     actor.GetProperty().SetEmissiveFactor(
                         *element.material.pbr.emissive_factor.rgb()

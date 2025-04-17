@@ -30,7 +30,14 @@ from OCP.TColStd import TColStd_IndexedDataMapOfStringString
 from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
-from ..assembly import AssemblyProtocol, color_to_occt, toCAF, toVTK, toFusedCAF
+from ..assembly import (
+    AssemblyProtocol,
+    color_to_occt,
+    toCAF,
+    toVTK,
+    toFusedCAF,
+    material_to_occt,
+)
 from ..geom import Location
 from ..shapes import Shape, Compound
 
@@ -139,6 +146,8 @@ def exportStepMeta(
     shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
     layer_tool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
+    material_tool = XCAFDoc_DocumentTool.MaterialTool_s(doc.Main())
+    vis_material_tool = XCAFDoc_DocumentTool.VisMaterialTool_s(doc.Main())
 
     def _process_child(child: AssemblyProtocol, assy_label: TDF_Label):
         """
@@ -166,16 +175,46 @@ def exportStepMeta(
                 child.name,
                 child.loc,
                 child.color,
+                child.material,
             )
 
         if child_items:
-            shape, name, loc, color = child_items
+            shape, name, loc, color, material = child_items
 
             # Handle shape name, color and location
             part_label = shape_tool.AddShape(shape.wrapped, False)
             TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name))
-            if color:
+
+            # Handle color and material
+            if material:
+                # Set color from material if available
+                if material.color:
+                    color_tool.SetColor(
+                        part_label, color_to_occt(material.color), XCAFDoc_ColorGen
+                    )
+
+                # Convert material to OCCT format and add to document
+                mat, vis_mat = material_to_occt(material)
+
+                # Create material label
+                mat_lab = material_tool.AddMaterial(
+                    mat.GetName(),
+                    mat.GetDescription(),
+                    mat.GetDensity(),
+                    mat.GetDensName(),
+                    mat.GetDensValType(),
+                )
+                material_tool.SetMaterial(part_label, mat_lab)
+
+                # Add visualization material to the document
+                vis_mat_lab = vis_material_tool.AddMaterial(
+                    vis_mat, TCollection_AsciiString(material.name)
+                )
+                vis_material_tool.SetShapeMaterial(part_label, vis_mat_lab)
+            elif color:
+                # If no material but color exists, set the color directly
                 color_tool.SetColor(part_label, color_to_occt(color), XCAFDoc_ColorGen)
+
             shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
 
             # If this assembly has shape metadata, add it to the shape

@@ -1,4 +1,5 @@
 import cadquery as cq
+from cadquery.occ_impl.exporters.assembly import exportStepMeta
 
 # Create a simple cube
 cube = cq.Workplane().box(10, 10, 10)
@@ -69,9 +70,9 @@ assy.add(cube.translate((30, 0, 0)), name="glass_cube", material=glass_material)
 assy.add(cube.translate((45, 0, 0)), name="gold_cube", material=gold_material)
 
 # Export as OBJ and GLTF to showcase materials
-assy.export("materials.step")  # Step format
-assy.export("materials.gltf")  # Step format
-assy.export("materials.glb")  # GLTF format with PBR materials
+assy.export("materials.step")  # STEP format
+exportStepMeta(assy, "materials_meta.step")  # STEP format with metadata
+assy.export("materials.glb")  # GLTF format (binary) with PBR materials
 
 # Show the assembly in the UI
 show_object(assy)
