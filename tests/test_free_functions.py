@@ -36,6 +36,7 @@ from cadquery.occ_impl.shapes import (
     Shape,
     Compound,
     Edge,
+    Shell,
     _get_one_wire,
     _get_wires,
     _get,
@@ -167,6 +168,57 @@ def test_constructors():
     assert sh2.Area() == approx(6)
     assert sh3.isValid()
 
+    # compound
+    c1 = compound(b.Faces())
+    c2 = compound(*b.Faces())
+
+    assert len(list(c1)) == 6
+    assert len(list(c2)) == 6
+
+    for f in list(c1) + list(c2):
+        assert f.ShapeType() == "Face"
+
+
+def test_sewing():
+
+    b = box(1, 1, 1)
+    ftop = b.faces(">Z")
+    sh = b.remove(ftop)
+
+    # regular local sewing
+    history1 = dict(ftop=ftop)
+    res1 = shell(sh.faces("not <Z"), ftop, ctx=(sh, ftop), history=history1)
+
+    assert res1.isValid()
+    assert res1.Area() == approx(6)
+    assert "ftop" in history1
+
+    # regular local sewing - with Shape context
+    history2 = {}
+    res2 = shell(sh.faces("not <Z"), ftop, ctx=compound(sh, ftop), history=history2)
+
+    assert res2.isValid()
+    assert res2.Area() == approx(6)
+    assert ftop in history2
+
+    # non-manifold sewing
+    res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=False)
+
+    assert res3.isValid()
+    assert not solid(res3).isValid()
+    assert isinstance(res3, Shell)
+
+    # manifold sewing (default) - results in a compound
+    res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=True)
+
+    assert res3.isValid()
+    assert isinstance(res3, Compound)
+
+
+def test_solid():
+
+    b = box(1, 1, 1)
+
     # solid
     s1 = solid(b.Faces())
     s2 = solid(*b.Faces())
@@ -186,15 +238,16 @@ def test_constructors():
 
     assert s4.Volume() == approx(1)
 
-    # compound
-    c1 = compound(b.Faces())
-    c2 = compound(*b.Faces())
+    # check history handling
+    hist = {}
+    s4 = solid(
+        b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces(), history=hist
+    )
 
-    assert len(list(c1)) == 6
-    assert len(list(c2)) == 6
-
-    for f in list(c1) + list(c2):
-        assert f.ShapeType() == "Face"
+    final_faces = s4.Faces()
+    final_faces_history = list(hist.values())
+    for f in final_faces:
+        assert f in final_faces_history
 
 
 #%% primitives

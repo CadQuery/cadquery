@@ -305,3 +305,24 @@ def test_replace():
 
     assert len(br2.Faces()) == len(b.Faces()) + 1
     assert br2.isValid()
+
+
+def test_addHole():
+
+    f = plane(1, 1)
+    c = circle(0.1)
+
+    f1 = f.addHole(c)
+
+    assert len(f1.innerWires()) == 1
+    assert f1.isValid()
+
+    f2 = f.addHole(wire(c))
+
+    assert len(f2.innerWires()) == 1
+    assert f2.isValid()
+
+    f3 = f.addHole(*c.moved((-0.3, 0), (0.3, 0)))
+
+    assert len(f3.innerWires()) == 2
+    assert f3.isValid()
