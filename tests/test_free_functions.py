@@ -205,18 +205,27 @@ def test_sewing():
     sh = b.remove(ftop)
 
     # regular local sewing
-    history1 = {}
+    history1 = dict(ftop=ftop)
     res1 = shell(sh.faces("not <Z"), ftop, ctx=(sh, ftop), history=history1)
 
     assert res1.isValid()
     assert res1.Area() == approx(6)
+    assert "ftop" in history1
 
-    # non-manifold sewing
-    res2 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=False)
+    # regular local sewing - with Shape context
+    history2 = {}
+    res2 = shell(sh.faces("not <Z"), ftop, ctx=compound(sh, ftop), history=history2)
 
     assert res2.isValid()
-    assert not solid(res2).isValid()
-    assert isinstance(res2, Shell)
+    assert res2.Area() == approx(6)
+    assert ftop in history2
+
+    # non-manifold sewing
+    res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=False)
+
+    assert res3.isValid()
+    assert not solid(res3).isValid()
+    assert isinstance(res3, Shell)
 
     # manifold sewing (default) - results in a compound
     res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=True)

@@ -5145,17 +5145,11 @@ def _process_sewing_history(
         # collect shapes present in the history dict
         for k, v in history.items():
             if isinstance(k, str):
-                try:
-                    history[k] = Face(builder.Modified(v.wrapped))
-                except Standard_NoSuchObject:
-                    pass
+                history[k] = Face(builder.Modified(v.wrapped))
 
         # store all top-level shape relations
         for f in faces:
-            try:
-                history[f] = Face(builder.Modified(f.wrapped))
-            except Standard_NoSuchObject:
-                pass
+            history[f] = Face(builder.Modified(f.wrapped))
 
 
 @multimethod
