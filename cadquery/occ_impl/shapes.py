@@ -3570,7 +3570,6 @@ class Face(Shape):
         return self.__class__(bldr.Face()).fix()
 
 
-
 class Shell(Shape):
     """
     the outer boundary of a surface
