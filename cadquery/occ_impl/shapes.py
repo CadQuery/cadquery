@@ -5082,7 +5082,7 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
 
 #%% alternative constructors
 
-ShapeHistory = Dict[Union[Face, str], Face]
+ShapeHistory = Dict[Union[Shape, str], Shape]
 
 
 @multimethod
