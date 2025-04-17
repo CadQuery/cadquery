@@ -168,25 +168,6 @@ def test_constructors():
     assert sh2.Area() == approx(6)
     assert sh3.isValid()
 
-    # solid
-    s1 = solid(b.Faces())
-    s2 = solid(*b.Faces())
-
-    assert s1.Volume() == approx(1)
-    assert s2.Volume() == approx(1)
-
-    # solid with voids
-    b1 = box(0.1, 0.1, 0.1)
-
-    s3 = solid(b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces())
-
-    assert s3.Volume() == approx(1 - 2 * 0.1 ** 3)
-
-    # solid from shells
-    s4 = solid(b.shells())
-
-    assert s4.Volume() == approx(1)
-
     # compound
     c1 = compound(b.Faces())
     c2 = compound(*b.Faces())
@@ -232,6 +213,41 @@ def test_sewing():
 
     assert res3.isValid()
     assert isinstance(res3, Compound)
+
+
+def test_solid():
+
+    b = box(1, 1, 1)
+
+    # solid
+    s1 = solid(b.Faces())
+    s2 = solid(*b.Faces())
+
+    assert s1.Volume() == approx(1)
+    assert s2.Volume() == approx(1)
+
+    # solid with voids
+    b1 = box(0.1, 0.1, 0.1)
+
+    s3 = solid(b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces())
+
+    assert s3.Volume() == approx(1 - 2 * 0.1 ** 3)
+
+    # solid from shells
+    s4 = solid(b.shells())
+
+    assert s4.Volume() == approx(1)
+
+    # check history handling
+    hist = {}
+    s4 = solid(
+        b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces(), history=hist
+    )
+
+    final_faces = s4.Faces()
+    final_faces_history = list(hist.values())
+    for f in final_faces:
+        assert f in final_faces_history
 
 
 #%% primitives

@@ -5082,6 +5082,8 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
 
 #%% alternative constructors
 
+ShapeHistory = Dict[Union[Face, str], Face]
+
 
 @multimethod
 def wire(*s: Shape) -> Shape:
@@ -5132,9 +5134,7 @@ def face(s: Sequence[Shape]) -> Shape:
 
 
 def _process_sewing_history(
-    builder: BRepBuilderAPI_Sewing,
-    faces: List[Face],
-    history: Optional[Dict[Union[Face, str], Face]],
+    builder: BRepBuilderAPI_Sewing, faces: List[Face], history: Optional[ShapeHistory],
 ):
     """
     Reusable helper for processing sewing history.
@@ -5158,7 +5158,7 @@ def shell(
     tol: float = 1e-6,
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
-    history: Optional[Dict[Union[Face, str], Face]] = None,
+    history: Optional[ShapeHistory] = None,
 ) -> Shape:
     """
     Build shell from faces. If ctx is specified, local sewing is performed.
@@ -5202,7 +5202,7 @@ def shell(
     tol: float = 1e-6,
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
-    history: Optional[Dict[Union[Shape, str], Shape]] = None,
+    history: Optional[ShapeHistory] = None,
 ) -> Shape:
     """
     Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
@@ -5212,7 +5212,9 @@ def shell(
 
 
 @multimethod
-def solid(s1: Shape, *sn: Shape, tol: float = 1e-6) -> Shape:
+def solid(
+    s1: Shape, *sn: Shape, tol: float = 1e-6, history: Optional[ShapeHistory] = None,
+) -> Shape:
     """
     Build solid from faces or shells.
     """
@@ -5227,7 +5229,7 @@ def solid(s1: Shape, *sn: Shape, tol: float = 1e-6) -> Shape:
     shells = [el.wrapped for el in shells_faces if el.ShapeType() == "Shell"]
     if not shells:
         faces = [el for el in shells_faces]
-        shells = [shell(*faces, tol=tol).wrapped]
+        shells = [shell(*faces, tol=tol, history=history).wrapped]
 
     rvs = [builder.SolidFromShell(sh) for sh in shells]
 
@@ -5236,17 +5238,20 @@ def solid(s1: Shape, *sn: Shape, tol: float = 1e-6) -> Shape:
 
 @solid.register
 def solid(
-    s: Sequence[Shape], inner: Optional[Sequence[Shape]] = None, tol: float = 1e-6
+    s: Sequence[Shape],
+    inner: Optional[Sequence[Shape]] = None,
+    tol: float = 1e-6,
+    history: Optional[ShapeHistory] = None,
 ) -> Shape:
     """
     Build solid from a sequence of faces.
     """
 
     builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(shell(*s, tol=tol).wrapped)
+    builder.Add(shell(*s, tol=tol, history=history).wrapped)
 
     if inner:
-        for sh in _get(shell(*inner, tol=tol), "Shell"):
+        for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
             builder.Add(sh.wrapped)
 
     # fix orientations
@@ -5782,7 +5787,7 @@ def imprint(
     *shapes: Shape,
     tol: float = 0.0,
     glue: GlueLiteral = "full",
-    history: Optional[Dict[Union[Shape, str], Shape]] = None,
+    history: Optional[ShapeHistory] = None,
 ) -> Shape:
     """
     Imprint arbitrary number of shapes.
