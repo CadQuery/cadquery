@@ -3544,7 +3544,7 @@ class Face(Shape):
         :param umin: extend along the umin isoline.
         :param umax: extend along the umax isoline.
         :param vmin: extend along the vmin isoline.
-        :param umax: extend along the umax isoline.
+        :param vmax: extend along the vmax isoline.
         """
 
         # convert to NURBS if needed
@@ -3568,6 +3568,7 @@ class Face(Shape):
             )
 
         return self.__class__(bldr.Face()).fix()
+
 
 
 class Shell(Shape):
@@ -4491,7 +4492,7 @@ class Compound(Shape, Mixin3D):
 
     def remove(self, *shape: Shape):
         """
-        Remove the specified shape.
+        Remove the specified shapes.
         """
 
         comp_builder = TopoDS_Builder()
