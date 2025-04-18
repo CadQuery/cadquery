@@ -21,6 +21,7 @@ from .occ_impl.shapes import (
 )
 from .occ_impl import exporters
 from .occ_impl import importers
+from .materials import Color, Material, CommonMaterial, PbrMaterial
 
 # these items are the common implementation
 
@@ -37,7 +38,7 @@ from .selectors import (
 )
 from .sketch import Sketch
 from .cq import CQ, Workplane
-from .assembly import Assembly, Color, Constraint
+from .assembly import Assembly, Constraint
 from . import selectors
 from . import plugins
 
@@ -47,6 +48,9 @@ __all__ = [
     "Workplane",
     "Assembly",
     "Color",
+    "Material",
+    "CommonMaterial",
+    "PbrMaterial",
     "Constraint",
     "plugins",
     "selectors",

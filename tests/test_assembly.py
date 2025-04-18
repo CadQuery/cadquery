@@ -538,18 +538,22 @@ def solve_result_check(solve_result: dict) -> bool:
 
 
 def test_color():
+    from cadquery.occ_impl.assembly import color_to_occt
 
     c1 = cq.Color("red")
-    assert c1.wrapped.GetRGB().Red() == 1
-    assert c1.wrapped.Alpha() == 1
+    occt_c1 = color_to_occt(c1)
+    assert occt_c1.GetRGB().Red() == 1
+    assert occt_c1.Alpha() == 1
 
     c2 = cq.Color(1, 0, 0)
-    assert c2.wrapped.GetRGB().Red() == 1
-    assert c2.wrapped.Alpha() == 1
+    occt_c2 = color_to_occt(c2)
+    assert occt_c2.GetRGB().Red() == 1
+    assert occt_c2.Alpha() == 1
 
     c3 = cq.Color(1, 0, 0, 0.5)
-    assert c3.wrapped.GetRGB().Red() == 1
-    assert c3.wrapped.Alpha() == 0.5
+    occt_c3 = color_to_occt(c3)
+    assert occt_c3.GetRGB().Red() == 1
+    assert occt_c3.Alpha() == 0.5
 
     c4 = cq.Color()
 
