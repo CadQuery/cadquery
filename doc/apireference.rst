@@ -291,4 +291,16 @@ Workplane and Shape objects can be connected together into assemblies
     Assembly.constrain
     Assembly.solve
     Constraint
+
+Materials
+----------
+
+For material properties (physical and visual) of assembly items.
+
+.. currentmodule:: cadquery
+.. autosummary::
+
     Color
+    Material
+    PbrMaterial
+    CommonMaterial
