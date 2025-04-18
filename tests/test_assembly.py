@@ -16,7 +16,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVTKJS,
     exportVRML,
 )
-from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF, color_to_occt
+from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
 from cadquery.occ_impl.shapes import Face, box, cone
 
 from OCP.gp import gp_XYZ

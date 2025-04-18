@@ -69,10 +69,13 @@ assy.add(cube.translate((15, 0, 0)), name="metal_cube", material=metal_material)
 assy.add(cube.translate((30, 0, 0)), name="glass_cube", material=glass_material)
 assy.add(cube.translate((45, 0, 0)), name="gold_cube", material=gold_material)
 
-# Export as OBJ and GLTF to showcase materials
-assy.export("materials.step")  # STEP format
-exportStepMeta(assy, "materials_meta.step")  # STEP format with metadata
-assy.export("materials.glb")  # GLTF format (binary) with PBR materials
+# Different formats support different material properties:
+# - STEP: Only supports colors and basic material properties like density
+# - OBJ: Supports common materials (ambient, diffuse, specular etc.)
+# - GLTF: Full support for PBR materials
+#
+# The best representation can be achieved with gltf:
+# assy.export("materials.glb")
 
 # Show the assembly in the UI
 show_object(assy)
