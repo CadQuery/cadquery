@@ -5,6 +5,7 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen, XCAFDoc_ColorSurf
 from OCP.TDF import TDF_Label, TDF_LabelSequence
+from OCP.TDataStd import TDataStd_Name
 
 import cadquery as cq
 from ..assembly import AssemblyProtocol
@@ -85,6 +86,12 @@ def importStep(assy: AssemblyProtocol, path: str):
         if shape_tool.IsSimpleShape_s(label):
             shape = shape_tool.GetShape_s(label)
 
+            # Load the name of the part in the assembly, if it is present
+            name = None
+            name_attr = TDataStd_Name()
+            if label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
+                name = str(name_attr.Get().ToExtString())
+
             # Process the color for the shape, which could be of different types
             color = Quantity_Color()
             if color_tool.GetColor_s(label, XCAFDoc_ColorSurf, color):
@@ -102,9 +109,11 @@ def importStep(assy: AssemblyProtocol, path: str):
 
             # Handle the location if it was passed down form a parent component
             if parent_location is not None:
-                assy.add(cq.Shape.cast(shape), color=cq_color, loc=parent_location)
+                assy.add(
+                    cq.Shape.cast(shape), name=name, color=cq_color, loc=parent_location
+                )
             else:
-                assy.add(cq.Shape.cast(shape), color=cq_color)
+                assy.add(cq.Shape.cast(shape), name=name, color=cq_color)
 
     # Grab the labels, which should hold the assembly parent
     labels = TDF_LabelSequence()
@@ -115,5 +124,9 @@ def importStep(assy: AssemblyProtocol, path: str):
         # Start the recursive processing of the assembly
         process_label(labels.Value(1))
 
+        # Load the top-level name of the assembly, if it is present
+        name_attr = TDataStd_Name()
+        if labels.Value(1).FindAttribute(TDataStd_Name.GetID_s(), name_attr):
+            assy.name = str(name_attr.Get().ToExtString())
     else:
         raise ValueError("Step file does not contain an assembly")

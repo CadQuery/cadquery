@@ -840,11 +840,11 @@ def test_assembly_step_import(tmp_path_factory):
     assert imported_assy is not None
 
     # Check for appropriate part names and colors
-    # assert imported_assy.children[0].name == "cube_1"
+    assert imported_assy.children[0].name == "cube_1"
     assert imported_assy.children[0].color.toTuple() == (0.0, 1.0, 0.0, 1.0)
-    # assert imported_assy.children[1].name == "cyl_2"
+    assert imported_assy.children[1].name == "cyl_1"
     assert imported_assy.children[1].color.toTuple() == (0.0, 0.0, 1.0, 1.0)
-    # assert imported_assy.name == "top-level"
+    assert imported_assy.name == "top-level"
 
 
 @pytest.mark.parametrize(
