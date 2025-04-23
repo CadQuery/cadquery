@@ -47,4 +47,5 @@ from .occ_impl.shapes import (
     check,
     closest,
     setThreads,
+    project,
 )

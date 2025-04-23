@@ -294,7 +294,7 @@ from OCP.Interface import Interface_Static
 
 from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
 
-from OCP.BRepAlgo import BRepAlgo
+from OCP.BRepAlgo import BRepAlgo, BRepAlgo_NormalProjection
 
 from OCP.ChFi2d import ChFi2d_FilletAPI  # For Wire.Fillet()
 
@@ -2216,14 +2216,14 @@ class Mixin1D(object):
         self: T1D, face: "Face", d: VectorLike, closest: bool = True
     ) -> Union[T1D, List[T1D]]:
         """
-        Project onto a face along the specified direction
+        Project onto a face along the specified direction.
         """
-
-        bldr = BRepProj_Projection(self.wrapped, face.wrapped, Vector(d).toDir())
-        shapes = Compound(bldr.Shape())
 
         # select the closest projection if requested
         rv: Union[T1D, List[T1D]]
+
+        bldr = BRepProj_Projection(self.wrapped, face.wrapped, Vector(d).toDir())
+        shapes = Compound(bldr.Shape())
 
         if closest:
 
@@ -6257,6 +6257,29 @@ def loft(
     """
 
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
+
+
+def project(
+    s: Shape,
+    base: Shape,
+    continuity: Literal["C1", "C2", "C3"] = "C2",
+    degree: int = 3,
+    maxseg: int = 30,
+    tol: float = 1e-4,
+):
+    """
+    Project s onto base using normal projection.
+    """
+
+    bldr = BRepAlgo_NormalProjection(base.wrapped)
+    bldr.SetParams(tol, tol ** (2 / 3), _to_geomabshape(continuity), degree, maxseg)
+
+    for el in _get_edges(s):
+        bldr.Add(s.wrapped)
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Projection())
 
 
 #%% diagnotics
