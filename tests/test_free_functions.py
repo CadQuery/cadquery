@@ -1,4 +1,4 @@
-from cadquery.occ_impl.shapes import (
+from cadquery.func import (
     vertex,
     segment,
     polyline,
@@ -37,17 +37,22 @@ from cadquery.occ_impl.shapes import (
     Compound,
     Edge,
     Shell,
+    Wire,
+    check,
+    Vector,
+    closest,
+    imprint,
+    setThreads,
+    project,
+)
+
+from cadquery.occ_impl.shapes import (
     _get_one_wire,
     _get_wires,
     _get,
     _get_one,
     _get_edges,
     _adaptor_curve_to_edge,
-    check,
-    Vector,
-    closest,
-    imprint,
-    setThreads,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -802,6 +807,26 @@ def test_loft_vertex():
     assert len(r4.Solids()) == 1
     assert r4.Volume() == approx(r3.Volume())  # inner features are ignored
     assert len(r5.Faces()) == 4
+
+
+def test_project():
+
+    base = cylinder(1, 2).faces("%CYLINDER")
+    e = circle(0.1).moved(rx=90).moved(y=0.5, z=1)
+
+    # project single edge
+    res = project(e, base)
+
+    assert res.isValid()
+    assert res.IsClosed()
+    assert isinstance(res, Edge)
+
+    # project multiple edges at once
+    res = project(e.moved([(0, -0.1), (0, 0.1)]), base)
+    assert isinstance(res, Compound)
+    for el in res:
+        assert el.isValid()
+        assert el.IsClosed()
 
 
 # %% export
