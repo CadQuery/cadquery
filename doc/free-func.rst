@@ -1,4 +1,4 @@
-.. _freefuncapi:
+
 
 *****************
 Free function API
@@ -241,7 +241,8 @@ Placement and creation of arrays is possible using :meth:`~cadquery.Shape.move` 
 Text
 ----
 
-The free function API has extensive text creation capabilities including text on planar curves and text on surfaces.
+The free function API has extensive text creation capabilities including text on
+planar curves and text on surfaces.
 
 
 .. cadquery::
@@ -275,3 +276,44 @@ The free function API has extensive text creation capabilities including text on
     r4 = offset(r3, TH).moved(z=S)
 
     result = compound(r1, r2, r3, r4)
+
+
+Adding features manually
+------------------------
+
+In certain cases it is desireable to add features such as holes or protrusions manually.
+E.g., for complicated shapes it might be beneficial performance-wise because it
+avoids boolean operations. One can add or remove faces, add holes to existing faces
+and last but not least reconstruct existing solids. 
+
+.. cadquery::
+    
+    from cadquery.func import *
+    
+    # box
+    b = box(1,1,1)
+    # bottom face
+    b_bot = b.faces('<Z')
+    # top faces
+    b_top = b.faces('>Z')
+    
+    # inner face 
+    inner = extrude(circle(0.45), (0,0,1))
+    
+    # add holes to the bottom and top face
+    b_bot_hole = b_bot.addHole(inner.edges('<Z'))
+    b_top_hole = b_top.addHole(inner.edges('>Z'))
+    
+    # needed to map between shapes before and after construction
+    hist = {}
+    
+    # construct the final solid
+    result = solid(
+        (b.remove(b_top, b_bot).faces(), #side faces
+         b_bot_hole, # bottom with a hole
+         inner, # inner cylinder face
+         b_top_hole, # top with a hole
+        ),
+        history=hist,
+    )
+
