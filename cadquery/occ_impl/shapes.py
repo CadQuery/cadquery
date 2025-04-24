@@ -12,7 +12,7 @@ from typing import (
     TypeVar,
     cast as tcast,
     Literal,
-    Protocol,
+    Protocol, get_args,
 )
 
 from typing_extensions import Self
@@ -815,6 +815,35 @@ class Shape(object):
 
     def ShapeType(self) -> Shapes:
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
+
+    def getHighestOrderShapeType(self) -> Shapes:
+        """
+        Determines the highest-order topological shape within a compound shape, or returns the shape type itself.
+
+        If the shape is not a compound (`TopoDS_Compound`), it directly returns its shape type.
+        If the shape is a compound, it iterates through all shape types (excluding CompSolid and Compound) in descending topological order
+        (e.g., Solid > Shell > Face > Wire > Edge) and returns the type of the highest-level shape present within the compound.
+
+        :returns: Shapes
+        """
+        return tcast(Shapes, shape_LUT[self._getHighestOrderShapeType()])
+
+    def _getHighestOrderShapeType(self) -> ta:
+        """
+        :returns: TopAbs
+        """
+        shape_OCC = self.wrapped
+
+        if shape_OCC.ShapeType() != ta.TopAbs_COMPOUND:
+            return shape_OCC.ShapeType()
+
+        reversed_shape_types = list(reversed(get_args(Shapes)))
+
+        for shape_type in reversed_shape_types[2:]: # Iterate over topo shapes excluding Compounds and CompSolids
+            if not self._entities(shape_type).IsEmpty():
+                return inverse_shape_LUT[shape_type]
+
+        raise Exception("Unable to find any shape types present in the given shape.")
 
     def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
 
