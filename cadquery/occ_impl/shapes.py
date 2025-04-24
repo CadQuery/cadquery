@@ -724,12 +724,17 @@ class Shape(object):
 
         raise NotImplementedError
 
-    def Center(self) -> Vector:
+    def Center(self, shape_type: Shapes = None) -> Vector:
         """
         :returns: The point of the center of mass of this Shape
         """
 
-        return Shape.centerOfMass(self)
+        if shape_type is None:
+            occ_shape_type = None
+        else:
+            occ_shape_type = inverse_shape_LUT[shape_type]
+
+        return Shape.centerOfMass(self, shape_type=occ_shape_type)
 
     def CenterOfBoundBox(self, tolerance: Optional[float] = None) -> Vector:
         """
@@ -773,14 +778,19 @@ class Shape(object):
             raise NotImplementedError
 
     @staticmethod
-    def centerOfMass(obj: "Shape") -> Vector:
+    def centerOfMass(obj: "Shape", shape_type: ta = None) -> Vector:
         """
         Calculates the center of 'mass' of an object.
 
         :param obj: Compute the center of mass of this object
+        :param shape_type: An optional specification of the topological type of the shape. If not provided,
+        the shape type is inferred automatically. This is used to determine the correct
+        property calculation function from the lookup table.
         """
         Properties = GProp_GProps()
-        calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
+        if shape_type is None:
+            shape_type = shapetype(obj.wrapped)
+        calc_function = shape_properties_LUT[shape_type]
 
         if calc_function:
             calc_function(obj.wrapped, Properties)
