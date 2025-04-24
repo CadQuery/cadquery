@@ -315,7 +315,7 @@ and last but not least reconstruct existing solids.
         b_top_hole, # top with a hole
     )
 
-If the base shape is more complicate, it is possible to use local sewing that
+If the base shape is more complicated, it is possible to use local sewing that
 takes into account on indicated elements of the context shape. This, however,
 necessitates a two step approach - first a shell needs to be explicitly sewn
 and only then the final solid can be constructed.
@@ -346,3 +346,6 @@ and only then the final solid can be constructed.
     sh = shell(b_top_hole, feat.faces('<Z'), ctx=(b, feat))
     
     # construct the final solid
+    result = solid(sh)
+
+
