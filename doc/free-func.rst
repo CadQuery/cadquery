@@ -281,7 +281,7 @@ planar curves and text on surfaces.
 Adding features manually
 ------------------------
 
-In certain cases it is desireable to add features such as holes or protrusions manually.
+In certain cases it is desirable to add features such as holes or protrusions manually.
 E.g., for complicated shapes it might be beneficial performance-wise because it
 avoids boolean operations. One can add or remove faces, add holes to existing faces
 and last but not least reconstruct existing solids. 
@@ -290,30 +290,59 @@ and last but not least reconstruct existing solids.
     
     from cadquery.func import *
     
+    w = 1
+    r = 0.9*w/2
+    
     # box
-    b = box(1,1,1)
+    b = box(w, w, w)
     # bottom face
     b_bot = b.faces('<Z')
     # top faces
     b_top = b.faces('>Z')
     
     # inner face 
-    inner = extrude(circle(0.45), (0,0,1))
+    inner = extrude(circle(r), (0,0,w))
     
     # add holes to the bottom and top face
     b_bot_hole = b_bot.addHole(inner.edges('<Z'))
     b_top_hole = b_top.addHole(inner.edges('>Z'))
     
-    # needed to map between shapes before and after construction
-    hist = {}
-    
     # construct the final solid
     result = solid(
-        (b.remove(b_top, b_bot).faces(), #side faces
-         b_bot_hole, # bottom with a hole
-         inner, # inner cylinder face
-         b_top_hole, # top with a hole
-        ),
-        history=hist,
+        b.remove(b_top, b_bot).faces(), #side faces
+        b_bot_hole, # bottom with a hole
+        inner, # inner cylinder face
+        b_top_hole, # top with a hole
     )
 
+If the base shape is more complicate, it is possible to use local sewing that
+takes into account on indicated elements of the context shape. This, however,
+necessitates a two step approach - first a shell needs to be explicitly sewn
+and only then the final solid can be constructed.
+
+.. cadquery::
+
+    from cadquery.func import *
+    
+    w = 1
+    h = 0.1
+    r = 0.9*w/2
+    
+    # box
+    b = box(w, w, w)
+    # top face
+    b_top = b.faces('>Z')
+    
+    # protrusion
+    feat_side = extrude(circle(r).moved(b_top.Center()), (0,0,h))
+    feat_top = face(feat_side.edges('>Z'))
+    feat = shell(feat_side, feat_top) # sew into a shell
+    
+    # add hole to the box
+    b_top_hole = b_top.addHole(feat.edges('<Z'))
+    b = b.replace(b_top, b_top_hole)
+    
+    # locall sewing - only two faces are take into account
+    sh = shell(b_top_hole, feat.faces('<Z'), ctx=(b, feat))
+    
+    # construct the final solid
