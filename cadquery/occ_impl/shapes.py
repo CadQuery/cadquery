@@ -724,17 +724,12 @@ class Shape(object):
 
         raise NotImplementedError
 
-    def Center(self, shape_type: Shapes = None) -> Vector:
+    def Center(self) -> Vector:
         """
         :returns: The point of the center of mass of this Shape
         """
 
-        if shape_type is None:
-            occ_shape_type = None
-        else:
-            occ_shape_type = inverse_shape_LUT[shape_type]
-
-        return Shape.centerOfMass(self, shape_type=occ_shape_type)
+        return Shape.centerOfMass(self)
 
     def CenterOfBoundBox(self, tolerance: Optional[float] = None) -> Vector:
         """
@@ -4718,6 +4713,7 @@ class Compound(Shape, Mixin3D):
             return rv if level == 1 else _siblings(rv, level - 1)
 
         return Compound.makeCompound(_siblings(self, level))
+        return Shape.centerOfMass(self, shape_type=self._getHighestOrderShapeType())
 
 
 def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
