@@ -885,12 +885,12 @@ Materials
 Materials can be assigned to objects in an assembly to define their visual
 and physical properties. CadQuery supports three types of material representations:
 
-1. Simple Color Material
+1. Color Only Material
 2. PBR (Physically Based Rendering) Material - the modern standard for material definition
-3. Common (Legacy) Material - legacy material representation in OCCT
+3. Simple Material - traditional lighting model representation
 
 A material can have multiple representations defined simultaneously - color,
-common, and PBR properties can all be specified for the same material.
+simple, and PBR properties can all be specified for the same material.
 The appropriate representation will be used based on the export format.
 This allows you to define a material once and have it work well across
 different export formats. For example:
@@ -911,26 +911,20 @@ different export formats. For example:
             roughness=0.2,
             refraction_index=1.0,
         ),
-        # Legacy common material for backward compatibility
-        common=cq.CommonMaterial(
+        # Traditional lighting model
+        simple=cq.SimpleMaterial(
             ambient_color=cq.Color(0.2, 0.2, 0.0, 1.0),
             diffuse_color=cq.Color(0.8, 0.8, 0.0, 1.0),
             specular_color=cq.Color(1.0, 1.0, 0.0, 1.0),
-            emissive_color=cq.Color(0.0, 0.0, 0.0, 1.0),
             shininess=0.9,
             transparency=0.0,
         ),
     )
 
-When this material is exported:
-
-- STEP files will use the simple color representation
-- GLTF/GLB files will use the PBR properties
-
 Material Types
 =============
 
-Simple Color Material
+Color Only Material
 ~~~~~~~~~~~~~~~~~~~
 
 The simplest form of material definition includes just a name,
@@ -961,15 +955,14 @@ PBR (Physically Based Rendering) materials provide physically accurate material 
             metallic=0.0,  # 0.0 for non-metals, 1.0 for metals
             roughness=0.1,  # 0.0 for smooth, 1.0 for rough
             refraction_index=1.5,  # Must be between 1.0 and 3.0
-            emissive_factor=cq.Color(0.0, 0.0, 0.0),  # Optional self-illumination
         ),
     )
 
-Common Material (Legacy)
-~~~~~~~~~~~~~~~~~~~~~~~
+Simple Material
+~~~~~~~~~~~~~
 
-Common materials use a traditional lighting model with ambient, diffuse, specular, and emissive colors. 
-This representation is the legacy representation in OCCT but can be useful for some formats.
+Simple materials use a traditional lighting model with ambient, diffuse, and specular colors.
+This representation is useful for compatibility with older visualization systems and file formats.
 
 .. code-block:: python
 
@@ -977,11 +970,10 @@ This representation is the legacy representation in OCCT but can be useful for s
         name="Polished Steel",
         description="A shiny metallic material",
         density=7850,  # kg/m³
-        common=cq.CommonMaterial(
+        simple=cq.SimpleMaterial(
             ambient_color=cq.Color(0.2, 0.2, 0.2, 1.0),   # Base color in shadow
             diffuse_color=cq.Color(0.5, 0.5, 0.5, 1.0),   # Main surface color
             specular_color=cq.Color(0.8, 0.8, 0.8, 1.0),  # Highlight color
-            emissive_color=cq.Color(0.0, 0.0, 0.0, 1.0),  # Self-illumination
             shininess=0.8,  # Controls highlight size (0.0-1.0)
             transparency=0.0,  # 0.0 is opaque, 1.0 is transparent
         ),
@@ -990,18 +982,58 @@ This representation is the legacy representation in OCCT but can be useful for s
 Export Support
 =============
 
-Different export formats support different material properties:
+Different export formats support different material properties. The table below shows which material representations are supported by each format:
 
-- STEP: Currently only supports colors and basic material properties like density
-- GLTF/GLB: Full support for PBR materials
+.. raw:: html
 
-For the best visual representation, export to GLTF/GLB format:
+    <table style="width: 100%; border-spacing: 0 10px; margin-bottom: 20px;">
+        <tr style="border-bottom: 2px solid #000;">
+            <th style="padding: 10px; vertical-align: middle;">Format</th>
+            <th style="text-align: center; vertical-align: middle;">Color</th>
+            <th style="text-align: center; vertical-align: middle;">Simple Material</th>
+            <th style="text-align: center; vertical-align: middle;">PBR Material</th>
+        </tr>
 
-.. code-block:: python
+        <tr style="background-color: #f2f2f2;">
+            <td style="padding: 10px; vertical-align: middle;">STEP</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+        </tr>
 
-    assy.export("assembly.glb")
+        <tr>
+            <td style="padding: 10px; vertical-align: middle;">VTK</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+        </tr>
 
+        <tr style="background-color: #f2f2f2;">
+            <td style="padding: 10px; vertical-align: middle;">VRML</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+        </tr>
 
+        <tr>
+            <td style="padding: 10px; vertical-align: middle;">GLTF/GLB</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+        </tr>
+
+        <tr style="background-color: #f2f2f2;">
+            <td style="padding: 10px; vertical-align: middle;">STL</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+        </tr>
+
+    </table>
+
+For the best visual appearance, especially with PBR materials, use VTK visualization with an HDR skybox
+as demonstrated in Example 028. The skybox provides realistic environment lighting and reflections,
+making materials like metals and glass look more realistic.
 
 Predefined Colors
 ---------------

@@ -1,5 +1,4 @@
 import cadquery as cq
-from cadquery.occ_impl.exporters.assembly import exportStepMeta
 
 # Create a simple cube
 cube = cq.Workplane().box(10, 10, 10)
@@ -18,11 +17,10 @@ metal_material = cq.Material(
     name="Polished Steel",
     description="A shiny metallic material",
     density=7850,  # kg/m³
-    common=cq.CommonMaterial(
+    simple=cq.SimpleMaterial(
         ambient_color=cq.Color(0.2, 0.2, 0.2, 1.0),
         diffuse_color=cq.Color(0.5, 0.5, 0.5, 1.0),
         specular_color=cq.Color(0.8, 0.8, 0.8, 1.0),
-        emissive_color=cq.Color(0.0, 0.0, 0.0, 1.0),
         shininess=0.8,  # High shininess for metallic look
         transparency=0.0,
     ),
@@ -46,11 +44,10 @@ gold_material = cq.Material(
     name="Gold",
     description="A golden material with both traditional and PBR properties",
     density=19300,  # kg/m³
-    common=cq.CommonMaterial(
+    simple=cq.SimpleMaterial(
         ambient_color=cq.Color(0.2, 0.2, 0.0, 1.0),
         diffuse_color=cq.Color(0.8, 0.8, 0.0, 1.0),
         specular_color=cq.Color(1.0, 1.0, 0.0, 1.0),
-        emissive_color=cq.Color(0.0, 0.0, 0.0, 1.0),
         shininess=0.9,
         transparency=0.0,
     ),
@@ -69,13 +66,6 @@ assy.add(cube.translate((15, 0, 0)), name="metal_cube", material=metal_material)
 assy.add(cube.translate((30, 0, 0)), name="glass_cube", material=glass_material)
 assy.add(cube.translate((45, 0, 0)), name="gold_cube", material=gold_material)
 
-# Different formats support different material properties:
-# - STEP: Only supports colors and basic material properties like density
-# - OBJ: Supports common materials (ambient, diffuse, specular etc.)
-# - GLTF: Full support for PBR materials
-#
-# The best representation can be achieved with gltf:
-# assy.export("materials.glb")
 
 # Show the assembly in the UI
 show_object(assy)

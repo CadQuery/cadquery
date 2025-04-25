@@ -20,6 +20,9 @@ def find_examples(pattern="examples/*.py", path=Path("examples")):
         with open(p, encoding="UTF-8") as f:
             code = f.read()
 
+        # Inject __file__ for assets etc.
+        code = f"""__file__ = "{Path(p).absolute()}"\n""" + code
+
         yield code, path
 
 

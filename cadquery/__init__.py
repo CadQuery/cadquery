@@ -21,7 +21,7 @@ from .occ_impl.shapes import (
 )
 from .occ_impl import exporters
 from .occ_impl import importers
-from .materials import Color, Material, CommonMaterial, PbrMaterial
+from .materials import Color, Material, SimpleMaterial, PbrMaterial
 
 # these items are the common implementation
 
@@ -49,7 +49,7 @@ __all__ = [
     "Assembly",
     "Color",
     "Material",
-    "CommonMaterial",
+    "SimpleMaterial",
     "PbrMaterial",
     "Constraint",
     "plugins",

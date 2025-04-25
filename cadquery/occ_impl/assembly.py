@@ -41,17 +41,17 @@ from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
-from OCP.gp import gp_EulerSequence, gp_Vec3f
+from OCP.gp import gp_EulerSequence
 
+from vtkmodules.util.vtkConstants import VTK_LINE, VTK_VERTEX
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper as vtkMapper,
     vtkRenderer,
     vtkAssembly,
 )
-
 from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
-from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_LINE, VTK_VERTEX
+from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE
 
 from .geom import Location
 from .shapes import Shape, Solid, Compound
@@ -178,22 +178,18 @@ def material_to_occt(
         pbr_mat.Metallic = material.pbr.metallic
         pbr_mat.Roughness = material.pbr.roughness
         pbr_mat.RefractionIndex = material.pbr.refraction_index
-        pbr_mat.EmissiveFactor = gp_Vec3f(*material.pbr.emissive_factor.rgb())
         vis_mat.SetPbrMaterial(pbr_mat)
 
     # Set up common material if provided
-    if material.common:
+    if material.simple:
         common_mat = XCAFDoc_VisMaterialCommon()
-        common_mat.AmbientColor = color_to_occt(material.common.ambient_color).GetRGB()
-        common_mat.DiffuseColor = color_to_occt(material.common.diffuse_color).GetRGB()
+        common_mat.AmbientColor = color_to_occt(material.simple.ambient_color).GetRGB()
+        common_mat.DiffuseColor = color_to_occt(material.simple.diffuse_color).GetRGB()
         common_mat.SpecularColor = color_to_occt(
-            material.common.specular_color
+            material.simple.specular_color
         ).GetRGB()
-        common_mat.EmissiveColor = color_to_occt(
-            material.common.emissive_color
-        ).GetRGB()
-        common_mat.Shininess = material.common.shininess
-        common_mat.Transparency = material.common.transparency
+        common_mat.Shininess = material.simple.shininess
+        common_mat.Transparency = material.simple.transparency
         vis_mat.SetCommonMaterial(common_mat)
 
     return occt_material, vis_mat
@@ -348,46 +344,102 @@ def _loc2vtk(
     return trans, (rot[1], rot[2], rot[0])
 
 
+def _vtk_set_material_properties(
+    actor: vtkActor, material: Optional[Material], color: Color,
+) -> None:
+    """
+    Set material properties on a VTK actor based on the assembly element's material and color.
+    
+    Args:
+        actor: The VTK actor to set properties on
+        element: The assembly element containing material and color information
+        default_color: Default color to use if no material or color is specified
+    """
+    prop = actor.GetProperty()
+
+    if material:
+        if pbr := material.pbr:
+            # Mark interpolation as PBR and set the PBR properties
+            prop.SetInterpolationToPBR()
+            prop.SetColor(*pbr.base_color.rgb())
+            prop.SetOpacity(pbr.base_color.a)
+            prop.SetMetallic(pbr.metallic)
+            prop.SetRoughness(pbr.roughness)
+            prop.SetBaseIOR(pbr.refraction_index)
+        elif common := material.simple:
+            # Common material properties
+            prop.SetInterpolationToPhong()
+            prop.SetAmbientColor(*common.ambient_color.rgb())
+            prop.SetDiffuseColor(*common.diffuse_color.rgb())
+            prop.SetSpecularColor(*common.specular_color.rgb())
+            prop.SetSpecular(common.shininess)
+            prop.SetOpacity(1.0 - common.transparency)
+        elif mat_color := material.color:
+            # Material base color
+            prop.SetColor(*mat_color.rgb())
+            prop.SetOpacity(mat_color.a)
+    elif color:
+        # Element color
+        prop.SetColor(*color.rgb())
+        prop.SetOpacity(color.a)
+
+
 def toVTKAssy(
     assy: AssemblyProtocol,
-    color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
-    edgecolor: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
+    color: Optional[Color] = None,
+    edgecolor: Optional[Color] = None,
     edges: bool = True,
-    linewidth: float = 2,
+    linewidth: float = 1,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ) -> vtkAssembly:
+    """
+    Convert an assembly to a VTK assembly with both solid faces and edges.
+    
+    Args:
+        assy: The assembly to convert
+        color: Default color for faces (white if None)
+        edgecolor: Default color for edges (black if None) 
+        edges: Whether to show edges
+        linewidth: Width of edge lines
+        tolerance: Linear tolerance for tessellation
+        angularTolerance: Angular tolerance for tessellation in degrees
+        
+    Returns:
+        A VTK assembly containing both faces and edges for each element
+    """
+
+    if color is None:
+        color = Color(1.0, 1.0, 1.0, 1.0)
+    if edgecolor is None:
+        edgecolor = Color(0.0, 0.0, 0.0, 0.0)
 
     rv = vtkAssembly()
 
     for element in assy:
-        col = element.color.toTuple() if element.color else color
-
         trans, rot = _loc2vtk(element.location)
 
         data = element.shape.toVtkPolyData(tolerance, angularTolerance)
 
-        # extract faces
+        # Extract edges (lines and vertices)
         extr = vtkExtractCellsByType()
         extr.SetInputDataObject(data)
-
         extr.AddCellType(VTK_LINE)
         extr.AddCellType(VTK_VERTEX)
         extr.Update()
         data_edges = extr.GetOutput()
 
-        # extract edges
+        # Extract faces (triangles)
         extr = vtkExtractCellsByType()
         extr.SetInputDataObject(data)
-
         extr.AddCellType(VTK_TRIANGLE)
         extr.Update()
         data_faces = extr.GetOutput()
 
-        # remove normals from edges
+        # Remove normals from edges since they're not needed
         data_edges.GetPointData().RemoveArray("Normals")
 
-        # add both to the vtkAssy
+        # Create actor for faces with material/color
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_faces)
 
@@ -395,21 +447,13 @@ def toVTKAssy(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
-        actor.GetProperty().SetColor(*col[:3])
-        actor.GetProperty().SetOpacity(col[3])
-
-        # Apply material properties if available
-        if element.material:
-            if element.material.pbr:
-                actor.GetProperty().SetMetallic(element.material.pbr.metallic)
-                actor.GetProperty().SetRoughness(element.material.pbr.roughness)
-                actor.GetProperty().SetBaseIOR(element.material.pbr.refraction_index)
-                actor.GetProperty().SetEmissiveFactor(
-                    *element.material.pbr.emissive_factor.rgb()
-                )
-
+        _vtk_set_material_properties(actor, element.material, element.color or color)
         rv.AddPart(actor)
 
+        if not edges:
+            continue
+
+        # Create actor for edges
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_edges)
 
@@ -418,9 +462,8 @@ def toVTKAssy(
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
         actor.GetProperty().SetLineWidth(linewidth)
-        actor.SetVisibility(edges)
-        actor.GetProperty().SetColor(*edgecolor[:3])
-        actor.GetProperty().SetLineWidth(edgecolor[3])
+        actor.GetProperty().SetColor(*edgecolor.rgb())
+        actor.GetProperty().SetLineWidth(edgecolor.a)
 
         rv.AddPart(actor)
 
@@ -429,41 +472,54 @@ def toVTKAssy(
 
 def toVTK(
     assy: AssemblyProtocol,
-    color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
+    color: Optional[Color] = None,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
+    *,
+    edges: bool = True,
 ) -> vtkRenderer:
+    """
+    Convert an assembly to a VTK renderer with both solid faces and edges.
+    
+    Args:
+        assy: The assembly to convert
+        color: Default color for faces (white if None)
+        tolerance: Linear tolerance for tessellation
+        angularTolerance: Angular tolerance for tessellation in degrees
+        
+    Returns:
+        A VTK renderer containing both faces and edges for each element
+    """
+
+    if color is None:
+        color = Color(1.0, 1.0, 1.0, 1.0)
 
     renderer = vtkRenderer()
 
     for element in assy:
-        col = element.color.toTuple() if element.color else color
-
         trans, rot = _loc2vtk(element.location)
 
         data = element.shape.toVtkPolyData(tolerance, angularTolerance)
 
-        # extract faces
+        # Extract edges (lines and vertices)
         extr = vtkExtractCellsByType()
         extr.SetInputDataObject(data)
-
         extr.AddCellType(VTK_LINE)
         extr.AddCellType(VTK_VERTEX)
         extr.Update()
         data_edges = extr.GetOutput()
 
-        # extract edges
+        # Extract faces (triangles)
         extr = vtkExtractCellsByType()
         extr.SetInputDataObject(data)
-
         extr.AddCellType(VTK_TRIANGLE)
         extr.Update()
         data_faces = extr.GetOutput()
 
-        # remove normals from edges
+        # Remove normals from edges since they're not needed
         data_edges.GetPointData().RemoveArray("Normals")
 
-        # add both to the renderer
+        # Create actor for faces with material/color
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_faces)
 
@@ -471,21 +527,13 @@ def toVTK(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
-        actor.GetProperty().SetColor(*col[:3])
-        actor.GetProperty().SetOpacity(col[3])
-
-        # Apply material properties if available
-        if element.material:
-            if element.material.pbr:
-                actor.GetProperty().SetMetallic(element.material.pbr.metallic)
-                actor.GetProperty().SetRoughness(element.material.pbr.roughness)
-                actor.GetProperty().SetBaseIOR(element.material.pbr.refraction_index)
-                actor.GetProperty().SetEmissiveFactor(
-                    *element.material.pbr.emissive_factor.rgb()
-                )
-
+        _vtk_set_material_properties(actor, element.material, element.color or color)
         renderer.AddActor(actor)
 
+        if not edges:
+            continue
+
+        # Create actor for edges
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_edges)
 
@@ -500,13 +548,14 @@ def toVTK(
 
 
 def toJSON(
-    assy: AssemblyProtocol,
-    color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
-    tolerance: float = 1e-3,
+    assy: AssemblyProtocol, color: Optional[Color] = None, tolerance: float = 1e-3,
 ) -> List[Dict[str, Any]]:
     """
     Export an object to a structure suitable for converting to VTK.js JSON.
     """
+
+    if color is None:
+        color = Color(1.0, 1.0, 1.0, 1.0)
 
     rv = []
 
@@ -517,7 +566,7 @@ def toJSON(
         trans, rot = element.location.toTuple()
 
         val["shape"] = data
-        val["color"] = element.color.toTuple() if element.color else color
+        val["color"] = element.color.rgba() if element.color else color.rgba()
         val["position"] = trans
         val["orientation"] = tuple(radians(r) for r in rot)
 
@@ -535,9 +584,6 @@ def toJSON(
                     "roughness": element.material.pbr.roughness,
                     "refraction_index": element.material.pbr.refraction_index,
                 }
-                val["material"]["pbr"][
-                    "emissive_factor"
-                ] = element.material.pbr.emissive_factor.rgba()
 
         rv.append(val)
 

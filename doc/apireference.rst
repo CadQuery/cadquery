@@ -303,4 +303,4 @@ For material properties (physical and visual) of assembly items.
     Color
     Material
     PbrMaterial
-    CommonMaterial
+    SimpleMaterial

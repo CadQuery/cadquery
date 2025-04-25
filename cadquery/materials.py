@@ -53,14 +53,30 @@ class Color:
             self.b = 0.0
             self.a = 1.0
         elif len(args) == 1 and isinstance(args[0], str):
-            from .occ_impl.assembly import color_from_name
+            from cadquery.occ_impl.assembly import color_from_name
+            from vtkmodules.vtkCommonColor import vtkNamedColors
 
-            # Handle color name case
-            color = color_from_name(args[0])
-            self.r = color.r
-            self.g = color.g
-            self.b = color.b
-            self.a = color.a
+            # Try to get color from OCCT first, fall back to VTK if not found
+            try:
+                # Get color from OCCT
+                color = color_from_name(args[0])
+                self.r = color.r
+                self.g = color.g
+                self.b = color.b
+                self.a = color.a
+            except ValueError:
+                # Check if color exists in VTK
+                vtk_colors = vtkNamedColors()
+                if not vtk_colors.ColorExists(args[0]):
+                    raise ValueError(f"Unsupported color name: {args[0]}")
+
+                # Get color from VTK
+                color = vtk_colors.GetColor4d(args[0])
+                self.r = color.GetRed()
+                self.g = color.GetGreen()
+                self.b = color.GetBlue()
+                self.a = color.GetAlpha()
+
         elif len(args) == 3:
             # Handle RGB case
             r, g, b = args
@@ -118,7 +134,7 @@ class Color:
 
 
 @dataclass
-class CommonMaterial:
+class SimpleMaterial:
     """
     Traditional material model matching OpenCascade's XCAFDoc_VisMaterialCommon.
     """
@@ -126,7 +142,6 @@ class CommonMaterial:
     ambient_color: Color
     diffuse_color: Color
     specular_color: Color
-    emissive_color: Color
     shininess: float
     transparency: float
 
@@ -145,7 +160,6 @@ class CommonMaterial:
                 self.ambient_color,
                 self.diffuse_color,
                 self.specular_color,
-                self.emissive_color,
                 self.shininess,
                 self.transparency,
             )
@@ -153,13 +167,12 @@ class CommonMaterial:
 
     def __eq__(self, other: object) -> bool:
         """Compare two CommonMaterial objects."""
-        if not isinstance(other, CommonMaterial):
+        if not isinstance(other, SimpleMaterial):
             return False
         return (
             self.ambient_color == other.ambient_color
             and self.diffuse_color == other.diffuse_color
             and self.specular_color == other.specular_color
-            and self.emissive_color == other.emissive_color
             and self.shininess == other.shininess
             and self.transparency == other.transparency
         )
@@ -169,6 +182,8 @@ class CommonMaterial:
 class PbrMaterial:
     """
     PBR material definition matching OpenCascade's XCAFDoc_VisMaterialPBR.
+    
+    Note: Emission support will be added in a future version with proper texture support.
     """
 
     # Base color and texture
@@ -176,9 +191,6 @@ class PbrMaterial:
     metallic: float
     roughness: float
     refraction_index: float
-
-    # Optional properties
-    emissive_factor: Color = Color(0.0, 0.0, 0.0)
 
     def __post_init__(self):
         """Validate the material properties."""
@@ -193,13 +205,7 @@ class PbrMaterial:
     def __hash__(self) -> int:
         """Make PbrMaterial hashable."""
         return hash(
-            (
-                self.base_color,
-                self.metallic,
-                self.roughness,
-                self.refraction_index,
-                self.emissive_factor,
-            )
+            (self.base_color, self.metallic, self.roughness, self.refraction_index,)
         )
 
     def __eq__(self, other: object) -> bool:
@@ -211,7 +217,6 @@ class PbrMaterial:
             and self.metallic == other.metallic
             and self.roughness == other.roughness
             and self.refraction_index == other.refraction_index
-            and self.emissive_factor == other.emissive_factor
         )
 
 
@@ -228,12 +233,12 @@ class Material:
 
     # Material representations
     color: Optional[Color] = None
-    common: Optional[CommonMaterial] = None
+    simple: Optional[SimpleMaterial] = None
     pbr: Optional[PbrMaterial] = None
 
     def __post_init__(self):
         """Validate that at least one representation is provided."""
-        if not any([self.color, self.common, self.pbr]):
+        if not any([self.color, self.simple, self.pbr]):
             raise ValueError("Material must have at least one representation defined")
 
     def __hash__(self) -> int:
@@ -244,7 +249,7 @@ class Material:
                 self.description,
                 self.density,
                 self.color,
-                self.common,
+                self.simple,
                 self.pbr,
             )
         )
@@ -258,6 +263,6 @@ class Material:
             and self.description == other.description
             and self.density == other.density
             and self.color == other.color
-            and self.common == other.common
+            and self.simple == other.simple
             and self.pbr == other.pbr
         )

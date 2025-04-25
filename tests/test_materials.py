@@ -1,6 +1,6 @@
 import re
 import pytest
-from cadquery.materials import Color, CommonMaterial, PbrMaterial, Material
+from cadquery.materials import Color, SimpleMaterial, PbrMaterial, Material
 import cadquery as cq
 import os
 import json
@@ -100,15 +100,13 @@ class TestCommonMaterial:
             "ambient": Color(0.1, 0.1, 0.1),
             "diffuse": Color(0.2, 0.2, 0.2),
             "specular": Color(0.3, 0.3, 0.3),
-            "emissive": Color(0.4, 0.4, 0.4),
         }
 
     def test_valid_construction(self, default_colors):
-        material = CommonMaterial(
+        material = SimpleMaterial(
             ambient_color=default_colors["ambient"],
             diffuse_color=default_colors["diffuse"],
             specular_color=default_colors["specular"],
-            emissive_color=default_colors["emissive"],
             shininess=0.5,
             transparency=0.2,
         )
@@ -117,40 +115,36 @@ class TestCommonMaterial:
 
     def test_invalid_shininess(self, default_colors):
         with pytest.raises(ValueError):
-            CommonMaterial(
+            SimpleMaterial(
                 ambient_color=default_colors["ambient"],
                 diffuse_color=default_colors["diffuse"],
                 specular_color=default_colors["specular"],
-                emissive_color=default_colors["emissive"],
                 shininess=1.5,  # Invalid: > 1.0
                 transparency=0.2,
             )
 
     def test_invalid_transparency(self, default_colors):
         with pytest.raises(ValueError):
-            CommonMaterial(
+            SimpleMaterial(
                 ambient_color=default_colors["ambient"],
                 diffuse_color=default_colors["diffuse"],
                 specular_color=default_colors["specular"],
-                emissive_color=default_colors["emissive"],
                 shininess=0.5,
                 transparency=-0.1,  # Invalid: < 0.0
             )
 
     def test_equality(self, default_colors):
-        mat1 = CommonMaterial(
+        mat1 = SimpleMaterial(
             ambient_color=default_colors["ambient"],
             diffuse_color=default_colors["diffuse"],
             specular_color=default_colors["specular"],
-            emissive_color=default_colors["emissive"],
             shininess=0.5,
             transparency=0.2,
         )
-        mat2 = CommonMaterial(
+        mat2 = SimpleMaterial(
             ambient_color=default_colors["ambient"],
             diffuse_color=default_colors["diffuse"],
             specular_color=default_colors["specular"],
-            emissive_color=default_colors["emissive"],
             shininess=0.5,
             transparency=0.2,
         )
@@ -158,27 +152,24 @@ class TestCommonMaterial:
         assert mat1 != "not a material"
 
     def test_hash(self, default_colors):
-        mat1 = CommonMaterial(
+        mat1 = SimpleMaterial(
             ambient_color=default_colors["ambient"],
             diffuse_color=default_colors["diffuse"],
             specular_color=default_colors["specular"],
-            emissive_color=default_colors["emissive"],
             shininess=0.5,
             transparency=0.2,
         )
-        mat2 = CommonMaterial(
+        mat2 = SimpleMaterial(
             ambient_color=default_colors["ambient"],
             diffuse_color=default_colors["diffuse"],
             specular_color=default_colors["specular"],
-            emissive_color=default_colors["emissive"],
             shininess=0.5,
             transparency=0.2,
         )
-        mat3 = CommonMaterial(
+        mat3 = SimpleMaterial(
             ambient_color=default_colors["ambient"],
             diffuse_color=default_colors["diffuse"],
             specular_color=default_colors["specular"],
-            emissive_color=default_colors["emissive"],
             shininess=0.6,  # Different shininess
             transparency=0.2,
         )
@@ -276,7 +267,7 @@ class TestMaterial:
         assert material.description == "test material"
         assert material.density == 1000.0
         assert material.color is not None
-        assert material.common is None
+        assert material.simple is None
         assert material.pbr is None
 
     def test_common_only(self):
@@ -284,17 +275,16 @@ class TestMaterial:
             name="test",
             description="test material",
             density=1000.0,
-            common=CommonMaterial(
+            simple=SimpleMaterial(
                 ambient_color=Color(0.1, 0.1, 0.1),
                 diffuse_color=Color(0.2, 0.2, 0.2),
                 specular_color=Color(0.3, 0.3, 0.3),
-                emissive_color=Color(0.4, 0.4, 0.4),
                 shininess=0.5,
                 transparency=0.2,
             ),
         )
         assert material.color is None
-        assert material.common is not None
+        assert material.simple is not None
         assert material.pbr is None
 
     def test_pbr_only(self):
@@ -310,7 +300,7 @@ class TestMaterial:
             ),
         )
         assert material.color is None
-        assert material.common is None
+        assert material.simple is None
         assert material.pbr is not None
 
     def test_no_representation(self):
@@ -362,11 +352,10 @@ class TestMaterial:
             name="test",
             description="test material",
             density=1000.0,
-            common=CommonMaterial(
+            simple=SimpleMaterial(
                 ambient_color=Color(0.1, 0.1, 0.1),
                 diffuse_color=Color(0.2, 0.2, 0.2),
                 specular_color=Color(0.3, 0.3, 0.3),
-                emissive_color=Color(0.4, 0.4, 0.4),
                 shininess=0.5,
                 transparency=0.2,
             ),
@@ -418,16 +407,15 @@ def material_assy(tmp_path_factory):
     assy.add(
         gold_cylinder,
         name="gold_cylinder",
-        loc=cq.Location((20, 0, 0)),
+        loc=cq.Location((40, 0, 0)),
         material=Material(
             name="Gold",
             description="Metallic gold material",
             density=19320.0,  # Actual density of gold in kg/m³
-            common=CommonMaterial(
+            simple=SimpleMaterial(
                 ambient_color=Color(0.24, 0.2, 0.07),
                 diffuse_color=Color(0.75, 0.6, 0.22),
                 specular_color=Color(0.63, 0.56, 0.37),
-                emissive_color=Color(0, 0, 0),
                 shininess=0.8,
                 transparency=0.0,
             ),
@@ -438,7 +426,7 @@ def material_assy(tmp_path_factory):
     assy.add(
         chrome_sphere,
         name="chrome_sphere",
-        loc=cq.Location((40, 0, 0)),
+        loc=cq.Location((80, 0, 0)),
         material=Material(
             name="Chrome",
             description="Polished chrome material",
@@ -448,7 +436,6 @@ def material_assy(tmp_path_factory):
                 metallic=1.0,
                 roughness=0.1,
                 refraction_index=2.4,
-                emissive_factor=Color(0, 0, 0),
             ),
         ),
     )
@@ -593,3 +580,36 @@ def test_material_vtkjs_assy_export(material_assy):
     # TODO: Add verification of VTK content once we have a parser
     # This would require implementing a VTK file parser or using external tools
     # For now we just verify the export succeeds
+
+
+def test_material_vrml_export(material_assy):
+    """Test that materials are correctly exported to VRML."""
+
+    # Export to VRML in current directory
+    vrml_path = "material_test.vrml"
+
+    # Export to VRML
+    material_assy.export(vrml_path)
+
+    # Verify file exists
+    assert os.path.exists(vrml_path)
+
+    # Read and verify the VRML content
+    with open(vrml_path, "r") as f:
+        content = f.read()
+
+        # VRML should contain material definitions
+        assert "material Material {" in content
+
+        # VRML uses ambient, diffuse, specular, emissive, shininess and transparency
+        # Each shape should have a material definition
+        material_blocks = content.count("material Material {")
+        # We expect multiple material blocks since each shape has one for faces, lines and points
+        assert material_blocks >= 3  # At least one set per shape (we have 3 shapes)
+
+        # Check for material properties
+        assert "ambientIntensity" in content
+        assert "diffuseColor" in content
+        assert "specularColor" in content
+        assert "shininess" in content
+        assert "transparency" in content
