@@ -537,33 +537,6 @@ def solve_result_check(solve_result: dict) -> bool:
     return all(checks)
 
 
-def test_color():
-    from cadquery.occ_impl.assembly import color_to_occt
-
-    c1 = cq.Color("red")
-    occt_c1 = color_to_occt(c1)
-    assert occt_c1.GetRGB().Red() == 1
-    assert occt_c1.Alpha() == 1
-
-    c2 = cq.Color(1, 0, 0)
-    occt_c2 = color_to_occt(c2)
-    assert occt_c2.GetRGB().Red() == 1
-    assert occt_c2.Alpha() == 1
-
-    c3 = cq.Color(1, 0, 0, 0.5)
-    occt_c3 = color_to_occt(c3)
-    assert occt_c3.GetRGB().Red() == 1
-    assert occt_c3.Alpha() == 0.5
-
-    c4 = cq.Color()
-
-    with pytest.raises(ValueError):
-        cq.Color("?????")
-
-    with pytest.raises(ValueError):
-        cq.Color(1, 2, 3, 4, 5)
-
-
 def test_assembly(simple_assy, nested_assy):
 
     # basic checks
@@ -1110,7 +1083,7 @@ def test_colors_assy0(assy_fixture, expected, request):
                 (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
                 (
                     ["box1", "box1_part"],
-                    {"color_shape": cq.Color().toTuple()},
+                    {"color_shape": cq.Color().rgba()},
                 ),  # default color when unspecified
             ],
         ),

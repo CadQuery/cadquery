@@ -29,7 +29,6 @@ from vtkmodules.vtkIOImage import vtkHDRReader
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLSkybox
 import cadquery as cq
-import os
 
 
 # Create basic shapes for our example

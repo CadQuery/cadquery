@@ -34,24 +34,31 @@ def approx_equal_tuples(tuple1, tuple2, rel=1e-6, abs=1e-12):
 class TestColor:
     def test_default_constructor(self):
         color = Color()
-        assert color.r == 1.0
-        assert color.g == 1.0
-        assert color.b == 0.0
-        assert color.a == 1.0
+        assert color.red == 1.0
+        assert color.green == 1.0
+        assert color.blue == 0.0
+        assert color.alpha == 1.0
 
     def test_rgb_constructor(self):
         color = Color(0.1, 0.2, 0.3)
-        assert color.r == 0.1
-        assert color.g == 0.2
-        assert color.b == 0.3
-        assert color.a == 1.0
+        assert color.red == 0.1
+        assert color.green == 0.2
+        assert color.blue == 0.3
+        assert color.alpha == 1.0
 
     def test_rgba_constructor(self):
         color = Color(0.1, 0.2, 0.3, 0.4)
-        assert color.r == 0.1
-        assert color.g == 0.2
-        assert color.b == 0.3
-        assert color.a == 0.4
+        assert color.red == 0.1
+        assert color.green == 0.2
+        assert color.blue == 0.3
+        assert color.alpha == 0.4
+
+    def test_kwargs_constructor(self):
+        color = Color(red=0.1, green=0.2, blue=0.3, alpha=0.4)
+        assert color.red == 0.1
+        assert color.green == 0.2
+        assert color.blue == 0.3
+        assert color.alpha == 0.4
 
     def test_invalid_values(self):
         with pytest.raises(ValueError):
@@ -91,6 +98,38 @@ class TestColor:
     def test_str(self):
         color = Color(0.1, 0.2, 0.3, 0.4)
         assert str(color) == "(0.1, 0.2, 0.3, 0.4)"
+
+    def test_occt_conversion(self):
+        c1 = cq.Color("red")
+        occt_c1 = c1.to_occ_rgba()
+        assert occt_c1.GetRGB().Red() == 1
+        assert occt_c1.Alpha() == 1
+
+        c2 = cq.Color(1, 0, 0)
+        occt_c2 = c2.to_occ_rgba()
+        assert occt_c2.GetRGB().Red() == 1
+        assert occt_c2.Alpha() == 1
+
+        c3 = cq.Color(1, 0, 0, 0.5)
+        occt_c3 = c3.to_occ_rgba()
+        assert occt_c3.GetRGB().Red() == 1
+        assert occt_c3.Alpha() == 0.5
+
+        c4 = cq.Color()
+
+        with pytest.raises(ValueError):
+            cq.Color("?????")
+
+        with pytest.raises(ValueError):
+            cq.Color(1, 2, 3, 4, 5)
+
+    def test_invalid_kwargs(self):
+        with pytest.raises(TypeError):
+            Color(red=0.1, green=0.2, blue=0.3, alpha=0.4, unknown_kwarg=1)
+
+    def test_too_many_args(self):
+        with pytest.raises(ValueError):
+            Color(0.1, 0.2, 0.3, 0.4, 0.5)
 
 
 class TestCommonMaterial:

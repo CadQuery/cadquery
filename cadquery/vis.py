@@ -41,11 +41,11 @@ from vtkmodules.vtkIOImage import vtkPNGWriter
 
 DEFAULT_COLOR = Color(1, 0.8, 0)
 DEFAULT_EDGE_COLOR = Color(0, 0, 0)
+DEFAULT_BG_COLOR = Color(1.0, 1.0, 1.0)
 DEFAULT_PT_SIZE = 7.5
 DEFAULT_PT_COLOR = "darkviolet"
 DEFAULT_CTRL_PT_COLOR = "crimson"
 DEFAULT_CTRL_PT_SIZE = 7.5
-
 SPECULAR = 0.3
 SPECULAR_POWER = 100
 SPECULAR_COLOR = Color(1.0, 1.0, 1.0, 1.0)
@@ -57,14 +57,11 @@ Showable = Union[
 
 
 def _to_assy(
-    *objs: ShapeLike, color: Optional[Color] = None, alpha: float = 1,
+    *objs: ShapeLike, color: Color = DEFAULT_COLOR, alpha: float = 1,
 ) -> Assembly:
     """
     Convert shapes to Assembly.
     """
-
-    if color is None:
-        color = DEFAULT_COLOR
 
     assy = Assembly(color=Color(*color.rgb(), alpha))
 
@@ -396,7 +393,7 @@ def show(
     width: Union[int, float] = 0.5,
     height: Union[int, float] = 0.5,
     trihedron: bool = True,
-    bgcolor: Optional[Color] = None,
+    bgcolor: Color = DEFAULT_BG_COLOR,
     gradient: bool = True,
     xpos: Union[int, float] = 0,
     ypos: Union[int, float] = 0,
@@ -404,9 +401,6 @@ def show(
     """
     Show CQ objects using VTK. This functions optionally allows to make screenshots.
     """
-
-    if bgcolor is None:
-        bgcolor = Color(1.0, 1.0, 1.0)
 
     # split objects
     shapes, vecs, locs, props = _split_showables(objs)

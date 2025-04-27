@@ -1,21 +1,27 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple, TypeAlias, overload
+from typing import TYPE_CHECKING, Optional, Tuple, TypeAlias, overload
+
+if TYPE_CHECKING:
+    from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA
+    from OCP.XCAFDoc import XCAFDoc_Material, XCAFDoc_VisMaterial
+    from vtkmodules.vtkRenderingCore import vtkActor
+
 
 RGB: TypeAlias = Tuple[float, float, float]
 RGBA: TypeAlias = Tuple[float, float, float, float]
 
 
-@dataclass
+@dataclass(frozen=True)
 class Color:
     """
     Simple color representation with optional alpha channel.
     All values are in range [0.0, 1.0].
     """
 
-    r: float  # red component
-    g: float  # green component
-    b: float  # blue component
-    a: float = 1.0  # alpha component, defaults to opaque
+    red: float
+    green: float
+    blue: float
+    alpha: float = 1.0
 
     @overload
     def __init__(self):
@@ -34,106 +40,118 @@ class Color:
         ...
 
     @overload
-    def __init__(self, r: float, g: float, b: float, a: float = 1.0):
+    def __init__(self, red: float, green: float, blue: float, alpha: float = 1.0):
         """
         Construct a Color from RGB(A) values.
 
-        :param r: red value, 0-1
-        :param g: green value, 0-1
-        :param b: blue value, 0-1
-        :param a: alpha value, 0-1 (default: 1.0)
+        :param red: red value, 0-1
+        :param green: green value, 0-1
+        :param blue: blue value, 0-1
+        :param alpha: alpha value, 0-1 (default: 1.0)
         """
         ...
 
     def __init__(self, *args, **kwargs):
-        if len(args) == 0:
+        # Check for unknown kwargs
+        valid_kwargs = {"red", "green", "blue", "alpha", "name"}
+        unknown_kwargs = set(kwargs.keys()) - valid_kwargs
+        if unknown_kwargs:
+            raise TypeError(f"Got unexpected keyword arguments: {unknown_kwargs}")
+
+        number_of_args = len(args) + len(kwargs)
+        if number_of_args == 0:
             # Handle no-args case (default yellow)
-            self.r = 1.0
-            self.g = 1.0
-            self.b = 0.0
-            self.a = 1.0
-        elif len(args) == 1 and isinstance(args[0], str):
-            from cadquery.occ_impl.assembly import color_from_name
+            r, g, b, a = 1.0, 1.0, 0.0, 1.0
+        elif (number_of_args == 1 and isinstance(args[0], str)) or "name" in kwargs:
+            from OCP.Quantity import Quantity_ColorRGBA
             from vtkmodules.vtkCommonColor import vtkNamedColors
+
+            color_name = args[0] if number_of_args == 1 else kwargs["name"]
 
             # Try to get color from OCCT first, fall back to VTK if not found
             try:
                 # Get color from OCCT
-                color = color_from_name(args[0])
-                self.r = color.r
-                self.g = color.g
-                self.b = color.b
-                self.a = color.a
+                occ_rgba = Quantity_ColorRGBA()
+                exists = Quantity_ColorRGBA.ColorFromName_s(color_name, occ_rgba)
+                if not exists:
+                    raise ValueError(f"Unknown color name: {color_name}")
+                occ_rgb = occ_rgba.GetRGB()
+                r, g, b, a = (
+                    occ_rgb.Red(),
+                    occ_rgb.Green(),
+                    occ_rgb.Blue(),
+                    occ_rgba.Alpha(),
+                )
             except ValueError:
                 # Check if color exists in VTK
                 vtk_colors = vtkNamedColors()
-                if not vtk_colors.ColorExists(args[0]):
-                    raise ValueError(f"Unsupported color name: {args[0]}")
+                if not vtk_colors.ColorExists(color_name):
+                    raise ValueError(f"Unsupported color name: {color_name}")
 
                 # Get color from VTK
-                color = vtk_colors.GetColor4d(args[0])
-                self.r = color.GetRed()
-                self.g = color.GetGreen()
-                self.b = color.GetBlue()
-                self.a = color.GetAlpha()
+                vtk_rgba = vtk_colors.GetColor4d(color_name)
+                r = vtk_rgba.GetRed()
+                g = vtk_rgba.GetGreen()
+                b = vtk_rgba.GetBlue()
+                a = vtk_rgba.GetAlpha()
 
-        elif len(args) == 3:
-            # Handle RGB case
-            r, g, b = args
-            a = kwargs.get("a", 1.0)
-            self.r = r
-            self.g = g
-            self.b = b
-            self.a = a
-        elif len(args) == 4:
-            # Handle RGBA case
-            r, g, b, a = args
-            self.r = r
-            self.g = g
-            self.b = b
-            self.a = a
-        else:
-            raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
+        elif number_of_args <= 4:
+            r, g, b, a = args + (4 - len(args)) * (1.0,)
+
+            if "red" in kwargs:
+                r = kwargs["red"]
+            if "green" in kwargs:
+                g = kwargs["green"]
+            if "blue" in kwargs:
+                b = kwargs["blue"]
+            if "alpha" in kwargs:
+                a = kwargs["alpha"]
+
+        elif number_of_args > 4:
+            raise ValueError("Too many arguments")
 
         # Validate values
-        for name, value in [("r", self.r), ("g", self.g), ("b", self.b), ("a", self.a)]:
+        for name, value in [("red", r), ("green", g), ("blue", b), ("alpha", a)]:
             if not 0.0 <= value <= 1.0:
                 raise ValueError(f"{name} component must be between 0.0 and 1.0")
 
+        # Set all attributes at once
+        object.__setattr__(self, "red", r)
+        object.__setattr__(self, "green", g)
+        object.__setattr__(self, "blue", b)
+        object.__setattr__(self, "alpha", a)
+
     def rgb(self) -> RGB:
         """Get RGB components as tuple."""
-        return (self.r, self.g, self.b)
+        return (self.red, self.green, self.blue)
 
     def rgba(self) -> RGBA:
         """Get RGBA components as tuple."""
-        return (self.r, self.g, self.b, self.a)
+        return (self.red, self.green, self.blue, self.alpha)
 
-    def toTuple(self) -> Tuple[float, float, float, float]:
-        """
-        Convert Color to RGBA tuple.
-        """
-        return (self.r, self.g, self.b, self.a)
+    def to_occ_rgb(self) -> "Quantity_Color":
+        """Convert Color to an OCCT RGB color object."""
+        from OCP.Quantity import Quantity_Color, Quantity_TOC_sRGB
+
+        return Quantity_Color(self.red, self.green, self.blue, Quantity_TOC_sRGB)
+
+    def to_occ_rgba(self) -> "Quantity_ColorRGBA":
+        """Convert Color to an OCCT RGBA color object."""
+        from OCP.Quantity import Quantity_ColorRGBA
+
+        rgb = self.to_occ_rgb()
+        return Quantity_ColorRGBA(rgb, self.alpha)
 
     def __repr__(self) -> str:
         """String representation of the color."""
-        return f"Color(r={self.r}, g={self.g}, b={self.b}, a={self.a})"
+        return f"Color(r={self.red}, g={self.green}, b={self.blue}, a={self.alpha})"
 
     def __str__(self) -> str:
         """String representation of the color."""
-        return f"({self.r}, {self.g}, {self.b}, {self.a})"
-
-    def __hash__(self) -> int:
-        """Make Color hashable."""
-        return hash((self.r, self.g, self.b, self.a))
-
-    def __eq__(self, other: object) -> bool:
-        """Compare two Color objects."""
-        if not isinstance(other, Color):
-            return False
-        return (self.r, self.g, self.b, self.a) == (other.r, other.g, other.b, other.a)
+        return f"({self.red}, {self.green}, {self.blue}, {self.alpha})"
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class SimpleMaterial:
     """
     Traditional material model matching OpenCascade's XCAFDoc_VisMaterialCommon.
@@ -153,32 +171,18 @@ class SimpleMaterial:
         if not 0.0 <= self.transparency <= 1.0:
             raise ValueError("Transparency must be between 0.0 and 1.0")
 
-    def __hash__(self) -> int:
-        """Make CommonMaterial hashable."""
-        return hash(
-            (
-                self.ambient_color,
-                self.diffuse_color,
-                self.specular_color,
-                self.shininess,
-                self.transparency,
-            )
-        )
-
-    def __eq__(self, other: object) -> bool:
-        """Compare two CommonMaterial objects."""
-        if not isinstance(other, SimpleMaterial):
-            return False
-        return (
-            self.ambient_color == other.ambient_color
-            and self.diffuse_color == other.diffuse_color
-            and self.specular_color == other.specular_color
-            and self.shininess == other.shininess
-            and self.transparency == other.transparency
-        )
+    def apply_to_vtk_actor(self, actor: "vtkActor") -> None:
+        """Apply common material properties to a VTK actor."""
+        prop = actor.GetProperty()
+        prop.SetInterpolationToPhong()
+        prop.SetAmbientColor(*self.ambient_color.rgb())
+        prop.SetDiffuseColor(*self.diffuse_color.rgb())
+        prop.SetSpecularColor(*self.specular_color.rgb())
+        prop.SetSpecular(self.shininess)
+        prop.SetOpacity(1.0 - self.transparency)
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class PbrMaterial:
     """
     PBR material definition matching OpenCascade's XCAFDoc_VisMaterialPBR.
@@ -202,25 +206,18 @@ class PbrMaterial:
         if not 1.0 <= self.refraction_index <= 3.0:
             raise ValueError("Refraction index must be between 1.0 and 3.0")
 
-    def __hash__(self) -> int:
-        """Make PbrMaterial hashable."""
-        return hash(
-            (self.base_color, self.metallic, self.roughness, self.refraction_index,)
-        )
-
-    def __eq__(self, other: object) -> bool:
-        """Compare two PbrMaterial objects."""
-        if not isinstance(other, PbrMaterial):
-            return False
-        return (
-            self.base_color == other.base_color
-            and self.metallic == other.metallic
-            and self.roughness == other.roughness
-            and self.refraction_index == other.refraction_index
-        )
+    def apply_to_vtk_actor(self, actor: "vtkActor") -> None:
+        """Apply PBR material properties to a VTK actor."""
+        prop = actor.GetProperty()
+        prop.SetInterpolationToPBR()
+        prop.SetColor(*self.base_color.rgb())
+        prop.SetOpacity(self.base_color.alpha)
+        prop.SetMetallic(self.metallic)
+        prop.SetRoughness(self.roughness)
+        prop.SetBaseIOR(self.refraction_index)
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class Material:
     """
     Material class that can store multiple representation types simultaneously.
@@ -229,7 +226,8 @@ class Material:
 
     name: str
     description: str
-    density: float  # kg/m³
+    density: float
+    density_unit: str = "kg/m³"
 
     # Material representations
     color: Optional[Color] = None
@@ -241,28 +239,62 @@ class Material:
         if not any([self.color, self.simple, self.pbr]):
             raise ValueError("Material must have at least one representation defined")
 
-    def __hash__(self) -> int:
-        """Make Material hashable."""
-        return hash(
-            (
-                self.name,
-                self.description,
-                self.density,
-                self.color,
-                self.simple,
-                self.pbr,
-            )
+    def apply_to_vtk_actor(self, actor: "vtkActor") -> None:
+        """Apply material properties to a VTK actor."""
+        prop = actor.GetProperty()
+        prop.SetMaterialName(self.name)
+
+        if self.pbr:
+            self.pbr.apply_to_vtk_actor(actor)
+        elif self.simple:
+            self.simple.apply_to_vtk_actor(actor)
+        elif self.color:
+            r, g, b, a = self.color.rgba()
+            prop.SetColor(r, g, b)
+            prop.SetOpacity(a)
+
+    def to_occ_material(self) -> "XCAFDoc_Material":
+        """Convert to OCCT material object."""
+        from OCP.XCAFDoc import XCAFDoc_Material
+        from OCP.TCollection import TCollection_HAsciiString
+
+        occt_material = XCAFDoc_Material()
+        occt_material.Set(
+            TCollection_HAsciiString(self.name),
+            TCollection_HAsciiString(self.description),
+            self.density,
+            TCollection_HAsciiString(self.density_unit),
+            TCollection_HAsciiString("DENSITY"),
+        )
+        return occt_material
+
+    def to_occ_vis_material(self) -> "XCAFDoc_VisMaterial":
+        """Convert to OCCT visualization material object."""
+        from OCP.XCAFDoc import (
+            XCAFDoc_VisMaterial,
+            XCAFDoc_VisMaterialPBR,
+            XCAFDoc_VisMaterialCommon,
         )
 
-    def __eq__(self, other: object) -> bool:
-        """Compare two Material objects."""
-        if not isinstance(other, Material):
-            return False
-        return (
-            self.name == other.name
-            and self.description == other.description
-            and self.density == other.density
-            and self.color == other.color
-            and self.simple == other.simple
-            and self.pbr == other.pbr
-        )
+        vis_mat = XCAFDoc_VisMaterial()
+
+        # Set up PBR material if provided
+        if self.pbr:
+            pbr_mat = XCAFDoc_VisMaterialPBR()
+            pbr_mat.BaseColor = self.pbr.base_color.to_occ_rgba()
+            pbr_mat.Metallic = self.pbr.metallic
+            pbr_mat.Roughness = self.pbr.roughness
+            pbr_mat.RefractionIndex = self.pbr.refraction_index
+            vis_mat.SetPbrMaterial(pbr_mat)
+
+        # Set up common material if provided
+        if self.simple:
+            common_mat = XCAFDoc_VisMaterialCommon()
+            common_mat.AmbientColor = self.simple.ambient_color.to_occ_rgb()
+            common_mat.DiffuseColor = self.simple.diffuse_color.to_occ_rgb()
+            common_mat.SpecularColor = self.simple.specular_color.to_occ_rgb()
+            common_mat.Shininess = self.simple.shininess
+            common_mat.Transparency = self.simple.transparency
+            vis_mat.SetCommonMaterial(common_mat)
+
+        return vis_mat

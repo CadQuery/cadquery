@@ -3,12 +3,11 @@ import uuid
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
-from itertools import chain
 from typing import Optional
 from typing_extensions import Literal
 
 from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
-from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
+from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
@@ -32,11 +31,9 @@ from OCP.Interface import Interface_Static
 
 from ..assembly import (
     AssemblyProtocol,
-    color_to_occt,
     toCAF,
     toVTK,
     toFusedCAF,
-    material_to_occt,
 )
 from ..geom import Location
 from ..shapes import Shape, Compound
@@ -190,30 +187,31 @@ def exportStepMeta(
                 # Set color from material if available
                 if material.color:
                     color_tool.SetColor(
-                        part_label, color_to_occt(material.color), XCAFDoc_ColorGen
+                        part_label, material.color.to_occ_rgba(), XCAFDoc_ColorGen
                     )
 
                 # Convert material to OCCT format and add to document
-                mat, vis_mat = material_to_occt(material)
+                occ_mat = material.to_occ_material()
+                occ_vis_mat = material.to_occ_vis_material()
 
                 # Create material label
                 mat_lab = material_tool.AddMaterial(
-                    mat.GetName(),
-                    mat.GetDescription(),
-                    mat.GetDensity(),
-                    mat.GetDensName(),
-                    mat.GetDensValType(),
+                    occ_mat.GetName(),
+                    occ_mat.GetDescription(),
+                    occ_mat.GetDensity(),
+                    occ_mat.GetDensName(),
+                    occ_mat.GetDensValType(),
                 )
                 material_tool.SetMaterial(part_label, mat_lab)
 
                 # Add visualization material to the document
                 vis_mat_lab = vis_material_tool.AddMaterial(
-                    vis_mat, TCollection_AsciiString(material.name)
+                    occ_vis_mat, TCollection_AsciiString(material.name)
                 )
                 vis_material_tool.SetShapeMaterial(part_label, vis_mat_lab)
             elif color:
                 # If no material but color exists, set the color directly
-                color_tool.SetColor(part_label, color_to_occt(color), XCAFDoc_ColorGen)
+                color_tool.SetColor(part_label, color.to_occ_rgba(), XCAFDoc_ColorGen)
 
             shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
 
@@ -246,7 +244,7 @@ def exportStepMeta(
                             if face in colors:
                                 color_tool.SetColor(
                                     face_label,
-                                    color_to_occt(colors[face]),
+                                    colors[face].to_occ_rgba(),
                                     XCAFDoc_ColorGen,
                                 )
 

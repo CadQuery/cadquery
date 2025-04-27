@@ -17,26 +17,16 @@ from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import (
     TCollection_ExtendedString,
     TCollection_AsciiString,
-    TCollection_HAsciiString,
 )
 from OCP.XCAFDoc import (
     XCAFDoc_DocumentTool,
     XCAFDoc_ColorType,
     XCAFDoc_ColorGen,
-    XCAFDoc_VisMaterial,
-    XCAFDoc_VisMaterialPBR,
-    XCAFDoc_VisMaterialCommon,
-    XCAFDoc_Material,
 )
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
-from OCP.Quantity import (
-    Quantity_ColorRGBA,
-    Quantity_Color,
-    Quantity_TOC_sRGB,
-)
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
@@ -59,6 +49,9 @@ from .exporters.vtk import toString
 from ..cq import Workplane
 from ..materials import Material, Color
 
+# Default colors
+DEFAULT_COLOR = Color(1.0, 1.0, 1.0, 1.0)  # White
+DEFAULT_EDGE_COLOR = Color(0.0, 0.0, 0.0, 1.0)  # Black
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -137,64 +130,6 @@ class AssemblyProtocol(Protocol):
         ...
 
 
-def color_from_name(name: str) -> Color:
-    """Create a Color from a name using OCCT's color system."""
-    color = Quantity_ColorRGBA()
-    exists = Quantity_ColorRGBA.ColorFromName_s(name, color)
-    if not exists:
-        raise ValueError(f"Unknown color name: {name}")
-    rgb = color.GetRGB()
-    return Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
-
-
-def color_to_occt(color: Color) -> Quantity_ColorRGBA:
-    """Convert a Color to an OCCT color object."""
-    rgb = Quantity_Color(color.r, color.g, color.b, Quantity_TOC_sRGB)
-    rgba = Quantity_ColorRGBA(rgb, color.a)
-    return rgba
-
-
-def material_to_occt(
-    material: Material,
-) -> Tuple[XCAFDoc_Material, XCAFDoc_VisMaterial]:
-    """Convert a Material to OCCT material objects."""
-    # Create material object
-    occt_material = XCAFDoc_Material()
-    occt_material.Set(
-        TCollection_HAsciiString(material.name),
-        TCollection_HAsciiString(material.description),
-        material.density,
-        TCollection_HAsciiString("kg/m³"),
-        TCollection_HAsciiString("DENSITY"),
-    )
-
-    # Create visualization material
-    vis_mat = XCAFDoc_VisMaterial()
-
-    # Set up PBR material if provided
-    if material.pbr:
-        pbr_mat = XCAFDoc_VisMaterialPBR()
-        pbr_mat.BaseColor = color_to_occt(material.pbr.base_color)
-        pbr_mat.Metallic = material.pbr.metallic
-        pbr_mat.Roughness = material.pbr.roughness
-        pbr_mat.RefractionIndex = material.pbr.refraction_index
-        vis_mat.SetPbrMaterial(pbr_mat)
-
-    # Set up common material if provided
-    if material.simple:
-        common_mat = XCAFDoc_VisMaterialCommon()
-        common_mat.AmbientColor = color_to_occt(material.simple.ambient_color).GetRGB()
-        common_mat.DiffuseColor = color_to_occt(material.simple.diffuse_color).GetRGB()
-        common_mat.SpecularColor = color_to_occt(
-            material.simple.specular_color
-        ).GetRGB()
-        common_mat.Shininess = material.simple.shininess
-        common_mat.Transparency = material.simple.transparency
-        vis_mat.SetCommonMaterial(common_mat)
-
-    return occt_material, vis_mat
-
-
 def setName(l: TDF_Label, name: str, tool):
     """Set the name of a label in the document."""
     TDataStd_Name.Set_s(l, TCollection_ExtendedString(name))
@@ -202,7 +137,7 @@ def setName(l: TDF_Label, name: str, tool):
 
 def setColor(l: TDF_Label, color: Color, tool):
     """Set the color of a label in the document."""
-    tool.SetColor(l, color_to_occt(color), XCAFDoc_ColorType.XCAFDoc_ColorSurf)
+    tool.SetColor(l, color.to_occ_rgba(), XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
 
 def toCAF(
@@ -275,12 +210,15 @@ def toCAF(
                     if current_material.color:
                         ctool.SetColor(
                             lab,
-                            color_to_occt(current_material.color),
+                            current_material.color.to_occ_rgba(),
                             XCAFDoc_ColorType.XCAFDoc_ColorSurf,
                         )
 
                     # Convert material to OCCT format and add to document
-                    mat, vis_mat = material_to_occt(current_material)
+                    mat, vis_mat = (
+                        current_material.to_occ_material(),
+                        current_material.to_occ_vis_material(),
+                    )
 
                     # Create material label
                     mat_lab = mtool.AddMaterial(
@@ -344,52 +282,12 @@ def _loc2vtk(
     return trans, (rot[1], rot[2], rot[0])
 
 
-def _vtk_set_material_properties(
-    actor: vtkActor, material: Optional[Material], color: Color,
-) -> None:
-    """
-    Set material properties on a VTK actor based on the assembly element's material and color.
-    
-    Args:
-        actor: The VTK actor to set properties on
-        element: The assembly element containing material and color information
-        default_color: Default color to use if no material or color is specified
-    """
-    prop = actor.GetProperty()
-
-    if material:
-        if pbr := material.pbr:
-            # Mark interpolation as PBR and set the PBR properties
-            prop.SetInterpolationToPBR()
-            prop.SetColor(*pbr.base_color.rgb())
-            prop.SetOpacity(pbr.base_color.a)
-            prop.SetMetallic(pbr.metallic)
-            prop.SetRoughness(pbr.roughness)
-            prop.SetBaseIOR(pbr.refraction_index)
-        elif common := material.simple:
-            # Common material properties
-            prop.SetInterpolationToPhong()
-            prop.SetAmbientColor(*common.ambient_color.rgb())
-            prop.SetDiffuseColor(*common.diffuse_color.rgb())
-            prop.SetSpecularColor(*common.specular_color.rgb())
-            prop.SetSpecular(common.shininess)
-            prop.SetOpacity(1.0 - common.transparency)
-        elif mat_color := material.color:
-            # Material base color
-            prop.SetColor(*mat_color.rgb())
-            prop.SetOpacity(mat_color.a)
-    elif color:
-        # Element color
-        prop.SetColor(*color.rgb())
-        prop.SetOpacity(color.a)
-
-
 def toVTKAssy(
     assy: AssemblyProtocol,
-    color: Optional[Color] = None,
-    edgecolor: Optional[Color] = None,
+    color: Color = DEFAULT_COLOR,
+    edgecolor: Color = DEFAULT_EDGE_COLOR,
     edges: bool = True,
-    linewidth: float = 1,
+    linewidth: float = 2,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ) -> vtkAssembly:
@@ -408,11 +306,6 @@ def toVTKAssy(
     Returns:
         A VTK assembly containing both faces and edges for each element
     """
-
-    if color is None:
-        color = Color(1.0, 1.0, 1.0, 1.0)
-    if edgecolor is None:
-        edgecolor = Color(0.0, 0.0, 0.0, 0.0)
 
     rv = vtkAssembly()
 
@@ -447,7 +340,17 @@ def toVTKAssy(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
-        _vtk_set_material_properties(actor, element.material, element.color or color)
+
+        # Apply material or color
+        if element.material:
+            element.material.apply_to_vtk_actor(actor)
+        else:
+            # Apply color directly
+            use_color = element.color if element.color else color
+            prop = actor.GetProperty()
+            prop.SetColor(*use_color.rgb())
+            prop.SetOpacity(use_color.alpha)
+
         rv.AddPart(actor)
 
         if not edges:
@@ -462,8 +365,11 @@ def toVTKAssy(
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
         actor.GetProperty().SetLineWidth(linewidth)
-        actor.GetProperty().SetColor(*edgecolor.rgb())
-        actor.GetProperty().SetLineWidth(edgecolor.a)
+
+        # Apply edge color directly
+        prop = actor.GetProperty()
+        prop.SetColor(*edgecolor.rgb())
+        prop.SetOpacity(edgecolor.alpha)
 
         rv.AddPart(actor)
 
@@ -472,7 +378,7 @@ def toVTKAssy(
 
 def toVTK(
     assy: AssemblyProtocol,
-    color: Optional[Color] = None,
+    color: Color = DEFAULT_COLOR,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
     *,
@@ -490,9 +396,6 @@ def toVTK(
     Returns:
         A VTK renderer containing both faces and edges for each element
     """
-
-    if color is None:
-        color = Color(1.0, 1.0, 1.0, 1.0)
 
     renderer = vtkRenderer()
 
@@ -527,7 +430,17 @@ def toVTK(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
-        _vtk_set_material_properties(actor, element.material, element.color or color)
+
+        # Apply material or color
+        if element.material:
+            element.material.apply_to_vtk_actor(actor)
+        else:
+            # Apply color directly
+            use_color = element.color if element.color else color
+            prop = actor.GetProperty()
+            prop.SetColor(*use_color.rgb())
+            prop.SetOpacity(use_color.alpha)
+
         renderer.AddActor(actor)
 
         if not edges:
@@ -548,14 +461,11 @@ def toVTK(
 
 
 def toJSON(
-    assy: AssemblyProtocol, color: Optional[Color] = None, tolerance: float = 1e-3,
+    assy: AssemblyProtocol, color: Color = DEFAULT_COLOR, tolerance: float = 1e-3,
 ) -> List[Dict[str, Any]]:
     """
     Export an object to a structure suitable for converting to VTK.js JSON.
     """
-
-    if color is None:
-        color = Color(1.0, 1.0, 1.0, 1.0)
 
     rv = []
 
@@ -671,7 +581,7 @@ def toFusedCAF(
             # See if the face can be treated as-is
             cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
             if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(face.wrapped):
-                color_tool.SetColor(cur_lbl, color_to_occt(color), XCAFDoc_ColorGen)
+                color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
 
             # Handle any modified faces
             modded_list = fuse_op.Modified(face.wrapped)
@@ -680,7 +590,7 @@ def toFusedCAF(
                 # Add the face as a subshape and set its color to match the parent assembly component
                 cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
                 if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(mod):
-                    color_tool.SetColor(cur_lbl, color_to_occt(color), XCAFDoc_ColorGen)
+                    color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
 
             # Handle any generated faces
             gen_list = fuse_op.Generated(face.wrapped)
@@ -689,7 +599,7 @@ def toFusedCAF(
                 # Add the face as a subshape and set its color to match the parent assembly component
                 cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
                 if color and not cur_lbl.IsNull():
-                    color_tool.SetColor(cur_lbl, color_to_occt(color), XCAFDoc_ColorGen)
+                    color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
 
     return top_level_lbl, doc
 
