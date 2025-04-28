@@ -37,6 +37,8 @@ from OCP.TDF import TDF_ChildIterator
 from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
 from OCP.TopAbs import TopAbs_ShapeEnum
 
+from cadquery.occ_impl.solver import getPln
+
 
 @pytest.fixture(scope="function")
 def tmpdir(tmp_path_factory):
@@ -1529,13 +1531,15 @@ def test_PointInPlane_param(box_and_vertex, param0, param1):
 
 def test_constraint_getPln():
     """
-    Test that _getPln does the right thing with different arguments
+    Test that getPln does the right thing with different arguments
     """
     ids = (0, 1)
     sublocs = (cq.Location(), cq.Location())
 
     def make_constraint(shape0):
-        return cq.Constraint(ids, (shape0, shape0), sublocs, "PointInPlane", 0)
+        return cq.occ_impl.solver.PointInPlaneConstraint(
+            ids, (shape0, shape0), sublocs, 0
+        )
 
     def fail_this(shape0):
         with pytest.raises(ValueError):
@@ -1543,7 +1547,7 @@ def test_constraint_getPln():
 
     def resulting_pln(shape0):
         c0 = make_constraint(shape0)
-        return c0._getPln(c0.args[0])
+        return getPln(c0.args[0])
 
     def resulting_plane(shape0):
         p0 = resulting_pln(shape0)
@@ -1663,13 +1667,12 @@ def test_infinite_face_constraint_PointInPlane(origin, normal):
 
     f0 = cq.Face.makePlane(length=None, width=None, basePnt=origin, dir=normal)
 
-    c0 = cq.assembly.Constraint(
+    c0 = cq.occ_impl.solver.PointInPlaneConstraint(
         ("point", "plane"),
         (cq.Vertex.makeVertex(10, 10, 10), f0),
         sublocs=(cq.Location(), cq.Location()),
-        kind="PointInPlane",
     )
-    p0 = c0._getPln(c0.args[1])  # a gp_Pln
+    p0 = getPln(c0.args[1])  # a gp_Pln
     derived_origin = cq.Vector(p0.Location())
     assert derived_origin == cq.Vector(origin)
 
@@ -1726,7 +1729,7 @@ def test_constraint_validation(simple_assy2):
         simple_assy2.constrain("b1", "Fixed?")
 
     with pytest.raises(ValueError):
-        cq.assembly.Constraint((), (), (), "Fixed?")
+        cq.occ_impl.solver.FixedConstraint((), (), ())
 
 
 def test_single_unary_constraint(simple_assy2):
