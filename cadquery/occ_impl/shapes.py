@@ -15,6 +15,8 @@ from typing import (
     Protocol,
 )
 
+from typing_extensions import Self
+
 from io import BytesIO
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
@@ -192,7 +194,11 @@ from OCP.StlAPI import StlAPI_Writer
 
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
-from OCP.BRepTools import BRepTools, BRepTools_WireExplorer
+from OCP.BRepTools import (
+    BRepTools,
+    BRepTools_WireExplorer,
+    BRepTools_ReShape,
+)
 
 from OCP.LocOpe import LocOpe_DPrism
 
@@ -1397,7 +1403,10 @@ class Shape(object):
         Minimal distance between two shapes
         """
 
-        return BRepExtrema_DistShapeShape(self.wrapped, other.wrapped).Value()
+        dist_calc = BRepExtrema_DistShapeShape(self.wrapped, other.wrapped)
+        dist_calc.SetMultiThread(True)
+
+        return dist_calc.Value()
 
     def distances(self, *others: "Shape") -> Iterator[float]:
         """
@@ -1405,6 +1414,8 @@ class Shape(object):
         """
 
         dist_calc = BRepExtrema_DistShapeShape()
+        dist_calc.SetMultiThread(True)
+
         dist_calc.LoadS1(self.wrapped)
 
         for s in others:
@@ -1688,6 +1699,40 @@ class Shape(object):
 
         self.wrapped = wrapped
         self.forConstruction = data[1]
+
+    def replace(self, old: "Shape", *new: "Shape") -> Self:
+        """
+        Replace old subshape with new subshapes.
+        """
+
+        tools: List[Shape] = []
+
+        for el in new:
+            if isinstance(el, Compound):
+                tools.extend(el)
+            else:
+                tools.append(el)
+
+        bldr = BRepTools_ReShape()
+        bldr.Replace(old.wrapped, compound(tools).wrapped)
+
+        rv = bldr.Apply(self.wrapped)
+
+        return self.__class__(rv)
+
+    def remove(self, *subshape: "Shape") -> Self:
+        """
+        Remove subshapes.
+        """
+
+        bldr = BRepTools_ReShape()
+
+        for el in subshape:
+            bldr.Remove(el.wrapped)
+
+        rv = bldr.Apply(self.wrapped)
+
+        return self.__class__(rv)
 
 
 class ShapeProtocol(Protocol):
@@ -3484,6 +3529,32 @@ class Face(Shape):
 
         return [self.isoline(p, direction) for p in params]
 
+    def extend(
+        self,
+        d: float,
+        umin: bool = True,
+        umax: bool = True,
+        vmin: bool = True,
+        vmax: bool = True,
+    ) -> "Face":
+        """
+        Extend a face. Does not work well in periodic directions.
+        
+        :param d: length of the extension.
+        :param umin: extend along the umin isoline.
+        :param umax: extend along the umax isoline.
+        :param vmin: extend along the vmin isoline.
+        :param vmax: extend along the vmax isoline.
+        """
+
+        # convert to NURBS if needed
+        tmp = self.toNURBS() if self.geomType() != "BSPLINE" else self
+
+        rv = TopoDS_Face()
+        BRepLib.ExtendFace_s(tmp.wrapped, d, umin, umax, vmin, vmax, rv)
+
+        return self.__class__(rv)
+
 
 class Shell(Shape):
     """
@@ -4357,6 +4428,25 @@ class Solid(Shape, Mixin3D):
 
         return [s for s in self.Shells() if not s.isSame(outer)]
 
+    def addCavity(self, *shells: Union[Shell, "Solid"]) -> Self:
+        """
+        Add one or more cavities.
+        """
+
+        builder = BRepBuilderAPI_MakeSolid(self.wrapped)
+
+        # if a solid is provided only outer shell is added
+        for sh in shells:
+            builder.Add(
+                sh.wrapped if isinstance(sh, Shell) else sh.outerShell().wrapped
+            )
+
+        # fix orientations
+        sf = ShapeFix_Solid(builder.Solid())
+        sf.Perform()
+
+        return self.__class__(sf.Solid())
+
 
 class CompSolid(Shape, Mixin3D):
     """
@@ -4385,13 +4475,15 @@ class Compound(Shape, Mixin3D):
 
         return comp
 
-    def remove(self, shape: Shape):
+    def remove(self, *shape: Shape):
         """
-        Remove the specified shape.
+        Remove the specified shapes.
         """
 
         comp_builder = TopoDS_Builder()
-        comp_builder.Remove(self.wrapped, shape.wrapped)
+
+        for s in shape:
+            comp_builder.Remove(self.wrapped, s.wrapped)
 
     @classmethod
     def makeCompound(cls, listOfShapes: Iterable[Shape]) -> "Compound":
@@ -5672,11 +5764,17 @@ def imprint(
         # collect shapes present in the history dict
         for k, v in history.items():
             if isinstance(k, str):
-                history[k] = _compound_or_shape(list(images.Find(v.wrapped)))
+                try:
+                    history[k] = _compound_or_shape(list(images.Find(v.wrapped)))
+                except Standard_NoSuchObject:
+                    pass
 
         # store all top-level shape relations
         for s in shapes:
-            history[s] = _compound_or_shape(list(images.Find(s.wrapped)))
+            try:
+                history[s] = _compound_or_shape(list(images.Find(s.wrapped)))
+            except Standard_NoSuchObject:
+                pass
 
     return _compound_or_shape(builder.Shape())
 
@@ -5928,6 +6026,7 @@ def sweep(
     def _make_builder():
 
         rv = BRepOffsetAPI_MakePipeShell(spine.wrapped)
+
         if aux:
             rv.SetMode(_get_one_wire(aux).wrapped, True)
         else:
@@ -6142,6 +6241,15 @@ def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
     """
     Closest points between two shapes.
     """
-    ext = BRepExtrema_DistShapeShape(s1.wrapped, s2.wrapped)
+    # configure
+    ext = BRepExtrema_DistShapeShape()
+    ext.SetMultiThread(True)
+
+    # load shapes
+    ext.LoadS1(s1.wrapped)
+    ext.LoadS2(s2.wrapped)
+
+    # perform
+    assert ext.Perform()
 
     return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))
