@@ -63,6 +63,7 @@ def importStep(assy: AssemblyProtocol, path: str):
             sub_label = comp_labels.Value(i + 1)
 
             # The component level holds the location for its shapes
+            location = parent_location
             loc = shape_tool.GetLocation_s(sub_label)
             if loc:
                 location = cq.Location(loc)
@@ -77,8 +78,6 @@ def importStep(assy: AssemblyProtocol, path: str):
                     0,
                 ):
                     location = parent_location
-            else:
-                location = parent_location
 
             process_label(sub_label, location)
 

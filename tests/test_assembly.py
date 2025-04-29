@@ -846,6 +846,15 @@ def test_assembly_step_import(tmp_path_factory):
     assert imported_assy.children[1].color.toTuple() == (0.0, 0.0, 1.0, 1.0)
     assert imported_assy.name == "top-level"
 
+    # Test a STEP file that does not contain an assembly
+    wp_step_path = os.path.join(tmpdir, "plain_workplane.step")
+    res = cq.Workplane().box(10, 10, 10)
+    res.export(wp_step_path)
+
+    # Import the STEP file back in
+    with pytest.raises(ValueError):
+        imported_assy = cq.Assembly.importStep(wp_step_path)
+
 
 @pytest.mark.parametrize(
     "assy_fixture, expected",
