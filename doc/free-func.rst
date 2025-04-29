@@ -342,7 +342,7 @@ and only then the final solid can be constructed.
     b_top_hole = b_top.addHole(feat.edges('<Z'))
     b = b.replace(b_top, b_top_hole)
     
-    # locall sewing - only two faces are take into account
+    # local sewing - only two faces are take into account
     sh = shell(b_top_hole, feat.faces('<Z'), ctx=(b, feat))
     
     # construct the final solid
