@@ -1,0 +1,26 @@
+import cadquery as cq
+
+comprimento = 1800
+largura = 1400
+altura = 900
+espessura_tampo = 3.175
+perfil_estrutura = (100, 50)
+
+bancada = cq.Workplane("XY").box(comprimento, largura, perfil_estrutura[1])
+
+for x in [-comprimento/2 + perfil_estrutura[0]/2, comprimento/2 - perfil_estrutura[0]/2]:
+    for y in [-largura/2 + perfil_estrutura[0]/2, largura/2 - perfil_estrutura[0]/2]:
+        coluna = cq.Workplane("XY").workplane(offset=perfil_estrutura[1])\
+            .transformed(offset=(x, y, 0))\
+            .box(perfil_estrutura[0], perfil_estrutura[0], altura - perfil_estrutura[1])
+        bancada = bancada.union(coluna)
+
+tampo = cq.Workplane("XY").workplane(offset=altura).box(comprimento, largura, espessura_tampo)
+bancada = bancada.union(tampo)
+
+morsa = cq.Workplane("XY").workplane(offset=altura + espessura_tampo)\
+    .transformed(offset=(comprimento/2 - 150, -largura/2 + 150, 0))\
+    .box(150, 100, 100)
+bancada = bancada.union(morsa)
+
+show_object(bancada)
