@@ -9,6 +9,7 @@ from .occ_impl.shapes import (
     Solid,
     CompSolid,
     Compound,
+    edge,
     wire,
     face,
     shell,
