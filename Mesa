@@ -1,0 +1,32 @@
+import cadquery as cq
+
+# Medidas da bancada
+comprimento = 1800
+largura = 1400
+altura = 900
+espessura_tampo = 3.175  # Chapa 1/8"
+perfil = (100, 50)
+
+# Base
+bancada = cq.Workplane("XY").box(comprimento, largura, perfil[1])
+
+# Quatro colunas nos cantos
+for x in [-comprimento/2 + perfil[0]/2, comprimento/2 - perfil[0]/2]:
+    for y in [-largura/2 + perfil[0]/2, largura/2 - perfil[0]/2]:
+        coluna = cq.Workplane("XY").workplane(offset=perfil[1])\
+            .transformed(offset=(x, y, 0))\
+            .box(perfil[0], perfil[0], altura - perfil[1])
+        bancada = bancada.union(coluna)
+
+# Tampo
+tampo = cq.Workplane("XY").workplane(offset=altura).box(comprimento, largura, espessura_tampo)
+bancada = bancada.union(tampo)
+
+# Morsa simples
+morsa = cq.Workplane("XY").workplane(offset=altura + espessura_tampo)\
+    .transformed(offset=(comprimento/2 - 150, -largura/2 + 150, 0))\
+    .box(150, 100, 100)
+bancada = bancada.union(morsa)
+
+# Mostrar o modelo
+show_object(bancada)
