@@ -294,7 +294,7 @@ from OCP.Interface import Interface_Static
 
 from OCP.ShapeCustom import ShapeCustom, ShapeCustom_RestrictionParameters
 
-from OCP.BRepAlgo import BRepAlgo
+from OCP.BRepAlgo import BRepAlgo, BRepAlgo_NormalProjection
 
 from OCP.ChFi2d import ChFi2d_FilletAPI  # For Wire.Fillet()
 
@@ -2216,14 +2216,14 @@ class Mixin1D(object):
         self: T1D, face: "Face", d: VectorLike, closest: bool = True
     ) -> Union[T1D, List[T1D]]:
         """
-        Project onto a face along the specified direction
+        Project onto a face along the specified direction.
         """
-
-        bldr = BRepProj_Projection(self.wrapped, face.wrapped, Vector(d).toDir())
-        shapes = Compound(bldr.Shape())
 
         # select the closest projection if requested
         rv: Union[T1D, List[T1D]]
+
+        bldr = BRepProj_Projection(self.wrapped, face.wrapped, Vector(d).toDir())
+        shapes = Compound(bldr.Shape())
 
         if closest:
 
@@ -3554,6 +3554,20 @@ class Face(Shape):
         BRepLib.ExtendFace_s(tmp.wrapped, d, umin, umax, vmin, vmax, rv)
 
         return self.__class__(rv)
+
+    def addHole(self, *inner: Wire | Edge) -> Self:
+        """
+        Add one or more holes.
+        """
+
+        bldr = BRepBuilderAPI_MakeFace(self.wrapped)
+
+        for w in inner:
+            bldr.Add(
+                TopoDS.Wire_s(w.wrapped if isinstance(w, Wire) else wire(w).wrapped)
+            )
+
+        return self.__class__(bldr.Face()).fix()
 
 
 class Shell(Shape):
@@ -5082,6 +5096,8 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
 
 #%% alternative constructors
 
+ShapeHistory = Dict[Union[Shape, str], Shape]
+
 
 @multimethod
 def wire(*s: Shape) -> Shape:
@@ -5131,21 +5147,54 @@ def face(s: Sequence[Shape]) -> Shape:
     return face(*s)
 
 
-@multimethod
-def shell(*s: Shape, tol: float = 1e-6) -> Shape:
+def _process_sewing_history(
+    builder: BRepBuilderAPI_Sewing, faces: List[Face], history: Optional[ShapeHistory],
+):
     """
-    Build shell from faces.
+    Reusable helper for processing sewing history.
     """
 
-    builder = BRepBuilderAPI_Sewing(tol)
+    # fill history if provided
+    if history is not None:
+        # collect shapes present in the history dict
+        for k, v in history.items():
+            if isinstance(k, str):
+                history[k] = Face(builder.Modified(v.wrapped))
+
+        # store all top-level shape relations
+        for f in faces:
+            history[f] = Face(builder.Modified(f.wrapped))
+
+
+@multimethod
+def shell(
+    *s: Shape,
+    tol: float = 1e-6,
+    manifold: bool = True,
+    ctx: Optional[Sequence[Shape] | Shape] = None,
+    history: Optional[ShapeHistory] = None,
+) -> Shape:
+    """
+    Build shell from faces. If ctx is specified, local sewing is performed.
+    """
+
+    builder = BRepBuilderAPI_Sewing(tol, option4=not manifold)
+    if ctx:
+        if isinstance(ctx, Shape):
+            builder.Load(ctx.wrapped)
+        else:
+            builder.Load(compound(ctx).wrapped)
+
+    faces: list[Face] = []
 
     for el in s:
         for f in _get(el, "Face"):
             builder.Add(f.wrapped)
+            faces.append(f)
 
     builder.Perform()
-
     sewed = builder.SewedShape()
+    _process_sewing_history(builder, faces, history)
 
     # for one face sewing will not produce a shell
     if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
@@ -5162,16 +5211,24 @@ def shell(*s: Shape, tol: float = 1e-6) -> Shape:
 
 
 @shell.register
-def shell(s: Sequence[Shape], tol: float = 1e-6) -> Shape:
+def shell(
+    s: Sequence[Shape],
+    tol: float = 1e-6,
+    manifold: bool = True,
+    ctx: Optional[Sequence[Shape] | Shape] = None,
+    history: Optional[ShapeHistory] = None,
+) -> Shape:
     """
-    Build shell from a sequence of faces.
+    Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
     """
 
-    return shell(*s, tol=tol)
+    return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history)
 
 
 @multimethod
-def solid(s1: Shape, *sn: Shape, tol: float = 1e-6) -> Shape:
+def solid(
+    s1: Shape, *sn: Shape, tol: float = 1e-6, history: Optional[ShapeHistory] = None,
+) -> Shape:
     """
     Build solid from faces or shells.
     """
@@ -5186,7 +5243,7 @@ def solid(s1: Shape, *sn: Shape, tol: float = 1e-6) -> Shape:
     shells = [el.wrapped for el in shells_faces if el.ShapeType() == "Shell"]
     if not shells:
         faces = [el for el in shells_faces]
-        shells = [shell(*faces, tol=tol).wrapped]
+        shells = [shell(*faces, tol=tol, history=history).wrapped]
 
     rvs = [builder.SolidFromShell(sh) for sh in shells]
 
@@ -5195,17 +5252,20 @@ def solid(s1: Shape, *sn: Shape, tol: float = 1e-6) -> Shape:
 
 @solid.register
 def solid(
-    s: Sequence[Shape], inner: Optional[Sequence[Shape]] = None, tol: float = 1e-6
+    s: Sequence[Shape],
+    inner: Optional[Sequence[Shape]] = None,
+    tol: float = 1e-6,
+    history: Optional[ShapeHistory] = None,
 ) -> Shape:
     """
     Build solid from a sequence of faces.
     """
 
     builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(shell(*s, tol=tol).wrapped)
+    builder.Add(shell(*s, tol=tol, history=history).wrapped)
 
     if inner:
-        for sh in _get(shell(*inner, tol=tol), "Shell"):
+        for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
             builder.Add(sh.wrapped)
 
     # fix orientations
@@ -5741,7 +5801,7 @@ def imprint(
     *shapes: Shape,
     tol: float = 0.0,
     glue: GlueLiteral = "full",
-    history: Optional[Dict[Union[Shape, str], Shape]] = None,
+    history: Optional[ShapeHistory] = None,
 ) -> Shape:
     """
     Imprint arbitrary number of shapes.
@@ -6197,6 +6257,29 @@ def loft(
     """
 
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
+
+
+def project(
+    s: Shape,
+    base: Shape,
+    continuity: Literal["C1", "C2", "C3"] = "C2",
+    degree: int = 3,
+    maxseg: int = 30,
+    tol: float = 1e-4,
+):
+    """
+    Project s onto base using normal projection.
+    """
+
+    bldr = BRepAlgo_NormalProjection(base.wrapped)
+    bldr.SetParams(tol, tol ** (2 / 3), _to_geomabshape(continuity), degree, maxseg)
+
+    for el in _get_edges(s):
+        bldr.Add(s.wrapped)
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Projection())
 
 
 #%% diagnotics

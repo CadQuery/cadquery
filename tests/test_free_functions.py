@@ -1,4 +1,4 @@
-from cadquery.occ_impl.shapes import (
+from cadquery.func import (
     vertex,
     segment,
     polyline,
@@ -36,17 +36,23 @@ from cadquery.occ_impl.shapes import (
     Shape,
     Compound,
     Edge,
+    Shell,
+    Wire,
+    check,
+    Vector,
+    closest,
+    imprint,
+    setThreads,
+    project,
+)
+
+from cadquery.occ_impl.shapes import (
     _get_one_wire,
     _get_wires,
     _get,
     _get_one,
     _get_edges,
     _adaptor_curve_to_edge,
-    check,
-    Vector,
-    closest,
-    imprint,
-    setThreads,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -167,6 +173,57 @@ def test_constructors():
     assert sh2.Area() == approx(6)
     assert sh3.isValid()
 
+    # compound
+    c1 = compound(b.Faces())
+    c2 = compound(*b.Faces())
+
+    assert len(list(c1)) == 6
+    assert len(list(c2)) == 6
+
+    for f in list(c1) + list(c2):
+        assert f.ShapeType() == "Face"
+
+
+def test_sewing():
+
+    b = box(1, 1, 1)
+    ftop = b.faces(">Z")
+    sh = b.remove(ftop)
+
+    # regular local sewing
+    history1 = dict(ftop=ftop)
+    res1 = shell(sh.faces("not <Z"), ftop, ctx=(sh, ftop), history=history1)
+
+    assert res1.isValid()
+    assert res1.Area() == approx(6)
+    assert "ftop" in history1
+
+    # regular local sewing - with Shape context
+    history2 = {}
+    res2 = shell(sh.faces("not <Z"), ftop, ctx=compound(sh, ftop), history=history2)
+
+    assert res2.isValid()
+    assert res2.Area() == approx(6)
+    assert ftop in history2
+
+    # non-manifold sewing
+    res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=False)
+
+    assert res3.isValid()
+    assert not solid(res3).isValid()
+    assert isinstance(res3, Shell)
+
+    # manifold sewing (default) - results in a compound
+    res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=True)
+
+    assert res3.isValid()
+    assert isinstance(res3, Compound)
+
+
+def test_solid():
+
+    b = box(1, 1, 1)
+
     # solid
     s1 = solid(b.Faces())
     s2 = solid(*b.Faces())
@@ -186,15 +243,16 @@ def test_constructors():
 
     assert s4.Volume() == approx(1)
 
-    # compound
-    c1 = compound(b.Faces())
-    c2 = compound(*b.Faces())
+    # check history handling
+    hist = {}
+    s4 = solid(
+        b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces(), history=hist
+    )
 
-    assert len(list(c1)) == 6
-    assert len(list(c2)) == 6
-
-    for f in list(c1) + list(c2):
-        assert f.ShapeType() == "Face"
+    final_faces = s4.Faces()
+    final_faces_history = list(hist.values())
+    for f in final_faces:
+        assert f in final_faces_history
 
 
 #%% primitives
@@ -749,6 +807,26 @@ def test_loft_vertex():
     assert len(r4.Solids()) == 1
     assert r4.Volume() == approx(r3.Volume())  # inner features are ignored
     assert len(r5.Faces()) == 4
+
+
+def test_project():
+
+    base = cylinder(1, 2).faces("%CYLINDER")
+    e = circle(0.1).moved(rx=90).moved(y=0.5, z=1)
+
+    # project single edge
+    res = project(e, base)
+
+    assert res.isValid()
+    assert res.IsClosed()
+    assert isinstance(res, Edge)
+
+    # project multiple edges at once
+    res = project(e.moved([(0, -0.1), (0, 0.1)]), base)
+    assert isinstance(res, Compound)
+    for el in res:
+        assert el.isValid()
+        assert el.IsClosed()
 
 
 # %% export
