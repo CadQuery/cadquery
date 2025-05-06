@@ -3471,7 +3471,7 @@ class Face(Shape):
         return Solid(builder.Shape())
 
     @classmethod
-    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> "Face":
+    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> Self:
 
         bldr = BRepBuilderAPI_MakeFace(f._geomAdaptor(), outer.wrapped)
 
