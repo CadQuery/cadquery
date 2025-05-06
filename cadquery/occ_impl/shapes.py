@@ -59,7 +59,12 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt, TColgp_Array1OfPnt, TColgp_HArray1OfPnt2d
+from OCP.TColgp import (
+    TColgp_HArray1OfPnt,
+    TColgp_HArray2OfPnt,
+    TColgp_Array1OfPnt,
+    TColgp_HArray1OfPnt2d,
+)
 
 # Array of vectors (used for B-spline interpolation):
 from OCP.TColgp import TColgp_Array1OfVec
@@ -5040,6 +5045,7 @@ def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
 
     return rv
 
+
 def _pts_to_harray2d(pts: Sequence[Tuple[Real, Real]]) -> TColgp_HArray1OfPnt2d:
     """
     Convert a sequence of 2d points to a TColgp harray (OCCT specific).
@@ -5051,6 +5057,7 @@ def _pts_to_harray2d(pts: Sequence[Tuple[Real, Real]]) -> TColgp_HArray1OfPnt2d:
         rv.SetValue(i + 1, gp_Pnt2d(*p))
 
     return rv
+
 
 def _floats_to_harray(vals: Sequence[float]) -> TColStd_HArray1OfReal:
     """
@@ -5153,21 +5160,26 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
 ShapeHistory = Dict[Union[Shape, str], Shape]
 
 
-def edge(pts: Sequence[Tuple[Real, Real]], base: Shape, periodic: bool = False, tol: float = 1e-6) -> Shape:
+def edge(
+    pts: Sequence[Tuple[Real, Real]],
+    base: Shape,
+    periodic: bool = False,
+    tol: float = 1e-6,
+) -> Shape:
     """
     Build an edge on a face from points in (u,v) space.
     """
-    
+
     f = _get_one(base, "Face")
 
     # interpolate the u,v points
     spline_bldr = Geom2dAPI_Interpolate(_pts_to_harray2d(pts), periodic, tol)
     spline_bldr.Perform()
-    
+
     # build the final edge
     rv = BRepBuilderAPI_MakeEdge(spline_bldr.Curve(), f._geomAdaptor()).Edge()
     BRepLib.BuildCurves3d_s(rv)
-    
+
     return _compound_or_shape(rv)
 
 
