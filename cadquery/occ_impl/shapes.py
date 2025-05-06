@@ -59,7 +59,7 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt, TColgp_Array1OfPnt
+from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt, TColgp_Array1OfPnt, TColgp_HArray1OfPnt2d
 
 # Array of vectors (used for B-spline interpolation):
 from OCP.TColgp import TColgp_Array1OfVec
@@ -161,6 +161,8 @@ from OCP.Geom import (
     Geom_Curve,
 )
 from OCP.Geom2d import Geom2d_Line
+
+from OCP.Geom2dAPI import Geom2dAPI_Interpolate
 
 from OCP.BRepLib import BRepLib, BRepLib_FindSurface
 
@@ -3489,9 +3491,10 @@ class Face(Shape):
 
         return self.__class__(BRepAlgo.ConvertFace_s(self.wrapped, tolerance))
 
-    def trim(self, u0: Real, u1: Real, v0: Real, v1: Real, tol: Real = 1e-6) -> "Face":
+    @multimethod
+    def trim(self, u0: Real, u1: Real, v0: Real, v1: Real, tol: Real = 1e-6) -> Self:
         """
-        Trim the face in the parametric space to (u0, u1).
+        Trim the face in the (u,v) space to (u0, u1)x(v1, v2).
 
         NB: this operation is done on the base geometry.
         """
@@ -3499,6 +3502,46 @@ class Face(Shape):
         bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), u0, u1, v0, v1, tol)
 
         return self.__class__(bldr.Shape())
+
+    @trim.register
+    def _(
+        self,
+        pt1: Tuple[Real, Real],
+        pt2: Tuple[Real, Real],
+        pt3: Tuple[Real, Real],
+        *pts: Tuple[Real, Real],
+    ) -> Self:
+        """
+        Trim the face using a polyline defined in the (u,v) space.
+        """
+
+        segs_uv = []
+        geom = self._geomAdaptor()
+
+        # build (u,v) segments
+        for el1, el2 in zip((pt1, pt2, pt3, *pts), (pt2, pt3, *pts, pt1)):
+            segs_uv.append(GCE2d_MakeSegment(gp_Pnt2d(*el1), gp_Pnt2d(*el2)).Value())
+
+        # convert to edges
+        edges = []
+
+        for seg in segs_uv:
+            edges.append(BRepBuilderAPI_MakeEdge(seg, geom).Edge())
+
+        # convert to a wire
+        builder = BRepBuilderAPI_MakeWire()
+
+        tmp = TopTools_ListOfShape()
+        for edge in edges:
+            tmp.Append(edge)
+
+        builder.Add(tmp)
+
+        w = builder.Wire()
+        BRepLib.BuildCurves3d_s(w)
+
+        # construct the final trimmed face
+        return self.constructOn(self, Wire(w))
 
     def isoline(self, param: Real, direction: Literal["u", "v"] = "v") -> Edge:
         """
@@ -4847,7 +4890,7 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
 
 def _get_edges(s: Shape) -> Iterable[Shape]:
     """
-    Get wires or wires from edges.
+    Get edges or edges from wires.
     """
 
     t = s.ShapeType()
@@ -4987,7 +5030,7 @@ def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
 
 def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
     """
-    Convert a sequence of Vecotor to a TColgp harray (OCCT specific).
+    Convert a sequence of Vector to a TColgp harray (OCCT specific).
     """
 
     rv = TColgp_HArray1OfPnt(1, len(pts))
@@ -4997,6 +5040,17 @@ def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
 
     return rv
 
+def _pts_to_harray2d(pts: Sequence[Tuple[Real, Real]]) -> TColgp_HArray1OfPnt2d:
+    """
+    Convert a sequence of 2d points to a TColgp harray (OCCT specific).
+    """
+
+    rv = TColgp_HArray1OfPnt2d(1, len(pts))
+
+    for i, p in enumerate(pts):
+        rv.SetValue(i + 1, gp_Pnt2d(*p))
+
+    return rv
 
 def _floats_to_harray(vals: Sequence[float]) -> TColStd_HArray1OfReal:
     """
@@ -5097,6 +5151,24 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
 #%% alternative constructors
 
 ShapeHistory = Dict[Union[Shape, str], Shape]
+
+
+def edge(pts: Sequence[Tuple[Real, Real]], base: Shape, periodic: bool = False, tol: float = 1e-6) -> Shape:
+    """
+    Build an edge on a face from points in (u,v) space.
+    """
+    
+    f = _get_one(base, "Face")
+
+    # interpolate the u,v points
+    spline_bldr = Geom2dAPI_Interpolate(_pts_to_harray2d(pts), periodic, tol)
+    spline_bldr.Perform()
+    
+    # build the final edge
+    rv = BRepBuilderAPI_MakeEdge(spline_bldr.Curve(), f._geomAdaptor()).Edge()
+    BRepLib.BuildCurves3d_s(rv)
+    
+    return _compound_or_shape(rv)
 
 
 @multimethod
