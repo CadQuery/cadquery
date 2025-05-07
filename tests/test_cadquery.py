@@ -5904,3 +5904,13 @@ class TestCadQuery(BaseTest):
         # in both cases we get a solid
         assert w1.solids().size() == 1
         assert w2.solids().size() == 1
+
+    def test_compound_faces_center(self):
+        sk = Sketch().rect(50, 50).faces()
+        face1 = sk.val()
+        face2 = face1.copy().translate(Vector(100, 0, 0))
+        compound = Compound.makeCompound([face1, face2])
+        expected_center = Shape.CombinedCenter([face1, face2])
+
+        assert compound.Center() == expected_center, "Incorrect center of mass of the compound, expected {}, got {}".format(
+            expected_center, compound.Center())
