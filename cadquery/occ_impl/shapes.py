@@ -19,6 +19,8 @@ from typing_extensions import Self
 
 from io import BytesIO
 
+from itertools import chain
+
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
@@ -3473,12 +3475,7 @@ class Face(Shape):
     @classmethod
     def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> Self:
 
-        bldr = BRepBuilderAPI_MakeFace(f._geomAdaptor(), outer.wrapped)
-
-        for w in inner:
-            bldr.Add(TopoDS.Wire_s(w.wrapped))
-
-        return cls(bldr.Face()).fix()
+        return f.trim(outer, *inner)
 
     def project(self, other: "Face", d: VectorLike) -> "Face":
 
@@ -3547,6 +3544,19 @@ class Face(Shape):
 
         # construct the final trimmed face
         return self.constructOn(self, Wire(w))
+
+    @trim.register
+    def _(self, outer: Wire, *inner: Wire) -> Self:
+        """
+        Trim using edges. The provided edges need to have a pcurve on self.
+        """
+
+        bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), outer.wrapped)
+
+        for w in inner:
+            bldr.Add(TopoDS.Wire_s(w.wrapped))
+
+        return self.__class__(bldr.Face()).fix()
 
     def isoline(self, param: Real, direction: Literal["u", "v"] = "v") -> Edge:
         """
@@ -4893,22 +4903,23 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
         raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
 
 
-def _get_edges(s: Shape) -> Iterable[Shape]:
+def _get_edges(*shapes: Shape) -> Iterable[Shape]:
     """
     Get edges or edges from wires.
     """
 
-    t = s.ShapeType()
+    for s in shapes:
+        t = s.ShapeType()
 
-    if t == "Edge":
-        yield s
-    elif t == "Wire":
-        yield from _get_edges(s.edges())
-    elif t == "Compound":
-        for el in s:
-            yield from _get_edges(el)
-    else:
-        raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+        if t == "Edge":
+            yield s
+        elif t == "Wire":
+            yield from _get_edges(s.edges())
+        elif t == "Compound":
+            for el in s:
+                yield from _get_edges(el)
+        else:
+            raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
 
 
 def _get_wire_lists(s: Sequence[Shape]) -> List[List[Union[Wire, Vertex]]]:
@@ -5160,9 +5171,10 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
 ShapeHistory = Dict[Union[Shape, str], Shape]
 
 
+@multimethod
 def edge(
-    pts: Sequence[Tuple[Real, Real]],
     base: Shape,
+    pts: Sequence[Tuple[Real, Real]],
     periodic: bool = False,
     tol: float = 1e-6,
 ) -> Shape:
@@ -5181,6 +5193,39 @@ def edge(
     BRepLib.BuildCurves3d_s(rv)
 
     return _compound_or_shape(rv)
+
+
+@edge.register
+def _(fbase: Shape, edg: Shape, *edgs: Shape, tol=1e-6, N=10):
+    """
+    Map one or more edges onta a base face in the u,v space.
+    """
+
+    f = _get_one(fbase, "Face")
+
+    rvs: List[TopoDS_Shape] = []
+
+    for el in _get_edges(edg, *edgs):
+
+        # sample the original curve
+        pts3D, params = el.sample(N)
+
+        # convert to 2D points ignoring the z coord
+        pts = [(el.x, el.y) for el in pts3D]
+
+        # interpolate the u,v points
+        spline_bldr = Geom2dAPI_Interpolate(
+            _pts_to_harray2d(pts), el._geomAdaptor().IsPeriodic(), tol
+        )
+        spline_bldr.Perform()
+
+        # build the final edge
+        rv = BRepBuilderAPI_MakeEdge(spline_bldr.Curve(), f._geomAdaptor()).Edge()
+        BRepLib.BuildCurves3d_s(rv)
+
+        rvs.append(rv)
+
+    return _compound_or_shape(rvs)
 
 
 @multimethod
