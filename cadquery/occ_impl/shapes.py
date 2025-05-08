@@ -3548,7 +3548,7 @@ class Face(Shape):
     @trim.register
     def _(self, outer: Wire, *inner: Wire) -> Self:
         """
-        Trim using edges. The provided edges need to have a pcurve on self.
+        Trim using wires. The provided wires need to have a pcurve on self.
         """
 
         bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), outer.wrapped)
