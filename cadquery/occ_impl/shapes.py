@@ -5196,7 +5196,9 @@ def edge(
 
 
 @edge.register
-def _(fbase: Shape, edg: Shape, *edgs: Shape, tol=1e-6, N=10):
+def _(
+    fbase: Shape, edg: Shape, *edgs: Shape, tol=1e-6, N=10,
+):
     """
     Map one or more edges onta a base face in the u,v space.
     """
@@ -5213,9 +5215,19 @@ def _(fbase: Shape, edg: Shape, *edgs: Shape, tol=1e-6, N=10):
         # convert to 2D points ignoring the z coord
         pts = [(el.x, el.y) for el in pts3D]
 
+        # handle periodicity
+        t0, _ = el._bounds()
+        el_crv = el._geomAdaptor()
+
+        if el_crv.IsPeriodic() and el_crv.IsClosed():
+            periodic = True
+            params.append(t0 + el_crv.Period())
+        else:
+            periodic = False
+
         # interpolate the u,v points
         spline_bldr = Geom2dAPI_Interpolate(
-            _pts_to_harray2d(pts), el._geomAdaptor().IsPeriodic(), tol
+            _pts_to_harray2d(pts), _floats_to_harray(params), periodic, tol
         )
         spline_bldr.Perform()
 
