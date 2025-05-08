@@ -44,6 +44,7 @@ from cadquery.func import (
     imprint,
     setThreads,
     project,
+    edge,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -253,6 +254,32 @@ def test_solid():
     final_faces_history = list(hist.values())
     for f in final_faces:
         assert f in final_faces_history
+
+
+def test_edge():
+
+    # make a base face
+    f = torus(10, 4).faces()
+
+    # construct an edge with points
+    e1 = edge(f, [(0, 0), (0, 1), (1, 1), (1, 0)], periodic=True)
+
+    assert e1.isValid()
+
+    # use it to make a face
+    f1 = f.trim(wire(e1))
+
+    assert f1.isValid()
+
+    # construct in uv space directly
+    e2 = edge(f, circle(0.3))
+
+    assert e2.isValid()
+
+    # use it to make a face
+    f2 = f.trim(wire(e2))
+
+    assert f2.isValid()
 
 
 #%% primitives
