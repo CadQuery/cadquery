@@ -2184,7 +2184,12 @@ class Mixin1D(object):
         T = gp_Trsf()
         if planar:
             T.SetTransformation(
-                gp_Ax3(pnt, gp_Dir(0, 0, 1), gp_Dir(normal.XYZ())), gp_Ax3()
+                gp_Ax3(
+                    pnt,
+                    gp_Dir(0, 0, 1),
+                    gp_Dir(Vector(0, 0, 1).cross(Vector(tangent)).normalized().wrapped),
+                ),
+                gp_Ax3(),
             )
         else:
             T.SetTransformation(

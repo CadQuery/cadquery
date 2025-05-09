@@ -193,6 +193,9 @@ def test_distribute():
 
     assert s5._selection[0].Center().toTuple() == approx((0.0, 6.0, 0.0))
 
+    # make sure that we can use distribute on straight lines
+    _ = Sketch().segment((0, 0), (10, 0)).edges().distribute(3).rect(1, 2)
+
 
 def test_rarray():
 
