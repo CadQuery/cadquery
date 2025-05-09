@@ -5245,7 +5245,7 @@ def wireOn(base: Shape, w: Shape, tol=1e-6, N=10) -> Shape:
     Map a wire onto a base face in the u,v space.
     """
 
-    rvs = [edgeOn(base, e, tol=tol, N=N) for e in w.edges()]
+    rvs = [edgeOn(base, e, tol=tol, N=N) for e in w.Edges()]
 
     return wire(rvs)
 
