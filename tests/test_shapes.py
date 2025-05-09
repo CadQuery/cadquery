@@ -209,10 +209,15 @@ def test_trimming():
     # face trim
     assert f.trim(0, 0.5, -0.5, 0.5).Area() == approx(f.Area() / 2)
 
-    # face trim using points
+    # face trim using wires
     assert f.trim(
         wireOn(f, polygon((0, -0.5), (0.5, -0.5), (0.5, 0.5), (0, 0.5)))
     ).Area() == approx(f.Area() / 2)
+
+    # face trim using points
+    assert f.trim((0, -0.5), (0.5, -0.5), (0.5, 0.5), (0, 0.5)).Area() == approx(
+        f.Area() / 2
+    )
 
 
 def test_bin_import_export():
