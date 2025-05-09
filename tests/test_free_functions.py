@@ -37,14 +37,13 @@ from cadquery.func import (
     Compound,
     Edge,
     Shell,
-    Wire,
     check,
     Vector,
     closest,
     imprint,
     setThreads,
     project,
-    edge,
+    edgeOn,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -256,13 +255,13 @@ def test_solid():
         assert f in final_faces_history
 
 
-def test_edge():
+def test_edgeOn():
 
     # make a base face
     f = torus(10, 4).faces()
 
     # construct an edge with points
-    e1 = edge(f, [(0, 0), (0, 1), (1, 1), (1, 0)], periodic=True)
+    e1 = edgeOn(f, [(0, 0), (0, 1), (1, 1), (1, 0)], periodic=True)
 
     assert e1.isValid()
 
@@ -272,7 +271,7 @@ def test_edge():
     assert f1.isValid()
 
     # construct in uv space directly
-    e2 = edge(f, circle(0.3))
+    e2 = edgeOn(f, circle(0.3))
 
     assert e2.isValid()
 

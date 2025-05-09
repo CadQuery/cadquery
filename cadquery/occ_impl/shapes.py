@@ -5172,7 +5172,7 @@ ShapeHistory = Dict[Union[Shape, str], Shape]
 
 
 @multimethod
-def edge(
+def edgeOn(
     base: Shape,
     pts: Sequence[Tuple[Real, Real]],
     periodic: bool = False,
@@ -5195,12 +5195,12 @@ def edge(
     return _compound_or_shape(rv)
 
 
-@edge.register
+@edgeOn.register
 def _(
-    fbase: Shape, edg: Shape, *edgs: Shape, tol=1e-6, N=10,
+    fbase: Shape, edg: Shape, *edgs: Shape, tol: float=1e-6, N: int=10,
 ):
     """
-    Map one or more edges onta a base face in the u,v space.
+    Map one or more edges onto a base face in the u,v space.
     """
 
     f = _get_one(fbase, "Face")
@@ -5238,6 +5238,16 @@ def _(
         rvs.append(rv)
 
     return _compound_or_shape(rvs)
+
+
+def wireOn(base: Shape, w: Shape, tol=1e-6, N=10) -> Shape:
+    """
+    Map a wire onto a base face in the u,v space.
+    """
+
+    rvs = [edgeOn(base, e, tol=tol, N=N) for e in w.edges()]
+
+    return wire(rvs)
 
 
 @multimethod
