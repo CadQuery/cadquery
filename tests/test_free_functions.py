@@ -264,6 +264,7 @@ def test_edgeOn():
     e1 = edgeOn(f, [(0, 0), (0, 1), (1, 1), (1, 0)], periodic=True)
 
     assert e1.isValid()
+    assert e1.hasPCurve(f)
 
     # use it to make a face
     f1 = f.trim(wire(e1))
@@ -274,6 +275,7 @@ def test_edgeOn():
     e2 = edgeOn(f, circle(0.3))
 
     assert e2.isValid()
+    assert e2.hasPCurve(f)
 
     # use it to make a face
     f2 = f.trim(wire(e2))

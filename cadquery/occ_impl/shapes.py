@@ -269,6 +269,7 @@ from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 
 from OCP.ShapeAnalysis import (
     ShapeAnalysis_FreeBounds,
+    ShapeAnalysis_Edge,
     ShapeAnalysis_Wire,
     ShapeAnalysis_Surface,
 )
@@ -2348,6 +2349,13 @@ class Edge(Shape, Mixin1D):
         bldr = BRepBuilderAPI_MakeEdge(self._geomAdaptor().Curve().Curve(), u0, u1)
 
         return self.__class__(bldr.Shape())
+
+    def hasPCurve(self, f: "Face") -> bool:
+        """
+        Check if self has a pcurve defined on f.
+        """
+
+        return ShapeAnalysis_Edge().HasPCurve(self.wrapped, f.wrapped)
 
     @classmethod
     def makeCircle(
