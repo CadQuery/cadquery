@@ -214,6 +214,9 @@ def test_trimming():
         wireOn(f, polygon((0, -0.5), (0.5, -0.5), (0.5, 0.5), (0, 0.5)))
     ).Area() == approx(f.Area() / 2)
 
+    # face trim using wires - single edge case
+    assert f.trim(wireOn(f, circle(1))).isValid()
+
     # face trim using points
     assert f.trim((0, -0.5), (0.5, -0.5), (0.5, 0.5), (0, 0.5)).Area() == approx(
         f.Area() / 2
