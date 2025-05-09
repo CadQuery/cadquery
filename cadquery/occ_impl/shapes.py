@@ -5197,7 +5197,7 @@ def edgeOn(
 
 @edgeOn.register
 def _(
-    fbase: Shape, edg: Shape, *edgs: Shape, tol: float=1e-6, N: int=10,
+    fbase: Shape, edg: Shape, *edgs: Shape, tol: float = 1e-6, N: int = 10,
 ):
     """
     Map one or more edges onto a base face in the u,v space.
