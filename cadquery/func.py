@@ -50,4 +50,5 @@ from .occ_impl.shapes import (
     closest,
     setThreads,
     project,
+    faceOn,
 )

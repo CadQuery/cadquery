@@ -5323,6 +5323,36 @@ def face(s: Sequence[Shape]) -> Shape:
     return face(*s)
 
 
+def faceOn(base: Shape, *fcs: Shape) -> Shape:
+    """
+    Build face(s) on base by mapping planar face(s) onto the (u,v) space of base.
+    """
+
+    rv: Shape
+    rvs = []
+
+    # get a face
+    fbase = _get_one(base, "Face")
+
+    # iterate over all faces
+    for el in fcs:
+        for fc in el.Faces():
+            # construct pcurves and trim in one go
+            rvs.append(
+                fbase.trim(
+                    wireOn(fbase, fc.outerWire()),
+                    *(wireOn(fbase, w) for w in fc.innerWires()),
+                )
+            )
+
+    if len(rvs) == 1:
+        rv = rvs[0]
+    else:
+        rv = compound(rvs)
+
+    return rv
+
+
 def _process_sewing_history(
     builder: BRepBuilderAPI_Sewing, faces: List[Face], history: Optional[ShapeHistory],
 ):
