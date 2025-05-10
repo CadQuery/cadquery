@@ -9,6 +9,8 @@ from .occ_impl.shapes import (
     Solid,
     CompSolid,
     Compound,
+    edgeOn,
+    wireOn,
     wire,
     face,
     shell,
@@ -48,4 +50,5 @@ from .occ_impl.shapes import (
     closest,
     setThreads,
     project,
+    faceOn,
 )

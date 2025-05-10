@@ -36,14 +36,16 @@ from cadquery.func import (
     Shape,
     Compound,
     Edge,
+    Face,
     Shell,
-    Wire,
     check,
     Vector,
     closest,
     imprint,
     setThreads,
     project,
+    edgeOn,
+    faceOn,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -253,6 +255,53 @@ def test_solid():
     final_faces_history = list(hist.values())
     for f in final_faces:
         assert f in final_faces_history
+
+
+def test_edgeOn():
+
+    # make a base face
+    f = torus(10, 4).faces()
+
+    # construct an edge with points
+    e1 = edgeOn(f, [(0, 0), (0, 1), (1, 1), (1, 0)], periodic=True)
+
+    assert e1.isValid()
+    assert e1.hasPCurve(f)
+
+    # use it to make a face
+    f1 = f.trim(wire(e1))
+
+    assert f1.isValid()
+
+    # construct in uv space directly
+    e2 = edgeOn(f, circle(0.3))
+
+    assert e2.isValid()
+    assert e2.hasPCurve(f)
+
+    # use it to make a face
+    f2 = f.trim(wire(e2))
+
+    assert f2.isValid()
+
+
+def test_faceOn():
+
+    # make a base face
+    f = sphere(4).faces()
+
+    # single face
+    f1 = faceOn(f, text("d", 1))
+
+    assert f1.isValid()
+    assert isinstance(f1, Face)
+    assert all(w.IsClosed() for w in f1)
+
+    # multiple faces
+    f2 = faceOn(f, text("CQ", 1))
+
+    assert f2.isValid()
+    assert len(f2.Faces()) == 2
 
 
 #%% primitives
