@@ -5271,7 +5271,7 @@ def _(
     return _compound_or_shape(rvs)
 
 
-def wireOn(base: Shape, w: Shape, tol=1e-6, N=10) -> Shape:
+def wireOn(base: Shape, w: Shape, tol=1e-6, N=20) -> Shape:
     """
     Map a wire onto a base face in the u,v space.
     """
@@ -5329,7 +5329,7 @@ def face(s: Sequence[Shape]) -> Shape:
     return face(*s)
 
 
-def faceOn(base: Shape, *fcs: Shape) -> Shape:
+def faceOn(base: Shape, *fcs: Shape, tol=1e-6, N=20) -> Shape:
     """
     Build face(s) on base by mapping planar face(s) onto the (u,v) space of base.
     """
@@ -5346,8 +5346,8 @@ def faceOn(base: Shape, *fcs: Shape) -> Shape:
             # construct pcurves and trim in one go
             rvs.append(
                 fbase.trim(
-                    wireOn(fbase, fc.outerWire()),
-                    *(wireOn(fbase, w) for w in fc.innerWires()),
+                    wireOn(fbase, fc.outerWire(), tol=tol, N=N),
+                    *(wireOn(fbase, w, tol=tol, N=N) for w in fc.innerWires()),
                 )
             )
 
