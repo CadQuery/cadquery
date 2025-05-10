@@ -36,6 +36,7 @@ from cadquery.func import (
     Shape,
     Compound,
     Edge,
+    Face,
     Shell,
     check,
     Vector,
@@ -44,6 +45,7 @@ from cadquery.func import (
     setThreads,
     project,
     edgeOn,
+    faceOn,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -281,6 +283,25 @@ def test_edgeOn():
     f2 = f.trim(wire(e2))
 
     assert f2.isValid()
+
+
+def test_faceOn():
+
+    # make a base face
+    f = sphere(4).faces()
+
+    # single face
+    f1 = faceOn(f, text("d", 1))
+
+    assert f1.isValid()
+    assert isinstance(f1, Face)
+    assert all(w.IsClosed() for w in f1)
+
+    # multiple faces
+    f2 = faceOn(f, text("CQ", 1))
+
+    assert f2.isValid()
+    assert len(f2.Faces()) == 2
 
 
 #%% primitives
