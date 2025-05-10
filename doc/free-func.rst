@@ -398,7 +398,7 @@ to work with higher level objects like wires.
     du = pi
     Nturns = 2
 
-    # consturct the base surface
+    # construct the base surface
     base = cylinder(d, h).faces("%CYLINDER")
 
     # construct a planar 2D patch for u,v trimming
@@ -422,10 +422,10 @@ Finally, it is also possible to map whole faces.
 
 .. cadquery::
 
-    from cadquery.func import text, faceOn, extrude
+    from cadquery.func import sphere, text, faceOn
 
-    t = text("CadQuery", 0.6, halign="left").moved(rz=90)
+    base = sphere(5).faces()
 
-    result = extrude(faceOn(base, t), (0.05, 0, 0))
+    result = faceOn(base, text("CadQuery", 1))
 
 
