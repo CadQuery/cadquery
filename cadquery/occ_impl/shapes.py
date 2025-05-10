@@ -1812,6 +1812,9 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     ) -> Tuple[Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve], float]:
         ...
 
+    def bounds(self) -> Tuple[float, float]:
+        ...
+
     def paramAt(self, d: float) -> float:
         ...
 
