@@ -369,10 +369,10 @@ trims, polygons, splines or arbitrary wires.
     base = cylinder(d, h).faces("%CYLINDER")
 
     # rectungualr trim
-    r1 = base.trim(-pi/2, 0, 0, h)
+    r1 = base.trim(-pi/2, 0, 0, h/3)
 
     # polyline trim
-    r2 = base.trim((0,0), (pi,0), (pi/2, h))
+    r2 = base.trim((0,0), (pi,0), (pi/2, h/2))
 
     # construct a pcurve
     pcurve = edgeOn(base, [(pi/2, h/4), (pi, h/4), (pi, h/2), (pi/2, h/2)], periodic=True)
@@ -417,7 +417,7 @@ to work with higher level objects like wires.
     result = base.trim(w)
 
 
-Finally, it is also possible to map whole faces.
+Finally, it is also possible to map complete faces.
 
 
 .. cadquery::
