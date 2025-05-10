@@ -5222,7 +5222,7 @@ def edgeOn(
 
 @edgeOn.register
 def _(
-    fbase: Shape, edg: Shape, *edgs: Shape, tol: float = 1e-6, N: int = 10,
+    fbase: Shape, edg: Shape, *edgs: Shape, tol: float = 1e-6, N: int = 20,
 ):
     """
     Map one or more edges onto a base face in the u,v space.
@@ -5241,14 +5241,20 @@ def _(
         pts = [(el.x, el.y) for el in pts3D]
 
         # handle periodicity
-        t0, _ = el._bounds()
+        t0, t1 = el._bounds()
         el_crv = el._geomAdaptor()
 
+        periodic = False
+
+        # periodic (and closed)
         if el_crv.IsPeriodic() and el_crv.IsClosed():
             periodic = True
             params.append(t0 + el_crv.Period())
-        else:
-            periodic = False
+
+        # only closed
+        elif el_crv.IsClosed():
+            pts.append(pts[0])
+            params.append(t1)
 
         # interpolate the u,v points
         spline_bldr = Geom2dAPI_Interpolate(
