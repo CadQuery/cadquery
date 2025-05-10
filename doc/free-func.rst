@@ -344,8 +344,88 @@ and only then the final solid can be constructed.
     
     # local sewing - only two faces are taken into account
     sh = shell(b_top_hole, feat.faces('<Z'), ctx=(b, feat))
-    
     # construct the final solid
     result = solid(sh)
+
+
+Mapping onto parametric space
+-----------------------------
+
+To complement functionalities described It is possible to trim edges and faces explicitly using simple rectangular
+trims, polygons, splines or arbitrary wires.
+
+.. cadquery::
+
+    from math import pi
+    from cadquery.func import cylinder, edgeOn, compound, wire
+
+    # parameters
+    d = 1.5
+    h = 3
+    du = pi
+    Nturns = 2
+
+    # constu urct the base surface
+    base = cylinder(d, h).faces("%CYLINDER")
+
+    # rectungualr trim
+    r1 = base.trim(-pi/2, 0, 0, h)
+
+    # polyline trim
+    r2 = base.trim((0,0), (pi,0), (pi/2, h))
+
+    # construct a pcurve
+    pcurve = edgeOn(base, [(0, 0), (pi, 0), (pi, h/2), (0, h/2)], periodic=True)
+
+    # pcurve trim
+    r3 = base.trim(wire(pcurve))
+
+    result = compound(r1, r2.moved(x=2), r3.moved(x=4))
+
+
+This in principle allows to model arbitrary shapes in the parametric domain, but often it is more desirable
+to work with higher level objects like wires.
+
+
+.. cadquery::
+
+    from cadquery.func import cylinder, loft, wireOn, segment
+    from math import pi
+
+    # parameters
+    d = 1.5
+    h = 3
+    du = pi
+    Nturns = 2
+
+    # consturct the base surface
+    base = cylinder(d, h).faces("%CYLINDER")
+
+    # construct a planar 2D patch for u,v trimming
+    uv_patch = loft(
+        segment((0, 0), (du, 0)), segment((Nturns * 2 * pi, h), (Nturns * 2 * pi + du, h))
+    )
+
+    # map it onto the cylinder
+    w = wireOn(base, uv_patch)
+
+    # check that the pcurves were created
+    for e in w:
+        assert e.hasPCurve(base), "No p-curve on base present"
+
+    # tirm the base surface
+    result = base.trim(w)
+
+
+Finally, it is also possible to map whole faces.
+
+
+.. cadquery::
+
+    from cadquery.func import text, faceOn, extrude
+
+    t = text("CadQuery", 0.6, halign="left").moved(rz=90)
+
+    result = extrude(faceOn(base, t), (0.05, 0, 0))
 
 
