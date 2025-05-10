@@ -1842,6 +1842,13 @@ T1D = TypeVar("T1D", bound=Mixin1DProtocol)
 class Mixin1D(object):
     def _bounds(self: Mixin1DProtocol) -> Tuple[float, float]:
 
+        return self.bounds()
+
+    def bounds(self: Mixin1DProtocol) -> Tuple[float, float]:
+        """
+        Parametric bounds of the curve.
+        """
+
         curve = self._geomAdaptor()
         return curve.FirstParameter(), curve.LastParameter()
 
@@ -3029,6 +3036,13 @@ class Face(Shape):
         return BRep_Tool.Surface_s(self.wrapped)
 
     def _uvBounds(self) -> Tuple[float, float, float, float]:
+
+        return self.uvBounds()
+
+    def uvBounds(self) -> Tuple[float, float, float, float]:
+        """
+        Parametric bounds (u_min, u_max, v_min, v_max).
+        """
 
         return BRepTools.UVBounds_s(self.wrapped)
 
