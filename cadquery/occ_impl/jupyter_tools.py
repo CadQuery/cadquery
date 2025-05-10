@@ -168,7 +168,7 @@ def display(shape):
         payload.append(
             dict(
                 shape=toString(shape),
-                color=DEFAULT_COLOR,
+                color=DEFAULT_COLOR.rgb(),
                 position=[0, 0, 0],
                 orientation=[0, 0, 0],
             )

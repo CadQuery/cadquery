@@ -19,7 +19,7 @@ TEMPLATE = """\
 def color_to_rgba_str(c: cq.Color) -> str:
     """ Convert a Color object to a string for the HTML/CSS template.
     """
-    t = c.toTuple()
+    t = c.rgba()
     vals = [int(v * 255) for v in t[:3]]
     return ",".join([str(v) for v in chain(vals, [t[3]])])
 
@@ -27,7 +27,7 @@ def color_to_rgba_str(c: cq.Color) -> str:
 def calc_text_color(c: cq.Color) -> str:
     """ Calculate required overlay text color from background color.
     """
-    val = sum(c.toTuple()[:3]) / 3
+    val = sum(c.rgba()[:3]) / 3
     if val < 0.5:
         rv = "255,255,255"
     else:
