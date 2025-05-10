@@ -375,7 +375,7 @@ trims, polygons, splines or arbitrary wires.
     r2 = base.trim((0,0), (pi,0), (pi/2, h))
 
     # construct a pcurve
-    pcurve = edgeOn(base, [(0, 0), (pi, 0), (pi, h/2), (0, h/2)], periodic=True)
+    pcurve = edgeOn(base, [(pi/2, h/4), (pi, h/4), (pi, h/2), (pi/2, h/2)], periodic=True)
 
     # pcurve trim
     r3 = base.trim(wire(pcurve))
