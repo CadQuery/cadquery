@@ -12,7 +12,7 @@ from typing import (
     TypeVar,
     cast as tcast,
     Literal,
-    Protocol, get_args,
+    Protocol,
 )
 
 from typing_extensions import Self
