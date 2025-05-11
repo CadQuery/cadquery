@@ -758,6 +758,9 @@ class Shape(object):
 
     @staticmethod
     def _mass_calc_function(obj: "Shape") -> Any:
+        """
+        Helper to find the correct mass calculation function with special compound handling.
+        """
 
         type_ = shapetype(obj.wrapped)
 
