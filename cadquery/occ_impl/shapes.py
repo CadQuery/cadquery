@@ -757,6 +757,32 @@ class Shape(object):
         return Vector(sum_wc.multiply(1.0 / total_mass))
 
     @staticmethod
+    def _mass_calc_function(obj: "Shape") -> Any:
+
+        type_ = shapetype(obj.wrapped)
+
+        # special handling of compounds - first non-compound child is assumed to define the type of the operation
+        if type_ == ta.TopAbs_COMPOUND:
+
+            # if the compound is not empty check its children
+            if obj:
+                # first child
+                child = next(iter(obj))
+
+                # if compound, go deeper
+                while child.ShapeType() == "Compound":
+                    child = next(iter(child))
+
+                type_ = shapetype(child.wrapped)
+
+            # if the compound is empty assume it was meant to be a solid
+            else:
+                type_ = ta.TopAbs_SOLID
+
+        # get the function based on dimensionality of the object
+        return shape_properties_LUT[type_]
+
+    @staticmethod
     def computeMass(obj: "Shape") -> float:
         """
         Calculates the 'mass' of an object.
@@ -764,34 +790,25 @@ class Shape(object):
         :param obj: Compute the mass of this object
         """
         Properties = GProp_GProps()
-        calc_function = shape_properties_LUT[shapetype(obj.wrapped)]
+        calc_function = Shape._mass_calc_function(obj)
 
-        if calc_function:
-            calc_function(obj.wrapped, Properties)
-            return Properties.Mass()
-        else:
-            raise NotImplementedError
+        calc_function(obj.wrapped, Properties)
+
+        return Properties.Mass()
 
     @staticmethod
-    def centerOfMass(obj: "Shape", shape_type: ta = None) -> Vector:
+    def centerOfMass(obj: "Shape") -> Vector:
         """
         Calculates the center of 'mass' of an object.
 
         :param obj: Compute the center of mass of this object
-        :param shape_type: An optional specification of the topological type of the shape. If not provided,
-        the shape type is inferred automatically. This is used to determine the correct
-        property calculation function from the lookup table.
         """
         Properties = GProp_GProps()
-        if shape_type is None:
-            shape_type = shapetype(obj.wrapped)
-        calc_function = shape_properties_LUT[shape_type]
+        calc_function = Shape._mass_calc_function(obj)
 
-        if calc_function:
-            calc_function(obj.wrapped, Properties)
-            return Vector(Properties.CentreOfMass())
-        else:
-            raise NotImplementedError
+        calc_function(obj.wrapped, Properties)
+
+        return Vector(Properties.CentreOfMass())
 
     @staticmethod
     def CombinedCenterOfBoundBox(objects: List["Shape"]) -> Vector:
