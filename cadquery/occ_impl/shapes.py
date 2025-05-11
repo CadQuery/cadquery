@@ -841,7 +841,6 @@ class Shape(object):
     def ShapeType(self) -> Shapes:
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
-
     def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
 
         shape_set = TopTools_IndexedMapOfShape()
