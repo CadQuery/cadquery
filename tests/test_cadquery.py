@@ -5912,5 +5912,8 @@ class TestCadQuery(BaseTest):
         compound = Compound.makeCompound([face1, face2])
         expected_center = Shape.CombinedCenter([face1, face2])
 
-        assert compound.Center() == expected_center, "Incorrect center of mass of the compound, expected {}, got {}".format(
-            expected_center, compound.Center())
+        assert (
+            compound.Center() == expected_center
+        ), "Incorrect center of mass of the compound, expected {}, got {}".format(
+            expected_center, compound.Center()
+        )
