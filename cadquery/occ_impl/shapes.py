@@ -5086,7 +5086,7 @@ def _pts_to_harray2D(pts: Sequence[Tuple[Real, Real]]) -> TColgp_HArray1OfPnt2d:
     Convert a sequence of 2d points to a TColgp harray (OCCT specific).
     """
 
-    rv = TColgp_HArray1OfPnt2D(1, len(pts))
+    rv = TColgp_HArray1OfPnt2d(1, len(pts))
 
     for i, p in enumerate(pts):
         rv.SetValue(i + 1, gp_Pnt2d(*p))
@@ -5209,7 +5209,7 @@ def edgeOn(
     f = _get_one(base, "Face")
 
     # interpolate the u,v points
-    spline_bldr = Geom2dAPI_Interpolate(_pts_to_harray2d(pts), periodic, tol)
+    spline_bldr = Geom2dAPI_Interpolate(_pts_to_harray2D(pts), periodic, tol)
     spline_bldr.Perform()
 
     # build the final edge
@@ -5257,7 +5257,7 @@ def _(
 
         # interpolate the u,v points
         spline_bldr = Geom2dAPI_Interpolate(
-            _pts_to_harray2d(pts), _floats_to_harray(params), periodic, tol
+            _pts_to_harray2D(pts), _floats_to_harray(params), periodic, tol
         )
         spline_bldr.Perform()
 
