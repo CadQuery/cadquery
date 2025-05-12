@@ -351,7 +351,7 @@ and only then the final solid can be constructed.
 Mapping onto parametric space
 -----------------------------
 
-To complement functionalities described It is possible to trim edges and faces explicitly using simple rectangular
+To complement functionalities described, it is possible to trim edges and faces explicitly using simple rectangular
 trims, polygons, splines or arbitrary wires.
 
 .. cadquery::
@@ -365,10 +365,10 @@ trims, polygons, splines or arbitrary wires.
     du = pi
     Nturns = 2
 
-    # constu urct the base surface
+    # construct the base surface
     base = cylinder(d, h).faces("%CYLINDER")
 
-    # rectungualr trim
+    # rectangular trim
     r1 = base.trim(-pi/2, 0, 0, h/3)
 
     # polyline trim
@@ -413,7 +413,7 @@ to work with higher level objects like wires.
     for e in w:
         assert e.hasPCurve(base), "No p-curve on base present"
 
-    # tirm the base surface
+    # trim the base surface
     result = base.trim(w)
 
 
