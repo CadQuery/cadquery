@@ -19,7 +19,6 @@ from typing_extensions import Self
 
 from io import BytesIO
 
-from itertools import chain
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
@@ -5082,12 +5081,12 @@ def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
     return rv
 
 
-def _pts_to_harray2d(pts: Sequence[Tuple[Real, Real]]) -> TColgp_HArray1OfPnt2d:
+def _pts_to_harray2D(pts: Sequence[Tuple[Real, Real]]) -> TColgp_HArray1OfPnt2d:
     """
     Convert a sequence of 2d points to a TColgp harray (OCCT specific).
     """
 
-    rv = TColgp_HArray1OfPnt2d(1, len(pts))
+    rv = TColgp_HArray1OfPnt2D(1, len(pts))
 
     for i, p in enumerate(pts):
         rv.SetValue(i + 1, gp_Pnt2d(*p))
