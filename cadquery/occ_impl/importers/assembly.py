@@ -3,12 +3,13 @@ from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA
 from OCP.TDocStd import TDocStd_Document
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.STEPCAFControl import STEPCAFControl_Reader
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen, XCAFDoc_ColorSurf
-from OCP.TDF import TDF_Label, TDF_LabelSequence
+from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen, XCAFDoc_ColorSurf, XCAFDoc_GraphNode
+from OCP.TDF import TDF_Label, TDF_LabelSequence, TDF_AttributeIterator
 from OCP.TDataStd import TDataStd_Name
 
 import cadquery as cq
 from ..assembly import AssemblyProtocol
+from tkinter.constants import CURRENT
 
 
 def importStep(assy: AssemblyProtocol, path: str):
@@ -113,6 +114,44 @@ def importStep(assy: AssemblyProtocol, path: str):
                 )
             else:
                 assy.add(cq.Shape.cast(shape), name=name, color=cq_color)
+
+            # if label.NbChildren() > 0:
+            #     child_label = label.FindChild(1)
+
+            #     # Create an attribute iterator
+            #     attr_iterator = TDF_AttributeIterator(child_label)
+
+            #     # Iterate through all attributes
+            #     while attr_iterator.More():
+            #         current_attr = attr_iterator.Value()
+            #         # Get the ID of the attribute
+            #         attr_id = current_attr.ID()
+            #         print(f"Found attribute with ID: {attr_id}")
+            #         print(f"Attribute type: {current_attr.DynamicType().Name()}")
+            #         if current_attr.DynamicType().Name() == "XCAFDoc_GraphNode":
+            #             graph_node = XCAFDoc_GraphNode()
+            #             if child_label.FindAttribute(XCAFDoc_GraphNode.GetID_s(), graph_node):
+            #                 # Follow the graph node to its referenced labels
+            #                     for i in range(1, graph_node.NbChildren() + 1):
+            #                         child_graph_node = graph_node.GetChild(i)
+            #                         if not child_graph_node.IsNull():
+            #                             referenced_label = child_graph_node.Label()
+            #                             if not referenced_label.IsNull():
+            #                                 # Check for name on the referenced label
+            #                                 name_attr = TDataStd_Name()
+            #                                 if referenced_label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
+            #                                     name = name_attr.Get().ToExtString()
+            #                                     print(f"Found name via GraphNode reference: {name}")
+                    # if current_attr.DynamicType().Name() == "TNaming_NamedShape":
+                    #     shape = current_attr.Get()
+                    #     if not shape.IsNull():
+                    #         name = shape_tool.GetName_s(shape)
+                    #         if name:
+                    #             print(f"Shape name: {name}")
+                    #     if child_label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
+                    #         print(name_attr)
+                    # Move to next attribute
+                    # attr_iterator.Next()
 
     # Grab the labels, which should hold the assembly parent
     labels = TDF_LabelSequence()
