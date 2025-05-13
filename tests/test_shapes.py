@@ -14,6 +14,8 @@ from cadquery.occ_impl.shapes import (
     ellipse,
     spline,
     sweep,
+    polygon,
+    wireOn,
 )
 
 from pytest import approx, raises
@@ -201,8 +203,24 @@ def test_trimming():
     e = segment((0, 0), (0, 1))
     f = plane(1, 1)
 
+    # edge trim
     assert e.trim(0, 0.5).Length() == approx(e.Length() / 2)
+
+    # face trim
     assert f.trim(0, 0.5, -0.5, 0.5).Area() == approx(f.Area() / 2)
+
+    # face trim using wires
+    assert f.trim(
+        wireOn(f, polygon((0, -0.5), (0.5, -0.5), (0.5, 0.5), (0, 0.5)))
+    ).Area() == approx(f.Area() / 2)
+
+    # face trim using wires - single edge case
+    assert f.trim(wireOn(f, circle(1))).isValid()
+
+    # face trim using points
+    assert f.trim((0, -0.5), (0.5, -0.5), (0.5, 0.5), (0, 0.5)).Area() == approx(
+        f.Area() / 2
+    )
 
 
 def test_bin_import_export():

@@ -19,6 +19,7 @@ from typing_extensions import Self
 
 from io import BytesIO
 
+
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
@@ -59,7 +60,12 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt, TColgp_Array1OfPnt
+from OCP.TColgp import (
+    TColgp_HArray1OfPnt,
+    TColgp_HArray2OfPnt,
+    TColgp_Array1OfPnt,
+    TColgp_HArray1OfPnt2d,
+)
 
 # Array of vectors (used for B-spline interpolation):
 from OCP.TColgp import TColgp_Array1OfVec
@@ -162,6 +168,8 @@ from OCP.Geom import (
 )
 from OCP.Geom2d import Geom2d_Line
 
+from OCP.Geom2dAPI import Geom2dAPI_Interpolate
+
 from OCP.BRepLib import BRepLib, BRepLib_FindSurface
 
 from OCP.BRepOffsetAPI import (
@@ -260,6 +268,7 @@ from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 
 from OCP.ShapeAnalysis import (
     ShapeAnalysis_FreeBounds,
+    ShapeAnalysis_Edge,
     ShapeAnalysis_Wire,
     ShapeAnalysis_Surface,
 )
@@ -1827,6 +1836,9 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     ) -> Tuple[Union[BRepAdaptor_Curve, BRepAdaptor_CompCurve], float]:
         ...
 
+    def bounds(self) -> Tuple[float, float]:
+        ...
+
     def paramAt(self, d: float) -> float:
         ...
 
@@ -1856,6 +1868,13 @@ T1D = TypeVar("T1D", bound=Mixin1DProtocol)
 
 class Mixin1D(object):
     def _bounds(self: Mixin1DProtocol) -> Tuple[float, float]:
+
+        return self.bounds()
+
+    def bounds(self: Mixin1DProtocol) -> Tuple[float, float]:
+        """
+        Parametric bounds of the curve.
+        """
 
         curve = self._geomAdaptor()
         return curve.FirstParameter(), curve.LastParameter()
@@ -2369,6 +2388,13 @@ class Edge(Shape, Mixin1D):
         bldr = BRepBuilderAPI_MakeEdge(self._geomAdaptor().Curve().Curve(), u0, u1)
 
         return self.__class__(bldr.Shape())
+
+    def hasPCurve(self, f: "Face") -> bool:
+        """
+        Check if self has a pcurve defined on f.
+        """
+
+        return ShapeAnalysis_Edge().HasPCurve(self.wrapped, f.wrapped)
 
     @classmethod
     def makeCircle(
@@ -3043,6 +3069,13 @@ class Face(Shape):
 
     def _uvBounds(self) -> Tuple[float, float, float, float]:
 
+        return self.uvBounds()
+
+    def uvBounds(self) -> Tuple[float, float, float, float]:
+        """
+        Parametric bounds (u_min, u_max, v_min, v_max).
+        """
+
         return BRepTools.UVBounds_s(self.wrapped)
 
     def paramAt(self, pt: VectorLike) -> Tuple[float, float]:
@@ -3494,14 +3527,9 @@ class Face(Shape):
         return Solid(builder.Shape())
 
     @classmethod
-    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> "Face":
+    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> Self:
 
-        bldr = BRepBuilderAPI_MakeFace(f._geomAdaptor(), outer.wrapped)
-
-        for w in inner:
-            bldr.Add(TopoDS.Wire_s(w.wrapped))
-
-        return cls(bldr.Face()).fix()
+        return f.trim(outer, *inner)
 
     def project(self, other: "Face", d: VectorLike) -> "Face":
 
@@ -3519,9 +3547,10 @@ class Face(Shape):
 
         return self.__class__(BRepAlgo.ConvertFace_s(self.wrapped, tolerance))
 
-    def trim(self, u0: Real, u1: Real, v0: Real, v1: Real, tol: Real = 1e-6) -> "Face":
+    @multimethod
+    def trim(self, u0: Real, u1: Real, v0: Real, v1: Real, tol: Real = 1e-6) -> Self:
         """
-        Trim the face in the parametric space to (u0, u1).
+        Trim the face in the (u,v) space to (u0, u1)x(v1, v2).
 
         NB: this operation is done on the base geometry.
         """
@@ -3529,6 +3558,59 @@ class Face(Shape):
         bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), u0, u1, v0, v1, tol)
 
         return self.__class__(bldr.Shape())
+
+    @trim.register
+    def _(
+        self,
+        pt1: Tuple[Real, Real],
+        pt2: Tuple[Real, Real],
+        pt3: Tuple[Real, Real],
+        *pts: Tuple[Real, Real],
+    ) -> Self:
+        """
+        Trim the face using a polyline defined in the (u,v) space.
+        """
+
+        segs_uv = []
+        geom = self._geomAdaptor()
+
+        # build (u,v) segments
+        for el1, el2 in zip((pt1, pt2, pt3, *pts), (pt2, pt3, *pts, pt1)):
+            segs_uv.append(GCE2d_MakeSegment(gp_Pnt2d(*el1), gp_Pnt2d(*el2)).Value())
+
+        # convert to edges
+        edges = []
+
+        for seg in segs_uv:
+            edges.append(BRepBuilderAPI_MakeEdge(seg, geom).Edge())
+
+        # convert to a wire
+        builder = BRepBuilderAPI_MakeWire()
+
+        tmp = TopTools_ListOfShape()
+        for edge in edges:
+            tmp.Append(edge)
+
+        builder.Add(tmp)
+
+        w = builder.Wire()
+        BRepLib.BuildCurves3d_s(w)
+
+        # construct the final trimmed face
+        return self.constructOn(self, Wire(w))
+
+    @trim.register
+    def _(self, outer: Wire, *inner: Wire) -> Self:
+        """
+        Trim using wires. The provided wires need to have a pcurve on self.
+        """
+
+        bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), outer.wrapped)
+
+        for w in inner:
+            bldr.Add(TopoDS.Wire_s(w.wrapped))
+
+        return self.__class__(bldr.Face()).fix()
 
     def isoline(self, param: Real, direction: Literal["u", "v"] = "v") -> Edge:
         """
@@ -4875,22 +4957,23 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
         raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
 
 
-def _get_edges(s: Shape) -> Iterable[Shape]:
+def _get_edges(*shapes: Shape) -> Iterable[Shape]:
     """
-    Get wires or wires from edges.
+    Get edges or edges from wires.
     """
 
-    t = s.ShapeType()
+    for s in shapes:
+        t = s.ShapeType()
 
-    if t == "Edge":
-        yield s
-    elif t == "Wire":
-        yield from _get_edges(s.edges())
-    elif t == "Compound":
-        for el in s:
-            yield from _get_edges(el)
-    else:
-        raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+        if t == "Edge":
+            yield s
+        elif t == "Wire":
+            yield from _get_edges(s.edges())
+        elif t == "Compound":
+            for el in s:
+                yield from _get_edges(el)
+        else:
+            raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
 
 
 def _get_wire_lists(s: Sequence[Shape]) -> List[List[Union[Wire, Vertex]]]:
@@ -5017,13 +5100,26 @@ def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
 
 def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
     """
-    Convert a sequence of Vecotor to a TColgp harray (OCCT specific).
+    Convert a sequence of Vector to a TColgp harray (OCCT specific).
     """
 
     rv = TColgp_HArray1OfPnt(1, len(pts))
 
     for i, p in enumerate(pts):
         rv.SetValue(i + 1, Vector(p).toPnt())
+
+    return rv
+
+
+def _pts_to_harray2D(pts: Sequence[Tuple[Real, Real]]) -> TColgp_HArray1OfPnt2d:
+    """
+    Convert a sequence of 2d points to a TColgp harray (OCCT specific).
+    """
+
+    rv = TColgp_HArray1OfPnt2d(1, len(pts))
+
+    for i, p in enumerate(pts):
+        rv.SetValue(i + 1, gp_Pnt2d(*p))
 
     return rv
 
@@ -5130,6 +5226,91 @@ ShapeHistory = Dict[Union[Shape, str], Shape]
 
 
 @multimethod
+def edgeOn(
+    base: Shape,
+    pts: Sequence[Tuple[Real, Real]],
+    periodic: bool = False,
+    tol: float = 1e-6,
+) -> Shape:
+    """
+    Build an edge on a face from points in (u,v) space.
+    """
+
+    f = _get_one(base, "Face")
+
+    # interpolate the u,v points
+    spline_bldr = Geom2dAPI_Interpolate(_pts_to_harray2D(pts), periodic, tol)
+    spline_bldr.Perform()
+
+    # build the final edge
+    rv = BRepBuilderAPI_MakeEdge(spline_bldr.Curve(), f._geomAdaptor()).Edge()
+    BRepLib.BuildCurves3d_s(rv)
+
+    return _compound_or_shape(rv)
+
+
+@edgeOn.register
+def _(
+    fbase: Shape, edg: Shape, *edgs: Shape, tol: float = 1e-6, N: int = 20,
+):
+    """
+    Map one or more edges onto a base face in the u,v space.
+    """
+
+    f = _get_one(fbase, "Face")
+
+    rvs: List[TopoDS_Shape] = []
+
+    for el in _get_edges(edg, *edgs):
+
+        # sample the original curve
+        pts3D, params = el.sample(N)
+
+        # convert to 2D points ignoring the z coord
+        pts = [(el.x, el.y) for el in pts3D]
+
+        # handle periodicity
+        t0, t1 = el._bounds()
+        el_crv = el._geomAdaptor()
+
+        periodic = False
+
+        # periodic (and closed)
+        if el_crv.IsPeriodic() and el_crv.IsClosed():
+            periodic = True
+            params.append(t0 + el_crv.Period())
+
+        # only closed
+        elif el_crv.IsClosed():
+            pts.append(pts[0])
+            params.append(t1)
+
+        # interpolate the u,v points
+        spline_bldr = Geom2dAPI_Interpolate(
+            _pts_to_harray2D(pts), _floats_to_harray(params), periodic, tol
+        )
+        spline_bldr.Perform()
+
+        # build the final edge
+        rv = BRepBuilderAPI_MakeEdge(spline_bldr.Curve(), f._geomAdaptor()).Edge()
+        BRepLib.BuildCurves3d_s(rv)
+
+        rvs.append(rv)
+
+    return _compound_or_shape(rvs)
+
+
+def wireOn(base: Shape, w: Shape, tol=1e-6, N=20) -> Shape:
+    """
+    Map a wire onto a base face in the u,v space.
+    """
+
+    rvs = [edgeOn(base, e, tol=tol, N=N) for e in w.Edges()]
+
+    return wire(rvs)
+
+
+@multimethod
 def wire(*s: Shape) -> Shape:
     """
     Build wire from edges.
@@ -5175,6 +5356,36 @@ def face(s: Sequence[Shape]) -> Shape:
     """
 
     return face(*s)
+
+
+def faceOn(base: Shape, *fcs: Shape, tol=1e-6, N=20) -> Shape:
+    """
+    Build face(s) on base by mapping planar face(s) onto the (u,v) space of base.
+    """
+
+    rv: Shape
+    rvs = []
+
+    # get a face
+    fbase = _get_one(base, "Face")
+
+    # iterate over all faces
+    for el in fcs:
+        for fc in el.Faces():
+            # construct pcurves and trim in one go
+            rvs.append(
+                fbase.trim(
+                    wireOn(fbase, fc.outerWire(), tol=tol, N=N),
+                    *(wireOn(fbase, w, tol=tol, N=N) for w in fc.innerWires()),
+                )
+            )
+
+    if len(rvs) == 1:
+        rv = rvs[0]
+    else:
+        rv = compound(rvs)
+
+    return rv
 
 
 def _process_sewing_history(
