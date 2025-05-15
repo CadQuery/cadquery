@@ -20,7 +20,7 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
-from OCP.Quantity import Quantity_ColorRGBA
+from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
@@ -117,6 +117,20 @@ class Color(object):
         rgb = self.wrapped.GetRGB()
 
         return (rgb.Red(), rgb.Green(), rgb.Blue(), a)
+
+    def toTupleSRGB(self) -> Tuple[float, float, float, float]:
+        """
+        Convert Color to RGB tuple.
+        """
+        a = self.wrapped.Alpha()
+        rgb = self.wrapped.GetRGB()
+
+        # Convert linear to sRGB
+        r = Quantity_Color.Convert_LinearRGB_To_sRGB_s(rgb.Red())
+        g = Quantity_Color.Convert_LinearRGB_To_sRGB_s(rgb.Green())
+        b = Quantity_Color.Convert_LinearRGB_To_sRGB_s(rgb.Blue())
+
+        return (r, g, b, a)
 
     def __getstate__(self) -> Tuple[float, float, float, float]:
 
