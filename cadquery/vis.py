@@ -393,6 +393,7 @@ def show(
     elevation: float = -45,
     position: Optional[Tuple[float, float, float]] = None,
     focus: Optional[Tuple[float, float, float]] = None,
+    viewup: Optional[Tuple[float, float, float]] = (0, 1, 0),
     width: Union[int, float] = 0.5,
     height: Union[int, float] = 0.5,
     trihedron: bool = True,
@@ -494,6 +495,7 @@ def show(
     camera.Roll(roll)
     camera.Elevation(elevation)
     camera.Zoom(zoom)
+    camera.SetViewUp(*viewup)
 
     if position or focus:
         if position:
