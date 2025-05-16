@@ -879,7 +879,163 @@ Where:
     show_object(assy)
 
 
-Assembly colors
+Materials
+----------------
+
+Materials can be assigned to objects in an assembly to define their visual
+and physical properties. CadQuery supports three types of material representations:
+
+1. Color Only Material
+2. PBR (Physically Based Rendering) Material - the modern standard for material definition
+3. Simple Material - traditional lighting model representation
+
+A material can have multiple representations defined simultaneously - color,
+simple, and PBR properties can all be specified for the same material.
+The appropriate representation will be used based on the export format.
+This allows you to define a material once and have it work well across
+different export formats. For example:
+
+.. code-block:: python
+
+    # Material with all three representations
+    gold_material = cq.Material(
+        name="Gold",
+        description="A golden material with multiple representations",
+        density=19300,  # kg/m³
+        # Simple color for basic visualization
+        color=cq.Color(1.0, 0.8, 0.0, 1.0),
+        # PBR material for modern physically-based rendering
+        pbr=cq.PbrMaterial(
+            base_color=cq.Color(1.0, 0.8, 0.0, 1.0),
+            metallic=1.0,
+            roughness=0.2,
+            refraction_index=1.0,
+        ),
+        # Traditional lighting model
+        simple=cq.SimpleMaterial(
+            ambient_color=cq.Color(0.2, 0.2, 0.0, 1.0),
+            diffuse_color=cq.Color(0.8, 0.8, 0.0, 1.0),
+            specular_color=cq.Color(1.0, 1.0, 0.0, 1.0),
+            shininess=0.9,
+            transparency=0.0,
+        ),
+    )
+
+Material Types
+=============
+
+Color Only Material
+~~~~~~~~~~~~~~~~~~~
+
+The simplest form of material definition includes just a name,
+description, density, and color:
+
+.. code-block:: python
+
+    material = cq.Material(
+        name="Red Plastic",
+        description="A simple red plastic material",
+        density=1200,  # kg/m³
+        color=cq.Color(1.0, 0.0, 0.0, 1.0),  # Red with full opacity
+    )
+
+PBR Material
+~~~~~~~~~~~
+
+PBR (Physically Based Rendering) materials provide physically accurate material representation and are the recommended way to define materials in CadQuery:
+
+.. code-block:: python
+
+    material = cq.Material(
+        name="Clear Glass",
+        description="A transparent glass material",
+        density=2500,  # kg/m³
+        pbr=cq.PbrMaterial(
+            base_color=cq.Color(0.9, 0.9, 0.9, 0.3),  # Base color with transparency
+            metallic=0.0,  # 0.0 for non-metals, 1.0 for metals
+            roughness=0.1,  # 0.0 for smooth, 1.0 for rough
+            refraction_index=1.5,  # Must be between 1.0 and 3.0
+        ),
+    )
+
+Simple Material
+~~~~~~~~~~~~~
+
+Simple materials use a traditional lighting model with ambient, diffuse, and specular colors.
+This representation is useful for compatibility with older visualization systems and file formats.
+
+.. code-block:: python
+
+    material = cq.Material(
+        name="Polished Steel",
+        description="A shiny metallic material",
+        density=7850,  # kg/m³
+        simple=cq.SimpleMaterial(
+            ambient_color=cq.Color(0.2, 0.2, 0.2, 1.0),   # Base color in shadow
+            diffuse_color=cq.Color(0.5, 0.5, 0.5, 1.0),   # Main surface color
+            specular_color=cq.Color(0.8, 0.8, 0.8, 1.0),  # Highlight color
+            shininess=0.8,  # Controls highlight size (0.0-1.0)
+            transparency=0.0,  # 0.0 is opaque, 1.0 is transparent
+        ),
+    )
+
+Export Support
+=============
+
+Different export formats support different material properties. The table below shows which material representations are supported by each format:
+
+.. raw:: html
+
+    <table style="width: 100%; border-spacing: 0 10px; margin-bottom: 20px;">
+        <tr style="border-bottom: 2px solid #000;">
+            <th style="padding: 10px; vertical-align: middle;">Format</th>
+            <th style="text-align: center; vertical-align: middle;">Color</th>
+            <th style="text-align: center; vertical-align: middle;">Simple Material</th>
+            <th style="text-align: center; vertical-align: middle;">PBR Material</th>
+        </tr>
+
+        <tr style="background-color: #f2f2f2;">
+            <td style="padding: 10px; vertical-align: middle;">STEP</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+        </tr>
+
+        <tr>
+            <td style="padding: 10px; vertical-align: middle;">VTK</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+        </tr>
+
+        <tr style="background-color: #f2f2f2;">
+            <td style="padding: 10px; vertical-align: middle;">VRML</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+        </tr>
+
+        <tr>
+            <td style="padding: 10px; vertical-align: middle;">GLTF/GLB</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+            <td style="text-align: center; vertical-align: middle;">✅</td>
+        </tr>
+
+        <tr style="background-color: #f2f2f2;">
+            <td style="padding: 10px; vertical-align: middle;">STL</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+            <td style="text-align: center; vertical-align: middle;">❌</td>
+        </tr>
+
+    </table>
+
+For the best visual appearance, especially with PBR materials, use VTK visualization with an HDR skybox
+as demonstrated in Example 028. The skybox provides realistic environment lighting and reflections,
+making materials like metals and glass look more realistic.
+
+Predefined Colors
 ---------------
 
 Aside from RGBA values, the :class:`~cadquery.Color` class can be instantiated from a text name. Valid names are
@@ -1410,3 +1566,4 @@ listed along with a color sample below:
       <div style="background-color:rgba(65,65,0,1.0);padding:10px;border-radius:5px;color:rgba(255,255,255);">yellow4</div>
       <div style="background-color:rgba(82,155,8,1.0);padding:10px;border-radius:5px;color:rgba(255,255,255);">yellowgreen</div>
     </div>
+

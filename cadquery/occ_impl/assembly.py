@@ -4,7 +4,6 @@ from typing import (
     Iterator,
     Tuple,
     Dict,
-    overload,
     Optional,
     Any,
     List,
@@ -12,119 +11,61 @@ from typing import (
 )
 from typing_extensions import Protocol
 from math import degrees, radians
+from dataclasses import dataclass
 
 from OCP.TDocStd import TDocStd_Document
-from OCP.TCollection import TCollection_ExtendedString
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType, XCAFDoc_ColorGen
+from OCP.TCollection import (
+    TCollection_ExtendedString,
+    TCollection_AsciiString,
+)
+from OCP.XCAFDoc import (
+    XCAFDoc_DocumentTool,
+    XCAFDoc_ColorType,
+    XCAFDoc_ColorGen,
+)
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
-from OCP.Quantity import Quantity_ColorRGBA
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
 from OCP.gp import gp_EulerSequence
 
+from vtkmodules.util.vtkConstants import VTK_LINE, VTK_VERTEX
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper as vtkMapper,
     vtkRenderer,
     vtkAssembly,
 )
-
 from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
-from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_LINE, VTK_VERTEX
+from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE
 
 from .geom import Location
 from .shapes import Shape, Solid, Compound
 from .exporters.vtk import toString
 from ..cq import Workplane
+from ..materials import Material, Color
+
+# Default colors
+DEFAULT_COLOR = Color(1.0, 1.0, 1.0, 1.0)  # White
+DEFAULT_EDGE_COLOR = Color(0.0, 0.0, 0.0, 1.0)  # Black
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
 
 
-class Color(object):
-    """
-    Wrapper for the OCCT color object Quantity_ColorRGBA.
-    """
+@dataclass
+class AssemblyElement:
+    """A dataclass representing an element in an assembly iterator."""
 
-    wrapped: Quantity_ColorRGBA
-
-    @overload
-    def __init__(self, name: str):
-        """
-        Construct a Color from a name.
-
-        :param name: name of the color, e.g. green
-        """
-        ...
-
-    @overload
-    def __init__(self, r: float, g: float, b: float, a: float = 0):
-        """
-        Construct a Color from RGB(A) values.
-
-        :param r: red value, 0-1
-        :param g: green value, 0-1
-        :param b: blue value, 0-1
-        :param a: alpha value, 0-1 (default: 0)
-        """
-        ...
-
-    @overload
-    def __init__(self):
-        """
-        Construct a Color with default value.
-        """
-        ...
-
-    def __init__(self, *args, **kwargs):
-
-        if len(args) == 0:
-            self.wrapped = Quantity_ColorRGBA()
-        elif len(args) == 1:
-            self.wrapped = Quantity_ColorRGBA()
-            exists = Quantity_ColorRGBA.ColorFromName_s(args[0], self.wrapped)
-            if not exists:
-                raise ValueError(f"Unknown color name: {args[0]}")
-        elif len(args) == 3:
-            r, g, b = args
-            self.wrapped = Quantity_ColorRGBA(r, g, b, 1)
-            if kwargs.get("a"):
-                self.wrapped.SetAlpha(kwargs.get("a"))
-        elif len(args) == 4:
-            r, g, b, a = args
-            self.wrapped = Quantity_ColorRGBA(r, g, b, a)
-        else:
-            raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
-
-    def __hash__(self):
-
-        return hash(self.toTuple())
-
-    def __eq__(self, other):
-
-        return self.toTuple() == other.toTuple()
-
-    def toTuple(self) -> Tuple[float, float, float, float]:
-        """
-        Convert Color to RGB tuple.
-        """
-        a = self.wrapped.Alpha()
-        rgb = self.wrapped.GetRGB()
-
-        return (rgb.Red(), rgb.Green(), rgb.Blue(), a)
-
-    def __getstate__(self) -> Tuple[float, float, float, float]:
-
-        return self.toTuple()
-
-    def __setstate__(self, data: Tuple[float, float, float, float]):
-
-        self.wrapped = Quantity_ColorRGBA(*data)
+    shape: Shape
+    name: str
+    location: Location
+    color: Optional[Color] = None
+    material: Optional[Material] = None
 
 
 class AssemblyProtocol(Protocol):
@@ -146,6 +87,10 @@ class AssemblyProtocol(Protocol):
 
     @property
     def color(self) -> Optional[Color]:
+        ...
+
+    @property
+    def material(self) -> Optional[Material]:
         ...
 
     @property
@@ -180,18 +125,19 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        material: Optional[Material] = None,
+    ) -> Iterator[AssemblyElement]:
         ...
 
 
 def setName(l: TDF_Label, name: str, tool):
-
+    """Set the name of a label in the document."""
     TDataStd_Name.Set_s(l, TCollection_ExtendedString(name))
 
 
 def setColor(l: TDF_Label, color: Color, tool):
-
-    tool.SetColor(l, color.wrapped, XCAFDoc_ColorType.XCAFDoc_ColorSurf)
+    """Set the color of a label in the document."""
+    tool.SetColor(l, color.to_occ_rgba(), XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
 
 def toCAF(
@@ -211,25 +157,30 @@ def toCAF(
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    mtool = XCAFDoc_DocumentTool.MaterialTool_s(doc.Main())
+    vmtool = XCAFDoc_DocumentTool.VisMaterialTool_s(doc.Main())
 
-    # used to store labels with unique part-color combinations
-    unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
+    # used to store labels with unique part-color-material combinations
+    unique_objs: Dict[
+        Tuple[Optional[Color], Optional[Material], AssemblyObjects], TDF_Label
+    ] = {}
     # used to cache unique, possibly meshed, compounds; allows to avoid redundant meshing operations if same object is referenced multiple times in an assy
     compounds: Dict[AssemblyObjects, Compound] = {}
 
-    def _toCAF(el, ancestor, color) -> TDF_Label:
+    def _toCAF(el, ancestor, color, material) -> TDF_Label:
 
         # create a subassy
         subassy = tool.NewShape()
         setName(subassy, el.name, tool)
 
-        # define the current color
+        # define the current color and material
         current_color = el.color if el.color else color
+        current_material: Optional[Material] = el.material if el.material else material
 
         # add a leaf with the actual part if needed
         if el.obj:
             # get/register unique parts referenced in the assy
-            key0 = (current_color, el.obj)  # (color, shape)
+            key0 = (current_color, current_material, el.obj)  # (color, material, shape)
             key1 = el.obj  # shape
 
             if key0 in unique_objs:
@@ -253,6 +204,38 @@ def toCAF(
                 if coloredSTEP and current_color:
                     setColor(lab, current_color, ctool)
 
+                # handle materials
+                if current_material:
+                    # Assign color directly to the shape
+                    if current_material.color:
+                        ctool.SetColor(
+                            lab,
+                            current_material.color.to_occ_rgba(),
+                            XCAFDoc_ColorType.XCAFDoc_ColorSurf,
+                        )
+
+                    # Convert material to OCCT format and add to document
+                    mat, vis_mat = (
+                        current_material.to_occ_material(),
+                        current_material.to_occ_vis_material(),
+                    )
+
+                    # Create material label
+                    mat_lab = mtool.AddMaterial(
+                        mat.GetName(),
+                        mat.GetDescription(),
+                        mat.GetDensity(),
+                        mat.GetDensName(),
+                        mat.GetDensValType(),
+                    )
+                    mtool.SetMaterial(lab, mat_lab)
+
+                    # Add visualization material to the document
+                    vis_mat_lab = vmtool.AddMaterial(
+                        vis_mat, TCollection_AsciiString(current_material.name)
+                    )
+                    vmtool.SetShapeMaterial(lab, vis_mat_lab)
+
             tool.AddComponent(subassy, lab, TopLoc_Location())
 
         # handle colors when *not* exporting to STEP
@@ -261,7 +244,7 @@ def toCAF(
 
         # add children recursively
         for child in el.children:
-            _toCAF(child, subassy, current_color)
+            _toCAF(child, subassy, current_color, current_material)
 
         if ancestor:
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
@@ -275,7 +258,7 @@ def toCAF(
         return rv
 
     # process the whole assy recursively
-    top = _toCAF(assy, None, None)
+    top = _toCAF(assy, None, None, None)
 
     tool.UpdateAssemblies()
 
@@ -301,45 +284,55 @@ def _loc2vtk(
 
 def toVTKAssy(
     assy: AssemblyProtocol,
-    color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
-    edgecolor: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
+    color: Color = DEFAULT_COLOR,
+    edgecolor: Color = DEFAULT_EDGE_COLOR,
     edges: bool = True,
     linewidth: float = 2,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ) -> vtkAssembly:
+    """
+    Convert an assembly to a VTK assembly with both solid faces and edges.
+    
+    Args:
+        assy: The assembly to convert
+        color: Default color for faces (white if None)
+        edgecolor: Default color for edges (black if None) 
+        edges: Whether to show edges
+        linewidth: Width of edge lines
+        tolerance: Linear tolerance for tessellation
+        angularTolerance: Angular tolerance for tessellation in degrees
+        
+    Returns:
+        A VTK assembly containing both faces and edges for each element
+    """
 
     rv = vtkAssembly()
 
-    for shape, _, loc, col_ in assy:
+    for element in assy:
+        trans, rot = _loc2vtk(element.location)
 
-        col = col_.toTuple() if col_ else color
+        data = element.shape.toVtkPolyData(tolerance, angularTolerance)
 
-        trans, rot = _loc2vtk(loc)
-
-        data = shape.toVtkPolyData(tolerance, angularTolerance)
-
-        # extract faces
+        # Extract edges (lines and vertices)
         extr = vtkExtractCellsByType()
         extr.SetInputDataObject(data)
-
         extr.AddCellType(VTK_LINE)
         extr.AddCellType(VTK_VERTEX)
         extr.Update()
         data_edges = extr.GetOutput()
 
-        # extract edges
+        # Extract faces (triangles)
         extr = vtkExtractCellsByType()
         extr.SetInputDataObject(data)
-
         extr.AddCellType(VTK_TRIANGLE)
         extr.Update()
         data_faces = extr.GetOutput()
 
-        # remove normals from edges
+        # Remove normals from edges since they're not needed
         data_edges.GetPointData().RemoveArray("Normals")
 
-        # add both to the vtkAssy
+        # Create actor for faces with material/color
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_faces)
 
@@ -347,11 +340,23 @@ def toVTKAssy(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
-        actor.GetProperty().SetColor(*col[:3])
-        actor.GetProperty().SetOpacity(col[3])
+
+        # Apply material or color
+        if element.material:
+            element.material.apply_to_vtk_actor(actor)
+        else:
+            # Apply color directly
+            use_color = element.color if element.color else color
+            prop = actor.GetProperty()
+            prop.SetColor(*use_color.rgb())
+            prop.SetOpacity(use_color.alpha)
 
         rv.AddPart(actor)
 
+        if not edges:
+            continue
+
+        # Create actor for edges
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_edges)
 
@@ -360,9 +365,11 @@ def toVTKAssy(
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
         actor.GetProperty().SetLineWidth(linewidth)
-        actor.SetVisibility(edges)
-        actor.GetProperty().SetColor(*edgecolor[:3])
-        actor.GetProperty().SetLineWidth(edgecolor[3])
+
+        # Apply edge color directly
+        prop = actor.GetProperty()
+        prop.SetColor(*edgecolor.rgb())
+        prop.SetOpacity(edgecolor.alpha)
 
         rv.AddPart(actor)
 
@@ -371,42 +378,51 @@ def toVTKAssy(
 
 def toVTK(
     assy: AssemblyProtocol,
-    color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
+    color: Color = DEFAULT_COLOR,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
+    *,
+    edges: bool = True,
 ) -> vtkRenderer:
+    """
+    Convert an assembly to a VTK renderer with both solid faces and edges.
+    
+    Args:
+        assy: The assembly to convert
+        color: Default color for faces (white if None)
+        tolerance: Linear tolerance for tessellation
+        angularTolerance: Angular tolerance for tessellation in degrees
+        
+    Returns:
+        A VTK renderer containing both faces and edges for each element
+    """
 
     renderer = vtkRenderer()
 
-    for shape, _, loc, col_ in assy:
+    for element in assy:
+        trans, rot = _loc2vtk(element.location)
 
-        col = col_.toTuple() if col_ else color
+        data = element.shape.toVtkPolyData(tolerance, angularTolerance)
 
-        trans, rot = _loc2vtk(loc)
-
-        data = shape.toVtkPolyData(tolerance, angularTolerance)
-
-        # extract faces
+        # Extract edges (lines and vertices)
         extr = vtkExtractCellsByType()
         extr.SetInputDataObject(data)
-
         extr.AddCellType(VTK_LINE)
         extr.AddCellType(VTK_VERTEX)
         extr.Update()
         data_edges = extr.GetOutput()
 
-        # extract edges
+        # Extract faces (triangles)
         extr = vtkExtractCellsByType()
         extr.SetInputDataObject(data)
-
         extr.AddCellType(VTK_TRIANGLE)
         extr.Update()
         data_faces = extr.GetOutput()
 
-        # remove normals from edges
+        # Remove normals from edges since they're not needed
         data_edges.GetPointData().RemoveArray("Normals")
 
-        # add both to the renderer
+        # Create actor for faces with material/color
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_faces)
 
@@ -414,11 +430,23 @@ def toVTK(
         actor.SetMapper(mapper)
         actor.SetPosition(*trans)
         actor.SetOrientation(*rot)
-        actor.GetProperty().SetColor(*col[:3])
-        actor.GetProperty().SetOpacity(col[3])
+
+        # Apply material or color
+        if element.material:
+            element.material.apply_to_vtk_actor(actor)
+        else:
+            # Apply color directly
+            use_color = element.color if element.color else color
+            prop = actor.GetProperty()
+            prop.SetColor(*use_color.rgb())
+            prop.SetOpacity(use_color.alpha)
 
         renderer.AddActor(actor)
 
+        if not edges:
+            continue
+
+        # Create actor for edges
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_edges)
 
@@ -433,9 +461,7 @@ def toVTK(
 
 
 def toJSON(
-    assy: AssemblyProtocol,
-    color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
-    tolerance: float = 1e-3,
+    assy: AssemblyProtocol, color: Color = DEFAULT_COLOR, tolerance: float = 1e-3,
 ) -> List[Dict[str, Any]]:
     """
     Export an object to a structure suitable for converting to VTK.js JSON.
@@ -443,17 +469,31 @@ def toJSON(
 
     rv = []
 
-    for shape, _, loc, col_ in assy:
-
+    for element in assy:
         val: Any = {}
 
-        data = toString(shape, tolerance)
-        trans, rot = loc.toTuple()
+        data = toString(element.shape, tolerance)
+        trans, rot = element.location.toTuple()
 
         val["shape"] = data
-        val["color"] = col_.toTuple() if col_ else color
+        val["color"] = element.color.rgba() if element.color else color.rgba()
         val["position"] = trans
         val["orientation"] = tuple(radians(r) for r in rot)
+
+        # Add material properties if available
+        if element.material:
+            val["material"] = {
+                "name": element.material.name,
+                "description": element.material.description,
+                "density": element.material.density,
+            }
+            if element.material.pbr:
+                val["material"]["pbr"] = {
+                    "base_color": element.material.pbr.base_color.rgba(),
+                    "metallic": element.material.pbr.metallic,
+                    "roughness": element.material.pbr.roughness,
+                    "refraction_index": element.material.pbr.refraction_index,
+                }
 
         rv.append(val)
 
@@ -492,9 +532,9 @@ def toFusedCAF(
     shapes: List[Shape] = []
     colors = []
 
-    for shape, _, loc, color in assy:
-        shapes.append(shape.moved(loc).copy())
-        colors.append(color)
+    for element in assy:
+        shapes.append(element.shape.moved(element.location).copy())
+        colors.append(element.color)
 
     # Initialize with a dummy value for mypy
     top_level_shape = cast(TopoDS_Shape, None)
@@ -541,7 +581,7 @@ def toFusedCAF(
             # See if the face can be treated as-is
             cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
             if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(face.wrapped):
-                color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+                color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
 
             # Handle any modified faces
             modded_list = fuse_op.Modified(face.wrapped)
@@ -550,7 +590,7 @@ def toFusedCAF(
                 # Add the face as a subshape and set its color to match the parent assembly component
                 cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
                 if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(mod):
-                    color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+                    color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
 
             # Handle any generated faces
             gen_list = fuse_op.Generated(face.wrapped)
@@ -559,7 +599,7 @@ def toFusedCAF(
                 # Add the face as a subshape and set its color to match the parent assembly component
                 cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
                 if color and not cur_lbl.IsNull():
-                    color_tool.SetColor(cur_lbl, color.wrapped, XCAFDoc_ColorGen)
+                    color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
 
     return top_level_lbl, doc
 
@@ -572,9 +612,9 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
     # make the id map
     id_map = {}
 
-    for obj, name, loc, _ in assy:
-        for s in obj.moved(loc).Solids():
-            id_map[s] = name
+    for element in assy:
+        for s in element.shape.moved(element.location).Solids():
+            id_map[s] = element.name
 
     # connect topologically
     bldr = BOPAlgo_MakeConnected()
