@@ -560,6 +560,29 @@ def test_color():
         cq.Color(1, 2, 3, 4, 5)
 
 
+def test_step_color(tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    step_color_path = os.path.join(tmpdir, "step_color.step")
+
+    # Create a simple assembly with color
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(10, 10, 10), color=cq.Color(0.47, 0.253, 0.18, 1.0))
+
+    success = exportStepMeta(assy, step_color_path)
+    assert success
+
+    # Read the file as a string and check for the correct colors
+    with open(step_color_path, "r") as f:
+        step_content = f.readlines()
+        # Step through and try to find the COLOUR line
+        for line in step_content:
+            if "COLOUR_RGB(''," in line:
+                assert "0.47" in line
+                assert "0.25" in line
+                assert "0.18" in line
+
+
 def test_assembly(simple_assy, nested_assy):
 
     # basic checks

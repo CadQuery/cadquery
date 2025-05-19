@@ -176,7 +176,9 @@ def exportStepMeta(
             part_label = shape_tool.AddShape(shape.wrapped, False)
             TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name))
             if color:
-                color_tool.SetColor(part_label, color.wrapped, XCAFDoc_ColorGen)
+                color_tool.SetColor(
+                    part_label, color.shiftForExport().wrapped, XCAFDoc_ColorGen
+                )
             shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
 
             # If this assembly has shape metadata, add it to the shape
@@ -207,7 +209,9 @@ def exportStepMeta(
                             # Set the individual face color
                             if face in colors:
                                 color_tool.SetColor(
-                                    face_label, colors[face].wrapped, XCAFDoc_ColorGen,
+                                    face_label,
+                                    colors[face].shiftForExport().wrapped,
+                                    XCAFDoc_ColorGen,
                                 )
 
                             # Also add a layer to hold the face label data

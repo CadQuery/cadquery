@@ -20,7 +20,7 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
-from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA
+from OCP.Quantity import Quantity_ColorRGBA
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
@@ -118,19 +118,22 @@ class Color(object):
 
         return (rgb.Red(), rgb.Green(), rgb.Blue(), a)
 
-    def toTupleSRGB(self) -> Tuple[float, float, float, float]:
-        """
-        Convert Color to RGB tuple.
-        """
-        a = self.wrapped.Alpha()
-        rgb = self.wrapped.GetRGB()
+    def shiftForExport(self):
+        def _srgb_to_linear(c):
+            """Convert a single sRGB channel (0.0–1.0) to linear RGB."""
+            if c <= 0.04045:
+                return c / 12.92
+            else:
+                return ((c + 0.055) / 1.055) ** 2.4
 
-        # Convert linear to sRGB
-        r = Quantity_Color.Convert_LinearRGB_To_sRGB_s(rgb.Red())
-        g = Quantity_Color.Convert_LinearRGB_To_sRGB_s(rgb.Green())
-        b = Quantity_Color.Convert_LinearRGB_To_sRGB_s(rgb.Blue())
-
-        return (r, g, b, a)
+        # Pre-shift the colors so that when they are converted again during export they end back up at the expected values
+        rgba = self.toTuple()
+        return Color(
+            _srgb_to_linear(rgba[0]),
+            _srgb_to_linear(rgba[1]),
+            _srgb_to_linear(rgba[2]),
+            rgba[3],
+        )
 
     def __getstate__(self) -> Tuple[float, float, float, float]:
 
