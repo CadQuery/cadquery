@@ -191,7 +191,7 @@ def exportStepMeta(
 
                 # Step through every face in the shape, and see if any metadata needs to be attached to it
                 for face in shape.Faces():
-                    if face in names or face in shape in colors or face in layers:
+                    if face in names or face in colors or face in layers:
                         # Add the face as a subshape
                         face_label = shape_tool.AddSubShape(part_label, face.wrapped)
 
