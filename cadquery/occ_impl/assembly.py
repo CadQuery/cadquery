@@ -20,7 +20,11 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
-from OCP.Quantity import Quantity_ColorRGBA
+from OCP.Quantity import (
+    Quantity_ColorRGBA,
+    Quantity_Color,
+    Quantity_TOC_sRGB,
+)
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
@@ -92,12 +96,16 @@ class Color(object):
                 raise ValueError(f"Unknown color name: {args[0]}")
         elif len(args) == 3:
             r, g, b = args
-            self.wrapped = Quantity_ColorRGBA(r, g, b, 1)
+            self.wrapped = Quantity_ColorRGBA(
+                Quantity_Color(r, g, b, Quantity_TOC_sRGB), 1
+            )
             if kwargs.get("a"):
                 self.wrapped.SetAlpha(kwargs.get("a"))
         elif len(args) == 4:
             r, g, b, a = args
-            self.wrapped = Quantity_ColorRGBA(r, g, b, a)
+            self.wrapped = Quantity_ColorRGBA(
+                Quantity_Color(r, g, b, Quantity_TOC_sRGB), a
+            )
         else:
             raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
 
@@ -114,9 +122,9 @@ class Color(object):
         Convert Color to RGB tuple.
         """
         a = self.wrapped.Alpha()
-        rgb = self.wrapped.GetRGB()
+        rgb = self.wrapped.GetRGB().Values(Quantity_TOC_sRGB)
 
-        return (rgb.Red(), rgb.Green(), rgb.Blue(), a)
+        return (*rgb, a)
 
     def __getstate__(self) -> Tuple[float, float, float, float]:
 
