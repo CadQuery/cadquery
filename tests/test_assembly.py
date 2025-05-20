@@ -34,7 +34,7 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
-from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
+from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB
 from OCP.TopAbs import TopAbs_ShapeEnum
 
 
@@ -427,7 +427,7 @@ def get_doc_nodes(doc, leaf=False):
                         child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
                     ):
                         face_color = (
-                            *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
+                            *color_subshape.GetRGB().Values(Quantity_TOC_sRGB),
                             color_subshape.Alpha(),
                         )
 
@@ -442,7 +442,7 @@ def get_doc_nodes(doc, leaf=False):
                     ):
                         color_subshapes_set.add(
                             (
-                                *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
+                                *color_subshape.GetRGB().Values(Quantity_TOC_sRGB),
                                 color_subshape.Alpha(),
                             )
                         )
@@ -454,9 +454,9 @@ def get_doc_nodes(doc, leaf=False):
             {
                 "path": PurePath(node.Id.ToCString()),
                 "name": TCollection_ExtendedString(name_att.Get()).ToExtString(),
-                "color": (*color.GetRGB().Values(Quantity_TOC_RGB), color.Alpha()),
+                "color": (*color.GetRGB().Values(Quantity_TOC_sRGB), color.Alpha()),
                 "color_shape": (
-                    *color_shape.GetRGB().Values(Quantity_TOC_RGB),
+                    *color_shape.GetRGB().Values(Quantity_TOC_sRGB),
                     color_shape.Alpha(),
                 ),
                 "color_subshapes": color_subshapes,
