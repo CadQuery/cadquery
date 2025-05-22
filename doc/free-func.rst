@@ -1,4 +1,4 @@
-.. _freefuncapi:
+
 
 *****************
 Free function API
@@ -241,7 +241,8 @@ Placement and creation of arrays is possible using :meth:`~cadquery.Shape.move` 
 Text
 ----
 
-The free function API has extensive text creation capabilities including text on planar curves and text on surfaces.
+The free function API has extensive text creation capabilities including text on
+planar curves and text on surfaces.
 
 
 .. cadquery::
@@ -275,3 +276,156 @@ The free function API has extensive text creation capabilities including text on
     r4 = offset(r3, TH).moved(z=S)
 
     result = compound(r1, r2, r3, r4)
+
+
+Adding features manually
+------------------------
+
+In certain cases it is desirable to add features such as holes or protrusions manually.
+E.g., for complicated shapes it might be beneficial performance-wise because it
+avoids boolean operations. One can add or remove faces, add holes to existing faces
+and last but not least reconstruct existing solids. 
+
+.. cadquery::
+    
+    from cadquery.func import *
+    
+    w = 1
+    r = 0.9*w/2
+    
+    # box
+    b = box(w, w, w)
+    # bottom face
+    b_bot = b.faces('<Z')
+    # top faces
+    b_top = b.faces('>Z')
+    
+    # inner face 
+    inner = extrude(circle(r), (0,0,w))
+    
+    # add holes to the bottom and top face
+    b_bot_hole = b_bot.addHole(inner.edges('<Z'))
+    b_top_hole = b_top.addHole(inner.edges('>Z'))
+    
+    # construct the final solid
+    result = solid(
+        b.remove(b_top, b_bot).faces(), #side faces
+        b_bot_hole, # bottom with a hole
+        inner, # inner cylinder face
+        b_top_hole, # top with a hole
+    )
+
+If the base shape is more complicated, it is possible to use local sewing that
+takes into account on indicated elements of the context shape. This, however,
+necessitates a two step approach - first a shell needs to be explicitly sewn
+and only then the final solid can be constructed.
+
+.. cadquery::
+
+    from cadquery.func import *
+    
+    w = 1
+    h = 0.1
+    r = 0.9*w/2
+    
+    # box
+    b = box(w, w, w)
+    # top face
+    b_top = b.faces('>Z')
+    
+    # protrusion
+    feat_side = extrude(circle(r).moved(b_top.Center()), (0,0,h))
+    feat_top = face(feat_side.edges('>Z'))
+    feat = shell(feat_side, feat_top) # sew into a shell
+    
+    # add hole to the box
+    b_top_hole = b_top.addHole(feat.edges('<Z'))
+    b = b.replace(b_top, b_top_hole)
+    
+    # local sewing - only two faces are taken into account
+    sh = shell(b_top_hole, feat.faces('<Z'), ctx=(b, feat))
+    # construct the final solid
+    result = solid(sh)
+
+
+Mapping onto parametric space
+-----------------------------
+
+To complement functionalities described, it is possible to trim edges and faces explicitly using simple rectangular
+trims, polygons, splines or arbitrary wires.
+
+.. cadquery::
+
+    from math import pi
+    from cadquery.func import cylinder, edgeOn, compound, wire
+
+    # parameters
+    d = 1.5
+    h = 3
+    du = pi
+    Nturns = 2
+
+    # construct the base surface
+    base = cylinder(d, h).faces("%CYLINDER")
+
+    # rectangular trim
+    r1 = base.trim(-pi/2, 0, 0, h/3)
+
+    # polyline trim
+    r2 = base.trim((0,0), (pi,0), (pi/2, h/2))
+
+    # construct a pcurve
+    pcurve = edgeOn(base, [(pi/2, h/4), (pi, h/4), (pi, h/2), (pi/2, h/2)], periodic=True)
+
+    # pcurve trim
+    r3 = base.trim(wire(pcurve))
+
+    result = compound(r1, r2.moved(x=2), r3.moved(x=4))
+
+
+This in principle allows to model arbitrary shapes in the parametric domain, but often it is more desirable
+to work with higher level objects like wires.
+
+
+.. cadquery::
+
+    from cadquery.func import cylinder, loft, wireOn, segment
+    from math import pi
+
+    # parameters
+    d = 1.5
+    h = 3
+    du = pi
+    Nturns = 2
+
+    # construct the base surface
+    base = cylinder(d, h).faces("%CYLINDER")
+
+    # construct a planar 2D patch for u,v trimming
+    uv_patch = loft(
+        segment((0, 0), (du, 0)), segment((Nturns * 2 * pi, h), (Nturns * 2 * pi + du, h))
+    )
+
+    # map it onto the cylinder
+    w = wireOn(base, uv_patch)
+
+    # check that the pcurves were created
+    for e in w:
+        assert e.hasPCurve(base), "No p-curve on base present"
+
+    # trim the base surface
+    result = base.trim(w)
+
+
+Finally, it is also possible to map complete faces.
+
+
+.. cadquery::
+
+    from cadquery.func import sphere, text, faceOn
+
+    base = sphere(5).faces()
+
+    result = faceOn(base, text("CadQuery", 1))
+
+
