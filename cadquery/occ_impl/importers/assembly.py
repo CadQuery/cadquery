@@ -3,9 +3,14 @@ from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA
 from OCP.TDocStd import TDocStd_Document
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.STEPCAFControl import STEPCAFControl_Reader
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen, XCAFDoc_ColorSurf, XCAFDoc_GraphNode
+from OCP.XCAFDoc import (
+    XCAFDoc_DocumentTool,
+    XCAFDoc_ColorGen,
+    XCAFDoc_ColorSurf,
+    XCAFDoc_GraphNode,
+)
 from OCP.TDF import TDF_Label, TDF_LabelSequence, TDF_AttributeIterator
-from OCP.TDataStd import TDataStd_Name
+from OCP.TDataStd import TDataStd_Name, TDataStd_TreeNode
 
 import cadquery as cq
 from ..assembly import AssemblyProtocol
@@ -43,6 +48,7 @@ def importStep(assy: AssemblyProtocol, path: str):
     # Shape and color tools for extracting XCAF data
     shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    layer_tool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
 
     def process_label(label, parent_location=None):
         """
@@ -115,43 +121,42 @@ def importStep(assy: AssemblyProtocol, path: str):
             else:
                 assy.add(cq.Shape.cast(shape), name=name, color=cq_color)
 
-            # if label.NbChildren() > 0:
-            #     child_label = label.FindChild(1)
+            if label.NbChildren() > 0:
+                child_label = label.FindChild(1)
+                attr_iterator = TDF_AttributeIterator(child_label)
+                while attr_iterator.More():
+                    current_attr = attr_iterator.Value()
 
-            #     # Create an attribute iterator
-            #     attr_iterator = TDF_AttributeIterator(child_label)
+                    # Get the type name of the attribute so that we can decide how to handle it
+                    if current_attr.DynamicType().Name() == "TNaming_NamedShape":
+                        # Save the shape so that we can add it to the subshape data
+                        cur_shape = current_attr.Get()
+                        cur_shape_type = cur_shape.ShapeType()
 
-            #     # Iterate through all attributes
-            #     while attr_iterator.More():
-            #         current_attr = attr_iterator.Value()
-            #         # Get the ID of the attribute
-            #         attr_id = current_attr.ID()
-            #         print(f"Found attribute with ID: {attr_id}")
-            #         print(f"Attribute type: {current_attr.DynamicType().Name()}")
-            #         if current_attr.DynamicType().Name() == "XCAFDoc_GraphNode":
-            #             graph_node = XCAFDoc_GraphNode()
-            #             if child_label.FindAttribute(XCAFDoc_GraphNode.GetID_s(), graph_node):
-            #                 # Follow the graph node to its referenced labels
-            #                     for i in range(1, graph_node.NbChildren() + 1):
-            #                         child_graph_node = graph_node.GetChild(i)
-            #                         if not child_graph_node.IsNull():
-            #                             referenced_label = child_graph_node.Label()
-            #                             if not referenced_label.IsNull():
-            #                                 # Check for name on the referenced label
-            #                                 name_attr = TDataStd_Name()
-            #                                 if referenced_label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
-            #                                     name = name_attr.Get().ToExtString()
-            #                                     print(f"Found name via GraphNode reference: {name}")
-                    # if current_attr.DynamicType().Name() == "TNaming_NamedShape":
-                    #     shape = current_attr.Get()
-                    #     if not shape.IsNull():
-                    #         name = shape_tool.GetName_s(shape)
-                    #         if name:
-                    #             print(f"Shape name: {name}")
-                    #     if child_label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
-                    #         print(name_attr)
-                    # Move to next attribute
-                    # attr_iterator.Next()
+                        # Find the layer name, if there is one set for this shape
+                        layers = TDF_LabelSequence()
+                        layer_tool.GetLayers(child_label, layers)
+                        for i in range(1, layers.Length() + 1):
+                            lbl = layers.Value(i)
+                            name_attr = TDataStd_Name()
+                            lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+
+                            # Extract the layer name for the shape here
+                            layer_name = name_attr.Get().ToExtString()
+
+                        # Find the subshape color, if there is one set for this shape
+                        color = Quantity_ColorRGBA()
+                        if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
+                            rgb = color.GetRGB()
+                            cq_color = cq.Color(
+                                rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha()
+                            )
+                    elif current_attr.DynamicType().Name() == "TDataStd_TreeNode":
+                        print("TreeNode")
+                    elif current_attr.DynamicType().Name() == "XCAFDoc_GraphNode":
+                        print("GraphNode")
+
+                    attr_iterator.Next()
 
     # Grab the labels, which should hold the assembly parent
     labels = TDF_LabelSequence()

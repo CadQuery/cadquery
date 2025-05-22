@@ -872,8 +872,8 @@ def test_assembly_subshape_step_import(tmpdir):
     assy.addSubshape(
         cube_1.faces(">Z").val(),
         name="cube_1_top_face",
-        color=cq.Color("red"),
-        layer="cube_1_top_face"
+        color=cq.Color("blue"),
+        layer="cube_1_top_face",
     )
 
     # Export the assembly
@@ -887,6 +887,7 @@ def test_assembly_subshape_step_import(tmpdir):
     # assert imported_assy.subshapes["cube_1_top_face"].name == "cube_1_top_face"
     # assert imported_assy.subshapes["cube_1_top_face"].color == cq.Color("red")
     # assert imported_assy.subshapes["cube_1_top_face"].layer == "cube_1_top_face"
+
 
 @pytest.mark.parametrize(
     "assy_fixture, expected",
