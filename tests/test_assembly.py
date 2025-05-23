@@ -872,7 +872,7 @@ def test_assembly_subshape_step_import(tmpdir):
     assy.addSubshape(
         cube_1.faces(">Z").val(),
         name="cube_1_top_face",
-        color=cq.Color("blue"),
+        color=cq.Color("red"),
         layer="cube_1_top_face",
     )
 
@@ -883,10 +883,18 @@ def test_assembly_subshape_step_import(tmpdir):
     # Import the STEP file back in
     imported_assy = cq.Assembly.importStep(assy_step_path)
     assert imported_assy.name == "top_level"
-    assert len(imported_assy._subshape_names) == 1
-    # assert imported_assy.subshapes["cube_1_top_face"].name == "cube_1_top_face"
-    # assert imported_assy.subshapes["cube_1_top_face"].color == cq.Color("red")
-    # assert imported_assy.subshapes["cube_1_top_face"].layer == "cube_1_top_face"
+
+    # Check the advanced face name
+    # assert len(imported_assy._subshape_names) == 1
+    # assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
+
+    # Check the color
+    color = list(imported_assy._subshape_colors.values())[0].toTuple()
+    assert color == cq.Color("red").toTuple()
+
+    # Check the layer info
+    layer_name = list(imported_assy._subshape_layers.values())[0]
+    assert layer_name == "cube_1_top_face"
 
 
 @pytest.mark.parametrize(

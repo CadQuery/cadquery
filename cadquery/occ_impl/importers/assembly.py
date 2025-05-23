@@ -131,7 +131,9 @@ def importStep(assy: AssemblyProtocol, path: str):
                     if current_attr.DynamicType().Name() == "TNaming_NamedShape":
                         # Save the shape so that we can add it to the subshape data
                         cur_shape = current_attr.Get()
-                        cur_shape_type = cur_shape.ShapeType()
+
+                        # The shape type can be obtained with the following
+                        # cur_shape_type = cur_shape.ShapeType()
 
                         # Find the layer name, if there is one set for this shape
                         layers = TDF_LabelSequence()
@@ -144,13 +146,20 @@ def importStep(assy: AssemblyProtocol, path: str):
                             # Extract the layer name for the shape here
                             layer_name = name_attr.Get().ToExtString()
 
+                            # Add the layer as a subshape entry on the assembly
+                            assy.addSubshape(cur_shape, layer=layer_name)
+
                         # Find the subshape color, if there is one set for this shape
                         color = Quantity_ColorRGBA()
+                        # Extract the color, if present on the shape
                         if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
                             rgb = color.GetRGB()
                             cq_color = cq.Color(
                                 rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha()
                             )
+
+                            # Save the color info via the assembly subshape mechanism
+                            assy.addSubshape(cur_shape, color=cq_color)
                     elif current_attr.DynamicType().Name() == "TDataStd_TreeNode":
                         print("TreeNode")
                     elif current_attr.DynamicType().Name() == "XCAFDoc_GraphNode":
