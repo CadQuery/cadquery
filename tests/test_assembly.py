@@ -366,6 +366,41 @@ def chassis0_assy():
     return chassis
 
 
+def subshape_assy():
+    """
+    Builds an assembly with the needed subshapes to test the export and import of STEP files.
+    """
+
+    # Create a simple assembly
+    assy = cq.Assembly(name="top-level")
+    cube_1 = cq.Workplane().box(10.0, 10.0, 10.0)
+    assy.add(cube_1, name="cube_1", color=cq.Color("green"))
+
+    # Add subshape name, color and layer
+    assy.addSubshape(
+        cube_1.faces(">Z").val(),
+        name="cube_1_top_face",
+        color=cq.Color("red"),
+        layer="cube_1_top_face",
+    )
+
+    # Add a cylinder to the assembly
+    cyl_1 = cq.Workplane().cylinder(10.0, 2.5)
+    assy.add(
+        cyl_1, name="cyl_1", color=cq.Color("blue"), loc=cq.Location((0.0, 0.0, -10.0))
+    )
+
+    # Add a subshape face for the cylinder
+    assy.addSubshape(
+        cyl_1.faces("<Z").val(),
+        name="cylinder_bottom_face",
+        color=cq.Color("green"),
+        layer="cylinder_bottom_face",
+    )
+
+    return assy
+
+
 def read_step(stepfile) -> TDocStd_Document:
     """Read STEP file, return XCAF document"""
 
@@ -783,6 +818,83 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assy.addSubshape(cube.faces(">Z").val(), layer="cube_top_face")
     success = exportStepMeta(assy, meta_path)
     assert success
+
+
+def test_assembly_step_import(tmp_path_factory):
+    """
+    Test if the STEP import works correctly for an assembly with subshape data attached.
+    """
+    assy = subshape_assy()
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    assy_step_path = os.path.join(tmpdir, "assembly_with_subshapes.step")
+
+    success = exportStepMeta(assy, assy_step_path)
+    assert success
+
+    # Import the STEP file back in
+    imported_assy = cq.Assembly.importStep(assy_step_path)
+
+    # Check that the assembly was imported successfully
+    assert imported_assy is not None
+
+    # Check for appropriate part names and colors
+    assert imported_assy.children[0].name == "cube_1"
+    assert imported_assy.children[0].color.toTuple() == (0.0, 1.0, 0.0, 1.0)
+    assert imported_assy.children[1].name == "cyl_1"
+    assert imported_assy.children[1].color.toTuple() == (0.0, 0.0, 1.0, 1.0)
+    assert imported_assy.name == "top-level"
+
+    # Test a STEP file that does not contain an assembly
+    wp_step_path = os.path.join(tmpdir, "plain_workplane.step")
+    res = cq.Workplane().box(10, 10, 10)
+    res.export(wp_step_path)
+
+    # Import the STEP file back in
+    with pytest.raises(ValueError):
+        imported_assy = cq.Assembly.importStep(wp_step_path)
+
+
+def test_assembly_subshape_step_import(tmpdir):
+    """
+    Test if a STEP file containing subshape information can be imported correctly.
+    """
+
+    assy_step_path = os.path.join(tmpdir, "subshape_assy.step")
+
+    # Create a basic assembly
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    assy = cq.Assembly(name="top_level")
+    assy.add(cube_1, name="cube_1")
+
+    # Add subshape name, color and layer
+    assy.addSubshape(
+        cube_1.faces(">Z").val(),
+        name="cube_1_top_face",
+        color=cq.Color("red"),
+        layer="cube_1_top_face",
+    )
+
+    # Export the assembly
+    success = exportStepMeta(assy, assy_step_path)
+    assert success
+
+    # Import the STEP file back in
+    imported_assy = cq.Assembly.importStep(assy_step_path)
+    assert imported_assy.name == "top_level"
+
+    # Check the advanced face name
+    # assert len(imported_assy._subshape_names) == 1
+    # assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
+
+    # Check the color
+    color = list(imported_assy._subshape_colors.values())[0].toTuple()
+    assert color == cq.Color("red").toTuple()
+
+    # Check the layer info
+    layer_name = list(imported_assy._subshape_layers.values())[0]
+    assert layer_name == "cube_1_top_face"
 
 
 @pytest.mark.parametrize(

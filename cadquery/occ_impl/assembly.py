@@ -140,6 +140,10 @@ class AssemblyProtocol(Protocol):
     def name(self) -> str:
         ...
 
+    @name.setter
+    def name(self, value: str) -> None:
+        ...
+
     @property
     def parent(self) -> Optional["AssemblyProtocol"]:
         ...
