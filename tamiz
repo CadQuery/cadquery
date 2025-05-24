@@ -1,0 +1,20 @@
+import cadquery as cq
+
+# Crear el tamiz rotativo (cilindro horizontal con eje)
+tamiz = cq.Workplane("XY").circle(50).extrude(200)
+
+# Eje central
+eje = cq.Workplane("XY").circle(10).extrude(220).translate((0, 0, -10))
+tamiz = tamiz.union(eje)
+
+# Escalera
+escalera = cq.Workplane("XZ").rect(5, 100).extrude(5).translate((-60, 0, 0))
+escalera = escalera.union(cq.Workplane("XZ").rect(5, 100).extrude(5).translate((-40, 0, 0)))
+
+for i in range(0, 100, 20):
+    peldaño = cq.Workplane("XZ").rect(20, 3).extrude(5).translate((-55, i, 0))
+    escalera = escalera.union(peldaño)
+
+modelo_final = tamiz.union(escalera.translate((0, 0, -50)))
+
+cq.exporters.export(modelo_final, 'tamiz_con_escalera.dxf')
