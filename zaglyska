@@ -1,0 +1,30 @@
+import cadquery as cq
+
+# Розміри
+length = 61.0
+width = 181.0
+thickness = 1.0
+hole_diameter = 18.0
+hole_center_x = 67.0
+hole_center_y = width / 2
+corner_radius = 5.0
+
+# Створення форми заглушки
+result = (
+    cq.Workplane("XY")
+    .rect(length, width)
+    .fillet(corner_radius)
+    .extrude(thickness)
+)
+
+# Отвір
+result = (
+    result.faces(">Z")
+    .workplane()
+    .transformed(offset=(hole_center_x - length/2, 0, 0))
+    .hole(hole_diameter)
+)
+
+# Зберегти STL
+cq.exporters.export(result, 'zaglushka_final.stl')
+
