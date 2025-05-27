@@ -856,11 +856,12 @@ def test_assembly_step_import(tmp_path_factory):
         imported_assy = cq.Assembly.importStep(wp_step_path)
 
 
-def test_assembly_subshape_step_import(tmpdir):
+def test_assembly_subshape_step_import(tmp_path_factory):
     """
     Test if a STEP file containing subshape information can be imported correctly.
     """
 
+    tmpdir = tmp_path_factory.mktemp("out")
     assy_step_path = os.path.join(tmpdir, "subshape_assy.step")
 
     # Create a basic assembly
@@ -885,8 +886,8 @@ def test_assembly_subshape_step_import(tmpdir):
     assert imported_assy.name == "top_level"
 
     # Check the advanced face name
-    # assert len(imported_assy._subshape_names) == 1
-    # assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
+    assert len(imported_assy._subshape_names) == 1
+    assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
 
     # Check the color
     color = list(imported_assy._subshape_colors.values())[0].toTuple()
