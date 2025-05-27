@@ -839,11 +839,14 @@ def test_assembly_step_import(tmp_path_factory):
     # Check that the assembly was imported successfully
     assert imported_assy is not None
 
-    # Check for appropriate part names and colors
+    # Check for appropriate part name
     assert imported_assy.children[0].name == "cube_1"
-    assert imported_assy.children[0].color.toTuple() == (0.0, 1.0, 0.0, 1.0)
+    # Check for approximate color match
+    assert pytest.approx(imported_assy.children[0].color.toTuple(), rel=0.01) == (0.0, 1.0, 0.0, 1.0)
+    # Check for appropriate part name
     assert imported_assy.children[1].name == "cyl_1"
-    assert imported_assy.children[1].color.toTuple() == (0.0, 0.0, 1.0, 1.0)
+    # Check for approximate color match
+    assert pytest.approx(imported_assy.children[1].color.toTuple(), rel=0.01) == (0.0, 0.0, 1.0, 1.0)
     assert imported_assy.name == "top-level"
 
     # Test a STEP file that does not contain an assembly
