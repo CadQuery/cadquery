@@ -184,7 +184,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                                 it.Next()
 
                             # If we found a color name, save it on the subshape
-                            # Perfer the RGB value because when importing, OCCT will try to round
+                            # Perfer the RGB value because when importing, OCCT tries to round
                             # RGB values to fit color names.
                             if cq_color is not None:
                                 assy.addSubshape(cur_shape, color=cq_color)
@@ -204,11 +204,6 @@ def importStep(assy: AssemblyProtocol, path: str):
                                         cur_shape, name=new_attr.Get().ToExtString(),
                                     )
                                 it.Next()
-                        else:
-                            print(
-                                "Unknown attribute type:",
-                                current_attr.DynamicType().Name(),
-                            )
 
                         attr_iterator.Next()
 

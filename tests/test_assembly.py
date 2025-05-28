@@ -34,7 +34,7 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
-from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB
+from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB, Quantity_NameOfColor
 from OCP.TopAbs import TopAbs_ShapeEnum
 
 
@@ -880,7 +880,7 @@ def test_assembly_subshape_step_import(tmp_path_factory):
     # Create a basic assembly
     cube_1 = cq.Workplane().box(10, 10, 10)
     assy = cq.Assembly(name="top_level")
-    assy.add(cube_1, name="cube_1", color=cq.Color(0.76512, 0.23491, 0.91301))
+    assy.add(cube_1, name="cube_1")
 
     # Add subshape name, color and layer
     assy.addSubshape(
@@ -903,8 +903,8 @@ def test_assembly_subshape_step_import(tmp_path_factory):
     assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
 
     # Check the color
-    color = list(imported_assy._subshape_colors.values())[0].toTuple()
-    assert color == cq.Color("red").toTuple()
+    color = list(imported_assy._subshape_colors.values())[0]
+    assert Quantity_NameOfColor.Quantity_NOC_RED == color.wrapped.GetRGB().Name()
 
     # Check the layer info
     layer_name = list(imported_assy._subshape_layers.values())[0]
