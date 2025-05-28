@@ -880,7 +880,7 @@ def test_assembly_subshape_step_import(tmp_path_factory):
     # Create a basic assembly
     cube_1 = cq.Workplane().box(10, 10, 10)
     assy = cq.Assembly(name="top_level")
-    assy.add(cube_1, name="cube_1")
+    assy.add(cube_1, name="cube_1", color=cq.Color(0.76512, 0.23491, 0.91301))
 
     # Add subshape name, color and layer
     assy.addSubshape(
@@ -909,6 +909,20 @@ def test_assembly_subshape_step_import(tmp_path_factory):
     # Check the layer info
     layer_name = list(imported_assy._subshape_layers.values())[0]
     assert layer_name == "cube_1_top_face"
+
+
+def test_bad_step_file_import(tmp_path_factory):
+    """
+    Test if a bad STEP file raises an error when importing.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    bad_step_path = os.path.join(tmpdir, "bad_step.step")
+
+    # Check that an error is raised when trying to import a non-existent STEP file
+    with pytest.raises(ValueError):
+        # Export the assembly
+        imported_assy = cq.Assembly.importStep(bad_step_path)
 
 
 @pytest.mark.parametrize(
