@@ -103,18 +103,12 @@ def importStep(assy: AssemblyProtocol, path: str):
 
             # Process the color for the shape, which could be of different types
             color = Quantity_Color()
+            cq_color = cq.Color(0.0, 0.0, 0.0)
             if color_tool.GetColor_s(label, XCAFDoc_ColorSurf, color):
                 r = color.Red()
                 g = color.Green()
                 b = color.Blue()
                 cq_color = cq.Color(r, g, b)
-            elif color_tool.GetColor_s(label, XCAFDoc_ColorGen, color):
-                r = color.Red()
-                g = color.Green()
-                b = color.Blue()
-                cq_color = cq.Color(r, g, b)
-            else:
-                cq_color = cq.Color(0.5, 0.5, 0.5)
 
             # Handle the location if it was passed down form a parent component
             if parent_location is not None:
@@ -161,35 +155,6 @@ def importStep(assy: AssemblyProtocol, path: str):
 
                                 # Save the color info via the assembly subshape mechanism
                                 assy.addSubshape(cur_shape, color=cq_color)
-                        elif current_attr.DynamicType().Name() == "TDataStd_TreeNode":
-                            # Holds the color name, if found, and tells us whether or not it was found
-                            color_name = None
-
-                            # Get the attributes of the father node
-                            father_attr = current_attr.Father()
-
-                            # Iterate theough the attributes to see if there is a color name
-                            lbl = father_attr.Label()
-                            it = TDF_AttributeIterator(lbl)
-                            while it.More():
-                                new_attr = it.Value()
-                                if new_attr.DynamicType().Name() == "TDataStd_Name":
-                                    # Retrieve the name
-                                    name_string = new_attr.Get().ToExtString()
-
-                                    # Make sure that we have a color name
-                                    if "#" in name_string:
-                                        color_name = name_string.split(" ")[0]
-
-                                it.Next()
-
-                            # If we found a color name, save it on the subshape
-                            # Perfer the RGB value because when importing, OCCT tries to round
-                            # RGB values to fit color names.
-                            if cq_color is not None:
-                                assy.addSubshape(cur_shape, color=cq_color)
-                            elif color_name is not None:
-                                assy.addSubshape(cur_shape, color=cq.Color(color_name))
                         elif current_attr.DynamicType().Name() == "XCAFDoc_GraphNode":
                             # Step up one level to try to get the name from the parent
                             lbl = current_attr.GetFather(1).Label()
