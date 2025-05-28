@@ -34,7 +34,7 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
-from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
+from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB
 from OCP.TopAbs import TopAbs_ShapeEnum
 
 
@@ -462,7 +462,7 @@ def get_doc_nodes(doc, leaf=False):
                         child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
                     ):
                         face_color = (
-                            *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
+                            *color_subshape.GetRGB().Values(Quantity_TOC_sRGB),
                             color_subshape.Alpha(),
                         )
 
@@ -477,7 +477,7 @@ def get_doc_nodes(doc, leaf=False):
                     ):
                         color_subshapes_set.add(
                             (
-                                *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
+                                *color_subshape.GetRGB().Values(Quantity_TOC_sRGB),
                                 color_subshape.Alpha(),
                             )
                         )
@@ -489,9 +489,9 @@ def get_doc_nodes(doc, leaf=False):
             {
                 "path": PurePath(node.Id.ToCString()),
                 "name": TCollection_ExtendedString(name_att.Get()).ToExtString(),
-                "color": (*color.GetRGB().Values(Quantity_TOC_RGB), color.Alpha()),
+                "color": (*color.GetRGB().Values(Quantity_TOC_sRGB), color.Alpha()),
                 "color_shape": (
-                    *color_shape.GetRGB().Values(Quantity_TOC_RGB),
+                    *color_shape.GetRGB().Values(Quantity_TOC_sRGB),
                     color_shape.Alpha(),
                 ),
                 "color_subshapes": color_subshapes,
@@ -2112,3 +2112,31 @@ def test_remove_without_parent():
 
     assert len(assy.children) == 1
     assert len(assy.objects) == 1
+
+
+def test_step_color(tmp_path_factory):
+    """
+    Checks color handling for STEP export.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    step_color_path = os.path.join(tmpdir, "step_color.step")
+
+    # Create a simple assembly with color
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(10, 10, 10), color=cq.Color(0.47, 0.253, 0.18, 1.0))
+
+    success = exportStepMeta(assy, step_color_path)
+    assert success
+
+    # Read the file as a string and check for the correct colors
+    with open(step_color_path, "r") as f:
+        step_content = f.readlines()
+
+        # Step through and try to find the COLOUR line
+        for line in step_content:
+            if "COLOUR_RGB(''," in line:
+                assert "0.47" in line
+                assert "0.25" in line
+                assert "0.18" in line
