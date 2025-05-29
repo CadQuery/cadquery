@@ -72,6 +72,7 @@ def importStep(assy: AssemblyProtocol, path: str):
             # The component level holds the location for its shapes
             location = parent_location
             loc = shape_tool.GetLocation_s(sub_label)
+            location = cq.Location((0.0, 0.0, 0.0))
             if loc:
                 location = cq.Location(loc)
 
@@ -98,8 +99,8 @@ def importStep(assy: AssemblyProtocol, path: str):
             # Load the name of the part in the assembly, if it is present
             name = None
             name_attr = TDataStd_Name()
-            if label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
-                name = str(name_attr.Get().ToExtString())
+            label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+            name = str(name_attr.Get().ToExtString())
 
             # Process the color for the shape, which could be of different types
             color = Quantity_Color()
@@ -118,59 +119,59 @@ def importStep(assy: AssemblyProtocol, path: str):
             else:
                 assy.add(cq.Shape.cast(shape), name=name, color=cq_color)
 
-            if label.NbChildren() > 0:
-                for j in range(label.NbChildren()):
-                    child_label = label.FindChild(j + 1)
-                    attr_iterator = TDF_AttributeIterator(child_label)
-                    while attr_iterator.More():
-                        current_attr = attr_iterator.Value()
+            # Check all the attributes of all the children to find the subshapes and any names
+            for j in range(label.NbChildren()):
+                child_label = label.FindChild(j + 1)
+                attr_iterator = TDF_AttributeIterator(child_label)
+                while attr_iterator.More():
+                    current_attr = attr_iterator.Value()
 
-                        # Get the type name of the attribute so that we can decide how to handle it
-                        if current_attr.DynamicType().Name() == "TNaming_NamedShape":
-                            # Save the shape so that we can add it to the subshape data
-                            cur_shape = current_attr.Get()
+                    # Get the type name of the attribute so that we can decide how to handle it
+                    if current_attr.DynamicType().Name() == "TNaming_NamedShape":
+                        # Save the shape so that we can add it to the subshape data
+                        cur_shape = current_attr.Get()
 
-                            # Find the layer name, if there is one set for this shape
-                            layers = TDF_LabelSequence()
-                            layer_tool.GetLayers(child_label, layers)
-                            for i in range(1, layers.Length() + 1):
-                                lbl = layers.Value(i)
-                                name_attr = TDataStd_Name()
-                                lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+                        # Find the layer name, if there is one set for this shape
+                        layers = TDF_LabelSequence()
+                        layer_tool.GetLayers(child_label, layers)
+                        for i in range(1, layers.Length() + 1):
+                            lbl = layers.Value(i)
+                            name_attr = TDataStd_Name()
+                            lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
 
-                                # Extract the layer name for the shape here
-                                layer_name = name_attr.Get().ToExtString()
+                            # Extract the layer name for the shape here
+                            layer_name = name_attr.Get().ToExtString()
 
-                                # Add the layer as a subshape entry on the assembly
-                                assy.addSubshape(cur_shape, layer=layer_name)
+                            # Add the layer as a subshape entry on the assembly
+                            assy.addSubshape(cur_shape, layer=layer_name)
 
-                            # Find the subshape color, if there is one set for this shape
-                            color = Quantity_ColorRGBA()
-                            # Extract the color, if present on the shape
-                            if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
-                                rgb = color.GetRGB()
-                                cq_color = cq.Color(
-                                    rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha()
+                        # Find the subshape color, if there is one set for this shape
+                        color = Quantity_ColorRGBA()
+                        # Extract the color, if present on the shape
+                        if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
+                            rgb = color.GetRGB()
+                            cq_color = cq.Color(
+                                rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha()
+                            )
+
+                            # Save the color info via the assembly subshape mechanism
+                            assy.addSubshape(cur_shape, color=cq_color)
+                    elif current_attr.DynamicType().Name() == "XCAFDoc_GraphNode":
+                        # Step up one level to try to get the name from the parent
+                        lbl = current_attr.GetFather(1).Label()
+
+                        # Step through and search for the name attribute
+                        it = TDF_AttributeIterator(lbl)
+                        while it.More():
+                            new_attr = it.Value()
+                            if new_attr.DynamicType().Name() == "TDataStd_Name":
+                                # Save this as the name of the subshape
+                                assy.addSubshape(
+                                    cur_shape, name=new_attr.Get().ToExtString(),
                                 )
+                            it.Next()
 
-                                # Save the color info via the assembly subshape mechanism
-                                assy.addSubshape(cur_shape, color=cq_color)
-                        elif current_attr.DynamicType().Name() == "XCAFDoc_GraphNode":
-                            # Step up one level to try to get the name from the parent
-                            lbl = current_attr.GetFather(1).Label()
-
-                            # Step through and search for the name attribute
-                            it = TDF_AttributeIterator(lbl)
-                            while it.More():
-                                new_attr = it.Value()
-                                if new_attr.DynamicType().Name() == "TDataStd_Name":
-                                    # Save this as the name of the subshape
-                                    assy.addSubshape(
-                                        cur_shape, name=new_attr.Get().ToExtString(),
-                                    )
-                                it.Next()
-
-                        attr_iterator.Next()
+                    attr_iterator.Next()
 
     # Grab the labels, which should hold the assembly parent
     labels = TDF_LabelSequence()
@@ -183,7 +184,7 @@ def importStep(assy: AssemblyProtocol, path: str):
 
         # Load the top-level name of the assembly, if it is present
         name_attr = TDataStd_Name()
-        if labels.Value(1).FindAttribute(TDataStd_Name.GetID_s(), name_attr):
-            assy.name = str(name_attr.Get().ToExtString())
+        labels.Value(1).FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+        assy.name = str(name_attr.Get().ToExtString())
     else:
         raise ValueError("Step file does not contain an assembly")
