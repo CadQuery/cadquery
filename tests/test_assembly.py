@@ -925,6 +925,28 @@ def test_bad_step_file_import(tmp_path_factory):
         imported_assy = cq.Assembly.importStep(bad_step_path)
 
 
+def test_plain_assembly_import(tmp_path_factory):
+    """
+    Test to make sure that importing plain assemblies has not been broken.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    plain_step_path = os.path.join(tmpdir, "plain_assembly_step.step")
+
+    # Create a basic assembly
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    assy = cq.Assembly(name="top_level")
+    assy.add(cube_1)
+
+    # Export the assembly
+    success = exportStepMeta(assy, plain_step_path)
+    assert success
+
+    # Import the STEP file back in
+    imported_assy = cq.Assembly.importStep(plain_step_path)
+    assert imported_assy.name == "top_level"
+
+
 @pytest.mark.parametrize(
     "assy_fixture, expected",
     [
