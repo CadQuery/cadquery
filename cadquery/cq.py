@@ -656,7 +656,7 @@ class Workplane(object):
         # a new workplane has the center of the workplane on the stack
         return s
 
-    def copyWorkplane(self, obj: "Workplane") -> "Workplane":
+    def copyWorkplane(self, obj: T) -> T:
         """
         Copies the workplane from obj.
 
