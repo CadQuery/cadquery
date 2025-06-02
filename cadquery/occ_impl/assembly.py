@@ -11,7 +11,6 @@ from typing import (
 )
 from typing_extensions import Protocol
 from math import degrees, radians
-from dataclasses import dataclass
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import (
@@ -55,17 +54,6 @@ DEFAULT_EDGE_COLOR = Color(0.0, 0.0, 0.0, 1.0)  # Black
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-
-
-@dataclass
-class AssemblyElement:
-    """A dataclass representing an element in an assembly iterator."""
-
-    shape: Shape
-    name: str
-    location: Location
-    color: Optional[Color] = None
-    material: Optional[Material] = None
 
 
 class AssemblyProtocol(Protocol):
@@ -126,7 +114,7 @@ class AssemblyProtocol(Protocol):
         name: Optional[str] = None,
         color: Optional[Color] = None,
         material: Optional[Material] = None,
-    ) -> Iterator[AssemblyElement]:
+    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color], Optional[Material]]]:
         ...
 
 
@@ -309,10 +297,10 @@ def toVTKAssy(
 
     rv = vtkAssembly()
 
-    for element in assy:
-        trans, rot = _loc2vtk(element.location)
+    for shape, _, loc, col, material in assy:
+        trans, rot = _loc2vtk(loc)
 
-        data = element.shape.toVtkPolyData(tolerance, angularTolerance)
+        data = shape.toVtkPolyData(tolerance, angularTolerance)
 
         # Extract edges (lines and vertices)
         extr = vtkExtractCellsByType()
@@ -342,11 +330,11 @@ def toVTKAssy(
         actor.SetOrientation(*rot)
 
         # Apply material or color
-        if element.material:
-            element.material.apply_to_vtk_actor(actor)
+        if material:
+            material.apply_to_vtk_actor(actor)
         else:
             # Apply color directly
-            use_color = element.color if element.color else color
+            use_color = col if col else color
             prop = actor.GetProperty()
             prop.SetColor(*use_color.rgb())
             prop.SetOpacity(use_color.alpha)
@@ -399,10 +387,10 @@ def toVTK(
 
     renderer = vtkRenderer()
 
-    for element in assy:
-        trans, rot = _loc2vtk(element.location)
+    for shape, _, loc, col, material in assy:
+        trans, rot = _loc2vtk(loc)
 
-        data = element.shape.toVtkPolyData(tolerance, angularTolerance)
+        data = shape.toVtkPolyData(tolerance, angularTolerance)
 
         # Extract edges (lines and vertices)
         extr = vtkExtractCellsByType()
@@ -432,11 +420,11 @@ def toVTK(
         actor.SetOrientation(*rot)
 
         # Apply material or color
-        if element.material:
-            element.material.apply_to_vtk_actor(actor)
+        if material:
+            material.apply_to_vtk_actor(actor)
         else:
             # Apply color directly
-            use_color = element.color if element.color else color
+            use_color = col if col else color
             prop = actor.GetProperty()
             prop.SetColor(*use_color.rgb())
             prop.SetOpacity(use_color.alpha)
@@ -469,30 +457,30 @@ def toJSON(
 
     rv = []
 
-    for element in assy:
+    for shape, _, loc, col, material in assy:
         val: Any = {}
 
-        data = toString(element.shape, tolerance)
-        trans, rot = element.location.toTuple()
+        data = toString(shape, tolerance)
+        trans, rot = loc.toTuple()
 
         val["shape"] = data
-        val["color"] = element.color.toTuple() if element.color else color.toTuple()
+        val["color"] = col.toTuple() if col else color.toTuple()
         val["position"] = trans
         val["orientation"] = tuple(radians(r) for r in rot)
 
         # Add material properties if available
-        if element.material:
+        if material:
             val["material"] = {
-                "name": element.material.name,
-                "description": element.material.description,
-                "density": element.material.density,
+                "name": material.name,
+                "description": material.description,
+                "density": material.density,
             }
-            if element.material.pbr:
+            if material.pbr:
                 val["material"]["pbr"] = {
-                    "base_color": element.material.pbr.base_color.toTuple(),
-                    "metallic": element.material.pbr.metallic,
-                    "roughness": element.material.pbr.roughness,
-                    "refraction_index": element.material.pbr.refraction_index,
+                    "base_color": material.pbr.base_color.toTuple(),
+                    "metallic": material.pbr.metallic,
+                    "roughness": material.pbr.roughness,
+                    "refraction_index": material.pbr.refraction_index,
                 }
 
         rv.append(val)
@@ -532,9 +520,9 @@ def toFusedCAF(
     shapes: List[Shape] = []
     colors = []
 
-    for element in assy:
-        shapes.append(element.shape.moved(element.location).copy())
-        colors.append(element.color)
+    for shape, _, loc, col, _ in assy:
+        shapes.append(shape.moved(loc).copy())
+        colors.append(col)
 
     # Initialize with a dummy value for mypy
     top_level_shape = cast(TopoDS_Shape, None)
@@ -612,9 +600,9 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
     # make the id map
     id_map = {}
 
-    for element in assy:
-        for s in element.shape.moved(element.location).Solids():
-            id_map[s] = element.name
+    for shape, name, loc, _, _ in assy:
+        for s in shape.moved(loc).Solids():
+            id_map[s] = name
 
     # connect topologically
     bldr = BOPAlgo_MakeConnected()

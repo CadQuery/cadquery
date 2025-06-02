@@ -18,7 +18,7 @@ from uuid import uuid1 as uuid
 from .cq import Workplane
 from .occ_impl.shapes import Shape, Compound
 from .occ_impl.geom import Location
-from .occ_impl.assembly import Color, Material, AssemblyElement
+from .occ_impl.assembly import Color, Material
 from .occ_impl.solver import (
     ConstraintKind,
     ConstraintSolver,
@@ -673,7 +673,7 @@ class Assembly(object):
         name: Optional[str] = None,
         color: Optional[Color] = None,
         material: Optional[Material] = None,
-    ) -> Iterator[AssemblyElement]:
+    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color], Optional[Material]]]:
         """
         Assembly iterator yielding shapes, names, locations, colors and materials.
         """
@@ -691,9 +691,7 @@ class Assembly(object):
                     s for s in self.obj.vals() if isinstance(s, Shape)
                 )
             )
-            yield AssemblyElement(
-                shape=shape, name=name, location=loc, color=color, material=material
-            )
+            yield shape, name, loc, color, material
 
         for ch in self.children:
             yield from ch.__iter__(loc, name, color, material)
