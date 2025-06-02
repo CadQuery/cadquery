@@ -476,7 +476,7 @@ def toJSON(
         trans, rot = element.location.toTuple()
 
         val["shape"] = data
-        val["color"] = element.color.rgba() if element.color else color.rgba()
+        val["color"] = element.color.toTuple() if element.color else color.toTuple()
         val["position"] = trans
         val["orientation"] = tuple(radians(r) for r in rot)
 
@@ -489,7 +489,7 @@ def toJSON(
             }
             if element.material.pbr:
                 val["material"]["pbr"] = {
-                    "base_color": element.material.pbr.base_color.rgba(),
+                    "base_color": element.material.pbr.base_color.toTuple(),
                     "metallic": element.material.pbr.metallic,
                     "roughness": element.material.pbr.roughness,
                     "refraction_index": element.material.pbr.refraction_index,

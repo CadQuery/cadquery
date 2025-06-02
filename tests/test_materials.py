@@ -76,6 +76,10 @@ class TestColor:
         color = Color(0.1, 0.2, 0.3, 0.4)
         assert color.rgba() == (0.1, 0.2, 0.3, 0.4)
 
+    def test_to_tuple(self):
+        color = Color(0.1, 0.2, 0.3, 0.4)
+        assert color.toTuple() == (0.1, 0.2, 0.3, 0.4)
+
     def test_equality(self):
         color1 = Color(0.1, 0.2, 0.3, 0.4)
         color2 = Color(0.1, 0.2, 0.3, 0.4)

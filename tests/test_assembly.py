@@ -1083,7 +1083,7 @@ def test_colors_assy0(assy_fixture, expected, request):
                 (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
                 (
                     ["box1", "box1_part"],
-                    {"color_shape": cq.Color().rgba()},
+                    {"color_shape": cq.Color().toTuple()},
                 ),  # default color when unspecified
             ],
         ),

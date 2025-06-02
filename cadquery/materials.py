@@ -129,6 +129,10 @@ class Color:
         """Get RGBA components as tuple."""
         return (self.red, self.green, self.blue, self.alpha)
 
+    def toTuple(self) -> RGBA:
+        """Get RGBA components as tuple."""
+        return self.rgba()
+
     def to_occ_rgb(self) -> "Quantity_Color":
         """Convert Color to an OCCT RGB color object."""
         from OCP.Quantity import Quantity_Color, Quantity_TOC_sRGB
@@ -249,7 +253,7 @@ class Material:
         elif self.simple:
             self.simple.apply_to_vtk_actor(actor)
         elif self.color:
-            r, g, b, a = self.color.rgba()
+            r, g, b, a = self.color.toTuple()
             prop.SetColor(r, g, b)
             prop.SetOpacity(a)
 
