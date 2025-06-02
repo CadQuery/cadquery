@@ -1,10 +1,16 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Tuple, TypeAlias, overload
+from typing import Optional, Tuple, TypeAlias, overload
 
-if TYPE_CHECKING:
-    from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA
-    from OCP.XCAFDoc import XCAFDoc_Material, XCAFDoc_VisMaterial
-    from vtkmodules.vtkRenderingCore import vtkActor
+from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA, Quantity_TOC_sRGB
+from OCP.XCAFDoc import (
+    XCAFDoc_Material,
+    XCAFDoc_VisMaterial,
+    XCAFDoc_VisMaterialPBR,
+    XCAFDoc_VisMaterialCommon,
+)
+from OCP.TCollection import TCollection_HAsciiString
+from vtkmodules.vtkRenderingCore import vtkActor
+from vtkmodules.vtkCommonColor import vtkNamedColors
 
 
 RGB: TypeAlias = Tuple[float, float, float]
@@ -63,9 +69,6 @@ class Color:
             # Handle no-args case (default yellow)
             r, g, b, a = 1.0, 1.0, 0.0, 1.0
         elif (number_of_args == 1 and isinstance(args[0], str)) or "name" in kwargs:
-            from OCP.Quantity import Quantity_ColorRGBA
-            from vtkmodules.vtkCommonColor import vtkNamedColors
-
             color_name = args[0] if number_of_args == 1 else kwargs["name"]
 
             # Try to get color from OCCT first, fall back to VTK if not found
@@ -133,17 +136,14 @@ class Color:
         """Get RGBA components as tuple."""
         return self.rgba()
 
-    def to_occ_rgb(self) -> "Quantity_Color":
-        """Convert Color to an OCCT RGB color object."""
-        from OCP.Quantity import Quantity_Color, Quantity_TOC_sRGB
+    def toQuantityColor(self) -> "Quantity_Color":
+        """Convert Color to a Quantity_Color object."""
 
         return Quantity_Color(self.red, self.green, self.blue, Quantity_TOC_sRGB)
 
-    def to_occ_rgba(self) -> "Quantity_ColorRGBA":
-        """Convert Color to an OCCT RGBA color object."""
-        from OCP.Quantity import Quantity_ColorRGBA
-
-        rgb = self.to_occ_rgb()
+    def toQuantityColorRGBA(self) -> "Quantity_ColorRGBA":
+        """Convert Color to a Quantity_ColorRGBA object."""
+        rgb = self.toQuantityColor()
         return Quantity_ColorRGBA(rgb, self.alpha)
 
     def __repr__(self) -> str:
@@ -175,7 +175,7 @@ class SimpleMaterial:
         if not 0.0 <= self.transparency <= 1.0:
             raise ValueError("Transparency must be between 0.0 and 1.0")
 
-    def apply_to_vtk_actor(self, actor: "vtkActor") -> None:
+    def applyToVTKActor(self, actor: "vtkActor") -> None:
         """Apply common material properties to a VTK actor."""
         prop = actor.GetProperty()
         prop.SetInterpolationToPhong()
@@ -190,7 +190,7 @@ class SimpleMaterial:
 class PbrMaterial:
     """
     PBR material definition matching OpenCascade's XCAFDoc_VisMaterialPBR.
-    
+
     Note: Emission support will be added in a future version with proper texture support.
     """
 
@@ -210,7 +210,7 @@ class PbrMaterial:
         if not 1.0 <= self.refraction_index <= 3.0:
             raise ValueError("Refraction index must be between 1.0 and 3.0")
 
-    def apply_to_vtk_actor(self, actor: "vtkActor") -> None:
+    def applyToVtkActor(self, actor: "vtkActor") -> None:
         """Apply PBR material properties to a VTK actor."""
         prop = actor.GetProperty()
         prop.SetInterpolationToPBR()
@@ -243,24 +243,22 @@ class Material:
         if not any([self.color, self.simple, self.pbr]):
             raise ValueError("Material must have at least one representation defined")
 
-    def apply_to_vtk_actor(self, actor: "vtkActor") -> None:
+    def applyToVtkActor(self, actor: "vtkActor") -> None:
         """Apply material properties to a VTK actor."""
         prop = actor.GetProperty()
         prop.SetMaterialName(self.name)
 
         if self.pbr:
-            self.pbr.apply_to_vtk_actor(actor)
+            self.pbr.applyToVtkActor(actor)
         elif self.simple:
-            self.simple.apply_to_vtk_actor(actor)
+            self.simple.applyToVTKActor(actor)
         elif self.color:
             r, g, b, a = self.color.toTuple()
             prop.SetColor(r, g, b)
             prop.SetOpacity(a)
 
-    def to_occ_material(self) -> "XCAFDoc_Material":
+    def toXCAFDocMaterial(self) -> "XCAFDoc_Material":
         """Convert to OCCT material object."""
-        from OCP.XCAFDoc import XCAFDoc_Material
-        from OCP.TCollection import TCollection_HAsciiString
 
         occt_material = XCAFDoc_Material()
         occt_material.Set(
@@ -272,20 +270,14 @@ class Material:
         )
         return occt_material
 
-    def to_occ_vis_material(self) -> "XCAFDoc_VisMaterial":
+    def toXCAFDocVisMaterial(self) -> "XCAFDoc_VisMaterial":
         """Convert to OCCT visualization material object."""
-        from OCP.XCAFDoc import (
-            XCAFDoc_VisMaterial,
-            XCAFDoc_VisMaterialPBR,
-            XCAFDoc_VisMaterialCommon,
-        )
-
         vis_mat = XCAFDoc_VisMaterial()
 
         # Set up PBR material if provided
         if self.pbr:
             pbr_mat = XCAFDoc_VisMaterialPBR()
-            pbr_mat.BaseColor = self.pbr.base_color.to_occ_rgba()
+            pbr_mat.BaseColor = self.pbr.base_color.toQuantityColorRGBA()
             pbr_mat.Metallic = self.pbr.metallic
             pbr_mat.Roughness = self.pbr.roughness
             pbr_mat.RefractionIndex = self.pbr.refraction_index
@@ -294,9 +286,9 @@ class Material:
         # Set up common material if provided
         if self.simple:
             common_mat = XCAFDoc_VisMaterialCommon()
-            common_mat.AmbientColor = self.simple.ambient_color.to_occ_rgb()
-            common_mat.DiffuseColor = self.simple.diffuse_color.to_occ_rgb()
-            common_mat.SpecularColor = self.simple.specular_color.to_occ_rgb()
+            common_mat.AmbientColor = self.simple.ambient_color.toQuantityColor()
+            common_mat.DiffuseColor = self.simple.diffuse_color.toQuantityColor()
+            common_mat.SpecularColor = self.simple.specular_color.toQuantityColor()
             common_mat.Shininess = self.simple.shininess
             common_mat.Transparency = self.simple.transparency
             vis_mat.SetCommonMaterial(common_mat)

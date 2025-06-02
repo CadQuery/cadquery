@@ -105,17 +105,17 @@ class TestColor:
 
     def test_occt_conversion(self):
         c1 = cq.Color("red")
-        occt_c1 = c1.to_occ_rgba()
+        occt_c1 = c1.toQuantityColorRGBA()
         assert occt_c1.GetRGB().Red() == 1
         assert occt_c1.Alpha() == 1
 
         c2 = cq.Color(1, 0, 0)
-        occt_c2 = c2.to_occ_rgba()
+        occt_c2 = c2.toQuantityColorRGBA()
         assert occt_c2.GetRGB().Red() == 1
         assert occt_c2.Alpha() == 1
 
         c3 = cq.Color(1, 0, 0, 0.5)
-        occt_c3 = c3.to_occ_rgba()
+        occt_c3 = c3.toQuantityColorRGBA()
         assert occt_c3.GetRGB().Red() == 1
         assert occt_c3.Alpha() == 0.5
 

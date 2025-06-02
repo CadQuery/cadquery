@@ -187,12 +187,14 @@ def exportStepMeta(
                 # Set color from material if available
                 if material.color:
                     color_tool.SetColor(
-                        part_label, material.color.to_occ_rgba(), XCAFDoc_ColorGen
+                        part_label,
+                        material.color.toQuantityColorRGBA(),
+                        XCAFDoc_ColorGen,
                     )
 
                 # Convert material to OCCT format and add to document
-                occ_mat = material.to_occ_material()
-                occ_vis_mat = material.to_occ_vis_material()
+                occ_mat = material.toXCAFDocMaterial()
+                occ_vis_mat = material.toXCAFDocVisMaterial()
 
                 # Create material label
                 mat_lab = material_tool.AddMaterial(
@@ -211,7 +213,9 @@ def exportStepMeta(
                 vis_material_tool.SetShapeMaterial(part_label, vis_mat_lab)
             elif color:
                 # If no material but color exists, set the color directly
-                color_tool.SetColor(part_label, color.to_occ_rgba(), XCAFDoc_ColorGen)
+                color_tool.SetColor(
+                    part_label, color.toQuantityColorRGBA(), XCAFDoc_ColorGen
+                )
 
             shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
 
@@ -244,7 +248,7 @@ def exportStepMeta(
                             if face in colors:
                                 color_tool.SetColor(
                                     face_label,
-                                    colors[face].to_occ_rgba(),
+                                    colors[face].toQuantityColorRGBA(),
                                     XCAFDoc_ColorGen,
                                 )
 

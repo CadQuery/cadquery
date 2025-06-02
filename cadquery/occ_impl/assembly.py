@@ -125,7 +125,7 @@ def setName(l: TDF_Label, name: str, tool):
 
 def setColor(l: TDF_Label, color: Color, tool):
     """Set the color of a label in the document."""
-    tool.SetColor(l, color.to_occ_rgba(), XCAFDoc_ColorType.XCAFDoc_ColorSurf)
+    tool.SetColor(l, color.toQuantityColorRGBA(), XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
 
 def toCAF(
@@ -198,14 +198,14 @@ def toCAF(
                     if current_material.color:
                         ctool.SetColor(
                             lab,
-                            current_material.color.to_occ_rgba(),
+                            current_material.color.toQuantityColorRGBA(),
                             XCAFDoc_ColorType.XCAFDoc_ColorSurf,
                         )
 
                     # Convert material to OCCT format and add to document
                     mat, vis_mat = (
-                        current_material.to_occ_material(),
-                        current_material.to_occ_vis_material(),
+                        current_material.toXCAFDocMaterial(),
+                        current_material.toXCAFDocVisMaterial(),
                     )
 
                     # Create material label
@@ -331,7 +331,7 @@ def toVTKAssy(
 
         # Apply material or color
         if material:
-            material.apply_to_vtk_actor(actor)
+            material.applyToVtkActor(actor)
         else:
             # Apply color directly
             use_color = col if col else color
@@ -421,7 +421,7 @@ def toVTK(
 
         # Apply material or color
         if material:
-            material.apply_to_vtk_actor(actor)
+            material.applyToVtkActor(actor)
         else:
             # Apply color directly
             use_color = col if col else color
@@ -518,7 +518,7 @@ def toFusedCAF(
 
     # Walk the entire assembly, collecting the located shapes and colors
     shapes: List[Shape] = []
-    colors = []
+    colors: List[Optional[Color]] = []
 
     for shape, _, loc, col, _ in assy:
         shapes.append(shape.moved(loc).copy())
@@ -569,7 +569,9 @@ def toFusedCAF(
             # See if the face can be treated as-is
             cur_lbl = shape_tool.AddSubShape(top_level_lbl, face.wrapped)
             if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(face.wrapped):
-                color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
+                color_tool.SetColor(
+                    cur_lbl, color.toQuantityColorRGBA(), XCAFDoc_ColorGen
+                )
 
             # Handle any modified faces
             modded_list = fuse_op.Modified(face.wrapped)
@@ -578,7 +580,9 @@ def toFusedCAF(
                 # Add the face as a subshape and set its color to match the parent assembly component
                 cur_lbl = shape_tool.AddSubShape(top_level_lbl, mod)
                 if color and not cur_lbl.IsNull() and not fuse_op.IsDeleted(mod):
-                    color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
+                    color_tool.SetColor(
+                        cur_lbl, color.toQuantityColorRGBA(), XCAFDoc_ColorGen
+                    )
 
             # Handle any generated faces
             gen_list = fuse_op.Generated(face.wrapped)
@@ -587,7 +591,9 @@ def toFusedCAF(
                 # Add the face as a subshape and set its color to match the parent assembly component
                 cur_lbl = shape_tool.AddSubShape(top_level_lbl, gen)
                 if color and not cur_lbl.IsNull():
-                    color_tool.SetColor(cur_lbl, color.to_occ_rgba(), XCAFDoc_ColorGen)
+                    color_tool.SetColor(
+                        cur_lbl, color.toQuantityColorRGBA(), XCAFDoc_ColorGen
+                    )
 
     return top_level_lbl, doc
 
