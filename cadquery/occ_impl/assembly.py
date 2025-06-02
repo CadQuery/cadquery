@@ -279,21 +279,6 @@ def toVTKAssy(
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ) -> vtkAssembly:
-    """
-    Convert an assembly to a VTK assembly with both solid faces and edges.
-    
-    Args:
-        assy: The assembly to convert
-        color: Default color for faces (white if None)
-        edgecolor: Default color for edges (black if None) 
-        edges: Whether to show edges
-        linewidth: Width of edge lines
-        tolerance: Linear tolerance for tessellation
-        angularTolerance: Angular tolerance for tessellation in degrees
-        
-    Returns:
-        A VTK assembly containing both faces and edges for each element
-    """
 
     rv = vtkAssembly()
 
@@ -372,18 +357,6 @@ def toVTK(
     *,
     edges: bool = True,
 ) -> vtkRenderer:
-    """
-    Convert an assembly to a VTK renderer with both solid faces and edges.
-    
-    Args:
-        assy: The assembly to convert
-        color: Default color for faces (white if None)
-        tolerance: Linear tolerance for tessellation
-        angularTolerance: Angular tolerance for tessellation in degrees
-        
-    Returns:
-        A VTK renderer containing both faces and edges for each element
-    """
 
     renderer = vtkRenderer()
 
