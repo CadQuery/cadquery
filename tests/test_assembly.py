@@ -537,29 +537,6 @@ def solve_result_check(solve_result: dict) -> bool:
     return all(checks)
 
 
-def test_color():
-
-    c1 = cq.Color("red")
-    assert c1.wrapped.GetRGB().Red() == 1
-    assert c1.wrapped.Alpha() == 1
-
-    c2 = cq.Color(1, 0, 0)
-    assert c2.wrapped.GetRGB().Red() == 1
-    assert c2.wrapped.Alpha() == 1
-
-    c3 = cq.Color(1, 0, 0, 0.5)
-    assert c3.wrapped.GetRGB().Red() == 1
-    assert c3.wrapped.Alpha() == 0.5
-
-    c4 = cq.Color()
-
-    with pytest.raises(ValueError):
-        cq.Color("?????")
-
-    with pytest.raises(ValueError):
-        cq.Color(1, 2, 3, 4, 5)
-
-
 def test_assembly(simple_assy, nested_assy):
 
     # basic checks

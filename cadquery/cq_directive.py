@@ -7,7 +7,7 @@ import traceback
 
 from json import dumps
 
-from cadquery import exporters, Assembly, Compound, Color, Sketch
+from cadquery import exporters, Assembly, Compound, Sketch
 from cadquery import cqgi
 from cadquery.occ_impl.assembly import toJSON
 from cadquery.occ_impl.jupyter_tools import DEFAULT_COLOR
@@ -299,9 +299,9 @@ class cq_directive_vtk(Directive):
                 if isinstance(shape, Assembly):
                     assy = shape
                 elif isinstance(shape, Sketch):
-                    assy = Assembly(shape._faces, color=Color(*DEFAULT_COLOR))
+                    assy = Assembly(shape._faces, color=DEFAULT_COLOR)
                 else:
-                    assy = Assembly(shape, color=Color(*DEFAULT_COLOR))
+                    assy = Assembly(shape, color=DEFAULT_COLOR)
             else:
                 raise result.exception
 
