@@ -857,6 +857,11 @@ def test_assembly_step_import(tmp_path_factory):
         1.0,
         1.0,
     )
+
+    # Make sure the shape locations were applied correctly
+    assert imported_assy.children[1].loc.toTuple()[0] == (0.0, 0.0, -10.0)
+
+    # Check the top-level assembly name
     assert imported_assy.name == "top-level"
 
     # Test a STEP file that does not contain an assembly
@@ -900,6 +905,58 @@ def test_assembly_subshape_step_import(tmp_path_factory):
 
     # Check the advanced face name
     assert len(imported_assy._subshape_names) == 1
+    assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
+
+    # Check the color
+    color = list(imported_assy._subshape_colors.values())[0]
+    assert Quantity_NameOfColor.Quantity_NOC_RED == color.wrapped.GetRGB().Name()
+
+    # Check the layer info
+    layer_name = list(imported_assy._subshape_layers.values())[0]
+    assert layer_name == "cube_1_top_face"
+
+
+def test_assembly_multi_subshape_step_import(tmp_path_factory):
+    """
+    Test if a STEP file containing subshape information can be imported correctly.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    assy_step_path = os.path.join(tmpdir, "multi_subshape_assy.step")
+
+    # Create a basic assembly
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    assy = cq.Assembly(name="top_level")
+    assy.add(cube_1, name="cube_1", color=cq.Color("green"))
+    cube_2 = cq.Workplane().box(5, 5, 5)
+    assy.add(cube_2, name="cube_2", color=cq.Color("blue"), loc=cq.Location(10, 10, 10))
+
+    # Add subshape name, color and layer
+    assy.addSubshape(
+        cube_1.faces(">Z").val(),
+        name="cube_1_top_face",
+        color=cq.Color("red"),
+        layer="cube_1_top_face",
+    )
+    assy.addSubshape(
+        cube_2.faces(">X").val(),
+        name="cube_2_right_face",
+        color=cq.Color("red"),
+        layer="cube_2_right_face",
+    )
+
+    # Export the assembly
+    success = exportStepMeta(assy, assy_step_path)
+    assert success
+
+    # Import the STEP file back in
+    imported_assy = cq.Assembly.importStep(assy_step_path)
+
+    # Check that the top-level assembly name is correct
+    assert imported_assy.name == "top_level"
+
+    # Check the advanced face name
+    assert len(imported_assy._subshape_names) == 2
     assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
 
     # Check the color

@@ -74,7 +74,10 @@ def importStep(assy: AssemblyProtocol, path: str):
         # Handle the location if it was passed down form a parent component
         if parent_location is not None:
             assy.add(
-                cq.Shape.cast(shape), name=name, color=cq_color, loc=parent_location
+                cq.Shape.cast(shape),
+                name=name,
+                color=cq_color,
+                loc=cq.Location(parent_location),
             )
         else:
             assy.add(cq.Shape.cast(shape), name=name, color=cq_color)
@@ -159,9 +162,11 @@ def importStep(assy: AssemblyProtocol, path: str):
             shape_tool.GetComponents_s(label, comp_labels)
             for i in range(comp_labels.Length()):
                 sub_label = comp_labels.Value(i + 1)
+                # Get the location of the sub-label, if it exists
+                loc = shape_tool.GetLocation_s(sub_label)
 
                 # Pass down the location or other context as needed
-                process_label(sub_label, parent_location)
+                process_label(sub_label, loc)
             return
 
         # Check to see if we have an endpoint shape and process it
