@@ -218,3 +218,14 @@ def test_camera_position(wp, patch_vtk):
     show(wp, position=(0, 0, 1), focus=(0, 0.1, 0))
     show(wp, focus=(0, 0.1, 0))
     show(wp, position=(0, 0, 1))
+
+    # Specify Z up
+    show(wp, viewup=(0, 0, 1), position=(0, -1, 0), focus=(0, 0.1, 0))
+    show(wp, focus=(0, 0.1, 0))
+    show(wp, position=(0, -1, 0))
+    show(wp, viewup=(0, 0, 1))
+
+
+def test_frustrum_clipping_range(wp, patch_vtk):
+
+    show(wp, zoom=2.0, clipping_range=(1, 100))
