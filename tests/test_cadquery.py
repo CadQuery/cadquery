@@ -5917,3 +5917,11 @@ class TestCadQuery(BaseTest):
         ), "Incorrect center of mass of the compound, expected {}, got {}".format(
             expected_center, compound.Center()
         )
+
+    def test_line_from_vertex(self):
+
+        # select one vertex and create an Edge
+        res = Workplane().rect(1,1).vertices(">(1,1,0)").line(1,0)
+
+        # check if an Edge was created
+        assert isinstance(res.val(), Edge)
