@@ -5921,7 +5921,7 @@ class TestCadQuery(BaseTest):
     def test_line_from_vertex(self):
 
         # select one vertex and create an Edge
-        res = Workplane().rect(1,1).vertices(">(1,1,0)").line(1,0)
+        res = Workplane().rect(1, 1).vertices(">(1,1,0)").line(1, 0)
 
         # check if an Edge was created
         assert isinstance(res.val(), Edge)
