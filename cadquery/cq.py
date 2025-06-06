@@ -1413,6 +1413,8 @@ class Workplane(object):
             p = obj.endPoint()
         elif isinstance(obj, Vector):
             p = obj
+        elif isinstance(obj, Vertex):
+            p = obj.Center()
         else:
             raise RuntimeError("Cannot convert object type '%s' to vector " % type(obj))
 
