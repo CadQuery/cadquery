@@ -64,7 +64,7 @@ def importStep(assy: AssemblyProtocol, path: str):
 
         # Process the color for the shape, which could be of different types
         color = Quantity_Color()
-        cq_color = cq.Color(0.0, 0.0, 0.0)
+        cq_color = cq.Color(0.50, 0.50, 0.50)
         if color_tool.GetColor_s(label, XCAFDoc_ColorSurf, color):
             r = color.Red()
             g = color.Green()
