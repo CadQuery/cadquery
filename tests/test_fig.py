@@ -39,7 +39,8 @@ def test_fig(fig):
     fig.clear()
 
     # clear with an arg
-    fig.show(s).clear(s)
+    for el in showables:
+        fig.show(el).clear(el)
 
     # lists of showables
     fig.show(s.Edges()).show([Vector(), Vector(0, 1)])
