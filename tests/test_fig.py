@@ -5,6 +5,8 @@ from cadquery.fig import Figure
 
 from pytest import fixture, mark
 
+from sys import platform
+
 
 @fixture(scope="module")
 def fig():
@@ -12,6 +14,7 @@ def fig():
 
 
 @mark.gui
+@mark.skipif(platform != "win32", reason="CI with UI only works on win for now")
 def test_fig(fig):
 
     # showables
@@ -24,14 +27,19 @@ def test_fig(fig):
     loc = Location()
     act = vtkAxesActor()
 
+    showables = (s, wp, assy, sk, ctrl_pts, v, loc, act)
+
     # individual showables
-    fig.show(s, wp, assy, sk, ctrl_pts, v, loc, act)
+    fig.show(*showables)
 
     # fit
     fig.fit()
 
     # clear
     fig.clear()
+
+    # clear with an arg
+    fig.show(s).clear(s)
 
     # lists of showables
     fig.show(s.Edges()).show([Vector(), Vector(0, 1)])
@@ -40,5 +48,10 @@ def test_fig(fig):
     fig.show("a").show(["a", 1234])
 
     # pop
-    fig.show(s, color="red")
-    fig.pop()
+    for el in showables:
+        fig.show(el, color="red")
+        fig.pop()
+
+    # test singleton behavior of fig
+    fig2 = Figure()
+    assert fig is fig2
