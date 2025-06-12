@@ -231,7 +231,7 @@ class Figure:
                 self.empty = True
 
             for s in shapes:
-                if isinstance(s, Shape):
+                if isinstance(s, ShapeLike):
                     for a in self.shapes[s]:
                         self.ren.RemoveActor(a)
 

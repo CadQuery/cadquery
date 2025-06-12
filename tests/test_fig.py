@@ -39,7 +39,7 @@ def test_fig(fig):
     fig.clear()
 
     # clear with an arg
-    for el in showables:
+    for el in (s, wp, assy, sk, ctrl_pts):
         fig.show(el).clear(el)
 
     # lists of showables
