@@ -160,12 +160,16 @@ def importStep(assy: AssemblyProtocol, path: str):
             # Recursively process its components (children)
             comp_labels = TDF_LabelSequence()
             shape_tool.GetComponents_s(label, comp_labels)
+
             for i in range(comp_labels.Length()):
                 sub_label = comp_labels.Value(i + 1)
                 # Get the location of the sub-label, if it exists
                 loc = shape_tool.GetLocation_s(sub_label)
 
                 # Pass down the location or other context as needed
+                # Add the parent location if it exists
+                if parent_location is not None:
+                    loc = parent_location * loc
                 process_label(sub_label, loc)
             return
 

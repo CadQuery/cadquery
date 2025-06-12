@@ -987,21 +987,61 @@ def test_plain_assembly_import(tmp_path_factory):
     Test to make sure that importing plain assemblies has not been broken.
     """
 
+    from cadquery.func import box, rect
+
     tmpdir = tmp_path_factory.mktemp("out")
     plain_step_path = os.path.join(tmpdir, "plain_assembly_step.step")
 
-    # Create a basic assembly
+    # Simple cubes
     cube_1 = cq.Workplane().box(10, 10, 10)
+    cube_2 = cq.Workplane().box(5, 5, 5)
+    cube_3 = cq.Workplane().box(5, 5, 5)
+    cube_4 = cq.Workplane().box(5, 5, 5)
+
     assy = cq.Assembly(name="top_level")
-    assy.add(cube_1)
+    assy.add(cube_1, color=cq.Color("green"))
+    assy.add(cube_2, loc=cq.Location((10, 10, 10)), color=cq.Color("red"))
+    assy.add(cube_3, loc=cq.Location((-10, -10, -10)), color=cq.Color("red"))
+    assy.add(cube_4, loc=cq.Location((10, -10, -10)), color=cq.Color("red"))
 
-    # Export the assembly
-    success = exportStepMeta(assy, plain_step_path)
-    assert success
+    # Export the assembly, but do not use the meta STEP export method
+    assy.export(plain_step_path)
 
-    # Import the STEP file back in
+    # # Import the STEP file back in
     imported_assy = cq.Assembly.importStep(plain_step_path)
     assert imported_assy.name == "top_level"
+
+    # Check the locations
+    assert imported_assy.children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0)
+    assert imported_assy.children[1].loc.toTuple()[0] == (10.0, 10.0, 10.0)
+    assert imported_assy.children[2].loc.toTuple()[0] == (-10.0, -10.0, -10.0)
+    assert imported_assy.children[3].loc.toTuple()[0] == (10.0, -10.0, -10.0)
+
+    # Check the colors
+    assert pytest.approx(imported_assy.children[0].color.toTuple(), rel=0.01) == (
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+    )  # green
+    assert pytest.approx(imported_assy.children[1].color.toTuple(), rel=0.01) == (
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+    )  # red
+    assert pytest.approx(imported_assy.children[2].color.toTuple(), rel=0.01) == (
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+    )  # red
+    assert pytest.approx(imported_assy.children[3].color.toTuple(), rel=0.01) == (
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+    )  # red
 
 
 @pytest.mark.parametrize(
