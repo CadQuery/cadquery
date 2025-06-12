@@ -10,19 +10,19 @@ from threading import Thread
 from itertools import chain
 from webbrowser import open_new_tab
 
-from trame.app import get_server, Server
+from trame.app import get_server
+from trame.app.core import Server
 from trame.widgets import html, vtk as vtk_widgets, client
 from trame.ui.html import DivLayout
 
 from . import Shape
-from .vis import style, Showable, ShapeLike, _split_showables, _to_vtk_pts, _to_vtk_axs
+from .vis import style, Showable, ShapeLike, _split_showables
 
 from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkProp3D,
-    vtkActor,
 )
 
 
