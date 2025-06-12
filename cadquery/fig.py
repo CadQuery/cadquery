@@ -3,8 +3,8 @@ from asyncio import (
     set_event_loop,
     run_coroutine_threadsafe,
     AbstractEventLoop,
-    Future,
 )
+from concurrent.futures import Future
 from typing import Optional
 from threading import Thread
 from itertools import chain
