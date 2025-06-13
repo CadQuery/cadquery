@@ -205,6 +205,32 @@ This is done by setting the name property of the assembly before calling :meth:`
 
 If an assembly name is not specified, a UUID will be used to avoid name conflicts.
 
+Exporting Assemblies to STEP with Metadata
+###########################################
+
+It is possible to attach metadata to the assembly that will be included in the STEP file. This metadata can be attached to arbitrary shapes and includes names, colors and layers. This is done by using the :meth:`Assembly.addSubshape` method before calling :meth:`cadquery.occ_impl.exporters.assembly.exportStepMeta`.
+
+.. code-block:: python
+
+    import cadquery as cq
+    from cadquery.occ_impl.exporters.assembly import exportStepMeta
+
+    # Create a simple assembly
+    assy = cq.Assembly(name="top-level")
+    cube_1 = cq.Workplane().box(10.0, 10.0, 10.0)
+    assy.add(cube_1, name="cube_1", color=cq.Color("green"))
+
+    # Add subshape name, color and layer
+    assy.addSubshape(
+        cube_1.faces(">Z").val(),
+        name="cube_1_top_face",
+        color=cq.Color("red"),
+        layer="cube_1_top_face"
+    )
+
+    # Export the assembly to STEP with metadata
+    exportStepMeta(assy, "out.step")
+
 Exporting Assemblies to glTF
 #############################
 
@@ -395,6 +421,8 @@ optimum values that will produce an acceptable mesh.
 
 Exporting DXF
 ##############
+
+.. warning:: DXF exporting works only with 2D sections on the current workplane or sketches.
 
 .. seealso::
 

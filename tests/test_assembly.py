@@ -11,12 +11,13 @@ from pytest import approx
 import cadquery as cq
 from cadquery.occ_impl.exporters.assembly import (
     exportAssembly,
+    exportStepMeta,
     exportCAF,
     exportVTKJS,
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box
+from cadquery.occ_impl.shapes import Face, box, cone
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -33,7 +34,7 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
-from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_RGB
+from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB
 from OCP.TopAbs import TopAbs_ShapeEnum
 
 
@@ -426,7 +427,7 @@ def get_doc_nodes(doc, leaf=False):
                         child, XCAFDoc_ColorType.XCAFDoc_ColorSurf, color_subshape
                     ):
                         face_color = (
-                            *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
+                            *color_subshape.GetRGB().Values(Quantity_TOC_sRGB),
                             color_subshape.Alpha(),
                         )
 
@@ -441,7 +442,7 @@ def get_doc_nodes(doc, leaf=False):
                     ):
                         color_subshapes_set.add(
                             (
-                                *color_subshape.GetRGB().Values(Quantity_TOC_RGB),
+                                *color_subshape.GetRGB().Values(Quantity_TOC_sRGB),
                                 color_subshape.Alpha(),
                             )
                         )
@@ -453,9 +454,9 @@ def get_doc_nodes(doc, leaf=False):
             {
                 "path": PurePath(node.Id.ToCString()),
                 "name": TCollection_ExtendedString(name_att.Get()).ToExtString(),
-                "color": (*color.GetRGB().Values(Quantity_TOC_RGB), color.Alpha()),
+                "color": (*color.GetRGB().Values(Quantity_TOC_sRGB), color.Alpha()),
                 "color_shape": (
-                    *color_shape.GetRGB().Values(Quantity_TOC_RGB),
+                    *color_shape.GetRGB().Values(Quantity_TOC_sRGB),
                     color_shape.Alpha(),
                 ),
                 "color_subshapes": color_subshapes,
@@ -614,6 +615,174 @@ def test_step_export(nested_assy, tmp_path_factory):
     assert pytest.approx(c.toTuple()) == (0, 4, 0)
     c2 = cq.Compound.makeCompound(o.solids().vals()).Center()
     assert pytest.approx(c2.toTuple()) == (0, 4, 0)
+
+
+def test_meta_step_export(tmp_path_factory):
+    """
+    Tests that an assembly can be exported to a STEP file with faces tagged with names and colors,
+    and layers added.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    meta_path = os.path.join(tmpdir, "meta.step")
+
+    # Most nested level of the assembly
+    subsubassy = cq.Assembly(name="third-level")
+    cone_1 = cq.Workplane(cone(5.0, 10.0, 5.0))
+    cone_2 = cq.Workplane(cone(2.5, 5.0, 2.5))
+    subsubassy.add(
+        cone_1,
+        name="cone_1",
+        color=cq.Color(1.0, 1.0, 1.0),
+        loc=cq.Location(-15.0, 10.0, 0.0),
+    )
+    subsubassy.add(
+        cone_2,
+        name="cone_2",
+        color=cq.Color(0.0, 0.0, 0.0),
+        loc=cq.Location((15.0, 10.0, -5.0)),
+    )
+
+    # First layer of nested assembly
+    subassy = cq.Assembly(name="second-level")
+    cylinder_1 = cq.Workplane().cylinder(radius=5.0, height=10.0)
+    cylinder_2 = cq.Workplane().cylinder(radius=2.5, height=5.0)
+    subassy.add(
+        cylinder_1,
+        name="cylinder_1",
+        color=cq.Color(1.0, 1.0, 0.0),
+        loc=cq.Location(-15.0, 0.0, 0.0),
+    )
+    subassy.add(
+        cylinder_2,
+        name="cylinder_2",
+        color=cq.Color(0.0, 1.0, 1.0),
+        loc=cq.Location((15.0, -10.0, -5.0)),
+    )
+    subassy.add(subsubassy)
+
+    # Top level of the assembly
+    assy = cq.Assembly(name="top-level")
+    cube_1 = cq.Workplane().box(10.0, 10.0, 10.0)
+    assy.add(cube_1, name="cube_1", color=cq.Color(0.5, 0.0, 0.5))
+    cube_2 = cq.Workplane().box(5.0, 5.0, 5.0)
+    assy.add(
+        cube_2,
+        name="cube_2",
+        color=cq.Color(0.0, 0.5, 0.0),
+        loc=cq.Location(10.0, 10.0, 10.0),
+    )
+    assy.add(subassy)
+
+    # Tag faces to test from all levels of the assembly
+    assy.addSubshape(cube_1.faces(">Z").val(), name="cube_1_top_face")
+    assy.addSubshape(cube_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cube_1.faces(">Z").val(), layer="cube_1_top_face")
+    assy.addSubshape(cube_2.faces("<Z").val(), name="cube_2_bottom_face")
+    assy.addSubshape(cube_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cube_2.faces("<Z").val(), layer="cube_2_bottom_face")
+    assy.addSubshape(cylinder_1.faces(">Z").val(), name="cylinder_1_top_face")
+    assy.addSubshape(cylinder_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cylinder_1.faces(">Z").val(), layer="cylinder_1_top_face")
+    assy.addSubshape(cylinder_2.faces("<Z").val(), name="cylinder_2_bottom_face")
+    assy.addSubshape(cylinder_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cylinder_2.faces("<Z").val(), layer="cylinder_2_bottom_face")
+    assy.addSubshape(cone_1.faces(">Z").val(), name="cone_1_top_face")
+    assy.addSubshape(cone_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cone_1.faces(">Z").val(), layer="cone_1_top_face")
+    assy.addSubshape(cone_2.faces("<Z").val(), name="cone_2_bottom_face")
+    assy.addSubshape(cone_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
+
+    # Write once with pcurves turned on
+    success = exportStepMeta(assy, meta_path)
+    assert success
+
+    # Write again with pcurves turned off
+    success = exportStepMeta(assy, meta_path, write_pcurves=False)
+    assert success
+
+    # Make sure the step file exists
+    assert os.path.exists(meta_path)
+
+    # Read the contents as a step file as a string so we can check the outputs
+    with open(meta_path, "r") as f:
+        step_contents = f.read()
+
+        # Make sure that the face name strings were applied in ADVACED_FACE entries
+        assert "ADVANCED_FACE('cube_1_top_face'" in step_contents
+        assert "ADVANCED_FACE('cube_2_bottom_face'" in step_contents
+
+        # Make reasonably sure that the colors were applied to the faces
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('black')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('white')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('cyan')" in step_contents
+        assert "DRAUGHTING_PRE_DEFINED_COLOUR('yellow')" in step_contents
+
+        # Make sure that the layers were created
+        assert (
+            "PRESENTATION_LAYER_ASSIGNMENT('cube_1_top_face','visible'" in step_contents
+        )
+        assert (
+            "PRESENTATION_LAYER_ASSIGNMENT('cube_2_bottom_face','visible'"
+            in step_contents
+        )
+
+
+def test_meta_step_export_edge_cases(tmp_path_factory):
+    """
+    Test all the edge cases of the STEP export function.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    meta_path = os.path.join(tmpdir, "meta_edges_cases.step")
+
+    # Create an assembly where the child is empty
+    assy = cq.Assembly(name="top-level")
+    subassy = cq.Assembly(name="second-level")
+    assy.add(subassy)
+
+    # Write an assembly with no children
+    success = exportStepMeta(assy, meta_path)
+    assert success
+
+    # Test an object with no color set
+    cube = cq.Workplane().box(10.0, 10.0, 10.0)
+    assy.add(cube, name="cube")
+    success = exportStepMeta(assy, meta_path)
+    assert success
+
+    # Tag a face that does not match the object
+    assy.addSubshape(None, name="cube_top_face")
+    success = exportStepMeta(assy, meta_path)
+    assert success
+
+    # Tag the name but nothing else
+    assy.addSubshape(cube.faces(">Z").val(), name="cube_top_face")
+    success = exportStepMeta(assy, meta_path)
+    assert success
+
+    # Reset the assembly
+    assy.remove("cube")
+    cube = cq.Workplane().box(9.9, 9.9, 9.9)
+    assy.add(cube, name="cube")
+
+    # Tag the color but nothing else
+    assy.addSubshape(cube.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    success = exportStepMeta(assy, meta_path)
+    assert success
+
+    # Reset the assembly
+    assy.remove("cube")
+    cube = cq.Workplane().box(9.8, 9.8, 9.8)
+    assy.add(cube, name="cube")
+
+    # Tag the layer but nothing else
+    assy.addSubshape(cube.faces(">Z").val(), layer="cube_top_face")
+    success = exportStepMeta(assy, meta_path)
+    assert success
 
 
 @pytest.mark.parametrize(
@@ -1803,3 +1972,31 @@ def test_remove_without_parent():
 
     assert len(assy.children) == 1
     assert len(assy.objects) == 1
+
+
+def test_step_color(tmp_path_factory):
+    """
+    Checks color handling for STEP export.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    step_color_path = os.path.join(tmpdir, "step_color.step")
+
+    # Create a simple assembly with color
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(10, 10, 10), color=cq.Color(0.47, 0.253, 0.18, 1.0))
+
+    success = exportStepMeta(assy, step_color_path)
+    assert success
+
+    # Read the file as a string and check for the correct colors
+    with open(step_color_path, "r") as f:
+        step_content = f.readlines()
+
+        # Step through and try to find the COLOUR line
+        for line in step_content:
+            if "COLOUR_RGB(''," in line:
+                assert "0.47" in line
+                assert "0.25" in line
+                assert "0.18" in line

@@ -1,4 +1,4 @@
-from cadquery.occ_impl.shapes import (
+from cadquery.func import (
     vertex,
     segment,
     polyline,
@@ -36,22 +36,30 @@ from cadquery.occ_impl.shapes import (
     Shape,
     Compound,
     Edge,
+    Face,
+    Shell,
+    check,
+    Vector,
+    closest,
+    imprint,
+    setThreads,
+    project,
+    edgeOn,
+    faceOn,
+)
+
+from cadquery.occ_impl.shapes import (
     _get_one_wire,
     _get_wires,
     _get,
     _get_one,
     _get_edges,
     _adaptor_curve_to_edge,
-    check,
-    Vector,
-    closest,
-    imprint,
-    setThreads,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
 
-from pytest import approx, raises
+from pytest import approx, raises, fixture
 from math import pi
 
 #%% test utils
@@ -167,6 +175,57 @@ def test_constructors():
     assert sh2.Area() == approx(6)
     assert sh3.isValid()
 
+    # compound
+    c1 = compound(b.Faces())
+    c2 = compound(*b.Faces())
+
+    assert len(list(c1)) == 6
+    assert len(list(c2)) == 6
+
+    for f in list(c1) + list(c2):
+        assert f.ShapeType() == "Face"
+
+
+def test_sewing():
+
+    b = box(1, 1, 1)
+    ftop = b.faces(">Z")
+    sh = b.remove(ftop)
+
+    # regular local sewing
+    history1 = dict(ftop=ftop)
+    res1 = shell(sh.faces("not <Z"), ftop, ctx=(sh, ftop), history=history1)
+
+    assert res1.isValid()
+    assert res1.Area() == approx(6)
+    assert "ftop" in history1
+
+    # regular local sewing - with Shape context
+    history2 = {}
+    res2 = shell(sh.faces("not <Z"), ftop, ctx=compound(sh, ftop), history=history2)
+
+    assert res2.isValid()
+    assert res2.Area() == approx(6)
+    assert ftop in history2
+
+    # non-manifold sewing
+    res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=False)
+
+    assert res3.isValid()
+    assert not solid(res3).isValid()
+    assert isinstance(res3, Shell)
+
+    # manifold sewing (default) - results in a compound
+    res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=True)
+
+    assert res3.isValid()
+    assert isinstance(res3, Compound)
+
+
+def test_solid():
+
+    b = box(1, 1, 1)
+
     # solid
     s1 = solid(b.Faces())
     s2 = solid(*b.Faces())
@@ -186,15 +245,63 @@ def test_constructors():
 
     assert s4.Volume() == approx(1)
 
-    # compound
-    c1 = compound(b.Faces())
-    c2 = compound(*b.Faces())
+    # check history handling
+    hist = {}
+    s4 = solid(
+        b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces(), history=hist
+    )
 
-    assert len(list(c1)) == 6
-    assert len(list(c2)) == 6
+    final_faces = s4.Faces()
+    final_faces_history = list(hist.values())
+    for f in final_faces:
+        assert f in final_faces_history
 
-    for f in list(c1) + list(c2):
-        assert f.ShapeType() == "Face"
+
+def test_edgeOn():
+
+    # make a base face
+    f = torus(10, 4).faces()
+
+    # construct an edge with points
+    e1 = edgeOn(f, [(0, 0), (0, 1), (1, 1), (1, 0)], periodic=True)
+
+    assert e1.isValid()
+    assert e1.hasPCurve(f)
+
+    # use it to make a face
+    f1 = f.trim(wire(e1))
+
+    assert f1.isValid()
+
+    # construct in uv space directly
+    e2 = edgeOn(f, circle(0.3))
+
+    assert e2.isValid()
+    assert e2.hasPCurve(f)
+
+    # use it to make a face
+    f2 = f.trim(wire(e2))
+
+    assert f2.isValid()
+
+
+def test_faceOn():
+
+    # make a base face
+    f = sphere(4).faces()
+
+    # single face
+    f1 = faceOn(f, text("d", 1))
+
+    assert f1.isValid()
+    assert isinstance(f1, Face)
+    assert all(w.IsClosed() for w in f1)
+
+    # multiple faces
+    f2 = faceOn(f, text("CQ", 1))
+
+    assert f2.isValid()
+    assert len(f2.Faces()) == 2
 
 
 #%% primitives
@@ -430,6 +537,7 @@ def test_imprint():
 
     assert len(res_glue_full.Faces()) == len(compound(b1, b2).Faces()) - 1
 
+    # imprint with history
     history = dict(b1=b1, b3=b3)
     res_glue_partial = imprint(b1, b3, glue="partial", history=history)
 
@@ -438,6 +546,45 @@ def test_imprint():
 
     assert len(b1_imp.Faces()) == len(b1.Faces()) + 1
     assert len(res_glue_partial.Faces()) == len(b1_imp.Faces() + b3_imp.Faces()) - 1
+
+    # imprint with faulty history
+    history = dict(b2=b2)
+    # this does not raise!
+    res_glue_partial = imprint(b1, b3, glue="partial", history=history)
+
+    assert b2 not in history
+
+
+@fixture
+def patch_find(monkeypatch):
+    """
+    Fixture for throwing exception during imprinting.
+    """
+
+    from OCP.TopTools import TopTools_DataMapOfShapeListOfShape
+    from OCP.Standard import Standard_NoSuchObject
+    from OCP.BOPAlgo import BOPAlgo_Builder
+
+    def dummy(x):
+
+        raise ValueError("A")
+        raise Standard_NoSuchObject
+
+    class DummyMap(TopTools_DataMapOfShapeListOfShape):
+        def Find(self, x):
+            raise Standard_NoSuchObject
+
+    monkeypatch.setattr(BOPAlgo_Builder, "Images", lambda x: DummyMap())
+
+
+def test_imprint_error(patch_find):
+
+    b1 = box(1, 1, 1)
+    b2 = b1.moved(x=1)
+
+    history = {}
+
+    _ = imprint(b1, b2, history=history)
 
 
 def test_setThreads():
@@ -709,6 +856,26 @@ def test_loft_vertex():
     assert len(r4.Solids()) == 1
     assert r4.Volume() == approx(r3.Volume())  # inner features are ignored
     assert len(r5.Faces()) == 4
+
+
+def test_project():
+
+    base = cylinder(1, 2).faces("%CYLINDER")
+    e = circle(0.1).moved(rx=90).moved(y=0.5, z=1)
+
+    # project single edge
+    res = project(e, base)
+
+    assert res.isValid()
+    assert res.IsClosed()
+    assert isinstance(res, Edge)
+
+    # project multiple edges at once
+    res = project(e.moved([(0, -0.1), (0, 0.1)]), base)
+    assert isinstance(res, Compound)
+    for el in res:
+        assert el.isValid()
+        assert el.IsClosed()
 
 
 # %% export

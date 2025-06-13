@@ -664,7 +664,7 @@ class Workplane(object):
         :type obj: a CQ object
         :returns: a CQ object with obj's workplane
         """
-        out = obj.__class__(obj.plane)
+        out = copy(obj)
         out.parent = self
         out.ctx = self.ctx
         return out
