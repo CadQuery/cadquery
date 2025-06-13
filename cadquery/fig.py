@@ -10,6 +10,8 @@ from threading import Thread
 from itertools import chain
 from webbrowser import open_new_tab
 
+from typish import instance_of
+
 from trame.app import get_server
 from trame.app.core import Server
 from trame.widgets import html, vtk as vtk_widgets, client
@@ -231,7 +233,7 @@ class Figure:
                 self.empty = True
 
             for s in shapes:
-                if isinstance(s, ShapeLike):
+                if instance_of(s, ShapeLike):
                     for a in self.shapes[s]:
                         self.ren.RemoveActor(a)
 
