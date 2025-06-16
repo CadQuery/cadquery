@@ -230,8 +230,6 @@ class Figure:
                 self.actors.clear()
                 self.shapes.clear()
 
-                self.empty = True
-
             for s in shapes:
                 if instance_of(s, ShapeLike):
                     for a in self.shapes[s]:
