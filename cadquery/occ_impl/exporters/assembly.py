@@ -110,6 +110,7 @@ def exportStepMeta(
     path: str,
     write_pcurves: bool = True,
     precision_mode: int = 0,
+    flatten: bool = False,
 ) -> bool:
     """
     Export an assembly to a STEP file with faces tagged with names and colors. This is done as a
@@ -172,12 +173,31 @@ def exportStepMeta(
         if child_items:
             shape, name, loc, color = child_items
 
+            # Treat the shape differently based on whether or not the assembly should be flattened
+            if flatten:
+                part_label = shape_tool.AddShape(shape.wrapped, makeAssembly=False)
+
+                # Set the name of the part which has been flattened so it is not in an assembly
+                TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name))
+
+                # Set the location of the part rather than the enclosing assembly
+                shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
+            else:
+                subassy_label = shape_tool.AddShape(shape.wrapped, makeAssembly=True)
+
+                # Set the name of the enclosing assembly
+                TDataStd_Name.Set_s(subassy_label, TCollection_ExtendedString(name))
+
+                # Set the name of the part that is enclosed in the assembly
+                part_label = subassy_label.FindChild(1)
+                TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name + "_part"))
+
+                # Set the location of the assembly rather than the part
+                shape_tool.AddComponent(assy_label, subassy_label, loc.wrapped)
+
             # Handle shape name, color and location
-            part_label = shape_tool.AddShape(shape.wrapped, False)
-            TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name))
             if color:
                 color_tool.SetColor(part_label, color.wrapped, XCAFDoc_ColorGen)
-            shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
 
             # If this assembly has shape metadata, add it to the shape
             if (

@@ -626,6 +626,7 @@ def test_meta_step_export(tmp_path_factory):
     # Use a temporary directory
     tmpdir = tmp_path_factory.mktemp("out")
     meta_path = os.path.join(tmpdir, "meta.step")
+    expanded_meta_path = os.path.join(tmpdir, "expanded_meta.step")
 
     # Most nested level of the assembly
     subsubassy = cq.Assembly(name="third-level")
@@ -696,11 +697,11 @@ def test_meta_step_export(tmp_path_factory):
     assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
 
     # Write once with pcurves turned on
-    success = exportStepMeta(assy, meta_path)
+    success = exportStepMeta(assy, meta_path, flatten=True)
     assert success
 
     # Write again with pcurves turned off
-    success = exportStepMeta(assy, meta_path, write_pcurves=False)
+    success = exportStepMeta(assy, meta_path, write_pcurves=False, flatten=True)
     assert success
 
     # Make sure the step file exists
@@ -728,6 +729,22 @@ def test_meta_step_export(tmp_path_factory):
             "PRESENTATION_LAYER_ASSIGNMENT('cube_2_bottom_face','visible'"
             in step_contents
         )
+
+        #
+        # Test the non-flattened assembly export
+        #
+        success = exportStepMeta(assy, expanded_meta_path, flatten=False)
+        assert success
+
+        # Make sure the step file exists
+        assert os.path.exists(expanded_meta_path)
+
+        # Read the contents as a step file as a string so we can check the outputs
+        with open(expanded_meta_path, "r") as f:
+            step_contents = f.read()
+
+            # Make sure that the face name strings were applied in ADVACED_FACE entries
+            assert "ADVANCED_FACE('cube_1_top_face'" in step_contents
 
 
 def test_meta_step_export_edge_cases(tmp_path_factory):
