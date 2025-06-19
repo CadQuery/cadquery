@@ -190,7 +190,9 @@ def exportStepMeta(
 
                 # Set the name of the part that is enclosed in the assembly
                 part_label = subassy_label.FindChild(1)
-                TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name + "_part"))
+                TDataStd_Name.Set_s(
+                    part_label, TCollection_ExtendedString(name + "_part")
+                )
 
                 # Set the location of the assembly rather than the part
                 shape_tool.AddComponent(assy_label, subassy_label, loc.wrapped)
