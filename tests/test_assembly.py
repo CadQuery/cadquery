@@ -1077,7 +1077,7 @@ def test_copied_assembly_import(tmp_path_factory):
     assy_copy = Assembly.importStep(os.path.join(tmpdir, "test_assy_copy.step"))
     assert 5 == len(assy_copy.children)
 
-    # import the assy without copies - this throws
+    # import the assy without copies
     assy_normal = Assembly.importStep(os.path.join(tmpdir, "test_assy.step"))
     assert 5 == len(assy_normal.children)
 
