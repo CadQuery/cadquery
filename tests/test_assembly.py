@@ -987,8 +987,6 @@ def test_plain_assembly_import(tmp_path_factory):
     Test to make sure that importing plain assemblies has not been broken.
     """
 
-    from cadquery.func import box, rect
-
     tmpdir = tmp_path_factory.mktemp("out")
     plain_step_path = os.path.join(tmpdir, "plain_assembly_step.step")
 
@@ -1042,6 +1040,46 @@ def test_plain_assembly_import(tmp_path_factory):
         0.0,
         1.0,
     )  # red
+
+
+def test_copied_assembly_import(tmp_path_factory):
+    """
+    Tests to make sure that copied children in assemblies work correctly.
+    """
+    from cadquery import Assembly, Location, Color
+    from cadquery.func import box, rect
+
+    # Create the temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+
+    # prepare the model
+    def make_model(name: str, COPY: bool):
+        name = os.path.join(tmpdir, name)
+
+        b = box(1, 1, 1)
+
+        assy = Assembly(name="test_assy")
+        assy.add(box(1, 2, 5), color=Color("green"))
+
+        for v in rect(10, 10).vertices():
+            assy.add(
+                b.copy() if COPY else b, loc=Location(v.Center()), color=Color("red")
+            )
+
+        assy.export(name)
+
+        return assy
+
+    make_model("test_assy_copy.step", True)
+    make_model("test_assy.step", False)
+
+    # import the assy with copies
+    assy_copy = Assembly.importStep(os.path.join(tmpdir, "test_assy_copy.step"))
+    assert 5 == len(assy_copy.children)
+
+    # import the assy without copies - this throws
+    assy_normal = Assembly.importStep(os.path.join(tmpdir, "test_assy.step"))
+    assert 5 == len(assy_normal.children)
 
 
 @pytest.mark.parametrize(

@@ -50,7 +50,7 @@ def importStep(assy: AssemblyProtocol, path: str):
     color_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
     layer_tool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
 
-    def _process_simple_shape(label, parent_location=None):
+    def _process_simple_shape(label, parent_location=None, parent_name=None):
         shape = shape_tool.GetShape_s(label)
 
         # Tracks the RGB color value and whether or not it was found
@@ -58,9 +58,12 @@ def importStep(assy: AssemblyProtocol, path: str):
 
         # Load the name of the part in the assembly, if it is present
         name = None
-        name_attr = TDataStd_Name()
-        label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
-        name = str(name_attr.Get().ToExtString())
+        if parent_name is not None and parent_name != assy.name:
+            name = parent_name
+        else:
+            name_attr = TDataStd_Name()
+            label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+            name = str(name_attr.Get().ToExtString())
 
         # Process the color for the shape, which could be of different types
         color = Quantity_Color()
@@ -136,7 +139,7 @@ def importStep(assy: AssemblyProtocol, path: str):
 
                 attr_iterator.Next()
 
-    def process_label(label, parent_location=None):
+    def process_label(label, parent_location=None, parent_name=None):
         """
         Recursive function that allows us to process the hierarchy of the assembly as represented
         in the step file.
@@ -146,17 +149,16 @@ def importStep(assy: AssemblyProtocol, path: str):
         if shape_tool.IsReference_s(label):
             ref_label = TDF_Label()
             shape_tool.GetReferredShape_s(label, ref_label)
-            process_label(ref_label, parent_location)
-
-            # Load the top-level name of the assembly, if it is present
-            name_attr = TDataStd_Name()
-            labels.Value(1).FindAttribute(TDataStd_Name.GetID_s(), name_attr)
-            assy.name = str(name_attr.Get().ToExtString())
+            process_label(ref_label, parent_location, parent_name)
 
             return
 
         # See if this is an assembly (or sub-assembly)
         if shape_tool.IsAssembly_s(label):
+            name_attr = TDataStd_Name()
+            label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+            name = name_attr.Get().ToExtString()
+
             # Recursively process its components (children)
             comp_labels = TDF_LabelSequence()
             shape_tool.GetComponents_s(label, comp_labels)
@@ -170,25 +172,28 @@ def importStep(assy: AssemblyProtocol, path: str):
                 # Add the parent location if it exists
                 if parent_location is not None:
                     loc = parent_location * loc
-                process_label(sub_label, loc)
+
+                process_label(sub_label, loc, name)
+
             return
 
         # Check to see if we have an endpoint shape and process it
         if shape_tool.IsSimpleShape_s(label):
-            _process_simple_shape(label, parent_location)
+            _process_simple_shape(label, parent_location, parent_name)
 
-    # Look for the top-level assembly
-    found_top_level_assembly = False
+    # Get the shapes in the assembly
     labels = TDF_LabelSequence()
     shape_tool.GetFreeShapes(labels)
-    for i in range(labels.Length()):
-        # Make sure that we have an assembly at the top level
-        if shape_tool.IsTopLevel(labels.Value(i + 1)):
-            if shape_tool.IsAssembly_s(labels.Value(i + 1)):
-                found_top_level_assembly = True
 
-            process_label(labels.Value(i + 1))
+    # Use the first label to pull the top-level assembly information
+    name_attr = TDataStd_Name()
+    labels.Value(1).FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+    assy.name = str(name_attr.Get().ToExtString())
 
-    # If we did not find a top-level assembly, raise an error
-    if not found_top_level_assembly:
+    # Make sure there is a top-level assembly
+    if shape_tool.IsTopLevel(labels.Value(1)) and shape_tool.IsAssembly_s(
+        labels.Value(1)
+    ):
+        process_label(labels.Value(1))
+    else:
         raise ValueError("Step file does not contain an assembly")
