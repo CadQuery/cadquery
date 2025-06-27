@@ -48,8 +48,7 @@ def test_der():
     out = np.zeros(order + 1)
 
     for p in params:
-        nbBasisDer(nbFindSpan(p, order, knots), p,
-                   order, order - 1, knots, out_der)
+        nbBasisDer(nbFindSpan(p, order, knots), p, order, order - 1, knots, out_der)
         nbBasis(nbFindSpan(p, order, knots), p, order, knots, out)
 
         # sanity check
