@@ -26,6 +26,7 @@ requirements:
     - multimethod >=1.11,<2.0
     - casadi
     - typish
+    - numba
 
 test:
   requires:

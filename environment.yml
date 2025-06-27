@@ -25,6 +25,7 @@ dependencies:
   - pathspec
   - click
   - appdirs
+  - numba
   - pip
   - pip:
     - --editable=.
