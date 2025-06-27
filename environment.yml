@@ -26,6 +26,7 @@ dependencies:
   - click
   - appdirs
   - numba
+  - scipy
   - pip
   - pip:
     - --editable=.

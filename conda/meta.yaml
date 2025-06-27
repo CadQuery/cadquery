@@ -27,6 +27,7 @@ requirements:
     - casadi
     - typish
     - numba
+    - scipy
 
 test:
   requires:
