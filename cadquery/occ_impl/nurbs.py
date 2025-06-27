@@ -127,6 +127,7 @@ def nbBasis(i: int, u: float, order: int, knots: Array, out: Array):
         out[j] = saved
 
 
+@njiti
 def nbBasisDer(i: int, u: float, order: int, dorder: int, knots: Array, out: Array):
     """
     NURBS book A2.3
@@ -305,7 +306,6 @@ def periodicDesignMatrix(u: Array, order: int, knots: Array) -> COO:
         ui = u[i]
 
         # find the supporting span
-        # span = np.clip(findSpan(ui, knots), None, nb - 1)  + order - 1
         span = nbFindSpan(ui, order, knots, 0, nb) + order - 1
 
         # evaluate non-zero functions
@@ -317,6 +317,108 @@ def periodicDesignMatrix(u: Array, order: int, knots: Array) -> COO:
             span - order + np.arange(n)
         ) % nb  # NB: this is due to peridicity
         rv.v[i * n : (i + 1) * n] = temp
+
+    return rv
+
+
+@njit
+def derMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
+    """
+    Create a sparse design matrix and corresponding derivative matrices.
+    """
+
+    # number of param values
+    nu = np.size(u)
+
+    # chunck size
+    n = order + 1
+
+    # temp chunck storage
+    temp = np.zeros((n, n))
+
+    # initialize the empty matrix
+    rv = []
+
+    for _ in range(dorder + 1):
+        rv.append(
+            COO(
+                i=np.empty(n * nu, dtype=np.int64),
+                j=np.empty(n * nu, dtype=np.int64),
+                v=np.empty(n * nu),
+            )
+        )
+
+    # loop over param values
+    for i in range(nu):
+        ui = u[i]
+
+        # find the supporting span
+        span = nbFindSpan(ui, order, knots)
+
+        # evaluate non-zero functions
+        nbBasisDer(span, ui, order, dorder, knots, temp)
+
+        # update the matrices
+        for di in range(dorder + 1):
+            rv[di].i[i * n : (i + 1) * n] = i
+            rv[di].j[i * n : (i + 1) * n] = span - order + np.arange(n)
+            rv[di].v[i * n : (i + 1) * n] = temp[di, :]
+
+    return rv
+
+
+@njit
+def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
+    """
+    Create a sparse periodic design matrix and corresponding derivative matrices.
+    """
+
+    # extend the knots
+    knots_ext = np.concat(
+        (knots[-order:-1] - knots[-1], knots, knots[-1] + knots[1:order])
+    )
+
+    # number of param values
+    nu = len(u)
+
+    # number of basis functions
+    nb = len(knots) - 1
+
+    # chunck size
+    n = order + 1
+
+    # temp chunck storage
+    temp = np.zeros((n, n))
+
+    # initialize the empty matrix
+    rv = []
+
+    for _ in range(dorder + 1):
+        rv.append(
+            COO(
+                i=np.empty(n * nu, dtype=np.int64),
+                j=np.empty(n * nu, dtype=np.int64),
+                v=np.empty(n * nu),
+            )
+        )
+
+    # loop over param values
+    for i in range(nu):
+        ui = u[i]
+
+        # find the supporting span
+        span = nbFindSpan(ui, order, knots, 0, nb) + order - 1
+
+        # evaluate non-zero functions
+        nbBasisDer(span, ui, order, dorder, knots_ext, temp)
+
+        # update the matrices
+        for di in range(dorder + 1):
+            rv[di].i[i * n : (i + 1) * n] = i
+            rv[di].j[i * n : (i + 1) * n] = (
+                span - order + np.arange(n)
+            ) % nb  # NB: this is due to peridicity
+            rv[di].v[i * n : (i + 1) * n] = temp[di, :]
 
     return rv
 
