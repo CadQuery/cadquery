@@ -14,7 +14,6 @@ from OCP.TDataStd import TDataStd_Name
 
 import cadquery as cq
 from ..assembly import AssemblyProtocol
-from tkinter.constants import CURRENT
 
 
 def importStep(assy: AssemblyProtocol, path: str):
