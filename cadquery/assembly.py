@@ -34,7 +34,7 @@ from .occ_impl.exporters.assembly import (
     exportGLTF,
     STEPExportModeLiterals,
 )
-from .occ_impl.importers.assembly import importStep as importStepTopLevel
+from .occ_impl.importers.assembly import importStep as _importStep
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate
@@ -619,7 +619,7 @@ class Assembly(object):
         """
 
         assy = cls()
-        importStepTopLevel(assy, path)
+        _importStep(assy, path)
 
         return assy
 

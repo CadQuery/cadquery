@@ -52,11 +52,7 @@ def importStep(assy: AssemblyProtocol, path: str):
     def _process_simple_shape(label, parent_location=None, parent_name=None):
         shape = shape_tool.GetShape_s(label)
 
-        # Tracks the RGB color value and whether or not it was found
-        cq_color = None
-
         # Load the name of the part in the assembly, if it is present
-        name = None
         if parent_name is not None and parent_name != assy.name:
             name = parent_name
         else:
@@ -92,6 +88,8 @@ def importStep(assy: AssemblyProtocol, path: str):
                 current_attr = attr_iterator.Value()
 
                 # Get the type name of the attribute so that we can decide how to handle it
+                # TNaming_NamedShape is used to store and manage references to topological shapes, and its attributes can be accessed directly.
+                # XCAFDoc_GraphNode contains a graph of labels, and so we must follow the branch back to a father.
                 if current_attr.DynamicType().Name() == "TNaming_NamedShape":
                     # Save the shape so that we can add it to the subshape data
                     cur_shape = current_attr.Get()
