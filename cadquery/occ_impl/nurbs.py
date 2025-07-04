@@ -1,18 +1,82 @@
 #%% imports
-from numba import njit, prange
-from numpy import linspace, array, empty_like, atleast_1d
 import numpy as np
+import scipy.sparse as sp
 import math
 
 from numba import njit as _njit, prange
+
 from typing import NamedTuple, Optional
+
 from numpy.typing import NDArray
+from numpy import linspace, array, empty_like, atleast_1d
+
+from casadi import ldl, ldl_solve
+
+from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface
+from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
+from OCP.TColStd import (
+    TColStd_Array1OfInteger,
+    TColStd_Array1OfReal,
+    TColStd_Array2OfReal,
+)
+from OCP.gp import gp_Pnt
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace
+
+from .shapes import Face, Edge
 
 njit = _njit(cache=False, error_model="numpy", fastmath=True, parallel=False)
 
 njiti = _njit(
     cache=True, inline="always", error_model="numpy", fastmath=True, parallel=False
 )
+
+
+#%% internal helpers
+
+
+def _colPtsArray(pts: NDArray):
+
+    rv = TColgp_Array1OfPnt(1, pts.shape[0])
+
+    for i, p in enumerate(pts):
+        rv.SetValue(i + 1, gp_Pnt(*p))
+
+    return rv
+
+
+def _colPtsArray2(pts: NDArray) -> TColStd_Array2OfReal:
+
+    assert pts.ndim == 3
+
+    nu, nv, _ = pts.shape
+
+    rv = TColgp_Array2OfPnt(1, len(pts), 1, len(pts[0]))
+
+    for i, row in enumerate(pts):
+        for j, pt in enumerate(row):
+            rv.SetValue(i + 1, j + 1, gp_Pnt(*pt))
+
+    return rv
+
+
+def _colRealArray(knots: NDArray):
+
+    rv = TColStd_Array1OfReal(1, len(knots))
+
+    for i, el in enumerate(knots):
+        rv.SetValue(i + 1, el)
+
+    return rv
+
+
+def _colIntArray(knots: NDArray):
+
+    rv = TColStd_Array1OfInteger(1, len(knots))
+
+    for i, el in enumerate(knots):
+        rv.SetValue(i + 1, el)
+
+    return rv
 
 
 #%% vocabulary types
@@ -29,6 +93,119 @@ class COO(NamedTuple):
     i: ArrayI
     j: ArrayI
     v: Array
+
+    def coo(self):
+
+        return sp.coo_matrix((self.v, (self.i, self.j)))
+
+    def csc(self):
+
+        return self.coo().tocsc()
+
+    def csr(self):
+
+        return self.coo().tocsr()
+
+
+class Curve(NamedTuple):
+    """
+    B-spline curve container.
+    """
+
+    pts: Array
+    knots: Array
+    order: int
+    periodic: bool
+
+    def curve(self) -> Geom_BSplineCurve:
+
+        if self.periodic:
+            mults = _colIntArray(np.ones_like(self.knots, dtype=int))
+            knots = _colRealArray(self.knots)
+        else:
+            unique_knots, mults_arr = np.unique(self.knots, return_counts=True)
+            knots = _colRealArray(unique_knots)
+            mults = _colIntArray(mults_arr)
+
+        return Geom_BSplineCurve(
+            _colPtsArray(self.pts), knots, mults, self.order, self.periodic,
+        )
+
+    def edge(self) -> Edge:
+
+        return Edge(BRepBuilderAPI_MakeEdge(self.curve()).Shape())
+
+    @classmethod
+    def fromEdge(cls, e: Edge):
+
+        assert (
+            e.geomType() == "BSPLINE"
+        ), "B-spline geometry required, try converting first."
+
+        g = e._geomAdaptor().BSpline()
+
+        knots = np.array(list(e._geomAdaptor().BSpline().KnotSequence()))
+        pts = np.array([(p.X(), p.Y(), p.Z()) for p in g.Poles()])
+        order = g.Degree()
+        periodic = g.IsPeriodic()
+
+        return cls(pts, knots, order, periodic)
+
+    def __call__(self, us: NDArray) -> NDArray:
+
+        pass
+
+    def der(self, us: NDArray) -> NDArray:
+
+        pass
+
+
+class Surface(NamedTuple):
+    """
+    B-spline surface container.
+    """
+
+    pts: Array
+    uknots: Array
+    vknots: Array
+    uorder: int
+    vorder: int
+    uperiodic: bool
+    vperiodic: bool
+
+    def surface(self) -> Geom_BSplineSurface:
+
+        if self.uperiodic:
+            umults = _colIntArray(np.ones_like(self.uknots, dtype=int))
+            uknots = _colRealArray(self.uknots)
+        else:
+            unique_knots, mults_arr = np.unique(self.uknots, return_counts=True)
+            uknots = _colRealArray(unique_knots)
+            umults = _colIntArray(mults_arr)
+
+        if self.vperiodic:
+            vmults = _colIntArray(np.ones_like(self.vknots, dtype=int))
+            vknots = _colRealArray(self.vknots)
+        else:
+            unique_knots, mults_arr = np.unique(self.vknots, return_counts=True)
+            vknots = _colRealArray(unique_knots)
+            vmults = _colIntArray(mults_arr)
+
+        return Geom_BSplineSurface(
+            _colPtsArray2(self.pts),
+            uknots,
+            vknots,
+            umults,
+            vmults,
+            self.uorder,
+            self.vorder,
+            self.uperiodic,
+            self.vperiodic,
+        )
+
+    def face(self, tol: float = 1e-3) -> Face:
+
+        return Face(BRepBuilderAPI_MakeFace(self.surface(), tol).Shape())
 
 
 #%% basis functions
@@ -423,6 +600,304 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
     return rv
 
 
+@njit
+def periodicDiscretePenalty(us: Array, order: int) -> COO:
+
+    if order not in (1, 2):
+        raise ValueError(
+            f"Only 1st and 2nd order penalty is supported, requested order {order}"
+        )
+
+    # number of rows
+    nb = len(us)
+
+    # number of elements per row
+    ne = order + 1
+
+    # initialize the penlaty matrix
+    rv = COO(
+        i=np.empty(nb * ne, dtype=np.int64),
+        j=np.empty(nb * ne, dtype=np.int64),
+        v=np.empty(nb * ne),
+    )
+
+    if order == 1:
+        for ix in range(nb):
+            rv.i[ne * ix] = ix
+            rv.j[ne * ix] = (ix - 1) % nb
+            rv.v[ne * ix] = -0.5
+
+            rv.i[ne * ix + 1] = ix
+            rv.j[ne * ix + 1] = (ix + 1) % nb
+            rv.v[ne * ix + 1] = 0.5
+
+    elif order == 2:
+        for ix in range(nb):
+            rv.i[ne * ix] = ix
+            rv.j[ne * ix] = (ix - 1) % nb
+            rv.v[ne * ix] = 1
+
+            rv.i[ne * ix + 1] = ix
+            rv.j[ne * ix + 1] = ix
+            rv.v[ne * ix + 1] = -2
+
+            rv.i[ne * ix + 2] = ix
+            rv.j[ne * ix + 2] = (ix + 1) % nb
+            rv.v[ne * ix + 2] = 1
+
+    return rv
+
+
+@njit
+def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
+
+    if order not in (1, 2):
+        raise ValueError(
+            f"Only 1st and 2nd order penalty is supported, requested order {order}"
+        )
+
+    # number of rows
+    nb = len(us)
+
+    # number of elements per row
+    ne = order + 1
+
+    # initialize the penlaty matrix
+    rv = COO(
+        i=np.empty(nb * ne, dtype=np.int64),
+        j=np.empty(nb * ne, dtype=np.int64),
+        v=np.empty(nb * ne),
+    )
+
+    if order == 1:
+        for ix in range(nb):
+            if ix == 0:
+                rv.i[ne * ix] = ix
+                rv.j[ne * ix] = ix
+                rv.v[ne * ix] = -1
+
+                rv.i[ne * ix + 1] = ix
+                rv.j[ne * ix + 1] = ix + 1
+                rv.v[ne * ix + 1] = 1
+            elif ix < nb - 1:
+                rv.i[ne * ix] = ix
+                rv.j[ne * ix] = ix - 1
+                rv.v[ne * ix] = -0.5
+
+                rv.i[ne * ix + 1] = ix
+                rv.j[ne * ix + 1] = ix + 1
+                rv.v[ne * ix + 1] = 0.5
+            else:
+                rv.i[ne * ix] = ix
+                rv.j[ne * ix] = ix - 1
+                rv.v[ne * ix] = -1
+
+                rv.i[ne * ix + 1] = ix
+                rv.j[ne * ix + 1] = ix
+                rv.v[ne * ix + 1] = 1
+
+    elif order == 2:
+        for ix in range(nb):
+            if ix == 0:
+                rv.i[ne * ix] = ix
+                rv.j[ne * ix] = ix
+                rv.v[ne * ix] = 1
+
+                rv.i[ne * ix + 1] = ix
+                rv.j[ne * ix + 1] = ix + 1
+                rv.v[ne * ix + 1] = -2
+
+                rv.i[ne * ix + 2] = ix
+                rv.j[ne * ix + 2] = ix + 2
+                rv.v[ne * ix + 2] = 1
+            elif ix < nb - 1:
+                rv.i[ne * ix] = ix
+                rv.j[ne * ix] = ix - 1
+                rv.v[ne * ix] = 1
+
+                rv.i[ne * ix + 1] = ix
+                rv.j[ne * ix + 1] = ix
+                rv.v[ne * ix + 1] = -2
+
+                rv.i[ne * ix + 2] = ix
+                rv.j[ne * ix + 2] = ix + 1
+                rv.v[ne * ix + 2] = 1
+            else:
+                rv.i[ne * ix] = ix
+                rv.j[ne * ix] = ix - 2
+                rv.v[ne * ix] = 1
+
+                rv.i[ne * ix + 1] = ix
+                rv.j[ne * ix + 1] = ix - 1
+                rv.v[ne * ix + 1] = -2
+
+                rv.i[ne * ix + 2] = ix
+                rv.j[ne * ix + 2] = ix
+                rv.v[ne * ix + 2] = 1
+
+    return rv
+
+
+def periodicApproximate(
+    data: NDArray,
+    us: Optional[NDArray] = None,
+    knots: int | NDArray = 50,
+    order: int = 3,
+) -> Curve:
+
+    npts = data.shape[0]
+
+    # parametrize the points
+    us = linspace(0, 1, npts, endpoint=False)
+
+    # construct the knot vector
+    if isinstance(knots, int):
+        knots_ = linspace(0, 1, knots)
+    else:
+        knots_ = np.array(knots)
+
+    # construct the design matrix
+    C = periodicDesignMatrix(us, order, knots_).csc()
+    CtC = C.T @ C
+
+    # factorize
+    D, L, P = ldl(CtC, True)
+
+    # invert
+    pts = ldl_solve(C.T @ data, D, L, P).toarray()
+
+    # convert to an edge
+    rv = Curve(pts, knots_, order, periodic=True)
+
+    return rv
+
+
+def approximate(
+    data: NDArray,
+    us: Optional[NDArray] = None,
+    knots: int | NDArray = 50,
+    order: int = 3,
+    penalty: int = 4,
+    lam: float = 0,
+) -> Curve:
+
+    npts = data.shape[0]
+
+    # parametrize the points
+    us = linspace(0, 1, npts)
+
+    # construct the knot vector
+    if isinstance(knots, int):
+        knots_ = np.concatenate(
+            (np.repeat(0, order), linspace(0, 1, knots), np.repeat(1, order))
+        )
+    else:
+        knots_ = np.array(knots)
+
+    # construct the design matrix
+    C = designMatrix(us, order, knots_).csc()
+    CtC = C.T @ C
+
+    # add a penalty term if requested
+    if lam:
+        up = linspace(0, 1, order * npts)
+
+        assert penalty <= order + 2
+
+        # discrete + exact derivatives
+        if penalty > order:
+            Pexact = derMatrix(up, order, order - 1, knots_)[-1].csc()
+            Pdiscrete = discretePenalty(up, penalty - order, order).csc()
+
+            P = Pdiscrete @ Pexact
+
+        # only exact derivatives
+        else:
+            P = derMatrix(up, order, penalty, knots_)[-1].csc()
+
+        CtC += lam * P.T @ P
+
+    # clamp first and last point
+    Cc = C[[0, -1], :]
+    bc = data[[0, -1], :]
+
+    # final matrix and vector
+    Aug = sp.bmat([[CtC, Cc.T], [Cc, None]])
+    data_aug = np.vstack((C.T @ data, bc))
+
+    # factorize
+    D, L, P = ldl(Aug, False)
+
+    # invert
+    pts = ldl_solve(data_aug, D, L, P).toarray()[:-2, :]
+
+    # convert to an edge
+    rv = Curve(pts, knots_, order, periodic=False)
+
+    return rv
+
+
+def periodicLoft(*curves: Curve, order: int = 3) -> Curve:
+
+    nknots: int = len(curves) + 1
+
+    # collect control pts
+    pts = np.stack([c.pts for c in curves])
+
+    # approximate
+    pts_new = []
+
+    for j in range(pts.shape[1]):
+        pts_new.append(periodicApproximate(pts[:, j, :], knots=nknots, order=order).pts)
+
+    # construct the final surface
+    rv = Surface(
+        np.stack(pts_new).swapaxes(0, 1),
+        linspace(0, 1, nknots),
+        curves[0].knots,
+        order,
+        curves[0].order,
+        True,
+        curves[0].periodic,
+    )
+
+    return rv
+
+
+def loft(*curves: Curve, order: int = 3, lam: float = 1e-9, penalty: int = 4):
+
+    nknots: int = len(curves)
+
+    # collect control pts
+    pts = np.stack([c.pts for c in curves])
+
+    # approximate
+    pts_new = []
+
+    for j in range(pts.shape[1]):
+        pts_new.append(
+            approximate(
+                pts[:, j, :], knots=nknots, order=order, lam=lam, penalty=penalty
+            ).pts
+        )
+
+    # construct the final surface
+    rv = Surface(
+        np.stack(pts_new).swapaxes(0, 1),
+        np.concatenate(
+            (np.repeat(0, order), linspace(0, 1, nknots), np.repeat(1, order))
+        ),
+        curves[0].knots,
+        order,
+        curves[0].order,
+        False,
+        curves[0].periodic,
+    )
+
+    return rv
+
+
+#%% for removal?
 @njit
 def findSpan(v, knots):
 
