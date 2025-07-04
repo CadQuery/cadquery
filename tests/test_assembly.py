@@ -1005,7 +1005,7 @@ def test_plain_assembly_import(tmp_path_factory):
     # Export the assembly, but do not use the meta STEP export method
     assy.export(plain_step_path)
 
-    # # Import the STEP file back in
+    # Import the STEP file back in
     imported_assy = cq.Assembly.importStep(plain_step_path)
     assert imported_assy.name == "top_level"
 
@@ -1080,6 +1080,38 @@ def test_copied_assembly_import(tmp_path_factory):
     # import the assy without copies
     assy_normal = Assembly.importStep(os.path.join(tmpdir, "test_assy.step"))
     assert 5 == len(assy_normal.children)
+
+
+def test_nested_subassembly_step_import(tmp_path_factory):
+    """
+    Tests if the STEP import works correctly with nested subassemblies.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    nested_step_path = os.path.join(tmpdir, "plain_assembly_step.step")
+
+    # Create a simple assembly
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(10, 10, 10), name="box_1")
+
+    # Create a simple subassembly
+    subassy = cq.Assembly()
+    subassy.add(cq.Workplane().box(5, 5, 5), name="box_2", loc=cq.Location(10, 10, 10))
+
+    # Nest the subassembly
+    assy.add(subassy)
+
+    # Export and then re-import the nested assembly STEP
+    assy.export(nested_step_path)
+    imported_assy = cq.Assembly.importStep(nested_step_path)
+
+    # Check the locations
+    assert imported_assy.children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0)
+    assert imported_assy.children[1].objects["box_2"].loc.toTuple()[0] == (
+        10.0,
+        10.0,
+        10.0,
+    )
 
 
 @pytest.mark.parametrize(
