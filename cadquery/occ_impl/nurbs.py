@@ -5,7 +5,7 @@ import math
 
 from numba import njit as _njit, prange
 
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple, Optional, Tuple, List
 
 from numpy.typing import NDArray
 from numpy import linspace, array, empty_like, atleast_1d
@@ -876,7 +876,11 @@ def periodicLoft(*curves: Curve, order: int = 3) -> Surface:
 
 
 def loft(
-    *curves: Curve, order: int = 3, lam: float = 1e-9, penalty: int = 4
+    *curves: Curve,
+    order: int = 3,
+    lam: float = 1e-9,
+    penalty: int = 4,
+    tangents: Optional[List[Tuple[NDArray, NDArray]]] = None,
 ) -> Surface:
 
     nknots: int = len(curves)
@@ -890,7 +894,12 @@ def loft(
     for j in range(pts.shape[1]):
         pts_new.append(
             approximate(
-                pts[:, j, :], knots=nknots, order=order, lam=lam, penalty=penalty
+                pts[:, j, :],
+                knots=nknots,
+                order=order,
+                lam=lam,
+                penalty=penalty,
+                tangents=tangents[j] if tangents else None,
             ).pts
         )
 
