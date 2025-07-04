@@ -5,7 +5,7 @@ import math
 
 from numba import njit as _njit, prange
 
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Tuple
 
 from numpy.typing import NDArray
 from numpy import linspace, array, empty_like, atleast_1d
@@ -34,7 +34,7 @@ njiti = _njit(
 #%% internal helpers
 
 
-def _colPtsArray(pts: NDArray):
+def _colPtsArray(pts: NDArray) -> TColgp_Array1OfPnt:
 
     rv = TColgp_Array1OfPnt(1, pts.shape[0])
 
@@ -44,7 +44,7 @@ def _colPtsArray(pts: NDArray):
     return rv
 
 
-def _colPtsArray2(pts: NDArray) -> TColStd_Array2OfReal:
+def _colPtsArray2(pts: NDArray) -> TColgp_Array2OfPnt:
 
     assert pts.ndim == 3
 
@@ -59,7 +59,7 @@ def _colPtsArray2(pts: NDArray) -> TColStd_Array2OfReal:
     return rv
 
 
-def _colRealArray(knots: NDArray):
+def _colRealArray(knots: NDArray) -> TColStd_Array1OfReal:
 
     rv = TColStd_Array1OfReal(1, len(knots))
 
@@ -69,7 +69,7 @@ def _colRealArray(knots: NDArray):
     return rv
 
 
-def _colIntArray(knots: NDArray):
+def _colIntArray(knots: NDArray) -> TColStd_Array1OfInteger:
 
     rv = TColStd_Array1OfInteger(1, len(knots))
 
@@ -153,11 +153,11 @@ class Curve(NamedTuple):
 
     def __call__(self, us: NDArray) -> NDArray:
 
-        pass
+        raise NotImplementedError()
 
     def der(self, us: NDArray) -> NDArray:
 
-        pass
+        raise NotImplementedError()
 
 
 class Surface(NamedTuple):
@@ -779,6 +779,7 @@ def approximate(
     order: int = 3,
     penalty: int = 4,
     lam: float = 0,
+    tangents: Optional[Tuple[NDArray, NDArray]] = None,
 ) -> Curve:
 
     npts = data.shape[0]
@@ -820,6 +821,16 @@ def approximate(
     # clamp first and last point
     Cc = C[[0, -1], :]
     bc = data[[0, -1], :]
+    nc = 2  # number of constraints
+
+    # handle tangent constraints if needed
+    if tangents:
+        nc += 2
+
+        Cc2 = derMatrix(us[[0, -1]], order, 1, knots_)[-1].csc()
+
+        Cc = sp.vstack((Cc, Cc2))
+        bc = np.vstack((bc, *tangents))
 
     # final matrix and vector
     Aug = sp.bmat([[CtC, Cc.T], [Cc, None]])
@@ -829,7 +840,7 @@ def approximate(
     D, L, P = ldl(Aug, False)
 
     # invert
-    pts = ldl_solve(data_aug, D, L, P).toarray()[:-2, :]
+    pts = ldl_solve(data_aug, D, L, P).toarray()[:-nc, :]
 
     # convert to an edge
     rv = Curve(pts, knots_, order, periodic=False)
@@ -837,7 +848,7 @@ def approximate(
     return rv
 
 
-def periodicLoft(*curves: Curve, order: int = 3) -> Curve:
+def periodicLoft(*curves: Curve, order: int = 3) -> Surface:
 
     nknots: int = len(curves) + 1
 
@@ -864,7 +875,9 @@ def periodicLoft(*curves: Curve, order: int = 3) -> Curve:
     return rv
 
 
-def loft(*curves: Curve, order: int = 3, lam: float = 1e-9, penalty: int = 4):
+def loft(
+    *curves: Curve, order: int = 3, lam: float = 1e-9, penalty: int = 4
+) -> Surface:
 
     nknots: int = len(curves)
 
