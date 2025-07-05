@@ -6389,6 +6389,36 @@ def sweep(
     return _compound_or_shape(results)
 
 
+@overload
+def loft(
+    s: Sequence[Shape],
+    cap: bool = False,
+    ruled: bool = False,
+    continuity: Literal["C1", "C2", "C3"] = "C2",
+    parametrization: Literal["uniform", "chordal", "centripetal"] = "uniform",
+    degree: int = 3,
+    compat: bool = True,
+    smoothing: bool = False,
+    weights: Tuple[float, float, float] = (1, 1, 1),
+) -> Shape:
+    ...
+
+
+@overload
+def loft(
+    *s: Shape,
+    cap: bool = False,
+    ruled: bool = False,
+    continuity: Literal["C1", "C2", "C3"] = "C2",
+    parametrization: Literal["uniform", "chordal", "centripetal"] = "uniform",
+    degree: int = 3,
+    compat: bool = True,
+    smoothing: bool = False,
+    weights: Tuple[float, float, float] = (1, 1, 1),
+) -> Shape:
+    ...
+
+
 @multimethod
 def loft(
     s: Sequence[Shape],
@@ -6482,7 +6512,7 @@ def loft(
 
 
 @loft.register
-def loft(
+def _(
     *s: Shape,
     cap: bool = False,
     ruled: bool = False,
