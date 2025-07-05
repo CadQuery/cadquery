@@ -81,7 +81,7 @@ def _colIntArray(knots: NDArray) -> TColStd_Array1OfInteger:
 
 #%% vocabulary types
 
-Array = NDArray[np.float64]
+Array = NDArray[np.floating]
 ArrayI = NDArray[np.int_]
 
 
