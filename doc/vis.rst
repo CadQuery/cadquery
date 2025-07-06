@@ -13,17 +13,17 @@ and are not tied to any external tool.
 
 .. code-block:: python
 
-    from cadquery import *
-    from cadquery.vis import show
+   from cadquery import *
+   from cadquery.vis import show
 
-    w = Workplane().sphere(1).split(keepBottom=True) - Workplane().sphere(0.5)
-    r = w.faces('>Z').fillet(0.1)
+   w = Workplane().sphere(1).split(keepBottom=True) - Workplane().sphere(0.5)
+   r = w.faces('>Z').fillet(0.1)
 
-    # Show the result
-    show(r, alpha=0.5)
+   # Show the result
+   show(r, alpha=0.5)
 
 
-..  image:: _static/show.PNG
+.. image:: _static/show.PNG
 
 
 One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquery.Sketch`, :class:`~cadquery.Assembly`, :class:`~cadquery.Shape`,
@@ -53,7 +53,7 @@ One can visualize objects of type :class:`~cadquery.Workplane`, :class:`~cadquer
    show(w, sk, sh, vecs, locs)
 
 
-..  image:: _static/show_demo.PNG
+.. image:: _static/show_demo.PNG
 
 
 Additionally it is possible to integrate with other libraries using VTK and display any `vtkProp` object.
@@ -61,18 +61,18 @@ Additionally it is possible to integrate with other libraries using VTK and disp
 
 .. code-block:: python
 
-    from cadquery.vis import show
-    from cadquery.func import torus
+   from cadquery.vis import show
+   from cadquery.func import torus
 
-    from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
+   from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 
 
-    a = vtkAnnotatedCubeActor()
-    t = torus(5,1)
+   a = vtkAnnotatedCubeActor()
+   t = torus(5,1)
 
-    show(t, a)
+   show(t, a)
 
-..  image:: _static/show_vtk.PNG
+.. image:: _static/show_vtk.PNG
 
 
 Note that currently the show function is blocking.
@@ -85,12 +85,12 @@ camera position and windows size.
 
 .. code-block:: python
 
-    from cadquery.vis import show
-    from cadquery.func import box
+   from cadquery.vis import show
+   from cadquery.func import box
 
-    b = box(1,1,1)
+   b = box(1,1,1)
 
-    show(b, width=800, height=800, screenshot='img.png', zoom=2, roll=-20, elevation=-30, interact=False)
+   show(b, width=800, height=800, screenshot='img.png', zoom=2, roll=-20, elevation=-30, interact=False)
 
 
 .. warning::
@@ -101,19 +101,19 @@ Sometimes it is desirable to control the camera position precisely. This can be 
 
 .. code-block:: python
 
-    from cadquery.vis import show
-    from cadquery.func import torus
+   from cadquery.vis import show
+   from cadquery.func import torus
 
-    R = 10
-    r = 1
-    h = 2
+   R = 10
+   r = 1
+   h = 2
 
-    t = torus(R, r)
+   t = torus(R, r)
 
-    show(t, position=(R, -R, R/h), roll=-45, zoom=0.9)
+   show(t, position=(R, -R, R/h), roll=-45, zoom=0.9)
 
 
-..  image:: _static/show_camera_position.png
+.. image:: _static/show_camera_position.png
 
 
 Control points
@@ -123,22 +123,22 @@ Control points
 
 .. code-block:: python
 
-    from cadquery.func import *
-    from cadquery.vis import *
+   from cadquery.func import *
+   from cadquery.vis import *
 
-    c = circle(1).toSplines()
-    spine = spline([(0, 0, 0), (-3, -3, 5)], tgts=[(0, 0, 1), (0, -1, 0)])
-    f = sweep(c, spine)
+   c = circle(1).toSplines()
+   spine = spline([(0, 0, 0), (-3, -3, 5)], tgts=[(0, 0, 1), (0, -1, 0)])
+   f = sweep(c, spine)
 
-    show(
-        f,
-        ctrlPts(f),
-        spine.moved(x=7),
-        ctrlPts(spine.moved(x=7), color="green"),
-        alpha=0.0,
-    )
+   show(
+       f,
+       ctrlPts(f),
+       spine.moved(x=7),
+       ctrlPts(spine.moved(x=7), color="green"),
+       alpha=0.0,
+   )
 
-..  image:: _static/ctrl_pts.png
+.. image:: _static/ctrl_pts.png
 
 Note that for some geometries explicit conversion to spline representation might be needed.
 :meth:`~cadquery.Shape.toSplines` performs approximate conversion and :meth:`~cadquery.Shape.toNURBS`
@@ -152,24 +152,24 @@ Fine-grained control of the appearance of every item can be achieved using :meth
 
 .. code-block:: python
 
-    from cadquery.vis import *
-    from cadquery.func import *
+   from cadquery.vis import *
+   from cadquery.func import *
 
-    show(
-        style(
-            torus(10, 2),
-            color="crimson",
-            tubes=True,
-            linewidth=5,
-            mesh=True,
-            meshcolor="blue",
-            tolerance=0.1,
-        ),
-        style(box(3, 3, 3), color="green", markersize=0.1, alpha=0.5),
-    )
+   show(
+       style(
+           torus(10, 2),
+           color="crimson",
+           tubes=True,
+           linewidth=5,
+           mesh=True,
+           meshcolor="blue",
+           tolerance=0.1,
+       ),
+       style(box(3, 3, 3), color="green", markersize=0.1, alpha=0.5),
+   )
 
 
-..  image:: _static/show_styling.png
+.. image:: _static/show_styling.png
 
 
 Jupyter/JupterLab
@@ -180,9 +180,9 @@ There is also more limited support for displaying :class:`~cadquery.Workplane`, 
 
 .. code-block:: python
 
-    from cadquery import *
+   from cadquery import *
 
-    Workplane().sphere(1).split(keepTop=True)
+   Workplane().sphere(1).split(keepTop=True)
 
-..  image:: _static/show_jupyter.PNG
+.. image:: _static/show_jupyter.PNG
 
