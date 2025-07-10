@@ -1,14 +1,13 @@
 #%% imports
 import numpy as np
 import scipy.sparse as sp
-import math
 
-from numba import njit as _njit, prange
+from numba import njit as _njit
 
-from typing import NamedTuple, Optional, Tuple, List
+from typing import NamedTuple, Optional, Tuple, List, Union, cast, Type
 
 from numpy.typing import NDArray
-from numpy import linspace, array, empty_like, atleast_1d
+from numpy import linspace, ndarray, dtype
 
 from casadi import ldl, ldl_solve
 
@@ -17,12 +16,13 @@ from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCP.TColStd import (
     TColStd_Array1OfInteger,
     TColStd_Array1OfReal,
-    TColStd_Array2OfReal,
 )
 from OCP.gp import gp_Pnt
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace
 
 from .shapes import Face, Edge
+
+from multimethod import multidispatch, parametric
 
 njit = _njit(cache=False, error_model="numpy", fastmath=True, parallel=False)
 
@@ -81,8 +81,8 @@ def _colIntArray(knots: NDArray) -> TColStd_Array1OfInteger:
 
 #%% vocabulary types
 
-Array = NDArray[np.floating]
-ArrayI = NDArray[np.int_]
+Array = ndarray  # NDArray[np.floating]
+ArrayI = ndarray  # NDArray[np.int_]
 
 
 class COO(NamedTuple):
@@ -738,11 +738,14 @@ def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
     return rv
 
 
+@multidispatch
 def periodicApproximate(
-    data: NDArray,
-    us: Optional[NDArray] = None,
-    knots: int | NDArray = 50,
+    data: Array,
+    us: Optional[Array] = None,
+    knots: int | Array = 50,
     order: int = 3,
+    penalty: int = 4,
+    lam: float = 0,
 ) -> Curve:
 
     npts = data.shape[0]
@@ -760,6 +763,25 @@ def periodicApproximate(
     C = periodicDesignMatrix(us, order, knots_).csc()
     CtC = C.T @ C
 
+    # add the penalty if requested
+    if lam:
+        up = linspace(0, 1, order * npts, endpoint=False)
+
+        assert penalty <= order + 2
+
+        # discrete + exact derivatives
+        if penalty > order:
+            Pexact = periodicDerMatrix(up, order, order - 1, knots_)[-1].csc()
+            Pdiscrete = periodicDiscretePenalty(up, penalty - order).csc()
+
+            P = Pdiscrete @ Pexact
+
+        # only exact derivatives
+        else:
+            P = periodicDerMatrix(up, order, penalty, knots_)[-1].csc()
+
+        CtC += lam * P.T @ P
+
     # factorize
     D, L, P = ldl(CtC, True)
 
@@ -772,14 +794,74 @@ def periodicApproximate(
     return rv
 
 
-def approximate(
-    data: NDArray,
-    us: Optional[NDArray] = None,
-    knots: int | NDArray = 50,
+@periodicApproximate.register
+def _(
+    data: List[Array],
+    us: Optional[Array] = None,
+    knots: int | Array = 50,
     order: int = 3,
     penalty: int = 4,
     lam: float = 0,
-    tangents: Optional[Tuple[NDArray, NDArray]] = None,
+) -> List[Curve]:
+
+    rv = []
+
+    npts = data[0].shape[0]
+
+    # parametrize the points
+    us = linspace(0, 1, npts, endpoint=False)
+
+    # construct the knot vector
+    if isinstance(knots, int):
+        knots_ = linspace(0, 1, knots)
+    else:
+        knots_ = np.array(knots)
+
+    # construct the design matrix
+    C = periodicDesignMatrix(us, order, knots_).csc()
+    CtC = C.T @ C
+
+    # add the penalty if requested
+    if lam:
+        up = linspace(0, 1, order * npts, endpoint=False)
+
+        assert penalty <= order + 2
+
+        # discrete + exact derivatives
+        if penalty > order:
+            Pexact = periodicDerMatrix(up, order, order - 1, knots_)[-1].csc()
+            Pdiscrete = periodicDiscretePenalty(up, penalty - order).csc()
+
+            P = Pdiscrete @ Pexact
+
+        # only exact derivatives
+        else:
+            P = periodicDerMatrix(up, order, penalty, knots_)[-1].csc()
+
+        CtC += lam * P.T @ P
+
+    # factorize
+    D, L, P = ldl(CtC, True)
+
+    # invert every dataset
+    for dataset in data:
+        pts = ldl_solve(C.T @ dataset, D, L, P).toarray()
+
+        # convert to an edge and store
+        rv.append(Curve(pts, knots_, order, periodic=True))
+
+    return rv
+
+
+@multidispatch
+def approximate(
+    data: Array,
+    us: Optional[Array] = None,
+    knots: int | Array = 50,
+    order: int = 3,
+    penalty: int = 4,
+    lam: float = 0,
+    tangents: Optional[Tuple[Array, Array]] = None,
 ) -> Curve:
 
     npts = data.shape[0]
@@ -848,6 +930,94 @@ def approximate(
     return rv
 
 
+@approximate.register
+def _(
+    data: List[Array],
+    us: Optional[Array] = None,
+    knots: int | Array = 50,
+    order: int = 3,
+    penalty: int = 4,
+    lam: float = 0,
+    tangents: Optional[Union[Tuple[Array, Array], List[Tuple[Array, Array]]]] = None,
+) -> List[Curve]:
+
+    rv = []
+
+    npts = data[0].shape[0]
+
+    # parametrize the points
+    us = linspace(0, 1, npts)
+
+    # construct the knot vector
+    if isinstance(knots, int):
+        knots_ = np.concatenate(
+            (np.repeat(0, order), linspace(0, 1, knots), np.repeat(1, order))
+        )
+    else:
+        knots_ = np.array(knots)
+
+    # construct the design matrix
+    C = designMatrix(us, order, knots_).csc()
+    CtC = C.T @ C
+
+    # add a penalty term if requested
+    if lam:
+        up = linspace(0, 1, order * npts)
+
+        assert penalty <= order + 2
+
+        # discrete + exact derivatives
+        if penalty > order:
+            Pexact = derMatrix(up, order, order - 1, knots_)[-1].csc()
+            Pdiscrete = discretePenalty(up, penalty - order, order).csc()
+
+            P = Pdiscrete @ Pexact
+
+        # only exact derivatives
+        else:
+            P = derMatrix(up, order, penalty, knots_)[-1].csc()
+
+        CtC += lam * P.T @ P
+
+    # clamp first and last point
+    Cc = C[[0, -1], :]
+
+    nc = 2  # number of constraints
+
+    # handle tangent constraints if needed
+    if tangents:
+        nc += 2
+        Cc2 = derMatrix(us[[0, -1]], order, 1, knots_)[-1].csc()
+        Cc = sp.vstack((Cc, Cc2))
+
+    # final matrix and vector
+    Aug = sp.bmat([[CtC, Cc.T], [Cc, None]])
+
+    # factorize
+    D, L, P = ldl(Aug, False)
+
+    # invert all datasets
+    for ix, dataset in enumerate(data):
+        bc = dataset[[0, -1], :]  # first and last point for clamping
+
+        if tangents:
+            if len(tangents) == len(data):
+                bc = np.vstack((bc, *tangents[ix]))
+            else:
+                bc = np.vstack((bc, *tangents))
+
+        # construct the LHS of the linear system
+        dataset_aug = np.vstack((C.T @ dataset, bc))
+
+        # actual solver
+        pts = ldl_solve(dataset_aug, D, L, P).toarray()[:-nc, :]
+
+        # convert to an edge
+        rv.append(Curve(pts, knots_, order, periodic=False))
+
+    return rv
+
+
 def periodicLoft(*curves: Curve, order: int = 3) -> Surface:
 
     nknots: int = len(curves) + 1
@@ -880,7 +1050,7 @@ def loft(
     order: int = 3,
     lam: float = 1e-9,
     penalty: int = 4,
-    tangents: Optional[List[Tuple[NDArray, NDArray]]] = None,
+    tangents: Optional[List[Tuple[Array, Array]]] = None,
 ) -> Surface:
 
     nknots: int = len(curves)
