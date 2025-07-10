@@ -1023,13 +1023,10 @@ def periodicLoft(*curves: Curve, order: int = 3) -> Surface:
     nknots: int = len(curves) + 1
 
     # collect control pts
-    pts = np.stack([c.pts for c in curves])
+    pts = [el for el in np.stack([c.pts for c in curves]).swapaxes(0, 1)]
 
     # approximate
-    pts_new = []
-
-    for j in range(pts.shape[1]):
-        pts_new.append(periodicApproximate(pts[:, j, :], knots=nknots, order=order).pts)
+    pts_new = [el.pts for el in periodicApproximate(pts, knots=nknots, order=order)]
 
     # construct the final surface
     rv = Surface(
