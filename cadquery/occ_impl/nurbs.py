@@ -795,7 +795,7 @@ def periodicApproximate(
 
 
 @periodicApproximate.register
-def _(
+def periodicApproximate(
     data: List[Array],
     us: Optional[Array] = None,
     knots: int | Array = 50,
@@ -931,7 +931,7 @@ def approximate(
 
 
 @approximate.register
-def _(
+def approximate(
     data: List[Array],
     us: Optional[Array] = None,
     knots: int | Array = 50,
