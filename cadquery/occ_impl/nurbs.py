@@ -506,6 +506,7 @@ def nbCurve(
     return out
 
 
+@njit
 def nbCurveDer(
     u: Array, order: int, dorder: int, knots: Array, pts: Array, periodic: bool = False
 ) -> Array:
