@@ -212,6 +212,28 @@ class Surface(NamedTuple):
 
 
 @njiti
+def extendKnots(order: int, knots: Array) -> Array:
+    """
+    Knot vector extension for periodic b-splines.
+
+    Parameters
+    ----------
+    order : int
+        B-spline order.
+    knots : Array
+        Knot vector.
+
+    Returns
+    -------
+    knots_ext : Array
+        Extended knots vector.
+
+    """
+
+    return np.concat((knots[-order:-1] - knots[-1], knots, knots[-1] + knots[1:order]))
+
+
+@njiti
 def nbFindSpan(
     u: float,
     order: int,
@@ -229,7 +251,7 @@ def nbFindSpan(
     order : int
         Spline order.
     knots : ndarray
-        Knot vectr.
+        Knot vector.
 
     Returns
     -------
@@ -275,7 +297,7 @@ def nbBasis(i: int, u: float, order: int, knots: Array, out: Array):
     order : int
         B-spline order.
     knots : ndarray
-        Knot vectr.
+        Knot vector.
     out : ndarray
         B-spline basis function values.
 
@@ -320,7 +342,7 @@ def nbBasisDer(i: int, u: float, order: int, dorder: int, knots: Array, out: Arr
     dorder : int
         Derivative order.
     knots : ndarray
-        Knot vectr.
+        Knot vector.
     out : ndarray
         B-spline basis function and derivative values.
 
@@ -406,6 +428,170 @@ def nbBasisDer(i: int, u: float, order: int, dorder: int, knots: Array, out: Arr
     for k in range(1, dorder + 1):
         out[k, :] *= r
         r *= order - k
+
+
+#%% evaluation
+
+
+@njit
+def nbCurve(
+    u: Array, order: int, knots: Array, pts: Array, periodic: bool = False
+) -> Array:
+    """
+    NURBS book A3.1 with modifications to handle periodicity.
+
+    Parameters
+    ----------
+    u : Array
+        Parameter values.
+    order : int
+        B-spline order.
+    knots : Array
+        Knot vector.
+    pts : Array
+        Control points.
+    periodic : bool, optional
+        Peridocity flag. The default is False.
+
+    Returns
+    -------
+    Array
+        Curve values.
+
+    """
+
+    # number of control points
+    nb = pts.shape[0]
+
+    # handle periodicity
+    if periodic:
+        period = knots[-1] - knots[0]
+        u_ = u % period
+        knots_ext = extendKnots(order, knots)
+        minspan = 0
+        maxspan = len(knots) - 1
+        deltaspan = order - 1
+    else:
+        u_ = u
+        knots_ext = knots
+        minspan = None
+        maxspan = None
+        deltaspan = 0
+
+    # number of param values
+    nu = np.size(u)
+
+    # chunck size
+    n = order + 1
+
+    # temp chunck storage
+    temp = np.zeros(n)
+
+    # initialize
+    out = np.zeros((nu, 3))
+
+    for i in range(nu):
+        ui = u_[i]
+
+        # find span
+        span = nbFindSpan(ui, order, knots, minspan, maxspan) + deltaspan
+
+        # evaluate chunk
+        nbBasis(span, ui, order, knots_ext, temp)
+
+        # multiply by ctrl points
+        for j in range(order + 1):
+            out[i, :] += temp[j] * pts[(span - order + j) % nb, :]
+
+    return out
+
+
+def nbCurveDer(
+    u: Array, order: int, dorder: int, knots: Array, pts: Array, periodic: bool = False
+) -> Array:
+    """
+    NURBS book A3.2 with modifications to handle periodicity.
+
+    Parameters
+    ----------
+    u : Array
+        Parameter values.
+    order : int
+        B-spline order.
+    dorder : int
+        Derivative order.
+    knots : Array
+        Knot vector.
+    pts : Array
+        Control points.
+    periodic : bool, optional
+        Peridocity flag. The default is False.
+
+
+    Returns
+    -------
+    Array
+        Curve values and derivatives.
+
+    """
+    # number of control points
+    nb = pts.shape[0]
+
+    # handle periodicity
+    if periodic:
+        period = knots[-1] - knots[0]
+        u_ = u % period
+        knots_ext = extendKnots(order, knots)
+        minspan = 0
+        maxspan = len(knots) - 1
+        deltaspan = order - 1
+    else:
+        u_ = u
+        knots_ext = knots
+        minspan = None
+        maxspan = None
+        deltaspan = 0
+
+    # number of param values
+    nu = np.size(u)
+
+    # chunck size
+    n = order + 1
+
+    # temp chunck storage
+    temp = np.zeros((dorder + 1, n))
+
+    # initialize
+    out = np.zeros((nu, dorder + 1, 3))
+
+    for i in range(nu):
+        ui = u_[i]
+
+        # find span
+        span = nbFindSpan(ui, order, knots, minspan, maxspan) + deltaspan
+
+        # evaluate chunk
+        nbBasisDer(span, ui, order, dorder, knots_ext, temp)
+
+        # multiply by ctrl points
+        for j in range(order + 1):
+            for k in range(dorder + 1):
+                out[i, k, :] += temp[k, j] * pts[(span - order + j) % nb, :]
+
+    return out
+
+
+def nbSurface():
+
+    pass
+
+
+def nbSurfaceDer():
+
+    pass
+
+
+#%% matrices
 
 
 @njit
@@ -511,7 +697,7 @@ def derMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
     n = order + 1
 
     # temp chunck storage
-    temp = np.zeros((n, n))
+    temp = np.zeros((dorder + 1, n))
 
     # initialize the empty matrix
     rv = []
@@ -565,7 +751,7 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
     n = order + 1
 
     # temp chunck storage
-    temp = np.zeros((n, n))
+    temp = np.zeros((dorder + 1, n))
 
     # initialize the empty matrix
     rv = []
@@ -736,6 +922,9 @@ def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
                 rv.v[ne * ix + 2] = 1
 
     return rv
+
+
+#%% construction
 
 
 @multidispatch
