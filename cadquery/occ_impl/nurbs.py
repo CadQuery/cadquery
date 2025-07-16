@@ -582,7 +582,17 @@ def nbCurveDer(
     return out
 
 
-def nbSurface():
+def nbSurface(
+    u: Array,
+    v: Array,
+    uorder: int,
+    vorder: int,
+    uknots: Array,
+    vknots: Array,
+    pts: Array,
+    uperiodic: bool = False,
+    vperiodic: bool = False,
+):
 
     pass
 
