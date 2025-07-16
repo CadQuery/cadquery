@@ -4,10 +4,10 @@ import scipy.sparse as sp
 
 from numba import njit as _njit
 
-from typing import NamedTuple, Optional, Tuple, List, Union, cast, Type
+from typing import NamedTuple, Optional, Tuple, List, Union, cast
 
 from numpy.typing import NDArray
-from numpy import linspace, ndarray, dtype
+from numpy import linspace, ndarray
 
 from casadi import ldl, ldl_solve
 
@@ -19,12 +19,13 @@ from OCP.TColStd import (
 )
 from OCP.gp import gp_Pnt
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace
+from OCP.Geom import Geom_BSplineSurface
 
 from .shapes import Face, Edge
 
-from multimethod import multidispatch, parametric
+from multimethod import multidispatch
 
-njit = _njit(cache=False, error_model="numpy", fastmath=True, parallel=False)
+njit = _njit(cache=True, error_model="numpy", fastmath=True, nogil=True, parallel=False)
 
 njiti = _njit(
     cache=True, inline="always", error_model="numpy", fastmath=True, parallel=False
@@ -151,13 +152,13 @@ class Curve(NamedTuple):
 
         return cls(pts, knots, order, periodic)
 
-    def __call__(self, us: NDArray) -> NDArray:
+    def __call__(self, us: Array) -> Array:
 
-        raise NotImplementedError()
+        return nbCurve(np.atleast_1d(us), self.order, self.knots, self.pts)
 
-    def der(self, us: NDArray) -> NDArray:
+    def der(self, us: NDArray, dorder: int) -> NDArray:
 
-        raise NotImplementedError()
+        return nbCurveDer(np.atleast_1d(us), self.order, self.knots, self.pts)
 
 
 class Surface(NamedTuple):
@@ -206,6 +207,64 @@ class Surface(NamedTuple):
     def face(self, tol: float = 1e-3) -> Face:
 
         return Face(BRepBuilderAPI_MakeFace(self.surface(), tol).Shape())
+
+    @classmethod
+    def fromFace(cls, f: Face):
+        """
+        Construct a surface from a face.
+        """
+
+        assert (
+            f.geomType() == "BSPLINE"
+        ), "B-spline geometry required, try converting first."
+
+        g = cast(Geom_BSplineSurface, f._geomAdaptor())
+
+        uknots = np.array(list(g.UKnotSequence()))
+        vknots = np.array(list(g.VKnotSequence()))
+
+        tmp = []
+        for i in range(1, g.NbUPoles() + 1):
+            tmp.append(
+                [
+                    [g.Pole(i, j).X(), g.Pole(i, j).Y(), g.Pole(i, j).Z(),]
+                    for j in range(1, g.NbVPoles() + 1)
+                ]
+            )
+
+        pts = np.array(tmp)
+
+        uorder = g.UDegree()
+        vorder = g.VDegree()
+
+        uperiodic = g.IsUPeriodic()
+        vperiodic = g.IsVPeriodic()
+
+        return cls(pts, uknots, vknots, uorder, vorder, uperiodic, vperiodic)
+
+    def __call__(self, u: Array, v: Array) -> Array:
+        """
+        Evaluate surface at (u,v) points.
+        """
+
+        return nbSurface(
+            np.atleast_1d(u),
+            np.atleast_1d(v),
+            self.uorder,
+            self.vorder,
+            self.uknots,
+            self.vknots,
+            self.pts,
+            self.uperiodic,
+            self.vperiodic,
+        )
+
+    def der(self, u: Array, v: Array, dorder: int) -> Array:
+        """
+        Evaluate surface and derivatives at (u,v) points.
+        """
+
+        raise NotImplementedError
 
 
 #%% basis functions
@@ -451,7 +510,7 @@ def nbCurve(
     pts : Array
         Control points.
     periodic : bool, optional
-        Peridocity flag. The default is False.
+        Periodicity flag. The default is False.
 
     Returns
     -------
@@ -526,7 +585,7 @@ def nbCurveDer(
     pts : Array
         Control points.
     periodic : bool, optional
-        Peridocity flag. The default is False.
+        Periodicity flag. The default is False.
 
 
     Returns
@@ -582,6 +641,7 @@ def nbCurveDer(
     return out
 
 
+@njit
 def nbSurface(
     u: Array,
     v: Array,
@@ -592,14 +652,130 @@ def nbSurface(
     pts: Array,
     uperiodic: bool = False,
     vperiodic: bool = False,
-):
+) -> Array:
+    """
+    NURBS book A3.5 with modifications to handle periodicity.
 
-    pass
+    Parameters
+    ----------
+    u : Array
+        U parameter values.
+    v : Array
+        V parameter values.
+    uorder : int
+        B-spline u order.
+    vorder : int
+        B-spline v order.
+    uknots : Array
+        U knot vector..
+    vknots : Array
+        V knot vector..
+    pts : Array
+        Control points.
+    uperiodic : bool, optional
+        U periodicity flag. The default is False.
+    vperiodic : bool, optional
+        V periodicity flag. The default is False.
+
+    Returns
+    -------
+    Array
+        Surface values.
+
+    """
+
+    # number of control points
+    nub = pts.shape[0]
+    nvb = pts.shape[1]
+
+    # handle periodicity
+    if uperiodic:
+        uperiod = uknots[-1] - uknots[0]
+        u_ = u % uperiod
+        uknots_ext = extendKnots(uorder, uknots)
+        minspanu = 0
+        maxspanu = len(uknots) - 1
+        deltaspanu = uorder - 1
+    else:
+        u_ = u
+        uknots_ext = uknots
+        minspanu = None
+        maxspanu = None
+        deltaspanu = 0
+
+    if vperiodic:
+        vperiod = vknots[-1] - vknots[0]
+        v_ = v % vperiod
+        vknots_ext = extendKnots(vorder, vknots)
+        minspanv = 0
+        maxspanv = len(vknots) - 1
+        deltaspanv = vorder - 1
+    else:
+        v_ = v
+        vknots_ext = vknots
+        minspanv = None
+        maxspanv = None
+        deltaspanv = 0
+
+    # number of param values
+    nu = np.size(u)
+
+    # chunck sizes
+    un = uorder + 1
+    vn = vorder + 1
+
+    # temp chunck storage
+    utemp = np.zeros(un)
+    vtemp = np.zeros(vn)
+
+    # initialize
+    out = np.zeros((nu, 3))
+
+    for i in range(nu):
+        ui = u_[i]
+        vi = v_[i]
+
+        # find span
+        uspan = nbFindSpan(ui, uorder, uknots, minspanu, maxspanu) + deltaspanu
+        vspan = nbFindSpan(vi, vorder, vknots, minspanv, maxspanv) + deltaspanv
+
+        # evaluate chunk
+        nbBasis(uspan, ui, uorder, uknots_ext, utemp)
+        nbBasis(vspan, vi, vorder, vknots_ext, vtemp)
+
+        uind = uspan - uorder
+        temp = np.empty(3)
+
+        # multiply by ctrl points: Nu.T*P*Nv
+        for j in range(vorder + 1):
+
+            temp[:] = 0.0
+            vind = vspan - vorder + j
+
+            # calculate Nu.T*P
+            for k in range(uorder + 1):
+                temp += utemp[k] * pts[(uind + k) % nub, vind % nvb, :]
+
+            # multiple by Nv
+            out[i, :] += vtemp[j] * temp
+
+    return out
 
 
-def nbSurfaceDer():
+def nbSurfaceDer(
+    u: Array,
+    v: Array,
+    uorder: int,
+    vorder: int,
+    dorder: int,
+    uknots: Array,
+    vknots: Array,
+    pts: Array,
+    uperiodic: bool = False,
+    vperiodic: bool = False,
+) -> Array:
 
-    pass
+    raise NotImplementedError
 
 
 #%% matrices
