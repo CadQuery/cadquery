@@ -154,11 +154,15 @@ class Curve(NamedTuple):
 
     def __call__(self, us: Array) -> Array:
 
-        return nbCurve(np.atleast_1d(us), self.order, self.knots, self.pts)
+        return nbCurve(
+            np.atleast_1d(us), self.order, self.knots, self.pts, self.periodic
+        )
 
     def der(self, us: NDArray, dorder: int) -> NDArray:
 
-        return nbCurveDer(np.atleast_1d(us), self.order, self.knots, self.pts)
+        return nbCurveDer(
+            np.atleast_1d(us), self.order, self.knots, self.pts, self.periodic
+        )
 
 
 class Surface(NamedTuple):
@@ -264,7 +268,18 @@ class Surface(NamedTuple):
         Evaluate surface and derivatives at (u,v) points.
         """
 
-        raise NotImplementedError
+        return nbSurfaceDer(
+            np.atleast_1d(u),
+            np.atleast_1d(v),
+            self.uorder,
+            self.vorder,
+            dorder,
+            self.uknots,
+            self.vknots,
+            self.pts,
+            self.uperiodic,
+            self.vperiodic,
+        )
 
 
 #%% basis functions
@@ -762,6 +777,7 @@ def nbSurface(
     return out
 
 
+@njit
 def nbSurfaceDer(
     u: Array,
     v: Array,
@@ -774,8 +790,124 @@ def nbSurfaceDer(
     uperiodic: bool = False,
     vperiodic: bool = False,
 ) -> Array:
+    """
+    NURBS book A3.6 with modifications to handle periodicity.
 
-    raise NotImplementedError
+    Parameters
+    ----------
+    u : Array
+        U parameter values.
+    v : Array
+        V parameter values.
+    uorder : int
+        B-spline u order.
+    vorder : int
+        B-spline v order.
+    dorder : int
+        Maximum derivative order.
+    uknots : Array
+        U knot vector..
+    vknots : Array
+        V knot vector..
+    pts : Array
+        Control points.
+    uperiodic : bool, optional
+        U periodicity flag. The default is False.
+    vperiodic : bool, optional
+        V periodicity flag. The default is False.
+
+    Returns
+    -------
+    Array
+        Surface and derivative values.
+
+    """
+
+    # max derivative orders
+    du = min(dorder, uorder)
+    dv = min(dorder, vorder)
+
+    # number of control points
+    nub = pts.shape[0]
+    nvb = pts.shape[1]
+
+    # handle periodicity
+    if uperiodic:
+        uperiod = uknots[-1] - uknots[0]
+        u_ = u % uperiod
+        uknots_ext = extendKnots(uorder, uknots)
+        minspanu = 0
+        maxspanu = len(uknots) - 1
+        deltaspanu = uorder - 1
+    else:
+        u_ = u
+        uknots_ext = uknots
+        minspanu = None
+        maxspanu = None
+        deltaspanu = 0
+
+    if vperiodic:
+        vperiod = vknots[-1] - vknots[0]
+        v_ = v % vperiod
+        vknots_ext = extendKnots(vorder, vknots)
+        minspanv = 0
+        maxspanv = len(vknots) - 1
+        deltaspanv = vorder - 1
+    else:
+        v_ = v
+        vknots_ext = vknots
+        minspanv = None
+        maxspanv = None
+        deltaspanv = 0
+
+    # number of param values
+    nu = np.size(u)
+
+    # chunck sizes
+    un = uorder + 1
+    vn = vorder + 1
+
+    # temp chunck storage
+
+    utemp = np.zeros((du + 1, un))
+    vtemp = np.zeros((dv + 1, vn))
+
+    # initialize
+    out = np.zeros((nu, du + 1, dv + 1, 3))
+
+    for i in range(nu):
+        ui = u_[i]
+        vi = v_[i]
+
+        # find span
+        uspan = nbFindSpan(ui, uorder, uknots, minspanu, maxspanu) + deltaspanu
+        vspan = nbFindSpan(vi, vorder, vknots, minspanv, maxspanv) + deltaspanv
+
+        # evaluate chunk
+        nbBasisDer(uspan, ui, uorder, du, uknots_ext, utemp)
+        nbBasisDer(vspan, vi, vorder, dv, vknots_ext, vtemp)
+
+        for k in range(du + 1):
+
+            temp = np.zeros((vorder + 1, 3))
+
+            # Nu.T^(k)*pts
+            for s in range(vorder + 1):
+                for r in range(uorder + 1):
+                    temp[s, :] += (
+                        utemp[k, r]
+                        * pts[(uspan - uorder + r) % nub, (vspan - vorder + s) % nvb, :]
+                    )
+
+            # ramaining derivative orders: dk + du <= dorder
+            dd = min(dorder - k, dv)
+
+            # .. * Nv^(l)
+            for l in range(dd + 1):
+                for s in range(vorder + 1):
+                    out[i, k, l, :] += vtemp[l, s] * temp[s, :]
+
+    return out
 
 
 #%% matrices
