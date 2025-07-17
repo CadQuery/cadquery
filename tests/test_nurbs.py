@@ -133,6 +133,12 @@ def test_curve():
 
     assert e2.isValid()
 
+    # check roundtrip
+    crv3 = Curve.fromEdge(e2)
+
+    assert np.allclose(crv2.knots, crv3.knots)
+    assert np.allclose(crv2.pts, crv3.pts)
+
 
 def test_surface():
 
@@ -146,6 +152,13 @@ def test_surface():
 
     assert f.isValid()
     assert f.Area() == approx(1)
+
+    # roundtrip
+    srf2 = Surface.fromFace(f)
+
+    assert np.allclose(srf.uknots, srf2.uknots)
+    assert np.allclose(srf.vknots, srf2.vknots)
+    assert np.allclose(srf.pts, srf2.pts)
 
 
 def test_approximate():

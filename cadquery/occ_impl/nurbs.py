@@ -150,6 +150,9 @@ class Curve(NamedTuple):
         order = g.Degree()
         periodic = g.IsPeriodic()
 
+        if periodic:
+            knots = knots[order:-order]
+
         return cls(pts, knots, order, periodic)
 
     def __call__(self, us: Array) -> Array:
@@ -243,6 +246,12 @@ class Surface(NamedTuple):
 
         uperiodic = g.IsUPeriodic()
         vperiodic = g.IsVPeriodic()
+
+        if uperiodic:
+            uknots = uknots[uorder:-uorder]
+
+        if vperiodic:
+            vknots = vknots[vorder:-vorder]
 
         return cls(pts, uknots, vknots, uorder, vorder, uperiodic, vperiodic)
 
