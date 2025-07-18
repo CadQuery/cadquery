@@ -164,7 +164,7 @@ class Curve(NamedTuple):
     def der(self, us: NDArray, dorder: int) -> NDArray:
 
         return nbCurveDer(
-            np.atleast_1d(us), self.order, self.knots, self.pts, self.periodic
+            np.atleast_1d(us), self.order, dorder, self.knots, self.pts, self.periodic
         )
 
 
@@ -1601,6 +1601,45 @@ def loft(
     )
 
     return rv
+
+
+def reparametrize(
+    *curves: Curve, n: int = 100, w1: float = 1, w2: float = 1e-2
+) -> List[Curve]:
+
+    from scipy.optimize import fmin_l_bfgs_b
+
+    n_curves = len(curves)
+
+    u0 = np.tile(np.linspace(0, 1, n, False), n_curves)
+
+    def cost(u: Array) -> float:
+
+        rv1 = 0
+        us = np.split(u, n_curves)
+
+        pts = []
+
+        for i, ui in enumerate(us):
+            pts.append(curves[i](ui))
+
+            # parametric distance between points on the same curve
+            rv1 += np.sum((ui[:-1] - ui[1:]) ** 2) + np.sum((u[0] + 1 - u[-1]) ** 2)
+
+        rv2 = 0
+
+        for p1, p2 in zip(pts, pts[1:]):
+
+            # geometric distance between points on adjecent curves
+            rv2 += np.sum((p1 - p2) ** 2)
+
+        return w1 * rv1 + w2 * rv2
+
+    usol, _, _ = fmin_l_bfgs_b(cost, u0, approx_grad=True)
+
+    us = np.split(usol, n_curves)
+
+    return periodicApproximate([crv(u) for crv, u in zip(curves, us)], lam=1e-3)
 
 
 #%% for removal?
