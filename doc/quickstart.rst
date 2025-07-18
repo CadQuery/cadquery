@@ -134,7 +134,7 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 5,14-17
+   :emphasize-lines: 5,14-18
 
    height = 60.0
    width = 80.0
@@ -168,8 +168,12 @@ There is quite a bit going on here, so let's break it down a bit.
 
 **Line 5** creates a new padding parameter that decides how far the holes are from the edges of the plate.
 
-**Lines 11-12** selects the top-most face of the block, and creates a workplane on the top of that face, which we'll use to
+**Lines 14-15** selects the top-most face of the block, and creates a workplane on the top of that face, which we'll use to
 define the centers of the holes in the corners.
+
+**Line 16** draws a rectangle 12mm smaller than the overall length and width of the block, which we will use to
+locate the corner holes. We'll use the vertices ( corners ) of this rectangle to locate the holes. The rectangle's
+center is at the center of the workplane, which in this case coincides with the center of the bearing hole.
 
 There are a couple of things to note about this line:
 
@@ -178,11 +182,6 @@ There are a couple of things to note about this line:
        but we are just using it to help define some other geometry.
     2. Unless you specify otherwise, a rectangle is drawn with its center on the current workplane center-- in
        this case, the center of the top face of the block. So this rectangle will be centered on the face.
-
-
-**Line 16** draws a rectangle 12mm smaller than the overall length and width of the block, which we will use to
-locate the corner holes. We'll use the vertices ( corners ) of this rectangle to locate the holes. The rectangle's
-center is at the center of the workplane, which in this case coincides with the center of the bearing hole.
 
 **Line 17** selects the vertices of the rectangle, which we will use for the centers of the holes.
 The :py:meth:`cadquery.Workplane.vertices` function selects the corners of the rectangle.
@@ -231,10 +230,10 @@ We can do that using the preset dictionaries in the parameter definition:
    # Render the solid
    show_object(result)
 
-**Line 20** fillets the edges using the :py:meth:`cadquery.Workplane.fillet` method.
+**Line 19** To grab the right edges, the :py:meth:`cadquery.Workplane.edges` selects all of the
+edges that are parallel to the Z axis ("\|Z").
 
-To grab the right edges, the :py:meth:`cadquery.Workplane.edges` selects all of the
-edges that are parallel to the Z axis ("\|Z"),
+**Line 20** fillets the edges using the :py:meth:`cadquery.Workplane.fillet` method.
 
 The finished product looks like this:
 
