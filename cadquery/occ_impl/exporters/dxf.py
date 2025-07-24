@@ -54,28 +54,28 @@ class DxfDocument:
     .. rubric:: Example usage
 
     .. code-block:: python
-        :caption: Single layer DXF document
+       :caption: Single layer DXF document
 
-        rectangle = cq.Workplane().rect(10, 20)
+       rectangle = cq.Workplane().rect(10, 20)
 
-        dxf = DxfDocument()
-        dxf.add_shape(rectangle)
-        dxf.document.saveas("rectangle.dxf")
+       dxf = DxfDocument()
+       dxf.add_shape(rectangle)
+       dxf.document.saveas("rectangle.dxf")
 
     .. code-block:: python
-        :caption: Multilayer DXF document
+       :caption: Multilayer DXF document
 
-        rectangle = cq.Workplane().rect(10, 20)
-        circle = cq.Workplane().circle(3)
+       rectangle = cq.Workplane().rect(10, 20)
+       circle = cq.Workplane().circle(3)
 
-        dxf = DxfDocument()
-        dxf = (
-            dxf.add_layer("layer_1", color=2)
-            .add_layer("layer_2", color=3)
-            .add_shape(rectangle, "layer_1")
-            .add_shape(circle, "layer_2")
-        )
-        dxf.document.saveas("rectangle-with-hole.dxf")
+       dxf = DxfDocument()
+       dxf = (
+           dxf.add_layer("layer_1", color=2)
+           .add_layer("layer_2", color=3)
+           .add_shape(rectangle, "layer_1")
+           .add_shape(circle, "layer_2")
+       )
+       dxf.document.saveas("rectangle-with-hole.dxf")
     """
 
     CURVE_TOLERANCE = 1e-9

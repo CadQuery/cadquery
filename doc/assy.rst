@@ -18,21 +18,21 @@ We want to start with defining the model parameters to allow for easy dimension 
 
 .. code-block:: python
 
-    import cadquery as cq
+   import cadquery as cq
 
-    # Parameters
-    H = 400
-    W = 200
-    D = 350
+   # Parameters
+   H = 400
+   W = 200
+   D = 350
 
-    PROFILE = cq.importers.importDXF("vslot-2020_1.dxf").wires()
+   PROFILE = cq.importers.importDXF("vslot-2020_1.dxf").wires()
 
-    SLOT_D = 5
-    PANEL_T = 3
+   SLOT_D = 5
+   PANEL_T = 3
 
-    HANDLE_D = 20
-    HANDLE_L = 50
-    HANDLE_W = 4
+   HANDLE_D = 20
+   HANDLE_L = 50
+   HANDLE_W = 4
 
 It is interesting to note that the v-slot profile is imported from a DXF file.
 This way it is very easy to change to other aluminum extrusion type, e.g. Item or Bosch.
@@ -45,72 +45,72 @@ Next we want to define functions generating the assembly components based on the
 
 .. code-block:: python
 
-    def make_vslot(l):
-        return PROFILE.toPending().extrude(l)
+   def make_vslot(l):
+       return PROFILE.toPending().extrude(l)
 
 
-    def make_connector():
-        rv = (
-            cq.Workplane()
-            .box(20, 20, 20)
-            .faces("<X")
-            .workplane()
-            .cboreHole(6, 15, 18)
-            .faces("<Z")
-            .workplane(centerOption="CenterOfMass")
-            .cboreHole(6, 15, 18)
-        )
+   def make_connector():
+       rv = (
+           cq.Workplane()
+           .box(20, 20, 20)
+           .faces("<X")
+           .workplane()
+           .cboreHole(6, 15, 18)
+           .faces("<Z")
+           .workplane(centerOption="CenterOfMass")
+           .cboreHole(6, 15, 18)
+       )
 
-        # tag mating faces
-        rv.faces(">X").tag("X").end()
-        rv.faces(">Z").tag("Z").end()
+       # tag mating faces
+       rv.faces(">X").tag("X").end()
+       rv.faces(">Z").tag("Z").end()
 
-        return rv
-
-
-    def make_panel(w, h, t, cutout):
-        rv = (
-            cq.Workplane("XZ")
-            .rect(w, h)
-            .extrude(t)
-            .faces(">Y")
-            .vertices()
-            .rect(2 * cutout, 2 * cutout)
-            .cutThruAll()
-            .faces("<Y")
-            .workplane()
-            .pushPoints([(-w / 3, HANDLE_L / 2), (-w / 3, -HANDLE_L / 2)])
-            .hole(3)
-        )
-
-        # tag mating edges
-        rv.faces(">Y").edges("%CIRCLE").edges(">Z").tag("hole1")
-        rv.faces(">Y").edges("%CIRCLE").edges("<Z").tag("hole2")
-
-        return rv
+       return rv
 
 
-    def make_handle(w, h, r):
-        pts = ((0, 0), (w, 0), (w, h), (0, h))
+   def make_panel(w, h, t, cutout):
+       rv = (
+           cq.Workplane("XZ")
+           .rect(w, h)
+           .extrude(t)
+           .faces(">Y")
+           .vertices()
+           .rect(2 * cutout, 2 * cutout)
+           .cutThruAll()
+           .faces("<Y")
+           .workplane()
+           .pushPoints([(-w / 3, HANDLE_L / 2), (-w / 3, -HANDLE_L / 2)])
+           .hole(3)
+       )
 
-        path = cq.Workplane().polyline(pts)
+       # tag mating edges
+       rv.faces(">Y").edges("%CIRCLE").edges(">Z").tag("hole1")
+       rv.faces(">Y").edges("%CIRCLE").edges("<Z").tag("hole2")
 
-        rv = (
-            cq.Workplane("YZ")
-            .rect(r, r)
-            .sweep(path, transition="round")
-            .tag("solid")
-            .faces("<X")
-            .workplane()
-            .faces("<X", tag="solid")
-            .hole(r / 1.5)
-        )
+       return rv
 
-        # tag mating faces
-        rv.faces("<X").faces(">Y").tag("mate1")
-        rv.faces("<X").faces("<Y").tag("mate2")
 
-        return rv
+   def make_handle(w, h, r):
+       pts = ((0, 0), (w, 0), (w, h), (0, h))
+
+       path = cq.Workplane().polyline(pts)
+
+       rv = (
+           cq.Workplane("YZ")
+           .rect(r, r)
+           .sweep(path, transition="round")
+           .tag("solid")
+           .faces("<X")
+           .workplane()
+           .faces("<X", tag="solid")
+           .hole(r / 1.5)
+       )
+
+       # tag mating faces
+       rv.faces("<X").faces(">Y").tag("mate1")
+       rv.faces("<X").faces("<Y").tag("mate2")
+
+       return rv
 
 Initial assembly
 ================
@@ -149,35 +149,35 @@ Then we want to define all the constraints
 
 .. code-block:: python
 
-    # define the constraints
-    (
-        door
-        # left profile
-        .constrain("left@faces@<Z", "con_bl?Z", "Plane")
-        .constrain("left@faces@<X", "con_bl?X", "Axis")
-        .constrain("left@faces@>Z", "con_tl?Z", "Plane")
-        .constrain("left@faces@<X", "con_tl?X", "Axis")
-        # top
-        .constrain("top@faces@<Z", "con_tl?X", "Plane")
-        .constrain("top@faces@<Y", "con_tl@faces@>Y", "Axis")
-        # bottom
-        .constrain("bottom@faces@<Y", "con_bl@faces@>Y", "Axis")
-        .constrain("bottom@faces@>Z", "con_bl?X", "Plane")
-        # right connectors
-        .constrain("top@faces@>Z", "con_tr@faces@>X", "Plane")
-        .constrain("bottom@faces@<Z", "con_br@faces@>X", "Plane")
-        .constrain("left@faces@>Z", "con_tr?Z", "Axis")
-        .constrain("left@faces@<Z", "con_br?Z", "Axis")
-        # right profile
-        .constrain("right@faces@>Z", "con_tr@faces@>Z", "Plane")
-        .constrain("right@faces@<X", "left@faces@<X", "Axis")
-        # panel
-        .constrain("left@faces@>X[-4]", "panel@faces@<X", "Plane")
-        .constrain("left@faces@>Z", "panel@faces@>Z", "Axis")
-        # handle
-        .constrain("panel?hole1", "handle?mate1", "Plane")
-        .constrain("panel?hole2", "handle?mate2", "Point")
-    )
+   # define the constraints
+   (
+       door
+       # left profile
+       .constrain("left@faces@<Z", "con_bl?Z", "Plane")
+       .constrain("left@faces@<X", "con_bl?X", "Axis")
+       .constrain("left@faces@>Z", "con_tl?Z", "Plane")
+       .constrain("left@faces@<X", "con_tl?X", "Axis")
+       # top
+       .constrain("top@faces@<Z", "con_tl?X", "Plane")
+       .constrain("top@faces@<Y", "con_tl@faces@>Y", "Axis")
+       # bottom
+       .constrain("bottom@faces@<Y", "con_bl@faces@>Y", "Axis")
+       .constrain("bottom@faces@>Z", "con_bl?X", "Plane")
+       # right connectors
+       .constrain("top@faces@>Z", "con_tr@faces@>X", "Plane")
+       .constrain("bottom@faces@<Z", "con_br@faces@>X", "Plane")
+       .constrain("left@faces@>Z", "con_tr?Z", "Axis")
+       .constrain("left@faces@<Z", "con_br?Z", "Axis")
+       # right profile
+       .constrain("right@faces@>Z", "con_tr@faces@>Z", "Plane")
+       .constrain("right@faces@<X", "left@faces@<X", "Axis")
+       # panel
+       .constrain("left@faces@>X[-4]", "panel@faces@<X", "Plane")
+       .constrain("left@faces@>Z", "panel@faces@>Z", "Axis")
+       # handle
+       .constrain("panel?hole1", "handle?mate1", "Plane")
+       .constrain("panel?hole2", "handle?mate2", "Point")
+   )
 
 Should you need to do something unusual that is not possible with the string
 based selectors (e.g. use :py:class:`cadquery.selectors.BoxSelector` or a user-defined selector class),
@@ -359,9 +359,10 @@ STEP can be loaded in all CAD tool, e.g. in FreeCAD and the XML be used in other
 .. code-block:: python
    :linenos:
 
-    door.export("door.step")
-    door.export("door.xml")
-..  image:: _static/door_assy_freecad.png
+   door.export("door.step")
+   door.export("door.xml")
+
+.. image:: _static/door_assy_freecad.png
 
 
 Object locations

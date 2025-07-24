@@ -53,39 +53,39 @@ It begins with defining few edges.
 
 .. code-block:: python
 
-    edge1 = circle(r)
-    edge2 = circle(2*r).moved(z=dh)
-    edge3 = circle(r).moved(z=1.5*dh)
+   edge1 = circle(r)
+   edge2 = circle(2*r).moved(z=dh)
+   edge3 = circle(r).moved(z=1.5*dh)
 
 
 Those edges are used to create the side faces of the final solid using :meth:`~cadquery.occ_impl.shapes.loft`.
 
 .. code-block:: python
 
-    side = loft(edge1, edge2, edge3)
+   side = loft(edge1, edge2, edge3)
 
 Once the side is there, :meth:`~cadquery.occ_impl.shapes.cap` and :meth:`~cadquery.occ_impl.shapes.fill` are used to define the top and bottom faces.
 Note that :meth:`~cadquery.occ_impl.shapes.cap` tries to maintain curvature continuity with respect to the context shape. This is not the case for :meth:`~cadquery.occ_impl.shapes.fill`.
 
 .. code-block:: python
 
-    # bottom face
-    bottom = fill(side.edges('<Z'))
+   # bottom face
+   bottom = fill(side.edges('<Z'))
 
-    # top face with continuous curvature
-    top = cap(side.edges('>Z'), side, [(0,0,1.75*dh)])
+   # top face with continuous curvature
+   top = cap(side.edges('>Z'), side, [(0,0,1.75*dh)])
 
 Next, all the faces are assembled into a solid.
 
 .. code-block:: python
 
-    s = solid(side, bottom, top)
+   s = solid(side, bottom, top)
 
 Finally, the solid is duplicated and placed in the desired locations creating the final compound object. Note various usages of :meth:`~cadquery.Shape.moved`.
 
 .. code-block:: python
 
-    result = s.moved((-3*r, 0, 0), (3*r, 0, 0))
+   result = s.moved((-3*r, 0, 0), (3*r, 0, 0))
 
 In general all the operations are implemented as free functions, with the exception of placement and selection which are strictly related to a specific shape.
 
