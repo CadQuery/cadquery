@@ -636,19 +636,7 @@ def nbCurveDer(
     nb = pts.shape[0]
 
     # handle periodicity
-    if periodic:
-        period = knots[-1] - knots[0]
-        u_ = u % period
-        knots_ext = extendKnots(order, knots)
-        minspan = 0
-        maxspan = len(knots) - 1
-        deltaspan = order - 1
-    else:
-        u_ = u
-        knots_ext = knots
-        minspan = None
-        maxspan = None
-        deltaspan = 0
+    u_, knots_ext, minspan, maxspan, deltaspan = _preprocess(u, order, knots, periodic)
 
     # number of param values
     nu = np.size(u)
@@ -727,33 +715,12 @@ def nbSurface(
     nvb = pts.shape[1]
 
     # handle periodicity
-    if uperiodic:
-        uperiod = uknots[-1] - uknots[0]
-        u_ = u % uperiod
-        uknots_ext = extendKnots(uorder, uknots)
-        minspanu = 0
-        maxspanu = len(uknots) - 1
-        deltaspanu = uorder - 1
-    else:
-        u_ = u
-        uknots_ext = uknots
-        minspanu = None
-        maxspanu = None
-        deltaspanu = 0
-
-    if vperiodic:
-        vperiod = vknots[-1] - vknots[0]
-        v_ = v % vperiod
-        vknots_ext = extendKnots(vorder, vknots)
-        minspanv = 0
-        maxspanv = len(vknots) - 1
-        deltaspanv = vorder - 1
-    else:
-        v_ = v
-        vknots_ext = vknots
-        minspanv = None
-        maxspanv = None
-        deltaspanv = 0
+    u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
+        u, uorder, uknots, uperiodic
+    )
+    v_, vknots_ext, minspanv, maxspanv, deltaspanv = _preprocess(
+        v, vorder, vknots, vperiodic
+    )
 
     # number of param values
     nu = np.size(u)
@@ -855,33 +822,12 @@ def nbSurfaceDer(
     nvb = pts.shape[1]
 
     # handle periodicity
-    if uperiodic:
-        uperiod = uknots[-1] - uknots[0]
-        u_ = u % uperiod
-        uknots_ext = extendKnots(uorder, uknots)
-        minspanu = 0
-        maxspanu = len(uknots) - 1
-        deltaspanu = uorder - 1
-    else:
-        u_ = u
-        uknots_ext = uknots
-        minspanu = None
-        maxspanu = None
-        deltaspanu = 0
-
-    if vperiodic:
-        vperiod = vknots[-1] - vknots[0]
-        v_ = v % vperiod
-        vknots_ext = extendKnots(vorder, vknots)
-        minspanv = 0
-        maxspanv = len(vknots) - 1
-        deltaspanv = vorder - 1
-    else:
-        v_ = v
-        vknots_ext = vknots
-        minspanv = None
-        maxspanv = None
-        deltaspanv = 0
+    u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
+        u, uorder, uknots, uperiodic
+    )
+    v_, vknots_ext, minspanv, maxspanv, deltaspanv = _preprocess(
+        v, vorder, vknots, vperiodic
+    )
 
     # number of param values
     nu = np.size(u)
