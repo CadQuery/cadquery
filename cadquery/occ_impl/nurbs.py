@@ -964,6 +964,7 @@ def designMatrix2D(
     nj = nu * nv
 
     # number of basis
+    nu_total = maxspanu
     nv_total = maxspanv
 
     # temp chunck storage
@@ -992,8 +993,8 @@ def designMatrix2D(
         # update the matrix
         rv.i[i * nj : (i + 1) * nj] = i
         rv.j[i * nj : (i + 1) * nj] = (
-            (uspan - uorder + np.arange(nu)) * nv_total
-            + (vspan - vorder + np.arange(nv))[:, np.newaxis]
+            ((uspan - uorder + np.arange(nu)) % nu_total) * nv_total
+            + ((vspan - vorder + np.arange(nv)) % nv_total)[:, np.newaxis]
         ).ravel()
         rv.v[i * nj : (i + 1) * nj] = (utemp * vtemp[:, np.newaxis]).ravel()
 
