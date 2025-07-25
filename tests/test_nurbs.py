@@ -1,6 +1,7 @@
 from cadquery.occ_impl.nurbs import (
     designMatrix,
     periodicDesignMatrix,
+    designMatrix2D,
     nbFindSpan,
     nbBasis,
     nbBasisDer,
@@ -17,7 +18,7 @@ from cadquery.func import circle
 import numpy as np
 import scipy.sparse as sp
 
-from pytest import approx, fixture
+from pytest import approx, fixture, mark
 
 
 @fixture
@@ -61,6 +62,26 @@ def test_periodic_dm():
 
     assert C.shape[0] == len(params)
     assert C.shape[1] == len(knots) - 1
+
+
+def test_dm_2d():
+
+    uknots = np.array([0, 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1, 1])
+    uparams = np.linspace(0, 1, 100)
+    uorder = 3
+
+    vknots = np.array([0, 0, 0, 0.5, 1, 1, 1])
+    vparams = np.linspace(0, 1, 100)
+    vorder = 2
+
+    params = np.column_stack((uparams, vparams))
+
+    res = designMatrix2D(params, uorder, vorder, uknots, vknots)
+
+    C = res.coo()
+
+    assert C.shape[0] == len(uparams)
+    assert C.shape[1] == (len(uknots) - uorder - 1) * (len(vknots) - vorder - 1)
 
 
 def test_dm():

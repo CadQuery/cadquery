@@ -295,6 +295,33 @@ class Surface(NamedTuple):
 
 
 @njiti
+def _preprocess(
+    u: Array, order: int, knots: Array, periodic: float
+) -> Tuple[Array, Array, Optional[int], Optional[int], int]:
+    """
+    Helper for handling peridocity. This function extends the knot vector,
+    wraps the parameters and calculates the delta span.
+    """
+
+    # handle periodicity
+    if periodic:
+        period = knots[-1] - knots[0]
+        u_ = u % period
+        knots_ext = extendKnots(order, knots)
+        minspan = 0
+        maxspan = len(knots) - 1
+        deltaspan = order - 1
+    else:
+        u_ = u
+        knots_ext = knots
+        minspan = None
+        maxspan = None
+        deltaspan = 0
+
+    return u_, knots_ext, minspan, maxspan, deltaspan
+
+
+@njiti
 def extendKnots(order: int, knots: Array) -> Array:
     """
     Knot vector extension for periodic b-splines.
@@ -546,20 +573,7 @@ def nbCurve(
     # number of control points
     nb = pts.shape[0]
 
-    # handle periodicity
-    if periodic:
-        period = knots[-1] - knots[0]
-        u_ = u % period
-        knots_ext = extendKnots(order, knots)
-        minspan = 0
-        maxspan = len(knots) - 1
-        deltaspan = order - 1
-    else:
-        u_ = u
-        knots_ext = knots
-        minspan = None
-        maxspan = None
-        deltaspan = 0
+    u_, knots_ext, minspan, maxspan, deltaspan = _preprocess(u, order, knots, periodic)
 
     # number of param values
     nu = np.size(u)
@@ -958,6 +972,60 @@ def designMatrix(u: Array, order: int, knots: Array) -> COO:
         rv.i[i * n : (i + 1) * n] = i
         rv.j[i * n : (i + 1) * n] = span - order + np.arange(n)
         rv.v[i * n : (i + 1) * n] = temp
+
+    return rv
+
+
+# @njit
+def designMatrix2D(
+    uv: Array, uorder: int, vorder: int, uknots: Array, vknots: Array
+) -> COO:
+    """
+    Create a sparse tensor product design matrix.
+    """
+
+    # number of param values
+    ni = uv.shape[0]
+
+    # chunck size
+    nu = uorder + 1
+    nv = vorder + 1
+    nj = nu * nv
+
+    # number of basis
+    nu_total = len(uknots) - uorder - 1
+    nv_total = len(vknots) - vorder - 1
+
+    # temp chunck storage
+    utemp = np.zeros(nu)
+    vtemp = np.zeros(nv)
+
+    # initialize the empty matrix
+    rv = COO(
+        i=np.empty(ni * nj, dtype=np.int64),
+        j=np.empty(ni * nj, dtype=np.int64),
+        v=np.empty(ni * nj),
+    )
+
+    # loop over param values
+    for i in range(ni):
+        ui, vi = uv[i, :]
+
+        # find the supporting span
+        uspan = nbFindSpan(ui, uorder, uknots)
+        vspan = nbFindSpan(vi, vorder, vknots)
+
+        # evaluate non-zero functions
+        nbBasis(uspan, ui, uorder, uknots, utemp)
+        nbBasis(vspan, vi, vorder, vknots, vtemp)
+
+        # update the matrix
+        rv.i[i * nj : (i + 1) * nj] = i
+        rv.j[i * nj : (i + 1) * nj] = (
+            (uspan - uorder + np.arange(nu)) * nv_total
+            + (vspan - vorder + np.arange(nv))[:, np.newaxis]
+        ).ravel()
+        rv.v[i * nj : (i + 1) * nj] = (utemp * vtemp[:, np.newaxis]).ravel()
 
     return rv
 
