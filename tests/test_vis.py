@@ -10,12 +10,16 @@ from vtkmodules.vtkRenderingCore import (
     vtkWindowToImageFilter,
     vtkActor,
     vtkAssembly,
+    vtkProp3D,
 )
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkIOImage import vtkPNGWriter
 
 from pytest import fixture, raises
 from path import Path
+
+from typish import instance_of
+from typing import List
 
 
 @fixture(scope="module")
@@ -178,39 +182,39 @@ def test_style(wp, assy):
 
     # Shape
     act = style(t, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
     # Assy
     act = style(assy, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
     # Workplane
     act = style(wp, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
     # Shape
     act = style(e)
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
     # Sketch
     act = style(Sketch().circle(1))
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
     # list[Vector]
     act = style(pts)
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
     # list[Location]
     act = style(locs)
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
     # vtkAssembly
     act = style(style(t))
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
     # vtkActor
     act = style(ctrlPts(e.toNURBS()))
-    assert isinstance(act, (vtkActor, vtkAssembly))
+    assert instance_of(act, List[vtkProp3D])
 
 
 def test_camera_position(wp, patch_vtk):

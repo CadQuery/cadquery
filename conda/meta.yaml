@@ -28,6 +28,8 @@ requirements:
     - typish
     - numba
     - scipy
+    - trame
+    - trame-vtk
 
 test:
   requires:
