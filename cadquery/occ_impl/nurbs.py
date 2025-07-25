@@ -1618,14 +1618,18 @@ def loft(
 
 
 def reparametrize(
-    *curves: Curve, n: int = 100, w1: float = 1, w2: float = 1e-2
+    *curves: Curve, n: int = 100, w1: float = 1, w2: float = 1e-1
 ) -> List[Curve]:
 
     from scipy.optimize import fmin_l_bfgs_b
 
     n_curves = len(curves)
 
-    u0 = np.tile(np.linspace(0, 1, n, False), n_curves)
+    u0_0 = np.linspace(0, 1, n, False)
+    u0 = np.tile(u0_0, n_curves)
+
+    # scaling for the second cost term
+    scale = n * np.linalg.norm(curves[0](u0[0]) - curves[1](u0[n]))
 
     def cost(u: Array) -> float:
 
@@ -1638,14 +1642,14 @@ def reparametrize(
             pts.append(curves[i](ui))
 
             # parametric distance between points on the same curve
-            rv1 += np.sum((ui[:-1] - ui[1:]) ** 2) + np.sum((u[0] + 1 - u[-1]) ** 2)
+            rv1 += np.sum((ui[:-1] - ui[1:]) ** 2) + np.sum((ui[0] + 1 - ui[-1]) ** 2)
 
         rv2 = 0
 
         for p1, p2 in zip(pts, pts[1:]):
 
             # geometric distance between points on adjecent curves
-            rv2 += np.sum((p1 - p2) ** 2)
+            rv2 += np.sum(((p1 - p2) / scale) ** 2)
 
         return w1 * rv1 + w2 * rv2
 
@@ -1653,7 +1657,7 @@ def reparametrize(
 
     us = np.split(usol, n_curves)
 
-    return periodicApproximate([crv(u) for crv, u in zip(curves, us)], lam=1e-3)
+    return periodicApproximate([crv(u) for crv, u in zip(curves, us)], knots=n, lam=0)
 
 
 #%% for removal?
