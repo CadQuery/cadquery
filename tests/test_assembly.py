@@ -1010,31 +1010,47 @@ def test_plain_assembly_import(tmp_path_factory):
     assert imported_assy.name == "top_level"
 
     # Check the locations
-    assert imported_assy.children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0)
-    assert imported_assy.children[1].loc.toTuple()[0] == (10.0, 10.0, 10.0)
-    assert imported_assy.children[2].loc.toTuple()[0] == (-10.0, -10.0, -10.0)
-    assert imported_assy.children[3].loc.toTuple()[0] == (10.0, -10.0, -10.0)
+    assert imported_assy.children[0].children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0,)
+    assert imported_assy.children[0].children[1].loc.toTuple()[0] == (10.0, 10.0, 10.0,)
+    assert imported_assy.children[0].children[2].loc.toTuple()[0] == (
+        -10.0,
+        -10.0,
+        -10.0,
+    )
+    assert imported_assy.children[0].children[3].loc.toTuple()[0] == (
+        10.0,
+        -10.0,
+        -10.0,
+    )
 
     # Check the colors
-    assert pytest.approx(imported_assy.children[0].color.toTuple(), rel=0.01) == (
+    assert pytest.approx(
+        imported_assy.children[0].children[0].children[0].color.toTuple(), rel=0.01
+    ) == (
         0.0,
         1.0,
         0.0,
         1.0,
     )  # green
-    assert pytest.approx(imported_assy.children[1].color.toTuple(), rel=0.01) == (
+    assert pytest.approx(
+        imported_assy.children[0].children[1].children[0].color.toTuple(), rel=0.01
+    ) == (
         1.0,
         0.0,
         0.0,
         1.0,
     )  # red
-    assert pytest.approx(imported_assy.children[2].color.toTuple(), rel=0.01) == (
+    assert pytest.approx(
+        imported_assy.children[0].children[2].children[0].color.toTuple(), rel=0.01
+    ) == (
         1.0,
         0.0,
         0.0,
         1.0,
     )  # red
-    assert pytest.approx(imported_assy.children[3].color.toTuple(), rel=0.01) == (
+    assert pytest.approx(
+        imported_assy.children[0].children[3].children[0].color.toTuple(), rel=0.01
+    ) == (
         1.0,
         0.0,
         0.0,
@@ -1075,11 +1091,11 @@ def test_copied_assembly_import(tmp_path_factory):
 
     # import the assy with copies
     assy_copy = Assembly.importStep(os.path.join(tmpdir, "test_assy_copy.step"))
-    assert 5 == len(assy_copy.children)
+    assert 5 == len(assy_copy.children[0].children)
 
     # import the assy without copies
     assy_normal = Assembly.importStep(os.path.join(tmpdir, "test_assy.step"))
-    assert 5 == len(assy_normal.children)
+    assert 5 == len(assy_normal.children[0].children)
 
 
 def test_nested_subassembly_step_import(tmp_path_factory):
@@ -1106,8 +1122,8 @@ def test_nested_subassembly_step_import(tmp_path_factory):
     imported_assy = cq.Assembly.importStep(nested_step_path)
 
     # Check the locations
-    assert imported_assy.children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0)
-    assert imported_assy.children[1].objects["box_2"].loc.toTuple()[0] == (
+    assert imported_assy.children[0].children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0)
+    assert imported_assy.children[0].children[1].objects["box_2"].loc.toTuple()[0] == (
         10.0,
         10.0,
         10.0,
