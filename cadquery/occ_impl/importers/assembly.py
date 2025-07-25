@@ -84,6 +84,20 @@ def importStep(assy: AssemblyProtocol, path: str):
                         else:
                             new_assy.add(cq_shape, name=f"{ref_name}", color=cq_color)
 
+                        # Find the layer name, if there is one set for this shape
+                        layers = TDF_LabelSequence()
+                        layer_tool.GetLayers(ref_label, layers)
+                        for i in range(1, layers.Length() + 1):
+                            lbl = layers.Value(i)
+                            name_attr = TDataStd_Name()
+                            lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+
+                            # Extract the layer name for the shape here
+                            layer_name = name_attr.Get().ToExtString()
+
+                            # Add the layer as a subshape entry on the assembly
+                            new_assy.addSubshape(final_shape, layer=layer_name)
+
             return new_assy
         elif shape_tool.IsSimpleShape_s(lbl):
             shape = shape_tool.GetShape_s(lbl)
