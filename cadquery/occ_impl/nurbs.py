@@ -314,8 +314,8 @@ def _preprocess(
     else:
         u_ = u
         knots_ext = knots
-        minspan = None
-        maxspan = None
+        minspan = order
+        maxspan = knots.shape[0] - order - 1
         deltaspan = 0
 
     return u_, knots_ext, minspan, maxspan, deltaspan
@@ -883,13 +883,23 @@ def nbSurfaceDer(
 
 
 @njit
-def designMatrix(u: Array, order: int, knots: Array) -> COO:
+def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> COO:
     """
-    Create a sparse design matrix.
+    Create a sparse (possibly periodic) design matrix.
     """
 
+    # extend the knots
+    knots_ext = np.concat(
+        (knots[-order:-1] - knots[-1], knots, knots[-1] + knots[1:order])
+    )
+
+    u_, knots_ext, minspan, maxspan, deltaspan = _preprocess(u, order, knots, periodic)
+
     # number of param values
-    nu = np.size(u)
+    nu = len(u)
+
+    # number of basis functions
+    nb = maxspan
 
     # chunck size
     n = order + 1
@@ -906,17 +916,19 @@ def designMatrix(u: Array, order: int, knots: Array) -> COO:
 
     # loop over param values
     for i in range(nu):
-        ui = u[i]
+        ui = u_[i]
 
         # find the supporting span
-        span = nbFindSpan(ui, order, knots)
+        span = nbFindSpan(ui, order, knots, minspan, maxspan) + deltaspan
 
         # evaluate non-zero functions
-        nbBasis(span, ui, order, knots, temp)
+        nbBasis(span, ui, order, knots_ext, temp)
 
         # update the matrix
         rv.i[i * n : (i + 1) * n] = i
-        rv.j[i * n : (i + 1) * n] = span - order + np.arange(n)
+        rv.j[i * n : (i + 1) * n] = (
+            span - order + np.arange(n)
+        ) % nb  # NB: this is due to peridicity
         rv.v[i * n : (i + 1) * n] = temp
 
     return rv
@@ -924,11 +936,24 @@ def designMatrix(u: Array, order: int, knots: Array) -> COO:
 
 # @njit
 def designMatrix2D(
-    uv: Array, uorder: int, vorder: int, uknots: Array, vknots: Array
+    uv: Array,
+    uorder: int,
+    vorder: int,
+    uknots: Array,
+    vknots: Array,
+    uperiodic: bool = False,
+    vperiodic: bool = False,
 ) -> COO:
     """
     Create a sparse tensor product design matrix.
     """
+
+    u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
+        uv[:, 0], uorder, uknots, uperiodic
+    )
+    v_, vknots_ext, minspanv, maxspanv, deltaspanv = _preprocess(
+        uv[:, 1], vorder, vknots, vperiodic
+    )
 
     # number of param values
     ni = uv.shape[0]
@@ -939,8 +964,7 @@ def designMatrix2D(
     nj = nu * nv
 
     # number of basis
-    nu_total = len(uknots) - uorder - 1
-    nv_total = len(vknots) - vorder - 1
+    nv_total = maxspanv
 
     # temp chunck storage
     utemp = np.zeros(nu)
@@ -955,15 +979,15 @@ def designMatrix2D(
 
     # loop over param values
     for i in range(ni):
-        ui, vi = uv[i, :]
+        ui, vi = u_[i], v_[i]
 
         # find the supporting span
-        uspan = nbFindSpan(ui, uorder, uknots)
-        vspan = nbFindSpan(vi, vorder, vknots)
+        uspan = nbFindSpan(ui, uorder, uknots, minspanu, maxspanu) + deltaspanu
+        vspan = nbFindSpan(vi, vorder, vknots, minspanv, maxspanv) + deltaspanv
 
         # evaluate non-zero functions
-        nbBasis(uspan, ui, uorder, uknots, utemp)
-        nbBasis(vspan, vi, vorder, vknots, vtemp)
+        nbBasis(uspan, ui, uorder, uknots_ext, utemp)
+        nbBasis(vspan, vi, vorder, vknots_ext, vtemp)
 
         # update the matrix
         rv.i[i * nj : (i + 1) * nj] = i
@@ -982,48 +1006,7 @@ def periodicDesignMatrix(u: Array, order: int, knots: Array) -> COO:
     Create a sparse periodic design matrix.
     """
 
-    # extend the knots
-    knots_ext = np.concat(
-        (knots[-order:-1] - knots[-1], knots, knots[-1] + knots[1:order])
-    )
-
-    # number of param values
-    nu = len(u)
-
-    # number of basis functions
-    nb = len(knots) - 1
-
-    # chunck size
-    n = order + 1
-
-    # temp chunck storage
-    temp = np.zeros(n)
-
-    # initialize the empty matrix
-    rv = COO(
-        i=np.empty(n * nu, dtype=np.int64),
-        j=np.empty(n * nu, dtype=np.int64),
-        v=np.empty(n * nu),
-    )
-
-    # loop over param values
-    for i in range(nu):
-        ui = u[i]
-
-        # find the supporting span
-        span = nbFindSpan(ui, order, knots, 0, nb) + order - 1
-
-        # evaluate non-zero functions
-        nbBasis(span, ui, order, knots_ext, temp)
-
-        # update the matrix
-        rv.i[i * n : (i + 1) * n] = i
-        rv.j[i * n : (i + 1) * n] = (
-            span - order + np.arange(n)
-        ) % nb  # NB: this is due to peridicity
-        rv.v[i * n : (i + 1) * n] = temp
-
-    return rv
+    return designMatrix(u, order, knots, periodic=True)
 
 
 @njit
