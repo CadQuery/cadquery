@@ -26,6 +26,10 @@ requirements:
     - multimethod >=1.11,<2.0
     - casadi
     - typish
+    - numba
+    - scipy
+    - trame
+    - trame-vtk
 
 test:
   requires:
