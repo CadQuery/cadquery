@@ -142,7 +142,7 @@ def importStep(assy: AssemblyProtocol, path: str):
 
                                         # Add the layer as a subshape entry on the assembly
                                         new_assy.addSubshape(
-                                            cur_shape, layer=layer_name
+                                            cq.Shape.cast(cur_shape), layer=layer_name
                                         )
 
                                     # Find the subshape color, if there is one set for this shape
@@ -160,7 +160,9 @@ def importStep(assy: AssemblyProtocol, path: str):
                                         )
 
                                         # Save the color info via the assembly subshape mechanism
-                                        new_assy.addSubshape(cur_shape, color=cq_color)
+                                        new_assy.addSubshape(
+                                            cq.Shape.cast(cur_shape), color=cq_color
+                                        )
 
                                 attr_iterator.Next()
 

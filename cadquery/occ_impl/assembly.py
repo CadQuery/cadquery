@@ -187,7 +187,7 @@ class AssemblyProtocol(Protocol):
     @overload
     def add(
         self,
-        obj: "Assembly",
+        obj: "AssemblyProtocol",
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
@@ -214,7 +214,7 @@ class AssemblyProtocol(Protocol):
         name: Optional[str] = None,
         color: Optional[Color] = None,
         layer: Optional[str] = None,
-    ) -> "Assembly":
+    ) -> "AssemblyProtocol":
         ...
 
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
