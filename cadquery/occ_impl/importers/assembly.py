@@ -115,7 +115,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                                         ):
                                             # Save this as the name of the subshape
                                             new_assy.addSubshape(
-                                                cur_shape,
+                                                cq.Shape.cast(cur_shape),
                                                 name=new_attr.Get().ToExtString(),
                                             )
                                             break
