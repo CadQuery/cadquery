@@ -1130,6 +1130,64 @@ def test_nested_subassembly_step_import(tmp_path_factory):
     )
 
 
+def test_assembly_step_import_roundtrip(tmp_path_factory):
+    """
+    Tests that the assembly does not mutate during successive export-import round trips.
+    """
+
+    # Set up the temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    round_trip_step_path = os.path.join(tmpdir, "round_trip.step")
+
+    # Create a sample assembly
+    assy = cq.Assembly(name="top-level")
+    assy.add(cq.Workplane().box(10, 10, 10), name="cube_1", color=cq.Color("red"))
+    subshape_assy = cq.Assembly(name="nested-assy")
+    subshape_assy.add(
+        cq.Workplane().cylinder(height=10.0, radius=2.5),
+        name="cylinder_1",
+        color=cq.Color("blue"),
+        loc=cq.Location((20, 20, 20)),
+    )
+    assy.add(subshape_assy)
+
+    # First export
+    assy.export(round_trip_step_path)
+
+    # First import
+    assy = cq.Assembly.importStep(round_trip_step_path)
+
+    # Second export
+    assy.export(round_trip_step_path)
+
+    # Second import
+    assy = cq.Assembly.importStep(round_trip_step_path)
+
+    # Check some general aspects of the assembly structure now
+    assert len(assy.children) == 2
+    assert assy.name == "top-level"
+    assert assy.children[0].name == "cube_1"
+    assert assy.children[1].children[0].name == "cylinder_1"
+
+    # First meta export
+    exportStepMeta(assy, round_trip_step_path)
+
+    # First meta import
+    assy = cq.Assembly.importStep(round_trip_step_path)
+
+    # Second meta export
+    exportStepMeta(assy, round_trip_step_path)
+
+    # Second meta import
+    assy = cq.Assembly.importStep(round_trip_step_path)
+
+    # Check some general aspects of the assembly structure now
+    assert len(assy.children) == 2
+    assert assy.name == "top-level"
+    assert assy.children[0].name == "cube_1"
+    assert assy.children[1].children[0].name == "cylinder_1"
+
+
 @pytest.mark.parametrize(
     "assy_fixture, expected",
     [

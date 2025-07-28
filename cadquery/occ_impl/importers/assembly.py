@@ -1,6 +1,6 @@
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.Quantity import Quantity_ColorRGBA
-from OCP.TDF import TDF_Label, TDF_LabelSequence
+from OCP.TDF import TDF_Label, TDF_LabelSequence, TDF_AttributeIterator
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDocStd import TDocStd_Document
 from OCP.TDataStd import TDataStd_Name
@@ -84,19 +84,82 @@ def importStep(assy: AssemblyProtocol, path: str):
                         else:
                             new_assy.add(cq_shape, name=f"{ref_name}", color=cq_color)
 
-                        # Find the layer name, if there is one set for this shape
-                        layers = TDF_LabelSequence()
-                        layer_tool.GetLayers(ref_label, layers)
-                        for i in range(1, layers.Length() + 1):
-                            lbl = layers.Value(i)
-                            name_attr = TDataStd_Name()
-                            lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+                        # Search for subshape names, layers and colors
+                        for j in range(ref_label.NbChildren()):
+                            child_label = ref_label.FindChild(j + 1)
 
-                            # Extract the layer name for the shape here
-                            layer_name = name_attr.Get().ToExtString()
+                            # Iterate through all the attributes looking for subshapes
+                            attr_iterator = TDF_AttributeIterator(child_label)
+                            while attr_iterator.More():
+                                current_attr = attr_iterator.Value()
 
-                            # Add the layer as a subshape entry on the assembly
-                            new_assy.addSubshape(final_shape, layer=layer_name)
+                                # TNaming_NamedShape is used to store and manage references to
+                                # topological shapes, and its attributes can be accessed directly.
+                                # XCAFDoc_GraphNode contains a graph of labels, and so we must
+                                # follow the branch back to a father.
+                                if (
+                                    current_attr.DynamicType().Name()
+                                    == "XCAFDoc_GraphNode"
+                                ):
+                                    # Step up one level to try to get the name from the parent
+                                    lbl = current_attr.GetFather(1).Label()
+
+                                    # Step through and search for the name attribute
+                                    it = TDF_AttributeIterator(lbl)
+                                    while it.More():
+                                        new_attr = it.Value()
+                                        if (
+                                            new_attr.DynamicType().Name()
+                                            == "TDataStd_Name"
+                                        ):
+                                            # Save this as the name of the subshape
+                                            assy.addSubshape(
+                                                cur_shape,
+                                                name=new_attr.Get().ToExtString(),
+                                            )
+                                            break
+                                        it.Next()
+                                elif (
+                                    current_attr.DynamicType().Name()
+                                    == "TNaming_NamedShape"
+                                ):
+                                    # Save the shape so that we can add it to the subshape data
+                                    cur_shape = current_attr.Get()
+
+                                    # Find the layer name, if there is one set for this shape
+                                    layers = TDF_LabelSequence()
+                                    layer_tool.GetLayers(child_label, layers)
+                                    for i in range(1, layers.Length() + 1):
+                                        lbl = layers.Value(i)
+                                        name_attr = TDataStd_Name()
+                                        lbl.FindAttribute(
+                                            TDataStd_Name.GetID_s(), name_attr
+                                        )
+
+                                        # Extract the layer name for the shape here
+                                        layer_name = name_attr.Get().ToExtString()
+
+                                        # Add the layer as a subshape entry on the assembly
+                                        assy.addSubshape(cur_shape, layer=layer_name)
+
+                                    # Find the subshape color, if there is one set for this shape
+                                    color = Quantity_ColorRGBA()
+                                    # Extract the color, if present on the shape
+                                    if color_tool.GetColor(
+                                        cur_shape, XCAFDoc_ColorSurf, color
+                                    ):
+                                        rgb = color.GetRGB()
+                                        cq_color = cq.Color(
+                                            rgb.Red(),
+                                            rgb.Green(),
+                                            rgb.Blue(),
+                                            color.Alpha(),
+                                        )
+
+                                        # Save the color info via the assembly subshape mechanism
+                                        assy.addSubshape(cur_shape, color=cq_color)
+
+                                attr_iterator.Next()
 
             return new_assy
         elif shape_tool.IsSimpleShape_s(lbl):
@@ -149,9 +212,15 @@ def importStep(assy: AssemblyProtocol, path: str):
         # Start the recursive processing of labels
         whole_assy = _process_label(top_level_label)
 
-        # Copy contents instead of adding the whole assembly
-        # assy.name = whole_assy.name
         if whole_assy and hasattr(whole_assy, "children"):
+            # Check to see if there is an extra top-level node. This is done because
+            # cq.Assembly.export adds an extra top-level node which will cause a cascade of
+            # extras on successive round-trips. exportStepMeta does not add the extra top-level
+            # node and so does not exhibit this behavior.
+            if assy.name == whole_assy.children[0].name:
+                whole_assy = whole_assy.children[0]
+
+            # Copy all of the children over to the main assembly object
             for child in whole_assy.children:
                 assy.add(child, name=child.name, color=child.color, loc=child.loc)
         elif whole_assy:
