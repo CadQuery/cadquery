@@ -184,6 +184,39 @@ class AssemblyProtocol(Protocol):
     def _subshape_layers(self) -> Dict[Shape, str]:
         ...
 
+    @overload
+    def add(
+        self,
+        obj: "Assembly",
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ):
+        ...
+
+    @overload
+    def add(
+        self,
+        obj: AssemblyObjects,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
+        ...
+
+    def add(self, arg, **kwargs):
+        ...
+
+    def addSubshape(
+        self,
+        s: Shape,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        layer: Optional[str] = None,
+    ) -> "Assembly":
+        ...
+
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 

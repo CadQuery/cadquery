@@ -1,3 +1,4 @@
+from OCP.TopoDS import TopoDS_Shape
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.Quantity import Quantity_ColorRGBA
 from OCP.TDF import TDF_Label, TDF_LabelSequence, TDF_AttributeIterator
@@ -113,7 +114,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                                             == "TDataStd_Name"
                                         ):
                                             # Save this as the name of the subshape
-                                            assy.addSubshape(
+                                            new_assy.addSubshape(
                                                 cur_shape,
                                                 name=new_attr.Get().ToExtString(),
                                             )
@@ -124,7 +125,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                                     == "TNaming_NamedShape"
                                 ):
                                     # Save the shape so that we can add it to the subshape data
-                                    cur_shape = current_attr.Get()
+                                    cur_shape: TopoDS_Shape = current_attr.Get()
 
                                     # Find the layer name, if there is one set for this shape
                                     layers = TDF_LabelSequence()
@@ -140,7 +141,9 @@ def importStep(assy: AssemblyProtocol, path: str):
                                         layer_name = name_attr.Get().ToExtString()
 
                                         # Add the layer as a subshape entry on the assembly
-                                        assy.addSubshape(cur_shape, layer=layer_name)
+                                        new_assy.addSubshape(
+                                            cur_shape, layer=layer_name
+                                        )
 
                                     # Find the subshape color, if there is one set for this shape
                                     color = Quantity_ColorRGBA()
@@ -157,7 +160,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                                         )
 
                                         # Save the color info via the assembly subshape mechanism
-                                        assy.addSubshape(cur_shape, color=cq_color)
+                                        new_assy.addSubshape(cur_shape, color=cq_color)
 
                                 attr_iterator.Next()
 
@@ -210,20 +213,28 @@ def importStep(assy: AssemblyProtocol, path: str):
         assy.name = str(name_attr.Get().ToExtString())
 
         # Start the recursive processing of labels
-        whole_assy = _process_label(top_level_label)
+        imported_assy = _process_label(top_level_label)
 
-        if whole_assy and hasattr(whole_assy, "children"):
+        if imported_assy and hasattr(imported_assy, "children"):
             # Check to see if there is an extra top-level node. This is done because
             # cq.Assembly.export adds an extra top-level node which will cause a cascade of
             # extras on successive round-trips. exportStepMeta does not add the extra top-level
             # node and so does not exhibit this behavior.
-            if assy.name == whole_assy.children[0].name:
-                whole_assy = whole_assy.children[0]
+            if assy.name == imported_assy.children[0].name:
+                imported_assy = imported_assy.children[0]
 
             # Copy all of the children over to the main assembly object
-            for child in whole_assy.children:
+            for child in imported_assy.children:
                 assy.add(child, name=child.name, color=child.color, loc=child.loc)
-        elif whole_assy:
-            assy.add(whole_assy)
+        elif imported_assy:
+            assy.add(imported_assy)
+
+        # Copy across subshape data
+        for shape, name in imported_assy._subshape_names.items():
+            assy.addSubshape(shape, name=name)
+        for shape, color in imported_assy._subshape_colors.items():
+            assy.addSubshape(shape, color=color)
+        for shape, layer in imported_assy._subshape_layers.items():
+            assy.addSubshape(shape, layer=layer)
     else:
         raise ValueError("Step file does not contain an assembly")
