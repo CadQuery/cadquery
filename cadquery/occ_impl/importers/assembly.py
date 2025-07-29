@@ -102,30 +102,30 @@ def importStep(assy: AssemblyProtocol, path: str):
                                     current_attr.DynamicType().Name()
                                     == "XCAFDoc_GraphNode"
                                 ):
-                                    # Step up one level to try to get the name from the parent
-                                    lbl = current_attr.GetFather(1).Label()
+                                    # Compatibility check
+                                    if hasattr(current_attr, "GetFather"):
+                                        lbl = current_attr.GetFather(1).Label()
+                                    else:
+                                        lbl = current_attr.Label().Father()
 
-                                    # Step through and search for the name attribute
-                                    it = TDF_AttributeIterator(lbl)
-                                    while it.More():
-                                        new_attr = it.Value()
-                                        if (
-                                            new_attr.DynamicType().Name()
-                                            == "TDataStd_Name"
-                                        ):
-                                            # Save this as the name of the subshape
-                                            new_assy.addSubshape(
-                                                cq.Shape.cast(cur_shape),
-                                                name=new_attr.Get().ToExtString(),
-                                            )
-                                            break
-                                        it.Next()
+                                    # Find the name attribute and add it for the subshape
+                                    name_attr = TDataStd_Name()
+                                    if lbl.FindAttribute(
+                                        TDataStd_Name.GetID_s(), name_attr
+                                    ):
+                                        # Save this as the name of the subshape
+                                        new_assy.addSubshape(
+                                            cq.Shape.cast(cur_shape),
+                                            name=name_attr.Get().ToExtString(),
+                                        )
                                 elif (
                                     current_attr.DynamicType().Name()
                                     == "TNaming_NamedShape"
                                 ):
                                     # Save the shape so that we can add it to the subshape data
-                                    cur_shape: TopoDS_Shape = current_attr.Get()
+                                    cur_shape: TopoDS_Shape = shape_tool.GetShape_s(
+                                        child_label
+                                    )
 
                                     # Find the layer name, if there is one set for this shape
                                     layers = TDF_LabelSequence()

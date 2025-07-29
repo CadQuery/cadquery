@@ -10,7 +10,7 @@ from typing import (
     List,
     cast,
 )
-from typing_extensions import Protocol
+from typing_extensions import Protocol, Self
 from math import degrees, radians
 
 from OCP.TDocStd import TDocStd_Document
@@ -187,11 +187,11 @@ class AssemblyProtocol(Protocol):
     @overload
     def add(
         self,
-        obj: "AssemblyProtocol",
+        obj: Self,
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ):
+    ) -> Self:
         ...
 
     @overload
@@ -202,10 +202,21 @@ class AssemblyProtocol(Protocol):
         name: Optional[str] = None,
         color: Optional[Color] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> Self:
         ...
 
-    def add(self, arg, **kwargs):
+    def add(
+        self,
+        obj: Union[Self, AssemblyObjects],
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> Self:
+        """
+        Add a subassembly to the current assembly.
+        """
         ...
 
     def addSubshape(
@@ -214,7 +225,7 @@ class AssemblyProtocol(Protocol):
         name: Optional[str] = None,
         color: Optional[Color] = None,
         layer: Optional[str] = None,
-    ) -> "AssemblyProtocol":
+    ) -> Self:
         ...
 
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
