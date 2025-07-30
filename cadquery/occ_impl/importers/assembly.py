@@ -89,7 +89,48 @@ def importStep(assy: AssemblyProtocol, path: str):
                         for j in range(ref_label.NbChildren()):
                             child_label = ref_label.FindChild(j + 1)
 
-                            # Iterate through all the attributes looking for subshapes
+                            # Save the shape so that we can add it to the subshape data
+                            cur_shape: TopoDS_Shape = shape_tool.GetShape_s(child_label)
+                            if cur_shape.IsNull():
+                                continue
+
+                            # Validate the child label before using it
+                            if not child_label or child_label.IsNull():
+                                continue
+
+                            # Find the layer name, if there is one set for this shape
+                            layers = TDF_LabelSequence()
+                            layer_tool.GetLayers(child_label, layers)
+                            for i in range(1, layers.Length() + 1):
+                                lbl = layers.Value(i)
+                                name_attr = TDataStd_Name()
+                                lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+
+                                # Extract the layer name for the shape here
+                                layer_name = name_attr.Get().ToExtString()
+
+                                # Add the layer as a subshape entry on the assembly
+                                new_assy.addSubshape(
+                                    cq.Shape.cast(cur_shape), layer=layer_name
+                                )
+
+                            # Find the subshape color, if there is one set for this shape
+                            color = Quantity_ColorRGBA()
+                            # Extract the color, if present on the shape
+                            if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
+                                rgb = color.GetRGB()
+                                cq_color = cq.Color(
+                                    rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(),
+                                )
+
+                                # Save the color info via the assembly subshape mechanism
+                                new_assy.addSubshape(
+                                    cq.Shape.cast(cur_shape), color=cq_color
+                                )
+
+                            # Iterate through all the attributes looking for subshape names.
+                            # This is safer than trying to access the attributes directly with
+                            # FindAttribute because it will cause a segfault in certain cases.
                             attr_iterator = TDF_AttributeIterator(child_label)
                             while attr_iterator.More():
                                 current_attr = attr_iterator.Value()
@@ -126,43 +167,6 @@ def importStep(assy: AssemblyProtocol, path: str):
                                     cur_shape: TopoDS_Shape = shape_tool.GetShape_s(
                                         child_label
                                     )
-
-                                    # Find the layer name, if there is one set for this shape
-                                    layers = TDF_LabelSequence()
-                                    layer_tool.GetLayers(child_label, layers)
-                                    for i in range(1, layers.Length() + 1):
-                                        lbl = layers.Value(i)
-                                        name_attr = TDataStd_Name()
-                                        lbl.FindAttribute(
-                                            TDataStd_Name.GetID_s(), name_attr
-                                        )
-
-                                        # Extract the layer name for the shape here
-                                        layer_name = name_attr.Get().ToExtString()
-
-                                        # Add the layer as a subshape entry on the assembly
-                                        new_assy.addSubshape(
-                                            cq.Shape.cast(cur_shape), layer=layer_name
-                                        )
-
-                                    # Find the subshape color, if there is one set for this shape
-                                    color = Quantity_ColorRGBA()
-                                    # Extract the color, if present on the shape
-                                    if color_tool.GetColor(
-                                        cur_shape, XCAFDoc_ColorSurf, color
-                                    ):
-                                        rgb = color.GetRGB()
-                                        cq_color = cq.Color(
-                                            rgb.Red(),
-                                            rgb.Green(),
-                                            rgb.Blue(),
-                                            color.Alpha(),
-                                        )
-
-                                        # Save the color info via the assembly subshape mechanism
-                                        new_assy.addSubshape(
-                                            cq.Shape.cast(cur_shape), color=cq_color
-                                        )
 
                                 attr_iterator.Next()
 
