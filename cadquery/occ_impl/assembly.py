@@ -35,7 +35,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper as vtkMapper,
     vtkRenderer,
-    vtkAssembly,
+    vtkProp3D,
 )
 
 from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
@@ -315,9 +315,9 @@ def toVTKAssy(
     linewidth: float = 2,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
-) -> vtkAssembly:
+) -> List[vtkProp3D]:
 
-    rv = vtkAssembly()
+    rv: List[vtkProp3D] = []
 
     for shape, _, loc, col_ in assy:
 
@@ -358,7 +358,7 @@ def toVTKAssy(
         actor.GetProperty().SetColor(*col[:3])
         actor.GetProperty().SetOpacity(col[3])
 
-        rv.AddPart(actor)
+        rv.append(actor)
 
         mapper = vtkMapper()
         mapper.AddInputDataObject(data_edges)
@@ -370,9 +370,8 @@ def toVTKAssy(
         actor.GetProperty().SetLineWidth(linewidth)
         actor.SetVisibility(edges)
         actor.GetProperty().SetColor(*edgecolor[:3])
-        actor.GetProperty().SetLineWidth(edgecolor[3])
 
-        rv.AddPart(actor)
+        rv.append(actor)
 
     return rv
 
