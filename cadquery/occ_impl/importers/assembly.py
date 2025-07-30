@@ -5,9 +5,9 @@ from OCP.TDF import TDF_Label, TDF_LabelSequence, TDF_AttributeIterator
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDocStd import TDocStd_Document
 from OCP.TDataStd import TDataStd_Name
+from OCP.TNaming import TNaming_NamedShape
 from OCP.STEPCAFControl import STEPCAFControl_Reader
-from OCP.XCAFDoc import XCAFDoc_ColorSurf
-from OCP.XCAFDoc import XCAFDoc_DocumentTool
+from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_GraphNode
 
 import cadquery as cq
 from ..assembly import AssemblyProtocol
@@ -27,135 +27,124 @@ def importStep(assy: AssemblyProtocol, path: str):
         """
         Recursive method to process the assembly in a top-down manner.
         """
-        # If we have an assembly, extract all of the information out of it that we can
-        if shape_tool.IsAssembly_s(lbl):
-            # Instantiate the new assembly
-            new_assy = cq.Assembly()
 
-            # Look for components
-            comp_labels = TDF_LabelSequence()
-            shape_tool.GetComponents_s(lbl, comp_labels)
+        # Instantiate the new assembly
+        new_assy = cq.Assembly()
 
-            for i in range(comp_labels.Length()):
-                comp_label = comp_labels.Value(i + 1)
+        # Look for components
+        comp_labels = TDF_LabelSequence()
+        shape_tool.GetComponents_s(lbl, comp_labels)
 
-                # Get the location of the component label
-                loc = shape_tool.GetLocation_s(comp_label)
-                cq_loc = cq.Location(loc) if loc else None
+        for i in range(comp_labels.Length()):
+            comp_label = comp_labels.Value(i + 1)
 
-                if shape_tool.IsReference_s(comp_label):
-                    ref_label = TDF_Label()
-                    shape_tool.GetReferredShape_s(comp_label, ref_label)
+            # Get the location of the component label
+            loc = shape_tool.GetLocation_s(comp_label)
+            cq_loc = cq.Location(loc) if loc else None
 
-                    # Find the name of this referenced part
-                    ref_name_attr = TDataStd_Name()
-                    if ref_label.FindAttribute(TDataStd_Name.GetID_s(), ref_name_attr):
-                        ref_name = str(ref_name_attr.Get().ToExtString())
+            if shape_tool.IsReference_s(comp_label):
+                ref_label = TDF_Label()
+                shape_tool.GetReferredShape_s(comp_label, ref_label)
 
-                    if shape_tool.IsAssembly_s(ref_label):
-                        # Recursively process subassemblies
-                        sub_assy = _process_label(ref_label)
+                # Find the name of this referenced part
+                ref_name_attr = TDataStd_Name()
+                if ref_label.FindAttribute(TDataStd_Name.GetID_s(), ref_name_attr):
+                    ref_name = str(ref_name_attr.Get().ToExtString())
 
-                        # Add the appropriate attributes to the subassembly
-                        new_assy.add(sub_assy, name=f"{ref_name}", loc=cq_loc)
-                    elif shape_tool.IsSimpleShape_s(ref_label):
-                        # A single shape needs to be added to the assembly
-                        final_shape = shape_tool.GetShape_s(ref_label)
-                        cq_shape = cq.Shape.cast(final_shape)
+                if shape_tool.IsAssembly_s(ref_label):
+                    # Recursively process subassemblies
+                    sub_assy = _process_label(ref_label)
+
+                    # Add the appropriate attributes to the subassembly
+                    new_assy.add(sub_assy, name=f"{ref_name}", loc=cq_loc)
+                elif shape_tool.IsSimpleShape_s(ref_label):
+                    # A single shape needs to be added to the assembly
+                    final_shape = shape_tool.GetShape_s(ref_label)
+                    cq_shape = cq.Shape.cast(final_shape)
+
+                    # Find the subshape color, if there is one set for this shape
+                    color = Quantity_ColorRGBA()
+                    # Extract the color, if present on the shape
+                    if color_tool.GetColor(final_shape, XCAFDoc_ColorSurf, color):
+                        rgb = color.GetRGB()
+                        cq_color = cq.Color(
+                            rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha()
+                        )
+                    else:
+                        cq_color = None
+
+                    new_assy.add(
+                        cq_shape, name=f"{ref_name}", loc=cq_loc, color=cq_color
+                    )
+
+                    # Search for subshape names, layers and colors
+                    for j in range(ref_label.NbChildren()):
+                        child_label = ref_label.FindChild(j + 1)
+
+                        # Save the shape so that we can add it to the subshape data
+                        cur_shape: TopoDS_Shape = shape_tool.GetShape_s(child_label)
+
+                        # Find the layer name, if there is one set for this shape
+                        layers = TDF_LabelSequence()
+                        layer_tool.GetLayers(child_label, layers)
+                        for i in range(1, layers.Length() + 1):
+                            lbl = layers.Value(i)
+                            name_attr = TDataStd_Name()
+                            lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+
+                            # Extract the layer name for the shape here
+                            layer_name = name_attr.Get().ToExtString()
+
+                            # Add the layer as a subshape entry on the assembly
+                            new_assy.addSubshape(
+                                cq.Shape.cast(cur_shape), layer=layer_name
+                            )
 
                         # Find the subshape color, if there is one set for this shape
                         color = Quantity_ColorRGBA()
                         # Extract the color, if present on the shape
-                        if color_tool.GetColor(final_shape, XCAFDoc_ColorSurf, color):
+                        if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
                             rgb = color.GetRGB()
                             cq_color = cq.Color(
-                                rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha()
+                                rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(),
                             )
-                        else:
-                            cq_color = None
 
-                        new_assy.add(
-                            cq_shape, name=f"{ref_name}", loc=cq_loc, color=cq_color
-                        )
+                            # Save the color info via the assembly subshape mechanism
+                            new_assy.addSubshape(
+                                cq.Shape.cast(cur_shape), color=cq_color
+                            )
 
-                        # Search for subshape names, layers and colors
-                        for j in range(ref_label.NbChildren()):
-                            child_label = ref_label.FindChild(j + 1)
+                        # Iterate through all the attributes looking for subshape names.
+                        # This is safer than trying to access the attributes directly with
+                        # FindAttribute because it will cause a segfault in certain cases.
+                        attr_iterator = TDF_AttributeIterator(child_label)
+                        while attr_iterator.More():
+                            current_attr = attr_iterator.Value()
 
-                            # Save the shape so that we can add it to the subshape data
-                            cur_shape: TopoDS_Shape = shape_tool.GetShape_s(child_label)
+                            # TNaming_NamedShape is used to store and manage references to
+                            # topological shapes, and its attributes can be accessed directly.
+                            # XCAFDoc_GraphNode contains a graph of labels, and so we must
+                            # follow the branch back to a father.
+                            if isinstance(current_attr, XCAFDoc_GraphNode):
+                                lbl = current_attr.GetFather(1).Label()
 
-                            # Find the layer name, if there is one set for this shape
-                            layers = TDF_LabelSequence()
-                            layer_tool.GetLayers(child_label, layers)
-                            for i in range(1, layers.Length() + 1):
-                                lbl = layers.Value(i)
+                                # Find the name attribute and add it for the subshape
                                 name_attr = TDataStd_Name()
-                                lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
-
-                                # Extract the layer name for the shape here
-                                layer_name = name_attr.Get().ToExtString()
-
-                                # Add the layer as a subshape entry on the assembly
-                                new_assy.addSubshape(
-                                    cq.Shape.cast(cur_shape), layer=layer_name
-                                )
-
-                            # Find the subshape color, if there is one set for this shape
-                            color = Quantity_ColorRGBA()
-                            # Extract the color, if present on the shape
-                            if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
-                                rgb = color.GetRGB()
-                                cq_color = cq.Color(
-                                    rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(),
-                                )
-
-                                # Save the color info via the assembly subshape mechanism
-                                new_assy.addSubshape(
-                                    cq.Shape.cast(cur_shape), color=cq_color
-                                )
-
-                            # Iterate through all the attributes looking for subshape names.
-                            # This is safer than trying to access the attributes directly with
-                            # FindAttribute because it will cause a segfault in certain cases.
-                            attr_iterator = TDF_AttributeIterator(child_label)
-                            while attr_iterator.More():
-                                current_attr = attr_iterator.Value()
-
-                                # TNaming_NamedShape is used to store and manage references to
-                                # topological shapes, and its attributes can be accessed directly.
-                                # XCAFDoc_GraphNode contains a graph of labels, and so we must
-                                # follow the branch back to a father.
-                                if (
-                                    current_attr.DynamicType().Name()
-                                    == "XCAFDoc_GraphNode"
+                                if lbl.FindAttribute(
+                                    TDataStd_Name.GetID_s(), name_attr
                                 ):
-                                    # Only the GraphNode should have this method
-                                    if hasattr(current_attr, "GetFather"):
-                                        lbl = current_attr.GetFather(1).Label()
-
-                                    # Find the name attribute and add it for the subshape
-                                    name_attr = TDataStd_Name()
-                                    if lbl.FindAttribute(
-                                        TDataStd_Name.GetID_s(), name_attr
-                                    ):
-                                        # Save this as the name of the subshape
-                                        new_assy.addSubshape(
-                                            cq.Shape.cast(cur_shape),
-                                            name=name_attr.Get().ToExtString(),
-                                        )
-                                elif (
-                                    current_attr.DynamicType().Name()
-                                    == "TNaming_NamedShape"
-                                ):
-                                    # Save the shape so that we can add it to the subshape data
-                                    cur_shape: TopoDS_Shape = shape_tool.GetShape_s(
-                                        child_label
+                                    # Save this as the name of the subshape
+                                    new_assy.addSubshape(
+                                        cq.Shape.cast(cur_shape),
+                                        name=name_attr.Get().ToExtString(),
                                     )
+                            elif isinstance(current_attr, TNaming_NamedShape):
+                                # Save the shape so that we can add it to the subshape data
+                                cur_shape = shape_tool.GetShape_s(child_label)
 
-                                attr_iterator.Next()
+                            attr_iterator.Next()
 
-            return new_assy
+        return new_assy
 
     # Document that the step file will be read into
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
