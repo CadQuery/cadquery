@@ -57,11 +57,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                         sub_assy = _process_label(ref_label)
 
                         # Add the appropriate attributes to the subassembly
-                        if sub_assy:
-                            if cq_loc:
-                                new_assy.add(sub_assy, name=f"{ref_name}", loc=cq_loc)
-                            else:
-                                new_assy.add(sub_assy, name=f"{ref_name}")
+                        new_assy.add(sub_assy, name=f"{ref_name}", loc=cq_loc)
                     elif shape_tool.IsSimpleShape_s(ref_label):
                         # A single shape needs to be added to the assembly
                         final_shape = shape_tool.GetShape_s(ref_label)
@@ -78,12 +74,9 @@ def importStep(assy: AssemblyProtocol, path: str):
                         else:
                             cq_color = None
 
-                        if cq_loc:
-                            new_assy.add(
-                                cq_shape, name=f"{ref_name}", loc=cq_loc, color=cq_color
-                            )
-                        else:
-                            new_assy.add(cq_shape, name=f"{ref_name}", color=cq_color)
+                        new_assy.add(
+                            cq_shape, name=f"{ref_name}", loc=cq_loc, color=cq_color
+                        )
 
                         # Search for subshape names, layers and colors
                         for j in range(ref_label.NbChildren()):
@@ -91,12 +84,6 @@ def importStep(assy: AssemblyProtocol, path: str):
 
                             # Save the shape so that we can add it to the subshape data
                             cur_shape: TopoDS_Shape = shape_tool.GetShape_s(child_label)
-                            if cur_shape.IsNull():
-                                continue
-
-                            # Validate the child label before using it
-                            if not child_label or child_label.IsNull():
-                                continue
 
                             # Find the layer name, if there is one set for this shape
                             layers = TDF_LabelSequence()
@@ -143,11 +130,9 @@ def importStep(assy: AssemblyProtocol, path: str):
                                     current_attr.DynamicType().Name()
                                     == "XCAFDoc_GraphNode"
                                 ):
-                                    # Compatibility check
+                                    # Only the GraphNode should have this method
                                     if hasattr(current_attr, "GetFather"):
                                         lbl = current_attr.GetFather(1).Label()
-                                    else:
-                                        lbl = current_attr.Label().Father()
 
                                     # Find the name attribute and add it for the subshape
                                     name_attr = TDataStd_Name()
@@ -171,11 +156,6 @@ def importStep(assy: AssemblyProtocol, path: str):
                                 attr_iterator.Next()
 
             return new_assy
-        elif shape_tool.IsSimpleShape_s(lbl):
-            shape = shape_tool.GetShape_s(lbl)
-            return cq.Shape.cast(shape)
-        else:
-            return None
 
     # Document that the step file will be read into
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
@@ -203,12 +183,9 @@ def importStep(assy: AssemblyProtocol, path: str):
     # Collect all the labels representing shapes in the document
     labels = TDF_LabelSequence()
     shape_tool.GetFreeShapes(labels)
-    if labels.Length() == 0:
-        raise ValueError("No assembly found in STEP file")
 
     # Get the top-level label, which should represent an assembly
     top_level_label = labels.Value(1)
-
     # Make sure there is a top-level assembly
     if shape_tool.IsTopLevel(top_level_label) and shape_tool.IsAssembly_s(
         top_level_label
@@ -221,19 +198,16 @@ def importStep(assy: AssemblyProtocol, path: str):
         # Start the recursive processing of labels
         imported_assy = _process_label(top_level_label)
 
-        if imported_assy and hasattr(imported_assy, "children"):
-            # Check to see if there is an extra top-level node. This is done because
-            # cq.Assembly.export adds an extra top-level node which will cause a cascade of
-            # extras on successive round-trips. exportStepMeta does not add the extra top-level
-            # node and so does not exhibit this behavior.
-            if assy.name == imported_assy.children[0].name:
-                imported_assy = imported_assy.children[0]
+        # Handle a possible extra top-level node. This is done because cq.Assembly.export
+        # adds an extra top-level node which will cause a cascade of
+        # extras on successive round-trips. exportStepMeta does not add the extra top-level
+        # node and so does not exhibit this behavior.
+        if assy.name == imported_assy.children[0].name:
+            imported_assy = imported_assy.children[0]
 
-            # Copy all of the children over to the main assembly object
-            for child in imported_assy.children:
-                assy.add(child, name=child.name, color=child.color, loc=child.loc)
-        elif imported_assy:
-            assy.add(imported_assy)
+        # Copy all of the children over to the main assembly object
+        for child in imported_assy.children:
+            assy.add(child, name=child.name, color=child.color, loc=child.loc)
 
         # Copy across subshape data
         for shape, name in imported_assy._subshape_names.items():
