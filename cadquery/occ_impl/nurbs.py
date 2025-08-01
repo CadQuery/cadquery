@@ -19,7 +19,6 @@ from OCP.TColStd import (
 )
 from OCP.gp import gp_Pnt
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace
-from OCP.Geom import Geom_BSplineSurface
 
 from .shapes import Face, Edge
 
@@ -1623,6 +1622,8 @@ def reparametrize(
         pts = []
 
         for i, ui in enumerate(us):
+
+            # evaluate
             pts.append(curves[i](ui))
 
             # parametric distance between points on the same curve
@@ -1637,7 +1638,58 @@ def reparametrize(
 
         return w1 * rv1 + w2 * rv2
 
-    usol, _, _ = fmin_l_bfgs_b(cost, u0, approx_grad=True)
+    def grad(u: Array) -> Array:
+
+        rv1 = np.zeros_like(u)
+        us = np.split(u, n_curves)
+
+        pts = []
+        tgts = []
+
+        for i, ui in enumerate(us):
+
+            # evaluate up to 1st derivative
+            tmp = curves[i].der(ui, 1)
+
+            pts.append(tmp[:, 0, :].squeeze())
+            tgts.append(tmp[:, 1, :].squeeze())
+
+            # parametric distance between points on the same curve
+            delta = np.roll(ui, -1) - ui
+            delta[-1] += 1
+            delta *= -2
+            delta -= np.roll(delta, 1)
+
+            rv1[i * n : (i + 1) * n] = delta
+
+        rv2 = np.zeros_like(u)
+
+        for i, _ in enumerate(us):
+            # geometric distance between points on adjecent curves
+
+            # first profile
+            if i == 0:
+                p1, p2, t = pts[i], pts[i + 1], tgts[i]
+
+                rv2[i * n : (i + 1) * n] = (2 / scale ** 2 * (p1 - p2) * t).sum(1)
+
+            # middle profile
+            elif i + 1 < n_curves:
+                p1, p2, t = pts[i], pts[i + 1], tgts[i]
+                p0 = pts[i - 1]
+
+                rv2[i * n : (i + 1) * n] = (2 / scale ** 2 * (p1 - p2) * t).sum(1)
+                rv2[i * n : (i + 1) * n] += (-2 / scale ** 2 * (p0 - p1) * t).sum(1)
+
+            # last profile
+            else:
+                p1, p2, t = pts[i - 1], pts[i], tgts[i]
+
+                rv2[i * n : (i + 1) * n] = (-2 / scale ** 2 * (p1 - p2) * t).sum(1)
+
+        return w1 * rv1 + w2 * rv2
+
+    usol, _, _ = fmin_l_bfgs_b(cost, u0, grad)
 
     us = np.split(usol, n_curves)
 
