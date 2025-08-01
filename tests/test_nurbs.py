@@ -11,6 +11,7 @@ from cadquery.occ_impl.nurbs import (
     periodicApproximate,
     periodicLoft,
     loft,
+    reparametrize,
 )
 
 from cadquery.func import circle
@@ -48,6 +49,18 @@ def trimmed_circles() -> list[Curve]:
     ]
 
     return cs
+
+
+@fixture
+def rotated_circles() -> list[Curve]:
+
+    pts1 = np.array([v.toTuple() for v in circle(1).sample(100)[0]])
+    pts2 = np.array([v.toTuple() for v in circle(1).moved(z=1, rz=90).sample(100)[0]])
+
+    c1 = periodicApproximate(pts1)
+    c2 = periodicApproximate(pts2)
+
+    return [c1, c2]
 
 
 def test_periodic_dm():
@@ -245,3 +258,21 @@ def test_loft(circles, trimmed_circles):
     surf2 = loft(*trimmed_circles)
 
     assert surf2.face().isValid()
+
+
+def test_reparametrize(rotated_circles):
+
+    c1, c2 = rotated_circles
+
+    # this surface will be twisted
+    surf = loft(c1, c2, order=2, lam=1e-6)
+
+    # this should adjust the paramatrizations
+    c1r, c2r = reparametrize(c1, c2)
+
+    # resulting loft should not be twisted
+    surfr = loft(c1r, c2r, order=2, lam=1e-6)
+
+    # assert that the surface is indeed not twisted
+    assert surfr.face().Area() == approx(2 * np.pi, 1e-3)
+    assert surfr.face().Area() >= 1.01 * surf.face().Area()
