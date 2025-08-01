@@ -57,11 +57,11 @@ Importing a DXF profile with default settings and using it within a CadQuery scr
 
 .. code-block:: python
 
-    import cadquery as cq
+   import cadquery as cq
 
-    result = (
-        cq.importers.importDXF("/path/to/dxf/circle.dxf").wires().toPending().extrude(10)
-    )
+   result = (
+       cq.importers.importDXF("/path/to/dxf/circle.dxf").wires().toPending().extrude(10)
+   )
 
 Note the use of the :meth:`Workplane.wires` and :meth:`Workplane.toPending` methods to make the DXF profile
 ready for use during subsequent operations. Calling ``toPending()`` tells CadQuery to make the edges/wires available
@@ -75,9 +75,9 @@ There are no parameters for this method other than the file path to import.
 
 .. code-block:: python
 
-    import cadquery as cq
+   import cadquery as cq
 
-    result = cq.importers.importStep("/path/to/step/block.stp")
+   result = cq.importers.importStep("/path/to/step/block.stp")
 
 Exporting STEP
 ###############
@@ -92,11 +92,11 @@ since it will be determined from the file extension. Below is an example.
 
 .. code-block:: python
 
-    # Create a simple object
-    box = cq.Workplane().box(10, 10, 10)
+   # Create a simple object
+   box = cq.Workplane().box(10, 10, 10)
 
-    # Export the box
-    box.export("/path/to/step/box.step")
+   # Export the box
+   box.export("/path/to/step/box.step")
 
 Non-Default File Extensions
 ----------------------------
@@ -106,14 +106,14 @@ not recognize the file extension. In that case the export type has to be specifi
 
 .. code-block:: python
 
-    # Create a simple object
-    box = cq.Workplane().box(10, 10, 10)
+   # Create a simple object
+   box = cq.Workplane().box(10, 10, 10)
 
-    # Export the box
-    box.export("/path/to/step/box.stp", cq.exporters.ExportTypes.STEP)
+   # Export the box
+   box.export("/path/to/step/box.stp", cq.exporters.ExportTypes.STEP)
 
-    # The export type may also be specified as a literal
-    box.export("/path/to/step/box2.stp", "STEP")
+   # The export type may also be specified as a literal
+   box.export("/path/to/step/box2.stp", "STEP")
 
 Setting Extra Options
 ----------------------
@@ -124,14 +124,14 @@ or the :meth:`Assembly.exportAssembly`` method.
 
 .. code-block:: python
 
-    # Create a simple object
-    box = cq.Workplane().box(10, 10, 10)
+   # Create a simple object
+   box = cq.Workplane().box(10, 10, 10)
 
-    # Export the box, provide additional options with the opt dict
-    box.export("/path/to/step/box.step", opt={"write_pcurves": False})
+   # Export the box, provide additional options with the opt dict
+   box.export("/path/to/step/box.step", opt={"write_pcurves": False})
 
-    # or equivalently when exporting a lower level Shape object
-    box.val().export("/path/to/step/box2.step", opt={"write_pcurves": False})
+   # or equivalently when exporting a lower level Shape object
+   box.val().export("/path/to/step/box2.step", opt={"write_pcurves": False})
 
 
 Exporting Assemblies to STEP
@@ -149,17 +149,17 @@ export with all defaults is shown below.
 
 .. code-block:: python
 
-    import cadquery as cq
+   import cadquery as cq
 
-    # Create a sample assembly
-    assy = cq.Assembly()
-    body = cq.Workplane().box(10, 10, 10)
-    assy.add(body, color=cq.Color(1, 0, 0), name="body")
-    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
-    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+   # Create a sample assembly
+   assy = cq.Assembly()
+   body = cq.Workplane().box(10, 10, 10)
+   assy.add(body, color=cq.Color(1, 0, 0), name="body")
+   pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+   assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
-    # Save the assembly to STEP
-    assy.export("out.step")
+   # Save the assembly to STEP
+   assy.export("out.step")
 
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
@@ -173,20 +173,20 @@ fused solids.
 
 .. code-block:: python
 
-    import cadquery as cq
+   import cadquery as cq
 
-    # Create a sample assembly
-    assy = cq.Assembly()
-    body = cq.Workplane().box(10, 10, 10)
-    assy.add(body, color=cq.Color(1, 0, 0), name="body")
-    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
-    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+   # Create a sample assembly
+   assy = cq.Assembly()
+   body = cq.Workplane().box(10, 10, 10)
+   assy.add(body, color=cq.Color(1, 0, 0), name="body")
+   pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+   assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
-    # Save the assembly to STEP
-    assy.export("out.stp", "STEP", mode="fused")
+   # Save the assembly to STEP
+   assy.export("out.stp", "STEP", mode="fused")
 
-    # Specify additional options such as glue as keyword arguments
-    assy.export("out_glue.step", mode="fused", glue=True, write_pcurves=False)
+   # Specify additional options such as glue as keyword arguments
+   assy.export("out_glue.step", mode="fused", glue=True, write_pcurves=False)
 
 Naming
 -------
@@ -196,12 +196,12 @@ This is done by setting the name property of the assembly before calling :meth:`
 
 .. code-block:: python
 
-    assy = Assembly(name="my_assembly")
-    assy.export(
-        "out.stp",
-        cq.exporters.ExportTypes.STEP,
-        mode=cq.exporters.assembly.ExportModes.FUSED,
-    )
+   assy = Assembly(name="my_assembly")
+   assy.export(
+       "out.stp",
+       cq.exporters.ExportTypes.STEP,
+       mode=cq.exporters.assembly.ExportModes.FUSED,
+   )
 
 If an assembly name is not specified, a UUID will be used to avoid name conflicts.
 
@@ -212,24 +212,24 @@ It is possible to attach metadata to the assembly that will be included in the S
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery.occ_impl.exporters.assembly import exportStepMeta
+   import cadquery as cq
+   from cadquery.occ_impl.exporters.assembly import exportStepMeta
 
-    # Create a simple assembly
-    assy = cq.Assembly(name="top-level")
-    cube_1 = cq.Workplane().box(10.0, 10.0, 10.0)
-    assy.add(cube_1, name="cube_1", color=cq.Color("green"))
+   # Create a simple assembly
+   assy = cq.Assembly(name="top-level")
+   cube_1 = cq.Workplane().box(10.0, 10.0, 10.0)
+   assy.add(cube_1, name="cube_1", color=cq.Color("green"))
 
-    # Add subshape name, color and layer
-    assy.addSubshape(
-        cube_1.faces(">Z").val(),
-        name="cube_1_top_face",
-        color=cq.Color("red"),
-        layer="cube_1_top_face"
-    )
+   # Add subshape name, color and layer
+   assy.addSubshape(
+       cube_1.faces(">Z").val(),
+       name="cube_1_top_face",
+       color=cq.Color("red"),
+       layer="cube_1_top_face"
+   )
 
-    # Export the assembly to STEP with metadata
-    exportStepMeta(assy, "out.step")
+   # Export the assembly to STEP with metadata
+   exportStepMeta(assy, "out.step")
 
 Exporting Assemblies to glTF
 #############################
@@ -241,17 +241,17 @@ export with all defaults is shown below. To export to a binary glTF file, change
 
 .. code-block:: python
 
-    import cadquery as cq
+   import cadquery as cq
 
-    # Create a sample assembly
-    assy = cq.Assembly()
-    body = cq.Workplane().box(10, 10, 10)
-    assy.add(body, color=cq.Color(1, 0, 0), name="body")
-    pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
-    assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
+   # Create a sample assembly
+   assy = cq.Assembly()
+   body = cq.Workplane().box(10, 10, 10)
+   assy.add(body, color=cq.Color(1, 0, 0), name="body")
+   pin = cq.Workplane().center(2, 2).cylinder(radius=2, height=20)
+   assy.add(pin, color=cq.Color(0, 1, 0), name="pin")
 
-    # Save the assembly to GLTF
-    assy.export("out.gltf")
+   # Save the assembly to GLTF
+   assy.export("out.gltf")
 
 Exporting SVG
 ###############
@@ -278,16 +278,16 @@ Without options:
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+   result = cq.Workplane().box(10, 10, 10)
 
-    result.export("/path/to/file/box.svg")
+   result.export("/path/to/file/box.svg")
 
 Results in:
 
-..  image:: _static/importexport/box_default_options.svg
+.. image:: _static/importexport/box_default_options.svg
 
 Note that the exporters API figured out the format type from the file extension. The format
 type can be set explicitly by using :py:class:`exporters.ExportTypes`.
@@ -296,30 +296,30 @@ The following is an example of using options to alter the resulting SVG output b
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+   result = cq.Workplane().box(10, 10, 10)
 
-    result.export(
-        "/path/to/file/box_custom_options.svg",
-        opt={
-            "width": 300,
-            "height": 300,
-            "marginLeft": 10,
-            "marginTop": 10,
-            "showAxes": False,
-            "projectionDir": (0.5, 0.5, 0.5),
-            "strokeWidth": 0.25,
-            "strokeColor": (255, 0, 0),
-            "hiddenColor": (0, 0, 255),
-            "showHidden": True,
-        },
-    )
+   result.export(
+       "/path/to/file/box_custom_options.svg",
+       opt={
+           "width": 300,
+           "height": 300,
+           "marginLeft": 10,
+           "marginTop": 10,
+           "showAxes": False,
+           "projectionDir": (0.5, 0.5, 0.5),
+           "strokeWidth": 0.25,
+           "strokeColor": (255, 0, 0),
+           "hiddenColor": (0, 0, 255),
+           "showHidden": True,
+       },
+   )
 
 Which results in the following image:
 
-..  image:: _static/importexport/box_custom_options.svg
+.. image:: _static/importexport/box_custom_options.svg
 
 Exporting with the additional option ``"focus": 25`` results in the following output SVG with perspective:
 
@@ -338,12 +338,12 @@ optimum values that will produce an acceptable mesh.
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+   result = cq.Workplane().box(10, 10, 10)
 
-    result.export("/path/to/file/mesh.stl")
+   result.export("/path/to/file/mesh.stl")
 
 Exporting AMF and 3MF
 ######################
@@ -359,12 +359,12 @@ optimum values that will produce an acceptable mesh. Note that parameters for co
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+   result = cq.Workplane().box(10, 10, 10)
 
-    result.export("/path/to/file/mesh.amf", tolerance=0.01, angularTolerance=0.1)
+   result.export("/path/to/file/mesh.amf", tolerance=0.01, angularTolerance=0.1)
 
 
 Exporting TJS
@@ -381,17 +381,17 @@ optimum values that will produce an acceptable mesh.
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+   result = cq.Workplane().box(10, 10, 10)
 
-    result.export(
-        "/path/to/file/mesh.json",
-        tolerance=0.01,
-        angularTolerance=0.1,
-        exportType=exporters.ExportTypes.TJS,
-    )
+   result.export(
+       "/path/to/file/mesh.json",
+       tolerance=0.01,
+       angularTolerance=0.1,
+       exportType=exporters.ExportTypes.TJS,
+   )
 
 Note that the export type was explicitly specified as ``TJS`` because the extension that was used for the file name was ``.json``. If the extension ``.tjs``
 had been used, CadQuery would have understood to use the ``TJS`` export format.
@@ -410,14 +410,14 @@ optimum values that will produce an acceptable mesh.
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+   result = cq.Workplane().box(10, 10, 10)
 
-    result.export(
-        "/path/to/file/mesh.vrml", tolerance=0.01, angularTolerance=0.1
-    )
+   result.export(
+       "/path/to/file/mesh.vrml", tolerance=0.01, angularTolerance=0.1
+   )
 
 Exporting DXF
 ##############
@@ -449,26 +449,26 @@ Options
     See `Units`_.
 
 .. code-block:: python
-    :caption: DXF of workplanes.
+   :caption: DXF of workplanes.
 
-    import cadquery as cq
+   import cadquery as cq
 
-    result = cq.Workplane().box(10, 10, 10).section()
+   result = cq.Workplane().box(10, 10, 10).section()
 
-    exporters.exportDXF(result, "/path/to/file/object.dxf")
-    # or
-    result.export("/path/to/file/object.dxf")
+   exporters.exportDXF(result, "/path/to/file/object.dxf")
+   # or
+   result.export("/path/to/file/object.dxf")
 
 Sketches can also be directly exported to DXF.
 
 .. code-block:: python
-    :caption: DXF export of sketches.
+   :caption: DXF export of sketches.
 
-    import cadquery as cq
+   import cadquery as cq
 
-    result = cq.Sketch().rect(1,1)
+   result = cq.Sketch().rect(1,1)
 
-    result.export("/path/to/file/object.dxf")
+   result.export("/path/to/file/object.dxf")
 
 
 Units
@@ -491,25 +491,25 @@ doc_units Unit
 Document units can be set to any :doc:`unit supported by ezdxf <ezdxf-stable:concepts/units>`.
 
 .. code-block:: python
-    :caption: DXF document with units set to meters.
+   :caption: DXF document with units set to meters.
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10).section()
+   result = cq.Workplane().box(10, 10, 10).section()
 
-    exporters.exportDXF(
-        result,
-        "/path/to/file/object.dxf",
-        doc_units=6,  # set DXF document units to meters
-    )
+   exporters.exportDXF(
+       result,
+       "/path/to/file/object.dxf",
+       doc_units=6,  # set DXF document units to meters
+   )
 
-    # or
+   # or
 
-    result.export(
-        "/path/to/file/object.dxf",
-        opt={"doc_units": 6},  # set DXF document units to meters
-    )
+   result.export(
+       "/path/to/file/object.dxf",
+       opt={"doc_units": 6},  # set DXF document units to meters
+   )
 
 
 .. _Approximation strategy:
@@ -523,9 +523,9 @@ By default, the DXF exporter will output splines exactly as they are represented
 * ``tolerance``: Acceptable error of the approximation, in document/modelspace units. Defaults to 0.001 (1 thou for inch-scale drawings, 1 µm for mm-scale drawings).
 
 .. code-block:: python
-    :caption: DXF document with curves approximated with cubic splines.
+   :caption: DXF document with curves approximated with cubic splines.
 
-    cq.exporters.exportDXF(result, "/path/to/file/object.dxf", approx="spline")
+   cq.exporters.exportDXF(result, "/path/to/file/object.dxf", approx="spline")
 
 
 Exporting Other Formats
@@ -536,12 +536,12 @@ using the following structure.
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10)
+   result = cq.Workplane().box(10, 10, 10)
 
-    result.export("/path/to/file/object.[file_extension]")
+   result.export("/path/to/file/object.[file_extension]")
 
 Be sure to use the correct file extension so that CadQuery can determine the export format. If in doubt, fall
 back to setting the type explicitly by using :py:class:`exporters.ExportTypes`.
@@ -550,9 +550,9 @@ For example:
 
 .. code-block:: python
 
-    import cadquery as cq
-    from cadquery import exporters
+   import cadquery as cq
+   from cadquery import exporters
 
-    result = cq.Workplane().box(10, 10, 10).section()
+   result = cq.Workplane().box(10, 10, 10).section()
 
-    result.export("/path/to/file/object.dxf", exporters.ExportTypes.DXF)
+   result.export("/path/to/file/object.dxf", exporters.ExportTypes.DXF)

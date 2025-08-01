@@ -269,7 +269,7 @@ Assemblies
 
 Simple models can be combined into complex, possibly nested, assemblies.
 
-..  image:: _static/assy.png
+.. image:: _static/assy.png
 
 A simple example could look as follows::
 
@@ -293,7 +293,7 @@ A simple example could look as follows::
 
 Resulting in:
 
-..  image:: _static/simple_assy.png
+.. image:: _static/simple_assy.png
 
 Note that the locations of the children parts are defined with respect to their parents - in the above example ``part3`` will be located at (-5,-5,20) in the global coordinate system. Assemblies with different colors can be created this way and exported to STEP or the native OCCT xml format.
 

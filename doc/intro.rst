@@ -29,7 +29,7 @@ produces a flat plate with a hole in the middle::
     width = 2.0
     result = Workplane("front").box(width, width, thickness).faces(">Z").hole(thickness)
 
-..  image:: _static/simpleblock.png
+.. image:: _static/simpleblock.png
 
 That's a bit of a dixie-cup example. But it is pretty similar to a more useful part: a parametric pillow block for a
 standard 608-size ball bearing::
@@ -49,7 +49,7 @@ standard 608-size ball bearing::
         .cboreHole(2.4, 4.4, 2.1)
     )
 
-..  image:: _static/pillowblock.png
+.. image:: _static/pillowblock.png
 
 Lots more examples are available in the :ref:`examples`
 
