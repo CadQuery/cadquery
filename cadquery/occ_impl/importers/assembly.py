@@ -189,8 +189,7 @@ def importStep(assy: AssemblyProtocol, path: str):
         shape_tool.GetComponents_s(top_level_label, comp_labels)
         comp_label = comp_labels.Value(1)
         loc = shape_tool.GetLocation_s(comp_label)
-        if loc and not loc.IsIdentity():
-            assy.loc = cq.Location(loc)
+        assy.loc = cq.Location(loc)
 
         # Start the recursive processing of labels
         imported_assy = _process_label(top_level_label)
