@@ -996,7 +996,7 @@ def test_plain_assembly_import(tmp_path_factory):
     cube_3 = cq.Workplane().box(5, 5, 5)
     cube_4 = cq.Workplane().box(5, 5, 5)
 
-    assy = cq.Assembly(name="top_level")
+    assy = cq.Assembly(name="top_level", loc=cq.Location(10, 10, 10))
     assy.add(cube_1, color=cq.Color("green"))
     assy.add(cube_2, loc=cq.Location((10, 10, 10)), color=cq.Color("red"))
     assy.add(cube_3, loc=cq.Location((-10, -10, -10)), color=cq.Color("red"))
@@ -1014,6 +1014,9 @@ def test_plain_assembly_import(tmp_path_factory):
     assert imported_assy.children[1].loc.toTuple()[0] == (10.0, 10.0, 10.0,)
     assert imported_assy.children[2].loc.toTuple()[0] == (-10.0, -10.0, -10.0,)
     assert imported_assy.children[3].loc.toTuple()[0] == (10.0, -10.0, -10.0,)
+
+    # Make sure the location of the top-level assembly was preserved
+    assert imported_assy.loc.toTuple() == cq.Location((10, 10, 10)).toTuple()
 
     # Check the colors
     assert pytest.approx(

@@ -184,6 +184,14 @@ def importStep(assy: AssemblyProtocol, path: str):
         top_level_label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
         assy.name = str(name_attr.Get().ToExtString())
 
+        # Get the location of the top-level component
+        comp_labels = TDF_LabelSequence()
+        shape_tool.GetComponents_s(top_level_label, comp_labels)
+        comp_label = comp_labels.Value(1)
+        loc = shape_tool.GetLocation_s(comp_label)
+        if loc and not loc.IsIdentity():
+            assy.loc = cq.Location(loc)
+
         # Start the recursive processing of labels
         imported_assy = _process_label(top_level_label)
 
