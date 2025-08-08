@@ -1,4 +1,4 @@
-#%% imports
+# %% imports
 import numpy as np
 import scipy.sparse as sp
 
@@ -31,7 +31,7 @@ njiti = _njit(
 )
 
 
-#%% internal helpers
+# %% internal helpers
 
 
 def _colPtsArray(pts: NDArray) -> TColgp_Array1OfPnt:
@@ -79,7 +79,7 @@ def _colIntArray(knots: NDArray) -> TColStd_Array1OfInteger:
     return rv
 
 
-#%% vocabulary types
+# %% vocabulary types
 
 Array = ndarray  # NDArray[np.floating]
 ArrayI = ndarray  # NDArray[np.int_]
@@ -290,7 +290,7 @@ class Surface(NamedTuple):
         )
 
 
-#%% basis functions
+# %% basis functions
 
 
 @njiti
@@ -539,7 +539,7 @@ def nbBasisDer(i: int, u: float, order: int, dorder: int, knots: Array, out: Arr
         r *= order - k
 
 
-#%% evaluation
+# %% evaluation
 
 
 @njit
@@ -878,7 +878,7 @@ def nbSurfaceDer(
     return out
 
 
-#%% matrices
+# %% matrices
 
 
 @njit
@@ -1249,7 +1249,7 @@ def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
     return rv
 
 
-#%% construction
+# %% construction
 
 
 @multidispatch
@@ -1601,7 +1601,7 @@ def loft(
 
 
 def reparametrize(
-    *curves: Curve, n: int = 100, w1: float = 1, w2: float = 1e-1
+    *curves: Curve, n: int = 100, knots: int = 100, w1: float = 1, w2: float = 1e-1
 ) -> List[Curve]:
 
     from scipy.optimize import fmin_l_bfgs_b
@@ -1693,10 +1693,12 @@ def reparametrize(
 
     us = np.split(usol, n_curves)
 
-    return periodicApproximate([crv(u) for crv, u in zip(curves, us)], knots=n, lam=0)
+    return periodicApproximate(
+        [crv(u) for crv, u in zip(curves, us)], knots=knots, lam=0
+    )
 
 
-#%% for removal?
+# %% for removal?
 @njit
 def findSpan(v, knots):
 
