@@ -933,7 +933,7 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
     return rv
 
 
-# @njit
+@njit
 def designMatrix2D(
     uv: Array,
     uorder: int,
@@ -1528,6 +1528,45 @@ def approximate(
 
         # convert to an edge
         rv.append(Curve(pts, knots_, order, periodic=False))
+
+    return rv
+
+
+def approximate2D(
+    data: Array,
+    uv: Array,
+    uorder: int,
+    vorder: int,
+    uknots: int | Array = 50,
+    vknots: int | Array = 50,
+    uperiodic: bool = False,
+    vperiodic: bool = False,
+) -> Surface:
+    """
+    Simple 2D surface approximation (without any penalty).
+    """
+
+    # process the knots
+    uknots_ = uknots if isinstance(uknots, Array) else np.linspace(0, 1, uknots)
+    vknots_ = vknots if isinstance(vknots, Array) else np.linspace(0, 1, vknots)
+
+    # create the desing matrix
+    C = designMatrix2D(uv, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic).csc()
+
+    # solve normal equations
+    D, L, P = ldl(C.T @ C, False)
+    pts = ldl_solve(C.T @ data, D, L, P).toarray()
+
+    # construt the result
+    rv = Surface(
+        pts.reshape((len(uknots_) - int(uperiodic), len(vknots_) - int(vperiodic), 3)),
+        uknots_,
+        vknots_,
+        uorder,
+        vorder,
+        uperiodic,
+        vperiodic,
+    )
 
     return rv
 
