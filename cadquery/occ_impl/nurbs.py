@@ -888,10 +888,6 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
     """
 
     # extend the knots
-    knots_ext = np.concat(
-        (knots[-order:-1] - knots[-1], knots, knots[-1] + knots[1:order])
-    )
-
     u_, knots_ext, minspan, maxspan, deltaspan = _preprocess(u, order, knots, periodic)
 
     # number of param values
@@ -947,6 +943,7 @@ def designMatrix2D(
     Create a sparse tensor product design matrix.
     """
 
+    # extend the knots and preprocess
     u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
         uv[:, 0], uorder, uknots, uperiodic
     )
@@ -1245,6 +1242,85 @@ def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
                 rv.i[ne * ix + 2] = ix
                 rv.j[ne * ix + 2] = ix
                 rv.v[ne * ix + 2] = 1
+
+    return rv
+
+
+@njit
+def penaltyMatrix2D(
+    uv: Array,
+    uorder: int,
+    vorder: int,
+    dorder: int,
+    uknots: Array,
+    vknots: Array,
+    uperiodic: bool = False,
+    vperiodic: bool = False,
+) -> list[COO]:
+    """
+    Create sparse tensor product 2D derivative matrices.
+    """
+
+    # extend the knots and preprocess
+    u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
+        uv[:, 0], uorder, uknots, uperiodic
+    )
+    v_, vknots_ext, minspanv, maxspanv, deltaspanv = _preprocess(
+        uv[:, 1], vorder, vknots, vperiodic
+    )
+
+    # number of param values
+    ni = uv.shape[0]
+
+    # chunck size
+    nu = uorder + 1
+    nv = vorder + 1
+    nj = nu * nv
+
+    # number of basis
+    nu_total = maxspanu
+    nv_total = maxspanv
+
+    # temp chunck storage
+    utemp = np.zeros((dorder + 1, nu))
+    vtemp = np.zeros((dorder + 1, nv))
+
+    # initialize the emptry matrices
+    rv = []
+    for i in range(dorder + 1):
+        rv.append(
+            COO(
+                i=np.empty(ni * nj, dtype=np.int64),
+                j=np.empty(ni * nj, dtype=np.int64),
+                v=np.empty(ni * nj),
+            )
+        )
+
+    # loop over param values
+    for i in range(ni):
+        ui, vi = u_[i], v_[i]
+
+        # find the supporting span
+        uspan = nbFindSpan(ui, uorder, uknots, minspanu, maxspanu) + deltaspanu
+        vspan = nbFindSpan(vi, vorder, vknots, minspanv, maxspanv) + deltaspanv
+
+        # evaluate non-zero functions
+        nbBasisDer(uspan, ui, uorder, dorder, uknots_ext, utemp)
+        nbBasisDer(vspan, vi, vorder, dorder, vknots_ext, vtemp)
+
+        # update the matrices - iterate over all derivative paris
+        for dv in range(dorder + 1):
+
+            du = dorder - dv  # NB: du + dv == dorder
+
+            rv[dv].i[i * nj : (i + 1) * nj] = i
+            rv[dv].j[i * nj : (i + 1) * nj] = (
+                ((uspan - uorder + np.arange(nu)) % nu_total) * nv_total
+                + ((vspan - vorder + np.arange(nv)) % nv_total)[:, np.newaxis]
+            ).ravel()
+            rv[dv].v[i * nj : (i + 1) * nj] = (
+                utemp[du, :] * vtemp[dv, :, np.newaxis]
+            ).ravel()
 
     return rv
 
