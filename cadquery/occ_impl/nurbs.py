@@ -6,6 +6,8 @@ from numba import njit as _njit
 
 from typing import NamedTuple, Optional, Tuple, List, Union, cast
 
+from math import comb
+
 from numpy.typing import NDArray
 from numpy import linspace, ndarray
 
@@ -1617,6 +1619,8 @@ def approximate2D(
     vknots: int | Array = 50,
     uperiodic: bool = False,
     vperiodic: bool = False,
+    penalty: int = 3,
+    lam: float = 0,
 ) -> Surface:
     """
     Simple 2D surface approximation (without any penalty).
@@ -1629,8 +1633,34 @@ def approximate2D(
     # create the desing matrix
     C = designMatrix2D(uv, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic).csc()
 
+    # handle penalties if requested
+    if lam:
+        # construct the penalty grid
+        Up, Vp = np.meshgrid(
+            np.linspace(uknots_[0], uknots_[-1], 2 * len(uknots_) * uorder),
+            np.linspace(vknots_[0], vknots_[-1], 2 * len(vknots_) * vorder),
+        )
+        up = Up.ravel()
+        vp = Vp.ravel()
+        uvp = np.column_stack((up, vp))
+
+        # construct the derivative matrices
+        penalties = penaltyMatrix2D(
+            uvp, uorder, vorder, penalty, uknots_, vknots_, uperiodic, vperiodic,
+        )
+
+        # augment the design matrix
+        tmp = [comb(penalty, i) * penalties[i].csc() for i in range(penalty + 1)]
+        Lu = uknots_[-1] - uknots_[0]  # v lenght of the parametric domain
+        Lv = vknots_[-1] - vknots_[0]  # u lenght of the parametric domain
+        P = Lu * Lv / len(up) * sp.vstack(tmp)
+
+        CtC = C.T @ C + lam * P.T @ P
+    else:
+        CtC = C.T @ C
+
     # solve normal equations
-    D, L, P = ldl(C.T @ C, False)
+    D, L, P = ldl(CtC, False)
     pts = ldl_solve(C.T @ data, D, L, P).toarray()
 
     # construt the result
