@@ -87,9 +87,7 @@ def test_dm_2d():
     vparams = np.linspace(0, 1, 100)
     vorder = 2
 
-    params = np.column_stack((uparams, vparams))
-
-    res = designMatrix2D(params, uorder, vorder, uknots, vknots)
+    res = designMatrix2D(uparams, vparams, uorder, vorder, uknots, vknots)
 
     C = res.coo()
 
