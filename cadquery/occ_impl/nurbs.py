@@ -291,6 +291,21 @@ class Surface(NamedTuple):
             self.vperiodic,
         )
 
+    def normal(self, u: Array, v: Array) -> Tuple[Array, Array]:
+        """
+        Evaluate surface normals.
+        """
+
+        ders = self.der(u, v, 1)
+
+        du = ders[:, 1, 0, :].squeeze()
+        dv = ders[:, 0, 1, :].squeeze()
+
+        rv = np.atleast_2d(np.cross(du, dv))
+        rv /= np.linalg.norm(rv, axis=1)[:, np.newaxis]
+
+        return rv, ders[:, 0, 0, :].squeeze()
+
 
 # %% basis functions
 
@@ -933,7 +948,8 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
 
 @njit
 def designMatrix2D(
-    uv: Array,
+    u: Array,
+    v: Array,
     uorder: int,
     vorder: int,
     uknots: Array,
@@ -947,14 +963,14 @@ def designMatrix2D(
 
     # extend the knots and preprocess
     u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
-        uv[:, 0], uorder, uknots, uperiodic
+        u, uorder, uknots, uperiodic
     )
     v_, vknots_ext, minspanv, maxspanv, deltaspanv = _preprocess(
-        uv[:, 1], vorder, vknots, vperiodic
+        v, vorder, vknots, vperiodic
     )
 
     # number of param values
-    ni = uv.shape[0]
+    ni = len(u)
 
     # chunck size
     nu = uorder + 1
@@ -1250,7 +1266,8 @@ def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
 
 @njit
 def penaltyMatrix2D(
-    uv: Array,
+    u: Array,
+    v: Array,
     uorder: int,
     vorder: int,
     dorder: int,
@@ -1265,14 +1282,14 @@ def penaltyMatrix2D(
 
     # extend the knots and preprocess
     u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
-        uv[:, 0], uorder, uknots, uperiodic
+        u, uorder, uknots, uperiodic
     )
     v_, vknots_ext, minspanv, maxspanv, deltaspanv = _preprocess(
-        uv[:, 1], vorder, vknots, vperiodic
+        v, vorder, vknots, vperiodic
     )
 
     # number of param values
-    ni = uv.shape[0]
+    ni = len(u)
 
     # chunck size
     nu = uorder + 1
@@ -1327,6 +1344,32 @@ def penaltyMatrix2D(
     return rv
 
 
+def uniformGrid(
+    uknots: Array,
+    vknots: Array,
+    uorder: int,
+    vorder: int,
+    uperiodic: bool,
+    vperiodic: bool,
+) -> Tuple[Array, Array]:
+    """
+    Create a uniform grid for evaluating penalties.
+    """
+
+    Up, Vp = np.meshgrid(
+        np.linspace(
+            uknots[0], uknots[-1], 2 * len(uknots) * uorder, endpoint=not uperiodic
+        ),
+        np.linspace(
+            vknots[0], vknots[-1], 2 * len(vknots) * vorder, endpoint=not vperiodic
+        ),
+    )
+    up = Up.ravel()
+    vp = Vp.ravel()
+
+    return up, vp
+
+
 # %% construction
 
 
@@ -1342,8 +1385,9 @@ def periodicApproximate(
 
     npts = data.shape[0]
 
-    # parametrize the points
-    us = linspace(0, 1, npts, endpoint=False)
+    # parametrize the points if needed
+    if us is None:
+        us = linspace(0, 1, npts, endpoint=False)
 
     # construct the knot vector
     if isinstance(knots, int):
@@ -1612,7 +1656,8 @@ def approximate(
 
 def approximate2D(
     data: Array,
-    uv: Array,
+    u: Array,
+    v: Array,
     uorder: int,
     vorder: int,
     uknots: int | Array = 50,
@@ -1631,22 +1676,18 @@ def approximate2D(
     vknots_ = vknots if isinstance(vknots, Array) else np.linspace(0, 1, vknots)
 
     # create the desing matrix
-    C = designMatrix2D(uv, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic).csc()
+    C = designMatrix2D(
+        u, v, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic
+    ).csc()
 
     # handle penalties if requested
     if lam:
         # construct the penalty grid
-        Up, Vp = np.meshgrid(
-            np.linspace(uknots_[0], uknots_[-1], 2 * len(uknots_) * uorder),
-            np.linspace(vknots_[0], vknots_[-1], 2 * len(vknots_) * vorder),
-        )
-        up = Up.ravel()
-        vp = Vp.ravel()
-        uvp = np.column_stack((up, vp))
+        up, vp = uniformGrid(uknots_, vknots_, uorder, vorder, uperiodic, vperiodic)
 
         # construct the derivative matrices
         penalties = penaltyMatrix2D(
-            uvp, uorder, vorder, penalty, uknots_, vknots_, uperiodic, vperiodic,
+            up, vp, uorder, vorder, penalty, uknots_, vknots_, uperiodic, vperiodic,
         )
 
         # augment the design matrix
@@ -1672,6 +1713,60 @@ def approximate2D(
         vorder,
         uperiodic,
         vperiodic,
+    )
+
+    return rv
+
+
+def fairPenalty(surf: Surface, penalty: int, lam: float) -> Surface:
+    """
+    Penalty-based surface fairing.
+    """
+
+    uknots = surf.uknots
+    vknots = surf.vknots
+    pts = surf.pts.reshape((-1, 3))
+
+    # generate penalty grid
+    up, vp = uniformGrid(
+        uknots, vknots, surf.uorder, surf.vorder, surf.uperiodic, surf.vperiodic
+    )
+
+    # generate penalty matrix
+    penalties = penaltyMatrix2D(
+        up,
+        vp,
+        surf.uorder,
+        surf.vorder,
+        penalty,
+        surf.uknots,
+        surf.vknots,
+        surf.uperiodic,
+        surf.vperiodic,
+    )
+
+    tmp = [comb(penalty, i) * penalties[i].csc() for i in range(penalty + 1)]
+    Lu = uknots[-1] - uknots[0]  # v lenght of the parametric domain
+    Lv = vknots[-1] - vknots[0]  # u lenght of the parametric domain
+    P = Lu * Lv / len(up) * sp.vstack(tmp)
+
+    # form and solve normal equations
+    CtC = sp.identity(pts.shape[0]) + lam * P.T @ P
+
+    D, L, P = ldl(CtC, False)
+    pts_new = ldl_solve(pts, D, L, P).toarray()
+
+    # construt the result
+    rv = Surface(
+        pts_new.reshape(
+            (len(uknots) - int(surf.uperiodic), len(vknots) - int(surf.vperiodic), 3)
+        ),
+        uknots,
+        vknots,
+        surf.uorder,
+        surf.vorder,
+        surf.uperiodic,
+        surf.vperiodic,
     )
 
     return rv
@@ -1840,6 +1935,40 @@ def reparametrize(
 
     return periodicApproximate(
         [crv(u) for crv, u in zip(curves, us)], knots=knots, lam=0
+    )
+
+
+def offset(surf: Surface, d: float, lam: float = 1e-3) -> Surface:
+    """
+    Simple approximate offset.
+    """
+
+    # construct the knot grid
+    U, V = np.meshgrid(
+        np.linspace(surf.uknots[0], surf.uknots[-1], surf.uorder * len(surf.uknots)),
+        np.linspace(surf.vknots[0], surf.vknots[-1], surf.vorder * len(surf.uknots)),
+    )
+
+    us = U.ravel()
+    vs = V.ravel()
+
+    # evaluate the normals
+    ns, pts = surf.normal(us, vs)
+
+    # move the control points
+    pts += d * ns
+
+    return approximate2D(
+        pts,
+        us,
+        vs,
+        surf.uorder,
+        surf.vorder,
+        surf.uknots,
+        surf.vknots,
+        surf.uperiodic,
+        surf.vperiodic,
+        lam=lam,
     )
 
 
