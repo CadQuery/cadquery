@@ -795,16 +795,17 @@ class Shape(object):
         return shape_properties_LUT[type_]
 
     @staticmethod
-    def computeMass(obj: "Shape") -> float:
+    def computeMass(obj: "Shape", tol: Optional[float] = None) -> float:
         """
         Calculates the 'mass' of an object.
 
         :param obj: Compute the mass of this object
+        :param tol: Numerical integration tolerance (optional).
         """
         Properties = GProp_GProps()
         calc_function = Shape._mass_calc_function(obj)
 
-        calc_function(obj.wrapped, Properties)
+        calc_function(obj.wrapped, Properties, *(tol if tol else ()))
 
         return Properties.Mass()
 
@@ -1010,12 +1011,12 @@ class Shape(object):
 
         return Properties.Mass()
 
-    def Volume(self) -> float:
+    def Volume(self, tol: Optional[float] = None) -> float:
         """
         :returns: The volume of this Shape
         """
         # when density == 1, mass == volume
-        return Shape.computeMass(self)
+        return Shape.computeMass(self, tol)
 
     def _apply_transform(self: T, Tr: gp_Trsf) -> T:
 
