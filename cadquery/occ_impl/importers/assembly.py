@@ -12,6 +12,8 @@ from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_GraphNo
 import cadquery as cq
 from ..assembly import AssemblyProtocol
 
+from logzero import logger
+
 
 def importStep(assy: AssemblyProtocol, path: str):
     """
@@ -23,13 +25,10 @@ def importStep(assy: AssemblyProtocol, path: str):
     :return: None
     """
 
-    def _process_label(lbl: TDF_Label):
+    def _process_label(lbl: TDF_Label, parent: AssemblyProtocol):
         """
         Recursive method to process the assembly in a top-down manner.
         """
-
-        # Instantiate the new assembly
-        new_assy = cq.Assembly()
 
         # Look for components
         comp_labels = TDF_LabelSequence()
@@ -52,12 +51,19 @@ def importStep(assy: AssemblyProtocol, path: str):
                     ref_name = str(ref_name_attr.Get().ToExtString())
 
                 if shape_tool.IsAssembly_s(ref_label):
-                    # Recursively process subassemblies
-                    sub_assy = _process_label(ref_label)
+                    logger.info(f"assy: {ref_name}")
 
-                    # Add the appropriate attributes to the subassembly
-                    new_assy.add(sub_assy, name=f"{ref_name}", loc=cq_loc)
+                    sub_assy = cq.Assembly(name=ref_name)
+
+                    # Recursively process subassemblies
+                    _ = _process_label(ref_label, sub_assy)
+
+                    # Add the subassy
+                    parent.add(sub_assy, name=ref_name, loc=cq_loc)
+
                 elif shape_tool.IsSimpleShape_s(ref_label):
+                    logger.info(f"simple: {ref_name}")
+
                     # A single shape needs to be added to the assembly
                     final_shape = shape_tool.GetShape_s(ref_label)
                     cq_shape = cq.Shape.cast(final_shape)
@@ -73,9 +79,20 @@ def importStep(assy: AssemblyProtocol, path: str):
                     else:
                         cq_color = None
 
-                    new_assy.add(
-                        cq_shape, name=f"{ref_name}", loc=cq_loc, color=cq_color
-                    )
+                    # this if/else is needed
+                    if ref_name.endswith("_part"):
+                        parent.obj = cq_shape
+                        parent.loc = cq_loc
+                        parent.color = cq_color
+
+                        current = parent
+                    else:
+                        tmp = cq.Assembly(
+                            cq_shape, loc=cq_loc, name=ref_name, color=cq_color
+                        )
+                        parent.add(tmp)
+                        # FIXME
+                        current = parent.children[-1]
 
                     # Search for subshape names, layers and colors
                     for j in range(ref_label.NbChildren()):
@@ -96,7 +113,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                             layer_name = name_attr.Get().ToExtString()
 
                             # Add the layer as a subshape entry on the assembly
-                            new_assy.addSubshape(
+                            current.addSubshape(
                                 cq.Shape.cast(cur_shape), layer=layer_name
                             )
 
@@ -110,7 +127,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                             )
 
                             # Save the color info via the assembly subshape mechanism
-                            new_assy.addSubshape(
+                            current.addSubshape(
                                 cq.Shape.cast(cur_shape), color=cq_color
                             )
 
@@ -134,7 +151,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                                     TDataStd_Name.GetID_s(), name_attr
                                 ):
                                     # Save this as the name of the subshape
-                                    new_assy.addSubshape(
+                                    current.addSubshape(
                                         cq.Shape.cast(cur_shape),
                                         name=name_attr.Get().ToExtString(),
                                     )
@@ -144,7 +161,10 @@ def importStep(assy: AssemblyProtocol, path: str):
 
                             attr_iterator.Next()
 
-        return new_assy
+                    # needed due to copy on Assembly.add(...)
+                    breakpoint()
+
+        return parent
 
     # Document that the step file will be read into
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
@@ -192,7 +212,8 @@ def importStep(assy: AssemblyProtocol, path: str):
         assy.loc = cq.Location(loc)
 
         # Start the recursive processing of labels
-        imported_assy = _process_label(top_level_label)
+        imported_assy = cq.Assembly()
+        _process_label(top_level_label, imported_assy)
 
         # Handle a possible extra top-level node. This is done because cq.Assembly.export
         # adds an extra top-level node which will cause a cascade of
