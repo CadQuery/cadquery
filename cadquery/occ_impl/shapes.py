@@ -805,7 +805,7 @@ class Shape(object):
         Properties = GProp_GProps()
         calc_function = Shape._mass_calc_function(obj)
 
-        calc_function(obj.wrapped, Properties, *(tol if tol else ()))
+        calc_function(obj.wrapped, Properties, *((tol,) if tol else ()))
 
         return Properties.Mass()
 
