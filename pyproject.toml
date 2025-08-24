@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "cadquery"
+version = "2.1"
+description = "A python parametric CAD scripting framework based on OCCT"
+authors = [ "Parametric Products Intellectual Holdings, LLC" ]
+license = "Apache-2.0"
+readme = "README.md"
+homepage = "https://cadquery.readthedocs.io/en/latest/"
+repository = "https://github.com/CadQuery/cadquery"
+documentation = "https://cadquery.readthedocs.io/en/latest/"
+keywords = ["modeling", "cad", "stl", "opencascade", "brep"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS",
+    "Operating System :: Unix",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering"
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+ezdxf = "^0.17.2"
+multimethod = "^1.8"
+nlopt = "^2.7.1"
+nptyping = "^2.0.0"
+typish = "^1.9.3"
+ocp-vtk = "^7.5.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
