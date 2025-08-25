@@ -156,6 +156,10 @@ class Assembly(object):
 
         rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
 
+        rv._subshape_colors = dict(self._subshape_colors)
+        rv._subshape_names = dict(self._subshape_names)
+        rv._subshape_layers = dict(self._subshape_layers)
+
         for ch in self.children:
             ch_copy = ch._copy()
             ch_copy.parent = rv

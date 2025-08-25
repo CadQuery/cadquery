@@ -904,15 +904,17 @@ def test_assembly_subshape_step_import(tmp_path_factory):
     assert imported_assy.name == "top_level"
 
     # Check the advanced face name
-    assert len(imported_assy._subshape_names) == 1
-    assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
+    assert len(imported_assy.children[0]._subshape_names) == 1
+    assert (
+        list(imported_assy.children[0]._subshape_names.values())[0] == "cube_1_top_face"
+    )
 
     # Check the color
-    color = list(imported_assy._subshape_colors.values())[0]
+    color = list(imported_assy.children[0]._subshape_colors.values())[0]
     assert Quantity_NameOfColor.Quantity_NOC_RED == color.wrapped.GetRGB().Name()
 
     # Check the layer info
-    layer_name = list(imported_assy._subshape_layers.values())[0]
+    layer_name = list(imported_assy.children[0]._subshape_layers.values())[0]
     assert layer_name == "cube_1_top_face"
 
 
@@ -955,17 +957,34 @@ def test_assembly_multi_subshape_step_import(tmp_path_factory):
     # Check that the top-level assembly name is correct
     assert imported_assy.name == "top_level"
 
-    # Check the advanced face name
-    assert len(imported_assy._subshape_names) == 2
-    assert list(imported_assy._subshape_names.values())[0] == "cube_1_top_face"
+    # Check the advanced face name for the first cube
+    assert len(imported_assy.children[0]._subshape_names) == 1
+    assert (
+        list(imported_assy.children[0]._subshape_names.values())[0] == "cube_1_top_face"
+    )
+
+    # Check the color for the first cube
+    color = list(imported_assy.children[0]._subshape_colors.values())[0]
+    assert Quantity_NameOfColor.Quantity_NOC_RED == color.wrapped.GetRGB().Name()
+
+    # Check the layer info for the first cube
+    layer_name = list(imported_assy.children[0]._subshape_layers.values())[0]
+    assert layer_name == "cube_1_top_face"
+
+    # Check the advanced face name for the second cube
+    assert len(imported_assy.children[1]._subshape_names) == 1
+    assert (
+        list(imported_assy.children[1]._subshape_names.values())[0]
+        == "cube_2_right_face"
+    )
 
     # Check the color
-    color = list(imported_assy._subshape_colors.values())[0]
+    color = list(imported_assy.children[1]._subshape_colors.values())[0]
     assert Quantity_NameOfColor.Quantity_NOC_RED == color.wrapped.GetRGB().Name()
 
     # Check the layer info
-    layer_name = list(imported_assy._subshape_layers.values())[0]
-    assert layer_name == "cube_1_top_face"
+    layer_name = list(imported_assy.children[1]._subshape_layers.values())[0]
+    assert layer_name == "cube_2_right_face"
 
 
 def test_bad_step_file_import(tmp_path_factory):
@@ -1019,33 +1038,25 @@ def test_plain_assembly_import(tmp_path_factory):
     assert imported_assy.loc.toTuple() == cq.Location((10, 10, 10)).toTuple()
 
     # Check the colors
-    assert pytest.approx(
-        imported_assy.children[0].children[0].color.toTuple(), rel=0.01
-    ) == (
+    assert pytest.approx(imported_assy.children[0].color.toTuple(), rel=0.01) == (
         0.0,
         1.0,
         0.0,
         1.0,
     )  # green
-    assert pytest.approx(
-        imported_assy.children[1].children[0].color.toTuple(), rel=0.01
-    ) == (
+    assert pytest.approx(imported_assy.children[1].color.toTuple(), rel=0.01) == (
         1.0,
         0.0,
         0.0,
         1.0,
     )  # red
-    assert pytest.approx(
-        imported_assy.children[2].children[0].color.toTuple(), rel=0.01
-    ) == (
+    assert pytest.approx(imported_assy.children[2].color.toTuple(), rel=0.01) == (
         1.0,
         0.0,
         0.0,
         1.0,
     )  # red
-    assert pytest.approx(
-        imported_assy.children[3].children[0].color.toTuple(), rel=0.01
-    ) == (
+    assert pytest.approx(imported_assy.children[3].color.toTuple(), rel=0.01) == (
         1.0,
         0.0,
         0.0,
