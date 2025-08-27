@@ -10,7 +10,7 @@ from typing import (
     List,
     cast,
 )
-from typing_extensions import Protocol
+from typing_extensions import Protocol, Self
 from math import degrees, radians
 
 from OCP.TDocStd import TDocStd_Document
@@ -148,6 +148,10 @@ class AssemblyProtocol(Protocol):
     def name(self) -> str:
         ...
 
+    @name.setter
+    def name(self, value: str) -> None:
+        ...
+
     @property
     def parent(self) -> Optional["AssemblyProtocol"]:
         ...
@@ -156,8 +160,16 @@ class AssemblyProtocol(Protocol):
     def color(self) -> Optional[Color]:
         ...
 
+    @color.setter
+    def color(self, value: Optional[Color]) -> None:
+        ...
+
     @property
     def obj(self) -> AssemblyObjects:
+        ...
+
+    @obj.setter
+    def obj(self, value: AssemblyObjects) -> None:
         ...
 
     @property
@@ -178,6 +190,50 @@ class AssemblyProtocol(Protocol):
 
     @property
     def _subshape_layers(self) -> Dict[Shape, str]:
+        ...
+
+    @overload
+    def add(
+        self,
+        obj: Self,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ) -> Self:
+        ...
+
+    @overload
+    def add(
+        self,
+        obj: AssemblyObjects,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Self:
+        ...
+
+    def add(
+        self,
+        obj: Union[Self, AssemblyObjects],
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> Self:
+        """
+        Add a subassembly to the current assembly.
+        """
+        ...
+
+    def addSubshape(
+        self,
+        s: Shape,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        layer: Optional[str] = None,
+    ) -> Self:
         ...
 
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:

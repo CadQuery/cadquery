@@ -11,7 +11,7 @@ from typing import (
     cast,
     get_args,
 )
-from typing_extensions import Literal
+from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
 
@@ -34,6 +34,7 @@ from .occ_impl.exporters.assembly import (
     exportGLTF,
     STEPExportModeLiterals,
 )
+from .occ_impl.importers.assembly import importStep as _importStep
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate
@@ -84,10 +85,10 @@ class Assembly(object):
 
     loc: Location
     name: str
-    color: Optional[Color]
+    _color: Optional[Color]
     metadata: Dict[str, Any]
 
-    obj: AssemblyObjects
+    _obj: AssemblyObjects
     parent: Optional["Assembly"]
     children: List["Assembly"]
 
@@ -131,10 +132,10 @@ class Assembly(object):
 
         """
 
-        self.obj = obj
-        self.loc = loc if loc else Location()
+        self._obj = obj
+        self._loc = loc if loc else Location()
         self.name = name if name else str(uuid())
-        self.color = color if color else None
+        self._color = color if color else None
         self.metadata = metadata if metadata else {}
         self.parent = None
 
@@ -148,12 +149,46 @@ class Assembly(object):
         self._subshape_colors = {}
         self._subshape_layers = {}
 
+    @property
+    def obj(self) -> AssemblyObjects:
+        """Get the root object of the assembly."""
+        return self._obj
+
+    @obj.setter
+    def obj(self, value: AssemblyObjects) -> None:
+        """Set the root object of the assembly."""
+        self._obj = value
+
+    @property
+    def loc(self) -> Location:
+        """Get the location of this assembly."""
+        return self._loc
+
+    @loc.setter
+    def loc(self, value: Location) -> None:
+        """Set the location of this assembly."""
+        self._loc = value
+
+    @property
+    def color(self) -> Optional[Color]:
+        """Get the color assigned to this assembly."""
+        return self._color
+
+    @color.setter
+    def color(self, value: Optional[Color]) -> None:
+        """Set the color assigned to this assembly."""
+        self._color = value
+
     def _copy(self) -> "Assembly":
         """
         Make a deep copy of an assembly
         """
 
         rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
+
+        rv._subshape_colors = dict(self._subshape_colors)
+        rv._subshape_names = dict(self._subshape_names)
+        rv._subshape_layers = dict(self._subshape_layers)
 
         for ch in self.children:
             ch_copy = ch._copy()
@@ -172,7 +207,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Add a subassembly to the current assembly.
 
@@ -194,7 +229,7 @@ class Assembly(object):
         name: Optional[str] = None,
         color: Optional[Color] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Add a subassembly to the current assembly with explicit location and name.
 
@@ -342,11 +377,11 @@ class Assembly(object):
     @overload
     def constrain(
         self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     @overload
-    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> "Assembly":
+    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> Self:
         ...
 
     @overload
@@ -358,13 +393,13 @@ class Assembly(object):
         s2: Shape,
         kind: ConstraintKind,
         param: Any = None,
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     @overload
     def constrain(
         self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     def constrain(self, *args, param=None):
@@ -409,7 +444,7 @@ class Assembly(object):
 
         return self
 
-    def solve(self, verbosity: int = 0) -> "Assembly":
+    def solve(self, verbosity: int = 0) -> Self:
         """
         Solve the constraints.
         """
@@ -504,7 +539,7 @@ class Assembly(object):
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Save assembly to a file.
 
@@ -560,7 +595,7 @@ class Assembly(object):
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Save assembly to a file.
 
@@ -609,7 +644,21 @@ class Assembly(object):
         return self
 
     @classmethod
-    def load(cls, path: str) -> "Assembly":
+    def importStep(cls, path: str) -> Self:
+        """
+        Reads an assembly from a STEP file.
+
+        :param path: Path and filename for writing.
+        :return: An Assembly object.
+        """
+
+        assy = cls()
+        _importStep(assy, path)
+
+        return assy
+
+    @classmethod
+    def load(cls, path: str) -> Self:
 
         raise NotImplementedError
 
