@@ -160,8 +160,16 @@ class AssemblyProtocol(Protocol):
     def color(self) -> Optional[Color]:
         ...
 
+    @color.setter
+    def color(self, value: Optional[Color]) -> None:
+        ...
+
     @property
     def obj(self) -> AssemblyObjects:
+        ...
+
+    @obj.setter
+    def obj(self, value: AssemblyObjects) -> None:
         ...
 
     @property

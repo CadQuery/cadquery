@@ -40,7 +40,7 @@ def importStep(assy: AssemblyProtocol, path: str):
 
             # Get the location of the component label
             loc = shape_tool.GetLocation_s(comp_label)
-            cq_loc = cq.Location(loc) if loc else None
+            cq_loc = cq.Location(loc) if loc else cq.Location()
 
             if shape_tool.IsReference_s(comp_label):
                 ref_label = TDF_Label()
@@ -90,7 +90,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                         )
                         parent.add(tmp)
                         # FIXME
-                        current = parent.children[-1]
+                        current = list(parent.children)[-1]
 
                     # Search for subshape names, layers and colors
                     for j in range(ref_label.NbChildren()):

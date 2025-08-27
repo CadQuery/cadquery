@@ -85,10 +85,10 @@ class Assembly(object):
 
     loc: Location
     name: str
-    color: Optional[Color]
+    _color: Optional[Color]
     metadata: Dict[str, Any]
 
-    obj: AssemblyObjects
+    _obj: AssemblyObjects
     parent: Optional["Assembly"]
     children: List["Assembly"]
 
@@ -132,10 +132,10 @@ class Assembly(object):
 
         """
 
-        self.obj = obj
-        self.loc = loc if loc else Location()
+        self._obj = obj
+        self._loc = loc if loc else Location()
         self.name = name if name else str(uuid())
-        self.color = color if color else None
+        self._color = color if color else None
         self.metadata = metadata if metadata else {}
         self.parent = None
 
@@ -148,6 +148,36 @@ class Assembly(object):
         self._subshape_names = {}
         self._subshape_colors = {}
         self._subshape_layers = {}
+
+    @property
+    def obj(self) -> AssemblyObjects:
+        """Get the root object of the assembly."""
+        return self._obj
+
+    @obj.setter
+    def obj(self, value: AssemblyObjects) -> None:
+        """Set the root object of the assembly."""
+        self._obj = value
+
+    @property
+    def loc(self) -> Location:
+        """Get the location of this assembly."""
+        return self._loc
+
+    @loc.setter
+    def loc(self, value: Location) -> None:
+        """Set the location of this assembly."""
+        self._loc = value
+
+    @property
+    def color(self) -> Optional[Color]:
+        """Get the color assigned to this assembly."""
+        return self._color
+
+    @color.setter
+    def color(self, value: Optional[Color]) -> None:
+        """Set the color assigned to this assembly."""
+        self._color = value
 
     def _copy(self) -> "Assembly":
         """
