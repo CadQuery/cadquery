@@ -409,9 +409,12 @@ class Assembly(object):
 
         return self
 
-    def solve(self, verbosity: int = 0) -> "Assembly":
+    def solve(self, verbosity: int = 0, tree_initialize: bool = False) -> "Assembly":
         """
         Solve the constraints.
+
+        Set `tree_initialize` to true to set the constraints by tree
+        exploration.
         """
 
         # Get all entities and number them. First entity is marked as locked
@@ -469,6 +472,18 @@ class Assembly(object):
         # check if at least two entities are present
         if len(ents) < 2:
             raise ValueError("At least two entities need to be constrained")
+
+        if tree_initialize:
+            """
+            Set the locations
+            """
+            for obj in locked:
+                print("Locked", obj)
+
+            for ixs, pod in constraints:
+                (src, dst), t, _ = pod
+                print(f"{t}[{ixs}], {src.Coord()} <- {dst.Coord()}")
+                src.SetCoord(*dst.Coord())
 
         # instantiate the solver
         scale = self.toCompound().BoundingBox().DiagonalLength
