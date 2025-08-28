@@ -78,6 +78,40 @@ def _define_grammar():
 
 _grammar = _define_grammar()
 
+class ConstraintGraph:
+    """
+    Auxiliary structure for tracking constraint relations
+
+    Each constraint connects two quantities together. This is a undirected
+    graph.
+    """
+    def __init__(self):
+        self.adjlist = dict()
+        # Index of fixed objects
+        self.locked = set()
+        # Map from ordered tuples to constraints for fast solving
+        self.constraints = dict()
+
+    def add_locked(self, i):
+        self.locked.add(i)
+    def add_binary(self, i, j, pods):
+        d = self.adjlist.get(i, set())
+        d[j] = pods
+        self.adjlist[i] = d
+
+        d = self.adjlist.get(j, set())
+        d[i] = pods
+        self.adjlist[j] = d
+
+    def __str__(self):
+        def format_i(i):
+            return f"!{i}" if i in self.locked else str(i)
+        adjlist = [
+            f"{format_i(src)} -> {[format_i(j) for j in dst]}"
+            for src, dst in self.adjlist.items()
+        ]
+        return "\n".join(adjlist)
+
 
 class Assembly(object):
     """Nested assembly of Workplane and Shape objects defining their relative positions."""
@@ -409,9 +443,12 @@ class Assembly(object):
 
         return self
 
-    def solve(self, verbosity: int = 0) -> "Assembly":
+    def solve(self, verbosity: int = 0, tree_initialize: bool = False) -> "Assembly":
         """
         Solve the constraints.
+
+        Set `tree_initialize` to true to set the constraints by tree
+        exploration.
         """
 
         # Get all entities and number them. First entity is marked as locked
@@ -453,11 +490,18 @@ class Assembly(object):
 
         locs = [self.objects[n].loc for n in ents]
 
+        cgraph = ConstraintGraph()
+
         # construct the constraint mapping
         constraints = []
         for c in self.constraints:
             ixs = tuple(ents[obj] for obj in c.objects)
             pods = c.toPODs()
+
+            if tree_initialize:
+                if len(ixs) == 2:
+                    i, j = ixs
+                    cgraph.add_binary(i, j, pods)
 
             for pod in pods:
                 constraints.append((ixs, pod))
@@ -469,6 +513,22 @@ class Assembly(object):
         # check if at least two entities are present
         if len(ents) < 2:
             raise ValueError("At least two entities need to be constrained")
+
+        if tree_initialize:
+            """
+            Set the locations
+            """
+
+            # Resolve locks
+            for obj in locked:
+                cgraph.add_locked(obj)
+
+            print(cgraph)
+
+            for ixs, pod in constraints:
+                (src, dst), t, _ = pod
+                print(f"{t}[{ixs}], {src.Coord()} <- {dst.Coord()}")
+                src.SetCoord(*dst.Coord())
 
         # instantiate the solver
         scale = self.toCompound().BoundingBox().DiagonalLength
