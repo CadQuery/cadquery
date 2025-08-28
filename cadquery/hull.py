@@ -198,6 +198,14 @@ def _pt_arc(p: Point, a: Arc) -> Tuple[float, float, float, float]:
 
 def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
 
+    # Calculate the distance from the point to the arc's center
+    l = sqrt((p.x - a.c.x) ** 2 + (p.y - a.c.y) ** 2)
+
+    # If the point is inside the circle, no real tangent exists.
+    # Return an infinite angle to disqualify this path for the hull algorithm.
+    if l < a.r:
+        return inf, Segment(Point(inf, inf), Point(inf, inf))
+
     x, y = p.x, p.y
     x1, y1, x2, y2 = _pt_arc(p, a)
 
@@ -209,6 +217,13 @@ def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
 
 
 def arc_pt(a: Arc, p: Point) -> Tuple[float, Segment]:
+
+    # Calculate the distance from the point to the arc's center
+    l = sqrt((p.x - a.c.x) ** 2 + (p.y - a.c.y) ** 2)
+
+    # If the point is inside the circle, no real tangent exists.
+    if l < a.r:
+        return inf, Segment(Point(inf, inf), Point(inf, inf))
 
     x, y = p.x, p.y
     x1, y1, x2, y2 = _pt_arc(p, a)
@@ -222,6 +237,11 @@ def arc_pt(a: Arc, p: Point) -> Tuple[float, Segment]:
 
 
 def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
+
+    # Add a safety check to see if the arcs are identical.
+    # This prevents division by zero if they have the same center and radius.
+    if a1 is a2 or (a1.c == a2.c and a1.r == a2.r):
+        return inf, Segment(Point(inf, inf), Point(inf, inf))
 
     r1 = a1.r
     xc1, yc1 = a1.c.x, a1.c.y
