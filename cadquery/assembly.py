@@ -85,17 +85,17 @@ class _Quantity(Enum):
     AXIS = 2
 
     def __repr__(self):
-        match self:
-            case _Quantity.POINT: return "p"
-            case _Quantity.AXIS: return "a"
-
+        if self == _Quantity.POINT:
+            return "p"
+        else:
+            return "a"
 
 class ConstraintGraph:
     """
     Auxiliary structure for tracking constraint relations
 
     Each constraint connects two quantities together. This is a undirected
-    graph. Moreover, each node on the graph is a pair (objid, property)
+    graph. Moreover, each node on the graph is a pair (object id, property)
     """
     def __init__(self, n_objs: int):
         self.n_objs = n_objs
@@ -105,62 +105,52 @@ class ConstraintGraph:
         # Map from ordered tuples to constraints for fast solving
         self.constraints = dict()
 
-    def add_unary(self, i, pods):
+    def add_unary(self, i, pod):
         """
         Unary constraint
         """
-        (_, kind, _) = pods
-        match kind:
-            case "Fixed":
-                self.locked.add((i, _Quantity.POINT))
-                self.locked.add((i, _Quantity.AXIS))
-            case "FixedPoint":
-                self.locked.add((i, _Quantity.POINT))
-            case "FixedAxis":
-                self.locked.add((i, _Quantity.AXIS))
-            case "FixedRotation":
-                self.locked.add((i, _Quantity.AXIS))
+        src, kind, param = pod
+        if kind == "Fixed":
+            self.locked.add((i, _Quantity.POINT))
+            self.locked.add((i, _Quantity.AXIS))
+        elif kind == "FixedPoint":
+            src.setCoord(*param)
+            self.locked.add((i, _Quantity.POINT))
+        elif kind == "FixedAxis":
+            src.setCoord(*param)
+            self.locked.add((i, _Quantity.AXIS))
 
-    def add_binary(self, i, j, pods):
+    def add_binary(self, i, j, pod):
         """
         Binary constraint
         """
-        quantity = []
-        ((src, dst), kind, param), = pods
+        (src, dst), kind, param = pod
 
+        q = None
         # Only keep the constraints with 0 degrees of freedom
-        match kind:
-            case "Axis":
-                if param and float(param) not in {0.0, 180.0}:
-                    return
-                quantity = [_Quantity.AXIS]
-            case "PointInPlane":
+        assert kind != "Plane", "Compound constraints should not exist here"
+        if kind in {"PointInPlane", "PointOnLine"}:
+            return
+        elif kind == "Axis":
+            if param and float(param) not in {0.0, 180.0}:
                 return
-            case "PointOnLine":
+            q = _Quantity.AXIS
+        elif kind == "Point":
+            if param and param != 0.0:
                 return
-            case "Point":
-                if param and float(param) != 0.0:
-                    return
-                quantity = [_Quantity.POINT]
-            case "Plane":
-                if param and float(param) not in {0.0, 180.0}:
-                    return
-                quantity = [
-                    _Quantity.POINT,
-                    _Quantity.AXIS,
-                ]
+            q = _Quantity.POINT
+        else:
+            raise ValueError(f"Unknown kind {kind}")
 
-        for q in quantity:
-            d = self.adjlist.get((i, q), dict())
-            d[(j, q)] = pods
-            self.adjlist[(j, q)] = d
+        # Insert into adjacency lists
 
-            d = self.adjlist.get((j, q), dict())
-            d[(j, q)] = [
-                ((dst, src), kind, param)
-                for ((src, dst), kind, param) in pods
-            ]
-            self.adjlist[(j, q)] = d
+        d = self.adjlist.get((i, q), dict())
+        d[(j, q)] = pod
+        self.adjlist[(j, q)] = d
+
+        d = self.adjlist.get((j, q), dict())
+        d[(j, q)] = ((dst, src), kind, param)
+        self.adjlist[(j, q)] = d
 
     def __str__(self):
         def format_i(i):
@@ -172,21 +162,17 @@ class ConstraintGraph:
         return "\n".join(adjlist)
 
     @staticmethod
-    def zero_point_binary_constraint(pods):
-        print("pods:", pods)
-        ((src, dst), kind, param), = pods
-        match kind:
-            case "Point":
+    def zero_point_binary_constraint(pod):
+        (src, dst), kind, param = pod
+        if kind == "Axis":
+            if param and float(param) == 180.0:
+                dst.SetCoord(*(-src).Coord())
+            else:
                 dst.SetCoord(*src.Coord())
-            case "Axis":
-                if param == 0.0:
-                    dst.SetCoord(*src.Coord())
-                else:
-                    dst.SetCoord(*(-src).Coord())
-            case "Plane":
-                raise ValueError("not supported yet")
-            case _:
-                raise ValueError(f"Unknown binary constraint: {kind}")
+        elif kind == "Point":
+            dst.SetCoord(*src.Coord())
+        else:
+            raise ValueError(f"Illegal binary constraint {kind}")
 
     def solve(self, verbosity: int = 0):
         remaining = {
@@ -202,16 +188,16 @@ class ConstraintGraph:
                 if (i, qty) in remaining:
                     remaining.remove((i, qty))
                 # Query the adjlist
-                for ((j, p), pods) in self.adjlist.get((i, qty), {}).items():
+                for ((j, p), pod) in self.adjlist.get((i, qty), {}).items():
                     if (j, p) in remaining:
                         li.append((j, p))
                     else:
                         continue
 
                     if verbosity > 3:
-                        print(f"Solving {(i, qty)} -> {(j, p)} with {len(pods)} pods")
+                        print(f"Solving {(i, qty)} -> {(j, p)} with kind {pod[1]}")
                     # Zero the constraint (i,qty) to (j, p)
-                    ConstraintGraph.zero_point_binary_constraint(pods)
+                    ConstraintGraph.zero_point_binary_constraint(pod)
         # Start solving from each of the locked nodes
         if verbosity > 3:
             print(f"Start solving from locked: {len(self.locked)}")
@@ -222,6 +208,7 @@ class ConstraintGraph:
         while remaining:
             node = remaining.pop()
             start_solve(node)
+
 
 class Assembly(object):
     """Nested assembly of Workplane and Shape objects defining their relative positions."""
@@ -553,7 +540,7 @@ class Assembly(object):
 
         return self
 
-    def solve(self, verbosity: int = 0, tree_initialize: bool = False) -> "Assembly":
+    def solve(self, verbosity: int = 0, tree_initialize: bool = True) -> "Assembly":
         """
         Solve the constraints.
 
@@ -608,16 +595,15 @@ class Assembly(object):
             ixs = tuple(ents[obj] for obj in c.objects)
             pods = c.toPODs()
 
-            if tree_initialize:
-                match len(ixs):
-                    case 1:
-                        cgraph.add_unary(ixs[0], pods)
-                    case 2:
-                        i, j = ixs
-                        cgraph.add_binary(i, j, pods)
-
             for pod in pods:
                 constraints.append((ixs, pod))
+
+            if tree_initialize:
+                if len(ixs) == 1:
+                    cgraph.add_unary(ixs[0], pod)
+                elif len(ixs) == 2:
+                    i, j = ixs
+                    cgraph.add_binary(i, j, pod)
 
         # check if any constraints were specified
         if not constraints:
