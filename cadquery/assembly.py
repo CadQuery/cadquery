@@ -177,8 +177,7 @@ class ConstraintGraph:
     def solve(self, verbosity: int = 0):
         remaining = {
             (i, key)
-            for i in range(self.n_objs)
-            for key in _Quantity
+            for i, key in self.adjlist
             if (i, key) not in self.locked
         }
         def start_solve(node):
@@ -204,7 +203,7 @@ class ConstraintGraph:
         for node in self.locked:
             start_solve(node)
         if verbosity > 3:
-            print(f"Remaining: {len(self.locked)}")
+            print(f"Remaining points: {len(remaining)}")
         while remaining:
             node = remaining.pop()
             start_solve(node)
