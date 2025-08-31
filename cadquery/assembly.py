@@ -95,10 +95,11 @@ class _Quantity(Enum):
 
 class ConstraintGraph:
     """
-    Auxiliary structure for tracking constraint relations
+    Auxiliary structure for tracking constraint relations.
 
-    Each constraint connects two quantities together. This is a undirected
-    graph. Moreover, each node on the graph is a pair (object id, property)
+    We store an undirected graph of (object id, quantity) nodes. Every binary
+    constraint with 0 degrees of freedom links two property nodes. We then
+    traverse through the graph to solve each constraint to its local minimum.
     """
 
     def __init__(self, n_objs: int):
