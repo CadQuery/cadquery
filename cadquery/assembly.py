@@ -15,6 +15,7 @@ from typing_extensions import Literal
 from typish import instance_of
 from uuid import uuid1 as uuid
 from enum import Enum
+from collections import defaultdict
 
 from .cq import Workplane
 from .occ_impl.shapes import Shape, Compound
@@ -99,7 +100,7 @@ class ConstraintGraph:
     """
     def __init__(self, n_objs: int):
         self.n_objs = n_objs
-        self.adjlist = dict()
+        self.adjlist = defaultdict(lambda: defaultdict(dict))
         # Index of fixed objects
         self.locked = set()
         # Map from ordered tuples to constraints for fast solving
@@ -143,14 +144,8 @@ class ConstraintGraph:
             raise ValueError(f"Unknown kind {kind}")
 
         # Insert into adjacency lists
-
-        d = self.adjlist.get((i, q), dict())
-        d[(j, q)] = pod
-        self.adjlist[(j, q)] = d
-
-        d = self.adjlist.get((j, q), dict())
-        d[(j, q)] = ((dst, src), kind, param)
-        self.adjlist[(j, q)] = d
+        self.adjlist[(i, q)][(j, q)] = pod
+        self.adjlist[(j, q)][(i, q)] = ((dst, src), kind, param)
 
     def __str__(self):
         def format_i(i):
