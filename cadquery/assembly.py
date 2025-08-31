@@ -46,6 +46,7 @@ ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
+
 # entity selector grammar definition
 def _define_grammar():
 
@@ -91,6 +92,7 @@ class _Quantity(Enum):
         else:
             return "a"
 
+
 class ConstraintGraph:
     """
     Auxiliary structure for tracking constraint relations
@@ -98,6 +100,7 @@ class ConstraintGraph:
     Each constraint connects two quantities together. This is a undirected
     graph. Moreover, each node on the graph is a pair (object id, property)
     """
+
     def __init__(self, n_objs: int):
         self.n_objs = n_objs
         self.adjlist = defaultdict(lambda: defaultdict(dict))
@@ -150,6 +153,7 @@ class ConstraintGraph:
     def __str__(self):
         def format_i(i):
             return f"!{i}" if i in self.locked else str(i)
+
         adjlist = [
             f"{format_i(src)} -> {[format_i(j) for j in dst]}"
             for src, dst in self.adjlist.items()
@@ -170,11 +174,8 @@ class ConstraintGraph:
             raise ValueError(f"Illegal binary constraint {kind}")
 
     def solve(self, verbosity: int = 0):
-        remaining = {
-            (i, key)
-            for i, key in self.adjlist
-            if (i, key) not in self.locked
-        }
+        remaining = {(i, key) for i, key in self.adjlist if (i, key) not in self.locked}
+
         def start_solve(node):
             li = [node]
             while li:
@@ -182,7 +183,7 @@ class ConstraintGraph:
                 if (i, qty) in remaining:
                     remaining.remove((i, qty))
                 # Query the adjlist
-                for ((j, p), pod) in self.adjlist.get((i, qty), {}).items():
+                for (j, p), pod in self.adjlist.get((i, qty), {}).items():
                     if (j, p) in remaining:
                         li.append((j, p))
                     else:
@@ -192,6 +193,7 @@ class ConstraintGraph:
                         print(f"Solving {(i, qty)} -> {(j, p)} with kind {pod[1]}")
                     # Zero the constraint (i,qty) to (j, p)
                     ConstraintGraph.zero_point_binary_constraint(pod)
+
         # Start solving from each of the locked nodes
         if verbosity > 3:
             print(f"Start solving from locked: {len(self.locked)}")
@@ -467,12 +469,12 @@ class Assembly(object):
     @overload
     def constrain(
         self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
-    ) -> "Assembly":
-        ...
+    ) -> "Assembly": ...
 
     @overload
-    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> "Assembly":
-        ...
+    def constrain(
+        self, q1: str, kind: ConstraintKind, param: Any = None
+    ) -> "Assembly": ...
 
     @overload
     def constrain(
@@ -483,14 +485,16 @@ class Assembly(object):
         s2: Shape,
         kind: ConstraintKind,
         param: Any = None,
-    ) -> "Assembly":
-        ...
+    ) -> "Assembly": ...
 
     @overload
     def constrain(
-        self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
-    ) -> "Assembly":
-        ...
+        self,
+        id1: str,
+        s1: Shape,
+        kind: ConstraintKind,
+        param: Any = None,
+    ) -> "Assembly": ...
 
     def constrain(self, *args, param=None):
         """
@@ -813,8 +817,12 @@ class Assembly(object):
         color = self.color if self.color else color
 
         if self.obj:
-            yield self.obj if isinstance(self.obj, Shape) else Compound.makeCompound(
-                s for s in self.obj.vals() if isinstance(s, Shape)
+            yield (
+                self.obj
+                if isinstance(self.obj, Shape)
+                else Compound.makeCompound(
+                    s for s in self.obj.vals() if isinstance(s, Shape)
+                )
             ), name, loc, color
 
         for ch in self.children:
