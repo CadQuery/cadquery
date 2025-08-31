@@ -119,12 +119,12 @@ class ConstraintGraph:
             self.locked.add((i, _Quantity.POINT))
             self.locked.add((i, _Quantity.AXIS))
         elif kind == "FixedPoint":
-            src, = srcs
-            src.setCoord(*param)
+            (src,) = srcs
+            src.SetCoord(*param)
             self.locked.add((i, _Quantity.POINT))
         elif kind == "FixedAxis":
-            src, = srcs
-            src.setCoord(*param)
+            (src,) = srcs
+            src.SetCoord(*param)
             self.locked.add((i, _Quantity.AXIS))
 
     def add_binary(self, i, j, pod):
@@ -472,12 +472,14 @@ class Assembly(object):
     @overload
     def constrain(
         self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
-    ) -> "Assembly": ...
+    ) -> "Assembly":
+        ...
 
     @overload
     def constrain(
         self, q1: str, kind: ConstraintKind, param: Any = None
-    ) -> "Assembly": ...
+    ) -> "Assembly":
+        ...
 
     @overload
     def constrain(
@@ -488,7 +490,8 @@ class Assembly(object):
         s2: Shape,
         kind: ConstraintKind,
         param: Any = None,
-    ) -> "Assembly": ...
+    ) -> "Assembly":
+        ...
 
     @overload
     def constrain(
@@ -497,7 +500,8 @@ class Assembly(object):
         s1: Shape,
         kind: ConstraintKind,
         param: Any = None,
-    ) -> "Assembly": ...
+    ) -> "Assembly":
+        ...
 
     def constrain(self, *args, param=None):
         """
