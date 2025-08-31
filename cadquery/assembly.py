@@ -114,14 +114,16 @@ class ConstraintGraph:
         """
         Unary constraint
         """
-        src, kind, param = pod
+        srcs, kind, param = pod
         if kind == "Fixed":
             self.locked.add((i, _Quantity.POINT))
             self.locked.add((i, _Quantity.AXIS))
         elif kind == "FixedPoint":
+            src, = srcs
             src.setCoord(*param)
             self.locked.add((i, _Quantity.POINT))
         elif kind == "FixedAxis":
+            src, = srcs
             src.setCoord(*param)
             self.locked.add((i, _Quantity.AXIS))
 
