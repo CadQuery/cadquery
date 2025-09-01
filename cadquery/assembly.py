@@ -218,7 +218,7 @@ class Assembly(object):
             # enforce unique names
             name = kwargs["name"] if kwargs.get("name") else arg.name
             if name in self.objects:
-                raise ValueError("Unique name is required")
+                raise ValueError(f"Unique name is required. {name} is already in the assembly")
 
             subassy = arg._copy()
 
