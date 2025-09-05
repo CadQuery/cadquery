@@ -1373,6 +1373,17 @@ def uniformGrid(
 # %% construction
 
 
+def parametrizeChord(data: Array) -> Array:
+    """
+    Chord length parametrization.
+    """
+
+    dists = np.linalg.norm(data - np.roll(data, 1), axis=1)
+    params = np.cumulative_sum(dists)
+
+    return params / params[-1]
+
+
 @multidispatch
 def periodicApproximate(
     data: Array,
