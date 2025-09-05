@@ -770,3 +770,11 @@ class Assembly(object):
             self._subshape_layers[s] = layer
 
         return self
+
+    def __getitem__(self, name: str) -> Self:
+
+        return self.objects[name]
+
+    def _ipython_key_completions_(self) -> List[str]:
+
+        return list(self.objects.keys())
