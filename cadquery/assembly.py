@@ -659,8 +659,11 @@ class Assembly(object):
 
     @classmethod
     def load(cls, path: str) -> Self:
+        """
+        Alias of importStep for now.
+        """
 
-        raise NotImplementedError
+        return cls.importStep(path)
 
     @property
     def shapes(self) -> List[Shape]:
@@ -771,10 +774,16 @@ class Assembly(object):
 
         return self
 
-    def __getitem__(self, name: str) -> Self:
+    def __getitem__(self, name: str) -> "Assembly":
+        """
+        [] based access to children.
+        """
 
         return self.objects[name]
 
     def _ipython_key_completions_(self) -> List[str]:
+        """
+        IPython autocompletion helper.
+        """
 
         return list(self.objects.keys())
