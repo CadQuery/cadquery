@@ -10,7 +10,9 @@ from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_GraphNode
 
 import cadquery as cq
-from ..assembly import AssemblyProtocol
+from ..assembly import AssemblyProtocol, Color
+from ..geom import Location
+from ..shapes import Shape
 
 
 def importStep(assy: AssemblyProtocol, path: str):
@@ -28,9 +30,6 @@ def importStep(assy: AssemblyProtocol, path: str):
         Recursive method to process the assembly in a top-down manner.
         """
 
-        # Instantiate the new assembly
-        new_assy = cq.Assembly()
-
         # Look for components
         comp_labels = TDF_LabelSequence()
         shape_tool.GetComponents_s(lbl, comp_labels)
@@ -40,7 +39,7 @@ def importStep(assy: AssemblyProtocol, path: str):
 
             # Get the location of the component label
             loc = shape_tool.GetLocation_s(comp_label)
-            cq_loc = cq.Location(loc) if loc else cq.Location()
+            cq_loc = Location(loc) if loc else Location()
 
             if shape_tool.IsReference_s(comp_label):
                 ref_label = TDF_Label()
@@ -52,7 +51,8 @@ def importStep(assy: AssemblyProtocol, path: str):
                     ref_name = str(ref_name_attr.Get().ToExtString())
 
                 if shape_tool.IsAssembly_s(ref_label):
-                    sub_assy = cq.Assembly(name=ref_name)
+
+                    sub_assy = assy.__class__(name=ref_name)
 
                     # Recursively process subassemblies
                     _ = _process_label(ref_label, sub_assy)
@@ -60,40 +60,45 @@ def importStep(assy: AssemblyProtocol, path: str):
                     # Add the subassy
                     parent.add(sub_assy, name=ref_name, loc=cq_loc)
 
-                    # Add the appropriate attributes to the subassembly
-                    new_assy.add(sub_assy, name=f"{ref_name}", loc=cq_loc)
                 elif shape_tool.IsSimpleShape_s(ref_label):
+
                     # A single shape needs to be added to the assembly
                     final_shape = shape_tool.GetShape_s(ref_label)
-                    cq_shape = cq.Shape.cast(final_shape)
+                    cq_shape = Shape.cast(final_shape)
 
-                    # Find the subshape color, if there is one set for this shape
+                    # Find the shape color, if there is one set for this shape
                     color = Quantity_ColorRGBA()
+
                     # Extract the color, if present on the shape
                     if color_tool.GetColor(final_shape, XCAFDoc_ColorSurf, color):
                         rgb = color.GetRGB()
-                        cq_color = cq.Color(
+                        cq_color = Color(
                             rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha()
                         )
                     else:
                         cq_color = None
 
-                    if ref_name.endswith("_part"):
+                    # this if/else is needed to handle different structures of STEP files
+                    # "*"/"*_part" based naming is the default strucutre produced by CQ
+                    if ref_name.endswith("_part") and ref_name.startswith(parent.name):
                         parent.obj = cq_shape
                         parent.loc = cq_loc
                         parent.color = cq_color
 
+                        # change the current assy to handle subshape data
                         current = parent
                     else:
-                        tmp = cq.Assembly(
+                        tmp = assy.__class__(
                             cq_shape, loc=cq_loc, name=ref_name, color=cq_color
                         )
                         parent.add(tmp)
-                        # FIXME
-                        current = list(parent.children)[-1]
+
+                        # change the current assy to handle subshape data
+                        current = parent[ref_name]
 
                     # Search for subshape names, layers and colors
                     for j in range(ref_label.NbChildren()):
+
                         child_label = ref_label.FindChild(j + 1)
 
                         # Save the shape so that we can add it to the subshape data
@@ -111,23 +116,19 @@ def importStep(assy: AssemblyProtocol, path: str):
                             layer_name = name_attr.Get().ToExtString()
 
                             # Add the layer as a subshape entry on the assembly
-                            current.addSubshape(
-                                cq.Shape.cast(cur_shape), layer=layer_name
-                            )
+                            current.addSubshape(Shape.cast(cur_shape), layer=layer_name)
 
                         # Find the subshape color, if there is one set for this shape
                         color = Quantity_ColorRGBA()
                         # Extract the color, if present on the shape
                         if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
                             rgb = color.GetRGB()
-                            cq_color = cq.Color(
+                            cq_color = Color(
                                 rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(),
                             )
 
                             # Save the color info via the assembly subshape mechanism
-                            current.addSubshape(
-                                cq.Shape.cast(cur_shape), color=cq_color
-                            )
+                            current.addSubshape(Shape.cast(cur_shape), color=cq_color)
 
                         # Iterate through all the attributes looking for subshape names.
                         # This is safer than trying to access the attributes directly with
@@ -150,7 +151,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                                 ):
                                     # Save this as the name of the subshape
                                     current.addSubshape(
-                                        cq.Shape.cast(cur_shape),
+                                        Shape.cast(cur_shape),
                                         name=name_attr.Get().ToExtString(),
                                     )
                             elif isinstance(current_attr, TNaming_NamedShape):
@@ -204,7 +205,7 @@ def importStep(assy: AssemblyProtocol, path: str):
         shape_tool.GetComponents_s(top_level_label, comp_labels)
         comp_label = comp_labels.Value(1)
         loc = shape_tool.GetLocation_s(comp_label)
-        assy.loc = cq.Location(loc)
+        assy.loc = Location(loc)
 
         # Start the recursive processing of labels
         imported_assy = cq.Assembly()

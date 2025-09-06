@@ -136,6 +136,15 @@ class Color(object):
 
 
 class AssemblyProtocol(Protocol):
+    def __init__(
+        self,
+        obj: AssemblyObjects = None,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ):
+        ...
+
     @property
     def loc(self) -> Location:
         ...
@@ -245,6 +254,9 @@ class AssemblyProtocol(Protocol):
         name: Optional[str] = None,
         color: Optional[Color] = None,
     ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        ...
+
+    def __getitem__(self, name: str) -> Self:
         ...
 
 
