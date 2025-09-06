@@ -14,9 +14,10 @@ from typing import (
 from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
+from warnings import warn
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound
+from .occ_impl.shapes import Shape, Compound, isSubshape, compound
 from .occ_impl.geom import Location
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
@@ -764,13 +765,33 @@ class Assembly(object):
         :return: The modified assembly.
         """
 
+        # check if the subshape belongs to the stored object
+        if any(isSubshape(s, obj) for obj in self.shapes):
+            assy = self
+        else:
+            warn(
+                "Current node does not contain any Shapes, searching in subnodes. In the future this will result in an error."
+            )
+
+            found = False
+            for ch in self.children:
+                if any(isSubshape(s, obj) for obj in ch.shapes):
+                    assy = ch
+                    found = True
+                    break
+
+            if not found:
+                raise ValueError(
+                    f"{s} is not a subshape of the current node or its children"
+                )
+
         # Handle any metadata we were passed
         if name:
-            self._subshape_names[s] = name
+            assy._subshape_names[s] = name
         if color:
-            self._subshape_colors[s] = color
+            assy._subshape_colors[s] = color
         if layer:
-            self._subshape_layers[s] = layer
+            assy._subshape_layers[s] = layer
 
         return self
 
@@ -791,3 +812,20 @@ class Assembly(object):
     def __contains__(self, name: str) -> bool:
 
         return name in self.objects
+
+    def __getattr__(self, name: str) -> "Assembly":
+        """
+        . based access to children.
+        """
+
+        if name in self.objects:
+            return self.objects[name]
+
+        raise AttributeError
+
+    def __dir__(self):
+        """
+        Modified __dir__ for autocompletion.
+        """
+
+        return list(self.__dict__) + list(ch.name for ch in self.children)

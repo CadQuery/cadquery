@@ -17,7 +17,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box, cone
+from cadquery.occ_impl.shapes import Face, box, cone, plane
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -723,21 +723,24 @@ def test_meta_step_export(tmp_path_factory):
     assy.addSubshape(cube_1.faces(">Z").val(), name="cube_1_top_face")
     assy.addSubshape(cube_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
     assy.addSubshape(cube_1.faces(">Z").val(), layer="cube_1_top_face")
-    assy.addSubshape(cube_2.faces("<Z").val(), name="cube_2_bottom_face")
-    assy.addSubshape(cube_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cube_2.faces("<Z").val(), layer="cube_2_bottom_face")
-    assy.addSubshape(cylinder_1.faces(">Z").val(), name="cylinder_1_top_face")
-    assy.addSubshape(cylinder_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cylinder_1.faces(">Z").val(), layer="cylinder_1_top_face")
-    assy.addSubshape(cylinder_2.faces("<Z").val(), name="cylinder_2_bottom_face")
-    assy.addSubshape(cylinder_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cylinder_2.faces("<Z").val(), layer="cylinder_2_bottom_face")
-    assy.addSubshape(cone_1.faces(">Z").val(), name="cone_1_top_face")
-    assy.addSubshape(cone_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cone_1.faces(">Z").val(), layer="cone_1_top_face")
-    assy.addSubshape(cone_2.faces("<Z").val(), name="cone_2_bottom_face")
-    assy.addSubshape(cone_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
+
+    assy.cube_2.addSubshape(cube_2.faces("<Z").val(), name="cube_2_bottom_face")
+    assy.cube_2.addSubshape(cube_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.cube_2.addSubshape(cube_2.faces("<Z").val(), layer="cube_2_bottom_face")
+
+    with pytest.raises(ValueError):
+        assy.addSubshape(cylinder_1.faces(">Z").val(), name="cylinder_1_top_face")
+        assy.addSubshape(cylinder_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        assy.addSubshape(cylinder_1.faces(">Z").val(), layer="cylinder_1_top_face")
+        assy.addSubshape(cylinder_2.faces("<Z").val(), name="cylinder_2_bottom_face")
+        assy.addSubshape(cylinder_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        assy.addSubshape(cylinder_2.faces("<Z").val(), layer="cylinder_2_bottom_face")
+        assy.addSubshape(cone_1.faces(">Z").val(), name="cone_1_top_face")
+        assy.addSubshape(cone_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        assy.addSubshape(cone_1.faces(">Z").val(), layer="cone_1_top_face")
+        assy.addSubshape(cone_2.faces("<Z").val(), name="cone_2_bottom_face")
+        assy.addSubshape(cone_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
 
     # Write once with pcurves turned on
     success = exportStepMeta(assy, meta_path)
@@ -799,9 +802,8 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assert success
 
     # Tag a face that does not match the object
-    assy.addSubshape(None, name="cube_top_face")
-    success = exportStepMeta(assy, meta_path)
-    assert success
+    with pytest.raises(ValueError):
+        assy.addSubshape(plane(1, 1), name="cube_top_face")
 
     # Tag the name but nothing else
     assy.addSubshape(cube.faces(">Z").val(), name="cube_top_face")
