@@ -275,6 +275,7 @@ def toCAF(
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    ltool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
 
     # used to store labels with unique part-color combinations
     unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
@@ -316,6 +317,42 @@ def toCAF(
                 # handle colors when exporting to STEP
                 if coloredSTEP and current_color:
                     setColor(lab, current_color, ctool)
+
+            # handle subshape names/colors/layers
+            subshape_colors = el._subshape_colors
+            subshape_names = el._subshape_names
+            subshape_layers = el._subshape_layers
+
+            for k in (
+                subshape_colors.keys() | subshape_names.keys() | subshape_layers.keys()
+            ):
+
+                subshape_label = tool.AddSubShape(lab, k.wrapped)
+
+                # In some cases the face may not be considered part of the shape, so protect
+                # against that
+                if not subshape_label.IsNull():
+                    # Set the name
+                    if k in subshape_names:
+                        TDataStd_Name.Set_s(
+                            subshape_label,
+                            TCollection_ExtendedString(subshape_names[k]),
+                        )
+
+                    # Set the individual face color
+                    if k in subshape_colors:
+                        ctool.SetColor(
+                            subshape_label,
+                            subshape_colors[k].wrapped,
+                            XCAFDoc_ColorGen,
+                        )
+
+                    # Also add a layer to hold the face label data
+                    if k in subshape_layers:
+                        layer_label = ltool.AddLayer(
+                            TCollection_ExtendedString(subshape_layers[k])
+                        )
+                        ltool.SetLayer(subshape_label, layer_label)
 
             tool.AddComponent(subassy, lab, TopLoc_Location())
 
