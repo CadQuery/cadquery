@@ -259,6 +259,9 @@ class AssemblyProtocol(Protocol):
     def __getitem__(self, name: str) -> Self:
         ...
 
+    def __contains__(self, name: str) -> bool:
+        ...
+
 
 def setName(l: TDF_Label, name: str, tool):
 

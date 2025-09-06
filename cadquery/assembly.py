@@ -787,3 +787,7 @@ class Assembly(object):
         """
 
         return list(self.objects.keys())
+
+    def __contains__(self, name: str) -> bool:
+
+        return name in self.objects

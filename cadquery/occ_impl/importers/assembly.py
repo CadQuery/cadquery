@@ -9,7 +9,6 @@ from OCP.TNaming import TNaming_NamedShape
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_GraphNode
 
-import cadquery as cq
 from ..assembly import AssemblyProtocol, Color
 from ..geom import Location
 from ..shapes import Shape
@@ -208,26 +207,19 @@ def importStep(assy: AssemblyProtocol, path: str):
         assy.loc = Location(loc)
 
         # Start the recursive processing of labels
-        imported_assy = cq.Assembly()
+        imported_assy = assy.__class__()
         _process_label(top_level_label, imported_assy)
 
         # Handle a possible extra top-level node. This is done because cq.Assembly.export
         # adds an extra top-level node which will cause a cascade of
         # extras on successive round-trips. exportStepMeta does not add the extra top-level
         # node and so does not exhibit this behavior.
-        if assy.name == imported_assy.children[0].name:
-            imported_assy = imported_assy.children[0]
+        if assy.name in imported_assy:
+            imported_assy = imported_assy[assy.name]
 
         # Copy all of the children over to the main assembly object
         for child in imported_assy.children:
             assy.add(child, name=child.name, color=child.color, loc=child.loc)
 
-        # Copy across subshape data
-        for shape, name in imported_assy._subshape_names.items():
-            assy.addSubshape(shape, name=name)
-        for shape, color in imported_assy._subshape_colors.items():
-            assy.addSubshape(shape, color=color)
-        for shape, layer in imported_assy._subshape_layers.items():
-            assy.addSubshape(shape, layer=layer)
     else:
         raise ValueError("Step file does not contain an assembly")
