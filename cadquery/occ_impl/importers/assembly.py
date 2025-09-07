@@ -8,6 +8,7 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.TNaming import TNaming_NamedShape
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_GraphNode
+from OCP.Interface import Interface_Static
 
 from ..assembly import AssemblyProtocol, Color
 from ..geom import Location
@@ -104,6 +105,19 @@ def importStep(assy: AssemblyProtocol, path: str):
                         # Save the shape so that we can add it to the subshape data
                         cur_shape: TopoDS_Shape = shape_tool.GetShape_s(child_label)
 
+                        # Handle subshape name
+                        name_attr = TDataStd_Name()
+
+                        if child_label.IsAttribute(TDataStd_Name.GetID_s()):
+                            child_label.FindAttribute(
+                                TDataStd_Name.GetID_s(), name_attr
+                            )
+
+                            current.addSubshape(
+                                Shape.cast(cur_shape),
+                                name=name_attr.Get().ToExtString(),
+                            )
+
                         # Find the layer name, if there is one set for this shape
                         layers = TDF_LabelSequence()
                         layer_tool.GetLayers(child_label, layers)
@@ -130,34 +144,6 @@ def importStep(assy: AssemblyProtocol, path: str):
                             # Save the color info via the assembly subshape mechanism
                             current.addSubshape(Shape.cast(cur_shape), color=cq_color)
 
-                        # Iterate through all the attributes looking for subshape names.
-                        # This is safer than trying to access the attributes directly with
-                        # FindAttribute because it will cause a segfault in certain cases.
-                        attr_iterator = TDF_AttributeIterator(child_label)
-                        while attr_iterator.More():
-                            current_attr = attr_iterator.Value()
-
-                            # XCAFDoc_GraphNode contains a reference to the node, and so we must
-                            # follow the branch back to a father.
-                            # After XDE STEP import father contains the name of the subshape.
-                            if isinstance(current_attr, XCAFDoc_GraphNode):
-                                lbl = current_attr.GetFather(1).Label()
-
-                                # Find the name attribute and add it for the subshape
-                                name_attr = TDataStd_Name()
-                                if lbl.FindAttribute(
-                                    TDataStd_Name.GetID_s(), name_attr
-                                ):
-                                    # Save this as the name of the subshape
-                                    current.addSubshape(
-                                        Shape.cast(cur_shape),
-                                        name=name_attr.Get().ToExtString(),
-                                    )
-
-                                break
-
-                            attr_iterator.Next()
-
         return parent
 
     # Document that the step file will be read into
@@ -169,6 +155,8 @@ def importStep(assy: AssemblyProtocol, path: str):
     step_reader.SetNameMode(True)
     step_reader.SetLayerMode(True)
     step_reader.SetSHUOMode(True)
+
+    Interface_Static.SetIVal_s("read.stepcaf.subshapes.name", 1)
 
     # Read the STEP file
     status = step_reader.ReadFile(path)
