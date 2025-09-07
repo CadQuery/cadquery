@@ -2417,9 +2417,8 @@ def test_special_methods(subshape_assy):
     Smoke-test some special methods.
     """
 
-    subshape_assy.__dir__()
-    subshape_assy._ipython_key_completions_()
-
+    assert "cube_1" in subshape_assy.__dir__()
+    assert "cube_1" in subshape_assy._ipython_key_completions_()
     assert "cube_1" in subshape_assy
 
     subshape_assy["cube_1"]
