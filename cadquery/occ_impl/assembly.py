@@ -344,30 +344,27 @@ def toCAF(
 
                 subshape_label = tool.AddSubShape(lab, k.wrapped)
 
-                # In some cases the face may not be considered part of the shape, so protect
-                # against that
-                if not subshape_label.IsNull():
-                    # Set the name
-                    if k in subshape_names:
-                        TDataStd_Name.Set_s(
-                            subshape_label,
-                            TCollection_ExtendedString(subshape_names[k]),
-                        )
+                # Sanity check, this is in principle enforced when calling addSubshape
+                assert not subshape_label.IsNull(), "Invalid subshape"
 
-                    # Set the individual face color
-                    if k in subshape_colors:
-                        ctool.SetColor(
-                            subshape_label,
-                            subshape_colors[k].wrapped,
-                            XCAFDoc_ColorGen,
-                        )
+                # Set the name
+                if k in subshape_names:
+                    TDataStd_Name.Set_s(
+                        subshape_label, TCollection_ExtendedString(subshape_names[k]),
+                    )
 
-                    # Also add a layer to hold the face label data
-                    if k in subshape_layers:
-                        layer_label = ltool.AddLayer(
-                            TCollection_ExtendedString(subshape_layers[k])
-                        )
-                        ltool.SetLayer(subshape_label, layer_label)
+                # Set the individual subshape color
+                if k in subshape_colors:
+                    ctool.SetColor(
+                        subshape_label, subshape_colors[k].wrapped, XCAFDoc_ColorGen,
+                    )
+
+                # Also add a layer to hold the subshape label data
+                if k in subshape_layers:
+                    layer_label = ltool.AddLayer(
+                        TCollection_ExtendedString(subshape_layers[k])
+                    )
+                    ltool.SetLayer(subshape_label, layer_label)
 
             tool.AddComponent(subassy, lab, TopLoc_Location())
 
