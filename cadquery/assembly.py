@@ -1,4 +1,5 @@
 from functools import reduce
+from itertools import chain
 from typing import (
     Union,
     Optional,
@@ -22,7 +23,7 @@ from .occ_impl.assembly import Color
 from .occ_impl.solver import (
     ConstraintKind,
     ConstraintSolver,
-    ConstraintSpec as Constraint,
+    BaseConstraint,
     UnaryConstraintKind,
     BinaryConstraintKind,
 )
@@ -92,7 +93,7 @@ class Assembly(object):
     children: List["Assembly"]
 
     objects: Dict[str, "Assembly"]
-    constraints: List[Constraint]
+    constraints: List[BaseConstraint]
 
     # Allows metadata to be stored for exports
     _subshape_names: dict[Shape, str]
@@ -343,12 +344,21 @@ class Assembly(object):
 
     @overload
     def constrain(
-        self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
+        self,
+        q1: str,
+        q2: str,
+        kind: Literal["Point", "Axis", "PointInPlane", "PointOnLine", "Plane"],
+        param: Any = None,
     ) -> "Assembly":
         ...
 
     @overload
-    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> "Assembly":
+    def constrain(
+        self,
+        q1: str,
+        kind: Literal["Fixed", "FixedPoint", "FixedAxis", "FixedRotation"],
+        param: Any = None,
+    ) -> "Assembly":
         ...
 
     @overload
@@ -358,57 +368,95 @@ class Assembly(object):
         s1: Shape,
         id2: str,
         s2: Shape,
-        kind: ConstraintKind,
+        kind: Literal["Point", "Axis", "PointInPlane", "PointOnLine", "Plane"],
         param: Any = None,
     ) -> "Assembly":
         ...
 
     @overload
     def constrain(
-        self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
+        self,
+        id1: str,
+        s1: Shape,
+        kind: Literal["Fixed", "FixedPoint", "FixedAxis", "FixedRotation"],
+        param: Any = None,
     ) -> "Assembly":
         ...
 
     def constrain(self, *args, param=None):
         """
         Define a new constraint.
+
+        The method accepts several call signatures:
+        
+        1. Unary constraints (Fixed, FixedPoint, FixedAxis, FixedRotation):
+            - constrain(query_str, kind, param=None)
+            - constrain(id_str, shape, kind, param=None)
+        
+        2. Binary constraints (Point, Axis, PointInPlane, PointOnLine, Plane):
+            - constrain(query_str1, query_str2, kind, param=None)
+            - constrain(id_str1, shape1, id_str2, shape2, kind, param=None)
+            
+        3. Higher order constraints:
+            - constrain(query_str1, query_str2, ..., query_strN, kind, param=None)
+            - constrain(id_str1, shape1, id_str2, shape2, ..., id_strN, shapeN, kind, param=None)
         """
 
-        # dispatch on arguments
-        if len(args) == 2:
-            q1, kind = args
-            id1, s1 = self._query(q1)
-        elif len(args) == 3 and instance_of(args[1], UnaryConstraintKind):
-            q1, kind, param = args
-            id1, s1 = self._query(q1)
-        elif len(args) == 3:
-            q1, q2, kind = args
-            id1, s1 = self._query(q1)
-            id2, s2 = self._query(q2)
-        elif len(args) == 4:
-            q1, q2, kind, param = args
-            id1, s1 = self._query(q1)
-            id2, s2 = self._query(q2)
-        elif len(args) == 5:
-            id1, s1, id2, s2, kind = args
-        elif len(args) == 6:
-            id1, s1, id2, s2, kind, param = args
-        else:
-            raise ValueError(f"Incompatible arguments: {args}")
+        # Collect all arguments into ids, shapes, and kind
+        ids = []
+        shapes = []
 
-        # handle unary and binary constraints
-        if instance_of(kind, UnaryConstraintKind):
-            loc1, id1_top = self._subloc(id1)
-            c = Constraint((id1_top,), (s1,), (loc1,), kind, param)
-        elif instance_of(kind, BinaryConstraintKind):
-            loc1, id1_top = self._subloc(id1)
-            loc2, id2_top = self._subloc(id2)
-            c = Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
-        else:
-            raise ValueError(f"Unknown constraint: {kind}")
+        if len(args) < 2:
+            raise ValueError("At least two arguments required")
 
+        # Find the kind argument - it should be a string and a valid constraint kind
+        kind_idx = -1
+        for i, arg in enumerate(args):
+            constraint_kinds = chain.from_iterable(
+                get_args(x) for x in get_args(ConstraintKind)
+            )
+            if isinstance(arg, str) and arg in constraint_kinds:
+                kind_idx = i
+                break
+
+        if kind_idx == -1:
+            raise ValueError("No valid constraint kind found in arguments")
+
+        kind = args[kind_idx]
+
+        # Handle arguments before the kind
+        if all(isinstance(arg, str) for arg in args[:kind_idx]):
+            # Query string pattern
+            for q in args[:kind_idx]:
+                id_, shape = self._query(q)
+                ids.append(id_)
+                shapes.append(shape)
+        else:
+            # id/shape pairs pattern
+            if kind_idx % 2 != 0:  # Should be even (pairs)
+                raise ValueError("Arguments before kind must be id/shape pairs")
+            for i in range(0, kind_idx, 2):
+                ids.append(args[i])
+                shapes.append(args[i + 1])
+
+        # Handle param if present after kind
+        if kind_idx < len(args) - 1:
+            param = args[kind_idx + 1]
+
+        # Get locations based on whether it's a unary or binary constraint
+        locs = []
+        ids_top = []
+        for id_ in ids:
+            loc, id_top = self._subloc(id_)
+            locs.append(loc)
+            ids_top.append(id_top)
+
+        args_tuple = (tuple(ids_top), tuple(shapes), tuple(locs))
+
+        # Create the appropriate constraint based on kind
+        constraint_class = BaseConstraint.get_constraint_class(kind)
+        c = constraint_class(*args_tuple, param)
         self.constraints.append(c)
-
         return self
 
     def solve(self, verbosity: int = 0) -> "Assembly":
@@ -455,17 +503,8 @@ class Assembly(object):
 
         locs = [self.objects[n].loc for n in ents]
 
-        # construct the constraint mapping
-        constraints = []
-        for c in self.constraints:
-            ixs = tuple(ents[obj] for obj in c.objects)
-            pods = c.toPODs()
-
-            for pod in pods:
-                constraints.append((ixs, pod))
-
         # check if any constraints were specified
-        if not constraints:
+        if not self.constraints:
             raise ValueError("At least one constraint required")
 
         # check if at least two entities are present
@@ -474,7 +513,9 @@ class Assembly(object):
 
         # instantiate the solver
         scale = self.toCompound().BoundingBox().DiagonalLength
-        solver = ConstraintSolver(locs, constraints, locked=locked, scale=scale)
+        solver = ConstraintSolver(
+            locs, self.constraints, object_indices=ents, locked=locked, scale=scale
+        )
 
         # solve
         locs_new, self._solve_result = solver.solve(verbosity)
