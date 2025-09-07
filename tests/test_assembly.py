@@ -2410,3 +2410,23 @@ def test_step_color(tmp_path_factory):
                 assert "0.47" in line
                 assert "0.25" in line
                 assert "0.18" in line
+
+
+def test_special_methods(subshape_assy):
+    """
+    Smoke-test some special methods.
+    """
+
+    subshape_assy.__dir__()
+    subshape_assy._ipython_key_completions_()
+
+    assert "cube_1" in subshape_assy
+
+    subshape_assy["cube_1"]
+    subshape_assy.cube_1
+
+    with pytest.raises(KeyError):
+        subshape_assy["123456"]
+
+    with pytest.raises(AttributeError):
+        subshape_assy.cube_123456
