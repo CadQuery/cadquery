@@ -829,3 +829,17 @@ class Assembly(object):
         """
 
         return list(self.__dict__) + list(ch.name for ch in self.children)
+
+    def __getstate__(self):
+        """
+        Explicit getstate needed due to getattr.
+        """
+
+        return self.__dict__
+
+    def __setstate__(self, d):
+        """
+        Explicit setstate needed due to getattr.
+        """
+
+        self.__dict__ = d
