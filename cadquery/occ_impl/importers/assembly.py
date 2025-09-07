@@ -95,10 +95,11 @@ def importStep(assy: AssemblyProtocol, path: str):
                         # change the current assy to handle subshape data
                         current = parent[ref_name]
 
-                    # Search for subshape names, layers and colors
-                    for j in range(ref_label.NbChildren()):
+                    # iterate over subshape and handle names, layers and colors
+                    subshape_labels = TDF_LabelSequence()
+                    shape_tool.GetSubShapes_s(ref_label, subshape_labels)
 
-                        child_label = ref_label.FindChild(j + 1)
+                    for child_label in subshape_labels:
 
                         # Save the shape so that we can add it to the subshape data
                         cur_shape: TopoDS_Shape = shape_tool.GetShape_s(child_label)
@@ -106,8 +107,8 @@ def importStep(assy: AssemblyProtocol, path: str):
                         # Find the layer name, if there is one set for this shape
                         layers = TDF_LabelSequence()
                         layer_tool.GetLayers(child_label, layers)
-                        for i in range(1, layers.Length() + 1):
-                            lbl = layers.Value(i)
+
+                        for lbl in layers:
                             name_attr = TDataStd_Name()
                             lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
 
@@ -136,10 +137,9 @@ def importStep(assy: AssemblyProtocol, path: str):
                         while attr_iterator.More():
                             current_attr = attr_iterator.Value()
 
-                            # TNaming_NamedShape is used to store and manage references to
-                            # topological shapes, and its attributes can be accessed directly.
-                            # XCAFDoc_GraphNode contains a graph of labels, and so we must
+                            # XCAFDoc_GraphNode contains a reference to the node, and so we must
                             # follow the branch back to a father.
+                            # After XDE STEP import father contains the name of the subshape.
                             if isinstance(current_attr, XCAFDoc_GraphNode):
                                 lbl = current_attr.GetFather(1).Label()
 
@@ -153,9 +153,8 @@ def importStep(assy: AssemblyProtocol, path: str):
                                         Shape.cast(cur_shape),
                                         name=name_attr.Get().ToExtString(),
                                     )
-                            elif isinstance(current_attr, TNaming_NamedShape):
-                                # Save the shape so that we can add it to the subshape data
-                                cur_shape = shape_tool.GetShape_s(child_label)
+
+                                break
 
                             attr_iterator.Next()
 
