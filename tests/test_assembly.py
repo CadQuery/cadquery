@@ -595,8 +595,6 @@ def test_color():
     assert c3.wrapped.GetRGB().Red() == 1
     assert c3.wrapped.Alpha() == 0.5
 
-    c4 = cq.Color()
-
     with pytest.raises(ValueError):
         cq.Color("?????")
 
@@ -999,7 +997,7 @@ def test_bad_step_file_import(tmp_path_factory):
     # Check that an error is raised when trying to import a non-existent STEP file
     with pytest.raises(ValueError):
         # Export the assembly
-        imported_assy = cq.Assembly.importStep(bad_step_path)
+        cq.Assembly.importStep(bad_step_path)
 
 
 def test_plain_assembly_import(tmp_path_factory):
@@ -1317,7 +1315,7 @@ def test_save_stl_formats(nested_assy_sphere):
     assert os.path.exists("nested.stl")
 
     # Trying to read a binary file as UTF-8/ASCII should throw an error
-    with pytest.raises(UnicodeDecodeError) as info:
+    with pytest.raises(UnicodeDecodeError):
         with open("nested.stl", "r") as file:
             file.read()
 
@@ -1334,7 +1332,7 @@ def test_save_gltf(nested_assy_sphere):
     assert os.path.exists("nested.glb")
 
     # Trying to read a binary file as UTF-8/ASCII should throw an error
-    with pytest.raises(UnicodeDecodeError) as info:
+    with pytest.raises(UnicodeDecodeError):
         with open("nested.glb", "r") as file:
             file.read()
 
@@ -1349,7 +1347,7 @@ def test_exportGLTF(nested_assy_sphere):
 
     # Test binary export inferred from file extension
     cq.exporters.assembly.exportGLTF(nested_assy_sphere, "nested_export_gltf.glb")
-    with pytest.raises(UnicodeDecodeError) as info:
+    with pytest.raises(UnicodeDecodeError):
         with open("nested_export_gltf.glb", "r") as file:
             file.read()
 
@@ -1357,7 +1355,7 @@ def test_exportGLTF(nested_assy_sphere):
     cq.exporters.assembly.exportGLTF(
         nested_assy_sphere, "nested_export_gltf_2.glb", binary=True
     )
-    with pytest.raises(UnicodeDecodeError) as info:
+    with pytest.raises(UnicodeDecodeError):
         with open("nested_export_gltf_2.glb", "r") as file:
             file.read()
 
