@@ -299,9 +299,10 @@ def toCAF(
 
     def _toCAF(el, ancestor, color) -> TDF_Label:
 
-        # create a subassy
-        subassy = tool.NewShape()
-        setName(subassy, el.name, tool)
+        # create a subassy if needed
+        if el.children:
+            subassy = tool.NewShape()
+            setName(subassy, el.name, tool)
 
         # define the current color
         current_color = el.color if el.color else color
@@ -326,7 +327,7 @@ def toCAF(
                     compounds[key1] = compound
 
                 tool.SetShape(lab, compound.wrapped)
-                setName(lab, f"{el.name}_part", tool)
+                setName(lab, f"{el.name}_part" if el.children else el.name, tool)
                 unique_objs[key0] = lab
 
                 # handle colors when exporting to STEP
@@ -366,19 +367,30 @@ def toCAF(
                     )
                     ltool.SetLayer(subshape_label, layer_label)
 
-            tool.AddComponent(subassy, lab, TopLoc_Location())
+            if el.children:
+                lab = tool.AddComponent(subassy, lab, TopLoc_Location())
+                setName(lab, f"{el.name}_part", tool)
+            else:
+                lab = tool.AddComponent(ancestor, lab, el.loc.wrapped)
+                setName(lab, f"{el.name}", tool)
 
         # handle colors when *not* exporting to STEP
         if not coloredSTEP and current_color:
-            setColor(subassy, current_color, ctool)
+            if el.children:
+                setColor(subassy, current_color, ctool)
+
+            if el.obj:
+                setColor(lab, current_color, ctool)
 
         # add children recursively
         for child in el.children:
             _toCAF(child, subassy, current_color)
 
-        if ancestor:
+        if ancestor and el.children:
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
             rv = subassy
+        elif ancestor:
+            rv = ancestor
         else:
             # update the top level location
             rv = TDF_Label()  # NB: additional label is needed to apply the location

@@ -176,9 +176,12 @@ def exportStepMeta(
             # Handle shape name, color and location
             part_label = shape_tool.AddShape(shape.wrapped, False)
             TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name))
+
             if color:
                 color_tool.SetColor(part_label, color.wrapped, XCAFDoc_ColorGen)
-            shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
+
+            ref_label = shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
+            TDataStd_Name.Set_s(ref_label, TCollection_ExtendedString(name))
 
             # If this assembly has shape metadata, add it to the shape
             if (

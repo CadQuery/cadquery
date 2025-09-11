@@ -100,8 +100,8 @@ def empty_top_assy():
 
     b1 = cq.Workplane().box(1, 1, 1)
 
-    assy = cq.Assembly()
-    assy.add(b1, color=cq.Color("green"))
+    assy = cq.Assembly(name="top")
+    assy.add(b1, color=cq.Color("green"), name="b")
 
     return assy
 
@@ -441,9 +441,14 @@ def get_doc_nodes(doc, leaf=False):
         ctool = expl.ColorTool()
         style = node.Style
         label = node.RefLabel
+        label2 = node.Label
 
         name_att = TDataStd_Name()
         label.FindAttribute(TDataStd_Name.GetID_s(), name_att)
+
+        if label2.IsAttribute(TDataStd_Name.GetID_s()):
+            name_att = TDataStd_Name()
+            label2.FindAttribute(TDataStd_Name.GetID_s(), name_att)
 
         color = style.GetColorSurfRGBA()
         shape = expl.FindShapeFromPathId_s(doc, node.Id)
@@ -1082,9 +1087,12 @@ def test_copied_assembly_import(tmp_path_factory):
         assy = Assembly(name="test_assy")
         assy.add(box(1, 2, 5), color=Color("green"))
 
-        for v in rect(10, 10).vertices():
+        for i, v in enumerate(rect(10, 10).vertices()):
             assy.add(
-                b.copy() if COPY else b, loc=Location(v.Center()), color=Color("red")
+                b.copy() if COPY else b,
+                name=f"element_{i}",
+                loc=Location(v.Center()),
+                color=Color("red"),
             )
 
         assy.export(name)
@@ -1417,27 +1425,11 @@ def test_leaf_node_count(assy_fixture, count, request):
             [
                 (
                     ["chassis", "wheel-axle.*", "wheel:.*"],
-                    {
-                        "color": (1.0, 0.0, 0.0, 1.0),
-                        "color_shape": (1.0, 0.0, 0.0, 1.0),
-                        "num_nodes": 4,
-                    },
-                ),
-                (
-                    ["chassis", "wheel-axle.*", "wheel:.*", "wheel.*_part"],
-                    {"color": (1.0, 0.0, 0.0, 1.0), "num_nodes": 4},
+                    {"color": (1.0, 0.0, 0.0, 1.0), "num_nodes": 4,},
                 ),
                 (
                     ["chassis", "wheel-axle.*", "axle"],
-                    {
-                        "color": (0.0, 1.0, 0.0, 1.0),
-                        "color_shape": (0.0, 1.0, 0.0, 1.0),
-                        "num_nodes": 2,
-                    },
-                ),
-                (
-                    ["chassis", "wheel-axle.*", "axle", "axle_part"],
-                    {"color": (0.0, 1.0, 0.0, 1.0), "num_nodes": 2},
+                    {"color": (0.0, 1.0, 0.0, 1.0), "num_nodes": 2,},
                 ),
             ],
         ),
@@ -1478,7 +1470,7 @@ def test_colors_assy0(assy_fixture, expected, request):
                     {"color_shape": (0.0, 1.0, 0.0, 1.0)},
                 ),
                 (
-                    ["TOP", "SECOND", "BOTTOM", "BOTTOM_part"],
+                    ["TOP", "SECOND", "BOTTOM"],
                     {
                         "color_shape": (0.0, 1.0, 0.0, 1.0),
                         "color_subshapes": (0.0, 1.0, 0.0, 1.0),
@@ -1486,34 +1478,34 @@ def test_colors_assy0(assy_fixture, expected, request):
                 ),
             ],
         ),
-        ("empty_top_assy", [([".*_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),]),
+        ("empty_top_assy", [(["top", "b"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),]),
         (
             "boxes0_assy",
             [
-                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes1_assy",
             [
-                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes2_assy",
             [
-                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["box0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box1"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes3_assy",
             [
-                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
                 (
-                    ["box1", "box1_part"],
+                    ["box1"],
                     {"color_shape": cq.Color().toTuple()},
                 ),  # default color when unspecified
             ],
@@ -1521,60 +1513,57 @@ def test_colors_assy0(assy_fixture, expected, request):
         (
             "boxes4_assy",
             [
-                (["box_0", "box_0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box_1", "box_1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["box_0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box_1"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes5_assy",
             [
-                (["box:a", "box:a_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box:b", "box:b_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["box:a"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box:b"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes6_assy",
             [
-                (["box__0", "box__0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box__1", "box__1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["box__0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box__1"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
             ],
         ),
         (
             "boxes7_assy",
             [
-                (["box_0", "box_0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-                (
-                    ["another box", "another box_part"],
-                    {"color_shape": (0.23, 0.26, 0.26, 0.6)},
-                ),
+                (["box_0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
+                (["box"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
+                (["another box"], {"color_shape": (0.23, 0.26, 0.26, 0.6)},),
             ],
         ),
         (
             "chassis0_assy",
             [
                 (
-                    ["chassis", "wheel-axle-front", "wheel:left", "wheel:left_part"],
+                    ["chassis", "wheel-axle-front", "wheel:left"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-front", "wheel:right", "wheel:left_part"],
+                    ["chassis", "wheel-axle-front", "wheel:right"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-rear", "wheel:left", "wheel:left_part"],
+                    ["chassis", "wheel-axle-rear", "wheel:left"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel:left_part"],
+                    ["chassis", "wheel-axle-rear", "wheel:right"],
                     {"color_shape": (1.0, 0.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-front", "axle", "axle_part"],
+                    ["chassis", "wheel-axle-front", "axle"],
                     {"color_shape": (0.0, 1.0, 0.0, 1.0)},
                 ),
                 (
-                    ["chassis", "wheel-axle-rear", "axle", "axle_part"],
+                    ["chassis", "wheel-axle-rear", "axle"],
                     {"color_shape": (0.0, 1.0, 0.0, 1.0)},
                 ),
             ],

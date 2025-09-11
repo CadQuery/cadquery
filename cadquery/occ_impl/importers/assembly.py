@@ -15,6 +15,20 @@ from ..geom import Location
 from ..shapes import Shape
 
 
+def _name(label: TDF_Label) -> str | None:
+    """
+    Internal helper for getting names
+    """
+
+    rv = None
+
+    name_attr = TDataStd_Name()
+    if label.FindAttribute(TDataStd_Name.GetID_s(), name_attr):
+        rv = str(name_attr.Get().ToExtString())
+
+    return rv
+
+
 def importStep(assy: AssemblyProtocol, path: str):
     """
     Import a step file into an assembly.
@@ -45,12 +59,12 @@ def importStep(assy: AssemblyProtocol, path: str):
                 ref_label = TDF_Label()
                 shape_tool.GetReferredShape_s(comp_label, ref_label)
 
-                # Find the name of this referenced part
-                ref_name_attr = TDataStd_Name()
-                if ref_label.FindAttribute(TDataStd_Name.GetID_s(), ref_name_attr):
-                    ref_name = str(ref_name_attr.Get().ToExtString())
-
                 if shape_tool.IsAssembly_s(ref_label):
+
+                    # Find the name of this referenced part
+                    ref_name_attr = TDataStd_Name()
+                    if ref_label.FindAttribute(TDataStd_Name.GetID_s(), ref_name_attr):
+                        ref_name = str(ref_name_attr.Get().ToExtString())
 
                     sub_assy = assy.__class__(name=ref_name)
 
@@ -61,6 +75,10 @@ def importStep(assy: AssemblyProtocol, path: str):
                     parent.add(sub_assy, name=ref_name, loc=cq_loc)
 
                 elif shape_tool.IsSimpleShape_s(ref_label):
+                    # Find the name of this referenced part
+                    ref_name_attr = TDataStd_Name()
+                    if comp_label.FindAttribute(TDataStd_Name.GetID_s(), ref_name_attr):
+                        ref_name = str(ref_name_attr.Get().ToExtString())
 
                     # A single shape needs to be added to the assembly
                     final_shape = shape_tool.GetShape_s(ref_label)
@@ -184,7 +202,11 @@ def importStep(assy: AssemblyProtocol, path: str):
         # Set the name of the top-level assembly to match the top-level label
         name_attr = TDataStd_Name()
         top_level_label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+
+        # Manipulation of .objects is needed to maintain consistency
+        assy.objects.pop(assy.name)
         assy.name = str(name_attr.Get().ToExtString())
+        assy.objects[assy.name] = assy
 
         # Get the location of the top-level component
         comp_labels = TDF_LabelSequence()
