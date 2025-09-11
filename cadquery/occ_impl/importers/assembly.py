@@ -184,7 +184,11 @@ def importStep(assy: AssemblyProtocol, path: str):
         # Set the name of the top-level assembly to match the top-level label
         name_attr = TDataStd_Name()
         top_level_label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+
+        # Manipulation of .objects is needed to maintain consistency
+        assy.objects.pop(assy.name)
         assy.name = str(name_attr.Get().ToExtString())
+        assy.objects[assy.name] = assy
 
         # Get the location of the top-level component
         comp_labels = TDF_LabelSequence()
