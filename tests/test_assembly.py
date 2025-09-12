@@ -1171,10 +1171,10 @@ def test_assembly_step_import_roundtrip(tmp_path_factory):
     # Check some general aspects of the assembly structure now
     for k in assy_orig.objects:
         assert k in assy
-    
+
     for k in assy.objects:
         assert k in assy_orig
-    
+
     assert len(assy.children) == 2
     assert assy.name == "top-level"
     assert assy.children[0].name == "cube_1"
