@@ -182,6 +182,10 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
+    def objects(self) -> Dict[str, Self]:
+        ...
+
+    @property
     def shapes(self) -> Iterable[Shape]:
         ...
 
