@@ -1145,8 +1145,8 @@ def test_assembly_step_import_roundtrip(tmp_path_factory):
     round_trip_step_path = os.path.join(tmpdir, "round_trip.step")
 
     # Create a sample assembly
-    assy = cq.Assembly(name="top-level")
-    assy.add(cq.Workplane().box(10, 10, 10), name="cube_1", color=cq.Color("red"))
+    assy_orig = cq.Assembly(name="top-level")
+    assy_orig.add(cq.Workplane().box(10, 10, 10), name="cube_1", color=cq.Color("red"))
     subshape_assy = cq.Assembly(name="nested-assy")
     subshape_assy.add(
         cq.Workplane().cylinder(height=10.0, radius=2.5),
@@ -1154,10 +1154,10 @@ def test_assembly_step_import_roundtrip(tmp_path_factory):
         color=cq.Color("blue"),
         loc=cq.Location((20, 20, 20)),
     )
-    assy.add(subshape_assy)
+    assy_orig.add(subshape_assy)
 
     # First export
-    assy.export(round_trip_step_path)
+    assy_orig.export(round_trip_step_path)
 
     # First import
     assy = cq.Assembly.importStep(round_trip_step_path)
@@ -1169,6 +1169,12 @@ def test_assembly_step_import_roundtrip(tmp_path_factory):
     assy = cq.Assembly.importStep(round_trip_step_path)
 
     # Check some general aspects of the assembly structure now
+    for k in assy_orig.objects:
+        assert k in assy
+    
+    for k in assy.objects:
+        assert k in assy_orig
+    
     assert len(assy.children) == 2
     assert assy.name == "top-level"
     assert assy.children[0].name == "cube_1"
