@@ -98,6 +98,7 @@ def exportAssembly(
     writer.SetNameMode(True)
     Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
     Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
+    Interface_Static.SetIVal_s("write.stepcaf.subshapes.name", 1)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)
