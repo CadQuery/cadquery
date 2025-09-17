@@ -619,7 +619,7 @@ class Assembly(object):
         """
         Reads an assembly from a STEP file.
 
-        :param path: Path and filename for writing.
+        :param path: Path and filename for reading.
         :return: An Assembly object.
         """
 

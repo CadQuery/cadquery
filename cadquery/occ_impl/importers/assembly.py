@@ -1,3 +1,5 @@
+from typing import Optional
+
 from OCP.TopoDS import TopoDS_Shape
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.Quantity import Quantity_ColorRGBA
@@ -13,6 +15,18 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, Color
 from ..geom import Location
 from ..shapes import Shape
+
+
+def _get_name(label: TDF_Label) -> Optional[str]:
+
+    rv = None
+
+    name_attr = TDataStd_Name()
+    if label.IsAttribute(TDataStd_Name.GetID_s()):
+        label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+        rv = str(name_attr.Get().ToExtString())
+
+    return rv
 
 
 def importStep(assy: AssemblyProtocol, path: str):
@@ -36,6 +50,7 @@ def importStep(assy: AssemblyProtocol, path: str):
 
         for i in range(comp_labels.Length()):
             comp_label = comp_labels.Value(i + 1)
+            comp_name = _get_name(comp_label)
 
             # Get the location of the component label
             loc = shape_tool.GetLocation_s(comp_label)
@@ -46,9 +61,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                 shape_tool.GetReferredShape_s(comp_label, ref_label)
 
                 # Find the name of this referenced part
-                ref_name_attr = TDataStd_Name()
-                if ref_label.FindAttribute(TDataStd_Name.GetID_s(), ref_name_attr):
-                    ref_name = str(ref_name_attr.Get().ToExtString())
+                ref_name = _get_name(ref_label)
 
                 if shape_tool.IsAssembly_s(ref_label):
 
@@ -80,7 +93,7 @@ def importStep(assy: AssemblyProtocol, path: str):
 
                     # this if/else is needed to handle different structures of STEP files
                     # "*"/"*_part" based naming is the default strucutre produced by CQ
-                    if ref_name.endswith("_part") and ref_name.startswith(parent.name):
+                    if ref_name.endswith("_part"):
                         parent.obj = cq_shape
                         parent.loc = cq_loc
                         parent.color = cq_color
@@ -89,12 +102,12 @@ def importStep(assy: AssemblyProtocol, path: str):
                         current = parent
                     else:
                         tmp = assy.__class__(
-                            cq_shape, loc=cq_loc, name=ref_name, color=cq_color
+                            cq_shape, loc=cq_loc, name=comp_name, color=cq_color
                         )
                         parent.add(tmp)
 
                         # change the current assy to handle subshape data
-                        current = parent[ref_name]
+                        current = parent[comp_name]
 
                     # iterate over subshape and handle names, layers and colors
                     subshape_labels = TDF_LabelSequence()

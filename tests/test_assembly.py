@@ -1135,26 +1135,19 @@ def test_nested_subassembly_step_import(tmp_path_factory):
     )
 
 
-def test_assembly_step_import_roundtrip(tmp_path_factory):
+@pytest.mark.parametrize(
+    "assy_orig", ["subshape_assy", "chassis0_assy", "nested_assy", "simple_assy"]
+)
+def test_assembly_step_import_roundtrip(assy_orig, tmp_path_factory, request):
     """
     Tests that the assembly does not mutate during successive export-import round trips.
     """
 
+    assy_orig = request.getfixturevalue(assy_orig)
+
     # Set up the temporary directory
     tmpdir = tmp_path_factory.mktemp("out")
     round_trip_step_path = os.path.join(tmpdir, "round_trip.step")
-
-    # Create a sample assembly
-    assy_orig = cq.Assembly(name="top-level")
-    assy_orig.add(cq.Workplane().box(10, 10, 10), name="cube_1", color=cq.Color("red"))
-    subshape_assy = cq.Assembly(name="nested-assy")
-    subshape_assy.add(
-        cq.Workplane().cylinder(height=10.0, radius=2.5),
-        name="cylinder_1",
-        color=cq.Color("blue"),
-        loc=cq.Location((20, 20, 20)),
-    )
-    assy_orig.add(subshape_assy)
 
     # First export
     assy_orig.export(round_trip_step_path)
@@ -1175,11 +1168,6 @@ def test_assembly_step_import_roundtrip(tmp_path_factory):
     for k in assy.objects:
         assert k in assy_orig
 
-    assert len(assy.children) == 2
-    assert assy.name == "top-level"
-    assert assy.children[0].name == "cube_1"
-    assert assy.children[1].children[0].name == "cylinder_1"
-
     # First meta export
     exportStepMeta(assy, round_trip_step_path)
 
@@ -1193,10 +1181,11 @@ def test_assembly_step_import_roundtrip(tmp_path_factory):
     assy = cq.Assembly.importStep(round_trip_step_path)
 
     # Check some general aspects of the assembly structure now
-    assert len(assy.children) == 2
-    assert assy.name == "top-level"
-    assert assy.children[0].name == "cube_1"
-    assert assy.children[1].children[0].name == "cylinder_1"
+    for k in assy_orig.objects:
+        assert k in assy
+
+    for k in assy.objects:
+        assert k in assy_orig
 
 
 @pytest.mark.parametrize(

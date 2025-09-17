@@ -6560,7 +6560,7 @@ def check(
 
 def isSubshape(s1: Shape, s2: Shape) -> bool:
     """
-    Check is s1 is a subshape of s2.
+    Check if s1 is a subshape of s2.
     """
 
     shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
