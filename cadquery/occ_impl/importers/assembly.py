@@ -17,9 +17,12 @@ from ..geom import Location
 from ..shapes import Shape
 
 
-def _get_name(label: TDF_Label) -> Optional[str]:
+def _get_name(label: TDF_Label) -> str:
+    """
+    Helper to get a name of a given label.
+    """
 
-    rv = None
+    rv = ""
 
     name_attr = TDataStd_Name()
     if label.IsAttribute(TDataStd_Name.GetID_s()):
