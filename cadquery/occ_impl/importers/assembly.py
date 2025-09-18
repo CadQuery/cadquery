@@ -1,15 +1,12 @@
-from typing import Optional
-
 from OCP.TopoDS import TopoDS_Shape
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.Quantity import Quantity_ColorRGBA
-from OCP.TDF import TDF_Label, TDF_LabelSequence, TDF_AttributeIterator
+from OCP.TDF import TDF_Label, TDF_LabelSequence
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDocStd import TDocStd_Document
 from OCP.TDataStd import TDataStd_Name
-from OCP.TNaming import TNaming_NamedShape
 from OCP.STEPCAFControl import STEPCAFControl_Reader
-from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_GraphNode
+from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool
 from OCP.Interface import Interface_Static
 
 from ..assembly import AssemblyProtocol, Color
@@ -27,7 +24,6 @@ def _get_name(label: TDF_Label) -> str:
     name_attr = TDataStd_Name()
     if label.IsAttribute(TDataStd_Name.GetID_s()):
         label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
-        rv = str(name_attr.Get().ToExtString())
 
     return rv
 
@@ -63,10 +59,9 @@ def importStep(assy: AssemblyProtocol, path: str):
                 ref_label = TDF_Label()
                 shape_tool.GetReferredShape_s(comp_label, ref_label)
 
-                # Find the name of this referenced part
-                ref_name = _get_name(ref_label)
-
                 if shape_tool.IsAssembly_s(ref_label):
+                    # Find the name of this referenced part
+                    ref_name = _get_name(ref_label)
 
                     sub_assy = assy.__class__(name=ref_name)
 
@@ -77,6 +72,8 @@ def importStep(assy: AssemblyProtocol, path: str):
                     parent.add(sub_assy, name=ref_name, loc=cq_loc)
 
                 elif shape_tool.IsSimpleShape_s(ref_label):
+                    # Find the name of this referenced part
+                    ref_name = _get_name(comp_label)
 
                     # A single shape needs to be added to the assembly
                     final_shape = shape_tool.GetShape_s(ref_label)

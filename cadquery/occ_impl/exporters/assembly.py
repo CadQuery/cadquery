@@ -3,12 +3,11 @@ import uuid
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
-from itertools import chain
 from typing import Optional
 from typing_extensions import Literal
 
 from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
-from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
+from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
@@ -33,7 +32,6 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
-from ..assembly import Color
 
 
 class ExportModes:
@@ -81,9 +79,6 @@ def exportAssembly(
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
     fuzzy_tol = kwargs["fuzzy_tol"] if "fuzzy_tol" in kwargs else None
     glue = kwargs["glue"] if "glue" in kwargs else False
-
-    # Use the assembly name if the user set it
-    assembly_name = assy.name if assy.name else str(uuid.uuid1())
 
     # Handle the doc differently based on which mode we are using
     if mode == "fused":
