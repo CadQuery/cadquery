@@ -24,6 +24,7 @@ def _get_name(label: TDF_Label) -> str:
     name_attr = TDataStd_Name()
     if label.IsAttribute(TDataStd_Name.GetID_s()):
         label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+        rv = str(name_attr.Get().ToExtString())
 
     return rv
 
