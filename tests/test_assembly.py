@@ -1144,7 +1144,7 @@ def test_nested_subassembly_step_import(tmp_path_factory):
 
 
 @pytest.mark.parametrize(
-    "assy_orig", ["subshape_assy", "chassis0_assy", "nested_assy", "simple_assy"]
+    "assy_orig", ["subshape_assy", "boxes0_assy", "nested_assy", "simple_assy"]
 )
 def test_assembly_step_import_roundtrip(assy_orig, tmp_path_factory, request):
     """
