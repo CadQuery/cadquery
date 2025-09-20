@@ -18,10 +18,16 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.TDocStd import TDocStd_Document
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen
-from OCP.XmlDrivers import (
-    XmlDrivers_DocumentStorageDriver,
-    XmlDrivers_DocumentRetrievalDriver,
+from OCP.XmlXCAFDrivers import (
+    XmlXCAFDrivers_DocumentRetrievalDriver,
+    XmlXCAFDrivers_DocumentStorageDriver,
 )
+from OCP.BinXCAFDrivers import (
+    BinXCAFDrivers_DocumentRetrievalDriver,
+    BinXCAFDrivers_DocumentStorageDriver,
+)
+
+
 from OCP.TCollection import TCollection_ExtendedString, TCollection_AsciiString
 from OCP.PCDM import PCDM_StoreStatus
 from OCP.RWGltf import RWGltf_CafWriter
@@ -267,29 +273,39 @@ def exportStepMeta(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
+def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
     """
-    Export an assembly to a OCAF xml file (internal OCCT format).
+    Export an assembly to ax XCAF xml or xbf file (internal OCCT formats).
     """
 
     folder, fname = os.path.split(path)
     name, ext = os.path.splitext(fname)
     ext = ext[1:] if ext[0] == "." else ext
 
-    _, doc = toCAF(assy)
+    _, doc = toCAF(assy, binary=binary)
     app = XCAFApp_Application.GetApplication_s()
 
-    store = XmlDrivers_DocumentStorageDriver(
-        TCollection_ExtendedString("Copyright: Open Cascade, 2001-2002")
-    )
-    ret = XmlDrivers_DocumentRetrievalDriver()
+    store: BinXCAFDrivers_DocumentStorageDriver | XmlXCAFDrivers_DocumentStorageDriver
+    ret: BinXCAFDrivers_DocumentRetrievalDriver | XmlXCAFDrivers_DocumentRetrievalDriver
+
+    # XBF
+    if binary:
+        ret = XmlXCAFDrivers_DocumentRetrievalDriver()
+        format_name = TCollection_AsciiString("BinXCAF")
+        format_desc = TCollection_AsciiString("Binary XCAF Document")
+        store = BinXCAFDrivers_DocumentStorageDriver()
+        ret = BinXCAFDrivers_DocumentRetrievalDriver()
+    # XML
+    else:
+        format_name = TCollection_AsciiString("XmlXCAF")
+        format_desc = TCollection_AsciiString("Xml XCAF Document")
+        store = XmlXCAFDrivers_DocumentStorageDriver(
+            TCollection_ExtendedString("Copyright: Open Cascade, 2001-2002")
+        )
+        ret = XmlXCAFDrivers_DocumentRetrievalDriver()
 
     app.DefineFormat(
-        TCollection_AsciiString("XmlOcaf"),
-        TCollection_AsciiString("Xml XCAF Document"),
-        TCollection_AsciiString(ext),
-        ret,
-        store,
+        format_name, format_desc, TCollection_AsciiString(ext), ret, store,
     )
 
     doc.SetRequestedFolder(TCollection_ExtendedString(folder))

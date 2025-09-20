@@ -17,6 +17,8 @@ from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType, XCAFDoc_ColorGen
 from OCP.XCAFApp import XCAFApp_Application
+from OCP.BinXCAFDrivers import BinXCAFDrivers
+from OCP.XmlXCAFDrivers import XmlXCAFDrivers
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
@@ -283,12 +285,19 @@ def toCAF(
     mesh: bool = False,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
+    binary: bool = True,
 ) -> Tuple[TDF_Label, TDocStd_Document]:
 
     # prepare a doc
     app = XCAFApp_Application.GetApplication_s()
 
-    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    if binary:
+        BinXCAFDrivers.DefineFormat_s(app)
+        doc = TDocStd_Document(TCollection_ExtendedString("BinXCAF"))
+    else:
+        XmlXCAFDrivers.DefineFormat_s(app)
+        doc = TDocStd_Document(TCollection_ExtendedString("XmlXCAF"))
+
     app.InitDocument(doc)
 
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())

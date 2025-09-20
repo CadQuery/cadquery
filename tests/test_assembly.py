@@ -1272,6 +1272,7 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
     [
         ("step", (), {}),
         ("xml", (), {}),
+        ("xbf", (), {}),
         ("vrml", (), {}),
         ("gltf", (), {}),
         ("glb", (), {}),
