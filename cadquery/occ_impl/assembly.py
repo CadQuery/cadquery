@@ -10,13 +10,15 @@ from typing import (
     List,
     cast,
 )
-from typing_extensions import Protocol
+from typing_extensions import Protocol, Self
 from math import degrees, radians
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType, XCAFDoc_ColorGen
 from OCP.XCAFApp import XCAFApp_Application
+from OCP.BinXCAFDrivers import BinXCAFDrivers
+from OCP.XmlXCAFDrivers import XmlXCAFDrivers
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
@@ -136,6 +138,15 @@ class Color(object):
 
 
 class AssemblyProtocol(Protocol):
+    def __init__(
+        self,
+        obj: AssemblyObjects = None,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ):
+        ...
+
     @property
     def loc(self) -> Location:
         ...
@@ -148,6 +159,10 @@ class AssemblyProtocol(Protocol):
     def name(self) -> str:
         ...
 
+    @name.setter
+    def name(self, value: str) -> None:
+        ...
+
     @property
     def parent(self) -> Optional["AssemblyProtocol"]:
         ...
@@ -156,8 +171,20 @@ class AssemblyProtocol(Protocol):
     def color(self) -> Optional[Color]:
         ...
 
+    @color.setter
+    def color(self, value: Optional[Color]) -> None:
+        ...
+
     @property
     def obj(self) -> AssemblyObjects:
+        ...
+
+    @obj.setter
+    def obj(self, value: AssemblyObjects) -> None:
+        ...
+
+    @property
+    def objects(self) -> Dict[str, Self]:
         ...
 
     @property
@@ -180,6 +207,50 @@ class AssemblyProtocol(Protocol):
     def _subshape_layers(self) -> Dict[Shape, str]:
         ...
 
+    @overload
+    def add(
+        self,
+        obj: Self,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ) -> Self:
+        ...
+
+    @overload
+    def add(
+        self,
+        obj: AssemblyObjects,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Self:
+        ...
+
+    def add(
+        self,
+        obj: Union[Self, AssemblyObjects],
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> Self:
+        """
+        Add a subassembly to the current assembly.
+        """
+        ...
+
+    def addSubshape(
+        self,
+        s: Shape,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        layer: Optional[str] = None,
+    ) -> Self:
+        ...
+
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 
@@ -189,6 +260,12 @@ class AssemblyProtocol(Protocol):
         name: Optional[str] = None,
         color: Optional[Color] = None,
     ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        ...
+
+    def __getitem__(self, name: str) -> Self:
+        ...
+
+    def __contains__(self, name: str) -> bool:
         ...
 
 
@@ -208,17 +285,25 @@ def toCAF(
     mesh: bool = False,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
+    binary: bool = True,
 ) -> Tuple[TDF_Label, TDocStd_Document]:
 
     # prepare a doc
     app = XCAFApp_Application.GetApplication_s()
 
-    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    if binary:
+        BinXCAFDrivers.DefineFormat_s(app)
+        doc = TDocStd_Document(TCollection_ExtendedString("BinXCAF"))
+    else:
+        XmlXCAFDrivers.DefineFormat_s(app)
+        doc = TDocStd_Document(TCollection_ExtendedString("XmlXCAF"))
+
     app.InitDocument(doc)
 
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    ltool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
 
     # used to store labels with unique part-color combinations
     unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
@@ -227,9 +312,10 @@ def toCAF(
 
     def _toCAF(el, ancestor, color) -> TDF_Label:
 
-        # create a subassy
-        subassy = tool.NewShape()
-        setName(subassy, el.name, tool)
+        # create a subassy if needed
+        if el.children:
+            subassy = tool.NewShape()
+            setName(subassy, el.name, tool)
 
         # define the current color
         current_color = el.color if el.color else color
@@ -254,26 +340,70 @@ def toCAF(
                     compounds[key1] = compound
 
                 tool.SetShape(lab, compound.wrapped)
-                setName(lab, f"{el.name}_part", tool)
+                setName(lab, f"{el.name}_part" if el.children else el.name, tool)
                 unique_objs[key0] = lab
 
                 # handle colors when exporting to STEP
                 if coloredSTEP and current_color:
                     setColor(lab, current_color, ctool)
 
-            tool.AddComponent(subassy, lab, TopLoc_Location())
+            # handle subshape names/colors/layers
+            subshape_colors = el._subshape_colors
+            subshape_names = el._subshape_names
+            subshape_layers = el._subshape_layers
+
+            for k in (
+                subshape_colors.keys() | subshape_names.keys() | subshape_layers.keys()
+            ):
+
+                subshape_label = tool.AddSubShape(lab, k.wrapped)
+
+                # Sanity check, this is in principle enforced when calling addSubshape
+                assert not subshape_label.IsNull(), "Invalid subshape"
+
+                # Set the name
+                if k in subshape_names:
+                    TDataStd_Name.Set_s(
+                        subshape_label, TCollection_ExtendedString(subshape_names[k]),
+                    )
+
+                # Set the individual subshape color
+                if k in subshape_colors:
+                    ctool.SetColor(
+                        subshape_label, subshape_colors[k].wrapped, XCAFDoc_ColorGen,
+                    )
+
+                # Also add a layer to hold the subshape label data
+                if k in subshape_layers:
+                    layer_label = ltool.AddLayer(
+                        TCollection_ExtendedString(subshape_layers[k])
+                    )
+                    ltool.SetLayer(subshape_label, layer_label)
+
+            if el.children:
+                lab = tool.AddComponent(subassy, lab, TopLoc_Location())
+                setName(lab, f"{el.name}_part", tool)
+            else:
+                lab = tool.AddComponent(ancestor, lab, el.loc.wrapped)
+                setName(lab, f"{el.name}", tool)
 
         # handle colors when *not* exporting to STEP
         if not coloredSTEP and current_color:
-            setColor(subassy, current_color, ctool)
+            if el.children:
+                setColor(subassy, current_color, ctool)
+
+            if el.obj:
+                setColor(lab, current_color, ctool)
 
         # add children recursively
         for child in el.children:
             _toCAF(child, subassy, current_color)
 
-        if ancestor:
+        if ancestor and el.children:
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
             rv = subassy
+        elif ancestor:
+            rv = ancestor
         else:
             # update the top level location
             rv = TDF_Label()  # NB: additional label is needed to apply the location

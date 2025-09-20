@@ -6559,6 +6559,20 @@ def check(
     return rv
 
 
+def isSubshape(s1: Shape, s2: Shape) -> bool:
+    """
+    Check if s1 is a subshape of s2.
+    """
+
+    shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
+
+    TopExp.MapShapesAndAncestors_s(
+        s2.wrapped, shapetype(s1.wrapped), inverse_shape_LUT[s2.ShapeType()], shape_map
+    )
+
+    return shape_map.Contains(s1.wrapped)
+
+
 #%% properties
 
 

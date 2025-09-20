@@ -11,12 +11,13 @@ from typing import (
     cast,
     get_args,
 )
-from typing_extensions import Literal
+from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
+from warnings import warn
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound
+from .occ_impl.shapes import Shape, Compound, isSubshape, compound
 from .occ_impl.geom import Location
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
@@ -34,13 +35,14 @@ from .occ_impl.exporters.assembly import (
     exportGLTF,
     STEPExportModeLiterals,
 )
+from .occ_impl.importers.assembly import importStep as _importStep
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
+ExportLiterals = Literal["STEP", "XML", "XBF", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
@@ -155,6 +157,10 @@ class Assembly(object):
 
         rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
 
+        rv._subshape_colors = dict(self._subshape_colors)
+        rv._subshape_names = dict(self._subshape_names)
+        rv._subshape_layers = dict(self._subshape_layers)
+
         for ch in self.children:
             ch_copy = ch._copy()
             ch_copy.parent = rv
@@ -172,7 +178,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Add a subassembly to the current assembly.
 
@@ -194,7 +200,7 @@ class Assembly(object):
         name: Optional[str] = None,
         color: Optional[Color] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Add a subassembly to the current assembly with explicit location and name.
 
@@ -344,11 +350,11 @@ class Assembly(object):
     @overload
     def constrain(
         self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     @overload
-    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> "Assembly":
+    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> Self:
         ...
 
     @overload
@@ -360,13 +366,13 @@ class Assembly(object):
         s2: Shape,
         kind: ConstraintKind,
         param: Any = None,
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     @overload
     def constrain(
         self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     def constrain(self, *args, param=None):
@@ -411,7 +417,7 @@ class Assembly(object):
 
         return self
 
-    def solve(self, verbosity: int = 0) -> "Assembly":
+    def solve(self, verbosity: int = 0) -> Self:
         """
         Solve the constraints.
         """
@@ -506,7 +512,7 @@ class Assembly(object):
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Save assembly to a file.
 
@@ -562,7 +568,7 @@ class Assembly(object):
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Save assembly to a file.
 
@@ -583,7 +589,7 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
+            if t in ("STEP", "XML", "XBF", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
@@ -592,6 +598,8 @@ class Assembly(object):
             exportAssembly(self, path, mode, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
+        elif exportType == "XBF":
+            exportCAF(self, path, binary=True)
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF" or exportType == "GLB":
@@ -611,9 +619,26 @@ class Assembly(object):
         return self
 
     @classmethod
-    def load(cls, path: str) -> "Assembly":
+    def importStep(cls, path: str) -> Self:
+        """
+        Reads an assembly from a STEP file.
 
-        raise NotImplementedError
+        :param path: Path and filename for reading.
+        :return: An Assembly object.
+        """
+
+        assy = cls()
+        _importStep(assy, path)
+
+        return assy
+
+    @classmethod
+    def load(cls, path: str) -> Self:
+        """
+        Alias of importStep for now.
+        """
+
+        return cls.importStep(path)
 
     @property
     def shapes(self) -> List[Shape]:
@@ -714,12 +739,81 @@ class Assembly(object):
         :return: The modified assembly.
         """
 
+        # check if the subshape belongs to the stored object
+        if any(isSubshape(s, obj) for obj in self.shapes):
+            assy = self
+        else:
+            warn(
+                "Current node does not contain any Shapes, searching in subnodes. In the future this will result in an error."
+            )
+
+            found = False
+            for ch in self.children:
+                if any(isSubshape(s, obj) for obj in ch.shapes):
+                    assy = ch
+                    found = True
+                    break
+
+            if not found:
+                raise ValueError(
+                    f"{s} is not a subshape of the current node or its children"
+                )
+
         # Handle any metadata we were passed
         if name:
-            self._subshape_names[s] = name
+            assy._subshape_names[s] = name
         if color:
-            self._subshape_colors[s] = color
+            assy._subshape_colors[s] = color
         if layer:
-            self._subshape_layers[s] = layer
+            assy._subshape_layers[s] = layer
 
         return self
+
+    def __getitem__(self, name: str) -> "Assembly":
+        """
+        [] based access to children.
+        """
+
+        return self.objects[name]
+
+    def _ipython_key_completions_(self) -> List[str]:
+        """
+        IPython autocompletion helper.
+        """
+
+        return list(self.objects.keys())
+
+    def __contains__(self, name: str) -> bool:
+
+        return name in self.objects
+
+    def __getattr__(self, name: str) -> "Assembly":
+        """
+        . based access to children.
+        """
+
+        if name in self.objects:
+            return self.objects[name]
+
+        raise AttributeError
+
+    def __dir__(self):
+        """
+        Modified __dir__ for autocompletion.
+        """
+
+        return list(self.__dict__) + list(ch.name for ch in self.children)
+
+    def __getstate__(self):
+        """
+        Explicit getstate needed due to getattr.
+        """
+
+        return self.__dict__
+
+    def __setstate__(self, d):
+        """
+        Explicit setstate needed due to getattr.
+        """
+
+        self.__dict__ = d
