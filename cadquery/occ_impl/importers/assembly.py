@@ -7,6 +7,9 @@ from OCP.TDocStd import TDocStd_Document
 from OCP.TDataStd import TDataStd_Name
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool
+from OCP.XCAFApp import XCAFApp_Application
+from OCP.XmlXCAFDrivers import XmlXCAFDrivers
+from OCP.BinXCAFDrivers import BinXCAFDrivers
 from OCP.Interface import Interface_Static
 
 from ..assembly import AssemblyProtocol, Color
@@ -39,6 +42,72 @@ def importStep(assy: AssemblyProtocol, path: str):
     :return: None
     """
 
+    # Create and configure a STEP reader
+    step_reader = STEPCAFControl_Reader()
+    step_reader.SetColorMode(True)
+    step_reader.SetNameMode(True)
+    step_reader.SetLayerMode(True)
+    step_reader.SetSHUOMode(True)
+
+    Interface_Static.SetIVal_s("read.stepcaf.subshapes.name", 1)
+
+    # Read the STEP file
+    status = step_reader.ReadFile(path)
+    if status != IFSelect_RetDone:
+        raise ValueError(f"Error reading STEP file: {path}")
+
+    # Document that the step file will be read into
+    doc = TDocStd_Document(TCollection_ExtendedString("XmXCAF"))
+
+    # Transfer the contents of the STEP file to the document
+    step_reader.Transfer(doc)
+
+    _importDoc(doc, assy)
+
+
+def importXbf(assy: AssemblyProtocol, path: str):
+    """
+    Import an xbf file into an assembly.
+
+    :param assy: An Assembly object that will be packed with the contents of the STEP file.
+    :param path: Path and filename to the xbf file to read.
+
+    :return: None
+    """
+
+    app = XCAFApp_Application.GetApplication_s()
+    BinXCAFDrivers.DefineFormat_s(app)
+
+    doc = TDocStd_Document(TCollection_ExtendedString("BinXCAF"))
+
+    app.NewDocument(TCollection_ExtendedString("BinXCAF"), doc)
+    app.Open(TCollection_ExtendedString(path), doc)
+
+    _importDoc(doc, assy)
+
+
+def importXml(assy: AssemblyProtocol, path: str):
+    """
+    Import an xcaf xml file into an assembly.
+
+    :param assy: An Assembly object that will be packed with the contents of the STEP file.
+    :param path: Path and filename to the xml file to read.
+
+    :return: None
+    """
+
+    app = XCAFApp_Application.GetApplication_s()
+    XmlXCAFDrivers.DefineFormat_s(app)
+
+    doc = TDocStd_Document(TCollection_ExtendedString("XmlXCAF"))
+
+    app.NewDocument(TCollection_ExtendedString("XmlXCAF"), doc)
+    app.Open(TCollection_ExtendedString(path), doc)
+
+    _importDoc(doc, assy)
+
+
+def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
     def _process_label(lbl: TDF_Label, parent: AssemblyProtocol):
         """
         Recursive method to process the assembly in a top-down manner.
@@ -159,26 +228,6 @@ def importStep(assy: AssemblyProtocol, path: str):
                             current.addSubshape(Shape.cast(cur_shape), color=cq_color)
 
         return parent
-
-    # Document that the step file will be read into
-    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
-
-    # Create and configure a STEP reader
-    step_reader = STEPCAFControl_Reader()
-    step_reader.SetColorMode(True)
-    step_reader.SetNameMode(True)
-    step_reader.SetLayerMode(True)
-    step_reader.SetSHUOMode(True)
-
-    Interface_Static.SetIVal_s("read.stepcaf.subshapes.name", 1)
-
-    # Read the STEP file
-    status = step_reader.ReadFile(path)
-    if status != IFSelect_RetDone:
-        raise ValueError(f"Error reading STEP file: {path}")
-
-    # Transfer the contents of the STEP file to the document
-    step_reader.Transfer(doc)
 
     # Shape and color tools for extracting XCAF data
     shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())

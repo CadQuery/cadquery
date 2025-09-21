@@ -17,7 +17,7 @@ from uuid import uuid1 as uuid
 from warnings import warn
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound, isSubshape, compound
+from .occ_impl.shapes import Shape, Compound, isSubshape
 from .occ_impl.geom import Location
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
@@ -35,13 +35,14 @@ from .occ_impl.exporters.assembly import (
     exportGLTF,
     STEPExportModeLiterals,
 )
-from .occ_impl.importers.assembly import importStep as _importStep
+from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
+ImportLiterals = Literal["STEP", "XML", "XBF"]
 ExportLiterals = Literal["STEP", "XML", "XBF", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
@@ -625,18 +626,31 @@ class Assembly(object):
         :return: An Assembly object.
         """
 
-        assy = cls()
-        _importStep(assy, path)
-
-        return assy
+        return cls.load(path, importType="STEP")
 
     @classmethod
-    def load(cls, path: str) -> Self:
+    def load(cls, path: str, importType: Optional[ImportLiterals] = None,) -> Self:
         """
-        Alias of importStep for now.
+        Load step, xbf or xml.
         """
 
-        return cls.importStep(path)
+        if importType is None:
+            t = path.split(".")[-1].upper()
+            if t in ("STEP", "XML", "XBF"):
+                importType = cast(ImportLiterals, t)
+            else:
+                raise ValueError("Unknown extension, specify export type explicitly")
+
+        assy = cls()
+
+        if importType == "STEP":
+            _importStep(assy, path)
+        elif importType == "XML":
+            importXml(assy, path)
+        elif importType == "XBF":
+            importXbf(assy, path)
+
+        return assy
 
     @property
     def shapes(self) -> List[Shape]:

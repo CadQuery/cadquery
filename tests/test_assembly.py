@@ -1143,10 +1143,11 @@ def test_nested_subassembly_step_import(tmp_path_factory):
     )
 
 
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
 @pytest.mark.parametrize(
-    "assy_orig", ["subshape_assy", "boxes0_assy", "nested_assy", "simple_assy"]
+    "assy_orig", ["subshape_assy", "boxes0_assy", "nested_assy", "simple_assy"],
 )
-def test_assembly_step_import_roundtrip(assy_orig, tmp_path_factory, request):
+def test_assembly_step_import_roundtrip(assy_orig, kind, tmp_path_factory, request):
     """
     Tests that the assembly does not mutate during successive export-import round trips.
     """
@@ -1155,19 +1156,19 @@ def test_assembly_step_import_roundtrip(assy_orig, tmp_path_factory, request):
 
     # Set up the temporary directory
     tmpdir = tmp_path_factory.mktemp("out")
-    round_trip_step_path = os.path.join(tmpdir, "round_trip.step")
+    round_trip_path = os.path.join(tmpdir, f"round_trip.{kind}")
 
     # First export
-    assy_orig.export(round_trip_step_path)
+    assy_orig.export(round_trip_path)
 
     # First import
-    assy = cq.Assembly.importStep(round_trip_step_path)
+    assy = cq.Assembly.load(round_trip_path)
 
     # Second export
-    assy.export(round_trip_step_path)
+    assy.export(round_trip_path)
 
     # Second import
-    assy = cq.Assembly.importStep(round_trip_step_path)
+    assy = cq.Assembly.importStep(round_trip_path)
 
     # Check some general aspects of the assembly structure now
     for k in assy_orig.objects:
@@ -1176,24 +1177,25 @@ def test_assembly_step_import_roundtrip(assy_orig, tmp_path_factory, request):
     for k in assy.objects:
         assert k in assy_orig
 
-    # First meta export
-    exportStepMeta(assy, round_trip_step_path)
+    if kind == "step":
+        # First meta export
+        exportStepMeta(assy, round_trip_path)
 
-    # First meta import
-    assy = cq.Assembly.importStep(round_trip_step_path)
+        # First meta import
+        assy = cq.Assembly.importStep(round_trip_path)
 
-    # Second meta export
-    exportStepMeta(assy, round_trip_step_path)
+        # Second meta export
+        exportStepMeta(assy, round_trip_path)
 
-    # Second meta import
-    assy = cq.Assembly.importStep(round_trip_step_path)
+        # Second meta import
+        assy = cq.Assembly.importStep(round_trip_path)
 
-    # Check some general aspects of the assembly structure now
-    for k in assy_orig.objects:
-        assert k in assy
+        # Check some general aspects of the assembly structure now
+        for k in assy_orig.objects:
+            assert k in assy
 
-    for k in assy.objects:
-        assert k in assy_orig
+        for k in assy.objects:
+            assert k in assy_orig
 
 
 @pytest.mark.parametrize(
