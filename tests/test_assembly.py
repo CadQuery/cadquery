@@ -1168,7 +1168,7 @@ def test_assembly_step_import_roundtrip(assy_orig, kind, tmp_path_factory, reque
     assy.export(round_trip_path)
 
     # Second import
-    assy = cq.Assembly.importStep(round_trip_path)
+    assy = cq.Assembly.load(round_trip_path)
 
     # Check some general aspects of the assembly structure now
     for k in assy_orig.objects:

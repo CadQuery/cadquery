@@ -1,3 +1,6 @@
+from typing import cast
+from path import Path
+
 from OCP.TopoDS import TopoDS_Shape
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.Quantity import Quantity_ColorRGBA
@@ -8,9 +11,11 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool
 from OCP.XCAFApp import XCAFApp_Application
+from OCP.TDocStd import TDocStd_Application
 from OCP.XmlXCAFDrivers import XmlXCAFDrivers
 from OCP.BinXCAFDrivers import BinXCAFDrivers
 from OCP.Interface import Interface_Static
+from OCP.PCDM import PCDM_ReaderStatus
 
 from ..assembly import AssemblyProtocol, Color
 from ..geom import Location
@@ -75,13 +80,21 @@ def importXbf(assy: AssemblyProtocol, path: str):
     :return: None
     """
 
-    app = XCAFApp_Application.GetApplication_s()
+    app = TDocStd_Application()
     BinXCAFDrivers.DefineFormat_s(app)
 
-    doc = TDocStd_Document(TCollection_ExtendedString("BinXCAF"))
+    dirname, fname = Path(path).absolute().splitpath()
+    doc = cast(
+        TDocStd_Document,
+        app.Retrieve(
+            TCollection_ExtendedString(dirname), TCollection_ExtendedString(fname)
+        ),
+    )
 
-    app.NewDocument(TCollection_ExtendedString("BinXCAF"), doc)
-    app.Open(TCollection_ExtendedString(path), doc)
+    status = app.GetRetrieveStatus()
+    assert (
+        status == PCDM_ReaderStatus.PCDM_RS_OK
+    ), f"Opening of file {path} failed: {status}"
 
     _importDoc(doc, assy)
 
@@ -96,13 +109,21 @@ def importXml(assy: AssemblyProtocol, path: str):
     :return: None
     """
 
-    app = XCAFApp_Application.GetApplication_s()
+    app = TDocStd_Application()
     XmlXCAFDrivers.DefineFormat_s(app)
 
-    doc = TDocStd_Document(TCollection_ExtendedString("XmlXCAF"))
+    dirname, fname = Path(path).absolute().splitpath()
+    doc = cast(
+        TDocStd_Document,
+        app.Retrieve(
+            TCollection_ExtendedString(dirname), TCollection_ExtendedString(fname)
+        ),
+    )
 
-    app.NewDocument(TCollection_ExtendedString("XmlXCAF"), doc)
-    app.Open(TCollection_ExtendedString(path), doc)
+    status = app.GetRetrieveStatus()
+    assert (
+        status == PCDM_ReaderStatus.PCDM_RS_OK
+    ), f"Opening of file {path} failed: {status}"
 
     _importDoc(doc, assy)
 
@@ -236,10 +257,17 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
 
     # Collect all the labels representing shapes in the document
     labels = TDF_LabelSequence()
-    shape_tool.GetFreeShapes(labels)
+    shape_tool.GetShapes(labels)
 
     # Get the top-level label, which should represent an assembly
     top_level_label = labels.Value(1)
+
+    # Get the reference if needed
+    if shape_tool.IsReference_s(top_level_label):
+        tmp = TDF_Label()
+        shape_tool.GetReferredShape_s(top_level_label, tmp)
+        top_level_label = tmp
+
     # Make sure there is a top-level assembly
     if shape_tool.IsTopLevel(top_level_label) and shape_tool.IsAssembly_s(
         top_level_label
