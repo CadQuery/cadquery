@@ -7,7 +7,7 @@ from OCP.Quantity import Quantity_ColorRGBA
 from OCP.TDF import TDF_Label, TDF_LabelSequence
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDocStd import TDocStd_Document
-from OCP.TDataStd import TDataStd_Name
+from OCP.TDataStd import TDataStd_Name, TDataStd_TreeNode
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.XCAFDoc import (
     XCAFDoc_ColorSurf,
@@ -29,7 +29,7 @@ from ..shapes import Shape
 
 def _get_name(label: TDF_Label) -> str:
     """
-    Helper to get a name of a given label.
+    Helper to get the name of a given label.
     """
 
     rv = ""
@@ -43,16 +43,15 @@ def _get_name(label: TDF_Label) -> str:
 
 
 def _get_ref_color(label: TDF_Label) -> Color | None:
+    """
+    Helper to get the instance color of a given label.
+    """
 
-    import OCP
-
-    color_ref_guid = OCP.XCAFDoc.XCAFDoc.ColorRefGUID_s(
-        XCAFDoc_ColorType.XCAFDoc_ColorSurf
-    )
+    color_ref_guid = XCAFDoc.ColorRefGUID_s(XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
     color_ref_guid_generic = XCAFDoc.ColorRefGUID_s(XCAFDoc_ColorType.XCAFDoc_ColorGen)
 
-    attr = OCP.TDataStd.TDataStd_TreeNode()
+    attr = TDataStd_TreeNode()
 
     if label.IsAttribute(color_ref_guid):
         label.FindAttribute(color_ref_guid, attr)
@@ -63,6 +62,7 @@ def _get_ref_color(label: TDF_Label) -> Color | None:
 
         rgb = color.GetRGB()
         rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
+
     elif label.IsAttribute(color_ref_guid_generic):
         label.FindAttribute(color_ref_guid_generic, attr)
         color_label = attr.Father().Label()
@@ -80,6 +80,9 @@ def _get_ref_color(label: TDF_Label) -> Color | None:
 
 
 def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | None:
+    """
+    Helper to get the shape color of a given shape.
+    """
 
     color = Quantity_ColorRGBA()
 
@@ -261,16 +264,11 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                         cur_shape: TopoDS_Shape = shape_tool.GetShape_s(child_label)
 
                         # Handle subshape name
-                        name_attr = TDataStd_Name()
+                        child_name = _get_name(child_label)
 
-                        if child_label.IsAttribute(TDataStd_Name.GetID_s()):
-                            child_label.FindAttribute(
-                                TDataStd_Name.GetID_s(), name_attr
-                            )
-
+                        if child_name:
                             current.addSubshape(
-                                Shape.cast(cur_shape),
-                                name=name_attr.Get().ToExtString(),
+                                Shape.cast(cur_shape), name=child_name,
                             )
 
                         # Find the layer name, if there is one set for this shape
@@ -278,11 +276,8 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                         layer_tool.GetLayers(child_label, layers)
 
                         for lbl in layers:
-                            name_attr = TDataStd_Name()
-                            lbl.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
-
                             # Extract the layer name for the shape here
-                            layer_name = name_attr.Get().ToExtString()
+                            layer_name = _get_name(lbl)
 
                             # Add the layer as a subshape entry on the assembly
                             current.addSubshape(Shape.cast(cur_shape), layer=layer_name)
