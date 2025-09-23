@@ -9,7 +9,7 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDocStd import TDocStd_Document
 from OCP.TDataStd import TDataStd_Name
 from OCP.STEPCAFControl import STEPCAFControl_Reader
-from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool
+from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_ColorTool
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.TDocStd import TDocStd_Application
 from OCP.XmlXCAFDrivers import XmlXCAFDrivers
@@ -33,6 +33,45 @@ def _get_name(label: TDF_Label) -> str:
     if label.IsAttribute(TDataStd_Name.GetID_s()):
         label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
         rv = str(name_attr.Get().ToExtString())
+
+    return rv
+
+
+def _get_ref_color(label: TDF_Label) -> Color | None:
+
+    import OCP
+
+    color_ref_guid = OCP.XCAFDoc.XCAFDoc.ColorRefGUID_s(
+        OCP.XCAFDoc.XCAFDoc_ColorType.XCAFDoc_ColorSurf
+    )
+    attr = OCP.TDataStd.TDataStd_TreeNode()
+
+    if label.IsAttribute(color_ref_guid):
+        label.FindAttribute(color_ref_guid, attr)
+        color_label = attr.Father().Label()
+        color = Quantity_ColorRGBA()
+
+        XCAFDoc_ColorTool.GetColor_s(color_label, color)
+
+        rgb = color.GetRGB()
+        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
+
+    else:
+        rv = None
+
+    return rv
+
+
+def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | None:
+
+    color = Quantity_ColorRGBA()
+
+    # Extract the color, if present on the shape
+    if color_tool.GetColor(s, XCAFDoc_ColorSurf, color):
+        rgb = color.GetRGB()
+        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
+    else:
+        rv = None
 
     return rv
 
@@ -150,6 +189,9 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                 ref_label = TDF_Label()
                 shape_tool.GetReferredShape_s(comp_label, ref_label)
 
+                # get (if it exists the color of the comp label)
+                color = _get_ref_color(comp_label)
+
                 if shape_tool.IsAssembly_s(ref_label):
                     # Find the name of this referenced part
                     ref_name = _get_name(ref_label)
@@ -160,7 +202,7 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                     _ = _process_label(ref_label, sub_assy)
 
                     # Add the subassy
-                    parent.add(sub_assy, name=ref_name, loc=cq_loc)
+                    parent.add(sub_assy, name=ref_name, loc=cq_loc, color=color)
 
                 elif shape_tool.IsSimpleShape_s(ref_label):
                     # Find the name of this referenced part
@@ -170,30 +212,22 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                     final_shape = shape_tool.GetShape_s(ref_label)
                     cq_shape = Shape.cast(final_shape)
 
-                    # Find the shape color, if there is one set for this shape
-                    color = Quantity_ColorRGBA()
-
-                    # Extract the color, if present on the shape
-                    if color_tool.GetColor(final_shape, XCAFDoc_ColorSurf, color):
-                        rgb = color.GetRGB()
-                        cq_color = Color(
-                            rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha()
-                        )
-                    else:
-                        cq_color = None
+                    # If the instance has no color, try to find the refernced shape color
+                    if color is None:
+                        color = _get_shape_color(final_shape, color_tool)
 
                     # this if/else is needed to handle different structures of STEP files
                     # "*"/"*_part" based naming is the default strucutre produced by CQ
                     if ref_name.endswith("_part"):
                         parent.obj = cq_shape
                         parent.loc = cq_loc
-                        parent.color = cq_color
+                        parent.color = color
 
                         # change the current assy to handle subshape data
                         current = parent
                     else:
                         tmp = assy.__class__(
-                            cq_shape, loc=cq_loc, name=comp_name, color=cq_color
+                            cq_shape, loc=cq_loc, name=comp_name, color=color
                         )
                         parent.add(tmp)
 
@@ -237,16 +271,10 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                             current.addSubshape(Shape.cast(cur_shape), layer=layer_name)
 
                         # Find the subshape color, if there is one set for this shape
-                        color = Quantity_ColorRGBA()
-                        # Extract the color, if present on the shape
-                        if color_tool.GetColor(cur_shape, XCAFDoc_ColorSurf, color):
-                            rgb = color.GetRGB()
-                            cq_color = Color(
-                                rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(),
-                            )
-
+                        color = _get_shape_color(cur_shape, color_tool)
+                        if color:
                             # Save the color info via the assembly subshape mechanism
-                            current.addSubshape(Shape.cast(cur_shape), color=cq_color)
+                            current.addSubshape(Shape.cast(cur_shape), color=color)
 
         return parent
 
@@ -257,7 +285,7 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
 
     # Collect all the labels representing shapes in the document
     labels = TDF_LabelSequence()
-    shape_tool.GetShapes(labels)
+    shape_tool.GetFreeShapes(labels)
 
     # Get the top-level label, which should represent an assembly
     top_level_label = labels.Value(1)
