@@ -886,13 +886,14 @@ def test_assembly_step_import(tmp_path_factory, subshape_assy):
         imported_assy = cq.Assembly.importStep(wp_step_path)
 
 
-def test_assembly_subshape_step_import(tmp_path_factory, subshape_assy):
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+def test_assembly_subshape_import(tmp_path_factory, subshape_assy, kind):
     """
-    Test if a STEP file containing subshape information can be imported correctly.
+    Test if a STEP/XBF/XML file containing subshape information can be imported correctly.
     """
 
     tmpdir = tmp_path_factory.mktemp("out")
-    assy_step_path = os.path.join(tmpdir, "subshape_assy.step")
+    assy_step_path = os.path.join(tmpdir, f"subshape_assy.{kind}")
 
     # Export the assembly
     subshape_assy.export(assy_step_path)
@@ -915,11 +916,8 @@ def test_assembly_subshape_step_import(tmp_path_factory, subshape_assy):
     layer_name = list(imported_assy["cube_1"]._subshape_layers.values())[0]
     assert layer_name == "cube_1_top_face"
 
-    layer_name = list(imported_assy["cyl_1"]._subshape_layers.values())[0]
-    assert layer_name == "cylinder_bottom_face"
-
-    layer_name = list(imported_assy["cyl_1"]._subshape_layers.values())[1]
-    assert layer_name == "cylinder_bottom_wire"
+    assert "cylinder_bottom_face" in imported_assy["cyl_1"]._subshape_layers.values()
+    assert "cylinder_bottom_wire" in imported_assy["cyl_1"]._subshape_layers.values()
 
 
 def test_assembly_multi_subshape_step_import(tmp_path_factory):

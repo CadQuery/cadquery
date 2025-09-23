@@ -9,8 +9,13 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDocStd import TDocStd_Document
 from OCP.TDataStd import TDataStd_Name
 from OCP.STEPCAFControl import STEPCAFControl_Reader
-from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_ColorTool
-from OCP.XCAFApp import XCAFApp_Application
+from OCP.XCAFDoc import (
+    XCAFDoc_ColorSurf,
+    XCAFDoc_DocumentTool,
+    XCAFDoc_ColorTool,
+    XCAFDoc,
+    XCAFDoc_ColorType,
+)
 from OCP.TDocStd import TDocStd_Application
 from OCP.XmlXCAFDrivers import XmlXCAFDrivers
 from OCP.BinXCAFDrivers import BinXCAFDrivers
@@ -42,12 +47,24 @@ def _get_ref_color(label: TDF_Label) -> Color | None:
     import OCP
 
     color_ref_guid = OCP.XCAFDoc.XCAFDoc.ColorRefGUID_s(
-        OCP.XCAFDoc.XCAFDoc_ColorType.XCAFDoc_ColorSurf
+        XCAFDoc_ColorType.XCAFDoc_ColorSurf
     )
+
+    color_ref_guid_generic = XCAFDoc.ColorRefGUID_s(XCAFDoc_ColorType.XCAFDoc_ColorGen)
+
     attr = OCP.TDataStd.TDataStd_TreeNode()
 
     if label.IsAttribute(color_ref_guid):
         label.FindAttribute(color_ref_guid, attr)
+        color_label = attr.Father().Label()
+        color = Quantity_ColorRGBA()
+
+        XCAFDoc_ColorTool.GetColor_s(color_label, color)
+
+        rgb = color.GetRGB()
+        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
+    elif label.IsAttribute(color_ref_guid_generic):
+        label.FindAttribute(color_ref_guid_generic, attr)
         color_label = attr.Father().Label()
         color = Quantity_ColorRGBA()
 
@@ -271,7 +288,12 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                             current.addSubshape(Shape.cast(cur_shape), layer=layer_name)
 
                         # Find the subshape color, if there is one set for this shape
-                        color = _get_shape_color(cur_shape, color_tool)
+
+                        # try the instance first
+                        color = _get_ref_color(child_label)
+
+                        if not color:
+                            color = _get_shape_color(cur_shape, color_tool)
                         if color:
                             # Save the color info via the assembly subshape mechanism
                             current.addSubshape(Shape.cast(cur_shape), color=color)
