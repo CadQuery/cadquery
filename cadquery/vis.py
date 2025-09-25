@@ -10,6 +10,9 @@ from . import (
     Face,
     Edge,
 )
+import queue
+import threading
+
 from .occ_impl.assembly import _loc2vtk, toVTKAssy
 
 from typing import Union, Any, List, Tuple, Iterable, cast, Optional
@@ -19,6 +22,8 @@ from typish import instance_of
 from OCP.TopoDS import TopoDS_Shape
 from OCP.Geom import Geom_BSplineSurface
 
+import vtk
+from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
@@ -552,3 +557,122 @@ def show(
 
 # alias
 show_object = show
+
+def shape_to_polydata_from_cq(shape, tol=0.1):
+    verts, faces = shape.tessellate(tol)
+
+    if not verts or not faces:
+        return None
+
+    points = vtk.vtkPoints()
+    for v in verts:
+        points.InsertNextPoint((v.x, v.y, v.z))
+
+    polys = vtk.vtkCellArray()
+    for f in faces:
+        polys.InsertNextCell(len(f))
+        for vid in f:
+            polys.InsertCellPoint(int(vid))
+
+    polydata = vtk.vtkPolyData()
+    polydata.SetPoints(points)
+    polydata.SetPolys(polys)
+    return polydata
+
+
+class LiveVTKViewer:
+    def __init__(self, initial_shape):
+        self.queue = queue.Queue()
+        self.actor = None
+        self.mapper = None
+        self.renderer = None
+        self.render_window = None
+        self.interactor = None
+        self._thread = threading.Thread(
+            target=self._vtk_thread, args=(initial_shape,), daemon=True
+        )
+        self._thread.start()
+
+    def _vtk_thread(self, initial_shape):
+        polydata = shape_to_polydata_from_cq(initial_shape)
+        if polydata is None:
+            raise ValueError(
+                "Initial shape could not be converted to VTK PolyData"
+            )
+
+        self.mapper = vtk.vtkPolyDataMapper()
+        self.mapper.SetInputData(polydata)
+        self.actor = vtk.vtkActor()
+        self.actor.SetMapper(self.mapper)
+
+        self.renderer = vtk.vtkRenderer()
+        self.renderer.AddActor(self.actor)
+        self.renderer.SetBackground(0.1, 0.1, 0.1)
+
+        self.render_window = vtk.vtkRenderWindow()
+        self.render_window.SetWindowName("Live VTK Viewer")
+        self.render_window.AddRenderer(self.renderer)
+
+        self.interactor = vtk.vtkRenderWindowInteractor()
+        self.interactor.SetInteractorStyle(
+            vtkInteractorStyleTrackballCamera()
+        )
+        self.interactor.SetRenderWindow(self.render_window)
+
+        axes = vtkAxesActor()
+        orient_widget = vtkOrientationMarkerWidget()
+        orient_widget.SetOrientationMarker(axes)
+        orient_widget.SetViewport(0.0, 0.0, 0.2, 0.2)
+        orient_widget.SetInteractor(self.interactor)
+        orient_widget.EnabledOn()
+        orient_widget.InteractiveOff()
+
+        def on_close(obj, event):
+            print("[DEBUG] VTK window closed by user", flush=True)
+            self.queue.put(None)
+
+        self.render_window.AddObserver("DeleteEvent", on_close)
+
+        def on_keypress(obj, event):
+            key = obj.GetKeySym()
+            if key.lower() == "escape":
+                print("[DEBUG] Escape pressed", flush=True)
+                self.queue.put(None)
+
+        self.interactor.AddObserver("KeyPressEvent", on_keypress)
+
+        self.interactor.Initialize()
+        self.renderer.ResetCamera()
+        self.render_window.Render()
+
+        while True:
+            try:
+                shape_update = self.queue.get(timeout=0.01)
+                if shape_update is None:
+                    break
+
+                polydata_new = shape_to_polydata_from_cq(shape_update)
+                if polydata_new:
+                    self.mapper.SetInputData(polydata_new)
+                    self.mapper.Update()
+                    self.renderer.ResetCamera()
+                    self.render_window.Render()
+            except queue.Empty:
+                self.interactor.ProcessEvents()
+                continue
+
+        self.render_window.Finalize()
+        self.interactor.TerminateApp()
+
+    def update(self, new_shape):
+        self.queue.put(new_shape)
+
+    def close(self):
+        self.queue.put(None)
+        self._thread.join()
+
+
+def show_live(initial_shape):
+    if isinstance(initial_shape, Workplane):
+        initial_shape = initial_shape.val()
+    return LiveVTKViewer(initial_shape)
