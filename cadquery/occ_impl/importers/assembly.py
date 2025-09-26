@@ -90,9 +90,6 @@ def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | 
     if color_tool.GetColor(s, XCAFDoc_ColorSurf, color):
         rgb = color.GetRGB()
         rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(), False)
-    elif color_tool.GetColor(s, XCAFDoc_ColorType.XCAFDoc_ColorGen, color):
-        rgb = color.GetRGB()
-        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(), False)
     else:
         rv = None
 
@@ -290,8 +287,6 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                         # try the instance first
                         color = _get_ref_color(child_label)
 
-                        if not color:
-                            color = _get_shape_color(cur_shape, color_tool)
                         if color:
                             # Save the color info via the assembly subshape mechanism
                             current.addSubshape(Shape.cast(cur_shape), color=color)
