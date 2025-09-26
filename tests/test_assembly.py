@@ -382,7 +382,7 @@ def subshape_assy():
         cube_1.faces(">Z").val(),
         name="cube_1_top_face",
         color=cq.Color("red"),
-        layer="cube_1_top_face",
+        layer="cube_1_top_face_layer",
     )
 
     # Add a cylinder to the assembly
@@ -396,7 +396,7 @@ def subshape_assy():
         cyl_1.faces("<Z").val(),
         name="cylinder_bottom_face",
         color=cq.Color("green"),
-        layer="cylinder_bottom_face",
+        layer="cylinder_bottom_face_layer",
     )
 
     # Add a subshape wire for the cylinder
@@ -404,7 +404,7 @@ def subshape_assy():
         cyl_1.wires("<Z").val(),
         name="cylinder_bottom_wire",
         color=cq.Color("blue"),
-        layer="cylinder_bottom_wire",
+        layer="cylinder_bottom_wire_layer",
     )
 
     return assy
@@ -953,10 +953,14 @@ def test_assembly_subshape_import(tmp_path_factory, subshape_assy, kind):
 
     # Check the layer info
     layer_name = list(imported_assy["cube_1"]._subshape_layers.values())[0]
-    assert layer_name == "cube_1_top_face"
+    assert layer_name == "cube_1_top_face_layer"
 
-    assert "cylinder_bottom_face" in imported_assy["cyl_1"]._subshape_layers.values()
-    assert "cylinder_bottom_wire" in imported_assy["cyl_1"]._subshape_layers.values()
+    assert (
+        "cylinder_bottom_face_layer" in imported_assy["cyl_1"]._subshape_layers.values()
+    )
+    assert (
+        "cylinder_bottom_wire_layer" in imported_assy["cyl_1"]._subshape_layers.values()
+    )
 
 
 @pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
@@ -1431,7 +1435,7 @@ def test_leaf_node_count(assy_fixture, count, request):
     assert len(get_doc_nodes(doc, True)) == count
 
 
-def check_colors(assy, assy_i):
+def check_assy(assy, assy_i):
 
     for k in assy.objects:
 
@@ -1451,13 +1455,31 @@ def check_colors(assy, assy_i):
         # check names
         assert ref.name == val.name
 
+        # check subshape names
+        if ref._subshape_names:
+            for v in ref._subshape_names.values():
+                assert v in val._subshape_names.values()
+
+        # check subshape layers
+        if ref._subshape_layers:
+            for v in ref._subshape_layers.values():
+                assert v in val._subshape_layers.values()
+
+        # check colors
+        if ref._subshape_colors:
+            colors = set(v.toTuple() for v in ref._subshape_colors.values())
+
+            for v in val._subshape_colors.values():
+                assert v.toTuple() in colors
+
 
 @pytest.mark.parametrize("kind", ["xbf", "xml"])
-@pytest.mark.parametrize("assy_fixture", ["chassis0_assy", "boxes1_assy"])
+@pytest.mark.parametrize(
+    "assy_fixture",
+    ["chassis0_assy", "boxes1_assy", "subshape_assy", "multi_subshape_assy"],
+)
 def test_colors_assy0(assy_fixture, request, tmpdir, kind):
-    """Validate assembly colors with document explorer.
-
-    Check toCAF wth color shape parameter False.
+    """Validate assembly roundtrip, checks colors, locs, names, subshapes.
     """
 
     assy = request.getfixturevalue(assy_fixture)
@@ -1466,7 +1488,7 @@ def test_colors_assy0(assy_fixture, request, tmpdir, kind):
 
     assy_i = assy.load(stepfile)
 
-    check_colors(assy, assy_i)
+    check_assy(assy, assy_i)
 
 
 @pytest.mark.parametrize("kind", ["step", "xbf"])
@@ -1482,6 +1504,8 @@ def test_colors_assy0(assy_fixture, request, tmpdir, kind):
         "boxes0_assy",
         "nested_assy",
         "empty_top_assy",
+        "subshape_assy",
+        "multi_subshape_assy",
     ],
 )
 def test_colors_assy1(assy_fixture, request, tmpdir, kind):
@@ -1496,7 +1520,7 @@ def test_colors_assy1(assy_fixture, request, tmpdir, kind):
 
     assy_i = assy.load(stepfile)
 
-    check_colors(assy, assy_i)
+    check_assy(assy, assy_i)
 
 
 @pytest.mark.parametrize(
