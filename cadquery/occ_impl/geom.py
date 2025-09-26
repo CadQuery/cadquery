@@ -1009,15 +1009,22 @@ class Location(object):
     ) -> None:
         """Location with translation (x,y,z) and 3 rotation angles."""
 
-        T = gp_Trsf()
+        if any((x, y, z, rx, ry, rz)):
 
-        q = gp_Quaternion()
-        q.SetEulerAngles(gp_Extrinsic_XYZ, radians(rx), radians(ry), radians(rz))
+            T = gp_Trsf()
 
-        T.SetRotation(q)
-        T.SetTranslationPart(Vector(x, y, z).wrapped)
+            q = gp_Quaternion()
+            q.SetEulerAngles(gp_Extrinsic_XYZ, radians(rx), radians(ry), radians(rz))
 
-        self.wrapped = TopLoc_Location(T)
+            T.SetRotation(q)
+            T.SetTranslationPart(Vector(x, y, z).wrapped)
+
+            loc = TopLoc_Location(T)
+        else:
+            # in this case location is flagged as identity
+            loc = TopLoc_Location()
+
+        self.wrapped = loc
 
     @__init__.register
     def __init__(self, t: Plane) -> None:
@@ -1118,4 +1125,7 @@ class Location(object):
         ls = BinTools_LocationSet()
         ls.Read(data)
 
-        self.wrapped = ls.Location(1)
+        if ls.NbLocations() > 0:
+            self.wrapped = ls.Location(1)
+        else:
+            self.wrapped = TopLoc_Location()  # identity location

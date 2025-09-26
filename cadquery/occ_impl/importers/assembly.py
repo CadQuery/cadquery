@@ -61,7 +61,7 @@ def _get_ref_color(label: TDF_Label) -> Color | None:
         XCAFDoc_ColorTool.GetColor_s(color_label, color)
 
         rgb = color.GetRGB()
-        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
+        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(), False)
 
     elif label.IsAttribute(color_ref_guid_generic):
         label.FindAttribute(color_ref_guid_generic, attr)
@@ -71,7 +71,7 @@ def _get_ref_color(label: TDF_Label) -> Color | None:
         XCAFDoc_ColorTool.GetColor_s(color_label, color)
 
         rgb = color.GetRGB()
-        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
+        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(), False)
 
     else:
         rv = None
@@ -89,7 +89,10 @@ def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | 
     # Extract the color, if present on the shape
     if color_tool.GetColor(s, XCAFDoc_ColorSurf, color):
         rgb = color.GetRGB()
-        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha())
+        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(), False)
+    elif color_tool.GetColor(s, XCAFDoc_ColorType.XCAFDoc_ColorGen, color):
+        rgb = color.GetRGB()
+        rv = Color(rgb.Red(), rgb.Green(), rgb.Blue(), color.Alpha(), False)
     else:
         rv = None
 
@@ -307,6 +310,8 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
     # Get the top-level label, which should represent an assembly
     top_level_label = labels.Value(1)
 
+    cq_color = _get_ref_color(top_level_label)
+
     # Get the reference if needed
     if shape_tool.IsReference_s(top_level_label):
         tmp = TDF_Label()
@@ -325,13 +330,20 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
         assy.objects.pop(assy.name)
         assy.name = str(name_attr.Get().ToExtString())
         assy.objects[assy.name] = assy
+        if cq_color:
+            assy.color = cq_color
 
         # Get the location of the top-level component
-        comp_labels = TDF_LabelSequence()
-        shape_tool.GetComponents_s(top_level_label, comp_labels)
-        comp_label = comp_labels.Value(1)
-        loc = shape_tool.GetLocation_s(comp_label)
-        assy.loc = Location(loc)
+        loc = shape_tool.GetLocation_s(top_level_label)
+        cq_loc = Location(loc)
+
+        if not cq_loc.wrapped.IsIdentity() and cq_loc.toTuple() == (
+            (0, 0, 0),
+            (0, 0, 0),
+        ):
+            assy.loc = Location()
+        else:
+            assy.loc = cq_loc
 
         # Start the recursive processing of labels
         imported_assy = assy.__class__()
@@ -343,6 +355,11 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
         # node and so does not exhibit this behavior.
         if assy.name in imported_assy:
             imported_assy = imported_assy[assy.name]
+            # comp_labels = TDF_LabelSequence()
+            # shape_tool.GetComponents_s(top_level_label, comp_labels)
+            # comp_label = comp_labels.Value(1)
+            # breakpoint()
+            assy.loc = imported_assy.loc
 
         # Copy all of the children over to the main assembly object
         for child in imported_assy.children:

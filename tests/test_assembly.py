@@ -627,11 +627,23 @@ def test_color():
     assert c3.wrapped.GetRGB().Red() == 1
     assert c3.wrapped.Alpha() == 0.5
 
+    # test for srgb
+    c4 = cq.Color(0.5, 0.2, 0, 0.5, True)
+    assert c4.wrapped.GetRGB().Red() != 0.5
+    assert c4.wrapped.GetRGB().Green() != 0.2
+    assert c4.wrapped.Alpha() == 0.5
+
+    # test for linear rgb
+    c4 = cq.Color(0.5, 0.2, 0, 0.5, False)
+    assert c4.wrapped.GetRGB().Red() == pytest.approx(0.5)
+    assert c4.wrapped.GetRGB().Green() == pytest.approx(0.2)
+    assert c4.wrapped.Alpha() == 0.5
+
     with pytest.raises(ValueError):
         cq.Color("?????")
 
     with pytest.raises(ValueError):
-        cq.Color(1, 2, 3, 4, 5)
+        cq.Color(1, 2, 3, 4, 5, 6)
 
 
 def test_assembly(simple_assy, nested_assy):
@@ -1419,198 +1431,72 @@ def test_leaf_node_count(assy_fixture, count, request):
     assert len(get_doc_nodes(doc, True)) == count
 
 
-@pytest.mark.parametrize(
-    "assy_fixture, expected",
-    [
-        (
-            "chassis0_assy",
-            [
-                (
-                    ["chassis", "wheel-axle.*", "wheel:.*"],
-                    {"color": (1.0, 0.0, 0.0, 1.0), "num_nodes": 4,},
-                ),
-                (
-                    ["chassis", "wheel-axle.*", "axle"],
-                    {"color": (0.0, 1.0, 0.0, 1.0), "num_nodes": 2,},
-                ),
-            ],
-        ),
-    ],
-)
-def test_colors_assy0(assy_fixture, expected, request):
+def check_colors(assy, assy_i):
+
+    for k in assy.objects:
+
+        ref = assy[k]
+        val = assy_i[k]
+
+        # check colors
+        if ref.color:
+            assert ref.color.toTuple() == pytest.approx(val.color.toTuple())
+        else:
+            assert val.color is None
+
+        # check loc
+        assert pytest.approx(ref.loc.toTuple()[0]) == val.loc.toTuple()[0]
+        assert pytest.approx(ref.loc.toTuple()[1]) == val.loc.toTuple()[1]
+
+        # check names
+        assert ref.name == val.name
+
+
+@pytest.mark.parametrize("kind", ["xbf", "xml"])
+@pytest.mark.parametrize("assy_fixture", ["chassis0_assy", "boxes1_assy"])
+def test_colors_assy0(assy_fixture, request, tmpdir, kind):
     """Validate assembly colors with document explorer.
 
     Check toCAF wth color shape parameter False.
     """
 
-    def check_nodes(doc, expected):
-        allnodes = get_doc_nodes(doc, False)
-        for name_path, props in expected:
-            nodes = find_node(allnodes, name_path)
-            if "num_nodes" in props:
-                assert len(nodes) == props["num_nodes"]
-                props.pop("num_nodes")
-            else:
-                assert len(nodes) > 0
-            for n in nodes:
-                for k, v in props.items():
-                    assert pytest.approx(n[k], abs=1e-3) == v
-
     assy = request.getfixturevalue(assy_fixture)
-    _, doc = toCAF(assy, False)
-    check_nodes(doc, expected)
+    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(f".{kind}")
+    assy.export(stepfile)
+
+    assy_i = assy.load(stepfile)
+
+    check_colors(assy, assy_i)
 
 
+@pytest.mark.parametrize("kind", ["step", "xbf"])
 @pytest.mark.parametrize(
-    "assy_fixture, expected",
+    "assy_fixture",
     [
-        (
-            "nested_assy",
-            [
-                (
-                    ["TOP", "SECOND", "SECOND_part"],
-                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
-                ),
-                (
-                    ["TOP", "SECOND", "BOTTOM"],
-                    {
-                        "color_shape": (0.0, 1.0, 0.0, 1.0),
-                        "color_subshapes": (0.0, 1.0, 0.0, 1.0),
-                    },
-                ),
-            ],
-        ),
-        ("empty_top_assy", [(["top", "b"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),]),
-        (
-            "boxes0_assy",
-            [
-                (["box0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes1_assy",
-            [
-                (["box0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes2_assy",
-            [
-                (["box0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes3_assy",
-            [
-                (["box0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (
-                    ["box1"],
-                    {"color_shape": cq.Color().toTuple()},
-                ),  # default color when unspecified
-            ],
-        ),
-        (
-            "boxes4_assy",
-            [
-                (["box_0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box_1"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes5_assy",
-            [
-                (["box:a"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box:b"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes6_assy",
-            [
-                (["box__0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box__1"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes7_assy",
-            [
-                (["box_0"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-                (["another box"], {"color_shape": (0.23, 0.26, 0.26, 0.6)},),
-            ],
-        ),
-        (
-            "chassis0_assy",
-            [
-                (
-                    ["chassis", "wheel-axle-front", "wheel:left"],
-                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-front", "wheel:right"],
-                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-rear", "wheel:left"],
-                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-rear", "wheel:right"],
-                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-front", "axle"],
-                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-rear", "axle"],
-                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
-                ),
-            ],
-        ),
+        "boxes7_assy",
+        "boxes6_assy",
+        "boxes5_assy",
+        "boxes4_assy",
+        "boxes3_assy",
+        "boxes2_assy",
+        "boxes0_assy",
+        "nested_assy",
+        "empty_top_assy",
     ],
 )
-def test_colors_assy1(assy_fixture, expected, request, tmpdir):
+def test_colors_assy1(assy_fixture, request, tmpdir, kind):
     """Validate assembly colors with document explorer.
 
     Check both documents created with toCAF and STEP export round trip.
     """
 
-    def check_nodes(doc, expected, is_STEP=False):
-        expected = copy.deepcopy(expected)
-        allnodes = get_doc_nodes(doc, False)
-        for name_path, props in expected:
-            nodes = find_node(allnodes, name_path)
-            if "num_nodes" in props:
-                assert len(nodes) == props["num_nodes"]
-                props.pop("num_nodes")
-            else:
-                assert len(nodes) > 0
-            for n in nodes:
-                if not is_STEP:
-                    if "color_subshapes" in props:
-                        props.pop("color_subshapes")
-                for k, v in props.items():
-                    if (
-                        k == "color_shape"
-                        and "color_subshapes" in props
-                        and props["color_subshapes"]
-                    ):
-                        continue
-                    assert pytest.approx(n[k], abs=1e-3) == v
-
     assy = request.getfixturevalue(assy_fixture)
-    _, doc = toCAF(assy, True)
-    check_nodes(doc, expected)
+    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(f".{kind}")
+    assy.export(stepfile)
 
-    # repeat color check again - after STEP export round trip
-    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(".step")
-    if not stepfile.exists():
-        assy.save(str(stepfile))
-    doc = read_step(stepfile)
-    check_nodes(doc, expected, True)
+    assy_i = assy.load(stepfile)
+
+    check_colors(assy, assy_i)
 
 
 @pytest.mark.parametrize(

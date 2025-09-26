@@ -526,38 +526,9 @@ class Assembly(object):
         :type ascii: bool
         """
 
-        # Make sure the export mode setting is correct
-        if mode not in get_args(STEPExportModeLiterals):
-            raise ValueError(f"Unknown assembly export mode {mode} for STEP")
-
-        if exportType is None:
-            t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
-                exportType = cast(ExportLiterals, t)
-            else:
-                raise ValueError("Unknown extension, specify export type explicitly")
-
-        if exportType == "STEP":
-            exportAssembly(self, path, mode, **kwargs)
-        elif exportType == "XML":
-            exportCAF(self, path)
-        elif exportType == "VRML":
-            exportVRML(self, path, tolerance, angularTolerance)
-        elif exportType == "GLTF" or exportType == "GLB":
-            exportGLTF(self, path, None, tolerance, angularTolerance)
-        elif exportType == "VTKJS":
-            exportVTKJS(self, path)
-        elif exportType == "STL":
-            # Handle the ascii setting for STL export
-            export_ascii = False
-            if "ascii" in kwargs:
-                export_ascii = bool(kwargs.get("ascii"))
-
-            self.toCompound().exportStl(path, tolerance, angularTolerance, export_ascii)
-        else:
-            raise ValueError(f"Unknown format: {exportType}")
-
-        return self
+        return self.export(
+            path, exportType, mode, tolerance, angularTolerance, **kwargs
+        )
 
     def export(
         self,
