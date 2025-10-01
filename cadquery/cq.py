@@ -2305,9 +2305,6 @@ class Workplane(object):
             consolidated.objects.append(w)
             consolidated._addPendingWire(w)
 
-        # Reset the first point for the next operation
-        self.ctx.firstPoint = None
-
         # attempt again to consolidate all of the wires
         return consolidated.consolidateWires()
 
@@ -2333,9 +2330,6 @@ class Workplane(object):
         for w in mirroredWires:
             consolidated.objects.append(w)
             consolidated._addPendingWire(w)
-
-        # Reset the first point for the next operation
-        self.ctx.firstPoint = None
 
         # attempt again to consolidate all of the wires
         return consolidated.consolidateWires()
@@ -2400,6 +2394,7 @@ class Workplane(object):
         r = self.newObject(w)
         r.ctx.pendingWires = w
         r.ctx.pendingEdges = []
+        r.ctx.firstPoint = None
 
         return r
 
