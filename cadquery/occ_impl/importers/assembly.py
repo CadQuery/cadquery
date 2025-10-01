@@ -232,12 +232,13 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                     final_shape = shape_tool.GetShape_s(ref_label)
                     cq_shape = Shape.cast(final_shape)
 
-                    # If the instance has no color, try to find the refernced shape color
+                    # If the instance has no color, try to find the referenced shape color
                     if color is None:
                         color = _get_shape_color(final_shape, color_tool)
 
                     # this if/else is needed to handle different structures of STEP files
-                    # "*"/"*_part" based naming is the default strucutre produced by CQ
+                    # "*"/"*_part" based naming is the default structure produced by CQ
+                    # with an object and child nodes at the same time
                     if ref_name.endswith("_part"):
                         parent.obj = cq_shape
                         parent.loc = cq_loc
