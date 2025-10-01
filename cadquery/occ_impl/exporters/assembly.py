@@ -275,7 +275,7 @@ def exportStepMeta(
 
 def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
     """
-    Export an assembly to ax XCAF xml or xbf file (internal OCCT formats).
+    Export an assembly to an XCAF xml or xbf file (internal OCCT formats).
     """
 
     folder, fname = os.path.split(path)
