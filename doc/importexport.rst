@@ -19,6 +19,8 @@ Import Formats
 
 * DXF
 * STEP
+* XML (XCAF)
+* XBF
 
 Export Formats
 ---------------
@@ -33,6 +35,8 @@ Export Formats
 * VTP
 * 3MF
 * glTF
+* XML (XCAF)
+* XBF
 
 Notes on the Formats
 ---------------------
@@ -44,6 +48,8 @@ Notes on the Formats
 * VRML is a mesh-based format for representing interactive 3D objects in a web browser.
 * VTP is a mesh-based format used by the VTK library.
 * glTF is a mesh-based format useful for viewing models on the web. Whether the resulting glTF file is binary (.glb) or text (.gltf) is set by the file extension. This export format is only available for assemblies.
+* XML is an internal OCCT format for assemblies
+* XBF is an internal OCCT binary format for assemblies
 
 Importing DXF
 ##############
@@ -134,17 +140,17 @@ or the :meth:`Assembly.exportAssembly`` method.
    box.val().export("/path/to/step/box2.step", opt={"write_pcurves": False})
 
 
-Exporting Assemblies to STEP
-#############################
+Exporting Assemblies
+####################
 
-It is possible to export CadQuery assemblies directly to STEP. The STEP exporter has multiple options which change the way
+It is possible to export CadQuery assemblies directly to STEP, XBF or XML. The exporter has multiple options which change the way
 exported STEP files will appear and operate when opened in other CAD programs. All assembly export methods shown here will
 preserve the color information from the assembly.
 
 Default
 --------
 
-CadQuery assemblies have a :meth:`Assembly.export` method which can write an assembly to a STEP file. An example assembly
+CadQuery assemblies have a :meth:`Assembly.export` method which can write an assembly to a file. An example assembly
 export with all defaults is shown below.
 
 .. code-block:: python
@@ -160,6 +166,12 @@ export with all defaults is shown below.
 
    # Save the assembly to STEP
    assy.export("out.step")
+
+   # Save the assembly to XBF
+   assy.export("out.xbf")
+
+   # Save the assembly to XML
+   assy.export("out.xml")
 
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
@@ -205,10 +217,13 @@ This is done by setting the name property of the assembly before calling :meth:`
 
 If an assembly name is not specified, a UUID will be used to avoid name conflicts.
 
-Exporting Assemblies to STEP with Metadata
-###########################################
+Exporting Assemblies with Metadata
+----------------------------------
 
-It is possible to attach metadata to the assembly that will be included in the STEP file. This metadata can be attached to arbitrary shapes and includes names, colors and layers. This is done by using the :meth:`Assembly.addSubshape` method before calling :meth:`cadquery.occ_impl.exporters.assembly.exportStepMeta`.
+It is possible to attach metadata to the assembly that will be included in the output file. 
+This metadata can be attached to arbitrary shapes and includes names, colors and layers. 
+This is done by using the :meth:`Assembly.addSubshape` method before calling '
+':meth:`cadquery.Assembly.export` or ':meth:`cadquery.occ_impl.exporters.assembly.exportStepMeta`.
 
 .. code-block:: python
 
@@ -229,7 +244,14 @@ It is possible to attach metadata to the assembly that will be included in the S
    )
 
    # Export the assembly to STEP with metadata
-   exportStepMeta(assy, "out.step")
+   assy.export("out.step")
+
+
+Importing Assemblies
+####################
+
+It is possible to import CadQuery assemblies from STEP, XBF or XML files using the :meth:`Assembly.load`.
+Note that this method will create a new assembly if invoked from an instance.
 
 Exporting Assemblies to glTF
 #############################

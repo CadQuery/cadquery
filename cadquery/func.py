@@ -51,4 +51,5 @@ from .occ_impl.shapes import (
     setThreads,
     project,
     faceOn,
+    isSubshape,
 )
