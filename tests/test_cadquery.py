@@ -5925,3 +5925,7 @@ class TestCadQuery(BaseTest):
 
         # check if an Edge was created
         assert isinstance(res.val(), Edge)
+
+        # check that errors are handled
+        with raises(ValueError):
+            Workplane().box(1, 1, 1).line(1, 0)
