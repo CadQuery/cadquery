@@ -2394,6 +2394,7 @@ class Workplane(object):
         r = self.newObject(w)
         r.ctx.pendingWires = w
         r.ctx.pendingEdges = []
+        r.ctx.firstPoint = None
 
         return r
 
