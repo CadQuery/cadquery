@@ -49,7 +49,7 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     setup_requires=setup_reqs,
     install_requires=reqs,
     extras_require={
