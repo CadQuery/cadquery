@@ -4,6 +4,7 @@ omit =
     cadquery/utils.py
     cadquery/cq_directive.py
     tests/*
+    setup.py
 
 [report]
 exclude_lines =
