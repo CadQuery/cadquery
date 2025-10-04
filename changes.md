@@ -10,11 +10,12 @@ Changes
 * Per item styling and ability to control the camera position of `cadquery.vis.show` https://github.com/CadQuery/cadquery/pull/1778
 * Added control point visualization to `cadquery.vis.show` https://github.com/CadQuery/cadquery/pull/1765
 * Implemented screenshots in `cadquery.vis.show` https://github.com/CadQuery/cadquery/pull/1759
-* STEP export for assemblies including names, layers and colors https://github.com/CadQuery/cadquery/pull/1782, https://github.com/CadQuery/cadquery/pull/1838
-* STEP import for assemblies, including names, layers and colors https://github.com/CadQuery/cadquery/pull/1779
+* STEP/XBF/XML export for assemblies including names, layers and colors https://github.com/CadQuery/cadquery/pull/1782, https://github.com/CadQuery/cadquery/pull/1838
+* STEP/XBF/XML import for assemblies, including names, layers and colors https://github.com/CadQuery/cadquery/pull/1779
 * Added more ways to trim features in the free function API https://github.com/CadQuery/cadquery/pull/1833
 * Free function API improvements including `Shape.remove`, `Face.extend` and `Solid.addCavity` https://github.com/CadQuery/cadquery/pull/1797
-* Additions to `cq.Face` including `paramAt`, `params`, `positionAt`, `positions`, and `cq.func.closes` https://github.com/CadQuery/cadquery/pull/1752
+* Additions to `cq.Face` including `paramAt`, `params`, `positionAt`, `positions`, and `cq.func.closest` https://github.com/CadQuery/cadquery/pull/1752
+* Added local and non-manifold sewing (i.e. shell construction) in Local and non-manifold sewing https://github.com/CadQuery/cadquery/pull/1808
 
 ## Other Changes
 * Fixed a bug in `consolidateWires` that was not resetting `firstPoint` correctly, breaking `mirrorX` and `mirrorY` https://github.com/CadQuery/cadquery/pull/1904

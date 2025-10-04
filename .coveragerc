@@ -3,6 +3,7 @@ branch = True
 omit = 
     cadquery/utils.py
     cadquery/cq_directive.py
+    cadquery/__init__.py
     tests/*
     setup.py
 
