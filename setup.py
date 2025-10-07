@@ -32,7 +32,6 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "nlopt>=2.9.0,<3.0",
         "typish",
         "casadi",
-        "path",
         "trame",
         "trame-vtk",
     ]

@@ -1,13 +1,14 @@
 from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter
 from ..shapes import Shape
+from pathlib import Path
 
 
 def exportVTP(
-    shape: Shape, fname: str, tolerance: float = 0.1, angularTolerance: float = 0.1
+    shape: Shape, fname: Path, tolerance: float = 0.1, angularTolerance: float = 0.1
 ):
 
     writer = vtkXMLPolyDataWriter()
-    writer.SetFileName(fname)
+    writer.SetFileName(str(fname))
     writer.SetInputData(shape.toVtkPolyData(tolerance, angularTolerance))
     writer.Write()
 

@@ -1,6 +1,7 @@
 import tempfile
 import os
 import io as StringIO
+from pathlib import Path
 
 from typing import IO, Optional, Union, cast, Dict, Any, Iterable
 from typing_extensions import Literal
@@ -39,13 +40,12 @@ ExportLiterals = Literal[
 
 def export(
     w: Union[Shape, Iterable[Shape]],
-    fname: str,
+    fname: Path,
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
     opt: Optional[Dict[str, Any]] = None,
 ):
-
     """
     Export Workplane or Shape to file. Multiple entities are converted to compound.
 
@@ -69,7 +69,7 @@ def export(
         shape = compound(*w)
 
     if exportType is None:
-        t = fname.split(".")[-1].upper()
+        t = fname.suffix.upper().lstrip(".")
         if t in ExportTypes.__dict__.values():
             exportType = cast(ExportLiterals, t)
         else:
@@ -121,7 +121,7 @@ def export(
 
     elif exportType == ExportTypes.VRML:
         shape.mesh(tolerance, angularTolerance)
-        VrmlAPI.Write_s(shape.wrapped, fname)
+        VrmlAPI.Write_s(shape.wrapped, str(fname))
 
     elif exportType == ExportTypes.VTP:
         exportVTP(shape, fname, tolerance, angularTolerance)
@@ -205,9 +205,9 @@ def exportShape(
         os.close(h)
 
         if exportType == ExportTypes.STEP:
-            shape.exportStep(outFileName)
+            shape.exportStep(Path(outFileName))
         elif exportType == ExportTypes.STL:
-            shape.exportStl(outFileName, tolerance, angularTolerance, True)
+            shape.exportStl(Path(outFileName), tolerance, angularTolerance, True)
         else:
             raise ValueError("No idea how i got here")
 

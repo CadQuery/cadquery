@@ -16,6 +16,8 @@ from typing import Union, Any, List, Tuple, Iterable, cast, Optional
 
 from typish import instance_of
 
+from pathlib import Path
+
 from OCP.TopoDS import TopoDS_Shape
 from OCP.Geom import Geom_BSplineSurface
 
@@ -393,7 +395,7 @@ def show(
     edges: bool = False,
     specular: bool = True,
     title: str = "CQ viewer",
-    screenshot: Optional[str] = None,
+    screenshot: Optional[Path] = None,
     interact: bool = True,
     zoom: float = 1.0,
     roll: float = -35,
@@ -541,7 +543,7 @@ def show(
         win2image.Update()
 
         writer = vtkPNGWriter()
-        writer.SetFileName(screenshot)
+        writer.SetFileName(str(screenshot))
         writer.SetInputConnection(win2image.GetOutputPort())
         writer.Write()
 

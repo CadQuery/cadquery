@@ -11,7 +11,6 @@ __author__ = "dcowden"
 import math
 import unittest
 import sys
-import os.path
 
 # my modules
 from tests import BaseTest, makeUnitCube, makeUnitSquareWire

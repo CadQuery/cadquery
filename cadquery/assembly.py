@@ -15,6 +15,7 @@ from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
 from warnings import warn
+from pathlib import Path
 
 from .cq import Workplane
 from .occ_impl.shapes import Shape, Compound, isSubshape
@@ -46,6 +47,7 @@ ImportLiterals = Literal["STEP", "XML", "XBF"]
 ExportLiterals = Literal["STEP", "XML", "XBF", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
+
 
 # entity selector grammar definition
 def _define_grammar():
@@ -507,7 +509,7 @@ class Assembly(object):
     @deprecate()
     def save(
         self,
-        path: str,
+        path: Path,
         exportType: Optional[ExportLiterals] = None,
         mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
@@ -534,7 +536,7 @@ class Assembly(object):
 
     def export(
         self,
-        path: str,
+        path: Path,
         exportType: Optional[ExportLiterals] = None,
         mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
@@ -560,7 +562,7 @@ class Assembly(object):
             raise ValueError(f"Unknown assembly export mode {mode} for STEP")
 
         if exportType is None:
-            t = path.split(".")[-1].upper()
+            t = path.suffix.upper().lstrip(".")
             if t in ("STEP", "XML", "XBF", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:
@@ -591,7 +593,7 @@ class Assembly(object):
         return self
 
     @classmethod
-    def importStep(cls, path: str) -> Self:
+    def importStep(cls, path: Path) -> Self:
         """
         Reads an assembly from a STEP file.
 
@@ -602,13 +604,13 @@ class Assembly(object):
         return cls.load(path, importType="STEP")
 
     @classmethod
-    def load(cls, path: str, importType: Optional[ImportLiterals] = None,) -> Self:
+    def load(cls, path: Path, importType: Optional[ImportLiterals] = None,) -> Self:
         """
         Load step, xbf or xml.
         """
 
         if importType is None:
-            t = path.split(".")[-1].upper()
+            t = path.suffix.upper().lstrip(".")
             if t in ("STEP", "XML", "XBF"):
                 importType = cast(ImportLiterals, t)
             else:
@@ -680,8 +682,12 @@ class Assembly(object):
         color = self.color if self.color else color
 
         if self.obj:
-            yield self.obj if isinstance(self.obj, Shape) else Compound.makeCompound(
-                s for s in self.obj.vals() if isinstance(s, Shape)
+            yield (
+                self.obj
+                if isinstance(self.obj, Shape)
+                else Compound.makeCompound(
+                    s for s in self.obj.vals() if isinstance(s, Shape)
+                )
             ), name, loc, color
 
         for ch in self.children:

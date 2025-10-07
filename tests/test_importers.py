@@ -1,6 +1,7 @@
 """
-    Tests file importers such as STEP
+Tests file importers such as STEP
 """
+
 # core modules
 import tempfile
 import os
@@ -8,12 +9,13 @@ import os
 from cadquery import importers, Workplane, Compound
 from tests import BaseTest
 from pytest import approx, raises
+from pathlib import Path
 
 # where unit test output will be saved
-OUTDIR = tempfile.gettempdir()
+OUTDIR = Path(tempfile.gettempdir())
 
 # test data directory
-testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+testdataDir = Path(__file__).parent / "testdata"
 
 
 class TestImporters(BaseTest):
@@ -119,7 +121,7 @@ class TestImporters(BaseTest):
         self.assertEqual(workplane.faces("+Z").vertices().size(), nVerticesZ)
 
     def testInvalidImportTypeRaisesRuntimeError(self):
-        fileName = os.path.join(OUTDIR, "tempSTEP.step")
+        fileName = OUTDIR / "tempSTEP.step"
         shape = Workplane("XY").box(1, 2, 3).val()
         shape.exportStep(fileName)
         self.assertRaises(RuntimeError, importers.importShape, "INVALID", fileName)
@@ -128,39 +130,29 @@ class TestImporters(BaseTest):
         """
         Test BREP file import.
         """
-        self.importBox(
-            importers.ImportTypes.BREP, os.path.join(OUTDIR, "tempBREP.brep")
-        )
-        self.importCompound(
-            importers.ImportTypes.BREP, os.path.join(OUTDIR, "tempBREP.brep")
-        )
+        self.importBox(importers.ImportTypes.BREP, OUTDIR / "tempBREP.brep")
+        self.importCompound(importers.ImportTypes.BREP, OUTDIR / "tempBREP.brep")
 
     def testBIN(self):
         """
         Test binary BREP file import.
         """
-        self.importBox(importers.ImportTypes.BIN, os.path.join(OUTDIR, "tempBIN.bin"))
-        self.importCompound(
-            importers.ImportTypes.BIN, os.path.join(OUTDIR, "tempBIN.bin")
-        )
+        self.importBox(importers.ImportTypes.BIN, OUTDIR / "tempBIN.bin")
+        self.importCompound(importers.ImportTypes.BIN, OUTDIR / "tempBIN.bin")
 
     def testSTEP(self):
         """
         Tests STEP file import
         """
-        self.importBox(
-            importers.ImportTypes.STEP, os.path.join(OUTDIR, "tempSTEP.step")
-        )
-        self.importCompound(
-            importers.ImportTypes.STEP, os.path.join(OUTDIR, "tempSTEP.step")
-        )
+        self.importBox(importers.ImportTypes.STEP, OUTDIR / "tempSTEP.step")
+        self.importCompound(importers.ImportTypes.STEP, OUTDIR / "tempSTEP.step")
 
     def testInvalidSTEP(self):
         """
         Attempting to load an invalid STEP file should throw an exception, but
         not segfault.
         """
-        tmpfile = os.path.join(OUTDIR, "badSTEP.step")
+        tmpfile = OUTDIR / "badSTEP.step"
         with open(tmpfile, "w") as f:
             f.write("invalid STEP file")
         with self.assertRaises(ValueError):
@@ -172,7 +164,7 @@ class TestImporters(BaseTest):
         loaded.
         """
 
-        filename = os.path.join(testdataDir, "red_cube_blue_cylinder.step")
+        filename = testdataDir / "red_cube_blue_cylinder.step"
         objs = importers.importShape(importers.ImportTypes.STEP, filename)
         self.assertEqual(2, len(objs.all()))
 
@@ -181,7 +173,7 @@ class TestImporters(BaseTest):
         Test DXF import with various tolerances.
         """
 
-        filename = os.path.join(testdataDir, "gear.dxf")
+        filename = testdataDir / "gear.dxf"
 
         with self.assertRaises(ValueError):
             # tol >~ 2e-4 required for closed wires
@@ -201,37 +193,37 @@ class TestImporters(BaseTest):
 
         # additional files to test more DXF entities
 
-        filename = os.path.join(testdataDir, "MC 12x31.dxf")
+        filename = testdataDir / "MC 12x31.dxf"
         obj = importers.importDXF(filename)
         self.assertTrue(obj.val().isValid())
 
-        filename = os.path.join(testdataDir, "1001.dxf")
+        filename = testdataDir / "1001.dxf"
         obj = importers.importDXF(filename)
         self.assertTrue(obj.val().isValid())
 
         # test spline import
 
-        filename = os.path.join(testdataDir, "spline.dxf")
+        filename = testdataDir / "spline.dxf"
         obj = importers.importDXF(filename, tol=1)
         self.assertTrue(obj.val().isValid())
         self.assertEqual(obj.faces().size(), 1)
         self.assertEqual(obj.wires().size(), 2)
 
         # test rational spline import
-        filename = os.path.join(testdataDir, "rational_spline.dxf")
+        filename = testdataDir / "rational_spline.dxf"
         obj = importers.importDXF(filename)
         self.assertTrue(obj.val().isValid())
         self.assertEqual(obj.faces().size(), 1)
         self.assertEqual(obj.edges().size(), 1)
 
         # importing of a complex shape exported from Inkscape
-        filename = os.path.join(testdataDir, "genshi.dxf")
+        filename = testdataDir / "genshi.dxf"
         obj = importers.importDXF(filename)
         self.assertTrue(obj.val().isValid())
         self.assertEqual(obj.faces().size(), 1)
 
         # test layer filtering
-        filename = os.path.join(testdataDir, "three_layers.dxf")
+        filename = testdataDir / "three_layers.dxf"
         obj = importers.importDXF(filename, exclude=["Layer2"])
         self.assertTrue(obj.val().isValid())
         self.assertEqual(obj.faces().size(), 2)

@@ -6,8 +6,9 @@ from cadquery import Edge, Vertex
 
 from pytest import approx, raises, fixture
 from math import pi, sqrt
+from pathlib import Path
 
-testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+testdataDir = Path(__file__).parent / "testdata"
 
 
 def test_face_interface():
@@ -747,7 +748,7 @@ def test_constraint_solver():
 
 def test_dxf_import():
 
-    filename = os.path.join(testdataDir, "gear.dxf")
+    filename = testdataDir / "gear.dxf"
 
     s1 = Sketch().importDXF(filename, tol=1e-3)
 
@@ -822,8 +823,10 @@ def test_bool_ops():
 
 def test_export():
 
-    s1 = Sketch().rect(1, 1).export("sketch.dxf")
-    s2 = Sketch().importDXF("sketch.dxf")
+    filename = Path("sketch.dxf")
+
+    s1 = Sketch().rect(1, 1).export(filename)
+    s2 = Sketch().importDXF(filename)
 
     assert (s1 - s2).val().Area() == approx(0)
 

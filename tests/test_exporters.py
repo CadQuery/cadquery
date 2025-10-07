@@ -1,10 +1,10 @@
 """
-    Tests exporters
+Tests exporters
 """
+
 # core modules
-import os
 import io
-from path import Path
+from pathlib import Path
 import re
 import sys
 import math
@@ -65,7 +65,7 @@ def test_step_options(tmpdir):
     then imports that STEP to validate it.
     """
     # Use a temporary directory
-    box_path = os.path.join(tmpdir, "out.step")
+    box_path = tmpdir / "out.step"
 
     # Simple object to export
     box = Workplane().box(1, 1, 1)
@@ -93,9 +93,9 @@ def test_fused_assembly(tmpdir):
     assy.add(pin, color=Color(0, 1, 0), name="pin")
 
     # Export the assembly
-    step_path = os.path.join(tmpdir, "fused.step")
+    step_path = tmpdir / "fused.step"
     assy.save(
-        path=str(step_path),
+        path=step_path,
         exportType=exporters.ExportTypes.STEP,
         mode=exporters.assembly.ExportModes.FUSED,
     )
@@ -120,9 +120,9 @@ def test_fused_not_touching_assembly(tmpdir):
     assy.add(pin, color=Color(0, 1, 0), name="pin")
 
     # Export the assembly
-    step_path = os.path.join(tmpdir, "fused_not_touching.step")
+    step_path = tmpdir / "fused_not_touching.step"
     assy.save(
-        path=str(step_path),
+        path=step_path,
         exportType=exporters.ExportTypes.STEP,
         mode=exporters.assembly.ExportModes.FUSED,
     )
@@ -149,9 +149,9 @@ def test_nested_fused_assembly(tmpdir):
     assy.add(pins, name="pins")
 
     # Export the assembly
-    step_path = os.path.join(tmpdir, "nested_fused_assembly.step")
+    step_path = tmpdir / "nested_fused_assembly.step"
     assy.save(
-        path=str(step_path),
+        path=step_path,
         exportType=exporters.ExportTypes.STEP,
         mode=exporters.assembly.ExportModes.FUSED,
     )
@@ -172,9 +172,9 @@ def test_fused_assembly_with_one_part(tmpdir):
     assy.add(body, color=Color(1, 0, 0), name="body")
 
     # Export the assembly
-    step_path = os.path.join(tmpdir, "single_part_fused_assembly.step")
+    step_path = tmpdir / "single_part_fused_assembly.step"
     assy.save(
-        path=str(step_path),
+        path=step_path,
         exportType=exporters.ExportTypes.STEP,
         mode=exporters.assembly.ExportModes.FUSED,
     )
@@ -198,9 +198,9 @@ def test_fused_assembly_glue_tol(tmpdir):
     assy.add(pin, color=Color(0, 1, 0), name="pin")
 
     # Export the assembly
-    step_path = os.path.join(tmpdir, "fused_glue_tol.step")
+    step_path = tmpdir / "fused_glue_tol.step"
     assy.save(
-        path=str(step_path),
+        path=step_path,
         exportType=exporters.ExportTypes.STEP,
         mode=exporters.assembly.ExportModes.FUSED,
         fuzzy_tol=0.1,
@@ -223,9 +223,9 @@ def test_fused_assembly_top_level_only(tmpdir):
     assy = Assembly(body)
 
     # Export the assembly
-    step_path = os.path.join(tmpdir, "top_level_only_fused_assembly.step")
+    step_path = tmpdir / "top_level_only_fused_assembly.step"
     assy.save(
-        path=str(step_path),
+        path=step_path,
         exportType=exporters.ExportTypes.STEP,
         mode=exporters.assembly.ExportModes.FUSED,
     )
@@ -250,9 +250,9 @@ def test_fused_assembly_top_level_with_children(tmpdir):
     assy.add(pin, loc=Location(Vector(0, 0, 15)), color=Color(0, 1, 0), name="pin")
 
     # Export the assembly
-    step_path = os.path.join(tmpdir, "top_level_with_children_fused_assembly.step")
+    step_path = tmpdir / "top_level_with_children_fused_assembly.step"
     assy.save(
-        path=str(step_path),
+        path=step_path,
         exportType=exporters.ExportTypes.STEP,
         mode=exporters.assembly.ExportModes.FUSED,
     )
@@ -273,9 +273,9 @@ def test_fused_empty_assembly(tmpdir):
     # Make sure an export with no top level shape raises an exception
     with pytest.raises(Exception):
         # Export the assembly
-        step_path = os.path.join(tmpdir, "empty_fused_assembly.step")
+        step_path = tmpdir / "empty_fused_assembly.step"
         assy.save(
-            path=str(step_path),
+            path=step_path,
             exportType=exporters.ExportTypes.STEP,
             mode=exporters.assembly.ExportModes.FUSED,
         )
@@ -293,11 +293,9 @@ def test_fused_invalid_mode(tmpdir):
     # Make sure an export with an invalid export mode raises an exception
     with pytest.raises(Exception):
         # Export the assembly
-        step_path = os.path.join(tmpdir, "invalid_mode_fused_assembly.step")
+        step_path = tmpdir / "invalid_mode_fused_assembly.step"
         assy.save(
-            path=str(step_path),
-            exportType=exporters.ExportTypes.STEP,
-            mode="INCORRECT",
+            path=step_path, exportType=exporters.ExportTypes.STEP, mode="INCORRECT",
         )
 
 
@@ -556,14 +554,14 @@ class TestExporters(BaseTest):
     def testSVG(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
-        exporters.export(self._box(), "out.svg")
+        exporters.export(self._box(), Path("out.svg"))
 
     def testSVGOptions(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
         exporters.export(
             self._box(),
-            "out.svg",
+            Path("out.svg"),
             opt={
                 "width": 100,
                 "height": None,
@@ -581,7 +579,7 @@ class TestExporters(BaseTest):
 
         exporters.export(
             self._box(),
-            "out.svg",
+            Path("out.svg"),
             opt={
                 "width": None,
                 "height": 100,
@@ -600,26 +598,26 @@ class TestExporters(BaseTest):
     def testAMF(self):
         self._exportBox(exporters.ExportTypes.AMF, ["<amf units", "</object>"])
 
-        exporters.export(self._box(), "out.amf")
+        exporters.export(self._box(), Path("out.amf"))
 
     def testSTEP(self):
         self._exportBox(exporters.ExportTypes.STEP, ["FILE_SCHEMA"])
 
-        exporters.export(self._box(), "out.step")
+        exporters.export(self._box(), Path("out.step"))
 
     def test3MF(self):
         self._exportBox(
             exporters.ExportTypes.THREEMF,
             ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"],
         )
-        exporters.export(self._box(), "out1.3mf")  # Compound
-        exporters.export(self._box().val(), "out2.3mf")  # Solid
+        exporters.export(self._box(), Path("out1.3mf"))  # Compound
+        exporters.export(self._box().val(), Path("out2.3mf"))  # Solid
 
         # No zlib support
         import zlib
 
         sys.modules["zlib"] = None
-        exporters.export(self._box(), "out3.3mf")
+        exporters.export(self._box(), Path("out3.3mf"))
         sys.modules["zlib"] = zlib
 
     def testTJS(self):
@@ -627,11 +625,11 @@ class TestExporters(BaseTest):
             exporters.ExportTypes.TJS, ["vertices", "formatVersion", "faces"]
         )
 
-        exporters.export(self._box(), "out.tjs")
+        exporters.export(self._box(), Path("out.tjs"))
 
     def testVRML(self):
 
-        exporters.export(self._box(), "out.vrml")
+        exporters.export(self._box(), Path("out.vrml"))
 
         with open("out.vrml") as f:
             res = f.read(10)
@@ -639,20 +637,22 @@ class TestExporters(BaseTest):
         assert res.startswith("#VRML V2.0")
 
         # export again to trigger all paths in the code
-        exporters.export(self._box(), "out.vrml")
+        exporters.export(self._box(), Path("out.vrml"))
 
     def testVTP(self):
 
-        exporters.export(self._box(), "out.vtp")
+        filename = Path("out.vtp")
 
-        with open("out.vtp") as f:
+        exporters.export(self._box(), filename)
+
+        with open(filename) as f:
             res = f.read(100)
 
         assert res.startswith('<?xml version="1.0"?>\n<VTKFile')
 
     def testDXF(self):
 
-        exporters.export(self._box().section(), "out.dxf")
+        exporters.export(self._box().section(), Path("out.dxf"))
 
         s1 = (
             Workplane("XZ")
@@ -663,9 +663,10 @@ class TestExporters(BaseTest):
             .fillet(1)
             .section()
         )
-        exporters.dxf.exportDXF(s1, "res1.dxf")
+        filename = Path("res1.dxf")
+        exporters.dxf.exportDXF(s1, filename)
 
-        s1_i = importers.importDXF("res1.dxf")
+        s1_i = importers.importDXF(filename)
 
         self.assertAlmostEqual(s1.val().Area(), s1_i.val().Area(), 6)
         self.assertAlmostEqual(s1.edges().size(), s1_i.edges().size())
@@ -674,9 +675,10 @@ class TestExporters(BaseTest):
         s2 = (
             Workplane().spline(pts).close().extrude(1).edges("|Z").fillet(0.1).section()
         )
-        exporters.dxf.exportDXF(s2, "res2.dxf")
+        filename2 = Path("res2.dxf")
+        exporters.dxf.exportDXF(s2, filename2)
 
-        s2_i = importers.importDXF("res2.dxf")
+        s2_i = importers.importDXF(filename2)
 
         self.assertAlmostEqual(s2.val().Area(), s2_i.val().Area(), 6)
         self.assertAlmostEqual(s2.edges().size(), s2_i.edges().size())
@@ -690,9 +692,10 @@ class TestExporters(BaseTest):
             .fillet(0.1)
             .section()
         )
-        exporters.dxf.exportDXF(s3, "res3.dxf")
+        filename3 = Path("res3.dxf")
+        exporters.dxf.exportDXF(s3, filename3)
 
-        s3_i = importers.importDXF("res3.dxf")
+        s3_i = importers.importDXF(filename3)
 
         self.assertAlmostEqual(s3.val().Area(), s3_i.val().Area(), 6)
         self.assertAlmostEqual(s3.edges().size(), s3_i.edges().size())
@@ -701,18 +704,20 @@ class TestExporters(BaseTest):
 
         s4 = Workplane("XY").box(80, 60, 5).cut(cyl).section()
 
-        exporters.dxf.exportDXF(s4, "res4.dxf")
+        filename4 = Path("res4.dxf")
+        exporters.dxf.exportDXF(s4, filename4)
 
-        s4_i = importers.importDXF("res4.dxf")
+        s4_i = importers.importDXF(filename4)
 
         self.assertAlmostEqual(s4.val().Area(), s4_i.val().Area(), 6)
         self.assertAlmostEqual(s4.edges().size(), s4_i.edges().size())
 
         # test periodic spline
         w = Workplane().spline([(1, 1), (2, 2), (3, 2), (3, 1)], periodic=True)
-        exporters.dxf.exportDXF(w, "res5.dxf")
+        filename5 = Path("res5.dxf")
+        exporters.dxf.exportDXF(w, filename5)
 
-        w_i = importers.importDXF("res5.dxf")
+        w_i = importers.importDXF(filename5)
 
         self.assertAlmostEqual(w.val().Length(), w_i.wires().val().Length(), 6)
 
@@ -722,9 +727,10 @@ class TestExporters(BaseTest):
         curve = GeomConvert.CurveToBSplineCurve_s(adaptor.Curve().Curve())
 
         e = Workplane().add(Edge(BRepBuilderAPI_MakeEdge(curve).Shape()))
-        exporters.dxf.exportDXF(e, "res6.dxf")
+        filename6 = Path("res6.dxf")
+        exporters.dxf.exportDXF(e, filename6)
 
-        e_i = importers.importDXF("res6.dxf")
+        e_i = importers.importDXF(filename6)
 
         self.assertAlmostEqual(e.val().Length(), e_i.wires().val().Length(), 6)
 
@@ -739,26 +745,29 @@ class TestExporters(BaseTest):
 
         s5.plane = Plane(origin=(0, 0.1, 0.5), normal=(0.05, 0.05, 1))
         s5 = s5.section()
-        exporters.dxf.exportDXF(s5, "res7.dxf")
+        filename7 = Path("res7.dxf")
+        exporters.dxf.exportDXF(s5, filename7)
 
-        s5_i = importers.importDXF("res7.dxf")
+        s5_i = importers.importDXF(filename7)
 
         self.assertAlmostEqual(s5.val().Area(), s5_i.val().Area(), 4)
 
     def testBIN(self):
 
-        exporters.export(self._box(), "out.bin")
+        filename = Path("out.bin")
 
-        s = Shape.importBin("out.bin")
+        exporters.export(self._box(), filename)
+
+        s = Shape.importBin(filename)
         assert s.isValid()
 
     def testTypeHandling(self):
 
         with self.assertRaises(ValueError):
-            exporters.export(self._box(), "out.random")
+            exporters.export(self._box(), Path("out.random"))
 
         with self.assertRaises(ValueError):
-            exporters.export(self._box(), "out.stl", "STP")
+            exporters.export(self._box(), Path("out.stl"), "STP")
 
 
 @pytest.mark.parametrize(
@@ -779,12 +788,12 @@ def test_stl_ascii(tmpdir, box123, id, opt, matchvals):
     :param matchval: List of strings to match at start of file
     """
 
-    fpath = tmpdir.joinpath(f"stl_ascii_{id}.stl").resolve()
+    fpath = tmpdir / f"stl_ascii_{id}.stl"
     assert not fpath.exists()
 
     assert matchvals
 
-    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
+    exporters.export(box123, fpath, None, 0.1, 0.1, opt)
 
     with open(fpath, "r") as f:
         for i, line in enumerate(f):
@@ -812,12 +821,12 @@ def test_stl_binary(tmpdir, box123, id, opt, matchval):
     :param matchval: Check that the file starts with the specified value
     """
 
-    fpath = tmpdir.joinpath(f"stl_binary_{id}.stl").resolve()
+    fpath = tmpdir / f"stl_binary_{id}.stl"
     assert not fpath.exists()
 
     assert matchval
 
-    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
+    exporters.export(box123, fpath, None, 0.1, 0.1, opt)
 
     with open(fpath, "rb") as f:
         r = f.read(len(matchval))
@@ -833,9 +842,9 @@ def test_assy_vtk_rotation(tmpdir):
         v0, name="v0", loc=Location(Vector(0, 0, 0), Vector(1, 0, 0), 90),
     )
 
-    fwrl = Path(tmpdir) / "v0.wrl"
+    fwrl = tmpdir / "v0.wrl"
     assert not fwrl.exists()
-    assy.save(str(fwrl), "VRML")
+    assy.save(fwrl, "VRML")
     assert fwrl.exists()
 
     matched_rot = False
@@ -886,20 +895,20 @@ def test_dxf_approx():
 
     pts = [(0, 0), (0, 0.5), (1, 1)]
     w1 = Workplane().spline(pts).close().extrude(1).edges("|Z").fillet(0.1).section()
-    exporters.exportDXF(w1, "orig.dxf")
+    exporters.exportDXF(w1, Path("orig.dxf"))
 
     assert _dxf_spline_max_degree("orig.dxf") == 6
 
     exporters.exportDXF(w1, "limit1.dxf", approx="spline")
-    w1_i1 = importers.importDXF("limit1.dxf")
+    w1_i1 = importers.importDXF(Path("limit1.dxf"))
 
     assert _dxf_spline_max_degree("limit1.dxf") == 3
 
     assert w1.val().Area() == approx(w1_i1.val().Area(), 1e-3)
     assert w1.edges().size() == w1_i1.edges().size()
 
-    exporters.exportDXF(w1, "limit2.dxf", approx="arc")
-    w1_i2 = importers.importDXF("limit2.dxf")
+    exporters.exportDXF(w1, Path("limit2.dxf"), approx="arc")
+    w1_i2 = importers.importDXF(Path("limit2.dxf"))
 
     assert _check_dxf_no_spline("limit2.dxf")
 
@@ -922,7 +931,7 @@ def test_dxf_text(tmpdir, testdatadir):
         )
     )
 
-    fname = tmpdir.joinpath(f"dxf_text.dxf").resolve()
+    fname = tmpdir / "dxf_text.dxf"
     exporters.exportDXF(w1.section(), fname)
 
     s2 = Sketch().importDXF(fname)
@@ -955,7 +964,7 @@ def test_dxf_ellipse_arc(tmpdir):
     dxf = exporters.dxf.DxfDocument()
     dxf.add_layer("layer1", color=1)
     dxf.add_shape(w1, "layer1")
-    fname = tmpdir.joinpath("ellipse_arc.dxf").resolve()
+    fname = tmpdir / "ellipse_arc.dxf"
     dxf.document.saveas(fname)
 
     s1 = Sketch().importDXF(fname)

@@ -1,5 +1,6 @@
 from math import pi
 from typing import List, Literal
+from pathlib import Path
 
 import OCP.IFSelect
 from OCP.STEPControl import STEPControl_Reader
@@ -24,7 +25,7 @@ class UNITS:
 
 
 def importShape(
-    importType: Literal["STEP", "DXF", "BREP", "BIN"], fileName: str, *args, **kwargs
+    importType: Literal["STEP", "DXF", "BREP", "BIN"], fileName: Path, *args, **kwargs
 ) -> "cq.Workplane":
     """
     Imports a file based on the type (STEP, STL, etc)
@@ -46,7 +47,7 @@ def importShape(
         raise RuntimeError("Unsupported import type: {!r}".format(importType))
 
 
-def importBrep(fileName: str) -> "cq.Workplane":
+def importBrep(fileName: Path) -> "cq.Workplane":
     """
     Loads the BREP file as a single shape into a cadquery Workplane.
 
@@ -63,7 +64,7 @@ def importBrep(fileName: str) -> "cq.Workplane":
     return cq.Workplane("XY").newObject([shape])
 
 
-def importBin(fileName: str) -> "cq.Workplane":
+def importBin(fileName: Path) -> "cq.Workplane":
     """
     Loads the binary BREP file as a single shape into a cadquery Workplane.
 
@@ -76,7 +77,7 @@ def importBin(fileName: str) -> "cq.Workplane":
 
 
 # Loads a STEP file into a CQ.Workplane object
-def importStep(fileName: str) -> "cq.Workplane":
+def importStep(fileName: Path) -> "cq.Workplane":
     """
     Accepts a file name and loads the STEP file into a cadquery Workplane
 
@@ -85,7 +86,7 @@ def importStep(fileName: str) -> "cq.Workplane":
 
     # Now read and return the shape
     reader = STEPControl_Reader()
-    readStatus = reader.ReadFile(fileName)
+    readStatus = reader.ReadFile(str(fileName))
     if readStatus != OCP.IFSelect.IFSelect_RetDone:
         raise ValueError("STEP File could not be loaded")
     for i in range(reader.NbRootsForTransfer()):
@@ -104,7 +105,7 @@ def importStep(fileName: str) -> "cq.Workplane":
 
 
 def importDXF(
-    filename: str, tol: float = 1e-6, exclude: List[str] = [], include: List[str] = []
+    filename: Path, tol: float = 1e-6, exclude: List[str] = [], include: List[str] = []
 ) -> "cq.Workplane":
     """
     Loads a DXF file into a Workplane.

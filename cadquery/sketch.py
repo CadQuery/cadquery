@@ -19,6 +19,7 @@ from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
 from multimethod import multimethod
 from typish import instance_of, get_type
+from pathlib import Path
 
 from .hull import find_hull
 from .selectors import StringSyntaxSelector, Selector
@@ -220,7 +221,7 @@ class Sketch(object):
 
     def importDXF(
         self: T,
-        filename: str,
+        filename: Path,
         tol: float = 1e-6,
         exclude: List[str] = [],
         include: List[str] = [],
@@ -1325,7 +1326,7 @@ class Sketch(object):
 
     def export(
         self: T,
-        fname: str,
+        fname: Path,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         opt: Optional[Dict[str, Any]] = None,

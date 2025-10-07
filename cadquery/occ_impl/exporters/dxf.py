@@ -20,6 +20,7 @@ from OCP.GeomConvert import GeomConvert
 from OCP.gp import gp_Dir
 from OCP.GC import GC_MakeArcOfEllipse
 from typing_extensions import Self
+from pathlib import Path
 
 from ...units import RAD2DEG
 from ..shapes import Face, Edge, Shape, Compound, compound
@@ -366,7 +367,7 @@ class DxfDocument:
 
 def exportDXF(
     w: Union[WorkplaneLike, Shape, Iterable[Shape]],
-    fname: str,
+    fname: Path,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
     *,

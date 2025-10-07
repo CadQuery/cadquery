@@ -18,7 +18,7 @@ from typing import (
 from typing_extensions import Self
 
 from io import BytesIO
-
+from pathlib import Path
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
@@ -478,7 +478,7 @@ class Shape(object):
 
     def exportStl(
         self,
-        fileName: str,
+        fileName: Path,
         tolerance: float = 1e-3,
         angularTolerance: float = 0.1,
         ascii: bool = False,
@@ -507,9 +507,9 @@ class Shape(object):
         writer = StlAPI_Writer()
         writer.ASCIIMode = ascii
 
-        return writer.Write(self.wrapped, fileName)
+        return writer.Write(self.wrapped, str(fileName))
 
-    def exportStep(self, fileName: str, **kwargs) -> IFSelect_ReturnStatus:
+    def exportStep(self, fileName: Path, **kwargs) -> IFSelect_ReturnStatus:
         """
         Export this shape to a STEP file.
 
@@ -536,49 +536,56 @@ class Shape(object):
         Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
-        return writer.Write(fileName)
+        return writer.Write(str(fileName))
 
-    def exportBrep(self, f: Union[str, BytesIO]) -> bool:
+    def exportBrep(self, f: Union[Path, BytesIO]) -> bool:
         """
         Export this shape to a BREP file
         """
 
-        rv = BRepTools.Write_s(self.wrapped, f)
+        if isinstance(f, Path):
+            f = str(f)  # type: ignore
+        rv = BRepTools.Write_s(self.wrapped, tcast(Union[str, BytesIO], f))
 
         return True if rv is None else rv
 
     @classmethod
-    def importBrep(cls, f: Union[str, BytesIO]) -> "Shape":
+    def importBrep(cls, f: Union[Path, BytesIO]) -> "Shape":
         """
         Import shape from a BREP file
         """
         s = TopoDS_Shape()
         builder = BRep_Builder()
 
-        BRepTools.Read_s(s, f, builder)
+        if isinstance(f, Path):
+            f = str(f)  # type: ignore
+        BRepTools.Read_s(s, tcast(Union[str, BytesIO], f), builder)
 
         if s.IsNull():
             raise ValueError(f"Could not import {f}")
 
         return cls.cast(s)
 
-    def exportBin(self, f: Union[str, BytesIO]) -> bool:
+    def exportBin(self, f: Union[Path, BytesIO]) -> bool:
         """
         Export this shape to a binary BREP file.
         """
-
-        rv = BinTools.Write_s(self.wrapped, f)
+        if isinstance(f, Path):
+            f = str(f)  # type: ignore
+        rv = BinTools.Write_s(self.wrapped, tcast(Union[str, BytesIO], f))
 
         return True if rv is None else rv
 
     @classmethod
-    def importBin(cls, f: Union[str, BytesIO]) -> "Shape":
+    def importBin(cls, f: Union[Path, BytesIO]) -> "Shape":
         """
         Import shape from a binary BREP file.
         """
         s = TopoDS_Shape()
 
-        BinTools.Read_s(s, f)
+        if isinstance(f, Path):
+            f = str(f)  # type: ignore
+        BinTools.Read_s(s, tcast(Union[str, BytesIO], f))
 
         return cls.cast(s)
 
@@ -1702,7 +1709,7 @@ class Shape(object):
 
     def export(
         self: T,
-        fname: str,
+        fname: Path,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         opt: Optional[Dict[str, Any]] = None,

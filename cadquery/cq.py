@@ -21,6 +21,7 @@ from typing import (
 )
 from typing_extensions import Literal
 from inspect import Parameter, Signature
+from pathlib import Path
 
 
 from .occ_impl.geom import Vector, Plane, Location
@@ -4582,7 +4583,7 @@ class Workplane(object):
 
     def export(
         self: T,
-        fname: str,
+        fname: Path,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         opt: Optional[Dict[str, Any]] = None,

@@ -16,7 +16,7 @@ from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkIOImage import vtkPNGWriter
 
 from pytest import fixture, raises
-from path import Path
+from pathlib import Path
 
 from typish import instance_of
 from typing import List
@@ -140,8 +140,8 @@ def test_show(wp, assy, sk, patch_vtk):
 def test_screenshot(wp, tmpdir, patch_vtk):
 
     # smoke test for now
-    with tmpdir:
-        show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
+    filename = tmpdir / "img.png"
+    show(wp, interact=False, screenshot=filename, trihedron=False, gradient=False)
 
 
 def test_ctrlPts():

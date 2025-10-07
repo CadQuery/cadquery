@@ -3,7 +3,7 @@
 
 """
 # system modules
-import math, os.path, time, tempfile
+import math, time, tempfile
 from pathlib import Path
 from random import random
 from random import randrange
@@ -30,8 +30,8 @@ testdataDir = Path(__file__).parent.joinpath("testdata")
 testFont = str(testdataDir / "OpenSans-Regular.ttf")
 
 # where unit test output will be saved
-OUTDIR = tempfile.gettempdir()
-SUMMARY_FILE = os.path.join(OUTDIR, "testSummary.html")
+OUTDIR = Path(tempfile.gettempdir())
+SUMMARY_FILE = OUTDIR / "testSummary.html"
 
 SUMMARY_TEMPLATE = """<html>
     <head>
@@ -69,10 +69,10 @@ class TestCadQuery(BaseTest):
 
         So what we do here is to read the existing file, stick in more content, and leave it
         """
-        svgFile = os.path.join(OUTDIR, self._testMethodName + ".svg")
+        svgFile = (OUTDIR / self._testMethodName).with_suffix(".svg")
 
         # all tests do not produce output
-        if os.path.exists(svgFile):
+        if svgFile.exists():
             existingSummary = readFileAsString(SUMMARY_FILE)
             svgText = readFileAsString(svgFile)
             svgText = svgText.replace(
@@ -93,8 +93,8 @@ class TestCadQuery(BaseTest):
         shape must be a CQ object
         Save models in SVG and STEP format
         """
-        shape.exportSvg(os.path.join(OUTDIR, self._testMethodName + ".svg"))
-        shape.val().exportStep(os.path.join(OUTDIR, self._testMethodName + ".step"))
+        shape.exportSvg((OUTDIR / self._testMethodName).with_suffix(".svg"))
+        shape.val().exportStep((OUTDIR / self._testMethodName).with_suffix(".step"))
 
     def testToOCC(self):
         """
@@ -1923,7 +1923,7 @@ class TestCadQuery(BaseTest):
         # most users dont understand what a wire is, they are just drawing
 
         r = s.lineTo(1.0, 0).lineTo(0, 1.0).close().wire().extrude(0.25)
-        r.val().exportStep(os.path.join(OUTDIR, "testBasicLinesStep1.STEP"))
+        r.val().exportStep(OUTDIR / "testBasicLinesStep1.STEP")
 
         # no faces on the original workplane
         self.assertEqual(0, s.faces().size())
@@ -1938,7 +1938,7 @@ class TestCadQuery(BaseTest):
             .cutThruAll()
         )
         self.assertEqual(6, r1.faces().size())
-        r1.val().exportStep(os.path.join(OUTDIR, "testBasicLinesXY.STEP"))
+        r1.val().exportStep(OUTDIR / "testBasicLinesXY.STEP")
 
         # now add a circle through a top
         r2 = (
@@ -1948,7 +1948,7 @@ class TestCadQuery(BaseTest):
             .cutThruAll()
         )
         self.assertEqual(9, r2.faces().size())
-        r2.val().exportStep(os.path.join(OUTDIR, "testBasicLinesZ.STEP"))
+        r2.val().exportStep(OUTDIR / "testBasicLinesZ.STEP")
 
         self.saveModel(r2)
 
@@ -5841,9 +5841,11 @@ class TestCadQuery(BaseTest):
 
     def test_export(self):
 
-        w = Workplane().box(1, 1, 1).export("box.brep")
+        filename = Path("box.brep")
 
-        assert (w - Shape.importBrep("box.brep")).val().Volume() == approx(0)
+        w = Workplane().box(1, 1, 1).export(filename)
+
+        assert (w - Shape.importBrep(filename)).val().Volume() == approx(0)
 
     def test_bool_operators(self):
 
