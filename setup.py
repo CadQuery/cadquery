@@ -40,7 +40,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
 
 setup(
     name="cadquery",
-    version="2.6.0",
+    version="2.7-dev",
     url="https://github.com/CadQuery/cadquery",
     license="Apache Public License 2.0",
     author="David Cowden",
