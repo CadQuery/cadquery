@@ -173,7 +173,7 @@ If there are multiple such objects, :py:meth:`Workplane.vals` can be used:
     >>> print(type(box))
     <class cadquery.occ_impl.shapes.Solid>
 
-If you are only interested in getting the context solid of your Workplane, you can use :py:meth:`Workplane.findSolid`:
+If you are only interested in getting the :ref:`the_context_solid` of your Workplane, you can use :py:meth:`Workplane.findSolid`:
 
 .. code-block::
 
