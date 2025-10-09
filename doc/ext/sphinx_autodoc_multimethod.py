@@ -1,6 +1,6 @@
 from types import ModuleType
 from typing import Any, List, Tuple, ValuesView
-from multimethod import multimethod, multidispatch
+from multimethod import multimethod
 import re
 
 from sphinx.ext.autosummary import Autosummary
@@ -39,7 +39,7 @@ def process_docstring_multimethod(app, what, name, obj, options, lines):
 
     methods = []
 
-    if what == "method" and isinstance(obj, (multimethod, multidispatch)):
+    if what == "method" and isinstance(obj, multimethod):
         # instance or static method
 
         # handle functools.singledispatch style register (multiple names)
@@ -156,7 +156,7 @@ class MultimethodAutosummary(Autosummary):
             try:
                 sig = documenter.format_signature(show_annotation=False)
                 # -- multimethod customization
-                if isinstance(obj, (multimethod, multidispatch)):
+                if isinstance(obj, multimethod):
                     sig = "(...)"
                 # -- end customization
             except TypeError:
@@ -226,7 +226,7 @@ class MethodDocumenter(SphinxMethodDocumenter):
                         documenter.objpath = [None]
                         sigs.append(documenter.format_signature())
         # -- multimethod customization
-        elif isinstance(meth, (multimethod, multidispatch)):
+        elif isinstance(meth, multimethod):
             if meth.pending:
                 methods = meth.pending
             else:
@@ -238,7 +238,7 @@ class MethodDocumenter(SphinxMethodDocumenter):
             else:
                 methods = set(self.object.__func__.values())
             sigs = self.append_signature_multiple_dispatch(methods)
-        elif inspect.isstaticmethod(meth) and isinstance(self.object, (multimethod, multidispatch)):
+        elif inspect.isstaticmethod(meth) and isinstance(self.object, multimethod):
             sigs = []
             methods = self.object.values()
             for dispatchmeth in methods:
