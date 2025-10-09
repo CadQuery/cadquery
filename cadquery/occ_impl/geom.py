@@ -1132,6 +1132,11 @@ class Location(object):
         rx, ry, rz = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
 
         return rv_trans, (degrees(rx), degrees(ry), degrees(rz))
+    
+    @property
+    def plane(self) -> "Plane":
+
+        return Plane(self)
 
     def __getstate__(self) -> BytesIO:
 

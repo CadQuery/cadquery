@@ -6,6 +6,14 @@ import math
 #Use instead of 1 to create a vector with two non-zero elements and length 1
 twocomp = math.sqrt(1./2.)
 
+#Conversion can betriggered from explicit constructor, or from property
+@pytest.mark.parametrize(
+    ["useproperty",],
+    [
+        (False,),
+        (True,),
+    ]
+)
 #Create different test cases from different initial plane.
 #Testing the different components is mainly useful for debugging if things
 #do not work.
@@ -30,7 +38,7 @@ twocomp = math.sqrt(1./2.)
         (((3, 5, 6), (2, 4, 7), (9, 8, 1),),),
     ]
 )
-def test_Plane_from_Location(plargs):
+def test_Plane_from_Location(plargs, useproperty):
     #Test conversion between Plane and Location by converting multiple
     #times between them, such that two Plane and two Location can be
     #compared respectively.
@@ -52,11 +60,16 @@ def test_Plane_from_Location(plargs):
     #Start from random Plane with classical __init__
     originalpl = Plane(*plargs)
     
-    #Convert back and forth, such that comparable pairs are created
-    #plforth = Plane(originalloc)
-    locforth = Location(originalpl)
-    plback = Plane(locforth)
-    locback = Location(plback)
+    #Convert back and forth, such that comparable pairs are created.
+    #Depending on test fixture, call constructor directly or use properties
+    if useproperty:
+        locforth = originalpl.location
+        plback = locforth.plane
+        locback = plback.location
+    else:
+        locforth = Location(originalpl)
+        plback = Plane(locforth)
+        locback = Location(plback)
     
     #Create raw locations, which are flat tuples of raw numbers, suitable for
     #assertion with pytes.approx
