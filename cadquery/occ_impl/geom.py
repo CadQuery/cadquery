@@ -615,17 +615,36 @@ class Plane(object):
     ):
         """Create a Plane from Location loc"""
         
+        #Ask location for its information
         origin, rotations = loc.toTuple()
         
+        #Origin is easy, but the rotational angles of the location need to be
+        #turned into xDir and normal vectors.
+        #This is done by multiplying a standard cooridnate system by the given
+        #angles.
+        #Rotation of vectors is done by a transformation matrix.
+        #The order in which rotational angles are introduced is crucial:
+        #If u is our vector, Rx is rotation around x axis etc, we want the
+        #following:
+        #u' = Rz * Ry * Rx * u = R * u
+        #That way, all rotational angles refer to a global coordinate system,
+        #and e.g. Ry does not refer to a rotation direction, which already
+        #was rotated around Rx.
+        #This definition in the global system is called extrinsic, and it is
+        #how the Location class wants it to be done.
+        #And this is why we introduce the rotations from left to right
+        #and from Z to X.
         transformation = Matrix()
-        transformation.rotateX(rotations[0] * pi / 180.0)
-        transformation.rotateY(rotations[1] * pi / 180.0)
         transformation.rotateZ(rotations[2] * pi / 180.0)
+        transformation.rotateY(rotations[1] * pi / 180.0)
+        transformation.rotateX(rotations[0] * pi / 180.0)
         
+        #Apply rotation on the cadquery global coordinate system.
+        #These vectors are already unit vectors and require no .normalized()
         dirs = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
-        dirs = (Vector(*i).normalized() for i in dirs)
-        dirs = (i.transform(transformation) for i in dirs)
+        dirs = (Vector(*i).transform(transformation) for i in dirs)
 
+        #Unpack vectors and set attributes
         self.xDir, self.yDir, self.zDir = dirs
         #Set origin last, as that triggers self._calcTransforms via
         #origin property, and that needs the dirs to be recent.
