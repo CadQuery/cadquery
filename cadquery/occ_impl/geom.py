@@ -576,6 +576,7 @@ class Plane(object):
         plane._setPlaneDir(xDir)
         return plane
 
+    @multimethod
     def __init__(
         self,
         origin: Union[Tuple[float, float, float], Vector],
@@ -606,6 +607,30 @@ class Plane(object):
 
         self._setPlaneDir(xDir)
         self.origin = Vector(origin)
+        
+    @__init__.register
+    def __init__(
+        self,
+        loc: 'Location',
+    ):
+        """Create a Plane from Location loc"""
+        
+        loctuple = loc.toTuple()
+        pl = Plane(loctuple[0])
+        #But that can be rotated. The problem is, that the tuple is applied
+        #on x, y and z direction in that order, but we need the reverse
+        #order. So we need to apply angles manually.
+        rx, ry, rz = loctuple[1]
+        pl = pl.rotated((0, 0, rz))
+        pl = pl.rotated((0, ry, 0))
+        pl = pl.rotated((rx, 0, 0))
+        
+        
+        self.__init__(pl.origin)
+        self.xDir = pl.xDir
+        self.yDir = pl.yDir
+        self.zDir = pl.zDir
+        
 
     def _eq_iter(self, other):
         """Iterator to successively test equality"""
