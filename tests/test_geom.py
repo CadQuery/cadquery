@@ -18,7 +18,7 @@ import itertools
     [
         #Default plane
         (((3, 5, 6),),),
-        #Just xDir specified
+        #Just xDir specified, but never parallel to the default normal
         (((3, 5, 6), (1, 0, 0),),),
         (((3, 5, 6), (0, 1, 0),),),
         #xDir and normal specified.
