@@ -579,9 +579,9 @@ class Plane(object):
     @multimethod
     def __init__(
         self,
-        origin: Union[Tuple[float, float, float], Vector],
-        xDir: Optional[Union[Tuple[float, float, float], Vector]] = None,
-        normal: Union[Tuple[float, float, float], Vector] = (0, 0, 1),
+        origin: Union[Tuple[Real, Real, Real], Vector],
+        xDir: Optional[Union[Tuple[Real, Real, Real], Vector]] = None,
+        normal: Union[Tuple[Real, Real, Real], Vector] = (0, 0, 1),
     ):
         """
         Create a Plane with an arbitrary orientation
