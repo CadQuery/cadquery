@@ -21,10 +21,10 @@ import itertools
         #Just xDir specified
         (((3, 5, 6), (1, 0, 0),),),
         (((3, 5, 6), (0, 1, 0),),),
-        #xDir and normal specified
-        (((3, 5, 6), (1, 0, 0), (0, 0, 1),),),
+        #xDir and normal specified.
+        #Omit normals, that were included as default, and once which
+        #have no component orthogonal to xDir
         (((3, 5, 6), (1, 0, 0), (0, 1, 0),),),
-        (((3, 5, 6), (0, 1, 0), (0, 0, 1),),),
         (((3, 5, 6), (0, 1, 0), (1, 0, 0),),),
         #JUst xDir, but with multiple vector components
         (((3, 5, 6), (1, 1, 0),),),
