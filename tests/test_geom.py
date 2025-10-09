@@ -1,10 +1,6 @@
 from cadquery.occ_impl.shapes import Location, Plane, Vector
 import pytest
 import itertools
-import math
-
-#Use instead of 1 to create a vector with two non-zero elements and length 1
-twocomp = math.sqrt(1./2.)
 
 #Conversion can betriggered from explicit constructor, or from property
 @pytest.mark.parametrize(
