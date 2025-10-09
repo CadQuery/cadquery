@@ -26,8 +26,6 @@ from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
 from OCP.BinTools import BinTools_LocationSet
 
-from multimethod import multidispatch
-
 from ..types import Real
 from ..utils import multimethod
 
@@ -578,10 +576,6 @@ class Plane(object):
         plane._setPlaneDir(xDir)
         return plane
 
-    # Prefer multidispatch over multimethod, as that supports keyword
-    # arguments. These are in use, since Plane.__init__ has not always
-    # been a multimethod.
-    @multidispatch
     def __init__(
         self,
         origin: Union[Tuple[Real, Real, Real], Vector],
@@ -613,11 +607,11 @@ class Plane(object):
         self._setPlaneDir(xDir)
         self.origin = Vector(origin)
 
-    @__init__.register
-    def __init__(
-        self,
+    @classmethod
+    def fromLocation(
+        cls,
         loc: "Location",
-    ):
+    ) -> "Plane":
         """Create a Plane from Location loc"""
 
         # Ask location for its information
@@ -644,16 +638,17 @@ class Plane(object):
         transformation.rotateY(rotations[1] * pi / 180.0)
         transformation.rotateX(rotations[0] * pi / 180.0)
 
-        # Apply rotation on the cadquery global coordinate system.
+        # Apply rotation on vectors of the global plane
         # These vectors are already unit vectors and require no .normalized()
-        dirs = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
+        dirs = ((1, 0, 0), (0, 0, 1))
         dirs = (Vector(*i).transform(transformation) for i in dirs)
 
-        # Unpack vectors and set attributes
-        self.xDir, self.yDir, self.zDir = dirs
-        # Set origin last, as that triggers self._calcTransforms via
-        # origin property, and that needs the dirs to be recent.
-        self.origin = origin
+        # Unpack vectors
+        xDir, normal = dirs
+        # Construct a plane and return it
+        pl = cls(origin=origin, xDir=xDir, normal=normal)
+
+        return pl
 
     def _eq_iter(self, other):
         """Iterator to successively test equality"""
@@ -1159,7 +1154,7 @@ class Location(object):
     @property
     def plane(self) -> "Plane":
 
-        return Plane(self)
+        return Plane.fromLocation(self)
 
     def __getstate__(self) -> BytesIO:
 

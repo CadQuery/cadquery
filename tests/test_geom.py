@@ -84,7 +84,7 @@ def test_Plane_from_Location(plargs, useproperty):
         locback = plback.location
     else:
         locforth = Location(originalpl)
-        plback = Plane(locforth)
+        plback = Plane.fromLocation(locforth)
         locback = Location(plback)
 
     # Create raw locations, which are flat tuples of raw numbers, suitable for
