@@ -26,6 +26,8 @@ from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
 from OCP.BinTools import BinTools_LocationSet
 
+from multimethod import multidispatch
+
 from ..types import Real
 from ..utils import multimethod
 
@@ -576,7 +578,10 @@ class Plane(object):
         plane._setPlaneDir(xDir)
         return plane
 
-    @multimethod
+    # Prefer multidispatch over multimethod, as that supports keyword
+    # arguments. These are in use, since Plane.__init__ has not always
+    # been a multimethod.
+    @multidispatch
     def __init__(
         self,
         origin: Union[Tuple[Real, Real, Real], Vector],

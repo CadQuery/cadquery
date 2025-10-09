@@ -66,10 +66,15 @@ def test_Plane_from_Location(plargs, useproperty):
         xDir = Vector(xDir)
         normal = Vector(normal)
         normal -= normal.projectToLine(xDir)
-        plargs = (origin, xDir, normal)
 
     # Start from random Plane with classical __init__
-    originalpl = Plane(*plargs)
+    # Use keyword arguments on purpose, as they still need to work after
+    # having @multidispatch added to that __init__.
+    # Test that on cases, where plargs has three elements and was unpacked.
+    if len(plargs) == 3:
+        originalpl = Plane(origin=origin, xDir=xDir, normal=normal)
+    else:
+        originalpl = Plane(*plargs)
 
     # Convert back and forth, such that comparable pairs are created.
     # Depending on test fixture, call constructor directly or use properties
