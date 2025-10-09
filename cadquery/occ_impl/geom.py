@@ -615,22 +615,21 @@ class Plane(object):
     ):
         """Create a Plane from Location loc"""
         
-        loctuple = loc.toTuple()
-        pl = Plane(loctuple[0])
-        #But that can be rotated. The problem is, that the tuple is applied
-        #on x, y and z direction in that order, but we need the reverse
-        #order. So we need to apply angles manually.
-        rx, ry, rz = loctuple[1]
-        pl = pl.rotated((0, 0, rz))
-        pl = pl.rotated((0, ry, 0))
-        pl = pl.rotated((rx, 0, 0))
+        origin, rotations = loc.toTuple()
         
+        transformation = Matrix()
+        transformation.rotateX(rotations[0] * pi / 180.0)
+        transformation.rotateY(rotations[1] * pi / 180.0)
+        transformation.rotateZ(rotations[2] * pi / 180.0)
         
-        self.__init__(pl.origin)
-        self.xDir = pl.xDir
-        self.yDir = pl.yDir
-        self.zDir = pl.zDir
-        
+        dirs = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
+        dirs = (Vector(*i).normalized() for i in dirs)
+        dirs = (i.transform(transformation) for i in dirs)
+
+        self.xDir, self.yDir, self.zDir = dirs
+        #Set origin last, as that triggers self._calcTransforms via
+        #origin property, and that needs the dirs to be recent.
+        self.origin = origin
 
     def _eq_iter(self, other):
         """Iterator to successively test equality"""
