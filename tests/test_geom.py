@@ -9,7 +9,7 @@ import itertools
     [
         (False,),
         (True,),
-    ]
+    ],
 )
 # Create different test cases from different initial plane.
 # Testing the different components is mainly useful for debugging if things

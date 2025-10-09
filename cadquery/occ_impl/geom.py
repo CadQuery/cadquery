@@ -611,7 +611,7 @@ class Plane(object):
     @__init__.register
     def __init__(
         self,
-        loc: 'Location',
+        loc: "Location",
     ):
         """Create a Plane from Location loc"""
 
