@@ -66,7 +66,7 @@ def test_Plane_from_Location(plargs, expectedrot, useproperty):
     # If no normal is given, the default normal is assumed.
     # Packed and unpacked arguments to Plane are kept the same.
     if len(plargs) == 1:
-        origin, = plargs
+        (origin,) = plargs
     elif len(plargs) == 2:
         plargs = (*plargs, (0, 0, 1),)
     # If len(plargs) was 2, it is now 3, and the normal still needs to be
