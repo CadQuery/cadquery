@@ -1,10 +1,10 @@
-import os.path
 import uuid
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
 from typing import Optional
 from typing_extensions import Literal
+from pathlib import Path
 
 from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
 from vtkmodules.vtkRenderingCore import vtkRenderWindow
@@ -50,7 +50,7 @@ STEPExportModeLiterals = Literal["default", "fused"]
 
 def exportAssembly(
     assy: AssemblyProtocol,
-    path: str,
+    path: Path | str,
     mode: STEPExportModeLiterals = "default",
     **kwargs,
 ) -> bool:
@@ -78,6 +78,9 @@ def exportAssembly(
     :type precision_mode: int
     """
 
+    if isinstance(path, str):
+        path = Path(path)
+
     # Handle the extra settings for the STEP export
     pcurves = 1
     if "write_pcurves" in kwargs and not kwargs["write_pcurves"]:
@@ -102,14 +105,14 @@ def exportAssembly(
     Interface_Static.SetIVal_s("write.stepcaf.subshapes.name", 1)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
-    status = writer.Write(path)
+    status = writer.Write(str(path))
 
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
 def exportStepMeta(
     assy: AssemblyProtocol,
-    path: str,
+    path: Path | str,
     write_pcurves: bool = True,
     precision_mode: int = 0,
 ) -> bool:
@@ -128,6 +131,9 @@ def exportStepMeta(
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     pcurves = 1
     if not write_pcurves:
@@ -161,10 +167,12 @@ def exportStepMeta(
         # Collect all of the shapes in the child object
         if child.obj:
             child_items = (
-                child.obj
-                if isinstance(child.obj, Shape)
-                else Compound.makeCompound(
-                    s for s in child.obj.vals() if isinstance(s, Shape)
+                (
+                    child.obj
+                    if isinstance(child.obj, Shape)
+                    else Compound.makeCompound(
+                        s for s in child.obj.vals() if isinstance(s, Shape)
+                    )
                 ),
                 child.name,
                 child.loc,
@@ -268,19 +276,23 @@ def exportStepMeta(
     Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
-    status = writer.Write(path)
+    status = writer.Write(str(path))
 
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
+def exportCAF(assy: AssemblyProtocol, path: Path | str, binary: bool = False) -> bool:
     """
     Export an assembly to an XCAF xml or xbf file (internal OCCT formats).
     """
 
-    folder, fname = os.path.split(path)
-    name, ext = os.path.splitext(fname)
-    ext = ext[1:] if ext[0] == "." else ext
+    if isinstance(path, str):
+        path = Path(path)
+
+    folder = path.parent
+    fname = path.name
+    name = path.stem
+    ext = path.suffix.lstrip(".")
 
     _, doc = toCAF(assy, binary=binary)
     app = XCAFApp_Application.GetApplication_s()
@@ -308,10 +320,10 @@ def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
         format_name, format_desc, TCollection_AsciiString(ext), ret, store,
     )
 
-    doc.SetRequestedFolder(TCollection_ExtendedString(folder))
+    doc.SetRequestedFolder(TCollection_ExtendedString(str(folder)))
     doc.SetRequestedName(TCollection_ExtendedString(name))
 
-    status = app.SaveAs(doc, TCollection_ExtendedString(path))
+    status = app.SaveAs(doc, TCollection_ExtendedString(str(path)))
 
     app.Close(doc)
 
@@ -335,10 +347,13 @@ def _vtkRenderWindow(
     return renderWindow
 
 
-def exportVTKJS(assy: AssemblyProtocol, path: str):
+def exportVTKJS(assy: AssemblyProtocol, path: Path | str):
     """
     Export an assembly to a zipped vtkjs. NB: .zip extensions is added to path.
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     renderWindow = _vtkRenderWindow(assy)
 
@@ -348,12 +363,12 @@ def exportVTKJS(assy: AssemblyProtocol, path: str):
         exporter.SetFileName(tmpdir)
         exporter.SetRenderWindow(renderWindow)
         exporter.Write()
-        make_archive(path, "zip", tmpdir)
+        make_archive(str(path), "zip", tmpdir)
 
 
 def exportVRML(
     assy: AssemblyProtocol,
-    path: str,
+    path: Path | str,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ):
@@ -361,15 +376,18 @@ def exportVRML(
     Export an assembly to a vrml file using vtk.
     """
 
+    if isinstance(path, str):
+        path = Path(path)
+
     exporter = vtkVRMLExporter()
-    exporter.SetFileName(path)
+    exporter.SetFileName(str(path))
     exporter.SetRenderWindow(_vtkRenderWindow(assy, tolerance, angularTolerance))
     exporter.Write()
 
 
 def exportGLTF(
     assy: AssemblyProtocol,
-    path: str,
+    path: Path | str,
     binary: Optional[bool] = None,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
@@ -378,14 +396,17 @@ def exportGLTF(
     Export an assembly to a gltf file.
     """
 
+    if isinstance(path, str):
+        path = Path(path)
+
     # If the caller specified the binary option, respect it
     if binary is None:
         # Handle the binary option for GLTF export based on file extension
         binary = True
-        path_parts = path.split(".")
+        sfx = path.suffix.lstrip(".").lower()
 
         # Binary will be the default if the user specified a non-standard file extension
-        if len(path_parts) > 0 and path_parts[-1] == "gltf":
+        if sfx == "gltf":
             binary = False
 
     # map from CadQuery's right-handed +Z up coordinate system to glTF's right-handed +Y up coordinate system
@@ -395,7 +416,7 @@ def exportGLTF(
 
     _, doc = toCAF(assy, True, True, tolerance, angularTolerance)
 
-    writer = RWGltf_CafWriter(TCollection_AsciiString(path), binary)
+    writer = RWGltf_CafWriter(TCollection_AsciiString(str(path)), binary)
     result = writer.Perform(
         doc, TColStd_IndexedDataMapOfStringString(), Message_ProgressRange()
     )

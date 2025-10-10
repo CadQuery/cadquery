@@ -1,5 +1,5 @@
 from typing import cast
-from path import Path
+from pathlib import Path
 
 from OCP.TopoDS import TopoDS_Shape
 from OCP.TCollection import TCollection_ExtendedString
@@ -96,7 +96,7 @@ def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | 
     return rv
 
 
-def importStep(assy: AssemblyProtocol, path: str):
+def importStep(assy: AssemblyProtocol, path: Path | str):
     """
     Import a step file into an assembly.
 
@@ -105,6 +105,8 @@ def importStep(assy: AssemblyProtocol, path: str):
 
     :return: None
     """
+    if isinstance(path, str):
+        path = Path(path)
 
     # Create and configure a STEP reader
     step_reader = STEPCAFControl_Reader()
@@ -116,7 +118,7 @@ def importStep(assy: AssemblyProtocol, path: str):
     Interface_Static.SetIVal_s("read.stepcaf.subshapes.name", 1)
 
     # Read the STEP file
-    status = step_reader.ReadFile(path)
+    status = step_reader.ReadFile(str(path))
     if status != IFSelect_RetDone:
         raise ValueError(f"Error reading STEP file: {path}")
 
@@ -129,7 +131,7 @@ def importStep(assy: AssemblyProtocol, path: str):
     _importDoc(doc, assy)
 
 
-def importXbf(assy: AssemblyProtocol, path: str):
+def importXbf(assy: AssemblyProtocol, path: Path | str):
     """
     Import an xbf file into an assembly.
 
@@ -138,15 +140,18 @@ def importXbf(assy: AssemblyProtocol, path: str):
 
     :return: None
     """
+    if isinstance(path, str):
+        path = Path(path)
 
     app = TDocStd_Application()
     BinXCAFDrivers.DefineFormat_s(app)
 
-    dirname, fname = Path(path).absolute().splitpath()
+    dirname = path.absolute().parent
+    fname = path.absolute().name
     doc = cast(
         TDocStd_Document,
         app.Retrieve(
-            TCollection_ExtendedString(dirname), TCollection_ExtendedString(fname)
+            TCollection_ExtendedString(str(dirname)), TCollection_ExtendedString(fname)
         ),
     )
 
@@ -158,7 +163,7 @@ def importXbf(assy: AssemblyProtocol, path: str):
     _importDoc(doc, assy)
 
 
-def importXml(assy: AssemblyProtocol, path: str):
+def importXml(assy: AssemblyProtocol, path: Path | str):
     """
     Import an xcaf xml file into an assembly.
 
@@ -168,14 +173,18 @@ def importXml(assy: AssemblyProtocol, path: str):
     :return: None
     """
 
+    if isinstance(path, str):
+        path = Path(path)
+
     app = TDocStd_Application()
     XmlXCAFDrivers.DefineFormat_s(app)
 
-    dirname, fname = Path(path).absolute().splitpath()
+    dirname = path.absolute().parent
+    fname = path.absolute().name
     doc = cast(
         TDocStd_Document,
         app.Retrieve(
-            TCollection_ExtendedString(dirname), TCollection_ExtendedString(fname)
+            TCollection_ExtendedString(str(dirname)), TCollection_ExtendedString(fname)
         ),
     )
 

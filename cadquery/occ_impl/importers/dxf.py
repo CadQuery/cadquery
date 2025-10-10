@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from math import pi
 from typing import List
+from pathlib import Path
 
 from ... import cq
 from ..geom import Vector
@@ -159,7 +160,7 @@ def _dxf_convert(elements, tol):
 
 
 def _importDXF(
-    filename: str, tol: float = 1e-6, exclude: List[str] = [], include: List[str] = [],
+    filename: Path, tol: float = 1e-6, exclude: List[str] = [], include: List[str] = [],
 ) -> List[Face]:
     """
     Loads a DXF file into a list of faces.
