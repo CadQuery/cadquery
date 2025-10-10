@@ -25,7 +25,10 @@ class UNITS:
 
 
 def importShape(
-    importType: Literal["STEP", "DXF", "BREP", "BIN"], fileName: Path, *args, **kwargs
+    importType: Literal["STEP", "DXF", "BREP", "BIN"],
+    fileName: Path | str,
+    *args,
+    **kwargs
 ) -> "cq.Workplane":
     """
     Imports a file based on the type (STEP, STL, etc)
@@ -33,6 +36,8 @@ def importShape(
     :param importType: The type of file that we're importing
     :param fileName: The name of the file that we're importing
     """
+    if isinstance(fileName, str):
+        fileName = Path(fileName)
 
     # Check to see what type of file we're working with
     if importType == ImportTypes.STEP:
@@ -47,13 +52,16 @@ def importShape(
         raise RuntimeError("Unsupported import type: {!r}".format(importType))
 
 
-def importBrep(fileName: Path) -> "cq.Workplane":
+def importBrep(fileName: Path | str) -> "cq.Workplane":
     """
     Loads the BREP file as a single shape into a cadquery Workplane.
 
     :param fileName: The path and name of the BREP file to be imported
 
     """
+    if isinstance(fileName, str):
+        fileName = Path(fileName)
+
     shape = Shape.importBrep(fileName)
 
     # We know a single shape is returned. Sending it as a list prevents
@@ -64,25 +72,30 @@ def importBrep(fileName: Path) -> "cq.Workplane":
     return cq.Workplane("XY").newObject([shape])
 
 
-def importBin(fileName: Path) -> "cq.Workplane":
+def importBin(fileName: Path | str) -> "cq.Workplane":
     """
     Loads the binary BREP file as a single shape into a cadquery Workplane.
 
     :param fileName: The path and name of the BREP file to be imported
 
     """
+    if isinstance(fileName, str):
+        fileName = Path(fileName)
+
     shape = Shape.importBin(fileName)
 
     return cq.Workplane("XY").newObject([shape])
 
 
 # Loads a STEP file into a CQ.Workplane object
-def importStep(fileName: Path) -> "cq.Workplane":
+def importStep(fileName: Path | str) -> "cq.Workplane":
     """
     Accepts a file name and loads the STEP file into a cadquery Workplane
 
     :param fileName: The path and name of the STEP file to be imported
     """
+    if isinstance(fileName, str):
+        fileName = Path(fileName)
 
     # Now read and return the shape
     reader = STEPControl_Reader()
@@ -105,7 +118,10 @@ def importStep(fileName: Path) -> "cq.Workplane":
 
 
 def importDXF(
-    filename: Path, tol: float = 1e-6, exclude: List[str] = [], include: List[str] = []
+    filename: Path | str,
+    tol: float = 1e-6,
+    exclude: List[str] = [],
+    include: List[str] = [],
 ) -> "cq.Workplane":
     """
     Loads a DXF file into a Workplane.
@@ -118,6 +134,8 @@ def importDXF(
     :param exclude: a list of layer names not to import
     :param include: a list of layer names to import
     """
+    if isinstance(filename, str):
+        filename = Path(filename)
 
     faces = _importDXF(filename, tol, exclude, include)
 

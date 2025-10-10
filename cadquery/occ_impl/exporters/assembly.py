@@ -50,7 +50,7 @@ STEPExportModeLiterals = Literal["default", "fused"]
 
 def exportAssembly(
     assy: AssemblyProtocol,
-    path: Path,
+    path: Path | str,
     mode: STEPExportModeLiterals = "default",
     **kwargs,
 ) -> bool:
@@ -77,6 +77,9 @@ def exportAssembly(
         See OCCT documentation.
     :type precision_mode: int
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     # Handle the extra settings for the STEP export
     pcurves = 1
@@ -109,7 +112,7 @@ def exportAssembly(
 
 def exportStepMeta(
     assy: AssemblyProtocol,
-    path: Path,
+    path: Path | str,
     write_pcurves: bool = True,
     precision_mode: int = 0,
 ) -> bool:
@@ -128,6 +131,9 @@ def exportStepMeta(
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     pcurves = 1
     if not write_pcurves:
@@ -275,10 +281,13 @@ def exportStepMeta(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportCAF(assy: AssemblyProtocol, path: Path, binary: bool = False) -> bool:
+def exportCAF(assy: AssemblyProtocol, path: Path | str, binary: bool = False) -> bool:
     """
     Export an assembly to an XCAF xml or xbf file (internal OCCT formats).
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     folder = path.parent
     fname = path.name
@@ -338,10 +347,13 @@ def _vtkRenderWindow(
     return renderWindow
 
 
-def exportVTKJS(assy: AssemblyProtocol, path: Path):
+def exportVTKJS(assy: AssemblyProtocol, path: Path | str):
     """
     Export an assembly to a zipped vtkjs. NB: .zip extensions is added to path.
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     renderWindow = _vtkRenderWindow(assy)
 
@@ -356,13 +368,16 @@ def exportVTKJS(assy: AssemblyProtocol, path: Path):
 
 def exportVRML(
     assy: AssemblyProtocol,
-    path: Path,
+    path: Path | str,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ):
     """
     Export an assembly to a vrml file using vtk.
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     exporter = vtkVRMLExporter()
     exporter.SetFileName(str(path))
@@ -372,7 +387,7 @@ def exportVRML(
 
 def exportGLTF(
     assy: AssemblyProtocol,
-    path: Path,
+    path: Path | str,
     binary: Optional[bool] = None,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
@@ -380,6 +395,9 @@ def exportGLTF(
     """
     Export an assembly to a gltf file.
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     # If the caller specified the binary option, respect it
     if binary is None:

@@ -5844,6 +5844,7 @@ class TestCadQuery(BaseTest):
         filename = Path("box.brep")
 
         w = Workplane().box(1, 1, 1).export(filename)
+        w2 = Workplane().box(1, 1, 1).export(str(filename))
 
         assert (w - Shape.importBrep(filename)).val().Volume() == approx(0)
 

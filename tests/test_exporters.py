@@ -554,7 +554,10 @@ class TestExporters(BaseTest):
     def testSVG(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
-        exporters.export(self._box(), Path("out.svg"))
+        outfile = Path("out.svg")
+
+        exporters.export(self._box(), outfile)
+        exporters.export(self._box(), str(outfile))
 
     def testSVGOptions(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
@@ -649,6 +652,8 @@ class TestExporters(BaseTest):
             res = f.read(100)
 
         assert res.startswith('<?xml version="1.0"?>\n<VTKFile')
+
+        exporters.export(self._box(), str(filename))
 
     def testDXF(self):
 
@@ -801,6 +806,8 @@ def test_stl_ascii(tmpdir, box123, id, opt, matchvals):
                 break
             assert line.find(matchvals[i]) > -1
 
+    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
+
 
 @pytest.mark.parametrize(
     "id, opt, matchval",
@@ -831,6 +838,8 @@ def test_stl_binary(tmpdir, box123, id, opt, matchval):
     with open(fpath, "rb") as f:
         r = f.read(len(matchval))
         assert r == matchval
+
+    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
 
 
 def test_assy_vtk_rotation(tmpdir):
@@ -922,13 +931,7 @@ def test_dxf_text(tmpdir, testdatadir):
         .box(8, 8, 1)
         .faces("<Y")
         .workplane()
-        .text(
-            ",,",
-            10,
-            -1,
-            True,
-            fontPath=str(Path(testdatadir) / "OpenSans-Regular.ttf"),
-        )
+        .text(",,", 10, -1, True, fontPath=testdatadir / "OpenSans-Regular.ttf",)
     )
 
     fname = tmpdir / "dxf_text.dxf"

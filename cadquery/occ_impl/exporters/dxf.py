@@ -367,7 +367,7 @@ class DxfDocument:
 
 def exportDXF(
     w: Union[WorkplaneLike, Shape, Iterable[Shape]],
-    fname: Path,
+    fname: Path | str,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
     *,
@@ -384,6 +384,9 @@ def exportDXF(
     :param tolerance: Approximation tolerance.
     :param doc_units: ezdxf document/modelspace :doc:`units <ezdxf-stable:concepts/units>` (in. = ``1``, mm = ``4``).
     """
+
+    if isinstance(fname, str):
+        fname = Path(fname)
 
     dxf = DxfDocument(approx=approx, tolerance=tolerance, doc_units=doc_units)
 

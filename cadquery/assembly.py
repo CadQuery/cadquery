@@ -48,7 +48,6 @@ ExportLiterals = Literal["STEP", "XML", "XBF", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
-
 # entity selector grammar definition
 def _define_grammar():
 
@@ -509,7 +508,7 @@ class Assembly(object):
     @deprecate()
     def save(
         self,
-        path: Path,
+        path: Path | str,
         exportType: Optional[ExportLiterals] = None,
         mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
@@ -529,6 +528,9 @@ class Assembly(object):
         :param ascii: STL only - Sets whether or not STL export should be text or binary
         :type ascii: bool
         """
+
+        if isinstance(path, str):
+            path = Path(path)
 
         return self.export(
             path, exportType, mode, tolerance, angularTolerance, **kwargs
@@ -536,7 +538,7 @@ class Assembly(object):
 
     def export(
         self,
-        path: Path,
+        path: Path | str,
         exportType: Optional[ExportLiterals] = None,
         mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
@@ -556,6 +558,9 @@ class Assembly(object):
         :param ascii: STL only - Sets whether or not STL export should be text or binary
         :type ascii: bool
         """
+
+        if isinstance(path, str):
+            path = Path(path)
 
         # Make sure the export mode setting is correct
         if mode not in get_args(STEPExportModeLiterals):
@@ -593,7 +598,7 @@ class Assembly(object):
         return self
 
     @classmethod
-    def importStep(cls, path: Path) -> Self:
+    def importStep(cls, path: Path | str) -> Self:
         """
         Reads an assembly from a STEP file.
 
@@ -601,13 +606,21 @@ class Assembly(object):
         :return: An Assembly object.
         """
 
+        if isinstance(path, str):
+            path = Path(path)
+
         return cls.load(path, importType="STEP")
 
     @classmethod
-    def load(cls, path: Path, importType: Optional[ImportLiterals] = None,) -> Self:
+    def load(
+        cls, path: Path | str, importType: Optional[ImportLiterals] = None,
+    ) -> Self:
         """
         Load step, xbf or xml.
         """
+
+        if isinstance(path, str):
+            path = Path(path)
 
         if importType is None:
             t = path.suffix.upper().lstrip(".")
