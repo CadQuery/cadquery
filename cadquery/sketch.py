@@ -221,7 +221,7 @@ class Sketch(object):
 
     def importDXF(
         self: T,
-        filename: Path,
+        filename: Path | str,
         tol: float = 1e-6,
         exclude: List[str] = [],
         include: List[str] = [],
@@ -232,6 +232,8 @@ class Sketch(object):
         """
         Import a DXF file and construct face(s)
         """
+        if isinstance(filename, str):
+            filename = Path(filename)
 
         res = Compound.makeCompound(_importDXF(filename, tol, exclude, include))
 
@@ -1326,7 +1328,7 @@ class Sketch(object):
 
     def export(
         self: T,
-        fname: Path,
+        fname: Path | str,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         opt: Optional[Dict[str, Any]] = None,
@@ -1340,6 +1342,8 @@ class Sketch(object):
         :param opt: additional options passed to the specific exporter. Default None.
         :return: Self.
         """
+        if isinstance(fname, str):
+            fname = Path(fname)
 
         export(
             self, fname, tolerance=tolerance, angularTolerance=angularTolerance, opt=opt

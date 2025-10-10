@@ -27,7 +27,8 @@ from tests import (
 
 # test data directory
 testdataDir = Path(__file__).parent.joinpath("testdata")
-testFont = str(testdataDir / "OpenSans-Regular.ttf")
+testFont = testdataDir / "OpenSans-Regular.ttf"
+testFontStr = str(testFont)
 
 # where unit test output will be saved
 OUTDIR = Path(tempfile.gettempdir())
@@ -3905,6 +3906,22 @@ class TestCadQuery(BaseTest):
         # verify that the number of solids is correct
         self.assertEqual(len(obj4.solids().vals()), 5)
 
+        obj4point5 = (
+            box.faces(">Z")
+            .workplane()
+            .text(
+                "CQ 2.0",
+                0.5,
+                0.05,
+                fontPath=testFontStr,
+                cut=False,
+                combine=False,
+                halign="right",
+                valign="top",
+                font="Sans",
+            )
+        )
+
         # test to see if non-existent file causes segfault
         obj5 = (
             box.faces(">Z")
@@ -5844,6 +5861,7 @@ class TestCadQuery(BaseTest):
         filename = Path("box.brep")
 
         w = Workplane().box(1, 1, 1).export(filename)
+        w2 = Workplane().box(1, 1, 1).export(str(filename))
 
         assert (w - Shape.importBrep(filename)).val().Volume() == approx(0)
 

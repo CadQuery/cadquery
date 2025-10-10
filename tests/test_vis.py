@@ -142,6 +142,7 @@ def test_screenshot(wp, tmpdir, patch_vtk):
     # smoke test for now
     filename = tmpdir / "img.png"
     show(wp, interact=False, screenshot=filename, trihedron=False, gradient=False)
+    show(wp, interact=False, screenshot=str(filename), trihedron=False, gradient=False)
 
 
 def test_ctrlPts():

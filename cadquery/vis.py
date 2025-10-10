@@ -395,7 +395,7 @@ def show(
     edges: bool = False,
     specular: bool = True,
     title: str = "CQ viewer",
-    screenshot: Optional[Path] = None,
+    screenshot: Optional[Path | str] = None,
     interact: bool = True,
     zoom: float = 1.0,
     roll: float = -35,
@@ -413,6 +413,8 @@ def show(
     """
     Show CQ objects using VTK. This functions optionally allows to make screenshots.
     """
+    if isinstance(screenshot, str):
+        patscreenshoth = Path(screenshot)
 
     # split objects
     shapes, vecs, locs, props = _split_showables(objs)

@@ -40,7 +40,7 @@ ExportLiterals = Literal[
 
 def export(
     w: Union[Shape, Iterable[Shape]],
-    fname: Path,
+    fname: Path | str,
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
@@ -56,6 +56,9 @@ def export(
     :param angularTolerance: the angular tolerance, in radians. Default 0.1.
     :param opt: additional options passed to the specific exporter. Default None.
     """
+
+    if isinstance(fname, str):
+        fname = Path(fname)
 
     shape: Shape
     f: IO
@@ -200,14 +203,15 @@ def exportShape(
         # all these types required writing to a file and then
         # re-reading. this is due to the fact that FreeCAD writes these
         (h, outFileName) = tempfile.mkstemp()
+        outFileName = Path(outFileName)  # type: ignore
         # weird, but we need to close this file. the next step is going to write to
         # it from c code, so it needs to be closed.
         os.close(h)
 
         if exportType == ExportTypes.STEP:
-            shape.exportStep(Path(outFileName))
+            shape.exportStep(outFileName)
         elif exportType == ExportTypes.STL:
-            shape.exportStl(Path(outFileName), tolerance, angularTolerance, True)
+            shape.exportStl(outFileName, tolerance, angularTolerance, True)
         else:
             raise ValueError("No idea how i got here")
 
@@ -216,7 +220,7 @@ def exportShape(
 
 
 @deprecate()
-def readAndDeleteFile(fileName):
+def readAndDeleteFile(fileName: Path):
     """
     Read data from file provided, and delete it when done
     return the contents as a string
@@ -225,5 +229,5 @@ def readAndDeleteFile(fileName):
     with open(fileName, "r") as f:
         res = "{}".format(f.read())
 
-    os.remove(fileName)
+    fileName.unlink()
     return res

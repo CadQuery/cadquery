@@ -132,6 +132,8 @@ class TestImporters(BaseTest):
         """
         self.importBox(importers.ImportTypes.BREP, OUTDIR / "tempBREP.brep")
         self.importCompound(importers.ImportTypes.BREP, OUTDIR / "tempBREP.brep")
+        self.importBox(importers.ImportTypes.BREP, str(OUTDIR / "tempBREP.brep"))
+        self.importCompound(importers.ImportTypes.BREP, str(OUTDIR / "tempBREP.brep"))
 
     def testBIN(self):
         """
@@ -139,6 +141,8 @@ class TestImporters(BaseTest):
         """
         self.importBox(importers.ImportTypes.BIN, OUTDIR / "tempBIN.bin")
         self.importCompound(importers.ImportTypes.BIN, OUTDIR / "tempBIN.bin")
+        self.importBox(importers.ImportTypes.BIN, str(OUTDIR / "tempBIN.bin"))
+        self.importCompound(importers.ImportTypes.BIN, str(OUTDIR / "tempBIN.bin"))
 
     def testSTEP(self):
         """
@@ -146,6 +150,8 @@ class TestImporters(BaseTest):
         """
         self.importBox(importers.ImportTypes.STEP, OUTDIR / "tempSTEP.step")
         self.importCompound(importers.ImportTypes.STEP, OUTDIR / "tempSTEP.step")
+        self.importBox(importers.ImportTypes.STEP, str(OUTDIR / "tempSTEP.step"))
+        self.importCompound(importers.ImportTypes.STEP, str(OUTDIR / "tempSTEP.step"))
 
     def testInvalidSTEP(self):
         """

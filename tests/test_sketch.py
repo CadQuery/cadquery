@@ -827,6 +827,8 @@ def test_export():
 
     s1 = Sketch().rect(1, 1).export(filename)
     s2 = Sketch().importDXF(filename)
+    s3 = Sketch().rect(1, 1).export(str(filename))
+    s4 = Sketch().importDXF(str(filename))
 
     assert (s1 - s2).val().Area() == approx(0)
 

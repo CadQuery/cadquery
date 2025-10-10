@@ -4305,7 +4305,7 @@ class Workplane(object):
         combine: CombineMode = False,
         clean: bool = True,
         font: str = "Arial",
-        fontPath: Optional[str] = None,
+        fontPath: Optional[Path | str] = None,
         kind: Literal["regular", "bold", "italic"] = "regular",
         halign: Literal["center", "left", "right"] = "center",
         valign: Literal["center", "top", "bottom"] = "center",
@@ -4353,6 +4353,10 @@ class Workplane(object):
             cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, -1.0)
 
         """
+
+        if isinstance(fontPath, str):
+            fontPath = Path(fontPath)
+
         r = Compound.makeText(
             txt,
             fontsize,
@@ -4583,7 +4587,7 @@ class Workplane(object):
 
     def export(
         self: T,
-        fname: Path,
+        fname: Path | str,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         opt: Optional[Dict[str, Any]] = None,
@@ -4597,6 +4601,9 @@ class Workplane(object):
         :param opt: additional options passed to the specific exporter. Default None.
         :return: Self.
         """
+
+        if isinstance(fname, str):
+            fname = Path(fname)
 
         export(
             self, fname, tolerance=tolerance, angularTolerance=angularTolerance, opt=opt

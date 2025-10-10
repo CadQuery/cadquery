@@ -96,7 +96,7 @@ def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | 
     return rv
 
 
-def importStep(assy: AssemblyProtocol, path: Path):
+def importStep(assy: AssemblyProtocol, path: Path | str):
     """
     Import a step file into an assembly.
 
@@ -105,6 +105,8 @@ def importStep(assy: AssemblyProtocol, path: Path):
 
     :return: None
     """
+    if isinstance(path, str):
+        path = Path(path)
 
     # Create and configure a STEP reader
     step_reader = STEPCAFControl_Reader()
@@ -129,7 +131,7 @@ def importStep(assy: AssemblyProtocol, path: Path):
     _importDoc(doc, assy)
 
 
-def importXbf(assy: AssemblyProtocol, path: Path):
+def importXbf(assy: AssemblyProtocol, path: Path | str):
     """
     Import an xbf file into an assembly.
 
@@ -138,6 +140,8 @@ def importXbf(assy: AssemblyProtocol, path: Path):
 
     :return: None
     """
+    if isinstance(path, str):
+        path = Path(path)
 
     app = TDocStd_Application()
     BinXCAFDrivers.DefineFormat_s(app)
@@ -159,7 +163,7 @@ def importXbf(assy: AssemblyProtocol, path: Path):
     _importDoc(doc, assy)
 
 
-def importXml(assy: AssemblyProtocol, path: Path):
+def importXml(assy: AssemblyProtocol, path: Path | str):
     """
     Import an xcaf xml file into an assembly.
 
@@ -168,6 +172,9 @@ def importXml(assy: AssemblyProtocol, path: Path):
 
     :return: None
     """
+
+    if isinstance(path, str):
+        path = Path(path)
 
     app = TDocStd_Application()
     XmlXCAFDrivers.DefineFormat_s(app)

@@ -939,6 +939,10 @@ def test_assembly_subshape_import(tmp_path_factory, subshape_assy, kind):
     imported_assy = cq.Assembly.load(assy_step_path)
     assert imported_assy.name == "top_level"
 
+    # test string paths
+    subshape_assy.export(str(assy_step_path))
+    imported_assy = cq.Assembly.load(str(assy_step_path))
+
     # Check the advanced face name
     assert len(imported_assy.children[0]._subshape_names) == 1
     assert (
