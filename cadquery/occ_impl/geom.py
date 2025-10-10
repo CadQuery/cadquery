@@ -637,11 +637,11 @@ class Plane(object):
 
         # Apply rotation on vectors of the global plane
         # These vectors are already unit vectors and require no .normalized()
-        dirs = ((1, 0, 0), (0, 0, 1))
-        dirs = (Vector(*i).transform(transformation) for i in dirs)
+        globaldirs = ((1, 0, 0), (0, 0, 1))
+        localdirs = (Vector(*i).transform(transformation) for i in globaldirs)
 
         # Unpack vectors
-        xDir, normal = dirs
+        xDir, normal = localdirs
         # Construct a plane and return it
         pl = cls(origin=origin, xDir=xDir, normal=normal)
 
