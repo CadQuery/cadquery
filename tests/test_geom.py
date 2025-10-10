@@ -5,11 +5,7 @@ import itertools
 
 # Conversion can betriggered from explicit constructor, or from property
 @pytest.mark.parametrize(
-    ["useproperty",],
-    [
-        (False,),
-        (True,),
-    ],
+    ["useproperty",], [(False,), (True,),],
 )
 # Create different test cases from different initial plane.
 # Testing the different components is mainly useful for debugging if things
@@ -52,7 +48,7 @@ import itertools
         (((3, 5, 6), (0, -1, -1), (1, 0, -1),), None,),
         # Vectors with random non-trivial directions
         (((3, 5, 6), (2, 4, 7), (9, 8, 1),), None,),
-    ]
+    ],
 )
 def test_Plane_from_Location(plargs, expectedrot, useproperty):
     # Test conversion between Plane and Location by converting multiple
@@ -68,7 +64,10 @@ def test_Plane_from_Location(plargs, expectedrot, useproperty):
     if len(plargs) == 1:
         (origin,) = plargs
     elif len(plargs) == 2:
-        plargs = (*plargs, (0, 0, 1),)
+        plargs = (
+            *plargs,
+            (0, 0, 1),
+        )
     # If len(plargs) was 2, it is now 3, and the normal still needs to be
     # made orthogonal to xDir.
     if len(plargs) == 3:
@@ -78,7 +77,11 @@ def test_Plane_from_Location(plargs, expectedrot, useproperty):
         normal -= normal.projectToLine(xDir)
         xDir = xDir.toTuple()
         normal = normal.toTuple()
-        plargs = (origin, xDir, normal,)
+        plargs = (
+            origin,
+            xDir,
+            normal,
+        )
 
     # Start from random Plane with classical __init__
     # Use keyword arguments on purpose, as they still need to work after

@@ -608,10 +608,7 @@ class Plane(object):
         self.origin = Vector(origin)
 
     @classmethod
-    def fromLocation(
-        cls,
-        loc: "Location",
-    ) -> "Plane":
+    def fromLocation(cls, loc: "Location",) -> "Plane":
         """Create a Plane from Location loc"""
 
         # Ask location for its information
