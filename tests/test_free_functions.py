@@ -61,6 +61,7 @@ from OCP.BOPAlgo import BOPAlgo_CheckStatus
 
 from pytest import approx, raises, fixture
 from math import pi
+from pathlib import Path
 
 #%% test utils
 
@@ -881,10 +882,12 @@ def test_project():
 # %% export
 def test_export():
 
-    b1 = box(1, 1, 1)
-    b1.export("box.brep")
+    filename = Path("box.brep")
 
-    b2 = Shape.importBrep("box.brep")
+    b1 = box(1, 1, 1)
+    b1.export(filename)
+
+    b2 = Shape.importBrep(filename)
 
     assert (b1 - b2).Volume() == approx(0)
 
