@@ -578,9 +578,9 @@ class Plane(object):
 
     def __init__(
         self,
-        origin: Union[Tuple[float, float, float], Vector],
-        xDir: Optional[Union[Tuple[float, float, float], Vector]] = None,
-        normal: Union[Tuple[float, float, float], Vector] = (0, 0, 1),
+        origin: Union[Tuple[Real, Real, Real], Vector],
+        xDir: Optional[Union[Tuple[Real, Real, Real], Vector]] = None,
+        normal: Union[Tuple[Real, Real, Real], Vector] = (0, 0, 1),
     ):
         """
         Create a Plane with an arbitrary orientation
@@ -606,6 +606,46 @@ class Plane(object):
 
         self._setPlaneDir(xDir)
         self.origin = Vector(origin)
+
+    @classmethod
+    def fromLocation(cls, loc: "Location",) -> "Plane":
+        """Create a Plane from Location loc"""
+
+        # Ask location for its information
+        origin, rotations = loc.toTuple()
+
+        # Origin is easy, but the rotational angles of the location need to be
+        # turned into xDir and normal vectors.
+        # This is done by multiplying a standard cooridnate system by the given
+        # angles.
+        # Rotation of vectors is done by a transformation matrix.
+        # The order in which rotational angles are introduced is crucial:
+        # If u is our vector, Rx is rotation around x axis etc, we want the
+        # following:
+        # u' = Rz * Ry * Rx * u = R * u
+        # That way, all rotational angles refer to a global coordinate system,
+        # and e.g. Ry does not refer to a rotation direction, which already
+        # was rotated around Rx.
+        # This definition in the global system is called extrinsic, and it is
+        # how the Location class wants it to be done.
+        # And this is why we introduce the rotations from left to right
+        # and from Z to X.
+        transformation = Matrix()
+        transformation.rotateZ(rotations[2] * pi / 180.0)
+        transformation.rotateY(rotations[1] * pi / 180.0)
+        transformation.rotateX(rotations[0] * pi / 180.0)
+
+        # Apply rotation on vectors of the global plane
+        # These vectors are already unit vectors and require no .normalized()
+        globaldirs = ((1, 0, 0), (0, 0, 1))
+        localdirs = (Vector(*i).transform(transformation) for i in globaldirs)
+
+        # Unpack vectors
+        xDir, normal = localdirs
+        # Construct a plane and return it
+        pl = cls(origin=origin, xDir=xDir, normal=normal)
+
+        return pl
 
     def _eq_iter(self, other):
         """Iterator to successively test equality"""
@@ -1107,6 +1147,11 @@ class Location(object):
         rx, ry, rz = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
 
         return rv_trans, (degrees(rx), degrees(ry), degrees(rz))
+
+    @property
+    def plane(self) -> "Plane":
+
+        return Plane.fromLocation(self)
 
     def __getstate__(self) -> BytesIO:
 
