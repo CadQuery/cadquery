@@ -146,13 +146,10 @@ class Curve(NamedTuple):
 
         g = e._geomAdaptor().BSpline()
 
-        knots = np.array(list(e._geomAdaptor().BSpline().KnotSequence()))
+        knots = np.repeat(list(g.Knots()), list(g.Multiplicities()))
         pts = np.array([(p.X(), p.Y(), p.Z()) for p in g.Poles()])
         order = g.Degree()
         periodic = g.IsPeriodic()
-
-        if periodic:
-            knots = knots[order:-order]
 
         return cls(pts, knots, order, periodic)
 
@@ -184,21 +181,13 @@ class Surface(NamedTuple):
 
     def surface(self) -> Geom_BSplineSurface:
 
-        if self.uperiodic:
-            umults = _colIntArray(np.ones_like(self.uknots, dtype=int))
-            uknots = _colRealArray(self.uknots)
-        else:
-            unique_knots, mults_arr = np.unique(self.uknots, return_counts=True)
-            uknots = _colRealArray(unique_knots)
-            umults = _colIntArray(mults_arr)
+        unique_knots, mults_arr = np.unique(self.uknots, return_counts=True)
+        uknots = _colRealArray(unique_knots)
+        umults = _colIntArray(mults_arr)
 
-        if self.vperiodic:
-            vmults = _colIntArray(np.ones_like(self.vknots, dtype=int))
-            vknots = _colRealArray(self.vknots)
-        else:
-            unique_knots, mults_arr = np.unique(self.vknots, return_counts=True)
-            vknots = _colRealArray(unique_knots)
-            vmults = _colIntArray(mults_arr)
+        unique_knots, mults_arr = np.unique(self.vknots, return_counts=True)
+        vknots = _colRealArray(unique_knots)
+        vmults = _colIntArray(mults_arr)
 
         return Geom_BSplineSurface(
             _colPtsArray2(self.pts),
@@ -228,8 +217,8 @@ class Surface(NamedTuple):
 
         g = cast(Geom_BSplineSurface, f._geomAdaptor())
 
-        uknots = np.array(list(g.UKnotSequence()))
-        vknots = np.array(list(g.VKnotSequence()))
+        uknots = np.repeat(list(g.UKnots()), list(g.UMultiplicities()))
+        vknots = np.repeat(list(g.VKnots()), list(g.VMultiplicities()))
 
         tmp = []
         for i in range(1, g.NbUPoles() + 1):
@@ -247,12 +236,6 @@ class Surface(NamedTuple):
 
         uperiodic = g.IsUPeriodic()
         vperiodic = g.IsVPeriodic()
-
-        if uperiodic:
-            uknots = uknots[uorder:-uorder]
-
-        if vperiodic:
-            vknots = vknots[vorder:-vorder]
 
         return cls(pts, uknots, vknots, uorder, vorder, uperiodic, vperiodic)
 
@@ -1852,7 +1835,7 @@ def loft(
 
 
 def reparametrize(
-    *curves: Curve, n: int = 100, knots: int = 100, w1: float = 1, w2: float = 1e-1
+    *curves: Curve, n: int = 100, knots: int = 100, w1: float = 1, w2: float = 1
 ) -> List[Curve]:
 
     from scipy.optimize import fmin_l_bfgs_b
