@@ -3,7 +3,7 @@ import pytest
 from glob import glob
 from itertools import chain, count
 
-from path import Path
+from pathlib import Path
 
 from docutils.parsers.rst import directives
 from docutils.core import publish_doctree

@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import PathLike
+from pathlib import Path
 import xml.etree.cElementTree as ET
 from typing import IO, List, Literal, Tuple, Union
 from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
@@ -46,7 +46,7 @@ class ThreeMFWriter(object):
         self.tessellations = [t for t in tessellations if all(t)]
 
     def write3mf(
-        self, outfile: Union[PathLike, str, IO[bytes]],
+        self, outfile: Union[Path, str, IO[bytes]],
     ):
         """
         Write to the given file.

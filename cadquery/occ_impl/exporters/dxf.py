@@ -20,6 +20,7 @@ from OCP.GeomConvert import GeomConvert
 from OCP.gp import gp_Dir
 from OCP.GC import GC_MakeArcOfEllipse
 from typing_extensions import Self
+from pathlib import Path
 
 from ...units import RAD2DEG
 from ..shapes import Face, Edge, Shape, Compound, compound
@@ -366,7 +367,7 @@ class DxfDocument:
 
 def exportDXF(
     w: Union[WorkplaneLike, Shape, Iterable[Shape]],
-    fname: str,
+    fname: Path | str,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
     *,
@@ -383,6 +384,9 @@ def exportDXF(
     :param tolerance: Approximation tolerance.
     :param doc_units: ezdxf document/modelspace :doc:`units <ezdxf-stable:concepts/units>` (in. = ``1``, mm = ``4``).
     """
+
+    if isinstance(fname, str):
+        fname = Path(fname)
 
     dxf = DxfDocument(approx=approx, tolerance=tolerance, doc_units=doc_units)
 
