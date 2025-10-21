@@ -26,6 +26,8 @@ from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
 from OCP.BinTools import BinTools_LocationSet
 
+from multimethod import multidispatch
+
 from ..types import Real
 from ..utils import multimethod
 
@@ -576,20 +578,17 @@ class Plane(object):
         plane._setPlaneDir(xDir)
         return plane
 
+    # Prefer multidispatch over multimethod, as that supports keyword
+    # arguments. These are in use, since Plane.__init__ has not always
+    # been a multimethod.
+    @multidispatch
     def __init__(
         self,
         origin: Union[Tuple[Real, Real, Real], Vector],
         xDir: Optional[Union[Tuple[Real, Real, Real], Vector]] = None,
         normal: Union[Tuple[Real, Real, Real], Vector] = (0, 0, 1),
     ):
-        """
-        Create a Plane with an arbitrary orientation
-
-        :param origin: the origin in global coordinates
-        :param xDir: an optional vector representing the xDirection.
-        :param normal: the normal direction for the plane
-        :raises ValueError: if the specified xDir is not orthogonal to the provided normal
-        """
+        """Create a Plane from origin in global coordinates, vector xDir, and normal direction for the plane."""
         zDir = Vector(normal)
         if zDir.Length == 0.0:
             raise ValueError("normal should be non null")
@@ -607,9 +606,11 @@ class Plane(object):
         self._setPlaneDir(xDir)
         self.origin = Vector(origin)
 
-    @classmethod
-    def fromLocation(cls, loc: "Location",) -> "Plane":
-        """Create a Plane from Location loc"""
+    @__init__.register
+    def __init__(
+        self, loc: "Location",
+    ):
+        """Create a Plane from Location loc."""
 
         # Ask location for its information
         origin, rotations = loc.toTuple()
@@ -642,10 +643,12 @@ class Plane(object):
 
         # Unpack vectors
         xDir, normal = localdirs
-        # Construct a plane and return it
-        pl = cls(origin=origin, xDir=xDir, normal=normal)
 
-        return pl
+        # Apply attributes as in other constructor.
+        # Rememeber to set zDir before calling _setPlaneDir.
+        self.zDir = normal
+        self._setPlaneDir(xDir)
+        self.origin = origin
 
     def _eq_iter(self, other):
         """Iterator to successively test equality"""
@@ -1151,7 +1154,7 @@ class Location(object):
     @property
     def plane(self) -> "Plane":
 
-        return Plane.fromLocation(self)
+        return Plane(self)
 
     def __getstate__(self) -> BytesIO:
 
