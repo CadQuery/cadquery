@@ -3,12 +3,11 @@ import uuid
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
-from itertools import chain
 from typing import Optional
 from typing_extensions import Literal
 
 from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
-from vtkmodules.vtkRenderingCore import vtkRenderer, vtkRenderWindow
+from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
@@ -19,10 +18,16 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.TDocStd import TDocStd_Document
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen
-from OCP.XmlDrivers import (
-    XmlDrivers_DocumentStorageDriver,
-    XmlDrivers_DocumentRetrievalDriver,
+from OCP.XmlXCAFDrivers import (
+    XmlXCAFDrivers_DocumentRetrievalDriver,
+    XmlXCAFDrivers_DocumentStorageDriver,
 )
+from OCP.BinXCAFDrivers import (
+    BinXCAFDrivers_DocumentRetrievalDriver,
+    BinXCAFDrivers_DocumentStorageDriver,
+)
+
+
 from OCP.TCollection import TCollection_ExtendedString, TCollection_AsciiString
 from OCP.PCDM import PCDM_StoreStatus
 from OCP.RWGltf import RWGltf_CafWriter
@@ -33,7 +38,6 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
-from ..assembly import Color
 
 
 class ExportModes:
@@ -81,9 +85,6 @@ def exportAssembly(
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
     fuzzy_tol = kwargs["fuzzy_tol"] if "fuzzy_tol" in kwargs else None
     glue = kwargs["glue"] if "glue" in kwargs else False
-
-    # Use the assembly name if the user set it
-    assembly_name = assy.name if assy.name else str(uuid.uuid1())
 
     # Handle the doc differently based on which mode we are using
     if mode == "fused":
@@ -175,10 +176,14 @@ def exportStepMeta(
 
             # Handle shape name, color and location
             part_label = shape_tool.AddShape(shape.wrapped, False)
+            # NB: this might overwrite the name if shape is referenced multiple times
             TDataStd_Name.Set_s(part_label, TCollection_ExtendedString(name))
+
             if color:
                 color_tool.SetColor(part_label, color.wrapped, XCAFDoc_ColorGen)
-            shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
+
+            comp_label = shape_tool.AddComponent(assy_label, part_label, loc.wrapped)
+            TDataStd_Name.Set_s(comp_label, TCollection_ExtendedString(name))
 
             # If this assembly has shape metadata, add it to the shape
             if (
@@ -268,29 +273,39 @@ def exportStepMeta(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportCAF(assy: AssemblyProtocol, path: str) -> bool:
+def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
     """
-    Export an assembly to a OCAF xml file (internal OCCT format).
+    Export an assembly to an XCAF xml or xbf file (internal OCCT formats).
     """
 
     folder, fname = os.path.split(path)
     name, ext = os.path.splitext(fname)
     ext = ext[1:] if ext[0] == "." else ext
 
-    _, doc = toCAF(assy)
+    _, doc = toCAF(assy, binary=binary)
     app = XCAFApp_Application.GetApplication_s()
 
-    store = XmlDrivers_DocumentStorageDriver(
-        TCollection_ExtendedString("Copyright: Open Cascade, 2001-2002")
-    )
-    ret = XmlDrivers_DocumentRetrievalDriver()
+    store: BinXCAFDrivers_DocumentStorageDriver | XmlXCAFDrivers_DocumentStorageDriver
+    ret: BinXCAFDrivers_DocumentRetrievalDriver | XmlXCAFDrivers_DocumentRetrievalDriver
+
+    # XBF
+    if binary:
+        ret = XmlXCAFDrivers_DocumentRetrievalDriver()
+        format_name = TCollection_AsciiString("BinXCAF")
+        format_desc = TCollection_AsciiString("Binary XCAF Document")
+        store = BinXCAFDrivers_DocumentStorageDriver()
+        ret = BinXCAFDrivers_DocumentRetrievalDriver()
+    # XML
+    else:
+        format_name = TCollection_AsciiString("XmlXCAF")
+        format_desc = TCollection_AsciiString("Xml XCAF Document")
+        store = XmlXCAFDrivers_DocumentStorageDriver(
+            TCollection_ExtendedString("Copyright: Open Cascade, 2001-2002")
+        )
+        ret = XmlXCAFDrivers_DocumentRetrievalDriver()
 
     app.DefineFormat(
-        TCollection_AsciiString("XmlOcaf"),
-        TCollection_AsciiString("Xml XCAF Document"),
-        TCollection_AsciiString(ext),
-        ret,
-        store,
+        format_name, format_desc, TCollection_AsciiString(ext), ret, store,
     )
 
     doc.SetRequestedFolder(TCollection_ExtendedString(folder))

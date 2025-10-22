@@ -15,8 +15,14 @@ from math import degrees, radians
 
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorType, XCAFDoc_ColorGen
+from OCP.XCAFDoc import (
+    XCAFDoc_DocumentTool,
+    XCAFDoc_ColorType,
+    XCAFDoc_ColorGen,
+)
 from OCP.XCAFApp import XCAFApp_Application
+from OCP.BinXCAFDrivers import BinXCAFDrivers
+from OCP.XmlXCAFDrivers import XmlXCAFDrivers
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDF import TDF_Label
 from OCP.TopLoc import TopLoc_Location
@@ -24,6 +30,7 @@ from OCP.Quantity import (
     Quantity_ColorRGBA,
     Quantity_Color,
     Quantity_TOC_sRGB,
+    Quantity_TOC_RGB,
 )
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
@@ -67,7 +74,7 @@ class Color(object):
         ...
 
     @overload
-    def __init__(self, r: float, g: float, b: float, a: float = 0):
+    def __init__(self, r: float, g: float, b: float, a: float = 0, srgb: bool = True):
         """
         Construct a Color from RGB(A) values.
 
@@ -75,6 +82,7 @@ class Color(object):
         :param g: green value, 0-1
         :param b: blue value, 0-1
         :param a: alpha value, 0-1 (default: 0)
+        :param srgb: srgb/linear rgb switch, bool (default: True)
         """
         ...
 
@@ -105,6 +113,14 @@ class Color(object):
             r, g, b, a = args
             self.wrapped = Quantity_ColorRGBA(
                 Quantity_Color(r, g, b, Quantity_TOC_sRGB), a
+            )
+        elif len(args) == 5:
+            r, g, b, a, srgb = args
+            self.wrapped = Quantity_ColorRGBA(
+                Quantity_Color(
+                    r, g, b, Quantity_TOC_sRGB if srgb else Quantity_TOC_RGB
+                ),
+                a,
             )
         else:
             raise ValueError(f"Unsupported arguments: {args}, {kwargs}")
@@ -283,12 +299,19 @@ def toCAF(
     mesh: bool = False,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
+    binary: bool = True,
 ) -> Tuple[TDF_Label, TDocStd_Document]:
 
     # prepare a doc
     app = XCAFApp_Application.GetApplication_s()
 
-    doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
+    if binary:
+        BinXCAFDrivers.DefineFormat_s(app)
+        doc = TDocStd_Document(TCollection_ExtendedString("BinXCAF"))
+    else:
+        XmlXCAFDrivers.DefineFormat_s(app)
+        doc = TDocStd_Document(TCollection_ExtendedString("XmlXCAF"))
+
     app.InitDocument(doc)
 
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
@@ -297,18 +320,19 @@ def toCAF(
     ltool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
 
     # used to store labels with unique part-color combinations
-    unique_objs: Dict[Tuple[Color, AssemblyObjects], TDF_Label] = {}
+    unique_objs: Dict[Tuple[Color | None, AssemblyObjects], TDF_Label] = {}
     # used to cache unique, possibly meshed, compounds; allows to avoid redundant meshing operations if same object is referenced multiple times in an assy
     compounds: Dict[AssemblyObjects, Compound] = {}
 
-    def _toCAF(el, ancestor, color) -> TDF_Label:
+    def _toCAF(el: AssemblyProtocol, ancestor: TDF_Label | None) -> TDF_Label:
 
-        # create a subassy
-        subassy = tool.NewShape()
-        setName(subassy, el.name, tool)
+        # create a subassy if needed
+        if el.children:
+            subassy = tool.NewShape()
+            setName(subassy, el.name, tool)
 
         # define the current color
-        current_color = el.color if el.color else color
+        current_color = el.color if el.color else None
 
         # add a leaf with the actual part if needed
         if el.obj:
@@ -330,7 +354,7 @@ def toCAF(
                     compounds[key1] = compound
 
                 tool.SetShape(lab, compound.wrapped)
-                setName(lab, f"{el.name}_part", tool)
+                setName(lab, f"{el.name}_part" if el.children else el.name, tool)
                 unique_objs[key0] = lab
 
                 # handle colors when exporting to STEP
@@ -370,29 +394,42 @@ def toCAF(
                     )
                     ltool.SetLayer(subshape_label, layer_label)
 
-            tool.AddComponent(subassy, lab, TopLoc_Location())
+            if el.children:
+                lab = tool.AddComponent(subassy, lab, TopLoc_Location())
+                setName(lab, f"{el.name}_part", tool)
+            elif ancestor is not None:
+                lab = tool.AddComponent(ancestor, lab, el.loc.wrapped)
+                setName(lab, f"{el.name}", tool)
 
         # handle colors when *not* exporting to STEP
         if not coloredSTEP and current_color:
-            setColor(subassy, current_color, ctool)
+            if el.children:
+                setColor(subassy, current_color, ctool)
+
+            if el.obj:
+                setColor(lab, current_color, ctool)
 
         # add children recursively
         for child in el.children:
-            _toCAF(child, subassy, current_color)
+            _toCAF(child, subassy)
 
-        if ancestor:
+        if ancestor and el.children:
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
             rv = subassy
+        elif ancestor:
+            rv = ancestor
         else:
             # update the top level location
             rv = TDF_Label()  # NB: additional label is needed to apply the location
+
+            # set location, is location is identity return subassy
             tool.SetLocation(subassy, assy.loc.wrapped, rv)
             setName(rv, assy.name, tool)
 
         return rv
 
     # process the whole assy recursively
-    top = _toCAF(assy, None, None)
+    top = _toCAF(assy, None)
 
     tool.UpdateAssemblies()
 
