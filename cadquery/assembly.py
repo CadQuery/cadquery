@@ -82,6 +82,13 @@ def _define_grammar():
 _grammar = _define_grammar()
 
 
+def _ensure_material(material):
+    """
+    Convert string to Material if needed.
+    """
+    return Material(material) if isinstance(material, str) else material
+
+
 class Assembly(object):
     """Nested assembly of Workplane and Shape objects defining their relative positions."""
 
@@ -207,7 +214,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-        material: Optional[Material] = None,
+        material: Optional[Union[Material, str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Self:
         """
@@ -244,7 +251,7 @@ class Assembly(object):
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
-            subassy.material = (
+            subassy.material = _ensure_material(
                 kwargs["material"] if kwargs.get("material") else arg.material
             )
             subassy.metadata = (

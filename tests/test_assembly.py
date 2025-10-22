@@ -1533,6 +1533,7 @@ def test_materials():
     wp_1 = cq.Workplane().box(10, 10, 10)
     wp_2 = cq.Workplane().box(5, 5, 5)
     wp_3 = cq.Workplane().box(2.5, 2.5, 2.5)
+    wp_4 = cq.Workplane().box(1.25, 1.25, 1.25)
 
     # Add the object to the assembly with the material
     assy = cq.Assembly()
@@ -1554,6 +1555,10 @@ def test_materials():
     assy.add(wp_3, material=mat_3)
     assert assy.children[2].material.wrapped.StringName().ToCString() == "Stone"
     assert assy.children[2].material.name == "Stone"
+
+    # Test plain material string passed when adding subassembly
+    assy.add(wp_4, material="Unobtanium")
+    assert assy.children[3].material.name == "Unobtanium"
 
 
 @pytest.mark.parametrize(
