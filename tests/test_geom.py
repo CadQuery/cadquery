@@ -21,7 +21,7 @@ import itertools
         (((3, 5, 6), (1, 0, 0),), (0, 0, 0),),
         (((3, 5, 6), (0, 1, 0),), (0, 0, 90),),
         # xDir and normal specified.
-        # Omit normals, that were included as default, and once which
+        # Omit normals, that were included as default, and ones which
         # have no component orthogonal to xDir
         (((3, 5, 6), (1, 0, 0), (0, 1, 0),), (-90, 0, 0),),
         (((3, 5, 6), (0, 1, 0), (1, 0, 0),), (90, 0, 90),),
