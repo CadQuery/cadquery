@@ -3,7 +3,7 @@ import pytest
 import itertools
 
 
-# Conversion can betriggered from explicit constructor, or from property
+# Conversion can be triggered from explicit constructor, or from property
 @pytest.mark.parametrize(
     ["useproperty",], [(False,), (True,),],
 )
