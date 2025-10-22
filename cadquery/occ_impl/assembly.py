@@ -13,6 +13,7 @@ from typing import (
 from typing_extensions import Protocol, Self
 from math import degrees, radians
 
+from OCP.TCollection import TCollection_AsciiString
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFDoc import (
@@ -37,6 +38,7 @@ from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
 from OCP.gp import gp_EulerSequence
+from OCP.Graphic3d import Graphic3d_MaterialAspect, Graphic3d_NameOfMaterial
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -55,6 +57,61 @@ from ..cq import Workplane
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
+
+
+class Material(object):
+    """
+    Wrapper for the OCCT material object Graphic3d_MaterialAspect.
+    Graphic3d_MaterialAspect is mainly for rendering purposes, so this
+    Material class could be extended to also contain physical material
+    properties.
+    """
+
+    wrapped: Graphic3d_MaterialAspect
+
+    def __init__(self, name: str | Graphic3d_NameOfMaterial | None = None, **kwargs):
+        """
+        Can be passed an arbitrary string name, a string name of an OCC material,
+        or a Graphic3d_NameOfMaterial object. If nothing is passed, the default OCC
+        material is used.
+        """
+
+        # Get the name from the positional arguments or the kwargs
+        material_name = (
+            name
+            if name is not None
+            else kwargs["name"]
+            if name in kwargs.keys()
+            else None
+        )
+
+        # The caller wants a default materials object
+        if material_name is None:
+            self.wrapped = Graphic3d_MaterialAspect()
+        # If we have a string, there may be some additional lookup that needs to happen
+        elif isinstance(material_name, str):
+            # Check to see if the name is one of the pre-defined materials in OpenCASCADE
+            if material_name in dir(Graphic3d_NameOfMaterial):
+                occ_mat = getattr(Graphic3d_NameOfMaterial, material_name)
+                self.wrapped = Graphic3d_MaterialAspect(occ_mat)
+            else:
+                # An arbitrary user-defined name is being used
+                self.wrapped = Graphic3d_MaterialAspect(
+                    Graphic3d_NameOfMaterial.Graphic3d_NameOfMaterial_UserDefined
+                )
+                self.wrapped.SetMaterialName(TCollection_AsciiString(material_name))
+        # The caller is passing a direct OCC material type
+        elif isinstance(material_name, Graphic3d_NameOfMaterial):
+            self.wrapped = Graphic3d_MaterialAspect(material_name)
+        else:
+            raise ValueError(f"Invalid material name type: {type(material_name)}")
+
+    @property
+    def name(self) -> str:
+        """
+        Read-only property to get a simple string name from the material.
+        """
+        return self.wrapped.StringName().ToCString()
 
 
 class Color(object):

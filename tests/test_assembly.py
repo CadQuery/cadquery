@@ -36,6 +36,7 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
 from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB, Quantity_NameOfColor
 from OCP.TopAbs import TopAbs_ShapeEnum
+from OCP.Graphic3d import Graphic3d_NameOfMaterial
 
 
 @pytest.fixture(scope="function")
@@ -1521,6 +1522,38 @@ def test_colors_assy1(assy_fixture, request, tmpdir, kind):
     assy_i = assy.load(stepfile)
 
     check_assy(assy, assy_i)
+
+
+def test_materials():
+    # Test a default material
+    mat_0 = cq.Material()
+    assert mat_0.wrapped.StringName().ToCString() == "Default"
+
+    # Simple objects to be added to the assembly with the material
+    wp_1 = cq.Workplane().box(10, 10, 10)
+    wp_2 = cq.Workplane().box(5, 5, 5)
+    wp_3 = cq.Workplane().box(2.5, 2.5, 2.5)
+
+    # Add the object to the assembly with the material
+    assy = cq.Assembly()
+
+    # Test with the string name of a standard pre-defined material from OpenCASCADE
+    mat_1 = cq.Material(name="Graphic3d_NameOfMaterial_Brass")
+    assy.add(wp_1, material=mat_1)
+    assert assy.children[0].material.wrapped.StringName().ToCString() == "Brass"
+    assert assy.children[0].material.name == "Brass"
+
+    # Test with a user-defined material
+    mat_2 = cq.Material(name="test")
+    assy.add(wp_2, material=mat_2)
+    assert assy.children[1].material.wrapped.StringName().ToCString() == "test"
+    assert assy.children[1].material.name == "test"
+
+    # Test with an OpenCASCADE material type
+    mat_3 = cq.Material(Graphic3d_NameOfMaterial.Graphic3d_NameOfMaterial_Stone)
+    assy.add(wp_3, material=mat_3)
+    assert assy.children[2].material.wrapped.StringName().ToCString() == "Stone"
+    assert assy.children[2].material.name == "Stone"
 
 
 @pytest.mark.parametrize(

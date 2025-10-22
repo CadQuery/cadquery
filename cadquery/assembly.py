@@ -19,7 +19,7 @@ from warnings import warn
 from .cq import Workplane
 from .occ_impl.shapes import Shape, Compound, isSubshape
 from .occ_impl.geom import Location
-from .occ_impl.assembly import Color
+from .occ_impl.assembly import Color, Material
 from .occ_impl.solver import (
     ConstraintKind,
     ConstraintSolver,
@@ -88,6 +88,7 @@ class Assembly(object):
     loc: Location
     name: str
     color: Optional[Color]
+    material: Optional[Material]
     metadata: Dict[str, Any]
 
     obj: AssemblyObjects
@@ -110,6 +111,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -119,6 +121,7 @@ class Assembly(object):
         :param loc: location of the root object (default: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, resulting in an UUID being generated)
         :param color: color of the added object (default: None)
+        :param material: material (for visual and/or physical properties) of the added object (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         :return: An Assembly object.
 
@@ -138,6 +141,7 @@ class Assembly(object):
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
         self.color = color if color else None
+        self.material = material if material else None
         self.metadata = metadata if metadata else {}
         self.parent = None
 
@@ -179,6 +183,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
     ) -> Self:
         """
         Add a subassembly to the current assembly.
@@ -190,6 +195,8 @@ class Assembly(object):
           the subassembly being used)
         :param color: color of the added object (default: None, resulting in the color stored in the
           subassembly being used)
+        :param material: material (for visual and/or physical properties) of the added object
+          (default: None)
         """
         ...
 
@@ -200,6 +207,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Self:
         """
@@ -211,6 +219,8 @@ class Assembly(object):
         :param name: unique name of the root object (default: None, resulting in an UUID being
           generated)
         :param color: color of the added object (default: None)
+        :param material: material (for visual and/or physical properties) of the added object
+          (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         """
         ...
@@ -234,6 +244,9 @@ class Assembly(object):
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.material = (
+                kwargs["material"] if kwargs.get("material") else arg.material
+            )
             subassy.metadata = (
                 kwargs["metadata"] if kwargs.get("metadata") else arg.metadata
             )
