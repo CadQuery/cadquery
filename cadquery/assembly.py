@@ -167,7 +167,9 @@ class Assembly(object):
         Make a deep copy of an assembly
         """
 
-        rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
+        rv = self.__class__(
+            self.obj, self.loc, self.name, self.color, self.material, self.metadata
+        )
 
         rv._subshape_colors = dict(self._subshape_colors)
         rv._subshape_names = dict(self._subshape_names)
@@ -190,7 +192,6 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-        material: Optional[Material] = None,
     ) -> Self:
         """
         Add a subassembly to the current assembly.
@@ -202,8 +203,6 @@ class Assembly(object):
           the subassembly being used)
         :param color: color of the added object (default: None, resulting in the color stored in the
           subassembly being used)
-        :param material: material (for visual and/or physical properties) of the added object
-          (default: None)
         """
         ...
 
@@ -257,12 +256,17 @@ class Assembly(object):
             subassy.metadata = (
                 kwargs["metadata"] if kwargs.get("metadata") else arg.metadata
             )
+
             subassy.parent = self
 
             self.children.append(subassy)
             self.objects.update(subassy._flatten())
 
         else:
+            # Convert the material string to a Material object, if needed
+            if "material" in kwargs:
+                kwargs["material"] = _ensure_material(kwargs["material"])
+
             assy = self.__class__(arg, **kwargs)
             assy.parent = self
 
