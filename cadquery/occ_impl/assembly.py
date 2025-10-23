@@ -103,8 +103,6 @@ class Material(object):
         # The caller is passing a direct OCC material type
         elif isinstance(material_name, Graphic3d_NameOfMaterial):
             self.wrapped = Graphic3d_MaterialAspect(material_name)
-        else:
-            raise ValueError(f"Invalid material name type: {type(material_name)}")
 
     @property
     def name(self) -> str:
