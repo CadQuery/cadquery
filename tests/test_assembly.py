@@ -2339,4 +2339,4 @@ def test_shallow_assy():
     toCAF(cq.Assembly(cq.Workplane().box(1, 1, 1)))
 
     with pytest.raises(ValueError):
-        toCAF(cq.Assembly(cq.Workplane().box(1, 1, 1)))
+        toCAF(cq.Assembly())
