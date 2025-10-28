@@ -1,4 +1,4 @@
-from cadquery.occ_impl.shapes import Location, Plane, Vector
+from cadquery.occ_impl.geom import Location, Plane, Vector
 import pytest
 import itertools
 
@@ -25,7 +25,7 @@ import itertools
         # have no component orthogonal to xDir
         (((3, 5, 6), (1, 0, 0), (0, 1, 0),), (-90, 0, 0),),
         (((3, 5, 6), (0, 1, 0), (1, 0, 0),), (90, 0, 90),),
-        # JUst xDir, but with multiple vector components
+        # Just xDir, but with multiple vector components
         (((3, 5, 6), (1, 1, 0),), (0, 0, 45),),
         (((3, 5, 6), (1, 0, 1),), (0, -45, 0),),
         (((3, 5, 6), (0, 1, 1),), (0, -45, 90),),
@@ -132,6 +132,6 @@ def test_Plane_from_Location(plargs, expectedrot, useproperty):
     if expectedrot is not None:
         assert locraws[0][3:6] == pytest.approx(expectedrot)
 
-    # Assert that pairs of PLane or Location are equal after conversion
+    # Assert that pairs of Plane or Location are equal after conversion
     assert locraws[0] == pytest.approx(locraws[1])
     assert plraws[0] == pytest.approx(plraws[1])
