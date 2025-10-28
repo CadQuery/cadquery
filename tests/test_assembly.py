@@ -2328,3 +2328,15 @@ def test_special_methods(subshape_assy):
 
     with pytest.raises(AttributeError):
         subshape_assy.cube_123456
+
+
+def test_shallow_assy():
+    """
+    toCAF edge case.
+    """
+
+    # shallow assy
+    toCAF(cq.Assembly(cq.Workplane().box(1, 1, 1)))
+
+    with pytest.raises(ValueError):
+        toCAF(cq.Assembly())
