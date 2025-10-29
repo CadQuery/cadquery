@@ -77,15 +77,6 @@ class Material(object):
         passed, arbitrary defaults are used.
         """
 
-        # Get the name from the positional arguments or the kwargs
-        material_name = (
-            name
-            if name is not None
-            else kwargs["name"]
-            if name in kwargs.keys()
-            else None
-        )
-
         # Create the default material object and prepare to set a few defaults
         self.wrapped = XCAFDoc_Material()
 
@@ -97,7 +88,7 @@ class Material(object):
         aDensityTypeName = "g/cm^3"
 
         # See if there are any non-defaults to be set
-        if material_name is not None:
+        if name:
             aName = name
         if "description" in kwargs.keys():
             aDescription = kwargs["description"]
