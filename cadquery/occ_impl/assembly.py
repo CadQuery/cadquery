@@ -13,13 +13,15 @@ from typing import (
 from typing_extensions import Protocol, Self
 from math import degrees, radians
 
-from OCP.TCollection import TCollection_AsciiString
+from OCP.TCollection import TCollection_HAsciiString
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFDoc import (
     XCAFDoc_DocumentTool,
     XCAFDoc_ColorType,
     XCAFDoc_ColorGen,
+    XCAFDoc_Material,
+    XCAFDoc_VisMaterial,
 )
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.BinXCAFDrivers import BinXCAFDrivers
@@ -38,7 +40,6 @@ from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
 from OCP.gp import gp_EulerSequence
-from OCP.Graphic3d import Graphic3d_MaterialAspect, Graphic3d_NameOfMaterial
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -61,19 +62,19 @@ AssemblyObjects = Union[Shape, Workplane, None]
 
 class Material(object):
     """
-    Wrapper for the OCCT material object Graphic3d_MaterialAspect.
-    Graphic3d_MaterialAspect is mainly for rendering purposes, so this
-    Material class could be extended to also contain physical material
-    properties.
+    Wrapper for the OCCT material classes XCAFDoc_Material and XCAFDoc_VisMaterial.
+    XCAFDoc_Material is focused on physical material properties and
+    XCAFDoc_VisMaterial is for visual properties to be used when rendering.
     """
 
-    wrapped: Graphic3d_MaterialAspect
+    wrapped: XCAFDoc_Material
+    wrapped_vis: XCAFDoc_VisMaterial
 
-    def __init__(self, name: str | Graphic3d_NameOfMaterial | None = None, **kwargs):
+    def __init__(self, name: str | None = None, **kwargs):
         """
-        Can be passed an arbitrary string name, a string name of an OCC material,
-        or a Graphic3d_NameOfMaterial object. If nothing is passed, the default OCC
-        material is used.
+        Can be passed an arbitrary string name for the material along with keyword
+        arguments defining some other characteristics of the material. If nothing is
+        passed, arbitrary defaults are used.
         """
 
         # Get the name from the positional arguments or the kwargs
@@ -85,31 +86,68 @@ class Material(object):
             else None
         )
 
-        # The caller wants a default materials object
-        if material_name is None:
-            self.wrapped = Graphic3d_MaterialAspect()
-        # If we have a string, there may be some additional lookup that needs to happen
-        elif isinstance(material_name, str):
-            # Check to see if the name is one of the pre-defined materials in OpenCASCADE
-            if material_name in dir(Graphic3d_NameOfMaterial):
-                occ_mat = getattr(Graphic3d_NameOfMaterial, material_name)
-                self.wrapped = Graphic3d_MaterialAspect(occ_mat)
-            else:
-                # An arbitrary user-defined name is being used
-                self.wrapped = Graphic3d_MaterialAspect(
-                    Graphic3d_NameOfMaterial.Graphic3d_NameOfMaterial_UserDefined
-                )
-                self.wrapped.SetMaterialName(TCollection_AsciiString(material_name))
-        # The caller is passing a direct OCC material type
-        elif isinstance(material_name, Graphic3d_NameOfMaterial):
-            self.wrapped = Graphic3d_MaterialAspect(material_name)
+        # Create the default material object and prepare to set a few defaults
+        self.wrapped = XCAFDoc_Material()
+
+        # Default values in case the user did not set any others
+        aName = "Default"
+        aDescription = "Default material with properties similar to low carbon steel"
+        aDensity = 7.85
+        aDensityName = "Mass density"
+        aDensityTypeName = "g/cm^3"
+
+        # See if there are any non-defaults to be set
+        if material_name is not None:
+            aName = name
+        if "description" in kwargs.keys():
+            aDescription = kwargs["description"]
+        if "density" in kwargs.keys():
+            aDensity = kwargs["density"]
+        if "densityUnit" in kwargs.keys():
+            aDensityTypeName = kwargs["densityUnit"]
+
+        # Set the properties on the material object
+        self.wrapped.Set(
+            TCollection_HAsciiString(aName),
+            TCollection_HAsciiString(aDescription),
+            aDensity,
+            TCollection_HAsciiString(aDensityName),
+            TCollection_HAsciiString(aDensityTypeName),
+        )
+
+        # Create the default visual material object and allow it to be used just with
+        # the OCC layer, for now. When this material class is expanded to include visual
+        # attributes, the OCC docs say that XCAFDoc_VisMaterialTool should be used to
+        # manage those attributes on the XCAFDoc_VisMaterial class.
+        self.wrapped_vis = XCAFDoc_VisMaterial()
 
     @property
     def name(self) -> str:
         """
-        Read-only property to get a simple string name from the material.
+        Get the string name of the material.
         """
-        return self.wrapped.StringName().ToCString()
+        return self.wrapped.GetName().ToCString()
+
+    @property
+    def description(self) -> str:
+        """
+        Get the string description of the material.
+        """
+        return self.wrapped.GetDescription().ToCString()
+
+    @property
+    def density(self) -> float:
+        """
+        Get the density value of the material.
+        """
+        return self.wrapped.GetDensity()
+
+    @property
+    def densityUnit(self) -> str:
+        """
+        Get the units that the material density is defined in.
+        """
+        return self.wrapped.GetDensValType().ToCString()
 
 
 class Color(object):

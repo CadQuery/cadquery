@@ -1525,40 +1525,41 @@ def test_colors_assy1(assy_fixture, request, tmpdir, kind):
 
 
 def test_materials():
-    # Test a default material
+    # Test a default material not attached to an assembly
     mat_0 = cq.Material()
-    assert mat_0.wrapped.StringName().ToCString() == "Default"
+    assert mat_0.name == "Default"
 
     # Simple objects to be added to the assembly with the material
     wp_1 = cq.Workplane().box(10, 10, 10)
     wp_2 = cq.Workplane().box(5, 5, 5)
     wp_3 = cq.Workplane().box(2.5, 2.5, 2.5)
-    wp_4 = cq.Workplane().box(1.25, 1.25, 1.25)
 
     # Add the object to the assembly with the material
     assy = cq.Assembly()
 
-    # Test with the string name of a standard pre-defined material from OpenCASCADE
-    mat_1 = cq.Material(name="Graphic3d_NameOfMaterial_Brass")
+    # Test with a default material
+    mat_1 = cq.Material()
     assy.add(wp_1, material=mat_1)
-    assert assy.children[0].material.wrapped.StringName().ToCString() == "Brass"
-    assert assy.children[0].material.name == "Brass"
+    assert assy.children[0].material.name == "Default"
+    assert (
+        assy.children[0].material.description
+        == "Default material with properties similar to low carbon steel"
+    )
+    assert assy.children[0].material.density == 7.85
+    assert assy.children[0].material.densityUnit == "g/cm^3"
 
-    # Test with a user-defined material
-    mat_2 = cq.Material(name="test")
+    # Test with a user-defined material when passing properties in constructor
+    mat_2 = cq.Material(
+        "test", description="Test material", density=1.0, densityUnit="lb/in^3"
+    )
     assy.add(wp_2, material=mat_2)
-    assert assy.children[1].material.wrapped.StringName().ToCString() == "test"
     assert assy.children[1].material.name == "test"
+    assert assy.children[1].material.description == "Test material"
+    assert assy.children[1].material.density == 1.0
+    assert assy.children[1].material.densityUnit == "lb/in^3"
 
-    # Test with an OpenCASCADE material type
-    mat_3 = cq.Material(Graphic3d_NameOfMaterial.Graphic3d_NameOfMaterial_Stone)
-    assy.add(wp_3, material=mat_3)
-    assert assy.children[2].material.wrapped.StringName().ToCString() == "Stone"
-    assert assy.children[2].material.name == "Stone"
-
-    # Test plain material string passed when adding subassembly
-    assy.add(wp_4, material="Unobtanium")
-    assert assy.children[3].material.name == "Unobtanium"
+    # The visualization material is left for later expansion
+    assert assy.children[1].material.wrapped_vis.IsEmpty()
 
 
 @pytest.mark.parametrize(
