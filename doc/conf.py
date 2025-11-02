@@ -36,7 +36,6 @@ sys.path.insert(0, os.path.abspath("./ext"))
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
@@ -293,29 +292,6 @@ texinfo_documents = [
 # texinfo_show_urls = 'footnote'
 
 
-patparam = re.compile(r"(\W*):\W*param.*")
-
-
-def process_docstring_insert_self(app, what, name, obj, options, lines):
-    """
-    Insert self in front of documented params for instance methods
-    """
-
-    if (
-        what == "method"
-        and app.config.autodoc_typehints in ("both", "description")
-        and app.config.autodoc_typehints_description_target in ("all")
-        and getattr(obj, "__self__", None) is None
-        and "self" in obj.__annotations__
-    ):
-        for i, line in enumerate(lines):
-            if m := patparam.match(line):
-                indent = m.group(1)
-                lines.insert(i, f"{indent}:param self:")
-                break
-
-
 def setup(app):
 
     app.add_css_file("tables.css")
-    app.connect("autodoc-process-docstring", process_docstring_insert_self)
