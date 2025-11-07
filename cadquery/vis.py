@@ -407,6 +407,7 @@ def show(
     gradient: bool = True,
     xpos: Union[int, float] = 0,
     ypos: Union[int, float] = 0,
+    fxaa: bool = True,
 ):
     """
     Show CQ objects using VTK. This functions optionally allows to make screenshots.
@@ -488,7 +489,7 @@ def show(
         renderer.GradientBackgroundOn()
 
     # use FXXAA
-    renderer.UseFXAAOn()
+    renderer.SetUseFXAA(fxaa)
 
     # add pts and locs
     renderer.AddActor(pts)
