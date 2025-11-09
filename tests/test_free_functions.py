@@ -503,6 +503,7 @@ def test_text():
     assert len(r11.Faces()) == 1
     assert len(r11.Wires()) == 1
 
+
 #%% bool ops
 def test_operators():
 
