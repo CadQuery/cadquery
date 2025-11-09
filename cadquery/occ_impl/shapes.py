@@ -5843,7 +5843,7 @@ def text(
         font_i, NCollection_Utf8String(txt), theHAlign=theHAlign, theVAlign=theVAlign
     )
 
-    return clean(compound(_compound_or_shape(rv).faces()).fuse())
+    return clean(compound(_compound_or_shape(rv).Faces()).fuse())
 
 
 @text.register
@@ -5866,7 +5866,7 @@ def text(
     L = spine.Length()
 
     rv = []
-    for el in text(txt, size, font, path, kind, halign, valign):
+    for el in text(txt, size, font, path, kind, halign, valign).Faces():
         pos = el.BoundingBox().center.x
 
         # position
@@ -5900,7 +5900,7 @@ def text(
     tmp = text(txt, size, spine, False, font, path, kind, halign, valign)
 
     rv = []
-    for f in tmp.faces():
+    for f in tmp.Faces():
         rv.append(f.project(base, f.normalAt()))
 
     return _normalize(compound(rv))

@@ -468,6 +468,7 @@ def test_text():
     # test single letter
     r6 = text("C", 1)
 
+    assert isinstance(r6, Face)
     assert len(r6.Faces()) == 1
     assert len(r6.Wires()) == 1
 
@@ -479,6 +480,8 @@ def test_text():
     r7 = text("CQ", 1, spine)  # normal
     r8 = text("CQ", 1, spine, planar=True)  # planar
     r9 = text("CQ", 1, spine, cf)  # projected
+    r10 = text("C", 1, spine, planar=True)  # single letter, planar
+    r11 = text("C", 1, spine, cf)  # single letter, projected
 
     assert r7.faces(">>Z").Center().z > 0
     assert r7.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
@@ -491,6 +494,14 @@ def test_text():
     assert r9.faces(">>Z").Center().z > 0
     assert r9.faces("<<X").normalAt().dot(Vector(0, 0, 1)) == approx(0)
     assert r9.faces("<<X").geomType() == "CYLINDER"
+
+    assert isinstance(r10, Face)
+    assert len(r10.Faces()) == 1
+    assert len(r10.Wires()) == 1
+
+    assert isinstance(r11, Face)
+    assert len(r11.Faces()) == 1
+    assert len(r11.Wires()) == 1
 
 
 #%% bool ops
