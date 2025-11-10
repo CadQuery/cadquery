@@ -504,7 +504,8 @@ def show(
 
     if position:
         camera.SetPosition(*position)
-    else:
+
+    if not (position or focus):
         renderer.ResetCamera()  # fit all if no explicit position provided
 
     # Update camera position with user defined relative positions
