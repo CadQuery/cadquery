@@ -495,16 +495,17 @@ def show(
     # set camera
     camera = renderer.GetActiveCamera()
 
-    # Reset orientation to known state
-    renderer.ResetCamera()
-
     # Update camera position with user provided absolute positions
     if viewup:
         camera.SetViewUp(*viewup)
-    if position:
-        camera.SetPosition(*position)
+
     if focus:
         camera.SetFocalPoint(*focus)
+
+    if position:
+        camera.SetPosition(*position)
+    else:
+        renderer.ResetCamera()  # fit all if no explicit position provided
 
     # Update camera position with user defined relative positions
     camera.Roll(roll)
