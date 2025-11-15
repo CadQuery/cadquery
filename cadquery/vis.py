@@ -398,8 +398,11 @@ def show(
     zoom: float = 1.0,
     roll: float = -35,
     elevation: float = -45,
+    azimuth: float = 0,
     position: Optional[Tuple[float, float, float]] = None,
     focus: Optional[Tuple[float, float, float]] = None,
+    viewup: Optional[Tuple[float, float, float]] = None,
+    clipping_range: Optional[Tuple[float, float]] = None,
     width: Union[int, float] = 0.5,
     height: Union[int, float] = 0.5,
     trihedron: bool = True,
@@ -503,17 +506,29 @@ def show(
 
     # set camera
     camera = renderer.GetActiveCamera()
+
+    # Update camera position with user provided absolute positions
+    if viewup:
+        camera.SetViewUp(*viewup)
+
+    if focus:
+        camera.SetFocalPoint(*focus)
+
+    if position:
+        camera.SetPosition(*position)
+
+    if not (position or focus):
+        renderer.ResetCamera()  # fit all if no explicit position provided
+
+    # Update camera position with user defined relative positions
     camera.Roll(roll)
     camera.Elevation(elevation)
-    camera.Zoom(zoom)
+    camera.Azimuth(azimuth)
 
-    if position or focus:
-        if position:
-            camera.SetPosition(*position)
-        if focus:
-            camera.SetFocalPoint(*focus)
-    else:
-        renderer.ResetCamera()
+    # Update camera view frustum
+    camera.Zoom(zoom)
+    if clipping_range:
+        camera.SetClippingRange(*clipping_range)
 
     # initialize and set size
     inter.Initialize()
