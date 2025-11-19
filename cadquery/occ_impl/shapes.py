@@ -18,7 +18,7 @@ from typing import (
 from typing_extensions import Self
 
 from io import BytesIO
-
+from pathlib import Path
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
@@ -478,7 +478,7 @@ class Shape(object):
 
     def exportStl(
         self,
-        fileName: str,
+        fileName: Path | str,
         tolerance: float = 1e-3,
         angularTolerance: float = 0.1,
         ascii: bool = False,
@@ -499,6 +499,9 @@ class Shape(object):
             Setting this value to True may cause large features to become faceted, or small features dense.
         :param parallel: If True, OCCT will use parallel processing to mesh the shape. Default is True.
         """
+        if isinstance(fileName, str):
+            fileName = Path(fileName)
+
         # The constructor used here automatically calls mesh.Perform(). https://dev.opencascade.org/doc/refman/html/class_b_rep_mesh___incremental_mesh.html#a3a383b3afe164161a3aa59a492180ac6
         BRepMesh_IncrementalMesh(
             self.wrapped, tolerance, relative, angularTolerance, parallel
@@ -507,9 +510,9 @@ class Shape(object):
         writer = StlAPI_Writer()
         writer.ASCIIMode = ascii
 
-        return writer.Write(self.wrapped, fileName)
+        return writer.Write(self.wrapped, str(fileName))
 
-    def exportStep(self, fileName: str, **kwargs) -> IFSelect_ReturnStatus:
+    def exportStep(self, fileName: Path | str, **kwargs) -> IFSelect_ReturnStatus:
         """
         Export this shape to a STEP file.
 
@@ -524,6 +527,8 @@ class Shape(object):
             See OCCT documentation.
         :type precision_mode: int
         """
+        if isinstance(fileName, str):
+            fileName = Path(fileName)
 
         # Handle the extra settings for the STEP export
         pcurves = 1
@@ -536,25 +541,29 @@ class Shape(object):
         Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
-        return writer.Write(fileName)
+        return writer.Write(str(fileName))
 
-    def exportBrep(self, f: Union[str, BytesIO]) -> bool:
+    def exportBrep(self, f: Union[Path, str, BytesIO]) -> bool:
         """
         Export this shape to a BREP file
         """
 
+        if isinstance(f, Path):
+            f = str(f)
         rv = BRepTools.Write_s(self.wrapped, f)
 
         return True if rv is None else rv
 
     @classmethod
-    def importBrep(cls, f: Union[str, BytesIO]) -> "Shape":
+    def importBrep(cls, f: Union[Path, str, BytesIO]) -> "Shape":
         """
         Import shape from a BREP file
         """
         s = TopoDS_Shape()
         builder = BRep_Builder()
 
+        if isinstance(f, Path):
+            f = str(f)
         BRepTools.Read_s(s, f, builder)
 
         if s.IsNull():
@@ -562,22 +571,25 @@ class Shape(object):
 
         return cls.cast(s)
 
-    def exportBin(self, f: Union[str, BytesIO]) -> bool:
+    def exportBin(self, f: Union[Path, str, BytesIO]) -> bool:
         """
         Export this shape to a binary BREP file.
         """
-
+        if isinstance(f, Path):
+            f = str(f)
         rv = BinTools.Write_s(self.wrapped, f)
 
         return True if rv is None else rv
 
     @classmethod
-    def importBin(cls, f: Union[str, BytesIO]) -> "Shape":
+    def importBin(cls, f: Union[Path, str, BytesIO]) -> "Shape":
         """
         Import shape from a binary BREP file.
         """
         s = TopoDS_Shape()
 
+        if isinstance(f, Path):
+            f = str(f)
         BinTools.Read_s(s, f)
 
         return cls.cast(s)
@@ -1702,7 +1714,7 @@ class Shape(object):
 
     def export(
         self: T,
-        fname: str,
+        fname: Path | str,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         opt: Optional[Dict[str, Any]] = None,
@@ -1710,6 +1722,9 @@ class Shape(object):
         """
         Export Shape to file.
         """
+
+        if isinstance(fname, str):
+            fname = Path(fname)
 
         from .exporters import export  # imported here to prevent circular imports
 
@@ -4627,7 +4642,7 @@ class Compound(Shape, Mixin3D):
         size: float,
         height: float,
         font: str = "Arial",
-        fontPath: Optional[str] = None,
+        fontPath: Optional[Path | str] = None,
         kind: Literal["regular", "bold", "italic"] = "regular",
         halign: Literal["center", "left", "right"] = "center",
         valign: Literal["center", "top", "bottom"] = "center",
@@ -4637,6 +4652,9 @@ class Compound(Shape, Mixin3D):
         Create a 3D text
         """
 
+        if isinstance(fontPath, str):
+            fontPath = Path(fontPath)
+
         font_kind = {
             "regular": Font_FA_Regular,
             "bold": Font_FA_Bold,
@@ -4645,13 +4663,15 @@ class Compound(Shape, Mixin3D):
 
         mgr = Font_FontMgr.GetInstance_s()
 
-        if fontPath and mgr.CheckFont(TCollection_AsciiString(fontPath).ToCString()):
-            font_t = Font_SystemFont(TCollection_AsciiString(fontPath))
-            font_t.SetFontPath(font_kind, TCollection_AsciiString(fontPath))
+        if fontPath and mgr.CheckFont(
+            TCollection_AsciiString(str(fontPath)).ToCString()
+        ):
+            font_t = Font_SystemFont(TCollection_AsciiString(str(fontPath)))
+            font_t.SetFontPath(font_kind, TCollection_AsciiString(str(fontPath)))
             mgr.RegisterFont(font_t, True)
 
         else:
-            font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+            font_t = mgr.FindFont(TCollection_AsciiString(str(font)), font_kind)
 
         builder = Font_BRepTextBuilder()
         font_i = StdPrs_BRepFont(
@@ -5794,7 +5814,7 @@ def text(
     txt: str,
     size: Real,
     font: str = "Arial",
-    path: Optional[str] = None,
+    path: Optional[Path | str] = None,
     kind: Literal["regular", "bold", "italic"] = "regular",
     halign: Literal["center", "left", "right"] = "center",
     valign: Literal["center", "top", "bottom"] = "center",
@@ -5802,6 +5822,8 @@ def text(
     """
     Create a flat text.
     """
+    if isinstance(path, str):
+        path = Path(path)
 
     builder = Font_BRepTextBuilder()
 
@@ -5813,9 +5835,9 @@ def text(
 
     mgr = Font_FontMgr.GetInstance_s()
 
-    if path and mgr.CheckFont(TCollection_AsciiString(path).ToCString()):
-        font_t = Font_SystemFont(TCollection_AsciiString(path))
-        font_t.SetFontPath(font_kind, TCollection_AsciiString(path))
+    if path and mgr.CheckFont(TCollection_AsciiString(str(path)).ToCString()):
+        font_t = Font_SystemFont(TCollection_AsciiString(str(path)))
+        font_t.SetFontPath(font_kind, TCollection_AsciiString(str(path)))
         mgr.RegisterFont(font_t, True)
 
     else:
@@ -5853,7 +5875,7 @@ def text(
     spine: Shape,
     planar: bool = False,
     font: str = "Arial",
-    path: Optional[str] = None,
+    path: Optional[Path | str] = None,
     kind: Literal["regular", "bold", "italic"] = "regular",
     halign: Literal["center", "left", "right"] = "center",
     valign: Literal["center", "top", "bottom"] = "center",
@@ -5886,7 +5908,7 @@ def text(
     spine: Shape,
     base: Shape,
     font: str = "Arial",
-    path: Optional[str] = None,
+    path: Optional[Path | str] = None,
     kind: Literal["regular", "bold", "italic"] = "regular",
     halign: Literal["center", "left", "right"] = "center",
     valign: Literal["center", "top", "bottom"] = "center",

@@ -1,6 +1,7 @@
 import tempfile
 import os
 import io as StringIO
+from pathlib import Path
 
 from typing import IO, Optional, Union, cast, Dict, Any, Iterable
 from typing_extensions import Literal
@@ -39,13 +40,12 @@ ExportLiterals = Literal[
 
 def export(
     w: Union[Shape, Iterable[Shape]],
-    fname: str,
+    fname: Path | str,
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
     opt: Optional[Dict[str, Any]] = None,
 ):
-
     """
     Export Workplane or Shape to file. Multiple entities are converted to compound.
 
@@ -56,6 +56,9 @@ def export(
     :param angularTolerance: the angular tolerance, in radians. Default 0.1.
     :param opt: additional options passed to the specific exporter. Default None.
     """
+
+    if isinstance(fname, str):
+        fname = Path(fname)
 
     shape: Shape
     f: IO
@@ -69,7 +72,7 @@ def export(
         shape = compound(*w)
 
     if exportType is None:
-        t = fname.split(".")[-1].upper()
+        t = fname.suffix.upper().lstrip(".")
         if t in ExportTypes.__dict__.values():
             exportType = cast(ExportLiterals, t)
         else:
@@ -121,7 +124,7 @@ def export(
 
     elif exportType == ExportTypes.VRML:
         shape.mesh(tolerance, angularTolerance)
-        VrmlAPI.Write_s(shape.wrapped, fname)
+        VrmlAPI.Write_s(shape.wrapped, str(fname))
 
     elif exportType == ExportTypes.VTP:
         exportVTP(shape, fname, tolerance, angularTolerance)
@@ -200,6 +203,7 @@ def exportShape(
         # all these types required writing to a file and then
         # re-reading. this is due to the fact that FreeCAD writes these
         (h, outFileName) = tempfile.mkstemp()
+        outFileName = Path(outFileName)  # type: ignore
         # weird, but we need to close this file. the next step is going to write to
         # it from c code, so it needs to be closed.
         os.close(h)
@@ -216,7 +220,7 @@ def exportShape(
 
 
 @deprecate()
-def readAndDeleteFile(fileName):
+def readAndDeleteFile(fileName: Path):
     """
     Read data from file provided, and delete it when done
     return the contents as a string
@@ -225,5 +229,5 @@ def readAndDeleteFile(fileName):
     with open(fileName, "r") as f:
         res = "{}".format(f.read())
 
-    os.remove(fileName)
+    fileName.unlink()
     return res
