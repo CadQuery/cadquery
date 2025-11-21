@@ -2340,3 +2340,39 @@ def test_shallow_assy():
 
     with pytest.raises(ValueError):
         toCAF(cq.Assembly())
+
+
+def test_basic_assembly_meshing(simple_assy):
+    """
+    Tests to make sure basic multi-part assemblies work correctly.
+    """
+
+    # Mesh the assemby
+    mesh = cq.occ_impl.assembly.toMesh(simple_assy, do_imprint=False)
+
+    # Make sure we have the correct number of vertices
+    assert len(mesh["vertices"]) == 16
+
+    # Make sure that we have the correct number of solids
+    assert len(mesh["solid_face_triangle_vertex_map"]) == 2
+
+    # Make sure that each of the solids has the correct number of faces
+    assert len(mesh["solid_face_triangle_vertex_map"][1]) == 6
+
+
+def test_basic_imprinted_assembly_meshing(simple_assy):
+    """
+    Tests to make sure basic multi-part assemblies work correctly with imprinting.
+    """
+
+    # Mesh the assemby
+    mesh = cq.occ_impl.assembly.toMesh(simple_assy, do_imprint=True)
+
+    # Make sure we have the correct number of vertices
+    assert len(mesh["vertices"]) == 37
+
+    # Make sure that we have the correct number of solids
+    assert len(mesh["solid_face_triangle_vertex_map"]) == 4
+
+    # Make sure that each of the solids has the correct number of faces
+    assert len(mesh["solid_face_triangle_vertex_map"][1]) == 7
