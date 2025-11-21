@@ -1,6 +1,13 @@
 Changes
 =======
 
+2.6.1
+-----
+
+* Fixed a bug in shallow assembly export when using `toCAF` https://github.com/CadQuery/cadquery/pull/1924, https://github.com/CadQuery/cadquery/issues/1922
+* Fixed the Apache 2.0 license designation in the citation file https://github.com/CadQuery/cadquery/pull/1916
+* Mentioned periodic surface trimming in the docs https://github.com/CadQuery/cadquery/pull/1917
+
 2.6.0
 -----
 

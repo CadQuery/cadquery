@@ -499,18 +499,27 @@ def toCAF(
         for child in el.children:
             _toCAF(child, subassy)
 
+        # final rv construction
         if ancestor and el.children:
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
             rv = subassy
         elif ancestor:
             rv = ancestor
-        else:
+        elif el.children:
             # update the top level location
             rv = TDF_Label()  # NB: additional label is needed to apply the location
 
-            # set location, is location is identity return subassy
+            # set location, if location is identity return subassy
             tool.SetLocation(subassy, assy.loc.wrapped, rv)
             setName(rv, assy.name, tool)
+        elif el.obj:
+            # only root with an object
+            rv = tool.NewShape()
+
+            lab = tool.AddComponent(rv, lab, el.loc.wrapped)
+            setName(lab, f"{el.name}", tool)
+        else:
+            raise ValueError("Cannot convert an empty assembly to CAF")
 
         return rv
 
