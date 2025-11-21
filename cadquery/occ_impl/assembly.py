@@ -13,6 +13,7 @@ from typing import (
 from typing_extensions import Protocol, Self
 from math import degrees, radians
 
+from OCP import GCPnts, BRepAdaptor
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFDoc import (
@@ -765,12 +766,12 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
 
 def toMesh(
     assy: AssemblyProtocol,
-    do_imprint=True,
-    tolerance=0.1,
-    angular_tolerance=0.1,
-    scale_factor=1.0,
-    include_brep_edges=False,
-    include_brep_vertices=False,
+    do_imprint: bool = True,
+    tolerance: float = 0.1,
+    angular_tolerance: float = 0.1,
+    scale_factor: float = 1.0,
+    include_brep_edges: bool = False,
+    include_brep_vertices: bool = False,
 ):
     """
         Converts an assembly to a custom mesh format defined by the CadQuery team.
@@ -826,16 +827,14 @@ def toMesh(
         return is_internal_face
 
     # To keep track of the vertices and triangles in the mesh
-    vertices = []
-    vertex_map = {}
-    solids = []
+    vertices: list[tuple[float, float, float]] = []
+    vertex_map: dict[tuple[float, float, float], int] = {}
+    solids: List[Solid] = []
     solid_face_triangle = {}
     imprinted_assembly = None
     imprinted_solids_with_orginal_ids = None
     solid_colors = []
     solid_locs = []
-    solid_brep_edge_segments = []
-    solid_brep_vertices = []
 
     # Imprinted assemblies end up being compounds, whereas you have to step through each of the
     # parts in an assembly and extract the solids.
@@ -855,10 +854,15 @@ def toMesh(
         for child in assy.children:
             # Make sure we end up with a base shape
             obj = child.obj
-            if type(child.obj).__name__ == "Workplane":
-                solids.append(obj.val())
-            else:
+
+            if isinstance(obj, Workplane):
+                val = obj.val()
+                if isinstance(val, Solid):
+                    solids.append(val)
+            elif isinstance(obj, Solid):
                 solids.append(obj)
+            else:
+                continue
 
             # Use the color set for the assembly component, or use a default color
             if child.color:
@@ -964,82 +968,6 @@ def toMesh(
 
         solid_face_triangle[solid_idx] = face_triangles
 
-        # If the caller wants to track edges, include them
-        if include_brep_edges:
-            # If this is not an imprinted assembly, override the location of the edges
-            loc = TopLoc_Location()
-            if not do_imprint:
-                loc = solid_locs[solid_idx - 1].wrapped
-
-            # Save the transformation so that we can place vertices in the correct locations later
-            Trsf = loc.Transformation()
-
-            # Add CadQuery-reported edges
-            current_segments = []
-            for edge in solid.edges():
-                # We need to handle different kinds of edges differently
-                gt = edge.geomType()
-
-                # Line edges are just point to point
-                if gt == "LINE":
-                    start = edge.startPoint().toPnt()
-                    end = edge.endPoint().toPnt()
-
-                    # Apply the assembly location transformation to each vertex
-                    start_trsf = start.Transformed(Trsf)
-                    located_start = (start_trsf.X(), start_trsf.Y(), start_trsf.Z())
-                    end_trsf = end.Transformed(Trsf)
-                    located_end = (end_trsf.X(), end_trsf.Y(), end_trsf.Z())
-
-                    # Save the start and end points for the edge
-                    current_segments.append([located_start, located_end])
-                # If dealing with some sort of arc, discretize it into individual lines
-                elif gt in ("CIRCLE", "ARC", "SPLINE", "BSPLINE", "ELLIPSE"):
-                    # Discretize the curve
-                    disc = GCPnts.GCPnts_TangentialDeflection(
-                        BRepAdaptor.BRepAdaptor_Curve(edge.wrapped),
-                        tolerance,
-                        angular_tolerance,
-                    )
-
-                    # Add each of the discretized sections to the edge list
-                    if disc.NbPoints() > 1:
-                        for i in range(2, disc.NbPoints() + 1):
-                            p_0 = disc.Value(i - 1)
-                            p_1 = disc.Value(i)
-
-                            # Apply the assembly location transformation to each vertex
-                            p_0_trsf = p_0.Transformed(Trsf)
-                            located_p_0 = (p_0_trsf.X(), p_0_trsf.Y(), p_0_trsf.Z())
-                            p_1_trsf = p_1.Transformed(Trsf)
-                            located_p_1 = (p_1_trsf.X(), p_1_trsf.Y(), p_1_trsf.Z())
-
-                            # Save the start and end points for the edge
-                            current_segments.append([located_p_0, located_p_1])
-
-            solid_brep_edge_segments.append(current_segments)
-
-        # Add CadQuery-reported vertices, if requested
-        if include_brep_vertices:
-            # If this is not an imprinted assembly, override the location of the edges
-            loc = TopLoc_Location()
-            if not do_imprint:
-                loc = solid_locs[solid_idx - 1].wrapped
-
-            # Save the transformation so that we can place vertices in the correct locations later
-            Trsf = loc.Transformation()
-
-            current_vertices = []
-            for vertex in solid.vertices():
-                p = BRep_Tool.Pnt_s(vertex.wrapped)
-
-                # Apply the assembly location transformation to each vertex
-                p_trsf = p.Transformed(Trsf)
-                located_p = (p_trsf.X(), p_trsf.Y(), p_trsf.Z())
-                current_vertices.append(located_p)
-
-            solid_brep_vertices.append(current_vertices)
-
         # Move to the next solid
         solid_idx += 1
 
@@ -1047,8 +975,6 @@ def toMesh(
         "vertices": vertices,
         "solid_face_triangle_vertex_map": solid_face_triangle,
         "solid_colors": solid_colors,
-        "solid_brep_edge_segments": solid_brep_edge_segments,
-        "solid_brep_vertices": solid_brep_vertices,
         "imprinted_assembly": imprinted_assembly,
         "imprinted_solids_with_orginal_ids": imprinted_solids_with_orginal_ids,
     }
