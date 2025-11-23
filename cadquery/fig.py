@@ -9,14 +9,14 @@ from typing import Optional
 from threading import Thread
 from itertools import chain
 from webbrowser import open_new_tab
+from uuid import uuid1
 
 from typish import instance_of
 
 from trame.app import get_server
 from trame.app.core import Server
-from trame.widgets import html, vtk as vtk_widgets, client
-from trame.ui.html import DivLayout
-
+from trame.widgets import vtk as vtk_widgets, client, trame, vuetify3 as v3
+from trame.ui.vuetify3 import SinglePageWithDrawerLayout
 from . import Shape
 from .vis import style, Showable, ShapeLike, _split_showables
 
@@ -43,7 +43,7 @@ class Figure:
     ren: vtkRenderer
     view: vtk_widgets.VtkRemoteView
     shapes: dict[ShapeLike, list[vtkProp3D]]
-    actors: list[vtkProp3D]
+    actors: dict[str, tuple[vtkProp3D]]
     loop: AbstractEventLoop
     thread: Thread
     empty: bool
@@ -107,24 +107,104 @@ class Figure:
         self.ren = renderer
 
         self.shapes = {}
-        self.actors = []
+        self.actors = {}
+        self.active = None
 
         # server
-        server = get_server("CQ-server")
-        server.client_type = "vue3"
+        server = get_server("CQ-server", client_type="vue3")
+        self.server = server
+
+        # state
+        self.state = self.server.state
+
+        self.state.actors: list = []
+        self.state.selected: None | str = None
 
         # layout
-        with DivLayout(server):
+        self.layout = SinglePageWithDrawerLayout(server, show_drawer=False)
+        with self.layout as layout:
             client.Style("body { margin: 0; }")
 
-            with html.Div(style=FULL_SCREEN):
-                self.view = vtk_widgets.VtkRemoteView(
-                    win, interactive_ratio=1, interactive_quality=100
+            layout.title.set_text("CQ viewer")
+            layout.footer.hide()
+
+            with layout.toolbar:
+
+                BSTYLE = "display: block;"
+
+                v3.VBtn(
+                    click=lambda: self._fit(),
+                    flat=True,
+                    density="compact",
+                    icon="mdi-crop-free",
+                    style=BSTYLE,
+                )
+
+                v3.VBtn(
+                    click=lambda: self._view((0, 0, 0), (1, 1, 1), (0, 0, 1)),
+                    flat=True,
+                    density="compact",
+                    icon="mdi-axis-arrow",
+                    style=BSTYLE,
+                )
+
+                v3.VBtn(
+                    click=lambda: self._view((0, 0, 0), (1, 0, 0), (0, 0, 1)),
+                    flat=True,
+                    density="compact",
+                    icon="mdi-axis-x-arrow",
+                    style=BSTYLE,
+                )
+
+                v3.VBtn(
+                    click=lambda: self._view((0, 0, 0), (0, 1, 0), (0, 0, 1)),
+                    flat=True,
+                    density="compact",
+                    icon="mdi-axis-y-arrow",
+                    style=BSTYLE,
+                )
+
+                v3.VBtn(
+                    click=lambda: self._view((0, 0, 0), (0, 0, 1), (0, 1, 0)),
+                    flat=True,
+                    density="compact",
+                    icon="mdi-axis-z-arrow",
+                    style=BSTYLE,
+                )
+
+                v3.VBtn(
+                    click=lambda: self._pop(),
+                    flat=True,
+                    density="compact",
+                    icon="mdi-file-document-remove-outline",
+                    style=BSTYLE,
+                )
+
+                v3.VBtn(
+                    click=lambda: self._clear([]),
+                    flat=True,
+                    density="compact",
+                    icon="mdi-delete-outline",
+                    style=BSTYLE,
+                )
+
+            with layout.content:
+                with v3.VContainer(
+                    fluid=True, classes="pa-0 fill-height",
+                ):
+                    self.view = vtk_widgets.VtkRemoteView(
+                        win, interactive_ratio=1, interactive_quality=100
+                    )
+
+            with layout.drawer:
+                self.tree = trame.GitTree(
+                    sources=("actors",),
+                    visibility_change=(self.onVisibility, "[$event]"),
+                    actives_change=(self.onSelection, "[$event]"),
                 )
 
         server.state.flush()
 
-        self.server = server
         self.loop = new_event_loop()
 
         def _run_loop():
@@ -159,7 +239,20 @@ class Figure:
 
         return run_coroutine_threadsafe(coro, self.loop)
 
-    def show(self, *showables: Showable | vtkProp3D | list[vtkProp3D], **kwargs):
+    def _update_state(self, name: str):
+        async def _():
+
+            self.state.dirty(name)
+            self.state.flush()
+
+        self._run(_())
+
+    def show(
+        self,
+        *showables: Showable | vtkProp3D | list[vtkProp3D],
+        name: Optional[str] = None,
+        **kwargs,
+    ):
         """
         Show objects.
         """
@@ -169,6 +262,9 @@ class Figure:
 
         pts = style(vecs, **kwargs)
         axs = style(locs, **kwargs)
+
+        # to be added to state
+        new_actors = []
 
         for s in shapes:
             # do not show markers by default
@@ -181,13 +277,17 @@ class Figure:
             for actor in actors:
                 self.ren.AddActor(actor)
 
+            new_actors.extend(actors)
+
         for prop in chain(props, axs):
-            self.actors.append(prop)
             self.ren.AddActor(prop)
 
+            new_actors.append(prop)
+
         if vecs:
-            self.actors.append(*pts)
             self.ren.AddActor(*pts)
+
+            new_actors.append(*pts)
 
         # store to enable pop
         self.last = (shapes, axs, pts if vecs else None, props)
@@ -202,76 +302,151 @@ class Figure:
             self.fit()
             self.empty = False
 
+        # update actors
+        uuid = str(uuid1())
+        self.state.actors.append(
+            {
+                "id": uuid,
+                "parent": "0",
+                "visible": 1,
+                "name": f"{name if name else type(showables[0]).__name__} at {id(showables[0]):x}",
+            }
+        )
+        self._update_state("actors")
+
+        self.actors[uuid] = tuple(new_actors)
+
         return self
+
+    async def _fit(self):
+        self.ren.ResetCamera()
+        self.view.update()
 
     def fit(self):
         """
         Update view to fit all objects.
         """
 
-        async def _show():
-            self.ren.ResetCamera()
-            self.view.update()
-
-        self._run(_show())
+        self._run(self._fit())
 
         return self
+
+    async def _view(self, foc, pos, up):
+
+        cam = self.ren.GetActiveCamera()
+
+        cam.SetViewUp(*up)
+        cam.SetFocalPoint(*foc)
+        cam.SetPosition(*pos)
+
+        self.ren.ResetCamera()
+
+        self.view.update()
+
+    def iso(self):
+
+        self._run(self._view((0, 0, 0), (1, 1, 1), (0, 0, 1)))
+
+        return self
+
+    def up(self):
+
+        self._run(self._view((0, 0, 0), (0, 0, 1), (0, 1, 0)))
+
+        return self
+
+        pass
+
+    def front(self):
+
+        self._run(self._view((0, 0, 0), (1, 0, 0), (0, 0, 1)))
+
+        return self
+
+    def side(self):
+
+        self._run(self._view((0, 0, 0), (0, 1, 0), (0, 0, 1)))
+
+        return self
+
+    async def _clear(self, shapes):
+
+        if len(shapes) == 0:
+            self.ren.RemoveAllViewProps()
+
+            self.actors.clear()
+            self.shapes.clear()
+
+            self.state.actors = []
+            self._update_state("actors")
+
+        for s in shapes:
+            if instance_of(s, ShapeLike):
+                for a in self.shapes[s]:
+                    self.ren.RemoveActor(a)
+
+                del self.shapes[s]
+            else:
+                self.actors.remove(s)
+                self.ren.RemoveActor(s)
+
+        self.view.update()
 
     def clear(self, *shapes: Shape | vtkProp3D):
         """
         Clear specified objects. If no arguments are passed, clears all objects.
         """
 
-        async def _clear():
-
-            if len(shapes) == 0:
-                self.ren.RemoveAllViewProps()
-
-                self.actors.clear()
-                self.shapes.clear()
-
-            for s in shapes:
-                if instance_of(s, ShapeLike):
-                    for a in self.shapes[s]:
-                        self.ren.RemoveActor(a)
-
-                    del self.shapes[s]
-                else:
-                    self.actors.remove(s)
-                    self.ren.RemoveActor(s)
-
-            self.view.update()
-
         # reset last, bc we don't want to keep track of what was removed
         self.last = None
-        future = self._run(_clear())
+        future = self._run(self._clear(shapes))
         future.result()
 
         return self
 
+    async def _pop(self):
+
+        if self.active is None:
+            self.active = self.actors[-1]["id"]
+
+        if self.active in self.actors:
+            for act in self.actors[self.active]:
+                self.ren.RemoveActor(act)
+
+            self.actors.pop(self.active)
+
+            # update corresponding state
+            for i, el in enumerate(self.state.actors):
+                if el["id"] == self.active:
+                    self.state.actors.pop(i)
+                    self._update_state("actors")
+                    break
+
+            self.active = None
+
+        else:
+            return
+
+        self.view.update()
+
     def pop(self):
         """
-        Clear the last showable.
+        Clear the selected showable.
         """
 
-        async def _pop():
-
-            (shapes, axs, pts, props) = self.last
-
-            for s in shapes:
-                for act in self.shapes.pop(s):
-                    self.ren.RemoveActor(act)
-
-            for act in chain(axs, props):
-                self.ren.RemoveActor(act)
-                self.actors.remove(act)
-
-            if pts:
-                self.ren.RemoveActor(*pts)
-                self.actors.remove(*pts)
-
-            self.view.update()
-
-        self._run(_pop())
+        self._run(self._pop())
 
         return self
+
+    def onVisibility(self, event):
+
+        actors = self.actors[event["id"]]
+
+        for act in actors:
+            act.SetVisibility(event["visible"])
+
+        self.view.update()
+
+    def onSelection(self, event):
+
+        self.active = event[0]
