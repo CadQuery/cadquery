@@ -43,7 +43,7 @@ class Figure:
     ren: vtkRenderer
     view: vtk_widgets.VtkRemoteView
     shapes: dict[ShapeLike, list[vtkProp3D]]
-    actors: dict[str, tuple[vtkProp3D]]
+    actors: dict[str, tuple[vtkProp3D, ...]]
     loop: AbstractEventLoop
     thread: Thread
     empty: bool
@@ -117,8 +117,8 @@ class Figure:
         # state
         self.state = self.server.state
 
-        self.state.actors: list = []
-        self.state.selected: None | str = None
+        self.state.actors = []
+        self.state.selected = None
 
         # layout
         self.layout = SinglePageWithDrawerLayout(server, show_drawer=False)
