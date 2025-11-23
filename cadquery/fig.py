@@ -378,7 +378,6 @@ class Figure:
             self.shapes.clear()
 
             self.state.actors = []
-            self._update_state("actors")
 
         for s in shapes:
             if instance_of(s, ShapeLike):
@@ -387,9 +386,14 @@ class Figure:
 
                 del self.shapes[s]
             else:
-                self.actors.remove(s)
-                self.ren.RemoveActor(s)
+                for k, v in self.actors.items():
+                    if s in v:
+                        for el in self.actors.pop(k):
+                            self.ren.RemoveActor(el)
 
+                        break
+
+        self._update_state("actors")
         self.view.update()
 
     def clear(self, *shapes: Shape | vtkProp3D):
