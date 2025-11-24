@@ -140,6 +140,48 @@ class Material(object):
         """
         return self.wrapped.GetDensValType().ToCString()
 
+    def toTuple(self) -> Tuple[str, str, float, str]:
+        """
+        Convert Material to a tuple.
+        """
+        name = self.name
+        description = self.description
+        density = self.density
+        densityUnit = self.densityUnit
+
+        return (name, description, density, densityUnit)
+
+    def __hash__(self):
+        """
+        Create a unique hash for this material via its tuple.
+        """
+        return hash(self.toTuple())
+
+    def __eq__(self, other):
+        """
+        Check equality of this material against another via its tuple.
+        """
+        return self.toTuple() == other.toTuple()
+
+    def __getstate__(self) -> Tuple[str, str, float, str]:
+        """
+        Allows pickling.
+        """
+        return self.toTuple()
+
+    def __setstate__(self, data: Tuple[str, str, float, str]):
+        """
+        Allows pickling.
+        """
+        self.wrapped = XCAFDoc_Material()
+        self.wrapped.Set(
+            TCollection_HAsciiString(data[0]),
+            TCollection_HAsciiString(data[1]),
+            data[2],
+            TCollection_HAsciiString("Mass density"),
+            TCollection_HAsciiString(data[3]),
+        )
+
 
 class Color(object):
     """

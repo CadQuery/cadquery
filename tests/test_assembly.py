@@ -1561,6 +1561,17 @@ def test_materials():
     # The visualization material is left for later expansion
     assert assy.children[1].material.wrapped_vis.IsEmpty()
 
+    # Test the ability to convert a material to a tuple
+    assert mat_2.toTuple() == ("test", "Test material", 1.0, "lb/in^3")
+
+    # Test the ability to has a material
+    assert mat_2.__hash__() == hash(("test", "Test material", 1.0, "lb/in^3"))
+
+    # Test the equality operator with material
+    assert mat_2 == cq.Material(
+        "test", description="Test material", density=1.0, densityUnit="lb/in^3"
+    )
+
 
 @pytest.mark.parametrize(
     "assy_fixture, expected",
