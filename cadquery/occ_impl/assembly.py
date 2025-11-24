@@ -774,57 +774,14 @@ def toMesh(
     include_brep_vertices: bool = False,
 ):
     """
-        Converts an assembly to a custom mesh format defined by the CadQuery team.
+    Converts an assembly to a custom mesh format defined by the CadQuery team.
 
-        :param do_imprint: Whether or not the assembly should be imprinted
-        :param tolerance: Tessellation tolerance for mesh generation
-        :param angular_tolerance: Angular tolerance for tessellation
-        :param include_brep_edges: Whether to include BRep edge segments
-        :param include_brep_vertices: Whether to include BRep vertices
-        """
-
-    def _is_interior_face(face, solid, tolerance=0.01):
-        """
-            Determine if a face is interior to a solid (like a cavity wall).
-
-            This is more robust than just checking face orientation, as it considers
-            the geometric relationship between the face and the solid.
-            """
-        # Get geometric surface and parameter bounds
-        surf = BRep_Tool.Surface_s(face.wrapped)
-        u_min, u_max, v_min, v_max = face._uvBounds()
-
-        # # Take center point in UV space on the face
-        u = (u_min + u_max) * 0.5
-        v = (v_min + v_max) * 0.5
-        face_pnt = surf.Value(u, v)
-
-        # Determine if the face is most likely inside the solid
-        is_inside = solid.isInside((face_pnt.X(), face_pnt.Y(), face_pnt.Z()))
-
-        # Determine if the normal of the face points generally towards to the center of the solid
-        is_pointing_inward = False
-        face_normal = face.normalAt((face_pnt.X(), face_pnt.Y(), face_pnt.Z()))
-        solid_center = solid.Center()
-
-        to_center = gp_Vec(
-            face_pnt, gp_Pnt(solid_center.x, solid_center.y, solid_center.z)
-        )
-
-        # Dot product: negative = toward, positive = away
-        dot = face_normal.dot(cq.Vector(to_center.Normalized()))
-
-        if dot < 0:
-            is_pointing_inward = False
-        else:
-            is_pointing_inward = True
-
-        # If the face seems to be inside the solid and its normal points inwards, it should be an internal face
-        is_internal_face = False
-        if is_inside and is_pointing_inward:
-            is_internal_face = True
-
-        return is_internal_face
+    :param do_imprint: Whether or not the assembly should be imprinted
+    :param tolerance: Tessellation tolerance for mesh generation
+    :param angular_tolerance: Angular tolerance for tessellation
+    :param include_brep_edges: Whether to include BRep edge segments
+    :param include_brep_vertices: Whether to include BRep vertices
+    """
 
     # To keep track of the vertices and triangles in the mesh
     vertices: list[tuple[float, float, float]] = []

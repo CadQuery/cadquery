@@ -2368,6 +2368,9 @@ def test_basic_imprinted_assembly_meshing(simple_assy):
     # Mesh the assemby
     mesh = cq.occ_impl.assembly.toMesh(simple_assy, do_imprint=True)
 
+    # Set a color for one of the children
+    simple_assy.children[0].color = cq.Color(1, 0, 0, 1)
+
     # Make sure we have the correct number of vertices
     assert len(mesh["vertices"]) == 37
 
