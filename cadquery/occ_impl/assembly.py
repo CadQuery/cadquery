@@ -53,7 +53,7 @@ from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
 from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_LINE, VTK_VERTEX
 
 from .geom import Location
-from .shapes import Shape, Solid, Compound
+from .shapes import Shape, Solid, Compound, Shell
 from .exporters.vtk import toString
 from ..cq import Workplane
 
@@ -829,7 +829,7 @@ def toMesh(
     # To keep track of the vertices and triangles in the mesh
     vertices: list[tuple[float, float, float]] = []
     vertex_map: dict[tuple[float, float, float], int] = {}
-    solids: List[Solid] = []
+    solids: List[Solid | Compound | Shell] = []
     solid_face_triangle = {}
     imprinted_assembly = None
     imprinted_solids_with_orginal_ids = None
@@ -843,8 +843,8 @@ def toMesh(
         (imprinted_assembly, imprinted_solids_with_orginal_ids,) = imprint(assy)
 
         # Extract the solids from the imprinted assembly because we should not mesh the compound
-        for solid in imprinted_assembly.Solids():
-            solids.append(solid)
+        for imprinted_solid in imprinted_assembly.Solids():
+            solids.append(imprinted_solid)
 
         # Keep track of the colors and location of each of the solids
         solid_colors.append((0.5, 0.5, 0.5, 1.0))
@@ -857,9 +857,17 @@ def toMesh(
 
             if isinstance(obj, Workplane):
                 val = obj.val()
-                if isinstance(val, Solid):
+                if (
+                    isinstance(val, Solid)
+                    or isinstance(val, Compound)
+                    or isinstance(val, Shell)
+                ):
                     solids.append(val)
-            elif isinstance(obj, Solid):
+            elif (
+                isinstance(obj, Solid)
+                or isinstance(obj, Compound)
+                or isinstance(obj, Shell)
+            ):
                 solids.append(obj)
             else:
                 continue
