@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  cadquery:
+    build:
+      context: .
+      args:
+        WITH_CQEDITOR: "false"   # set "true" if you want CQ-editor in the image
+    image: cadquery/jupyter-cadquery:local
+    container_name: cadquery
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./work:/home/mambauser/work

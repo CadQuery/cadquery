@@ -8,6 +8,37 @@ To install both Cadquery and CQ-Editor together with a single installer see the 
 
 CadQuery may be installed with either conda or pip.  The conda installation method is the better tested and more mature option.
 
+Install via docker
+------------------
+```rst
+Docker
+------
+
+If you prefer not to install Python or CadQuery directly on your system, you can use a
+Docker-based Jupyter environment. This provides a self-contained CadQuery installation
+with JupyterLab and the Jupyter-CadQuery viewer extension, running in your web browser.
+
+The Docker assets live in the main CadQuery repository:
+
+- ``docker/jupyter-cadquery/`` (Dockerfile and usage guide)
+
+See the README in that directory for build and run instructions:
+
+.. _docker-jupyter-cadquery:
+
+   https://github.com/CadQuery/cadquery/tree/master/docker/jupyter-cadquery
+
+The Docker workflow is intended to:
+
+* Provide a **fully self-contained environment** for trying CadQuery and running
+  the examples.
+* Offer a **consistent development environment** for contributors.
+* Support both **Linux** and **Windows** (via Docker Desktop), with a default
+  user interface based on **JupyterLab + Jupyter-CadQuery**.
+
+Models are rendered in the browser and use the host machine's graphics capabilities.
+No GPU driver needs to be configured inside the container.
+
 
 Install via conda
 ------------------
