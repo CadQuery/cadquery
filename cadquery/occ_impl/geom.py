@@ -1125,4 +1125,3 @@ class Location(object):
             self.wrapped = TopLoc_Location()
         else:
             self.wrapped = ls.Location(1)
-Locatio
