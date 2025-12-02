@@ -2,7 +2,7 @@ name: cadquery
 channels:
   - conda-forge
 dependencies:
-  - python>=3.9,<=3.12
+  - python>=3.10
   - ipython
   - ocp=7.9.0
   - vtk=*=qt*
@@ -25,6 +25,8 @@ dependencies:
   - pathspec
   - click
   - appdirs
+  - trame
+  - trame-vtk
   - pip
   - pip:
     - --editable=.

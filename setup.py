@@ -33,12 +33,14 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "typish",
         "casadi",
         "path",
+        "trame",
+        "trame-vtk",
     ]
 
 
 setup(
     name="cadquery",
-    version="2.6-dev",  # Update this for the next release
+    version="2.7-dev",
     url="https://github.com/CadQuery/cadquery",
     license="Apache Public License 2.0",
     author="David Cowden",
@@ -47,7 +49,7 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     setup_requires=setup_reqs,
     install_requires=reqs,
     extras_require={

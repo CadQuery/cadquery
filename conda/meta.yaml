@@ -12,7 +12,7 @@ build:
 
 requirements:
   build:
-    - python >=3.9
+    - python >=3.10
     - setuptools
   run:
     - python >=3.9
@@ -26,6 +26,8 @@ requirements:
     - multimethod >=1.11,<2.0
     - casadi
     - typish
+    - trame
+    - trame-vtk
 
 test:
   requires:

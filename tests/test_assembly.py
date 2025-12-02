@@ -17,7 +17,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box, cone
+from cadquery.occ_impl.shapes import Face, box, cone, plane
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -34,7 +34,7 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
-from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB
+from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB, Quantity_NameOfColor
 from OCP.TopAbs import TopAbs_ShapeEnum
 
 
@@ -100,8 +100,8 @@ def empty_top_assy():
 
     b1 = cq.Workplane().box(1, 1, 1)
 
-    assy = cq.Assembly()
-    assy.add(b1, color=cq.Color("green"))
+    assy = cq.Assembly(name="top")
+    assy.add(b1, color=cq.Color("green"), name="b")
 
     return assy
 
@@ -366,6 +366,77 @@ def chassis0_assy():
     return chassis
 
 
+@pytest.fixture
+def subshape_assy():
+    """
+    Builds an assembly with the needed subshapes to test the export and import of STEP files.
+    """
+
+    # Create a simple assembly
+    assy = cq.Assembly(name="top_level")
+    cube_1 = cq.Workplane().box(10.0, 10.0, 10.0)
+    assy.add(cube_1, name="cube_1", color=cq.Color("green"))
+
+    # Add subshape name, color and layer
+    assy["cube_1"].addSubshape(
+        cube_1.faces(">Z").val(),
+        name="cube_1_top_face",
+        color=cq.Color("red"),
+        layer="cube_1_top_face_layer",
+    )
+
+    # Add a cylinder to the assembly
+    cyl_1 = cq.Workplane().cylinder(10.0, 2.5)
+    assy.add(
+        cyl_1, name="cyl_1", color=cq.Color("blue"), loc=cq.Location((0.0, 0.0, -10.0))
+    )
+
+    # Add a subshape face for the cylinder
+    assy["cyl_1"].addSubshape(
+        cyl_1.faces("<Z").val(),
+        name="cylinder_bottom_face",
+        color=cq.Color("green"),
+        layer="cylinder_bottom_face_layer",
+    )
+
+    # Add a subshape wire for the cylinder
+    assy["cyl_1"].addSubshape(
+        cyl_1.wires("<Z").val(),
+        name="cylinder_bottom_wire",
+        color=cq.Color("blue"),
+        layer="cylinder_bottom_wire_layer",
+    )
+
+    return assy
+
+
+@pytest.fixture
+def multi_subshape_assy():
+
+    # Create a basic assembly
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    assy = cq.Assembly(name="top_level")
+    assy.add(cube_1, name="cube_1", color=cq.Color("green"))
+    cube_2 = cq.Workplane().box(5, 5, 5)
+    assy.add(cube_2, name="cube_2", color=cq.Color("blue"), loc=cq.Location(10, 10, 10))
+
+    # Add subshape name, color and layer
+    assy.addSubshape(
+        cube_1.faces(">Z").val(),
+        name="cube_1_top_face",
+        color=cq.Color("red"),
+        layer="cube_1_top_face",
+    )
+    assy.addSubshape(
+        cube_2.faces(">X").val(),
+        name="cube_2_right_face",
+        color=cq.Color("red"),
+        layer="cube_2_right_face",
+    )
+
+    return assy
+
+
 def read_step(stepfile) -> TDocStd_Document:
     """Read STEP file, return XCAF document"""
 
@@ -397,9 +468,14 @@ def get_doc_nodes(doc, leaf=False):
         ctool = expl.ColorTool()
         style = node.Style
         label = node.RefLabel
+        label2 = node.Label
 
         name_att = TDataStd_Name()
         label.FindAttribute(TDataStd_Name.GetID_s(), name_att)
+
+        if label2.IsAttribute(TDataStd_Name.GetID_s()):
+            name_att = TDataStd_Name()
+            label2.FindAttribute(TDataStd_Name.GetID_s(), name_att)
 
         color = style.GetColorSurfRGBA()
         shape = expl.FindShapeFromPathId_s(doc, node.Id)
@@ -551,13 +627,23 @@ def test_color():
     assert c3.wrapped.GetRGB().Red() == 1
     assert c3.wrapped.Alpha() == 0.5
 
-    c4 = cq.Color()
+    # test for srgb
+    c4 = cq.Color(0.5, 0.2, 0, 0.5, True)
+    assert c4.wrapped.GetRGB().Red() != 0.5
+    assert c4.wrapped.GetRGB().Green() != 0.2
+    assert c4.wrapped.Alpha() == 0.5
+
+    # test for linear rgb
+    c4 = cq.Color(0.5, 0.2, 0, 0.5, False)
+    assert c4.wrapped.GetRGB().Red() == pytest.approx(0.5)
+    assert c4.wrapped.GetRGB().Green() == pytest.approx(0.2)
+    assert c4.wrapped.Alpha() == 0.5
 
     with pytest.raises(ValueError):
         cq.Color("?????")
 
     with pytest.raises(ValueError):
-        cq.Color(1, 2, 3, 4, 5)
+        cq.Color(1, 2, 3, 4, 5, 6)
 
 
 def test_assembly(simple_assy, nested_assy):
@@ -679,21 +765,24 @@ def test_meta_step_export(tmp_path_factory):
     assy.addSubshape(cube_1.faces(">Z").val(), name="cube_1_top_face")
     assy.addSubshape(cube_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
     assy.addSubshape(cube_1.faces(">Z").val(), layer="cube_1_top_face")
-    assy.addSubshape(cube_2.faces("<Z").val(), name="cube_2_bottom_face")
-    assy.addSubshape(cube_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cube_2.faces("<Z").val(), layer="cube_2_bottom_face")
-    assy.addSubshape(cylinder_1.faces(">Z").val(), name="cylinder_1_top_face")
-    assy.addSubshape(cylinder_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cylinder_1.faces(">Z").val(), layer="cylinder_1_top_face")
-    assy.addSubshape(cylinder_2.faces("<Z").val(), name="cylinder_2_bottom_face")
-    assy.addSubshape(cylinder_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cylinder_2.faces("<Z").val(), layer="cylinder_2_bottom_face")
-    assy.addSubshape(cone_1.faces(">Z").val(), name="cone_1_top_face")
-    assy.addSubshape(cone_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cone_1.faces(">Z").val(), layer="cone_1_top_face")
-    assy.addSubshape(cone_2.faces("<Z").val(), name="cone_2_bottom_face")
-    assy.addSubshape(cone_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
+
+    assy.cube_2.addSubshape(cube_2.faces("<Z").val(), name="cube_2_bottom_face")
+    assy.cube_2.addSubshape(cube_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+    assy.cube_2.addSubshape(cube_2.faces("<Z").val(), layer="cube_2_bottom_face")
+
+    with pytest.raises(ValueError):
+        assy.addSubshape(cylinder_1.faces(">Z").val(), name="cylinder_1_top_face")
+        assy.addSubshape(cylinder_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        assy.addSubshape(cylinder_1.faces(">Z").val(), layer="cylinder_1_top_face")
+        assy.addSubshape(cylinder_2.faces("<Z").val(), name="cylinder_2_bottom_face")
+        assy.addSubshape(cylinder_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        assy.addSubshape(cylinder_2.faces("<Z").val(), layer="cylinder_2_bottom_face")
+        assy.addSubshape(cone_1.faces(">Z").val(), name="cone_1_top_face")
+        assy.addSubshape(cone_1.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        assy.addSubshape(cone_1.faces(">Z").val(), layer="cone_1_top_face")
+        assy.addSubshape(cone_2.faces("<Z").val(), name="cone_2_bottom_face")
+        assy.addSubshape(cone_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
 
     # Write once with pcurves turned on
     success = exportStepMeta(assy, meta_path)
@@ -755,9 +844,8 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assert success
 
     # Tag a face that does not match the object
-    assy.addSubshape(None, name="cube_top_face")
-    success = exportStepMeta(assy, meta_path)
-    assert success
+    with pytest.raises(ValueError):
+        assy.addSubshape(plane(1, 1), name="cube_top_face")
 
     # Tag the name but nothing else
     assy.addSubshape(cube.faces(">Z").val(), name="cube_top_face")
@@ -783,6 +871,351 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assy.addSubshape(cube.faces(">Z").val(), layer="cube_top_face")
     success = exportStepMeta(assy, meta_path)
     assert success
+
+
+def test_assembly_step_import(tmp_path_factory, subshape_assy):
+    """
+    Test if the STEP import works correctly for an assembly with subshape data attached.
+    """
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    assy_step_path = os.path.join(tmpdir, "assembly_with_subshapes.step")
+
+    subshape_assy.export(assy_step_path)
+
+    # Import the STEP file back in
+    imported_assy = cq.Assembly.importStep(assy_step_path)
+
+    # Check that the assembly was imported successfully
+    assert imported_assy is not None
+
+    # Check for appropriate part name
+    assert imported_assy.children[0].name == "cube_1"
+    # Check for approximate color match
+    assert pytest.approx(imported_assy.children[0].color.toTuple(), rel=0.01) == (
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+    )
+    # Check for appropriate part name
+    assert imported_assy.children[1].name == "cyl_1"
+    # Check for approximate color match
+    assert pytest.approx(imported_assy.children[1].color.toTuple(), rel=0.01) == (
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+    )
+
+    # Make sure the shape locations were applied correctly
+    assert imported_assy.children[1].loc.toTuple()[0] == (0.0, 0.0, -10.0)
+
+    # Check the top-level assembly name
+    assert imported_assy.name == "top_level"
+
+    # Test a STEP file that does not contain an assembly
+    wp_step_path = os.path.join(tmpdir, "plain_workplane.step")
+    res = cq.Workplane().box(10, 10, 10)
+    res.export(wp_step_path)
+
+    # Import the STEP file back in
+    with pytest.raises(ValueError):
+        imported_assy = cq.Assembly.importStep(wp_step_path)
+
+
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+def test_assembly_subshape_import(tmp_path_factory, subshape_assy, kind):
+    """
+    Test if a STEP/XBF/XML file containing subshape information can be imported correctly.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    assy_step_path = os.path.join(tmpdir, f"subshape_assy.{kind}")
+
+    # Export the assembly
+    subshape_assy.export(assy_step_path)
+
+    # Import the file back in
+    imported_assy = cq.Assembly.load(assy_step_path)
+    assert imported_assy.name == "top_level"
+
+    # Check the advanced face name
+    assert len(imported_assy.children[0]._subshape_names) == 1
+    assert (
+        list(imported_assy.children[0]._subshape_names.values())[0] == "cube_1_top_face"
+    )
+
+    # Check the color
+    color = list(imported_assy.children[0]._subshape_colors.values())[0]
+    assert Quantity_NameOfColor.Quantity_NOC_RED == color.wrapped.GetRGB().Name()
+
+    # Check the layer info
+    layer_name = list(imported_assy["cube_1"]._subshape_layers.values())[0]
+    assert layer_name == "cube_1_top_face_layer"
+
+    assert (
+        "cylinder_bottom_face_layer" in imported_assy["cyl_1"]._subshape_layers.values()
+    )
+    assert (
+        "cylinder_bottom_wire_layer" in imported_assy["cyl_1"]._subshape_layers.values()
+    )
+
+
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+def test_assembly_multi_subshape_import(tmp_path_factory, multi_subshape_assy, kind):
+    """
+    Test if a file containing subshape information can be imported correctly.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    assy_step_path = os.path.join(tmpdir, f"multi_subshape_assy.{kind}")
+
+    # Export the assembly
+    multi_subshape_assy.export(assy_step_path)
+
+    # Import the file back in
+    imported_assy = cq.Assembly.load(assy_step_path)
+
+    # Check that the top-level assembly name is correct
+    assert imported_assy.name == "top_level"
+
+    # Check the advanced face name for the first cube
+    assert len(imported_assy.children[0]._subshape_names) == 1
+    assert (
+        list(imported_assy.children[0]._subshape_names.values())[0] == "cube_1_top_face"
+    )
+
+    # Check the color for the first cube
+    color = list(imported_assy.children[0]._subshape_colors.values())[0]
+    assert Quantity_NameOfColor.Quantity_NOC_RED == color.wrapped.GetRGB().Name()
+
+    # Check the layer info for the first cube
+    layer_name = list(imported_assy.children[0]._subshape_layers.values())[0]
+    assert layer_name == "cube_1_top_face"
+
+    # Check the advanced face name for the second cube
+    assert len(imported_assy.children[1]._subshape_names) == 1
+    assert (
+        list(imported_assy.children[1]._subshape_names.values())[0]
+        == "cube_2_right_face"
+    )
+
+    # Check the color
+    color = list(imported_assy.children[1]._subshape_colors.values())[0]
+    assert Quantity_NameOfColor.Quantity_NOC_RED == color.wrapped.GetRGB().Name()
+
+    # Check the layer info
+    layer_name = list(imported_assy.children[1]._subshape_layers.values())[0]
+    assert layer_name == "cube_2_right_face"
+
+
+def test_bad_step_file_import(tmp_path_factory):
+    """
+    Test if a bad STEP file raises an error when importing.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    bad_step_path = os.path.join(tmpdir, "bad_step.step")
+
+    # Check that an error is raised when trying to import a non-existent STEP file
+    with pytest.raises(ValueError):
+        # Export the assembly
+        cq.Assembly.importStep(bad_step_path)
+
+
+def test_plain_assembly_import(tmp_path_factory):
+    """
+    Test to make sure that importing plain assemblies has not been broken.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    plain_step_path = os.path.join(tmpdir, "plain_assembly_step.step")
+
+    # Simple cubes
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    cube_2 = cq.Workplane().box(5, 5, 5)
+    cube_3 = cq.Workplane().box(5, 5, 5)
+    cube_4 = cq.Workplane().box(5, 5, 5)
+
+    assy = cq.Assembly(name="top_level", loc=cq.Location(10, 10, 10))
+    assy.add(cube_1, color=cq.Color("green"))
+    assy.add(cube_2, loc=cq.Location((10, 10, 10)), color=cq.Color("red"))
+    assy.add(cube_3, loc=cq.Location((-10, -10, -10)), color=cq.Color("red"))
+    assy.add(cube_4, loc=cq.Location((10, -10, -10)), color=cq.Color("red"))
+
+    # Export the assembly, but do not use the meta STEP export method
+    assy.export(plain_step_path)
+
+    # Import the STEP file back in
+    imported_assy = cq.Assembly.importStep(plain_step_path)
+    assert imported_assy.name == "top_level"
+
+    # Check the locations
+    assert imported_assy.children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0,)
+    assert imported_assy.children[1].loc.toTuple()[0] == (10.0, 10.0, 10.0,)
+    assert imported_assy.children[2].loc.toTuple()[0] == (-10.0, -10.0, -10.0,)
+    assert imported_assy.children[3].loc.toTuple()[0] == (10.0, -10.0, -10.0,)
+
+    # Make sure the location of the top-level assembly was preserved
+    assert imported_assy.loc.toTuple() == cq.Location((10, 10, 10)).toTuple()
+
+    # Check the colors
+    assert pytest.approx(imported_assy.children[0].color.toTuple(), rel=0.01) == (
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+    )  # green
+    assert pytest.approx(imported_assy.children[1].color.toTuple(), rel=0.01) == (
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+    )  # red
+    assert pytest.approx(imported_assy.children[2].color.toTuple(), rel=0.01) == (
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+    )  # red
+    assert pytest.approx(imported_assy.children[3].color.toTuple(), rel=0.01) == (
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+    )  # red
+
+
+def test_copied_assembly_import(tmp_path_factory):
+    """
+    Tests to make sure that copied children in assemblies work correctly.
+    """
+    from cadquery import Assembly, Location, Color
+    from cadquery.func import box, rect
+
+    # Create the temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+
+    # prepare the model
+    def make_model(name: str, COPY: bool):
+        name = os.path.join(tmpdir, name)
+
+        b = box(1, 1, 1)
+
+        assy = Assembly(name="test_assy")
+        assy.add(box(1, 2, 5), color=Color("green"))
+
+        for i, v in enumerate(rect(10, 10).vertices()):
+            assy.add(
+                b.copy() if COPY else b,
+                name=f"element_{i}",
+                loc=Location(v.Center()),
+                color=Color("red"),
+            )
+
+        assy.export(name)
+
+        return assy
+
+    make_model("test_assy_copy.step", True)
+    make_model("test_assy.step", False)
+
+    # import the assy with copies
+    assy_copy = Assembly.importStep(os.path.join(tmpdir, "test_assy_copy.step"))
+    assert 5 == len(assy_copy.children)
+
+    # import the assy without copies
+    assy_normal = Assembly.importStep(os.path.join(tmpdir, "test_assy.step"))
+    assert 5 == len(assy_normal.children)
+
+
+def test_nested_subassembly_step_import(tmp_path_factory):
+    """
+    Tests if the STEP import works correctly with nested subassemblies.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("out")
+    nested_step_path = os.path.join(tmpdir, "plain_assembly_step.step")
+
+    # Create a simple assembly
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(10, 10, 10), name="box_1")
+
+    # Create a simple subassembly
+    subassy = cq.Assembly()
+    subassy.add(cq.Workplane().box(5, 5, 5), name="box_2", loc=cq.Location(10, 10, 10))
+
+    # Nest the subassembly
+    assy.add(subassy)
+
+    # Export and then re-import the nested assembly STEP
+    assy.export(nested_step_path)
+    imported_assy = cq.Assembly.importStep(nested_step_path)
+
+    # Check the locations
+    assert imported_assy.children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0)
+    assert imported_assy.children[1].objects["box_2"].loc.toTuple()[0] == (
+        10.0,
+        10.0,
+        10.0,
+    )
+
+
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+@pytest.mark.parametrize(
+    "assy_orig", ["subshape_assy", "boxes0_assy", "nested_assy", "simple_assy"],
+)
+def test_assembly_step_import_roundtrip(assy_orig, kind, tmp_path_factory, request):
+    """
+    Tests that the assembly does not mutate during successive export-import round trips.
+    """
+
+    assy_orig = request.getfixturevalue(assy_orig)
+
+    # Set up the temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    round_trip_path = os.path.join(tmpdir, f"round_trip.{kind}")
+
+    # First export
+    assy_orig.export(round_trip_path)
+
+    # First import
+    assy = cq.Assembly.load(round_trip_path)
+
+    # Second export
+    assy.export(round_trip_path)
+
+    # Second import
+    assy = cq.Assembly.load(round_trip_path)
+
+    # Check some general aspects of the assembly structure now
+    for k in assy_orig.objects:
+        assert k in assy
+
+    for k in assy.objects:
+        assert k in assy_orig
+
+    if kind == "step":
+        # First meta export
+        exportStepMeta(assy, round_trip_path)
+
+        # First meta import
+        assy = cq.Assembly.importStep(round_trip_path)
+
+        # Second meta export
+        exportStepMeta(assy, round_trip_path)
+
+        # Second meta import
+        assy = cq.Assembly.importStep(round_trip_path)
+
+        # Check some general aspects of the assembly structure now
+        for k in assy_orig.objects:
+            assert k in assy
+
+        for k in assy.objects:
+            assert k in assy_orig
 
 
 @pytest.mark.parametrize(
@@ -861,6 +1294,7 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
     [
         ("step", (), {}),
         ("xml", (), {}),
+        ("xbf", (), {}),
         ("vrml", (), {}),
         ("gltf", (), {}),
         ("glb", (), {}),
@@ -907,7 +1341,7 @@ def test_save_stl_formats(nested_assy_sphere):
     assert os.path.exists("nested.stl")
 
     # Trying to read a binary file as UTF-8/ASCII should throw an error
-    with pytest.raises(UnicodeDecodeError) as info:
+    with pytest.raises(UnicodeDecodeError):
         with open("nested.stl", "r") as file:
             file.read()
 
@@ -924,7 +1358,7 @@ def test_save_gltf(nested_assy_sphere):
     assert os.path.exists("nested.glb")
 
     # Trying to read a binary file as UTF-8/ASCII should throw an error
-    with pytest.raises(UnicodeDecodeError) as info:
+    with pytest.raises(UnicodeDecodeError):
         with open("nested.glb", "r") as file:
             file.read()
 
@@ -939,7 +1373,7 @@ def test_exportGLTF(nested_assy_sphere):
 
     # Test binary export inferred from file extension
     cq.exporters.assembly.exportGLTF(nested_assy_sphere, "nested_export_gltf.glb")
-    with pytest.raises(UnicodeDecodeError) as info:
+    with pytest.raises(UnicodeDecodeError):
         with open("nested_export_gltf.glb", "r") as file:
             file.read()
 
@@ -947,7 +1381,7 @@ def test_exportGLTF(nested_assy_sphere):
     cq.exporters.assembly.exportGLTF(
         nested_assy_sphere, "nested_export_gltf_2.glb", binary=True
     )
-    with pytest.raises(UnicodeDecodeError) as info:
+    with pytest.raises(UnicodeDecodeError):
         with open("nested_export_gltf_2.glb", "r") as file:
             file.read()
 
@@ -1001,217 +1435,92 @@ def test_leaf_node_count(assy_fixture, count, request):
     assert len(get_doc_nodes(doc, True)) == count
 
 
-@pytest.mark.parametrize(
-    "assy_fixture, expected",
-    [
-        (
-            "chassis0_assy",
-            [
-                (
-                    ["chassis", "wheel-axle.*", "wheel:.*"],
-                    {
-                        "color": (1.0, 0.0, 0.0, 1.0),
-                        "color_shape": (1.0, 0.0, 0.0, 1.0),
-                        "num_nodes": 4,
-                    },
-                ),
-                (
-                    ["chassis", "wheel-axle.*", "wheel:.*", "wheel.*_part"],
-                    {"color": (1.0, 0.0, 0.0, 1.0), "num_nodes": 4},
-                ),
-                (
-                    ["chassis", "wheel-axle.*", "axle"],
-                    {
-                        "color": (0.0, 1.0, 0.0, 1.0),
-                        "color_shape": (0.0, 1.0, 0.0, 1.0),
-                        "num_nodes": 2,
-                    },
-                ),
-                (
-                    ["chassis", "wheel-axle.*", "axle", "axle_part"],
-                    {"color": (0.0, 1.0, 0.0, 1.0), "num_nodes": 2},
-                ),
-            ],
-        ),
-    ],
-)
-def test_colors_assy0(assy_fixture, expected, request):
-    """Validate assembly colors with document explorer.
+def check_assy(assy, assy_i):
 
-    Check toCAF wth color shape parameter False.
+    for k in assy.objects:
+
+        ref = assy[k]
+        val = assy_i[k]
+
+        # check colors
+        if ref.color:
+            assert ref.color.toTuple() == pytest.approx(val.color.toTuple())
+        else:
+            assert val.color is None
+
+        # check loc
+        assert pytest.approx(ref.loc.toTuple()[0]) == val.loc.toTuple()[0]
+        assert pytest.approx(ref.loc.toTuple()[1]) == val.loc.toTuple()[1]
+
+        # check names
+        assert ref.name == val.name
+
+        # check subshape names
+        if ref._subshape_names:
+            for v in ref._subshape_names.values():
+                assert v in val._subshape_names.values()
+
+        # check subshape layers
+        if ref._subshape_layers:
+            for v in ref._subshape_layers.values():
+                assert v in val._subshape_layers.values()
+
+        # check colors
+        if ref._subshape_colors:
+            colors = set(v.toTuple() for v in ref._subshape_colors.values())
+
+            for v in val._subshape_colors.values():
+                assert v.toTuple() in colors
+
+
+@pytest.mark.parametrize("kind", ["xbf", "xml"])
+@pytest.mark.parametrize(
+    "assy_fixture",
+    ["chassis0_assy", "boxes1_assy", "subshape_assy", "multi_subshape_assy"],
+)
+def test_colors_assy0(assy_fixture, request, tmpdir, kind):
+    """Validate assembly roundtrip, checks colors, locs, names, subshapes.
     """
 
-    def check_nodes(doc, expected):
-        allnodes = get_doc_nodes(doc, False)
-        for name_path, props in expected:
-            nodes = find_node(allnodes, name_path)
-            if "num_nodes" in props:
-                assert len(nodes) == props["num_nodes"]
-                props.pop("num_nodes")
-            else:
-                assert len(nodes) > 0
-            for n in nodes:
-                for k, v in props.items():
-                    assert pytest.approx(n[k], abs=1e-3) == v
-
     assy = request.getfixturevalue(assy_fixture)
-    _, doc = toCAF(assy, False)
-    check_nodes(doc, expected)
+    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(f".{kind}")
+    assy.export(stepfile)
+
+    assy_i = assy.load(stepfile)
+
+    check_assy(assy, assy_i)
 
 
+@pytest.mark.parametrize("kind", ["step", "xbf"])
 @pytest.mark.parametrize(
-    "assy_fixture, expected",
+    "assy_fixture",
     [
-        (
-            "nested_assy",
-            [
-                (
-                    ["TOP", "SECOND", "SECOND_part"],
-                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
-                ),
-                (
-                    ["TOP", "SECOND", "BOTTOM", "BOTTOM_part"],
-                    {
-                        "color_shape": (0.0, 1.0, 0.0, 1.0),
-                        "color_subshapes": (0.0, 1.0, 0.0, 1.0),
-                    },
-                ),
-            ],
-        ),
-        ("empty_top_assy", [([".*_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),]),
-        (
-            "boxes0_assy",
-            [
-                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes1_assy",
-            [
-                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes2_assy",
-            [
-                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box1", "box1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes3_assy",
-            [
-                (["box0", "box0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (
-                    ["box1", "box1_part"],
-                    {"color_shape": cq.Color().toTuple()},
-                ),  # default color when unspecified
-            ],
-        ),
-        (
-            "boxes4_assy",
-            [
-                (["box_0", "box_0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box_1", "box_1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes5_assy",
-            [
-                (["box:a", "box:a_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box:b", "box:b_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes6_assy",
-            [
-                (["box__0", "box__0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box__1", "box__1_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-            ],
-        ),
-        (
-            "boxes7_assy",
-            [
-                (["box_0", "box_0_part"], {"color_shape": (1.0, 0.0, 0.0, 1.0)}),
-                (["box", "box_part"], {"color_shape": (0.0, 1.0, 0.0, 1.0)}),
-                (
-                    ["another box", "another box_part"],
-                    {"color_shape": (0.23, 0.26, 0.26, 0.6)},
-                ),
-            ],
-        ),
-        (
-            "chassis0_assy",
-            [
-                (
-                    ["chassis", "wheel-axle-front", "wheel:left", "wheel:left_part"],
-                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-front", "wheel:right", "wheel:left_part"],
-                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-rear", "wheel:left", "wheel:left_part"],
-                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-rear", "wheel:right", "wheel:left_part"],
-                    {"color_shape": (1.0, 0.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-front", "axle", "axle_part"],
-                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
-                ),
-                (
-                    ["chassis", "wheel-axle-rear", "axle", "axle_part"],
-                    {"color_shape": (0.0, 1.0, 0.0, 1.0)},
-                ),
-            ],
-        ),
+        "boxes7_assy",
+        "boxes6_assy",
+        "boxes5_assy",
+        "boxes4_assy",
+        "boxes3_assy",
+        "boxes2_assy",
+        "boxes0_assy",
+        "nested_assy",
+        "empty_top_assy",
+        "subshape_assy",
+        "multi_subshape_assy",
     ],
 )
-def test_colors_assy1(assy_fixture, expected, request, tmpdir):
+def test_colors_assy1(assy_fixture, request, tmpdir, kind):
     """Validate assembly colors with document explorer.
 
     Check both documents created with toCAF and STEP export round trip.
     """
 
-    def check_nodes(doc, expected, is_STEP=False):
-        expected = copy.deepcopy(expected)
-        allnodes = get_doc_nodes(doc, False)
-        for name_path, props in expected:
-            nodes = find_node(allnodes, name_path)
-            if "num_nodes" in props:
-                assert len(nodes) == props["num_nodes"]
-                props.pop("num_nodes")
-            else:
-                assert len(nodes) > 0
-            for n in nodes:
-                if not is_STEP:
-                    if "color_subshapes" in props:
-                        props.pop("color_subshapes")
-                for k, v in props.items():
-                    if (
-                        k == "color_shape"
-                        and "color_subshapes" in props
-                        and props["color_subshapes"]
-                    ):
-                        continue
-                    assert pytest.approx(n[k], abs=1e-3) == v
-
     assy = request.getfixturevalue(assy_fixture)
-    _, doc = toCAF(assy, True)
-    check_nodes(doc, expected)
+    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(f".{kind}")
+    assy.export(stepfile)
 
-    # repeat color check again - after STEP export round trip
-    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(".step")
-    if not stepfile.exists():
-        assy.save(str(stepfile))
-    doc = read_step(stepfile)
-    check_nodes(doc, expected, True)
+    assy_i = assy.load(stepfile)
+
+    check_assy(assy, assy_i)
 
 
 @pytest.mark.parametrize(
@@ -2000,3 +2309,34 @@ def test_step_color(tmp_path_factory):
                 assert "0.47" in line
                 assert "0.25" in line
                 assert "0.18" in line
+
+
+def test_special_methods(subshape_assy):
+    """
+    Smoke-test some special methods.
+    """
+
+    assert "cube_1" in subshape_assy.__dir__()
+    assert "cube_1" in subshape_assy._ipython_key_completions_()
+    assert "cube_1" in subshape_assy
+
+    subshape_assy["cube_1"]
+    subshape_assy.cube_1
+
+    with pytest.raises(KeyError):
+        subshape_assy["123456"]
+
+    with pytest.raises(AttributeError):
+        subshape_assy.cube_123456
+
+
+def test_shallow_assy():
+    """
+    toCAF edge case.
+    """
+
+    # shallow assy
+    toCAF(cq.Assembly(cq.Workplane().box(1, 1, 1)))
+
+    with pytest.raises(ValueError):
+        toCAF(cq.Assembly())
