@@ -86,6 +86,22 @@ class NearestToPointSelector(Selector):
         return [min(objectList, key=dist)]
 
 
+class NearestToShapeSelector(Selector):
+    """
+    Selects object nearest the provided Shape.
+
+    Applicability: All Types of Shapes
+
+    """
+
+    def __init__(self, s: Shape):
+        self.shape = s
+
+    def filter(self, objectList: Sequence[Shape]):
+
+        return [min(objectList, key=lambda el: self.s.distance(el))]
+
+
 class BoxSelector(Selector):
     """
     Selects objects inside the 3D box defined by 2 points.
@@ -870,3 +886,11 @@ class StringSyntaxSelector(Selector):
         Filter give object list through th already constructed complex selector object
         """
         return self.mySelector.filter(objectList)
+
+
+#%% Aliases
+
+NearestToPoint = NearestToPointSelector
+NearestToShape = NearestToShapeSelector
+Parallel = ParallelDirSelector
+Perpendicular = PerpendicularDirSelector
