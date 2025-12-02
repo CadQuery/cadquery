@@ -38,7 +38,7 @@ from .occ_impl.exporters.assembly import (
 from .occ_impl.importers.assembly import importStep as _importStep
 
 from .selectors import _expression_grammar as _selector_grammar
-from .utils import deprecate
+from .utils import deprecate, BiDict
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -97,9 +97,9 @@ class Assembly(object):
     constraints: List[Constraint]
 
     # Allows metadata to be stored for exports
-    _subshape_names: dict[Shape, str]
-    _subshape_colors: dict[Shape, Color]
-    _subshape_layers: dict[Shape, str]
+    _subshape_names: BiDict[Shape, str]
+    _subshape_colors: BiDict[Shape, Color]
+    _subshape_layers: BiDict[Shape, str]
 
     _solve_result: Optional[Dict[str, Any]]
 
@@ -146,9 +146,9 @@ class Assembly(object):
 
         self._solve_result = None
 
-        self._subshape_names = {}
-        self._subshape_colors = {}
-        self._subshape_layers = {}
+        self._subshape_names = BiDict()
+        self._subshape_colors = BiDict()
+        self._subshape_layers = BiDict()
 
     def _copy(self) -> "Assembly":
         """
@@ -157,9 +157,9 @@ class Assembly(object):
 
         rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
 
-        rv._subshape_colors = dict(self._subshape_colors)
-        rv._subshape_names = dict(self._subshape_names)
-        rv._subshape_layers = dict(self._subshape_layers)
+        rv._subshape_colors = BiDict(self._subshape_colors)
+        rv._subshape_names = BiDict(self._subshape_names)
+        rv._subshape_layers = BiDict(self._subshape_layers)
 
         for ch in self.children:
             ch_copy = ch._copy()
@@ -768,9 +768,19 @@ class Assembly(object):
     def __getitem__(self, name: str) -> "Assembly":
         """
         [] based access to children.
+        
         """
 
-        return self.objects[name]
+        if name in self.objects:
+            return self.objects[name]
+        elif name[0] in self.objects:
+            rv = self.objects[name[0]]
+
+            if name[1] in rv._subshape_names.inv:
+                rv = self._subshape_names.inv[name[1]]
+                return rv[0] if len(rv) == 1 else compound(rv)
+
+        raise KeyError
 
     def _ipython_key_completions_(self) -> List[str]:
         """
@@ -790,15 +800,22 @@ class Assembly(object):
 
         if name in self.objects:
             return self.objects[name]
+        elif name in self._subshape_names.inv:
+            rv = self._subshape_names.inv[name]
+            return rv[0] if len(rv) == 1 else compound(rv)
 
-        raise AttributeError
+        raise AttributeError(f"{name} is not an attribute of {self}")
 
     def __dir__(self):
         """
         Modified __dir__ for autocompletion.
         """
 
-        return list(self.__dict__) + list(ch.name for ch in self.children)
+        return (
+            list(self.__dict__)
+            + list(ch.name for ch in self.children)
+            + list(self._subshape_names.inverse.keys())
+        )
 
     def __getstate__(self):
         """
