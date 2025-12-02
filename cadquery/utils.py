@@ -2,6 +2,7 @@ from functools import wraps
 from inspect import signature, isbuiltin
 from typing import TypeVar, Callable, cast
 from warnings import warn
+from collections import UserDict
 
 from multimethod import multimethod, DispatchError
 
@@ -83,3 +84,35 @@ def get_arity(f: TCallable) -> int:
         rv = f.__code__.co_argcount - n_defaults
 
     return rv
+
+
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class BiDict(UserDict[K, V]):
+    """
+    Bi-directional dictionary.
+    """
+
+    _inv = dict[V, list[K]]
+
+    def __init__(self, *args, **kwargs):
+
+        self._inv = {}
+
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, k: K, v: V):
+
+        super().__setitem__(k, v)
+
+        if v in self._inv:
+            self._inv[v].append(k)
+        else:
+            self._inv[v] = [k]
+
+    @property
+    def inv(self) -> dict[V, list[K]]:
+
+        return self._inv
