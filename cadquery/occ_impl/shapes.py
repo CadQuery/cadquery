@@ -733,12 +733,12 @@ class Shape(object):
 
         raise NotImplementedError
 
-    def Center(self) -> Vector:
+    def Center(self, tol: Optional[float] = None) -> Vector:
         """
         :returns: The point of the center of mass of this Shape
         """
 
-        return Shape.centerOfMass(self)
+        return Shape.centerOfMass(self, tol)
 
     def CenterOfBoundBox(self, tolerance: Optional[float] = None) -> Vector:
         """
@@ -810,7 +810,7 @@ class Shape(object):
         return Properties.Mass()
 
     @staticmethod
-    def centerOfMass(obj: "Shape") -> Vector:
+    def centerOfMass(obj: "Shape", tol: Optional[float] = None) -> Vector:
         """
         Calculates the center of 'mass' of an object.
 
@@ -819,7 +819,7 @@ class Shape(object):
         Properties = GProp_GProps()
         calc_function = Shape._mass_calc_function(obj)
 
-        calc_function(obj.wrapped, Properties)
+        calc_function(obj.wrapped, Properties, *((tol,) if tol else ()))
 
         return Vector(Properties.CentreOfMass())
 
