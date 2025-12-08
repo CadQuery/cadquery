@@ -95,7 +95,7 @@ class BiDict(UserDict[K, V]):
     Bi-directional dictionary.
     """
 
-    _inv = dict[V, list[K]]
+    _inv: dict[V, list[K]]
 
     def __init__(self, *args, **kwargs):
 

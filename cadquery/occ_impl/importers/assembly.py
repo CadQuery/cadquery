@@ -10,6 +10,8 @@ from OCP.STEPCAFControl import STEPCAFControl_Reader
 from OCP.XCAFDoc import XCAFDoc_ColorSurf, XCAFDoc_DocumentTool, XCAFDoc_GraphNode
 from OCP.Interface import Interface_Static
 
+from typing import cast
+
 from ..assembly import AssemblyProtocol, Color
 from ..geom import Location
 from ..shapes import Shape
@@ -94,7 +96,7 @@ def importStep(assy: AssemblyProtocol, path: str):
                         parent.add(tmp)
 
                         # change the current assy to handle subshape data
-                        current = parent[ref_name]
+                        current = cast(AssemblyProtocol, parent[ref_name])
 
                     # iterate over subshape and handle names, layers and colors
                     subshape_labels = TDF_LabelSequence()
@@ -206,7 +208,7 @@ def importStep(assy: AssemblyProtocol, path: str):
         # extras on successive round-trips. exportStepMeta does not add the extra top-level
         # node and so does not exhibit this behavior.
         if assy.name in imported_assy:
-            imported_assy = imported_assy[assy.name]
+            imported_assy = cast(AssemblyProtocol, imported_assy[assy.name])
 
         # Copy all of the children over to the main assembly object
         for child in imported_assy.children:

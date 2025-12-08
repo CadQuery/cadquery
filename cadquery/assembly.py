@@ -47,6 +47,8 @@ ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
 PATH_DELIM = "/"
 
 # entity selector grammar definition
+
+
 def _define_grammar():
 
     from pyparsing import (
@@ -765,10 +767,10 @@ class Assembly(object):
 
         return self
 
-    def __getitem__(self, name: str) -> "Assembly":
+    def __getitem__(self, name: str) -> Union["Assembly", Shape]:
         """
         [] based access to children.
-        
+
         """
 
         if name in self.objects:
@@ -777,7 +779,7 @@ class Assembly(object):
             rv = self.objects[name[0]]
 
             if name[1] in rv._subshape_names.inv:
-                rv = self._subshape_names.inv[name[1]]
+                rv = compound(self._subshape_names.inv[name[1]])
                 return rv[0] if len(rv) == 1 else compound(rv)
 
         raise KeyError
@@ -793,7 +795,7 @@ class Assembly(object):
 
         return name in self.objects
 
-    def __getattr__(self, name: str) -> "Assembly":
+    def __getattr__(self, name: str) -> Union["Assembly", Shape]:
         """
         . based access to children.
         """
