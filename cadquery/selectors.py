@@ -99,7 +99,7 @@ class NearestToShapeSelector(Selector):
 
     def filter(self, objectList: Sequence[Shape]):
 
-        return [min(objectList, key=lambda el: self.s.distance(el))]
+        return [min(objectList, key=lambda el: self.shape.distance(el))]
 
 
 class BoxSelector(Selector):
@@ -888,7 +888,7 @@ class StringSyntaxSelector(Selector):
         return self.mySelector.filter(objectList)
 
 
-#%% Aliases
+# %% Aliases
 
 NearestToPoint = NearestToPointSelector
 NearestToShape = NearestToShapeSelector
