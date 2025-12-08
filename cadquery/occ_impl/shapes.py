@@ -6194,7 +6194,9 @@ def extrude(s: Shape, d: VectorLike, both: bool = False) -> Shape:
     for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
 
         if both:
-            builder = BRepPrimAPI_MakePrism(el.moved(-d).wrapped, 2 * Vector(d).wrapped)
+            builder = BRepPrimAPI_MakePrism(
+                el.moved(-Vector(d)).wrapped, (2 * Vector(d)).wrapped
+            )
         else:
             builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
 
