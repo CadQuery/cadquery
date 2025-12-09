@@ -1,6 +1,50 @@
 Changes
 =======
 
+2.6.1
+-----
+
+* Fixed a bug in shallow assembly export when using `toCAF` https://github.com/CadQuery/cadquery/pull/1924, https://github.com/CadQuery/cadquery/issues/1922
+* Fixed the Apache 2.0 license designation in the citation file https://github.com/CadQuery/cadquery/pull/1916
+* Mentioned periodic surface trimming in the docs https://github.com/CadQuery/cadquery/pull/1917
+
+2.6.0
+-----
+
+## Highlights
+
+* Removed Python 3.9 support since it reaches EOL October 31, 2025 https://github.com/CadQuery/cadquery/pull/1905
+* Per item styling and ability to control the camera position of `cadquery.vis.show` https://github.com/CadQuery/cadquery/pull/1778
+* Added control point visualization to `cadquery.vis.show` https://github.com/CadQuery/cadquery/pull/1765
+* Implemented screenshots in `cadquery.vis.show` https://github.com/CadQuery/cadquery/pull/1759
+* STEP/XBF/XML export for assemblies including names, layers and colors https://github.com/CadQuery/cadquery/pull/1782, https://github.com/CadQuery/cadquery/pull/1838
+* STEP/XBF/XML import for assemblies, including names, layers and colors https://github.com/CadQuery/cadquery/pull/1779
+* Added more ways to trim features in the free function API https://github.com/CadQuery/cadquery/pull/1833
+* Free function API improvements including `Shape.remove`, `Face.extend` and `Solid.addCavity` https://github.com/CadQuery/cadquery/pull/1797
+* Additions to `cq.Face` including `paramAt`, `params`, `positionAt`, `positions`, and `cq.func.closest` https://github.com/CadQuery/cadquery/pull/1752
+* Added local and non-manifold sewing (i.e. shell construction) in Local and non-manifold sewing https://github.com/CadQuery/cadquery/pull/1808
+
+## Other Changes
+* Fixed a bug in `consolidateWires` that was not resetting `firstPoint` correctly, breaking `mirrorX` and `mirrorY` https://github.com/CadQuery/cadquery/pull/1904
+* Improved the error message when an assembly child with the same name is added to an assembly https://github.com/CadQuery/cadquery/pull/1893
+* Added a `tolerance` parameters to the volume calculation https://github.com/CadQuery/cadquery/pull/1882
+* Extended `_findFromPoint` to support `Vertex` https://github.com/CadQuery/cadquery/pull/1853
+* Fixed a bug in color handling that was affecting exported STEP files https://github.com/CadQuery/cadquery/pull/1843
+* Fixed a bug in the distribute functionality in Sketch https://github.com/CadQuery/cadquery/pull/1826
+* Fixed a bug in the calculation of the center of mass of a Compound https://github.com/CadQuery/cadquery/pull/1822
+* Local and non-manifold sewing in free function API https://github.com/CadQuery/cadquery/pull/1808
+* Added imprinting to free function API https://github.com/CadQuery/cadquery/pull/1781
+* Added remove method for assemblies https://github.com/CadQuery/cadquery/pull/1776
+* Improved DXF export performance by changing when the layout is aligned https://github.com/CadQuery/cadquery/pull/1773
+* Fixed copyWorkplane so that it returns a full copy of the tagged workplane https://github.com/CadQuery/cadquery/pull/1770
+* Changed OCP to be the conda-forge version for conda https://github.com/CadQuery/cadquery/pull/1769
+* Pickling support https://github.com/CadQuery/cadquery/pull/1762
+* Added EZDXF version pins https://github.com/CadQuery/cadquery/pull/1746
+* Documentation updates https://github.com/CadQuery/cadquery/pull/1749, https://github.com/CadQuery/cadquery/pull/1792, https://github.com/CadQuery/cadquery/pull/1861, https://github.com/CadQuery/cadquery/pull/1871
+
+## Experimental
+* Non-blocking show functionality using trame and VTK https://github.com/CadQuery/cadquery/pull/1786
+
 2.5.2
 -----
 

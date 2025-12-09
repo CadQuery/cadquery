@@ -35,14 +35,15 @@ from .occ_impl.exporters.assembly import (
     exportGLTF,
     STEPExportModeLiterals,
 )
-from .occ_impl.importers.assembly import importStep as _importStep
+from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate, BiDict
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
+ImportLiterals = Literal["STEP", "XML", "XBF"]
+ExportLiterals = Literal["STEP", "XML", "XBF", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
@@ -226,7 +227,9 @@ class Assembly(object):
             # enforce unique names
             name = kwargs["name"] if kwargs.get("name") else arg.name
             if name in self.objects:
-                raise ValueError("Unique name is required")
+                raise ValueError(
+                    f"Unique name is required. {name} is already in the assembly"
+                )
 
             subassy = arg._copy()
 
@@ -527,38 +530,9 @@ class Assembly(object):
         :type ascii: bool
         """
 
-        # Make sure the export mode setting is correct
-        if mode not in get_args(STEPExportModeLiterals):
-            raise ValueError(f"Unknown assembly export mode {mode} for STEP")
-
-        if exportType is None:
-            t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
-                exportType = cast(ExportLiterals, t)
-            else:
-                raise ValueError("Unknown extension, specify export type explicitly")
-
-        if exportType == "STEP":
-            exportAssembly(self, path, mode, **kwargs)
-        elif exportType == "XML":
-            exportCAF(self, path)
-        elif exportType == "VRML":
-            exportVRML(self, path, tolerance, angularTolerance)
-        elif exportType == "GLTF" or exportType == "GLB":
-            exportGLTF(self, path, None, tolerance, angularTolerance)
-        elif exportType == "VTKJS":
-            exportVTKJS(self, path)
-        elif exportType == "STL":
-            # Handle the ascii setting for STL export
-            export_ascii = False
-            if "ascii" in kwargs:
-                export_ascii = bool(kwargs.get("ascii"))
-
-            self.toCompound().exportStl(path, tolerance, angularTolerance, export_ascii)
-        else:
-            raise ValueError(f"Unknown format: {exportType}")
-
-        return self
+        return self.export(
+            path, exportType, mode, tolerance, angularTolerance, **kwargs
+        )
 
     def export(
         self,
@@ -589,7 +563,7 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
+            if t in ("STEP", "XML", "XBF", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
@@ -598,6 +572,8 @@ class Assembly(object):
             exportAssembly(self, path, mode, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
+        elif exportType == "XBF":
+            exportCAF(self, path, binary=True)
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF" or exportType == "GLB":
@@ -621,22 +597,35 @@ class Assembly(object):
         """
         Reads an assembly from a STEP file.
 
-        :param path: Path and filename for writing.
+        :param path: Path and filename for reading.
         :return: An Assembly object.
         """
 
-        assy = cls()
-        _importStep(assy, path)
-
-        return assy
+        return cls.load(path, importType="STEP")
 
     @classmethod
-    def load(cls, path: str) -> Self:
+    def load(cls, path: str, importType: Optional[ImportLiterals] = None,) -> Self:
         """
-        Alias of importStep for now.
+        Load step, xbf or xml.
         """
 
-        return cls.importStep(path)
+        if importType is None:
+            t = path.split(".")[-1].upper()
+            if t in ("STEP", "XML", "XBF"):
+                importType = cast(ImportLiterals, t)
+            else:
+                raise ValueError("Unknown extension, specify export type explicitly")
+
+        assy = cls()
+
+        if importType == "STEP":
+            _importStep(assy, path)
+        elif importType == "XML":
+            importXml(assy, path)
+        elif importType == "XBF":
+            importXbf(assy, path)
+
+        return assy
 
     @property
     def shapes(self) -> List[Shape]:
@@ -816,7 +805,7 @@ class Assembly(object):
         return (
             list(self.__dict__)
             + list(ch.name for ch in self.children)
-            + list(self._subshape_names.inverse.keys())
+            + list(self._subshape_names.inv.keys())
         )
 
     def __getstate__(self):

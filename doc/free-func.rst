@@ -417,6 +417,35 @@ to work with higher level objects like wires.
     result = base.trim(w)
 
 
+Note that trimming of periodic faces requires manual seam construction and an additional sewing
+step to ensure correctness.
+
+
+.. cadquery::
+
+    from cadquery.func import circle, extrude, spline, edgeOn, segment, wire, shell
+    from math import pi
+
+    # base
+    r = 5
+    h = 5
+
+    f = extrude(circle(r), (0, 0, -h))
+
+    # trimming edges
+    spl = spline([(0, h), (pi, h / 2.5), (2 * pi, h)], tgts=[(0.1, 0), (0.1, 0)])
+    top = edgeOn(f, spl)
+    bot = edgeOn(f, segment((2 * pi, 0), (0, 0)))
+    side1 = edgeOn(f, segment((0, 0), (0, h)))
+    side2 = edgeOn(f, segment((2 * pi, h), (2 * pi, 0)))
+
+    # trimming wire
+    trim_wire = wire(top, side1, bot, side2)
+
+    # trim and sew
+    result = shell(f.trim(trim_wire))
+
+
 Finally, it is also possible to map complete faces.
 
 
