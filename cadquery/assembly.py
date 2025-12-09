@@ -17,7 +17,7 @@ from uuid import uuid1 as uuid
 from warnings import warn
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound, isSubshape
+from .occ_impl.shapes import Shape, Compound, isSubshape, compound
 from .occ_impl.geom import Location
 from .occ_impl.assembly import Color
 from .occ_impl.solver import (
@@ -35,19 +35,20 @@ from .occ_impl.exporters.assembly import (
     exportGLTF,
     STEPExportModeLiterals,
 )
-from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
+from .occ_impl.importers.assembly import importStep as _importStep
 
 from .selectors import _expression_grammar as _selector_grammar
-from .utils import deprecate
+from .utils import deprecate, BiDict
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-ImportLiterals = Literal["STEP", "XML", "XBF"]
-ExportLiterals = Literal["STEP", "XML", "XBF", "GLTF", "VTKJS", "VRML", "STL"]
+ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
 # entity selector grammar definition
+
+
 def _define_grammar():
 
     from pyparsing import (
@@ -98,9 +99,9 @@ class Assembly(object):
     constraints: List[Constraint]
 
     # Allows metadata to be stored for exports
-    _subshape_names: dict[Shape, str]
-    _subshape_colors: dict[Shape, Color]
-    _subshape_layers: dict[Shape, str]
+    _subshape_names: BiDict[Shape, str]
+    _subshape_colors: BiDict[Shape, Color]
+    _subshape_layers: BiDict[Shape, str]
 
     _solve_result: Optional[Dict[str, Any]]
 
@@ -147,9 +148,9 @@ class Assembly(object):
 
         self._solve_result = None
 
-        self._subshape_names = {}
-        self._subshape_colors = {}
-        self._subshape_layers = {}
+        self._subshape_names = BiDict()
+        self._subshape_colors = BiDict()
+        self._subshape_layers = BiDict()
 
     def _copy(self) -> "Assembly":
         """
@@ -158,9 +159,9 @@ class Assembly(object):
 
         rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
 
-        rv._subshape_colors = dict(self._subshape_colors)
-        rv._subshape_names = dict(self._subshape_names)
-        rv._subshape_layers = dict(self._subshape_layers)
+        rv._subshape_colors = BiDict(self._subshape_colors)
+        rv._subshape_names = BiDict(self._subshape_names)
+        rv._subshape_layers = BiDict(self._subshape_layers)
 
         for ch in self.children:
             ch_copy = ch._copy()
@@ -225,9 +226,7 @@ class Assembly(object):
             # enforce unique names
             name = kwargs["name"] if kwargs.get("name") else arg.name
             if name in self.objects:
-                raise ValueError(
-                    f"Unique name is required. {name} is already in the assembly"
-                )
+                raise ValueError("Unique name is required")
 
             subassy = arg._copy()
 
@@ -528,9 +527,38 @@ class Assembly(object):
         :type ascii: bool
         """
 
-        return self.export(
-            path, exportType, mode, tolerance, angularTolerance, **kwargs
-        )
+        # Make sure the export mode setting is correct
+        if mode not in get_args(STEPExportModeLiterals):
+            raise ValueError(f"Unknown assembly export mode {mode} for STEP")
+
+        if exportType is None:
+            t = path.split(".")[-1].upper()
+            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
+                exportType = cast(ExportLiterals, t)
+            else:
+                raise ValueError("Unknown extension, specify export type explicitly")
+
+        if exportType == "STEP":
+            exportAssembly(self, path, mode, **kwargs)
+        elif exportType == "XML":
+            exportCAF(self, path)
+        elif exportType == "VRML":
+            exportVRML(self, path, tolerance, angularTolerance)
+        elif exportType == "GLTF" or exportType == "GLB":
+            exportGLTF(self, path, None, tolerance, angularTolerance)
+        elif exportType == "VTKJS":
+            exportVTKJS(self, path)
+        elif exportType == "STL":
+            # Handle the ascii setting for STL export
+            export_ascii = False
+            if "ascii" in kwargs:
+                export_ascii = bool(kwargs.get("ascii"))
+
+            self.toCompound().exportStl(path, tolerance, angularTolerance, export_ascii)
+        else:
+            raise ValueError(f"Unknown format: {exportType}")
+
+        return self
 
     def export(
         self,
@@ -561,7 +589,7 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "XBF", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
+            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
@@ -570,8 +598,6 @@ class Assembly(object):
             exportAssembly(self, path, mode, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
-        elif exportType == "XBF":
-            exportCAF(self, path, binary=True)
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF" or exportType == "GLB":
@@ -595,35 +621,22 @@ class Assembly(object):
         """
         Reads an assembly from a STEP file.
 
-        :param path: Path and filename for reading.
+        :param path: Path and filename for writing.
         :return: An Assembly object.
         """
 
-        return cls.load(path, importType="STEP")
-
-    @classmethod
-    def load(cls, path: str, importType: Optional[ImportLiterals] = None,) -> Self:
-        """
-        Load step, xbf or xml.
-        """
-
-        if importType is None:
-            t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "XBF"):
-                importType = cast(ImportLiterals, t)
-            else:
-                raise ValueError("Unknown extension, specify export type explicitly")
-
         assy = cls()
-
-        if importType == "STEP":
-            _importStep(assy, path)
-        elif importType == "XML":
-            importXml(assy, path)
-        elif importType == "XBF":
-            importXbf(assy, path)
+        _importStep(assy, path)
 
         return assy
+
+    @classmethod
+    def load(cls, path: str) -> Self:
+        """
+        Alias of importStep for now.
+        """
+
+        return cls.importStep(path)
 
     @property
     def shapes(self) -> List[Shape]:
@@ -754,12 +767,22 @@ class Assembly(object):
 
         return self
 
-    def __getitem__(self, name: str) -> "Assembly":
+    def __getitem__(self, name: str) -> Union["Assembly", Shape]:
         """
         [] based access to children.
+
         """
 
-        return self.objects[name]
+        if name in self.objects:
+            return self.objects[name]
+        elif name[0] in self.objects:
+            rv = self.objects[name[0]]
+
+            if name[1] in rv._subshape_names.inv:
+                rv = compound(self._subshape_names.inv[name[1]])
+                return rv[0] if len(rv) == 1 else compound(rv)
+
+        raise KeyError
 
     def _ipython_key_completions_(self) -> List[str]:
         """
@@ -772,22 +795,29 @@ class Assembly(object):
 
         return name in self.objects
 
-    def __getattr__(self, name: str) -> "Assembly":
+    def __getattr__(self, name: str) -> Union["Assembly", Shape]:
         """
         . based access to children.
         """
 
         if name in self.objects:
             return self.objects[name]
+        elif name in self._subshape_names.inv:
+            rv = self._subshape_names.inv[name]
+            return rv[0] if len(rv) == 1 else compound(rv)
 
-        raise AttributeError
+        raise AttributeError(f"{name} is not an attribute of {self}")
 
     def __dir__(self):
         """
         Modified __dir__ for autocompletion.
         """
 
-        return list(self.__dict__) + list(ch.name for ch in self.children)
+        return (
+            list(self.__dict__)
+            + list(ch.name for ch in self.children)
+            + list(self._subshape_names.inverse.keys())
+        )
 
     def __getstate__(self):
         """

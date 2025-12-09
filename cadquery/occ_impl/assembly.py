@@ -52,6 +52,7 @@ from .geom import Location
 from .shapes import Shape, Solid, Compound
 from .exporters.vtk import toString
 from ..cq import Workplane
+from ..utils import BiDict
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -210,15 +211,15 @@ class AssemblyProtocol(Protocol):
         ...
 
     @property
-    def _subshape_names(self) -> Dict[Shape, str]:
+    def _subshape_names(self) -> BiDict[Shape, str]:
         ...
 
     @property
-    def _subshape_colors(self) -> Dict[Shape, Color]:
+    def _subshape_colors(self) -> BiDict[Shape, Color]:
         ...
 
     @property
-    def _subshape_layers(self) -> Dict[Shape, str]:
+    def _subshape_layers(self) -> BiDict[Shape, str]:
         ...
 
     @overload
@@ -276,7 +277,7 @@ class AssemblyProtocol(Protocol):
     ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
         ...
 
-    def __getitem__(self, name: str) -> Self:
+    def __getitem__(self, name: str) -> Self | Shape:
         ...
 
     def __contains__(self, name: str) -> bool:
@@ -413,7 +414,6 @@ def toCAF(
         for child in el.children:
             _toCAF(child, subassy)
 
-        # final rv construction
         if ancestor and el.children:
             tool.AddComponent(ancestor, subassy, el.loc.wrapped)
             rv = subassy
