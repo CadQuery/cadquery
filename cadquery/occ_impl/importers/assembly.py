@@ -326,7 +326,7 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
         assy.objects.pop(assy.name)
         assy.name = str(name_attr.Get().ToExtString())
         assy.objects[assy.name] = assy
- 
+
         if cq_color:
             assy.color = cq_color
 
