@@ -266,50 +266,6 @@ class AssemblyProtocol(Protocol):
     ) -> Self:
         ...
 
-    @overload
-    def add(
-        self,
-        obj: Self,
-        loc: Optional[Location] = None,
-        name: Optional[str] = None,
-        color: Optional[Color] = None,
-    ) -> Self:
-        ...
-
-    @overload
-    def add(
-        self,
-        obj: AssemblyObjects,
-        loc: Optional[Location] = None,
-        name: Optional[str] = None,
-        color: Optional[Color] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Self:
-        ...
-
-    def add(
-        self,
-        obj: Union[Self, AssemblyObjects],
-        loc: Optional[Location] = None,
-        name: Optional[str] = None,
-        color: Optional[Color] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        **kwargs: Any,
-    ) -> Self:
-        """
-        Add a subassembly to the current assembly.
-        """
-        ...
-
-    def addSubshape(
-        self,
-        s: Shape,
-        name: Optional[str] = None,
-        color: Optional[Color] = None,
-        layer: Optional[str] = None,
-    ) -> Self:
-        ...
-
     def traverse(self) -> Iterable[Tuple[str, "AssemblyProtocol"]]:
         ...
 

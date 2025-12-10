@@ -253,7 +253,7 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                         parent.add(tmp)
 
                         # change the current assy to handle subshape data
-                        current = parent[comp_name]
+                        current = cast(AssemblyProtocol, parent[comp_name])
 
                     # iterate over subshape and handle names, layers and colors
                     subshape_labels = TDF_LabelSequence()
@@ -326,7 +326,7 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
         assy.objects.pop(assy.name)
         assy.name = str(name_attr.Get().ToExtString())
         assy.objects[assy.name] = assy
- 
+
         if cq_color:
             assy.color = cq_color
 
