@@ -17,7 +17,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box, cone, plane
+from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -406,6 +406,10 @@ def subshape_assy():
         color=cq.Color("blue"),
         layer="cylinder_bottom_wire_layer",
     )
+
+    # Add two subshapes with the same name
+    assy["cyl_1"].addSubshape(cyl_1.faces(">Z").val(), name="2_faces")
+    assy["cyl_1"].addSubshape(cyl_1.faces("<Z").val(), name="2_faces")
 
     return assy
 
@@ -2328,6 +2332,20 @@ def test_special_methods(subshape_assy):
 
     with pytest.raises(AttributeError):
         subshape_assy.cube_123456
+
+
+def test_subshape_access(subshape_assy):
+    """
+    Smoke-test subshape access.
+    """
+
+    assert "cube_1_top_face" in subshape_assy.cube_1.__dir__()
+    assert "cube_1_top_face" in subshape_assy.cube_1._ipython_key_completions_()
+    assert "cube_1_top_face" in subshape_assy.cube_1
+
+    assert isinstance(subshape_assy.cube_1.cube_1_top_face, Face)
+    assert isinstance(subshape_assy.cube_1["cube_1_top_face"], Face)
+    assert isinstance(subshape_assy.cyl_1["2_faces"], Compound)
 
 
 def test_shallow_assy():
