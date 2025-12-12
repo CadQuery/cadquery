@@ -36,6 +36,7 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
 from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB, Quantity_NameOfColor
 from OCP.TopAbs import TopAbs_ShapeEnum
+from OCP.Graphic3d import Graphic3d_NameOfMaterial
 
 
 @pytest.fixture(scope="function")
@@ -1525,6 +1526,55 @@ def test_colors_assy1(assy_fixture, request, tmpdir, kind):
     assy_i = assy.load(stepfile)
 
     check_assy(assy, assy_i)
+
+
+def test_materials():
+    # Test a default material not attached to an assembly
+    mat_0 = cq.Material()
+    assert mat_0.name == "Default"
+
+    # Simple objects to be added to the assembly with the material
+    wp_1 = cq.Workplane().box(10, 10, 10)
+    wp_2 = cq.Workplane().box(5, 5, 5)
+    wp_3 = cq.Workplane().box(2.5, 2.5, 2.5)
+
+    # Add the object to the assembly with the material
+    assy = cq.Assembly()
+
+    # Test with a default material
+    mat_1 = cq.Material()
+    assy.add(wp_1, material=mat_1)
+    assert assy.children[0].material.name == "Default"
+    assert (
+        assy.children[0].material.description
+        == "Default material with properties similar to low carbon steel"
+    )
+    assert assy.children[0].material.density == 7.85
+    assert assy.children[0].material.densityUnit == "g/cm^3"
+
+    # Test with a user-defined material when passing properties in constructor
+    mat_2 = cq.Material(
+        "test", description="Test material", density=1.0, densityUnit="lb/in^3"
+    )
+    assy.add(wp_2, material=mat_2)
+    assert assy.children[1].material.name == "test"
+    assert assy.children[1].material.description == "Test material"
+    assert assy.children[1].material.density == 1.0
+    assert assy.children[1].material.densityUnit == "lb/in^3"
+
+    # The visualization material is left for later expansion
+    assert assy.children[1].material.wrapped_vis.IsEmpty()
+
+    # Test the ability to convert a material to a tuple
+    assert mat_2.toTuple() == ("test", "Test material", 1.0, "lb/in^3")
+
+    # Test the ability to has a material
+    assert mat_2.__hash__() == hash(("test", "Test material", 1.0, "lb/in^3"))
+
+    # Test the equality operator with material
+    assert mat_2 == cq.Material(
+        "test", description="Test material", density=1.0, densityUnit="lb/in^3"
+    )
 
 
 @pytest.mark.parametrize(
