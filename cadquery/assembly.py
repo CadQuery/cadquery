@@ -15,6 +15,7 @@ from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
 from warnings import warn
+from itertools import chain
 
 from .cq import Workplane
 from .occ_impl.shapes import Shape, Compound, isSubshape, compound
@@ -775,11 +776,11 @@ class Assembly(object):
         IPython autocompletion helper.
         """
 
-        return list(self.objects.keys())
+        return list(chain(self.objects.keys(), self._subshape_names.inv.keys()))
 
     def __contains__(self, name: str) -> bool:
 
-        return name in self.objects
+        return name in self.objects or name in self._subshape_names.inv
 
     def __getattr__(self, name: str) -> Union["Assembly", Shape]:
         """
