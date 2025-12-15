@@ -2458,8 +2458,12 @@ def test_assembly_material_meshing():
     cube_1 = cq.Workplane().box(10, 10, 10)
     cube_2 = cq.Workplane().box(5, 5, 5)
     assy = cq.Assembly()
-    assy.add(cube_1, name="cube_1", material="copper")
+    assy.add(cube_1, name="cube_1", color=cq.Color(0.722, 0.451, 0.2, 1.0), material="copper")
     assy.add(cube_2, name="cube_2", material="steel", loc=cq.Location(0, 0, 5))
+
+    # Add two other objects to increase the test coverage
+    assy.add(cq.Workplane().box(5, 5, 5).val(), loc=cq.Location(0, 0, -5))
+    assy.add(cq.Workplane().rect(5, 5).val())
 
     # Mesh the assembly without imprinting
     mesh = cq.occ_impl.assembly.toMesh(assy, do_imprint=False)
