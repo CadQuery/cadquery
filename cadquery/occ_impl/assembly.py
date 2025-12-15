@@ -921,12 +921,23 @@ def toMesh(
     imprinted_solids_with_orginal_ids = None
     solid_colors = []
     solid_locs = []
+    solid_materials = []
 
     # Imprinted assemblies end up being compounds, whereas you have to step through each of the
     # parts in an assembly and extract the solids.
     if do_imprint:
         # Imprint the assembly and process it as a compound
         (imprinted_assembly, imprinted_solids_with_orginal_ids,) = imprint(assy)
+
+        # Collect the materials
+        for imp_solid, solid_id in imprinted_solids_with_orginal_ids.items():
+            # Track down the original assembly object so that we can retrieve materials, if present
+            short_id = solid_id[0].split("/")[-1] if "/" in solid_id[0] else solid_id[0]
+            subassy = assy.objects[short_id]
+
+            # Save the assembly material associated with this solid
+            if subassy.material:
+                solid_materials.append(subassy.material.name)
 
         # Extract the solids from the imprinted assembly because we should not mesh the compound
         for imprinted_solid in imprinted_assembly.Solids():
@@ -966,6 +977,10 @@ def toMesh(
 
             # Keep track of the location of each of the solids
             solid_locs.append(child.loc)
+
+            # Keep track of the materials
+            if child.material:
+                solid_materials.append(child.material.name)
 
     # Solid and face IDs need to be unique unless they are a shared face
     solid_idx = 1  # We start at 1 to mimic gmsh
@@ -1069,6 +1084,7 @@ def toMesh(
         "vertices": vertices,
         "solid_face_triangle_vertex_map": solid_face_triangle,
         "solid_colors": solid_colors,
+        "solid_materials": solid_materials,
         "imprinted_assembly": imprinted_assembly,
         "imprinted_solids_with_orginal_ids": imprinted_solids_with_orginal_ids,
     }

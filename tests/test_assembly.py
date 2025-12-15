@@ -2447,3 +2447,26 @@ def test_basic_imprinted_assembly_meshing(simple_assy):
 
     # Make sure that each of the solids has the correct number of faces
     assert len(mesh["solid_face_triangle_vertex_map"][1]) == 7
+
+
+def test_assembly_material_meshing():
+    """
+    Makes sure that assembly materials make it into the mesh data structure.
+    """
+
+    # Build a basic assembly with two cubes of different materials
+    cube_1 = cq.Workplane().box(10, 10, 10)
+    cube_2 = cq.Workplane().box(5, 5, 5)
+    assy = cq.Assembly()
+    assy.add(cube_1, name="cube_1", material="copper")
+    assy.add(cube_2, name="cube_2", material="steel", loc=cq.Location(0, 0, 5))
+
+    # Mesh the assembly without imprinting
+    mesh = cq.occ_impl.assembly.toMesh(assy, do_imprint=False)
+    imprinted_mesh = cq.occ_impl.assembly.toMesh(assy, do_imprint=True)
+
+    # Make sure that each mode of meshing has the material in the correct place
+    assert mesh["solid_materials"][0] == "copper"
+    assert mesh["solid_materials"][1] == "steel"
+    assert imprinted_mesh["solid_materials"][0] == "copper"
+    assert imprinted_mesh["solid_materials"][1] == "steel"
