@@ -289,6 +289,7 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
     ):
         ...
 
@@ -318,6 +319,14 @@ class AssemblyProtocol(Protocol):
 
     @color.setter
     def color(self, value: Optional[Color]) -> None:
+        ...
+
+    @property
+    def material(self) -> Optional[Material]:
+        ...
+
+    @material.setter
+    def material(self, value: Optional[Material]) -> None:
         ...
 
     @property
