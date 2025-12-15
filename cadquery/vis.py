@@ -529,6 +529,8 @@ def show(
     camera.Zoom(zoom)
     if clipping_range:
         camera.SetClippingRange(*clipping_range)
+    else:
+        renderer.ResetCameraClippingRange()
 
     # initialize and set size
     inter.Initialize()
