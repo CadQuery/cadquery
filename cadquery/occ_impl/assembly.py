@@ -422,6 +422,18 @@ def setColor(l: TDF_Label, color: Color, tool):
     tool.SetColor(l, color.wrapped, XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
 
+def setMaterial(l: TDF_Label, material: Material, tool):
+
+    tool.SetMaterial(
+        l,
+        TCollection_HAsciiString(material.name),
+        TCollection_HAsciiString(material.description),
+        material.density,
+        TCollection_HAsciiString("MassDensity"),
+        TCollection_HAsciiString(material.densityUnit),
+    )
+
+
 def toCAF(
     assy: AssemblyProtocol,
     coloredSTEP: bool = False,
@@ -447,6 +459,7 @@ def toCAF(
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
     ltool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
+    mtool = XCAFDoc_DocumentTool.MaterialTool_s(doc.Main())
 
     # used to store labels with unique part-color combinations
     unique_objs: Dict[Tuple[Color | None, AssemblyObjects], TDF_Label] = {}
@@ -462,6 +475,9 @@ def toCAF(
 
         # define the current color
         current_color = el.color if el.color else None
+
+        # define the current material
+        current_material = el.material if el.material else None
 
         # add a leaf with the actual part if needed
         if el.obj:
@@ -489,6 +505,10 @@ def toCAF(
                 # handle colors when exporting to STEP
                 if coloredSTEP and current_color:
                     setColor(lab, current_color, ctool)
+
+                # Handle materials when exporting to STEP
+                if current_material:
+                    setMaterial(lab, current_material, mtool)
 
             # handle subshape names/colors/layers
             subshape_colors = el._subshape_colors

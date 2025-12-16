@@ -878,6 +878,25 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assert success
 
 
+def test_step_export_with_materials(tmp_path_factory):
+    materials_assy = cq.Assembly()
+    materials_assy.add(cq.Workplane().box(10, 10, 10), name="cube_1", material=cq.Material(name="copper"))
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    materials_path = os.path.join(tmpdir, "materials.step")
+    # nested_options_path = os.path.join(tmpdir, "nested_options.step")
+
+    exportAssembly(materials_assy, materials_path)
+
+    # Read the contents as a step file as a string so we can check the outputs
+    with open(materials_path, "r") as f:
+        step_contents = f.read()
+
+        # Make sure that the face name strings were applied in ADVACED_FACE entries
+        assert "copper" in step_contents
+
+
 def test_assembly_step_import(tmp_path_factory, subshape_assy):
     """
     Test if the STEP import works correctly for an assembly with subshape data attached.
