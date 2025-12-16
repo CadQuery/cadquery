@@ -880,7 +880,11 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
 
 def test_step_export_with_materials(tmp_path_factory):
     materials_assy = cq.Assembly()
-    materials_assy.add(cq.Workplane().box(10, 10, 10), name="cube_1", material=cq.Material(name="copper"))
+    materials_assy.add(
+        cq.Workplane().box(10, 10, 10),
+        name="cube_1",
+        material=cq.Material(name="copper"),
+    )
 
     # Use a temporary directory
     tmpdir = tmp_path_factory.mktemp("out")
