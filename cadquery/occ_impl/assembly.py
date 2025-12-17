@@ -1023,7 +1023,9 @@ def toMesh(
             loc = TopLoc_Location()
 
             # Perform the tessellation
-            BRepMesh_IncrementalMesh(face.wrapped, tolerance, False, angular_tolerance, parallel)
+            BRepMesh_IncrementalMesh(
+                face.wrapped, tolerance, False, angular_tolerance, parallel
+            )
             face_mesh = BRep_Tool.Triangulation_s(face.wrapped, loc)
 
             # If this is not an imprinted assembly, override the location of the triangulation
