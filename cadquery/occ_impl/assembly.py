@@ -13,6 +13,7 @@ from typing import (
 from typing_extensions import Protocol, Self
 from math import degrees, radians
 
+from OCP import GCPnts, BRepAdaptor
 from OCP.TCollection import TCollection_HAsciiString
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
@@ -35,11 +36,14 @@ from OCP.Quantity import (
     Quantity_TOC_sRGB,
     Quantity_TOC_RGB,
 )
+from OCP.BRep import BRep_Tool
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.TopTools import TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
 from OCP.TopoDS import TopoDS_Shape
 from OCP.gp import gp_EulerSequence
+from OCP.TopAbs import TopAbs_REVERSED
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -52,7 +56,7 @@ from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
 from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_LINE, VTK_VERTEX
 
 from .geom import Location
-from .shapes import Shape, Solid, Compound
+from .shapes import Shape, Solid, Compound, Shell
 from .exporters.vtk import toString
 from ..cq import Workplane
 from ..utils import BiDict
@@ -285,6 +289,7 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
     ):
         ...
 
@@ -314,6 +319,14 @@ class AssemblyProtocol(Protocol):
 
     @color.setter
     def color(self, value: Optional[Color]) -> None:
+        ...
+
+    @property
+    def material(self) -> Optional[Material]:
+        ...
+
+    @material.setter
+    def material(self, value: Optional[Material]) -> None:
         ...
 
     @property
@@ -887,3 +900,200 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
         origins[s] = ids if ids else (id_map[s],)
 
     return res, origins
+
+
+def toMesh(
+    assy: AssemblyProtocol,
+    do_imprint: bool = True,
+    tolerance: float = 0.1,
+    angular_tolerance: float = 0.1,
+    scale_factor: float = 1.0,
+    parallel: bool = True,
+):
+    """
+    Converts an assembly to a custom mesh format defined by the CadQuery team.
+
+    :param do_imprint: Whether or not the assembly should be imprinted
+    :param tolerance: Tessellation tolerance for mesh generation
+    :param angular_tolerance: Angular tolerance for tessellation
+    :param parallel: If True, OCCT will use parallel processing to mesh the assembly. Default is True.
+    """
+
+    # To keep track of the vertices and triangles in the mesh
+    vertices: list[tuple[float, float, float]] = []
+    vertex_map: dict[tuple[float, float, float], int] = {}
+    solids: List[Solid | Compound | Shell] = []
+    solid_face_triangle = {}
+    imprinted_assembly = None
+    imprinted_solids_with_orginal_ids = None
+    solid_colors = []
+    solid_locs = []
+    solid_materials = []
+
+    # Imprinted assemblies end up being compounds, whereas you have to step through each of the
+    # parts in an assembly and extract the solids.
+    if do_imprint:
+        # Imprint the assembly and process it as a compound
+        (imprinted_assembly, imprinted_solids_with_orginal_ids,) = imprint(assy)
+
+        # Collect the materials
+        for imp_solid, solid_id in imprinted_solids_with_orginal_ids.items():
+            # Track down the original assembly object so that we can retrieve materials, if present
+            short_id = solid_id[0].split("/")[-1] if "/" in solid_id[0] else solid_id[0]
+            subassy = assy.objects[short_id]
+
+            # Save the assembly material associated with this solid
+            if subassy.material:
+                solid_materials.append(subassy.material.name)
+
+        # Extract the solids from the imprinted assembly because we should not mesh the compound
+        for imprinted_solid in imprinted_assembly.Solids():
+            solids.append(imprinted_solid)
+
+        # Keep track of the colors and location of each of the solids
+        solid_colors.append((0.5, 0.5, 0.5, 1.0))
+        solid_locs.append(Location())
+    else:
+        # Step through every child in the assembly and save their solids
+        for child in assy.children:
+            # Make sure we end up with a base shape
+            obj = child.obj
+
+            if isinstance(obj, Workplane):
+                val = obj.val()
+                if (
+                    isinstance(val, Solid)
+                    or isinstance(val, Compound)
+                    or isinstance(val, Shell)
+                ):
+                    solids.append(val)
+            elif (
+                isinstance(obj, Solid)
+                or isinstance(obj, Compound)
+                or isinstance(obj, Shell)
+            ):
+                solids.append(obj)
+            else:
+                continue
+
+            # Use the color set for the assembly component, or use a default color
+            if child.color:
+                solid_colors.append(child.color.toTuple())
+            else:
+                solid_colors.append((0.5, 0.5, 0.5, 1.0))
+
+            # Keep track of the location of each of the solids
+            solid_locs.append(child.loc)
+
+            # Keep track of the materials
+            if child.material:
+                solid_materials.append(child.material.name)
+
+    # Solid and face IDs need to be unique unless they are a shared face
+    solid_idx = 1  # We start at 1 to mimic gmsh
+    face_idx = 1  # We start at id of 1 to mimic gmsh
+
+    # Step through all of the collected solids and their respective faces to get the vertices
+    for solid in solids:
+        # Reset this each time so that we get the correct number of faces per solid
+        face_triangles = {}
+
+        # Order the faces in order of area, largest first
+        sorted_faces = []
+        face_areas = []
+        for face in solid.Faces():
+            area = face.Area()
+            sorted_faces.append((face, area))
+            face_areas.append(area)
+
+        # Sort by area (largest first)
+        sorted_faces.sort(key=lambda x: x[1], reverse=False)
+
+        # Extract just the sorted faces if you need them separately
+        sorted_face_list = [face_info[0] for face_info in sorted_faces]
+
+        # Walk through all the faces
+        for face in sorted_face_list:
+            # Figure out if the face has a reversed orientation so we can handle the triangles accordingly
+            is_reversed = False
+            if face.wrapped.Orientation() == TopAbs_REVERSED:
+                is_reversed = True
+
+            # Location information of the face to place the vertices and edges correctly
+            loc = TopLoc_Location()
+
+            # Perform the tessellation
+            BRepMesh_IncrementalMesh(
+                face.wrapped, tolerance, False, angular_tolerance, parallel
+            )
+            face_mesh = BRep_Tool.Triangulation_s(face.wrapped, loc)
+
+            # If this is not an imprinted assembly, override the location of the triangulation
+            if not do_imprint:
+                loc = solid_locs[solid_idx - 1].wrapped
+
+            # Save the transformation so that we can place vertices in the correct locations later
+            Trsf = loc.Transformation()
+
+            # Pre-process all vertices from the face mesh for better performance
+            face_vertices = {}  # Map from face mesh node index to global vertex index
+            for node_idx in range(1, face_mesh.NbNodes() + 1):
+                node = face_mesh.Node(node_idx)
+                v_trsf = node.Transformed(Trsf)
+                vertex_coords = (
+                    v_trsf.X() * scale_factor,
+                    v_trsf.Y() * scale_factor,
+                    v_trsf.Z() * scale_factor,
+                )
+
+                # Use dictionary for O(1) lookup instead of O(n) list operations
+                if vertex_coords in vertex_map:
+                    face_vertices[node_idx] = vertex_map[vertex_coords]
+                else:
+                    global_vertex_idx = len(vertices)
+                    vertices.append(vertex_coords)
+                    vertex_map[vertex_coords] = global_vertex_idx
+                    face_vertices[node_idx] = global_vertex_idx
+
+            # Step through the triangles of the face
+            cur_triangles = []
+            for i in range(1, face_mesh.NbTriangles() + 1):
+                # Get the current triangle and its index vertices
+                cur_tri = face_mesh.Triangle(i)
+                idx_1, idx_2, idx_3 = cur_tri.Get()
+
+                # Look up pre-processed vertex indices - O(1) operation
+                if is_reversed:
+                    triangle_vertex_indices = [
+                        face_vertices[idx_1],
+                        face_vertices[idx_3],
+                        face_vertices[idx_2],
+                    ]
+                else:
+                    triangle_vertex_indices = [
+                        face_vertices[idx_1],
+                        face_vertices[idx_2],
+                        face_vertices[idx_3],
+                    ]
+
+                cur_triangles.append(triangle_vertex_indices)
+
+            # Save this triangle for the current face
+            face_triangles[face_idx] = cur_triangles
+
+            # Move to the next face
+            face_idx += 1
+
+        solid_face_triangle[solid_idx] = face_triangles
+
+        # Move to the next solid
+        solid_idx += 1
+
+    return {
+        "vertices": vertices,
+        "solid_face_triangle_vertex_map": solid_face_triangle,
+        "solid_colors": solid_colors,
+        "solid_materials": solid_materials,
+        "imprinted_assembly": imprinted_assembly,
+        "imprinted_solids_with_orginal_ids": imprinted_solids_with_orginal_ids,
+    }
