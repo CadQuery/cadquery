@@ -908,8 +908,7 @@ def toMesh(
     tolerance: float = 0.1,
     angular_tolerance: float = 0.1,
     scale_factor: float = 1.0,
-    include_brep_edges: bool = False,
-    include_brep_vertices: bool = False,
+    parallel: bool = True,
 ):
     """
     Converts an assembly to a custom mesh format defined by the CadQuery team.
@@ -917,8 +916,7 @@ def toMesh(
     :param do_imprint: Whether or not the assembly should be imprinted
     :param tolerance: Tessellation tolerance for mesh generation
     :param angular_tolerance: Angular tolerance for tessellation
-    :param include_brep_edges: Whether to include BRep edge segments
-    :param include_brep_vertices: Whether to include BRep vertices
+    :param parallel: If True, OCCT will use parallel processing to mesh the assembly. Default is True.
     """
 
     # To keep track of the vertices and triangles in the mesh
@@ -1025,7 +1023,7 @@ def toMesh(
             loc = TopLoc_Location()
 
             # Perform the tessellation
-            BRepMesh_IncrementalMesh(face.wrapped, tolerance, False, angular_tolerance)
+            BRepMesh_IncrementalMesh(face.wrapped, tolerance, False, angular_tolerance, parallel)
             face_mesh = BRep_Tool.Triangulation_s(face.wrapped, loc)
 
             # If this is not an imprinted assembly, override the location of the triangulation
