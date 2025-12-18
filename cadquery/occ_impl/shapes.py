@@ -3486,7 +3486,9 @@ class Face(Shape):
 
             e1, e2 = edges
 
-            chamfer_builder.AddChamfer(e1.wrapped, e2.wrapped, d, d)
+            chamfer_builder.AddChamfer(
+                tcast(TopoDS_Edge, e1.wrapped), tcast(TopoDS_Edge, e2.wrapped), d, d
+            )
 
         chamfer_builder.Build()
 
