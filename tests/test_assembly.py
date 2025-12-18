@@ -905,7 +905,7 @@ def test_step_roundtrip_with_materials(tmp_path_factory):
 
     # Make sure that the material was re-imported
     assert test_assy.children[0].material is not None
-    assert test_assy.children[0].material.name =="copper"
+    assert test_assy.children[0].material.name == "copper"
 
 
 def test_assembly_step_import(tmp_path_factory, subshape_assy):

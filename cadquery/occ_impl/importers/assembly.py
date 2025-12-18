@@ -256,7 +256,13 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                     _ = _process_label(ref_label, sub_assy)
 
                     # Add the subassy
-                    parent.add(sub_assy, name=ref_name, loc=cq_loc, color=color)
+                    parent.add(
+                        sub_assy,
+                        name=ref_name,
+                        loc=cq_loc,
+                        color=color,
+                        material=material,
+                    )
 
                 elif shape_tool.IsSimpleShape_s(ref_label):
                     # Find the name of this referenced part
@@ -285,7 +291,11 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                         current = parent
                     else:
                         tmp = assy.__class__(
-                            cq_shape, loc=cq_loc, name=comp_name, color=color, material=material
+                            cq_shape,
+                            loc=cq_loc,
+                            name=comp_name,
+                            color=color,
+                            material=material,
                         )
                         parent.add(tmp)
 
