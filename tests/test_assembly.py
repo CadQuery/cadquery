@@ -878,7 +878,7 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assert success
 
 
-def test_step_export_with_materials(tmp_path_factory):
+def test_step_roundtrip_with_materials(tmp_path_factory):
     materials_assy = cq.Assembly()
     materials_assy.add(
         cq.Workplane().box(10, 10, 10),
@@ -899,6 +899,13 @@ def test_step_export_with_materials(tmp_path_factory):
 
         # Make sure that the face name strings were applied in ADVACED_FACE entries
         assert "copper" in step_contents
+
+    # Import the STEP file back in as an assembly
+    test_assy = cq.Assembly.importStep(materials_path)
+
+    # Make sure that the material was re-imported
+    assert test_assy.children[0].material is not None
+    assert test_assy.children[0].material.name =="copper"
 
 
 def test_assembly_step_import(tmp_path_factory, subshape_assy):
