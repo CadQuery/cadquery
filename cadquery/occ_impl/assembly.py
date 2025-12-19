@@ -364,6 +364,7 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
     ) -> Self:
         ...
 
