@@ -43,7 +43,7 @@ def _get_name(label: TDF_Label) -> str:
     return rv
 
 
-def _get_material(label: TDF_Label) -> Material:
+def _get_material(label: TDF_Label) -> Material | None:
     """
     Helper to get the material for a given label.
     """
@@ -258,8 +258,8 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                     # Add the subassy
                     parent.add(
                         sub_assy,
-                        name=ref_name,
                         loc=cq_loc,
+                        name=ref_name,
                         color=color,
                         material=material,
                     )
