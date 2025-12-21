@@ -356,14 +356,14 @@ shape_properties_LUT = {
 inverse_shape_LUT = {v: k for k, v in shape_LUT.items()}
 
 downcast_LUT = {
-    ta.TopAbs_VERTEX: TopoDS.Vertex_s,
-    ta.TopAbs_EDGE: TopoDS.Edge_s,
-    ta.TopAbs_WIRE: TopoDS.Wire_s,
-    ta.TopAbs_FACE: TopoDS.Face_s,
-    ta.TopAbs_SHELL: TopoDS.Shell_s,
-    ta.TopAbs_SOLID: TopoDS.Solid_s,
-    ta.TopAbs_COMPSOLID: TopoDS.CompSolid_s,
-    ta.TopAbs_COMPOUND: TopoDS.Compound_s,
+    ta.TopAbs_VERTEX: TopoDS.Vertex,
+    ta.TopAbs_EDGE: TopoDS.Edge,
+    ta.TopAbs_WIRE: TopoDS.Wire,
+    ta.TopAbs_FACE: TopoDS.Face,
+    ta.TopAbs_SHELL: TopoDS.Shell,
+    ta.TopAbs_SOLID: TopoDS.Solid,
+    ta.TopAbs_COMPSOLID: TopoDS.CompSolid,
+    ta.TopAbs_COMPOUND: TopoDS.Compound,
 }
 
 geom_LUT = {
@@ -894,7 +894,7 @@ class Shape(object):
         return [
             Edge(i)
             for i in self._entities("Edge")
-            if not BRep_Tool.Degenerated_s(TopoDS.Edge_s(i))
+            if not BRep_Tool.Degenerated_s(TopoDS.Edge(i))
         ]
 
     def Compounds(self) -> List["Compound"]:
@@ -2899,8 +2899,8 @@ class Wire(Shape, Mixin1D):
         """Attempt to stitch wires"""
 
         wire_builder = BRepBuilderAPI_MakeWire()
-        wire_builder.Add(TopoDS.Wire_s(self.wrapped))
-        wire_builder.Add(TopoDS.Wire_s(other.wrapped))
+        wire_builder.Add(TopoDS.Wire(self.wrapped))
+        wire_builder.Add(TopoDS.Wire(other.wrapped))
         wire_builder.Build()
 
         return self.__class__(wire_builder.Wire())
@@ -3395,7 +3395,7 @@ class Face(Shape):
         # fix outer wire
         sf_s = ShapeFix_Shape(outerWire.wrapped)
         sf_s.Perform()
-        wo = TopoDS.Wire_s(sf_s.Shape())
+        wo = TopoDS.Wire(sf_s.Shape())
 
         face_builder = BRepBuilderAPI_MakeFace(wo, True)
 
@@ -3487,7 +3487,7 @@ class Face(Shape):
             e1, e2 = edges
 
             chamfer_builder.AddChamfer(
-                TopoDS.Edge_s(e1.wrapped), TopoDS.Edge_s(e2.wrapped), d, d
+                tcast(TopoDS_Edge, e1.wrapped), tcast(TopoDS_Edge, e2.wrapped), d, d
             )
 
         chamfer_builder.Build()
@@ -3609,7 +3609,7 @@ class Face(Shape):
         bldr = BRepBuilderAPI_MakeFace(self._geomAdaptor(), outer.wrapped)
 
         for w in inner:
-            bldr.Add(TopoDS.Wire_s(w.wrapped))
+            bldr.Add(TopoDS.Wire(w.wrapped))
 
         return self.__class__(bldr.Face()).fix()
 
@@ -3676,9 +3676,7 @@ class Face(Shape):
         bldr = BRepBuilderAPI_MakeFace(self.wrapped)
 
         for w in inner:
-            bldr.Add(
-                TopoDS.Wire_s(w.wrapped if isinstance(w, Wire) else wire(w).wrapped)
-            )
+            bldr.Add(TopoDS.Wire(w.wrapped if isinstance(w, Wire) else wire(w).wrapped))
 
         return self.__class__(bldr.Face()).fix()
 
@@ -3760,7 +3758,7 @@ class Mixin3D(object):
         for e in nativeEdges:
             face = edge_face_map.FindFromKey(e).First()
             chamfer_builder.Add(
-                d1, d2, e, TopoDS.Face_s(face)
+                d1, d2, e, TopoDS.Face(face)
             )  # NB: edge_face_map return a generic TopoDS_Shape
         return self.__class__(chamfer_builder.Shape())
 
@@ -6127,7 +6125,7 @@ def cap(
 
     for e in _get_edges(s):
         f = _get_one(e.ancestors(ctx, "Face"), "Face")
-        builder.Add(e.wrapped, f.wrapped, GeomAbs_G2, True)
+        builder.Add(e.wrapped, f.wrapped, GeomAbs_Shape.GeomAbs_G1, True)
 
     for c in constraints:
         if isinstance(c, Shape):
