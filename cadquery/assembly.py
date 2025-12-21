@@ -15,11 +15,12 @@ from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
 from warnings import warn
+from itertools import chain
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound, isSubshape
+from .occ_impl.shapes import Shape, Compound, isSubshape, compound
 from .occ_impl.geom import Location
-from .occ_impl.assembly import Color
+from .occ_impl.assembly import Color, Material
 from .occ_impl.solver import (
     ConstraintKind,
     ConstraintSolver,
@@ -38,7 +39,7 @@ from .occ_impl.exporters.assembly import (
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
 from .selectors import _expression_grammar as _selector_grammar
-from .utils import deprecate
+from .utils import deprecate, BiDict
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -48,6 +49,8 @@ ExportLiterals = Literal["STEP", "XML", "XBF", "GLTF", "VTKJS", "VRML", "STL"]
 PATH_DELIM = "/"
 
 # entity selector grammar definition
+
+
 def _define_grammar():
 
     from pyparsing import (
@@ -82,12 +85,20 @@ def _define_grammar():
 _grammar = _define_grammar()
 
 
+def _ensure_material(material):
+    """
+    Convert string to Material if needed.
+    """
+    return Material(material) if isinstance(material, str) else material
+
+
 class Assembly(object):
     """Nested assembly of Workplane and Shape objects defining their relative positions."""
 
     loc: Location
     name: str
     color: Optional[Color]
+    material: Optional[Material]
     metadata: Dict[str, Any]
 
     obj: AssemblyObjects
@@ -98,9 +109,9 @@ class Assembly(object):
     constraints: List[Constraint]
 
     # Allows metadata to be stored for exports
-    _subshape_names: dict[Shape, str]
-    _subshape_colors: dict[Shape, Color]
-    _subshape_layers: dict[Shape, str]
+    _subshape_names: BiDict[Shape, str]
+    _subshape_colors: BiDict[Shape, Color]
+    _subshape_layers: BiDict[Shape, str]
 
     _solve_result: Optional[Dict[str, Any]]
 
@@ -110,6 +121,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -119,6 +131,7 @@ class Assembly(object):
         :param loc: location of the root object (default: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, resulting in an UUID being generated)
         :param color: color of the added object (default: None)
+        :param material: material (for visual and/or physical properties) of the added object (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         :return: An Assembly object.
 
@@ -138,6 +151,7 @@ class Assembly(object):
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
         self.color = color if color else None
+        self.material = material if material else None
         self.metadata = metadata if metadata else {}
         self.parent = None
 
@@ -147,20 +161,22 @@ class Assembly(object):
 
         self._solve_result = None
 
-        self._subshape_names = {}
-        self._subshape_colors = {}
-        self._subshape_layers = {}
+        self._subshape_names = BiDict()
+        self._subshape_colors = BiDict()
+        self._subshape_layers = BiDict()
 
     def _copy(self) -> "Assembly":
         """
         Make a deep copy of an assembly
         """
 
-        rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
+        rv = self.__class__(
+            self.obj, self.loc, self.name, self.color, self.material, self.metadata
+        )
 
-        rv._subshape_colors = dict(self._subshape_colors)
-        rv._subshape_names = dict(self._subshape_names)
-        rv._subshape_layers = dict(self._subshape_layers)
+        rv._subshape_colors = BiDict(self._subshape_colors)
+        rv._subshape_names = BiDict(self._subshape_names)
+        rv._subshape_layers = BiDict(self._subshape_layers)
 
         for ch in self.children:
             ch_copy = ch._copy()
@@ -200,6 +216,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Self:
         """
@@ -211,6 +228,8 @@ class Assembly(object):
         :param name: unique name of the root object (default: None, resulting in an UUID being
           generated)
         :param color: color of the added object (default: None)
+        :param material: material (for visual and/or physical properties) of the added object
+          (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         """
         ...
@@ -234,15 +253,23 @@ class Assembly(object):
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.material = _ensure_material(
+                kwargs["material"] if kwargs.get("material") else arg.material
+            )
             subassy.metadata = (
                 kwargs["metadata"] if kwargs.get("metadata") else arg.metadata
             )
+
             subassy.parent = self
 
             self.children.append(subassy)
             self.objects.update(subassy._flatten())
 
         else:
+            # Convert the material string to a Material object, if needed
+            if "material" in kwargs:
+                kwargs["material"] = _ensure_material(kwargs["material"])
+
             assy = self.__class__(arg, **kwargs)
             assy.parent = self
 
@@ -754,40 +781,54 @@ class Assembly(object):
 
         return self
 
-    def __getitem__(self, name: str) -> "Assembly":
+    def __getitem__(self, name: str) -> Union["Assembly", Shape]:
         """
         [] based access to children.
+
         """
 
-        return self.objects[name]
+        if name in self.objects:
+            return self.objects[name]
+        elif name in self._subshape_names.inv:
+            rv = self._subshape_names.inv[name]
+            return rv[0] if len(rv) == 1 else compound(rv)
+
+        raise KeyError
 
     def _ipython_key_completions_(self) -> List[str]:
         """
         IPython autocompletion helper.
         """
 
-        return list(self.objects.keys())
+        return list(chain(self.objects.keys(), self._subshape_names.inv.keys()))
 
     def __contains__(self, name: str) -> bool:
 
-        return name in self.objects
+        return name in self.objects or name in self._subshape_names.inv
 
-    def __getattr__(self, name: str) -> "Assembly":
+    def __getattr__(self, name: str) -> Union["Assembly", Shape]:
         """
         . based access to children.
         """
 
         if name in self.objects:
             return self.objects[name]
+        elif name in self._subshape_names.inv:
+            rv = self._subshape_names.inv[name]
+            return rv[0] if len(rv) == 1 else compound(rv)
 
-        raise AttributeError
+        raise AttributeError(f"{name} is not an attribute of {self}")
 
     def __dir__(self):
         """
         Modified __dir__ for autocompletion.
         """
 
-        return list(self.__dict__) + list(ch.name for ch in self.children)
+        return (
+            list(self.__dict__)
+            + list(ch.name for ch in self.children)
+            + list(self._subshape_names.inv.keys())
+        )
 
     def __getstate__(self):
         """
