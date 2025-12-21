@@ -36,12 +36,13 @@ sys.path.insert(0, os.path.abspath("./ext"))
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
+    #    "sphinx.ext.autodoc",
+    #    "sphinx.ext.autosummary",
+    "sphinx_autodoc_multimethod",  # custom extension; includes autodoc and autosummary
     "sphinx.ext.viewcode",
-    "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "cadquery.cq_directive",
     "sphinx.ext.mathjax",
-    "sphinx_autodoc_multimethod",
 ]
 
 autodoc_typehints = "both"
