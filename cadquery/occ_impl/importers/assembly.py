@@ -59,18 +59,18 @@ def _get_material(label: TDF_Label) -> Material | None:
 
         material_attr = XCAFDoc_Material()
 
-        if material_label.FindAttribute(XCAFDoc_Material.GetID_s(), material_attr):
-            name = material_attr.GetName().ToCString()
-            description = material_attr.GetDescription().ToCString()
-            density = material_attr.GetDensity()
-            density_unit = material_attr.GetDensValType().ToCString()
+        material_label.FindAttribute(XCAFDoc_Material.GetID_s(), material_attr)
+        name = material_attr.GetName().ToCString()
+        description = material_attr.GetDescription().ToCString()
+        density = material_attr.GetDensity()
+        density_unit = material_attr.GetDensValType().ToCString()
 
-            rv = Material(
-                name=name,
-                description=description,
-                density=density,
-                densityUnit=density_unit,
-            )
+        rv = Material(
+            name=name,
+            description=description,
+            density=density,
+            densityUnit=density_unit,
+        )
 
     return rv
 
