@@ -878,7 +878,13 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assert success
 
 
-def test_step_roundtrip_with_materials(tmp_path_factory):
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+def test_step_roundtrip_with_materials(kind, tmp_path_factory):
+    """
+    Tests to make sure that once materials have been exported to a file format
+    such as STEP, the materials can be imported again.
+    """
+
     materials_assy = cq.Assembly()
     materials_assy.add(
         cq.Workplane().box(10, 10, 10),
@@ -888,8 +894,7 @@ def test_step_roundtrip_with_materials(tmp_path_factory):
 
     # Use a temporary directory
     tmpdir = tmp_path_factory.mktemp("out")
-    materials_path = os.path.join(tmpdir, "materials.step")
-    # nested_options_path = os.path.join(tmpdir, "nested_options.step")
+    materials_path = os.path.join(tmpdir, f"roundtrip_materials.{kind}")
 
     exportAssembly(materials_assy, materials_path)
 
