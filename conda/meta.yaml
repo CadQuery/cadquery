@@ -16,8 +16,7 @@ requirements:
     - setuptools
   run:
     - python >=3.10
-    - ocp=7.8.1
-    - vtk=*=qt*
+    - ocp=7.9.3.*
     - pyparsing >=2.1.9
     - ezdxf>=1.3.0
     - ipython
