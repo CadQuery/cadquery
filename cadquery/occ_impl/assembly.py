@@ -83,7 +83,7 @@ class Material(object):
 
         # Default values in case the user did not set any others
         aName = "Default"
-        aDescription = "Default material with properties similar to low carbon steel"
+        aDescription = ""
         aDensity = 7.85
         aDensityName = "Mass density"
         aDensityTypeName = "g/cm^3"

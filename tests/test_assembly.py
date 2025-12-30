@@ -1580,10 +1580,7 @@ def test_materials():
     mat_1 = cq.Material()
     assy.add(wp_1, material=mat_1)
     assert assy.children[0].material.name == "Default"
-    assert (
-        assy.children[0].material.description
-        == "Default material with properties similar to low carbon steel"
-    )
+    assert assy.children[0].material.description == ""
     assert assy.children[0].material.density == 7.85
     assert assy.children[0].material.densityUnit == "g/cm^3"
 
@@ -1603,7 +1600,7 @@ def test_materials():
     # Test the ability to convert a material to a tuple
     assert mat_2.toTuple() == ("test", "Test material", 1.0, "lb/in^3")
 
-    # Test the ability to has a material
+    # Test the ability to have a material
     assert mat_2.__hash__() == hash(("test", "Test material", 1.0, "lb/in^3"))
 
     # Test the equality operator with material
