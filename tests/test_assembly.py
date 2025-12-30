@@ -902,7 +902,7 @@ def test_step_roundtrip_with_materials(kind, tmp_path_factory):
     with open(materials_path, "r") as f:
         step_contents = f.read()
 
-        # Make sure that the face name strings were applied in ADVACED_FACE entries
+        # Make sure that the face name string is present in the exported STEP contents
         assert "copper" in step_contents
 
     # Import the STEP file back in as an assembly
