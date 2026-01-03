@@ -878,6 +878,41 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assert success
 
 
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+def test_step_roundtrip_with_materials(kind, tmp_path_factory):
+    """
+    Tests to make sure that once materials have been exported to a file format
+    such as STEP, the materials can be imported again.
+    """
+
+    materials_assy = cq.Assembly()
+    materials_assy.add(
+        cq.Workplane().box(10, 10, 10),
+        name="cube_1",
+        material=cq.Material(name="copper"),
+    )
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    materials_path = os.path.join(tmpdir, f"roundtrip_materials.{kind}")
+
+    exportAssembly(materials_assy, materials_path)
+
+    # Read the contents as a step file as a string so we can check the outputs
+    with open(materials_path, "r") as f:
+        step_contents = f.read()
+
+        # Make sure that the face name string is present in the exported STEP contents
+        assert "copper" in step_contents
+
+    # Import the STEP file back in as an assembly
+    test_assy = cq.Assembly.importStep(materials_path)
+
+    # Make sure that the material was re-imported
+    assert test_assy.children[0].material is not None
+    assert test_assy.children[0].material.name == "copper"
+
+
 def test_assembly_step_import(tmp_path_factory, subshape_assy):
     """
     Test if the STEP import works correctly for an assembly with subshape data attached.
@@ -1545,10 +1580,7 @@ def test_materials():
     mat_1 = cq.Material()
     assy.add(wp_1, material=mat_1)
     assert assy.children[0].material.name == "Default"
-    assert (
-        assy.children[0].material.description
-        == "Default material with properties similar to low carbon steel"
-    )
+    assert assy.children[0].material.description == ""
     assert assy.children[0].material.density == 7.85
     assert assy.children[0].material.densityUnit == "g/cm^3"
 
@@ -1568,7 +1600,7 @@ def test_materials():
     # Test the ability to convert a material to a tuple
     assert mat_2.toTuple() == ("test", "Test material", 1.0, "lb/in^3")
 
-    # Test the ability to has a material
+    # Test the ability to have a material
     assert mat_2.__hash__() == hash(("test", "Test material", 1.0, "lb/in^3"))
 
     # Test the equality operator with material

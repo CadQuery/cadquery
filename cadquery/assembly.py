@@ -195,6 +195,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
     ) -> Self:
         """
         Add a subassembly to the current assembly.
