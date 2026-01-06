@@ -37,15 +37,20 @@ the container.  An error will occur if the script does not return an object usin
 
 This CQGI compliant script produces a cube with a circle on top, and displays a workplane as well as an intermediate circle as debug output::
 
-    base_cube = cq.Workplane('XY').rect(1.0,1.0).extrude(1.0)
+    base_cube = cq.Workplane("XY").rect(1.0, 1.0).extrude(1.0)
     top_of_cube_plane = base_cube.faces(">Z").workplane()
-    debug(top_of_cube_plane, { 'color': 'yellow', } )
-    debug(top_of_cube_plane.center, { 'color' : 'blue' } )
+    debug(
+        top_of_cube_plane,
+        {
+            "color": "yellow",
+        },
+    )
+    debug(top_of_cube_plane.center, {"color": "blue"})
 
-    circle=top_of_cube_plane.circle(0.5)
-    debug(circle, { 'color': 'red' } )
+    circle = top_of_cube_plane.circle(0.5)
+    debug(circle, {"color": "red"})
 
-    show_object( circle.extrude(1.0) )
+    show_object(circle.extrude(1.0))
 
 Note that importing cadquery is not required. 
 At the end of this script, one object will be displayed, in addition to a workplane, a point, and a circle
@@ -73,7 +78,6 @@ user parameters available. This is useful if the execution environment would lik
 model parameters.  Typically, after collecting new values, the environment will supply them in the build() method.
 
 This code will return a dictionary of parameter values in the model text SCRIPT::
-     
      parameters = cqgi.parse(SCRIPT).metadata.parameters
 
 The dictionary you get back is a map where key is the parameter name, and value is an InputParameter object, 
@@ -100,7 +104,9 @@ with new values::
     from cadquery import cqgi
 
     user_script = ...
-    build_result = cqgi.parse(user_script).build(build_parameters={ 'param': 2 }, build_options={} )
+    build_result = cqgi.parse(user_script).build(
+        build_parameters={"param": 2}, build_options={}
+    )
 
 If a parameter called 'param' is defined in the model, it will be assigned the value 2 before the script runs.
 An error will occur if a value is provided that is not defined in the model, or if the value provided cannot
@@ -122,7 +128,8 @@ For example, in the following script::
 
       h = 1.0
       w = 2.0
-      foo = 'bar'
+      foo = "bar"
+
 
       def some_function():
           x = 1
@@ -133,7 +140,7 @@ You can list the variables defined in the model by using the return value of the
 
        model = cqgi.parse(user_script)
 
-       //a dictionary of InputParameter objects
+       # a dictionary of InputParameter objects
        parameters = model.metadata.parameters
 
 The key of the dictionary is a string , and the value is a :py:class:`cadquery.cqgi.InputParameter` object
@@ -150,13 +157,13 @@ The below Python script demonstrates how to open, process, and export an STL fil
       # Load CQGI
       import cadquery.cqgi as cqgi
       import cadquery as cq
-      
+
       # load the cadquery script
       model = cqgi.parse(open("example.py").read())
-      
+
       # run the script and store the result (from the show_object call in the script)
       build_result = model.build()
-      
+
       # test to ensure the process worked.
       if build_result.success:
           # loop through all the shapes returned and export to STL

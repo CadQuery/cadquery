@@ -2,22 +2,20 @@ import tempfile
 import os
 import io as StringIO
 
-from typing import IO, Optional, Union, cast
+from typing import IO, Optional, Union, cast, Dict, Any, Iterable
 from typing_extensions import Literal
 
 from OCP.VrmlAPI import VrmlAPI
 
-from ...cq import Workplane
 from ...utils import deprecate
-from ..shapes import Shape
+from ..shapes import Shape, compound
 
 from .svg import getSVG
 from .json import JsonMesh
 from .amf import AmfWriter
 from .threemf import ThreeMFWriter
-from .dxf import exportDXF
+from .dxf import exportDXF, DxfDocument
 from .vtk import exportVTP
-from .utils import toCompound
 
 
 class ExportTypes:
@@ -30,26 +28,28 @@ class ExportTypes:
     VRML = "VRML"
     VTP = "VTP"
     THREEMF = "3MF"
+    BREP = "BREP"
+    BIN = "BIN"
 
 
 ExportLiterals = Literal[
-    "STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP", "3MF"
+    "STL", "STEP", "AMF", "SVG", "TJS", "DXF", "VRML", "VTP", "3MF", "BREP", "BIN"
 ]
 
 
 def export(
-    w: Union[Shape, Workplane],
+    w: Union[Shape, Iterable[Shape]],
     fname: str,
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
-    opt=None,
+    opt: Optional[Dict[str, Any]] = None,
 ):
 
     """
     Export Workplane or Shape to file. Multiple entities are converted to compound.
 
-    :param w:  Shape or Workplane to be exported.
+    :param w:  Shape or Iterable[Shape] (e.g. Workplane) to be exported.
     :param fname: output filename.
     :param exportType: the exportFormat to use. If None will be inferred from the extension. Default: None.
     :param tolerance: the deflection tolerance, in model units. Default 0.1.
@@ -60,10 +60,13 @@ def export(
     shape: Shape
     f: IO
 
-    if isinstance(w, Workplane):
-        shape = toCompound(w)
-    else:
+    if not opt:
+        opt = {}
+
+    if isinstance(w, Shape):
         shape = w
+    else:
+        shape = compound(*w)
 
     if exportType is None:
         t = fname.split(".")[-1].upper()
@@ -98,21 +101,15 @@ def export(
             aw.writeAmf(f)
 
     elif exportType == ExportTypes.THREEMF:
-        tmfw = ThreeMFWriter(shape, tolerance, angularTolerance, **opt or {})
+        tmfw = ThreeMFWriter(shape, tolerance, angularTolerance, **opt)
         with open(fname, "wb") as f:
             tmfw.write3mf(f)
 
     elif exportType == ExportTypes.DXF:
-        if isinstance(w, Workplane):
-            exportDXF(w, fname)
-        else:
-            raise ValueError("Only Workplanes can be exported as DXF")
+        exportDXF(w, fname, **opt)
 
     elif exportType == ExportTypes.STEP:
-        if opt:
-            shape.exportStep(fname, **opt)
-        else:
-            shape.exportStep(fname)
+        shape.exportStep(fname, **opt)
 
     elif exportType == ExportTypes.STL:
         if opt:
@@ -129,6 +126,12 @@ def export(
     elif exportType == ExportTypes.VTP:
         exportVTP(shape, fname, tolerance, angularTolerance)
 
+    elif exportType == ExportTypes.BREP:
+        shape.exportBrep(fname)
+
+    elif exportType == ExportTypes.BIN:
+        shape.exportBin(fname)
+
     else:
         raise ValueError("Unknown export type")
 
@@ -142,7 +145,7 @@ def toString(shape, exportType, tolerance=0.1, angularTolerance=0.05):
 
 @deprecate()
 def exportShape(
-    w: Union[Shape, Workplane],
+    w: Union[Shape, Iterable[Shape]],
     exportType: ExportLiterals,
     fileLike: IO,
     tolerance: float = 0.1,
@@ -164,10 +167,10 @@ def exportShape(
         return shape.tessellate(tolerance, angularTolerance)
 
     shape: Shape
-    if isinstance(w, Workplane):
-        shape = toCompound(w)
-    else:
+    if isinstance(w, Shape):
         shape = w
+    else:
+        shape = compound(*w)
 
     if exportType == ExportTypes.TJS:
         tess = tessellate(shape, angularTolerance)

@@ -6,24 +6,28 @@ source:
   path: ..
 
 build:
-  string: {{ 'py'+environ.get('PYTHON_VERSION')}}
+  string: {{ GIT_DESCRIBE_TAG }}_{{ GIT_BUILD_STR }}
+  noarch: python
   script: python setup.py install --single-version-externally-managed --record=record.txt
 
 requirements:
   build:
-    - python {{ environ.get('PYTHON_VERSION') }}
+    - python >=3.10
     - setuptools
   run:
-    - python {{ environ.get('PYTHON_VERSION') }}
-    - ocp 7.7.*
+    - python >=3.10
+    - ocp=7.8.1
+    - vtk=*=qt*
     - pyparsing >=2.1.9
-    - ezdxf
+    - ezdxf>=1.3.0
     - ipython
     - typing_extensions
-    - nptyping 2.0.1
     - nlopt
-    - multimethod >=1.7,<2.0
+    - multimethod >=1.11,<2.0
     - casadi
+    - typish
+    - trame
+    - trame-vtk
 
 test:
   requires:

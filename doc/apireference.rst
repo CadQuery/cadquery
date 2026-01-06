@@ -1,7 +1,7 @@
 .. _apireference:
 
 ***********************
-CadQuery API Reference
+API Reference
 ***********************
 
 The CadQuery API is made up of 4 main objects:
@@ -180,7 +180,7 @@ Some 3D operations also require an active 2D workplane, but some do not.
 	Workplane.twistExtrude
 	Workplane.revolve
 	Workplane.text
-	
+
 
 3D operations that do NOT require a 2D workplane to be active:
 
@@ -206,6 +206,7 @@ File Management and Export
     importers.importStep
     importers.importDXF
     exporters.export
+    occ_impl.exporters.dxf.DxfDocument
 
 
 Iteration Methods
@@ -275,7 +276,7 @@ as a basis for further operations.
     StringSyntaxSelector
 
 .. _assembly:
-        
+
 Assemblies
 ----------
 

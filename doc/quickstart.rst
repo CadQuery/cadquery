@@ -1,21 +1,21 @@
 .. _quickstart:
 
 ***********************
-CadQuery QuickStart
+QuickStart
 ***********************
 
 .. currentmodule:: cadquery
 
 Want a quick glimpse of what CadQuery can do?  This quickstart will demonstrate the basics of CadQuery using a simple example
 
-Prerequisites: conda + CQ-editor running from an environment
-==============================================================
+Prerequisites: CadQuery and CQ-editor installation
+==================================================
 
-If you have not already done so, follow the :ref:`installation`, to install conda and CQ-editor.
+If you have not already done so, follow the :ref:`installation`, to install CadQuery and CQ-editor.
 
 After installation, run CQ-editor:
 
-..  image:: _static/quickstart/001.png
+.. image:: _static/quickstart/001.png
 
 Find the CadQuery code editor, on the left side.  You'll see that we start out with the script for a simple block.
 
@@ -24,7 +24,7 @@ What we'll accomplish
 
 We will build a fully parametric bearing pillow block in this quickstart.  Our finished object will look like this:
 
-..  image:: _static/quickstart/000.png
+.. image:: _static/quickstart/000.png
 
 **We would like our block to have these features:**
 
@@ -51,19 +51,19 @@ with place-holders for the dimensions. Paste this into the code editor:
 .. code-block:: python
    :linenos:
 
-    height = 60.0
-    width = 80.0
-    thickness = 10.0
+   height = 60.0
+   width = 80.0
+   thickness = 10.0
 
-    # make the base
-    result = cq.Workplane("XY").box(height, width, thickness)
+   # make the base
+   result = cq.Workplane("XY").box(height, width, thickness)
 
-    # Render the solid
-    show_object(result)
+   # Render the solid
+   show_object(result)
 
 Press the green Render button in the toolbar to run the script. You should see our base object.
 
-..  image:: _static/quickstart/002.png
+.. image:: _static/quickstart/002.png
 
 Nothing special, but its a start!
 
@@ -76,31 +76,35 @@ This modification will do the trick:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 4,8
+   :emphasize-lines: 4,10-12
 
-    height = 60.0
-    width = 80.0
-    thickness = 10.0
-    diameter = 22.0
+   height = 60.0
+   width = 80.0
+   thickness = 10.0
+   diameter = 22.0
 
-    # make the base
-    result = (cq.Workplane("XY").box(height, width, thickness)
-        .faces(">Z").workplane().hole(diameter)
-    )
+   # make the base
+   result = (
+       cq.Workplane("XY")
+       .box(height, width, thickness)
+       .faces(">Z")
+       .workplane()
+       .hole(diameter)
+   )
 
-    # Render the solid
-    show_object(result)
+   # Render the solid
+   show_object(result)
 
 Rebuild your model by clicking the Render button. Your block should look like this:
 
-..  image:: _static/quickstart/003.png
+.. image:: _static/quickstart/003.png
 
 
 The code is pretty compact, let's step through it.
 
 **Line 4** adds a new parameter, diameter, for the diameter of the hole
 
-**Line 8**, we're adding the hole.
+**Lines 10-12**, we're adding the hole.
 :py:meth:`cadquery.Workplane.faces` selects the top-most face in the Z direction, and then
 :py:meth:`cadquery.Workplane.workplane` begins a new workplane located on this face. The center of this workplane
 is located at the center of mass of the shape, which in this case is the center of the plate.
@@ -130,38 +134,46 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 5,10-13
+   :emphasize-lines: 5,14-18
 
-    height = 60.0
-    width = 80.0
-    thickness = 10.0
-    diameter = 22.0
-    padding = 12.0
+   height = 60.0
+   width = 80.0
+   thickness = 10.0
+   diameter = 22.0
+   padding = 12.0
 
-    # make the base
-    result = (cq.Workplane("XY")
-        .box(height, width, thickness)
-        .faces(">Z").workplane().hole(diameter)
-        .faces(">Z").workplane()
-        .rect(height - padding,width - padding,forConstruction=True)
-        .vertices()
-        .cboreHole(2.4, 4.4, 2.1)
-    )
-    # Render the solid
-    show_object(result)
+   # make the base
+   result = (
+       cq.Workplane("XY")
+       .box(height, width, thickness)
+       .faces(">Z")
+       .workplane()
+       .hole(diameter)
+       .faces(">Z")
+       .workplane()
+       .rect(height - padding, width - padding, forConstruction=True)
+       .vertices()
+       .cboreHole(2.4, 4.4, 2.1)
+   )
+   # Render the solid
+   show_object(result)
 
 
 After clicking the Render button to re-execute the model, you should see something like this:
 
-        ..  image:: _static/quickstart/004.png
+        .. image:: _static/quickstart/004.png
 
 
 There is quite a bit going on here, so let's break it down a bit.
 
 **Line 5** creates a new padding parameter that decides how far the holes are from the edges of the plate.
 
-**Line 10** selects the top-most face of the block, and creates a workplane on the top of that face, which we'll use to
+**Lines 14-15** selects the top-most face of the block, and creates a workplane on the top of that face, which we'll use to
 define the centers of the holes in the corners.
+
+**Line 16** draws a rectangle 12mm smaller than the overall length and width of the block, which we will use to
+locate the corner holes. We'll use the vertices ( corners ) of this rectangle to locate the holes. The rectangle's
+center is at the center of the workplane, which in this case coincides with the center of the bearing hole.
 
 There are a couple of things to note about this line:
 
@@ -171,16 +183,11 @@ There are a couple of things to note about this line:
     2. Unless you specify otherwise, a rectangle is drawn with its center on the current workplane center-- in
        this case, the center of the top face of the block. So this rectangle will be centered on the face.
 
-
-**Line 11** draws a rectangle 12mm smaller than the overall length and width of the block, which we will use to
-locate the corner holes. We'll use the vertices ( corners ) of this rectangle to locate the holes. The rectangle's
-center is at the center of the workplane, which in this case coincides with the center of the bearing hole.
-
-**Line 12** selects the vertices of the rectangle, which we will use for the centers of the holes.
+**Line 17** selects the vertices of the rectangle, which we will use for the centers of the holes.
 The :py:meth:`cadquery.Workplane.vertices` function selects the corners of the rectangle.
 
-**Line 13** uses the cboreHole function to draw the holes.
-The :py:meth:`cadquery.Workplane.cboreHole` function is a handy CadQuery function that makes a counterbored hole. 
+**Line 18** uses the cboreHole function to draw the holes.
+The :py:meth:`cadquery.Workplane.cboreHole` function is a handy CadQuery function that makes a counterbored hole.
 Like most other CadQuery functions, it operates on the values on the stack.  In this case, since we
 selected the four vertices before calling the function, the function operates on each of the four points--
 which results in a counterbore hole at each of the rectangle corners.
@@ -196,35 +203,41 @@ We can do that using the preset dictionaries in the parameter definition:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 13
+   :emphasize-lines: 19-20
 
-    height = 60.0
-    width = 80.0
-    thickness = 10.0
-    diameter = 22.0
-    padding = 12.0
+   height = 60.0
+   width = 80.0
+   thickness = 10.0
+   diameter = 22.0
+   padding = 12.0
 
-    # make the base
-    result = (cq.Workplane("XY")
-        .box(height, width, thickness)
-        .faces(">Z").workplane().hole(diameter)
-        .faces(">Z").workplane()
-        .rect(height - padding, width - padding, forConstruction=True)
-        .vertices().cboreHole(2.4, 4.4, 2.1)
-        .edges("|Z").fillet(2.0)
-    )
+   # make the base
+   result = (
+       cq.Workplane("XY")
+       .box(height, width, thickness)
+       .faces(">Z")
+       .workplane()
+       .hole(diameter)
+       .faces(">Z")
+       .workplane()
+       .rect(height - padding, width - padding, forConstruction=True)
+       .vertices()
+       .cboreHole(2.4, 4.4, 2.1)
+       .edges("|Z")
+       .fillet(2.0)
+   )
 
-    # Render the solid
-    show_object(result)
+   # Render the solid
+   show_object(result)
 
-**Line 13** fillets the edges using the   :py:meth:`cadquery.Workplane.fillet` method.
+**Line 19** To grab the right edges, the :py:meth:`cadquery.Workplane.edges` selects all of the
+edges that are parallel to the Z axis ("\|Z").
 
-To grab the right edges, the :py:meth:`cadquery.Workplane.edges` selects all of the
-edges that are parallel to the Z axis ("\|Z"),
+**Line 20** fillets the edges using the :py:meth:`cadquery.Workplane.fillet` method.
 
 The finished product looks like this:
 
-        ..  image:: _static/quickstart/005.png
+        .. image:: _static/quickstart/005.png
 
 Exporting
 =========
@@ -235,37 +248,43 @@ This can be easily accomplished using the :py:meth:`cadquery.exporters.export` f
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 13
+   :emphasize-lines: 27-29
 
-    height = 60.0
-    width = 80.0
-    thickness = 10.0
-    diameter = 22.0
-    padding = 12.0
+   height = 60.0
+   width = 80.0
+   thickness = 10.0
+   diameter = 22.0
+   padding = 12.0
 
-    # make the base
-    result = (cq.Workplane("XY")
-        .box(height, width, thickness)
-        .faces(">Z").workplane().hole(diameter)
-        .faces(">Z").workplane()
-        .rect(height - padding, width - padding, forConstruction=True)
-        .vertices().cboreHole(2.4, 4.4, 2.1)
-        .edges("|Z").fillet(2.0)
-    )
+   # make the base
+   result = (
+       cq.Workplane("XY")
+       .box(height, width, thickness)
+       .faces(">Z")
+       .workplane()
+       .hole(diameter)
+       .faces(">Z")
+       .workplane()
+       .rect(height - padding, width - padding, forConstruction=True)
+       .vertices()
+       .cboreHole(2.4, 4.4, 2.1)
+       .edges("|Z")
+       .fillet(2.0)
+   )
 
-    # Render the solid
-    show_object(result)
-    
-    # Export
-    cq.exporters.export(result,'result.stl')
-    cq.exporters.export(result.section(),'result.dxf')
-    cq.exporters.export(result,'result.step')
+   # Render the solid
+   show_object(result)
+
+   # Export
+   cq.exporters.export(result, "result.stl")
+   cq.exporters.export(result.section(), "result.dxf")
+   cq.exporters.export(result, "result.step")
 
 Done!
 ============
 
 You just made a parametric, model that can generate pretty much any bearing pillow block
-with < 20 lines of code.
+with <30 lines of code.
 
 Want to learn more?
 ====================

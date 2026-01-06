@@ -1,13 +1,26 @@
 from functools import reduce
-from typing import Union, Optional, List, Dict, Any, overload, Tuple, Iterator, cast
-from typing_extensions import Literal
+from typing import (
+    Union,
+    Optional,
+    List,
+    Dict,
+    Any,
+    overload,
+    Tuple,
+    Iterator,
+    cast,
+    get_args,
+)
+from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
+from warnings import warn
+from itertools import chain
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound
+from .occ_impl.shapes import Shape, Compound, isSubshape, compound
 from .occ_impl.geom import Location
-from .occ_impl.assembly import Color
+from .occ_impl.assembly import Color, Material
 from .occ_impl.solver import (
     ConstraintKind,
     ConstraintSolver,
@@ -21,17 +34,23 @@ from .occ_impl.exporters.assembly import (
     exportVTKJS,
     exportVRML,
     exportGLTF,
+    STEPExportModeLiterals,
 )
+from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
 from .selectors import _expression_grammar as _selector_grammar
+from .utils import deprecate, BiDict
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
-ExportLiterals = Literal["STEP", "XML", "GLTF", "VTKJS", "VRML", "STL"]
+ImportLiterals = Literal["STEP", "XML", "XBF"]
+ExportLiterals = Literal["STEP", "XML", "XBF", "GLTF", "VTKJS", "VRML", "STL"]
 
 PATH_DELIM = "/"
 
-# entity selector grammar definiiton
+# entity selector grammar definition
+
+
 def _define_grammar():
 
     from pyparsing import (
@@ -66,12 +85,20 @@ def _define_grammar():
 _grammar = _define_grammar()
 
 
+def _ensure_material(material):
+    """
+    Convert string to Material if needed.
+    """
+    return Material(material) if isinstance(material, str) else material
+
+
 class Assembly(object):
     """Nested assembly of Workplane and Shape objects defining their relative positions."""
 
     loc: Location
     name: str
     color: Optional[Color]
+    material: Optional[Material]
     metadata: Dict[str, Any]
 
     obj: AssemblyObjects
@@ -81,6 +108,11 @@ class Assembly(object):
     objects: Dict[str, "Assembly"]
     constraints: List[Constraint]
 
+    # Allows metadata to be stored for exports
+    _subshape_names: BiDict[Shape, str]
+    _subshape_colors: BiDict[Shape, Color]
+    _subshape_layers: BiDict[Shape, str]
+
     _solve_result: Optional[Dict[str, Any]]
 
     def __init__(
@@ -89,6 +121,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -98,6 +131,7 @@ class Assembly(object):
         :param loc: location of the root object (default: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, resulting in an UUID being generated)
         :param color: color of the added object (default: None)
+        :param material: material (for visual and/or physical properties) of the added object (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         :return: An Assembly object.
 
@@ -108,8 +142,8 @@ class Assembly(object):
 
         To create one constraint a root object::
 
-            b = Workplane().box(1,1,1)
-            assy = Assembly(b, Location(Vector(0,0,1)), name="root")
+            b = Workplane().box(1, 1, 1)
+            assy = Assembly(b, Location(Vector(0, 0, 1)), name="root")
 
         """
 
@@ -117,6 +151,7 @@ class Assembly(object):
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
         self.color = color if color else None
+        self.material = material if material else None
         self.metadata = metadata if metadata else {}
         self.parent = None
 
@@ -126,12 +161,22 @@ class Assembly(object):
 
         self._solve_result = None
 
+        self._subshape_names = BiDict()
+        self._subshape_colors = BiDict()
+        self._subshape_layers = BiDict()
+
     def _copy(self) -> "Assembly":
         """
         Make a deep copy of an assembly
         """
 
-        rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
+        rv = self.__class__(
+            self.obj, self.loc, self.name, self.color, self.material, self.metadata
+        )
+
+        rv._subshape_colors = BiDict(self._subshape_colors)
+        rv._subshape_names = BiDict(self._subshape_names)
+        rv._subshape_layers = BiDict(self._subshape_layers)
 
         for ch in self.children:
             ch_copy = ch._copy()
@@ -150,7 +195,8 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> "Assembly":
+        material: Optional[Union[Material, str]] = None,
+    ) -> Self:
         """
         Add a subassembly to the current assembly.
 
@@ -171,7 +217,9 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
-    ) -> "Assembly":
+        material: Optional[Union[Material, str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Self:
         """
         Add a subassembly to the current assembly with explicit location and name.
 
@@ -181,6 +229,9 @@ class Assembly(object):
         :param name: unique name of the root object (default: None, resulting in an UUID being
           generated)
         :param color: color of the added object (default: None)
+        :param material: material (for visual and/or physical properties) of the added object
+          (default: None)
+        :param metadata: a store for user-defined metadata (default: None)
         """
         ...
 
@@ -194,23 +245,71 @@ class Assembly(object):
             # enforce unique names
             name = kwargs["name"] if kwargs.get("name") else arg.name
             if name in self.objects:
-                raise ValueError("Unique name is required")
+                raise ValueError(
+                    f"Unique name is required. {name} is already in the assembly"
+                )
 
             subassy = arg._copy()
 
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.material = _ensure_material(
+                kwargs["material"] if kwargs.get("material") else arg.material
+            )
+            subassy.metadata = (
+                kwargs["metadata"] if kwargs.get("metadata") else arg.metadata
+            )
+
             subassy.parent = self
 
             self.children.append(subassy)
             self.objects.update(subassy._flatten())
 
         else:
+            # Convert the material string to a Material object, if needed
+            if "material" in kwargs:
+                kwargs["material"] = _ensure_material(kwargs["material"])
+
             assy = self.__class__(arg, **kwargs)
             assy.parent = self
 
             self.add(assy)
+
+        return self
+
+    def remove(self, name: str) -> "Assembly":
+        """
+        Remove a part/subassembly from the current assembly.
+
+        :param name: Name of the part/subassembly to be removed
+        :return: The modified assembly
+
+        *NOTE* This method can cause problems with deeply nested assemblies and does not remove
+        constraints associated with the removed part/subassembly.
+        """
+
+        # Make sure the part/subassembly is actually part of the assembly
+        if name not in self.objects:
+            raise ValueError(f"No object with name '{name}' found in the assembly")
+
+        # Get the part/assembly to be removed
+        to_remove = self.objects[name]
+
+        # Remove the part/assembly from the parent's children list
+        if to_remove.parent:
+            to_remove.parent.children.remove(to_remove)
+
+        # Remove the part/assembly from the assembly's object dictionary
+        del self.objects[name]
+
+        # Remove all descendants from the objects dictionary
+        for descendant_name in to_remove._flatten().keys():
+            if descendant_name in self.objects:
+                del self.objects[descendant_name]
+
+        # Update the parent reference
+        to_remove.parent = None
 
         return self
 
@@ -272,18 +371,19 @@ class Assembly(object):
                 obj = cast(Assembly, obj.parent)
                 name_out = obj.name
 
-            rv = reduce(lambda l1, l2: l1 * l2, locs)
+            # This must reduce in the order of (parent, ..., child)
+            rv = reduce(lambda l1, l2: l2 * l1, locs)
 
         return (rv, name_out)
 
     @overload
     def constrain(
         self, q1: str, q2: str, kind: ConstraintKind, param: Any = None
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     @overload
-    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> "Assembly":
+    def constrain(self, q1: str, kind: ConstraintKind, param: Any = None) -> Self:
         ...
 
     @overload
@@ -295,13 +395,13 @@ class Assembly(object):
         s2: Shape,
         kind: ConstraintKind,
         param: Any = None,
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     @overload
     def constrain(
         self, id1: str, s1: Shape, kind: ConstraintKind, param: Any = None,
-    ) -> "Assembly":
+    ) -> Self:
         ...
 
     def constrain(self, *args, param=None):
@@ -346,7 +446,7 @@ class Assembly(object):
 
         return self
 
-    def solve(self, verbosity: int = 0) -> "Assembly":
+    def solve(self, verbosity: int = 0) -> Self:
         """
         Solve the constraints.
         """
@@ -367,7 +467,7 @@ class Assembly(object):
                 ] not in locked:
                     locked.append(ents[name])
 
-        # Lock the first occuring entity if needed.
+        # Lock the first occurring entity if needed.
         if not locked:
             unary_objects = [
                 c.objects[0]
@@ -384,7 +484,7 @@ class Assembly(object):
                     locked.append(ents[b])
                     break
 
-        # Lock the first occuring entity if needed.
+        # Lock the first occurring entity if needed.
         if not locked:
             locked.append(0)
 
@@ -432,53 +532,126 @@ class Assembly(object):
 
         return self
 
+    @deprecate()
     def save(
         self,
         path: str,
         exportType: Optional[ExportLiterals] = None,
+        mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         **kwargs,
-    ) -> "Assembly":
+    ) -> Self:
         """
         Save assembly to a file.
 
         :param path: Path and filename for writing.
         :param exportType: export format (default: None, results in format being inferred form the path)
-        :param tolerance: the deflection tolerance, in model units. Only used for GLTF, VRML. Default 0.1.
-        :param angularTolerance: the angular tolerance, in radians. Only used for GLTF, VRML. Default 0.1.
-        :param **kwargs: Additional keyword arguments.  Only used for STEP.
+        :param mode: STEP only - See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
+        :param tolerance: the deflection tolerance, in model units. Only used for glTF, VRML. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Only used for glTF, VRML. Default 0.1.
+        :param \\**kwargs: Additional keyword arguments.  Only used for STEP, glTF and STL.
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
+        :param ascii: STL only - Sets whether or not STL export should be text or binary
+        :type ascii: bool
         """
+
+        return self.export(
+            path, exportType, mode, tolerance, angularTolerance, **kwargs
+        )
+
+    def export(
+        self,
+        path: str,
+        exportType: Optional[ExportLiterals] = None,
+        mode: STEPExportModeLiterals = "default",
+        tolerance: float = 0.1,
+        angularTolerance: float = 0.1,
+        **kwargs,
+    ) -> Self:
+        """
+        Save assembly to a file.
+
+        :param path: Path and filename for writing.
+        :param exportType: export format (default: None, results in format being inferred form the path)
+        :param mode: STEP only - See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
+        :param tolerance: the deflection tolerance, in model units. Only used for glTF, VRML. Default 0.1.
+        :param angularTolerance: the angular tolerance, in radians. Only used for glTF, VRML. Default 0.1.
+        :param \\**kwargs: Additional keyword arguments.  Only used for STEP, glTF and STL.
+            See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
+        :param ascii: STL only - Sets whether or not STL export should be text or binary
+        :type ascii: bool
+        """
+
+        # Make sure the export mode setting is correct
+        if mode not in get_args(STEPExportModeLiterals):
+            raise ValueError(f"Unknown assembly export mode {mode} for STEP")
 
         if exportType is None:
             t = path.split(".")[-1].upper()
-            if t in ("STEP", "XML", "VRML", "VTKJS", "GLTF", "STL"):
+            if t in ("STEP", "XML", "XBF", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path, **kwargs)
+            exportAssembly(self, path, mode, **kwargs)
         elif exportType == "XML":
             exportCAF(self, path)
+        elif exportType == "XBF":
+            exportCAF(self, path, binary=True)
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
-        elif exportType == "GLTF":
-            exportGLTF(self, path, True, tolerance, angularTolerance)
+        elif exportType == "GLTF" or exportType == "GLB":
+            exportGLTF(self, path, None, tolerance, angularTolerance)
         elif exportType == "VTKJS":
             exportVTKJS(self, path)
         elif exportType == "STL":
-            self.toCompound().exportStl(path, tolerance, angularTolerance)
+            # Handle the ascii setting for STL export
+            export_ascii = False
+            if "ascii" in kwargs:
+                export_ascii = bool(kwargs.get("ascii"))
+
+            self.toCompound().exportStl(path, tolerance, angularTolerance, export_ascii)
         else:
             raise ValueError(f"Unknown format: {exportType}")
 
         return self
 
     @classmethod
-    def load(cls, path: str) -> "Assembly":
+    def importStep(cls, path: str) -> Self:
+        """
+        Reads an assembly from a STEP file.
 
-        raise NotImplementedError
+        :param path: Path and filename for reading.
+        :return: An Assembly object.
+        """
+
+        return cls.load(path, importType="STEP")
+
+    @classmethod
+    def load(cls, path: str, importType: Optional[ImportLiterals] = None,) -> Self:
+        """
+        Load step, xbf or xml.
+        """
+
+        if importType is None:
+            t = path.split(".")[-1].upper()
+            if t in ("STEP", "XML", "XBF"):
+                importType = cast(ImportLiterals, t)
+            else:
+                raise ValueError("Unknown extension, specify export type explicitly")
+
+        assy = cls()
+
+        if importType == "STEP":
+            _importStep(assy, path)
+        elif importType == "XML":
+            importXml(assy, path)
+        elif importType == "XBF":
+            importXbf(assy, path)
+
+        return assy
 
     @property
     def shapes(self) -> List[Shape]:
@@ -520,6 +693,28 @@ class Assembly(object):
 
         return rv
 
+    def __iter__(
+        self,
+        loc: Optional[Location] = None,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+    ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
+        """
+        Assembly iterator yielding shapes, names, locations and colors.
+        """
+
+        name = f"{name}/{self.name}" if name else self.name
+        loc = loc * self.loc if loc else self.loc
+        color = self.color if self.color else color
+
+        if self.obj:
+            yield self.obj if isinstance(self.obj, Shape) else Compound.makeCompound(
+                s for s in self.obj.vals() if isinstance(s, Shape)
+            ), name, loc, color
+
+        for ch in self.children:
+            yield from ch.__iter__(loc, name, color)
+
     def toCompound(self) -> Compound:
         """
         Returns a Compound made from this Assembly (including all children) with the
@@ -539,3 +734,113 @@ class Assembly(object):
         from .occ_impl.jupyter_tools import display
 
         return display(self)._repr_javascript_()
+
+    def addSubshape(
+        self,
+        s: Shape,
+        name: Optional[str] = None,
+        color: Optional[Color] = None,
+        layer: Optional[str] = None,
+    ) -> "Assembly":
+        """
+        Handles name, color and layer metadata for subshapes.
+
+        :param s: The subshape to add metadata to.
+        :param name: The name to assign to the subshape.
+        :param color: The color to assign to the subshape.
+        :param layer: The layer to assign to the subshape.
+        :return: The modified assembly.
+        """
+
+        # check if the subshape belongs to the stored object
+        if any(isSubshape(s, obj) for obj in self.shapes):
+            assy = self
+        else:
+            warn(
+                "Current node does not contain any Shapes, searching in subnodes. In the future this will result in an error."
+            )
+
+            found = False
+            for ch in self.children:
+                if any(isSubshape(s, obj) for obj in ch.shapes):
+                    assy = ch
+                    found = True
+                    break
+
+            if not found:
+                raise ValueError(
+                    f"{s} is not a subshape of the current node or its children"
+                )
+
+        # Handle any metadata we were passed
+        if name:
+            assy._subshape_names[s] = name
+        if color:
+            assy._subshape_colors[s] = color
+        if layer:
+            assy._subshape_layers[s] = layer
+
+        return self
+
+    def __getitem__(self, name: str) -> Union["Assembly", Shape]:
+        """
+        [] based access to children.
+
+        """
+
+        if name in self.objects:
+            return self.objects[name]
+        elif name in self._subshape_names.inv:
+            rv = self._subshape_names.inv[name]
+            return rv[0] if len(rv) == 1 else compound(rv)
+
+        raise KeyError
+
+    def _ipython_key_completions_(self) -> List[str]:
+        """
+        IPython autocompletion helper.
+        """
+
+        return list(chain(self.objects.keys(), self._subshape_names.inv.keys()))
+
+    def __contains__(self, name: str) -> bool:
+
+        return name in self.objects or name in self._subshape_names.inv
+
+    def __getattr__(self, name: str) -> Union["Assembly", Shape]:
+        """
+        . based access to children.
+        """
+
+        if name in self.objects:
+            return self.objects[name]
+        elif name in self._subshape_names.inv:
+            rv = self._subshape_names.inv[name]
+            return rv[0] if len(rv) == 1 else compound(rv)
+
+        raise AttributeError(f"{name} is not an attribute of {self}")
+
+    def __dir__(self):
+        """
+        Modified __dir__ for autocompletion.
+        """
+
+        return (
+            list(self.__dict__)
+            + list(ch.name for ch in self.children)
+            + list(self._subshape_names.inv.keys())
+        )
+
+    def __getstate__(self):
+        """
+        Explicit getstate needed due to getattr.
+        """
+
+        return self.__dict__
+
+    def __setstate__(self, d):
+        """
+        Explicit setstate needed due to getattr.
+        """
+
+        self.__dict__ = d

@@ -18,17 +18,25 @@ Using OpenCascade methods
 The easiest way to extend CadQuery is to simply use OpenCascade/OCP scripting inside of your build method.  Just about
 any valid OCP script will execute just fine. For example, this simple CadQuery script::
 
-    return cq.Workplane("XY").box(1.0,2.0,3.0).val()
+    return cq.Workplane("XY").box(1.0, 2.0, 3.0).val()
 
 is actually equivalent to::
 
-    return cq.Shape.cast(BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape())
+    return cq.Shape.cast(
+        BRepPrimAPI_MakeBox(
+            gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0
+        ).Shape()
+    )
 
 As long as you return a valid OCP Shape, you can use any OCP methods you like. You can even mix and match the
 two. For example, consider this script, which creates a OCP box, but then uses CadQuery to select its faces::
 
-    box = cq.Shape.cast(BRepPrimAPI_MakeBox(gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0).Shape())
-    cq = Workplane(box).faces(">Z").size() # returns 6
+    box = cq.Shape.cast(
+        BRepPrimAPI_MakeBox(
+            gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0
+        ).Shape()
+    )
+    cq = Workplane(box).faces(">Z").size()  # returns 6
 
 
 Extending CadQuery: Plugins
@@ -130,9 +138,10 @@ You can also accept other arguments.
 
 To install it, simply attach it to the CadQuery or Workplane object, like this::
 
-    def _yourFunction(self,arg1,arg):
-        do stuff
+    def _yourFunction(self, arg1, arg):
+        # do stuff
         return whatever_you_want
+
 
     cq.Workplane.yourPlugin = _yourFunction
 
@@ -154,26 +163,77 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
 
 (The cubes are off-center because the boxes have their lower left corner at the reference points.)
 
-.. code-block:: python
+.. cadquery::
 
-        def makeCubes(self,length):
-            #self refers to the CQ or Workplane object
+        from cadquery.occ_impl.shapes import box
 
-            #inner method that creates a cube
+        def makeCubes(self, length):
+            # self refers to the CQ or Workplane object
+
+            # inner method that creates a cube
             def _singleCube(loc):
-                #loc is a location in local coordinates
-                #since we're using eachpoint with useLocalCoordinates=True
-                return cq.Solid.makeBox(length,length,length,pnt).locate(loc)
+                # loc is a location in local coordinates
+                # since we're using eachpoint with useLocalCoordinates=True
+                return box(length, length, length).locate(loc)
 
-            #use CQ utility method to iterate over the stack, call our
-            #method, and convert to/from local coordinates.
-            return self.eachpoint(_singleCube,True)
+            # use CQ utility method to iterate over the stack, call our
+            # method, and convert to/from local coordinates.
+            return self.eachpoint(_singleCube, True)
 
-        #link the plugin into CadQuery
+
+        # link the plugin into CadQuery
         cq.Workplane.makeCubes = makeCubes
 
-        #use the plugin
-        result = cq.Workplane("XY").box(6.0,8.0,0.5).faces(">Z")\
-            .rect(4.0,4.0,forConstruction=True).vertices() \
-            .makeCubes(1.0).combineSolids()
+        # use the plugin
+        result = (
+            cq.Workplane("XY")
+            .box(6.0, 8.0, 0.5)
+            .faces(">Z")
+            .rect(4.0, 4.0, forConstruction=True)
+            .vertices()
+            .makeCubes(1.0)
+            .combineSolids()
+        )
 
+
+Extending CadQuery: Special Methods
+-----------------------------------
+
+The above-mentioned approach has one drawback, it requires monkey-patching or subclassing. To avoid this
+one can also use the following special methods of :py:class:`cadquery.Workplane` and :py:class:`cadquery.Sketch`
+and write plugins in a more functional style.
+
+    * :py:meth:`cadquery.Workplane.map`
+    * :py:meth:`cadquery.Workplane.apply`
+    * :py:meth:`cadquery.Workplane.invoke`
+    * :py:meth:`cadquery.Sketch.map`
+    * :py:meth:`cadquery.Sketch.apply`
+    * :py:meth:`cadquery.Sketch.invoke`
+
+Here is the same plugin rewritten using one of those methods.
+
+.. cadquery::
+
+        from cadquery.occ_impl.shapes import box
+
+        def makeCubes(length):
+
+            # inner method that creates the cubes
+            def callback(wp):
+
+                return wp.eachpoint(box(length, length, length), True)
+
+            return callback
+
+        # use the plugin
+        result = (
+            cq.Workplane("XY")
+            .box(6.0, 8.0, 0.5)
+            .faces(">Z")
+            .rect(4.0, 4.0, forConstruction=True)
+            .vertices()
+            .invoke(makeCubes(1.0))
+            .combineSolids()
+        )
+
+Such an approach is more friendly for auto-completion and static analysis tools.

@@ -1,8 +1,12 @@
 from functools import wraps
-from inspect import signature
+from inspect import signature, isbuiltin
+from typing import TypeVar, Callable, cast
 from warnings import warn
+from collections import UserDict
 
 from multimethod import multimethod, DispatchError
+
+TCallable = TypeVar("TCallable", bound=Callable)
 
 
 class deprecate_kwarg:
@@ -11,7 +15,7 @@ class deprecate_kwarg:
         self.name = name
         self.new_value = new_value
 
-    def __call__(self, f):
+    def __call__(self, f: TCallable) -> TCallable:
         @wraps(f)
         def wrapped(*args, **kwargs):
 
@@ -25,7 +29,7 @@ class deprecate_kwarg:
 
             return f(*args, **kwargs)
 
-        return wrapped
+        return cast(TCallable, wrapped)
 
 
 class deprecate:
@@ -55,7 +59,7 @@ class deprecate_kwarg_name:
         self.name = name
         self.new_name = new_name
 
-    def __call__(self, f):
+    def __call__(self, f: TCallable) -> TCallable:
         @wraps(f)
         def wrapped(*args, **kwargs):
 
@@ -67,4 +71,48 @@ class deprecate_kwarg_name:
 
             return f(*args, **kwargs)
 
-        return wrapped
+        return cast(TCallable, wrapped)
+
+
+def get_arity(f: TCallable) -> int:
+
+    if isbuiltin(f):
+        rv = 0  # assume 0 arity for builtins; they cannot be introspected
+    else:
+        # NB: this is not understood by mypy
+        n_defaults = len(f.__defaults__) if f.__defaults__ else 0
+        rv = f.__code__.co_argcount - n_defaults
+
+    return rv
+
+
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class BiDict(UserDict[K, V]):
+    """
+    Bi-directional dictionary.
+    """
+
+    _inv: dict[V, list[K]]
+
+    def __init__(self, *args, **kwargs):
+
+        self._inv = {}
+
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, k: K, v: V):
+
+        super().__setitem__(k, v)
+
+        if v in self._inv:
+            self._inv[v].append(k)
+        else:
+            self._inv[v] = [k]
+
+    @property
+    def inv(self) -> dict[V, list[K]]:
+
+        return self._inv

@@ -133,8 +133,8 @@ def getSVG(shape, opts=None):
     :type Shape: Vertex, Edge, Wire, Face, Shell, Solid, or Compound.
     :param opts: An options dictionary that influences the SVG that is output.
     :type opts: Dictionary, keys are as follows:
-        width: Document width of the resulting image.
-        height: Document height of the resulting image.
+        width: Width of the resulting image (None to fit based on height).
+        height: Height of the resulting image (None to fit based on width).
         marginLeft: Inset margin from the left side of the document.
         marginTop: Inset margin from the top side of the document.
         projectionDir: Direction the camera will view the shape from.
@@ -144,6 +144,8 @@ def getSVG(shape, opts=None):
         strokeColor: Color of the line that visible edges are drawn with.
         hiddenColor: Color of the line that hidden edges are drawn with.
         showHidden: Whether or not to show hidden lines.
+        focus: If specified, creates a perspective SVG with the projector
+               at the distance specified.
     """
 
     # Available options and their defaults
@@ -158,6 +160,7 @@ def getSVG(shape, opts=None):
         "strokeColor": (0, 0, 0),  # RGB 0-255
         "hiddenColor": (160, 160, 160),  # RGB 0-255
         "showHidden": True,
+        "focus": None,
     }
 
     if opts:
@@ -166,8 +169,13 @@ def getSVG(shape, opts=None):
     # need to guess the scale and the coordinate center
     uom = guessUnitOfMeasure(shape)
 
-    width = float(d["width"])
-    height = float(d["height"])
+    # Handle the case where the height or width are None
+    width = d["width"]
+    if width != None:
+        width = float(d["width"])
+    height = d["height"]
+    if d["height"] != None:
+        height = float(d["height"])
     marginLeft = float(d["marginLeft"])
     marginTop = float(d["marginTop"])
     projectionDir = tuple(d["projectionDir"])
@@ -176,11 +184,17 @@ def getSVG(shape, opts=None):
     strokeColor = tuple(d["strokeColor"])
     hiddenColor = tuple(d["hiddenColor"])
     showHidden = bool(d["showHidden"])
+    focus = float(d["focus"]) if d.get("focus") else None
 
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
 
-    projector = HLRAlgo_Projector(gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir)))
+    coordinate_system = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
+
+    if focus is not None:
+        projector = HLRAlgo_Projector(coordinate_system, focus)
+    else:
+        projector = HLRAlgo_Projector(coordinate_system)
 
     hlr.Projector(projector)
     hlr.Update()
@@ -226,8 +240,22 @@ def getSVG(shape, opts=None):
     # get bounding box -- these are all in 2D space
     bb = Compound.makeCompound(hidden + visible).BoundingBox()
 
-    # width pixels for x, height pixels for y
-    unitScale = min(width / bb.xlen * 0.75, height / bb.ylen * 0.75)
+    # Determine whether the user wants to fit the drawing to the bounding box
+    if width == None or height == None:
+        # Fit image to specified width (or height)
+        if width == None:
+            width = (height - (2.0 * marginTop)) * (
+                bb.xlen / bb.ylen
+            ) + 2.0 * marginLeft
+        else:
+            height = (width - 2.0 * marginLeft) * (bb.ylen / bb.xlen) + 2.0 * marginTop
+
+        # width pixels for x, height pixels for y
+        unitScale = (width - 2.0 * marginLeft) / bb.xlen
+    else:
+        bb_scale = 0.75
+        # width pixels for x, height pixels for y
+        unitScale = min(width / bb.xlen * bb_scale, height / bb.ylen * bb_scale)
 
     # compute amount to translate-- move the top left into view
     (xTranslate, yTranslate) = (

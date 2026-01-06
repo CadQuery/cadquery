@@ -4,7 +4,7 @@ import xml.etree.cElementTree as ET
 from typing import IO, List, Literal, Tuple, Union
 from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
 
-from ...cq import Compound, Shape, Vector
+from ..shapes import Compound, Shape, Vector
 
 
 class CONTENT_TYPES(object):
@@ -48,8 +48,8 @@ class ThreeMFWriter(object):
     def write3mf(
         self, outfile: Union[PathLike, str, IO[bytes]],
     ):
-        """ 
-        Write to the given file. 
+        """
+        Write to the given file.
         """
 
         try:

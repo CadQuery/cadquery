@@ -84,6 +84,10 @@ Class Details
    :members:
    :special-members:
 
+.. automodule:: cadquery.occ_impl.shapes
+   :show-inheritance:
+   :members:
+
 .. autoclass:: cadquery.occ_impl.shapes.Mixin1D
    :show-inheritance: 
    :members:
@@ -99,3 +103,10 @@ Class Details
 .. automodule:: cadquery.occ_impl.exporters.assembly
    :show-inheritance:
    :members:
+
+.. autofunction:: cadquery.occ_impl.assembly.toJSON
+
+.. autoclass:: cadquery.occ_impl.exporters.dxf.DxfDocument
+   :members:
+
+   .. automethod:: __init__

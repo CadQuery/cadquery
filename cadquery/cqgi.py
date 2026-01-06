@@ -19,7 +19,6 @@ def parse(script_source):
 
     :param script_source: the script to run. Must be a valid cadquery script
     :return: a CQModel object that defines the script and allows execution
-
     """
     model = CQModel(script_source)
     return model
@@ -39,6 +38,7 @@ class CQModel(object):
     def __init__(self, script_source):
         """
         Create an object by parsing the supplied python script.
+
         :param script_source: a python script to parse
         """
         self.metadata = ScriptMetadata()
@@ -76,6 +76,7 @@ class CQModel(object):
         """
         Determine if the supplied parameters are valid.
         NOT IMPLEMENTED YET-- raises NotImplementedError
+
         :param params: a dictionary of parameters
 
         """
@@ -84,14 +85,15 @@ class CQModel(object):
     def build(self, build_parameters=None, build_options=None):
         """
         Executes the script, using the optional parameters to override those in the model
+
         :param build_parameters: a dictionary of variables. The variables must be
-        assignable to the underlying variable type. These variables override default values in the script
+            assignable to the underlying variable type. These variables override default values in the script
         :param build_options: build options for how to build the model. Build options include things like
-        timeouts, tessellation tolerances, etc
+            timeouts, tessellation tolerances, etc
         :raises: Nothing. If there is an exception, it will be on the exception property of the result.
-        This is the interface so that we can return other information on the result, such as the build time
+            This is the interface so that we can return other information on the result, such as the build time
         :return: a BuildResult object, which includes the status of the result, and either
-        a resulting shape or an exception
+            a resulting shape or an exception
         """
         if not build_parameters:
             build_parameters = {}
@@ -217,6 +219,10 @@ class BooleanParameterType(ParameterType):
     pass
 
 
+class TupleParameterType(ParameterType):
+    pass
+
+
 class InputParameter:
     """
     Defines a parameter that can be supplied when the model is executed.
@@ -302,6 +308,15 @@ class InputParameter:
                     self.ast_node.value = False
                 else:
                     self.ast_node.id = "False"
+        elif self.varType == TupleParameterType:
+            self.ast_node.n = new_value
+
+            # Build the list of constants to set as the tuple value
+            constants = []
+            for nv in new_value:
+                constants.append(ast.Constant(value=nv))
+            self.ast_node.elts = constants
+            ast.fix_missing_locations(self.ast_node)
         else:
             raise ValueError("Unknown Type of var: ", str(self.varType))
 
@@ -326,7 +341,8 @@ class ScriptCallback(object):
 
     def show_object(self, shape, options={}, **kwargs):
         """
-        return an object to the executing environment, with options
+        Return an object to the executing environment, with options.
+
         :param shape: a cadquery object
         :param options: a dictionary of options that will be made available to the executing environment
         """
@@ -475,7 +491,6 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
 
     def handle_assignment(self, var_name, value_node):
         try:
-
             if type(value_node) == ast.Num:
                 self.cqModel.add_script_parameter(
                     InputParameter.create(
@@ -501,6 +516,17 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                             value_node, var_name, BooleanParameterType, False
                         )
                     )
+            elif type(value_node) == ast.Tuple:
+                # Handle multi-length tuples
+                tup = ()
+                for entry in value_node.elts:
+                    tup = tup + (entry.value,)
+
+                self.cqModel.add_script_parameter(
+                    InputParameter.create(
+                        value_node, var_name, TupleParameterType, tup,
+                    )
+                )
             elif hasattr(ast, "NameConstant") and type(value_node) == ast.NameConstant:
                 if value_node.value == True:
                     self.cqModel.add_script_parameter(
@@ -522,6 +548,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                     str: StringParameterType,
                     float: NumberParameterType,
                     int: NumberParameterType,
+                    tuple: TupleParameterType,
                 }
 
                 self.cqModel.add_script_parameter(
@@ -557,9 +584,12 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             if type(node.value) in astTypes:
                 self.handle_assignment(left_side.id, node.value)
             elif type(node.value) == ast.Tuple:
-                # we have a multi-value assignment
-                for n, v in zip(left_side.elts, node.value.elts):
-                    self.handle_assignment(n.id, v)
+                if isinstance(left_side, ast.Name):
+                    self.handle_assignment(left_side.id, node.value)
+                else:
+                    # we have a multi-value assignment
+                    for n, v in zip(left_side.elts, node.value.elts):
+                        self.handle_assignment(n.id, v)
         except:
             traceback.print_exc()
             print("Unable to handle assignment for node '%s'" % ast.dump(left_side))
