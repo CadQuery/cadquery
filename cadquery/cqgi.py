@@ -491,19 +491,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
 
     def handle_assignment(self, var_name, value_node):
         try:
-            if type(value_node) == ast.Num:
-                self.cqModel.add_script_parameter(
-                    InputParameter.create(
-                        value_node, var_name, NumberParameterType, value_node.n
-                    )
-                )
-            elif type(value_node) == ast.Str:
-                self.cqModel.add_script_parameter(
-                    InputParameter.create(
-                        value_node, var_name, StringParameterType, value_node.s
-                    )
-                )
-            elif type(value_node) == ast.Name:
+            if type(value_node) == ast.Name:
                 if value_node.id == "True":
                     self.cqModel.add_script_parameter(
                         InputParameter.create(
@@ -574,7 +562,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                 return
 
             # Handle the NamedConstant type that is only present in Python 3
-            astTypes = [ast.Num, ast.Str, ast.Name]
+            astTypes = [ast.Name]
             if hasattr(ast, "NameConstant"):
                 astTypes.append(ast.NameConstant)
 
