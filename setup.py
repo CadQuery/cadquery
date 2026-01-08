@@ -35,6 +35,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "path",
         "trame",
         "trame-vtk",
+        "mcp>=1.0.0",
     ]
 
 
@@ -60,6 +61,12 @@ setup(
             # "black@git+https://github.com/cadquery/black.git@cq",
         ],
         "ipython": ["ipython",],
+        "mcp": ["mcp>=1.0.0",],
+    },
+    entry_points={
+        "console_scripts": [
+            "cadquery-mcp=cadquery.mcp_server:run",
+        ],
     },
     include_package_data=True,
     zip_safe=False,
