@@ -790,12 +790,11 @@ class Assembly(object):
 
         if name in self.objects:
             return self.objects[name]
-        elif name[0] in self.objects:
-            rv = self.objects[name[0]]
+        elif name in self._subshape_names.inv:
+            rv = self._subshape_names.inv[name]
+            return rv[0] if len(rv) == 1 else compound(rv)
 
-            if name[1] in rv._subshape_names.inv:
-                rv = compound(self._subshape_names.inv[name[1]])
-                return rv[0] if len(rv) == 1 else compound(rv)
+        raise KeyError
 
         raise KeyError
 
