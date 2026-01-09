@@ -15,11 +15,12 @@ from typing_extensions import Literal, Self
 from typish import instance_of
 from uuid import uuid1 as uuid
 from warnings import warn
+from itertools import chain
 
 from .cq import Workplane
 from .occ_impl.shapes import Shape, Compound, isSubshape, compound
 from .occ_impl.geom import Location
-from .occ_impl.assembly import Color
+from .occ_impl.assembly import Color, Material
 from .occ_impl.solver import (
     ConstraintKind,
     ConstraintSolver,
@@ -84,12 +85,20 @@ def _define_grammar():
 _grammar = _define_grammar()
 
 
+def _ensure_material(material):
+    """
+    Convert string to Material if needed.
+    """
+    return Material(material) if isinstance(material, str) else material
+
+
 class Assembly(object):
     """Nested assembly of Workplane and Shape objects defining their relative positions."""
 
     loc: Location
     name: str
     color: Optional[Color]
+    material: Optional[Material]
     metadata: Dict[str, Any]
 
     obj: AssemblyObjects
@@ -112,6 +121,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -121,6 +131,7 @@ class Assembly(object):
         :param loc: location of the root object (default: None, interpreted as identity transformation)
         :param name: unique name of the root object (default: None, resulting in an UUID being generated)
         :param color: color of the added object (default: None)
+        :param material: material (for visual and/or physical properties) of the added object (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         :return: An Assembly object.
 
@@ -140,6 +151,7 @@ class Assembly(object):
         self.loc = loc if loc else Location()
         self.name = name if name else str(uuid())
         self.color = color if color else None
+        self.material = material if material else None
         self.metadata = metadata if metadata else {}
         self.parent = None
 
@@ -158,7 +170,9 @@ class Assembly(object):
         Make a deep copy of an assembly
         """
 
-        rv = self.__class__(self.obj, self.loc, self.name, self.color, self.metadata)
+        rv = self.__class__(
+            self.obj, self.loc, self.name, self.color, self.material, self.metadata
+        )
 
         rv._subshape_colors = BiDict(self._subshape_colors)
         rv._subshape_names = BiDict(self._subshape_names)
@@ -181,6 +195,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
     ) -> Self:
         """
         Add a subassembly to the current assembly.
@@ -202,6 +217,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Self:
         """
@@ -213,6 +229,8 @@ class Assembly(object):
         :param name: unique name of the root object (default: None, resulting in an UUID being
           generated)
         :param color: color of the added object (default: None)
+        :param material: material (for visual and/or physical properties) of the added object
+          (default: None)
         :param metadata: a store for user-defined metadata (default: None)
         """
         ...
@@ -236,15 +254,23 @@ class Assembly(object):
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
+            subassy.material = _ensure_material(
+                kwargs["material"] if kwargs.get("material") else arg.material
+            )
             subassy.metadata = (
                 kwargs["metadata"] if kwargs.get("metadata") else arg.metadata
             )
+
             subassy.parent = self
 
             self.children.append(subassy)
             self.objects.update(subassy._flatten())
 
         else:
+            # Convert the material string to a Material object, if needed
+            if "material" in kwargs:
+                kwargs["material"] = _ensure_material(kwargs["material"])
+
             assy = self.__class__(arg, **kwargs)
             assy.parent = self
 
@@ -778,11 +804,11 @@ class Assembly(object):
         IPython autocompletion helper.
         """
 
-        return list(self.objects.keys())
+        return list(chain(self.objects.keys(), self._subshape_names.inv.keys()))
 
     def __contains__(self, name: str) -> bool:
 
-        return name in self.objects
+        return name in self.objects or name in self._subshape_names.inv
 
     def __getattr__(self, name: str) -> Union["Assembly", Shape]:
         """

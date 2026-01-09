@@ -13,12 +13,15 @@ from typing import (
 from typing_extensions import Protocol, Self
 from math import degrees, radians
 
+from OCP.TCollection import TCollection_HAsciiString
 from OCP.TDocStd import TDocStd_Document
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.XCAFDoc import (
     XCAFDoc_DocumentTool,
     XCAFDoc_ColorType,
     XCAFDoc_ColorGen,
+    XCAFDoc_Material,
+    XCAFDoc_VisMaterial,
 )
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.BinXCAFDrivers import BinXCAFDrivers
@@ -56,6 +59,129 @@ from ..utils import BiDict
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
+
+
+class Material(object):
+    """
+    Wrapper for the OCCT material classes XCAFDoc_Material and XCAFDoc_VisMaterial.
+    XCAFDoc_Material is focused on physical material properties and
+    XCAFDoc_VisMaterial is for visual properties to be used when rendering.
+    """
+
+    wrapped: XCAFDoc_Material
+    wrapped_vis: XCAFDoc_VisMaterial
+
+    def __init__(self, name: str | None = None, **kwargs):
+        """
+        Can be passed an arbitrary string name for the material along with keyword
+        arguments defining some other characteristics of the material. If nothing is
+        passed, arbitrary defaults are used.
+        """
+
+        # Create the default material object and prepare to set a few defaults
+        self.wrapped = XCAFDoc_Material()
+
+        # Default values in case the user did not set any others
+        aName = "Default"
+        aDescription = ""
+        aDensity = 7.85
+        aDensityName = "Mass density"
+        aDensityTypeName = "g/cm^3"
+
+        # See if there are any non-defaults to be set
+        if name:
+            aName = name
+        if "description" in kwargs.keys():
+            aDescription = kwargs["description"]
+        if "density" in kwargs.keys():
+            aDensity = kwargs["density"]
+        if "densityUnit" in kwargs.keys():
+            aDensityTypeName = kwargs["densityUnit"]
+
+        # Set the properties on the material object
+        self.wrapped.Set(
+            TCollection_HAsciiString(aName),
+            TCollection_HAsciiString(aDescription),
+            aDensity,
+            TCollection_HAsciiString(aDensityName),
+            TCollection_HAsciiString(aDensityTypeName),
+        )
+
+        # Create the default visual material object and allow it to be used just with
+        # the OCC layer, for now. When this material class is expanded to include visual
+        # attributes, the OCC docs say that XCAFDoc_VisMaterialTool should be used to
+        # manage those attributes on the XCAFDoc_VisMaterial class.
+        self.wrapped_vis = XCAFDoc_VisMaterial()
+
+    @property
+    def name(self) -> str:
+        """
+        Get the string name of the material.
+        """
+        return self.wrapped.GetName().ToCString()
+
+    @property
+    def description(self) -> str:
+        """
+        Get the string description of the material.
+        """
+        return self.wrapped.GetDescription().ToCString()
+
+    @property
+    def density(self) -> float:
+        """
+        Get the density value of the material.
+        """
+        return self.wrapped.GetDensity()
+
+    @property
+    def densityUnit(self) -> str:
+        """
+        Get the units that the material density is defined in.
+        """
+        return self.wrapped.GetDensValType().ToCString()
+
+    def toTuple(self) -> Tuple[str, str, float, str]:
+        """
+        Convert Material to a tuple.
+        """
+        name = self.name
+        description = self.description
+        density = self.density
+        densityUnit = self.densityUnit
+
+        return (name, description, density, densityUnit)
+
+    def __hash__(self):
+        """
+        Create a unique hash for this material via its tuple.
+        """
+        return hash(self.toTuple())
+
+    def __eq__(self, other):
+        """
+        Check equality of this material against another via its tuple.
+        """
+        return self.toTuple() == other.toTuple()
+
+    def __getstate__(self) -> Tuple[str, str, float, str]:
+        """
+        Allows pickling.
+        """
+        return self.toTuple()
+
+    def __setstate__(self, data: Tuple[str, str, float, str]):
+        """
+        Allows pickling.
+        """
+        self.wrapped = XCAFDoc_Material()
+        self.wrapped.Set(
+            TCollection_HAsciiString(data[0]),
+            TCollection_HAsciiString(data[1]),
+            data[2],
+            TCollection_HAsciiString("Mass density"),
+            TCollection_HAsciiString(data[3]),
+        )
 
 
 class Color(object):
@@ -159,6 +285,7 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Material] = None,
     ):
         ...
 
@@ -188,6 +315,14 @@ class AssemblyProtocol(Protocol):
 
     @color.setter
     def color(self, value: Optional[Color]) -> None:
+        ...
+
+    @property
+    def material(self) -> Optional[Material]:
+        ...
+
+    @material.setter
+    def material(self, value: Optional[Material]) -> None:
         ...
 
     @property
@@ -229,6 +364,7 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
     ) -> Self:
         ...
 
@@ -239,6 +375,7 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Self:
         ...
@@ -249,6 +386,7 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> Self:
@@ -294,6 +432,18 @@ def setColor(l: TDF_Label, color: Color, tool):
     tool.SetColor(l, color.wrapped, XCAFDoc_ColorType.XCAFDoc_ColorSurf)
 
 
+def setMaterial(l: TDF_Label, material: Material, tool):
+
+    tool.SetMaterial(
+        l,
+        TCollection_HAsciiString(material.name),
+        TCollection_HAsciiString(material.description),
+        material.density,
+        TCollection_HAsciiString("MassDensity"),
+        TCollection_HAsciiString(material.densityUnit),
+    )
+
+
 def toCAF(
     assy: AssemblyProtocol,
     coloredSTEP: bool = False,
@@ -319,6 +469,7 @@ def toCAF(
     tool.SetAutoNaming_s(False)
     ctool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
     ltool = XCAFDoc_DocumentTool.LayerTool_s(doc.Main())
+    mtool = XCAFDoc_DocumentTool.MaterialTool_s(doc.Main())
 
     # used to store labels with unique part-color combinations
     unique_objs: Dict[Tuple[Color | None, AssemblyObjects], TDF_Label] = {}
@@ -334,6 +485,9 @@ def toCAF(
 
         # define the current color
         current_color = el.color if el.color else None
+
+        # define the current material
+        current_material = el.material if el.material else None
 
         # add a leaf with the actual part if needed
         if el.obj:
@@ -361,6 +515,10 @@ def toCAF(
                 # handle colors when exporting to STEP
                 if coloredSTEP and current_color:
                     setColor(lab, current_color, ctool)
+
+                # Handle materials when exporting to STEP
+                if current_material:
+                    setMaterial(lab, current_material, mtool)
 
             # handle subshape names/colors/layers
             subshape_colors = el._subshape_colors

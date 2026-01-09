@@ -10,6 +10,7 @@ from cadquery import (
     Assembly,
     Color,
     Workplane,
+    Material,
 )
 from cadquery.func import box
 
@@ -42,6 +43,14 @@ def test_shape():
 
 def test_assy():
 
-    assy = Assembly().add(box(1, 1, 1), color=Color("blue")).add(box(2, 2, 2))
+    mat_1 = Material(
+        "test", description="Test material", density=1.0, densityUnit="lb/in^3"
+    )
+
+    assy = (
+        Assembly()
+        .add(box(1, 1, 1), color=Color("blue"), material=mat_1)
+        .add(box(2, 2, 2))
+    )
 
     assert isinstance(loads(dumps(assy)), Assembly)

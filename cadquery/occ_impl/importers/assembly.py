@@ -15,6 +15,7 @@ from OCP.XCAFDoc import (
     XCAFDoc_ColorTool,
     XCAFDoc,
     XCAFDoc_ColorType,
+    XCAFDoc_Material,
 )
 from OCP.TDocStd import TDocStd_Application
 from OCP.XmlXCAFDrivers import XmlXCAFDrivers
@@ -22,7 +23,7 @@ from OCP.BinXCAFDrivers import BinXCAFDrivers
 from OCP.Interface import Interface_Static
 from OCP.PCDM import PCDM_ReaderStatus
 
-from ..assembly import AssemblyProtocol, Color
+from ..assembly import AssemblyProtocol, Color, Material
 from ..geom import Location
 from ..shapes import Shape
 
@@ -38,6 +39,38 @@ def _get_name(label: TDF_Label) -> str:
     if label.IsAttribute(TDataStd_Name.GetID_s()):
         label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
         rv = str(name_attr.Get().ToExtString())
+
+    return rv
+
+
+def _get_material(label: TDF_Label) -> Material | None:
+    """
+    Helper to get the material for a given label.
+    """
+
+    rv = None
+
+    material_ref_guid = XCAFDoc.MaterialRefGUID_s()
+
+    if label.IsAttribute(material_ref_guid):
+        attr = TDataStd_TreeNode()
+        label.FindAttribute(material_ref_guid, attr)
+        material_label = attr.Father().Label()
+
+        material_attr = XCAFDoc_Material()
+
+        material_label.FindAttribute(XCAFDoc_Material.GetID_s(), material_attr)
+        name = material_attr.GetName().ToCString()
+        description = material_attr.GetDescription().ToCString()
+        density = material_attr.GetDensity()
+        density_unit = material_attr.GetDensValType().ToCString()
+
+        rv = Material(
+            name=name,
+            description=description,
+            density=density,
+            densityUnit=density_unit,
+        )
 
     return rv
 
@@ -211,6 +244,7 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
 
                 # get (if it exists the color of the comp label)
                 color = _get_ref_color(comp_label)
+                material = _get_material(comp_label)
 
                 if shape_tool.IsAssembly_s(ref_label):
                     # Find the name of this referenced part
@@ -222,7 +256,13 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                     _ = _process_label(ref_label, sub_assy)
 
                     # Add the subassy
-                    parent.add(sub_assy, name=ref_name, loc=cq_loc, color=color)
+                    parent.add(
+                        sub_assy,
+                        loc=cq_loc,
+                        name=ref_name,
+                        color=color,
+                        material=material,
+                    )
 
                 elif shape_tool.IsSimpleShape_s(ref_label):
                     # Find the name of this referenced part
@@ -236,6 +276,9 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                     if color is None:
                         color = _get_shape_color(final_shape, color_tool)
 
+                    if material is None:
+                        material = _get_material(ref_label)
+
                     # this if/else is needed to handle different structures of STEP files
                     # "*"/"*_part" based naming is the default structure produced by CQ
                     # with an object and child nodes at the same time
@@ -248,7 +291,11 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                         current = parent
                     else:
                         tmp = assy.__class__(
-                            cq_shape, loc=cq_loc, name=comp_name, color=color
+                            cq_shape,
+                            loc=cq_loc,
+                            name=comp_name,
+                            color=color,
+                            material=material,
                         )
                         parent.add(tmp)
 
@@ -287,6 +334,7 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
 
                         # try the instance first
                         color = _get_ref_color(child_label)
+                        material = _get_material(child_label)
 
                         if color:
                             # Save the color info via the assembly subshape mechanism
