@@ -28,6 +28,8 @@ requirements:
     - typish
     - trame
     - trame-vtk
+    - trame-components
+    - trame-vuetify
 
 test:
   requires:

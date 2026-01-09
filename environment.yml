@@ -27,6 +27,8 @@ dependencies:
   - appdirs
   - trame
   - trame-vtk
+  - trame-components
+  - trame-vuetify
   - pip
   - pip:
     - --editable=.
