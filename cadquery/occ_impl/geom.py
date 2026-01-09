@@ -95,6 +95,9 @@ class Vector(object):
                 fV = gp_Vec(args[0].XYZ())
             elif isinstance(args[0], gp_XYZ):
                 fV = gp_Vec(args[0])
+            elif hasattr(args[0], "__array__"):
+                tmp = args[0].ravel()
+                fV = gp_Vec(tmp[0], tmp[1], tmp[2])
             else:
                 raise TypeError("Expected three floats, OCC gp_, or 3-tuple")
         elif len(args) == 0:
@@ -1173,7 +1176,7 @@ class Location(object):
         ls = BinTools_LocationSet()
         ls.Read(data)
 
-        if ls.NbLocations() > 0:
-            self.wrapped = ls.Location(1)
+        if ls.NbLocations() == 0:
+            self.wrapped = TopLoc_Location()
         else:
-            self.wrapped = TopLoc_Location()  # identity location
+            self.wrapped = ls.Location(1)

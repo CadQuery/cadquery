@@ -321,6 +321,9 @@ from OCP.GeomAdaptor import GeomAdaptor_Surface
 
 from OCP.OSD import OSD_ThreadPool
 
+from OCP.Bnd import Bnd_OBB
+from OCP.BRepBndLib import BRepBndLib
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -1433,12 +1436,12 @@ class Shape(object):
 
         return self._bool_op((self,), splitters, split_op)
 
-    def distance(self, other: "Shape") -> float:
+    def distance(self, other: "Shape", tol: float = 1e-6) -> float:
         """
         Minimal distance between two shapes
         """
 
-        dist_calc = BRepExtrema_DistShapeShape(self.wrapped, other.wrapped)
+        dist_calc = BRepExtrema_DistShapeShape(self.wrapped, other.wrapped, tol)
         dist_calc.SetMultiThread(True)
 
         return dist_calc.Value()
@@ -2396,6 +2399,13 @@ class Edge(Shape, Mixin1D):
         """
 
         return ShapeAnalysis_Edge().HasPCurve(self.wrapped, f.wrapped)
+
+    def reversed(self) -> "Edge":
+        """
+        Return a reversed version of self.
+        """
+
+        return self.__class__(self.wrapped.Reversed())
 
     @classmethod
     def makeCircle(
@@ -5467,6 +5477,10 @@ def shell(
     return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history)
 
 
+# add an alias
+sew = shell
+
+
 @multimethod
 def solid(
     s1: Shape, *sn: Shape, tol: float = 1e-6, history: Optional[ShapeHistory] = None,
@@ -6171,7 +6185,7 @@ def chamfer(s: Shape, e: Shape, d: float) -> Shape:
     return _compound_or_shape(builder.Shape())
 
 
-def extrude(s: Shape, d: VectorLike) -> Shape:
+def extrude(s: Shape, d: VectorLike, both: bool = False) -> Shape:
     """
     Extrude a shape.
     """
@@ -6180,7 +6194,13 @@ def extrude(s: Shape, d: VectorLike) -> Shape:
 
     for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
 
-        builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
+        if both:
+            builder = BRepPrimAPI_MakePrism(
+                el.moved(-Vector(d)).wrapped, (2 * Vector(d)).wrapped
+            )
+        else:
+            builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
+
         builder.Build()
 
         results.append(builder.Shape())
@@ -6256,6 +6276,30 @@ def offset(
         rv = _compound_or_shape(results)
 
     return rv
+
+
+def offset2D(
+    s: Shape, t: float, kind: Literal["arc", "intersection", "tangent"] = "arc"
+) -> Shape:
+    """
+    2D Offset edges, wires or faces.
+    """
+
+    kind_dict = {
+        "arc": GeomAbs_JoinType.GeomAbs_Arc,
+        "intersection": GeomAbs_JoinType.GeomAbs_Intersection,
+        "tangent": GeomAbs_JoinType.GeomAbs_Tangent,
+    }
+
+    bldr = BRepOffsetAPI_MakeOffset()
+    bldr.Init(kind_dict[kind])
+
+    for el in _get_wires(s):
+        bldr.AddWire(el.wrapped)
+
+    bldr.Perform(t)
+
+    return _compound_or_shape(bldr.Shape())
 
 
 @multimethod
@@ -6501,6 +6545,7 @@ def loft(
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
 
 
+@multimethod
 def project(
     s: Shape,
     base: Shape,
@@ -6522,6 +6567,26 @@ def project(
     bldr.Build()
 
     return _compound_or_shape(bldr.Projection())
+
+
+@project.register
+def project(
+    s: Shape, base: Shape, direction: VectorLike,
+):
+    """
+    Project s onto base using cylindrical projection.
+    """
+
+    results = []
+
+    for el in _get_wires(s):
+        bldr = BRepProj_Projection(el.wrapped, base.wrapped, Vector(direction).toDir())
+
+        while bldr.More():
+            results.append(_compound_or_shape(bldr.Current()))
+            bldr.Next()
+
+    return _normalize(compound(results))
 
 
 #%% diagnotics
@@ -6561,7 +6626,7 @@ def check(
 
 def isSubshape(s1: Shape, s2: Shape) -> bool:
     """
-    Check if s1 is a subshape of s2.
+    Check is s1 is a subshape of s2.
     """
 
     shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
@@ -6576,7 +6641,7 @@ def isSubshape(s1: Shape, s2: Shape) -> bool:
 #%% properties
 
 
-def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
+def closest(s1: Shape, s2: Shape, tol: float = 1e-6) -> Tuple[Vector, Vector]:
     """
     Closest points between two shapes.
     """
@@ -6588,7 +6653,36 @@ def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
     ext.LoadS1(s1.wrapped)
     ext.LoadS2(s2.wrapped)
 
+    ext.SetDeflection(tol)
+    import OCP
+
+    ext.SetAlgo(OCP.Extrema.Extrema_ExtAlgo.Extrema_ExtAlgo_Grad)
+
     # perform
-    assert ext.Perform()
+    ext.Perform()
 
     return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))
+
+
+def obb(s: Shape) -> Shape:
+
+    # construct the OBB
+    bbox = Bnd_OBB()
+    BRepBndLib.AddOBB_s(
+        s.wrapped, bbox, theIsTriangulationUsed=False, theIsOptimal=True
+    )
+
+    # convert to a shape
+    center = Vector(bbox.Center())
+    xdir = Vector(bbox.XDirection())
+    ydir = Vector(bbox.YDirection())
+    zdir = Vector(bbox.ZDirection())
+
+    dx = bbox.XHSize()
+    dy = bbox.YHSize()
+    dz = bbox.ZHSize()
+
+    ax = gp_Ax2(center.toPnt(), zdir.toDir(), xdir.toDir())
+    ax.SetLocation((center - dx * xdir - dy * ydir - dz * zdir).toPnt())
+
+    return Shape.cast(BRepPrimAPI_MakeBox(ax, 2.0 * dx, 2.0 * dy, 2.0 * dz).Shape())

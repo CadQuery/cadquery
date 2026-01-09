@@ -25,8 +25,12 @@ dependencies:
   - pathspec
   - click
   - appdirs
+  - numba
+  - scipy
   - trame
   - trame-vtk
+  - trame-components
+  - trame-vuetify
   - pip
   - pip:
     - --editable=.
