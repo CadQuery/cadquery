@@ -796,8 +796,6 @@ class Assembly(object):
 
         raise KeyError
 
-        raise KeyError
-
     def _ipython_key_completions_(self) -> List[str]:
         """
         IPython autocompletion helper.
