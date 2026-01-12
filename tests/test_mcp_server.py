@@ -8,6 +8,7 @@ These tests verify that:
 - Parameter extraction works
 - Export functionality works
 - Error handling is correct
+- Multi-view rendering works
 
 Note: These tests require the 'mcp' package to be installed.
 They will be skipped if mcp is not available (e.g., in conda CI environments).
@@ -348,3 +349,125 @@ show_object(box)
         self.assertIn("5.0000", text)
         self.assertIn("10.0000", text)
         self.assertIn("15.0000", text)
+
+
+class TestMCPServerViews(BaseTest):
+    """Test multi-view and custom view angle functionality."""
+
+    def test_render_front_view(self):
+        """Test rendering from front view."""
+        from cadquery.mcp_server import _handle_render
+
+        result = asyncio.run(_handle_render({
+            "code": "import cadquery as cq\nresult = cq.Workplane('XY').box(10, 20, 30)",
+            "format": "svg",
+            "view": "front",
+        }))
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].type, "image")
+        svg_content = base64.b64decode(result[0].data).decode("utf-8")
+        self.assertIn("<svg", svg_content)
+        # Front view should not show axes
+        self.assertNotIn("X", svg_content)
+
+    def test_render_top_view(self):
+        """Test rendering from top view."""
+        from cadquery.mcp_server import _handle_render
+
+        result = asyncio.run(_handle_render({
+            "code": "import cadquery as cq\nresult = cq.Workplane('XY').box(10, 20, 30)",
+            "format": "svg",
+            "view": "top",
+        }))
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].type, "image")
+
+    def test_render_all_standard_views(self):
+        """Test that all standard views render successfully."""
+        from cadquery.mcp_server import _handle_render, VIEWS
+
+        code = "import cadquery as cq\nresult = cq.Workplane('XY').box(10, 10, 10)"
+
+        for view_name in VIEWS.keys():
+            result = asyncio.run(_handle_render({
+                "code": code,
+                "format": "svg",
+                "view": view_name,
+            }))
+            self.assertEqual(result[0].type, "image", f"View '{view_name}' failed")
+
+    def test_multi_view_returns_multiple_images(self):
+        """Test that multi_view returns multiple images."""
+        from cadquery.mcp_server import _handle_render
+
+        result = asyncio.run(_handle_render({
+            "code": "import cadquery as cq\nresult = cq.Workplane('XY').box(10, 10, 10)",
+            "format": "svg",
+            "multi_view": True,
+        }))
+
+        # Should return: 1 text description + 4 images (isometric, front, top, right)
+        self.assertEqual(len(result), 5)
+        self.assertEqual(result[0].type, "text")
+        self.assertIn("4 views", result[0].text)
+
+        # Check all 4 images
+        for i in range(1, 5):
+            self.assertEqual(result[i].type, "image")
+            self.assertEqual(result[i].mimeType, "image/svg+xml")
+
+    def test_multi_view_content(self):
+        """Test that multi_view images have valid SVG content."""
+        from cadquery.mcp_server import _handle_render
+
+        result = asyncio.run(_handle_render({
+            "code": "import cadquery as cq\nresult = cq.Workplane('XY').box(10, 10, 10)",
+            "format": "svg",
+            "multi_view": True,
+        }))
+
+        # Verify each image is valid SVG
+        for i in range(1, 5):
+            svg_content = base64.b64decode(result[i].data).decode("utf-8")
+            self.assertIn("<svg", svg_content)
+            self.assertIn("</svg>", svg_content)
+
+    def test_show_hidden_option(self):
+        """Test that show_hidden option is respected."""
+        from cadquery.mcp_server import _handle_render
+
+        code = """
+import cadquery as cq
+result = cq.Workplane('XY').box(20, 20, 10).faces('>Z').workplane().hole(5)
+"""
+        # Render with hidden lines
+        result_with_hidden = asyncio.run(_handle_render({
+            "code": code,
+            "format": "svg",
+            "show_hidden": True,
+        }))
+
+        # Render without hidden lines
+        result_without_hidden = asyncio.run(_handle_render({
+            "code": code,
+            "format": "svg",
+            "show_hidden": False,
+        }))
+
+        svg_with = base64.b64decode(result_with_hidden[0].data).decode("utf-8")
+        svg_without = base64.b64decode(result_without_hidden[0].data).decode("utf-8")
+
+        # SVG with hidden lines should have more content (dashed lines for hidden edges)
+        self.assertGreater(len(svg_with), len(svg_without))
+
+    def test_views_dictionary_exists(self):
+        """Test that VIEWS dictionary is properly defined."""
+        from cadquery.mcp_server import VIEWS
+
+        expected_views = ["isometric", "front", "back", "top", "bottom", "left", "right", "isometric_back"]
+        for view in expected_views:
+            self.assertIn(view, VIEWS)
+            # Each view should be a 3-tuple (projection direction)
+            self.assertEqual(len(VIEWS[view]), 3)

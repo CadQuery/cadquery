@@ -51,6 +51,18 @@ from .vis import show
 
 server = Server("cadquery")
 
+# Standard view projection directions
+VIEWS = {
+    "isometric": (-1.75, 1.1, 5),      # Default isometric view
+    "front": (0, -1, 0),                # Looking at XZ plane from -Y
+    "back": (0, 1, 0),                  # Looking at XZ plane from +Y
+    "top": (0, 0, 1),                   # Looking at XY plane from +Z
+    "bottom": (0, 0, -1),               # Looking at XY plane from -Z
+    "left": (-1, 0, 0),                 # Looking at YZ plane from -X
+    "right": (1, 0, 0),                 # Looking at YZ plane from +X
+    "isometric_back": (1.75, -1.1, 5),  # Isometric from opposite corner
+}
+
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
@@ -62,7 +74,8 @@ async def list_tools() -> list[Tool]:
                 "Execute CadQuery Python code and return a rendered image of the 3D model. "
                 "The code should use show_object() to output shapes, or assign the final result to 'result'. "
                 "Example: result = cq.Workplane('XY').box(1, 2, 3). "
-                "Returns SVG by default (works headlessly), or PNG if format='png' and display is available."
+                "Returns SVG by default (works headlessly), or PNG if format='png' and display is available. "
+                "Use 'view' to specify camera angle, or 'multi_view' to get multiple angles at once."
             ),
             inputSchema={
                 "type": "object",
@@ -77,15 +90,31 @@ async def list_tools() -> list[Tool]:
                         "enum": ["svg", "png"],
                         "default": "svg",
                     },
+                    "view": {
+                        "type": "string",
+                        "description": "Camera view angle. Options: isometric (default), front, back, top, bottom, left, right, isometric_back",
+                        "enum": ["isometric", "front", "back", "top", "bottom", "left", "right", "isometric_back"],
+                        "default": "isometric",
+                    },
+                    "multi_view": {
+                        "type": "boolean",
+                        "description": "If true, returns multiple images from different angles (isometric, front, top, right). Useful for complex models.",
+                        "default": False,
+                    },
                     "width": {
                         "type": "integer",
-                        "description": "Image width in pixels (default: 800, PNG only)",
+                        "description": "Image width in pixels (default: 800)",
                         "default": 800,
                     },
                     "height": {
                         "type": "integer",
-                        "description": "Image height in pixels (default: 600, PNG only)",
+                        "description": "Image height in pixels (default: 600)",
                         "default": 600,
+                    },
+                    "show_hidden": {
+                        "type": "boolean",
+                        "description": "Whether to show hidden lines (default: true)",
+                        "default": True,
                     },
                 },
                 "required": ["code"],
@@ -167,6 +196,23 @@ def _extract_shape(build_result, env):
     return None
 
 
+def _render_svg(shape, view_name: str, width: int, height: int, show_hidden: bool = True) -> str:
+    """Render a shape to SVG from a specific view angle."""
+    from .occ_impl.exporters.svg import getSVG
+
+    projection_dir = VIEWS.get(view_name, VIEWS["isometric"])
+
+    opts = {
+        "width": width,
+        "height": height,
+        "projectionDir": projection_dir,
+        "showAxes": view_name == "isometric" or view_name == "isometric_back",
+        "showHidden": show_hidden,
+    }
+
+    return getSVG(shape, opts=opts)
+
+
 @server.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | ImageContent]:
     """Handle tool calls."""
@@ -184,11 +230,14 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
 
 
 async def _handle_render(arguments: dict[str, Any]) -> list[TextContent | ImageContent]:
-    """Execute CadQuery code and return a rendered image (SVG or PNG)."""
+    """Execute CadQuery code and return rendered image(s) (SVG or PNG)."""
     code = arguments["code"]
     output_format = arguments.get("format", "svg")
+    view = arguments.get("view", "isometric")
+    multi_view = arguments.get("multi_view", False)
     width = arguments.get("width", 800)
     height = arguments.get("height", 600)
+    show_hidden = arguments.get("show_hidden", True)
 
     try:
         # Parse and execute the script using CQGI
@@ -215,12 +264,28 @@ async def _handle_render(arguments: dict[str, Any]) -> list[TextContent | ImageC
 
         if output_format == "svg":
             # SVG rendering (works headlessly, no display required)
-            from .occ_impl.exporters.svg import getSVG
 
-            svg_content = getSVG(shape, opts={"width": width, "height": height})
-            svg_data = base64.standard_b64encode(svg_content.encode("utf-8")).decode("utf-8")
+            if multi_view:
+                # Return multiple views for complex models
+                views_to_render = ["isometric", "front", "top", "right"]
+                results = []
 
-            return [ImageContent(type="image", data=svg_data, mimeType="image/svg+xml")]
+                for view_name in views_to_render:
+                    svg_content = _render_svg(shape, view_name, width, height, show_hidden)
+                    svg_data = base64.standard_b64encode(svg_content.encode("utf-8")).decode("utf-8")
+                    results.append(ImageContent(type="image", data=svg_data, mimeType="image/svg+xml"))
+
+                # Add a text description of the views
+                results.insert(0, TextContent(
+                    type="text",
+                    text=f"Rendered {len(views_to_render)} views: {', '.join(views_to_render)}"
+                ))
+                return results
+            else:
+                # Single view
+                svg_content = _render_svg(shape, view, width, height, show_hidden)
+                svg_data = base64.standard_b64encode(svg_content.encode("utf-8")).decode("utf-8")
+                return [ImageContent(type="image", data=svg_data, mimeType="image/svg+xml")]
 
         else:
             # PNG rendering using VTK (requires display/OpenGL)
