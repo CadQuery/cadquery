@@ -10,7 +10,7 @@ from threading import Thread
 from itertools import chain
 from webbrowser import open_new_tab
 
-from typish import instance_of
+from runtype import isa
 
 from trame.app import get_server
 from trame.app.core import Server
@@ -231,7 +231,7 @@ class Figure:
                 self.shapes.clear()
 
             for s in shapes:
-                if instance_of(s, ShapeLike):
+                if isa(s, ShapeLike):
                     for a in self.shapes[s]:
                         self.ren.RemoveActor(a)
 

@@ -18,7 +18,7 @@ from vtkmodules.vtkIOImage import vtkPNGWriter
 from pytest import fixture, raises
 from path import Path
 
-from typish import instance_of
+from runtype import isa
 from typing import List
 
 
@@ -182,39 +182,39 @@ def test_style(wp, assy):
 
     # Shape
     act = style(t, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
     # Assy
     act = style(assy, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
     # Workplane
     act = style(wp, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
     # Shape
     act = style(e)
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
     # Sketch
     act = style(Sketch().circle(1))
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
     # list[Vector]
     act = style(pts)
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
     # list[Location]
     act = style(locs)
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
     # vtkAssembly
     act = style(style(t))
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
     # vtkActor
     act = style(ctrlPts(e.toNURBS()))
-    assert instance_of(act, List[vtkProp3D])
+    assert isa(act, List[vtkProp3D])
 
 
 def test_camera_position(wp, patch_vtk):

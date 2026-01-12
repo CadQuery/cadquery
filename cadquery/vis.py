@@ -14,7 +14,7 @@ from .occ_impl.assembly import _loc2vtk, toVTKAssy
 
 from typing import Union, Any, List, Tuple, Iterable, cast, Optional
 
-from typish import instance_of
+from runtype import isa
 
 from OCP.TopoDS import TopoDS_Shape
 from OCP.Geom import Geom_BSplineSurface
@@ -101,7 +101,7 @@ def _split_showables(
     rv_a: List[vtkProp3D] = []
 
     for el in objs:
-        if instance_of(el, ShapeLike):
+        if isa(el, ShapeLike):
             rv_s.append(el)
         elif isinstance(el, Vector):
             rv_v.append(el)

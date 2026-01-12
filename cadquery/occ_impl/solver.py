@@ -9,10 +9,11 @@ from typing import (
     Literal,
     cast as tcast,
     Type,
+    get_origin,
 )
 
 from math import radians, pi
-from typish import instance_of, get_type
+from runtype import isa
 
 import casadi as ca
 
@@ -130,7 +131,7 @@ class ConstraintSpec(object):
         """
 
         # validate
-        if not instance_of(kind, ConstraintKind):
+        if not isa(kind, ConstraintKind):
             raise ValueError(f"Unknown constraint {kind}.")
 
         if kind in CompoundConstraints:
@@ -177,9 +178,9 @@ class ConstraintSpec(object):
                 raise ValueError(f"Unsupported entity {a} for constraint {kind}.")
 
         # check parameter
-        if not instance_of(param, param_type) and param is not None:
+        if not isa(param, param_type) and param is not None:
             raise ValueError(
-                f"Unsupported argument types {get_type(param)}, required {param_type}."
+                f"Unsupported argument types {get_origin(param)}, required {param_type}."
             )
 
         # check parameter conversion
