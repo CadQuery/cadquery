@@ -1811,6 +1811,18 @@ def test_constrain(simple_assy, nested_assy):
         .IsEqual(gp_XYZ(2, -4, 0.75), 1e-6)
     )
 
+    # Make sure that calling with too many args causes an error
+    with pytest.raises(ValueError):
+        simple_assy.constrain(
+            subassy1.name,
+            b2.faces(">Z").val(),
+            subassy2.name,
+            b3.faces("<Z").val(),
+            "Point",
+            "Point",
+            "Point"
+        )
+
 
 def test_constrain_with_tags(nested_assy):
 
