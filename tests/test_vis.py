@@ -22,6 +22,7 @@ from path import Path
 
 from typing import List
 
+
 @fixture(scope="module")
 def tmpdir(tmp_path_factory):
     return Path(tmp_path_factory.mktemp("screenshots"))

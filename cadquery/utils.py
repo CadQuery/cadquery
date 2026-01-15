@@ -118,5 +118,6 @@ class BiDict(UserDict[K, V]):
 
         return self._inv
 
+
 def instance_of(obj: object, *args: object):
     return isa(obj, args)
