@@ -5786,7 +5786,7 @@ def _(d: Real, h: Real) -> Shape:
     Construct a full solid cone.
     """
 
-    return cone.dispatch(float, float, float)(d, 0.0, h) # or cone[(Real, Real, Real)](d, 0.0, h)
+    return cone.dispatch(float, float, float)(d, 0.0, h)
 
 
 @multimethod
