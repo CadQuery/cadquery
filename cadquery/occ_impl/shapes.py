@@ -5763,7 +5763,7 @@ def torus(d1: float, d2: float) -> Shape:
     )
 
 
-@multimethod
+@multidispatch
 def cone(d1: Real, d2: Real, h: Real) -> Shape:
     """
     Construct a partial solid cone.
@@ -5781,12 +5781,12 @@ def cone(d1: Real, d2: Real, h: Real) -> Shape:
 
 
 @cone.register
-def cone(d: Real, h: Real) -> Shape:
+def _(d: Real, h: Real) -> Shape:
     """
     Construct a full solid cone.
     """
 
-    return cone(d, 0, h)
+    return cone.dispatch(float, float, float)(d, 0.0, h) # or cone[(Real, Real, Real)](d, 0.0, h)
 
 
 @multimethod
