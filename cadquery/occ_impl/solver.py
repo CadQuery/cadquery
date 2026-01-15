@@ -13,7 +13,6 @@ from typing import (
 )
 
 from math import radians, pi
-from runtype import isa
 
 import casadi as ca
 
@@ -34,6 +33,7 @@ from OCP.Precision import Precision
 from .geom import Location, Vector, Plane
 from .shapes import Shape, Face, Edge, Wire
 from ..types import Real
+from ..utils import instance_of
 
 # type definitions
 
@@ -131,7 +131,7 @@ class ConstraintSpec(object):
         """
 
         # validate
-        if not isa(kind, ConstraintKind):
+        if not instance_of(kind, ConstraintKind):
             raise ValueError(f"Unknown constraint {kind}.")
 
         if kind in CompoundConstraints:
@@ -178,7 +178,7 @@ class ConstraintSpec(object):
                 raise ValueError(f"Unsupported entity {a} for constraint {kind}.")
 
         # check parameter
-        if not isa(param, param_type) and param is not None:
+        if not instance_of(param, param_type) and param is not None:
             raise ValueError(
                 f"Unsupported argument types {get_origin(param)}, required {param_type}."
             )

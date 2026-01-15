@@ -4,6 +4,8 @@ from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts, style
 
 import cadquery.vis as vis
 
+from cadquery.utils import instance_of
+
 from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
@@ -18,9 +20,7 @@ from vtkmodules.vtkIOImage import vtkPNGWriter
 from pytest import fixture, raises
 from path import Path
 
-from runtype import isa
 from typing import List
-
 
 @fixture(scope="module")
 def tmpdir(tmp_path_factory):
@@ -182,39 +182,39 @@ def test_style(wp, assy):
 
     # Shape
     act = style(t, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
     # Assy
     act = style(assy, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
     # Workplane
     act = style(wp, color="red", alpha=0.5, tubes=True, spheres=True)
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
     # Shape
     act = style(e)
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
     # Sketch
     act = style(Sketch().circle(1))
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
     # list[Vector]
     act = style(pts)
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
     # list[Location]
     act = style(locs)
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
     # vtkAssembly
     act = style(style(t))
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
     # vtkActor
     act = style(ctrlPts(e.toNURBS()))
-    assert isa(act, List[vtkProp3D])
+    assert instance_of(act, List[vtkProp3D])
 
 
 def test_camera_position(wp, patch_vtk):

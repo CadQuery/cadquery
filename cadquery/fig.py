@@ -10,8 +10,6 @@ from threading import Thread
 from itertools import chain
 from webbrowser import open_new_tab
 
-from runtype import isa
-
 from trame.app import get_server
 from trame.app.core import Server
 from trame.widgets import html, vtk as vtk_widgets, client
@@ -32,6 +30,8 @@ from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
+
+from .utils import instance_of
 
 FULL_SCREEN = "position:absolute; left:0; top:0; width:100vw; height:100vh;"
 
@@ -231,7 +231,7 @@ class Figure:
                 self.shapes.clear()
 
             for s in shapes:
-                if isa(s, ShapeLike):
+                if instance_of(s, ShapeLike):
                     for a in self.shapes[s]:
                         self.ren.RemoveActor(a)
 

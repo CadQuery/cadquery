@@ -1,6 +1,7 @@
 from functools import wraps
 from inspect import signature, isbuiltin
 from typing import TypeVar, Callable, cast
+from runtype import isa
 from warnings import warn
 from collections import UserDict
 
@@ -116,3 +117,6 @@ class BiDict(UserDict[K, V]):
     def inv(self) -> dict[V, list[K]]:
 
         return self._inv
+
+def instance_of(obj: object, *args: object):
+    return isa(obj, args)

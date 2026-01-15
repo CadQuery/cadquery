@@ -12,7 +12,6 @@ from typing import (
     get_args,
 )
 from typing_extensions import Literal, Self
-from runtype import isa
 from uuid import uuid1 as uuid
 from warnings import warn
 from itertools import chain
@@ -39,7 +38,7 @@ from .occ_impl.exporters.assembly import (
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
 from .selectors import _expression_grammar as _selector_grammar
-from .utils import deprecate, BiDict
+from .utils import deprecate, BiDict, instance_of
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -413,7 +412,7 @@ class Assembly(object):
         if len(args) == 2:
             q1, kind = args
             id1, s1 = self._query(q1)
-        elif len(args) == 3 and isa(args[1], UnaryConstraintKind):
+        elif len(args) == 3 and instance_of(args[1], UnaryConstraintKind):
             q1, kind, param = args
             id1, s1 = self._query(q1)
         elif len(args) == 3:
@@ -432,10 +431,10 @@ class Assembly(object):
             raise ValueError(f"Incompatible arguments: {args}")
 
         # handle unary and binary constraints
-        if isa(kind, UnaryConstraintKind):
+        if instance_of(kind, UnaryConstraintKind):
             loc1, id1_top = self._subloc(id1)
             c = Constraint((id1_top,), (s1,), (loc1,), kind, param)
-        elif isa(kind, BinaryConstraintKind):
+        elif instance_of(kind, BinaryConstraintKind):
             loc1, id1_top = self._subloc(id1)
             loc2, id2_top = self._subloc(id2)
             c = Constraint((id1_top, id2_top), (s1, s2), (loc1, loc2), kind, param)
@@ -472,12 +471,12 @@ class Assembly(object):
             unary_objects = [
                 c.objects[0]
                 for c in self.constraints
-                if isa(c.kind, UnaryConstraintKind)
+                if instance_of(c.kind, UnaryConstraintKind)
             ]
             binary_objects = [
                 c.objects[0]
                 for c in self.constraints
-                if isa(c.kind, BinaryConstraintKind)
+                if instance_of(c.kind, BinaryConstraintKind)
             ]
             for b in binary_objects:
                 if b not in unary_objects:

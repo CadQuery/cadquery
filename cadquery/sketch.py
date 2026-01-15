@@ -19,12 +19,11 @@ from typing import (
 from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
 from multimethod import multimethod
-from runtype import isa
 
 from .hull import find_hull
 from .selectors import StringSyntaxSelector, Selector
 from .types import Real
-from .utils import get_arity
+from .utils import get_arity, instance_of
 
 from .occ_impl.shapes import (
     Shape,
@@ -116,7 +115,7 @@ class Constraint(object):
                 f"Unsupported geometry types {[e.geomType() for e in args]} for constraint {kind}."
             )
 
-        if not isa(param, param_type):
+        if not instance_of(param, param_type):
             raise ValueError(
                 f"Unsupported argument types {get_origin(param)}, required {param_type}."
             )
