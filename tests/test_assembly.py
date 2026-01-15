@@ -1820,7 +1820,7 @@ def test_constrain(simple_assy, nested_assy):
             b3.faces("<Z").val(),
             "Point",
             "Point",
-            "Point"
+            "Point",
         )
 
 
