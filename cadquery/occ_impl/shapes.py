@@ -31,7 +31,7 @@ from ..selectors import (
     StringSyntaxSelector,
 )
 
-from ..utils import multimethod
+from ..utils import multimethod, multidispatch
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
