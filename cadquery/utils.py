@@ -4,7 +4,7 @@ from typing import TypeVar, Callable, cast
 from warnings import warn
 from collections import UserDict
 
-from multimethod import multimethod, DispatchError
+from multimethod import multimethod, multidispatch, DispatchError
 
 TCallable = TypeVar("TCallable", bound=Callable)
 
