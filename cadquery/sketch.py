@@ -13,17 +13,17 @@ from typing import (
     cast as tcast,
     Literal,
     overload,
+    get_origin,
 )
 
 from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
 from multimethod import multimethod
-from typish import instance_of, get_type
 
 from .hull import find_hull
 from .selectors import StringSyntaxSelector, Selector
 from .types import Real
-from .utils import get_arity
+from .utils import get_arity, instance_of
 
 from .occ_impl.shapes import (
     Shape,
@@ -117,7 +117,7 @@ class Constraint(object):
 
         if not instance_of(param, param_type):
             raise ValueError(
-                f"Unsupported argument types {get_type(param)}, required {param_type}."
+                f"Unsupported argument types {get_origin(param)}, required {param_type}."
             )
 
         # if all is fine store everything and possibly convert the params
