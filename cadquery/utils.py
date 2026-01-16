@@ -18,7 +18,7 @@ else:
 
     class multidispatch(_multidispatch):
         """
-        Multidsipatch without register.
+        Multidispatch without register.
         """
 
         def __new__(cls, func):
