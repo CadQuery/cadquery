@@ -1,10 +1,45 @@
-from functools import wraps
-from inspect import signature, isbuiltin
-from typing import TypeVar, Callable, cast
+from functools import wraps, update_wrapper
+from inspect import signature, isbuiltin, currentframe
+from typing import TypeVar, Callable, cast, TYPE_CHECKING
 from warnings import warn
 from collections import UserDict
 
-from multimethod import multimethod, multidispatch, DispatchError
+from multimethod import (
+    multimethod,
+    multidispatch as _multidispatch,
+    DispatchError,
+    RETURN,
+)
+
+
+if TYPE_CHECKING:
+    from typing import overload as multidispatch
+else:
+
+    class multidispatch(_multidispatch):
+        """
+        Multidsipatch without register.
+        """
+
+        def __new__(cls, func):
+
+            homonym = currentframe().f_back.f_locals.get(func.__name__)  # type: ignore
+            if isinstance(homonym, multimethod):
+                return homonym
+
+            self = update_wrapper(dict.__new__(cls), func)
+            self.pending = set()
+            self.generics = []
+            self.signatures = {}
+
+            return self
+
+        def __init__(self, func: Callable[..., RETURN]) -> None:
+            if () not in self:
+                self[()] = func
+            else:
+                self.register(func)
+
 
 TCallable = TypeVar("TCallable", bound=Callable)
 

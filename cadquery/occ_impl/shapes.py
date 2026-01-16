@@ -5769,11 +5769,11 @@ def cone(d: Real, h: Real) -> Shape:
     Construct a full solid cone.
     """
 
-    return cone[(float, float, float)](d, 0.0, h)
+    return cone(d, 0.0, h)
 
 
-@cone.register
-def _(d1: Real, d2: Real, h: Real) -> Shape:
+@multidispatch
+def cone(d1: Real, d2: Real, h: Real) -> Shape:
     """
     Construct a partial solid cone.
     """
