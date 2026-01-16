@@ -2449,19 +2449,20 @@ def test_name_geometries(tmpdir):
 
     assy = cq.Assembly()
 
-    assy.add(box(1,1,1), name="box")
-    assy.box.addSubshape(assy.box.obj.faces('>Z'), "top_face")
+    assy.add(box(1, 1, 1), name="box")
+    assy.box.addSubshape(assy.box.obj.faces(">Z"), "top_face")
 
-    assy.add(plane(1,1), name="face").face.addSubshape(assy.face.obj, name="plane_")
+    assy.add(plane(1, 1), name="face").face.addSubshape(assy.face.obj, name="plane_")
 
-    assy.add(segment((0,0), (0,1)), name="edge").edge.addSubshape(assy.edge.obj, name="seg_")
+    assy.add(segment((0, 0), (0, 1)), name="edge").edge.addSubshape(
+        assy.edge.obj, name="seg_"
+    )
 
     with tmpdir:
-        assy.save('out.step', name_geometries=True) 
+        assy.save("out.step", name_geometries=True)
 
-        lines = Path('out.step').lines()
+        lines = Path("out.step").lines()
 
     assert len([l for l in lines if "top_face" in l]) == 2
     assert len([l for l in lines if "plane_" in l]) == 2
     assert len([l for l in lines if "seg_" in l]) == 3
-
