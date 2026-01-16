@@ -26,10 +26,8 @@ from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
 from OCP.BinTools import BinTools_LocationSet
 
-from multimethod import multidispatch
-
 from ..types import Real
-from ..utils import multimethod
+from ..utils import multimethod, multidispatch
 
 TOL = 1e-2
 
@@ -606,7 +604,7 @@ class Plane(object):
         self._setPlaneDir(xDir)
         self.origin = Vector(origin)
 
-    @__init__.register
+    @multidispatch
     def __init__(
         self, loc: "Location",
     ):
