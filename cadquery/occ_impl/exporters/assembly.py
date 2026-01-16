@@ -17,7 +17,7 @@ from OCP.StepShape import (
     StepShape_EdgeCurve,
     StepShape_AdvancedFace,
     StepShape_VertexPoint,
-    StepShape_GeometricCurveSet
+    StepShape_GeometricCurveSet,
 )
 from OCP.StepGeom import StepGeom_SurfaceCurve
 from OCP.IFSelect import IFSelect_ReturnStatus
@@ -144,9 +144,20 @@ def exportAssembly(
                     entity.VertexGeometry().SetName(occ_name)
 
                 elif isinstance(entity, StepShape_GeometricCurveSet):
-                    crv = entity.ElementsValue(1).Curve()
-                    crv.SetName(occ_name)
-                    crv.BasisCurve().SetName(occ_name)
+                    for i in range(entity.NbElements()):
+                        el = entity.ElementsValue(i + 1)
+                        case = el.CaseNum()
+
+                        if case == 1:
+                            pt = el.Point()
+                            pt.SetName(occ_name)
+                        elif case == 2:
+                            crv = el.Curve()
+                            crv.SetName(occ_name)
+                            crv.BasisCurve().SetName(occ_name)
+                        elif case == 3:
+                            srf = el.Surface()
+                            srf.SetName(occ_name)
 
     status = writer.Write(path)
 
