@@ -4,6 +4,8 @@ from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts, style
 
 import cadquery.vis as vis
 
+from cadquery.utils import instance_of
+
 from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
@@ -18,7 +20,6 @@ from vtkmodules.vtkIOImage import vtkPNGWriter
 from pytest import fixture, raises
 from path import Path
 
-from typish import instance_of
 from typing import List
 
 

@@ -12,7 +12,6 @@ from typing import (
     get_args,
 )
 from typing_extensions import Literal, Self
-from typish import instance_of
 from uuid import uuid1 as uuid
 from warnings import warn
 from itertools import chain
@@ -39,7 +38,7 @@ from .occ_impl.exporters.assembly import (
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
 from .selectors import _expression_grammar as _selector_grammar
-from .utils import deprecate, BiDict
+from .utils import deprecate, BiDict, instance_of
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -195,6 +194,7 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        material: Optional[Union[Material, str]] = None,
     ) -> Self:
         """
         Add a subassembly to the current assembly.
