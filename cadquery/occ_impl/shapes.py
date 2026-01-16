@@ -13,6 +13,7 @@ from typing import (
     cast as tcast,
     Literal,
     Protocol,
+    Generator,
 )
 
 from typing_extensions import Self
@@ -5084,7 +5085,7 @@ def _normalize(s: Shape) -> Shape:
     return rv
 
 
-def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
+def _compound_or_shape(s: Union[TopoDS_Shape, Sequence[TopoDS_Shape]]) -> Shape:
     """
     Convert a list of TopoDS_Shape to a Shape or a Compound.
     """
@@ -5226,7 +5227,7 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
 ShapeHistory = Dict[Union[Shape, str], Shape]
 
 
-@multimethod
+@multidispatch
 def edgeOn(
     base: Shape,
     pts: Sequence[Tuple[Real, Real]],
@@ -5250,10 +5251,10 @@ def edgeOn(
     return _compound_or_shape(rv)
 
 
-@edgeOn.register
-def _(
+@multidispatch
+def edgeOn(
     fbase: Shape, edg: Shape, *edgs: Shape, tol: float = 1e-6, N: int = 20,
-):
+) -> Shape:
     """
     Map one or more edges onto a base face in the u,v space.
     """
@@ -5311,7 +5312,7 @@ def wireOn(base: Shape, w: Shape, tol=1e-6, N=20) -> Shape:
     return wire(rvs)
 
 
-@multimethod
+@multidispatch
 def wire(*s: Shape) -> Shape:
     """
     Build wire from edges.
@@ -5325,13 +5326,13 @@ def wire(*s: Shape) -> Shape:
     return _compound_or_shape(builder.Shape())
 
 
-@wire.register
+@multidispatch
 def wire(s: Sequence[Shape]) -> Shape:
 
     return wire(*s)
 
 
-@multimethod
+@multidispatch
 def face(*s: Shape) -> Shape:
     """
     Build face from edges or wires.
@@ -5350,7 +5351,7 @@ def face(*s: Shape) -> Shape:
     return _get_one(_compound_or_shape(rv), "Face")
 
 
-@face.register
+@multidispatch
 def face(s: Sequence[Shape]) -> Shape:
     """
     Build face from a sequence of edges or wires.
@@ -5408,7 +5409,7 @@ def _process_sewing_history(
             history[f] = Face(builder.Modified(f.wrapped))
 
 
-@multimethod
+@multidispatch
 def shell(
     *s: Shape,
     tol: float = 1e-6,
@@ -5438,13 +5439,15 @@ def shell(
     sewed = builder.SewedShape()
     _process_sewing_history(builder, faces, history)
 
+    rv: Union[TopoDS_Shape, TopoDS_Shell]
+
     # for one face sewing will not produce a shell
     if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
         rv = TopoDS_Shell()
 
-        builder = TopoDS_Builder()
-        builder.MakeShell(rv)
-        builder.Add(rv, sewed)
+        builder_topo = TopoDS_Builder()
+        builder_topo.MakeShell(rv)
+        builder_topo.Add(rv, sewed)
 
     else:
         rv = sewed
@@ -5452,7 +5455,7 @@ def shell(
     return _compound_or_shape(rv)
 
 
-@shell.register
+@multidispatch
 def shell(
     s: Sequence[Shape],
     tol: float = 1e-6,
@@ -5467,7 +5470,7 @@ def shell(
     return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history)
 
 
-@multimethod
+@multidispatch
 def solid(
     s1: Shape, *sn: Shape, tol: float = 1e-6, history: Optional[ShapeHistory] = None,
 ) -> Shape:
@@ -5482,17 +5485,17 @@ def solid(
     shells_faces = [f for el in s for f in _get(el, ("Shell", "Face"))]
 
     # if no shells are present, use faces to construct them
-    shells = [el.wrapped for el in shells_faces if el.ShapeType() == "Shell"]
+    shells = [el.wrapped for el in shells_faces if isinstance(el, Shell)]
     if not shells:
-        faces = [el for el in shells_faces]
-        shells = [shell(*faces, tol=tol, history=history).wrapped]
+        faces = [el for el in shells_faces if isinstance(el, Face)]
+        shells = [tcast(TopoDS_Shell, shell(*faces, tol=tol, history=history).wrapped)]
 
     rvs = [builder.SolidFromShell(sh) for sh in shells]
 
     return _compound_or_shape(rvs)
 
 
-@solid.register
+@multidispatch
 def solid(
     s: Sequence[Shape],
     inner: Optional[Sequence[Shape]] = None,
@@ -5504,7 +5507,7 @@ def solid(
     """
 
     builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(shell(*s, tol=tol, history=history).wrapped)
+    builder.Add(_get_one(shell(*s, tol=tol, history=history), "Shell").wrapped)
 
     if inner:
         for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
@@ -5534,8 +5537,8 @@ def compound(*s: Shape) -> Shape:
     return Compound(rv)
 
 
-@compound.register
-def compound(s: Sequence[Shape]) -> Shape:
+@multimethod
+def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Shape:
     """
     Build compound from a sequence of shapes.
     """

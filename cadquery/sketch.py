@@ -1173,12 +1173,25 @@ class Sketch(object):
 
         return rv
 
+    def _selected_faces(self: T) -> Shape:
+        """
+        Helper for returning selected faces.
+        """
+
+        if self._selection:
+            return compound(
+                [el for el in self._selection if isinstance(el, Shape)]
+            ).faces()
+        else:
+            raise ValueError("Nothing is selected")
+
     def add(self: T) -> T:
         """
         Add selection to the underlying faces.
         """
 
-        self._faces += compound(self._selection).faces()
+        if self._selection:
+            self._faces = tcast(Compound, self._faces + self._selected_faces())
 
         return self
 
@@ -1187,7 +1200,8 @@ class Sketch(object):
         Subtract selection from the underlying faces.
         """
 
-        self._faces -= compound(self._selection).faces()
+        if self._selection:
+            self._faces = tcast(Compound, self._faces - self._selected_faces())
 
         return self
 
@@ -1196,7 +1210,7 @@ class Sketch(object):
         Replace the underlying faces with the selection.
         """
 
-        self._faces = compound(self._selection).faces()
+        self._faces = tcast(Compound, self._selected_faces())
 
         return self
 
