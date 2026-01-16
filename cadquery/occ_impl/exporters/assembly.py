@@ -146,7 +146,7 @@ def exportAssembly(
                 elif isinstance(entity, StepShape_GeometricCurveSet):
                     for i in range(entity.NbElements()):
                         el = entity.ElementsValue(i + 1)
-                        case = el.CaseNum()
+                        case = el.CaseNumber()
 
                         if case == 1:
                             pt = el.Point()
