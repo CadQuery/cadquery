@@ -19,7 +19,7 @@ from OCP.StepShape import (
     StepShape_VertexPoint,
     StepShape_GeometricCurveSet,
 )
-from OCP.StepGeom import StepGeom_SurfaceCurve
+from OCP.StepGeom import StepGeom_SurfaceCurve, StepGeom_TrimmedCurve
 from OCP.IFSelect import IFSelect_ReturnStatus
 from OCP.TDF import TDF_Label
 from OCP.TDataStd import TDataStd_Name
@@ -154,7 +154,11 @@ def exportAssembly(
                         elif case == 2:
                             crv = el.Curve()
                             crv.SetName(occ_name)
-                            crv.BasisCurve().SetName(occ_name)
+
+                            # trimmed curves also have a basis curve
+                            if isinstance(crv, StepGeom_TrimmedCurve):
+                                crv.BasisCurve().SetName(occ_name)
+
                         elif case == 3:
                             srf = el.Surface()
                             srf.SetName(occ_name)
