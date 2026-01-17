@@ -65,7 +65,7 @@ def test_step_options(tmpdir):
     then imports that STEP to validate it.
     """
     # Use a temporary directory
-    box_path = os.path.join(tmpdir, "out.step")
+    box_path = os.path.join(tmpdir, "out1.step")
 
     # Simple object to export
     box = Workplane().box(1, 1, 1)
@@ -522,6 +522,10 @@ class TestDxfDocument(BaseTest):
 
 
 class TestExporters(BaseTest):
+    @pytest.fixture(autouse=True)
+    def setup_tmpdir(self, tmpdir):
+        self.tmpdir = tmpdir
+
     def _exportBox(self, eType, stringsToFind, tolerance=0.1, angularTolerance=0.1):
         """
         Exports a test object, and then looks for
@@ -556,14 +560,14 @@ class TestExporters(BaseTest):
     def testSVG(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
-        exporters.export(self._box(), "out.svg")
+        exporters.export(self._box(), str(self.tmpdir / "out1.svg"))
 
     def testSVGOptions(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
         exporters.export(
             self._box(),
-            "out.svg",
+            os.path.join(self.tmpdir, "out2.svg"),
             opt={
                 "width": 100,
                 "height": None,
@@ -581,7 +585,7 @@ class TestExporters(BaseTest):
 
         exporters.export(
             self._box(),
-            "out.svg",
+            str(self.tmpdir / "out3.svg"),
             opt={
                 "width": None,
                 "height": 100,
@@ -600,26 +604,26 @@ class TestExporters(BaseTest):
     def testAMF(self):
         self._exportBox(exporters.ExportTypes.AMF, ["<amf units", "</object>"])
 
-        exporters.export(self._box(), "out.amf")
+        exporters.export(self._box(), str(self.tmpdir / "out.amf"))
 
     def testSTEP(self):
         self._exportBox(exporters.ExportTypes.STEP, ["FILE_SCHEMA"])
 
-        exporters.export(self._box(), "out.step")
+        exporters.export(self._box(), str(self.tmpdir / "out2.step"))
 
     def test3MF(self):
         self._exportBox(
             exporters.ExportTypes.THREEMF,
             ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"],
         )
-        exporters.export(self._box(), "out1.3mf")  # Compound
-        exporters.export(self._box().val(), "out2.3mf")  # Solid
+        exporters.export(self._box(), str(self.tmpdir / "out1.3mf"))  # Compound
+        exporters.export(self._box().val(), str(self.tmpdir / "out2.3mf"))  # Solid
 
         # No zlib support
         import zlib
 
         sys.modules["zlib"] = None
-        exporters.export(self._box(), "out3.3mf")
+        exporters.export(self._box(), str(self.tmpdir / "out3.3mf"))
         sys.modules["zlib"] = zlib
 
     def testTJS(self):
@@ -627,32 +631,32 @@ class TestExporters(BaseTest):
             exporters.ExportTypes.TJS, ["vertices", "formatVersion", "faces"]
         )
 
-        exporters.export(self._box(), "out.tjs")
+        exporters.export(self._box(), str(self.tmpdir / "out.tjs"))
 
     def testVRML(self):
 
-        exporters.export(self._box(), "out.vrml")
+        exporters.export(self._box(), str(self.tmpdir / "out1.vrml"))
 
-        with open("out.vrml") as f:
+        with open(self.tmpdir / "out1.vrml") as f:
             res = f.read(10)
 
         assert res.startswith("#VRML V2.0")
 
         # export again to trigger all paths in the code
-        exporters.export(self._box(), "out.vrml")
+        exporters.export(self._box(), str(self.tmpdir / "out2.vrml"))
 
     def testVTP(self):
 
-        exporters.export(self._box(), "out.vtp")
+        exporters.export(self._box(), str(self.tmpdir / "out.vtp"))
 
-        with open("out.vtp") as f:
+        with open(self.tmpdir / "out.vtp") as f:
             res = f.read(100)
 
         assert res.startswith('<?xml version="1.0"?>\n<VTKFile')
 
     def testDXF(self):
 
-        exporters.export(self._box().section(), "out.dxf")
+        exporters.export(self._box().section(), str(self.tmpdir / "out.dxf"))
 
         s1 = (
             Workplane("XZ")
@@ -663,9 +667,9 @@ class TestExporters(BaseTest):
             .fillet(1)
             .section()
         )
-        exporters.dxf.exportDXF(s1, "res1.dxf")
+        exporters.dxf.exportDXF(s1, str(self.tmpdir / "res1.dxf"))
 
-        s1_i = importers.importDXF("res1.dxf")
+        s1_i = importers.importDXF(str(self.tmpdir / "res1.dxf"))
 
         self.assertAlmostEqual(s1.val().Area(), s1_i.val().Area(), 6)
         self.assertAlmostEqual(s1.edges().size(), s1_i.edges().size())
@@ -674,9 +678,9 @@ class TestExporters(BaseTest):
         s2 = (
             Workplane().spline(pts).close().extrude(1).edges("|Z").fillet(0.1).section()
         )
-        exporters.dxf.exportDXF(s2, "res2.dxf")
+        exporters.dxf.exportDXF(s2, str(self.tmpdir / "res2.dxf"))
 
-        s2_i = importers.importDXF("res2.dxf")
+        s2_i = importers.importDXF(str(self.tmpdir / "res2.dxf"))
 
         self.assertAlmostEqual(s2.val().Area(), s2_i.val().Area(), 6)
         self.assertAlmostEqual(s2.edges().size(), s2_i.edges().size())
@@ -690,9 +694,9 @@ class TestExporters(BaseTest):
             .fillet(0.1)
             .section()
         )
-        exporters.dxf.exportDXF(s3, "res3.dxf")
+        exporters.dxf.exportDXF(s3, str(self.tmpdir / "res3.dxf"))
 
-        s3_i = importers.importDXF("res3.dxf")
+        s3_i = importers.importDXF(str(self.tmpdir / "res3.dxf"))
 
         self.assertAlmostEqual(s3.val().Area(), s3_i.val().Area(), 6)
         self.assertAlmostEqual(s3.edges().size(), s3_i.edges().size())
@@ -701,18 +705,18 @@ class TestExporters(BaseTest):
 
         s4 = Workplane("XY").box(80, 60, 5).cut(cyl).section()
 
-        exporters.dxf.exportDXF(s4, "res4.dxf")
+        exporters.dxf.exportDXF(s4, str(self.tmpdir / "res4.dxf"))
 
-        s4_i = importers.importDXF("res4.dxf")
+        s4_i = importers.importDXF(str(self.tmpdir / "res4.dxf"))
 
         self.assertAlmostEqual(s4.val().Area(), s4_i.val().Area(), 6)
         self.assertAlmostEqual(s4.edges().size(), s4_i.edges().size())
 
         # test periodic spline
         w = Workplane().spline([(1, 1), (2, 2), (3, 2), (3, 1)], periodic=True)
-        exporters.dxf.exportDXF(w, "res5.dxf")
+        exporters.dxf.exportDXF(w, str(self.tmpdir / "res5.dxf"))
 
-        w_i = importers.importDXF("res5.dxf")
+        w_i = importers.importDXF(str(self.tmpdir / "res5.dxf"))
 
         self.assertAlmostEqual(w.val().Length(), w_i.wires().val().Length(), 6)
 
@@ -722,9 +726,9 @@ class TestExporters(BaseTest):
         curve = GeomConvert.CurveToBSplineCurve_s(adaptor.Curve().Curve())
 
         e = Workplane().add(Edge(BRepBuilderAPI_MakeEdge(curve).Shape()))
-        exporters.dxf.exportDXF(e, "res6.dxf")
+        exporters.dxf.exportDXF(e, str(self.tmpdir / "res6.dxf"))
 
-        e_i = importers.importDXF("res6.dxf")
+        e_i = importers.importDXF(str(self.tmpdir / "res6.dxf"))
 
         self.assertAlmostEqual(e.val().Length(), e_i.wires().val().Length(), 6)
 
@@ -739,17 +743,17 @@ class TestExporters(BaseTest):
 
         s5.plane = Plane(origin=(0, 0.1, 0.5), normal=(0.05, 0.05, 1))
         s5 = s5.section()
-        exporters.dxf.exportDXF(s5, "res7.dxf")
+        exporters.dxf.exportDXF(s5, str(self.tmpdir / "res7.dxf"))
 
-        s5_i = importers.importDXF("res7.dxf")
+        s5_i = importers.importDXF(str(self.tmpdir / "res7.dxf"))
 
         self.assertAlmostEqual(s5.val().Area(), s5_i.val().Area(), 4)
 
     def testBIN(self):
 
-        exporters.export(self._box(), "out.bin")
+        exporters.export(self._box(), str(self.tmpdir / "out.bin"))
 
-        s = Shape.importBin("out.bin")
+        s = Shape.importBin(str(self.tmpdir / "out.bin"))
         assert s.isValid()
 
     def testTypeHandling(self):
@@ -882,26 +886,26 @@ def _check_dxf_no_spline(fname):
     return True
 
 
-def test_dxf_approx():
+def test_dxf_approx(tmpdir):
 
     pts = [(0, 0), (0, 0.5), (1, 1)]
     w1 = Workplane().spline(pts).close().extrude(1).edges("|Z").fillet(0.1).section()
-    exporters.exportDXF(w1, "orig.dxf")
+    exporters.exportDXF(w1, str(tmpdir / "orig.dxf"))
 
-    assert _dxf_spline_max_degree("orig.dxf") == 6
+    assert _dxf_spline_max_degree(str(tmpdir / "orig.dxf")) == 6
 
-    exporters.exportDXF(w1, "limit1.dxf", approx="spline")
-    w1_i1 = importers.importDXF("limit1.dxf")
+    exporters.exportDXF(w1, str(tmpdir / "limit1.dxf"), approx="spline")
+    w1_i1 = importers.importDXF(str(tmpdir / "limit1.dxf"))
 
-    assert _dxf_spline_max_degree("limit1.dxf") == 3
+    assert _dxf_spline_max_degree(str(tmpdir / "limit1.dxf")) == 3
 
     assert w1.val().Area() == approx(w1_i1.val().Area(), 1e-3)
     assert w1.edges().size() == w1_i1.edges().size()
 
-    exporters.exportDXF(w1, "limit2.dxf", approx="arc")
-    w1_i2 = importers.importDXF("limit2.dxf")
+    exporters.exportDXF(w1, str(tmpdir / "limit2.dxf"), approx="arc")
+    w1_i2 = importers.importDXF(str(tmpdir / "limit2.dxf"))
 
-    assert _check_dxf_no_spline("limit2.dxf")
+    assert _check_dxf_no_spline(str(tmpdir / "limit2.dxf"))
 
     assert w1.val().Area() == approx(w1_i2.val().Area(), 1e-3)
 
