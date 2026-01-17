@@ -7,7 +7,7 @@ dependencies:
   - ocp=7.8.1
   - vtk=*=qt*
   - pyparsing>=2.1.9
-  - sphinx=9.0.4
+  - sphinx=9.1.0
 #  - sphinx_rtd_theme=3.1.0
   - mypy
   - codecov
@@ -29,6 +29,6 @@ dependencies:
   - trame-vtk
   - pip
   - pip:
-    - sphinx_rtd_theme==3.1.0rc1
+    - sphinx_rtd_theme==3.1.0
     - --editable=.
     - git+https://github.com/cadquery/black.git@cq
