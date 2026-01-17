@@ -15,7 +15,7 @@ def process_docstring_multimethod(app, what, name, obj, options, lines):
         return
 
     fname = name.split(".")[-1]
-    patsig = re.compile(rf"\s*({fname})\(.*\).*")
+    patsig = re.compile(rf"\s*({fname}|_)\(.*\).*")
 
     indent = -1
     sig = False

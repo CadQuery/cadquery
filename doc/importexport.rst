@@ -352,8 +352,8 @@ Exporting STL
 
 The STL exporter is capable of adjusting the quality of the resulting mesh, and accepts the following parameters.
 
-.. automethod::
-    cadquery.occ_impl.shapes.Shape.exportStl
+.. automethod:: cadquery.occ_impl.shapes.Shape.exportStl
+   :no-index:
 
 For more complex objects, some experimentation with ``tolerance`` and ``angularTolerance`` may be required to find the
 optimum values that will produce an acceptable mesh.
