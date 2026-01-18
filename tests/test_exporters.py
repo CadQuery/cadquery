@@ -912,13 +912,7 @@ def test_dxf_text(tmpdir, testdatadir):
         .box(8, 8, 1)
         .faces("<Y")
         .workplane()
-        .text(
-            ",,",
-            10,
-            -1,
-            True,
-            fontPath=str(Path(testdatadir) / "OpenSans-Regular.ttf"),
-        )
+        .text(",,", 10, -1, fontPath=str(Path(testdatadir) / "OpenSans-Regular.ttf"),)
     )
 
     fname = tmpdir.joinpath(f"dxf_text.dxf").resolve()

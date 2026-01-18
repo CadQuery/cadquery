@@ -3844,15 +3844,7 @@ class TestCadQuery(BaseTest):
         obj1 = (
             box.faces(">Z")
             .workplane()
-            .text(
-                "CQ 2.0",
-                0.5,
-                -0.05,
-                cut=True,
-                halign="left",
-                valign="bottom",
-                font="Sans",
-            )
+            .text("CQ 2.0", 0.5, -0.05, halign="left", valign="bottom", font="Sans",)
         )
 
         # combined object should have smaller volume
@@ -3861,7 +3853,7 @@ class TestCadQuery(BaseTest):
         obj2 = (
             box.faces(">Z")
             .workplane()
-            .text("CQ 2.0", 0.5, 0.05, cut=False, combine=True, font="Sans")
+            .text("CQ 2.0", 0.5, 0.05, combine=True, font="Sans")
         )
 
         # combined object should have bigger volume
@@ -3877,7 +3869,6 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                cut=False,
                 combine=False,
                 halign="right",
                 valign="top",
@@ -3896,7 +3887,6 @@ class TestCadQuery(BaseTest):
                 0.5,
                 0.05,
                 fontPath=testFont,
-                cut=False,
                 combine=False,
                 halign="right",
                 valign="top",
@@ -3916,7 +3906,6 @@ class TestCadQuery(BaseTest):
                 0.5,
                 0.05,
                 fontPath=testFont,
-                cut=False,
                 combine=False,
                 halign="right",
                 valign="top",
@@ -3931,9 +3920,7 @@ class TestCadQuery(BaseTest):
         obj1 = (
             box.faces(">Z")
             .workplane()
-            .text(
-                "CQ 2.0", 10, -1, cut=True, halign="left", valign="bottom", font="Sans",
-            )
+            .text("CQ 2.0", 10, -1, halign="left", valign="bottom", font="Sans",)
         )
 
     def testTextAlignment(self):

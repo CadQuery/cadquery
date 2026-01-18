@@ -4235,14 +4235,12 @@ class Workplane(object):
 
         return self.newObject(cleanObjects)
 
-    @deprecate_kwarg_name("cut", "combine='cut'")
     def text(
         self: T,
         txt: str,
         fontsize: float,
         distance: float,
-        cut: bool = True,
-        combine: CombineMode = False,
+        combine: CombineMode = "cut",
         clean: bool = True,
         font: str = "Arial",
         fontPath: Optional[str] = None,
@@ -4257,7 +4255,6 @@ class Workplane(object):
         :param fontsize: size of the font in model units
         :param distance: the distance to extrude or cut, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
-        :param cut: True to cut the resulting solid from the parent solids if found
         :param combine: True or "a" to combine the resulting solid with parent solids if found,
             "cut" or "s" to remove the resulting solid from the parent solids if found.
             False to keep the resulting solid separated from the parent solids.
@@ -4273,10 +4270,12 @@ class Workplane(object):
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
-        *  if combine is true, the value is combined with the context solid if it exists,
+        *  if combine is True, "a", "cut" or "s", the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
 
         Examples::
+
+        Create text::
 
             cq.Workplane().text("CadQuery", 5, 1)
 
@@ -4288,9 +4287,14 @@ class Workplane(object):
 
             cq.Workplane().text("CadQuery", 5, 1, fontPath="/opt/fonts/texgyrecursor-bold.otf")
 
-        Cutting text into a solid::
+        Cut text from a solid (default behavior when context solid exists and combine is not overridden)::
 
             cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, -1.0)
+
+        Add text to a solid::
+
+            cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, 1.0, combine="a")
+
 
         """
         r = Compound.makeText(
@@ -4304,9 +4308,6 @@ class Workplane(object):
             valign=valign,
             position=self.plane,
         )
-
-        if cut:
-            combine = "cut"
 
         return self._combineWithBase(r, combine, clean)
 
