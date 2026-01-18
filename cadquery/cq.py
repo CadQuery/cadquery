@@ -749,25 +749,6 @@ class Workplane(object):
 
         return found
 
-    @deprecate()
-    def findFace(self, searchStack: bool = True, searchParents: bool = True) -> Face:
-        """
-        Finds the first face object in the chain, searching from the current node
-        backwards through parents until one is found.
-
-        :param searchStack: should objects on the stack be searched first.
-        :param searchParents: should parents be searched?
-        :returns: A face or None if no face is found.
-        """
-
-        found = self._findType((Face,), searchStack, searchParents)
-
-        if found is None:
-            message = "on the stack or " if searchStack else ""
-            raise ValueError("Cannot find a face {}in the parent chain".format(message))
-
-        return found
-
     def _selectObjects(
         self: T,
         objType: Any,

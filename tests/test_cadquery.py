@@ -5027,22 +5027,6 @@ class TestCadQuery(BaseTest):
         with raises(ValueError):
             w0.cutBlind(1)
 
-    def testFindFace(self):
-        # if there are no faces to find, should raise ValueError
-        w0 = Workplane()
-        with raises(ValueError):
-            w0.findFace()
-
-        w1 = Workplane().box(1, 1, 1).faces(">Z")
-        self.assertTrue(isinstance(w1.findFace(), Face))
-        with raises(ValueError):
-            w1.findFace(searchStack=False)
-
-        w2 = w1.workplane().circle(0.1).extrude(0.1)
-        self.assertTrue(isinstance(w2.findFace(searchParents=True), Face))
-        with raises(ValueError):
-            w2.findFace(searchParents=False)
-
     def testPopPending(self):
         # test pending edges
         w0 = Workplane().hLine(1)
