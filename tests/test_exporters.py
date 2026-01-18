@@ -526,48 +526,50 @@ class TestExporters(BaseTest):
     def setup_tmpdir(self, tmpdir):
         self.tmpdir = tmpdir
 
-    def _exportBox(self, eType, stringsToFind, tolerance=0.1, angularTolerance=0.1):
+    def _exportBox(
+        self, eType, stringsToFind, fname=None, tolerance=0.1, angularTolerance=0.1
+    ):
         """
         Exports a test object, and then looks for
-        all of the supplied strings to be in the result
-        returns the result in case the case wants to do more checks also
+        all of the supplied strings to be in the result.
+        Returns the result in case additional testing is needed.
         """
         p = Workplane("XY").box(1, 2, 3)
 
-        if eType in (exporters.ExportTypes.AMF, exporters.ExportTypes.THREEMF):
-            s = io.BytesIO()
-        else:
-            s = io.StringIO()
+        if not fname:
+            fname = f"box.{eType.lower()}"
 
-        exporters.exportShape(
-            p, eType, s, tolerance=tolerance, angularTolerance=angularTolerance
+        fpath = self.tmpdir / fname
+
+        exporters.export(
+            p, str(fpath), eType, tolerance=tolerance, angularTolerance=angularTolerance
         )
 
-        result = "{}".format(s.getvalue())
+        if eType in (exporters.ExportTypes.AMF, exporters.ExportTypes.THREEMF):
+            with open(fpath, "rb") as f:
+                result = f.read().decode("utf-8", errors="ignore")
+        else:
+            with open(fpath, "r") as f:
+                result = f.read()
 
         for q in stringsToFind:
             self.assertTrue(result.find(q) > -1)
+
         return result
 
     def _box(self):
 
         return Workplane().box(1, 1, 1)
 
-    def testSTL(self):
-        # New STL tests have been added; Keep this to test deprecated exportShape
-        self._exportBox(exporters.ExportTypes.STL, ["facet normal"])
-
     def testSVG(self):
         self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
 
-        exporters.export(self._box(), str(self.tmpdir / "out1.svg"))
-
     def testSVGOptions(self):
-        self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"])
+        self._exportBox(exporters.ExportTypes.SVG, ["<svg", "<g transform"], "box2.svg")
 
         exporters.export(
             self._box(),
-            os.path.join(self.tmpdir, "out2.svg"),
+            str(self.tmpdir / "out1.svg"),
             opt={
                 "width": 100,
                 "height": None,
@@ -585,7 +587,7 @@ class TestExporters(BaseTest):
 
         exporters.export(
             self._box(),
-            str(self.tmpdir / "out3.svg"),
+            str(self.tmpdir / "out2.svg"),
             opt={
                 "width": None,
                 "height": 100,
@@ -604,34 +606,27 @@ class TestExporters(BaseTest):
     def testAMF(self):
         self._exportBox(exporters.ExportTypes.AMF, ["<amf units", "</object>"])
 
-        exporters.export(self._box(), str(self.tmpdir / "out.amf"))
-
     def testSTEP(self):
         self._exportBox(exporters.ExportTypes.STEP, ["FILE_SCHEMA"])
-
-        exporters.export(self._box(), str(self.tmpdir / "out2.step"))
 
     def test3MF(self):
         self._exportBox(
             exporters.ExportTypes.THREEMF,
             ["3D/3dmodel.model", "[Content_Types].xml", "_rels/.rels"],
         )
-        exporters.export(self._box(), str(self.tmpdir / "out1.3mf"))  # Compound
-        exporters.export(self._box().val(), str(self.tmpdir / "out2.3mf"))  # Solid
+        exporters.export(self._box().val(), str(self.tmpdir / "out1.3mf"))  # Solid
 
         # No zlib support
         import zlib
 
         sys.modules["zlib"] = None
-        exporters.export(self._box(), str(self.tmpdir / "out3.3mf"))
+        exporters.export(self._box(), str(self.tmpdir / "out2.3mf"))
         sys.modules["zlib"] = zlib
 
     def testTJS(self):
         self._exportBox(
             exporters.ExportTypes.TJS, ["vertices", "formatVersion", "faces"]
         )
-
-        exporters.export(self._box(), str(self.tmpdir / "out.tjs"))
 
     def testVRML(self):
 
@@ -759,10 +754,10 @@ class TestExporters(BaseTest):
     def testTypeHandling(self):
 
         with self.assertRaises(ValueError):
-            exporters.export(self._box(), "out.random")
+            exporters.export(self._box(), str(self.tmpdir / "out.random"))
 
         with self.assertRaises(ValueError):
-            exporters.export(self._box(), "out.stl", "STP")
+            exporters.export(self._box(), str(self.tmpdir / "out.stl"), "STP")
 
 
 @pytest.mark.parametrize(
