@@ -150,9 +150,11 @@ class TestCadQuery(BaseTest):
             .vertices()
         )
         result = result.makeCubes(1.0)
-        result = result.combineSolids()
+        result = result.combine()
         self.saveModel(result)
-        self.assertEqual(1, result.solids().size())
+        self.assertEqual(1, result.size())
+        self.assertEqual("Compound", result.val().ShapeType())
+        self.assertEqual(4, result.solids().size())
 
     def testCylinderPlugin(self):
         """
@@ -169,7 +171,7 @@ class TestCadQuery(BaseTest):
             c = Solid.makeCylinder(radius, height, Vector(0, 0, 0))
 
             # combine all the cylinders into a single compound
-            r = self.eachpoint(lambda loc: c.located(loc), True).combineSolids()
+            r = self.eachpoint(lambda loc: c.located(loc), True).union()
             return r
 
         Workplane.cyl = cylinders
@@ -2778,7 +2780,7 @@ class TestCadQuery(BaseTest):
         )
         # self.assertEquals(10,s.faces().size())
         # self.assertEquals(1,s.solids().size())
-        s3 = s.combineSolids(s2)
+        s3 = s + s2
         self.saveModel(s3)
 
     def testTwistedLoft(self):
@@ -2860,7 +2862,7 @@ class TestCadQuery(BaseTest):
         # append the 'good way'
         for oo in o:
             s.add(oo)
-        s = s.combineSolids()
+        s = s.combine()
 
         print("Total time %0.3f" % (time.time() - beginTime))
 

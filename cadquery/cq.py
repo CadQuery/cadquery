@@ -342,46 +342,6 @@ class Workplane(object):
 
         return self.newObject(rv)
 
-    @deprecate()
-    def combineSolids(
-        self, otherCQToCombine: Optional["Workplane"] = None
-    ) -> "Workplane":
-        """
-        !!!DEPRECATED!!! use union()
-        Combines all solids on the current stack, and any context object, together
-        into a single object.
-
-        After the operation, the returned solid is also the context solid.
-
-        :param otherCQToCombine: another CadQuery to combine.
-        :return: a CQ object with the resulting combined solid on the stack.
-
-        Most of the time, both objects will contain a single solid, which is
-        combined and returned on the stack of the new object.
-        """
-        # loop through current stack objects, and combine them
-        toCombine = cast(List[Solid], self.solids().vals())
-
-        if otherCQToCombine:
-            otherSolids = cast(List[Solid], otherCQToCombine.solids().vals())
-            for obj in otherSolids:
-                toCombine.append(obj)
-
-        if len(toCombine) < 1:
-            raise ValueError("Cannot Combine: at least one solid required!")
-
-        # get context solid and we don't want to find our own objects
-        ctxSolid = self._findType((Solid,), searchStack=False, searchParents=True)
-        if ctxSolid is None:
-            ctxSolid = toCombine.pop(0)
-
-        # now combine them all. make sure to save a reference to the ctxSolid pointer!
-        s: Shape = ctxSolid
-        if toCombine:
-            s = s.fuse(*_selectShapes(toCombine))
-
-        return self.newObject([s])
-
     def all(self: T) -> List[T]:
         """
         Return a list of all CQ objects on the stack.
