@@ -921,10 +921,23 @@ def test_add(s3, f):
     # we do not clean, so adding will increase the number of edges
     assert len(s3.map(lambda x: f).add().reset().val().Edges()) == 10
 
+    # check that adding without selection does not raise
+    s3.add()
+
 
 def test_subtract(s3, f):
 
     assert s3.map(lambda x: f).subtract().reset().val().Area() == approx(0.9)
+
+    # check that adding without selection does not raise
+    s3.subtract()
+
+
+def test_selected_faces(s3):
+
+    # check that _selected_faces raises without selection
+    with raises(ValueError):
+        s3._selected_faces()
 
 
 def test_iter(s1):
