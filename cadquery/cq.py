@@ -3494,7 +3494,7 @@ class Workplane(object):
 
     def __truediv__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
         """
-        Syntactic sugar for intersect.
+        Syntactic sugar for split.
 
         Notice that :code:`r = a / b` is equivalent to :code:`r = a.split(b)`.
 
