@@ -4555,8 +4555,11 @@ class TestCadQuery(BaseTest):
 
         assert plate_5.val().isValid()
 
-        plate_6 = Solid.interpPlate(
-            [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], [], thickness=1
+        plate_6 = offset(
+            Face.makeNSidedSurface(
+                polyline((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)).close(), []
+            ),
+            1,
         )
 
         assert plate_6.isValid()
