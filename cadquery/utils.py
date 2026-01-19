@@ -1,11 +1,52 @@
-from functools import wraps
-from inspect import signature, isbuiltin
-from typing import TypeVar, Callable, cast, Any
+from functools import wraps, update_wrapper
+from inspect import signature, isbuiltin, currentframe
+from typing import TypeVar, Callable, cast, TYPE_CHECKING, Any
 from runtype import isa
 from warnings import warn
 from collections import UserDict
 
-from multimethod import multimethod, DispatchError
+from multimethod import (
+    multidispatch as _multidispatch,
+    DispatchError,
+    RETURN,
+)
+
+
+if TYPE_CHECKING:
+    from typing import overload as multidispatch, overload as multimethod
+
+    mypyclassmethod = classmethod
+
+else:
+
+    mypyclassmethod = lambda x: x
+
+    from multimethod import multimethod
+
+    class multidispatch(_multidispatch):
+        """
+        Multidispatch without register.
+        """
+
+        def __new__(cls, func):
+
+            homonym = currentframe().f_back.f_locals.get(func.__name__)  # type: ignore
+            if isinstance(homonym, multimethod):
+                return homonym
+
+            self = update_wrapper(dict.__new__(cls), func)
+            self.pending = set()
+            self.generics = []
+            self.signatures = {}
+
+            return self
+
+        def __init__(self, func: Callable[..., RETURN]) -> None:
+            if () not in self:
+                self[()] = func
+            else:
+                self.register(func)
+
 
 TCallable = TypeVar("TCallable", bound=Callable)
 
@@ -45,13 +86,13 @@ class deprecate:
         return wrapped
 
 
-class cqmultimethod(multimethod):
-    def __call__(self, *args, **kwargs):
+# class cqmultimethod(multimethod):
+#     def __call__(self, *args, **kwargs):
 
-        try:
-            return super().__call__(*args, **kwargs)
-        except DispatchError:
-            return next(iter(self.values()))(*args, **kwargs)
+#         try:
+#             return super().__call__(*args, **kwargs)
+#         except DispatchError:
+#             return next(iter(self.values()))(*args, **kwargs)
 
 
 class deprecate_kwarg_name:

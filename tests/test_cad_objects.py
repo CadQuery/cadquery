@@ -682,7 +682,7 @@ class TestCadObjects(BaseTest):
 
         # Test error handling on creation
         with self.assertRaises(TypeError):
-            Location([0, 0, 1])
+            Location([0, 0, "a"])
         with self.assertRaises(TypeError):
             Location("xy_plane")
 
