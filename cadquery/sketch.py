@@ -171,7 +171,7 @@ class Sketch(object):
 
         self._solve_status = None
 
-    def __iter__(self) -> Iterator[Face]:
+    def __iter__(self) -> Iterator[Face] | Iterator[Edge]:
         """
         Iterate over faces-locations combinations. If not faces are present
         iterate over edges:
@@ -206,7 +206,7 @@ class Sketch(object):
         elif isinstance(b, Sketch):
             res = b
         elif isinstance(b, Shape):
-            res = compound(b.Faces())
+            res = Compound.makeCompound(b.Faces())
         elif isinstance(b, Iterable):
             wires = edgesToWires(tcast(Iterable[Edge], b))
             res = Face.makeFromWires(*(wires[0], wires[1:]))
@@ -542,7 +542,7 @@ class Sketch(object):
         elif mode == "i":
             self._faces = self._faces.intersect(*res)
         elif mode == "r":
-            self._faces = compound(res)
+            self._faces = Compound.makeCompound(res)
         elif mode == "c":
             if not tag:
                 raise ValueError("No tag specified - the geometry will be unreachable")
