@@ -3716,7 +3716,7 @@ class Workplane(object):
 
         for el in self.objects:
             if isinstance(el, Sketch):
-                rv.extend(el)
+                rv.extend(f for f in el if isinstance(f, Face))
             elif isinstance(el, Face):
                 rv.append(el)
             elif isinstance(el, Compound):
@@ -3736,7 +3736,7 @@ class Workplane(object):
 
         for el in self.objects:
             if isinstance(el, Sketch):
-                rv.extend(el)
+                rv.extend(f for f in el if isinstance(f, Face))
             elif isinstance(el, (Face, Vertex)):
                 rv.append(el)
             elif isinstance(el, Compound):
