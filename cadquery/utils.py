@@ -6,7 +6,6 @@ from warnings import warn
 from collections import UserDict
 
 from multimethod import (
-    multimethod,
     multidispatch as _multidispatch,
     DispatchError,
     RETURN,
@@ -14,8 +13,15 @@ from multimethod import (
 
 
 if TYPE_CHECKING:
-    from typing import overload as multidispatch
+    from typing import overload as multidispatch, overload as multimethod
+
+    mypyclassmethod = classmethod
+
 else:
+
+    mypyclassmethod = lambda x: x
+
+    from multimethod import multimethod
 
     class multidispatch(_multidispatch):
         """
@@ -80,13 +86,13 @@ class deprecate:
         return wrapped
 
 
-class cqmultimethod(multimethod):
-    def __call__(self, *args, **kwargs):
+# class cqmultimethod(multimethod):
+#     def __call__(self, *args, **kwargs):
 
-        try:
-            return super().__call__(*args, **kwargs)
-        except DispatchError:
-            return next(iter(self.values()))(*args, **kwargs)
+#         try:
+#             return super().__call__(*args, **kwargs)
+#         except DispatchError:
+#             return next(iter(self.values()))(*args, **kwargs)
 
 
 class deprecate_kwarg_name:
