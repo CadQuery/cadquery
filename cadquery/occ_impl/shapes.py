@@ -32,7 +32,7 @@ from ..selectors import (
     StringSyntaxSelector,
 )
 
-from ..utils import multimethod, multidispatch
+from ..utils import multimethod, multidispatch, mypyclassmethod
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -1158,7 +1158,7 @@ class Shape(object):
 
         return self
 
-    @move.register
+    @multimethod
     def move(
         self: T,
         x: Real = 0,
@@ -1176,7 +1176,7 @@ class Shape(object):
 
         return self
 
-    @move.register
+    @multimethod
     def move(self: T, loc: VectorLike) -> T:
         """
         Apply a VectorLike in relative sense (i.e. update current location) to self.
@@ -1197,16 +1197,16 @@ class Shape(object):
 
         return r
 
-    @moved.register
-    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> T:
+    @multimethod
+    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> "Shape":
         """
         Apply multiple locations.
         """
 
         return self.moved((loc1, loc2) + locs)
 
-    @moved.register
-    def moved(self: T, locs: Sequence[Location]) -> T:
+    @multimethod
+    def moved(self: T, locs: Sequence[Location]) -> "Shape":
         """
         Apply multiple locations.
         """
@@ -1218,7 +1218,7 @@ class Shape(object):
 
         return _compound_or_shape(rv)
 
-    @moved.register
+    @multimethod
     def moved(
         self: T,
         x: Real = 0,
@@ -1234,7 +1234,7 @@ class Shape(object):
 
         return self.moved(Location(x, y, z, rx, ry, rz))
 
-    @moved.register
+    @multimethod
     def moved(self: T, loc: VectorLike) -> T:
         """
         Apply a VectorLike in relative sense to a copy of self.
@@ -1242,8 +1242,10 @@ class Shape(object):
 
         return self.moved(Location(loc))
 
-    @moved.register
-    def moved(self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike) -> T:
+    @multimethod
+    def moved(
+        self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike
+    ) -> "Shape":
         """
         Apply multiple VectorLikes in relative sense to a copy of self.
         """
@@ -1252,8 +1254,8 @@ class Shape(object):
             (Location(loc1), Location(loc2)) + tuple(Location(loc) for loc in locs)
         )
 
-    @moved.register
-    def moved(self: T, loc: Sequence[VectorLike]) -> T:
+    @multimethod
+    def moved(self: T, loc: Sequence[VectorLike]) -> "Shape":
         """
         Apply multiple VectorLikes in relative sense to a copy of self.
         """
@@ -3194,7 +3196,7 @@ class Face(Shape):
 
         return Vector(vn).normalized()
 
-    @normalAt.register
+    @multimethod
     def normalAt(self, u: Real, v: Real) -> Tuple[Vector, Vector]:
         """
         Computes the normal vector at the desired location in the u,v parameter space.
@@ -3529,7 +3531,7 @@ class Face(Shape):
         return Solid(builder.Shape())
 
     @classmethod
-    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> Self:
+    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> "Face":
 
         return f.trim(outer, *inner)
 
@@ -3561,14 +3563,14 @@ class Face(Shape):
 
         return self.__class__(bldr.Shape())
 
-    @trim.register
-    def _(
+    @multimethod
+    def trim(
         self,
         pt1: Tuple[Real, Real],
         pt2: Tuple[Real, Real],
         pt3: Tuple[Real, Real],
         *pts: Tuple[Real, Real],
-    ) -> Self:
+    ) -> "Face":
         """
         Trim the face using a polyline defined in the (u,v) space.
         """
@@ -3601,8 +3603,8 @@ class Face(Shape):
         # construct the final trimmed face
         return self.constructOn(self, Wire(w))
 
-    @trim.register
-    def _(self, outer: Wire, *inner: Wire) -> Self:
+    @multimethod
+    def trim(self, outer: Wire, *inner: Wire) -> Self:
         """
         Trim using wires. The provided wires need to have a pcurve on self.
         """
@@ -3852,7 +3854,7 @@ class Mixin3D(object):
         upToFace: Optional[Face] = None,
         thruAll: bool = True,
         additive: bool = True,
-    ) -> "Solid":
+    ) -> TS:
         """
         Make a prismatic feature (additive or subtractive)
 
@@ -3867,9 +3869,9 @@ class Mixin3D(object):
         sorted_profiles = sortWiresByBuildOrder(profiles)
         faces = [Face.makeFromWires(p[0], p[1:]) for p in sorted_profiles]
 
-        return self.dprism(basis, faces, depth, taper, upToFace, thruAll, additive)
+        return self.dprism(basis, faces, depth, taper, upToFace, thruAll, additive)  # type: ignore
 
-    @dprism.register
+    @multimethod
     def dprism(
         self: TS,
         basis: Optional[Face],
@@ -3879,7 +3881,7 @@ class Mixin3D(object):
         upToFace: Optional[Face] = None,
         thruAll: bool = True,
         additive: bool = True,
-    ) -> "Solid":
+    ) -> TS:
 
         shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
         for face in faces:
@@ -4198,6 +4200,7 @@ class Solid(Shape, Mixin3D):
         extrude_builder.MakeSolid()
         return extrude_builder.Shape()
 
+    @mypyclassmethod
     @multimethod
     def extrudeLinearWithRotation(
         cls,
@@ -4228,15 +4231,19 @@ class Solid(Shape, Mixin3D):
         :param angleDegrees: the angle to rotate through while extruding
         :return: a Solid object
         """
+
+        vecNormal_ = Vector(vecNormal)
+        vecCenter_ = Vector(vecCenter)
+
         # make straight spine
-        straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
+        straight_spine_e = Edge.makeLine(vecCenter_, vecCenter_.add(vecNormal_))
         straight_spine_w = Wire.combine([straight_spine_e,])[0].wrapped
 
         # make an auxiliary spine
-        pitch = 360.0 / angleDegrees * vecNormal.Length
+        pitch = 360.0 / angleDegrees * vecNormal_.Length
         radius = 1
         aux_spine_w = Wire.makeHelix(
-            pitch, vecNormal.Length, radius, center=vecCenter, dir=vecNormal
+            pitch, vecNormal_.Length, radius, center=vecCenter_, dir=vecNormal_
         ).wrapped
 
         # extrude the outer wire
@@ -4257,7 +4264,7 @@ class Solid(Shape, Mixin3D):
         return cls(BRepAlgoAPI_Cut(outer_solid, inner_comp).Shape())
 
     @classmethod
-    @extrudeLinearWithRotation.register
+    @multimethod
     def extrudeLinearWithRotation(
         cls,
         face: Face,
@@ -4270,6 +4277,7 @@ class Solid(Shape, Mixin3D):
             face.outerWire(), face.innerWires(), vecCenter, vecNormal, angleDegrees
         )
 
+    @mypyclassmethod
     @multimethod
     def extrudeLinear(
         cls,
@@ -4309,28 +4317,31 @@ class Solid(Shape, Mixin3D):
         return cls.extrudeLinear(face, vecNormal, taper)
 
     @classmethod
-    @extrudeLinear.register
+    @multimethod
     def extrudeLinear(
         cls, face: Face, vecNormal: VectorLike, taper: Real = 0,
     ) -> "Solid":
 
+        vecNormal_ = Vector(vecNormal)
+
         if taper == 0:
             prism_builder: Any = BRepPrimAPI_MakePrism(
-                face.wrapped, Vector(vecNormal).wrapped, True
+                face.wrapped, vecNormal_.wrapped, True
             )
         else:
             faceNormal = face.normalAt()
-            d = 1 if vecNormal.getAngle(faceNormal) < radians(90.0) else -1
+            d = 1 if vecNormal_.getAngle(faceNormal) < radians(90.0) else -1
 
             # Divided by cos of taper angle to ensure the height chosen by the user is respected
             prism_builder = LocOpe_DPrism(
                 face.wrapped,
-                (d * vecNormal.Length) / cos(radians(taper)),
+                (d * vecNormal_.Length) / cos(radians(taper)),
                 d * radians(taper),
             )
 
         return cls(prism_builder.Shape())
 
+    @mypyclassmethod
     @multimethod
     def revolve(
         cls,
@@ -4367,7 +4378,7 @@ class Solid(Shape, Mixin3D):
         return cls.revolve(face, angleDegrees, axisStart, axisEnd)
 
     @classmethod
-    @revolve.register
+    @multimethod
     def revolve(
         cls, face: Face, angleDegrees: Real, axisStart: VectorLike, axisEnd: VectorLike,
     ) -> "Solid":
@@ -4418,6 +4429,7 @@ class Solid(Shape, Mixin3D):
 
         return rv
 
+    @mypyclassmethod
     @multimethod
     def sweep(
         cls,
@@ -4476,7 +4488,7 @@ class Solid(Shape, Mixin3D):
         return rv
 
     @classmethod
-    @sweep.register
+    @multimethod
     def sweep(
         cls,
         face: Face,
@@ -5016,6 +5028,31 @@ def _get_wire_lists(s: Sequence[Shape]) -> List[List[Union[Wire, Vertex]]]:
     return wire_lists
 
 
+def _get_wire_lists_strict(s: Sequence[Shape]) -> List[List[Wire]]:
+    """
+    Get lists of wires for sweeping.
+    """
+
+    wire_lists: List[List[Wire]] = []
+
+    ix_last = len(s) - 1
+
+    for i, el in enumerate(s):
+        if i == 0:
+
+            wire_lists = [[w] for w in _get_wires(el)]
+
+            # if not faces and vertices were detected return an empty list
+            if not wire_lists:
+                break
+
+        else:
+            for wire_list, w in zip(wire_lists, _get_wires(el)):
+                wire_list.append(w)
+
+    return wire_lists
+
+
 def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
     """
     Get lists of faces for sweeping or lofting. First and last shape can be a vertex.
@@ -5059,6 +5096,31 @@ def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
         isinstance(el[0], Vertex) and isinstance(el[1], Vertex) for el in face_lists
     ):
         return []
+
+    return face_lists
+
+
+def _get_face_lists_strict(s: Sequence[Shape]) -> List[List[Face]]:
+    """
+    Get lists of faces for sweeping. No vertices are allowed.
+    """
+
+    face_lists: List[List[Face]] = []
+
+    ix_last = len(s) - 1
+
+    for i, el in enumerate(s):
+        if i == 0:
+
+            face_lists = [[f] for f in el.Faces()]
+
+            # if not faces were detected return an empty list
+            if not face_lists:
+                break
+
+        else:
+            for face_list, f in zip(face_lists, el.Faces()):
+                face_list.append(f)
 
     return face_lists
 
@@ -5377,8 +5439,11 @@ def faceOn(base: Shape, *fcs: Shape, tol=1e-6, N=20) -> Shape:
             # construct pcurves and trim in one go
             rvs.append(
                 fbase.trim(
-                    wireOn(fbase, fc.outerWire(), tol=tol, N=N),
-                    *(wireOn(fbase, w, tol=tol, N=N) for w in fc.innerWires()),
+                    tcast(Wire, wireOn(fbase, fc.outerWire(), tol=tol, N=N)),
+                    *(
+                        tcast(Wire, wireOn(fbase, w, tol=tol, N=N))
+                        for w in fc.innerWires()
+                    ),
                 )
             )
 
@@ -5558,7 +5623,7 @@ def vertex(x: Real, y: Real, z: Real) -> Shape:
     return _compound_or_shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
 
-@vertex.register
+@multimethod
 def vertex(p: VectorLike):
     """
     Construct a vertex from VectorLike.
@@ -5629,7 +5694,7 @@ def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape
     return _compound_or_shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge())
 
 
-@spline.register
+@multimethod
 def spline(
     pts: Sequence[VectorLike],
     tgts: Optional[Sequence[VectorLike]] = None,
@@ -5645,11 +5710,9 @@ def spline(
     data = _pts_to_harray(pts)
 
     if params is not None:
-        args = (data, _floats_to_harray(params), periodic, tol)
+        builder = GeomAPI_Interpolate(data, _floats_to_harray(params), periodic, tol)
     else:
-        args = (data, periodic, tol)
-
-    builder = GeomAPI_Interpolate(*args)
+        builder = GeomAPI_Interpolate(data, periodic, tol)
 
     if tgts is not None:
         builder.Load(Vector(tgts[0]).wrapped, Vector(tgts[1]).wrapped, scale)
@@ -5696,7 +5759,7 @@ def plane(w: Real, l: Real) -> Shape:
     )
 
 
-@plane.register
+@multimethod
 def plane() -> Shape:
     """
     Construct an infinite planar face.
@@ -5849,7 +5912,7 @@ def text(
     return clean(compound(_compound_or_shape(rv).Faces()).fuse())
 
 
-@text.register
+@multimethod
 def text(
     txt: str,
     size: Real,
@@ -5882,7 +5945,7 @@ def text(
     return _normalize(compound(rv))
 
 
-@text.register
+@multimethod
 def text(
     txt: str,
     size: Real,
@@ -6315,7 +6378,7 @@ def sweep(
     return _compound_or_shape(results)
 
 
-@sweep.register
+@multimethod
 def sweep(
     s: Sequence[Shape], path: Shape, aux: Optional[Shape] = None, cap: bool = False
 ) -> Shape:
@@ -6340,7 +6403,7 @@ def sweep(
         return rv
 
     # try to construct sweeps using faces
-    for el in _get_face_lists(s):
+    for el in _get_face_lists_strict(s):
         # build outer part
         builder = _make_builder()
 
@@ -6377,10 +6440,10 @@ def sweep(
     # if no faces were provided try with wires
     if not results:
         # construct sweeps
-        for el in _get_wire_lists(s):
+        for el2 in _get_wire_lists_strict(s):
             builder = _make_builder()
 
-            for w in el:
+            for w in el2:
                 builder.Add(w.wrapped, False, False)
 
             builder.Build()
@@ -6445,7 +6508,7 @@ def loft(
         # only initialize inner builders if no vertex was encountered
         if not has_vertex:
             # initialize builders
-            for w in el[0].innerWires():
+            for w in tcast(Face, el[0]).innerWires():
                 builder_inner = _make_builder(True)
 
                 builder_inner.AddWire(w.wrapped)
@@ -6453,7 +6516,9 @@ def loft(
 
             # add remaining sections
             for f in el[1:]:
-                for builder_inner, w in zip(builders_inner, f.innerWires()):
+                for builder_inner, w in zip(
+                    builders_inner, tcast(Face, f).innerWires()
+                ):
                     builder_inner.AddWire(w.wrapped)
 
         # actually build
@@ -6468,14 +6533,14 @@ def loft(
 
     # otherwise construct using wires
     if not results:
-        for el in _get_wire_lists(s):
+        for el2 in _get_wire_lists(s):
             builder = _make_builder(cap)
 
-            for w in el:
-                if isinstance(w, Wire):
-                    builder.AddWire(w.wrapped)
+            for w2 in el2:
+                if isinstance(w2, Wire):
+                    builder.AddWire(w2.wrapped)
                 else:
-                    builder.AddVertex(w.wrapped)
+                    builder.AddVertex(w2.wrapped)
 
             builder.Build()
             builder.Check()
@@ -6485,7 +6550,7 @@ def loft(
     return _compound_or_shape(results)
 
 
-@loft.register
+@multimethod
 def loft(
     *s: Shape,
     cap: bool = False,
