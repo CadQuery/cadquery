@@ -275,7 +275,7 @@ class TestCadObjects(BaseTest):
             c = Solid.makeCylinder(radius, height, Vector())
 
             # Combine all the cylinders into a single compound
-            r = self.eachpoint(lambda loc: c.located(loc), True).combineSolids()
+            r = self.eachpoint(lambda loc: c.located(loc), True).union()
 
             return r
 
