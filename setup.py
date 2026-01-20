@@ -30,11 +30,12 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "ezdxf>=1.3.0",
         "multimethod>=1.11,<2.0",
         "nlopt>=2.9.0,<3.0",
-        "typish",
+        "runtype",
         "casadi",
         "path",
         "trame",
         "trame-vtk",
+        "pyparsing>=3.0.0",
     ]
 
 

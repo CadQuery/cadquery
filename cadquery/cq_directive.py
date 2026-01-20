@@ -54,6 +54,7 @@ const manips = {
     roll: vtk.Interaction.Manipulators.vtkMouseCameraTrackballRollManipulator.newInstance(),
 };
 
+manips.rot.setUseFocalPointAsCenterOfRotation(true);
 manips.zoom1.setControl(true);
 manips.zoom2.setButton(3);
 manips.roll.setShift(true);

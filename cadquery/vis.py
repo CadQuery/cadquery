@@ -14,8 +14,6 @@ from .occ_impl.assembly import _loc2vtk, toVTKAssy
 
 from typing import Union, Any, List, Tuple, Iterable, cast, Optional
 
-from typish import instance_of
-
 from OCP.TopoDS import TopoDS_Shape
 from OCP.Geom import Geom_BSplineSurface
 
@@ -39,6 +37,7 @@ from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkPolyData
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkIOImage import vtkPNGWriter
 
+from .utils import instance_of
 
 DEFAULT_COLOR = (1, 0.8, 0)
 DEFAULT_EDGE_COLOR = (0, 0, 0)
@@ -529,6 +528,8 @@ def show(
     camera.Zoom(zoom)
     if clipping_range:
         camera.SetClippingRange(*clipping_range)
+    else:
+        renderer.ResetCameraClippingRange()
 
     # initialize and set size
     inter.Initialize()

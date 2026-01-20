@@ -161,14 +161,13 @@ Plugin Example
 
 This ultra simple plugin makes cubes of the specified size for each stack point.
 
-(The cubes are off-center because the boxes have their lower left corner at the reference points.)
-
 .. cadquery::
 
-        from cadquery.occ_impl.shapes import box
+        import cadquery as cq
+        from cadquery.func import box
 
         def makeCubes(self, length):
-            # self refers to the CQ or Workplane object
+            # self refers to the Workplane object
 
             # inner method that creates a cube
             def _singleCube(loc):
@@ -192,7 +191,7 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
             .rect(4.0, 4.0, forConstruction=True)
             .vertices()
             .makeCubes(1.0)
-            .combineSolids()
+            .combine()
         )
 
 
@@ -214,7 +213,8 @@ Here is the same plugin rewritten using one of those methods.
 
 .. cadquery::
 
-        from cadquery.occ_impl.shapes import box
+        import cadquery as cq
+        from cadquery.func import box
 
         def makeCubes(length):
 
@@ -233,7 +233,7 @@ Here is the same plugin rewritten using one of those methods.
             .rect(4.0, 4.0, forConstruction=True)
             .vertices()
             .invoke(makeCubes(1.0))
-            .combineSolids()
+            .combine()
         )
 
 Such an approach is more friendly for auto-completion and static analysis tools.

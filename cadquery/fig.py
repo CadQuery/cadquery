@@ -11,8 +11,6 @@ from itertools import chain
 from webbrowser import open_new_tab
 from uuid import uuid1
 
-from typish import instance_of
-
 from trame.app import get_server
 from trame.app.core import Server
 from trame.widgets import vtk as vtk_widgets, client, trame, vuetify3 as v3
@@ -32,6 +30,8 @@ from vtkmodules.vtkInteractionWidgets import vtkOrientationMarkerWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
+
+from .utils import instance_of
 
 FULL_SCREEN = "position:absolute; left:0; top:0; width:100vw; height:100vh;"
 
