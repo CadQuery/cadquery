@@ -17,7 +17,6 @@ from trame.widgets import vtk as vtk_widgets, client, trame, vuetify3 as v3
 from trame.ui.vuetify3 import SinglePageWithDrawerLayout
 from . import Shape
 from .vis import style, Showable, ShapeLike, _split_showables
-from .utils import BiDict
 
 from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
@@ -43,7 +42,7 @@ class Figure:
     win: vtkRenderWindow
     ren: vtkRenderer
     view: vtk_widgets.VtkRemoteView
-    shapes: dict[ShapeLike, list[vtkProp3D]]
+    shapes: dict[ShapeLike, str]
     actors: dict[str, tuple[vtkProp3D, ...]]
     loop: AbstractEventLoop
     thread: Thread
@@ -107,8 +106,8 @@ class Figure:
         self.win = win
         self.ren = renderer
 
-        self.shapes = BiDict()
-        self.actors = BiDict()
+        self.shapes = {}
+        self.actors = {}
         self.active = None
 
         # server
