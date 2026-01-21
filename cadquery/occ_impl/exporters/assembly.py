@@ -12,6 +12,14 @@ from vtkmodules.vtkRenderingCore import vtkRenderWindow
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_StepModelType
+from OCP.STEPConstruct import STEPConstruct
+from OCP.StepShape import (
+    StepShape_EdgeCurve,
+    StepShape_AdvancedFace,
+    StepShape_VertexPoint,
+    StepShape_GeometricCurveSet,
+)
+from OCP.StepGeom import StepGeom_SurfaceCurve, StepGeom_TrimmedCurve
 from OCP.IFSelect import IFSelect_ReturnStatus
 from OCP.TDF import TDF_Label
 from OCP.TDataStd import TDataStd_Name
@@ -28,7 +36,11 @@ from OCP.BinXCAFDrivers import (
 )
 
 
-from OCP.TCollection import TCollection_ExtendedString, TCollection_AsciiString
+from OCP.TCollection import (
+    TCollection_ExtendedString,
+    TCollection_AsciiString,
+    TCollection_HAsciiString,
+)
 from OCP.PCDM import PCDM_StoreStatus
 from OCP.RWGltf import RWGltf_CafWriter
 from OCP.TColStd import TColStd_IndexedDataMapOfStringString
@@ -76,6 +88,8 @@ def exportAssembly(
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
     :type precision_mode: int
+    :param name_geometries: Propagate subshape names to geometric STEP entities.
+    :type name_geometries: bool
     """
 
     # Handle the extra settings for the STEP export
@@ -85,6 +99,7 @@ def exportAssembly(
     precision_mode = kwargs["precision_mode"] if "precision_mode" in kwargs else 0
     fuzzy_tol = kwargs["fuzzy_tol"] if "fuzzy_tol" in kwargs else None
     glue = kwargs["glue"] if "glue" in kwargs else False
+    name_geometries = kwargs.get("name_geometries", False)
 
     # Handle the doc differently based on which mode we are using
     if mode == "fused":
@@ -101,6 +116,52 @@ def exportAssembly(
     Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
     Interface_Static.SetIVal_s("write.stepcaf.subshapes.name", 1)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
+
+    if name_geometries:
+        finder = session.TransferWriter().FinderProcess()
+
+        # iterate over all named subshapes
+        for child in assy.objects.values():
+            for subshape, name in child._subshape_names.items():
+                # find the topological STEP entity
+                entity = STEPConstruct.FindEntity_s(finder, subshape.wrapped)
+
+                occ_name = TCollection_HAsciiString(name)
+
+                # rename the underlying geometric entities
+                if isinstance(entity, StepShape_AdvancedFace):
+                    entity.FaceGeometry().SetName(occ_name)
+
+                elif isinstance(entity, StepShape_EdgeCurve):
+                    geom = entity.EdgeGeometry()
+                    geom.SetName(occ_name)
+
+                    # in some cases additianl levels of geometries are present
+                    if isinstance(geom, StepGeom_SurfaceCurve):
+                        geom.Curve3d().SetName(occ_name)
+
+                elif isinstance(entity, StepShape_VertexPoint):
+                    entity.VertexGeometry().SetName(occ_name)
+
+                elif isinstance(entity, StepShape_GeometricCurveSet):
+                    for i in range(entity.NbElements()):
+                        el = entity.ElementsValue(i + 1)
+                        case = el.CaseNumber()
+
+                        if case == 1:
+                            pt = el.Point()
+                            pt.SetName(occ_name)
+                        elif case == 2:
+                            crv = el.Curve()
+                            crv.SetName(occ_name)
+
+                            # trimmed curves also have a basis curve
+                            if isinstance(crv, StepGeom_TrimmedCurve):
+                                crv.BasisCurve().SetName(occ_name)
+
+                        elif case == 3:
+                            srf = el.Surface()
+                            srf.SetName(occ_name)
 
     status = writer.Write(path)
 
