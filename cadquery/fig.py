@@ -17,6 +17,7 @@ from trame.widgets import vtk as vtk_widgets, client, trame, vuetify3 as v3
 from trame.ui.vuetify3 import SinglePageWithDrawerLayout
 from . import Shape
 from .vis import style, Showable, ShapeLike, _split_showables
+from .utils import BiDict
 
 from vtkmodules.vtkRenderingCore import (
     vtkRenderer,
@@ -106,8 +107,8 @@ class Figure:
         self.win = win
         self.ren = renderer
 
-        self.shapes = {}
-        self.actors = {}
+        self.shapes = BiDict()
+        self.actors = BiDict()
         self.active = None
 
         # server
@@ -258,6 +259,9 @@ class Figure:
         Show objects.
         """
 
+        # genreate an uuid
+        uuid = str(uuid1())
+
         # split objects
         shapes, vecs, locs, props = _split_showables(showables)
 
@@ -273,7 +277,7 @@ class Figure:
                 kwargs["markersize"] = 0
 
             actors = style(s, **kwargs)
-            self.shapes[s] = actors
+            self.shapes[s] = uuid
 
             for actor in actors:
                 self.ren.AddActor(actor)
@@ -304,7 +308,6 @@ class Figure:
             self.empty = False
 
         # update actors
-        uuid = str(uuid1())
         self.state.actors.append(
             {
                 "id": uuid,
@@ -382,18 +385,29 @@ class Figure:
             self.active = None
 
         for s in shapes:
+            # handle shapes
             if instance_of(s, ShapeLike):
-                for a in self.shapes[s]:
+                uuid = self.shapes[s]
+                for a in self.actors.pop(uuid):
                     self.ren.RemoveActor(a)
 
                 del self.shapes[s]
+
+            # handle other actors
             else:
-                for k, v in self.actors.items():
-                    if s in v:
-                        for el in self.actors.pop(k):
+                for uuid, acts in self.actors.items():
+                    if s in acts:
+                        for el in self.actors.pop(uuid):
                             self.ren.RemoveActor(el)
 
                         break
+
+            # remove the id==k row from actors
+            for ix, el in enumerate(self.state.actors):
+                if el["id"] == uuid:
+                    break
+
+            self.state.actors.pop(ix)
 
         self._update_state("actors")
         self.view.update()
