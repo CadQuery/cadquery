@@ -22,9 +22,12 @@ any valid OCP script will execute just fine. For example, this simple CadQuery s
 
 is actually equivalent to::
 
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
+    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt
+
     return cq.Shape.cast(
         BRepPrimAPI_MakeBox(
-            gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0
+            gp_Ax2(gp_Pnt(-0.5, -1.0, -1.5), gp_Dir(0, 0, 1)), 1.0, 2.0, 3.0
         ).Shape()
     )
 
@@ -33,10 +36,10 @@ two. For example, consider this script, which creates a OCP box, but then uses C
 
     box = cq.Shape.cast(
         BRepPrimAPI_MakeBox(
-            gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0
+            gp_Ax2(gp_Pnt(-0.5, -1.0, -1.5), gp_Dir(0, 0, 1)), 1.0, 2.0, 3.0
         ).Shape()
     )
-    cq = Workplane(box).faces(">Z").size()  # returns 6
+    return box.faces(">X").Area()      # return 6.0
 
 
 Extending CadQuery: Plugins
