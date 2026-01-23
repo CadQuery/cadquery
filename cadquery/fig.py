@@ -31,7 +31,7 @@ from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 
-from .utils import instance_of
+from .utils import instance_of, BiDict
 
 FULL_SCREEN = "position:absolute; left:0; top:0; width:100vw; height:100vh;"
 
@@ -42,8 +42,8 @@ class Figure:
     win: vtkRenderWindow
     ren: vtkRenderer
     view: vtk_widgets.VtkRemoteView
-    shapes: dict[ShapeLike, str]
-    actors: dict[str, tuple[vtkProp3D, ...]]
+    shapes: BiDict[str, ShapeLike]
+    actors: BiDict[str, tuple[vtkProp3D, ...]]
     loop: AbstractEventLoop
     thread: Thread
     empty: bool
@@ -106,8 +106,8 @@ class Figure:
         self.win = win
         self.ren = renderer
 
-        self.shapes = {}
-        self.actors = {}
+        self.shapes = BiDict()
+        self.actors = BiDict()
         self.active = None
 
         # server
@@ -276,7 +276,7 @@ class Figure:
                 kwargs["markersize"] = 0
 
             actors = style(s, **kwargs)
-            self.shapes[s] = uuid
+            self.shapes[uuid] = s
 
             for actor in actors:
                 self.ren.AddActor(actor)
@@ -386,11 +386,14 @@ class Figure:
         for s in shapes:
             # handle shapes
             if instance_of(s, ShapeLike):
-                uuid = self.shapes[s]
-                for a in self.actors.pop(uuid):
-                    self.ren.RemoveActor(a)
+                uuids = tuple(self.shapes.inv[s])
+                for uuid in uuids:
+                    for a in self.actors.pop(uuid):
+                        self.ren.RemoveActor(a)
 
-                del self.shapes[s]
+                    del self.shapes[
+                        uuid
+                    ]  # NB this will remove all uuids pointing to the shape
 
             # handle other actors
             else:
@@ -401,12 +404,13 @@ class Figure:
 
                         break
 
-            # remove the id==k row from actors
-            for ix, el in enumerate(self.state.actors):
-                if el["id"] == uuid:
-                    break
+            # remove the id==k rows from actors
+            new_state = []
+            for el in self.state.actors:
+                if el["id"] not in uuids:
+                    new_state.append(el)
 
-            self.state.actors.pop(ix)
+            self.state.actors = new_state
 
         self._update_state("actors")
         self.view.update()
@@ -433,6 +437,9 @@ class Figure:
                 self.ren.RemoveActor(act)
 
             self.actors.pop(self.active)
+
+            # update shapes if needed
+            self.shapes.pop(self.active)
 
             # update corresponding state
             for i, el in enumerate(self.state.actors):

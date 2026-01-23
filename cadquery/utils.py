@@ -118,6 +118,25 @@ class BiDict(UserDict[K, V]):
 
         return self._inv
 
+    def clear(self):
+
+        super().clear()
+        self._inv.clear()
+
+    def __delitem__(self, k: K):
+
+        v = self.data.pop(k)
+
+        # if needed in one-many cases
+        if v in self._inv:
+            # remove the inverse mapping
+            inv = self._inv[v]
+            inv.remove(k)
+
+            # if needed remove the item completely
+            if not inv:
+                del self._inv[v]
+
 
 def instance_of(obj: object, *args: object) -> bool:
     """
