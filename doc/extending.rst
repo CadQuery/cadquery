@@ -34,12 +34,12 @@ is actually equivalent to::
 As long as you return a valid OCP Shape, you can use any OCP methods you like. You can even mix and match the
 two. For example, consider this script, which creates a OCP box, but then uses CadQuery to select its faces::
 
-    box = cq.Shape.cast(
+    box1 = cq.Shape.cast(
         BRepPrimAPI_MakeBox(
             gp_Ax2(gp_Pnt(-0.5, -1.0, -1.5), gp_Dir(0, 0, 1)), 1.0, 2.0, 3.0
         ).Shape()
     )
-    return box.faces(">X").Area()      # return 6.0
+    return box1.faces(">X").Area()      # return 6.0
 
 
 Extending CadQuery: Plugins
