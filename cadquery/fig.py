@@ -402,6 +402,9 @@ class Figure:
                         for el in self.actors.pop(uuid):
                             self.ren.RemoveActor(el)
 
+                        # store the uuid for state update
+                        uuids = [uuid]
+
                         break
 
             # remove the id==k rows from actors
