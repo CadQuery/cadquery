@@ -27,7 +27,7 @@ def test_fig(fig):
     loc = Location()
     act = vtkAxesActor()
 
-    showables = (s, wp, assy, sk, ctrl_pts, v, loc, act)
+    showables = (s, s.copy(), wp, assy, sk, ctrl_pts, v, loc, act)
 
     # individual showables
     fig.show(*showables)
@@ -35,12 +35,19 @@ def test_fig(fig):
     # fit
     fig.fit()
 
+    # views
+    fig.iso()
+    fig.up()
+    fig.front()
+    fig.side()
+
     # clear
     fig.clear()
 
     # clear with an arg
     for el in (s, wp, assy, sk, ctrl_pts):
-        fig.show(el).clear(el)
+        fig.clear().show(*showables)
+        fig.clear(el)
 
     # lists of showables
     fig.show(s.Edges()).show([Vector(), Vector(0, 1)])
