@@ -226,8 +226,9 @@ class Color(object):
             self.wrapped = Quantity_ColorRGBA()
         elif len(args) == 1:
             self.wrapped = Quantity_ColorRGBA()
-            exists = (Quantity_ColorRGBA.ColorFromName_s(args[0], self.wrapped) or
-                      Quantity_ColorRGBA.ColorFromHex_s(args[0], self.wrapped))
+            exists = Quantity_ColorRGBA.ColorFromName_s(
+                args[0], self.wrapped
+            ) or Quantity_ColorRGBA.ColorFromHex_s(args[0], self.wrapped)
             if not exists:
                 raise ValueError(f"Unknown color name: {args[0]}")
         elif len(args) == 3:
