@@ -293,6 +293,10 @@ class Figure:
 
             new_actors.append(*pts)
 
+        # if nothing to show return early
+        if not new_actors:
+            return self
+
         # store to enable pop
         self.last = (shapes, axs, pts if vecs else None, props)
 
@@ -433,7 +437,7 @@ class Figure:
     async def _pop(self):
 
         if self.active is None:
-            self.active = self.actors[-1]["id"]
+            self.active = self.state.actors[-1]["id"]
 
         if self.active in self.actors:
             for act in self.actors[self.active]:
@@ -452,9 +456,6 @@ class Figure:
                     break
 
             self.active = None
-
-        else:
-            return
 
         self.view.update()
 
