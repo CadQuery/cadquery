@@ -27,6 +27,8 @@ dependencies:
   - appdirs
   - trame
   - trame-vtk
+  - trame-components
+  - trame-vuetify
   - pip
   - pip:
     - sphinx_rtd_theme==3.1.0
