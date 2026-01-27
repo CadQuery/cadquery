@@ -47,6 +47,7 @@ class Figure:
     loop: AbstractEventLoop
     thread: Thread
     empty: bool
+    active: Optional[str]
     last: Optional[
         tuple[
             list[ShapeLike], list[vtkProp3D], Optional[list[vtkProp3D]], list[vtkProp3D]
@@ -468,7 +469,7 @@ class Figure:
 
         return self
 
-    def onVisibility(self, event):
+    def onVisibility(self, event: dict):
 
         actors = self.actors[event["id"]]
 
@@ -477,7 +478,7 @@ class Figure:
 
         self.view.update()
 
-    def onSelection(self, event):
+    def onSelection(self, event: list[str]):
 
         self.state.selected = event
         self.active = event[0]
