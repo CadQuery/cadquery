@@ -644,6 +644,33 @@ def test_color():
     assert c4.wrapped.GetRGB().Green() == pytest.approx(0.2)
     assert c4.wrapped.Alpha() == 0.5
 
+    # "#FF0" for short sRGB color, "#FF0F" for short sRGBA color, "#FFFF00" for RGB color, or "#FFFF00FF" for RGBA color
+    c5 = cq.Color("#FF0")
+    assert c5.wrapped.GetRGB().Red() == 1
+    assert c5.wrapped.GetRGB().Green() == 1
+    assert c5.wrapped.GetRGB().Blue() == 0
+    with pytest.raises(AttributeError):
+        c5.wrapped.GetRGB().Alpha()
+
+    c6 = cq.Color("#FF0F")
+    assert c6.wrapped.GetRGB().Red() == 1
+    assert c6.wrapped.GetRGB().Green() == 1
+    assert c6.wrapped.GetRGB().Blue() == 0
+    assert c6.wrapped.Alpha() == 1.0
+
+    c7 = cq.Color("#FFFF00")
+    assert c7.wrapped.GetRGB().Red() == 1
+    assert c7.wrapped.GetRGB().Green() == 1
+    assert c7.wrapped.GetRGB().Blue() == 0
+    with pytest.raises(AttributeError):
+        c7.wrapped.GetRGB().Alpha()
+
+    c8 = cq.Color("#FFFF00FF")
+    assert c8.wrapped.GetRGB().Red() == 1
+    assert c8.wrapped.GetRGB().Green() == 1
+    assert c8.wrapped.GetRGB().Blue() == 0
+    assert c8.wrapped.Alpha() == 1.0
+
     with pytest.raises(ValueError):
         cq.Color("?????")
 
