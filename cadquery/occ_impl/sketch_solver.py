@@ -31,6 +31,7 @@ ConstraintKind = Literal[
     "Orientation",
     "ArcAngle",
     "Equal",
+    "EqualRadius",
 ]
 
 ConstraintInvariants = {  # (arity, geometry types, param type, conversion func)
@@ -49,6 +50,7 @@ ConstraintInvariants = {  # (arity, geometry types, param type, conversion func)
     "Orientation": (1, ("LINE",), Tuple[Real, Real], None),
     "ArcAngle": (1, ("CIRCLE",), Real, radians),
     "Equal": (2, ("LINE",), NoneType, None),
+    "EqualRadius": (2, ("CIRCLE",), NoneType, None),
 }
 
 Constraint = Tuple[Tuple[int, Optional[int]], ConstraintKind, Optional[Any]]
@@ -225,6 +227,9 @@ def equal_cost(x1, t1, x10, x2, t2, x20, val):
     length2 = norm(x2[2:] - x2[:2]) if t2 == "LINE" else norm(x2[2] * x2[4])
     return length1 - length2
 
+def equal_radius_cost(x1, t1, x10, x2, t2, x20, val):
+    return x1[2] - x2[2]
+
 # dictionary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
     Fixed=fixed_cost,
@@ -237,6 +242,7 @@ costs: Dict[str, Callable[..., float]] = dict(
     Orientation=orientation_cost,
     ArcAngle=arc_angle_cost,
     Equal=equal_cost,
+    EqualRadius=equal_radius_cost
 )
 
 

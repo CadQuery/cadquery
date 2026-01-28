@@ -2,7 +2,7 @@ import os
 
 from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
-from cadquery import Edge, Vertex
+from cadquery import Edge, Vertex, exporters
 
 from pytest import approx, raises, fixture
 from math import pi, sqrt
@@ -781,6 +781,71 @@ def test_constraint_solver():
     assert s8._tags["hsegment2"][0].Length() == approx(2)
 
     assert s8._faces.Area() == approx(4)
+
+    s9 = (
+        Sketch()
+        .segment((1, 0), (9, 0), "segment1")
+        .arc((9, 0.1), (10, 1), (9, 2), "arc1")
+        .segment((10, 1), (10, 3.9), "segment2")
+        .arc((10, 4), (9, 5), (8, 4), "arc2")
+        .segment((9, 5), (1, 5), "segment3")
+        .arc((1, 5), (0, 4.4), (1, 2.5), "arc3")
+        .segment((0, 4), (0.3, 1.1), "segment4")
+        .arc((0, 1), (1, 0), (2, 1), "arc4")
+    )
+
+    s9.constrain("segment1", "Orientation", (1, 0))
+    s9.constrain("segment1", "FixedPoint", 0)
+
+    s9.constrain("segment1", "arc1", "Coincident", None)
+    s9.constrain("arc1", "segment2", "Coincident", None)
+    s9.constrain("segment2", "arc2", "Coincident", None)
+    s9.constrain("arc2", "segment3", "Coincident", None)
+    s9.constrain("segment3", "arc3", "Coincident", None)
+    s9.constrain("arc3", "segment4", "Coincident", None)
+    s9.constrain("segment4", "arc4", "Coincident", None)
+    s9.constrain("arc4", "segment1", "Coincident", None)
+
+
+    s9.constrain("segment1", "arc1", "Angle", 0)
+    s9.constrain("arc1", "segment2", "Angle", 0)
+    s9.constrain("segment2", "arc2", "Angle", 0)
+    s9.constrain("arc2", "segment3", "Angle", 0)
+    s9.constrain("segment3", "arc3", "Angle", 0)
+    s9.constrain("arc3", "segment4", "Angle", 0)
+    s9.constrain("segment4", "arc4", "Angle", 0)
+    s9.constrain("arc4", "segment1", "Angle", 0)
+    
+    s9.constrain("segment1", "segment3", "Angle", 180)
+    s9.constrain("segment2", "segment4", "Angle", 180)
+    s9.constrain("segment2", "segment1", "Angle", 90)
+
+    s9.constrain("arc1", "Radius", 1)
+    s9.constrain("segment1", "Length", 8)
+    s9.constrain("segment2", "Length", 3)
+
+    s9.constrain("arc1", "arc2", "EqualRadius", None)
+    s9.constrain("arc2", "arc3", "EqualRadius", None)
+    s9.constrain("arc3", "arc4", "EqualRadius", None)
+
+    s9.solve()
+    assert s9._solve_status["status"] == 4
+
+    s9.assemble()
+
+    exporters.exportDXF(s9, '/tmp/s9.dxf')
+    assert s9._faces.isValid()
+
+    assert s9._tags["segment1"][0].Length() == approx(8)
+    assert s9._tags["segment3"][0].Length() == approx(8)
+    assert s9._tags["segment2"][0].Length() == approx(3)
+    assert s9._tags["segment4"][0].Length() == approx(3)
+    assert s9._tags["arc1"][0].radius() == approx(1)
+    assert s9._tags["arc2"][0].radius() == approx(1)
+    assert s9._tags["arc3"][0].radius() == approx(1)
+    assert s9._tags["arc4"][0].radius() == approx(1)
+
+
 
 def test_dxf_import():
 
