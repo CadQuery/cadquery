@@ -745,6 +745,43 @@ def test_constraint_solver():
     assert s7._faces.isValid()
 
 
+    w = 1.5
+    s8 = (
+        Sketch()
+        .segment((0, 0), (0, 1.88), "vsegment1")
+        .segment((0, 2), (w, 2), "hsegment2")
+        .segment((w, 1.6), (w, 0), "vsegment2")
+        .segment((w, 0), (0, 0), "hsegment1")
+    )
+
+    s8.constrain("vsegment1", "FixedPoint", 0)
+    s8.constrain("vsegment1", "hsegment2", "Coincident", None)
+    s8.constrain("hsegment2", "vsegment2", "Coincident", None)
+    s8.constrain("vsegment2", "hsegment1", "Coincident", None)
+    s8.constrain("hsegment1", "vsegment1", "Coincident", None)
+    s8.constrain("hsegment1", "vsegment1", "Angle", 90)
+    s8.constrain("hsegment2", "vsegment2", "Angle", 90)
+
+    s8.constrain("vsegment1", "hsegment2", "Angle", 90)
+
+    s8.constrain("vsegment1", "Orientation", (0, 1))
+    s8.constrain("hsegment1", "vsegment1", "Equal", None)
+    s8.constrain("vsegment1", "Length", 2)
+    
+    s8.solve()
+    assert s8._solve_status["status"] == 4
+
+    s8.assemble()
+
+    assert s8._faces.isValid()
+
+    assert s8._tags["vsegment1"][0].Length() == approx(2)
+    assert s8._tags["hsegment1"][0].Length() == approx(2)
+    assert s8._tags["vsegment2"][0].Length() == approx(2)
+    assert s8._tags["hsegment2"][0].Length() == approx(2)
+
+    assert s8._faces.Area() == approx(4)
+
 def test_dxf_import():
 
     filename = os.path.join(testdataDir, "gear.dxf")
