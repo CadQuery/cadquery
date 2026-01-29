@@ -5042,7 +5042,7 @@ def _get_wire_lists_strict(s: Sequence[Shape]) -> List[List[Wire]]:
 
             wire_lists = [[w] for w in _get_wires(el)]
 
-            # if not faces and vertices were detected return an empty list
+            # if no faces and vertices were detected return an empty list
             if not wire_lists:
                 break
 
@@ -5114,7 +5114,7 @@ def _get_face_lists_strict(s: Sequence[Shape]) -> List[List[Face]]:
 
             face_lists = [[f] for f in el.Faces()]
 
-            # if not faces were detected return an empty list
+            # if no faces were detected return an empty list
             if not face_lists:
                 break
 

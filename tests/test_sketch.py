@@ -929,7 +929,7 @@ def test_subtract(s3, f):
 
     assert s3.map(lambda x: f).subtract().reset().val().Area() == approx(0.9)
 
-    # check that adding without selection does not raise
+    # check that subtract without selection does not raise
     s3.subtract()
 
 

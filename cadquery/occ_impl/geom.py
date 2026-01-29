@@ -27,7 +27,7 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.BinTools import BinTools_LocationSet
 
 from ..types import Real
-from ..utils import multimethod, multidispatch
+from ..utils import multidispatch
 
 TOL = 1e-2
 
