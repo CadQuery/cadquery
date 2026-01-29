@@ -2,7 +2,7 @@ import os
 
 from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
-from cadquery import Edge, Vertex, exporters
+from cadquery import Edge, Vertex
 
 from pytest import approx, raises, fixture
 from math import pi, sqrt
@@ -833,7 +833,6 @@ def test_constraint_solver():
 
     s9.assemble()
 
-    exporters.exportDXF(s9, '/tmp/s9.dxf')
     assert s9._faces.isValid()
 
     assert s9._tags["segment1"][0].Length() == approx(8)
