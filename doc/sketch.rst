@@ -187,6 +187,16 @@ Following constraints are implemented. Arguments are passed in as one tuple in :
       - Arc
       - `angle`
       - Specified entity is fixed angular span
+    * - Equal
+      - 2
+      - Line
+      - None
+      - Specified lines have equal length
+    * - EqualRadius
+      - 2
+      - Arc
+      - None
+      - Specified arcs have equal radius
 
 
 Workplane integration
