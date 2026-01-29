@@ -1,6 +1,5 @@
 from cadquery.utils import multidispatch
 
-from pytest import raises
 
 
 def test_multimethod():
