@@ -1,7 +1,6 @@
 from cadquery.utils import multidispatch
 
 
-
 def test_multimethod():
     class A:
         @multidispatch
