@@ -224,8 +224,8 @@ def arc_angle_cost(x, t, x0, val):
     return rv
 
 def equal_cost(x1, t1, x10, x2, t2, x20, val):
-    length1 = norm(x1[2:] - x1[:2]) if t1 == "LINE" else norm(x1[2] * x1[4])
-    length2 = norm(x2[2:] - x2[:2]) if t2 == "LINE" else norm(x2[2] * x2[4])
+    length1 = norm(x1[2:] - x1[:2])
+    length2 = norm(x2[2:] - x2[:2])
     return length1 - length2
 
 def equal_radius_cost(x1, t1, x10, x2, t2, x20, val):
