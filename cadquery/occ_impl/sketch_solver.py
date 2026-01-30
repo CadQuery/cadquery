@@ -5,7 +5,7 @@ from numpy import float64 as Float
 from itertools import accumulate, chain
 from math import sin, cos, radians
 
-from numpy import array, full, inf, sign, pi
+from numpy import array, full, inf, sign
 from numpy.linalg import norm
 import nlopt
 
@@ -154,8 +154,7 @@ def angle_cost(x1, t1, x10, x2, t2, x20, val):
         v2 = arc_first_tangent(x2)
     else:
         raise invalid_args(t1, t2)
-    angle = v2.Angle(v1) - val
-    return (angle + pi) % (2 * pi) - pi
+    return v2.Angle(v1) - val
 
 
 def length_cost(x, t, x0, val):
