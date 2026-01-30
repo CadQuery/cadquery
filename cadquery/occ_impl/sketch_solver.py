@@ -30,6 +30,7 @@ ConstraintKind = Literal[
     "Radius",
     "Orientation",
     "ArcAngle",
+    "PointOnObject",
 ]
 
 ConstraintInvariants = {  # (arity, geometry types, param type, conversion func)
@@ -47,6 +48,7 @@ ConstraintInvariants = {  # (arity, geometry types, param type, conversion func)
     "Radius": (1, ("CIRCLE",), Real, None),
     "Orientation": (1, ("LINE",), Tuple[Real, Real], None),
     "ArcAngle": (1, ("CIRCLE",), Real, radians),
+    "PointOnObject": (2, ("CIRCLE", "LINE"), Optional[Real], None),
 }
 
 Constraint = Tuple[Tuple[int, Optional[int]], ConstraintKind, Optional[Any]]
@@ -219,6 +221,33 @@ def arc_angle_cost(x, t, x0, val):
 
     return rv
 
+def point_on_object_cost(x1, t1, x10, x2, t2, x20, val):
+
+    if t1 == "LINE" and val == None:
+        raise invalid_args(t1, val)
+    p = [.0, .0]
+    if t1 == "LINE":
+        p = line_point(x1, val)
+    elif t1 == "CIRCLE" and val == None:
+        p = x1[:2]
+    elif t1 == "CIRCLE":
+        p = arc_point(x1, val)
+
+    if t2 == "LINE":
+        start = x2[:2]
+        end = x2[2:]
+        v = end - start
+        l = norm(v)
+        if l == 0:
+            return norm(p - start)
+        else:
+            d = p - start
+            return (v[0] * d[1] - v[1] * d[0]) / l
+    elif t2 == "CIRCLE":
+        c = x2[:2]
+        radius = x2[2]
+        return absolute(norm(p - c) - radius)
+    raise invalid_args(t2)
 
 # dictionary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
@@ -231,6 +260,7 @@ costs: Dict[str, Callable[..., float]] = dict(
     Radius=radius_cost,
     Orientation=orientation_cost,
     ArcAngle=arc_angle_cost,
+    PointOnObject=point_on_object_cost,
 )
 
 

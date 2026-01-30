@@ -744,6 +744,37 @@ def test_constraint_solver():
 
     assert s7._faces.isValid()
 
+    s8 = (
+        Sketch()
+        .segment((-1, 0), (1, 0), "base")
+        .segment((1, 0), (0, 1), "side1")
+        .segment((0, 1), (-1, 0), "side2")
+        .segment((0, 0.9), (0, 0.01), "height", True)
+    )
+    height = sqrt(2 * 2 - 1)
+    s8.constrain("base", "side1", "Coincident", None)
+    s8.constrain("side1", "side2", "Coincident", None)
+    s8.constrain("side2", "base", "Coincident", None)
+    s8.constrain("height", "base", "Angle", -90)
+    s8.constrain("height", "base", "PointOnObject", 1)
+    s8.constrain("base", "FixedPoint", 1)
+    s8.constrain("base", "Orientation", (1, 0))
+    s8.constrain("side1", "height", "Coincident", None)
+    s8.constrain("side1", "base", "Angle", 120)
+    s8.constrain("height", "Length", height)
+    s8.solve()
+
+    assert s8._solve_status["status"] == 4
+
+    s8.assemble()
+
+    assert s8._faces.isValid()
+
+    assert s8._tags["base"][0].Length() == approx(2)
+    assert s8._tags["side1"][0].Length() == approx(2)
+    assert s8._tags["side2"][0].Length() == approx(2)
+    assert s8._faces.Area() == approx(height)
+
 
 def test_dxf_import():
 
