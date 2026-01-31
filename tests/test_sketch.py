@@ -761,6 +761,7 @@ def test_constraint_solver():
     s8.constrain("base", "Orientation", (1, 0))
     s8.constrain("side1", "height", "Coincident", None)
     s8.constrain("side1", "base", "Angle", 120)
+    s8.constrain("side2", "base", "Angle", -120)
     s8.constrain("height", "Length", height)
     s8.solve()
 
