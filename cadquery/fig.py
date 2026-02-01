@@ -118,7 +118,6 @@ class Figure:
         # state
         self.state = self.server.state
 
-        self.state.setdefault("selected", [])
         self.state.setdefault("actors", [])
 
         # layout
@@ -200,7 +199,6 @@ class Figure:
             with layout.drawer:
                 self.tree = trame.GitTree(
                     sources=("actors", []),
-                    actives=("selected", []),
                     visibility_change=(self.onVisibility, "[$event]"),
                     actives_change=(self.onSelection, "[$event]"),
                 )
@@ -480,5 +478,4 @@ class Figure:
 
     def onSelection(self, event: list[str]):
 
-        self.state.selected = event
         self.active = event[0]
