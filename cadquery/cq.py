@@ -1563,6 +1563,9 @@ class Workplane(object):
 
         endPoint = self.plane.toWorldCoords((x, y))
 
+        if startPoint == endPoint:
+            return self
+
         p = Edge.makeLine(startPoint, endPoint)
 
         if not forConstruction:
