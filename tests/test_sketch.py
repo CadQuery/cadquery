@@ -834,17 +834,22 @@ def test_point_on_object():
     assert s3._tags["segment2"][0].Length() == approx(2 * sqrt(3))
     assert s3._tags["segment3"][0].Length() == approx(2 * sqrt(3))
 
-    # circle inscribed in square
+    # arc inscribed in square
     s4 = (
         Sketch()
-        .arc((0, 0), 0.2, 0, 360, "arc1")
+        .arc((0, 0), 0.2, 0, 180, "arc1")
+        .segment((0, 0), (0, 0.2), "arcdir", True)
         .segment((-0.5, -0.5), (0.5, -0.5), "segment1", True)
         .segment((0.5, -0.5), (0.5, 0.5), "segment2", True)
         .segment((0.5, 0.5), (-0.5, 0.5), "segment3", True)
         .segment((-0.5, 0.5), (-0.5, -0.5), "segment4", True)
     )
 
+    s4.constrain("arcdir", "arc1", "Coincident", None)
+    s4.constrain("arcdir", "Orientation", (0.2, 0))
+    s4.constrain("arcdir", "FixedPoint", 0)
     s4.constrain("segment1", "Fixed", None)
+    s4.constrain("arc1", "ArcAngle", 180)
     s4.constrain("segment1", "segment2", "Coincident", None)
     s4.constrain("segment2", "segment3", "Coincident", None)
     s4.constrain("segment3", "segment4", "Coincident", None)
@@ -852,7 +857,8 @@ def test_point_on_object():
     s4.constrain("segment2", "segment1", "Angle", 90)
     s4.constrain("segment3", "segment2", "Angle", 90)
     s4.constrain("segment4", "segment3", "Angle", 90)
-    s4.constrain("arc1", "segment2", "PointOnObject", 1)
+    s4.constrain("arc1", "segment2", "PointOnObject", 0)
+    s4.constrain("arc1", "segment4", "PointOnObject", 1)
     s4.constrain("arc1", "FixedPoint", None)
 
     s4.solve()
