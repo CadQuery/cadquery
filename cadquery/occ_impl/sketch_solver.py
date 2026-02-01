@@ -246,7 +246,7 @@ def point_on_object_cost(x1, t1, x10, x2, t2, x20, val):
     elif t2 == "CIRCLE":
         c = x2[:2]
         radius = x2[2]
-        return absolute(norm(p - c) - radius)
+        return norm(p - c) - radius
     raise invalid_args(t2)
 
 # dictionary of individual constraint cost functions
