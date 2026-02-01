@@ -744,7 +744,9 @@ def test_constraint_solver():
 
     assert s7._faces.isValid()
 
-    s8 = (
+
+def test_point_on_object():
+    s1 = (
         Sketch()
         .segment((-1, 0), (1, 0), "base")
         .segment((1, 0), (0, 1), "side1")
@@ -752,48 +754,49 @@ def test_constraint_solver():
         .segment((0, 0.9), (0, 0.01), "height", True)
     )
     height = sqrt(2 * 2 - 1)
-    s8.constrain("base", "side1", "Coincident", None)
-    s8.constrain("side1", "side2", "Coincident", None)
-    s8.constrain("side2", "base", "Coincident", None)
-    s8.constrain("height", "base", "Angle", -90)
-    s8.constrain("height", "base", "PointOnObject", 1)
-    s8.constrain("base", "FixedPoint", 1)
-    s8.constrain("base", "Orientation", (1, 0))
-    s8.constrain("side1", "height", "Coincident", None)
-    s8.constrain("side1", "base", "Angle", 120)
-    s8.constrain("side2", "base", "Angle", -120)
-    s8.constrain("height", "Length", height)
-    s8.solve()
+    s1.constrain("base", "side1", "Coincident", None)
+    s1.constrain("side1", "side2", "Coincident", None)
+    s1.constrain("side2", "base", "Coincident", None)
+    s1.constrain("height", "base", "Angle", -90)
+    s1.constrain("height", "base", "PointOnObject", 1)
+    s1.constrain("base", "FixedPoint", 1)
+    s1.constrain("base", "Orientation", (1, 0))
+    s1.constrain("side1", "height", "Coincident", None)
+    s1.constrain("side1", "base", "Angle", 120)
+    s1.constrain("side2", "base", "Angle", -120)
+    s1.constrain("height", "Length", height)
+    s1.solve()
 
-    assert s8._solve_status["status"] == 4
+    assert s1._solve_status["status"] == 4
 
-    s8.assemble()
+    s1.assemble()
 
-    assert s8._faces.isValid()
+    assert s1._faces.isValid()
 
-    assert s8._tags["base"][0].Length() == approx(2)
-    assert s8._tags["side1"][0].Length() == approx(2)
-    assert s8._tags["side2"][0].Length() == approx(2)
-    assert s8._faces.Area() == approx(height)
+    assert s1._tags["base"][0].Length() == approx(2)
+    assert s1._tags["side1"][0].Length() == approx(2)
+    assert s1._tags["side2"][0].Length() == approx(2)
+    assert s1._faces.Area() == approx(height)
 
-    s9 = (
+    s2 = (
         Sketch()
         .segment((1, 0), (-1, 0), "segment1", True)
-        .arc((-.5, .0), 0.8, 180, -180, "arc1")
-        .arc((.5, .0), 0.8, -180, 180, "arc2")
+        .arc((-0.5, 0.0), 0.8, 180, -180, "arc1")
+        .arc((0.5, 0.0), 0.8, -180, 180, "arc2")
     )
-    s9.constrain("segment1", "Fixed", None)
-    s9.constrain("arc1", "segment1", "PointOnObject", 1)
-    s9.constrain("arc1", "segment1", "PointOnObject", None)
-    s9.constrain("arc2", "segment1", "PointOnObject", None)
-    s9.constrain("arc1", "arc2", "Coincident", None)
-    s9.constrain("arc2", "segment1", "Coincident", None)
-    s9.constrain("segment1", "arc1", "Coincident", None)
-    s9.solve()
+    s2.constrain("segment1", "Fixed", None)
+    s2.constrain("arc1", "segment1", "PointOnObject", 1)
+    s2.constrain("arc1", "segment1", "PointOnObject", None)
+    s2.constrain("arc2", "segment1", "PointOnObject", None)
+    s2.constrain("arc1", "arc2", "Coincident", None)
+    s2.constrain("arc2", "segment1", "Coincident", None)
+    s2.constrain("segment1", "arc1", "Coincident", None)
+    s2.solve()
 
-    assert s9._solve_status["status"] == 4
+    assert s2._solve_status["status"] == 4
 
-    assert s9._tags["arc1"][0].radius() == approx(.5)
+    assert s2._tags["arc1"][0].radius() == approx(0.5)
+
 
 def test_dxf_import():
 
