@@ -221,11 +221,12 @@ def arc_angle_cost(x, t, x0, val):
 
     return rv
 
+
 def point_on_object_cost(x1, t1, x10, x2, t2, x20, val):
 
     if t1 == "LINE" and val == None:
         raise invalid_args(t1, val)
-    p = [.0, .0]
+    p = [0.0, 0.0]
     if t1 == "LINE":
         p = line_point(x1, val)
     elif t1 == "CIRCLE" and val == None:
@@ -248,6 +249,7 @@ def point_on_object_cost(x1, t1, x10, x2, t2, x20, val):
         radius = x2[2]
         return norm(p - c) - radius
     raise invalid_args(t2)
+
 
 # dictionary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
