@@ -776,6 +776,24 @@ def test_constraint_solver():
     assert s8._tags["side2"][0].Length() == approx(2)
     assert s8._faces.Area() == approx(height)
 
+    s9 = (
+        Sketch()
+        .segment((1, 0), (-1, 0), "segment1", True)
+        .arc((-.5, .0), 0.8, 180, -180, "arc1")
+        .arc((.5, .0), 0.8, -180, 180, "arc2")
+    )
+    s9.constrain("segment1", "Fixed", None)
+    s9.constrain("arc1", "segment1", "PointOnObject", 1)
+    s9.constrain("arc1", "segment1", "PointOnObject", None)
+    s9.constrain("arc2", "segment1", "PointOnObject", None)
+    s9.constrain("arc1", "arc2", "Coincident", None)
+    s9.constrain("arc2", "segment1", "Coincident", None)
+    s9.constrain("segment1", "arc1", "Coincident", None)
+    s9.solve()
+
+    assert s9._solve_status["status"] == 4
+
+    assert s9._tags["arc1"][0].radius() == approx(.5)
 
 def test_dxf_import():
 
