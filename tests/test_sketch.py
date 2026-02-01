@@ -1,5 +1,7 @@
 import os
 
+import OCP
+
 from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
 from cadquery import Edge, Vertex
@@ -565,6 +567,21 @@ def test_constraint_validation():
     with raises(ValueError):
         Sketch().segment(1.0, 1.0, "s").constrain("s", "Fixed", 1)
 
+    with raises(ValueError):
+        Sketch().segment((1, 0), (0, 0), "s1").segment((0, 1), (0, 0), "s2").constrain(
+            "s1", "s2", "PointOnObject", None
+        ).solve()
+
+    with raises(ValueError):
+        Sketch().spline([(1.0, 1.0), (2.0, 1.0), (0.0, 0.0)], "s").segment(
+            (1, 0), (0, 0), "s1"
+        ).constrain("s1", "s", "PointOnObject", 1)
+
+    with raises(ValueError):
+        Sketch().spline([(1.0, 1.0), (2.0, 1.0), (0.0, 0.0)], "s").segment(
+            (1, 0), (0, 0), "s1"
+        ).constrain("s", "s1", "PointOnObject", 1)
+
 
 def test_constraint_solver():
 
@@ -867,6 +884,12 @@ def test_point_on_object():
 
     s4.assemble()
     assert s4._tags["arc1"][0].radius() == approx(0.5)
+
+    # test that degenerate segments cannot exist and prevent division by zero
+    with raises(OCP.StdFail.StdFail_NotDone):
+        Sketch().segment((0, 1), (0, 0.2), "segment").segment(
+            (0, 0), (0, 0), "degenerate"
+        )
 
 
 def test_dxf_import():
