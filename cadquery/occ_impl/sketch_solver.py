@@ -222,13 +222,16 @@ def arc_angle_cost(x, t, x0, val):
 
     return rv
 
+
 def equal_cost(x1, t1, x10, x2, t2, x20, val):
     length1 = norm(x1[2:] - x1[:2])
     length2 = norm(x2[2:] - x2[:2])
     return length1 - length2
 
+
 def equal_radius_cost(x1, t1, x10, x2, t2, x20, val):
     return x1[2] - x2[2]
+
 
 # dictionary of individual constraint cost functions
 costs: Dict[str, Callable[..., float]] = dict(
@@ -242,7 +245,7 @@ costs: Dict[str, Callable[..., float]] = dict(
     Orientation=orientation_cost,
     ArcAngle=arc_angle_cost,
     Equal=equal_cost,
-    EqualRadius=equal_radius_cost
+    EqualRadius=equal_radius_cost,
 )
 
 
