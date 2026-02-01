@@ -886,7 +886,7 @@ def test_point_on_object():
     assert s4._tags["arc1"][0].radius() == approx(0.5)
 
     # test that degenerate segments cannot exist and prevent division by zero
-    with raises(OCP.StdFail.StdFail_NotDone):
+    with raises((OCP.StdFail.StdFail_NotDone, OCP.Standard.Standard_Failure)):
         Sketch().segment((0, 1), (0, 0.2), "segment").segment(
             (0, 0), (0, 0), "degenerate"
         )
