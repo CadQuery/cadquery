@@ -746,6 +746,8 @@ def test_constraint_solver():
 
 
 def test_point_on_object():
+
+    # equilateral triangle defined by height
     s1 = (
         Sketch()
         .segment((-1, 0), (1, 0), "base")
@@ -778,6 +780,7 @@ def test_point_on_object():
     assert s1._tags["side2"][0].Length() == approx(2)
     assert s1._faces.Area() == approx(height)
 
+    # s-shaped wire defined by horizontal length
     s2 = (
         Sketch()
         .segment((1, 0), (-1, 0), "segment1", True)
@@ -796,6 +799,68 @@ def test_point_on_object():
     assert s2._solve_status["status"] == 4
 
     assert s2._tags["arc1"][0].radius() == approx(0.5)
+
+    # circle inscribed equilateral triangle
+    s3 = (
+        Sketch()
+        .arc((0, 0), 2, 0, 180, "arc1", True)
+        .segment((-1, -1), (1, -1), "segment1")
+        .segment((1, -1), (0, 2), "segment2")
+        .segment((0, 2), (-1, -1), "segment3")
+    )
+    s3.constrain("arc1", "FixedPoint", None)
+    s3.constrain("arc1", "ArcAngle", 180)
+    s3.constrain("arc1", "Radius", 2)
+
+    s3.constrain("segment1", "Orientation", (0, 1))
+    s3.constrain("segment2", "segment1", "Angle", 120)
+    s3.constrain("segment3", "segment1", "Angle", -120)
+    s3.constrain("segment1", "segment2", "Coincident", None)
+    s3.constrain("segment2", "segment3", "Coincident", None)
+    s3.constrain("segment3", "segment1", "Coincident", None)
+    s3.constrain("segment1", "arc1", "PointOnObject", 1)
+    s3.constrain("segment2", "arc1", "PointOnObject", 1)
+    s3.constrain("segment3", "arc1", "PointOnObject", 1)
+
+    s3.solve()
+
+    assert s3._solve_status["status"] == 4
+
+    s3.assemble()
+
+    s3._faces.isValid()
+
+    assert s3._tags["segment1"][0].Length() == approx(2 * sqrt(3))
+    assert s3._tags["segment2"][0].Length() == approx(2 * sqrt(3))
+    assert s3._tags["segment3"][0].Length() == approx(2 * sqrt(3))
+
+    # circle inscribed in square
+    s4 = (
+        Sketch()
+        .arc((0, 0), 0.2, 0, 360, "arc1")
+        .segment((-0.5, -0.5), (0.5, -0.5), "segment1", True)
+        .segment((0.5, -0.5), (0.5, 0.5), "segment2", True)
+        .segment((0.5, 0.5), (-0.5, 0.5), "segment3", True)
+        .segment((-0.5, 0.5), (-0.5, -0.5), "segment4", True)
+    )
+
+    s4.constrain("segment1", "Fixed", None)
+    s4.constrain("segment1", "segment2", "Coincident", None)
+    s4.constrain("segment2", "segment3", "Coincident", None)
+    s4.constrain("segment3", "segment4", "Coincident", None)
+    s4.constrain("segment4", "segment1", "Coincident", None)
+    s4.constrain("segment2", "segment1", "Angle", 90)
+    s4.constrain("segment3", "segment2", "Angle", 90)
+    s4.constrain("segment4", "segment3", "Angle", 90)
+    s4.constrain("arc1", "segment2", "PointOnObject", 1)
+    s4.constrain("arc1", "FixedPoint", None)
+
+    s4.solve()
+
+    assert s4._solve_status["status"] == 4
+
+    s4.assemble()
+    assert s4._tags["arc1"][0].radius() == approx(0.5)
 
 
 def test_dxf_import():
