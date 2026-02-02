@@ -257,7 +257,7 @@ class Figure:
         Show objects.
         """
 
-        # genreate an uuid
+        # generate an uuid
         uuid = str(uuid1())
 
         # split objects
