@@ -885,6 +885,31 @@ def test_point_on_object():
     s4.assemble()
     assert s4._tags["arc1"][0].radius() == approx(0.5)
 
+    R = 2
+    s5 = (
+        Sketch()
+        .arc((0, 0), R, 45, -270, "major")
+        .arc((0, R + 0.1), 1, 180 + 45, -270, "minor")
+        .segment((0, 0), (0, 1), "arcdir", True)
+    )
+
+    # lobes: circle on circle
+    s5.constrain("major", "Fixed", None)
+    s5.constrain("arcdir", "Fixed", None)
+    s5.constrain("minor", "major", "Coincident", None)
+    s5.constrain("major", "minor", "Coincident", None)
+    s5.constrain("minor", "major", "PointOnObject", None)
+    s5.constrain("minor", "arcdir", "PointOnObject", None)
+    s5.solve()
+
+    assert s5._solve_status["status"] == 4
+    s5.assemble()
+    assert s5._faces.isValid()
+    s5.export("/tmp/s5.dxf")
+
+    r = sqrt((R / sqrt(2)) ** 2 + (R - R / sqrt(2)) ** 2)
+    assert s5._tags["minor"][0].radius() == approx(r)
+
     # test that degenerate segments cannot exist and prevent division by zero
     with raises((OCP.StdFail.StdFail_NotDone, OCP.Standard.Standard_Failure)):
         Sketch().segment((0, 1), (0, 0.2), "segment").segment(
