@@ -905,7 +905,6 @@ def test_point_on_object():
     assert s5._solve_status["status"] == 4
     s5.assemble()
     assert s5._faces.isValid()
-    s5.export("/tmp/s5.dxf")
 
     r = sqrt((R / sqrt(2)) ** 2 + (R - R / sqrt(2)) ** 2)
     assert s5._tags["minor"][0].radius() == approx(r)
