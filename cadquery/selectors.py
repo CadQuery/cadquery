@@ -1,22 +1,3 @@
-"""
-    Copyright (C) 2011-2015  Parametric Products Intellectual Holdings, LLC
-
-    This file is part of CadQuery.
-
-    CadQuery is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
-
-    CadQuery is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; If not, see <http://www.gnu.org/licenses/>
-"""
-
 from abc import abstractmethod, ABC
 import math
 from .occ_impl.geom import Vector
@@ -34,9 +15,9 @@ from pyparsing import (
     nums,
     Optional,
     Combine,
-    oneOf,
+    one_of,
     Group,
-    infixNotation,
+    infix_notation,
     opAssoc,
 )
 from functools import reduce
@@ -625,23 +606,23 @@ def _makeGrammar():
     )
 
     # direction definition
-    simple_dir = oneOf(["X", "Y", "Z", "XY", "XZ", "YZ"])
+    simple_dir = one_of(["X", "Y", "Z", "XY", "XZ", "YZ"])
     direction = simple_dir("simple_dir") | vector("vector_dir")
 
     # CQ type definition
-    cqtype = oneOf(
+    cqtype = one_of(
         set(geom_LUT_EDGE.values()) | set(geom_LUT_FACE.values()), caseless=True,
     )
-    cqtype = cqtype.setParseAction(pyparsing_common.upcaseTokens)
+    cqtype = cqtype.set_parse_action(pyparsing_common.upcase_tokens)
 
     # type operator
     type_op = Literal("%")
 
     # direction operator
-    direction_op = oneOf([">", "<"])
+    direction_op = one_of([">", "<"])
 
     # center Nth operator
-    center_nth_op = oneOf([">>", "<<"])
+    center_nth_op = one_of([">>", "<<"])
 
     # index definition
     ix_number = Group(Optional("-") + Word(nums))
@@ -651,10 +632,10 @@ def _makeGrammar():
     index = lsqbracket + ix_number("index") + rsqbracket
 
     # other operators
-    other_op = oneOf(["|", "#", "+", "-"])
+    other_op = one_of(["|", "#", "+", "-"])
 
     # named view
-    named_view = oneOf(["front", "back", "left", "right", "top", "bottom"])
+    named_view = one_of(["front", "back", "left", "right", "top", "bottom"])
 
     return (
         direction("only_dir")
@@ -779,14 +760,14 @@ def _makeExpressionGrammar(atom):
     # define operators
     and_op = Literal("and")
     or_op = Literal("or")
-    delta_op = oneOf(["exc", "except"])
+    delta_op = one_of(["exc", "except"])
     not_op = Literal("not")
 
     def atom_callback(res):
         return _SimpleStringSyntaxSelector(res)
 
     # construct a simple selector from every matched
-    atom.setParseAction(atom_callback)
+    atom.set_parse_action(atom_callback)
 
     # define callback functions for all operations
     def and_callback(res):
@@ -809,7 +790,7 @@ def _makeExpressionGrammar(atom):
         return InverseSelector(right)
 
     # construct the final grammar and set all the callbacks
-    expr = infixNotation(
+    expr = infix_notation(
         atom,
         [
             (and_op, 2, opAssoc.LEFT, and_callback),
@@ -881,7 +862,7 @@ class StringSyntaxSelector(Selector):
         Feed the input string through the parser and construct an relevant complex selector object
         """
         self.selectorString = selectorString
-        parse_result = _expression_grammar.parseString(selectorString, parseAll=True)
+        parse_result = _expression_grammar.parse_string(selectorString, parse_all=True)
         self.mySelector = parse_result.asList()[0]
 
     def filter(self, objectList: Sequence[Shape]):

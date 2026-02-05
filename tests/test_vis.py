@@ -1,12 +1,31 @@
-from cadquery import Workplane, Assembly, Sketch
-from cadquery.vis import show, show_object
+from cadquery import Workplane, Assembly, Sketch, Location, Vector
+from cadquery.func import circle, sweep, spline, plane, torus
+from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts, style
 
-import cadquery.occ_impl.exporters.assembly as assembly
 import cadquery.vis as vis
 
-from vtkmodules.vtkRenderingCore import vtkRenderWindow, vtkRenderWindowInteractor
+from cadquery.utils import instance_of
+
+from vtkmodules.vtkRenderingCore import (
+    vtkRenderWindow,
+    vtkRenderWindowInteractor,
+    vtkWindowToImageFilter,
+    vtkActor,
+    vtkAssembly,
+    vtkProp3D,
+)
+from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
+from vtkmodules.vtkIOImage import vtkPNGWriter
 
 from pytest import fixture, raises
+from path import Path
+
+from typing import List
+
+
+@fixture(scope="module")
+def tmpdir(tmp_path_factory):
+    return Path(tmp_path_factory.mktemp("screenshots"))
 
 
 @fixture
@@ -54,23 +73,53 @@ class FakeWindow(vtkRenderWindow):
 
         pass
 
+    def SetOffScreenRendering(*args):
 
-def test_show(wp, assy, sk, monkeypatch):
+        pass
+
+
+class FakeWin2Img(vtkWindowToImageFilter):
+    def Update(*args):
+
+        pass
+
+
+class FakePNGWriter(vtkPNGWriter):
+    def Write(*args):
+
+        pass
+
+
+@fixture
+def patch_vtk(monkeypatch):
+    """
+    Fixture needed to not show anything during testing / prevent crashes in CI.
+    """
 
     # use some dummy vtk objects
     monkeypatch.setattr(vis, "vtkRenderWindowInteractor", FakeInteractor)
-    monkeypatch.setattr(assembly, "vtkRenderWindow", FakeWindow)
+    monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
+    monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeWin2Img)
+    monkeypatch.setattr(vis, "vtkPNGWriter", FakePNGWriter)
+
+
+def test_show(wp, assy, sk, patch_vtk):
 
     # simple smoke test
     show(wp)
     show(wp.val())
+    show(wp.val().wrapped)
     show(assy)
     show(sk)
     show(wp, sk, assy, wp.val())
+    show(Vector())
+    show(Location())
+    show([Vector, Vector, Location])
+    show([wp, assy])
     show()
 
-    with raises(ValueError):
-        show(1)
+    # show with edges
+    show(wp, edges=True)
 
     show_object(wp)
     show_object(wp.val())
@@ -79,5 +128,109 @@ def test_show(wp, assy, sk, monkeypatch):
     show_object(wp, sk, assy, wp.val())
     show_object()
 
+    # for compatibility with CQ-editor
+    show_object(wp, "a")
+
+    # for now a workaround to be compatible with more complicated CQ-editor invocations
+    show(1)
+
+    # show a raw vtkProp
+    show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
+
+
+def test_screenshot(wp, tmpdir, patch_vtk):
+
+    # smoke test for now
+    with tmpdir:
+        show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
+
+
+def test_ctrlPts():
+
+    c = circle(1)
+
+    # non-NURBS objects throw
     with raises(ValueError):
-        show_object("a")
+        ctrlPts(c)
+
+    # control points of a curve
+    a1 = ctrlPts(c.toNURBS())
+    assert isinstance(a1, vtkActor)
+
+    # control points of a non-periodic curve
+    a2 = ctrlPts(c.trim(0, 1).toNURBS())
+    assert isinstance(a2, vtkActor)
+
+    # non-NURBS objects throw
+    with raises(ValueError):
+        ctrlPts(plane(1, 1))
+
+    # control points of a surface
+    a3 = ctrlPts(sweep(c.trim(0, 1), spline((0, 0, 0), (0, 0, 1))))
+    assert isinstance(a3, vtkActor)
+
+    # control points of a u,v periodic surface
+    a4 = ctrlPts(torus(5, 1).faces().toNURBS())
+    assert isinstance(a4, vtkActor)
+
+
+def test_style(wp, assy):
+
+    t = torus(10, 1)
+    e = t.Edges()[0]
+    pts = e.sample(10)[0]
+    locs = e.locations([0, 0.5, 0.75])
+
+    # Shape
+    act = style(t, color="red", alpha=0.5, tubes=True, spheres=True)
+    assert instance_of(act, List[vtkProp3D])
+
+    # Assy
+    act = style(assy, color="red", alpha=0.5, tubes=True, spheres=True)
+    assert instance_of(act, List[vtkProp3D])
+
+    # Workplane
+    act = style(wp, color="red", alpha=0.5, tubes=True, spheres=True)
+    assert instance_of(act, List[vtkProp3D])
+
+    # Shape
+    act = style(e)
+    assert instance_of(act, List[vtkProp3D])
+
+    # Sketch
+    act = style(Sketch().circle(1))
+    assert instance_of(act, List[vtkProp3D])
+
+    # list[Vector]
+    act = style(pts)
+    assert instance_of(act, List[vtkProp3D])
+
+    # list[Location]
+    act = style(locs)
+    assert instance_of(act, List[vtkProp3D])
+
+    # vtkAssembly
+    act = style(style(t))
+    assert instance_of(act, List[vtkProp3D])
+
+    # vtkActor
+    act = style(ctrlPts(e.toNURBS()))
+    assert instance_of(act, List[vtkProp3D])
+
+
+def test_camera_position(wp, patch_vtk):
+
+    show(wp, position=(0, 0, 1), focus=(0, 0.1, 0))
+    show(wp, focus=(0, 0.1, 0))
+    show(wp, position=(0, 0, 1))
+
+    # Specify Z up
+    show(wp, viewup=(0, 0, 1), position=(0, -1, 0), focus=(0, 0.1, 0))
+    show(wp, focus=(0, 0.1, 0))
+    show(wp, position=(0, -1, 0))
+    show(wp, viewup=(0, 0, 1))
+
+
+def test_frustrum_clipping_range(wp, patch_vtk):
+
+    show(wp, zoom=2.0, clipping_range=(1, 100))

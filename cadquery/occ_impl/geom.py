@@ -1,6 +1,8 @@
-import math
+from math import pi, radians, degrees
 
-from typing import overload, Sequence, Union, Tuple, Type, Optional
+from typing import overload, Sequence, Union, Tuple, Type, Optional, Iterator
+
+from io import BytesIO
 
 from OCP.gp import (
     gp_Vec,
@@ -14,14 +16,18 @@ from OCP.gp import (
     gp_XYZ,
     gp_EulerSequence,
     gp,
+    gp_Quaternion,
+    gp_Extrinsic_XYZ,
 )
 from OCP.Bnd import Bnd_Box
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.TopoDS import TopoDS_Shape
 from OCP.TopLoc import TopLoc_Location
+from OCP.BinTools import BinTools_LocationSet
 
 from ..types import Real
+from ..utils import multidispatch
 
 TOL = 1e-2
 
@@ -227,7 +233,15 @@ class Vector(object):
         return "Vector: " + str((self.x, self.y, self.z))
 
     def __eq__(self, other: "Vector") -> bool:  # type: ignore[override]
-        return self.wrapped.IsEqual(other.wrapped, 0.00001, 0.00001)
+        return (
+            self.wrapped.IsEqual(other.wrapped, 0.00001, 0.00001)
+            if isinstance(other, Vector)
+            else False
+        )
+
+    def __iter__(self) -> Iterator[float]:
+
+        yield from (self.x, self.y, self.z)
 
     def toPnt(self) -> gp_Pnt:
 
@@ -244,6 +258,16 @@ class Vector(object):
         pnt_t = pnt.Transformed(T.wrapped.Trsf())
 
         return Vector(gp_Vec(pnt_t.XYZ()))
+
+    def __getstate__(self) -> tuple[float, float, float]:
+
+        return (self.x, self.y, self.z)
+
+    def __setstate__(self, state: tuple[float, float, float]):
+
+        self._wrapped = gp_Vec()
+
+        self.x, self.y, self.z = state
 
 
 class Matrix:
@@ -388,6 +412,19 @@ class Matrix:
         matrix_transposed = self.transposed_list()
         matrix_str = ",\n        ".join(str(matrix_transposed[i::4]) for i in range(4))
         return f"Matrix([{matrix_str}])"
+
+    def __getstate__(self) -> list[list[float]]:
+
+        trsf = self.wrapped
+        return [[trsf.Value(i, j) for j in range(1, 5)] for i in range(1, 4)]
+
+    def __setstate__(self, state: list[list[float]]):
+
+        trsf = self.wrapped = gp_GTrsf()
+
+        for i in range(3):
+            for j in range(4):
+                trsf.SetValue(i + 1, j + 1, state[i][j])
 
 
 class Plane(object):
@@ -539,20 +576,17 @@ class Plane(object):
         plane._setPlaneDir(xDir)
         return plane
 
+    # Prefer multidispatch over multimethod, as that supports keyword
+    # arguments. These are in use, since Plane.__init__ has not always
+    # been a multimethod.
+    @multidispatch
     def __init__(
         self,
-        origin: Union[Tuple[float, float, float], Vector],
-        xDir: Optional[Union[Tuple[float, float, float], Vector]] = None,
-        normal: Union[Tuple[float, float, float], Vector] = (0, 0, 1),
+        origin: Union[Tuple[Real, Real, Real], Vector],
+        xDir: Optional[Union[Tuple[Real, Real, Real], Vector]] = None,
+        normal: Union[Tuple[Real, Real, Real], Vector] = (0, 0, 1),
     ):
-        """
-        Create a Plane with an arbitrary orientation
-
-        :param origin: the origin in global coordinates
-        :param xDir: an optional vector representing the xDirection.
-        :param normal: the normal direction for the plane
-        :raises ValueError: if the specified xDir is not orthogonal to the provided normal
-        """
+        """Create a Plane from origin in global coordinates, vector xDir, and normal direction for the plane."""
         zDir = Vector(normal)
         if zDir.Length == 0.0:
             raise ValueError("normal should be non null")
@@ -566,8 +600,53 @@ class Plane(object):
             xDir = Vector(xDir)
             if xDir.Length == 0.0:
                 raise ValueError("xDir should be non null")
+
         self._setPlaneDir(xDir)
         self.origin = Vector(origin)
+
+    @multidispatch
+    def __init__(
+        self, loc: "Location",
+    ):
+        """Create a Plane from Location loc."""
+
+        # Ask location for its information
+        origin, rotations = loc.toTuple()
+
+        # Origin is easy, but the rotational angles of the location need to be
+        # turned into xDir and normal vectors.
+        # This is done by multiplying a standard cooridnate system by the given
+        # angles.
+        # Rotation of vectors is done by a transformation matrix.
+        # The order in which rotational angles are introduced is crucial:
+        # If u is our vector, Rx is rotation around x axis etc, we want the
+        # following:
+        # u' = Rz * Ry * Rx * u = R * u
+        # That way, all rotational angles refer to a global coordinate system,
+        # and e.g. Ry does not refer to a rotation direction, which already
+        # was rotated around Rx.
+        # This definition in the global system is called extrinsic, and it is
+        # how the Location class wants it to be done.
+        # And this is why we introduce the rotations from left to right
+        # and from Z to X.
+        transformation = Matrix()
+        transformation.rotateZ(rotations[2] * pi / 180.0)
+        transformation.rotateY(rotations[1] * pi / 180.0)
+        transformation.rotateX(rotations[0] * pi / 180.0)
+
+        # Apply rotation on vectors of the global plane
+        # These vectors are already unit vectors and require no .normalized()
+        globaldirs = ((1, 0, 0), (0, 0, 1))
+        localdirs = (Vector(*i).transform(transformation) for i in globaldirs)
+
+        # Unpack vectors
+        xDir, normal = localdirs
+
+        # Apply attributes as in other constructor.
+        # Rememeber to set zDir before calling _setPlaneDir.
+        self.zDir = normal
+        self._setPlaneDir(xDir)
+        self.origin = origin
 
     def _eq_iter(self, other):
         """Iterator to successively test equality"""
@@ -682,7 +761,7 @@ class Plane(object):
         # NB: this is not a geometric Vector
         rotate = Vector(rotate)
         # Convert to radians.
-        rotate = rotate.multiply(math.pi / 180.0)
+        rotate = rotate.multiply(pi / 180.0)
 
         # Compute rotation matrix.
         T1 = gp_Trsf()
@@ -776,6 +855,14 @@ class Plane(object):
 
         return gp_Pln(gp_Ax3(self.origin.toPnt(), self.zDir.toDir(), self.xDir.toDir()))
 
+    def __getstate__(self) -> Tuple[Vector, Vector, Vector, Vector]:
+
+        return (self.xDir, self.yDir, self.zDir, self._origin)
+
+    def __setstate__(self, data: Tuple[Vector, Vector, Vector, Vector]):
+
+        self.xDir, self.yDir, self.zDir, self.origin = data
+
 
 class BoundBox(object):
     """A BoundingBox for an object or set of objects. Wraps the OCP one"""
@@ -848,11 +935,11 @@ class BoundBox(object):
 
     def enlarge(self, tol: float) -> "BoundBox":
         """Returns a modified (expanded) bounding box, expanded in all
-        directions by the tolerance value. 
+        directions by the tolerance value.
 
         This means that the minimum values of its X, Y and Z intervals
-        of the bounding box are reduced by the absolute value of tol, while 
-        the maximum values are increased by the same amount. 
+        of the bounding box are reduced by the absolute value of tol, while
+        the maximum values are increased by the same amount.
         """
         tmp = Bnd_Box()
         tmp.Add(self.wrapped)
@@ -942,75 +1029,98 @@ class Location(object):
 
     wrapped: TopLoc_Location
 
-    @overload
-    def __init__(self) -> None:
-        """Empty location with not rotation or translation with respect to the original location."""
-        ...
-
-    @overload
+    @multidispatch
     def __init__(self, t: VectorLike) -> None:
         """Location with translation t with respect to the original location."""
-        ...
 
-    @overload
+        T = gp_Trsf()
+        T.SetTranslationPart(Vector(t).wrapped)
+
+        self.wrapped = TopLoc_Location(T)
+
+    @multidispatch
+    def __init__(
+        self,
+        x: Real = 0,
+        y: Real = 0,
+        z: Real = 0,
+        rx: Real = 0,
+        ry: Real = 0,
+        rz: Real = 0,
+    ) -> None:
+        """Location with translation (x,y,z) and 3 rotation angles."""
+
+        if any((x, y, z, rx, ry, rz)):
+
+            T = gp_Trsf()
+
+            q = gp_Quaternion()
+            q.SetEulerAngles(gp_Extrinsic_XYZ, radians(rx), radians(ry), radians(rz))
+
+            T.SetRotation(q)
+            T.SetTranslationPart(Vector(x, y, z).wrapped)
+
+            loc = TopLoc_Location(T)
+        else:
+            # in this case location is flagged as identity
+            loc = TopLoc_Location()
+
+        self.wrapped = loc
+
+    @multidispatch
     def __init__(self, t: Plane) -> None:
         """Location corresponding to the location of the Plane t."""
-        ...
 
-    @overload
+        T = gp_Trsf()
+        T.SetTransformation(gp_Ax3(t.origin.toPnt(), t.zDir.toDir(), t.xDir.toDir()))
+        T.Invert()
+
+        self.wrapped = TopLoc_Location(T)
+
+    @multidispatch
     def __init__(self, t: Plane, v: VectorLike) -> None:
         """Location corresponding to the angular location of the Plane t with translation v."""
-        ...
 
-    @overload
-    def __init__(self, t: TopLoc_Location) -> None:
+        T = gp_Trsf()
+        T.SetTransformation(gp_Ax3(Vector(v).toPnt(), t.zDir.toDir(), t.xDir.toDir()))
+        T.Invert()
+
+        self.wrapped = TopLoc_Location(T)
+
+    @multidispatch
+    def __init__(self, T: TopLoc_Location) -> None:
         """Location wrapping the low-level TopLoc_Location object t"""
-        ...
 
-    @overload
-    def __init__(self, t: gp_Trsf) -> None:
+        self.wrapped = T
+
+    @multidispatch
+    def __init__(self, T: gp_Trsf) -> None:
         """Location wrapping the low-level gp_Trsf object t"""
-        ...
 
-    @overload
-    def __init__(self, t: VectorLike, ax: VectorLike, angle: float) -> None:
+        self.wrapped = TopLoc_Location(T)
+
+    @multidispatch
+    def __init__(self, t: VectorLike, ax: VectorLike, angle: Real) -> None:
         """Location with translation t and rotation around ax by angle
         with respect to the original location."""
-        ...
 
-    def __init__(self, *args):
+        T = gp_Trsf()
+        T.SetRotation(gp_Ax1(Vector().toPnt(), Vector(ax).toDir()), radians(angle))
+        T.SetTranslationPart(Vector(t).wrapped)
+
+        self.wrapped = TopLoc_Location(T)
+
+    @multidispatch
+    def __init__(self, t: VectorLike, angles: Tuple[Real, Real, Real]) -> None:
+        """Location with translation t and 3 rotation angles."""
 
         T = gp_Trsf()
 
-        if len(args) == 0:
-            pass
-        elif len(args) == 1:
-            t = args[0]
+        q = gp_Quaternion()
+        q.SetEulerAngles(gp_Extrinsic_XYZ, *map(radians, angles))
 
-            if isinstance(t, (Vector, tuple)):
-                T.SetTranslationPart(Vector(t).wrapped)
-            elif isinstance(t, Plane):
-                cs = gp_Ax3(t.origin.toPnt(), t.zDir.toDir(), t.xDir.toDir())
-                T.SetTransformation(cs)
-                T.Invert()
-            elif isinstance(t, TopLoc_Location):
-                self.wrapped = t
-                return
-            elif isinstance(t, gp_Trsf):
-                T = t
-            else:
-                raise TypeError("Unexpected parameters")
-        elif len(args) == 2:
-            t, v = args
-            cs = gp_Ax3(Vector(v).toPnt(), t.zDir.toDir(), t.xDir.toDir())
-            T.SetTransformation(cs)
-            T.Invert()
-        else:
-            t, ax, angle = args
-            T.SetRotation(
-                gp_Ax1(Vector().toPnt(), Vector(ax).toDir()), angle * math.pi / 180.0
-            )
-            T.SetTranslationPart(Vector(t).wrapped)
+        T.SetRotation(q)
+        T.SetTranslationPart(Vector(t).wrapped)
 
         self.wrapped = TopLoc_Location(T)
 
@@ -1035,6 +1145,33 @@ class Location(object):
         rot = T.GetRotation()
 
         rv_trans = (trans.X(), trans.Y(), trans.Z())
-        rv_rot = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
+        rx, ry, rz = rot.GetEulerAngles(gp_EulerSequence.gp_Extrinsic_XYZ)
 
-        return rv_trans, rv_rot
+        return rv_trans, (degrees(rx), degrees(ry), degrees(rz))
+
+    @property
+    def plane(self) -> "Plane":
+
+        return Plane(self)
+
+    def __getstate__(self) -> BytesIO:
+
+        rv = BytesIO()
+
+        ls = BinTools_LocationSet()
+        ls.Add(self.wrapped)
+        ls.Write(rv)
+
+        rv.seek(0)
+
+        return rv
+
+    def __setstate__(self, data: BytesIO):
+
+        ls = BinTools_LocationSet()
+        ls.Read(data)
+
+        if ls.NbLocations() > 0:
+            self.wrapped = ls.Location(1)
+        else:
+            self.wrapped = TopLoc_Location()  # identity location

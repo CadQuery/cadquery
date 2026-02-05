@@ -5,13 +5,12 @@
 [![Build Status](https://dev.azure.com/cadquery/conda-packages/_apis/build/status/CadQuery.cadquery?branchName=master)](https://dev.azure.com/cadquery/conda-packages/_build/latest?definitionId=2&branchName=master)
 [![codecov](https://codecov.io/gh/CadQuery/cadquery/branch/master/graph/badge.svg)](https://codecov.io/gh/CadQuery/cadquery)
 [![Documentation Status](https://readthedocs.org/projects/cadquery/badge/?version=latest)](https://cadquery.readthedocs.io/en/latest/?badge=latest)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4498634.svg)](https://doi.org/10.5281/zenodo.4498634)
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4498634.svg)](https://doi.org/10.5281/zenodo.3955118)
 
 ---
 
 ### Quick Links
-[***Documentation***](https://cadquery.readthedocs.io/en/latest/) | [***Cheatsheet***](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html) | [***Discord***](https://discord.com/invite/Bj9AQPsCfx) | [***Google Group***](https://groups.google.com/g/cadquery) | [***GUI Editor***](https://github.com/CadQuery/CQ-editor)
+[***Documentation***](https://cadquery.readthedocs.io/en/latest/) | [***Cheatsheet***](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html) | [***GitHub Discussions***](https://github.com/CadQuery/cadquery/discussions) | [***Google Group***](https://groups.google.com/g/cadquery) | [***GUI Editor***](https://github.com/CadQuery/CQ-editor)
 
 ---
 
@@ -27,7 +26,7 @@ CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCA
 4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
 5. CadQuery scripts can build STL, STEP, AMF and 3MF faster than OpenSCAD.
 
-CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts.  Options for visualziation are also available including CQ-Editor and JupyterLab.
+CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts.  Options for visualization are also available including CQ-Editor and JupyterLab.
 
 For those who are interested, the [OCP repository](https://github.com/CadQuery/OCP) contains the current OCCT wrapper used by CQ.
 
@@ -61,7 +60,7 @@ There are also videos covering installation:
 
 ### CadQuery Installation Via Conda
 
-To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager), and [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) for a minimal installer.
+To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager), and [Miniforge](https://github.com/conda-forge/miniforge) for a minimal installer.
 
 ``mamba install`` is recommended over ``conda install`` for faster and less memory intensive cadquery installation.
 
@@ -81,7 +80,7 @@ mamba install -c conda-forge -c cadquery cadquery=master
 
 ### CadQuery Installation Via Pip
 
-CadQuery has a complex set of dependencies including OCP, which is our set of bindings to the OpenCASCADE CAD kernel. OCP is distributed as binary wheels for Linux, MacOS and Windows. However, there are some limitations. Only Python 3.8 through 3.10 are currently supported, and some older Linux distributions such as Ubuntu 18.04 are not supported. If the pip installation method does not work for your system, you can try the conda installation method.
+CadQuery has a complex set of dependencies including OCP, which is our set of bindings to the OpenCASCADE CAD kernel. OCP is distributed as binary wheels for Linux, MacOS and Windows. However, there are some limitations. Only Python 3.9 through 3.12 are currently supported, and some older Linux distributions such as Ubuntu 18.04 are not supported. If the pip installation method does not work for your system, you can try the conda installation method.
 
 It is highly recommended that a virtual environment is used when installing CadQuery, although it is not strictly required. Installing CadQuery via pip requires a up-to-date version of pip, which can be obtained with the following command line (or a slight variation thereof).
 ```
@@ -126,7 +125,9 @@ You can find the full CadQuery documentation at [cadquery.readthedocs.io](https:
 
 We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) to make it easy to get help from other CadQuery users. We want you to feel welcome and encourage you to join the group and introduce yourself. We would also love to hear what you are doing with CadQuery.
 
-There is a [Discord server](https://discord.gg/Bj9AQPsCfx) as well. You can ask for help in the _general_ channel.
+[GitHub Discussions](https://github.com/CadQuery/cadquery/discussions) is a good place to ask general questions that are not tied to a bug report or feature request.
+
+There is also a [Discord](https://discord.com/invite/Bj9AQPsCfx) server, but the other methods of getting help are much better for newcomers.
 
 ## Projects using CadQuery
 
@@ -230,3 +231,7 @@ When filing a bug report [issue](https://github.com/CadQuery/cadquery/issues), p
 ### How to Suggest a Feature or Enhancement
 
 If you find yourself wishing for a feature that does not exist, you are probably not alone. There are bound to be others out there with similar needs. Open an [issue](https://github.com/CadQuery/cadquery/issues) which describes the feature you would like to see, why you need it, and how it should work.
+
+## Citing
+
+Please use our Zenodo DOI if you use CadQuery for scientific research: https://doi.org/10.5281/zenodo.3955118.

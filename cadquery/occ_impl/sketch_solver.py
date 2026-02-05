@@ -1,7 +1,7 @@
 from typing import Tuple, Union, Any, Callable, List, Optional, Iterable, Dict, Sequence
-from typing_extensions import Literal
-from nptyping import NDArray as Array
-from nptyping import Float
+from typing import Literal
+from numpy.typing import NDArray as Array
+from numpy import float64 as Float
 from itertools import accumulate, chain
 from math import sin, cos, radians
 
@@ -263,12 +263,12 @@ class SketchConstraintSolver(object):
         self.ixs = [0] + list(accumulate(len(e) for e in self.entities))
 
     def _cost(
-        self, x0: Array[Any, Float]
+        self, x0: Array[Float]
     ) -> Tuple[
-        Callable[[Array[Any, Float]], float],
-        Callable[[Array[Any, Float], Array[Any, Float]], None],
-        Array[Any, Float],
-        Array[Any, Float],
+        Callable[[Array[Float]], float],
+        Callable[[Array[Float], Array[Float]], None],
+        Array[Float],
+        Array[Float],
     ]:
 
         ixs = self.ixs

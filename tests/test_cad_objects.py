@@ -275,7 +275,7 @@ class TestCadObjects(BaseTest):
             c = Solid.makeCylinder(radius, height, Vector())
 
             # Combine all the cylinders into a single compound
-            r = self.eachpoint(lambda loc: c.located(loc), True).combineSolids()
+            r = self.eachpoint(lambda loc: c.located(loc), True).union()
 
             return r
 
@@ -616,6 +616,12 @@ class TestCadObjects(BaseTest):
 
     def testLocation(self):
 
+        # empty
+        loc = Location()
+
+        T = loc.wrapped.Transformation().TranslationPart()
+        self.assertTupleAlmostEquals((T.X(), T.Y(), T.Z()), (0, 0, 0), 6)
+
         # Tuple
         loc0 = Location((0, 0, 1))
 
@@ -676,9 +682,17 @@ class TestCadObjects(BaseTest):
 
         # Test error handling on creation
         with self.assertRaises(TypeError):
-            Location([0, 0, 1])
+            Location([0, 0, "a"])
         with self.assertRaises(TypeError):
             Location("xy_plane")
+
+        # test to tuple
+        loc8 = Location(z=2, ry=15)
+
+        trans, rot = loc8.toTuple()
+
+        self.assertTupleAlmostEquals(trans, (0, 0, 2), 6)
+        self.assertTupleAlmostEquals(rot, (0, 15, 0), 6)
 
     def testEdgeWrapperRadius(self):
 
@@ -742,6 +756,41 @@ class TestCadObjects(BaseTest):
         )
         self.assertAlmostEqual(many_rad.radius(), 1.0)
 
+    def testWireFillet(self):
+        points = [
+            (0.000, 0.000, 0.000),
+            (-0.287, 1.183, -0.592),
+            (-1.404, 4.113, -2.787),
+            (-1.332, 1.522, 0.553),
+            (7.062, 0.433, -0.097),
+            (8.539, -0.000, -0.000),
+        ]
+        wire = Wire.makePolygon(points, close=False)
+
+        # Fillet the wire
+        wfillet = wire.fillet(radius=0.560)
+        assert len(wfillet.Edges()) == 2 * len(points) - 3
+
+        # Fillet a single vertex
+        wfillet = wire.fillet(radius=0.560, vertices=wire.Vertices()[1:2])
+        assert len(wfillet.Edges()) == len(points)
+
+        # Assert exception if trying to fillet with too big
+        # a radius
+        with self.assertRaises(ValueError):
+            wfillet = wire.fillet(radius=1.0)
+
+        # Test a closed fillet
+        points = [[0, 0, 0], [5, 4, 0], [8, 3, 1], [10, 0, 0]]
+
+        wire = Wire.makePolygon(points, close=True)
+        wfillet = wire.fillet(radius=0.5)
+        assert len(wfillet.Edges()) == 2 * len(points)
+
+        # Fillet a single vertex
+        wfillet = wire.fillet(radius=0.5, vertices=wire.Vertices()[0:1])
+        assert len(wfillet.Edges()) == len(points) + 1
+
 
 @pytest.mark.parametrize(
     "points, close, expected_edges",
@@ -754,6 +803,22 @@ class TestCadObjects(BaseTest):
 )
 def test_wire_makepolygon(points, close, expected_edges):
     assert len(Wire.makePolygon(points, False, close).Edges()) == expected_edges
+
+
+def test_equality():
+
+    # do not raise error comparing with other type
+    assert (Vector(0, 0, 0) == 0) == False
+    assert (Plane.XY() == 0) == False
+
+    list1 = [
+        Vector(0, 0, 0),
+        Plane.XY(),
+        Vertex.makeVertex(0, 0, 0),
+        "a string",
+        4,
+    ]
+    assert [list1.index(item) for item in list1] == [0, 1, 2, 3, 4]
 
 
 if __name__ == "__main__":
