@@ -35,6 +35,8 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "path",
         "trame",
         "trame-vtk",
+        "trame-components",
+        "trame-vuetify",
         "pyparsing>=3.0.0",
     ]
 

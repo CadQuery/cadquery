@@ -27,7 +27,7 @@ def test_fig(fig):
     loc = Location()
     act = vtkAxesActor()
 
-    showables = (s, wp, assy, sk, ctrl_pts, v, loc, act)
+    showables = (s, s.copy(), wp, assy, sk, ctrl_pts, v, loc, act)
 
     # individual showables
     fig.show(*showables)
@@ -35,12 +35,28 @@ def test_fig(fig):
     # fit
     fig.fit()
 
+    # views
+    fig.iso()
+    fig.up()
+    fig.front()
+    fig.side()
+
     # clear
     fig.clear()
 
     # clear with an arg
+    for showable in showables:
+        fig.show(showable)
+
     for el in (s, wp, assy, sk, ctrl_pts):
-        fig.show(el).clear(el)
+        fig.clear(el)
+
+    # show multiple showables at once
+    fig.clear()
+    fig.show(*showables)
+
+    # more than one Solid showable -> more than 2 actors
+    assert len(list(fig.actors.values())[-1]) > 2
 
     # lists of showables
     fig.show(s.Edges()).show([Vector(), Vector(0, 1)])
@@ -56,3 +72,9 @@ def test_fig(fig):
     # test singleton behavior of fig
     fig2 = Figure()
     assert fig is fig2
+
+    # test onSelection
+    fig.onVisibility(fig.state.actors[0])
+
+    # test onVisbility
+    fig.onSelection([fig.state.actors[0]])
