@@ -708,8 +708,8 @@ class Sketch(object):
 
         # find the first edge matching current edge mode
         e = self._edges[-1]
-        mode = e.forConstruction 
-        
+        mode = e.forConstruction
+
         for el in reversed(self._edges):
             if el.forConstruction == mode:
                 e = el
