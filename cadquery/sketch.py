@@ -779,7 +779,7 @@ class Sketch(object):
         e = self._edges[-1]
         mode = e.forConstruction
 
-        for el in reversed(self._edges):
+        for el in self._edges:
             if el.forConstruction == mode:
                 e = el
                 break
