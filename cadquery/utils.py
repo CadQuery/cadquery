@@ -1,9 +1,52 @@
-from functools import wraps
-from inspect import signature, isbuiltin
-from typing import TypeVar, Callable, cast
+from functools import wraps, update_wrapper
+from inspect import signature, isbuiltin, currentframe
+from typing import TypeVar, Callable, cast, TYPE_CHECKING, Any
+from runtype import isa
 from warnings import warn
+from collections import UserDict
 
-from multimethod import multimethod, DispatchError
+from multimethod import (
+    multidispatch as _multidispatch,
+    DispatchError,
+    RETURN,
+)
+
+
+if TYPE_CHECKING:
+    from typing import overload as multidispatch, overload as multimethod
+
+    mypyclassmethod = classmethod
+
+else:
+
+    mypyclassmethod = lambda x: x
+
+    from multimethod import multimethod
+
+    class multidispatch(_multidispatch):
+        """
+        Multidispatch without register.
+        """
+
+        def __new__(cls, func):
+
+            homonym = currentframe().f_back.f_locals.get(func.__name__)  # type: ignore
+            if isinstance(homonym, multimethod):
+                return homonym
+
+            self = update_wrapper(dict.__new__(cls), func)
+            self.pending = set()
+            self.generics = []
+            self.signatures = {}
+
+            return self
+
+        def __init__(self, func: Callable[..., RETURN]) -> None:
+            if () not in self:
+                self[()] = func
+            else:
+                self.register(func)
+
 
 TCallable = TypeVar("TCallable", bound=Callable)
 
@@ -43,13 +86,13 @@ class deprecate:
         return wrapped
 
 
-class cqmultimethod(multimethod):
-    def __call__(self, *args, **kwargs):
+# class cqmultimethod(multimethod):
+#     def __call__(self, *args, **kwargs):
 
-        try:
-            return super().__call__(*args, **kwargs)
-        except DispatchError:
-            return next(iter(self.values()))(*args, **kwargs)
+#         try:
+#             return super().__call__(*args, **kwargs)
+#         except DispatchError:
+#             return next(iter(self.values()))(*args, **kwargs)
 
 
 class deprecate_kwarg_name:
@@ -83,3 +126,62 @@ def get_arity(f: TCallable) -> int:
         rv = f.__code__.co_argcount - n_defaults
 
     return rv
+
+
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class BiDict(UserDict[K, V]):
+    """
+    Bi-directional dictionary.
+    """
+
+    _inv: dict[V, list[K]]
+
+    def __init__(self, *args, **kwargs):
+
+        self._inv = {}
+
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, k: K, v: V):
+
+        super().__setitem__(k, v)
+
+        if v in self._inv:
+            self._inv[v].append(k)
+        else:
+            self._inv[v] = [k]
+
+    @property
+    def inv(self) -> dict[V, list[K]]:
+
+        return self._inv
+
+    def clear(self):
+
+        super().clear()
+        self._inv.clear()
+
+    def __delitem__(self, k: K):
+
+        v = self.data.pop(k)
+
+        # if needed in one-many cases
+        if v in self._inv:
+            # remove the inverse mapping
+            inv = self._inv[v]
+            inv.remove(k)
+
+            # if needed remove the item completely
+            if not inv:
+                del self._inv[v]
+
+
+def instance_of(obj: object, *args: object) -> bool:
+    """
+    Replacement for the instance_of method of typish, which
+    now uses the isa method of the runtype package.
+    """
+    return isa(obj, cast(tuple[type[Any], ...], args))

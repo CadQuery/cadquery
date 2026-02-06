@@ -1135,7 +1135,7 @@ class TestCQSelectors(BaseTest):
         ]
 
         for e in expressions:
-            gram.parseString(e, parseAll=True)
+            gram.parse_string(e, parse_all=True)
 
     def testShape(self):
         """

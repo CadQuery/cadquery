@@ -17,16 +17,18 @@ requirements:
   run:
     - python >=3.10
     - ocp=7.9.3.*
-    - pyparsing >=2.1.9
+    - pyparsing >=3.0.0
     - ezdxf>=1.3.0
     - ipython
     - typing_extensions
     - nlopt
     - multimethod >=1.11,<2.0
     - casadi
-    - typish
+    - runtype
     - trame
     - trame-vtk
+    - trame-components
+    - trame-vuetify
 
 test:
   requires:

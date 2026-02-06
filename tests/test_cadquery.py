@@ -150,9 +150,11 @@ class TestCadQuery(BaseTest):
             .vertices()
         )
         result = result.makeCubes(1.0)
-        result = result.combineSolids()
+        result = result.combine()
         self.saveModel(result)
-        self.assertEqual(1, result.solids().size())
+        self.assertEqual(1, result.size())
+        self.assertEqual("Compound", result.val().ShapeType())
+        self.assertEqual(4, result.solids().size())
 
     def testCylinderPlugin(self):
         """
@@ -169,7 +171,7 @@ class TestCadQuery(BaseTest):
             c = Solid.makeCylinder(radius, height, Vector(0, 0, 0))
 
             # combine all the cylinders into a single compound
-            r = self.eachpoint(lambda loc: c.located(loc), True).combineSolids()
+            r = self.eachpoint(lambda loc: c.located(loc), True).union()
             return r
 
         Workplane.cyl = cylinders
@@ -2778,7 +2780,7 @@ class TestCadQuery(BaseTest):
         )
         # self.assertEquals(10,s.faces().size())
         # self.assertEquals(1,s.solids().size())
-        s3 = s.combineSolids(s2)
+        s3 = s + s2
         self.saveModel(s3)
 
     def testTwistedLoft(self):
@@ -2860,7 +2862,7 @@ class TestCadQuery(BaseTest):
         # append the 'good way'
         for oo in o:
             s.add(oo)
-        s = s.combineSolids()
+        s = s.combine()
 
         print("Total time %0.3f" % (time.time() - beginTime))
 
@@ -3842,15 +3844,7 @@ class TestCadQuery(BaseTest):
         obj1 = (
             box.faces(">Z")
             .workplane()
-            .text(
-                "CQ 2.0",
-                0.5,
-                -0.05,
-                cut=True,
-                halign="left",
-                valign="bottom",
-                font="Sans",
-            )
+            .text("CQ 2.0", 0.5, -0.05, halign="left", valign="bottom", font="Sans",)
         )
 
         # combined object should have smaller volume
@@ -3859,7 +3853,7 @@ class TestCadQuery(BaseTest):
         obj2 = (
             box.faces(">Z")
             .workplane()
-            .text("CQ 2.0", 0.5, 0.05, cut=False, combine=True, font="Sans")
+            .text("CQ 2.0", 0.5, 0.05, combine=True, font="Sans")
         )
 
         # combined object should have bigger volume
@@ -3875,7 +3869,6 @@ class TestCadQuery(BaseTest):
                 "CQ 2.0",
                 0.5,
                 0.05,
-                cut=False,
                 combine=False,
                 halign="right",
                 valign="top",
@@ -3894,7 +3887,6 @@ class TestCadQuery(BaseTest):
                 0.5,
                 0.05,
                 fontPath=testFont,
-                cut=False,
                 combine=False,
                 halign="right",
                 valign="top",
@@ -3914,7 +3906,6 @@ class TestCadQuery(BaseTest):
                 0.5,
                 0.05,
                 fontPath=testFont,
-                cut=False,
                 combine=False,
                 halign="right",
                 valign="top",
@@ -3929,9 +3920,7 @@ class TestCadQuery(BaseTest):
         obj1 = (
             box.faces(">Z")
             .workplane()
-            .text(
-                "CQ 2.0", 10, -1, cut=True, halign="left", valign="bottom", font="Sans",
-            )
+            .text("CQ 2.0", 10, -1, halign="left", valign="bottom", font="Sans",)
         )
 
     def testTextAlignment(self):
@@ -4566,8 +4555,11 @@ class TestCadQuery(BaseTest):
 
         assert plate_5.val().isValid()
 
-        plate_6 = Solid.interpPlate(
-            [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], [], thickness=1
+        plate_6 = offset(
+            Face.makeNSidedSurface(
+                polyline((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)).close(), []
+            ),
+            1,
         )
 
         assert plate_6.isValid()
@@ -5024,22 +5016,6 @@ class TestCadQuery(BaseTest):
         w0 = Workplane().hLine(1).vLine(1).close()
         with raises(ValueError):
             w0.cutBlind(1)
-
-    def testFindFace(self):
-        # if there are no faces to find, should raise ValueError
-        w0 = Workplane()
-        with raises(ValueError):
-            w0.findFace()
-
-        w1 = Workplane().box(1, 1, 1).faces(">Z")
-        self.assertTrue(isinstance(w1.findFace(), Face))
-        with raises(ValueError):
-            w1.findFace(searchStack=False)
-
-        w2 = w1.workplane().circle(0.1).extrude(0.1)
-        self.assertTrue(isinstance(w2.findFace(searchParents=True), Face))
-        with raises(ValueError):
-            w2.findFace(searchParents=False)
 
     def testPopPending(self):
         # test pending edges

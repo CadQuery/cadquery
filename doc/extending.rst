@@ -22,21 +22,24 @@ any valid OCP script will execute just fine. For example, this simple CadQuery s
 
 is actually equivalent to::
 
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
+    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt
+
     return cq.Shape.cast(
         BRepPrimAPI_MakeBox(
-            gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0
+            gp_Ax2(gp_Pnt(-0.5, -1.0, -1.5), gp_Dir(0, 0, 1)), 1.0, 2.0, 3.0
         ).Shape()
     )
 
 As long as you return a valid OCP Shape, you can use any OCP methods you like. You can even mix and match the
 two. For example, consider this script, which creates a OCP box, but then uses CadQuery to select its faces::
 
-    box = cq.Shape.cast(
+    box1 = cq.Shape.cast(
         BRepPrimAPI_MakeBox(
-            gp_Ax2(Vector(-0.1, -1.0, -1.5), Vector(0, 0, 1)), 1.0, 2.0, 3.0
+            gp_Ax2(gp_Pnt(-0.5, -1.0, -1.5), gp_Dir(0, 0, 1)), 1.0, 2.0, 3.0
         ).Shape()
     )
-    cq = Workplane(box).faces(">Z").size()  # returns 6
+    return box1.faces(">X").Area()      # return 6.0
 
 
 Extending CadQuery: Plugins
@@ -161,14 +164,13 @@ Plugin Example
 
 This ultra simple plugin makes cubes of the specified size for each stack point.
 
-(The cubes are off-center because the boxes have their lower left corner at the reference points.)
-
 .. cadquery::
 
-        from cadquery.occ_impl.shapes import box
+        import cadquery as cq
+        from cadquery.func import box
 
         def makeCubes(self, length):
-            # self refers to the CQ or Workplane object
+            # self refers to the Workplane object
 
             # inner method that creates a cube
             def _singleCube(loc):
@@ -192,7 +194,7 @@ This ultra simple plugin makes cubes of the specified size for each stack point.
             .rect(4.0, 4.0, forConstruction=True)
             .vertices()
             .makeCubes(1.0)
-            .combineSolids()
+            .combine()
         )
 
 
@@ -214,7 +216,8 @@ Here is the same plugin rewritten using one of those methods.
 
 .. cadquery::
 
-        from cadquery.occ_impl.shapes import box
+        import cadquery as cq
+        from cadquery.func import box
 
         def makeCubes(length):
 
@@ -233,7 +236,7 @@ Here is the same plugin rewritten using one of those methods.
             .rect(4.0, 4.0, forConstruction=True)
             .vertices()
             .invoke(makeCubes(1.0))
-            .combineSolids()
+            .combine()
         )
 
 Such an approach is more friendly for auto-completion and static analysis tools.

@@ -13,6 +13,7 @@ from typing import (
     cast as tcast,
     Literal,
     Protocol,
+    Generator,
 )
 
 from typing_extensions import Self
@@ -31,7 +32,7 @@ from ..selectors import (
     StringSyntaxSelector,
 )
 
-from ..utils import multimethod
+from ..utils import multimethod, multidispatch, mypyclassmethod
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -1157,7 +1158,7 @@ class Shape(object):
 
         return self
 
-    @move.register
+    @multimethod
     def move(
         self: T,
         x: Real = 0,
@@ -1175,7 +1176,7 @@ class Shape(object):
 
         return self
 
-    @move.register
+    @multimethod
     def move(self: T, loc: VectorLike) -> T:
         """
         Apply a VectorLike in relative sense (i.e. update current location) to self.
@@ -1196,16 +1197,16 @@ class Shape(object):
 
         return r
 
-    @moved.register
-    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> T:
+    @multimethod
+    def moved(self: T, loc1: Location, loc2: Location, *locs: Location) -> "Shape":
         """
         Apply multiple locations.
         """
 
         return self.moved((loc1, loc2) + locs)
 
-    @moved.register
-    def moved(self: T, locs: Sequence[Location]) -> T:
+    @multimethod
+    def moved(self: T, locs: Sequence[Location]) -> "Shape":
         """
         Apply multiple locations.
         """
@@ -1217,7 +1218,7 @@ class Shape(object):
 
         return _compound_or_shape(rv)
 
-    @moved.register
+    @multimethod
     def moved(
         self: T,
         x: Real = 0,
@@ -1233,7 +1234,7 @@ class Shape(object):
 
         return self.moved(Location(x, y, z, rx, ry, rz))
 
-    @moved.register
+    @multimethod
     def moved(self: T, loc: VectorLike) -> T:
         """
         Apply a VectorLike in relative sense to a copy of self.
@@ -1241,8 +1242,10 @@ class Shape(object):
 
         return self.moved(Location(loc))
 
-    @moved.register
-    def moved(self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike) -> T:
+    @multimethod
+    def moved(
+        self: T, loc1: VectorLike, loc2: VectorLike, *locs: VectorLike
+    ) -> "Shape":
         """
         Apply multiple VectorLikes in relative sense to a copy of self.
         """
@@ -1251,8 +1254,8 @@ class Shape(object):
             (Location(loc1), Location(loc2)) + tuple(Location(loc) for loc in locs)
         )
 
-    @moved.register
-    def moved(self: T, loc: Sequence[VectorLike]) -> T:
+    @multimethod
+    def moved(self: T, loc: Sequence[VectorLike]) -> "Shape":
         """
         Apply multiple VectorLikes in relative sense to a copy of self.
         """
@@ -3193,7 +3196,7 @@ class Face(Shape):
 
         return Vector(vn).normalized()
 
-    @normalAt.register
+    @multimethod
     def normalAt(self, u: Real, v: Real) -> Tuple[Vector, Vector]:
         """
         Computes the normal vector at the desired location in the u,v parameter space.
@@ -3528,7 +3531,7 @@ class Face(Shape):
         return Solid(builder.Shape())
 
     @classmethod
-    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> Self:
+    def constructOn(cls, f: "Face", outer: "Wire", *inner: "Wire") -> "Face":
 
         return f.trim(outer, *inner)
 
@@ -3560,14 +3563,14 @@ class Face(Shape):
 
         return self.__class__(bldr.Shape())
 
-    @trim.register
-    def _(
+    @multimethod
+    def trim(
         self,
         pt1: Tuple[Real, Real],
         pt2: Tuple[Real, Real],
         pt3: Tuple[Real, Real],
         *pts: Tuple[Real, Real],
-    ) -> Self:
+    ) -> "Face":
         """
         Trim the face using a polyline defined in the (u,v) space.
         """
@@ -3600,8 +3603,8 @@ class Face(Shape):
         # construct the final trimmed face
         return self.constructOn(self, Wire(w))
 
-    @trim.register
-    def _(self, outer: Wire, *inner: Wire) -> Self:
+    @multimethod
+    def trim(self, outer: Wire, *inner: Wire) -> Self:
         """
         Trim using wires. The provided wires need to have a pcurve on self.
         """
@@ -3849,7 +3852,7 @@ class Mixin3D(object):
         upToFace: Optional[Face] = None,
         thruAll: bool = True,
         additive: bool = True,
-    ) -> "Solid":
+    ) -> TS:
         """
         Make a prismatic feature (additive or subtractive)
 
@@ -3864,9 +3867,9 @@ class Mixin3D(object):
         sorted_profiles = sortWiresByBuildOrder(profiles)
         faces = [Face.makeFromWires(p[0], p[1:]) for p in sorted_profiles]
 
-        return self.dprism(basis, faces, depth, taper, upToFace, thruAll, additive)
+        return self.dprism(basis, faces, depth, taper, upToFace, thruAll, additive)  # type: ignore
 
-    @dprism.register
+    @multimethod
     def dprism(
         self: TS,
         basis: Optional[Face],
@@ -3876,7 +3879,7 @@ class Mixin3D(object):
         upToFace: Optional[Face] = None,
         thruAll: bool = True,
         additive: bool = True,
-    ) -> "Solid":
+    ) -> TS:
 
         shape: Union[TopoDS_Shape, TopoDS_Solid] = self.wrapped
         for face in faces:
@@ -3907,92 +3910,6 @@ class Solid(Shape, Mixin3D):
     """
 
     wrapped: TopoDS_Solid
-
-    @classmethod
-    @deprecate()
-    def interpPlate(
-        cls,
-        surf_edges,
-        surf_pts,
-        thickness,
-        degree=3,
-        nbPtsOnCur=15,
-        nbIter=2,
-        anisotropy=False,
-        tol2d=0.00001,
-        tol3d=0.0001,
-        tolAng=0.01,
-        tolCurv=0.1,
-        maxDeg=8,
-        maxSegments=9,
-    ) -> Union["Solid", Face]:
-        """
-        Returns a plate surface that is 'thickness' thick, enclosed by 'surf_edge_pts' points, and going through 'surf_pts' points.
-
-        :param surf_edges:
-            list of [x,y,z] float ordered coordinates
-            or list of ordered or unordered wires
-        :param surf_pts: list of [x,y,z] float coordinates (uses only edges if [])
-        :param thickness: thickness may be negative or positive depending on direction, (returns 2D surface if 0)
-        :param degree: >=2
-        :param nbPtsOnCur: number of points on curve >= 15
-        :param nbIter: number of iterations >= 2
-        :param anisotropy: bool Anisotropy
-        :param tol2d: 2D tolerance >0
-        :param tol3d: 3D tolerance >0
-        :param tolAng: angular tolerance
-        :param tolCurv: tolerance for curvature >0
-        :param maxDeg: highest polynomial degree >= 2
-        :param maxSegments: greatest number of segments >= 2
-        """
-
-        # POINTS CONSTRAINTS: list of (x,y,z) points, optional.
-        pts_array = [gp_Pnt(*pt) for pt in surf_pts]
-
-        # EDGE CONSTRAINTS
-        # If a list of wires is provided, make a closed wire
-        if not isinstance(surf_edges, list):
-            surf_edges = [o.vals()[0] for o in surf_edges.all()]
-            surf_edges = Wire.assembleEdges(surf_edges)
-            w = surf_edges.wrapped
-
-        # If a list of (x,y,z) points provided, build closed polygon
-        if isinstance(surf_edges, list):
-            e_array = [Vector(*e) for e in surf_edges]
-            wire_builder = BRepBuilderAPI_MakePolygon()
-            for e in e_array:  # Create polygon from edges
-                wire_builder.Add(e.toPnt())
-            wire_builder.Close()
-            w = wire_builder.Wire()
-
-        edges = [i for i in Shape(w).Edges()]
-
-        # MAKE SURFACE
-        continuity = GeomAbs_C0  # Fixed, changing to anything else crashes.
-        face = Face.makeNSidedSurface(
-            edges,
-            pts_array,
-            continuity,
-            degree,
-            nbPtsOnCur,
-            nbIter,
-            anisotropy,
-            tol2d,
-            tol3d,
-            tolAng,
-            tolCurv,
-            maxDeg,
-            maxSegments,
-        )
-
-        # THICKEN SURFACE
-        if (
-            abs(thickness) > 0
-        ):  # abs() because negative values are allowed to set direction of thickening
-            return face.thicken(thickness)
-
-        else:  # Return 2D surface only
-            return face
 
     @staticmethod
     def isSolid(obj: Shape) -> bool:
@@ -4195,6 +4112,7 @@ class Solid(Shape, Mixin3D):
         extrude_builder.MakeSolid()
         return extrude_builder.Shape()
 
+    @mypyclassmethod
     @multimethod
     def extrudeLinearWithRotation(
         cls,
@@ -4225,15 +4143,19 @@ class Solid(Shape, Mixin3D):
         :param angleDegrees: the angle to rotate through while extruding
         :return: a Solid object
         """
+
+        vecNormal_ = Vector(vecNormal)
+        vecCenter_ = Vector(vecCenter)
+
         # make straight spine
-        straight_spine_e = Edge.makeLine(vecCenter, vecCenter.add(vecNormal))
+        straight_spine_e = Edge.makeLine(vecCenter_, vecCenter_.add(vecNormal_))
         straight_spine_w = Wire.combine([straight_spine_e,])[0].wrapped
 
         # make an auxiliary spine
-        pitch = 360.0 / angleDegrees * vecNormal.Length
+        pitch = 360.0 / angleDegrees * vecNormal_.Length
         radius = 1
         aux_spine_w = Wire.makeHelix(
-            pitch, vecNormal.Length, radius, center=vecCenter, dir=vecNormal
+            pitch, vecNormal_.Length, radius, center=vecCenter_, dir=vecNormal_
         ).wrapped
 
         # extrude the outer wire
@@ -4254,7 +4176,7 @@ class Solid(Shape, Mixin3D):
         return cls(BRepAlgoAPI_Cut(outer_solid, inner_comp).Shape())
 
     @classmethod
-    @extrudeLinearWithRotation.register
+    @multimethod
     def extrudeLinearWithRotation(
         cls,
         face: Face,
@@ -4267,6 +4189,7 @@ class Solid(Shape, Mixin3D):
             face.outerWire(), face.innerWires(), vecCenter, vecNormal, angleDegrees
         )
 
+    @mypyclassmethod
     @multimethod
     def extrudeLinear(
         cls,
@@ -4306,28 +4229,31 @@ class Solid(Shape, Mixin3D):
         return cls.extrudeLinear(face, vecNormal, taper)
 
     @classmethod
-    @extrudeLinear.register
+    @multimethod
     def extrudeLinear(
         cls, face: Face, vecNormal: VectorLike, taper: Real = 0,
     ) -> "Solid":
 
+        vecNormal_ = Vector(vecNormal)
+
         if taper == 0:
             prism_builder: Any = BRepPrimAPI_MakePrism(
-                face.wrapped, Vector(vecNormal).wrapped, True
+                face.wrapped, vecNormal_.wrapped, True
             )
         else:
             faceNormal = face.normalAt()
-            d = 1 if vecNormal.getAngle(faceNormal) < radians(90.0) else -1
+            d = 1 if vecNormal_.getAngle(faceNormal) < radians(90.0) else -1
 
             # Divided by cos of taper angle to ensure the height chosen by the user is respected
             prism_builder = LocOpe_DPrism(
                 face.wrapped,
-                (d * vecNormal.Length) / cos(radians(taper)),
+                (d * vecNormal_.Length) / cos(radians(taper)),
                 d * radians(taper),
             )
 
         return cls(prism_builder.Shape())
 
+    @mypyclassmethod
     @multimethod
     def revolve(
         cls,
@@ -4364,7 +4290,7 @@ class Solid(Shape, Mixin3D):
         return cls.revolve(face, angleDegrees, axisStart, axisEnd)
 
     @classmethod
-    @revolve.register
+    @multimethod
     def revolve(
         cls, face: Face, angleDegrees: Real, axisStart: VectorLike, axisEnd: VectorLike,
     ) -> "Solid":
@@ -4415,6 +4341,7 @@ class Solid(Shape, Mixin3D):
 
         return rv
 
+    @mypyclassmethod
     @multimethod
     def sweep(
         cls,
@@ -4473,7 +4400,7 @@ class Solid(Shape, Mixin3D):
         return rv
 
     @classmethod
-    @sweep.register
+    @multimethod
     def sweep(
         cls,
         face: Face,
@@ -5013,6 +4940,31 @@ def _get_wire_lists(s: Sequence[Shape]) -> List[List[Union[Wire, Vertex]]]:
     return wire_lists
 
 
+def _get_wire_lists_strict(s: Sequence[Shape]) -> List[List[Wire]]:
+    """
+    Get lists of wires for sweeping.
+    """
+
+    wire_lists: List[List[Wire]] = []
+
+    ix_last = len(s) - 1
+
+    for i, el in enumerate(s):
+        if i == 0:
+
+            wire_lists = [[w] for w in _get_wires(el)]
+
+            # if no faces and vertices were detected return an empty list
+            if not wire_lists:
+                break
+
+        else:
+            for wire_list, w in zip(wire_lists, _get_wires(el)):
+                wire_list.append(w)
+
+    return wire_lists
+
+
 def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
     """
     Get lists of faces for sweeping or lofting. First and last shape can be a vertex.
@@ -5060,6 +5012,31 @@ def _get_face_lists(s: Sequence[Shape]) -> List[List[Union[Face, Vertex]]]:
     return face_lists
 
 
+def _get_face_lists_strict(s: Sequence[Shape]) -> List[List[Face]]:
+    """
+    Get lists of faces for sweeping. No vertices are allowed.
+    """
+
+    face_lists: List[List[Face]] = []
+
+    ix_last = len(s) - 1
+
+    for i, el in enumerate(s):
+        if i == 0:
+
+            face_lists = [[f] for f in el.Faces()]
+
+            # if no faces were detected return an empty list
+            if not face_lists:
+                break
+
+        else:
+            for face_list, f in zip(face_lists, el.Faces()):
+                face_list.append(f)
+
+    return face_lists
+
+
 def _normalize(s: Shape) -> Shape:
     """
     Apply some normalizations:
@@ -5082,7 +5059,7 @@ def _normalize(s: Shape) -> Shape:
     return rv
 
 
-def _compound_or_shape(s: Union[TopoDS_Shape, List[TopoDS_Shape]]) -> Shape:
+def _compound_or_shape(s: Union[TopoDS_Shape, Sequence[TopoDS_Shape]]) -> Shape:
     """
     Convert a list of TopoDS_Shape to a Shape or a Compound.
     """
@@ -5224,7 +5201,7 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
 ShapeHistory = Dict[Union[Shape, str], Shape]
 
 
-@multimethod
+@multidispatch
 def edgeOn(
     base: Shape,
     pts: Sequence[Tuple[Real, Real]],
@@ -5248,10 +5225,10 @@ def edgeOn(
     return _compound_or_shape(rv)
 
 
-@edgeOn.register
-def _(
+@multidispatch
+def edgeOn(
     fbase: Shape, edg: Shape, *edgs: Shape, tol: float = 1e-6, N: int = 20,
-):
+) -> Shape:
     """
     Map one or more edges onto a base face in the u,v space.
     """
@@ -5309,7 +5286,7 @@ def wireOn(base: Shape, w: Shape, tol=1e-6, N=20) -> Shape:
     return wire(rvs)
 
 
-@multimethod
+@multidispatch
 def wire(*s: Shape) -> Shape:
     """
     Build wire from edges.
@@ -5323,13 +5300,13 @@ def wire(*s: Shape) -> Shape:
     return _compound_or_shape(builder.Shape())
 
 
-@wire.register
+@multidispatch
 def wire(s: Sequence[Shape]) -> Shape:
 
     return wire(*s)
 
 
-@multimethod
+@multidispatch
 def face(*s: Shape) -> Shape:
     """
     Build face from edges or wires.
@@ -5348,7 +5325,7 @@ def face(*s: Shape) -> Shape:
     return _get_one(_compound_or_shape(rv), "Face")
 
 
-@face.register
+@multidispatch
 def face(s: Sequence[Shape]) -> Shape:
     """
     Build face from a sequence of edges or wires.
@@ -5374,8 +5351,11 @@ def faceOn(base: Shape, *fcs: Shape, tol=1e-6, N=20) -> Shape:
             # construct pcurves and trim in one go
             rvs.append(
                 fbase.trim(
-                    wireOn(fbase, fc.outerWire(), tol=tol, N=N),
-                    *(wireOn(fbase, w, tol=tol, N=N) for w in fc.innerWires()),
+                    tcast(Wire, wireOn(fbase, fc.outerWire(), tol=tol, N=N)),
+                    *(
+                        tcast(Wire, wireOn(fbase, w, tol=tol, N=N))
+                        for w in fc.innerWires()
+                    ),
                 )
             )
 
@@ -5406,7 +5386,7 @@ def _process_sewing_history(
             history[f] = Face(builder.Modified(f.wrapped))
 
 
-@multimethod
+@multidispatch
 def shell(
     *s: Shape,
     tol: float = 1e-6,
@@ -5436,13 +5416,15 @@ def shell(
     sewed = builder.SewedShape()
     _process_sewing_history(builder, faces, history)
 
+    rv: Union[TopoDS_Shape, TopoDS_Shell]
+
     # for one face sewing will not produce a shell
     if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
         rv = TopoDS_Shell()
 
-        builder = TopoDS_Builder()
-        builder.MakeShell(rv)
-        builder.Add(rv, sewed)
+        builder_topo = TopoDS_Builder()
+        builder_topo.MakeShell(rv)
+        builder_topo.Add(rv, sewed)
 
     else:
         rv = sewed
@@ -5450,7 +5432,7 @@ def shell(
     return _compound_or_shape(rv)
 
 
-@shell.register
+@multidispatch
 def shell(
     s: Sequence[Shape],
     tol: float = 1e-6,
@@ -5465,7 +5447,7 @@ def shell(
     return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history)
 
 
-@multimethod
+@multidispatch
 def solid(
     s1: Shape, *sn: Shape, tol: float = 1e-6, history: Optional[ShapeHistory] = None,
 ) -> Shape:
@@ -5480,17 +5462,17 @@ def solid(
     shells_faces = [f for el in s for f in _get(el, ("Shell", "Face"))]
 
     # if no shells are present, use faces to construct them
-    shells = [el.wrapped for el in shells_faces if el.ShapeType() == "Shell"]
+    shells = [el.wrapped for el in shells_faces if isinstance(el, Shell)]
     if not shells:
-        faces = [el for el in shells_faces]
-        shells = [shell(*faces, tol=tol, history=history).wrapped]
+        faces = [el for el in shells_faces if isinstance(el, Face)]
+        shells = [tcast(TopoDS_Shell, shell(*faces, tol=tol, history=history).wrapped)]
 
     rvs = [builder.SolidFromShell(sh) for sh in shells]
 
     return _compound_or_shape(rvs)
 
 
-@solid.register
+@multidispatch
 def solid(
     s: Sequence[Shape],
     inner: Optional[Sequence[Shape]] = None,
@@ -5502,7 +5484,7 @@ def solid(
     """
 
     builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(shell(*s, tol=tol, history=history).wrapped)
+    builder.Add(_get_one(shell(*s, tol=tol, history=history), "Shell").wrapped)
 
     if inner:
         for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
@@ -5532,8 +5514,8 @@ def compound(*s: Shape) -> Shape:
     return Compound(rv)
 
 
-@compound.register
-def compound(s: Sequence[Shape]) -> Shape:
+@multimethod
+def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Shape:
     """
     Build compound from a sequence of shapes.
     """
@@ -5553,7 +5535,7 @@ def vertex(x: Real, y: Real, z: Real) -> Shape:
     return _compound_or_shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
 
 
-@vertex.register
+@multimethod
 def vertex(p: VectorLike):
     """
     Construct a vertex from VectorLike.
@@ -5624,7 +5606,7 @@ def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape
     return _compound_or_shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge())
 
 
-@spline.register
+@multimethod
 def spline(
     pts: Sequence[VectorLike],
     tgts: Optional[Sequence[VectorLike]] = None,
@@ -5640,11 +5622,9 @@ def spline(
     data = _pts_to_harray(pts)
 
     if params is not None:
-        args = (data, _floats_to_harray(params), periodic, tol)
+        builder = GeomAPI_Interpolate(data, _floats_to_harray(params), periodic, tol)
     else:
-        args = (data, periodic, tol)
-
-    builder = GeomAPI_Interpolate(*args)
+        builder = GeomAPI_Interpolate(data, periodic, tol)
 
     if tgts is not None:
         builder.Load(Vector(tgts[0]).wrapped, Vector(tgts[1]).wrapped, scale)
@@ -5691,7 +5671,7 @@ def plane(w: Real, l: Real) -> Shape:
     )
 
 
-@plane.register
+@multimethod
 def plane() -> Shape:
     """
     Construct an infinite planar face.
@@ -5761,7 +5741,16 @@ def torus(d1: float, d2: float) -> Shape:
     )
 
 
-@multimethod
+@multidispatch
+def cone(d: Real, h: Real) -> Shape:
+    """
+    Construct a full solid cone.
+    """
+
+    return cone(d, 0.0, h)
+
+
+@multidispatch
 def cone(d1: Real, d2: Real, h: Real) -> Shape:
     """
     Construct a partial solid cone.
@@ -5776,15 +5765,6 @@ def cone(d1: Real, d2: Real, h: Real) -> Shape:
             2 * pi,
         ).Shape()
     )
-
-
-@cone.register
-def cone(d: Real, h: Real) -> Shape:
-    """
-    Construct a full solid cone.
-    """
-
-    return cone(d, 0, h)
 
 
 @multimethod
@@ -5844,7 +5824,7 @@ def text(
     return clean(compound(_compound_or_shape(rv).Faces()).fuse())
 
 
-@text.register
+@multimethod
 def text(
     txt: str,
     size: Real,
@@ -5877,7 +5857,7 @@ def text(
     return _normalize(compound(rv))
 
 
-@text.register
+@multimethod
 def text(
     txt: str,
     size: Real,
@@ -6310,7 +6290,7 @@ def sweep(
     return _compound_or_shape(results)
 
 
-@sweep.register
+@multimethod
 def sweep(
     s: Sequence[Shape], path: Shape, aux: Optional[Shape] = None, cap: bool = False
 ) -> Shape:
@@ -6335,7 +6315,7 @@ def sweep(
         return rv
 
     # try to construct sweeps using faces
-    for el in _get_face_lists(s):
+    for el in _get_face_lists_strict(s):
         # build outer part
         builder = _make_builder()
 
@@ -6372,10 +6352,10 @@ def sweep(
     # if no faces were provided try with wires
     if not results:
         # construct sweeps
-        for el in _get_wire_lists(s):
+        for el2 in _get_wire_lists_strict(s):
             builder = _make_builder()
 
-            for w in el:
+            for w in el2:
                 builder.Add(w.wrapped, False, False)
 
             builder.Build()
@@ -6440,7 +6420,7 @@ def loft(
         # only initialize inner builders if no vertex was encountered
         if not has_vertex:
             # initialize builders
-            for w in el[0].innerWires():
+            for w in tcast(Face, el[0]).innerWires():
                 builder_inner = _make_builder(True)
 
                 builder_inner.AddWire(w.wrapped)
@@ -6448,7 +6428,9 @@ def loft(
 
             # add remaining sections
             for f in el[1:]:
-                for builder_inner, w in zip(builders_inner, f.innerWires()):
+                for builder_inner, w in zip(
+                    builders_inner, tcast(Face, f).innerWires()
+                ):
                     builder_inner.AddWire(w.wrapped)
 
         # actually build
@@ -6463,14 +6445,14 @@ def loft(
 
     # otherwise construct using wires
     if not results:
-        for el in _get_wire_lists(s):
+        for el2 in _get_wire_lists(s):
             builder = _make_builder(cap)
 
-            for w in el:
-                if isinstance(w, Wire):
-                    builder.AddWire(w.wrapped)
+            for w2 in el2:
+                if isinstance(w2, Wire):
+                    builder.AddWire(w2.wrapped)
                 else:
-                    builder.AddVertex(w.wrapped)
+                    builder.AddVertex(w2.wrapped)
 
             builder.Build()
             builder.Check()
@@ -6480,7 +6462,7 @@ def loft(
     return _compound_or_shape(results)
 
 
-@loft.register
+@multimethod
 def loft(
     *s: Shape,
     cap: bool = False,

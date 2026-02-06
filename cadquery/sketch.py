@@ -13,17 +13,17 @@ from typing import (
     cast as tcast,
     Literal,
     overload,
+    get_origin,
 )
 
 from math import tan, sin, cos, pi, radians, remainder
 from itertools import product, chain
 from multimethod import multimethod
-from typish import instance_of, get_type
 
 from .hull import find_hull
 from .selectors import StringSyntaxSelector, Selector
 from .types import Real
-from .utils import get_arity
+from .utils import get_arity, instance_of
 
 from .occ_impl.shapes import (
     Shape,
@@ -117,7 +117,7 @@ class Constraint(object):
 
         if not instance_of(param, param_type):
             raise ValueError(
-                f"Unsupported argument types {get_type(param)}, required {param_type}."
+                f"Unsupported argument types {get_origin(param)}, required {param_type}."
             )
 
         # if all is fine store everything and possibly convert the params
@@ -171,7 +171,7 @@ class Sketch(object):
 
         self._solve_status = None
 
-    def __iter__(self) -> Iterator[Face]:
+    def __iter__(self) -> Iterator[Face] | Iterator[Edge]:
         """
         Iterate over faces-locations combinations. If not faces are present
         iterate over edges:
@@ -206,7 +206,7 @@ class Sketch(object):
         elif isinstance(b, Sketch):
             res = b
         elif isinstance(b, Shape):
-            res = compound(b.Faces())
+            res = Compound.makeCompound(b.Faces())
         elif isinstance(b, Iterable):
             wires = edgesToWires(tcast(Iterable[Edge], b))
             res = Face.makeFromWires(*(wires[0], wires[1:]))
@@ -542,7 +542,7 @@ class Sketch(object):
         elif mode == "i":
             self._faces = self._faces.intersect(*res)
         elif mode == "r":
-            self._faces = compound(res)
+            self._faces = Compound.makeCompound(res)
         elif mode == "c":
             if not tag:
                 raise ValueError("No tag specified - the geometry will be unreachable")
@@ -1173,12 +1173,25 @@ class Sketch(object):
 
         return rv
 
+    def _selected_faces(self: T) -> Shape:
+        """
+        Helper for returning selected faces.
+        """
+
+        if self._selection:
+            return compound(
+                [el for el in self._selection if isinstance(el, Shape)]
+            ).faces()
+        else:
+            raise ValueError("Nothing is selected")
+
     def add(self: T) -> T:
         """
         Add selection to the underlying faces.
         """
 
-        self._faces += compound(self._selection).faces()
+        if self._selection:
+            self._faces = tcast(Compound, self._faces + self._selected_faces())
 
         return self
 
@@ -1187,7 +1200,8 @@ class Sketch(object):
         Subtract selection from the underlying faces.
         """
 
-        self._faces -= compound(self._selection).faces()
+        if self._selection:
+            self._faces = tcast(Compound, self._faces - self._selected_faces())
 
         return self
 
@@ -1196,7 +1210,7 @@ class Sketch(object):
         Replace the underlying faces with the selection.
         """
 
-        self._faces = compound(self._selection).faces()
+        self._faces = tcast(Compound, self._selected_faces())
 
         return self
 

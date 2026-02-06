@@ -17,7 +17,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box, cone, plane
+from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -36,6 +36,7 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
 from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB, Quantity_NameOfColor
 from OCP.TopAbs import TopAbs_ShapeEnum
+from OCP.Graphic3d import Graphic3d_NameOfMaterial
 
 
 @pytest.fixture(scope="function")
@@ -407,6 +408,10 @@ def subshape_assy():
         layer="cylinder_bottom_wire_layer",
     )
 
+    # Add two subshapes with the same name
+    assy["cyl_1"].addSubshape(cyl_1.faces(">Z").val(), name="2_faces")
+    assy["cyl_1"].addSubshape(cyl_1.faces("<Z").val(), name="2_faces")
+
     return assy
 
 
@@ -638,6 +643,36 @@ def test_color():
     assert c4.wrapped.GetRGB().Red() == pytest.approx(0.5)
     assert c4.wrapped.GetRGB().Green() == pytest.approx(0.2)
     assert c4.wrapped.Alpha() == 0.5
+
+    # test for hex string for short sRGB color
+    c5 = cq.Color("#FF0")
+    assert c5.wrapped.GetRGB().Red() == 1
+    assert c5.wrapped.GetRGB().Green() == 1
+    assert c5.wrapped.GetRGB().Blue() == 0
+    with pytest.raises(AttributeError):
+        c5.wrapped.GetRGB().Alpha()
+
+    # test for hex string for short sRGBA color
+    c6 = cq.Color("#FF0F")
+    assert c6.wrapped.GetRGB().Red() == 1
+    assert c6.wrapped.GetRGB().Green() == 1
+    assert c6.wrapped.GetRGB().Blue() == 0
+    assert c6.wrapped.Alpha() == 1.0
+
+    # test for hex string for RGB color
+    c7 = cq.Color("#FFFF00")
+    assert c7.wrapped.GetRGB().Red() == 1
+    assert c7.wrapped.GetRGB().Green() == 1
+    assert c7.wrapped.GetRGB().Blue() == 0
+    with pytest.raises(AttributeError):
+        c7.wrapped.GetRGB().Alpha()
+
+    # test for hex string for RGBA color
+    c8 = cq.Color("#FFFF00FF")
+    assert c8.wrapped.GetRGB().Red() == 1
+    assert c8.wrapped.GetRGB().Green() == 1
+    assert c8.wrapped.GetRGB().Blue() == 0
+    assert c8.wrapped.Alpha() == 1.0
 
     with pytest.raises(ValueError):
         cq.Color("?????")
@@ -871,6 +906,41 @@ def test_meta_step_export_edge_cases(tmp_path_factory):
     assy.addSubshape(cube.faces(">Z").val(), layer="cube_top_face")
     success = exportStepMeta(assy, meta_path)
     assert success
+
+
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+def test_step_roundtrip_with_materials(kind, tmp_path_factory):
+    """
+    Tests to make sure that once materials have been exported to a file format
+    such as STEP, the materials can be imported again.
+    """
+
+    materials_assy = cq.Assembly()
+    materials_assy.add(
+        cq.Workplane().box(10, 10, 10),
+        name="cube_1",
+        material=cq.Material(name="copper"),
+    )
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    materials_path = os.path.join(tmpdir, f"roundtrip_materials.{kind}")
+
+    exportAssembly(materials_assy, materials_path)
+
+    # Read the contents as a step file as a string so we can check the outputs
+    with open(materials_path, "r") as f:
+        step_contents = f.read()
+
+        # Make sure that the face name string is present in the exported STEP contents
+        assert "copper" in step_contents
+
+    # Import the STEP file back in as an assembly
+    test_assy = cq.Assembly.importStep(materials_path)
+
+    # Make sure that the material was re-imported
+    assert test_assy.children[0].material is not None
+    assert test_assy.children[0].material.name == "copper"
 
 
 def test_assembly_step_import(tmp_path_factory, subshape_assy):
@@ -1523,6 +1593,52 @@ def test_colors_assy1(assy_fixture, request, tmpdir, kind):
     check_assy(assy, assy_i)
 
 
+def test_materials():
+    # Test a default material not attached to an assembly
+    mat_0 = cq.Material()
+    assert mat_0.name == "Default"
+
+    # Simple objects to be added to the assembly with the material
+    wp_1 = cq.Workplane().box(10, 10, 10)
+    wp_2 = cq.Workplane().box(5, 5, 5)
+    wp_3 = cq.Workplane().box(2.5, 2.5, 2.5)
+
+    # Add the object to the assembly with the material
+    assy = cq.Assembly()
+
+    # Test with a default material
+    mat_1 = cq.Material()
+    assy.add(wp_1, material=mat_1)
+    assert assy.children[0].material.name == "Default"
+    assert assy.children[0].material.description == ""
+    assert assy.children[0].material.density == 7.85
+    assert assy.children[0].material.densityUnit == "g/cm^3"
+
+    # Test with a user-defined material when passing properties in constructor
+    mat_2 = cq.Material(
+        "test", description="Test material", density=1.0, densityUnit="lb/in^3"
+    )
+    assy.add(wp_2, material=mat_2)
+    assert assy.children[1].material.name == "test"
+    assert assy.children[1].material.description == "Test material"
+    assert assy.children[1].material.density == 1.0
+    assert assy.children[1].material.densityUnit == "lb/in^3"
+
+    # The visualization material is left for later expansion
+    assert assy.children[1].material.wrapped_vis.IsEmpty()
+
+    # Test the ability to convert a material to a tuple
+    assert mat_2.toTuple() == ("test", "Test material", 1.0, "lb/in^3")
+
+    # Test the ability to have a material
+    assert mat_2.__hash__() == hash(("test", "Test material", 1.0, "lb/in^3"))
+
+    # Test the equality operator with material
+    assert mat_2 == cq.Material(
+        "test", description="Test material", density=1.0, densityUnit="lb/in^3"
+    )
+
+
 @pytest.mark.parametrize(
     "assy_fixture, expected",
     [
@@ -1724,6 +1840,18 @@ def test_constrain(simple_assy, nested_assy):
         .TranslationPart()
         .IsEqual(gp_XYZ(2, -4, 0.75), 1e-6)
     )
+
+    # Make sure that calling with too many args causes an error
+    with pytest.raises(ValueError):
+        simple_assy.constrain(
+            subassy1.name,
+            b2.faces(">Z").val(),
+            subassy2.name,
+            b3.faces("<Z").val(),
+            "Point",
+            "Point",
+            "Point",
+        )
 
 
 def test_constrain_with_tags(nested_assy):
@@ -2328,6 +2456,20 @@ def test_special_methods(subshape_assy):
 
     with pytest.raises(AttributeError):
         subshape_assy.cube_123456
+
+
+def test_subshape_access(subshape_assy):
+    """
+    Smoke-test subshape access.
+    """
+
+    assert "cube_1_top_face" in subshape_assy.cube_1.__dir__()
+    assert "cube_1_top_face" in subshape_assy.cube_1._ipython_key_completions_()
+    assert "cube_1_top_face" in subshape_assy.cube_1
+
+    assert isinstance(subshape_assy.cube_1.cube_1_top_face, Face)
+    assert isinstance(subshape_assy.cube_1["cube_1_top_face"], Face)
+    assert isinstance(subshape_assy.cyl_1["2_faces"], Compound)
 
 
 def test_shallow_assy():
