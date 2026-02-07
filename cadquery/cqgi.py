@@ -287,7 +287,7 @@ class InputParameter:
                 else:
                     f = float(new_value)
 
-                self.ast_node.n = f
+                self.ast_node.value = f
             except ValueError:
                 raise InvalidParameterError(
                     "Cannot set value '{0:s}' for parameter '{1:s}': parameter must be numeric.".format(
@@ -296,20 +296,13 @@ class InputParameter:
                 )
 
         elif self.varType == StringParameterType:
-            self.ast_node.s = str(new_value)
+            self.ast_node.value = str(new_value)
         elif self.varType == BooleanParameterType:
             if new_value:
-                if hasattr(ast, "NameConstant"):
-                    self.ast_node.value = True
-                else:
-                    self.ast_node.id = "True"
+                self.ast_node.value = True
             else:
-                if hasattr(ast, "NameConstant"):
-                    self.ast_node.value = False
-                else:
-                    self.ast_node.id = "False"
+                self.ast_node.value = False
         elif self.varType == TupleParameterType:
-            self.ast_node.n = new_value
 
             # Build the list of constants to set as the tuple value
             constants = []
@@ -472,7 +465,7 @@ class ParameterDescriptionFinder(ast.NodeTransformer):
                 # first parameter is the variable,
                 # second is the description
                 varname = node.args[0].id
-                desc = node.args[1].s
+                desc = node.args[1].value
                 self.cqModel.add_parameter_description(varname, desc)
 
         except:
@@ -491,19 +484,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
 
     def handle_assignment(self, var_name, value_node):
         try:
-            if type(value_node) == ast.Num:
-                self.cqModel.add_script_parameter(
-                    InputParameter.create(
-                        value_node, var_name, NumberParameterType, value_node.n
-                    )
-                )
-            elif type(value_node) == ast.Str:
-                self.cqModel.add_script_parameter(
-                    InputParameter.create(
-                        value_node, var_name, StringParameterType, value_node.s
-                    )
-                )
-            elif type(value_node) == ast.Name:
+            if type(value_node) == ast.Name:
                 if value_node.id == "True":
                     self.cqModel.add_script_parameter(
                         InputParameter.create(
@@ -574,7 +555,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
                 return
 
             # Handle the NamedConstant type that is only present in Python 3
-            astTypes = [ast.Num, ast.Str, ast.Name]
+            astTypes = [ast.Name]
             if hasattr(ast, "NameConstant"):
                 astTypes.append(ast.NameConstant)
 
