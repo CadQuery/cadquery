@@ -17,7 +17,7 @@ from vtkmodules.vtkRenderingCore import (
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkIOImage import vtkPNGWriter
 
-from pytest import fixture, raises
+from pytest import fixture, raises, mark
 import os
 from pathlib import Path
 
@@ -139,11 +139,18 @@ def test_show(wp, assy, sk, patch_vtk):
     show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
 
 
-def test_screenshot(wp, tmpdir, patch_vtk, cwd):
+def test_screenshot(wp, patch_vtk):
 
     # smoke test for now
+    show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
+
+
+@mark.skip(reason="running only smoke test for now")
+def test_screenshot_no_patch(wp, tmpdir, cwd):
+
     with cwd(tmpdir):
         show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
+        assert (Path(tmpdir) / "img.png").exists()
 
 
 def test_ctrlPts():
