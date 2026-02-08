@@ -18,14 +18,15 @@ from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkIOImage import vtkPNGWriter
 
 from pytest import fixture, raises
-from path import Path
+import os
+from pathlib import Path
 
 from typing import List
 
 
 @fixture(scope="module")
 def tmpdir(tmp_path_factory):
-    return Path(tmp_path_factory.mktemp("screenshots"))
+    return tmp_path_factory.mktemp("screenshots")
 
 
 @fixture
@@ -138,10 +139,10 @@ def test_show(wp, assy, sk, patch_vtk):
     show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
 
 
-def test_screenshot(wp, tmpdir, patch_vtk):
+def test_screenshot(wp, tmpdir, patch_vtk, cwd):
 
     # smoke test for now
-    with tmpdir:
+    with cwd(tmpdir):
         show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
 
 

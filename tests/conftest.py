@@ -1,4 +1,6 @@
 import pytest
+import os
+from contextlib import contextmanager
 
 
 def pytest_addoption(parser):
@@ -20,3 +22,17 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "gui" in item.keywords:
             item.add_marker(skip_gui)
+
+
+@pytest.fixture
+def cwd():
+    @contextmanager
+    def _cwd(path):
+        oldpwd = os.getcwd()
+        os.chdir(path)
+        try:
+            yield
+        finally:
+            os.chdir(oldpwd)
+
+    return _cwd
