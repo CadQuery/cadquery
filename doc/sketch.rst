@@ -189,7 +189,7 @@ Following constraints are implemented. Arguments are passed in as one tuple in :
       - Specified entity is fixed angular span
     * - Equal
       - 2
-      - Line
+      - All
       - None
       - Specified lines have equal length
     * - EqualRadius
