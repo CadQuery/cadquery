@@ -554,13 +554,7 @@ class ConstantAssignmentFinder(ast.NodeTransformer):
             if isinstance(left_side, ast.Attribute):
                 return
 
-            # Handle the NamedConstant type that is only present in Python 3
-            astTypes = [ast.Name]
-            if hasattr(ast, "NameConstant"):
-                astTypes.append(ast.NameConstant)
-
-            if hasattr(ast, "Constant"):
-                astTypes.append(ast.Constant)
+            astTypes = [ast.Name, ast.Constant]
 
             if type(node.value) in astTypes:
                 self.handle_assignment(left_side.id, node.value)
