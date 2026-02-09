@@ -49,7 +49,7 @@ ConstraintInvariants = {  # (arity, geometry types, param type, conversion func)
     "Radius": (1, ("CIRCLE",), Real, None),
     "Orientation": (1, ("LINE",), Tuple[Real, Real], None),
     "ArcAngle": (1, ("CIRCLE",), Real, radians),
-    "Equal": (2, ("LINE",), NoneType, None),
+    "Equal": (2, ("LINE", "CIRCLE"), NoneType, None),
     "EqualRadius": (2, ("CIRCLE",), NoneType, None),
 }
 
@@ -224,8 +224,14 @@ def arc_angle_cost(x, t, x0, val):
 
 
 def equal_cost(x1, t1, x10, x2, t2, x20, val):
-    length1 = norm(x1[2:] - x1[:2])
-    length2 = norm(x2[2:] - x2[:2])
+    if t1 == "LINE":
+        length1 = norm(x1[2:] - x1[:2])
+    elif t1 == "CIRCLE":
+        length1 = norm(x1[2] * x1[4])
+    if t2 == "LINE":
+        length2 = norm(x2[2:] - x2[:2])
+    elif t2 == "CIRCLE":
+        length2 = norm(x2[2] * x2[4])
     return length1 - length2
 
 
