@@ -841,11 +841,7 @@ def test_equal_constraints():
     assert s2._tags["top_left"][0].radius() == approx(1)
     assert s2._tags["bottom_left"][0].radius() == approx(1)
 
-    s3 = (
-        Sketch()
-        .segment((-1, 0), (1, 0), "segment")
-        .arc((0, 0), 0.8, 0, 180, "arc")
-    )
+    s3 = Sketch().segment((-1, 0), (1, 0), "segment").arc((0, 0), 0.8, 0, 180, "arc")
     s3.constrain("segment", "Fixed", None)
     s3.constrain("arc", "FixedPoint", None)
     s3.constrain("arc", "ArcAngle", 180)
