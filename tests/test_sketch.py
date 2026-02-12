@@ -973,3 +973,22 @@ def test_missing_selection(s1):
     # cannot tag without selection
     with raises(ValueError):
         s1.tag("name")
+
+
+def test_mixed_close():
+
+    # check that closing of mixed mode edges works correctly
+    s = (
+        Sketch()
+        .arc((0, 0), 30, 0, 120, tag="e0", forConstruction=True)
+        .edges(tag="e0")
+        .distribute(1, rotate=False)
+        .segment((0, 0), (10, 2))
+        .segment((10, -2))
+        .close()
+        .assemble()
+        .reset()  # reset the implicit selection coming from distribute
+    )
+
+    # the underlying face should be valid
+    assert s.val().isValid()
