@@ -234,3 +234,8 @@ def test_camera_position(wp, patch_vtk):
 def test_frustrum_clipping_range(wp, patch_vtk):
 
     show(wp, zoom=2.0, clipping_range=(1, 100))
+
+
+def test_orthographic(wp, patch_vtk):
+
+    show(wp, orthographic=True)
