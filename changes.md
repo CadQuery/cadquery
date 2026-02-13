@@ -1,6 +1,39 @@
 Changes
 =======
 
+2.7.0
+-----
+
+## Highlights
+
+* Enable bidirectional mapping of subshapes by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1949
+* Add Basic Materials Functionality by @jmwright in https://github.com/CadQuery/cadquery/pull/1923
+* Materials Support for STEP Import/Export by @jmwright in https://github.com/CadQuery/cadquery/pull/1956
+* Replace deprecated pyparsing names and arguments by @lorenzncode in https://github.com/CadQuery/cadquery/pull/1974
+* Remove deprecated functions by @lorenzncode in https://github.com/CadQuery/cadquery/pull/1972
+* Multimethod changes and type checking by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1969
+
+## Other changes
+
+* Make FXAA optional in `show` by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1938
+* Fix single letter text handling by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1939
+* Enhance vis.py `show` routine by @winksaville in https://github.com/CadQuery/cadquery/pull/1855
+* Fix jupyter display missing opacity by @lorenzncode in https://github.com/CadQuery/cadquery/pull/1941
+* Use focal point as the center of rotation by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1948
+* Fix clipping range by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1951
+* Fix close for mixed mode edges by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1477
+* Update cqgi for py3.14 by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1986
+* Fix the function call errors for gp_Ax2() and size() by @yuan-xy in https://github.com/CadQuery/cadquery/pull/1977
+* Enhance color initialization with hex support by @akivab in https://github.com/CadQuery/cadquery/pull/1980
+* Replacing typish with runtype by @jmwright in https://github.com/CadQuery/cadquery/pull/1967
+* Update sphinx multimethod customization to handle toplevel functions by @lorenzncode in https://github.com/CadQuery/cadquery/pull/1932
+* Add pytest.ini to improve dev QoL by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1971
+* Create `Plane` from `Location` by @Joschua-Conrad in https://github.com/CadQuery/cadquery/pull/1912
+
+## Experimental
+
+* Add GUI elements to `fig.Figure` by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1943
+
 2.6.1
 -----
 
