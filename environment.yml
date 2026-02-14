@@ -16,7 +16,6 @@ dependencies:
   - ezdxf>=1.3.0
   - typing_extensions
   - nlopt
-  - path
   - casadi
   - runtype
   - multimethod >=1.11,<2.0

@@ -1,5 +1,5 @@
 from typing import cast
-from path import Path
+from pathlib import Path
 
 from OCP.TopoDS import TopoDS_Shape
 from OCP.TCollection import TCollection_ExtendedString
@@ -175,7 +175,8 @@ def importXbf(assy: AssemblyProtocol, path: str):
     app = TDocStd_Application()
     BinXCAFDrivers.DefineFormat_s(app)
 
-    dirname, fname = Path(path).absolute().splitpath()
+    p = Path(path).absolute()
+    dirname, fname = str(p.parent), p.name
     doc = cast(
         TDocStd_Document,
         app.Retrieve(
@@ -204,7 +205,8 @@ def importXml(assy: AssemblyProtocol, path: str):
     app = TDocStd_Application()
     XmlXCAFDrivers.DefineFormat_s(app)
 
-    dirname, fname = Path(path).absolute().splitpath()
+    p = Path(path).absolute()
+    dirname, fname = str(p.parent), p.name
     doc = cast(
         TDocStd_Document,
         app.Retrieve(

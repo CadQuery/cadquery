@@ -4,7 +4,7 @@
 # core modules
 import os
 import io
-from path import Path
+from pathlib import Path
 import re
 import sys
 import math
