@@ -410,6 +410,7 @@ def show(
     xpos: Union[int, float] = 0,
     ypos: Union[int, float] = 0,
     fxaa: bool = True,
+    orthographic: bool = False,
 ):
     """
     Show CQ objects using VTK. This functions optionally allows to make screenshots.
@@ -505,6 +506,9 @@ def show(
 
     # set camera
     camera = renderer.GetActiveCamera()
+
+    # set perspective or parallel (orthographic) projection
+    camera.SetParallelProjection(orthographic)
 
     # Update camera position with user provided absolute positions
     if viewup:
