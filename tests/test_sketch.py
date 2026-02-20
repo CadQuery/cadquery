@@ -745,6 +745,112 @@ def test_constraint_solver():
     assert s7._faces.isValid()
 
 
+def test_equal_constraints():
+    w = 1.5
+    s1 = (
+        Sketch()
+        .segment((0, 0), (0, 1.88), "left")
+        .segment((0, 2), (w, 2), "top")
+        .segment((w, 1.6), (w, 0), "right")
+        .segment((w, 0), (0, 0), "bottom")
+    )
+
+    s1.constrain("left", "FixedPoint", 0)
+    s1.constrain("left", "top", "Coincident", None)
+    s1.constrain("top", "right", "Coincident", None)
+    s1.constrain("right", "bottom", "Coincident", None)
+    s1.constrain("bottom", "left", "Coincident", None)
+    s1.constrain("left", "bottom", "Angle", 90)
+    s1.constrain("right", "top", "Angle", 90)
+
+    s1.constrain("top", "left", "Angle", 90)
+
+    s1.constrain("left", "Orientation", (0, 1))
+    s1.constrain("bottom", "left", "Equal", None)
+    s1.constrain("left", "Length", 2)
+
+    s1.solve()
+    assert s1._solve_status["status"] == 4
+
+    s1.assemble()
+
+    assert s1._faces.isValid()
+
+    assert s1._tags["left"][0].Length() == approx(2)
+    assert s1._tags["bottom"][0].Length() == approx(2)
+    assert s1._tags["right"][0].Length() == approx(2)
+    assert s1._tags["top"][0].Length() == approx(2)
+
+    assert s1._faces.Area() == approx(4)
+
+    s2 = (
+        Sketch()
+        .segment((1, 0), (9, 0), "bottom")
+        .arc((9, 1), 1.1, -90, 90, "bottom_right")
+        .segment((10, 1), (10, 3.9), "right")
+        .arc((9, 4), 1, 0, 90, "top_right")
+        .segment((9, 5), (1, 5), "top")
+        .arc((1, 4), 1, 90, 90, "top_left")
+        .segment((0, 4), (0.3, 1.1), "left")
+        .arc((1, 1), 1, 180, 90, "bottom_left")
+    )
+
+    s2.constrain("bottom", "Orientation", (1, 0))
+    s2.constrain("bottom", "FixedPoint", 0)
+
+    s2.constrain("bottom", "bottom_right", "Coincident", None)
+    s2.constrain("bottom_right", "right", "Coincident", None)
+    s2.constrain("right", "top_right", "Coincident", None)
+    s2.constrain("top_right", "top", "Coincident", None)
+    s2.constrain("top", "top_left", "Coincident", None)
+    s2.constrain("top_left", "left", "Coincident", None)
+    s2.constrain("left", "bottom_left", "Coincident", None)
+    s2.constrain("bottom_left", "bottom", "Coincident", None)
+
+    s2.constrain("bottom", "bottom_right", "Angle", 0)
+    s2.constrain("bottom_right", "right", "Angle", 0)
+    s2.constrain("right", "top_right", "Angle", 0)
+    s2.constrain("top_right", "top", "Angle", 0)
+    s2.constrain("top", "top_left", "Angle", 0)
+    s2.constrain("top_left", "left", "Angle", 0)
+    s2.constrain("left", "bottom_left", "Angle", 0)
+
+    s2.constrain("bottom", "top", "Equal", None)
+    s2.constrain("right", "left", "Equal", None)
+
+    s2.constrain("bottom_right", "Radius", 1)
+    s2.constrain("bottom", "Length", 8)
+    s2.constrain("right", "Length", 3)
+
+    s2.constrain("bottom_right", "top_right", "EqualRadius", None)
+    s2.constrain("top_right", "top_left", "EqualRadius", None)
+    s2.constrain("top_left", "bottom_left", "EqualRadius", None)
+
+    s2.solve()
+    assert s2._solve_status["status"] == 4
+    s2.assemble()
+
+    assert s2._faces.isValid()
+
+    assert s2._tags["bottom"][0].Length() == approx(8)
+    assert s2._tags["top"][0].Length() == approx(8)
+    assert s2._tags["right"][0].Length() == approx(3)
+    assert s2._tags["left"][0].Length() == approx(3)
+    assert s2._tags["bottom_right"][0].radius() == approx(1)
+    assert s2._tags["top_right"][0].radius() == approx(1)
+    assert s2._tags["top_left"][0].radius() == approx(1)
+    assert s2._tags["bottom_left"][0].radius() == approx(1)
+
+    s3 = Sketch().segment((-1, 0), (1, 0), "segment").arc((0, 0), 0.8, 0, 180, "arc")
+    s3.constrain("segment", "Fixed", None)
+    s3.constrain("arc", "FixedPoint", None)
+    s3.constrain("arc", "ArcAngle", 180)
+    s3.constrain("arc", "segment", "Equal", None)
+    s3.solve()
+    assert s3._solve_status["status"] == 4
+    assert s3._tags["arc"][0].Length() == approx(2)
+
+
 def test_dxf_import():
 
     filename = os.path.join(testdataDir, "gear.dxf")
