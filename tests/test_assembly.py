@@ -17,7 +17,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound
+from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound, segment, vertex
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -2469,3 +2469,29 @@ def test_shallow_assy():
 
     with pytest.raises(ValueError):
         toCAF(cq.Assembly())
+
+
+def test_name_geometries(tmpdir):
+    """
+    Test name propagation to geometric entities
+    """
+
+    assy = cq.Assembly()
+
+    assy.add(box(1, 1, 1), name="box")
+    assy.box.addSubshape(assy.box.obj.faces(">Z"), "top_face")
+
+    assy.add(plane(1, 1), name="face").face.addSubshape(assy.face.obj, name="plane_")
+
+    assy.add(segment((0, 0), (0, 1)), name="edge").edge.addSubshape(
+        assy.edge.obj, name="seg_"
+    )
+
+    with tmpdir:
+        assy.save("out.step", name_geometries=True)
+
+        lines = Path("out.step").lines()
+
+    assert len([l for l in lines if "top_face" in l]) == 2
+    assert len([l for l in lines if "plane_" in l]) == 2
+    assert len([l for l in lines if "seg_" in l]) == 3
