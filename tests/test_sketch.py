@@ -1,5 +1,7 @@
 import os
 
+import OCP
+
 from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
 from cadquery import Edge, Vertex
@@ -565,6 +567,21 @@ def test_constraint_validation():
     with raises(ValueError):
         Sketch().segment(1.0, 1.0, "s").constrain("s", "Fixed", 1)
 
+    with raises(ValueError):
+        Sketch().segment((1, 0), (0, 0), "s1").segment((0, 1), (0, 0), "s2").constrain(
+            "s1", "s2", "PointOnObject", None
+        ).solve()
+
+    with raises(ValueError):
+        Sketch().spline([(1.0, 1.0), (2.0, 1.0), (0.0, 0.0)], "s").segment(
+            (1, 0), (0, 0), "s1"
+        ).constrain("s1", "s", "PointOnObject", 1)
+
+    with raises(ValueError):
+        Sketch().spline([(1.0, 1.0), (2.0, 1.0), (0.0, 0.0)], "s").segment(
+            (1, 0), (0, 0), "s1"
+        ).constrain("s", "s1", "PointOnObject", 1)
+
 
 def test_constraint_solver():
 
@@ -743,6 +760,160 @@ def test_constraint_solver():
     s7.assemble()
 
     assert s7._faces.isValid()
+
+
+def test_point_on_object():
+
+    # equilateral triangle defined by height
+    s1 = (
+        Sketch()
+        .segment((-1, 0), (1, 0), "base")
+        .segment((1, 0), (0, 1), "side1")
+        .segment((0, 1), (-1, 0), "side2")
+        .segment((0, 0.9), (0, 0.01), "height", True)
+    )
+    height = sqrt(2 * 2 - 1)
+    s1.constrain("base", "side1", "Coincident", None)
+    s1.constrain("side1", "side2", "Coincident", None)
+    s1.constrain("side2", "base", "Coincident", None)
+    s1.constrain("height", "base", "Angle", -90)
+    s1.constrain("height", "base", "PointOnObject", 1)
+    s1.constrain("base", "FixedPoint", 1)
+    s1.constrain("base", "Orientation", (1, 0))
+    s1.constrain("side1", "height", "Coincident", None)
+    s1.constrain("side1", "base", "Angle", 120)
+    s1.constrain("side2", "base", "Angle", -120)
+    s1.constrain("height", "Length", height)
+    s1.solve()
+
+    assert s1._solve_status["status"] == 4
+
+    s1.assemble()
+
+    assert s1._faces.isValid()
+
+    assert s1._tags["base"][0].Length() == approx(2)
+    assert s1._tags["side1"][0].Length() == approx(2)
+    assert s1._tags["side2"][0].Length() == approx(2)
+    assert s1._faces.Area() == approx(height)
+
+    # s-shaped wire defined by horizontal length
+    s2 = (
+        Sketch()
+        .segment((1, 0), (-1, 0), "segment1", True)
+        .arc((-0.5, 0.0), 0.8, 180, -180, "arc1")
+        .arc((0.5, 0.0), 0.8, -180, 180, "arc2")
+    )
+    s2.constrain("segment1", "Fixed", None)
+    s2.constrain("arc1", "segment1", "PointOnObject", 1)
+    s2.constrain("arc1", "segment1", "PointOnObject", None)
+    s2.constrain("arc2", "segment1", "PointOnObject", None)
+    s2.constrain("arc1", "arc2", "Coincident", None)
+    s2.constrain("arc2", "segment1", "Coincident", None)
+    s2.constrain("segment1", "arc1", "Coincident", None)
+    s2.solve()
+
+    assert s2._solve_status["status"] == 4
+
+    assert s2._tags["arc1"][0].radius() == approx(0.5)
+
+    # circle inscribed equilateral triangle
+    s3 = (
+        Sketch()
+        .arc((0, 0), 2, 0, 180, "arc1", True)
+        .segment((-1, -1), (1, -1), "segment1")
+        .segment((1, -1), (0, 2), "segment2")
+        .segment((0, 2), (-1, -1), "segment3")
+    )
+    s3.constrain("arc1", "FixedPoint", None)
+    s3.constrain("arc1", "ArcAngle", 180)
+    s3.constrain("arc1", "Radius", 2)
+
+    s3.constrain("segment1", "Orientation", (0, 1))
+    s3.constrain("segment2", "segment1", "Angle", 120)
+    s3.constrain("segment3", "segment1", "Angle", -120)
+    s3.constrain("segment1", "segment2", "Coincident", None)
+    s3.constrain("segment2", "segment3", "Coincident", None)
+    s3.constrain("segment3", "segment1", "Coincident", None)
+    s3.constrain("segment1", "arc1", "PointOnObject", 1)
+    s3.constrain("segment2", "arc1", "PointOnObject", 1)
+    s3.constrain("segment3", "arc1", "PointOnObject", 1)
+
+    s3.solve()
+
+    assert s3._solve_status["status"] == 4
+
+    s3.assemble()
+
+    s3._faces.isValid()
+
+    assert s3._tags["segment1"][0].Length() == approx(2 * sqrt(3))
+    assert s3._tags["segment2"][0].Length() == approx(2 * sqrt(3))
+    assert s3._tags["segment3"][0].Length() == approx(2 * sqrt(3))
+
+    # arc inscribed in square
+    s4 = (
+        Sketch()
+        .arc((0, 0), 0.2, 0, 180, "arc1")
+        .segment((0, 0), (0, 0.2), "arcdir", True)
+        .segment((-0.5, -0.5), (0.5, -0.5), "segment1", True)
+        .segment((0.5, -0.5), (0.5, 0.5), "segment2", True)
+        .segment((0.5, 0.5), (-0.5, 0.5), "segment3", True)
+        .segment((-0.5, 0.5), (-0.5, -0.5), "segment4", True)
+    )
+
+    s4.constrain("arcdir", "arc1", "Coincident", None)
+    s4.constrain("arcdir", "Orientation", (0.2, 0))
+    s4.constrain("arcdir", "FixedPoint", 0)
+    s4.constrain("segment1", "Fixed", None)
+    s4.constrain("arc1", "ArcAngle", 180)
+    s4.constrain("segment1", "segment2", "Coincident", None)
+    s4.constrain("segment2", "segment3", "Coincident", None)
+    s4.constrain("segment3", "segment4", "Coincident", None)
+    s4.constrain("segment4", "segment1", "Coincident", None)
+    s4.constrain("segment2", "segment1", "Angle", 90)
+    s4.constrain("segment3", "segment2", "Angle", 90)
+    s4.constrain("segment4", "segment3", "Angle", 90)
+    s4.constrain("arc1", "segment2", "PointOnObject", 0)
+    s4.constrain("arc1", "segment4", "PointOnObject", 1)
+    s4.constrain("arc1", "FixedPoint", None)
+
+    s4.solve()
+
+    assert s4._solve_status["status"] == 4
+
+    s4.assemble()
+    assert s4._tags["arc1"][0].radius() == approx(0.5)
+
+    R = 2
+    s5 = (
+        Sketch()
+        .arc((0, 0), R, 45, -270, "major")
+        .arc((0, R + 0.1), 1, 180 + 45, -270, "minor")
+        .segment((0, 0), (0, 1), "arcdir", True)
+    )
+
+    # lobes: circle on circle
+    s5.constrain("major", "Fixed", None)
+    s5.constrain("arcdir", "Fixed", None)
+    s5.constrain("minor", "major", "Coincident", None)
+    s5.constrain("major", "minor", "Coincident", None)
+    s5.constrain("minor", "major", "PointOnObject", None)
+    s5.constrain("minor", "arcdir", "PointOnObject", None)
+    s5.solve()
+
+    assert s5._solve_status["status"] == 4
+    s5.assemble()
+    assert s5._faces.isValid()
+
+    r = sqrt((R / sqrt(2)) ** 2 + (R - R / sqrt(2)) ** 2)
+    assert s5._tags["minor"][0].radius() == approx(r)
+
+    # test that degenerate segments cannot exist and prevent division by zero
+    with raises((OCP.StdFail.StdFail_NotDone, OCP.Standard.Standard_Failure)):
+        Sketch().segment((0, 1), (0, 0.2), "segment").segment(
+            (0, 0), (0, 0), "degenerate"
+        )
 
 
 def test_dxf_import():
