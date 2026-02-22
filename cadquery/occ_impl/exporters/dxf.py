@@ -1,5 +1,6 @@
 """DXF export utilities."""
 
+import warnings
 from typing import (
     Any,
     Dict,
@@ -243,6 +244,13 @@ class DxfDocument:
 
         direction_y = circ.YAxis().Direction()
         direction_z = circ.Axis().Direction()
+
+        # DXF circle does not support tilted 3D circles.
+        dz = gp_Dir(0, 0, 1)
+        if abs(RAD2DEG * direction_z.Angle(dz)) % 180 > 1e-6:
+            warnings.warn(
+                "Circle not coplanar. This will fail in the future.",
+            )
 
         dy = gp_Dir(0, 1, 0)
 
