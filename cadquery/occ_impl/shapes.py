@@ -158,6 +158,9 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Check,
 )
 
+from OCP.HLRAlgo import HLRAlgo_Projector
+from OCP.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
+
 from OCP.Geom import (
     Geom_BezierCurve,
     Geom_ConicalSurface,
@@ -6572,3 +6575,63 @@ def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
     assert ext.Perform()
 
     return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))
+
+
+def projectToViewpoint(
+    shape, projectionDir: tuple[float, float, float], focus: Optional[float] = None,
+) -> tuple[list[Edge], list[Edge]]:
+    hlr = HLRBRep_Algo()
+    hlr.Add(shape.wrapped)
+
+    coordinate_system = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
+
+    if focus is not None:
+        projector = HLRAlgo_Projector(coordinate_system, focus)
+    else:
+        projector = HLRAlgo_Projector(coordinate_system)
+
+    hlr.Projector(projector)
+    hlr.Update()
+    hlr.Hide()
+
+    hlr_shapes = HLRBRep_HLRToShape(hlr)
+
+    visible = []
+
+    visible_sharp_edges = hlr_shapes.VCompound()
+    if not visible_sharp_edges.IsNull():
+        visible.append(visible_sharp_edges)
+
+    visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
+    if not visible_smooth_edges.IsNull():
+        visible.append(visible_smooth_edges)
+
+    visible_contour_edges = hlr_shapes.OutLineVCompound()
+    if not visible_contour_edges.IsNull():
+        visible.append(visible_contour_edges)
+
+    hidden = []
+
+    hidden_sharp_edges = hlr_shapes.HCompound()
+    if not hidden_sharp_edges.IsNull():
+        hidden.append(hidden_sharp_edges)
+
+    hidden_contour_edges = hlr_shapes.OutLineHCompound()
+    if not hidden_contour_edges.IsNull():
+        hidden.append(hidden_contour_edges)
+
+    # Fix the underlying geometry - otherwise we will get segfaults
+    for el in visible:
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
+    for el in hidden:
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
+
+    # convert to native CQ objects
+    visible = [Shape.cast(s) for s in visible]  # s is a TopoDS_Shape (Compound)
+    hidden = [Shape.cast(s) for s in hidden]
+
+    # Extract edges
+    visible_edges = [e for c in visible for e in c.Edges()]
+    hidden_edges = [e for c in hidden for e in c.Edges()]
+
+    return visible_edges, hidden_edges

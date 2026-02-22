@@ -1,13 +1,10 @@
 import io as StringIO
 
-from ..shapes import Shape, Compound, TOLERANCE
+from ..shapes import Shape, Compound, Edge
 from ..geom import BoundBox
+from ..shapes import projectToViewpoint
 
 
-from OCP.gp import gp_Ax2, gp_Pnt, gp_Dir
-from OCP.BRepLib import BRepLib
-from OCP.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
-from OCP.HLRAlgo import HLRAlgo_Projector
 from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
 DISCRETIZATION_TOLERANCE = 1e-3
@@ -106,7 +103,9 @@ def makeSVGedge(e):
     return cs.getvalue()
 
 
-def getPaths(visibleShapes, hiddenShapes):
+def getPaths(
+    visibleEdges: list[Edge], hiddenEdges: list[Edge]
+) -> tuple[list[str], list[str]]:
     """
     Collects the visible and hidden edges from the CadQuery object.
     """
@@ -114,18 +113,16 @@ def getPaths(visibleShapes, hiddenShapes):
     hiddenPaths = []
     visiblePaths = []
 
-    for s in visibleShapes:
-        for e in s.Edges():
-            visiblePaths.append(makeSVGedge(e))
+    for e in visibleEdges:
+        visiblePaths.append(makeSVGedge(e))
 
-    for s in hiddenShapes:
-        for e in s.Edges():
-            hiddenPaths.append(makeSVGedge(e))
+    for e in hiddenEdges:
+        hiddenPaths.append(makeSVGedge(e))
 
     return (hiddenPaths, visiblePaths)
 
 
-def getSVG(shape, opts=None):
+def getSVG(shape: Shape, opts=None):
     """
     Export a shape to SVG text.
 
@@ -186,64 +183,16 @@ def getSVG(shape, opts=None):
     showHidden = bool(d["showHidden"])
     focus = float(d["focus"]) if d.get("focus") else None
 
-    hlr = HLRBRep_Algo()
-    hlr.Add(shape.wrapped)
-
-    coordinate_system = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
-
-    if focus is not None:
-        projector = HLRAlgo_Projector(coordinate_system, focus)
-    else:
-        projector = HLRAlgo_Projector(coordinate_system)
-
-    hlr.Projector(projector)
-    hlr.Update()
-    hlr.Hide()
-
-    hlr_shapes = HLRBRep_HLRToShape(hlr)
-
-    visible = []
-
-    visible_sharp_edges = hlr_shapes.VCompound()
-    if not visible_sharp_edges.IsNull():
-        visible.append(visible_sharp_edges)
-
-    visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
-    if not visible_smooth_edges.IsNull():
-        visible.append(visible_smooth_edges)
-
-    visible_contour_edges = hlr_shapes.OutLineVCompound()
-    if not visible_contour_edges.IsNull():
-        visible.append(visible_contour_edges)
-
-    hidden = []
-
-    hidden_sharp_edges = hlr_shapes.HCompound()
-    if not hidden_sharp_edges.IsNull():
-        hidden.append(hidden_sharp_edges)
-
-    hidden_contour_edges = hlr_shapes.OutLineHCompound()
-    if not hidden_contour_edges.IsNull():
-        hidden.append(hidden_contour_edges)
-
-    # Fix the underlying geometry - otherwise we will get segfaults
-    for el in visible:
-        BRepLib.BuildCurves3d_s(el, TOLERANCE)
-    for el in hidden:
-        BRepLib.BuildCurves3d_s(el, TOLERANCE)
-
-    # convert to native CQ objects
-    visible = list(map(Shape, visible))
-    hidden = list(map(Shape, hidden))
-    (hiddenPaths, visiblePaths) = getPaths(visible, hidden)
+    visibleEdges, hiddenEdges = projectToViewpoint(shape, projectionDir, focus)
+    hiddenPaths, visiblePaths = getPaths(visibleEdges, hiddenEdges)
 
     # get bounding box -- these are all in 2D space
-    bb = Compound.makeCompound(hidden + visible).BoundingBox()
+    bb = Compound.makeCompound(hiddenEdges + visibleEdges).BoundingBox()
 
     # Determine whether the user wants to fit the drawing to the bounding box
-    if width == None or height == None:
+    if width is None or height is None:
         # Fit image to specified width (or height)
-        if width == None:
+        if width is None:
             width = (height - (2.0 * marginTop)) * (
                 bb.xlen / bb.ylen
             ) + 2.0 * marginLeft

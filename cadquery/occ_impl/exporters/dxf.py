@@ -157,6 +157,7 @@ class DxfDocument:
             plane = shape.plane
             shape_ = compound(*shape.__iter__()).transformShape(plane.fG)
         else:
+            plane = Plane((0, 0, 0))
             shape_ = shape
 
         general_attributes = {}
