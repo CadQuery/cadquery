@@ -720,6 +720,7 @@ def toVTK(
         extr.SetInputDataObject(data)
 
         extr.AddCellType(VTK_LINE)
+        extr.AddCellType(VTK_POLY_LINE)
         extr.AddCellType(VTK_VERTEX)
         extr.Update()
         data_edges = extr.GetOutput()
