@@ -479,7 +479,9 @@ class Figure:
         self.active = event[0]
 
 
-def show(*args: Showable | vtkProp3D | list[vtkProp3D], name: Optional[str]  = None, **kwargs):
+def show(
+    *args: Showable | vtkProp3D | list[vtkProp3D], name: Optional[str] = None, **kwargs
+):
 
     fig = Figure()
     fig.show(*args, name=name, **kwargs)
@@ -495,4 +497,3 @@ def fit(*args, **kwargs):
 
     fig = Figure()
     fig.fit(*args, **kwargs)
-

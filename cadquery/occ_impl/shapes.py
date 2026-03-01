@@ -1901,7 +1901,7 @@ class Shape(object):
 
         return compound(*sorted(self, key=key))
 
-    def __getitem__(self, item: int|slice) -> "Shape":
+    def __getitem__(self, item: int | slice) -> "Shape":
 
         if isinstance(item, slice):
             return compound(list(self)[item])
@@ -5794,8 +5794,8 @@ def spline(
             tgts_ocp = TColgp_Array1OfVec(1, len(tgts))
             tgts_ocp_flag = TColStd_HArray1OfBoolean(1, len(tgts))
 
-            for i,t in enumerate(tgts):
-                tgts_ocp.SetValue(i+1, Vector(t).wrapped)
+            for i, t in enumerate(tgts):
+                tgts_ocp.SetValue(i + 1, Vector(t).wrapped)
                 tgts_ocp_flag.SetValue(i, True)
 
             builder.Load(tgts_ocp, tgts_ocp_flag, scale)
