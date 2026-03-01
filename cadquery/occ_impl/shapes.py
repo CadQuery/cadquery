@@ -5796,7 +5796,7 @@ def spline(
 
             for i, t in enumerate(tgts):
                 tgts_ocp.SetValue(i + 1, Vector(t).wrapped)
-                tgts_ocp_flag.SetValue(i, True)
+                tgts_ocp_flag.SetValue(i + 1, True)
 
             builder.Load(tgts_ocp, tgts_ocp_flag, scale)
 
