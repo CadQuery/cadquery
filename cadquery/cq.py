@@ -1212,7 +1212,7 @@ class Workplane(object):
 
         faces = [f for f in self.objects if isinstance(f, Face)]
 
-        s = solidRef.shell(faces, thickness, kind=kind)
+        s = solidRef.hollow(faces, thickness, kind=kind)
         return self.newObject([s])
 
     def fillet(self: T, radius: float) -> T:
