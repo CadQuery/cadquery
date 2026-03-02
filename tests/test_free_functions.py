@@ -1,3 +1,4 @@
+import os
 from cadquery.func import (
     vertex,
     segment,
@@ -59,8 +60,15 @@ from cadquery.occ_impl.shapes import (
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
 
+import pytest
 from pytest import approx, raises, fixture
 from math import pi
+
+
+@pytest.fixture(scope="function")
+def tmpdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("sketch")
+
 
 #%% test utils
 
@@ -890,12 +898,15 @@ def test_project():
 
 
 # %% export
-def test_export():
+def test_export(tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    ff_export_path = os.path.join(tmpdir, "box.brep")
 
     b1 = box(1, 1, 1)
-    b1.export("box.brep")
+    b1.export(ff_export_path)
 
-    b2 = Shape.importBrep("box.brep")
+    b2 = Shape.importBrep(ff_export_path)
 
     assert (b1 - b2).Volume() == approx(0)
 

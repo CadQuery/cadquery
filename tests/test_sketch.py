@@ -1,4 +1,5 @@
 import os
+import pytest
 
 from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
@@ -8,6 +9,11 @@ from pytest import approx, raises, fixture
 from math import pi, sqrt
 
 testdataDir = os.path.join(os.path.dirname(__file__), "testdata")
+
+
+@pytest.fixture(scope="function")
+def tmpdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("sketch")
 
 
 def test_face_interface():
@@ -820,10 +826,13 @@ def test_bool_ops():
     assert (s1 / s2).val().Area() == approx(1)
 
 
-def test_export():
+def test_export(tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    sketch_export_path = os.path.join(tmpdir, "sketch.dxf")
 
-    s1 = Sketch().rect(1, 1).export("sketch.dxf")
-    s2 = Sketch().importDXF("sketch.dxf")
+    s1 = Sketch().rect(1, 1).export(sketch_export_path)
+    s2 = Sketch().importDXF(sketch_export_path)
 
     assert (s1 - s2).val().Area() == approx(0)
 

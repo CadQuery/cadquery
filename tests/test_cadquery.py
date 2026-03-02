@@ -5291,8 +5291,11 @@ class TestCadQuery(BaseTest):
         # import/export to file
         s = Workplane().box(1, 1, 1).val()
 
-        s.exportBrep("test.brep")
-        si = Shape.importBrep("test.brep")
+        # Use a temporary directory
+        brep_export_path = os.path.join(OUTDIR, "test.brep")
+
+        s.exportBrep(brep_export_path)
+        si = Shape.importBrep(brep_export_path)
 
         self.assertTrue(si.isValid())
         self.assertAlmostEqual(si.Volume(), 1)
@@ -5305,7 +5308,7 @@ class TestCadQuery(BaseTest):
         s.exportBrep(bio)
         bio.seek(0)
 
-        si = Shape.importBrep("test.brep")
+        si = Shape.importBrep(brep_export_path)
 
         self.assertTrue(si.isValid())
         self.assertAlmostEqual(si.Volume(), 1)
@@ -5816,10 +5819,12 @@ class TestCadQuery(BaseTest):
         assert len(verts) == 0
 
     def test_export(self):
+        # Use a temporary directory
+        box_export_path = os.path.join(OUTDIR, "box.brep")
 
-        w = Workplane().box(1, 1, 1).export("box.brep")
+        w = Workplane().box(1, 1, 1).export(box_export_path)
 
-        assert (w - Shape.importBrep("box.brep")).val().Volume() == approx(0)
+        assert (w - Shape.importBrep(box_export_path)).val().Volume() == approx(0)
 
     def test_bool_operators(self):
 
