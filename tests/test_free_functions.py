@@ -62,7 +62,7 @@ from OCP.BOPAlgo import BOPAlgo_CheckStatus
 from pytest import approx, raises, fixture
 from math import pi
 
-#%% test utils
+# %% test utils
 
 
 def assert_all_valid(*objs: Shape):
@@ -76,7 +76,7 @@ def vector_equal(v1, v2):
     return v1.toTuple() == approx(v2.toTuple())
 
 
-#%% utils
+# %% utils
 
 
 def test_utils():
@@ -135,7 +135,7 @@ def test_adaptor_curve_to_edge():
         assert isinstance(e, TopoDS_Edge)
 
 
-#%% constructors
+# %% constructors
 
 
 def test_constructors():
@@ -304,7 +304,7 @@ def test_faceOn():
     assert len(f2.Faces()) == 2
 
 
-#%% primitives
+# %% primitives
 
 
 def test_vertex():
@@ -504,7 +504,7 @@ def test_text():
     assert len(r11.Wires()) == 1
 
 
-#%% bool ops
+# %% bool ops
 def test_operators():
 
     b1 = box(1, 1, 1).moved(Location(-0.5, -0.5, -0.5))  # small box
@@ -612,10 +612,11 @@ def test_fuse_multi():
     assert len(res.Solids()) == 1
 
 
-#%% moved
+# %% moved
 def test_moved():
 
     b = box(1, 1, 1)
+    s = sphere(0.1)
     l1 = Location((-1, 0, 0))
     l2 = Location((1, 0, 0))
     l3 = Location((0, 1, 0), (45, 0, 0))
@@ -654,8 +655,28 @@ def test_moved():
     assert vector_equal(bs8.edges(">Z").Center(), b.edges(">Z").Center())
     assert vector_equal(bs9.edges(">Z").Center(), b.edges(">Z").Center())
 
+    # move to shape
+    s1 = s.moved(b.faces())
+    s2 = s.moved(b.edges("|Z"))
+    s3 = s.moved(b.vertices())
+    s4 = s.moved(b)
 
-#%% ops
+    assert len(s1.Solids()) == 6  # 6 faces
+
+    assert len(s2.Solids()) == 4
+    assert s2.Center().z == approx(
+        0.5
+    )  # spheres should be placed in the middle of the edges
+
+    assert len(s3.Solids()) == 8  # 8 vertices
+
+    assert len(s4.Solids()) == 1
+    assert s4.Center().z == approx(
+        0.5
+    )  # spheres should be placed in the middle of the edges
+
+
+# %% ops
 def test_clean():
 
     b1 = box(1, 1, 1)
