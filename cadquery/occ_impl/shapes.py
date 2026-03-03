@@ -6325,7 +6325,7 @@ def chamfer(s: Shape, e: Shape, d: float) -> Shape:
     return _compound_or_shape(builder.Shape())
 
 
-def extrude(s: Shape, d: VectorLike) -> Shape:
+def extrude(s: Shape, d: VectorLike, both: bool = False) -> Shape:
     """
     Extrude a shape.
     """
@@ -6334,13 +6334,18 @@ def extrude(s: Shape, d: VectorLike) -> Shape:
 
     for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
 
-        builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
+        if both:
+            builder = BRepPrimAPI_MakePrism(
+                el.moved(-Vector(d)).wrapped, (2 * Vector(d)).wrapped
+            )
+        else:
+            builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
+
         builder.Build()
 
         results.append(builder.Shape())
 
     return _compound_or_shape(results)
-
 
 def revolve(s: Shape, p: VectorLike, d: VectorLike, a: float = 360):
     """
