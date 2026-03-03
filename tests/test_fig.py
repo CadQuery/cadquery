@@ -1,7 +1,7 @@
 from cadquery import Workplane, Assembly, Sketch, Vector, Location
 from cadquery.func import box
 from cadquery.vis import vtkAxesActor, ctrlPts
-from cadquery.fig import Figure
+from cadquery.fig import Figure, show, clear, fit
 
 from pytest import fixture, mark
 
@@ -13,9 +13,8 @@ def fig():
     return Figure()
 
 
-@mark.gui
-@mark.skipif(platform != "win32", reason="CI with UI only works on win for now")
-def test_fig(fig):
+@fixture(scope="module")
+def showables():
 
     # showables
     s = box(1, 1, 1)
@@ -27,7 +26,14 @@ def test_fig(fig):
     loc = Location()
     act = vtkAxesActor()
 
-    showables = (s, s.copy(), wp, assy, sk, ctrl_pts, v, loc, act)
+    return (s, s.copy(), wp, assy, sk, ctrl_pts, v, loc, act)
+
+
+@mark.gui
+@mark.skipif(platform != "win32", reason="CI with UI only works on win for now")
+def test_fig(fig, showables):
+
+    (s, s1, wp, assy, sk, ctrl_pts, v, loc, act) = showables
 
     # individual showables
     fig.show(*showables)
@@ -78,3 +84,17 @@ def test_fig(fig):
 
     # test onVisbility
     fig.onSelection([fig.state.actors[0]])
+
+
+def test_fig_free_func(showables):
+
+    show(*showables)
+    fit()
+
+    fig = Figure()
+
+    assert len(fig.state.actors) == 1
+
+    clear()
+
+    assert len(fig.state.actors) == 0
