@@ -1,7 +1,13 @@
 from cadquery.occ_impl.shapes import (
+    Compound,
+    Edge,
+    Wire,
+    Face,
+    Shell,
     Vector,
     Shape,
     Solid,
+    Vertex,
     wire,
     segment,
     polyline,
@@ -344,3 +350,24 @@ def test_addHole():
 
     assert len(f3.innerWires()) == 2
     assert f3.isValid()
+
+
+def test_single_ent_selector():
+
+    bs = box(1, 1, 1).moved((0, 0, 0), (2, 0, 0))
+
+    f = bs.face(">X")
+
+    assert isinstance(f, Face)
+
+    fs = bs.faces(">Z")
+
+    assert isinstance(fs, Compound)
+    assert isinstance(fs.face(), Face)
+
+    # check all options
+    assert isinstance(f.edge(">Z"), Edge)
+    assert isinstance(f.vertex(), Vertex)
+    assert isinstance(f.wire(">Z"), Wire)
+    assert isinstance(bs.shell(">X"), Shell)
+    assert isinstance(bs.solid(">X"), Solid)
