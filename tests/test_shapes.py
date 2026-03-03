@@ -371,3 +371,18 @@ def test_single_ent_selector():
     assert isinstance(f.wire(">Z"), Wire)
     assert isinstance(bs.shell(">X"), Shell)
     assert isinstance(bs.solid(">X"), Solid)
+
+
+def test_special():
+
+    c = compound(box(1, 1, 1), box(2, 2, 2), box(3, 3, 3))
+
+    assert isinstance(c[0], Solid)
+    assert isinstance(c[-1], Solid)
+    assert isinstance(c[:2], Compound)
+
+    cf = c.filter(lambda x: x.Volume() <= 1)
+    assert len(cf.Solids()) == 1
+
+    cs = c.sort(lambda x: -x.Volume())
+    assert cs[0].Volume() == approx(3 ** 3)

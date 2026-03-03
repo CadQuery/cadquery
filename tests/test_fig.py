@@ -86,6 +86,8 @@ def test_fig(fig, showables):
     fig.onSelection([fig.state.actors[0]])
 
 
+@mark.gui
+@mark.skipif(platform != "win32", reason="CI with UI only works on win for now")
 def test_fig_free_func(showables):
 
     show(*showables)
