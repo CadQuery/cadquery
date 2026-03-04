@@ -6686,6 +6686,50 @@ def project(
     return _compound_or_shape(bldr.Projection())
 
 
+@multidispatch
+def project(
+    s: Shape,
+    base: Shape,
+    continuity: Literal["C1", "C2", "C3"] = "C2",
+    degree: int = 3,
+    maxseg: int = 30,
+    tol: float = 1e-4,
+):
+    """
+    Project s onto base using normal projection.
+    """
+
+    bldr = BRepAlgo_NormalProjection(base.wrapped)
+    bldr.SetParams(tol, tol ** (2 / 3), _to_geomabshape(continuity), degree, maxseg)
+
+    for el in _get_wires(s):
+        bldr.Add(el.wrapped)
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Projection())
+
+
+@multidispatch
+def project(
+    s: Shape, base: Shape, direction: VectorLike,
+):
+    """
+    Project s onto base using cylindrical projection.
+    """
+
+    results = []
+
+    for el in _get_edges(s):
+        bldr = BRepProj_Projection(el.wrapped, base.wrapped, Vector(direction).toDir())
+
+        while bldr.More():
+            results.append(_compound_or_shape(bldr.Current()))
+            bldr.Next()
+
+    return _normalize(compound(results))
+
+
 #%% diagnotics
 
 
