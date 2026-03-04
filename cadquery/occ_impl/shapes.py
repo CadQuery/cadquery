@@ -820,7 +820,8 @@ class Shape(object):
         """
 
         if obj.ShapeType() == "Vertex":
-            return Vector(tcast(Vertex, obj).toTuple())
+            geom_point = BRep_Tool.Pnt_s(tcast(TopoDS_Vertex, downcast(obj.wrapped)))
+            return Vector(geom_point.X(), geom_point.Y(), geom_point.Z())
 
         Properties = GProp_GProps()
         calc_function = Shape._mass_calc_function(obj)
