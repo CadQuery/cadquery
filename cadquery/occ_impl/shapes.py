@@ -6347,6 +6347,7 @@ def extrude(s: Shape, d: VectorLike, both: bool = False) -> Shape:
 
     return _compound_or_shape(results)
 
+
 def revolve(s: Shape, p: VectorLike, d: VectorLike, a: float = 360):
     """
     Revolve a shape.
