@@ -759,11 +759,13 @@ def test_extrude():
     r2 = extrude(e, d)
     r3 = extrude(w, d)
     r4 = extrude(f, d)
+    r5 = extrude(f, d, both=True)
 
     assert r1.Length() == approx(1)
     assert r2.Area() == approx(1)
     assert r3.Area() == approx(4)
     assert r4.Volume() == approx(1)
+    assert r5.Volume() == approx(2)
 
 
 def test_revolve():

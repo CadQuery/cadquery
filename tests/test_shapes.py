@@ -22,6 +22,7 @@ from cadquery.occ_impl.shapes import (
     sweep,
     polygon,
     wireOn,
+    vertex,
 )
 
 from cadquery.selectors import NearestToPointSelector
@@ -392,3 +393,14 @@ def test_special():
 
     cs = c.sort(lambda x: -x.Volume())
     assert cs[0].Volume() == approx(3 ** 3)
+
+
+def test_center():
+
+    v = vertex(1, 1, 1)
+
+    for obj in (v, Shape(v.wrapped)):
+        c = obj.Center()
+        assert c.x == approx(1)
+        assert c.y == approx(1)
+        assert c.z == approx(1)
