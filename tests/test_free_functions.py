@@ -454,7 +454,7 @@ def test_text():
     assert len(r1.Wires()) == 3
     assert r1.Area() > 0.0
 
-    # test alignemnt
+    # test alignment
     r2 = text("CQ", 10, halign="left")
     r3 = text("CQ", 10, halign="right")
     r4 = text("CQ", 10, valign="bottom")
@@ -655,7 +655,7 @@ def test_moved():
     assert vector_equal(bs8.edges(">Z").Center(), b.edges(">Z").Center())
     assert vector_equal(bs9.edges(">Z").Center(), b.edges(">Z").Center())
 
-    # move to shape
+    # moved to shape
     s1 = s.moved(b.faces())
     s2 = s.moved(b.edges("|Z"))
     s3 = s.moved(b.vertices())
@@ -674,6 +674,11 @@ def test_moved():
     assert s4.Center().z == approx(
         0.5
     )  # spheres should be placed in the middle of the edges
+
+    # move to shape, i.e. update location in place
+    assert s.Center().z == approx(0)
+    s.move(b.faces(">Z"))
+    assert s.Center().z == approx(1)
 
 
 # %% ops

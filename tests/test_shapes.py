@@ -24,6 +24,8 @@ from cadquery.occ_impl.shapes import (
     wireOn,
 )
 
+from cadquery.selectors import NearestToPointSelector
+
 from pytest import approx, raises
 
 from math import pi
@@ -371,6 +373,10 @@ def test_single_ent_selector():
     assert isinstance(f.wire(">Z"), Wire)
     assert isinstance(bs.shell(">X"), Shell)
     assert isinstance(bs.solid(">X"), Solid)
+    assert isinstance(bs.face(NearestToPointSelector((0, 0, 1))), Face)
+
+    with raises(ValueError):
+        bs.face("%CYLINDER")
 
 
 def test_special():
