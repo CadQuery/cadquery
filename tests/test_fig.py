@@ -95,7 +95,7 @@ def test_fig_free_func(showables):
 
     fig = Figure()
 
-    assert len(fig.state.actors) == 1
+    assert len(fig.state.actors) == len(showables)
 
     clear()
 
