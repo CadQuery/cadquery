@@ -916,6 +916,15 @@ def test_project():
         assert el.isValid()
         assert el.IsClosed()
 
+    # project using cylindrical projection
+    res = project(e, base, (0, 1, 0))
+
+    assert len(res.Edges()) == 2
+    assert isinstance(res, Compound)
+    for el in res:
+        assert el.isValid()
+        assert el.IsClosed()
+
 
 # %% export
 def test_export():
