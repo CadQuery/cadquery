@@ -90,13 +90,13 @@ def test_fig(fig, showables):
 @mark.skipif(platform != "win32", reason="CI with UI only works on win for now")
 def test_fig_free_func(showables):
 
-    show(*showables)
+    clear()
+    fig = Figure()
+    assert len(fig.state.actors) == 0
+
+    for el in showables:
+        show(el)
+
     fit()
 
-    fig = Figure()
-
     assert len(fig.state.actors) == len(showables)
-
-    clear()
-
-    assert len(fig.state.actors) == 0
