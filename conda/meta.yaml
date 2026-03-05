@@ -25,6 +25,8 @@ requirements:
     - multimethod >=1.11,<2.0
     - casadi
     - runtype
+    - numba
+    - scipy
     - trame
     - trame-vtk
     - trame-components
