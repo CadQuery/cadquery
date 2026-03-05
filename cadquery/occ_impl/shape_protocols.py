@@ -79,6 +79,7 @@ class ShapeProtocol(Protocol):
     def distance(self, other) -> float:
         ...
 
+
 class Shape1DProtocol(ShapeProtocol, Protocol):
     def tangentAt(
         self, p: float = 0.5, mode: Literal["length", "parameter"] = "length"
