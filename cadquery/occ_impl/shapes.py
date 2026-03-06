@@ -3288,7 +3288,7 @@ class Face(Shape):
 
     def locationAt(self, u: Real, v: Real) -> Location:
         """
-        Computes the loation at the desired location in the u,v parameter space.
+        Computes the location at the desired location in the u,v parameter space.
 
         :returns: a location
         :param u: the u parametric location to compute the normal at.
