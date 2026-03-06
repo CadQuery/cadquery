@@ -140,9 +140,6 @@ def exportAssembly(
                     if isinstance(geom, StepGeom_SurfaceCurve):
                         geom.Curve3d().SetName(occ_name)
 
-                elif isinstance(entity, StepShape_VertexPoint):
-                    entity.VertexGeometry().SetName(occ_name)
-
                 elif isinstance(entity, StepShape_GeometricCurveSet):
                     for i in range(entity.NbElements()):
                         el = entity.ElementsValue(i + 1)
