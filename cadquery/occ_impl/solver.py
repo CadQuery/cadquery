@@ -9,10 +9,10 @@ from typing import (
     Literal,
     cast as tcast,
     Type,
+    get_origin,
 )
 
 from math import radians, pi
-from typish import instance_of, get_type
 
 import casadi as ca
 
@@ -33,6 +33,7 @@ from OCP.Precision import Precision
 from .geom import Location, Vector, Plane
 from .shapes import Shape, Face, Edge, Wire
 from ..types import Real
+from ..utils import instance_of
 
 # type definitions
 
@@ -179,7 +180,7 @@ class ConstraintSpec(object):
         # check parameter
         if not instance_of(param, param_type) and param is not None:
             raise ValueError(
-                f"Unsupported argument types {get_type(param)}, required {param_type}."
+                f"Unsupported argument types {get_origin(param)}, required {param_type}."
             )
 
         # check parameter conversion

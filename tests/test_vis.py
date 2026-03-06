@@ -4,6 +4,8 @@ from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts, style
 
 import cadquery.vis as vis
 
+from cadquery.utils import instance_of
+
 from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
@@ -15,16 +17,16 @@ from vtkmodules.vtkRenderingCore import (
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkIOImage import vtkPNGWriter
 
-from pytest import fixture, raises
-from path import Path
+from pytest import fixture, raises, mark
+import os
+from pathlib import Path
 
-from typish import instance_of
 from typing import List
 
 
 @fixture(scope="module")
 def tmpdir(tmp_path_factory):
-    return Path(tmp_path_factory.mktemp("screenshots"))
+    return tmp_path_factory.mktemp("screenshots")
 
 
 @fixture
@@ -137,11 +139,18 @@ def test_show(wp, assy, sk, patch_vtk):
     show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
 
 
-def test_screenshot(wp, tmpdir, patch_vtk):
+def test_screenshot(wp, patch_vtk):
 
     # smoke test for now
-    with tmpdir:
+    show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
+
+
+@mark.skip(reason="running only smoke test for now")
+def test_screenshot_no_patch(wp, tmpdir, cwd):
+
+    with cwd(tmpdir):
         show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
+        assert (Path(tmpdir) / "img.png").exists()
 
 
 def test_ctrlPts():
@@ -233,3 +242,8 @@ def test_camera_position(wp, patch_vtk):
 def test_frustrum_clipping_range(wp, patch_vtk):
 
     show(wp, zoom=2.0, clipping_range=(1, 100))
+
+
+def test_orthographic(wp, patch_vtk):
+
+    show(wp, orthographic=True)

@@ -3,7 +3,7 @@ import os
 from itertools import product
 from math import degrees
 import copy
-from path import Path
+from pathlib import Path
 from pathlib import PurePath
 import re
 from pytest import approx
@@ -41,7 +41,7 @@ from OCP.Graphic3d import Graphic3d_NameOfMaterial
 
 @pytest.fixture(scope="function")
 def tmpdir(tmp_path_factory):
-    return Path(tmp_path_factory.mktemp("assembly"))
+    return tmp_path_factory.mktemp("assembly")
 
 
 @pytest.fixture
@@ -557,18 +557,6 @@ def find_node(node_list, name_path):
     :param name_path: list of node names (corresponding to path)
     """
 
-    def purepath_is_relative_to(p0, p1):
-        """Alternative to PurePath.is_relative_to for Python 3.8
-        PurePath.is_relative_to is new in Python 3.9
-        """
-        try:
-            if p0.relative_to(p1):
-                is_relative_to = True
-        except ValueError:
-            is_relative_to = False
-
-        return is_relative_to
-
     def get_nodes(node_list, name, parents):
         if parents:
             nodes = []
@@ -577,8 +565,7 @@ def find_node(node_list, name_path):
                     [
                         p
                         for p in node_list
-                        # if p["path"].is_relative_to(parent["path"])
-                        if purepath_is_relative_to(p["path"], parent["path"])
+                        if p["path"].is_relative_to(parent["path"])
                         and len(p["path"].relative_to(parent["path"]).parents) == 1
                         and re.fullmatch(name, p["name"])
                         and p not in nodes
@@ -643,6 +630,36 @@ def test_color():
     assert c4.wrapped.GetRGB().Red() == pytest.approx(0.5)
     assert c4.wrapped.GetRGB().Green() == pytest.approx(0.2)
     assert c4.wrapped.Alpha() == 0.5
+
+    # test for hex string for short sRGB color
+    c5 = cq.Color("#FF0")
+    assert c5.wrapped.GetRGB().Red() == 1
+    assert c5.wrapped.GetRGB().Green() == 1
+    assert c5.wrapped.GetRGB().Blue() == 0
+    with pytest.raises(AttributeError):
+        c5.wrapped.GetRGB().Alpha()
+
+    # test for hex string for short sRGBA color
+    c6 = cq.Color("#FF0F")
+    assert c6.wrapped.GetRGB().Red() == 1
+    assert c6.wrapped.GetRGB().Green() == 1
+    assert c6.wrapped.GetRGB().Blue() == 0
+    assert c6.wrapped.Alpha() == 1.0
+
+    # test for hex string for RGB color
+    c7 = cq.Color("#FFFF00")
+    assert c7.wrapped.GetRGB().Red() == 1
+    assert c7.wrapped.GetRGB().Green() == 1
+    assert c7.wrapped.GetRGB().Blue() == 0
+    with pytest.raises(AttributeError):
+        c7.wrapped.GetRGB().Alpha()
+
+    # test for hex string for RGBA color
+    c8 = cq.Color("#FFFF00FF")
+    assert c8.wrapped.GetRGB().Red() == 1
+    assert c8.wrapped.GetRGB().Green() == 1
+    assert c8.wrapped.GetRGB().Blue() == 0
+    assert c8.wrapped.Alpha() == 1.0
 
     with pytest.raises(ValueError):
         cq.Color("?????")
@@ -1346,18 +1363,18 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
         ("stl", ("STL",), {}),
     ],
 )
-def test_export(extension, args, kwargs, tmpdir, nested_assy):
+def test_export(extension, args, kwargs, tmpdir, nested_assy, cwd):
 
     filename = "nested." + extension
 
-    with tmpdir:
+    with cwd(tmpdir):
         nested_assy.export(filename, *args, **kwargs)
         assert os.path.exists(filename)
 
 
-def test_export_vtkjs(tmpdir, nested_assy):
+def test_export_vtkjs(tmpdir, nested_assy, cwd):
 
-    with tmpdir:
+    with cwd(tmpdir):
         nested_assy.export("nested.vtkjs")
         assert os.path.exists("nested.vtkjs.zip")
 
@@ -1523,7 +1540,7 @@ def test_colors_assy0(assy_fixture, request, tmpdir, kind):
     """
 
     assy = request.getfixturevalue(assy_fixture)
-    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(f".{kind}")
+    stepfile = str((Path(tmpdir) / assy_fixture).with_suffix(f".{kind}"))
     assy.export(stepfile)
 
     assy_i = assy.load(stepfile)
@@ -1555,7 +1572,7 @@ def test_colors_assy1(assy_fixture, request, tmpdir, kind):
     """
 
     assy = request.getfixturevalue(assy_fixture)
-    stepfile = (Path(tmpdir) / assy_fixture).with_suffix(f".{kind}")
+    stepfile = str((Path(tmpdir) / assy_fixture).with_suffix(f".{kind}"))
     assy.export(stepfile)
 
     assy_i = assy.load(stepfile)
@@ -1810,6 +1827,18 @@ def test_constrain(simple_assy, nested_assy):
         .TranslationPart()
         .IsEqual(gp_XYZ(2, -4, 0.75), 1e-6)
     )
+
+    # Make sure that calling with too many args causes an error
+    with pytest.raises(ValueError):
+        simple_assy.constrain(
+            subassy1.name,
+            b2.faces(">Z").val(),
+            subassy2.name,
+            b3.faces("<Z").val(),
+            "Point",
+            "Point",
+            "Point",
+        )
 
 
 def test_constrain_with_tags(nested_assy):

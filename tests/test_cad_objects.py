@@ -275,7 +275,7 @@ class TestCadObjects(BaseTest):
             c = Solid.makeCylinder(radius, height, Vector())
 
             # Combine all the cylinders into a single compound
-            r = self.eachpoint(lambda loc: c.located(loc), True).combineSolids()
+            r = self.eachpoint(lambda loc: c.located(loc), True).union()
 
             return r
 
@@ -682,7 +682,7 @@ class TestCadObjects(BaseTest):
 
         # Test error handling on creation
         with self.assertRaises(TypeError):
-            Location([0, 0, 1])
+            Location([0, 0, "a"])
         with self.assertRaises(TypeError):
             Location("xy_plane")
 

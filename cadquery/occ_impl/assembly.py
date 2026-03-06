@@ -49,7 +49,12 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
-from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE, VTK_LINE, VTK_VERTEX
+from vtkmodules.vtkCommonDataModel import (
+    VTK_TRIANGLE,
+    VTK_LINE,
+    VTK_VERTEX,
+    VTK_POLY_LINE,
+)
 
 from .geom import Location
 from .shapes import Shape, Solid, Compound
@@ -226,7 +231,9 @@ class Color(object):
             self.wrapped = Quantity_ColorRGBA()
         elif len(args) == 1:
             self.wrapped = Quantity_ColorRGBA()
-            exists = Quantity_ColorRGBA.ColorFromName_s(args[0], self.wrapped)
+            exists = Quantity_ColorRGBA.ColorFromName_s(
+                args[0], self.wrapped
+            ) or Quantity_ColorRGBA.ColorFromHex_s(args[0], self.wrapped)
             if not exists:
                 raise ValueError(f"Unknown color name: {args[0]}")
         elif len(args) == 3:
@@ -646,6 +653,7 @@ def toVTKAssy(
         extr.SetInputDataObject(data)
 
         extr.AddCellType(VTK_LINE)
+        extr.AddCellType(VTK_POLY_LINE)
         extr.AddCellType(VTK_VERTEX)
         extr.Update()
         data_edges = extr.GetOutput()
@@ -712,6 +720,7 @@ def toVTK(
         extr.SetInputDataObject(data)
 
         extr.AddCellType(VTK_LINE)
+        extr.AddCellType(VTK_POLY_LINE)
         extr.AddCellType(VTK_VERTEX)
         extr.Update()
         data_edges = extr.GetOutput()

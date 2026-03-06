@@ -16,6 +16,7 @@ import os.path
 # my modules
 from tests import BaseTest, makeUnitCube, makeUnitSquareWire
 from cadquery import *
+from cadquery.func import box
 from cadquery import selectors
 
 
@@ -500,7 +501,7 @@ class TestCQSelectors(BaseTest):
             3,
         )
 
-    def testNearestTo(self):
+    def testNearestToPoint(self):
         c = CQ(makeUnitCube(centered=False))
 
         # nearest vertex to origin is (0,0,0)
@@ -518,6 +519,15 @@ class TestCQSelectors(BaseTest):
         # nearest solid is myself
         s = c.solids(selectors.NearestToPointSelector(t)).vals()
         self.assertEqual(1, len(s))
+
+    def testNearestToShape(self):
+        b1 = box(1, 1, 1)
+        b2 = box(1, 1, 1).moved(x=5)
+        b3 = box(1, 1, 1).moved(x=-15)
+
+        res = (b2 + b3).solids(selectors.NearestToShape(b1))
+
+        assert res == b2
 
     def testBox(self):
         c = CQ(makeUnitCube(centered=False))
@@ -1135,7 +1145,7 @@ class TestCQSelectors(BaseTest):
         ]
 
         for e in expressions:
-            gram.parseString(e, parseAll=True)
+            gram.parse_string(e, parse_all=True)
 
     def testShape(self):
         """

@@ -155,7 +155,7 @@ class DxfDocument:
 
         if isinstance(shape, WorkplaneLike):
             plane = shape.plane
-            shape_ = compound(*shape).transformShape(plane.fG)
+            shape_ = compound(*shape.__iter__()).transformShape(plane.fG)
         else:
             shape_ = shape
 

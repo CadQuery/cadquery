@@ -342,46 +342,6 @@ class Workplane(object):
 
         return self.newObject(rv)
 
-    @deprecate()
-    def combineSolids(
-        self, otherCQToCombine: Optional["Workplane"] = None
-    ) -> "Workplane":
-        """
-        !!!DEPRECATED!!! use union()
-        Combines all solids on the current stack, and any context object, together
-        into a single object.
-
-        After the operation, the returned solid is also the context solid.
-
-        :param otherCQToCombine: another CadQuery to combine.
-        :return: a CQ object with the resulting combined solid on the stack.
-
-        Most of the time, both objects will contain a single solid, which is
-        combined and returned on the stack of the new object.
-        """
-        # loop through current stack objects, and combine them
-        toCombine = cast(List[Solid], self.solids().vals())
-
-        if otherCQToCombine:
-            otherSolids = cast(List[Solid], otherCQToCombine.solids().vals())
-            for obj in otherSolids:
-                toCombine.append(obj)
-
-        if len(toCombine) < 1:
-            raise ValueError("Cannot Combine: at least one solid required!")
-
-        # get context solid and we don't want to find our own objects
-        ctxSolid = self._findType((Solid,), searchStack=False, searchParents=True)
-        if ctxSolid is None:
-            ctxSolid = toCombine.pop(0)
-
-        # now combine them all. make sure to save a reference to the ctxSolid pointer!
-        s: Shape = ctxSolid
-        if toCombine:
-            s = s.fuse(*_selectShapes(toCombine))
-
-        return self.newObject([s])
-
     def all(self: T) -> List[T]:
         """
         Return a list of all CQ objects on the stack.
@@ -786,25 +746,6 @@ class Workplane(object):
             raise ValueError(
                 "Cannot find a solid {}in the parent chain".format(message)
             )
-
-        return found
-
-    @deprecate()
-    def findFace(self, searchStack: bool = True, searchParents: bool = True) -> Face:
-        """
-        Finds the first face object in the chain, searching from the current node
-        backwards through parents until one is found.
-
-        :param searchStack: should objects on the stack be searched first.
-        :param searchParents: should parents be searched?
-        :returns: A face or None if no face is found.
-        """
-
-        found = self._findType((Face,), searchStack, searchParents)
-
-        if found is None:
-            message = "on the stack or " if searchStack else ""
-            raise ValueError("Cannot find a face {}in the parent chain".format(message))
 
         return found
 
@@ -3553,7 +3494,7 @@ class Workplane(object):
 
     def __truediv__(self: T, other: Union["Workplane", Solid, Compound]) -> T:
         """
-        Syntactic sugar for intersect.
+        Syntactic sugar for split.
 
         Notice that :code:`r = a / b` is equivalent to :code:`r = a.split(b)`.
 
@@ -3716,7 +3657,7 @@ class Workplane(object):
 
         for el in self.objects:
             if isinstance(el, Sketch):
-                rv.extend(el)
+                rv.extend(f for f in el if isinstance(f, Face))
             elif isinstance(el, Face):
                 rv.append(el)
             elif isinstance(el, Compound):
@@ -3736,7 +3677,7 @@ class Workplane(object):
 
         for el in self.objects:
             if isinstance(el, Sketch):
-                rv.extend(el)
+                rv.extend(f for f in el if isinstance(f, Face))
             elif isinstance(el, (Face, Vertex)):
                 rv.append(el)
             elif isinstance(el, Compound):
@@ -4294,14 +4235,12 @@ class Workplane(object):
 
         return self.newObject(cleanObjects)
 
-    @deprecate_kwarg_name("cut", "combine='cut'")
     def text(
         self: T,
         txt: str,
         fontsize: float,
         distance: float,
-        cut: bool = True,
-        combine: CombineMode = False,
+        combine: CombineMode = "cut",
         clean: bool = True,
         font: str = "Arial",
         fontPath: Optional[str] = None,
@@ -4316,7 +4255,6 @@ class Workplane(object):
         :param fontsize: size of the font in model units
         :param distance: the distance to extrude or cut, normal to the workplane plane
         :type distance: float, negative means opposite the normal direction
-        :param cut: True to cut the resulting solid from the parent solids if found
         :param combine: True or "a" to combine the resulting solid with parent solids if found,
             "cut" or "s" to remove the resulting solid from the parent solids if found.
             False to keep the resulting solid separated from the parent solids.
@@ -4332,10 +4270,12 @@ class Workplane(object):
         whether a context solid is already defined:
 
         *  if combine is False, the new value is pushed onto the stack.
-        *  if combine is true, the value is combined with the context solid if it exists,
+        *  if combine is True, "a", "cut" or "s", the value is combined with the context solid if it exists,
            and the resulting solid becomes the new context solid.
 
         Examples::
+
+        Create text::
 
             cq.Workplane().text("CadQuery", 5, 1)
 
@@ -4347,9 +4287,14 @@ class Workplane(object):
 
             cq.Workplane().text("CadQuery", 5, 1, fontPath="/opt/fonts/texgyrecursor-bold.otf")
 
-        Cutting text into a solid::
+        Cut text from a solid (default behavior when context solid exists and combine is not overridden)::
 
             cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, -1.0)
+
+        Add text to a solid::
+
+            cq.Workplane().box(8, 8, 8).faces(">Z").workplane().text("Z", 5, 1.0, combine="a")
+
 
         """
         r = Compound.makeText(
@@ -4363,9 +4308,6 @@ class Workplane(object):
             valign=valign,
             position=self.plane,
         )
-
-        if cut:
-            combine = "cut"
 
         return self._combineWithBase(r, combine, clean)
 

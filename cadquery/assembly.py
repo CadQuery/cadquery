@@ -12,7 +12,6 @@ from typing import (
     get_args,
 )
 from typing_extensions import Literal, Self
-from typish import instance_of
 from uuid import uuid1 as uuid
 from warnings import warn
 from itertools import chain
@@ -39,7 +38,7 @@ from .occ_impl.exporters.assembly import (
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
 from .selectors import _expression_grammar as _selector_grammar
-from .utils import deprecate, BiDict
+from .utils import deprecate, BiDict, instance_of
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -59,21 +58,21 @@ def _define_grammar():
         Optional,
         alphas,
         alphanums,
-        delimitedList,
+        DelimitedList,
     )
 
     Separator = Literal("@").suppress()
     TagSeparator = Literal("?").suppress()
 
-    Name = delimitedList(
+    Name = DelimitedList(
         Word(alphas, alphanums + "_"), PATH_DELIM, combine=True
-    ).setResultsName("name")
-    Tag = Word(alphas, alphanums + "_").setResultsName("tag")
-    Selector = _selector_grammar.setResultsName("selector")
+    ).set_results_name("name")
+    Tag = Word(alphas, alphanums + "_").set_results_name("tag")
+    Selector = _selector_grammar.set_results_name("selector")
 
     SelectorType = (
         Literal("solids") | Literal("faces") | Literal("edges") | Literal("vertices")
-    ).setResultsName("selector_kind")
+    ).set_results_name("selector_kind")
 
     return (
         Name
@@ -332,7 +331,7 @@ class Assembly(object):
         tmp: Workplane
         res: Workplane
 
-        query = _grammar.parseString(q, True)
+        query = _grammar.parse_string(q, True)
         name: str = query.name
 
         obj = self.objects[name].obj

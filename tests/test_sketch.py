@@ -921,10 +921,23 @@ def test_add(s3, f):
     # we do not clean, so adding will increase the number of edges
     assert len(s3.map(lambda x: f).add().reset().val().Edges()) == 10
 
+    # check that adding without selection does not raise
+    s3.add()
+
 
 def test_subtract(s3, f):
 
     assert s3.map(lambda x: f).subtract().reset().val().Area() == approx(0.9)
+
+    # check that subtract without selection does not raise
+    s3.subtract()
+
+
+def test_selected_faces(s3):
+
+    # check that _selected_faces raises without selection
+    with raises(ValueError):
+        s3._selected_faces()
 
 
 def test_iter(s1):
@@ -960,3 +973,22 @@ def test_missing_selection(s1):
     # cannot tag without selection
     with raises(ValueError):
         s1.tag("name")
+
+
+def test_mixed_close():
+
+    # check that closing of mixed mode edges works correctly
+    s = (
+        Sketch()
+        .arc((0, 0), 30, 0, 120, tag="e0", forConstruction=True)
+        .edges(tag="e0")
+        .distribute(1, rotate=False)
+        .segment((0, 0), (10, 2))
+        .segment((10, -2))
+        .close()
+        .assemble()
+        .reset()  # reset the implicit selection coming from distribute
+    )
+
+    # the underlying face should be valid
+    assert s.val().isValid()
