@@ -130,17 +130,21 @@ def exportAssembly(
                 if isinstance(entity, StepShape_AdvancedFace):
                     entity.FaceGeometry().SetName(occ_name)
 
-                elif isinstance(entity, StepShape_GeometricCurveSet): # pragma: no branch
+                elif isinstance(
+                    entity, StepShape_GeometricCurveSet
+                ):  # pragma: no branch
                     for i in range(entity.NbElements()):
                         el = entity.ElementsValue(i + 1)
                         case = el.CaseNumber()
 
-                        if case == 2: # pragma: no branch
+                        if case == 2:  # pragma: no branch
                             crv = el.Curve()
                             crv.SetName(occ_name)
 
                             # trimmed curves also have a basis curve
-                            if isinstance(crv, StepGeom_TrimmedCurve): # pragma: no branch
+                            if isinstance(
+                                crv, StepGeom_TrimmedCurve
+                            ):  # pragma: no branch
                                 crv.BasisCurve().SetName(occ_name)
 
     status = writer.Write(path)
