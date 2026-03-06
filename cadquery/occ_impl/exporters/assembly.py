@@ -148,20 +148,13 @@ def exportAssembly(
                         el = entity.ElementsValue(i + 1)
                         case = el.CaseNumber()
 
-                        if case == 1:
-                            pt = el.Point()
-                            pt.SetName(occ_name)
-                        elif case == 2:
+                        if case == 2:
                             crv = el.Curve()
                             crv.SetName(occ_name)
 
                             # trimmed curves also have a basis curve
                             if isinstance(crv, StepGeom_TrimmedCurve):
                                 crv.BasisCurve().SetName(occ_name)
-
-                        elif case == 3:
-                            srf = el.Surface()
-                            srf.SetName(occ_name)
 
     status = writer.Write(path)
 
