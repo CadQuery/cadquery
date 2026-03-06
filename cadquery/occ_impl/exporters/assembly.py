@@ -14,12 +14,10 @@ from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_StepModelType
 from OCP.STEPConstruct import STEPConstruct
 from OCP.StepShape import (
-    StepShape_EdgeCurve,
     StepShape_AdvancedFace,
-    StepShape_VertexPoint,
     StepShape_GeometricCurveSet,
 )
-from OCP.StepGeom import StepGeom_SurfaceCurve, StepGeom_TrimmedCurve
+from OCP.StepGeom import StepGeom_TrimmedCurve
 from OCP.IFSelect import IFSelect_ReturnStatus
 from OCP.TDF import TDF_Label
 from OCP.TDataStd import TDataStd_Name
@@ -131,14 +129,6 @@ def exportAssembly(
                 # rename the underlying geometric entities
                 if isinstance(entity, StepShape_AdvancedFace):
                     entity.FaceGeometry().SetName(occ_name)
-
-                elif isinstance(entity, StepShape_EdgeCurve):
-                    geom = entity.EdgeGeometry()
-                    geom.SetName(occ_name)
-
-                    # in some cases additianl levels of geometries are present
-                    if isinstance(geom, StepGeom_SurfaceCurve):
-                        geom.Curve3d().SetName(occ_name)
 
                 elif isinstance(entity, StepShape_GeometricCurveSet):
                     for i in range(entity.NbElements()):
