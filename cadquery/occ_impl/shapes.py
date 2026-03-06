@@ -6664,29 +6664,6 @@ def loft(
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
 
 
-def project(
-    s: Shape,
-    base: Shape,
-    continuity: Literal["C1", "C2", "C3"] = "C2",
-    degree: int = 3,
-    maxseg: int = 30,
-    tol: float = 1e-4,
-):
-    """
-    Project s onto base using normal projection.
-    """
-
-    bldr = BRepAlgo_NormalProjection(base.wrapped)
-    bldr.SetParams(tol, tol ** (2 / 3), _to_geomabshape(continuity), degree, maxseg)
-
-    for el in _get_edges(s):
-        bldr.Add(s.wrapped)
-
-    bldr.Build()
-
-    return _compound_or_shape(bldr.Projection())
-
-
 @multidispatch
 def project(
     s: Shape,
