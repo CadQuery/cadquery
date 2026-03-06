@@ -2490,7 +2490,8 @@ def test_name_geometries(tmpdir):
     with tmpdir:
         assy.save("out.step", name_geometries=True)
 
-        lines = Path("out.step").lines()
+        with open("out.step", "r") as f:
+            lines = f.readlines()
 
     assert len([l for l in lines if "top_face" in l]) == 2
     assert len([l for l in lines if "plane_" in l]) == 2
