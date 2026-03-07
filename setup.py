@@ -37,6 +37,8 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "trame-components",
         "trame-vuetify",
         "pyparsing>=3.0.0",
+        "scipy",
+        "numba",
     ]
 
 
