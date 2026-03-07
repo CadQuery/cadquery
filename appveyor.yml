@@ -16,6 +16,7 @@ environment:
         secure: $(anaconda_token)
 
     NUMBA_JIT_COVERAGE: 1
+    NUMBA_DISABLE_JIT: 1
 
 init:
     - cmd: curl -fsSLo Miniforge.exe https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
