@@ -2424,8 +2424,8 @@ class TestCadQuery(BaseTest):
 
         s4_shape = Workplane("XY").box(2, 2, 2).val()
         # test that None and empty list both work and are equivalent
-        s4_shell_1 = s4_shape.shell(faceList=None, thickness=-0.1)
-        s4_shell_2 = s4_shape.shell(faceList=[], thickness=-0.1)
+        s4_shell_1 = s4_shape.hollow(faceList=None, thickness=-0.1)
+        s4_shell_2 = s4_shape.hollow(faceList=[], thickness=-0.1)
         # this should be the same as the first shape
         self.assertEqual(len(s4_shell_1.Faces()), s1.faces().size())
         self.assertEqual(len(s4_shell_2.Faces()), s1.faces().size())
