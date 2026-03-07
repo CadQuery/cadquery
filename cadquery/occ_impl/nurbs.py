@@ -577,10 +577,10 @@ def nbCurve(
     # number of param values
     nu = np.size(u)
 
-    # chunck size
+    # chunk size
     n = order + 1
 
-    # temp chunck storage
+    # temp chunk storage
     temp = np.zeros(n)
 
     # initialize
@@ -640,10 +640,10 @@ def nbCurveDer(
     # number of param values
     nu = np.size(u)
 
-    # chunck size
+    # chunk size
     n = order + 1
 
-    # temp chunck storage
+    # temp chunk storage
     temp = np.zeros((dorder + 1, n))
 
     # initialize
@@ -724,11 +724,11 @@ def nbSurface(
     # number of param values
     nu = np.size(u)
 
-    # chunck sizes
+    # chunk sizes
     un = uorder + 1
     vn = vorder + 1
 
-    # temp chunck storage
+    # temp chunk storage
     utemp = np.zeros(un)
     vtemp = np.zeros(vn)
 
@@ -831,12 +831,11 @@ def nbSurfaceDer(
     # number of param values
     nu = np.size(u)
 
-    # chunck sizes
+    # chunk sizes
     un = uorder + 1
     vn = vorder + 1
 
-    # temp chunck storage
-
+    # temp chunk storage
     utemp = np.zeros((du + 1, un))
     vtemp = np.zeros((dv + 1, vn))
 
@@ -867,7 +866,7 @@ def nbSurfaceDer(
                         * pts[(uspan - uorder + r) % nub, (vspan - vorder + s) % nvb, :]
                     )
 
-            # ramaining derivative orders: dk + du <= dorder
+            # remaining derivative orders: dk + du <= dorder
             dd = min(dorder - k, dv)
 
             # .. * Nv^(l)
@@ -896,10 +895,10 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
     # number of basis functions
     nb = maxspan
 
-    # chunck size
+    # chunk size
     n = order + 1
 
-    # temp chunck storage
+    # temp chunk storage
     temp = np.zeros(n)
 
     # initialize the empty matrix
@@ -923,7 +922,7 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
         rv.i[i * n : (i + 1) * n] = i
         rv.j[i * n : (i + 1) * n] = (
             span - order + np.arange(n)
-        ) % nb  # NB: this is due to peridicity
+        ) % nb  # NB: this is due to periodicity
         rv.v[i * n : (i + 1) * n] = temp
 
     return rv
@@ -955,7 +954,7 @@ def designMatrix2D(
     # number of param values
     ni = len(u)
 
-    # chunck size
+    # chunk size
     nu = uorder + 1
     nv = vorder + 1
     nj = nu * nv
@@ -964,7 +963,7 @@ def designMatrix2D(
     nu_total = maxspanu
     nv_total = maxspanv
 
-    # temp chunck storage
+    # temp chunk storage
     utemp = np.zeros(nu)
     vtemp = np.zeros(nv)
 
@@ -1016,10 +1015,10 @@ def derMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
     # number of param values
     nu = np.size(u)
 
-    # chunck size
+    # chunk size
     n = order + 1
 
-    # temp chunck storage
+    # temp chunk storage
     temp = np.zeros((dorder + 1, n))
 
     # initialize the empty matrix
@@ -1070,10 +1069,10 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
     # number of basis functions
     nb = len(knots) - 1
 
-    # chunck size
+    # chunk size
     n = order + 1
 
-    # temp chunck storage
+    # temp chunk storage
     temp = np.zeros((dorder + 1, n))
 
     # initialize the empty matrix
@@ -1123,7 +1122,7 @@ def periodicDiscretePenalty(us: Array, order: int) -> COO:
     # number of elements per row
     ne = order + 1
 
-    # initialize the penlaty matrix
+    # initialize the penalty matrix
     rv = COO(
         i=np.empty(nb * ne, dtype=np.int64),
         j=np.empty(nb * ne, dtype=np.int64),
@@ -1171,7 +1170,7 @@ def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
     # number of elements per row
     ne = order + 1
 
-    # initialize the penlaty matrix
+    # initialize the penalty matrix
     rv = COO(
         i=np.empty(nb * ne, dtype=np.int64),
         j=np.empty(nb * ne, dtype=np.int64),
@@ -1274,7 +1273,7 @@ def penaltyMatrix2D(
     # number of param values
     ni = len(u)
 
-    # chunck size
+    # chunk size
     nu = uorder + 1
     nv = vorder + 1
     nj = nu * nv
@@ -1283,7 +1282,7 @@ def penaltyMatrix2D(
     nu_total = maxspanu
     nv_total = maxspanv
 
-    # temp chunck storage
+    # temp chunk storage
     utemp = np.zeros((dorder + 1, nu))
     vtemp = np.zeros((dorder + 1, nv))
 
@@ -1310,7 +1309,7 @@ def penaltyMatrix2D(
         nbBasisDer(uspan, ui, uorder, dorder, uknots_ext, utemp)
         nbBasisDer(vspan, vi, vorder, dorder, vknots_ext, vtemp)
 
-        # update the matrices - iterate over all derivative paris
+        # update the matrices - iterate over all derivative pairs
         for dv in range(dorder + 1):
 
             du = dorder - dv  # NB: du + dv == dorder
@@ -1358,7 +1357,7 @@ def uniformGrid(
 
 def parametrizeChord(data: Array) -> Array:
     """
-    Chord length parametrization.
+    Chord length parameterization.
     """
 
     dists = np.linalg.norm(data - np.roll(data, 1), axis=1)
@@ -1379,7 +1378,7 @@ def periodicApproximate(
 
     npts = data.shape[0]
 
-    # parametrize the points if needed
+    # parameterize the points if needed
     if us is None:
         us = linspace(0, 1, npts, endpoint=False)
 
@@ -1438,7 +1437,7 @@ def periodicApproximate(
 
     npts = data[0].shape[0]
 
-    # parametrize the points
+    # parameterize the points
     us = linspace(0, 1, npts, endpoint=False)
 
     # construct the knot vector
@@ -1496,7 +1495,7 @@ def approximate(
 
     npts = data.shape[0]
 
-    # parametrize the points
+    # parameterize the points
     us = linspace(0, 1, npts)
 
     # construct the knot vector
@@ -1575,7 +1574,7 @@ def approximate(
 
     npts = data[0].shape[0]
 
-    # parametrize the points
+    # parameterize the points
     us = linspace(0, 1, npts)
 
     # construct the knot vector
@@ -1669,7 +1668,7 @@ def approximate2D(
     uknots_ = uknots if isinstance(uknots, Array) else np.linspace(0, 1, uknots)
     vknots_ = vknots if isinstance(vknots, Array) else np.linspace(0, 1, vknots)
 
-    # create the desing matrix
+    # create the design matrix
     C = designMatrix2D(
         u, v, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic
     ).csc()
@@ -1686,8 +1685,8 @@ def approximate2D(
 
         # augment the design matrix
         tmp = [comb(penalty, i) * penalties[i].csc() for i in range(penalty + 1)]
-        Lu = uknots_[-1] - uknots_[0]  # v lenght of the parametric domain
-        Lv = vknots_[-1] - vknots_[0]  # u lenght of the parametric domain
+        Lu = uknots_[-1] - uknots_[0]  # v length of the parametric domain
+        Lv = vknots_[-1] - vknots_[0]  # u length of the parametric domain
         P = Lu * Lv / len(up) * sp.vstack(tmp)
 
         CtC = C.T @ C + lam * P.T @ P
@@ -1698,7 +1697,7 @@ def approximate2D(
     D, L, P = ldl(CtC, False)
     pts = ldl_solve(C.T @ data, D, L, P).toarray()
 
-    # construt the result
+    # construct the result
     rv = Surface(
         pts.reshape((len(uknots_) - int(uperiodic), len(vknots_) - int(vperiodic), 3)),
         uknots_,
