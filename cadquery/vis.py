@@ -523,10 +523,10 @@ def show(
     if not (position or focus):
         renderer.ResetCamera()  # fit all if no explicit position provided
 
-    # # Update camera position with user defined relative positions
-    # camera.Roll(roll)
-    # camera.Elevation(elevation)
-    # camera.Azimuth(azimuth)
+    # Update camera position with user defined relative positions
+    camera.Roll(roll)
+    camera.Elevation(elevation)
+    camera.Azimuth(azimuth)
 
     # Update camera view frustum
     camera.Zoom(zoom)
