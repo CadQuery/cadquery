@@ -1437,8 +1437,8 @@ def periodicApproximate(
 
     npts = data[0].shape[0]
 
-    # parameterize the points
-    us = linspace(0, 1, npts, endpoint=False)
+    # parameterize the points if needed
+    us = linspace(0, 1, npts, endpoint=False) if us is None else us
 
     # construct the knot vector
     if isinstance(knots, int):
@@ -1495,8 +1495,8 @@ def approximate(
 
     npts = data.shape[0]
 
-    # parameterize the points
-    us = linspace(0, 1, npts)
+    # parameterize the points if needed
+    us = linspace(0, 1, npts) if us is None else us
 
     # construct the knot vector
     if isinstance(knots, int):
@@ -1574,8 +1574,8 @@ def approximate(
 
     npts = data[0].shape[0]
 
-    # parameterize the points
-    us = linspace(0, 1, npts)
+    # parameterize the points if needed
+    us = linspace(0, 1, npts) if us is None else us
 
     # construct the knot vector
     if isinstance(knots, int):
