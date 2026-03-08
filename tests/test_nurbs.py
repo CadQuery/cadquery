@@ -14,6 +14,9 @@ from cadquery.occ_impl.nurbs import (
 )
 
 from cadquery.func import circle
+from cadquery import Vector
+
+from OCP.gp import gp_Pnt, gp_Vec
 
 import numpy as np
 import scipy.sparse as sp
@@ -70,7 +73,7 @@ def test_periodic_dm():
 
     res = periodicDesignMatrix(params, order, knots)
 
-    C = sp.coo_array((res.v, (res.i, res.j)))
+    C = res.coo()
 
     assert C.shape[0] == len(params)
     assert C.shape[1] == len(knots) - 1
@@ -102,10 +105,23 @@ def test_dm():
 
     res = designMatrix(params, order, knots)
 
-    C = sp.coo_array((res.v, (res.i, res.j)))
+    C = res.coo()
 
     assert C.shape[0] == len(params)
     assert C.shape[1] == len(knots) - order - 1
+
+
+def test_COO():
+
+    knots = np.array([0, 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1, 1])
+    params = np.linspace(0, 1, 100)
+    order = 3
+
+    res = designMatrix(params, order, knots)
+
+    assert isinstance(res.coo(), sp.coo_matrix)
+    assert isinstance(res.csr(), sp.csr_matrix)
+    assert isinstance(res.csc(), sp.csc_matrix)
 
 
 def test_der():
@@ -170,6 +186,22 @@ def test_curve():
     assert np.allclose(crv2.knots, crv3.knots)
     assert np.allclose(crv2.pts, crv3.pts)
 
+    # eval
+    pt = crv(0)
+    assert np.allclose(pt, pts[0])
+
+    # eval der
+    der = crv.der(0, 1)
+
+    ga = e._geomAdaptor()
+
+    tmp = gp_Pnt()
+    res = gp_Vec()
+
+    ga.D1(0, tmp, res)
+
+    assert np.allclose(der[0, 1], np.array(Vector(res).toTuple()))
+
 
 def test_surface():
 
@@ -190,6 +222,20 @@ def test_surface():
     assert np.allclose(srf.uknots, srf2.uknots)
     assert np.allclose(srf.vknots, srf2.vknots)
     assert np.allclose(srf.pts, srf2.pts)
+
+    # eval
+    pt = srf(0, 0)
+    assert np.allclose(pt, pts[0, 0])
+
+    # eval der
+    der = srf.der(0, 0, 1)
+    assert np.allclose(der[0, 1, 0], np.array([1, 0, 0]))
+    assert np.allclose(der[0, 0, 1], np.array([0, 1, 0]))
+
+    # eval normal
+    n, pos = srf.normal(0, 0)
+    assert np.allclose(n, np.array([[0, 0, 1]]))
+    assert np.allclose(pos, np.array([[0, 0, 0]]))
 
 
 def test_approximate():
