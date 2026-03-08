@@ -1,4 +1,5 @@
 from cadquery.occ_impl.nurbs import (
+    approximate2D,
     designMatrix,
     periodicDesignMatrix,
     designMatrix2D,
@@ -13,7 +14,7 @@ from cadquery.occ_impl.nurbs import (
     loft,
 )
 
-from cadquery.func import circle
+from cadquery.func import circle, torus
 from cadquery import Vector
 
 from OCP.gp import gp_Pnt, gp_Vec
@@ -264,6 +265,15 @@ def test_approximate():
     assert e.isValid()
     assert e.Length() == approx(1)
 
+    # multiple approximate
+    crvs = approximate([pts, pts], penalty=2, lam=1e-9)
+
+    for crv in crvs:
+        e = crv.edge()
+
+        assert e.isValid()
+        assert e.Length() == approx(1)
+
 
 def test_periodic_approximate():
 
@@ -275,6 +285,15 @@ def test_periodic_approximate():
 
     assert e.isValid()
     assert e.Length() == approx(2 * np.pi)
+
+    # multiple approximate
+    crvs = periodicApproximate([pts, pts])
+
+    for crv in crvs:
+        e = crv.edge()
+
+        assert e.isValid()
+        assert e.Length() == approx(2 * np.pi)
 
 
 def test_periodic_loft(circles, trimmed_circles):
@@ -301,3 +320,37 @@ def test_loft(circles, trimmed_circles):
     surf2 = loft(*trimmed_circles)
 
     assert surf2.face().isValid()
+
+
+@mark.parametrize("lam", [0, 1e-6])
+@mark.parametrize("penalty", [2, 3, 4, 5])
+def test_approximate2D(lam, penalty):
+
+    t = torus(5, 1).face()
+
+    # double periodic surface
+    us = np.linspace(0, 1, endpoint=False)
+    vs = np.linspace(0, 1, endpoint=False)
+
+    pts = np.array(
+        [t.positionAt(u * 2 * np.pi, v * 2 * np.pi).toTuple() for v in vs for u in us]
+    )
+
+    surf = approximate2D(
+        pts,
+        us[None, :].repeat(len(vs), 0).ravel(),
+        vs[:, None].repeat(len(us), 1).ravel(),
+        3,
+        3,
+        50,
+        50,
+        uperiodic=True,
+        vperiodic=True,
+        penalty=penalty,
+        lam=lam,
+    )
+
+    f = surf.face()
+
+    assert f.isValid()
+    assert f.Area() == approx(t.Area(), rel=1e-4)
