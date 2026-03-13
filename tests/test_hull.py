@@ -23,6 +23,36 @@ def test_hull():
     assert h.isValid()
 
 
+def test_hull_overlapping_circles():
+    """Hull of overlapping circles should not raise ZeroDivisionError.
+
+    When two circles overlap, boolean face fusion splits them into
+    multiple arc segments sharing the same center. arc_arc() must
+    handle these concentric arcs without dividing by zero.
+    """
+    from cadquery import Sketch
+
+    s = Sketch().push([(-19, 0), (19, 0)]).circle(35).reset().hull()
+
+    assert s._faces.Area() > 0
+    assert len(s._faces.Faces()) >= 1
+
+
+def test_hull_overlapping_circles_equal_radii_via_face():
+    """Hull via .face() with overlapping equal-radii circles."""
+    from cadquery import Sketch, Location, Vector
+
+    s = (
+        Sketch()
+        .face(Sketch().circle(35).moved(Location(Vector(-19, 0, 0))))
+        .face(Sketch().circle(35).moved(Location(Vector(19, 0, 0))))
+        .hull()
+    )
+
+    assert s._faces.Area() > 0
+    assert len(s._faces.Faces()) >= 1
+
+
 def test_validation():
 
     with pytest.raises(ValueError):

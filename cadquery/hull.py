@@ -87,7 +87,7 @@ def atan2p(x, y):
 
 def convert_and_validate(edges: Iterable[Edge]) -> Tuple[List[Arc], List[Point]]:
 
-    arcs: Set[Arc] = set()
+    arcs_by_center: dict = {}
     points: Set[Point] = set()
 
     for e in edges:
@@ -102,14 +102,16 @@ def convert_and_validate(edges: Iterable[Edge]) -> Tuple[List[Arc], List[Point]]
         elif gt == "CIRCLE":
             c = e.arcCenter()
             r = e.radius()
-            a1, a2 = e._bounds()
+            key = (c.x, c.y)
 
-            arcs.add(Arc(Point(c.x, c.y), r, a1, a2))
+            # keep one arc per center (largest radius for the hull)
+            if key not in arcs_by_center or r > arcs_by_center[key].r:
+                arcs_by_center[key] = Arc(Point(c.x, c.y), r, 0, 2 * pi)
 
         else:
             raise ValueError("Unsupported geometry {gt}")
 
-    return list(arcs), list(points)
+    return list(arcs_by_center.values()), list(points)
 
 
 def select_lowest_point(points: Points) -> Tuple[Point, int]:
