@@ -3,14 +3,14 @@
 .. _cadquery_concepts:
 
 Concepts
-===================================
+========
 
 
 3D BREP Topology Concepts
----------------------------
-Before talking about CadQuery, it makes sense to talk a little about 3D CAD topology. CadQuery is based upon the
-OpenCascade kernel, which uses Boundary Representations (BREP) for objects.  This just means that objects
-are defined by their enclosing surfaces.
+-------------------------
+Before talking about CadQuery, it makes sense to talk a little about 3D CAD topology.
+CadQuery is based upon the OpenCascade kernel, which uses Boundary Representations (BREP) for objects.
+This just means that objects are defined by their enclosing surfaces.
 
 When working in a BREP system, these fundamental constructs exist to define a shape (working up the food chain):
 
@@ -28,7 +28,7 @@ hold a reference to an underlying curve that is a full circle, and each linear e
 for a line.  CadQuery shields you from these constructs.
 
 CadQuery API layers
----------------------------
+-------------------
 
 Once you start to dive a bit more into CadQuery, you may find yourself a bit confused juggling between different types of objects the CadQuery APIs can return.
 This chapter aims to give an explanation on this topic and to provide background on the underlying implementation and kernel layers so you can leverage more of CadQuery functionality.
@@ -48,23 +48,24 @@ CadQuery is composed of 4 different API, which are implemented on top of each ot
 4. The OCCT API
 
 The Fluent API
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
-What we call the fluent API is what you work with when you first start using CadQuery, the :class:`~cadquery.Workplane` class and all its methods defines the Fluent API.
-This is the API you will use and see most of the time, it's fairly easy to use and it simplifies a lot of things for you. A classic example could be : ::
+What we call the Fluent API is what you work with when you first start using CadQuery, the :class:`~cadquery.Workplane` class and all its methods defines the Fluent API.
+This is the API you will use and see most of the time.
+It's fairly easy to use and it simplifies a lot of things for you. A classic example could be: ::
 
     part = Workplane("XY").box(1, 2, 3).faces(">Z").vertices().circle(0.5).cutThruAll()
 
-Here we create a :class:`~cadquery.Workplane` object on which we subsequently call several methods to create our part. A general way of thinking about the Fluent API is to
-consider the :class:`~cadquery.Workplane` as your part object and all it's methods as operations that will affect your part.
+Here we create a :class:`~cadquery.Workplane` object on which we subsequently call several methods to create our part.
+A general way of thinking about the Fluent API is to consider the :class:`~cadquery.Workplane` as your part object and all it's methods as operations that will affect your part.
 Often you will start with an empty :class:`~cadquery.Workplane`, then add more features by calling :class:`~cadquery.Workplane` methods.
 
 This hierarchical structure of operations modifying a part is well seen with the traditional code style used in CadQuery code.
-Code written with the CadQuery fluent API will often look like this : ::
+Code written with the CadQuery Fluent API will often look like this, with a chain of function calls on one line: ::
 
     part = Workplane("XY").box(1, 2, 3).faces(">Z").vertices().circle(0.5).cutThruAll()
 
-Or like this : ::
+Or like this, with intermediate values saved as variables: ::
 
     part = Workplane("XY")
     part = part.box(1, 2, 3)
@@ -74,17 +75,18 @@ Or like this : ::
     part = part.cutThruAll()
 
 .. note::
-  While the first code style is what people default to, it's important to note that when you write your code like this it's equivalent as writting it on a single line.
-  It's then more difficult to debug as you cannot visualize each operation step by step, which is a functionality that is provided by the CQ-Editor debugger for example.
+  While the chained code style is succinct and intuitive and may be what people default to, it's important to note that all operations take place within a single statement (even if the code spans multiple lines).
+  This chained style be more difficult to debug using tools that allow a user to step statement-by-statement through the code (such as the CQ-Editor), because operations will occur simultaneously as part of a single statement.
+  Because steps in a debugger are at this statement level, in practice, a mix of these styles is best, with intermediate values useful as logical "step points" for debugging.
 
 The Direct API
 ~~~~~~~~~~~~~~
 
-While the fluent API exposes much functionality, you may find scenarios that require extra flexibility or require working with lower level objects.
+While the Fluent API exposes a lot of functionality, you may find scenarios that require extra flexibility or require working with lower level objects.
 
-The direct API is the API that is called by the fluent API under the hood. The 9 topological classes and their methods compose the direct API.
+The Direct API is the API that is called by the Fluent API under the hood. The 9 topological classes and their methods comprise the Direct API.
 These classes actually wrap the equivalent Open CASCADE Technology (OCCT) classes.
-The 9 topological classes are :
+The 9 topological classes are:
 
 1. :class:`~cadquery.Shape`
 2. :class:`~cadquery.Compound`
@@ -96,50 +98,59 @@ The 9 topological classes are :
 8. :class:`~cadquery.Edge`
 9. :class:`~cadquery.Vertex`
 
-Each class has its own methods to create and/or edit shapes of their respective type. One can also use the :ref:`freefuncapi` to create and modify shapes. As already explained in :ref:`cadquery_concepts` there is also some kind of hierarchy in the
-topological classes. A Wire is made of several edges which are themselves made of several vertices. This means you can create geometry from the bottom up and have a lot of control over it.
+Each class has its own methods to create and/or edit shapes of their respective type.
+One can also use the :doc:`free-func` to create and modify shapes.
+As already explained in :ref:`cadquery_concepts` there is a hierarchy when composing geometry from topological classes:
+a :class:`~cadquery.Wire` is made of several :class:`~cadquery.Edge`s which are themselves made of several :class:`~cadquery.Vertex`es.
+This means you can create geometry starting at the lowest level of this hierarchy and exert exact control over t.
 
-For example we can create a circular face like so ::
+For example we can create a circular face by first creating a list of :class:`~cadquery.Wire`s that form the circle as follows: ::
 
   circle_wire = Wire.makeCircle(10, Vector(0, 0, 0), Vector(0, 0, 1))
   circular_face = Face.makeFromWires(circle_wire, [])
 
 .. note::
-  In CadQuery (and OCCT) all the topological classes are shapes, the :class:`~cadquery.Shape` class is the most abstract topological class.
+  In CadQuery (and OCCT), all the topological classes are shapes, the :class:`~cadquery.Shape` class is the most abstract topological class.
   The topological class inherits :class:`~cadquery.Mixin3D` or :class:`~cadquery.Mixin1D` which provide aditional methods that are shared between the classes that inherits them.
 
-The direct API as its name suggests doesn't provide a parent/children data structure, instead each method call directly returns an object of the specified topological type.
-It is more verbose than the fluent API and more tedious to work with, but as it offers more flexibility (you can work with faces, which is something you can't do in the fluent API)
-it is sometimes more convenient than the fluent API.
+The Direct API is so named because each method call directly returns an object of the specified topological type.
+Functions in the Direct API do not provide a parent/children data structure that can be traversed with function call chaining.
+The Direct API is more verbose than the Fluent API and more tedious to work with, but as it offers more flexibility it is sometimes more convenient or capable than the Fluent API.
+(For example, you can work with faces in the Direct API, which is something you can't do in the Fluent API.)
 
 The OCCT API
-~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
-Finally we are discussing about the OCCT API. The OCCT API is the lowest level of CadQuery. The direct API is built upon the OCCT API, where the OCCT API in CadQuery is available through OCP.
-OCP are the Python bindings of the OCCT C++ libraries CadQuery uses. This means you have access to (almost) all the OCCT C++ libraries in Python and in CadQuery.
-Working with the OCCT API will give you the maximum flexibility and control over you designs, it is however very verbose and difficult to use. You will need to have a strong
-knowledge of the different C++ libraries to be able to achieve what you want. To obtain this knowledge the most obvious ways are :
+The OCCT API is the lowest abstraction level available in CadQuery.
+The Direct API is built upon the OCCT API, which is itself made available through OCP.
+OCP are the Python bindings of the OCCT C++ libraries CadQuery uses.
+OCP provides access to (almost) all the OCCT C++ libraries in Python and in CadQuery.
+Working with the OCCT API will give you the maximum flexibility and control over you designs, but is very verbose and difficult to use.
+You will need to have a strong working knowledge of the underlying OCCT C++ libraries to use the Direct API in CadQuery.
+The most useful references for this purpose are:
 
-1. Read the direct API source code, since it is build upon the OCCT API it is full of example usage.
+1. Read the Direct API source code, since it is build upon the OCCT API it is full of example usage.
 2. Go through the `C++ documentation <https://dev.opencascade.org/doc/overview/html/>`_
 
 .. note::
-  The general way of importing a specific class of the OCCT API is ::
+  The general way of importing a specific class of the OCCT API is: ::
 
     from OCP.thePackageName import theClassName
 
   For example if you want to use the class `BRepPrimAPI_MakeBox <https://dev.opencascade.org/doc/refman/html/class_b_rep_prim_a_p_i___make_box.html>`_.
-  You will go by the following ::
+  You will go by the following: ::
 
     from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
 
-  The package name of any class is written at the top of the documentation page. Often it's written in the class name itself as a prefix.
+  The package name of any class is written at the top of its documentation page.
+  The package name is also often written in the class name itself as a prefix.
 
 Going back and forth between the APIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-While the 3 APIs provide 3 different layer of complexity and functionality you can mix the 3 layers as you wish.
-Below is presented the different ways you can interact with the different API layers.
+While the three APIs exist to provide different levels of abstraction, they also provide different levels of complexity and functionality.
+Because of this, it is common to use a mixture of functions from the three APIs depending on what is being done within a model.
+You can interface between the APIs using the functions explained in the following sections to allow use of the proper level of abstraction for a given task (i.e. keep the simple things simple while allowing further specification where needed).
 
 -------------------------
 Fluent API <=> Direct API
@@ -149,8 +160,8 @@ Fluent API <=> Direct API
 
 Here are all the possibilities you have to get an object from the Direct API (i.e a topological object).
 
-You can end the Fluent API call chain and get the last object on the stack with :py:meth:`Workplane.val` alternatively you can get all
-the objects with :py:meth:`Workplane.vals`
+You can end the Fluent API call chain with :py:meth:`Workplane.val` to return the last object on the stack as a Direct API object.
+If there are multiple such objects, :py:meth:`Workplane.vals` can be used:
 
 .. code-block:: pycon
 
@@ -162,7 +173,7 @@ the objects with :py:meth:`Workplane.vals`
     >>> print(type(box))
     <class cadquery.occ_impl.shapes.Solid>
 
-If you are only interested in getting the context solid of your Workplane, you can use :py:meth:`Workplane.findSolid`:
+If you are only interested in getting the :ref:`the_context_solid` of your Workplane, you can use :py:meth:`Workplane.findSolid`:
 
 .. code-block::
 
@@ -175,17 +186,15 @@ If you are only interested in getting the context solid of your Workplane, you c
     <class cadquery.occ_impl.shapes.Compound>
     # The return type of findSolid is either a Solid or a Compound object
 
-If you want to go the other way around i.e using objects from the topological API in the Fluent API here are your options :
-
-You can pass a topological object as a base object to the :class:`~cadquery.Workplane` object. ::
+You can also go the other way around (i.e using objects from the Direct API in the Fluent API).
+You can pass a topological object as a base object to the :class:`~cadquery.Workplane` object: ::
 
   solid_box = Solid.makeBox(10, 10, 10)
   part = Workplane(obj=solid_box)
-  # And you can continue your modelling in the fluent API
+  # And you can continue your modelling in the Fluent API
   part = part.faces(">Z").circle(1).extrude(10)
 
-
-You can add a topological object as a new operation/step in the Fluent API call chain with :py:meth:`Workplane.newObject` ::
+You can add a topological object as a new operation/step in the Fluent API call chain with :py:meth:`Workplane.newObject`: ::
 
   circle_wire = Wire.makeCircle(1, Vector(0, 0, 0), Vector(0, 0, 1))
   box = Workplane().box(10, 10, 10).newObject([circle_wire])
@@ -194,11 +203,11 @@ You can add a topological object as a new operation/step in the Fluent API call 
       box.toPending().cutThruAll()
   )  # notice the call to `toPending` that is needed if you want to use it in a subsequent operation
 
--------------------------
+-----------------------
 Direct API <=> OCCT API
--------------------------
+-----------------------
 
-Every object of the Direct API stores its OCCT equivalent object in its :attr:`wrapped` attribute.:
+Every object in the Direct API stores its OCCT equivalent object in its :attr:`wrapped` attribute, which can be used to retrieve values usable in the OCCT API:
 
 .. code-block::
 
@@ -209,7 +218,6 @@ Every object of the Direct API stores its OCCT equivalent object in its :attr:`w
     >>> box = Solid.makeBox(10,5,5).wrapped
     >>> print(type(box))
     <class OCP.TopoDS.TopoDS_Solid>
-
 
 If you want to cast an OCCT object into a Direct API one you can just pass it as a parameter of the intended class:
 
@@ -224,27 +232,26 @@ If you want to cast an OCCT object into a Direct API one you can just pass it as
     <class cadquery.occ_impl.shapes.Solid>
 
 .. note::
-  You can cast into the direct API the types found `here <https://dev.opencascade.org/doc/refman/html/class_topo_d_s___shape.html>`_
+  You can cast into the Direct API the types found `here <https://dev.opencascade.org/doc/refman/html/class_topo_d_s___shape.html>`_.
 
 Multimethods
 ------------
 
-CadQuery uses `Multimethod <https://coady.github.io/multimethod/>`_ to allow a call to a method to
-be dispatched depending on the types of the arguments. An example is :meth:`~cadquery.Sketch.arc`,
-where ``a_sketch.arc((1, 2), (2, 3))`` would be dispatched to one method but ``a_sketch.arc((1, 2),
-(2, 3), (3, 4))`` would be dispatched to a different method. For multimethods to work, you should
-not use keyword arguments to specify positional parameters. For example, you **should not** write
-``a_sketch.arc(p1=(1, 2), p2=(2, 3), p3=(3, 4))``, instead you should use the previous example.
-Note CadQuery makes an attempt to fall back on the first registered multimethod in the event of a
-dispatch error, but it is still best practice to not use keyword arguments to specify positional
-arguments in CadQuery.
+CadQuery uses the `Multimethod <https://coady.github.io/multimethod/>`_ library to allow a call to a method to be dispatched depending on the types of the arguments.
+An example is :meth:`~cadquery.Sketch.arc`, where ``a_sketch.arc((1, 2), (2, 3))`` would be dispatched to one method but ``a_sketch.arc((1, 2), (2, 3), (3, 4))`` would be dispatched to a different method.
+For multimethods to work, you should not use keyword arguments to specify positional parameters.
+For example, you **should not** write ``a_sketch.arc(p1=(1, 2), p2=(2, 3), p3=(3, 4))``;
+instead you should use the previous example.
+
+.. note::
+  CadQuery makes an attempt to fall back on the first registered multimethod in the event of a dispatch error, but it is still best practice to not use keyword arguments to specify positional arguments in CadQuery.
 
 Selectors
----------------------------
+---------
 
-Selectors allow you to select one or more features, in order to define new features.  As an example, you might
-extrude a box, and then select the top face as the location for a new feature.  Or, you might extrude a box, and
-then select all of the vertical edges so that you can apply a fillet to them.
+Selectors allow you to select one or more features, in order to define new features.
+As an example, you might extrude a box, and then select the top face as the location for a new feature.
+Or, you might extrude a box, and then select all of the vertical edges so that you can apply a fillet to them.
 
 You can select Vertices, Edges, Faces, Solids, and Wires using selectors.
 
@@ -252,17 +259,13 @@ Think of selectors as the equivalent of your hand and mouse, if you were to buil
 
 See :ref:`selectors` to learn more.
 
-
 Workplane class
----------------------------
+---------------
 
-The Workplane class contains the currently selected objects (a list of Shapes, Vectors or Locations
-in the :attr:`~cadquery.Workplane.objects` attribute), the modelling context (in the
-:attr:`~cadquery.Workplane.ctx` attribute), and CadQuery's fluent api methods. It is the main class
-that users will instantiate.
+The Workplane class contains the currently selected objects (a list of Shapes, Vectors or Locations in the :attr:`~cadquery.Workplane.objects` attribute), the modelling context (in the :attr:`~cadquery.Workplane.ctx` attribute), and CadQuery's Fluent API methods.
+It is the main class that users will instantiate.
 
 See :ref:`apireference` to learn more.
-
 
 Assemblies
 ----------
@@ -328,10 +331,10 @@ constraints to obtain a fully parametric assembly. This can be achieved in the f
         .solve()
     )
 
-This code results in identical object as one from the previous section. The added
-benefit is that with changing parameters ``w``, ``d``, ``h`` the final locations
-will be calculated automatically. It is admittedly dense and can be made clearer
-using tags. Tags can be directly referenced when constructing the constraints::
+This code results in identical object as one from the previous section.
+The added benefit is that with changing parameters ``w``, ``d``, ``h`` the final locations of objects will be calculated automatically.
+It is admittedly dense and can be made clearer using tags.
+Tags can be directly referenced when constructing the constraints: ::
 
     from cadquery import *
 
@@ -365,6 +368,6 @@ The following constraints are currently implemented:
 
    :Axis: two normal vectors are anti-coincident or the angle (in radians) between them is equal to the specified value. Can be defined for all entities with consistent normal vector - planar faces, wires and edges.
    :Point: two points are coincident or separated by a specified distance. Can be defined for all entities, center of mass is used for lines, faces, solids and the vertex position for vertices.
-   :Plane: combination of :Axis: and :Point: constraints.
+   :Plane: combination of Axis and Point constraints.
 
-For a more elaborate assembly example see :ref:`assytutorial`.
+For a more elaborate assembly example, see :ref:`assytutorial`.
