@@ -1,5 +1,6 @@
 import os
 import pytest
+from contextlib import chdir
 
 from cadquery.sketch import Sketch, Vector, Location
 from cadquery.selectors import LengthNthSelector
@@ -826,13 +827,11 @@ def test_bool_ops():
     assert (s1 / s2).val().Area() == approx(1)
 
 
-def test_export(tmp_path_factory):
-    # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
-    sketch_export_path = os.path.join(tmpdir, "sketch.dxf")
+def test_export(tmpdir):
 
-    s1 = Sketch().rect(1, 1).export(sketch_export_path)
-    s2 = Sketch().importDXF(sketch_export_path)
+    with chdir(tmpdir):
+        s1 = Sketch().rect(1, 1).export("sketch.dxf")
+        s2 = Sketch().importDXF("sketch.dxf")
 
     assert (s1 - s2).val().Area() == approx(0)
 

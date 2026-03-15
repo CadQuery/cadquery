@@ -1,4 +1,3 @@
-import os
 from cadquery.func import (
     vertex,
     segment,
@@ -62,19 +61,16 @@ from OCP.BOPAlgo import BOPAlgo_CheckStatus
 
 import pytest
 from pytest import approx, raises, fixture
+from contextlib import chdir
 from math import pi
 
-<<<<<<< HEAD
 
 @pytest.fixture(scope="function")
 def tmpdir(tmp_path_factory):
-    return tmp_path_factory.mktemp("sketch")
+    return tmp_path_factory.mktemp("free_functions")
 
 
-#%% test utils
-=======
 # %% test utils
->>>>>>> master
 
 
 def assert_all_valid(*objs: Shape):
@@ -939,15 +935,13 @@ def test_project():
 
 
 # %% export
-def test_export(tmp_path_factory):
-    # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
-    ff_export_path = os.path.join(tmpdir, "box.brep")
+def test_export(tmpdir):
 
-    b1 = box(1, 1, 1)
-    b1.export(ff_export_path)
+    with chdir(tmpdir):
+        b1 = box(1, 1, 1)
+        b1.export("box.brep")
 
-    b2 = Shape.importBrep(ff_export_path)
+        b2 = Shape.importBrep("box.brep")
 
     assert (b1 - b2).Volume() == approx(0)
 
