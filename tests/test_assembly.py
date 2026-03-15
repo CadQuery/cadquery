@@ -5,6 +5,7 @@ from math import degrees
 import copy
 from pathlib import Path
 from pathlib import PurePath
+from contextlib import chdir
 import re
 from pytest import approx
 
@@ -17,7 +18,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound
+from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound, segment
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -36,7 +37,6 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
 from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB, Quantity_NameOfColor
 from OCP.TopAbs import TopAbs_ShapeEnum
-from OCP.Graphic3d import Graphic3d_NameOfMaterial
 
 
 @pytest.fixture(scope="function")
@@ -2512,3 +2512,30 @@ def test_shallow_assy():
 
     with pytest.raises(ValueError):
         toCAF(cq.Assembly())
+
+
+def test_name_geometries(tmpdir):
+    """
+    Test name propagation to geometric entities
+    """
+
+    assy = cq.Assembly()
+
+    assy.add(box(1, 1, 1), name="box")
+    assy.box.addSubshape(assy.box.obj.faces(">Z"), "top_face")
+
+    assy.add(plane(1, 1), name="face").face.addSubshape(assy.face.obj, name="plane_")
+
+    assy.add(segment((0, 0), (0, 1)), name="edge").edge.addSubshape(
+        assy.edge.obj, name="seg_"
+    )
+
+    with chdir(tmpdir):
+        assy.save("out.step", name_geometries=True)
+
+        with open("out.step", "r") as f:
+            lines = f.readlines()
+
+    assert len([l for l in lines if "top_face" in l]) == 2
+    assert len([l for l in lines if "plane_" in l]) == 2
+    assert len([l for l in lines if "seg_" in l]) == 3

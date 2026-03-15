@@ -64,6 +64,7 @@ import pytest
 from pytest import approx, raises, fixture
 from math import pi
 
+<<<<<<< HEAD
 
 @pytest.fixture(scope="function")
 def tmpdir(tmp_path_factory):
@@ -71,6 +72,9 @@ def tmpdir(tmp_path_factory):
 
 
 #%% test utils
+=======
+# %% test utils
+>>>>>>> master
 
 
 def assert_all_valid(*objs: Shape):
@@ -84,7 +88,7 @@ def vector_equal(v1, v2):
     return v1.toTuple() == approx(v2.toTuple())
 
 
-#%% utils
+# %% utils
 
 
 def test_utils():
@@ -143,7 +147,7 @@ def test_adaptor_curve_to_edge():
         assert isinstance(e, TopoDS_Edge)
 
 
-#%% constructors
+# %% constructors
 
 
 def test_constructors():
@@ -312,7 +316,7 @@ def test_faceOn():
     assert len(f2.Faces()) == 2
 
 
-#%% primitives
+# %% primitives
 
 
 def test_vertex():
@@ -462,7 +466,7 @@ def test_text():
     assert len(r1.Wires()) == 3
     assert r1.Area() > 0.0
 
-    # test alignemnt
+    # test alignment
     r2 = text("CQ", 10, halign="left")
     r3 = text("CQ", 10, halign="right")
     r4 = text("CQ", 10, valign="bottom")
@@ -512,7 +516,7 @@ def test_text():
     assert len(r11.Wires()) == 1
 
 
-#%% bool ops
+# %% bool ops
 def test_operators():
 
     b1 = box(1, 1, 1).moved(Location(-0.5, -0.5, -0.5))  # small box
@@ -620,10 +624,11 @@ def test_fuse_multi():
     assert len(res.Solids()) == 1
 
 
-#%% moved
+# %% moved
 def test_moved():
 
     b = box(1, 1, 1)
+    s = sphere(0.1)
     l1 = Location((-1, 0, 0))
     l2 = Location((1, 0, 0))
     l3 = Location((0, 1, 0), (45, 0, 0))
@@ -662,8 +667,33 @@ def test_moved():
     assert vector_equal(bs8.edges(">Z").Center(), b.edges(">Z").Center())
     assert vector_equal(bs9.edges(">Z").Center(), b.edges(">Z").Center())
 
+    # moved to shape
+    s1 = s.moved(b.faces())
+    s2 = s.moved(b.edges("|Z"))
+    s3 = s.moved(b.vertices())
+    s4 = s.moved(b)
 
-#%% ops
+    assert len(s1.Solids()) == 6  # 6 faces
+
+    assert len(s2.Solids()) == 4
+    assert s2.Center().z == approx(
+        0.5
+    )  # spheres should be placed in the middle of the edges
+
+    assert len(s3.Solids()) == 8  # 8 vertices
+
+    assert len(s4.Solids()) == 1
+    assert s4.Center().z == approx(
+        0.5
+    )  # spheres should be placed in the middle of the edges
+
+    # move to shape, i.e. update location in place
+    assert s.Center().z == approx(0)
+    s.move(b.faces(">Z"))
+    assert s.Center().z == approx(1)
+
+
+# %% ops
 def test_clean():
 
     b1 = box(1, 1, 1)
@@ -741,11 +771,13 @@ def test_extrude():
     r2 = extrude(e, d)
     r3 = extrude(w, d)
     r4 = extrude(f, d)
+    r5 = extrude(f, d, both=True)
 
     assert r1.Length() == approx(1)
     assert r2.Area() == approx(1)
     assert r3.Area() == approx(4)
     assert r4.Volume() == approx(1)
+    assert r5.Volume() == approx(2)
 
 
 def test_revolve():
@@ -891,6 +923,15 @@ def test_project():
 
     # project multiple edges at once
     res = project(e.moved([(0, -0.1), (0, 0.1)]), base)
+    assert isinstance(res, Compound)
+    for el in res:
+        assert el.isValid()
+        assert el.IsClosed()
+
+    # project using cylindrical projection
+    res = project(e, base, (0, 1, 0))
+
+    assert len(res.Edges()) == 2
     assert isinstance(res, Compound)
     for el in res:
         assert el.isValid()

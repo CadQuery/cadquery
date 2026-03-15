@@ -1,7 +1,13 @@
 from cadquery.occ_impl.shapes import (
+    Compound,
+    Edge,
+    Wire,
+    Face,
+    Shell,
     Vector,
     Shape,
     Solid,
+    Vertex,
     wire,
     segment,
     polyline,
@@ -16,7 +22,10 @@ from cadquery.occ_impl.shapes import (
     sweep,
     polygon,
     wireOn,
+    vertex,
 )
+
+from cadquery.selectors import NearestToPointSelector
 
 from pytest import approx, raises
 
@@ -344,3 +353,54 @@ def test_addHole():
 
     assert len(f3.innerWires()) == 2
     assert f3.isValid()
+
+
+def test_single_ent_selector():
+
+    bs = box(1, 1, 1).moved((0, 0, 0), (2, 0, 0))
+
+    f = bs.face(">X")
+
+    assert isinstance(f, Face)
+
+    fs = bs.faces(">Z")
+
+    assert isinstance(fs, Compound)
+    assert isinstance(fs.face(), Face)
+
+    # check all options
+    assert isinstance(f.edge(">Z"), Edge)
+    assert isinstance(f.vertex(), Vertex)
+    assert isinstance(f.wire(">Z"), Wire)
+    assert isinstance(bs.shell(">X"), Shell)
+    assert isinstance(bs.solid(">X"), Solid)
+    assert isinstance(bs.face(NearestToPointSelector((0, 0, 1))), Face)
+
+    with raises(ValueError):
+        bs.face("%CYLINDER")
+
+
+def test_special():
+
+    c = compound(box(1, 1, 1), box(2, 2, 2), box(3, 3, 3))
+
+    assert isinstance(c[0], Solid)
+    assert isinstance(c[-1], Solid)
+    assert isinstance(c[:2], Compound)
+
+    cf = c.filter(lambda x: x.Volume() <= 1)
+    assert len(cf.Solids()) == 1
+
+    cs = c.sort(lambda x: -x.Volume())
+    assert cs[0].Volume() == approx(3 ** 3)
+
+
+def test_center():
+
+    v = vertex(1, 1, 1)
+
+    for obj in (v, Shape(v.wrapped)):
+        c = obj.Center()
+        assert c.x == approx(1)
+        assert c.y == approx(1)
+        assert c.z == approx(1)

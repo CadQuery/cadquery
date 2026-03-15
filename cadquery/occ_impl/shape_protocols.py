@@ -76,6 +76,9 @@ class ShapeProtocol(Protocol):
     def BoundingBox(self, tolerance: Optional[float] = None) -> BoundBox:
         ...
 
+    def distance(self, other) -> float:
+        ...
+
 
 class Shape1DProtocol(ShapeProtocol, Protocol):
     def tangentAt(

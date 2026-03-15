@@ -14,6 +14,7 @@ from typing import (
     Literal,
     Protocol,
     Generator,
+    Callable,
 )
 
 from typing_extensions import Self
@@ -817,6 +818,11 @@ class Shape(object):
 
         :param obj: Compute the center of mass of this object
         """
+
+        if obj.ShapeType() == "Vertex":
+            geom_point = BRep_Tool.Pnt_s(tcast(TopoDS_Vertex, downcast(obj.wrapped)))
+            return Vector(geom_point.X(), geom_point.Y(), geom_point.Z())
+
         Properties = GProp_GProps()
         calc_function = Shape._mass_calc_function(obj)
 
@@ -961,6 +967,27 @@ class Shape(object):
 
         return rv
 
+    def _filter_single(
+        self, selector: Optional[Union[Selector, str]], objs: Iterable["Shape"]
+    ) -> "Shape":
+
+        selectorObj: Selector
+        if selector:
+            if isinstance(selector, str):
+                selectorObj = StringSyntaxSelector(selector)
+            else:
+                selectorObj = selector
+            selected = selectorObj.filter(list(objs))
+        else:
+            selected = list(objs)
+
+        if len(selected) == 0:
+            raise ValueError("No Shape available for selection")
+        else:
+            rv = selected[0]
+
+        return rv
+
     def vertices(self, selector: Optional[Union[Selector, str]] = None) -> "Shape":
         """
         Select vertices.
@@ -1002,6 +1029,63 @@ class Shape(object):
         """
 
         return self._filter(selector, map(Shape.cast, self._entities("Solid")))
+
+    def vertex(self, selector: Optional[Union[Selector, str]] = None) -> "Vertex":
+        """
+        Select a single vertex.
+        """
+
+        return tcast(
+            Vertex,
+            self._filter_single(selector, map(Shape.cast, self._entities("Vertex"))),
+        )
+
+    def edge(self, selector: Optional[Union[Selector, str]] = None) -> "Edge":
+        """
+        Select a single edge.
+        """
+
+        return tcast(
+            Edge, self._filter_single(selector, map(Shape.cast, self._entities("Edge")))
+        )
+
+    def wire(self, selector: Optional[Union[Selector, str]] = None) -> "Wire":
+        """
+        Select a single wire.
+        """
+
+        return tcast(
+            Wire, self._filter_single(selector, map(Shape.cast, self._entities("Wire")))
+        )
+
+    def face(self, selector: Optional[Union[Selector, str]] = None) -> "Face":
+        """
+        Select a single face.
+        """
+
+        return tcast(
+            Face, self._filter_single(selector, map(Shape.cast, self._entities("Face")))
+        )
+
+    def shell(self, selector: Optional[Union[Selector, str]] = None) -> "Shell":
+        """
+        Select a single shell.
+        """
+
+        return tcast(
+            Shell,
+            self._filter_single(selector, map(Shape.cast, self._entities("Shell"))),
+        )
+
+    def solid(self, selector: Optional[Union[Selector, str]] = None) -> "Solid":
+        """
+        Select a single solid.
+        """
+
+        return tcast(
+            Solid,
+            self._filter_single(selector, map(Shape.cast, self._entities("Solid"))),
+        )
 
     def Area(self) -> float:
         """
@@ -1185,6 +1269,22 @@ class Shape(object):
         self.wrapped.Move(Location(loc).wrapped)
 
         return self
+
+    @multimethod
+    def move(self: T, s: "Shape") -> T:
+        """
+        Apply a Shape as a Location in relative sense (i.e. update current location) to self.
+        """
+
+        return self.move(s.toLocs()[0])
+
+    @multimethod
+    def moved(self: T, s: "Shape") -> "Shape":
+        """
+        Apply a Shape as a Location in relative sense (i.e. update current location) to a copy of self.
+        """
+
+        return self.moved(s.toLocs())
 
     @multimethod
     def moved(self: T, loc: Location) -> T:
@@ -1771,6 +1871,43 @@ class Shape(object):
         rv = bldr.Apply(self.wrapped)
 
         return self.__class__(rv)
+
+    def toLocs(self) -> list[Location]:
+        """
+        Convert self to a list of locations.
+        """
+
+        rv: list[Location] = []
+        t = self.ShapeType()
+
+        if t == "Compound":
+            for el in self:
+                rv.extend(el.toLocs())
+        elif t == "Face":
+            u0, u1, v0, v1 = tcast(Face, self).uvBounds()
+            rv.append(tcast(Face, self).locationAt((u1 + u0) / 2, (v1 + v0) / 2))
+        elif t == "Edge":
+            u0, u1 = tcast(Edge, self).bounds()
+            rv.append(tcast(Edge, self).locationAt((u1 + u0) / 2, mode="parameter"))
+        else:
+            rv.append(Location(self.Center()))
+
+        return rv
+
+    def filter(self, f: Callable[["Shape"], bool]) -> "Compound":
+
+        return compound(*filter(f, self))
+
+    def sort(self, key: Callable[["Shape"], Any]) -> "Compound":
+
+        return compound(*sorted(self, key=key))
+
+    def __getitem__(self, item: int | slice) -> "Shape":
+
+        if isinstance(item, slice):
+            return compound(list(self)[item])
+        else:
+            return list(self)[item]
 
 
 class ShapeProtocol(Protocol):
@@ -3149,6 +3286,23 @@ class Face(Shape):
 
         return Vector(p)
 
+    def locationAt(self, u: Real, v: Real) -> Location:
+        """
+        Computes the location at the desired location in the u,v parameter space.
+
+        :returns: a location
+        :param u: the u parametric location to compute the normal at.
+        :param v: the v parametric location to compute the normal at.
+        """
+        p = gp_Pnt()
+        du = gp_Vec()
+        dv = gp_Vec()
+
+        ga = self._geomAdaptor()
+        ga.D1(u, v, p, du, dv)
+
+        return Location(Plane(Vector(p), Vector(du), Vector(du).cross(Vector(dv))))
+
     def positions(self, uvs: Iterable[Tuple[Real, Real]]) -> List[Vector]:
         """
         Computes position vectors at the desired locations in the u,v parameter space.
@@ -3765,7 +3919,7 @@ class Mixin3D(object):
             )  # NB: edge_face_map return a generic TopoDS_Shape
         return self.__class__(chamfer_builder.Shape())
 
-    def shell(
+    def hollow(
         self: Any,
         faceList: Optional[Iterable[Face]],
         thickness: float,
@@ -3773,7 +3927,7 @@ class Mixin3D(object):
         kind: Literal["arc", "intersection"] = "arc",
     ) -> Any:
         """
-        Make a shelled solid of self.
+        Make a hollow solid of self.
 
         :param faceList: List of faces to be removed, which must be part of the solid. Can
           be an empty list.
@@ -5074,6 +5228,14 @@ def _compound_or_shape(s: Union[TopoDS_Shape, Sequence[TopoDS_Shape]]) -> Shape:
     return rv
 
 
+def _shape(s: TopoDS_Shape, _: type[T]) -> T:
+    """
+    Cast a TopoDS_Shape to a Shape of the specfied type.
+    """
+
+    return tcast(T, Shape.cast(s))
+
+
 def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
     """
     Convert a sequence of Vector to a TColgp harray (OCCT specific).
@@ -5207,7 +5369,7 @@ def edgeOn(
     pts: Sequence[Tuple[Real, Real]],
     periodic: bool = False,
     tol: float = 1e-6,
-) -> Shape:
+) -> Edge:
     """
     Build an edge on a face from points in (u,v) space.
     """
@@ -5222,7 +5384,7 @@ def edgeOn(
     rv = BRepBuilderAPI_MakeEdge(spline_bldr.Curve(), f._geomAdaptor()).Edge()
     BRepLib.BuildCurves3d_s(rv)
 
-    return _compound_or_shape(rv)
+    return _shape(rv, Edge)
 
 
 @multidispatch
@@ -5276,7 +5438,7 @@ def edgeOn(
     return _compound_or_shape(rvs)
 
 
-def wireOn(base: Shape, w: Shape, tol=1e-6, N=20) -> Shape:
+def wireOn(base: Shape, w: Shape, tol=1e-6, N=20) -> Wire:
     """
     Map a wire onto a base face in the u,v space.
     """
@@ -5287,7 +5449,7 @@ def wireOn(base: Shape, w: Shape, tol=1e-6, N=20) -> Shape:
 
 
 @multidispatch
-def wire(*s: Shape) -> Shape:
+def wire(*s: Shape) -> Wire:
     """
     Build wire from edges.
     """
@@ -5297,17 +5459,17 @@ def wire(*s: Shape) -> Shape:
     edges = _shapes_to_toptools_list(e for el in s for e in _get_edges(el))
     builder.Add(edges)
 
-    return _compound_or_shape(builder.Shape())
+    return _shape(builder.Shape(), Wire)
 
 
 @multidispatch
-def wire(s: Sequence[Shape]) -> Shape:
+def wire(s: Sequence[Shape]) -> Wire:
 
     return wire(*s)
 
 
 @multidispatch
-def face(*s: Shape) -> Shape:
+def face(*s: Shape) -> Face:
     """
     Build face from edges or wires.
     """
@@ -5326,7 +5488,7 @@ def face(*s: Shape) -> Shape:
 
 
 @multidispatch
-def face(s: Sequence[Shape]) -> Shape:
+def face(s: Sequence[Shape]) -> Face:
     """
     Build face from a sequence of edges or wires.
     """
@@ -5334,7 +5496,7 @@ def face(s: Sequence[Shape]) -> Shape:
     return face(*s)
 
 
-def faceOn(base: Shape, *fcs: Shape, tol=1e-6, N=20) -> Shape:
+def faceOn(base: Shape, *fcs: Shape, tol=1e-6, N=20) -> Face | Compound:
     """
     Build face(s) on base by mapping planar face(s) onto the (u,v) space of base.
     """
@@ -5393,7 +5555,7 @@ def shell(
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
     history: Optional[ShapeHistory] = None,
-) -> Shape:
+) -> Shell:
     """
     Build shell from faces. If ctx is specified, local sewing is performed.
     """
@@ -5429,7 +5591,7 @@ def shell(
     else:
         rv = sewed
 
-    return _compound_or_shape(rv)
+    return _shape(rv, Shell)
 
 
 @multidispatch
@@ -5439,7 +5601,7 @@ def shell(
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
     history: Optional[ShapeHistory] = None,
-) -> Shape:
+) -> Shell:
     """
     Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
     """
@@ -5450,7 +5612,7 @@ def shell(
 @multidispatch
 def solid(
     s1: Shape, *sn: Shape, tol: float = 1e-6, history: Optional[ShapeHistory] = None,
-) -> Shape:
+) -> Compound | Solid:
     """
     Build solid from faces or shells.
     """
@@ -5469,7 +5631,7 @@ def solid(
 
     rvs = [builder.SolidFromShell(sh) for sh in shells]
 
-    return _compound_or_shape(rvs)
+    return tcast(Compound | Solid, _compound_or_shape(rvs))
 
 
 @multidispatch
@@ -5478,7 +5640,7 @@ def solid(
     inner: Optional[Sequence[Shape]] = None,
     tol: float = 1e-6,
     history: Optional[ShapeHistory] = None,
-) -> Shape:
+) -> Solid:
     """
     Build solid from a sequence of faces.
     """
@@ -5494,11 +5656,11 @@ def solid(
     sf = ShapeFix_Solid(builder.Solid())
     sf.Perform()
 
-    return _compound_or_shape(sf.Solid())
+    return _shape(sf.Solid(), Solid)
 
 
 @multimethod
-def compound(*s: Shape) -> Shape:
+def compound(*s: Shape) -> Compound:
     """
     Build compound from shapes.
     """
@@ -5515,7 +5677,7 @@ def compound(*s: Shape) -> Shape:
 
 
 @multimethod
-def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Shape:
+def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Compound:
     """
     Build compound from a sequence of shapes.
     """
@@ -5527,34 +5689,34 @@ def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Shape:
 
 
 @multimethod
-def vertex(x: Real, y: Real, z: Real) -> Shape:
+def vertex(x: Real, y: Real, z: Real) -> Vertex:
     """
     Construct a vertex from coordinates.
     """
 
-    return _compound_or_shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex())
+    return _shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex(), Vertex)
 
 
 @multimethod
-def vertex(p: VectorLike):
+def vertex(p: VectorLike) -> Vertex:
     """
     Construct a vertex from VectorLike.
     """
 
-    return _compound_or_shape(BRepBuilderAPI_MakeVertex(Vector(p).toPnt()).Vertex())
+    return _shape(BRepBuilderAPI_MakeVertex(Vector(p).toPnt()).Vertex(), Vertex)
 
 
-def segment(p1: VectorLike, p2: VectorLike) -> Shape:
+def segment(p1: VectorLike, p2: VectorLike) -> Edge:
     """
     Construct a segment from two points.
     """
 
-    return _compound_or_shape(
-        BRepBuilderAPI_MakeEdge(Vector(p1).toPnt(), Vector(p2).toPnt()).Edge()
+    return _shape(
+        BRepBuilderAPI_MakeEdge(Vector(p1).toPnt(), Vector(p2).toPnt()).Edge(), Edge
     )
 
 
-def polyline(*pts: VectorLike) -> Shape:
+def polyline(*pts: VectorLike) -> Wire:
     """
     Construct a polyline from points.
     """
@@ -5564,10 +5726,10 @@ def polyline(*pts: VectorLike) -> Shape:
     for p in pts:
         builder.Add(Vector(p).toPnt())
 
-    return _compound_or_shape(builder.Wire())
+    return _shape(builder.Wire(), Wire)
 
 
-def polygon(*pts: VectorLike) -> Shape:
+def polygon(*pts: VectorLike) -> Wire:
     """
     Construct a polygon (closed polyline) from points.
     """
@@ -5579,10 +5741,10 @@ def polygon(*pts: VectorLike) -> Shape:
 
     builder.Close()
 
-    return _compound_or_shape(builder.Wire())
+    return _shape(builder.Wire(), Wire)
 
 
-def rect(w: float, h: float) -> Shape:
+def rect(w: float, h: float) -> Wire:
     """
     Construct a rectangle.
     """
@@ -5593,7 +5755,7 @@ def rect(w: float, h: float) -> Shape:
 
 
 @multimethod
-def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape:
+def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Edge:
     """
     Construct a spline from points.
     """
@@ -5603,7 +5765,7 @@ def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Shape
     builder = GeomAPI_Interpolate(data, periodic, tol)
     builder.Perform()
 
-    return _compound_or_shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge())
+    return _shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge(), Edge)
 
 
 @multimethod
@@ -5614,7 +5776,7 @@ def spline(
     tol: float = 1e-6,
     periodic: bool = False,
     scale: bool = True,
-) -> Shape:
+) -> Edge:
     """
     Construct a spline from a sequence points.
     """
@@ -5627,52 +5789,64 @@ def spline(
         builder = GeomAPI_Interpolate(data, periodic, tol)
 
     if tgts is not None:
-        builder.Load(Vector(tgts[0]).wrapped, Vector(tgts[1]).wrapped, scale)
+        if len(tgts) != len(pts):
+            builder.Load(Vector(tgts[0]).wrapped, Vector(tgts[1]).wrapped, scale)
+        else:
+            tgts_ocp = TColgp_Array1OfVec(1, len(tgts))
+            tgts_ocp_flag = TColStd_HArray1OfBoolean(1, len(tgts))
+
+            for i, t in enumerate(tgts):
+                tgts_ocp.SetValue(i + 1, Vector(t).wrapped)
+                tgts_ocp_flag.SetValue(i + 1, True)
+
+            builder.Load(tgts_ocp, tgts_ocp_flag, scale)
 
     builder.Perform()
 
-    return _compound_or_shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge())
+    return _shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge(), Edge)
 
 
-def circle(r: float) -> Shape:
+def circle(r: float) -> Edge:
     """
     Construct a circle.
     """
 
-    return _compound_or_shape(
+    return _shape(
         BRepBuilderAPI_MakeEdge(
             gp_Circ(gp_Ax2(Vector().toPnt(), Vector(0, 0, 1).toDir()), r)
-        ).Edge()
+        ).Edge(),
+        Edge,
     )
 
 
-def ellipse(r1: float, r2: float) -> Shape:
+def ellipse(r1: float, r2: float) -> Edge:
     """
     Construct an ellipse.
     """
 
-    return _compound_or_shape(
+    return _shape(
         BRepBuilderAPI_MakeEdge(
             gp_Elips(gp_Ax2(Vector().toPnt(), Vector(0, 0, 1).toDir()), r1, r2)
-        ).Edge()
+        ).Edge(),
+        Edge,
     )
 
 
 @multimethod
-def plane(w: Real, l: Real) -> Shape:
+def plane(w: Real, l: Real) -> Face:
     """
     Construct a finite planar face.
     """
 
     pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
 
-    return _compound_or_shape(
-        BRepBuilderAPI_MakeFace(pln_geom, -w / 2, w / 2, -l / 2, l / 2).Face()
+    return _shape(
+        BRepBuilderAPI_MakeFace(pln_geom, -w / 2, w / 2, -l / 2, l / 2).Face(), Face
     )
 
 
 @multimethod
-def plane() -> Shape:
+def plane() -> Face:
     """
     Construct an infinite planar face.
 
@@ -5684,65 +5858,67 @@ def plane() -> Shape:
 
     pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
 
-    return _compound_or_shape(
-        BRepBuilderAPI_MakeFace(pln_geom, -INF, INF, -INF, INF).Face()
-    )
+    return _shape(BRepBuilderAPI_MakeFace(pln_geom, -INF, INF, -INF, INF).Face(), Face)
 
 
-def box(w: float, l: float, h: float) -> Shape:
+def box(w: float, l: float, h: float) -> Solid:
     """
     Construct a solid box.
     """
 
-    return _compound_or_shape(
+    return _shape(
         BRepPrimAPI_MakeBox(
             gp_Ax2(Vector(-w / 2, -l / 2, 0).toPnt(), Vector(0, 0, 1).toDir()), w, l, h
-        ).Shape()
+        ).Shape(),
+        Solid,
     )
 
 
-def cylinder(d: float, h: float) -> Shape:
+def cylinder(d: float, h: float) -> Solid:
     """
     Construct a solid cylinder.
     """
 
-    return _compound_or_shape(
+    return _shape(
         BRepPrimAPI_MakeCylinder(
             gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), d / 2, h, 2 * pi
-        ).Shape()
+        ).Shape(),
+        Solid,
     )
 
 
-def sphere(d: float) -> Shape:
+def sphere(d: float) -> Solid:
     """
     Construct a solid sphere.
     """
 
-    return _compound_or_shape(
+    return _shape(
         BRepPrimAPI_MakeSphere(
             gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), d / 2,
-        ).Shape()
+        ).Shape(),
+        Solid,
     )
 
 
-def torus(d1: float, d2: float) -> Shape:
+def torus(d1: float, d2: float) -> Solid:
     """
     Construct a solid torus.
     """
 
-    return _compound_or_shape(
+    return _shape(
         BRepPrimAPI_MakeTorus(
             gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
             d1 / 2,
             d2 / 2,
             0,
             2 * pi,
-        ).Shape()
+        ).Shape(),
+        Solid,
     )
 
 
 @multidispatch
-def cone(d: Real, h: Real) -> Shape:
+def cone(d: Real, h: Real) -> Solid:
     """
     Construct a full solid cone.
     """
@@ -5751,19 +5927,20 @@ def cone(d: Real, h: Real) -> Shape:
 
 
 @multidispatch
-def cone(d1: Real, d2: Real, h: Real) -> Shape:
+def cone(d1: Real, d2: Real, h: Real) -> Solid:
     """
     Construct a partial solid cone.
     """
 
-    return _compound_or_shape(
+    return _shape(
         BRepPrimAPI_MakeCone(
             gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
             d1 / 2,
             d2 / 2,
             h,
             2 * pi,
-        ).Shape()
+        ).Shape(),
+        Solid,
     )
 
 
@@ -6149,7 +6326,7 @@ def chamfer(s: Shape, e: Shape, d: float) -> Shape:
     return _compound_or_shape(builder.Shape())
 
 
-def extrude(s: Shape, d: VectorLike) -> Shape:
+def extrude(s: Shape, d: VectorLike, both: bool = False) -> Shape:
     """
     Extrude a shape.
     """
@@ -6158,7 +6335,13 @@ def extrude(s: Shape, d: VectorLike) -> Shape:
 
     for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
 
-        builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
+        if both:
+            builder = BRepPrimAPI_MakePrism(
+                el.moved(-Vector(d)).wrapped, (2 * Vector(d)).wrapped
+            )
+        else:
+            builder = BRepPrimAPI_MakePrism(el.wrapped, Vector(d).wrapped)
+
         builder.Build()
 
         results.append(builder.Shape())
@@ -6481,6 +6664,7 @@ def loft(
     return loft(s, cap, ruled, continuity, parametrization, degree, compat)
 
 
+@multidispatch
 def project(
     s: Shape,
     base: Shape,
@@ -6496,12 +6680,32 @@ def project(
     bldr = BRepAlgo_NormalProjection(base.wrapped)
     bldr.SetParams(tol, tol ** (2 / 3), _to_geomabshape(continuity), degree, maxseg)
 
-    for el in _get_edges(s):
-        bldr.Add(s.wrapped)
+    for el in _get_wires(s):
+        bldr.Add(el.wrapped)
 
     bldr.Build()
 
     return _compound_or_shape(bldr.Projection())
+
+
+@multidispatch
+def project(
+    s: Shape, base: Shape, direction: VectorLike,
+):
+    """
+    Project s onto base using cylindrical projection.
+    """
+
+    results = []
+
+    for el in _get_edges(s):
+        bldr = BRepProj_Projection(el.wrapped, base.wrapped, Vector(direction).toDir())
+
+        while bldr.More():
+            results.append(_compound_or_shape(bldr.Current()))
+            bldr.Next()
+
+    return _normalize(compound(results))
 
 
 #%% diagnotics

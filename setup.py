@@ -37,6 +37,8 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "trame-components",
         "trame-vuetify",
         "pyparsing>=3.0.0",
+        "scipy",
+        "numba",
     ]
 
 
@@ -51,7 +53,7 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),
-    python_requires=">=3.10",
+    python_requires=">=3.11",
     setup_requires=setup_reqs,
     install_requires=reqs,
     extras_require={

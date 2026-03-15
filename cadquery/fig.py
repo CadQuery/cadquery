@@ -361,8 +361,6 @@ class Figure:
 
         return self
 
-        pass
-
     def front(self):
 
         self._run(self._view((0, 0, 0), (1, 0, 0), (0, 0, 1)))
@@ -479,3 +477,23 @@ class Figure:
     def onSelection(self, event: list[str]):
 
         self.active = event[0]
+
+
+def show(
+    *args: Showable | vtkProp3D | list[vtkProp3D], name: Optional[str] = None, **kwargs
+):
+
+    fig = Figure()
+    fig.show(*args, name=name, **kwargs)
+
+
+def clear(*args: Shape | vtkProp3D, **kwargs):
+
+    fig = Figure()
+    fig.clear(*args, **kwargs)
+
+
+def fit(*args, **kwargs):
+
+    fig = Figure()
+    fig.fit(*args, **kwargs)
