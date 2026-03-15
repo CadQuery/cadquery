@@ -1293,28 +1293,37 @@ def test_step_export_loc(assy_fixture, expected, request, tmpdir):
     assert pytest.approx(c.toTuple()) == expected["center"]
 
 
-def test_native_export(simple_assy):
+def test_native_export(simple_assy, tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    xml_path = os.path.join(tmpdir, "assy.xml")
 
-    exportCAF(simple_assy, "assy.xml")
-
-    # only sanity check for now
-    assert os.path.exists("assy.xml")
-
-
-def test_vtkjs_export(nested_assy):
-
-    exportVTKJS(nested_assy, "assy")
+    exportCAF(simple_assy, xml_path)
 
     # only sanity check for now
-    assert os.path.exists("assy.zip")
+    assert os.path.exists(xml_path)
 
 
-def test_vrml_export(simple_assy):
+def test_vtkjs_export(nested_assy, tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    zip_path = os.path.join(tmpdir, "assy.zip")
 
-    exportVRML(simple_assy, "assy.wrl")
+    exportVTKJS(nested_assy, zip_path.replace(".zip", ""))
 
     # only sanity check for now
-    assert os.path.exists("assy.wrl")
+    assert os.path.exists(zip_path)
+
+
+def test_vrml_export(simple_assy, tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    wrl_path = os.path.join(tmpdir, "assy.wrl")
+
+    exportVRML(simple_assy, wrl_path)
+
+    # only sanity check for now
+    assert os.path.exists(wrl_path)
 
 
 def test_toJSON(simple_assy, nested_assy, empty_top_assy):
@@ -1339,11 +1348,16 @@ def test_toJSON(simple_assy, nested_assy, empty_top_assy):
         ("stl", ("STL",)),
     ],
 )
-def test_save(extension, args, nested_assy, nested_assy_sphere):
+def test_save(extension, args, nested_assy, nested_assy_sphere, tmp_path_factory):
 
     filename = "nested." + extension
-    nested_assy.save(filename, *args)
-    assert os.path.exists(filename)
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    nested_path = os.path.join(tmpdir, filename)
+
+    nested_assy.save(nested_path, *args)
+    assert os.path.exists(nested_path)
 
 
 @pytest.mark.parametrize(
@@ -1363,13 +1377,17 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
         ("stl", ("STL",), {}),
     ],
 )
-def test_export(extension, args, kwargs, tmpdir, nested_assy, cwd):
+def test_export(extension, args, kwargs, tmpdir, nested_assy, cwd, tmp_path_factory):
 
     filename = "nested." + extension
 
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    nested_path = os.path.join(tmpdir, filename)
+
     with cwd(tmpdir):
-        nested_assy.export(filename, *args, **kwargs)
-        assert os.path.exists(filename)
+        nested_assy.export(nested_path, *args, **kwargs)
+        assert os.path.exists(nested_path)
 
 
 def test_export_vtkjs(tmpdir, nested_assy, cwd):
@@ -1391,62 +1409,84 @@ def test_export_errors(nested_assy):
         nested_assy.export("nested.step", mode="1234")
 
 
-def test_save_stl_formats(nested_assy_sphere):
+def test_save_stl_formats(nested_assy_sphere, tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    stl_path = os.path.join(tmpdir, "nested.stl")
 
     # Binary export
-    nested_assy_sphere.save("nested.stl", "STL", ascii=False)
-    assert os.path.exists("nested.stl")
+    nested_assy_sphere.save(stl_path, "STL", ascii=False)
+    assert os.path.exists(stl_path)
 
     # Trying to read a binary file as UTF-8/ASCII should throw an error
     with pytest.raises(UnicodeDecodeError):
-        with open("nested.stl", "r") as file:
+        with open(stl_path, "r") as file:
             file.read()
 
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    ascii_stl_path = os.path.join(tmpdir, "nested_ascii.stl")
+
     # ASCII export
-    nested_assy_sphere.save("nested_ascii.stl", ascii=True)
-    assert os.path.exists("nested_ascii.stl")
-    assert os.path.getsize("nested_ascii.stl") > 3960 * 1024
+    nested_assy_sphere.save(ascii_stl_path, ascii=True)
+    assert os.path.exists(ascii_stl_path)
+    assert os.path.getsize(ascii_stl_path) > 3960 * 1024
 
 
-def test_save_gltf(nested_assy_sphere):
+def test_save_gltf(nested_assy_sphere, tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    glb_path = os.path.join(tmpdir, "nested.glb")
 
     # Binary export
-    nested_assy_sphere.save("nested.glb")
-    assert os.path.exists("nested.glb")
+    nested_assy_sphere.save(glb_path)
+    assert os.path.exists(glb_path)
 
     # Trying to read a binary file as UTF-8/ASCII should throw an error
     with pytest.raises(UnicodeDecodeError):
-        with open("nested.glb", "r") as file:
+        with open(glb_path, "r") as file:
             file.read()
 
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    ascii_gltf_path = os.path.join(tmpdir, "nested_ascii.gltf")
+
     # ASCII export
-    nested_assy_sphere.save("nested_ascii.gltf")
-    assert os.path.exists("nested_ascii.gltf")
-    assert os.path.getsize("nested_ascii.gltf") > 5 * 1024
+    nested_assy_sphere.save(ascii_gltf_path)
+    assert os.path.exists(ascii_gltf_path)
+    assert os.path.getsize(ascii_gltf_path) > 5 * 1024
 
 
-def test_exportGLTF(nested_assy_sphere):
+def test_exportGLTF(nested_assy_sphere, tmp_path_factory):
     """Tests the exportGLTF function directly for binary vs ascii export."""
 
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    glb_path = os.path.join(tmpdir, "nested_export_gltf.glb")
+
     # Test binary export inferred from file extension
-    cq.exporters.assembly.exportGLTF(nested_assy_sphere, "nested_export_gltf.glb")
+    cq.exporters.assembly.exportGLTF(nested_assy_sphere, glb_path)
     with pytest.raises(UnicodeDecodeError):
-        with open("nested_export_gltf.glb", "r") as file:
+        with open(glb_path, "r") as file:
             file.read()
+
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    glb_path_2 = os.path.join(tmpdir, "nested_export_gltf_2.glb")
 
     # Test explicit binary export
-    cq.exporters.assembly.exportGLTF(
-        nested_assy_sphere, "nested_export_gltf_2.glb", binary=True
-    )
+    cq.exporters.assembly.exportGLTF(nested_assy_sphere, glb_path_2, binary=True)
     with pytest.raises(UnicodeDecodeError):
-        with open("nested_export_gltf_2.glb", "r") as file:
+        with open(glb_path_2, "r") as file:
             file.read()
 
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    glb_path_3 = os.path.join(tmpdir, "nested_export_gltf_3.gltf")
+
     # Test explicit ascii export
-    cq.exporters.assembly.exportGLTF(
-        nested_assy_sphere, "nested_export_gltf_3.gltf", binary=False
-    )
-    with open("nested_export_gltf_3.gltf", "r") as file:
+    cq.exporters.assembly.exportGLTF(nested_assy_sphere, glb_path_3, binary=False)
+    with open(glb_path_3, "r") as file:
         lines = file.readlines()
         assert lines[0].startswith('{"accessors"')
 
@@ -1465,10 +1505,13 @@ def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):
     assert output.err == ""
 
 
-def test_save_vtkjs(nested_assy):
+def test_save_vtkjs(nested_assy, tmp_path_factory):
+    # Use a temporary directory
+    tmpdir = tmp_path_factory.mktemp("out")
+    nested_path = os.path.join(tmpdir, "nested.zip")
 
-    nested_assy.save("nested", "VTKJS")
-    assert os.path.exists("nested.zip")
+    nested_assy.save(nested_path.replace(".zip", ""), "VTKJS")
+    assert os.path.exists(nested_path)
 
 
 def test_save_raises(nested_assy):
