@@ -3,7 +3,6 @@
 """
 # core modules
 import os
-import io
 from pathlib import Path
 import re
 import sys
@@ -40,7 +39,7 @@ from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 @pytest.fixture(scope="module")
 def tmpdir(tmp_path_factory):
-    return tmp_path_factory.mktemp("out")
+    return tmp_path_factory.mktemp("exporters")
 
 
 @pytest.fixture(scope="module")
