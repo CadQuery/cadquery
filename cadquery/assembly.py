@@ -281,26 +281,40 @@ class Assembly(object):
         """
         Remove a part/subassembly from the current assembly.
 
-        :param name: Name of the part/subassembly to be removed
+        :param name: Name of the part/subassembly to be removed. The entire
+            assembly tree is searched, so the object does not need to be a
+            direct child.
         :return: The modified assembly
 
         *NOTE* This method can cause problems with deeply nested assemblies and does not remove
         constraints associated with the removed part/subassembly.
         """
 
-        # Make sure the part/subassembly is actually part of the assembly
-        if name not in self.objects:
-            raise ValueError(f"No object with name '{name}' found in the assembly")
+        # Try exact key match first (supports full paths like "sub/part1"),
+        # then fall back to searching by simple name across the tree
+        if name in self.objects:
+            key = name
+        else:
+            key = None
+            for k, v in self.objects.items():
+                if v.name == name:
+                    key = k
+                    break
+
+            if key is None:
+                raise ValueError(
+                    f"No object with name '{name}' found in the assembly"
+                )
 
         # Get the part/assembly to be removed
-        to_remove = self.objects[name]
+        to_remove = self.objects[key]
 
         # Remove the part/assembly from the parent's children list
         if to_remove.parent:
             to_remove.parent.children.remove(to_remove)
 
         # Remove the part/assembly from the assembly's object dictionary
-        del self.objects[name]
+        del self.objects[key]
 
         # Remove all descendants from the objects dictionary
         for descendant_name in to_remove._flatten().keys():

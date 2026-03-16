@@ -2385,6 +2385,31 @@ def test_remove_without_parent():
     assert len(assy.objects) == 1
 
 
+def test_assembly_remove_nested():
+    """
+    Tests the ability to remove a nested part from an assembly by name,
+    without knowing the full path (issue #2013).
+    """
+
+    outer = cq.Assembly(name="outer")
+    inner = cq.Assembly(name="inner")
+    inner.add(cq.Workplane("XY").box(1, 1, 1), name="box_a")
+    inner.add(cq.Workplane("XY").box(2, 2, 2), name="box_b")
+    outer.add(inner)
+
+    # Should be: outer, inner, box_a, box_b
+    assert len(outer.objects) == 4
+
+    # Remove a nested part by simple name
+    outer.remove("box_a")
+
+    assert len(outer.objects) == 3
+    assert "box_a" not in [v.name for v in outer.objects.values()]
+
+    # The other nested part should still be there
+    assert "box_b" in [v.name for v in outer.objects.values()]
+
+
 def test_step_color(tmpdir):
     """
     Checks color handling for STEP export.
