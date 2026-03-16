@@ -4,6 +4,7 @@ from glob import glob
 from itertools import chain, count
 
 from pathlib import Path
+from contextlib import chdir
 
 from docutils.parsers.rst import directives
 from docutils.core import publish_doctree
@@ -61,10 +62,10 @@ def find_examples_in_docs(pattern="doc/*.rst", path=Path("doc")):
 @pytest.mark.parametrize(
     "code, path", chain(find_examples(), find_examples_in_docs()), ids=count(0)
 )
-def test_example(code, path, tmpdir, cwd):
+def test_example(code, path, tmpdir):
 
     # build
-    with cwd(tmpdir):
+    with chdir(tmpdir):
         # tmpdir is for future use; currently there are no examples that export files
         res = cqgi.parse(code).build()
 
