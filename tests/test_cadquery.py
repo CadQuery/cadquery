@@ -2,14 +2,18 @@
     This module tests cadquery creation and manipulation functions
 
 """
+
 # system modules
-import math, os.path, time, tempfile
+import math, time
+from typing import ClassVar
 from pathlib import Path
 from random import random
 from random import randrange
 from itertools import product
 
+import pytest
 from pytest import approx, raises
+from contextlib import chdir
 
 # my modules
 
@@ -28,10 +32,6 @@ from tests import (
 # test data directory
 testdataDir = Path(__file__).parent.joinpath("testdata")
 testFont = str(testdataDir / "OpenSans-Regular.ttf")
-
-# where unit test output will be saved
-OUTDIR = tempfile.gettempdir()
-SUMMARY_FILE = os.path.join(OUTDIR, "testSummary.html")
 
 SUMMARY_TEMPLATE = """<html>
     <head>
@@ -55,12 +55,19 @@ TEST_RESULT_TEMPLATE = """
     <!--TEST_CONTENT-->
 """
 
-# clean up any summary file that is in the output directory.
-# i know, this sux, but there is no other way to do this in 2.6, as we cannot do class fixtures till 2.7
-writeStringToFile(SUMMARY_TEMPLATE, SUMMARY_FILE)
+
+@pytest.fixture(scope="class")
+def tmpdir(request, tmp_path_factory):
+    tmp = tmp_path_factory.mktemp("cadquery")
+    request.cls.tmpdir = tmp
+    return tmp
 
 
+@pytest.mark.usefixtures("tmpdir")
 class TestCadQuery(BaseTest):
+    tmpdir: ClassVar[Path] = Path()
+    summary_file: ClassVar[Path | None] = None
+
     def tearDown(self):
         """
         Update summary with data from this test.
@@ -69,11 +76,14 @@ class TestCadQuery(BaseTest):
 
         So what we do here is to read the existing file, stick in more content, and leave it
         """
-        svgFile = os.path.join(OUTDIR, self._testMethodName + ".svg")
+        svgFile = (self.tmpdir / self._testMethodName).with_suffix(".svg")
 
         # all tests do not produce output
-        if os.path.exists(svgFile):
-            existingSummary = readFileAsString(SUMMARY_FILE)
+        if svgFile.exists():
+            if self.summary_file is None:
+                type(self).summary_file = self.tmpdir / "testSummary.html"
+                writeStringToFile(SUMMARY_TEMPLATE, self.summary_file)
+            existingSummary = readFileAsString(self.summary_file)
             svgText = readFileAsString(svgFile)
             svgText = svgText.replace(
                 '<?xml version="1.0" encoding="UTF-8" standalone="no"?>', ""
@@ -86,15 +96,17 @@ class TestCadQuery(BaseTest):
                 TEST_RESULT_TEMPLATE % (dict(svg=svgText, name=self._testMethodName)),
             )
 
-            writeStringToFile(existingSummary, SUMMARY_FILE)
+            writeStringToFile(existingSummary, self.summary_file)
 
     def saveModel(self, shape):
         """
         shape must be a CQ object
         Save models in SVG and STEP format
         """
-        shape.exportSvg(os.path.join(OUTDIR, self._testMethodName + ".svg"))
-        shape.val().exportStep(os.path.join(OUTDIR, self._testMethodName + ".step"))
+        shape.exportSvg(str((self.tmpdir / self._testMethodName).with_suffix(".svg")))
+        shape.val().exportStep(
+            str((self.tmpdir / self._testMethodName).with_suffix(".step"))
+        )
 
     def testToOCC(self):
         """
@@ -1918,14 +1930,13 @@ class TestCadQuery(BaseTest):
 
     def testBasicLines(self):
         "Make a triangular boss"
-        global OUTDIR
         s = Workplane(Plane.XY())
 
         # TODO:  extrude() should imply wire() if not done already
         # most users dont understand what a wire is, they are just drawing
 
         r = s.lineTo(1.0, 0).lineTo(0, 1.0).close().wire().extrude(0.25)
-        r.val().exportStep(os.path.join(OUTDIR, "testBasicLinesStep1.STEP"))
+        r.val().exportStep(str(self.tmpdir / "testBasicLinesStep1.STEP"))
 
         # no faces on the original workplane
         self.assertEqual(0, s.faces().size())
@@ -1940,7 +1951,7 @@ class TestCadQuery(BaseTest):
             .cutThruAll()
         )
         self.assertEqual(6, r1.faces().size())
-        r1.val().exportStep(os.path.join(OUTDIR, "testBasicLinesXY.STEP"))
+        r1.val().exportStep(str(self.tmpdir / "testBasicLinesXY.STEP"))
 
         # now add a circle through a top
         r2 = (
@@ -1950,7 +1961,7 @@ class TestCadQuery(BaseTest):
             .cutThruAll()
         )
         self.assertEqual(9, r2.faces().size())
-        r2.val().exportStep(os.path.join(OUTDIR, "testBasicLinesZ.STEP"))
+        r2.val().exportStep(str(self.tmpdir / "testBasicLinesZ.STEP"))
 
         self.saveModel(r2)
 
@@ -5291,11 +5302,9 @@ class TestCadQuery(BaseTest):
         # import/export to file
         s = Workplane().box(1, 1, 1).val()
 
-        # Use a temporary directory
-        brep_export_path = os.path.join(OUTDIR, "test.brep")
-
-        s.exportBrep(brep_export_path)
-        si = Shape.importBrep(brep_export_path)
+        with chdir(self.tmpdir):
+            s.exportBrep("test.brep")
+            si = Shape.importBrep("test.brep")
 
         self.assertTrue(si.isValid())
         self.assertAlmostEqual(si.Volume(), 1)
@@ -5308,7 +5317,8 @@ class TestCadQuery(BaseTest):
         s.exportBrep(bio)
         bio.seek(0)
 
-        si = Shape.importBrep(brep_export_path)
+        with chdir(self.tmpdir):
+            si = Shape.importBrep("test.brep")
 
         self.assertTrue(si.isValid())
         self.assertAlmostEqual(si.Volume(), 1)
@@ -5819,12 +5829,11 @@ class TestCadQuery(BaseTest):
         assert len(verts) == 0
 
     def test_export(self):
-        # Use a temporary directory
-        box_export_path = os.path.join(OUTDIR, "box.brep")
 
-        w = Workplane().box(1, 1, 1).export(box_export_path)
+        with chdir(self.tmpdir):
+            w = Workplane().box(1, 1, 1).export("box.brep")
 
-        assert (w - Shape.importBrep(box_export_path)).val().Volume() == approx(0)
+            assert (w - Shape.importBrep("box.brep")).val().Volume() == approx(0)
 
     def test_bool_operators(self):
 
