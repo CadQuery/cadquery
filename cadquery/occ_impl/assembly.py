@@ -736,7 +736,7 @@ def toJSON(
         trans, rot = loc.toTuple()
 
         val_edges["shape"] = data_edges
-        val_edges["color"] = col_.toTuple() if col_ else color
+        val_edges["color"] = (0, 0, 0, 1)
         val_edges["position"] = trans
         val_edges["orientation"] = tuple(radians(r) for r in rot)
 
