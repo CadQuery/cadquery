@@ -1305,9 +1305,10 @@ def test_toJSON(simple_assy, empty_top_assy):
     r2 = toJSON(simple_assy)
     r3 = toJSON(empty_top_assy)
 
-    assert len(r1) == 3
-    assert len(r2) == 3
-    assert len(r3) == 1
+    # factor 2 to account for edges and faces being split
+    assert len(r1) == 3 * 2
+    assert len(r2) == 3 * 2
+    assert len(r3) == 1 * 2
 
 
 @pytest.mark.parametrize(
