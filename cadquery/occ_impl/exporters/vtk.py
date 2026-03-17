@@ -12,6 +12,7 @@ from vtkmodules.vtkCommonDataModel import (
 
 from ..shapes import Shape
 
+
 def extractEdgesFaces(data: vtkPolyData) -> tuple[vtkPolyData, vtkPolyData]:
     """Helper for edges and faces extraction"""
 
@@ -51,23 +52,22 @@ def exportVTP(
 
 def toString(
     shape: Shape, tolerance: float = 1e-3, angularTolerance: float = 0.1
-) -> str:
+) -> tuple[str, str]:
 
-    writer = vtkXMLPolyDataWriter()
-    writer.SetWriteToOutputString(True)
+    writer_edges = vtkXMLPolyDataWriter()
+    writer_edges.SetWriteToOutputString(True)
+
+    writer_faces = vtkXMLPolyDataWriter()
+    writer_faces.SetWriteToOutputString(True)
 
     # extract edges and faces
     data = shape.toVtkPolyData(tolerance, angularTolerance, True)
     data_edges, data_faces = extractEdgesFaces(data)
 
-    ap = vtkAppendPolyData()
-    ap.AddInputData(data_edges)
-    ap.AddInputData(data_faces)
+    # seperate edges and faces
+    writer_faces.SetInputData(data_faces)
+    writer_faces.Write()
+    writer_edges.SetInputData(data_edges)
+    writer_edges.Write()
 
-    data_final = ap.GetOutput()
-
-    # combine again
-    writer.SetInputData(data_final)
-    writer.Write()
-
-    return writer.GetOutputString()
+    return writer_faces.GetOutputString(), writer_edges.GetOutputString()

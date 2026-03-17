@@ -48,14 +48,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkProp3D,
 )
 
-from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
-from vtkmodules.vtkCommonDataModel import (
-    VTK_TRIANGLE,
-    VTK_LINE,
-    VTK_VERTEX,
-    VTK_POLY_LINE,
-)
-
 from .geom import Location
 from .shapes import Shape, Solid, Compound
 from .exporters.vtk import toString, extractEdgesFaces
@@ -647,27 +639,7 @@ def toVTKAssy(
         trans, rot = _loc2vtk(loc)
 
         data = shape.toVtkPolyData(tolerance, angularTolerance)
-
-        # extract faces
-        extr = vtkExtractCellsByType()
-        extr.SetInputDataObject(data)
-
-        extr.AddCellType(VTK_LINE)
-        extr.AddCellType(VTK_POLY_LINE)
-        extr.AddCellType(VTK_VERTEX)
-        extr.Update()
-        data_edges = extr.GetOutput()
-
-        # extract edges
-        extr = vtkExtractCellsByType()
-        extr.SetInputDataObject(data)
-
-        extr.AddCellType(VTK_TRIANGLE)
-        extr.Update()
-        data_faces = extr.GetOutput()
-
-        # remove normals from edges
-        data_edges.GetPointData().RemoveArray("Normals")
+        data_edges, data_faces = extractEdgesFaces(data)
 
         # add both to the vtkAssy
         mapper = vtkMapper()
@@ -757,17 +729,24 @@ def toJSON(
 
     for shape, _, loc, col_ in assy:
 
-        val: Any = {}
+        val_faces: Any = {}
+        val_edges: Any = {}
 
-        data = toString(shape, tolerance)
+        data_faces, data_edges = toString(shape, tolerance)
         trans, rot = loc.toTuple()
 
-        val["shape"] = data
-        val["color"] = col_.toTuple() if col_ else color
-        val["position"] = trans
-        val["orientation"] = tuple(radians(r) for r in rot)
+        val_edges["shape"] = data_edges
+        val_edges["color"] = col_.toTuple() if col_ else color
+        val_edges["position"] = trans
+        val_edges["orientation"] = tuple(radians(r) for r in rot)
 
-        rv.append(val)
+        val_faces["shape"] = data_faces
+        val_faces["color"] = col_.toTuple() if col_ else color
+        val_faces["position"] = trans
+        val_faces["orientation"] = tuple(radians(r) for r in rot)
+
+        rv.append(val_edges)
+        rv.append(val_faces)
 
     return rv
 
