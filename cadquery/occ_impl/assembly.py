@@ -719,6 +719,7 @@ def toVTK(
 def toJSON(
     assy: AssemblyProtocol,
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
+    edgecolor: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 1.0),
     tolerance: float = 1e-3,
 ) -> List[Dict[str, Any]]:
     """
@@ -736,7 +737,7 @@ def toJSON(
         trans, rot = loc.toTuple()
 
         val_edges["shape"] = data_edges
-        val_edges["color"] = (0, 0, 0, 1)
+        val_edges["color"] = edgecolor
         val_edges["position"] = trans
         val_edges["orientation"] = tuple(radians(r) for r in rot)
 
