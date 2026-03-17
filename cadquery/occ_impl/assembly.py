@@ -58,7 +58,7 @@ from vtkmodules.vtkCommonDataModel import (
 
 from .geom import Location
 from .shapes import Shape, Solid, Compound
-from .exporters.vtk import toString
+from .exporters.vtk import toString, extractEdgesFaces
 from ..cq import Workplane
 from ..utils import BiDict
 
@@ -713,31 +713,13 @@ def toVTK(
 
         trans, rot = _loc2vtk(loc)
 
+        # convert to vtkPolyData and split into edges/faces
         data = shape.toVtkPolyData(tolerance, angularTolerance)
-
-        # extract faces
-        extr = vtkExtractCellsByType()
-        extr.SetInputDataObject(data)
-
-        extr.AddCellType(VTK_LINE)
-        extr.AddCellType(VTK_POLY_LINE)
-        extr.AddCellType(VTK_VERTEX)
-        extr.Update()
-        data_edges = extr.GetOutput()
-
-        # extract edges
-        extr = vtkExtractCellsByType()
-        extr.SetInputDataObject(data)
-
-        extr.AddCellType(VTK_TRIANGLE)
-        extr.Update()
-        data_faces = extr.GetOutput()
-
-        # remove normals from edges
-        data_edges.GetPointData().RemoveArray("Normals")
+        data_edges, data_faces = extractEdgesFaces(data)
 
         # add both to the renderer
         mapper = vtkMapper()
+        mapper.AddInputDataObject(data_edges)
         mapper.AddInputDataObject(data_faces)
 
         actor = vtkActor()
