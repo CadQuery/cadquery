@@ -733,7 +733,7 @@ def toJSON(
         val_faces: Any = {}
         val_edges: Any = {}
 
-        data_faces, data_edges = toString(shape, tolerance)
+        data_edges, data_faces = toString(shape, tolerance)
         trans, rot = loc.toTuple()
 
         val_edges["shape"] = data_edges

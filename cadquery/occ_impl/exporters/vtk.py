@@ -64,10 +64,10 @@ def toString(
     data = shape.toVtkPolyData(tolerance, angularTolerance, True)
     data_edges, data_faces = extractEdgesFaces(data)
 
-    # seperate edges and faces
-    writer_faces.SetInputData(data_faces)
-    writer_faces.Write()
+    # separate edges and faces
     writer_edges.SetInputData(data_edges)
     writer_edges.Write()
+    writer_faces.SetInputData(data_faces)
+    writer_faces.Write()
 
-    return writer_faces.GetOutputString(), writer_edges.GetOutputString()
+    return writer_edges.GetOutputString(), writer_faces.GetOutputString()
