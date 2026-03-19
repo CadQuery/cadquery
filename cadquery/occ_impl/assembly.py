@@ -691,7 +691,6 @@ def toVTK(
 
         # add both to the renderer
         mapper = vtkMapper()
-        mapper.AddInputDataObject(data_edges)
         mapper.AddInputDataObject(data_faces)
 
         actor = vtkActor()
