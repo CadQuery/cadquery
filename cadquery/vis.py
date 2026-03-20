@@ -11,8 +11,9 @@ from . import (
     Edge,
 )
 from .occ_impl.assembly import _loc2vtk, toVTKAssy
+from .occ_impl.nurbs import Curve, Surface
 
-from typing import Union, Any, List, Tuple, Iterable, cast, Optional
+from typing import Union, List, Tuple, Iterable, cast, Optional
 
 from OCP.TopoDS import TopoDS_Shape
 from OCP.Geom import Geom_BSplineSurface
@@ -30,7 +31,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkWindowToImageFilter,
     vtkRenderer,
-    vtkPropCollection,
 )
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray, vtkPolyData
@@ -102,6 +102,10 @@ def _split_showables(
     for el in objs:
         if instance_of(el, ShapeLike):
             rv_s.append(el)
+        if isinstance(el, Curve):
+            rv_s.append(el.edge())
+        if isinstance(el, Surface):
+            rv_s.append(el.face())
         elif isinstance(el, Vector):
             rv_v.append(el)
         elif isinstance(el, Location):
@@ -195,13 +199,19 @@ def _to_vtk_shapes(
 
 
 def ctrlPts(
-    s: Union[Face, Edge],
+    s: Union[Face, Edge, Surface, Curve],
     size: float = DEFAULT_CTRL_PT_SIZE,
     color: str = DEFAULT_CTRL_PT_COLOR,
 ) -> vtkActor:
     """
-    Convert Edge or Face to a vtkActor representing control points.
+    Convert Edge, Face, Surface or Curve to a vtkActor representing control points.
     """
+
+    # handle Surface, Curve first
+    if isinstance(s, Surface):
+        return ctrlPts(s.face(), size, color)
+    elif isinstance(s, Curve):
+        return ctrlPts(s.edge(), size, color)
 
     rv = vtkActor()
 
