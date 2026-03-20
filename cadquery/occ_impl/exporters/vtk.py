@@ -16,7 +16,7 @@ from ..shapes import Shape
 def extractEdgesFaces(data: vtkPolyData) -> tuple[vtkPolyData, vtkPolyData]:
     """Helper for edges and faces extraction"""
 
-    # extract faces
+    # extract edges
     extr = vtkExtractCellsByType()
     extr.SetInputDataObject(data)
 
@@ -26,7 +26,7 @@ def extractEdgesFaces(data: vtkPolyData) -> tuple[vtkPolyData, vtkPolyData]:
     extr.Update()
     data_edges = extr.GetOutput()
 
-    # extract edges
+    # extract faces
     extr = vtkExtractCellsByType()
     extr.SetInputDataObject(data)
 
