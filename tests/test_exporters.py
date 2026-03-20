@@ -975,3 +975,26 @@ def test_dxf_shape(fname):
     s_imported = Sketch().importDXF(fname).val()
 
     assert (s - s_imported).Volume() == 0
+
+
+def test_toVTK():
+
+    from cadquery.occ_impl.assembly import toVTK
+
+    assy = Assembly().add(face(rect(10, 0.5)))
+
+    renderer = toVTK(assy)
+    actors = renderer.GetActors()
+    actors.InitTraversal()
+
+    assert actors.GetNumberOfItems() == 2
+
+    face_actor = actors.GetNextActor()
+    face_data = face_actor.GetMapper().GetInput()
+    assert face_data.GetNumberOfPolys() > 0
+    assert face_data.GetNumberOfLines() == 0
+
+    edge_actor = actors.GetNextActor()
+    edge_data = edge_actor.GetMapper().GetInput()
+    assert edge_data.GetNumberOfLines() > 0
+    assert edge_data.GetNumberOfPolys() == 0
