@@ -472,6 +472,12 @@ class Figure:
         for act in actors:
             act.SetVisibility(event["visible"])
 
+        # synchronize state by hand
+        for act in self.state.actors:
+            if act["id"] == event["id"]:
+                act["visible"] = event["visible"]
+
+        self._update_state("actors")
         self.view.update()
 
     def onSelection(self, event: list[str]):
