@@ -1406,7 +1406,7 @@ def uIsoMatrix(surf: Surface, u: float) -> COO:
 
     block = designMatrix(np.atleast_1d(u), surf.uorder, surf.uknots, surf.uperiodic)
 
-    shape = (1, nu * nv)
+    shape = (nv, nu * nv)
 
     n = len(block.i)
     N = nv * n  # total number of elements
@@ -1415,8 +1415,8 @@ def uIsoMatrix(surf: Surface, u: float) -> COO:
     v = np.empty(N)
 
     for ix in range(nv):
-        i[ix * n : (ix + 1) * n] = 0
-        j[ix * n : (ix + 1) * n] = block.j * nv
+        i[ix * n : (ix + 1) * n] = ix
+        j[ix * n : (ix + 1) * n] = block.j * nv + ix
         v[ix * n : (ix + 1) * n] = block.v
 
     return COO(i, j, v, shape)
@@ -1433,7 +1433,7 @@ def vIsoMatrix(surf: Surface, v: float) -> COO:
 
     block = designMatrix(np.atleast_1d(v), surf.vorder, surf.vknots, surf.vperiodic)
 
-    shape = (1, nu * nv)
+    shape = (nu, nu * nv)
 
     n = len(block.i)
     N = nu * n  # total number of elements
@@ -1442,7 +1442,7 @@ def vIsoMatrix(surf: Surface, v: float) -> COO:
     vals = np.empty(N)
 
     for ix in range(nu):
-        i[ix * n : (ix + 1) * n] = 0
+        i[ix * n : (ix + 1) * n] = ix
         j[ix * n : (ix + 1) * n] = block.j + ix * nv
         vals[ix * n : (ix + 1) * n] = block.v
 
