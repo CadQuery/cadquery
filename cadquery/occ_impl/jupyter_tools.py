@@ -166,9 +166,19 @@ def display(shape):
     payload: List[Dict[str, Any]] = []
 
     if isinstance(shape, Shape):
+        shape_edges, shape_faces = toString(shape)
+
         payload.append(
             dict(
-                shape=toString(shape),
+                shape=shape_edges,
+                color=(0.0, 0.0, 0.0, 1.0),
+                position=[0, 0, 0],
+                orientation=[0, 0, 0],
+            )
+        )
+        payload.append(
+            dict(
+                shape=shape_faces,
                 color=DEFAULT_COLOR + (1,),
                 position=[0, 0, 0],
                 orientation=[0, 0, 0],
