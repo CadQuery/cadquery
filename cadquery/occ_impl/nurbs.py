@@ -934,7 +934,7 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
         i=np.empty(n * nu, dtype=np.int64),
         j=np.empty(n * nu, dtype=np.int64),
         v=np.empty(n * nu),
-        shape=(nu, len(knots) - 1 + (not periodic) * order),
+        shape=(nu, len(knots) - 1 - (not periodic) * order),
     )
 
     # loop over param values
@@ -1003,8 +1003,8 @@ def designMatrix2D(
         v=np.empty(ni * nj),
         shape=(
             ni,
-            (len(uknots) - 1 + (not uperiodic) * uorder)
-            * (len(vknots) - 1 + (not vperiodic) * vorder),
+            (len(uknots) - 1 - (not uperiodic) * uorder)
+            * (len(vknots) - 1 - (not vperiodic) * vorder),
         ),
     )
 
@@ -1064,7 +1064,7 @@ def derMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
                 i=np.empty(n * nu, dtype=np.int64),
                 j=np.empty(n * nu, dtype=np.int64),
                 v=np.empty(n * nu),
-                shape=(nu, len(knots) - 1 + order),
+                shape=(nu, len(knots) - 1 - order),
             )
         )
 
@@ -1334,8 +1334,8 @@ def penaltyMatrix2D(
                 v=np.empty(ni * nj),
                 shape=(
                     ni,
-                    (len(uknots) - 1 + (not uperiodic) * uorder)
-                    * (len(vknots) - 1 + (not vperiodic) * vorder),
+                    (len(uknots) - 1 - (not uperiodic) * uorder)
+                    * (len(vknots) - 1 - (not vperiodic) * vorder),
                 ),
             )
         )
@@ -1616,7 +1616,7 @@ def approximate(
         # discrete + exact derivatives
         if penalty > order:
             Pexact = derMatrix(up, order, order - 1, knots_)[-1].csc()
-            Pdiscrete = discretePenalty(up, penalty - order, order).csc()
+            Pdiscrete = discretePenalty(up, penalty - order).csc()
 
             P = Pdiscrete @ Pexact
 
@@ -1695,7 +1695,7 @@ def approximate(
         # discrete + exact derivatives
         if penalty > order:
             Pexact = derMatrix(up, order, order - 1, knots_)[-1].csc()
-            Pdiscrete = discretePenalty(up, penalty - order, order).csc()
+            Pdiscrete = discretePenalty(up, penalty - order).csc()
 
             P = Pdiscrete @ Pexact
 
