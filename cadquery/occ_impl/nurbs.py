@@ -185,6 +185,9 @@ class Surface(NamedTuple):
     vperiodic: bool
 
     def surface(self) -> Geom_BSplineSurface:
+        """
+        Convert to a OCCT Surface object.
+        """
 
         unique_knots, mults_arr = np.unique(self.uknots, return_counts=True)
         uknots = _colRealArray(unique_knots)
@@ -207,6 +210,9 @@ class Surface(NamedTuple):
         )
 
     def face(self, tol: float = 1e-3) -> Face:
+        """
+        Convert to a Face object.
+        """
 
         return Face(BRepBuilderAPI_MakeFace(self.surface(), tol).Shape())
 
@@ -856,7 +862,7 @@ def nbSurfaceDer(
         v, vorder, vknots, vperiodic
     )
 
-    # number of param values
+    # number of parameter values
     nu = np.size(u)
 
     # chunk sizes
@@ -917,7 +923,7 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
     # extend the knots
     u_, knots_ext, minspan, maxspan, deltaspan = _preprocess(u, order, knots, periodic)
 
-    # number of param values
+    # number of parameter values
     nu = len(u)
 
     # number of basis functions
@@ -937,7 +943,7 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
         shape=(nu, len(knots) - 1 - (not periodic) * order),
     )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(nu):
         ui = u_[i]
 
@@ -972,7 +978,7 @@ def designMatrix2D(
     Create a sparse tensor product design matrix.
     """
 
-    # extend the knots and preprocess
+    # extend the knots and pre-process
     u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
         u, uorder, uknots, uperiodic
     )
@@ -980,7 +986,7 @@ def designMatrix2D(
         v, vorder, vknots, vperiodic
     )
 
-    # number of param values
+    # number of parameter values
     ni = len(u)
 
     # chunk size
@@ -1008,7 +1014,7 @@ def designMatrix2D(
         ),
     )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(ni):
         ui, vi = u_[i], v_[i]
 
@@ -1046,7 +1052,7 @@ def derMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
     Create a sparse design matrix and corresponding derivative matrices.
     """
 
-    # number of param values
+    # number of parameter values
     nu = np.size(u)
 
     # chunk size
@@ -1068,7 +1074,7 @@ def derMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
             )
         )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(nu):
         ui = u[i]
 
@@ -1098,7 +1104,7 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
         (knots[-order:-1] - knots[-1], knots, knots[-1] + knots[1:order])
     )
 
-    # number of param values
+    # number of parameter values
     nu = len(u)
 
     # number of basis functions
@@ -1123,7 +1129,7 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
             )
         )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(nu):
         ui = u[i]
 
@@ -1138,7 +1144,7 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
             rv[di].i[i * n : (i + 1) * n] = i
             rv[di].j[i * n : (i + 1) * n] = (
                 span - order + np.arange(n)
-            ) % nb  # NB: this is due to peridicity
+            ) % nb  # NB: this is due to periodicity
             rv[di].v[i * n : (i + 1) * n] = temp[di, :]
 
     return rv
@@ -1146,6 +1152,9 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
 
 @njit
 def periodicDiscretePenalty(us: Array, order: int) -> COO:
+    """
+    Create a periodic discrete penalty matrix for approximating higher order penalties.
+    """
 
     if order not in (1, 2):
         raise ValueError(
@@ -1195,6 +1204,9 @@ def periodicDiscretePenalty(us: Array, order: int) -> COO:
 
 @njit
 def discretePenalty(us: Array, order: int) -> COO:
+    """
+    Create a discrete penalty matrix for approximating higher order penalties.
+    """
 
     if order not in (1, 2):
         raise ValueError(
@@ -1300,7 +1312,7 @@ def penaltyMatrix2D(
     Create sparse tensor product 2D derivative matrices.
     """
 
-    # extend the knots and preprocess
+    # extend the knots and pre-process
     u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
         u, uorder, uknots, uperiodic
     )
@@ -1308,7 +1320,7 @@ def penaltyMatrix2D(
         v, vorder, vknots, vperiodic
     )
 
-    # number of param values
+    # number of parameter values
     ni = len(u)
 
     # chunk size
@@ -1324,7 +1336,7 @@ def penaltyMatrix2D(
     utemp = np.zeros((dorder + 1, nu))
     vtemp = np.zeros((dorder + 1, nv))
 
-    # initialize the emptry matrices
+    # initialize the empty matrices
     rv = []
     for i in range(dorder + 1):
         rv.append(
@@ -1340,7 +1352,7 @@ def penaltyMatrix2D(
             )
         )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(ni):
         ui, vi = u_[i], v_[i]
 
@@ -1472,6 +1484,9 @@ def periodicApproximate(
     penalty: int = 4,
     lam: float = 0,
 ) -> Curve:
+    """
+    Approximate a periodic curve.
+    """
 
     npts = data.shape[0]
 
@@ -1529,6 +1544,9 @@ def periodicApproximate(
     penalty: int = 4,
     lam: float = 0,
 ) -> List[Curve]:
+    """
+    Approximate multiple periodic curves using same parametrization.
+    """
 
     rv = []
 
@@ -1589,6 +1607,9 @@ def approximate(
     lam: float = 0,
     tangents: Optional[Tuple[Array, Array]] = None,
 ) -> Curve:
+    """
+    Approximate a curve.
+    """
 
     npts = data.shape[0]
 
@@ -1666,6 +1687,9 @@ def approximate(
     lam: float = 0,
     tangents: Optional[Union[Tuple[Array, Array], List[Tuple[Array, Array]]]] = None,
 ) -> List[Curve]:
+    """
+    Approximate multiple curves using the same parametrization.
+    """
 
     rv = []
 
@@ -1758,7 +1782,7 @@ def approximate2D(
     lam: float = 0,
 ) -> Surface:
     """
-    Simple 2D surface approximation.
+    Approximate a 2D surface.
     """
 
     # process the knots
@@ -1887,6 +1911,9 @@ def constrainedApproximate2D(
 
 
 def periodicLoft(*curves: Curve, order: int = 3) -> Surface:
+    """
+    Periodic loft from curves.
+    """
 
     nknots: int = len(curves) + 1
 
@@ -1917,6 +1944,9 @@ def loft(
     penalty: int = 4,
     tangents: Optional[List[Tuple[Array, Array]]] = None,
 ) -> Surface:
+    """
+    Regular (non-periodic) loft form curves.
+    """
 
     nknots: int = len(curves)
 
