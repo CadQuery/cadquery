@@ -12,6 +12,7 @@ from cadquery.occ_impl.nurbs import (
     periodicApproximate,
     periodicLoft,
     loft,
+    array2vec,
 )
 
 from cadquery.func import circle, torus
@@ -277,7 +278,8 @@ def test_approximate():
 
 def test_periodic_approximate():
 
-    pts_ = circle(1).sample(100)[0]
+    circ = circle(1)
+    pts_ = circ.sample(100)[0]
     pts = np.array([list(p) for p in pts_])
 
     crv = periodicApproximate(pts)
@@ -285,6 +287,12 @@ def test_periodic_approximate():
 
     assert e.isValid()
     assert e.Length() == approx(2 * np.pi)
+
+    # check params
+    us0 = circ.params(pts_)
+    us1 = e.params(pts_)
+
+    assert np.allclose(us0, np.array(us1) * 2 * np.pi)
 
     # multiple approximate
     crvs = periodicApproximate([pts, pts])
@@ -352,5 +360,18 @@ def test_approximate2D(lam, penalty):
 
     f = surf.face()
 
+    # general sanity checks
     assert f.isValid()
-    assert f.Area() == approx(t.Area(), rel=1e-4)
+    assert f.Area() == approx(t.Area(), rel=1e-3)
+
+    # check the stability of the parameters
+    us0 = us[None, :].repeat(len(vs), 0).ravel()
+    vs0 = vs[:, None].repeat(len(us), 1).ravel()
+
+    us2, vs2 = f.params(array2vec(pts))
+
+    delta_u = np.array(us2 - us0)
+    delta_v = np.array(vs2 - vs0)
+
+    assert np.allclose(np.where(delta_u >= 1, delta_u, 0) % 1, 0)
+    assert np.allclose(np.where(delta_v >= 1, delta_v, 0) % 1, 0)

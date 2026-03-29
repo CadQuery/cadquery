@@ -339,7 +339,7 @@ class Surface(NamedTuple):
 
 @njiti
 def _preprocess(
-    u: Array, order: int, knots: Array, periodic: float
+    u: Array, order: int, knots: Array, periodic: bool
 ) -> Tuple[Array, Array, Optional[int], Optional[int], int]:
     """
     Helper for handling periodicity. This function extends the knot vector,
@@ -966,7 +966,7 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
         # update the matrix
         rv.i[i * n : (i + 1) * n] = i
         rv.j[i * n : (i + 1) * n] = (
-            span - order + np.arange(n)
+            span - order + int(periodic) + np.arange(n)
         ) % nb  # NB: this is due to periodicity
         rv.v[i * n : (i + 1) * n] = temp
 
@@ -1039,8 +1039,10 @@ def designMatrix2D(
         # update the matrix
         rv.i[i * nj : (i + 1) * nj] = i
         rv.j[i * nj : (i + 1) * nj] = (
-            ((uspan - uorder + 1 + np.arange(nu)) % nu_total) * nv_total
-            + ((vspan - vorder + 1 + np.arange(nv)) % nv_total)[:, np.newaxis]
+            ((uspan - uorder + int(uperiodic) + np.arange(nu)) % nu_total) * nv_total
+            + ((vspan - vorder + int(vperiodic) + np.arange(nv)) % nv_total)[
+                :, np.newaxis
+            ]
         ).ravel()
         rv.v[i * nj : (i + 1) * nj] = (utemp * vtemp[:, np.newaxis]).ravel()
 
@@ -1153,7 +1155,7 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
         for di in range(dorder + 1):
             rv[di].i[i * n : (i + 1) * n] = i
             rv[di].j[i * n : (i + 1) * n] = (
-                span - order + np.arange(n)
+                span - order + 1 + np.arange(n)
             ) % nb  # NB: this is due to periodicity
             rv[di].v[i * n : (i + 1) * n] = temp[di, :]
 
@@ -1381,8 +1383,11 @@ def penaltyMatrix2D(
 
             rv[dv].i[i * nj : (i + 1) * nj] = i
             rv[dv].j[i * nj : (i + 1) * nj] = (
-                ((uspan - uorder + np.arange(nu)) % nu_total) * nv_total
-                + ((vspan - vorder + np.arange(nv)) % nv_total)[:, np.newaxis]
+                ((uspan - uorder + int(uperiodic) + np.arange(nu)) % nu_total)
+                * nv_total
+                + ((vspan - vorder + int(vperiodic) + np.arange(nv)) % nv_total)[
+                    :, np.newaxis
+                ]
             ).ravel()
             rv[dv].v[i * nj : (i + 1) * nj] = (
                 utemp[du, :] * vtemp[dv, :, np.newaxis]
