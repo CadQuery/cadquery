@@ -409,7 +409,7 @@ def show(
     gradient: bool = True,
     xpos: Union[int, float] = 0,
     ypos: Union[int, float] = 0,
-    fxaa: bool = True,
+    fxaa: bool = False,
     orthographic: bool = False,
 ):
     """
