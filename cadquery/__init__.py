@@ -21,6 +21,7 @@ from .occ_impl.shapes import (
 )
 from .occ_impl import exporters
 from .occ_impl import importers
+from .occ_impl.types import STEPUnitLiterals
 
 # these items are the common implementation
 
@@ -75,6 +76,6 @@ __all__ = [
     "DirectionMinMaxSelector",
     "StringSyntaxSelector",
     "Selector",
-    "plugins",
     "Sketch",
+    "STEPUnitLiterals",
 ]

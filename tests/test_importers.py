@@ -176,6 +176,53 @@ class TestImporters(BaseTest):
         objs = importers.importShape(importers.ImportTypes.STEP, filename)
         self.assertEqual(2, len(objs.all()))
 
+    def testSTEPImportUnitDefault(self):
+        """
+        Exports and re-imports a STEP file with the default unit (MM) and
+        verifies the shape geometry is unchanged.
+        """
+
+        fileName = os.path.join(OUTDIR, "unit_default_import.step")
+        shape = Workplane("XY").box(1, 2, 3).val()
+        shape.exportStep(fileName)
+
+        imported = importers.importStep(fileName, unit="MM")
+        self.assertTrue(imported.val().isValid())
+        self.assertAlmostEqual(imported.findSolid().Volume(), 6)
+
+    def testSTEPImportUnitOverride(self):
+        """
+        Exports a 1x1x1 box as MM and re-imports it with unit="M" to verify
+        whether read.step.unit overrides the unit declared in the STEP header.
+        If it overrides, the box will be 500x500x500 (0.5 treated as meters).
+        If it only applies as a fallback, the box will remain 1x1x1.
+        """
+
+        mm_path = os.path.join(OUTDIR, "unit_override_test.step")
+        Workplane().box(1, 1, 1).val().exportStep(mm_path)
+
+        imported = importers.importStep(mm_path, unit="M")
+        bb = imported.val().BoundingBox()
+
+        assert bb.xlen == approx(1.0, rel=1e-3)
+        assert bb.ylen == approx(1.0, rel=1e-3)
+
+    def testSTEPImportUnitViaImportShape(self):
+        """
+        Verifies that the unit parameter is correctly threaded through
+        importShape to importStep.
+        """
+
+        fileName = os.path.join(OUTDIR, "unit_importshape.step")
+        shape = Workplane("XY").box(1, 2, 3).val()
+        shape.exportStep(fileName)
+
+        imported = importers.importShape(
+            importers.ImportTypes.STEP, fileName, unit="MM"
+        )
+        self.assertTrue(imported.val().isValid())
+        self.assertAlmostEqual(imported.findSolid().Volume(), 6)
+
     def testImportDXF(self):
         """
         Test DXF import with various tolerances.

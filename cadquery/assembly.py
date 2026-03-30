@@ -37,6 +37,8 @@ from .occ_impl.exporters.assembly import (
 )
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
+from .occ_impl.types import STEPUnitLiterals
+
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate, BiDict, instance_of
 
@@ -618,18 +620,24 @@ class Assembly(object):
         return self
 
     @classmethod
-    def importStep(cls, path: str) -> Self:
+    def importStep(cls, path: str, unit: STEPUnitLiterals = "MM") -> Self:
         """
         Reads an assembly from a STEP file.
 
         :param path: Path and filename for reading.
+        :param unit: The unit of measurement for the STEP file. Default "MM".
         :return: An Assembly object.
         """
 
-        return cls.load(path, importType="STEP")
+        return cls.load(path, importType="STEP", unit=unit)
 
     @classmethod
-    def load(cls, path: str, importType: Optional[ImportLiterals] = None,) -> Self:
+    def load(
+        cls,
+        path: str,
+        importType: Optional[ImportLiterals] = None,
+        unit: STEPUnitLiterals = "MM",
+    ) -> Self:
         """
         Load step, xbf or xml.
         """
@@ -644,7 +652,7 @@ class Assembly(object):
         assy = cls()
 
         if importType == "STEP":
-            _importStep(assy, path)
+            _importStep(assy, path, unit)
         elif importType == "XML":
             importXml(assy, path)
         elif importType == "XBF":

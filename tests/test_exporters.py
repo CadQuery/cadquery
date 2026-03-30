@@ -977,6 +977,34 @@ def test_dxf_shape(fname):
     assert (s - s_imported).Volume() == 0
 
 
+def test_step_export_unit_default(tmpdir):
+    """
+    Exports a box without specifying a unit and verifies the STEP file
+    header defaults to millimeters.
+    """
+
+    box_path = os.path.join(tmpdir, "unit_default.step")
+    Workplane().box(1, 1, 1).val().exportStep(box_path)
+
+    with open(box_path, "r") as f:
+        content = f.read()
+
+    assert "MILLI" in content
+
+
+def test_step_export_unit_inches(tmpdir):
+    """
+    Exports a box with unit="INCH" and verifies the STEP file header declares inches.
+    """
+    box_path = os.path.join(tmpdir, "unit_inches.step")
+    Workplane().box(1, 1, 1).val().exportStep(box_path, unit="INCH")
+
+    with open(box_path, "r") as f:
+        content = f.read()
+
+    assert "INCH" in content
+
+
 def test_toVTK():
 
     from cadquery.occ_impl.assembly import toVTK

@@ -34,6 +34,7 @@ from ..selectors import (
 )
 
 from ..utils import multimethod, multidispatch, mypyclassmethod
+from .types import STEPUnitLiterals
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -511,15 +512,18 @@ class Shape(object):
 
         return writer.Write(self.wrapped, fileName)
 
-    def exportStep(self, fileName: str, **kwargs) -> IFSelect_ReturnStatus:
+    def exportStep(
+        self, fileName: str, unit: STEPUnitLiterals = "MM", **kwargs
+    ) -> IFSelect_ReturnStatus:
         """
         Export this shape to a STEP file.
-
-        kwargs is used to provide optional keyword arguments to configure the exporter.
+        kwargs is used to provide additional optional keyword arguments to configure the exporter.
 
         :param fileName: Path and filename for writing.
+        :type fileName: str
+        :param unit: The unit of measurement for the STEP file. Default "MM".
+        :type unit: STEPUnitLiterals
         :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
-
             If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
         :type write_pcurves: bool
         :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
@@ -536,6 +540,7 @@ class Shape(object):
         writer = STEPControl_Writer()
         Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
         Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
+        Interface_Static.SetCVal_s("write.step.unit", unit)
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
         return writer.Write(fileName)
