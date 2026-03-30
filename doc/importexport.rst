@@ -77,13 +77,26 @@ Importing STEP
 ###############
 
 STEP files can be imported using the :meth:`importers.importStep` method (note the capitalization of "Step").
-There are no parameters for this method other than the file path to import.
 
 .. code-block:: python
 
    import cadquery as cq
 
    result = cq.importers.importStep("/path/to/step/block.stp")
+
+By default, the unit declared in the STEP file's header is used. If the file does not declare a unit, the ``unit`` parameter can be used to specify what unit to assume. The valid values are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+
+.. note::
+
+   This parameter has no effect when the STEP file already contains a unit declaration in its header.
+   It only applies as a fallback for files that lack one.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # Import a STEP file that lacks a unit declaration, treating its values as meters
+   result = cq.importers.importStep("/path/to/step/block.stp", unit="M")
 
 Exporting STEP
 ###############
@@ -139,6 +152,28 @@ or the :meth:`Assembly.exportAssembly`` method.
    # or equivalently when exporting a lower level Shape object
    box.val().export("/path/to/step/box2.step", opt={"write_pcurves": False})
 
+Setting Units
+--------------
+
+By default, CadQuery exports STEP files with millimeter units.
+The ``unit`` parameter can be used to change the unit written in the STEP file header.
+The valid values are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+
+.. note::
+
+   Setting the unit does not rescale the geometry. OCCT will scale the coordinate values in the file to match the declared unit. For example, a 1mm box exported with ``unit="M"`` will have coordinate values of 0.001 in the STEP file, correctly representing 0.001 meters. A round-trip export/import will always return the original geometry unchanged.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # Create a simple object
+   box = cq.Workplane().box(10, 10, 10)
+
+   # Export with meter units
+   box.val().exportStep("/path/to/step/box.step", unit="M")
+
+For assemblies, see the ``unit`` parameter example in the exporting assemblies section.
 
 Exporting Assemblies
 ####################
@@ -175,6 +210,28 @@ export with all defaults is shown below.
 
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
+
+Setting Units
+--------------
+
+The ``unit`` parameter can be used to change the unit written in the STEP file header when exporting an assembly.
+The valid values are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+The default is ``"MM"``.
+
+.. note::
+
+   Setting the unit does not rescale the geometry. OCCT will scale the coordinate values in the file to match the declared unit.
+   A round-trip export/import will always return the original geometry unchanged.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   assy = cq.Assembly()
+   assy.add(cq.Workplane().box(10, 10, 10), name="box")
+
+   # Export the assembly with meter units
+   assy.export("/path/to/step/assy.step", unit="M")
 
 Fused
 ------
