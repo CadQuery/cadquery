@@ -5,6 +5,7 @@ from math import degrees
 import copy
 from pathlib import Path
 from pathlib import PurePath
+from contextlib import chdir
 import re
 from pytest import approx
 
@@ -17,7 +18,7 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound
+from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound, segment
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -36,7 +37,6 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDF import TDF_ChildIterator
 from OCP.Quantity import Quantity_ColorRGBA, Quantity_TOC_sRGB, Quantity_NameOfColor
 from OCP.TopAbs import TopAbs_ShapeEnum
-from OCP.Graphic3d import Graphic3d_NameOfMaterial
 
 
 @pytest.fixture(scope="function")
@@ -702,19 +702,16 @@ def test_assy_root_name(assy_fixture, root_name, request):
         assert list(map(len, m)) == [8, 4, 4, 4, 12]
 
 
-def test_step_export(nested_assy, tmp_path_factory):
-    # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
-    nested_path = os.path.join(tmpdir, "nested.step")
-    nested_options_path = os.path.join(tmpdir, "nested_options.step")
+def test_step_export(nested_assy, tmpdir):
 
-    exportAssembly(nested_assy, nested_path)
-    exportAssembly(
-        nested_assy, nested_options_path, write_pcurves=False, precision_mode=0
-    )
+    with chdir(tmpdir):
+        exportAssembly(nested_assy, "nested.step")
+        exportAssembly(
+            nested_assy, "nested_options.step", write_pcurves=False, precision_mode=0
+        )
+        w = cq.importers.importStep("nested.step")
+        o = cq.importers.importStep("nested_options.step")
 
-    w = cq.importers.importStep(nested_path)
-    o = cq.importers.importStep(nested_options_path)
     assert w.solids().size() == 4
     assert o.solids().size() == 4
 
@@ -725,15 +722,11 @@ def test_step_export(nested_assy, tmp_path_factory):
     assert pytest.approx(c2.toTuple()) == (0, 4, 0)
 
 
-def test_meta_step_export(tmp_path_factory):
+def test_meta_step_export(tmpdir):
     """
     Tests that an assembly can be exported to a STEP file with faces tagged with names and colors,
     and layers added.
     """
-
-    # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
-    meta_path = os.path.join(tmpdir, "meta.step")
 
     # Most nested level of the assembly
     subsubassy = cq.Assembly(name="third-level")
@@ -806,97 +799,95 @@ def test_meta_step_export(tmp_path_factory):
         assy.addSubshape(cone_2.faces("<Z").val(), color=cq.Color(1.0, 0.0, 0.0))
         assy.addSubshape(cone_2.faces("<Z").val(), layer="cone_2_bottom_face")
 
-    # Write once with pcurves turned on
-    success = exportStepMeta(assy, meta_path)
-    assert success
+    with chdir(tmpdir):
+        # Write once with pcurves turned on
+        success = exportStepMeta(assy, "meta1.step")
+        assert success
+        # Make sure the step file exists
+        assert os.path.exists("meta1.step")
 
-    # Write again with pcurves turned off
-    success = exportStepMeta(assy, meta_path, write_pcurves=False)
-    assert success
+        # Write again with pcurves turned off
+        success = exportStepMeta(assy, "meta2.step", write_pcurves=False)
+        assert success
 
-    # Make sure the step file exists
-    assert os.path.exists(meta_path)
+        # Read the contents as a step file as a string so we can check the outputs
+        with open("meta2.step", "r") as f:
+            step_contents = f.read()
 
-    # Read the contents as a step file as a string so we can check the outputs
-    with open(meta_path, "r") as f:
-        step_contents = f.read()
+            # Make sure that the face name strings were applied in ADVACED_FACE entries
+            assert "ADVANCED_FACE('cube_1_top_face'" in step_contents
+            assert "ADVANCED_FACE('cube_2_bottom_face'" in step_contents
 
-        # Make sure that the face name strings were applied in ADVACED_FACE entries
-        assert "ADVANCED_FACE('cube_1_top_face'" in step_contents
-        assert "ADVANCED_FACE('cube_2_bottom_face'" in step_contents
+            # Make reasonably sure that the colors were applied to the faces
+            assert "DRAUGHTING_PRE_DEFINED_COLOUR('black')" in step_contents
+            assert "DRAUGHTING_PRE_DEFINED_COLOUR('white')" in step_contents
+            assert "DRAUGHTING_PRE_DEFINED_COLOUR('cyan')" in step_contents
+            assert "DRAUGHTING_PRE_DEFINED_COLOUR('yellow')" in step_contents
 
-        # Make reasonably sure that the colors were applied to the faces
-        assert "DRAUGHTING_PRE_DEFINED_COLOUR('black')" in step_contents
-        assert "DRAUGHTING_PRE_DEFINED_COLOUR('white')" in step_contents
-        assert "DRAUGHTING_PRE_DEFINED_COLOUR('cyan')" in step_contents
-        assert "DRAUGHTING_PRE_DEFINED_COLOUR('yellow')" in step_contents
-
-        # Make sure that the layers were created
-        assert (
-            "PRESENTATION_LAYER_ASSIGNMENT('cube_1_top_face','visible'" in step_contents
-        )
-        assert (
-            "PRESENTATION_LAYER_ASSIGNMENT('cube_2_bottom_face','visible'"
-            in step_contents
-        )
+            # Make sure that the layers were created
+            assert (
+                "PRESENTATION_LAYER_ASSIGNMENT('cube_1_top_face','visible'"
+                in step_contents
+            )
+            assert (
+                "PRESENTATION_LAYER_ASSIGNMENT('cube_2_bottom_face','visible'"
+                in step_contents
+            )
 
 
-def test_meta_step_export_edge_cases(tmp_path_factory):
+def test_meta_step_export_edge_cases(tmpdir):
     """
     Test all the edge cases of the STEP export function.
     """
-
-    # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
-    meta_path = os.path.join(tmpdir, "meta_edges_cases.step")
 
     # Create an assembly where the child is empty
     assy = cq.Assembly(name="top-level")
     subassy = cq.Assembly(name="second-level")
     assy.add(subassy)
 
-    # Write an assembly with no children
-    success = exportStepMeta(assy, meta_path)
-    assert success
+    with chdir(tmpdir):
+        # Write an assembly with no children
+        success = exportStepMeta(assy, "meta_edge_cases1.step")
+        assert success
 
-    # Test an object with no color set
-    cube = cq.Workplane().box(10.0, 10.0, 10.0)
-    assy.add(cube, name="cube")
-    success = exportStepMeta(assy, meta_path)
-    assert success
+        # Test an object with no color set
+        cube = cq.Workplane().box(10.0, 10.0, 10.0)
+        assy.add(cube, name="cube")
+        success = exportStepMeta(assy, "meta_edge_cases2.step")
+        assert success
 
-    # Tag a face that does not match the object
-    with pytest.raises(ValueError):
-        assy.addSubshape(plane(1, 1), name="cube_top_face")
+        # Tag a face that does not match the object
+        with pytest.raises(ValueError):
+            assy.addSubshape(plane(1, 1), name="cube_top_face")
 
-    # Tag the name but nothing else
-    assy.addSubshape(cube.faces(">Z").val(), name="cube_top_face")
-    success = exportStepMeta(assy, meta_path)
-    assert success
+        # Tag the name but nothing else
+        assy.addSubshape(cube.faces(">Z").val(), name="cube_top_face")
+        success = exportStepMeta(assy, "meta_edge_cases3.step")
+        assert success
 
-    # Reset the assembly
-    assy.remove("cube")
-    cube = cq.Workplane().box(9.9, 9.9, 9.9)
-    assy.add(cube, name="cube")
+        # Reset the assembly
+        assy.remove("cube")
+        cube = cq.Workplane().box(9.9, 9.9, 9.9)
+        assy.add(cube, name="cube")
 
-    # Tag the color but nothing else
-    assy.addSubshape(cube.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
-    success = exportStepMeta(assy, meta_path)
-    assert success
+        # Tag the color but nothing else
+        assy.addSubshape(cube.faces(">Z").val(), color=cq.Color(1.0, 0.0, 0.0))
+        success = exportStepMeta(assy, "meta_edge_cases4.step")
+        assert success
 
-    # Reset the assembly
-    assy.remove("cube")
-    cube = cq.Workplane().box(9.8, 9.8, 9.8)
-    assy.add(cube, name="cube")
+        # Reset the assembly
+        assy.remove("cube")
+        cube = cq.Workplane().box(9.8, 9.8, 9.8)
+        assy.add(cube, name="cube")
 
-    # Tag the layer but nothing else
-    assy.addSubshape(cube.faces(">Z").val(), layer="cube_top_face")
-    success = exportStepMeta(assy, meta_path)
-    assert success
+        # Tag the layer but nothing else
+        assy.addSubshape(cube.faces(">Z").val(), layer="cube_top_face")
+        success = exportStepMeta(assy, "meta_edge_cases5.step")
+        assert success
 
 
 @pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
-def test_step_roundtrip_with_materials(kind, tmp_path_factory):
+def test_step_roundtrip_with_materials(kind, tmpdir):
     """
     Tests to make sure that once materials have been exported to a file format
     such as STEP, the materials can be imported again.
@@ -909,21 +900,20 @@ def test_step_roundtrip_with_materials(kind, tmp_path_factory):
         material=cq.Material(name="copper"),
     )
 
-    # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
-    materials_path = os.path.join(tmpdir, f"roundtrip_materials.{kind}")
+    materials_path = f"roundtrip_materials.{kind}"
 
-    exportAssembly(materials_assy, materials_path)
+    with chdir(tmpdir):
+        exportAssembly(materials_assy, materials_path)
 
-    # Read the contents as a step file as a string so we can check the outputs
-    with open(materials_path, "r") as f:
-        step_contents = f.read()
+        # Read the contents as a step file as a string so we can check the outputs
+        with open(materials_path, "r") as f:
+            step_contents = f.read()
 
         # Make sure that the face name string is present in the exported STEP contents
         assert "copper" in step_contents
 
-    # Import the STEP file back in as an assembly
-    test_assy = cq.Assembly.importStep(materials_path)
+        # Import the STEP file back in as an assembly
+        test_assy = cq.Assembly.importStep(materials_path)
 
     # Make sure that the material was re-imported
     assert test_assy.children[0].material is not None
@@ -994,14 +984,11 @@ def test_assembly_step_import(tmp_path_factory, subshape_assy):
     Test if the STEP import works correctly for an assembly with subshape data attached.
     """
 
-    # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
-    assy_step_path = os.path.join(tmpdir, "assembly_with_subshapes.step")
+    with chdir(tmpdir):
+        subshape_assy.export("assembly_with_subshapes.step")
 
-    subshape_assy.export(assy_step_path)
-
-    # Import the STEP file back in
-    imported_assy = cq.Assembly.importStep(assy_step_path)
+        # Import the STEP file back in
+        imported_assy = cq.Assembly.importStep("assembly_with_subshapes.step")
 
     # Check that the assembly was imported successfully
     assert imported_assy is not None
@@ -1032,29 +1019,30 @@ def test_assembly_step_import(tmp_path_factory, subshape_assy):
     assert imported_assy.name == "top_level"
 
     # Test a STEP file that does not contain an assembly
-    wp_step_path = os.path.join(tmpdir, "plain_workplane.step")
     res = cq.Workplane().box(10, 10, 10)
-    res.export(wp_step_path)
+    with chdir(tmpdir):
+        res.export("plain_workplane.step")
 
-    # Import the STEP file back in
-    with pytest.raises(ValueError):
-        imported_assy = cq.Assembly.importStep(wp_step_path)
+        # Import the STEP file back in
+        with pytest.raises(ValueError):
+            imported_assy = cq.Assembly.importStep("plain_workplane.step")
 
 
 @pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
-def test_assembly_subshape_import(tmp_path_factory, subshape_assy, kind):
+def test_assembly_subshape_import(tmpdir, subshape_assy, kind):
     """
     Test if a STEP/XBF/XML file containing subshape information can be imported correctly.
     """
 
-    tmpdir = tmp_path_factory.mktemp("out")
-    assy_step_path = os.path.join(tmpdir, f"subshape_assy.{kind}")
+    assy_step_path = f"subshape_assy.{kind}"
 
-    # Export the assembly
-    subshape_assy.export(assy_step_path)
+    with chdir(tmpdir):
+        # Export the assembly
+        subshape_assy.export(assy_step_path)
 
-    # Import the file back in
-    imported_assy = cq.Assembly.load(assy_step_path)
+        # Import the file back in
+        imported_assy = cq.Assembly.load(assy_step_path)
+
     assert imported_assy.name == "top_level"
 
     # Check the advanced face name
@@ -1080,19 +1068,19 @@ def test_assembly_subshape_import(tmp_path_factory, subshape_assy, kind):
 
 
 @pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
-def test_assembly_multi_subshape_import(tmp_path_factory, multi_subshape_assy, kind):
+def test_assembly_multi_subshape_import(tmpdir, multi_subshape_assy, kind):
     """
     Test if a file containing subshape information can be imported correctly.
     """
 
-    tmpdir = tmp_path_factory.mktemp("out")
-    assy_step_path = os.path.join(tmpdir, f"multi_subshape_assy.{kind}")
+    assy_step_path = f"multi_subshape_assy.{kind}"
 
-    # Export the assembly
-    multi_subshape_assy.export(assy_step_path)
+    with chdir(tmpdir):
+        # Export the assembly
+        multi_subshape_assy.export(assy_step_path)
 
-    # Import the file back in
-    imported_assy = cq.Assembly.load(assy_step_path)
+        # Import the file back in
+        imported_assy = cq.Assembly.load(assy_step_path)
 
     # Check that the top-level assembly name is correct
     assert imported_assy.name == "top_level"
@@ -1127,27 +1115,21 @@ def test_assembly_multi_subshape_import(tmp_path_factory, multi_subshape_assy, k
     assert layer_name == "cube_2_right_face"
 
 
-def test_bad_step_file_import(tmp_path_factory):
+def test_bad_step_file_import(tmpdir):
     """
     Test if a bad STEP file raises an error when importing.
     """
 
-    tmpdir = tmp_path_factory.mktemp("out")
-    bad_step_path = os.path.join(tmpdir, "bad_step.step")
-
-    # Check that an error is raised when trying to import a non-existent STEP file
-    with pytest.raises(ValueError):
-        # Export the assembly
-        cq.Assembly.importStep(bad_step_path)
+    with chdir(tmpdir):
+        # Check that an error is raised when trying to import a non-existent STEP file
+        with pytest.raises(ValueError):
+            cq.Assembly.importStep("bad_step.step")
 
 
-def test_plain_assembly_import(tmp_path_factory):
+def test_plain_assembly_import(tmpdir):
     """
     Test to make sure that importing plain assemblies has not been broken.
     """
-
-    tmpdir = tmp_path_factory.mktemp("out")
-    plain_step_path = os.path.join(tmpdir, "plain_assembly_step.step")
 
     # Simple cubes
     cube_1 = cq.Workplane().box(10, 10, 10)
@@ -1161,11 +1143,13 @@ def test_plain_assembly_import(tmp_path_factory):
     assy.add(cube_3, loc=cq.Location((-10, -10, -10)), color=cq.Color("red"))
     assy.add(cube_4, loc=cq.Location((10, -10, -10)), color=cq.Color("red"))
 
-    # Export the assembly, but do not use the meta STEP export method
-    assy.export(plain_step_path)
+    with chdir(tmpdir):
+        # Export the assembly, but do not use the meta STEP export method
+        assy.export("plain_assembly_step.step")
 
-    # Import the STEP file back in
-    imported_assy = cq.Assembly.importStep(plain_step_path)
+        # Import the STEP file back in
+        imported_assy = cq.Assembly.importStep("plain_assembly_step.step")
+
     assert imported_assy.name == "top_level"
 
     # Check the locations
@@ -1204,19 +1188,15 @@ def test_plain_assembly_import(tmp_path_factory):
     )  # red
 
 
-def test_copied_assembly_import(tmp_path_factory):
+def test_copied_assembly_import(tmpdir):
     """
     Tests to make sure that copied children in assemblies work correctly.
     """
     from cadquery import Assembly, Location, Color
     from cadquery.func import box, rect
 
-    # Create the temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
-
     # prepare the model
     def make_model(name: str, COPY: bool):
-        name = os.path.join(tmpdir, name)
 
         b = box(1, 1, 1)
 
@@ -1231,7 +1211,8 @@ def test_copied_assembly_import(tmp_path_factory):
                 color=Color("red"),
             )
 
-        assy.export(name)
+        with chdir(tmpdir):
+            assy.export(name)
 
         return assy
 
@@ -1239,21 +1220,20 @@ def test_copied_assembly_import(tmp_path_factory):
     make_model("test_assy.step", False)
 
     # import the assy with copies
-    assy_copy = Assembly.importStep(os.path.join(tmpdir, "test_assy_copy.step"))
+    with chdir(tmpdir):
+        assy_copy = Assembly.importStep("test_assy_copy.step")
     assert 5 == len(assy_copy.children)
 
     # import the assy without copies
-    assy_normal = Assembly.importStep(os.path.join(tmpdir, "test_assy.step"))
+    with chdir(tmpdir):
+        assy_normal = Assembly.importStep("test_assy.step")
     assert 5 == len(assy_normal.children)
 
 
-def test_nested_subassembly_step_import(tmp_path_factory):
+def test_nested_subassembly_step_import(tmpdir):
     """
     Tests if the STEP import works correctly with nested subassemblies.
     """
-
-    tmpdir = tmp_path_factory.mktemp("out")
-    nested_step_path = os.path.join(tmpdir, "plain_assembly_step.step")
 
     # Create a simple assembly
     assy = cq.Assembly()
@@ -1267,8 +1247,9 @@ def test_nested_subassembly_step_import(tmp_path_factory):
     assy.add(subassy)
 
     # Export and then re-import the nested assembly STEP
-    assy.export(nested_step_path)
-    imported_assy = cq.Assembly.importStep(nested_step_path)
+    with chdir(tmpdir):
+        assy.export("nested_assembly_step.step")
+        imported_assy = cq.Assembly.importStep("nested_assembly_step.step")
 
     # Check the locations
     assert imported_assy.children[0].loc.toTuple()[0] == (0.0, 0.0, 0.0)
@@ -1283,15 +1264,13 @@ def test_nested_subassembly_step_import(tmp_path_factory):
 @pytest.mark.parametrize(
     "assy_orig", ["subshape_assy", "boxes0_assy", "nested_assy", "simple_assy"],
 )
-def test_assembly_step_import_roundtrip(assy_orig, kind, tmp_path_factory, request):
+def test_assembly_step_import_roundtrip(assy_orig, kind, tmpdir, request):
     """
     Tests that the assembly does not mutate during successive export-import round trips.
     """
 
     assy_orig = request.getfixturevalue(assy_orig)
 
-    # Set up the temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
     round_trip_path = os.path.join(tmpdir, f"round_trip.{kind}")
 
     # First export
@@ -1375,39 +1354,43 @@ def test_step_export_loc(assy_fixture, expected, request, tmpdir):
     assert pytest.approx(c.toTuple()) == expected["center"]
 
 
-def test_native_export(simple_assy):
+def test_native_export(simple_assy, tmpdir):
 
-    exportCAF(simple_assy, "assy.xml")
+    with chdir(tmpdir):
+        exportCAF(simple_assy, "assy.xml")
 
-    # only sanity check for now
-    assert os.path.exists("assy.xml")
-
-
-def test_vtkjs_export(nested_assy):
-
-    exportVTKJS(nested_assy, "assy")
-
-    # only sanity check for now
-    assert os.path.exists("assy.zip")
+        # only sanity check for now
+        assert os.path.exists("assy.xml")
 
 
-def test_vrml_export(simple_assy):
+def test_vtkjs_export(nested_assy, tmpdir):
 
-    exportVRML(simple_assy, "assy.wrl")
+    with chdir(tmpdir):
+        exportVTKJS(nested_assy, "assy")
 
-    # only sanity check for now
-    assert os.path.exists("assy.wrl")
+        # only sanity check for now
+        assert os.path.exists("assy.zip")
 
 
-def test_toJSON(simple_assy, nested_assy, empty_top_assy):
+def test_vrml_export(simple_assy, tmpdir):
+
+    with chdir(tmpdir):
+        exportVRML(simple_assy, "assy.wrl")
+
+        # only sanity check for now
+        assert os.path.exists("assy.wrl")
+
+
+def test_toJSON(simple_assy, empty_top_assy):
 
     r1 = toJSON(simple_assy)
     r2 = toJSON(simple_assy)
     r3 = toJSON(empty_top_assy)
 
-    assert len(r1) == 3
-    assert len(r2) == 3
-    assert len(r3) == 1
+    # factor 2 to account for edges and faces being split
+    assert len(r1) == 3 * 2
+    assert len(r2) == 3 * 2
+    assert len(r3) == 1 * 2
 
 
 @pytest.mark.parametrize(
@@ -1421,11 +1404,12 @@ def test_toJSON(simple_assy, nested_assy, empty_top_assy):
         ("stl", ("STL",)),
     ],
 )
-def test_save(extension, args, nested_assy, nested_assy_sphere):
+def test_save(extension, args, nested_assy, tmpdir):
 
     filename = "nested." + extension
-    nested_assy.save(filename, *args)
-    assert os.path.exists(filename)
+    with chdir(tmpdir):
+        nested_assy.save(filename, *args)
+        assert os.path.exists(filename)
 
 
 @pytest.mark.parametrize(
@@ -1445,18 +1429,18 @@ def test_save(extension, args, nested_assy, nested_assy_sphere):
         ("stl", ("STL",), {}),
     ],
 )
-def test_export(extension, args, kwargs, tmpdir, nested_assy, cwd):
+def test_export(extension, args, kwargs, tmpdir, nested_assy):
 
     filename = "nested." + extension
 
-    with cwd(tmpdir):
+    with chdir(tmpdir):
         nested_assy.export(filename, *args, **kwargs)
         assert os.path.exists(filename)
 
 
-def test_export_vtkjs(tmpdir, nested_assy, cwd):
+def test_export_vtkjs(tmpdir, nested_assy):
 
-    with cwd(tmpdir):
+    with chdir(tmpdir):
         nested_assy.export("nested.vtkjs")
         assert os.path.exists("nested.vtkjs.zip")
 
@@ -1473,64 +1457,67 @@ def test_export_errors(nested_assy):
         nested_assy.export("nested.step", mode="1234")
 
 
-def test_save_stl_formats(nested_assy_sphere):
+def test_save_stl_formats(nested_assy_sphere, tmpdir):
 
-    # Binary export
-    nested_assy_sphere.save("nested.stl", "STL", ascii=False)
-    assert os.path.exists("nested.stl")
+    with chdir(tmpdir):
+        # Binary export
+        nested_assy_sphere.save("nested.stl", "STL", ascii=False)
+        assert os.path.exists("nested.stl")
 
-    # Trying to read a binary file as UTF-8/ASCII should throw an error
-    with pytest.raises(UnicodeDecodeError):
-        with open("nested.stl", "r") as file:
-            file.read()
+        # Trying to read a binary file as UTF-8/ASCII should throw an error
+        with pytest.raises(UnicodeDecodeError):
+            with open("nested.stl", "r") as file:
+                file.read()
 
-    # ASCII export
-    nested_assy_sphere.save("nested_ascii.stl", ascii=True)
-    assert os.path.exists("nested_ascii.stl")
-    assert os.path.getsize("nested_ascii.stl") > 3960 * 1024
-
-
-def test_save_gltf(nested_assy_sphere):
-
-    # Binary export
-    nested_assy_sphere.save("nested.glb")
-    assert os.path.exists("nested.glb")
-
-    # Trying to read a binary file as UTF-8/ASCII should throw an error
-    with pytest.raises(UnicodeDecodeError):
-        with open("nested.glb", "r") as file:
-            file.read()
-
-    # ASCII export
-    nested_assy_sphere.save("nested_ascii.gltf")
-    assert os.path.exists("nested_ascii.gltf")
-    assert os.path.getsize("nested_ascii.gltf") > 5 * 1024
+        # ASCII export
+        nested_assy_sphere.save("nested_ascii.stl", ascii=True)
+        assert os.path.exists("nested_ascii.stl")
+        assert os.path.getsize("nested_ascii.stl") > 3960 * 1024
 
 
-def test_exportGLTF(nested_assy_sphere):
+def test_save_gltf(nested_assy_sphere, tmpdir):
+
+    with chdir(tmpdir):
+        # Binary export
+        nested_assy_sphere.save("nested.glb")
+        assert os.path.exists("nested.glb")
+
+        # Trying to read a binary file as UTF-8/ASCII should throw an error
+        with pytest.raises(UnicodeDecodeError):
+            with open("nested.glb", "r") as file:
+                file.read()
+
+        # ASCII export
+        nested_assy_sphere.save("nested_ascii.gltf")
+        assert os.path.exists("nested_ascii.gltf")
+        assert os.path.getsize("nested_ascii.gltf") > 5 * 1024
+
+
+def test_exportGLTF(nested_assy_sphere, tmpdir):
     """Tests the exportGLTF function directly for binary vs ascii export."""
 
-    # Test binary export inferred from file extension
-    cq.exporters.assembly.exportGLTF(nested_assy_sphere, "nested_export_gltf.glb")
-    with pytest.raises(UnicodeDecodeError):
-        with open("nested_export_gltf.glb", "r") as file:
-            file.read()
+    with chdir(tmpdir):
+        # Test binary export inferred from file extension
+        cq.exporters.assembly.exportGLTF(nested_assy_sphere, "nested_export_gltf.glb")
+        with pytest.raises(UnicodeDecodeError):
+            with open("nested_export_gltf.glb", "r") as file:
+                file.read()
 
-    # Test explicit binary export
-    cq.exporters.assembly.exportGLTF(
-        nested_assy_sphere, "nested_export_gltf_2.glb", binary=True
-    )
-    with pytest.raises(UnicodeDecodeError):
-        with open("nested_export_gltf_2.glb", "r") as file:
-            file.read()
+        # Test explicit binary export
+        cq.exporters.assembly.exportGLTF(
+            nested_assy_sphere, "nested_export_gltf_2.glb", binary=True
+        )
+        with pytest.raises(UnicodeDecodeError):
+            with open("nested_export_gltf_2.glb", "r") as file:
+                file.read()
 
-    # Test explicit ascii export
-    cq.exporters.assembly.exportGLTF(
-        nested_assy_sphere, "nested_export_gltf_3.gltf", binary=False
-    )
-    with open("nested_export_gltf_3.gltf", "r") as file:
-        lines = file.readlines()
-        assert lines[0].startswith('{"accessors"')
+        # Test explicit ascii export
+        cq.exporters.assembly.exportGLTF(
+            nested_assy_sphere, "nested_export_gltf_3.gltf", binary=False
+        )
+        with open("nested_export_gltf_3.gltf", "r") as file:
+            lines = file.readlines()
+            assert lines[0].startswith('{"accessors"')
 
 
 def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):
@@ -1547,10 +1534,11 @@ def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):
     assert output.err == ""
 
 
-def test_save_vtkjs(nested_assy):
+def test_save_vtkjs(nested_assy, tmpdir):
 
-    nested_assy.save("nested", "VTKJS")
-    assert os.path.exists("nested.zip")
+    with chdir(tmpdir):
+        nested_assy.save("nested", "VTKJS")
+        assert os.path.exists("nested.zip")
 
 
 def test_save_raises(nested_assy):
@@ -2480,13 +2468,11 @@ def test_remove_without_parent():
     assert len(assy.objects) == 1
 
 
-def test_step_color(tmp_path_factory):
+def test_step_color(tmpdir):
     """
     Checks color handling for STEP export.
     """
 
-    # Use a temporary directory
-    tmpdir = tmp_path_factory.mktemp("out")
     step_color_path = os.path.join(tmpdir, "step_color.step")
 
     # Create a simple assembly with color
@@ -2551,3 +2537,30 @@ def test_shallow_assy():
 
     with pytest.raises(ValueError):
         toCAF(cq.Assembly())
+
+
+def test_name_geometries(tmpdir):
+    """
+    Test name propagation to geometric entities
+    """
+
+    assy = cq.Assembly()
+
+    assy.add(box(1, 1, 1), name="box")
+    assy.box.addSubshape(assy.box.obj.faces(">Z"), "top_face")
+
+    assy.add(plane(1, 1), name="face").face.addSubshape(assy.face.obj, name="plane_")
+
+    assy.add(segment((0, 0), (0, 1)), name="edge").edge.addSubshape(
+        assy.edge.obj, name="seg_"
+    )
+
+    with chdir(tmpdir):
+        assy.save("out.step", name_geometries=True)
+
+        with open("out.step", "r") as f:
+            lines = f.readlines()
+
+    assert len([l for l in lines if "top_face" in l]) == 2
+    assert len([l for l in lines if "plane_" in l]) == 2
+    assert len([l for l in lines if "seg_" in l]) == 3

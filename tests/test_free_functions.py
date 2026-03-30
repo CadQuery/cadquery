@@ -59,8 +59,16 @@ from cadquery.occ_impl.shapes import (
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
 
+import pytest
 from pytest import approx, raises, fixture
+from contextlib import chdir
 from math import pi
+
+
+@pytest.fixture(scope="function")
+def tmpdir(tmp_path_factory):
+    return tmp_path_factory.mktemp("free_functions")
+
 
 # %% test utils
 
@@ -927,12 +935,13 @@ def test_project():
 
 
 # %% export
-def test_export():
+def test_export(tmpdir):
 
-    b1 = box(1, 1, 1)
-    b1.export("box.brep")
+    with chdir(tmpdir):
+        b1 = box(1, 1, 1)
+        b1.export("box.brep")
 
-    b2 = Shape.importBrep("box.brep")
+        b2 = Shape.importBrep("box.brep")
 
     assert (b1 - b2).Volume() == approx(0)
 
