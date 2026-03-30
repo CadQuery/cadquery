@@ -175,6 +175,13 @@ The valid values are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, `
 
 For assemblies, see the ``unit`` parameter example in the exporting assemblies section.
 
+.. note::
+
+   CadQuery treats all geometry values as millimeters internally.
+   Setting ``unit="M"`` does not change how CadQuery interprets your model, it only affects how the coordinates are scaled when written to the STEP file.
+   If you built a model using values that represent meters (e.g. a box with side length ``10`` meaning 10 meters), you must scale the geometry by 1000 before exporting, then export with the default ``unit="MM"``.
+   Exporting such a model directly with ``unit="M"`` will produce a STEP file representing a 0.01-meter (10mm) object, not a 10-meter one.
+
 Exporting Assemblies
 ####################
 
@@ -232,6 +239,13 @@ The default is ``"MM"``.
 
    # Export the assembly with meter units
    assy.export("/path/to/step/assy.step", unit="M")
+
+.. note::
+
+   CadQuery treats all geometry values as millimeters internally.
+   Setting ``unit="M"`` does not change how CadQuery interprets your model, it only affects how the coordinates are scaled when written to the STEP file.
+   If you built a model using values that represent meters (e.g. a box with side length ``10`` meaning 10 meters), you must scale the geometry by 1000 before exporting, then export with the default ``unit="MM"``.
+   Exporting such a model directly with ``unit="M"`` will produce a STEP file representing a 0.01-meter (10mm) object, not a 10-meter one.
 
 Fused
 ------
