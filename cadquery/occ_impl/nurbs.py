@@ -641,7 +641,7 @@ def nbCurve(
 
         # multiply by ctrl points
         for j in range(order + 1):
-            out[i, :] += temp[j] * pts[(span - order + j) % nb, :]
+            out[i, :] += temp[j] * pts[(span - order + int(periodic) + j) % nb, :]
 
     return out
 
@@ -705,7 +705,9 @@ def nbCurveDer(
         # multiply by ctrl points
         for j in range(order + 1):
             for k in range(dorder + 1):
-                out[i, k, :] += temp[k, j] * pts[(span - order + j) % nb, :]
+                out[i, k, :] += (
+                    temp[k, j] * pts[(span - order + int(periodic) + j) % nb, :]
+                )
 
     return out
 
@@ -791,14 +793,14 @@ def nbSurface(
         nbBasis(uspan, ui, uorder, uknots_ext, utemp)
         nbBasis(vspan, vi, vorder, vknots_ext, vtemp)
 
-        uind = uspan - uorder
+        uind = uspan - uorder + int(uperiodic)
         temp = np.empty(3)
 
         # multiply by ctrl points: Nu.T*P*Nv
         for j in range(vorder + 1):
 
             temp[:] = 0.0
-            vind = vspan - vorder + j
+            vind = vspan - vorder + int(vperiodic) + j
 
             # calculate Nu.T*P
             for k in range(uorder + 1):
@@ -907,7 +909,11 @@ def nbSurfaceDer(
                 for r in range(uorder + 1):
                     temp[s, :] += (
                         utemp[k, r]
-                        * pts[(uspan - uorder + r) % nub, (vspan - vorder + s) % nvb, :]
+                        * pts[
+                            (uspan - uorder + int(uperiodic) + r) % nub,
+                            (vspan - vorder + int(vperiodic) + s) % nvb,
+                            :,
+                        ]
                     )
 
             # remaining derivative orders: dk + du <= dorder

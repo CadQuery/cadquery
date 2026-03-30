@@ -13,9 +13,10 @@ from cadquery.occ_impl.nurbs import (
     periodicLoft,
     loft,
     array2vec,
+    vec2array,
 )
 
-from cadquery.func import circle, torus
+from cadquery.func import circle, torus, ellipse, spline, plane
 from cadquery import Vector
 
 from OCP.gp import gp_Pnt, gp_Vec
@@ -375,3 +376,74 @@ def test_approximate2D(lam, penalty):
 
     assert np.allclose(np.where(delta_u >= 1, delta_u, 0) % 1, 0)
     assert np.allclose(np.where(delta_v >= 1, delta_v, 0) % 1, 0)
+
+
+EDGES = (
+    periodicApproximate(vec2array(ellipse(2, 1).sample(100)[0])).edge(),
+    spline([(0, 0), (1, 0)], tgts=((0, 1), (1, 0))),
+)
+
+PARAMS = np.array((0, 0.1, 0.5))
+
+
+@mark.parametrize("e", EDGES)
+def test_curve_position(e):
+
+    crv = Curve.fromEdge(e)
+
+    for u in PARAMS:
+        assert np.allclose(np.array(e.positionAt(u, mode="param").toTuple()), crv(u))
+
+
+@mark.parametrize("e", EDGES)
+def test_curve_tangents(e):
+
+    crv = Curve.fromEdge(e)
+
+    for u in PARAMS:
+        tgt = crv.der(u, 1)[0, 1, :]
+        tgt /= np.linalg.norm(tgt)
+
+        assert np.allclose(np.array(e.tangentAt(u, mode="param").toTuple()), tgt)
+
+
+def torus_surf():
+
+    t = torus(5, 1).face()
+
+    # double periodic surface
+    us = np.linspace(0, 1, endpoint=False)
+    vs = np.linspace(0, 1, endpoint=False)
+
+    pts = np.array(
+        [t.positionAt(u * 2 * np.pi, v * 2 * np.pi).toTuple() for v in vs for u in us]
+    )
+
+    surf = approximate2D(
+        pts,
+        us[None, :].repeat(len(vs), 0).ravel(),
+        vs[:, None].repeat(len(us), 1).ravel(),
+        3,
+        3,
+        50,
+        50,
+        uperiodic=True,
+        vperiodic=True,
+        penalty=3,
+        lam=1e-6,
+    )
+
+    return surf.face()
+
+
+FACES = (torus_surf(), plane(1, 1).toNURBS())
+
+
+@mark.parametrize("f", FACES)
+def test_surface_positions(f):
+
+    surf = Surface.fromFace(f)
+
+    for u in PARAMS:
+        for v in PARAMS:
+            assert np.allclose(np.array(f.positionAt(u, v).toTuple()), surf(u, v))
