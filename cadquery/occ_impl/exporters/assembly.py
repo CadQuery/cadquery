@@ -38,6 +38,7 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
+from ..types import STEPUnitLiterals
 
 
 class ExportModes:
@@ -52,6 +53,7 @@ def exportAssembly(
     assy: AssemblyProtocol,
     path: str,
     mode: STEPExportModeLiterals = "default",
+    unit: STEPUnitLiterals = "MM",
     **kwargs,
 ) -> bool:
     """
@@ -63,6 +65,8 @@ def exportAssembly(
     :param path: Path and filename for writing
     :param mode: STEP export mode. The options are "default", and "fused" (a single fused compound).
         It is possible that fused mode may exhibit low performance.
+    :param unit: The unit of measurement for the STEP file. Default "MM".
+    :type unit: STEPUnitLiterals
     :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
     :type fuzzy_tol: float
     :param glue: Enable gluing mode for improved performance during fused assembly export.
@@ -100,6 +104,7 @@ def exportAssembly(
     Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
     Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
     Interface_Static.SetIVal_s("write.stepcaf.subshapes.name", 1)
+    Interface_Static.SetCVal_s("write.step.unit", unit)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)
@@ -112,6 +117,7 @@ def exportStepMeta(
     path: str,
     write_pcurves: bool = True,
     precision_mode: int = 0,
+    unit: STEPUnitLiterals = "MM",
 ) -> bool:
     """
     Export an assembly to a STEP file with faces tagged with names and colors. This is done as a
@@ -127,6 +133,8 @@ def exportStepMeta(
         If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
+    :param unit: The unit of measurement for the STEP file. Default "MM".
+    :type unit: STEPUnitLiterals
     """
 
     pcurves = 1
@@ -266,6 +274,7 @@ def exportStepMeta(
     writer.SetNameMode(True)
     Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
     Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
+    Interface_Static.SetCVal_s("write.step.unit", unit)
     writer.Transfer(doc, STEPControl_StepModelType.STEPControl_AsIs)
 
     status = writer.Write(path)

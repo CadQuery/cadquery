@@ -3,10 +3,12 @@ from typing import List, Literal
 
 import OCP.IFSelect
 from OCP.STEPControl import STEPControl_Reader
+from OCP.Interface import Interface_Static
 
 from ... import cq
 from ..shapes import Shape
 from .dxf import _importDXF
+from ..types import STEPUnitLiterals
 
 RAD2DEG = 360.0 / (2 * pi)
 
@@ -24,18 +26,20 @@ class UNITS:
 
 
 def importShape(
-    importType: Literal["STEP", "DXF", "BREP", "BIN"], fileName: str, *args, **kwargs
+    importType: Literal["STEP", "DXF", "BREP", "BIN"], fileName: str, unit: STEPUnitLiterals = "MM", *args, **kwargs
 ) -> "cq.Workplane":
     """
     Imports a file based on the type (STEP, STL, etc)
 
     :param importType: The type of file that we're importing
     :param fileName: The name of the file that we're importing
+    :param unit: The unit of measurement for the STEP file. Default "MM".
+    :type unit: STEPUnitLiterals
     """
 
     # Check to see what type of file we're working with
     if importType == ImportTypes.STEP:
-        return importStep(fileName)
+        return importStep(fileName, unit)
     elif importType == ImportTypes.DXF:
         return importDXF(fileName, *args, **kwargs)
     elif importType == ImportTypes.BREP:
@@ -76,12 +80,19 @@ def importBin(fileName: str) -> "cq.Workplane":
 
 
 # Loads a STEP file into a CQ.Workplane object
-def importStep(fileName: str) -> "cq.Workplane":
+def importStep(fileName: str, unit: STEPUnitLiterals = "MM") -> "cq.Workplane":
     """
     Accepts a file name and loads the STEP file into a cadquery Workplane
 
     :param fileName: The path and name of the STEP file to be imported
+    :param unit: The assumed unit of measurement when the STEP file does not
+      declare one in its header. Has no effect when the file already contains
+      a unit declaration. Default "MM".
+    :type unit: STEPUnitLiterals
     """
+
+    # Set the assumed length unit for STEP import
+    Interface_Static.SetCVal_s("read.step.unit", unit)
 
     # Now read and return the shape
     reader = STEPControl_Reader()

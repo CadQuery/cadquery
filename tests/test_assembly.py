@@ -930,6 +930,65 @@ def test_step_roundtrip_with_materials(kind, tmp_path_factory):
     assert test_assy.children[0].material.name == "copper"
 
 
+def test_step_export_assembly_unit_default(tmp_path_factory):
+    """
+    Exports an assembly without specifying a unit and verifies the STEP
+    file header defaults to millimeters.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("unit_assy")
+    mm_path = os.path.join(tmpdir, "assy_unit_default.step")
+
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(1, 1, 1), name="box")
+    exportAssembly(assy, mm_path)
+
+    with open(mm_path, "r") as f:
+        content = f.read()
+
+    assert "MILLI" in content
+
+
+def test_step_export_assembly_unit_meters(tmp_path_factory):
+    """
+    Exports an assembly with unit="M" and verifies the STEP file header
+    declares meters.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("unit_assy_m")
+    m_path = os.path.join(tmpdir, "assy_unit_meters.step")
+
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(1, 1, 1), name="box")
+    exportAssembly(assy, m_path, unit="M")
+
+    with open(m_path, "r") as f:
+        content = f.read()
+
+    assert "MILLI" not in content
+    assert "METRE" in content
+
+
+def test_step_export_meta_unit_meters(tmp_path_factory):
+    """
+    Exports a meta STEP file with unit="M" and verifies the header
+    declares meters.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("unit_meta_m")
+    m_path = os.path.join(tmpdir, "meta_unit_meters.step")
+
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(1, 1, 1), name="box")
+    exportStepMeta(assy, m_path, unit="M")
+
+    with open(m_path, "r") as f:
+        content = f.read()
+
+    assert "MILLI" not in content
+    assert "METRE" in content
+
+
 def test_assembly_step_import(tmp_path_factory, subshape_assy):
     """
     Test if the STEP import works correctly for an assembly with subshape data attached.
@@ -1273,6 +1332,29 @@ def test_assembly_step_import_roundtrip(assy_orig, kind, tmp_path_factory, reque
 
         for k in assy.objects:
             assert k in assy_orig
+
+
+def test_assembly_import_step_unit(tmp_path_factory):
+    """
+    Exports an assembly labeled as meters and re-imports it via
+    Assembly.importStep. The geometry should be scaled to mm on import.
+    """
+
+    tmpdir = tmp_path_factory.mktemp("unit_assy_import")
+    m_path = os.path.join(tmpdir, "assy_import_meters.step")
+
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(1, 1, 1), name="box")
+    exportAssembly(assy, m_path, unit="M")
+
+    imported = cq.Assembly.importStep(m_path, unit="M")
+    assert imported is not None
+
+    # The shape should be 1.0x1.0x1.0 mm since OCCT converts from meters
+    bb = imported.toCompound().BoundingBox()
+    assert bb.xlen == approx(1.0, rel=1e-3)
+    assert bb.ylen == approx(1.0, rel=1e-3)
+    assert bb.zlen == approx(1.0, rel=1e-3)
 
 
 @pytest.mark.parametrize(
