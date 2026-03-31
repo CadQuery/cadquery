@@ -979,6 +979,26 @@ def test_step_export_meta_unit_meters(tmp_path_factory):
     assert "METRE" in content
 
 
+def test_step_export_assembly_output_unit(tmp_path_factory):
+    """
+    Exports an assembly with unit="MM" and outputUnit="M" and verifies
+    the STEP file header declares meters, and that the correct units are present.
+    """
+    tmpdir = tmp_path_factory.mktemp("output_unit_assy")
+    m_path = os.path.join(tmpdir, "assy_output_unit_meters.step")
+
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(10.0, 10.0, 10.0), name="box")
+    exportAssembly(assy, m_path, unit="MM", outputUnit="M")
+
+    with open(m_path, "r") as f:
+        content = f.read()
+
+    assert "MILLI" not in content
+    assert "METRE" in content
+    assert "(-5.E-03,-5.E-03,-5.E-03)" in content
+
+
 def test_assembly_step_import(tmpdir, subshape_assy):
     """
     Test if the STEP import works correctly for an assembly with subshape data attached.

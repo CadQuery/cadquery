@@ -1005,6 +1005,32 @@ def test_step_export_unit_inches(tmpdir):
     assert "INCH" in content
 
 
+def test_step_export_output_unit(tmpdir):
+    """
+    Exports a box with unit="MM" and outputUnit="M". Since OCCT knows
+    the model is in MM and the output is M, it should scale the coordinates
+    correctly. Re-importing should return the original 1x1x1 box.
+    """
+    box_path = os.path.join(tmpdir, "output_unit_roundtrip.step")
+    Workplane().box(10, 10, 10).val().exportStep(box_path, unit="MM", outputUnit="M")
+
+    # Make sure the coordinates are what we expect
+    with open(box_path, "r") as f:
+        content = f.read()
+    assert "(-5.E-03,-5.E-03,-5.E-03)" in content
+
+    # Make sure the units are set correctly
+    assert "MILLI" not in content
+    assert "METRE" in content
+
+    imported = importers.importStep(box_path)
+    bb = imported.val().BoundingBox()
+
+    assert bb.xlen == approx(10.0, rel=1e-3)
+    assert bb.ylen == approx(10.0, rel=1e-3)
+    assert bb.zlen == approx(10.0, rel=1e-3)
+
+
 def test_toVTK():
 
     from cadquery.occ_impl.assembly import toVTK

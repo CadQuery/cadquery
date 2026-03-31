@@ -513,7 +513,11 @@ class Shape(object):
         return writer.Write(self.wrapped, fileName)
 
     def exportStep(
-        self, fileName: str, unit: STEPUnitLiterals = "MM", **kwargs
+        self,
+        fileName: str,
+        unit: STEPUnitLiterals = "MM",
+        outputUnit: Optional[STEPUnitLiterals] = None,
+        **kwargs,
     ) -> IFSelect_ReturnStatus:
         """
         Export this shape to a STEP file.
@@ -521,8 +525,12 @@ class Shape(object):
 
         :param fileName: Path and filename for writing.
         :type fileName: str
-        :param unit: The unit of measurement for the STEP file. Default "MM".
+        :param unit: The internal unit of the model's geometry values. Default "MM".
         :type unit: STEPUnitLiterals
+        :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
+            Use this when you want the output file to declare a different unit than the model's internal unit,
+            for example to export a MM model as a STEP file declaring meters.
+        :type outputUnit: STEPUnitLiterals or None
         :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
             If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
         :type write_pcurves: bool
@@ -540,7 +548,10 @@ class Shape(object):
         writer = STEPControl_Writer()
         Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
         Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
-        Interface_Static.SetCVal_s("write.step.unit", unit)
+        Interface_Static.SetCVal_s("xstep.cascade.unit", unit)
+        Interface_Static.SetCVal_s(
+            "write.step.unit", outputUnit if outputUnit is not None else unit
+        )
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
         return writer.Write(fileName)
