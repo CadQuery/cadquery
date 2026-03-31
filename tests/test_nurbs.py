@@ -407,7 +407,8 @@ def test_curve_tangents(e):
         assert np.allclose(np.array(e.tangentAt(u, mode="param").toTuple()), tgt)
 
 
-def torus_surf():
+@fixture
+def torus_face():
 
     t = torus(5, 1).face()
 
@@ -436,23 +437,35 @@ def torus_surf():
     return surf.face()
 
 
-FACES = (torus_surf(), plane(1, 1).toNURBS())
+@fixture
+def torus_surf(torus_face):
+
+    return Surface.fromFace(torus_face)
 
 
-@mark.parametrize("f", FACES)
-def test_surface_positions(f):
+@fixture
+def plane_face():
 
-    surf = Surface.fromFace(f)
+    return plane(1, 1).toNURBS()
+
+
+FACES = (torus_face, plane_face)
+
+
+@fixture(params=FACES)
+def test_surface_positions(request):
+
+    surf = Surface.fromFace(request.getfixturevalue(request.param))
 
     for u in PARAMS:
         for v in PARAMS:
-            assert np.allclose(np.array(f.positionAt(u, v).toTuple()), surf(u, v))
+            assert np.allclose(f.positionAt(u, v).toTuple(), surf(u, v))
 
 
-@mark.parametrize("f", FACES)
-def test_surface_tangents(f):
+@fixture(params=FACES)
+def test_surface_tangents(request):
 
-    surf = Surface.fromFace(f)
+    surf = Surface.fromFace(request.getfixturevalue(request.param))
 
     for u in PARAMS:
         for v in PARAMS:
@@ -461,6 +474,31 @@ def test_surface_tangents(f):
             du = der[1, 0, :]
             dv = der[0, 1, :]
 
-            assert np.allclose(np.array(dun.toTuple()), du / np.linalg.norm(du))
-            assert np.allclose(np.array(dvn.toTuple()), dv / np.linalg.norm(dv))
-            assert np.allclose(np.array(p.toTuple()), der[0, 0, :])
+            assert np.allclose(dun.toTuple(), du / np.linalg.norm(du))
+            assert np.allclose(dvn.toTuple(), dv / np.linalg.norm(dv))
+            assert np.allclose(p.toTuple(), der[0, 0, :])
+
+
+@mark.parametrize("isoparam", PARAMS)
+@mark.parametrize("u", PARAMS)
+def test_isolines(torus_surf, isoparam, u):
+
+    uiso = torus_surf.isoline(isoparam)
+    viso = torus_surf.isoline(isoparam, "v")
+
+    assert isinstance(uiso, Curve)
+    assert isinstance(viso, Curve)
+
+    pt_u = uiso(u)
+    pt_v = viso(u)
+
+    # ref
+    f = torus_surf.face()
+    uiso_ref = f.isoline(isoparam, "u")
+    viso_ref = f.isoline(isoparam, "v")
+
+    pt_u_ref = uiso_ref.positionAt(u, mode="param")
+    pt_v_ref = viso_ref.positionAt(u, mode="param")
+
+    assert np.allclose(pt_u_ref.toTuple(), pt_u)
+    assert np.allclose(pt_v_ref.toTuple(), pt_v)
