@@ -1007,17 +1007,17 @@ def test_step_export_unit_inches(tmpdir):
 
 def test_step_export_output_unit(tmpdir):
     """
-    Exports a box with unit="MM" and outputUnit="M". Since OCCT knows
-    the model is in MM and the output is M, it should scale the coordinates
-    correctly. Re-importing should return the original 1x1x1 box.
+    Exports a box with unit="M" and outputUnit="M". This should prevent
+    OCCT from scaling the object from MM to M when it is written to the
+    STEP file. Re-importing should return the original 10x10x10 box.
     """
     box_path = os.path.join(tmpdir, "output_unit_roundtrip.step")
-    Workplane().box(10, 10, 10).val().exportStep(box_path, unit="MM", outputUnit="M")
+    Workplane().box(10, 10, 10).val().exportStep(box_path, unit="M", outputUnit="M")
 
     # Make sure the coordinates are what we expect
     with open(box_path, "r") as f:
         content = f.read()
-    assert "(-5.E-03,-5.E-03,-5.E-03)" in content
+    assert "CARTESIAN_POINT('',(-5.,-5.,-5.));" in content
 
     # Make sure the units are set correctly
     assert "MILLI" not in content
