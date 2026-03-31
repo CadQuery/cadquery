@@ -447,3 +447,20 @@ def test_surface_positions(f):
     for u in PARAMS:
         for v in PARAMS:
             assert np.allclose(np.array(f.positionAt(u, v).toTuple()), surf(u, v))
+
+
+@mark.parametrize("f", FACES)
+def test_surface_tangents(f):
+
+    surf = Surface.fromFace(f)
+
+    for u in PARAMS:
+        for v in PARAMS:
+            dun, dvn, p = f.tangentAt(u, v)
+            der = surf.der(u, v, 1).squeeze()
+            du = der[1, 0, :]
+            dv = der[0, 1, :]
+
+            assert np.allclose(np.array(dun.toTuple()), du / np.linalg.norm(du))
+            assert np.allclose(np.array(dvn.toTuple()), dv / np.linalg.norm(dv))
+            assert np.allclose(np.array(p.toTuple()), der[0, 0, :])

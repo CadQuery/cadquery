@@ -3392,6 +3392,22 @@ class Face(Shape):
 
         return rv_n, rv_p
 
+    def tangentAt(self, u: Real, v: Real) -> Tuple[Vector, Vector, Vector]:
+        """
+        Computes tangent vectors at the desired location in the u,v parameter space.
+
+        :returns: a vector representing the tangent directions and the position
+        :param u: the u parametric location to compute at.
+        :param v: the v parametric location to compute at.
+        """
+
+        p = gp_Pnt()
+        du = gp_Vec()
+        dv = gp_Vec()
+        BRepAdaptor_Surface(self.wrapped).D1(u, v, p, du, dv)
+
+        return Vector(du).normalized(), Vector(dv).normalized(), Vector(p)
+
     def Center(self) -> Vector:
 
         Properties = GProp_GProps()
