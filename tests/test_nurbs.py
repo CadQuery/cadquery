@@ -13,7 +13,10 @@ from cadquery.occ_impl.nurbs import (
     periodicLoft,
     loft,
     array2vec,
+    uIsoMatrix,
+    vIsoMatrix,
     vec2array,
+    constrainedApproximate2D,
 )
 
 from cadquery.func import circle, torus, ellipse, spline, plane
@@ -277,23 +280,32 @@ def test_approximate():
         assert e.Length() == approx(1)
 
 
-def test_periodic_approximate():
+@mark.parametrize("penalty", (1, 2, 3, 4, 5))
+@mark.parametrize("lam", (0, 1e-9))
+def test_periodic_approximate(penalty, lam):
+
+    EPS = 1e-6 if lam == 0 else 1e-3
 
     circ = circle(1)
     pts_ = circ.sample(100)[0]
     pts = np.array([list(p) for p in pts_])
 
-    crv = periodicApproximate(pts)
+    crv = periodicApproximate(pts, lam=lam, penalty=penalty)
     e = crv.edge()
 
     assert e.isValid()
-    assert e.Length() == approx(2 * np.pi)
+    assert e.Length() == approx(2 * np.pi, rel=EPS)
 
     # check params
     us0 = circ.params(pts_)
     us1 = e.params(pts_)
 
-    assert np.allclose(us0, np.array(us1) * 2 * np.pi)
+    # NB: I'm skipping the first and last point to not handle wrap around
+    assert np.allclose(us0[1:-1], np.array(us1)[1:-1] * 2 * np.pi, rtol=EPS)
+    # special case for wrap around
+    for ix in (0, -1):
+        delta = us0[ix] - np.array(us1[ix]) * 2 * np.pi
+        assert abs(delta) < EPS or abs(delta) - 2 * np.pi < EPS
 
     # multiple approximate
     crvs = periodicApproximate([pts, pts])
@@ -302,7 +314,7 @@ def test_periodic_approximate():
         e = crv.edge()
 
         assert e.isValid()
-        assert e.Length() == approx(2 * np.pi)
+        assert e.Length() == approx(2 * np.pi, rel=EPS)
 
 
 def test_periodic_loft(circles, trimmed_circles):
@@ -504,3 +516,70 @@ def test_isolines(torus_surf, isoparam, u):
 
     assert np.allclose(pt_u_ref.toTuple(), pt_u)
     assert np.allclose(pt_v_ref.toTuple(), pt_v)
+
+
+@mark.parametrize("lam", [0, 1e-6])
+@mark.parametrize("penalty", [2, 3, 4, 5])
+def test_constrainedApproximate2D(torus_surf, lam, penalty):
+
+    # sample the surface
+    us_ = np.linspace(0, 1, endpoint=False)
+    vs_ = np.linspace(0, 1, endpoint=False)
+
+    pts = np.stack([torus_surf(u, v) for v in vs_ for u in us_]).squeeze()
+
+    us = us_[None, :].repeat(len(vs_), 0).ravel()
+    vs = vs_[:, None].repeat(len(us_), 1).ravel()
+
+    # add some noise to make the problem non-trivial
+    pts += np.random.randn(*pts.shape) / 100
+
+    surf = approximate2D(
+        pts,
+        us,
+        vs,
+        3,
+        3,
+        25,
+        25,
+        uperiodic=True,
+        vperiodic=True,
+        penalty=penalty,
+        lam=lam,
+    )
+
+    isou = surf.isoline(0.0, "u")
+    isov = surf.isoline(0.0, "v")
+
+    # check that the constraints will do something
+    assert not np.allclose(isou.pts[:, 1], 0)
+    assert not np.allclose(isov.pts[:, 2], 0)
+
+    # constraints per direction
+    Au = uIsoMatrix(surf, np.array(0.0))
+    Av = vIsoMatrix(surf, np.array(0.0))
+    by = np.zeros(Au.shape[0])
+    bz = np.zeros(Av.shape[0])
+
+    surf = constrainedApproximate2D(
+        (None, Au, Av),
+        (None, by, bz),
+        pts,
+        us,
+        vs,
+        3,
+        3,
+        len(surf.uknots),
+        len(surf.vknots),
+        uperiodic=True,
+        vperiodic=True,
+        penalty=penalty,
+        lam=lam,
+    )
+
+    isou = surf.isoline(0.0, "u")
+    isov = surf.isoline(0.0, "v")
+
+    # check the constraints
+    assert np.allclose(isou.pts[:, 1], 0)
+    assert np.allclose(isov.pts[:, 2], 0)
