@@ -449,23 +449,25 @@ def plane_face():
     return plane(1, 1).toNURBS()
 
 
-FACES = (torus_face, plane_face)
+FACES = ("torus_face", "plane_face")
 
 
-@fixture(params=FACES)
-def test_surface_positions(request):
+@mark.parametrize("face", FACES)
+def test_surface_positions(face, request):
 
-    surf = Surface.fromFace(request.getfixturevalue(request.param))
+    f = request.getfixturevalue(face)
+    surf = Surface.fromFace(f)
 
     for u in PARAMS:
         for v in PARAMS:
             assert np.allclose(f.positionAt(u, v).toTuple(), surf(u, v))
 
 
-@fixture(params=FACES)
-def test_surface_tangents(request):
+@mark.parametrize("face", FACES)
+def test_surface_tangents(face, request):
 
-    surf = Surface.fromFace(request.getfixturevalue(request.param))
+    f = request.getfixturevalue(face)
+    surf = Surface.fromFace(f)
 
     for u in PARAMS:
         for v in PARAMS:
