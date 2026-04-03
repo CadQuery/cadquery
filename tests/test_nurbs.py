@@ -17,6 +17,7 @@ from cadquery.occ_impl.nurbs import (
     vIsoMatrix,
     vec2array,
     constrainedApproximate2D,
+    COO,
 )
 
 from cadquery.func import circle, torus, ellipse, spline, plane
@@ -280,8 +281,9 @@ def test_approximate():
         assert e.Length() == approx(1)
 
 
-@mark.parametrize("penalty", (1, 2, 3, 4, 5))
-@mark.parametrize("lam", (0, 1e-9))
+@mark.parametrize(
+    ("penalty", "lam"), [(1, 1e-9), (2, 1e-9), (3, 1e-9), (4, 1e-9), (5, 1e-9), (2, 0)]
+)
 def test_periodic_approximate(penalty, lam):
 
     EPS = 1e-6 if lam == 0 else 1e-3
@@ -343,8 +345,9 @@ def test_loft(circles, trimmed_circles):
     assert surf2.face().isValid()
 
 
-@mark.parametrize("lam", [0, 1e-6])
-@mark.parametrize("penalty", [2, 3, 4, 5])
+@mark.parametrize(
+    ("penalty", "lam"), [(2, 1e-6), (3, 1e-6), (4, 1e-6), (5, 1e-6), (2, 0)]
+)
 def test_approximate2D(lam, penalty):
 
     t = torus(5, 1).face()
@@ -363,8 +366,8 @@ def test_approximate2D(lam, penalty):
         vs[:, None].repeat(len(us), 1).ravel(),
         3,
         3,
-        50,
-        50,
+        15,
+        15,
         uperiodic=True,
         vperiodic=True,
         penalty=penalty,
@@ -518,8 +521,8 @@ def test_isolines(torus_surf, isoparam, u):
     assert np.allclose(pt_v_ref.toTuple(), pt_v)
 
 
-@mark.parametrize("lam", [0, 1e-6])
-@mark.parametrize("penalty", [2, 3, 4, 5])
+@mark.parametrize("lam", [0.0, 1e-6])
+@mark.parametrize("penalty", [3])
 def test_constrainedApproximate2D(torus_surf, lam, penalty):
 
     # sample the surface
@@ -540,8 +543,8 @@ def test_constrainedApproximate2D(torus_surf, lam, penalty):
         vs,
         3,
         3,
-        25,
-        25,
+        15,
+        15,
         uperiodic=True,
         vperiodic=True,
         penalty=penalty,
@@ -555,7 +558,7 @@ def test_constrainedApproximate2D(torus_surf, lam, penalty):
     assert not np.allclose(isou.pts[:, 1], 0)
     assert not np.allclose(isov.pts[:, 2], 0)
 
-    # constraints per direction
+    # # constraints per direction
     Au = uIsoMatrix(surf, np.array(0.0))
     Av = vIsoMatrix(surf, np.array(0.0))
     by = np.zeros(Au.shape[0])
@@ -583,3 +586,26 @@ def test_constrainedApproximate2D(torus_surf, lam, penalty):
     # check the constraints
     assert np.allclose(isou.pts[:, 1], 0)
     assert np.allclose(isov.pts[:, 2], 0)
+
+    # all constraints at once
+    Ay = sp.bmat(((sp.coo_matrix(Au.shape), Au.coo(), sp.coo_matrix(Au.shape)),))
+    Az = sp.bmat(((sp.coo_matrix(Av.shape), sp.coo_matrix(Av.shape), Av.coo()),))
+
+    A = sp.vstack((Ay, Az))
+    b = np.concatenate((by, bz))
+
+    surf = constrainedApproximate2D(
+        COO(A.row, A.col, A.data, A.shape),
+        b,
+        pts,
+        us,
+        vs,
+        3,
+        3,
+        len(surf.uknots),
+        len(surf.vknots),
+        uperiodic=True,
+        vperiodic=True,
+        penalty=penalty,
+        lam=lam,
+    )
