@@ -124,6 +124,16 @@ class COO(NamedTuple):
 
         return self.coo().tocsr()
 
+    @classmethod
+    def fromSP(cls, sparr: sp.sparray | sp.spmatrix):
+        """
+        Helper for converting from any SciPy sparse array or matrix.
+        """
+
+        tmp = sparr.tocoo()
+
+        return cls(tmp.row, tmp.col, tmp.data, tmp.shape)
+
 
 class Curve(NamedTuple):
     """
