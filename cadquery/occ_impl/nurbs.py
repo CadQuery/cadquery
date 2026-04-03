@@ -25,6 +25,7 @@ from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace
 from .shapes import Face, Edge
 from .geom import Vector
 from ..utils import multidispatch
+from ..types import Real
 
 njit = _njit(cache=True, error_model="numpy", fastmath=True, nogil=True, parallel=False)
 
@@ -1855,6 +1856,83 @@ def approximate2D(
 
 @multidispatch
 def constrainedApproximate2D(
+    As: COO,
+    bs: Array,
+    data: Array,
+    u: Array,
+    v: Array,
+    uorder: int,
+    vorder: int,
+    uknots: int | Array = 50,
+    vknots: int | Array = 50,
+    uperiodic: bool = False,
+    vperiodic: bool = False,
+    penalty: int = 3,
+    lam: Real = 0,
+) -> Surface:
+    """
+    2D surface approximation with additional constraint for all components (x,y,z) combined.
+    """
+
+    # process the knots
+    uknots_ = uknots if isinstance(uknots, Array) else np.linspace(0, 1, uknots)
+    vknots_ = vknots if isinstance(vknots, Array) else np.linspace(0, 1, vknots)
+
+    # create the design matrix
+    C = designMatrix2D(
+        u, v, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic
+    ).csc()
+
+    # handle penalties if requested
+    if lam:
+        # construct the penalty grid
+        up, vp = uniformGrid(uknots_, vknots_, uorder, vorder, uperiodic, vperiodic)
+
+        # construct the derivative matrices
+        penalties = penaltyMatrix2D(
+            up, vp, uorder, vorder, penalty, uknots_, vknots_, uperiodic, vperiodic,
+        )
+
+        # augment the design matrix
+        tmp = [comb(penalty, i) * penalties[i].csc() for i in range(penalty + 1)]
+        Lu = uknots_[-1] - uknots_[0]  # v length of the parametric domain
+        Lv = vknots_[-1] - vknots_[0]  # u length of the parametric domain
+        P = Lu * Lv / len(up) * sp.vstack(tmp)
+
+        CtC = C.T @ C + lam * P.T @ P
+    else:
+        CtC = C.T @ C
+
+    # assemble one large block diagonal matrix
+    CtC_xyz = sp.block_diag((CtC, CtC, CtC))
+    C_xyz = sp.block_diag((C, C, C))
+
+    # solve the augmented normal equations
+    LHS = sp.bmat(((CtC_xyz, As.coo().T,), (As.coo(), None)))
+    RHS = np.concatenate((C_xyz.T @ data.flatten(order="F"), bs))
+
+    D, L, P = ldl(LHS, False)
+    sol = ldl_solve(RHS, D, L, P).toarray()
+    pts = sol[: CtC_xyz.shape[0]]
+
+    # construct the result
+    rv = Surface(
+        pts.reshape((-1, 3), order="F").reshape(
+            (len(uknots_) - int(uperiodic), len(vknots_) - int(vperiodic), 3,)
+        ),
+        uknots_,
+        vknots_,
+        uorder,
+        vorder,
+        uperiodic,
+        vperiodic,
+    )
+
+    return rv
+
+
+@multidispatch
+def constrainedApproximate2D(
     As: tuple[Optional[COO], Optional[COO], Optional[COO]],
     bs: tuple[Optional[Array], Optional[Array], Optional[Array]],
     data: Array,
@@ -1867,7 +1945,7 @@ def constrainedApproximate2D(
     uperiodic: bool = False,
     vperiodic: bool = False,
     penalty: int = 3,
-    lam: float = 0,
+    lam: Real = 0,
 ) -> Surface:
     """
     2D surface approximation with additional optional constraints per (x,y,z) component.
@@ -1920,86 +1998,6 @@ def constrainedApproximate2D(
     rv = Surface(
         np.stack(pts, axis=1).reshape(
             (len(uknots_) - int(uperiodic), len(vknots_) - int(vperiodic), 3)
-        ),
-        uknots_,
-        vknots_,
-        uorder,
-        vorder,
-        uperiodic,
-        vperiodic,
-    )
-
-    return rv
-
-
-@multidispatch
-def constrainedApproximate2D(
-    A: COO,
-    b: Array,
-    data: Array,
-    u: Array,
-    v: Array,
-    uorder: int,
-    vorder: int,
-    uknots: int | Array = 50,
-    vknots: int | Array = 50,
-    uperiodic: bool = False,
-    vperiodic: bool = False,
-    penalty: int = 3,
-    lam: float = 0,
-) -> Surface:
-    """
-    2D surface approximation with additional constraint for all components (x,y,z) combined.
-    """
-
-    # process the knots
-    uknots_ = uknots if isinstance(uknots, Array) else np.linspace(0, 1, uknots)
-    vknots_ = vknots if isinstance(vknots, Array) else np.linspace(0, 1, vknots)
-
-    # create the design matrix
-    C = designMatrix2D(
-        u, v, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic
-    ).csc()
-
-    # handle penalties if requested
-    if lam:
-        # construct the penalty grid
-        up, vp = uniformGrid(uknots_, vknots_, uorder, vorder, uperiodic, vperiodic)
-
-        # construct the derivative matrices
-        penalties = penaltyMatrix2D(
-            up, vp, uorder, vorder, penalty, uknots_, vknots_, uperiodic, vperiodic,
-        )
-
-        # augment the design matrix
-        tmp = [comb(penalty, i) * penalties[i].csc() for i in range(penalty + 1)]
-        Lu = uknots_[-1] - uknots_[0]  # v length of the parametric domain
-        Lv = vknots_[-1] - vknots_[0]  # u length of the parametric domain
-        P = Lu * Lv / len(up) * sp.vstack(tmp)
-
-        CtC = C.T @ C + lam * P.T @ P
-    else:
-        CtC = C.T @ C
-
-    # assemble one large block diagonal matrix
-    CtC_xyz = sp.block_diag((CtC, CtC, CtC))
-
-    # solve the augmented normal equations
-    LHS = sp.bmat(((CtC_xyz, A.coo().T,), (A.coo(), None)))
-    RHS = np.stack((CtC_xyz.T @ data.flatten(order="F"), b))
-
-    D, L, P = ldl(LHS, False)
-    sol = ldl_solve(RHS, D, L, P).toarray()
-    pts = sol[: CtC_xyz.shape[0]]
-
-    # construct the result
-    rv = Surface(
-        pts.reshape((-1, 3), order="F").reshape(
-            (
-                len(uknots_) - int(uperiodic),
-                len(vknots_) - int(vperiodic),
-                3,
-            )  # FIXME: check if this  reshape is correct
         ),
         uknots_,
         vknots_,
