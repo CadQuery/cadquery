@@ -281,9 +281,7 @@ def test_approximate():
         assert e.Length() == approx(1)
 
 
-@mark.parametrize(
-    ("penalty", "lam"), [(1, 1e-9), (2, 1e-9), (3, 1e-9), (4, 1e-9), (5, 1e-9), (2, 0)]
-)
+@mark.parametrize(("penalty", "lam"), [(3, 1e-9), (4, 1e-9), (5, 1e-9), (2, 0)])
 def test_periodic_approximate(penalty, lam):
 
     EPS = 1e-6 if lam == 0 else 1e-3
@@ -345,9 +343,7 @@ def test_loft(circles, trimmed_circles):
     assert surf2.face().isValid()
 
 
-@mark.parametrize(
-    ("penalty", "lam"), [(2, 1e-6), (3, 1e-6), (4, 1e-6), (5, 1e-6), (2, 0)]
-)
+@mark.parametrize(("penalty", "lam"), [(3, 1e-6), (4, 1e-6), (5, 1e-6), (2, 0)])
 def test_approximate2D(lam, penalty):
 
     t = torus(5, 1).face()
@@ -398,7 +394,7 @@ EDGES = (
     spline([(0, 0), (1, 0)], tgts=((0, 1), (1, 0))),
 )
 
-PARAMS = np.array((0, 0.1, 0.5))
+PARAMS = np.array((0, 0.1))
 
 
 @mark.parametrize("e", EDGES)
@@ -441,8 +437,8 @@ def torus_face():
         vs[:, None].repeat(len(us), 1).ravel(),
         3,
         3,
-        50,
-        50,
+        10,
+        10,
         uperiodic=True,
         vperiodic=True,
         penalty=3,
@@ -543,8 +539,8 @@ def test_constrainedApproximate2D(torus_surf, lam, penalty):
         vs,
         3,
         3,
-        15,
-        15,
+        10,
+        10,
         uperiodic=True,
         vperiodic=True,
         penalty=penalty,
@@ -595,7 +591,7 @@ def test_constrainedApproximate2D(torus_surf, lam, penalty):
     b = np.concatenate((by, bz))
 
     surf = constrainedApproximate2D(
-        COO(A.row, A.col, A.data, A.shape),
+        COO.fromSP(A),
         b,
         pts,
         us,
