@@ -548,7 +548,7 @@ class Shape(object):
         writer = STEPControl_Writer()
         Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
         Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
-        Interface_Static.SetCVal_s("xstep.cascade.unit", unit)
+        Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
         Interface_Static.SetCVal_s(
             "write.step.unit", outputUnit if outputUnit is not None else unit
         )
