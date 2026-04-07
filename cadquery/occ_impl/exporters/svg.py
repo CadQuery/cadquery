@@ -122,7 +122,7 @@ def getPaths(
     return (hiddenPaths, visiblePaths)
 
 
-def getSVG(shape: Shape, opts=None):
+def getSVG(shape, opts=None):
     """
     Export a shape to SVG text.
 
