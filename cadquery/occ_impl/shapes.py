@@ -6627,11 +6627,11 @@ def projectToViewpoint(
         BRepLib.BuildCurves3d_s(el, TOLERANCE)
 
     # convert to native CQ objects
-    visible = [Shape.cast(s) for s in visible]  # s is a TopoDS_Shape (Compound)
-    hidden = [Shape.cast(s) for s in hidden]
+    visible_ = [Shape.cast(s) for s in visible]  # s is a TopoDS_Shape (Compound)
+    hidden_ = [Shape.cast(s) for s in hidden]
 
     # Extract edges
-    visible_edges = [e for c in visible for e in c.Edges()]
-    hidden_edges = [e for c in hidden for e in c.Edges()]
+    visible_edges = [e for c in visible_ for e in c.Edges()]
+    hidden_edges = [e for c in hidden_ for e in c.Edges()]
 
     return visible_edges, hidden_edges
