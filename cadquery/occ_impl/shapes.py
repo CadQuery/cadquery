@@ -619,7 +619,7 @@ class Shape(object):
         if isinstance(tr, str):
             rv = tr
         elif tr is BRepAdaptor_Curve:
-            rv = geom_LUT_EDGE[tr(self.wrapped).GetType()]
+            rv = geom_LUT_EDGE[tr(tcast(TopoDS_Edge, self.wrapped)).GetType()]
         else:
             rv = geom_LUT_FACE[tr(self.wrapped).GetType()]
 
