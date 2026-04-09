@@ -96,7 +96,7 @@ def importStep(fileName: str, unit: STEPUnitLiterals = "MM") -> "cq.Workplane":
     """
 
     # Set the assumed length unit for STEP import in case it is missing from the STEP header
-    Interface_Static.SetCVal_s("read.step.unit", unit)
+    Interface_Static.SetCVal_s("read.step.unit", unit.upper())
 
     # Now read and return the shape
     reader = STEPControl_Reader()

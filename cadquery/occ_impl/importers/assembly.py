@@ -151,7 +151,7 @@ def importStep(assy: AssemblyProtocol, path: str, unit: STEPUnitLiterals = "MM")
     step_reader.SetSHUOMode(True)
 
     Interface_Static.SetIVal_s("read.stepcaf.subshapes.name", 1)
-    Interface_Static.SetCVal_s("read.step.unit", unit)
+    Interface_Static.SetCVal_s("read.step.unit", unit.upper())
 
     # Read the STEP file
     status = step_reader.ReadFile(path)
