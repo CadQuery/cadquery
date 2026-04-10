@@ -192,20 +192,20 @@ class TestImporters(BaseTest):
 
     def testSTEPImportUnitOverride(self):
         """
-        Exports a 1x1x1 box as MM and re-imports it with unit="M" to verify
-        whether read.step.unit overrides the unit declared in the STEP header.
-        If it overrides, the box will be 500x500x500 (0.5 treated as meters).
-        If it only applies as a fallback, the box will remain 1x1x1.
+        Exports a 1000x1000x1000 box as MM and re-imports it with unit="M" to verify
+        that xstep.cascade.unit overrides the unit declared in the STEP header.
+        If it overrides, the box will be 1x1x1 (1000 mm treated as meters).
+        If it only applies as a fallback, the box will remain 1000x1000x1000.
         """
 
         mm_path = os.path.join(OUTDIR, "unit_override_test.step")
-        Workplane().box(1, 1, 1).val().exportStep(mm_path)
+        Workplane().box(1000, 1000, 1000).val().exportStep(mm_path)
 
         imported = importers.importStep(mm_path, unit="M")
         bb = imported.val().BoundingBox()
 
-        assert bb.xlen == approx(1.0, rel=1e-3)
-        assert bb.ylen == approx(1.0, rel=1e-3)
+        assert bb.xlen == approx(1, rel=1e-3)
+        assert bb.ylen == approx(1, rel=1e-3)
 
     def testSTEPImportUnitViaImportShape(self):
         """

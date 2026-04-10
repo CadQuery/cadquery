@@ -1023,7 +1023,7 @@ def test_step_export_output_unit(tmpdir):
     assert "MILLI" not in content
     assert "METRE" in content
 
-    imported = importers.importStep(box_path)
+    imported = importers.importStep(box_path, unit="m")
     bb = imported.val().BoundingBox()
 
     assert bb.xlen == approx(10.0, rel=1e-3)

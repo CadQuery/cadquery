@@ -84,13 +84,15 @@ STEP files can be imported using the :meth:`importers.importStep` method (note t
 
    result = cq.importers.importStep("/path/to/step/block.stp")
 
-By default, the unit declared in the STEP file's header is used, i.e. no conversion factor is applied when importing. If needed, the ``unit`` parameter can be used to specify to which unit it is converted. The valid values are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+By default, no unit conversion is applied.
+The ``unit`` parameter sets the target unit - OCCT scales from the unit declared in the STEP file's header to the requested unit.
+The valid values are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
 
 .. code-block:: python
 
    import cadquery as cq
 
-   # Import a STEP file that lacks a unit declaration, treating its values as meters
+   # Import a STEP file converting its units to meters
    result = cq.importers.importStep("/path/to/step/block.stp", unit="M")
 
 Exporting STEP

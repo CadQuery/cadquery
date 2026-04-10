@@ -89,14 +89,13 @@ def importStep(fileName: str, unit: STEPUnitLiterals = "MM") -> "cq.Workplane":
     Accepts a file name and loads the STEP file into a cadquery Workplane
 
     :param fileName: The path and name of the STEP file to be imported
-    :param unit: The assumed unit of measurement when the STEP file does not
-      declare one in its header. Has no effect when the file already contains
-      a unit declaration. Default "MM".
+    :param unit: Sets the target OpenCASCADE unit - OCCT scales from the file's
+    declared unit to this unit. Default "MM".
     :type unit: STEPUnitLiterals
     """
 
-    # Set the assumed length unit for STEP import in case it is missing from the STEP header
-    Interface_Static.SetCVal_s("read.step.unit", unit.upper())
+    # Set the target cascade unit - OCCT scales from the file's declared unit to this unit
+    Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
 
     # Now read and return the shape
     reader = STEPControl_Reader()
