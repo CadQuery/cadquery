@@ -329,17 +329,23 @@ class Surface(NamedTuple):
         if dir == "u":
             knots = self.vknots
             knots_orig = self.uknots
-            periodic = self.uperiodic
-            order = self.uorder
+            periodic = self.vperiodic
+            periodic_orig = self.uperiodic
+            order = self.vorder
+            order_orig = self.uorder
             ix = 0
         else:
             knots = self.uknots
             knots_orig = self.vknots
-            periodic = self.vperiodic
-            order = self.vorder
+            periodic = self.uperiodic
+            periodic_orig = self.vperiodic
+            order = self.uorder
+            order_orig = self.vorder
             ix = 1
 
-        C = designMatrix(np.atleast_1d(param), order, knots_orig, periodic).cooarr()
+        C = designMatrix(
+            np.atleast_1d(param), order_orig, knots_orig, periodic_orig
+        ).cooarr()
         pts = C.tensordot(self.pts, axes=((1,), (ix,))).squeeze()
 
         return Curve(pts, knots, order, periodic)

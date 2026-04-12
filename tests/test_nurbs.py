@@ -455,6 +455,34 @@ def torus_surf(torus_face):
 
 
 @fixture
+def simple_surf():
+
+    pts = np.array(
+        [
+            [[0.0, 0.0, 0.0], [0.0, 2.0, 0.0]],
+            [[2.0, 0.0, 1.0], [2.0, 2.0, 1.0]],
+            [[4.0, 0.0, 0.0], [4.0, 2.0, 0.0]],
+        ],
+        dtype=float,
+    )
+
+    uknots = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+    vknots = np.array([0.0, 0.0, 1.0, 1.0])
+
+    surf = Surface(
+        pts=pts,
+        uknots=uknots,
+        vknots=vknots,
+        uorder=2,
+        vorder=1,
+        uperiodic=False,
+        vperiodic=False,
+    )
+
+    return surf
+
+
+@fixture
 def plane_face():
 
     return plane(1, 1).toNURBS()
@@ -494,10 +522,13 @@ def test_surface_tangents(face, request):
 
 @mark.parametrize("isoparam", PARAMS)
 @mark.parametrize("u", PARAMS)
-def test_isolines(torus_surf, isoparam, u):
+@mark.parametrize("surf", ("torus_surf", "simple_surf"))
+def test_isolines(surf, isoparam, u, request):
 
-    uiso = torus_surf.isoline(isoparam)
-    viso = torus_surf.isoline(isoparam, "v")
+    surf = request.getfixturevalue(surf)
+
+    uiso = surf.isoline(isoparam)
+    viso = surf.isoline(isoparam, "v")
 
     assert isinstance(uiso, Curve)
     assert isinstance(viso, Curve)
@@ -506,7 +537,7 @@ def test_isolines(torus_surf, isoparam, u):
     pt_v = viso(u)
 
     # ref
-    f = torus_surf.face()
+    f = surf.face()
     uiso_ref = f.isoline(isoparam, "u")
     viso_ref = f.isoline(isoparam, "v")
 
