@@ -102,9 +102,9 @@ def _split_showables(
     for el in objs:
         if instance_of(el, ShapeLike):
             rv_s.append(el)
-        if isinstance(el, Curve):
+        elif isinstance(el, Curve):
             rv_s.append(el.edge())
-        if isinstance(el, Surface):
+        elif isinstance(el, Surface):
             rv_s.append(el.face())
         elif isinstance(el, Vector):
             rv_v.append(el)
