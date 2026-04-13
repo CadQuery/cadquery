@@ -1988,8 +1988,8 @@ def constrainedApproximate2D(
 
         # augment the design matrix
         tmp = [comb(penalty, i) * penalties[i].csc() for i in range(penalty + 1)]
-        Lu = uknots_[-1] - uknots_[0]  # v length of the parametric domain
-        Lv = vknots_[-1] - vknots_[0]  # u length of the parametric domain
+        Lu = uknots_[-1] - uknots_[0]  # u length of the parametric domain
+        Lv = vknots_[-1] - vknots_[0]  # v length of the parametric domain
         P = Lu * Lv / len(up) * sp.vstack(tmp)
 
         CtC = C.T @ C + lam * P.T @ P
