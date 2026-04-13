@@ -4,7 +4,7 @@ import scipy.sparse as sp
 
 from numba import njit as _njit
 
-from typing import NamedTuple, Optional, Tuple, List, Union, cast
+from typing import NamedTuple, Optional, Tuple, List, Union, cast, Literal, Sequence
 
 from math import comb
 
@@ -23,8 +23,9 @@ from OCP.gp import gp_Pnt
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace
 
 from .shapes import Face, Edge
-
-from multimethod import multidispatch
+from .geom import Vector
+from ..utils import multidispatch
+from ..types import Real
 
 njit = _njit(cache=True, error_model="numpy", fastmath=True, nogil=True, parallel=False)
 
@@ -81,6 +82,16 @@ def _colIntArray(knots: NDArray) -> TColStd_Array1OfInteger:
     return rv
 
 
+def vec2array(vecs: Sequence[Vector]) -> NDArray:
+
+    return np.array([v.toTuple() for v in vecs])
+
+
+def array2vec(data: NDArray) -> list[Vector]:
+
+    return [Vector(*row) for row in data]
+
+
 # %% vocabulary types
 
 Array = ndarray  # NDArray[np.floating]
@@ -95,10 +106,15 @@ class COO(NamedTuple):
     i: ArrayI
     j: ArrayI
     v: Array
+    shape: tuple[int, int]
 
     def coo(self):
 
-        return sp.coo_matrix((self.v, (self.i, self.j)))
+        return sp.coo_matrix((self.v, (self.i, self.j)), shape=self.shape)
+
+    def cooarr(self):
+
+        return sp.coo_array((self.v, (self.i, self.j)), shape=self.shape)
 
     def csc(self):
 
@@ -107,6 +123,16 @@ class COO(NamedTuple):
     def csr(self):
 
         return self.coo().tocsr()
+
+    @classmethod
+    def fromSP(cls, sparr: sp.sparray | sp.spmatrix):
+        """
+        Helper for converting from any SciPy sparse array or matrix.
+        """
+
+        tmp = sparr.tocoo()
+
+        return cls(tmp.row, tmp.col, tmp.data, tmp.shape)
 
 
 class Curve(NamedTuple):
@@ -180,6 +206,9 @@ class Surface(NamedTuple):
     vperiodic: bool
 
     def surface(self) -> Geom_BSplineSurface:
+        """
+        Convert to a OCCT Surface object.
+        """
 
         unique_knots, mults_arr = np.unique(self.uknots, return_counts=True)
         uknots = _colRealArray(unique_knots)
@@ -202,6 +231,9 @@ class Surface(NamedTuple):
         )
 
     def face(self, tol: float = 1e-3) -> Face:
+        """
+        Convert to a Face object.
+        """
 
         return Face(BRepBuilderAPI_MakeFace(self.surface(), tol).Shape())
 
@@ -289,16 +321,45 @@ class Surface(NamedTuple):
 
         return rv, ders[:, 0, 0, :].squeeze()
 
+    def isoline(self, param: float, dir: Literal["u", "v"] = "u") -> Curve:
+        """
+        Extract an isoline.
+        """
+
+        if dir == "u":
+            knots = self.vknots
+            knots_orig = self.uknots
+            periodic = self.vperiodic
+            periodic_orig = self.uperiodic
+            order = self.vorder
+            order_orig = self.uorder
+            ix = 0
+        else:
+            knots = self.uknots
+            knots_orig = self.vknots
+            periodic = self.uperiodic
+            periodic_orig = self.vperiodic
+            order = self.uorder
+            order_orig = self.vorder
+            ix = 1
+
+        C = designMatrix(
+            np.atleast_1d(param), order_orig, knots_orig, periodic_orig
+        ).cooarr()
+        pts = C.tensordot(self.pts, axes=((1,), (ix,))).squeeze()
+
+        return Curve(pts, knots, order, periodic)
+
 
 # %% basis functions
 
 
 @njiti
 def _preprocess(
-    u: Array, order: int, knots: Array, periodic: float
+    u: Array, order: int, knots: Array, periodic: bool
 ) -> Tuple[Array, Array, Optional[int], Optional[int], int]:
     """
-    Helper for handling peridocity. This function extends the knot vector,
+    Helper for handling periodicity. This function extends the knot vector,
     wraps the parameters and calculates the delta span.
     """
 
@@ -597,7 +658,7 @@ def nbCurve(
 
         # multiply by ctrl points
         for j in range(order + 1):
-            out[i, :] += temp[j] * pts[(span - order + j) % nb, :]
+            out[i, :] += temp[j] * pts[(span - order + int(periodic) + j) % nb, :]
 
     return out
 
@@ -661,7 +722,9 @@ def nbCurveDer(
         # multiply by ctrl points
         for j in range(order + 1):
             for k in range(dorder + 1):
-                out[i, k, :] += temp[k, j] * pts[(span - order + j) % nb, :]
+                out[i, k, :] += (
+                    temp[k, j] * pts[(span - order + int(periodic) + j) % nb, :]
+                )
 
     return out
 
@@ -747,14 +810,14 @@ def nbSurface(
         nbBasis(uspan, ui, uorder, uknots_ext, utemp)
         nbBasis(vspan, vi, vorder, vknots_ext, vtemp)
 
-        uind = uspan - uorder
+        uind = uspan - uorder + int(uperiodic)
         temp = np.empty(3)
 
         # multiply by ctrl points: Nu.T*P*Nv
         for j in range(vorder + 1):
 
             temp[:] = 0.0
-            vind = vspan - vorder + j
+            vind = vspan - vorder + int(vperiodic) + j
 
             # calculate Nu.T*P
             for k in range(uorder + 1):
@@ -828,7 +891,7 @@ def nbSurfaceDer(
         v, vorder, vknots, vperiodic
     )
 
-    # number of param values
+    # number of parameter values
     nu = np.size(u)
 
     # chunk sizes
@@ -863,7 +926,11 @@ def nbSurfaceDer(
                 for r in range(uorder + 1):
                     temp[s, :] += (
                         utemp[k, r]
-                        * pts[(uspan - uorder + r) % nub, (vspan - vorder + s) % nvb, :]
+                        * pts[
+                            (uspan - uorder + int(uperiodic) + r) % nub,
+                            (vspan - vorder + int(vperiodic) + s) % nvb,
+                            :,
+                        ]
                     )
 
             # remaining derivative orders: dk + du <= dorder
@@ -889,7 +956,7 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
     # extend the knots
     u_, knots_ext, minspan, maxspan, deltaspan = _preprocess(u, order, knots, periodic)
 
-    # number of param values
+    # number of parameter values
     nu = len(u)
 
     # number of basis functions
@@ -906,9 +973,10 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
         i=np.empty(n * nu, dtype=np.int64),
         j=np.empty(n * nu, dtype=np.int64),
         v=np.empty(n * nu),
+        shape=(nu, len(knots) - 1 - (not periodic) * order),
     )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(nu):
         ui = u_[i]
 
@@ -921,7 +989,7 @@ def designMatrix(u: Array, order: int, knots: Array, periodic: bool = False) -> 
         # update the matrix
         rv.i[i * n : (i + 1) * n] = i
         rv.j[i * n : (i + 1) * n] = (
-            span - order + np.arange(n)
+            span - order + int(periodic) + np.arange(n)
         ) % nb  # NB: this is due to periodicity
         rv.v[i * n : (i + 1) * n] = temp
 
@@ -943,7 +1011,7 @@ def designMatrix2D(
     Create a sparse tensor product design matrix.
     """
 
-    # extend the knots and preprocess
+    # extend the knots and pre-process
     u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
         u, uorder, uknots, uperiodic
     )
@@ -951,7 +1019,7 @@ def designMatrix2D(
         v, vorder, vknots, vperiodic
     )
 
-    # number of param values
+    # number of parameter values
     ni = len(u)
 
     # chunk size
@@ -972,9 +1040,14 @@ def designMatrix2D(
         i=np.empty(ni * nj, dtype=np.int64),
         j=np.empty(ni * nj, dtype=np.int64),
         v=np.empty(ni * nj),
+        shape=(
+            ni,
+            (len(uknots) - 1 - (not uperiodic) * uorder)
+            * (len(vknots) - 1 - (not vperiodic) * vorder),
+        ),
     )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(ni):
         ui, vi = u_[i], v_[i]
 
@@ -989,8 +1062,10 @@ def designMatrix2D(
         # update the matrix
         rv.i[i * nj : (i + 1) * nj] = i
         rv.j[i * nj : (i + 1) * nj] = (
-            ((uspan - uorder + np.arange(nu)) % nu_total) * nv_total
-            + ((vspan - vorder + np.arange(nv)) % nv_total)[:, np.newaxis]
+            ((uspan - uorder + int(uperiodic) + np.arange(nu)) % nu_total) * nv_total
+            + ((vspan - vorder + int(vperiodic) + np.arange(nv)) % nv_total)[
+                :, np.newaxis
+            ]
         ).ravel()
         rv.v[i * nj : (i + 1) * nj] = (utemp * vtemp[:, np.newaxis]).ravel()
 
@@ -1012,7 +1087,7 @@ def derMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
     Create a sparse design matrix and corresponding derivative matrices.
     """
 
-    # number of param values
+    # number of parameter values
     nu = np.size(u)
 
     # chunk size
@@ -1030,10 +1105,11 @@ def derMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[COO]:
                 i=np.empty(n * nu, dtype=np.int64),
                 j=np.empty(n * nu, dtype=np.int64),
                 v=np.empty(n * nu),
+                shape=(nu, len(knots) - 1 - order),
             )
         )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(nu):
         ui = u[i]
 
@@ -1063,7 +1139,7 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
         (knots[-order:-1] - knots[-1], knots, knots[-1] + knots[1:order])
     )
 
-    # number of param values
+    # number of parameter values
     nu = len(u)
 
     # number of basis functions
@@ -1084,10 +1160,11 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
                 i=np.empty(n * nu, dtype=np.int64),
                 j=np.empty(n * nu, dtype=np.int64),
                 v=np.empty(n * nu),
+                shape=(nu, len(knots) - 1),
             )
         )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(nu):
         ui = u[i]
 
@@ -1101,8 +1178,8 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
         for di in range(dorder + 1):
             rv[di].i[i * n : (i + 1) * n] = i
             rv[di].j[i * n : (i + 1) * n] = (
-                span - order + np.arange(n)
-            ) % nb  # NB: this is due to peridicity
+                span - order + 1 + np.arange(n)
+            ) % nb  # NB: this is due to periodicity
             rv[di].v[i * n : (i + 1) * n] = temp[di, :]
 
     return rv
@@ -1110,6 +1187,9 @@ def periodicDerMatrix(u: Array, order: int, dorder: int, knots: Array) -> list[C
 
 @njit
 def periodicDiscretePenalty(us: Array, order: int) -> COO:
+    """
+    Create a periodic discrete penalty matrix for approximating higher order penalties.
+    """
 
     if order not in (1, 2):
         raise ValueError(
@@ -1127,6 +1207,7 @@ def periodicDiscretePenalty(us: Array, order: int) -> COO:
         i=np.empty(nb * ne, dtype=np.int64),
         j=np.empty(nb * ne, dtype=np.int64),
         v=np.empty(nb * ne),
+        shape=(nb, nb),
     )
 
     if order == 1:
@@ -1157,7 +1238,10 @@ def periodicDiscretePenalty(us: Array, order: int) -> COO:
 
 
 @njit
-def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
+def discretePenalty(us: Array, order: int) -> COO:
+    """
+    Create a discrete penalty matrix for approximating higher order penalties.
+    """
 
     if order not in (1, 2):
         raise ValueError(
@@ -1175,6 +1259,7 @@ def discretePenalty(us: Array, order: int, splineorder: int = 3) -> COO:
         i=np.empty(nb * ne, dtype=np.int64),
         j=np.empty(nb * ne, dtype=np.int64),
         v=np.empty(nb * ne),
+        shape=(nb, nb),
     )
 
     if order == 1:
@@ -1262,7 +1347,7 @@ def penaltyMatrix2D(
     Create sparse tensor product 2D derivative matrices.
     """
 
-    # extend the knots and preprocess
+    # extend the knots and pre-process
     u_, uknots_ext, minspanu, maxspanu, deltaspanu = _preprocess(
         u, uorder, uknots, uperiodic
     )
@@ -1270,7 +1355,7 @@ def penaltyMatrix2D(
         v, vorder, vknots, vperiodic
     )
 
-    # number of param values
+    # number of parameter values
     ni = len(u)
 
     # chunk size
@@ -1286,7 +1371,7 @@ def penaltyMatrix2D(
     utemp = np.zeros((dorder + 1, nu))
     vtemp = np.zeros((dorder + 1, nv))
 
-    # initialize the emptry matrices
+    # initialize the empty matrices
     rv = []
     for i in range(dorder + 1):
         rv.append(
@@ -1294,10 +1379,15 @@ def penaltyMatrix2D(
                 i=np.empty(ni * nj, dtype=np.int64),
                 j=np.empty(ni * nj, dtype=np.int64),
                 v=np.empty(ni * nj),
+                shape=(
+                    ni,
+                    (len(uknots) - 1 - (not uperiodic) * uorder)
+                    * (len(vknots) - 1 - (not vperiodic) * vorder),
+                ),
             )
         )
 
-    # loop over param values
+    # loop over parameter values
     for i in range(ni):
         ui, vi = u_[i], v_[i]
 
@@ -1316,8 +1406,11 @@ def penaltyMatrix2D(
 
             rv[dv].i[i * nj : (i + 1) * nj] = i
             rv[dv].j[i * nj : (i + 1) * nj] = (
-                ((uspan - uorder + np.arange(nu)) % nu_total) * nv_total
-                + ((vspan - vorder + np.arange(nv)) % nv_total)[:, np.newaxis]
+                ((uspan - uorder + int(uperiodic) + np.arange(nu)) % nu_total)
+                * nv_total
+                + ((vspan - vorder + int(vperiodic) + np.arange(nv)) % nv_total)[
+                    :, np.newaxis
+                ]
             ).ravel()
             rv[dv].v[i * nj : (i + 1) * nj] = (
                 utemp[du, :] * vtemp[dv, :, np.newaxis]
@@ -1352,6 +1445,60 @@ def uniformGrid(
     return up, vp
 
 
+@njit
+def uIsoMatrix(surf: Surface, u: float) -> COO:
+    """
+    Create a matrix that extracts the requested u isoline control points from flattened surf control points.
+    """
+
+    nu = surf.pts.shape[0]
+    nv = surf.pts.shape[1]
+
+    block = designMatrix(np.atleast_1d(u), surf.uorder, surf.uknots, surf.uperiodic)
+
+    shape = (nv, nu * nv)
+
+    n = len(block.i)
+    N = nv * n  # total number of elements
+    i = np.empty(N, dtype=np.int64)
+    j = np.empty(N, dtype=np.int64)
+    v = np.empty(N)
+
+    for ix in range(nv):
+        i[ix * n : (ix + 1) * n] = ix
+        j[ix * n : (ix + 1) * n] = block.j * nv + ix
+        v[ix * n : (ix + 1) * n] = block.v
+
+    return COO(i, j, v, shape)
+
+
+@njit
+def vIsoMatrix(surf: Surface, v: float) -> COO:
+    """
+    Create a matrix that extracts the requested v isoline control points from flattened surf control points.
+    """
+
+    nu = surf.pts.shape[0]
+    nv = surf.pts.shape[1]
+
+    block = designMatrix(np.atleast_1d(v), surf.vorder, surf.vknots, surf.vperiodic)
+
+    shape = (nu, nu * nv)
+
+    n = len(block.i)
+    N = nu * n  # total number of elements
+    i = np.empty(N, dtype=np.int64)
+    j = np.empty(N, dtype=np.int64)
+    vals = np.empty(N)
+
+    for ix in range(nu):
+        i[ix * n : (ix + 1) * n] = ix
+        j[ix * n : (ix + 1) * n] = block.j + ix * nv
+        vals[ix * n : (ix + 1) * n] = block.v
+
+    return COO(i, j, vals, shape)
+
+
 # %% construction
 
 
@@ -1375,6 +1522,9 @@ def periodicApproximate(
     penalty: int = 4,
     lam: float = 0,
 ) -> Curve:
+    """
+    Approximate a periodic curve.
+    """
 
     npts = data.shape[0]
 
@@ -1423,7 +1573,7 @@ def periodicApproximate(
     return rv
 
 
-@periodicApproximate.register
+@multidispatch
 def periodicApproximate(
     data: List[Array],
     us: Optional[Array] = None,
@@ -1432,6 +1582,9 @@ def periodicApproximate(
     penalty: int = 4,
     lam: float = 0,
 ) -> List[Curve]:
+    """
+    Approximate multiple periodic curves using same parametrization.
+    """
 
     rv = []
 
@@ -1492,6 +1645,9 @@ def approximate(
     lam: float = 0,
     tangents: Optional[Tuple[Array, Array]] = None,
 ) -> Curve:
+    """
+    Approximate a curve.
+    """
 
     npts = data.shape[0]
 
@@ -1519,7 +1675,7 @@ def approximate(
         # discrete + exact derivatives
         if penalty > order:
             Pexact = derMatrix(up, order, order - 1, knots_)[-1].csc()
-            Pdiscrete = discretePenalty(up, penalty - order, order).csc()
+            Pdiscrete = discretePenalty(up, penalty - order).csc()
 
             P = Pdiscrete @ Pexact
 
@@ -1559,7 +1715,7 @@ def approximate(
     return rv
 
 
-@approximate.register
+@multidispatch
 def approximate(
     data: List[Array],
     us: Optional[Array] = None,
@@ -1569,6 +1725,9 @@ def approximate(
     lam: float = 0,
     tangents: Optional[Union[Tuple[Array, Array], List[Tuple[Array, Array]]]] = None,
 ) -> List[Curve]:
+    """
+    Approximate multiple curves using the same parametrization.
+    """
 
     rv = []
 
@@ -1598,7 +1757,7 @@ def approximate(
         # discrete + exact derivatives
         if penalty > order:
             Pexact = derMatrix(up, order, order - 1, knots_)[-1].csc()
-            Pdiscrete = discretePenalty(up, penalty - order, order).csc()
+            Pdiscrete = discretePenalty(up, penalty - order).csc()
 
             P = Pdiscrete @ Pexact
 
@@ -1661,7 +1820,7 @@ def approximate2D(
     lam: float = 0,
 ) -> Surface:
     """
-    Simple 2D surface approximation (without any penalty).
+    Approximate a 2D surface.
     """
 
     # process the knots
@@ -1711,7 +1870,166 @@ def approximate2D(
     return rv
 
 
+@multidispatch
+def constrainedApproximate2D(
+    As: COO,
+    bs: Array,
+    data: Array,
+    u: Array,
+    v: Array,
+    uorder: int,
+    vorder: int,
+    uknots: int | Array = 50,
+    vknots: int | Array = 50,
+    uperiodic: bool = False,
+    vperiodic: bool = False,
+    penalty: int = 3,
+    lam: Real = 0,
+) -> Surface:
+    """
+    2D surface approximation with additional constraint for all components (x,y,z) combined.
+    """
+
+    # process the knots
+    uknots_ = uknots if isinstance(uknots, Array) else np.linspace(0, 1, uknots)
+    vknots_ = vknots if isinstance(vknots, Array) else np.linspace(0, 1, vknots)
+
+    # create the design matrix
+    C = designMatrix2D(
+        u, v, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic
+    ).csc()
+
+    # handle penalties if requested
+    if lam:
+        # construct the penalty grid
+        up, vp = uniformGrid(uknots_, vknots_, uorder, vorder, uperiodic, vperiodic)
+
+        # construct the derivative matrices
+        penalties = penaltyMatrix2D(
+            up, vp, uorder, vorder, penalty, uknots_, vknots_, uperiodic, vperiodic,
+        )
+
+        # augment the design matrix
+        tmp = [comb(penalty, i) * penalties[i].csc() for i in range(penalty + 1)]
+        Lu = uknots_[-1] - uknots_[0]  # v length of the parametric domain
+        Lv = vknots_[-1] - vknots_[0]  # u length of the parametric domain
+        P = Lu * Lv / len(up) * sp.vstack(tmp)
+
+        CtC = C.T @ C + lam * P.T @ P
+    else:
+        CtC = C.T @ C
+
+    # assemble one large block diagonal matrix
+    CtC_xyz = sp.block_diag((CtC, CtC, CtC))
+    C_xyz = sp.block_diag((C, C, C))
+
+    # solve the augmented normal equations
+    LHS = sp.bmat(((CtC_xyz, As.coo().T,), (As.coo(), None)))
+    RHS = np.concatenate((C_xyz.T @ data.flatten(order="F"), bs))
+
+    D, L, P = ldl(LHS, False)
+    sol = ldl_solve(RHS, D, L, P).toarray()
+    pts = sol[: CtC_xyz.shape[0]]
+
+    # construct the result
+    rv = Surface(
+        pts.reshape((-1, 3), order="F").reshape(
+            (len(uknots_) - int(uperiodic), len(vknots_) - int(vperiodic), 3,)
+        ),
+        uknots_,
+        vknots_,
+        uorder,
+        vorder,
+        uperiodic,
+        vperiodic,
+    )
+
+    return rv
+
+
+@multidispatch
+def constrainedApproximate2D(
+    As: tuple[Optional[COO], Optional[COO], Optional[COO]],
+    bs: tuple[Optional[Array], Optional[Array], Optional[Array]],
+    data: Array,
+    u: Array,
+    v: Array,
+    uorder: int,
+    vorder: int,
+    uknots: int | Array = 50,
+    vknots: int | Array = 50,
+    uperiodic: bool = False,
+    vperiodic: bool = False,
+    penalty: int = 3,
+    lam: Real = 0,
+) -> Surface:
+    """
+    2D surface approximation with additional optional constraints per (x,y,z) component.
+    """
+
+    # process the knots
+    uknots_ = uknots if isinstance(uknots, Array) else np.linspace(0, 1, uknots)
+    vknots_ = vknots if isinstance(vknots, Array) else np.linspace(0, 1, vknots)
+
+    # create the design matrix
+    C = designMatrix2D(
+        u, v, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic
+    ).csc()
+
+    # handle penalties if requested
+    if lam:
+        # construct the penalty grid
+        up, vp = uniformGrid(uknots_, vknots_, uorder, vorder, uperiodic, vperiodic)
+
+        # construct the derivative matrices
+        penalties = penaltyMatrix2D(
+            up, vp, uorder, vorder, penalty, uknots_, vknots_, uperiodic, vperiodic,
+        )
+
+        # augment the design matrix
+        tmp = [comb(penalty, i) * penalties[i].csc() for i in range(penalty + 1)]
+        Lu = uknots_[-1] - uknots_[0]  # u length of the parametric domain
+        Lv = vknots_[-1] - vknots_[0]  # v length of the parametric domain
+        P = Lu * Lv / len(up) * sp.vstack(tmp)
+
+        CtC = C.T @ C + lam * P.T @ P
+    else:
+        CtC = C.T @ C
+
+    # solve the augmented normal equations
+    pts = []
+    for i, (A, b) in enumerate(zip(As, bs)):
+        if A is not None and b is not None:
+            LHS = sp.bmat(((CtC, A.coo().T,), (A.coo(), None)))
+            RHS = np.concatenate((C.T @ data[:, i], b))
+        else:
+            LHS = CtC
+            RHS = C.T @ data[:, i]
+
+        D, L, P = ldl(LHS, False)
+        sol = ldl_solve(RHS, D, L, P).toarray()
+        pts.append(sol[: CtC.shape[0]])
+
+    # construct the result
+    rv = Surface(
+        np.stack(pts, axis=1).reshape(
+            (len(uknots_) - int(uperiodic), len(vknots_) - int(vperiodic), 3)
+        ),
+        uknots_,
+        vknots_,
+        uorder,
+        vorder,
+        uperiodic,
+        vperiodic,
+    )
+
+    return rv
+
+
 def periodicLoft(*curves: Curve, order: int = 3) -> Surface:
+    """
+    Periodic loft from curves.
+    """
 
     nknots: int = len(curves) + 1
 
@@ -1742,6 +2060,9 @@ def loft(
     penalty: int = 4,
     tangents: Optional[List[Tuple[Array, Array]]] = None,
 ) -> Surface:
+    """
+    Regular (non-periodic) loft form curves.
+    """
 
     nknots: int = len(curves)
 

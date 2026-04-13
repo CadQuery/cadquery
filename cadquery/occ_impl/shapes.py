@@ -617,7 +617,7 @@ class Shape(object):
         if isinstance(tr, str):
             rv = tr
         elif tr is BRepAdaptor_Curve:
-            rv = geom_LUT_EDGE[tr(self.wrapped).GetType()]
+            rv = geom_LUT_EDGE[tr(tcast(TopoDS_Edge, self.wrapped)).GetType()]
         else:
             rv = geom_LUT_FACE[tr(self.wrapped).GetType()]
 
@@ -3391,6 +3391,22 @@ class Face(Shape):
             rv_p.append(Vector(p))
 
         return rv_n, rv_p
+
+    def tangentAt(self, u: Real, v: Real) -> Tuple[Vector, Vector, Vector]:
+        """
+        Computes tangent vectors at the desired location in the u,v parameter space.
+
+        :returns: vectors representing the tangent directions and the position
+        :param u: the u parametric location to compute at.
+        :param v: the v parametric location to compute at.
+        """
+
+        p = gp_Pnt()
+        du = gp_Vec()
+        dv = gp_Vec()
+        BRepAdaptor_Surface(self.wrapped).D1(u, v, p, du, dv)
+
+        return Vector(du).normalized(), Vector(dv).normalized(), Vector(p)
 
     def Center(self) -> Vector:
 

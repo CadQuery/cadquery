@@ -1,6 +1,7 @@
 from cadquery import Workplane, Assembly, Sketch, Location, Vector
-from cadquery.func import circle, sweep, spline, plane, torus
+from cadquery.func import circle, sweep, spline, plane, torus, segment
 from cadquery.vis import show, show_object, vtkAxesActor, ctrlPts, style
+from cadquery.occ_impl.nurbs import Surface, Curve
 
 import cadquery.vis as vis
 
@@ -137,6 +138,18 @@ def test_show(wp, assy, sk, patch_vtk):
 
     # show a raw vtkProp
     show(vtkAxesActor(), [vtkAnnotatedCubeActor()])
+
+
+def test_show_nurbs(patch_vtk):
+
+    # smoke tests for Surface and Curve
+    surf = Surface.fromFace(plane(1, 1).toNURBS())
+    crv = Curve.fromEdge(segment((0, 0), (1, 1)).toNURBS())
+
+    show(surf)
+    show(crv)
+    show(ctrlPts(surf))
+    show(ctrlPts(crv))
 
 
 def test_screenshot(wp, patch_vtk):

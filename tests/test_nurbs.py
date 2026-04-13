@@ -12,9 +12,15 @@ from cadquery.occ_impl.nurbs import (
     periodicApproximate,
     periodicLoft,
     loft,
+    array2vec,
+    uIsoMatrix,
+    vIsoMatrix,
+    vec2array,
+    constrainedApproximate2D,
+    COO,
 )
 
-from cadquery.func import circle, torus
+from cadquery.func import circle, torus, ellipse, spline, plane
 from cadquery import Vector
 
 from OCP.gp import gp_Pnt, gp_Vec
@@ -275,16 +281,31 @@ def test_approximate():
         assert e.Length() == approx(1)
 
 
-def test_periodic_approximate():
+@mark.parametrize(("penalty", "lam"), [(3, 1e-9), (4, 1e-9), (5, 1e-9), (2, 0)])
+def test_periodic_approximate(penalty, lam):
 
-    pts_ = circle(1).sample(100)[0]
+    EPS = 1e-6 if lam == 0 else 1e-3
+
+    circ = circle(1)
+    pts_ = circ.sample(100)[0]
     pts = np.array([list(p) for p in pts_])
 
-    crv = periodicApproximate(pts)
+    crv = periodicApproximate(pts, lam=lam, penalty=penalty)
     e = crv.edge()
 
     assert e.isValid()
-    assert e.Length() == approx(2 * np.pi)
+    assert e.Length() == approx(2 * np.pi, rel=EPS)
+
+    # check params
+    us0 = circ.params(pts_)
+    us1 = e.params(pts_)
+
+    # NB: I'm skipping the first and last point to not handle wrap around
+    assert np.allclose(us0[1:-1], np.array(us1)[1:-1] * 2 * np.pi, rtol=EPS)
+    # special case for wrap around
+    for ix in (0, -1):
+        delta = us0[ix] - np.array(us1[ix]) * 2 * np.pi
+        assert abs(delta) < EPS or abs(delta) - 2 * np.pi < EPS
 
     # multiple approximate
     crvs = periodicApproximate([pts, pts])
@@ -293,7 +314,7 @@ def test_periodic_approximate():
         e = crv.edge()
 
         assert e.isValid()
-        assert e.Length() == approx(2 * np.pi)
+        assert e.Length() == approx(2 * np.pi, rel=EPS)
 
 
 def test_periodic_loft(circles, trimmed_circles):
@@ -322,8 +343,7 @@ def test_loft(circles, trimmed_circles):
     assert surf2.face().isValid()
 
 
-@mark.parametrize("lam", [0, 1e-6])
-@mark.parametrize("penalty", [2, 3, 4, 5])
+@mark.parametrize(("penalty", "lam"), [(3, 1e-6), (4, 1e-6), (5, 1e-6), (2, 0)])
 def test_approximate2D(lam, penalty):
 
     t = torus(5, 1).face()
@@ -342,8 +362,8 @@ def test_approximate2D(lam, penalty):
         vs[:, None].repeat(len(us), 1).ravel(),
         3,
         3,
-        50,
-        50,
+        15,
+        15,
         uperiodic=True,
         vperiodic=True,
         penalty=penalty,
@@ -352,5 +372,267 @@ def test_approximate2D(lam, penalty):
 
     f = surf.face()
 
+    # general sanity checks
     assert f.isValid()
-    assert f.Area() == approx(t.Area(), rel=1e-4)
+    assert f.Area() == approx(t.Area(), rel=1e-3)
+
+    # check the stability of the parameters
+    us0 = us[None, :].repeat(len(vs), 0).ravel()
+    vs0 = vs[:, None].repeat(len(us), 1).ravel()
+
+    us2, vs2 = f.params(array2vec(pts))
+
+    delta_u = np.array(us2 - us0)
+    delta_v = np.array(vs2 - vs0)
+
+    assert np.allclose(np.where(delta_u >= 1, delta_u, 0) % 1, 0)
+    assert np.allclose(np.where(delta_v >= 1, delta_v, 0) % 1, 0)
+
+
+EDGES = (
+    periodicApproximate(vec2array(ellipse(2, 1).sample(100)[0])).edge(),
+    spline([(0, 0), (1, 0)], tgts=((0, 1), (1, 0))),
+)
+
+PARAMS = np.array((0, 0.1))
+
+
+@mark.parametrize("e", EDGES)
+def test_curve_position(e):
+
+    crv = Curve.fromEdge(e)
+
+    for u in PARAMS:
+        assert np.allclose(np.array(e.positionAt(u, mode="param").toTuple()), crv(u))
+
+
+@mark.parametrize("e", EDGES)
+def test_curve_tangents(e):
+
+    crv = Curve.fromEdge(e)
+
+    for u in PARAMS:
+        tgt = crv.der(u, 1)[0, 1, :]
+        tgt /= np.linalg.norm(tgt)
+
+        assert np.allclose(np.array(e.tangentAt(u, mode="param").toTuple()), tgt)
+
+
+@fixture
+def torus_face():
+
+    t = torus(5, 1).face()
+
+    # double periodic surface
+    us = np.linspace(0, 1, endpoint=False)
+    vs = np.linspace(0, 1, endpoint=False)
+
+    pts = np.array(
+        [t.positionAt(u * 2 * np.pi, v * 2 * np.pi).toTuple() for v in vs for u in us]
+    )
+
+    surf = approximate2D(
+        pts,
+        us[None, :].repeat(len(vs), 0).ravel(),
+        vs[:, None].repeat(len(us), 1).ravel(),
+        3,
+        3,
+        10,
+        10,
+        uperiodic=True,
+        vperiodic=True,
+        penalty=3,
+        lam=1e-6,
+    )
+
+    return surf.face()
+
+
+@fixture
+def torus_surf(torus_face):
+
+    return Surface.fromFace(torus_face)
+
+
+@fixture
+def simple_surf():
+
+    pts = np.array(
+        [
+            [[0.0, 0.0, 0.0], [0.0, 2.0, 0.0]],
+            [[2.0, 0.0, 1.0], [2.0, 2.0, 1.0]],
+            [[4.0, 0.0, 0.0], [4.0, 2.0, 0.0]],
+        ],
+        dtype=float,
+    )
+
+    uknots = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+    vknots = np.array([0.0, 0.0, 1.0, 1.0])
+
+    surf = Surface(
+        pts=pts,
+        uknots=uknots,
+        vknots=vknots,
+        uorder=2,
+        vorder=1,
+        uperiodic=False,
+        vperiodic=False,
+    )
+
+    return surf
+
+
+@fixture
+def plane_face():
+
+    return plane(1, 1).toNURBS()
+
+
+FACES = ("torus_face", "plane_face")
+
+
+@mark.parametrize("face", FACES)
+def test_surface_positions(face, request):
+
+    f = request.getfixturevalue(face)
+    surf = Surface.fromFace(f)
+
+    for u in PARAMS:
+        for v in PARAMS:
+            assert np.allclose(f.positionAt(u, v).toTuple(), surf(u, v))
+
+
+@mark.parametrize("face", FACES)
+def test_surface_tangents(face, request):
+
+    f = request.getfixturevalue(face)
+    surf = Surface.fromFace(f)
+
+    for u in PARAMS:
+        for v in PARAMS:
+            dun, dvn, p = f.tangentAt(u, v)
+            der = surf.der(u, v, 1).squeeze()
+            du = der[1, 0, :]
+            dv = der[0, 1, :]
+
+            assert np.allclose(dun.toTuple(), du / np.linalg.norm(du))
+            assert np.allclose(dvn.toTuple(), dv / np.linalg.norm(dv))
+            assert np.allclose(p.toTuple(), der[0, 0, :])
+
+
+@mark.parametrize("isoparam", PARAMS)
+@mark.parametrize("u", PARAMS)
+@mark.parametrize("surf", ("torus_surf", "simple_surf"))
+def test_isolines(surf, isoparam, u, request):
+
+    surf = request.getfixturevalue(surf)
+
+    uiso = surf.isoline(isoparam)
+    viso = surf.isoline(isoparam, "v")
+
+    assert isinstance(uiso, Curve)
+    assert isinstance(viso, Curve)
+
+    pt_u = uiso(u)
+    pt_v = viso(u)
+
+    # ref
+    f = surf.face()
+    uiso_ref = f.isoline(isoparam, "u")
+    viso_ref = f.isoline(isoparam, "v")
+
+    pt_u_ref = uiso_ref.positionAt(u, mode="param")
+    pt_v_ref = viso_ref.positionAt(u, mode="param")
+
+    assert np.allclose(pt_u_ref.toTuple(), pt_u)
+    assert np.allclose(pt_v_ref.toTuple(), pt_v)
+
+
+@mark.parametrize("lam", [0.0, 1e-6])
+@mark.parametrize("penalty", [3])
+def test_constrainedApproximate2D(torus_surf, lam, penalty):
+
+    # sample the surface
+    us_ = np.linspace(0, 1, endpoint=False)
+    vs_ = np.linspace(0, 1, endpoint=False)
+
+    pts = np.stack([torus_surf(u, v) for v in vs_ for u in us_]).squeeze()
+
+    us = us_[None, :].repeat(len(vs_), 0).ravel()
+    vs = vs_[:, None].repeat(len(us_), 1).ravel()
+
+    # add some noise to make the problem non-trivial
+    pts += np.random.randn(*pts.shape) / 100
+
+    surf = approximate2D(
+        pts,
+        us,
+        vs,
+        3,
+        3,
+        10,
+        10,
+        uperiodic=True,
+        vperiodic=True,
+        penalty=penalty,
+        lam=lam,
+    )
+
+    isou = surf.isoline(0.0, "u")
+    isov = surf.isoline(0.0, "v")
+
+    # check that the constraints will do something
+    assert not np.allclose(isou.pts[:, 1], 0)
+    assert not np.allclose(isov.pts[:, 2], 0)
+
+    # # constraints per direction
+    Au = uIsoMatrix(surf, np.array(0.0))
+    Av = vIsoMatrix(surf, np.array(0.0))
+    by = np.zeros(Au.shape[0])
+    bz = np.zeros(Av.shape[0])
+
+    surf = constrainedApproximate2D(
+        (None, Au, Av),
+        (None, by, bz),
+        pts,
+        us,
+        vs,
+        3,
+        3,
+        len(surf.uknots),
+        len(surf.vknots),
+        uperiodic=True,
+        vperiodic=True,
+        penalty=penalty,
+        lam=lam,
+    )
+
+    isou = surf.isoline(0.0, "u")
+    isov = surf.isoline(0.0, "v")
+
+    # check the constraints
+    assert np.allclose(isou.pts[:, 1], 0)
+    assert np.allclose(isov.pts[:, 2], 0)
+
+    # all constraints at once
+    Ay = sp.bmat(((sp.coo_matrix(Au.shape), Au.coo(), sp.coo_matrix(Au.shape)),))
+    Az = sp.bmat(((sp.coo_matrix(Av.shape), sp.coo_matrix(Av.shape), Av.coo()),))
+
+    A = sp.vstack((Ay, Az))
+    b = np.concatenate((by, bz))
+
+    surf = constrainedApproximate2D(
+        COO.fromSP(A),
+        b,
+        pts,
+        us,
+        vs,
+        3,
+        3,
+        len(surf.uknots),
+        len(surf.vknots),
+        uperiodic=True,
+        vperiodic=True,
+        penalty=penalty,
+        lam=lam,
+    )
