@@ -3,10 +3,11 @@ From: mambaorg/micromamba:latest
 
 %files
     environment.yml /opt
-
+    . /opt/cq
 %post
-    cat /opt/environment.yml | sed '$d' | sed '$d' | sed '$d' | sed '$d' > /opt/environment.yml
+    head -n -4 /opt/environment.yml  > /opt/environment.yml
     micromamba install -q -y -n base -f /opt/environment.yml
+    micromamba run -n base pip install -e /opt/cq
     micromamba clean --all --yes
 
 %labels
