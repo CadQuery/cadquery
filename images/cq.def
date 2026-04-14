@@ -6,6 +6,8 @@ From: mambaorg/micromamba:latest
     ./ ~
 
 %post
+    pwd
+    ls
     micromamba install -q -y -n base -f /opt/environment.yml
     micromamba clean --all --yes
 
