@@ -3,11 +3,9 @@ From: mambaorg/micromamba:latest
 
 %files
     environment.yml /opt
-    ./ ~
 
 %post
-    pwd
-    ls
+    cat /opt/environment.yml | sed '$d' | sed '$d' | sed '$d' | sed '$d' > /opt/environment.yml
     micromamba install -q -y -n base -f /opt/environment.yml
     micromamba clean --all --yes
 
