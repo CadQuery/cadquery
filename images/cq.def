@@ -2,7 +2,8 @@ Bootstrap: docker
 From: mambaorg/micromamba:latest
 
 %files
-environment.yml /opt
+    environment.yml /opt
+    ./ ~
 
 %post
     micromamba install -q -y -n base -f /opt/environment.yml
