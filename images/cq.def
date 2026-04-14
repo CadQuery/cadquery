@@ -5,7 +5,7 @@ From: mambaorg/micromamba:latest
 environment.yml /opt
 
 %post
-    micromamba install -q -y -n base -f environment.yml
+    micromamba install -q -y -n base -f /opt/environment.yml
     micromamba clean --all --yes
 
 %labels
