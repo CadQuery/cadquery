@@ -53,11 +53,6 @@ The CadQuery library (with or without CQ-editor) and its dependencies may be ins
 
 See the documentation for detailed CadQuery [installation instructions](https://cadquery.readthedocs.io/en/latest/installation.html).
 
-There are also videos covering installation:
-
-* Linux [installation video](https://youtu.be/sjLTePOq8bQ)
-* Windows [installation video](https://youtu.be/3Tg_RJhqZRg)
-
 ### CadQuery Installation Via Conda
 
 To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager), and [Miniforge](https://github.com/conda-forge/miniforge) for a minimal installer.
