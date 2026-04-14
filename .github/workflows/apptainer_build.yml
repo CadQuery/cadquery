@@ -1,0 +1,28 @@
+name: Build Apptainer image with CQ using micromamba
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+jobs:
+  build-test-container:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    container:
+        image: ghcr.io/apptainer/apptainer:1.4.1
+        options: --privileged
+
+    name: Build Container
+    steps:
+
+      - name: Check out code for the container builds
+        uses: actions/checkout@v4
+
+      - name: Build Container
+        run: |
+           apptainer build container.sif images/cq.def
+
