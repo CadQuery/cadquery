@@ -3,11 +3,13 @@ From: mambaorg/micromamba:latest
 
 %files
     environment.yml /opt
-    . /opt/cq
+    ./ /opt/cq
+
 %post
-    head -n -4 /opt/environment.yml  > /opt/environment.yml
-    micromamba install -q -y -n base -f /opt/environment.yml
-    micromamba env list
+    head -n -4 /opt/environment.yml  > /opt/environment_.yml
+    cat /opt/environment_.yml
+    micromamba install -y -q -n base -f /opt/environment_.yml
+    micromamba list
     micromamba run pip install -e /opt/cq
     micromamba clean --all --yes
 
