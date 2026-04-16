@@ -6,11 +6,11 @@ From: mambaorg/micromamba:latest
     ./ /opt/cq
 
 %post
-    head -n -4 /opt/environment.yml  > /opt/environment_.yml
-    cat /opt/environment_.yml
+    head -n -1 /opt/environment.yml  > /opt/environment_.yml
     micromamba install -y -q -n base -f /opt/environment_.yml
-    micromamba list
     micromamba run pip install -e /opt/cq
+    micromamba list
+    micromamba run pytest /opt/cq/tests
     micromamba clean --all --yes
 
 %labels

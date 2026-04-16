@@ -24,5 +24,10 @@ jobs:
 
       - name: Build Container
         run: |
-           apptainer build container.sif images/cq.def
+           apptainer build cq.sif images/cq.def
+           apptainer run cq.sif pytest tests/
+
+      - name: Test Container
+        run: |
+           apptainer run cq.sif pytest tests/
 
