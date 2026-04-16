@@ -31,3 +31,8 @@ jobs:
         run: |
            apptainer run cq.sif pytest tests/
 
+      - name: Store sif
+        uses: actions/upload-artifact@v4
+        with:
+          path: cq.sif
+
