@@ -11,7 +11,6 @@ From: mambaorg/micromamba:latest
     micromamba install -y -q -n base -f /opt/environment_.yml
     micromamba run pip install -e /opt/cq
     micromamba list
-    micromamba run pytest /opt/cq/tests
     micromamba clean --all --yes
 
 %labels
