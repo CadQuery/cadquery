@@ -77,13 +77,23 @@ Importing STEP
 ###############
 
 STEP files can be imported using the :meth:`importers.importStep` method (note the capitalization of "Step").
-There are no parameters for this method other than the file path to import.
 
 .. code-block:: python
 
    import cadquery as cq
 
    result = cq.importers.importStep("/path/to/step/block.stp")
+
+By default, no unit conversion is applied.
+The ``unit`` parameter sets the target unit - OCCT scales from the unit declared in the STEP file's header to the requested unit.
+The valid values are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # Import a STEP file converting its units to meters
+   result = cq.importers.importStep("/path/to/step/block.stp", unit="M")
 
 Exporting STEP
 ###############
@@ -139,6 +149,35 @@ or the :meth:`Assembly.exportAssembly`` method.
    # or equivalently when exporting a lower level Shape object
    box.val().export("/path/to/step/box2.step", opt={"write_pcurves": False})
 
+Setting Units
+--------------
+
+By default, CadQuery exports STEP files with millimeter units.
+The ``unit`` parameter specifies the internal unit of the model's geometry values.
+The ``outputUnit`` parameter controls the unit written to the STEP file header.
+If ``outputUnit`` is not specified, it defaults to the value of ``unit``.
+The valid values for both parameters are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+
+To export a millimeter model as a STEP file declaring meters, set ``outputUnit="M"`` while leaving ``unit`` at its default of ``"MM"``.
+OCCT will scale the coordinate values accordingly.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # Create a simple object
+   box = cq.Workplane().box(10, 10, 10)
+
+   # Export with meter units
+   box.val().exportStep("/path/to/step/box.step", outputUnit="M")
+
+For assemblies, see the ``outputUnit`` parameter example in the exporting assemblies section.
+
+.. note::
+
+   CadQuery treats all geometry values as millimeters internally.
+   If you built a model using values that represent meters (e.g. a box with side length ``10`` meaning 10 meters), you must scale the geometry by 1000 before exporting, then export with the default ``unit="MM"``.
+   Exporting such a model directly with ``outputUnit="M"`` will produce a STEP file representing a 0.01-meter (10mm) object, not a 10-meter one.
 
 Exporting Assemblies
 ####################
@@ -175,6 +214,36 @@ export with all defaults is shown below.
 
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
+
+Setting Units
+--------------
+
+By default, CadQuery exports STEP files with millimeter units.
+The ``unit`` parameter specifies the internal unit of the model's geometry values.
+The ``outputUnit`` parameter controls the unit written to the STEP file header.
+If ``outputUnit`` is not specified, it defaults to the value of ``unit``.
+The valid values for both parameters are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+The default is ``"MM"``.
+
+To export a millimeter model as a STEP file declaring meters, set ``outputUnit="M"`` while leaving ``unit`` at its default of ``"MM"``.
+OCCT will scale the coordinate values accordingly.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   assy = cq.Assembly()
+   assy.add(cq.Workplane().box(10, 10, 10), name="box")
+
+   # Export the assembly with meter units
+   assy.export("/path/to/step/assy.step", outputUnit="M")
+
+.. note::
+
+   CadQuery treats all geometry values as millimeters internally.
+   If you built a model using values that represent meters (e.g. a box with side length ``10`` meaning 10 meters), you must scale the geometry by 1000 before exporting, then export with the default ``unit="MM"``.
+   Exporting such a model directly with ``outputUnit="M"`` will produce a STEP file representing a 0.01-meter
+   (10mm) object, not a 10-meter one.
 
 Fused
 ------

@@ -34,6 +34,7 @@ from ..selectors import (
 )
 
 from ..utils import multimethod, multidispatch, mypyclassmethod
+from .types import UnitLiterals
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -511,15 +512,26 @@ class Shape(object):
 
         return writer.Write(self.wrapped, fileName)
 
-    def exportStep(self, fileName: str, **kwargs) -> IFSelect_ReturnStatus:
+    def exportStep(
+        self,
+        fileName: str,
+        unit: UnitLiterals = "MM",
+        outputUnit: Optional[UnitLiterals] = None,
+        **kwargs,
+    ) -> IFSelect_ReturnStatus:
         """
         Export this shape to a STEP file.
-
-        kwargs is used to provide optional keyword arguments to configure the exporter.
+        kwargs is used to provide additional optional keyword arguments to configure the exporter.
 
         :param fileName: Path and filename for writing.
+        :type fileName: str
+        :param unit: The internal unit of the model's geometry values. Default "MM".
+        :type unit: UnitLiterals
+        :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
+            Use this when you want the output file to declare a different unit than the model's internal unit,
+            for example to export a MM model as a STEP file declaring meters.
+        :type outputUnit: UnitLiterals or None
         :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
-
             If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
         :type write_pcurves: bool
         :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
@@ -536,6 +548,10 @@ class Shape(object):
         writer = STEPControl_Writer()
         Interface_Static.SetIVal_s("write.surfacecurve.mode", pcurves)
         Interface_Static.SetIVal_s("write.precision.mode", precision_mode)
+        Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
+        Interface_Static.SetCVal_s(
+            "write.step.unit", outputUnit if outputUnit is not None else unit.upper()
+        )
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
         return writer.Write(fileName)

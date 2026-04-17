@@ -26,6 +26,7 @@ from OCP.PCDM import PCDM_ReaderStatus
 from ..assembly import AssemblyProtocol, Color, Material
 from ..geom import Location
 from ..shapes import Shape
+from ..types import UnitLiterals
 
 
 def _get_name(label: TDF_Label) -> str:
@@ -129,12 +130,15 @@ def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | 
     return rv
 
 
-def importStep(assy: AssemblyProtocol, path: str):
+def importStep(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     """
     Import a step file into an assembly.
 
     :param assy: An Assembly object that will be packed with the contents of the STEP file.
     :param path: Path and filename to the STEP file to read.
+    :param unit: The assumed unit of measurement when the STEP file does not
+      declare one in its header. Has no effect when the file already contains
+      a unit declaration. Default "MM".
 
     :return: None
     """
@@ -147,6 +151,7 @@ def importStep(assy: AssemblyProtocol, path: str):
     step_reader.SetSHUOMode(True)
 
     Interface_Static.SetIVal_s("read.stepcaf.subshapes.name", 1)
+    Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
 
     # Read the STEP file
     status = step_reader.ReadFile(path)
