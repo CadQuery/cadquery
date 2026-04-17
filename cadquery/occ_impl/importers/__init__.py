@@ -8,7 +8,7 @@ from OCP.Interface import Interface_Static
 from ... import cq
 from ..shapes import Shape
 from .dxf import _importDXF
-from ..types import STEPUnitLiterals
+from ..types import UnitLiterals
 
 RAD2DEG = 360.0 / (2 * pi)
 
@@ -28,7 +28,7 @@ class UNITS:
 def importShape(
     importType: Literal["STEP", "DXF", "BREP", "BIN"],
     fileName: str,
-    unit: STEPUnitLiterals = "MM",
+    unit: UnitLiterals = "MM",
     *args,
     **kwargs,
 ) -> "cq.Workplane":
@@ -38,7 +38,7 @@ def importShape(
     :param importType: The type of file that we're importing
     :param fileName: The name of the file that we're importing
     :param unit: The unit of measurement for the STEP file. Default "MM".
-    :type unit: STEPUnitLiterals
+    :type unit: UnitLiterals
     """
 
     # Check to see what type of file we're working with
@@ -84,14 +84,14 @@ def importBin(fileName: str) -> "cq.Workplane":
 
 
 # Loads a STEP file into a CQ.Workplane object
-def importStep(fileName: str, unit: STEPUnitLiterals = "MM") -> "cq.Workplane":
+def importStep(fileName: str, unit: UnitLiterals = "MM") -> "cq.Workplane":
     """
     Accepts a file name and loads the STEP file into a cadquery Workplane
 
     :param fileName: The path and name of the STEP file to be imported
     :param unit: Sets the target OpenCASCADE unit - OCCT scales from the file's
     declared unit to this unit. Default "MM".
-    :type unit: STEPUnitLiterals
+    :type unit: UnitLiterals
     """
 
     # Set the target cascade unit - OCCT scales from the file's declared unit to this unit

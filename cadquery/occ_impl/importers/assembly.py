@@ -26,7 +26,7 @@ from OCP.PCDM import PCDM_ReaderStatus
 from ..assembly import AssemblyProtocol, Color, Material
 from ..geom import Location
 from ..shapes import Shape
-from ..types import STEPUnitLiterals
+from ..types import UnitLiterals
 
 
 def _get_name(label: TDF_Label) -> str:
@@ -130,7 +130,7 @@ def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | 
     return rv
 
 
-def importStep(assy: AssemblyProtocol, path: str, unit: STEPUnitLiterals = "MM"):
+def importStep(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     """
     Import a step file into an assembly.
 

@@ -48,7 +48,7 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
-from ..types import STEPUnitLiterals
+from ..types import UnitLiterals
 
 
 class ExportModes:
@@ -63,8 +63,8 @@ def exportAssembly(
     assy: AssemblyProtocol,
     path: str,
     mode: STEPExportModeLiterals = "default",
-    unit: STEPUnitLiterals = "MM",
-    outputUnit: Optional[STEPUnitLiterals] = None,
+    unit: UnitLiterals = "MM",
+    outputUnit: Optional[UnitLiterals] = None,
     **kwargs,
 ) -> bool:
     """
@@ -77,11 +77,11 @@ def exportAssembly(
     :param mode: STEP export mode. The options are "default", and "fused" (a single fused compound).
         It is possible that fused mode may exhibit low performance.
     :param unit: The internal unit of the model's geometry values. Default "MM".
-    :type unit: STEPUnitLiterals
+    :type unit: UnitLiterals
     :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
         Use this when you want the output file to declare a different unit than the model's internal unit,
         for example to export a MM model as a STEP file declaring meters.
-    :type outputUnit: STEPUnitLiterals or None
+    :type outputUnit: UnitLiterals or None
     :param fuzzy_tol: OCCT fuse operation tolerance setting used only for fused assembly export.
     :type fuzzy_tol: float
     :param glue: Enable gluing mode for improved performance during fused assembly export.
@@ -170,8 +170,8 @@ def exportStepMeta(
     path: str,
     write_pcurves: bool = True,
     precision_mode: int = 0,
-    unit: STEPUnitLiterals = "MM",
-    outputUnit: Optional[STEPUnitLiterals] = None,
+    unit: UnitLiterals = "MM",
+    outputUnit: Optional[UnitLiterals] = None,
 ) -> bool:
     """
     Export an assembly to a STEP file with faces tagged with names and colors. This is done as a
@@ -188,11 +188,11 @@ def exportStepMeta(
     :param precision_mode: Controls the uncertainty value for STEP entities. Specify -1, 0, or 1. Default 0.
         See OCCT documentation.
     :param unit: The internal unit of the model's geometry values. Default "MM".
-    :type unit: STEPUnitLiterals
+    :type unit: UnitLiterals
     :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
         Use this when you want the output file to declare a different unit than the model's internal unit,
         for example to export a MM model as a STEP file declaring meters.
-    :type outputUnit: STEPUnitLiterals or None
+    :type outputUnit: UnitLiterals or None
     """
 
     pcurves = 1

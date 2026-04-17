@@ -21,7 +21,7 @@ from .occ_impl.shapes import (
 )
 from .occ_impl import exporters
 from .occ_impl import importers
-from .occ_impl.types import STEPUnitLiterals
+from .occ_impl.types import UnitLiterals
 
 # these items are the common implementation
 
@@ -77,5 +77,5 @@ __all__ = [
     "StringSyntaxSelector",
     "Selector",
     "Sketch",
-    "STEPUnitLiterals",
+    "UnitLiterals",
 ]

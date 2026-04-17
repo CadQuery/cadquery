@@ -37,7 +37,7 @@ from .occ_impl.exporters.assembly import (
 )
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
-from .occ_impl.types import STEPUnitLiterals
+from .occ_impl.types import UnitLiterals
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate, BiDict, instance_of
@@ -620,7 +620,7 @@ class Assembly(object):
         return self
 
     @classmethod
-    def importStep(cls, path: str, unit: STEPUnitLiterals = "MM") -> Self:
+    def importStep(cls, path: str, unit: UnitLiterals = "MM") -> Self:
         """
         Reads an assembly from a STEP file.
 
@@ -636,7 +636,7 @@ class Assembly(object):
         cls,
         path: str,
         importType: Optional[ImportLiterals] = None,
-        unit: STEPUnitLiterals = "MM",
+        unit: UnitLiterals = "MM",
     ) -> Self:
         """
         Load step, xbf or xml.

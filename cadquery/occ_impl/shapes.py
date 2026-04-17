@@ -34,7 +34,7 @@ from ..selectors import (
 )
 
 from ..utils import multimethod, multidispatch, mypyclassmethod
-from .types import STEPUnitLiterals
+from .types import UnitLiterals
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -515,8 +515,8 @@ class Shape(object):
     def exportStep(
         self,
         fileName: str,
-        unit: STEPUnitLiterals = "MM",
-        outputUnit: Optional[STEPUnitLiterals] = None,
+        unit: UnitLiterals = "MM",
+        outputUnit: Optional[UnitLiterals] = None,
         **kwargs,
     ) -> IFSelect_ReturnStatus:
         """
@@ -526,11 +526,11 @@ class Shape(object):
         :param fileName: Path and filename for writing.
         :type fileName: str
         :param unit: The internal unit of the model's geometry values. Default "MM".
-        :type unit: STEPUnitLiterals
+        :type unit: UnitLiterals
         :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
             Use this when you want the output file to declare a different unit than the model's internal unit,
             for example to export a MM model as a STEP file declaring meters.
-        :type outputUnit: STEPUnitLiterals or None
+        :type outputUnit: UnitLiterals or None
         :param write_pcurves: Enable or disable writing parametric curves to the STEP file. Default True.
             If False, writes STEP file without pcurves. This decreases the size of the resulting STEP file.
         :type write_pcurves: bool

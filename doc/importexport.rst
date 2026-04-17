@@ -86,7 +86,7 @@ STEP files can be imported using the :meth:`importers.importStep` method (note t
 
 By default, no unit conversion is applied.
 The ``unit`` parameter sets the target unit - OCCT scales from the unit declared in the STEP file's header to the requested unit.
-The valid values are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+The valid values are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
 
 .. code-block:: python
 
@@ -156,7 +156,7 @@ By default, CadQuery exports STEP files with millimeter units.
 The ``unit`` parameter specifies the internal unit of the model's geometry values.
 The ``outputUnit`` parameter controls the unit written to the STEP file header.
 If ``outputUnit`` is not specified, it defaults to the value of ``unit``.
-The valid values for both parameters are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+The valid values for both parameters are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
 
 To export a millimeter model as a STEP file declaring meters, set ``outputUnit="M"`` while leaving ``unit`` at its default of ``"MM"``.
 OCCT will scale the coordinate values accordingly.
@@ -222,7 +222,7 @@ By default, CadQuery exports STEP files with millimeter units.
 The ``unit`` parameter specifies the internal unit of the model's geometry values.
 The ``outputUnit`` parameter controls the unit written to the STEP file header.
 If ``outputUnit`` is not specified, it defaults to the value of ``unit``.
-The valid values for both parameters are defined by :class:`STEPUnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+The valid values for both parameters are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
 The default is ``"MM"``.
 
 To export a millimeter model as a STEP file declaring meters, set ``outputUnit="M"`` while leaving ``unit`` at its default of ``"MM"``.
