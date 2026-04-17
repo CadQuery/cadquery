@@ -1,3 +1,3 @@
 from typing_extensions import Literal
 
-STEPUnitLiterals = Literal["MM", "CM", "M", "KM", "INCH", "FT", "MI", "UM", "NM"]
+UnitLiterals = Literal["MM", "CM", "M", "KM", "INCH", "FT", "MI", "UM", "NM"]
