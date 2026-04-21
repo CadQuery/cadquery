@@ -1,4 +1,4 @@
-FROM docker://mambaorg/micromamba:latest
+FROM mambaorg/micromamba:latest
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /opt/environment.yml
 COPY --chown=$MAMBA_USER:$MAMBA_USER ./ /opt/cq
