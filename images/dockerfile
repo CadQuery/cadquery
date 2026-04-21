@@ -5,6 +5,7 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER ./ /opt/cq
 
 RUN micromamba install -y -q -n base git && \
     micromamba install -y -q -n base -f /opt/environment.yml && \
+    micromamba list && \
     micromamba run pip install -e /opt/cq && \
     micromamba list && \
     micromamba clean --all --yes
