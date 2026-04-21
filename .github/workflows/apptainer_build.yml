@@ -50,6 +50,5 @@ jobs:
 
       - name: Build Container
         run: |
-          head -n -1 environment.yml  > environment.yml
           docker build -f images/dockerfile .
 
