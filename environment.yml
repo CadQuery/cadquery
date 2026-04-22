@@ -19,7 +19,7 @@ dependencies:
 #   - casadi
 #   - runtype
 #   - multimethod >=1.11,<2.0
-#   - typed-ast
+  - typed-ast
 #   - regex
 #   - pathspec
 #   - click
