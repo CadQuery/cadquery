@@ -32,6 +32,6 @@ dependencies:
 #   - trame-vuetify
   - pip
   - pip:
-    # - sphinx_rtd_theme==3.1.0
-    - git+https://github.com/cadquery/black.git@cq
+    - sphinx_rtd_theme==3.1.0
+    # - git+https://github.com/cadquery/black.git@cq
 #    - --editable=.
