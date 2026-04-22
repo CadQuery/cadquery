@@ -2,36 +2,36 @@ name: cadquery
 channels:
   - conda-forge
 dependencies:
-  - python>=3.11
-  - ipython
-# - cadquery/label/dev::ocp=x.x.x for dev
-  - ocp=7.9.3.1 
-  - pyparsing>=3.0.0
-  - sphinx=9.1.0
-#  - sphinx_rtd_theme=3.1.0
-  - mypy
-  - codecov
-  - pytest
-  - pytest-cov
-  - ezdxf>=1.3.0
-  - typing_extensions
-  - nlopt
-  - casadi
-  - runtype
-  - multimethod >=1.11,<2.0
-  - typed-ast
-  - regex
-  - pathspec
-  - click
-  - appdirs
-  - numba
-  - scipy
-  - trame
-  - trame-vtk
-  - trame-components
-  - trame-vuetify
+  # - python>=3.11
+#   - ipython
+# # - cadquery/label/dev::ocp=x.x.x for dev
+#   - ocp=7.9.3.1 
+#   - pyparsing>=3.0.0
+#   - sphinx=9.1.0
+# #  - sphinx_rtd_theme=3.1.0
+#   - mypy
+#   - codecov
+#   - pytest
+#   - pytest-cov
+#   - ezdxf>=1.3.0
+#   - typing_extensions
+#   - nlopt
+#   - casadi
+#   - runtype
+#   - multimethod >=1.11,<2.0
+#   - typed-ast
+#   - regex
+#   - pathspec
+#   - click
+#   - appdirs
+#   - numba
+#   - scipy
+#   - trame
+#   - trame-vtk
+#   - trame-components
+#   - trame-vuetify
   - pip
   - pip:
-    - sphinx_rtd_theme==3.1.0
+    # - sphinx_rtd_theme==3.1.0
     - git+https://github.com/cadquery/black.git@cq
 #    - --editable=.
