@@ -1,16 +1,12 @@
 FROM mambaorg/micromamba:latest
 
-COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /opt/environment.yml
-COPY --chown=$MAMBA_USER:$MAMBA_USER ./ /opt/cq
+COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/environment.yml
+COPY --chown=$MAMBA_USER:$MAMBA_USER ./ /tmp/cq
 
-USER root
-RUN chown -R $MAMBA_USER:$MAMBA_USER /opt 
-
-USER $MAMBA_USER
 RUN micromamba install -y -q -n base git && \
-    head -n -1 /opt/environment.yml  > /opt/environment_.yml && \
-    micromamba install -y -q -n base -f /opt/environment_.yml && \
-    micromamba run pip install -e /opt/cq && \
+    head -n -1 /tmp/environment.yml  > /tmp/environment_.yml && \
+    micromamba install -y -q -n base -f /tmp/environment_.yml && \
+    micromamba run pip install -e /tmp/cq && \
     micromamba list && \
     micromamba clean --all --yes
 
