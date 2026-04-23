@@ -3,8 +3,8 @@ FROM mambaorg/micromamba:latest
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /opt/environment.yml
 COPY --chown=$MAMBA_USER:$MAMBA_USER ./ /opt/cq
 
-# USER root
-# RUN chown -R $MAMBA_USER:$MAMBA_USER /opt 
+USER root
+RUN chown -R $MAMBA_USER:$MAMBA_USER /opt 
 
 USER $MAMBA_USER
 RUN micromamba install -y -q -n base git && \
