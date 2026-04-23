@@ -38,7 +38,7 @@ jobs:
       - name: Deploy to GHCR
         run: |
            echo ${{ secrets.GITHUB_TOKEN }} | apptainer registry login -u ${{ secrets.GHCR_USERNAME }} --password-stdin oras://ghcr.io
-           apptainer push cq.sif oras://ghcr.io/${GITHUB_REPOSITORY}:${{ github.ref_name }}
+           apptainer push cq.sif oras://ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_SHA}
 
   build-docker-container:
     runs-on: ubuntu-latest
