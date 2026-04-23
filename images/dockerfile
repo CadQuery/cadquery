@@ -8,7 +8,8 @@ RUN chown -R $MAMBA_USER:$MAMBA_USER /opt
 
 USER $MAMBA_USER
 RUN micromamba install -y -q -n base git && \
-    micromamba install -y -q -n base -f /opt/environment.yml && \
+    head -n -1 /opt/environment.yml  > /opt/environment_.yml && \
+    micromamba install -y -q -n base -f /opt/environment_.yml && \
     micromamba run pip install -e /opt/cq && \
     micromamba list && \
     micromamba clean --all --yes
