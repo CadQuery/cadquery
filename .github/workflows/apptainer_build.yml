@@ -38,7 +38,7 @@ jobs:
       - name: Deploy to GHCR
         run: |
            echo ${{ secrets.GITHUB_TOKEN }} | apptainer registry login -u ${{ secrets.GHCR_USERNAME }} --password-stdin oras://ghcr.io
-           apptainer push cq.sif oras://ghcr.io/cadquery/cadquery:${GITHUB_SHA}
+           apptainer push cq.sif oras://ghcr.io/cadquery/cadquery-apptainer:${GITHUB_SHA}
 
   build-docker-container:
     runs-on: ubuntu-latest
@@ -52,7 +52,15 @@ jobs:
       - name: Check out code for the container builds
         uses: actions/checkout@v4
 
+      - name: Authenticate
+        run: |
+           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin 
+
       - name: Build Container
         run: |
-          docker build -f images/dockerfile .
+          docker build -t ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA} -f images/dockerfile .
+
+      - name: Deploy to GHCR
+        run: |
+           docker push ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA}
 
