@@ -15,7 +15,7 @@ From: mambaorg/micromamba:latest
           libgl1-mesa-dri \
           mesa-utils \
           xauth
-    rm -rf /var/lib/apt/lists/*`
+    rm -rf /var/lib/apt/lists/*
     head -n -1 /opt/environment.yml  > /opt/environment_.yml
     micromamba install -y -q -n base git
     micromamba install -y -q -n base -f /opt/environment_.yml
