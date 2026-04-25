@@ -62,7 +62,7 @@ jobs:
 
       - name: Test
         run: |
-          docker run -rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA} pytest tests/
+          docker run --rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA} pytest tests/
 
       - name: Deploy to GHCR
         run: |
