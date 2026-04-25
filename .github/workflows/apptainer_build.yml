@@ -3,7 +3,10 @@ name: Build Apptainer and Docker images with CQ using micromamba
 on:
   pull_request:
   push:
-    branches: [master, main]
+    branches: master
+
+env:
+ BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 
 jobs:
   build-test-container:
@@ -36,6 +39,7 @@ jobs:
           path: cq.sif
 
       - name: Deploy to GHCR
+        if: contains( ${{ env.BRANCH_NAME }}, 'master')
         run: |
            echo ${{ secrets.GITHUB_TOKEN }} | apptainer registry login -u ${{ secrets.GHCR_USERNAME }} --password-stdin oras://ghcr.io
            apptainer push cq.sif oras://ghcr.io/cadquery/cadquery-apptainer:${GITHUB_SHA}
@@ -65,6 +69,7 @@ jobs:
           docker run --rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA} pytest tests/
 
       - name: Deploy to GHCR
+        if: contains(${{ env.BRANCH_NAME }}, 'master')
         run: |
            docker push ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA}
 
