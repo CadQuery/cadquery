@@ -34,7 +34,7 @@ jobs:
            apptainer run cq.sif pytest tests/
 
       - name: Store sif
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           path: cq.sif
 
@@ -54,7 +54,7 @@ jobs:
     steps:
 
       - name: Check out code for the container builds
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Authenticate
         run: |
