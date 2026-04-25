@@ -1,4 +1,4 @@
-name: Build Apptainer image with CQ using micromamba
+name: Build Apptainer and Docker images with CQ using micromamba
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ jobs:
         image: ghcr.io/apptainer/apptainer:1.4.1
         options: --privileged
 
-    name: Build Container
+    name: Build Apptainer
     steps:
 
       - name: Check out code for the container builds
@@ -59,6 +59,10 @@ jobs:
       - name: Build Container
         run: |
           docker build -t ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA} -f images/dockerfile .
+
+      - name: Test
+        run: |
+          docker run -rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA} pytest tests/
 
       - name: Deploy to GHCR
         run: |
