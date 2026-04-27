@@ -1,6 +1,5 @@
-set -eux
-apt-get update
-apt-get install -y \
+apt update
+apt install -y \
       libgl1 \
       libglx-mesa0 \
       libegl1 \
