@@ -3,8 +3,8 @@ From: mambaorg/micromamba:latest
 
 %files
     environment.yml /tmp
-    images/install_gl.sh /tmp
-    images/install_env.sh /tmp
+    images/install_gl.sh /tmp/install_gl.sh
+    images/install_env.sh /tmp/install_env.sh
     environment.yml /tmp
     ./ /tmp/cq
 
