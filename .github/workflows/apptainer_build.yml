@@ -23,7 +23,7 @@ jobs:
     steps:
 
       - name: Check out code for the container builds
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Container
         run: |
