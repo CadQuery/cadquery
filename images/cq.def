@@ -19,6 +19,7 @@ From: mambaorg/micromamba:latest
     head -n -1 /opt/environment.yml  > /opt/environment_.yml
     micromamba install -y -q -n base git
     micromamba install -y -q -n base -f /opt/environment_.yml
+    micromamba install -y -q -n base jupyterlab
     micromamba run pip install -e /opt/cq
     micromamba list
     micromamba clean --all --yes
