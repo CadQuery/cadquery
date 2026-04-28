@@ -1,14 +1,15 @@
 FROM mambaorg/micromamba:latest
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/environment.yml
+COPY --chown=$MAMBA_USER:$MAMBA_USER ./images/install_gl.sh /tmp/install_gl.sh
+COPY --chown=$MAMBA_USER:$MAMBA_USER ./images/install_env.sh /tmp/install_env.sh
 COPY --chown=$MAMBA_USER:$MAMBA_USER ./ /tmp/cq
 
-RUN micromamba install -y -q -n base git && \
-    head -n -1 /tmp/environment.yml  > /tmp/environment_.yml && \
-    micromamba install -y -q -n base -f /tmp/environment_.yml && \
-    micromamba run pip install -e /tmp/cq && \
-    micromamba list && \
-    micromamba clean --all --yes
+USER root
+RUN source /tmp/install_gl.sh
+
+USER $MAMBA_USER
+RUN source /tmp/install_env.sh
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1  # (otherwise python will not be found)
 
