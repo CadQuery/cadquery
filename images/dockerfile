@@ -9,7 +9,7 @@ USER root
 RUN source /tmp/install_gl.sh
 
 USER $MAMBA_USER
-RUN source /tmp/install_env.sh
+RUN export MYDIR=/tmp && source /tmp/install_env.sh
 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1  # (otherwise python will not be found)
 
