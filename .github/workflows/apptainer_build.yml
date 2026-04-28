@@ -62,11 +62,11 @@ jobs:
 
       - name: Build Container
         run: |
-          docker build -t ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA} -f images/dockerfile .
+          docker build -t ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME} -f images/dockerfile .
 
       - name: Test
         run: |
-          docker run --rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${GITHUB_SHA} pytest tests/
+          docker run --rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME} pytest tests/
 
       - name: Deploy to GHCR
         if: true # contains(env.BRANCH_NAME, 'master')
