@@ -24,6 +24,7 @@ Additionally, other options for visualization are also available including CQ-Ed
 For those who are interested, the [OCP repository](https://github.com/CadQuery/OCP) contains the current OCCT wrapper used by CQ.
 
 ### Key features
+
 * Build 3D models with scripts that are as close as possible to how you would describe the object to a human.
 * Create parametric models that can be very easily customized by end users.
 * Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL, VRML, AMF and 3MF.

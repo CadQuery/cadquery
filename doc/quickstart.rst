@@ -8,19 +8,23 @@ QuickStart
 
 Want a quick glimpse of what CadQuery can do?  This quickstart will demonstrate the basics of CadQuery using a simple example
 
-Prerequisites: CadQuery and CQ-editor installation
-==================================================
+Prerequisites: CadQuery installation
+====================================
 
-If you have not already done so, follow the :ref:`installation`, to install CadQuery and CQ-editor.
+If you want to quickly try out CadQuery you can do so by running apptainer or docker.
 
-After installation, run CQ-editor:
+```
+apptainer run oras://ghcr.io/cadquery/cadquery-apptainer:master ipython -i your_script.py
+```
 
-.. image:: _static/quickstart/001.png
+Otherwise, follow the :ref:`installation`, to install CadQuery.
 
-Find the CadQuery code editor, on the left side.  You'll see that we start out with the script for a simple block.
+
+You can use any editor of your choice to edit CadQuer (i.e. Python) scripts.
+You'll see that we start out with the script for a simple block.
 
 What we'll accomplish
-========================
+=====================
 
 We will build a fully parametric bearing pillow block in this quickstart.  Our finished object will look like this:
 
@@ -46,10 +50,12 @@ Start With A single, simple Plate
 ======================================
 
 Let's start with a simple model that makes nothing but a rectangular block, but
-with place-holders for the dimensions. Paste this into the code editor:
+with place-holders for the dimensions. Add this code to your script file:
 
 .. code-block:: python
    :linenos:
+   import cadquery as cq
+   from cadquery.vis import show
 
    height = 60.0
    width = 80.0
@@ -59,7 +65,7 @@ with place-holders for the dimensions. Paste this into the code editor:
    result = cq.Workplane("XY").box(height, width, thickness)
 
    # Render the solid
-   show_object(result)
+   show(result)
 
 Press the green Render button in the toolbar to run the script. You should see our base object.
 
@@ -77,6 +83,8 @@ This modification will do the trick:
 .. code-block:: python
    :linenos:
    :emphasize-lines: 4,10-12
+   import cadquery as cq
+   from cadquery.vis import show
 
    height = 60.0
    width = 80.0
@@ -93,7 +101,7 @@ This modification will do the trick:
    )
 
    # Render the solid
-   show_object(result)
+   show(result)
 
 Rebuild your model by clicking the Render button. Your block should look like this:
 
@@ -135,6 +143,8 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
 .. code-block:: python
    :linenos:
    :emphasize-lines: 5,14-18
+   import cadquery as cq
+   from cadquery.vis import show
 
    height = 60.0
    width = 80.0
@@ -156,7 +166,7 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
        .cboreHole(2.4, 4.4, 2.1)
    )
    # Render the solid
-   show_object(result)
+   show(result)
 
 
 After clicking the Render button to re-execute the model, you should see something like this:
@@ -204,6 +214,8 @@ We can do that using the preset dictionaries in the parameter definition:
 .. code-block:: python
    :linenos:
    :emphasize-lines: 19-20
+   import cadquery as cq
+   from cadquery.vis import show
 
    height = 60.0
    width = 80.0
@@ -228,7 +240,7 @@ We can do that using the preset dictionaries in the parameter definition:
    )
 
    # Render the solid
-   show_object(result)
+   show(result)
 
 **Line 19** To grab the right edges, the :py:meth:`cadquery.Workplane.edges` selects all of the
 edges that are parallel to the Z axis ("\|Z").
@@ -244,11 +256,13 @@ Exporting
 
 If you want to fabricate a physical object you need to export the result to STL or DXF. Additionally, exporting as STEP for post-processing in another CAD tool is also possible.
 
-This can be easily accomplished using the :py:meth:`cadquery.exporters.export` function:
+This can be easily accomplished using the :py:meth:`cadquery.Workplane.export` function:
 
 .. code-block:: python
    :linenos:
    :emphasize-lines: 27-29
+   import cadquery as cq
+   from cadquery.vis import show
 
    height = 60.0
    width = 80.0
@@ -273,12 +287,12 @@ This can be easily accomplished using the :py:meth:`cadquery.exporters.export` f
    )
 
    # Render the solid
-   show_object(result)
+   show(result)
 
    # Export
-   cq.exporters.export(result, "result.stl")
-   cq.exporters.export(result.section(), "result.dxf")
-   cq.exporters.export(result, "result.step")
+   result.export("result.stl")
+   result.section().export("result.dxf")
+   result.export("result.step")
 
 Done!
 ============
