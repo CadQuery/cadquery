@@ -28,7 +28,7 @@ What we'll accomplish
 
 We will build a fully parametric bearing pillow block in this quickstart.  Our finished object will look like this:
 
-.. image:: _static/quickstart/000.png
+.. image:: _static/quickstart/005.png
 
 **We would like our block to have these features:**
 
@@ -54,6 +54,7 @@ with place-holders for the dimensions. Add this code to your script file:
 
 .. code-block:: python
    :linenos:
+
    import cadquery as cq
    from cadquery.vis import show
 
@@ -82,7 +83,8 @@ This modification will do the trick:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 4,10-12
+   :emphasize-lines: 7,13-15
+
    import cadquery as cq
    from cadquery.vis import show
 
@@ -142,7 +144,8 @@ Good news!-- we can get the job done with just a few lines of code. Here's the c
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 5,14-18
+   :emphasize-lines: 8,17-21
+
    import cadquery as cq
    from cadquery.vis import show
 
@@ -213,7 +216,8 @@ We can do that using the preset dictionaries in the parameter definition:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 19-20
+   :emphasize-lines: 22-23
+
    import cadquery as cq
    from cadquery.vis import show
 
@@ -236,7 +240,7 @@ We can do that using the preset dictionaries in the parameter definition:
        .vertices()
        .cboreHole(2.4, 4.4, 2.1)
        .edges("|Z")
-       .fillet(2.0)
+       .fillet(10.0)
    )
 
    # Render the solid
