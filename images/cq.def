@@ -1,0 +1,32 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%files
+    environment.yml /opt
+    images/install_gl.sh /opt/install_gl.sh
+    images/install_env.sh /opt/install_env.sh
+    environment.yml /opt
+    ./ /opt/cq
+
+%post -c /bin/bash
+    export MYDIR=/opt
+    source /opt/install_gl.sh
+    source /opt/install_env.sh
+
+%labels
+    EnvironmentFile: environment.yml
+
+%help
+    This container container a Python environment with CadQuery.
+
+    To run Python from the environment:
+
+        apptainer run my_environment.sif ipython
+
+    To see the environment file used to create the environment:
+
+        apptainer run my_environment.sif cat /opt/environment.yml
+
+    To see what packages are in the environment:
+
+        apptainer run micromamba list

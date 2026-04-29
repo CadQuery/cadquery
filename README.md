@@ -18,19 +18,13 @@
 
 CadQuery is an intuitive, easy-to-use Python module for building parametric 3D CAD models. Using CadQuery, you can write short, simple scripts that produce high quality CAD models. It is easy to make many different objects using a single script that can be customized.
 
-CadQuery is often compared to [OpenSCAD](http://www.openscad.org/). Like OpenSCAD, CadQuery is an open-source, script based, parametric model generator. However, CadQuery stands out in many ways and has several key advantages:
-
-1. The scripts use a standard programming language, Python, and thus can benefit from the associated infrastructure. This includes many standard libraries and IDEs.
-2. CadQuery's CAD kernel Open CASCADE Technology ([OCCT](https://en.wikipedia.org/wiki/Open_Cascade_Technology)) is much more powerful than the [CGAL](https://en.wikipedia.org/wiki/CGAL) used by OpenSCAD. Features supported natively by OCCT include NURBS, splines, surface sewing, STL repair, STEP import/export, and other complex operations, in addition to the standard CSG operations supported by CGAL
-3. Ability to import/export [STEP](https://en.wikipedia.org/wiki/ISO_10303) and the ability to begin with a STEP model, created in a CAD package, and then add parametric features. This is possible in OpenSCAD using STL, but STL is a lossy format.
-4. CadQuery scripts require less code to create most objects, because it is possible to locate features based on the position of other features, workplanes, vertices, etc.
-5. CadQuery scripts can build STL, STEP, AMF and 3MF faster than OpenSCAD.
-
-CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts.  Options for visualization are also available including CQ-Editor and JupyterLab.
+CadQuery was built to be used as a Python library without any GUI. This makes it great for use cases such as integration into servers, or creating scientific and engineering scripts.  However, it includes internal visualization capabilities.
+Additionally, other options for visualization are also available including CQ-Editor and JupyterLab.
 
 For those who are interested, the [OCP repository](https://github.com/CadQuery/OCP) contains the current OCCT wrapper used by CQ.
 
 ### Key features
+
 * Build 3D models with scripts that are as close as possible to how you would describe the object to a human.
 * Create parametric models that can be very easily customized by end users.
 * Output high quality (loss-less) CAD formats like STEP and DXF in addition to STL, VRML, AMF and 3MF.
@@ -38,18 +32,18 @@ For those who are interested, the [OCP repository](https://github.com/CadQuery/O
 * Offer advanced modeling capabilities such as fillets, curvilinear extrudes, parametric curves and lofts.
 * Build nested assemblies out of individual parts and other assemblies.
 
-### Why this fork
-
-The original version of CadQuery was built on the FreeCAD API. This was great because it allowed for fast development and easy cross-platform capability. However, we eventually started reaching the limits of the API for some advanced operations and selectors. This 2.0 version of CadQuery is based directly on a Python wrapper of the OCCT kernel. This gives us a great deal more control and flexibility, at the expense of some simplicity and having to handle the cross-platform aspects of deployment ourselves. We believe this is a worthwhile trade-off to allow CadQuery to continue to grow and expand in the future.
-
 ## Getting started
 
 To learn more about designing with CadQuery, visit the [documentation](https://cadquery.readthedocs.io/en/latest/intro.html), [examples](https://cadquery.readthedocs.io/en/latest/examples.html), and [cheatsheet](https://cadquery.readthedocs.io/en/latest/_static/cadquery_cheatsheet.html).
 
-To get started playing around with CadQuery and see its capabilities, take a look at the [CQ-editor GUI](https://github.com/CadQuery/CQ-editor). This easy-to-use IDE is a great way to get started desiging with CadQuery.  The CQ-editor installer bundles both CQ-editor and CadQuery (recommended).  See the [CQ-editor installation instructions](https://cadquery.readthedocs.io/en/latest/installation.html#adding-a-nicer-gui-via-cq-editor).
+To quickly get started you can use docker or apptainer.
 
+```
+apptainer run oras://ghcr.io/cadquery/cadquery-apptainer:master ipython -i -c"from cadquery.func import *; form cadquery.vis import show; show(box(1,1,1))"
+```
 
-The CadQuery library (with or without CQ-editor) and its dependencies may be installed using conda, or pip.  Note that conda (or the CQ-editor installer) is the better supported option.
+The CadQuery library (with or without CQ-editor) and its dependencies may be installed using conda, or pip.
+Note that conda (or the CQ-editor installer) is the better supported option.
 
 See the documentation for detailed CadQuery [installation instructions](https://cadquery.readthedocs.io/en/latest/installation.html).
 
@@ -57,7 +51,7 @@ See the documentation for detailed CadQuery [installation instructions](https://
 
 To first install the Conda package manager see [Install the Conda Package Manager](https://cadquery.readthedocs.io/en/latest/installation.html#install-the-conda-package-manager), and [Miniforge](https://github.com/conda-forge/miniforge) for a minimal installer.
 
-``mamba install`` is recommended over ``conda install`` for faster and less memory intensive cadquery installation.
+``mamba install`` is recommended over ``conda install`` for faster and less memory intensive CadQuery installation.
 
 ```
 # Set up a new environment
@@ -91,6 +85,29 @@ It is also possible to install the very latest changes directly from CadQuery's 
 pip install git+https://github.com/CadQuery/cadquery.git
 ```
 
+### Built-in visualization
+
+CadQuery has built in visualization capabilities using trame and vtk.
+
+```
+from cadquery.func import box, fillet
+from cadquery.vis import show
+
+b = box(1,1,1)
+show(fillet(b, b.edges("|Z"), 0.1))
+
+```
+
+For non-blocking and persistent view one can use.
+
+```
+from cadquery.func import box, fillet
+from cadquery.fig import show
+
+b = box(1,1,1)
+show(fillet(b, b.edges("|Z"), 0.1))
+
+```
 
 ### CQ-editor GUI
 
@@ -124,33 +141,10 @@ We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) 
 
 There is also a [Discord](https://discord.com/invite/Bj9AQPsCfx) server, but the other methods of getting help are much better for newcomers.
 
-## Projects using CadQuery
+## Citing
 
-Here are just a few examples of how CadQuery is being used.
+Please use our Zenodo DOI if you use CadQuery for scientific research: https://doi.org/10.5281/zenodo.3955118.
 
-### FxBricks Lego Train System
-
-[FxBricks](https://fxbricks.com/) uses CadQuery in the product development pipeline for their Lego train system. FxBricks has also given back to the community by creating [documentation for their CAD pipeline](https://github.com/fx-bricks/fx-cad-notes). They have also assembled [cq-kit](https://github.com/michaelgale/cq-kit), a library containing utility classes and functions to extend the capabilities of CadQuery. Thanks to @michaelgale and @fx-bricks for this example.
-
-![FxBricks Pipeline Diagram](https://raw.githubusercontent.com/fx-bricks/fx-cad-notes/master/images/model_overview.png)
-
-### Hexidor Board Game Development
-
-Hexidor is an expanded take on the Quoridor board game, and the development process has been chronicled [here](https://bruceisonfire.net/2020/04/23/my-adventure-with-flosscad-the-birth-of-hexidor/). CadQuery was used to generate the game board. Thanks to Bruce for this example.
-
-<img src="https://bruceisonfire.net/wp-content/uploads/2020/04/16-945x709.jpg" alt="Hexidor Board Game" width="400"/>
-
-### Spindle assembly
-
-Thanks to @marcus7070 for this example from [here](https://github.com/marcus7070/spindle-assy-example).
-
-<img src="./doc/_static/assy.png" width="400">
-
-### 3D Printed Resin Mold
-
-Thanks to @eddieliberato for sharing [this example](https://jungletools.blogspot.com/2017/06/an-anti-kink-device-for-novel-high-tech.html) of an anti-kink resin mold for a cable.
-
-<img src="https://3.bp.blogspot.com/-2FiHOGUhtxo/WTRsViGdOXI/AAAAAAAAA-E/sb5ehwPVr-EncYC8RM2-v21M3AAmbjUjQCLcB/s1600/Screenshot%2Bfrom%2B2017-06-04%2B22-05-07.png" alt="3D printed resin mold" height="250"/>
 
 ## License
 
@@ -227,6 +221,3 @@ When filing a bug report [issue](https://github.com/CadQuery/cadquery/issues), p
 
 If you find yourself wishing for a feature that does not exist, you are probably not alone. There are bound to be others out there with similar needs. Open an [issue](https://github.com/CadQuery/cadquery/issues) which describes the feature you would like to see, why you need it, and how it should work.
 
-## Citing
-
-Please use our Zenodo DOI if you use CadQuery for scientific research: https://doi.org/10.5281/zenodo.3955118.
