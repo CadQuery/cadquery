@@ -5252,6 +5252,44 @@ def _shape(s: TopoDS_Shape, _: type[T]) -> T:
     return tcast(T, Shape.cast(s))
 
 
+def _shape_to_faces_shells(
+    s: TopoDS_Shape,
+) -> tuple[list[TopoDS_Face], list[TopoDS_Shell]]:
+    """
+    Split a TopoDS_Shape into Faces and Shells. Raise if another type was found.
+    """
+
+    rv_faces = []
+    rv_shells = []
+
+    t = s.ShapeType()
+
+    if t == TopAbs_ShapeEnum.TopAbs_COMPOUND:
+        it = TopoDS_Iterator(s)
+
+        while it.More():
+            el = it.Value()
+
+            t = el.ShapeType()
+
+            if t == TopAbs_ShapeEnum.TopAbs_FACE:
+                rv_faces.append(TopoDS.Face(el))
+            elif t == TopAbs_ShapeEnum.TopAbs_SHELL:
+                rv_shells.append(TopoDS.Shell(el))
+            else:
+                raise ValueError(f"Found unexpected type {t}")
+
+            it.Next()
+    elif t == TopAbs_ShapeEnum.TopAbs_SHELL:
+        rv_shells.append(TopoDS.Shell(s))
+    elif t == TopAbs_ShapeEnum.TopAbs_FACE:
+        rv_faces.append(TopoDS.Face(s))
+    else:
+        raise ValueError(f"Found unexpected type {t}")
+
+    return rv_faces, rv_shells
+
+
 def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
     """
     Convert a sequence of Vector to a TColgp harray (OCCT specific).
@@ -5571,7 +5609,7 @@ def shell(
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
     history: Optional[ShapeHistory] = None,
-) -> Shell:
+) -> Shape:
     """
     Build shell from faces. If ctx is specified, local sewing is performed.
     """
@@ -5594,20 +5632,24 @@ def shell(
     sewed = builder.SewedShape()
     _process_sewing_history(builder, faces, history)
 
-    rv: Union[TopoDS_Shape, TopoDS_Shell]
+    rv = []
 
-    # for one face sewing will not produce a shell
-    if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
-        rv = TopoDS_Shell()
+    # split the results
+    rv_faces, rv_shells = _shape_to_faces_shells(sewed)
+
+    rv.extend(rv_shells)
+
+    # for one closed face sewing will not produce a shell, so a special treatment is needed
+    for f_topo in rv_faces:
+        tmp = TopoDS_Shell()
 
         builder_topo = TopoDS_Builder()
-        builder_topo.MakeShell(rv)
-        builder_topo.Add(rv, sewed)
+        builder_topo.MakeShell(tmp)
+        builder_topo.Add(tmp, f_topo)
 
-    else:
-        rv = sewed
+        rv.append(tmp)
 
-    return _shape(rv, Shell)
+    return _compound_or_shape(rv)
 
 
 @multidispatch
@@ -5617,7 +5659,7 @@ def shell(
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
     history: Optional[ShapeHistory] = None,
-) -> Shell:
+) -> Shape:
     """
     Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
     """
