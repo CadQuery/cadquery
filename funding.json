@@ -20,7 +20,7 @@
         },
         "repositoryUrl": {
             "url": "https://github.com/CadQuery/cadquery",
-            "wellKnown": "https://github.com/CadQuery/cadquery/blob/master/.well-known/funding-manifest-urls"
+            "wellKnown": "https://raw.githubusercontent.com/CadQuery/cadquery/master/.well-known/funding-manifest-urls"
         },
         "licenses": ["spdx:Apache-2.0"],
         "tags": ["scientific-computing", "programming", "development", "design", "3d-modeling", "cad"]
@@ -55,10 +55,30 @@
                 "guid": "developer-time",
                 "status": "active",
                 "name": "Developer compensation",
-                "description": "This will cover the cost of one developer working part-time on features (i.e. $1000, $5000, $10000).",
+                "description": "A meaningful monthly contribution toward CadQuery development costs. Multiple sponsors at this level collectively help fund developer time for features and maintenance.",
                 "amount": 1000,
                 "currency": "USD",
                 "frequency": "monthly",
+                "channels": ["liberapay", "opencollective"]
+            },
+            {
+                "guid": "developer-part-time",
+                "status": "active",
+                "name": "Developer part time",
+                "description": "This will cover the cost of one developer working more consistently part-time on features. Funds might be disbursed among team members depending on what features need to be developed, and what expertise is needed for those features.",
+                "amount": 75000,
+                "currency": "USD",
+                "frequency": "yearly",
+                "channels": ["liberapay", "opencollective"]
+            },
+            {
+                "guid": "developer-full-time",
+                "status": "active",
+                "name": "Developer full time",
+                "description": "This will cover the cost of one developer working full-time on features. Funds might be disbursed among team members depending on what features need to be developed, and what expertise is needed for those features.",
+                "amount": 100000,
+                "currency": "USD",
+                "frequency": "yearly",
                 "channels": ["liberapay", "opencollective"]
             },
             {
