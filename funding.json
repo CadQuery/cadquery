@@ -1,0 +1,77 @@
+{
+    "$schema": "https://fundingjson.org/schema/v1.1.0.json",
+    "version": "v1.1.0",
+    "entity": {
+        "type": "group",
+        "role": "maintainer",
+        "name": "CadQuery",
+        "email": "wrightjmf@gmail.com",
+        "description": "A team of 3 core maintainers responsible for the ongoing development and stewardship of CadQuery and its ecosystem. We are committed to keeping CadQuery free, open, and accessible to the engineering and scientific communities.",
+        "webpageUrl": {
+            "url": "https://cadquery.org"
+        }
+    },
+    "projects": [{
+        "guid": "cadquery",
+        "name": "CadQuery",
+        "description": "CadQuery is an open source Python library for building parametric 3D CAD models using scripts. It is built on the Open CASCADE Technology (OCCT) kernel — the same industrial-grade geometry engine used in professional CAD software — giving it capabilities far beyond simpler tools like OpenSCAD. CadQuery supports high-quality, lossless formats including STEP, DXF, AMF, and 3MF, and integrates with JupyterLab and the CQ-editor GUI for interactive design. It is used across a wide range of fields, from fusion energy research to robotics to tabletop game development. The project is maintained by a small team of 3 core maintainers and relies entirely on community support to sustain ongoing development and maintenance.",
+        "webpageUrl": {
+            "url": "https://cadquery.org"
+        },
+        "repositoryUrl": {
+            "url": "https://github.com/CadQuery/cadquery",
+            "wellKnown": "https://github.com/CadQuery/cadquery/blob/master/.well-known/funding-manifest-urls"
+        },
+        "licenses": ["spdx:Apache-2.0"],
+        "tags": ["scientific-computing", "programming", "development", "design", "3d-modeling", "cad"]
+    }],
+    "funding": {
+        "channels": [
+            {
+                "guid": "liberapay",
+                "type": "payment-provider",
+                "address": "https://liberapay.com/cadquery",
+                "description": "Donate via Liberapay to support ongoing CadQuery development."
+            },
+            {
+                "guid": "opencollective",
+                "type": "payment-provider",
+                "address": "https://opencollective.com/cadquery",
+                "description": "Donate via Open Collective to support CadQuery development. Contributions are fiscally hosted and transparent."
+            }
+        ],
+        "plans": [
+            {
+                "guid": "monthly",
+                "status": "active",
+                "name": "Monthly development support",
+                "description": "This helps support ongoing development activities (i.e. $50, $100, $250).",
+                "amount": 50,
+                "currency": "USD",
+                "frequency": "monthly",
+                "channels": ["liberapay", "opencollective"]
+            },
+            {
+                "guid": "developer-time",
+                "status": "active",
+                "name": "Developer compensation",
+                "description": "This will cover the cost of one developer working part-time on features (i.e. $1000, $5000, $10000).",
+                "amount": 1000,
+                "currency": "USD",
+                "frequency": "monthly",
+                "channels": ["liberapay", "opencollective"]
+            },
+            {
+                "guid": "angel-plan",
+                "status": "active",
+                "name": "Goodwill plan",
+                "description": "Pay anything you wish to show your goodwill for the project.",
+                "amount": 0,
+                "currency": "USD",
+                "frequency": "one-time",
+                "channels": ["liberapay", "opencollective"]
+            }
+        ]
+    }
+}
+
