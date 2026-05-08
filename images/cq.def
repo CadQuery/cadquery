@@ -16,7 +16,7 @@ From: mambaorg/micromamba:latest
     EnvironmentFile: environment.yml
 
 %help
-    This container a Python environment with CadQuery.
+    This container provides a Python environment with CadQuery.
 
     To run Python from the environment:
 
