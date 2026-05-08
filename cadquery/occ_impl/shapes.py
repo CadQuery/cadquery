@@ -25,6 +25,8 @@ from io import BytesIO
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
+from OCP.ShapeBuild import ShapeBuild_ReShape
+
 from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
 from .shape_protocols import geom_LUT_FACE, geom_LUT_EDGE, Shapes, Geoms
 
@@ -5711,8 +5713,16 @@ def solid(
             builder.Add(sh.wrapped)
 
     # fix orientations
+    ctx = ShapeBuild_ReShape()
+
     sf = ShapeFix_Solid(builder.Solid())
+    sf.SetContext(ctx)
     sf.Perform()
+
+    # update history if applicable
+    if history is not None:
+        for k, v in history.items():
+            history[k] = Shape.cast(ctx.Apply(v.wrapped))
 
     return _shape(sf.Solid(), Solid)
 
