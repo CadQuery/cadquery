@@ -4930,10 +4930,10 @@ class Compound(Shape, Mixin3D):
 
         # simple query
         if isinstance(level, int):
-            rv = _siblings([self], level)
+            rv = _siblings(self, level)
         else:
             # collect all the requested levels
-            rv = set().union(*(_siblings([self], el) for el in level))
+            rv = set().union(*(_siblings(self, el) for el in level))
 
         return Compound.makeCompound(rv)
 
@@ -5744,14 +5744,13 @@ def solid(
     if inner:
         for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
             builder.Add(sh.wrapped)
-    # return _shape(builder.Solid(), Solid)
 
     # fix orientations
     ctx = ShapeBuild_ReShape()
 
     sf = ShapeFix_Solid(builder.Solid())
     sf.SetContext(ctx)
-    assert sf.Perform()
+    sf.Perform()
 
     # update history if applicable
     if history is not None:
