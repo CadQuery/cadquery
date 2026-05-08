@@ -404,3 +404,21 @@ def test_center():
         assert c.x == approx(1)
         assert c.y == approx(1)
         assert c.z == approx(1)
+
+
+def test_reverse():
+
+    b = box(1, 1, 1)
+
+    assert b.Volume() > 0 
+
+    br = b.reverse()
+
+    # reversed solid will have a negative volume
+    assert br.Volume() < 0
+    
+    # normals will be pointing in opposite direction
+    delta = b.face().normalAt() + br.face().normalAt()
+    assert delta.Length == approx(0)
+
+

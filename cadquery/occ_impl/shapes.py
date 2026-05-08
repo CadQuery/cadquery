@@ -1730,31 +1730,31 @@ class Shape(object):
             yield Shape.cast(it.Value())
             it.Next()
 
-    def ancestors(self, shape: "Shape", kind: Shapes) -> "Compound":
+    def ancestors(self, ctx: "Shape", kind: Shapes) -> "Compound":
         """
-        Iterate over ancestors, i.e. shapes of same kind within shape that contain self.
+        Iterate over ancestors, i.e. shapes of same kind within ctx shape that contain self.
 
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
 
         TopExp.MapShapesAndAncestors_s(
-            shape.wrapped, shapetype(self.wrapped), inverse_shape_LUT[kind], shape_map
+            ctx.wrapped, shapetype(self.wrapped), inverse_shape_LUT[kind], shape_map
         )
 
         return Compound.makeCompound(
             Shape.cast(s) for s in shape_map.FindFromKey(self.wrapped)
         )
 
-    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+    def siblings(self, ctx: "Shape", kind: Shapes, level: int = 1) -> "Compound":
         """
-        Iterate over siblings, i.e. shapes within shape that share subshapes of kind with self.
+        Iterate over siblings, i.e. shapes within ctx shape that share subshapes of kind with self.
 
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
         TopExp.MapShapesAndAncestors_s(
-            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
+            ctx.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
         )
         exclude = TopTools_MapOfShape()
 
@@ -1911,6 +1911,13 @@ class Shape(object):
             return compound(list(self)[item])
         else:
             return list(self)[item]
+
+    def reverse(self) -> "Shape":
+        """
+        Return a copy of self with reversed orientation.
+        """
+
+        return self.cast(self.wrapped.Reversed())
 
 
 class ShapeProtocol(Protocol):
@@ -3855,6 +3862,7 @@ class Face(Shape):
             bldr.Add(TopoDS.Wire(w.wrapped if isinstance(w, Wire) else wire(w).wrapped))
 
         return self.__class__(bldr.Face()).fix()
+
 
 
 class Shell(Shape):
