@@ -32,6 +32,7 @@ init:
 
 install:
     - conda config --set always_yes yes
+    - mamba info
     - mamba env create -f environment.yml
     - mamba list -n cadquery
 
