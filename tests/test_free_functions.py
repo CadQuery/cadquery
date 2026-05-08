@@ -233,6 +233,10 @@ def test_sewing():
 def test_solid():
 
     b = box(1, 1, 1)
+    b_large = box(10, 10, 1)
+    b_small = box(0.1, 0.1, 0.1).moved(b_large)
+    sphere1 = sphere(0.1).moved(b_large)
+    sphere2 = sphere1.moved(x=2)
 
     # solid
     s1 = solid(b.Faces())
@@ -263,6 +267,18 @@ def test_solid():
     final_faces_history = list(hist.values())
     for f in final_faces:
         assert f in final_faces_history
+
+    # solid with multiple periodic voids
+    s5 = solid(b_large.Faces(), inner=sphere1.Faces() + sphere2.Faces())
+
+    assert s5.isValid()
+    assert s5.Volume() == approx(b_large.Volume() - 2 * sphere1.Volume())
+
+    # solid with multiple simple voids
+    s6 = solid(b_large.Faces(), inner=b_small.Faces() + b_small.moved(x=1).Faces())
+
+    assert s6.isValid()
+    assert s6.Volume() == approx(b_large.Volume() - 2 * b_small.Volume())
 
 
 def test_edgeOn():
