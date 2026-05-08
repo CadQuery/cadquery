@@ -6784,6 +6784,7 @@ def check(
     s: Shape,
     results: Optional[List[Tuple[List[Shape], Any]]] = None,
     tol: Optional[float] = None,
+    verbose: bool = True,
 ) -> bool:
     """
     Check if a shape is valid.
@@ -6808,7 +6809,8 @@ def check(
         res = (_toptools_list_to_shapes(r.GetFaultyShapes1()), r.GetCheckStatus())
         msg = f"\n\tCheck failed.\n\tSubshapes: {res[0]} \n\tStatus: {res[1]}"
 
-        warn(msg)
+        if verbose:
+            warn(msg)
 
         if results is not None:
             results.append(res)
