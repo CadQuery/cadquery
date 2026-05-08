@@ -11,7 +11,7 @@ from math import comb
 from numpy.typing import NDArray
 from numpy import linspace, ndarray
 
-from casadi import ldl, ldl_solve
+from casadi import ldl, ldl_solve, Linsol, DM
 
 from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface
 from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
@@ -1454,7 +1454,9 @@ def uIsoMatrix(surf: Surface, u: float) -> COO:
     nu = surf.pts.shape[0]
     nv = surf.pts.shape[1]
 
-    block = designMatrix(np.atleast_1d(u), surf.uorder, surf.uknots, surf.uperiodic)
+    block = designMatrix(
+        np.atleast_1d(np.array(u)), surf.uorder, surf.uknots, surf.uperiodic
+    )
 
     shape = (nv, nu * nv)
 
@@ -1481,7 +1483,9 @@ def vIsoMatrix(surf: Surface, v: float) -> COO:
     nu = surf.pts.shape[0]
     nv = surf.pts.shape[1]
 
-    block = designMatrix(np.atleast_1d(v), surf.vorder, surf.vknots, surf.vperiodic)
+    block = designMatrix(
+        np.atleast_1d(np.array(v)), surf.vorder, surf.vknots, surf.vperiodic
+    )
 
     shape = (nu, nu * nv)
 
@@ -1853,8 +1857,9 @@ def approximate2D(
         CtC = C.T @ C
 
     # solve normal equations
-    D, L, P = ldl(CtC, False)
-    pts = ldl_solve(C.T @ data, D, L, P).toarray()
+    CtC = DM(CtC)
+    ldl = Linsol("mumps", "mumps", CtC.sparsity())
+    pts = ldl.solve(CtC, C.T @ data).toarray()
 
     # construct the result
     rv = Surface(
@@ -1899,6 +1904,11 @@ def constrainedApproximate2D(
         u, v, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic
     ).csc()
 
+    # normalize
+    npts = data.shape[0]
+    C /= npts
+    data /= npts
+
     # handle penalties if requested
     if lam:
         # construct the penalty grid
@@ -1927,8 +1937,10 @@ def constrainedApproximate2D(
     LHS = sp.bmat(((CtC_xyz, As.coo().T,), (As.coo(), None)))
     RHS = np.concatenate((C_xyz.T @ data.flatten(order="F"), bs))
 
-    D, L, P = ldl(LHS, False)
-    sol = ldl_solve(RHS, D, L, P).toarray()
+    LHS_DM = DM(LHS)
+    ldl = Linsol("mumps", "mumps", LHS_DM.sparsity())
+    sol = ldl.solve(LHS_DM, RHS).toarray()
+
     pts = sol[: CtC_xyz.shape[0]]
 
     # construct the result
