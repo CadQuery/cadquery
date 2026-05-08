@@ -30,7 +30,6 @@ dependencies:
   - trame-vtk
   - trame-components
   - trame-vuetify
-  - viskores=1.1.0 # tmp pin
   - pip
   - pip:
     - sphinx_rtd_theme==3.1.0
