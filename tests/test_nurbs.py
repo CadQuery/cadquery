@@ -586,8 +586,8 @@ def test_constrainedApproximate2D(torus_surf, lam, penalty):
     assert not np.allclose(isov.pts[:, 2], 0)
 
     # # constraints per direction
-    Au = uIsoMatrix(surf, np.array(0.0))
-    Av = vIsoMatrix(surf, np.array(0.0))
+    Au = uIsoMatrix(surf, 0.0)
+    Av = vIsoMatrix(surf, 0.0)
     by = np.zeros(Au.shape[0])
     bz = np.zeros(Av.shape[0])
 
