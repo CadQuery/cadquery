@@ -5,7 +5,6 @@ From: mambaorg/micromamba:latest
     environment.yml /opt
     images/install_gl.sh /opt/install_gl.sh
     images/install_env.sh /opt/install_env.sh
-    environment.yml /opt
     ./ /opt/cq
 
 %post -c /bin/bash
@@ -17,7 +16,7 @@ From: mambaorg/micromamba:latest
     EnvironmentFile: environment.yml
 
 %help
-    This container container a Python environment with CadQuery.
+    This container a Python environment with CadQuery.
 
     To run Python from the environment:
 
@@ -29,4 +28,4 @@ From: mambaorg/micromamba:latest
 
     To see what packages are in the environment:
 
-        apptainer run micromamba list
+        apptainer run my_environment.sif micromamba list
