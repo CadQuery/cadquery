@@ -4875,9 +4875,9 @@ class Compound(Shape, Mixin3D):
 
         return tcast(Compound, self._bool_op(self, toIntersect, intersect_op))
 
-    def ancestors(self, shape: "Shape", kind: Shapes) -> "Compound":
+    def ancestors(self, ctx: "Shape", kind: Shapes) -> "Compound":
         """
-        Iterate over ancestors, i.e. shapes of same kind within shape that contain elements of self.
+        Iterate over ancestors, i.e. shapes of same kind within ctx shape that contain elements of self.
 
         """
 
@@ -4886,14 +4886,16 @@ class Compound(Shape, Mixin3D):
 
         for t in shapetypes:
             TopExp.MapShapesAndAncestors_s(
-                shape.wrapped, t, inverse_shape_LUT[kind], shape_map
+                ctx.wrapped, t, inverse_shape_LUT[kind], shape_map
             )
 
         return Compound.makeCompound(
             Shape.cast(a) for s in self for a in shape_map.FindFromKey(s.wrapped)
         )
 
-    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+    def siblings(
+        self, ctx: "Shape", kind: Shapes, level: int | Iterable[int] = 1
+    ) -> "Compound":
         """
         Iterate over siblings, i.e. shapes within shape that share subshapes of kind with the elements of self.
 
@@ -4904,7 +4906,7 @@ class Compound(Shape, Mixin3D):
 
         for t in shapetypes:
             TopExp.MapShapesAndAncestors_s(
-                shape.wrapped, inverse_shape_LUT[kind], t, shape_map,
+                ctx.wrapped, inverse_shape_LUT[kind], t, shape_map,
             )
 
         exclude = TopTools_MapOfShape()
@@ -4926,7 +4928,14 @@ class Compound(Shape, Mixin3D):
 
             return rv if level == 1 else _siblings(rv, level - 1)
 
-        return Compound.makeCompound(_siblings(self, level))
+        # simple query
+        if isinstance(level, int):
+            rv = _siblings([self], level)
+        else:
+            # collect all the requested levels
+            rv = set().union(*(_siblings([self], el) for el in level))
+
+        return Compound.makeCompound(rv)
 
 
 def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:

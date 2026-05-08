@@ -432,12 +432,18 @@ def test_siblings(simple_box):
 
     f = simple_box.face("<Z")
 
-    # siblings_1 = f.siblings(simple_box, "Edge", 1)
-    # assert siblings_1.size() == 4
-    #
-    # siblings_12 = f.siblings(simple_box, "Edge", (1, 2))
-    # assert siblings_12.size() == 5
+    siblings_1 = f.siblings(simple_box, "Edge", 1)
+    assert siblings_1.size() == 4
+
+    siblings_12 = f.siblings(simple_box, "Edge", (1, 2))
+    assert siblings_12.size() == 5
 
     siblings_2 = f.siblings(simple_box, "Edge", (2,))
     assert siblings_2.size() == 1
     assert (siblings_2.Center() - simple_box.faces(">Z").Center()).Length == approx(0)
+
+    siblings_cmp_12 = simple_box.faces(">Z").siblings(simple_box, "Edge", (1, 2))
+    assert siblings_cmp_12.size() == 5
+
+    siblings_cmp_2 = simple_box.faces(">Z").siblings(simple_box, "Edge", (2,))
+    assert siblings_cmp_2.size() == 1
