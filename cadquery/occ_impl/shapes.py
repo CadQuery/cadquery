@@ -21,6 +21,7 @@ from typing_extensions import Self
 
 from io import BytesIO
 
+from warnings import warn
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
@@ -6776,7 +6777,7 @@ def project(
     return _normalize(compound(results))
 
 
-#%% diagnotics
+#%% diagnostics
 
 
 def check(
@@ -6799,14 +6800,18 @@ def check(
     if tol:
         analyzer.SetFuzzyValue(tol)
 
-    # output detailed results if requested
+    # generate warnings, output detailed results if requested
     if results is not None:
         results.clear()
 
-        for r in analyzer.Result():
-            results.append(
-                (_toptools_list_to_shapes(r.GetFaultyShapes1()), r.GetCheckStatus())
-            )
+    for r in analyzer.Result():
+        res = (_toptools_list_to_shapes(r.GetFaultyShapes1()), r.GetCheckStatus())
+        msg = f"\n\tCheck failed.\n\tSubshapes: {res[0]} \n\tStatus: {res[1]}"
+
+        warn(msg)
+
+        if results is not None:
+            results.append(res)
 
     return rv
 
