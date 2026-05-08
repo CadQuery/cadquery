@@ -1746,7 +1746,9 @@ class Shape(object):
             Shape.cast(s) for s in shape_map.FindFromKey(self.wrapped)
         )
 
-    def siblings(self, ctx: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+    def siblings(
+        self, ctx: "Shape", kind: Shapes, level: int | Iterable[int] = 1
+    ) -> "Compound":
         """
         Iterate over siblings, i.e. shapes within ctx shape that share subshapes of kind with self.
 
@@ -1776,7 +1778,14 @@ class Shape(object):
 
             return rv if level == 1 else _siblings(rv, level - 1)
 
-        return Compound.makeCompound(_siblings([self], level))
+        # simple query
+        if isinstance(level, int):
+            rv = _siblings([self], level)
+        else:
+            # collect all the requested levels
+            rv = set().union(*(_siblings([self], el) for el in level))
+
+        return Compound.makeCompound(rv)
 
     def __add__(self, other: "Shape") -> "Shape":
         """
@@ -1911,6 +1920,13 @@ class Shape(object):
             return compound(list(self)[item])
         else:
             return list(self)[item]
+
+    def size(self) -> int:
+        """
+        Simple size implementation.
+        """
+
+        return len(list(self))
 
     def reverse(self) -> "Shape":
         """
@@ -5719,13 +5735,14 @@ def solid(
     if inner:
         for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
             builder.Add(sh.wrapped)
+    # return _shape(builder.Solid(), Solid)
 
     # fix orientations
     ctx = ShapeBuild_ReShape()
 
     sf = ShapeFix_Solid(builder.Solid())
     sf.SetContext(ctx)
-    sf.Perform()
+    assert sf.Perform()
 
     # update history if applicable
     if history is not None:

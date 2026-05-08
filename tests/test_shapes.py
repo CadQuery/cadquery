@@ -27,9 +27,15 @@ from cadquery.occ_impl.shapes import (
 
 from cadquery.selectors import NearestToPointSelector
 
-from pytest import approx, raises
+from pytest import approx, raises, fixture
 
 from math import pi
+
+
+@fixture
+def simple_box():
+
+    return box(1, 1, 1)
 
 
 def test_edge_paramAt():
@@ -406,17 +412,32 @@ def test_center():
         assert c.z == approx(1)
 
 
-def test_reverse():
+def test_reverse(simple_box):
 
-    b = box(1, 1, 1)
+    simple_box = box(1, 1, 1)
 
-    assert b.Volume() > 0
+    assert simple_box.Volume() > 0
 
-    br = b.reverse()
+    br = simple_box.reverse()
 
     # reversed solid will have a negative volume
     assert br.Volume() < 0
 
     # normals will be pointing in opposite direction
-    delta = b.face().normalAt() + br.face().normalAt()
+    delta = simple_box.face().normalAt() + br.face().normalAt()
     assert delta.Length == approx(0)
+
+
+def test_siblings(simple_box):
+
+    f = simple_box.face("<Z")
+
+    # siblings_1 = f.siblings(simple_box, "Edge", 1)
+    # assert siblings_1.size() == 4
+    #
+    # siblings_12 = f.siblings(simple_box, "Edge", (1, 2))
+    # assert siblings_12.size() == 5
+
+    siblings_2 = f.siblings(simple_box, "Edge", (2,))
+    assert siblings_2.size() == 1
+    assert (siblings_2.Center() - simple_box.faces(">Z").Center()).Length == approx(0)
