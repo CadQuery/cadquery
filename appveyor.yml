@@ -24,7 +24,7 @@ init:
     - cmd: set "PATH=%MINICONDA_DIRNAME%;%MINICONDA_DIRNAME%\\Scripts;%PATH%"
     - cmd: activate
     - cmd: set MAMBA_ROOT_PREFIX=C:/Miniforge/Library
-    - sh: curl -sL hhttps://github.com/conda-forge/miniforge/releases/download/26.1.1-3/Miniforge3-26.1.1-3-$OS-x86_64.sh > miniconda.sh
+    - sh: curl -sL https://github.com/conda-forge/miniforge/releases/download/26.1.1-3/Miniforge3-26.1.1-3-$OS-x86_64.sh > miniconda.sh
     - sh: bash miniconda.sh -b -p $HOME/miniconda;
     - sh: export PATH="$HOME/miniconda/bin:$HOME/miniconda/lib:$PATH";
     - sh: source $HOME/miniconda/bin/activate
