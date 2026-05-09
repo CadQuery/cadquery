@@ -11,7 +11,7 @@ from math import comb
 from numpy.typing import NDArray
 from numpy import linspace, ndarray
 
-from casadi import ldl, ldl_solve, Linsol, DM
+from casadi import ldl, ldl_solve, Linsol, DM, solve
 
 from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface
 from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
@@ -1904,11 +1904,6 @@ def constrainedApproximate2D(
         u, v, uorder, vorder, uknots_, vknots_, uperiodic, vperiodic
     ).csc()
 
-    # normalize
-    npts = data.shape[0]
-    C /= npts
-    data /= npts
-
     # handle penalties if requested
     if lam:
         # construct the penalty grid
@@ -1938,7 +1933,7 @@ def constrainedApproximate2D(
     RHS = np.concatenate((C_xyz.T @ data.flatten(order="F"), bs))
 
     LHS_DM = DM(LHS)
-    ldl = Linsol("mumps", "mumps", LHS_DM.sparsity())
+    ldl = Linsol("mumps", "mumps", LHS_DM.sparsity(), dict(symmetric=True))
     sol = ldl.solve(LHS_DM, RHS).toarray()
 
     pts = sol[: CtC_xyz.shape[0]]
@@ -2018,8 +2013,9 @@ def constrainedApproximate2D(
             LHS = CtC
             RHS = C.T @ data[:, i]
 
-        D, L, P = ldl(LHS, False)
-        sol = ldl_solve(RHS, D, L, P).toarray()
+        LHS_DM = DM(LHS)
+        ldl = Linsol("mumps", "mumps", LHS_DM.sparsity(), dict(symmetric=True))
+        sol = ldl.solve(LHS_DM, RHS).toarray()
         pts.append(sol[: CtC.shape[0]])
 
     # construct the result
