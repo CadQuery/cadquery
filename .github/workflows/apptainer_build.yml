@@ -1,0 +1,75 @@
+name: Build Apptainer and Docker images with CQ using micromamba
+
+on:
+  pull_request:
+  push:
+    branches: master
+
+env:
+ BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+
+jobs:
+  build-test-container:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    container:
+        image: ghcr.io/apptainer/apptainer:1.4.1
+        options: --privileged
+
+    name: Build Apptainer
+    steps:
+
+      - name: Check out code for the container builds
+        uses: actions/checkout@v6
+
+      - name: Build Container
+        run: |
+           apptainer build cq.sif images/cq.def
+
+      - name: Test Container
+        run: |
+           apptainer run cq.sif pytest tests/
+
+      - name: Store sif
+        uses: actions/upload-artifact@v6
+        with:
+          path: cq.sif
+
+      - name: Deploy to GHCR
+        if: contains( env.BRANCH_NAME, 'master')
+        run: |
+           echo ${{ secrets.GITHUB_TOKEN }} | apptainer registry login -u ${{ secrets.GHCR_USERNAME }} --password-stdin oras://ghcr.io
+           apptainer push cq.sif oras://ghcr.io/cadquery/cadquery-apptainer:${BRANCH_NAME}
+
+  build-docker-container:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    name: Build Docker
+    steps:
+
+      - name: Check out code for the container builds
+        uses: actions/checkout@v6
+
+      - name: Authenticate
+        run: |
+           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin 
+
+      - name: Build Container
+        run: |
+          docker build -t ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME} -f images/dockerfile .
+
+      - name: Test
+        run: |
+          docker run --rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME} pytest tests/
+
+      - name: Deploy to GHCR
+        if: contains(env.BRANCH_NAME, 'master')
+        run: |
+           docker push ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME}
+
