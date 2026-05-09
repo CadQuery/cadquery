@@ -55,6 +55,7 @@ from cadquery.occ_impl.shapes import (
     _get_one,
     _get_edges,
     _adaptor_curve_to_edge,
+    _shape_to_faces_shells,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -141,6 +142,16 @@ def test_adaptor_curve_to_edge():
         e = _adaptor_curve_to_edge(s._geomAdaptor().Curve(), 0, 1)
 
         assert isinstance(e, TopoDS_Edge)
+
+
+def test__shape_to_faces_shells():
+
+    # bed weather tests
+    with raises(ValueError):
+        _shape_to_faces_shells(compound(vertex(0, 0, 0)))
+
+    with raises(ValueError):
+        _shape_to_faces_shells(vertex(0, 0, 0))
 
 
 # %% constructors
