@@ -447,3 +447,8 @@ def test_siblings(simple_box):
 
     siblings_cmp_2 = simple_box.faces(">Z").siblings(simple_box, "Edge", (2,))
     assert siblings_cmp_2.size() == 1
+
+    siblings_cmp_edges_12 = simple_box.edges(">Z").siblings(
+        simple_box, "Vertex", (1, 2)
+    )
+    assert siblings_cmp_edges_12.size() == 8
