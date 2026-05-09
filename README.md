@@ -39,13 +39,13 @@ To learn more about designing with CadQuery, visit the [documentation](https://c
 To quickly get started you can use apptainer
 
 ```
-apptainer run oras://ghcr.io/cadquery/cadquery-apptainer:master ipython -i -c"from cadquery.func import *; form cadquery.vis import show; show(box(1,1,1))"
+apptainer run oras://ghcr.io/cadquery/cadquery-apptainer:master ipython -i -c"from cadquery.func import *; from cadquery.vis import show; show(box(1,1,1))"
 ```
 
 or docker/podman.
 
 ```
-podman run -it -v /tmp:/tmp -e DISPLAY=$DISPLAY -t ghcr.io/cadquery/cadquery-docker:master ipython -i  -c"from cadquery.func import *; from cadquery.vis import show; show(box(1,1,1))"
+podman run -i -v /tmp:/tmp -e DISPLAY=$DISPLAY  --userns=keep-id --user "$(id -u):$(id -g)" --device /dev/dri -t ghcr.io/cadquery/cadquery-docker:master ipython -i  -c"from cadquery.func import *; from cadquery.vis import show; show(box(1,1,1))"
 ```
 
 The CadQuery library (with or without CQ-editor) and its dependencies may be installed using conda/mamba/micromamba/pixi, or pip.
