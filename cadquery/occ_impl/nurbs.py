@@ -1933,7 +1933,7 @@ def constrainedApproximate2D(
     RHS = np.concatenate((C_xyz.T @ data.flatten(order="F"), bs))
 
     LHS_DM = DM(LHS)
-    ldl = Linsol("mumps", "mumps", LHS_DM.sparsity(), dict(symmetric=True))
+    ldl = Linsol("mumps", "mumps", LHS_DM.sparsity())
     sol = ldl.solve(LHS_DM, RHS).toarray()
 
     pts = sol[: CtC_xyz.shape[0]]
@@ -2014,7 +2014,7 @@ def constrainedApproximate2D(
             RHS = C.T @ data[:, i]
 
         LHS_DM = DM(LHS)
-        ldl = Linsol("mumps", "mumps", LHS_DM.sparsity(), dict(symmetric=True))
+        ldl = Linsol("mumps", "mumps", LHS_DM.sparsity())
         sol = ldl.solve(LHS_DM, RHS).toarray()
         pts.append(sol[: CtC.shape[0]])
 
