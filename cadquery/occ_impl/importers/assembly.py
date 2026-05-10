@@ -167,7 +167,7 @@ def importStep(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     _importDoc(doc, assy)
 
 
-def importXbf(assy: AssemblyProtocol, path: str):
+def importXbf(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     """
     Import an xbf file into an assembly.
 
@@ -179,6 +179,8 @@ def importXbf(assy: AssemblyProtocol, path: str):
 
     app = TDocStd_Application()
     BinXCAFDrivers.DefineFormat_s(app)
+
+    Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
 
     p = Path(path).absolute()
     dirname, fname = str(p.parent), p.name
@@ -197,7 +199,7 @@ def importXbf(assy: AssemblyProtocol, path: str):
     _importDoc(doc, assy)
 
 
-def importXml(assy: AssemblyProtocol, path: str):
+def importXml(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     """
     Import an xcaf xml file into an assembly.
 
@@ -209,6 +211,8 @@ def importXml(assy: AssemblyProtocol, path: str):
 
     app = TDocStd_Application()
     XmlXCAFDrivers.DefineFormat_s(app)
+
+    Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
 
     p = Path(path).absolute()
     dirname, fname = str(p.parent), p.name
