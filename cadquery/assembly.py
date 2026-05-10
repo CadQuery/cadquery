@@ -654,9 +654,9 @@ class Assembly(object):
         if importType == "STEP":
             _importStep(assy, path, unit)
         elif importType == "XML":
-            importXml(assy, path)
+            importXml(assy, path, unit)
         elif importType == "XBF":
-            importXbf(assy, path)
+            importXbf(assy, path, unit)
 
         return assy
 
