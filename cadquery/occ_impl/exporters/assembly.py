@@ -343,8 +343,7 @@ def exportStepMeta(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportCAF(
-(assy: AssemblyProtocol, path: str, binary: bool = False, unit: UnitLiterals = "MM") -> bool:
+def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False, unit: UnitLiterals = "MM") -> bool:
     """
     Export an assembly to an XCAF xml or xbf file (internal OCCT formats).
     """
