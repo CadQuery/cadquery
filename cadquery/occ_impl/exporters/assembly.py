@@ -343,7 +343,12 @@ def exportStepMeta(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
+def exportCAF(
+    assy: AssemblyProtocol,
+    path: str,
+    binary: bool = False,
+    unit: UnitLiterals = "MM"
+) -> bool:
     """
     Export an assembly to an XCAF xml or xbf file (internal OCCT formats).
     """
@@ -377,6 +382,8 @@ def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
     app.DefineFormat(
         format_name, format_desc, TCollection_AsciiString(ext), ret, store,
     )
+
+    Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
 
     doc.SetRequestedFolder(TCollection_ExtendedString(folder))
     doc.SetRequestedName(TCollection_ExtendedString(name))
