@@ -146,12 +146,12 @@ def test_adaptor_curve_to_edge():
 
 def test__shape_to_faces_shells():
 
-    # bed weather tests
+    # bad weather tests
     with raises(ValueError):
-        _shape_to_faces_shells(compound(vertex(1, 0, 0), vertex(0, 0, 0)))
+        _shape_to_faces_shells(compound(vertex(1, 0, 0), vertex(0, 0, 0)).wrapped)
 
     with raises(ValueError):
-        _shape_to_faces_shells(vertex(0, 0, 0))
+        _shape_to_faces_shells(vertex(0, 0, 0).wrapped)
 
 
 # %% constructors
