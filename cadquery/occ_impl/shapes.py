@@ -6520,6 +6520,47 @@ def offset(
     return rv
 
 
+def offset2D(
+    s: Shape,
+    t: float,
+    ctx: Shape | None = None,
+    kind: Literal["arc", "intersection", "tangent"] = "arc",
+) -> Shape:
+    """
+    2D offset edges or wires. ctx face might be needed for ambigous wires/edges.
+    Only works with planar geometries.
+    """
+
+    kind_dict = {
+        "arc": GeomAbs_JoinType.GeomAbs_Arc,
+        "intersection": GeomAbs_JoinType.GeomAbs_Intersection,
+        "tangent": GeomAbs_JoinType.GeomAbs_Tangent,
+    }
+
+    if ctx:
+        # build a dummy face based on the geometry of the ctx face.
+        fbldr = BRepBuilderAPI_MakeFace(_get_one(ctx, "Face")._geomAdaptor(), 1e-6)
+
+        for el in _get_wires(s):
+            fbldr.Add(el.wrapped)
+
+        fbldr.Build()
+
+        bldr = BRepOffsetAPI_MakeOffset(fbldr.Face(), kind_dict[kind])
+
+    else:
+        # simple case - input wire defines a plane
+        bldr = BRepOffsetAPI_MakeOffset()
+        bldr.Init(kind_dict[kind])
+
+        for el in _get_wires(s):
+            bldr.AddWire(el.wrapped)
+
+    bldr.Perform(t)
+
+    return _compound_or_shape(bldr.Shape())
+
+
 @multimethod
 def sweep(
     s: Shape, path: Shape, aux: Optional[Shape] = None, cap: bool = False
