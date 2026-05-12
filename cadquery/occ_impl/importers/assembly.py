@@ -167,11 +167,11 @@ def importStep(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     _importDoc(doc, assy)
 
 
-def importXbf(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
+def importXbf(assy: AssemblyProtocol, path: str):
     """
     Import an xbf file into an assembly.
 
-    :param assy: An Assembly object that will be packed with the contents of the STEP file.
+    :param assy: An Assembly object that will be packed with the contents of the XBF file.
     :param path: Path and filename to the xbf file to read.
 
     :return: None
@@ -179,8 +179,6 @@ def importXbf(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
 
     app = TDocStd_Application()
     BinXCAFDrivers.DefineFormat_s(app)
-
-    Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
 
     p = Path(path).absolute()
     dirname, fname = str(p.parent), p.name
@@ -199,11 +197,11 @@ def importXbf(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     _importDoc(doc, assy)
 
 
-def importXml(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
+def importXml(assy: AssemblyProtocol, path: str):
     """
     Import an xcaf xml file into an assembly.
 
-    :param assy: An Assembly object that will be packed with the contents of the STEP file.
+    :param assy: An Assembly object that will be packed with the contents of the XML file.
     :param path: Path and filename to the xml file to read.
 
     :return: None
@@ -211,8 +209,6 @@ def importXml(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
 
     app = TDocStd_Application()
     XmlXCAFDrivers.DefineFormat_s(app)
-
-    Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
 
     p = Path(path).absolute()
     dirname, fname = str(p.parent), p.name
