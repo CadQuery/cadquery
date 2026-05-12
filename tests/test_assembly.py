@@ -999,6 +999,25 @@ def test_step_export_assembly_output_unit(tmp_path_factory):
     assert "(-5.E-03,-5.E-03,-5.E-03)" in content
 
 
+def test_step_roundtrip_unit(tmp_path_factory):
+
+    tmpdir = tmp_path_factory.mktemp("output_unit_assy")
+    m_path = os.path.join(tmpdir, "assy_roundtrip_unit.step")
+
+    assy = cq.Assembly()
+    assy.add(cq.Workplane().box(1.0, 1.0, 1.0), name="box")
+    assy.save(m_path, unit="MM", outputUnit="M")
+
+    assy2 = cq.Assembly.load(m_path, unit="M")
+    assert assy2.box.obj.Volume() == approx((1e-3) ** 3)
+
+    assy3 = cq.Assembly.load(m_path, unit="CM")
+    assert assy3.box.obj.Volume() == approx((1e-1) ** 3)
+
+    assy4 = cq.Assembly.load(m_path, unit="MM")
+    assert assy4.box.obj.Volume() == approx((1) ** 3)
+
+
 def test_assembly_step_import(tmpdir, subshape_assy):
     """
     Test if the STEP import works correctly for an assembly with subshape data attached.
