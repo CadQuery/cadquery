@@ -21,7 +21,6 @@ from .occ_impl.shapes import (
 )
 from .occ_impl import exporters
 from .occ_impl import importers
-from .occ_impl.types import UnitLiterals
 
 # these items are the common implementation
 
@@ -39,6 +38,7 @@ from .selectors import (
 from .sketch import Sketch
 from .cq import CQ, Workplane
 from .assembly import Assembly, Color, Constraint, Material
+from .types import UnitLiterals
 from . import selectors
 from . import plugins
 

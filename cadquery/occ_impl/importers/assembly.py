@@ -26,7 +26,7 @@ from OCP.PCDM import PCDM_ReaderStatus
 from ..assembly import AssemblyProtocol, Color, Material
 from ..geom import Location
 from ..shapes import Shape
-from ..types import UnitLiterals
+from ...types import UnitLiterals
 
 
 def _get_name(label: TDF_Label) -> str:

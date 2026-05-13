@@ -48,7 +48,7 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
-from ..types import UnitLiterals
+from ...types import UnitLiterals
 
 
 class ExportModes:

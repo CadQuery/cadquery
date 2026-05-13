@@ -37,7 +37,7 @@ from .occ_impl.exporters.assembly import (
 )
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
-from .occ_impl.types import UnitLiterals
+from .types import UnitLiterals
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate, BiDict, instance_of

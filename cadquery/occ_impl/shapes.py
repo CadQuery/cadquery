@@ -34,7 +34,7 @@ from ..selectors import (
 )
 
 from ..utils import multimethod, multidispatch, mypyclassmethod
-from .types import UnitLiterals
+from ..types import UnitLiterals
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -1824,6 +1824,8 @@ class Shape(object):
         fname: str,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
+        unit: UnitLiterals = "MM",
+        outputUnit: Optional[UnitLiterals] = None,
         opt: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -1833,7 +1835,13 @@ class Shape(object):
         from .exporters import export  # imported here to prevent circular imports
 
         export(
-            self, fname, tolerance=tolerance, angularTolerance=angularTolerance, opt=opt
+            self,
+            fname,
+            tolerance=tolerance,
+            angularTolerance=angularTolerance,
+            unit=unit,
+            outputUnit=outputUnit,
+            opt=opt,
         )
 
     def __getstate__(self) -> Tuple[BytesIO, bool]:
