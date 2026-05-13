@@ -782,7 +782,7 @@ def test_stl_ascii(tmpdir, box123, id, opt, matchvals):
 
     assert matchvals
 
-    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt)
+    exporters.export(box123, str(fpath), None, 0.1, 0.1, opt=opt)
 
     with open(fpath, "r") as f:
         for i, line in enumerate(f):

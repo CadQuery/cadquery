@@ -8,7 +8,7 @@ from OCP.Interface import Interface_Static
 from ... import cq
 from ..shapes import Shape
 from .dxf import _importDXF
-from ..types import UnitLiterals
+from ...types import UnitLiterals
 
 RAD2DEG = 360.0 / (2 * pi)
 
