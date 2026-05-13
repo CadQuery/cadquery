@@ -46,6 +46,7 @@ from cadquery.func import (
     project,
     edgeOn,
     faceOn,
+    offset2D,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -826,6 +827,34 @@ def test_offset():
     assert r2.Volume() == approx(1 - 0.5 ** 3)
     assert r3.Volume() == approx(2)
     assert r4.Volume() == approx(4)
+
+
+def test_offset2D():
+
+    c = circle(1)
+    seg = segment((0, 0), (1, 1))
+    ctx = plane()
+
+    # simple offset
+    r1 = offset2D(c, 0.1)
+
+    # offset with a context
+    r2 = offset2D(seg, 0.2, ctx)
+
+    # offset that is not closed
+    r3 = offset2D(seg, -0.3, ctx, closed=False)
+
+    assert r1.isValid()
+    assert len(clean(r1).Edges()) == 1
+    assert face(r1).isValid()
+
+    assert r2.isValid()
+    assert len(clean(r2).Edges()) == 4
+    assert face(r2).isValid()
+
+    assert r3.isValid()
+    assert len(clean(r3).Edges()) == 1
+    assert r3.edge().Length() == approx(seg.Length())
 
 
 def test_sweep():
