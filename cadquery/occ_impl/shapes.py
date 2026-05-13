@@ -6525,6 +6525,7 @@ def offset2D(
     t: float,
     ctx: Shape | None = None,
     kind: Literal["arc", "intersection", "tangent"] = "arc",
+    closed: bool = True,
 ) -> Shape:
     """
     2D offset edges or wires. ctx face might be needed for ambigous wires/edges.
@@ -6546,12 +6547,12 @@ def offset2D(
 
         fbldr.Build()
 
-        bldr = BRepOffsetAPI_MakeOffset(fbldr.Face(), kind_dict[kind])
+        bldr = BRepOffsetAPI_MakeOffset(fbldr.Face(), kind_dict[kind], not closed)
 
     else:
         # simple case - input wire defines a plane
         bldr = BRepOffsetAPI_MakeOffset()
-        bldr.Init(kind_dict[kind])
+        bldr.Init(kind_dict[kind], not closed)
 
         for el in _get_wires(s):
             bldr.AddWire(el.wrapped)
