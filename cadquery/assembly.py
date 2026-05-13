@@ -568,6 +568,8 @@ class Assembly(object):
         mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
+        unit: UnitLiterals = "MM",
+        outputUnit: Optional[UnitLiterals] = None,
         **kwargs,
     ) -> Self:
         """
