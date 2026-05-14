@@ -41,6 +41,7 @@ from .occ_impl.exporters.svg import getSVG, exportSVG
 from .occ_impl.exporters import export
 
 from .utils import deprecate, deprecate_kwarg_name, get_arity
+from .types import UnitLiterals
 
 from .selectors import (
     Selector,
@@ -4527,6 +4528,8 @@ class Workplane(object):
         fname: str,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
+        unit: UnitLiterals = "MM",
+        outputUnit: Optional[UnitLiterals] = None,
         opt: Optional[Dict[str, Any]] = None,
     ) -> T:
         """
@@ -4535,12 +4538,24 @@ class Workplane(object):
         :param path: Filename.
         :param tolerance: the deflection tolerance, in model units. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Default 0.1.
+        :param unit: The internal unit of the model's geometry values. Only used for STEP. Default "MM".
+        :type unit: UnitLiterals
+        :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
+        Use this when you want the output file to declare a different unit than the model's internal unit,
+        for example to export a MM model as a STEP file declaring meters.
+        :type outputUnit: UnitLiterals or None
         :param opt: additional options passed to the specific exporter. Default None.
         :return: Self.
         """
 
         export(
-            self, fname, tolerance=tolerance, angularTolerance=angularTolerance, opt=opt
+            self,
+            fname,
+            tolerance=tolerance,
+            angularTolerance=angularTolerance,
+            unit=unit,
+            outputUnit=outputUnit,
+            opt=opt,
         )
 
         return self

@@ -38,6 +38,7 @@ from .selectors import (
 from .sketch import Sketch
 from .cq import CQ, Workplane
 from .assembly import Assembly, Color, Constraint, Material
+from .types import UnitLiterals
 from . import selectors
 from . import plugins
 
@@ -75,6 +76,6 @@ __all__ = [
     "DirectionMinMaxSelector",
     "StringSyntaxSelector",
     "Selector",
-    "plugins",
     "Sketch",
+    "UnitLiterals",
 ]

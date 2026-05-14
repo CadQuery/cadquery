@@ -37,6 +37,8 @@ from .occ_impl.exporters.assembly import (
 )
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
+from .types import UnitLiterals
+
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate, BiDict, instance_of
 
@@ -566,6 +568,8 @@ class Assembly(object):
         mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
+        unit: UnitLiterals = "MM",
+        outputUnit: Optional[UnitLiterals] = None,
         **kwargs,
     ) -> Self:
         """
@@ -576,6 +580,12 @@ class Assembly(object):
         :param mode: STEP only - See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         :param tolerance: the deflection tolerance, in model units. Only used for glTF, VRML. Default 0.1.
         :param angularTolerance: the angular tolerance, in radians. Only used for glTF, VRML. Default 0.1.
+        :param unit: The internal unit of the model's geometry values. Only used for STEP. Default "MM".
+        :type unit: UnitLiterals
+        :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
+            Use this when you want the output file to declare a different unit than the model's internal unit,
+            for example to export a MM model as a STEP file declaring meters.
+        :type outputUnit: UnitLiterals or None
         :param \\**kwargs: Additional keyword arguments.  Only used for STEP, glTF and STL.
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         :param ascii: STL only - Sets whether or not STL export should be text or binary
@@ -594,11 +604,11 @@ class Assembly(object):
                 raise ValueError("Unknown extension, specify export type explicitly")
 
         if exportType == "STEP":
-            exportAssembly(self, path, mode, **kwargs)
+            exportAssembly(self, path, mode, unit, outputUnit, **kwargs)
         elif exportType == "XML":
-            exportCAF(self, path)
+            exportCAF(self, path, False)
         elif exportType == "XBF":
-            exportCAF(self, path, binary=True)
+            exportCAF(self, path, True)
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF" or exportType == "GLB":
@@ -618,20 +628,26 @@ class Assembly(object):
         return self
 
     @classmethod
-    def importStep(cls, path: str) -> Self:
+    def importStep(cls, path: str, unit: UnitLiterals = "MM") -> Self:
         """
         Reads an assembly from a STEP file.
 
         :param path: Path and filename for reading.
+        :param unit: The unit of measurement for the STEP file. Default "MM".
         :return: An Assembly object.
         """
 
-        return cls.load(path, importType="STEP")
+        return cls.load(path, importType="STEP", unit=unit)
 
     @classmethod
-    def load(cls, path: str, importType: Optional[ImportLiterals] = None,) -> Self:
+    def load(
+        cls,
+        path: str,
+        importType: Optional[ImportLiterals] = None,
+        unit: UnitLiterals = "MM",
+    ) -> Self:
         """
-        Load step, xbf or xml.
+        Load step, xbf or xml. Only STEP supports unit conversion on loading.
         """
 
         if importType is None:
@@ -639,12 +655,12 @@ class Assembly(object):
             if t in ("STEP", "XML", "XBF"):
                 importType = cast(ImportLiterals, t)
             else:
-                raise ValueError("Unknown extension, specify export type explicitly")
+                raise ValueError("Unknown extension, specify import type explicitly")
 
         assy = cls()
 
         if importType == "STEP":
-            _importStep(assy, path)
+            _importStep(assy, path, unit)
         elif importType == "XML":
             importXml(assy, path)
         elif importType == "XBF":
