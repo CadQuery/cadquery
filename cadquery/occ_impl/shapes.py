@@ -1721,7 +1721,6 @@ class Shape(object):
     def __iter__(self) -> Iterator["Shape"]:
         """
         Iterate over subshapes.
-
         """
 
         it = TopoDS_Iterator(self.wrapped)
@@ -1732,8 +1731,7 @@ class Shape(object):
 
     def ancestors(self, ctx: "Shape", kind: Shapes) -> "Compound":
         """
-        Iterate over ancestors, i.e. shapes of same kind within ctx shape that contain self.
-
+        Iterate over ancestors, i.e. shapes of type kind within ctx shape that contain self.
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
@@ -1750,8 +1748,7 @@ class Shape(object):
         self, ctx: "Shape", kind: Shapes, level: int | Iterable[int] = 1
     ) -> "Compound":
         """
-        Iterate over siblings, i.e. shapes within ctx shape that share subshapes of kind with self.
-
+        Iterate over siblings, i.e. shapes within ctx shape that share subshapes of type kind with self.
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
