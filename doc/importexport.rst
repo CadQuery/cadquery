@@ -84,7 +84,7 @@ STEP files can be imported using the :meth:`importers.importStep` method (note t
 
    result = cq.importers.importStep("/path/to/step/block.stp")
 
-By default, no unit conversion is applied.
+By default, unit conversion to millimeters is applied.
 The ``unit`` parameter sets the target unit - OCCT scales from the unit declared in the STEP file's header to the requested unit.
 The valid values are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
 
@@ -164,7 +164,7 @@ Typically it is enough to assume certain unit when modeling and simply specify i
 
    import cadquery as cq
 
-   # Create a simple 10 cm box. 
+   # Create a simple 10 cm box.
    box = cq.Workplane().box(10, 10, 10)
 
    # Export with cm units
@@ -234,7 +234,7 @@ If ``outputUnit`` is not specified, it defaults to the value of ``unit``.
 The valid values for both parameters are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
 The default is ``"MM"``.
 
-To export a micrometer model as a STEP file declaring micrometers, simple set ``unit="UM"``. 
+To export a micrometer model as a STEP file declaring micrometers, simple set ``unit="UM"``.
 
 .. code-block:: python
 
