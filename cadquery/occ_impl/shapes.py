@@ -6549,7 +6549,7 @@ def offset2D(
     closed: bool = True,
 ) -> Shape:
     """
-    2D offset edges or wires. ctx face might be needed for ambigous wires/edges.
+    2D offset edges or wires. ctx face might be needed for ambiguous wires/edges.
     Only works with planar geometries.
     """
 
