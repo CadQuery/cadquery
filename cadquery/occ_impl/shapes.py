@@ -1796,7 +1796,10 @@ class Shape(object):
             rv = _siblings([self], level)
         else:
             # collect all the requested levels
-            rv = set().union(*(_siblings([self], el) for el in level))
+            rv = set()
+            for lvl in level:
+                exclude.Clear()
+                rv |= _siblings([self], lvl)
 
         return Compound.makeCompound(rv)
 
@@ -4954,7 +4957,10 @@ class Compound(Shape, Mixin3D):
             rv = _siblings(self, level)
         else:
             # collect all the requested levels
-            rv = set().union(*(_siblings(self, el) for el in level))
+            rv = set()
+            for lvl in level:
+                exclude.Clear()
+                rv |= _siblings(self, lvl)
 
         return Compound.makeCompound(rv)
 

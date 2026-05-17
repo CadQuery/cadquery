@@ -23,6 +23,7 @@ from cadquery.occ_impl.shapes import (
     polygon,
     wireOn,
     vertex,
+    fuse,
 )
 
 from cadquery.selectors import NearestToPointSelector
@@ -452,3 +453,18 @@ def test_siblings(simple_box):
         simple_box, "Vertex", (1, 2)
     )
     assert siblings_cmp_edges_12.size() == 8
+
+    # more complex shape
+    stacked_box = fuse(
+        simple_box, simple_box.moved(x=1), simple_box.moved(x=2), simple_box.moved(x=3),
+    )
+
+    f = stacked_box.face("<X")
+
+    level_1 = f.siblings(stacked_box, "Vertex", 1)
+    level_2 = f.siblings(stacked_box, "Vertex", 2)
+    level_3 = f.siblings(stacked_box, "Vertex", 3)
+    level_123 = f.siblings(stacked_box, "Vertex", (1, 2, 3))
+
+    assert level_1.size() + level_2.size() + level_3.size() == level_123.size()
+    assert set(level_1) | set(level_2) | set(level_3) == set(level_123)
