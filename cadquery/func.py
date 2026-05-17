@@ -44,6 +44,7 @@ from .occ_impl.shapes import (
     extrude,
     revolve,
     offset,
+    offset2D,
     sweep,
     loft,
     check,

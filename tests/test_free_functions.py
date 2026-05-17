@@ -46,6 +46,7 @@ from cadquery.func import (
     project,
     edgeOn,
     faceOn,
+    offset2D,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -55,6 +56,7 @@ from cadquery.occ_impl.shapes import (
     _get_one,
     _get_edges,
     _adaptor_curve_to_edge,
+    _shape_to_faces_shells,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -141,6 +143,16 @@ def test_adaptor_curve_to_edge():
         e = _adaptor_curve_to_edge(s._geomAdaptor().Curve(), 0, 1)
 
         assert isinstance(e, TopoDS_Edge)
+
+
+def test__shape_to_faces_shells():
+
+    # bad weather tests
+    with raises(ValueError):
+        _shape_to_faces_shells(compound(vertex(1, 0, 0), vertex(0, 0, 0)).wrapped)
+
+    with raises(ValueError):
+        _shape_to_faces_shells(vertex(0, 0, 0).wrapped)
 
 
 # %% constructors
@@ -233,6 +245,10 @@ def test_sewing():
 def test_solid():
 
     b = box(1, 1, 1)
+    b_large = box(10, 10, 1)
+    b_small = box(0.1, 0.1, 0.1).moved(b_large)
+    sphere1 = sphere(0.1).moved(b_large)
+    sphere2 = sphere1.moved(x=2)
 
     # solid
     s1 = solid(b.Faces())
@@ -263,6 +279,18 @@ def test_solid():
     final_faces_history = list(hist.values())
     for f in final_faces:
         assert f in final_faces_history
+
+    # solid with multiple periodic voids
+    s5 = solid(b_large.Faces(), inner=sphere1.Faces() + sphere2.Faces())
+
+    assert s5.isValid()
+    assert s5.Volume() == approx(b_large.Volume() - 2 * sphere1.Volume())
+
+    # solid with multiple simple voids
+    s6 = solid(b_large.Faces(), inner=b_small.Faces() + b_small.moved(x=1).Faces())
+
+    assert s6.isValid()
+    assert s6.Volume() == approx(b_large.Volume() - 2 * b_small.Volume())
 
 
 def test_edgeOn():
@@ -799,6 +827,34 @@ def test_offset():
     assert r2.Volume() == approx(1 - 0.5 ** 3)
     assert r3.Volume() == approx(2)
     assert r4.Volume() == approx(4)
+
+
+def test_offset2D():
+
+    c = circle(1)
+    seg = segment((0, 0), (1, 1))
+    ctx = plane()
+
+    # simple offset
+    r1 = offset2D(c, 0.1)
+
+    # offset with a context
+    r2 = offset2D(seg, 0.2, ctx)
+
+    # offset that is not closed
+    r3 = offset2D(seg, -0.3, ctx, closed=False)
+
+    assert r1.isValid()
+    assert len(clean(r1).Edges()) == 1
+    assert face(r1).isValid()
+
+    assert r2.isValid()
+    assert len(clean(r2).Edges()) == 4
+    assert face(r2).isValid()
+
+    assert r3.isValid()
+    assert len(clean(r3).Edges()) == 1
+    assert r3.edge().Length() == approx(seg.Length())
 
 
 def test_sweep():

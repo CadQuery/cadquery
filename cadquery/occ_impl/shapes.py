@@ -21,9 +21,12 @@ from typing_extensions import Self
 
 from io import BytesIO
 
+from warnings import warn
 
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
+
+from OCP.ShapeBuild import ShapeBuild_ReShape
 
 from .geom import Vector, VectorLike, BoundBox, Plane, Location, Matrix
 from .shape_protocols import geom_LUT_FACE, geom_LUT_EDGE, Shapes, Geoms
@@ -1734,7 +1737,6 @@ class Shape(object):
     def __iter__(self) -> Iterator["Shape"]:
         """
         Iterate over subshapes.
-
         """
 
         it = TopoDS_Iterator(self.wrapped)
@@ -1743,31 +1745,31 @@ class Shape(object):
             yield Shape.cast(it.Value())
             it.Next()
 
-    def ancestors(self, shape: "Shape", kind: Shapes) -> "Compound":
+    def ancestors(self, ctx: "Shape", kind: Shapes) -> "Compound":
         """
-        Iterate over ancestors, i.e. shapes of same kind within shape that contain self.
-
+        Iterate over ancestors, i.e. shapes of type kind within ctx shape that contain self.
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
 
         TopExp.MapShapesAndAncestors_s(
-            shape.wrapped, shapetype(self.wrapped), inverse_shape_LUT[kind], shape_map
+            ctx.wrapped, shapetype(self.wrapped), inverse_shape_LUT[kind], shape_map
         )
 
         return Compound.makeCompound(
             Shape.cast(s) for s in shape_map.FindFromKey(self.wrapped)
         )
 
-    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+    def siblings(
+        self, ctx: "Shape", kind: Shapes, level: int | Iterable[int] = 1
+    ) -> "Compound":
         """
-        Iterate over siblings, i.e. shapes within shape that share subshapes of kind with self.
-
+        Iterate over siblings, i.e. shapes within ctx shape that share subshapes of type kind with self.
         """
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
         TopExp.MapShapesAndAncestors_s(
-            shape.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
+            ctx.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
         )
         exclude = TopTools_MapOfShape()
 
@@ -1789,7 +1791,17 @@ class Shape(object):
 
             return rv if level == 1 else _siblings(rv, level - 1)
 
-        return Compound.makeCompound(_siblings([self], level))
+        # simple query
+        if isinstance(level, int):
+            rv = _siblings([self], level)
+        else:
+            # collect all the requested levels
+            rv = set()
+            for lvl in level:
+                exclude.Clear()
+                rv |= _siblings([self], lvl)
+
+        return Compound.makeCompound(rv)
 
     def __add__(self, other: "Shape") -> "Shape":
         """
@@ -1932,6 +1944,20 @@ class Shape(object):
             return compound(list(self)[item])
         else:
             return list(self)[item]
+
+    def size(self) -> int:
+        """
+        Simple size implementation.
+        """
+
+        return len(list(self))
+
+    def reverse(self) -> "Shape":
+        """
+        Return a copy of self with reversed orientation.
+        """
+
+        return self.cast(self.wrapped.Reversed())
 
 
 class ShapeProtocol(Protocol):
@@ -4873,9 +4899,9 @@ class Compound(Shape, Mixin3D):
 
         return tcast(Compound, self._bool_op(self, toIntersect, intersect_op))
 
-    def ancestors(self, shape: "Shape", kind: Shapes) -> "Compound":
+    def ancestors(self, ctx: "Shape", kind: Shapes) -> "Compound":
         """
-        Iterate over ancestors, i.e. shapes of same kind within shape that contain elements of self.
+        Iterate over ancestors, i.e. shapes of same kind within ctx shape that contain elements of self.
 
         """
 
@@ -4884,14 +4910,16 @@ class Compound(Shape, Mixin3D):
 
         for t in shapetypes:
             TopExp.MapShapesAndAncestors_s(
-                shape.wrapped, t, inverse_shape_LUT[kind], shape_map
+                ctx.wrapped, t, inverse_shape_LUT[kind], shape_map
             )
 
         return Compound.makeCompound(
             Shape.cast(a) for s in self for a in shape_map.FindFromKey(s.wrapped)
         )
 
-    def siblings(self, shape: "Shape", kind: Shapes, level: int = 1) -> "Compound":
+    def siblings(
+        self, ctx: "Shape", kind: Shapes, level: int | Iterable[int] = 1
+    ) -> "Compound":
         """
         Iterate over siblings, i.e. shapes within shape that share subshapes of kind with the elements of self.
 
@@ -4902,7 +4930,7 @@ class Compound(Shape, Mixin3D):
 
         for t in shapetypes:
             TopExp.MapShapesAndAncestors_s(
-                shape.wrapped, inverse_shape_LUT[kind], t, shape_map,
+                ctx.wrapped, inverse_shape_LUT[kind], t, shape_map,
             )
 
         exclude = TopTools_MapOfShape()
@@ -4924,7 +4952,17 @@ class Compound(Shape, Mixin3D):
 
             return rv if level == 1 else _siblings(rv, level - 1)
 
-        return Compound.makeCompound(_siblings(self, level))
+        # simple query
+        if isinstance(level, int):
+            rv = _siblings(self, level)
+        else:
+            # collect all the requested levels
+            rv = set()
+            for lvl in level:
+                exclude.Clear()
+                rv |= _siblings(self, lvl)
+
+        return Compound.makeCompound(rv)
 
 
 def sortWiresByBuildOrder(wireList: List[Wire]) -> List[List[Wire]]:
@@ -5276,6 +5314,44 @@ def _shape(s: TopoDS_Shape, _: type[T]) -> T:
     return tcast(T, Shape.cast(s))
 
 
+def _shape_to_faces_shells(
+    s: TopoDS_Shape,
+) -> tuple[list[TopoDS_Face], list[TopoDS_Shell]]:
+    """
+    Split a TopoDS_Shape into Faces and Shells. Raise if another type was found.
+    """
+
+    rv_faces = []
+    rv_shells = []
+
+    t = s.ShapeType()
+
+    if t == TopAbs_ShapeEnum.TopAbs_COMPOUND:
+        it = TopoDS_Iterator(s)
+
+        while it.More():
+            el = it.Value()
+
+            t = el.ShapeType()
+
+            if t == TopAbs_ShapeEnum.TopAbs_FACE:
+                rv_faces.append(TopoDS.Face(el))
+            elif t == TopAbs_ShapeEnum.TopAbs_SHELL:
+                rv_shells.append(TopoDS.Shell(el))
+            else:
+                raise ValueError(f"Found unexpected type {t}")
+
+            it.Next()
+    elif t == TopAbs_ShapeEnum.TopAbs_SHELL:
+        rv_shells.append(TopoDS.Shell(s))
+    elif t == TopAbs_ShapeEnum.TopAbs_FACE:
+        rv_faces.append(TopoDS.Face(s))
+    else:
+        raise ValueError(f"Found unexpected type {t}")
+
+    return rv_faces, rv_shells
+
+
 def _pts_to_harray(pts: Sequence[VectorLike]) -> TColgp_HArray1OfPnt:
     """
     Convert a sequence of Vector to a TColgp harray (OCCT specific).
@@ -5595,7 +5671,7 @@ def shell(
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
     history: Optional[ShapeHistory] = None,
-) -> Shell:
+) -> Shape:
     """
     Build shell from faces. If ctx is specified, local sewing is performed.
     """
@@ -5618,20 +5694,24 @@ def shell(
     sewed = builder.SewedShape()
     _process_sewing_history(builder, faces, history)
 
-    rv: Union[TopoDS_Shape, TopoDS_Shell]
+    rv = []
 
-    # for one face sewing will not produce a shell
-    if sewed.ShapeType() == TopAbs_ShapeEnum.TopAbs_FACE:
-        rv = TopoDS_Shell()
+    # split the results
+    rv_faces, rv_shells = _shape_to_faces_shells(sewed)
+
+    rv.extend(rv_shells)
+
+    # for one closed face sewing will not produce a shell, so a special treatment is needed
+    for f_topo in rv_faces:
+        tmp = TopoDS_Shell()
 
         builder_topo = TopoDS_Builder()
-        builder_topo.MakeShell(rv)
-        builder_topo.Add(rv, sewed)
+        builder_topo.MakeShell(tmp)
+        builder_topo.Add(tmp, f_topo)
 
-    else:
-        rv = sewed
+        rv.append(tmp)
 
-    return _shape(rv, Shell)
+    return _compound_or_shape(rv)
 
 
 @multidispatch
@@ -5641,7 +5721,7 @@ def shell(
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
     history: Optional[ShapeHistory] = None,
-) -> Shell:
+) -> Shape:
     """
     Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
     """
@@ -5693,8 +5773,16 @@ def solid(
             builder.Add(sh.wrapped)
 
     # fix orientations
+    ctx = ShapeBuild_ReShape()
+
     sf = ShapeFix_Solid(builder.Solid())
+    sf.SetContext(ctx)
     sf.Perform()
+
+    # update history if applicable
+    if history is not None:
+        for k, v in history.items():
+            history[k] = Shape.cast(ctx.Apply(v.wrapped))
 
     return _shape(sf.Solid(), Solid)
 
@@ -6459,6 +6547,48 @@ def offset(
     return rv
 
 
+def offset2D(
+    s: Shape,
+    t: float,
+    ctx: Shape | None = None,
+    kind: Literal["arc", "intersection", "tangent"] = "arc",
+    closed: bool = True,
+) -> Shape:
+    """
+    2D offset edges or wires. ctx face might be needed for ambiguous wires/edges.
+    Only works with planar geometries.
+    """
+
+    kind_dict = {
+        "arc": GeomAbs_JoinType.GeomAbs_Arc,
+        "intersection": GeomAbs_JoinType.GeomAbs_Intersection,
+        "tangent": GeomAbs_JoinType.GeomAbs_Tangent,
+    }
+
+    if ctx:
+        # build a dummy face based on the geometry of the ctx face.
+        fbldr = BRepBuilderAPI_MakeFace(_get_one(ctx, "Face")._geomAdaptor(), 1e-6)
+
+        for el in _get_wires(s):
+            fbldr.Add(el.wrapped)
+
+        fbldr.Build()
+
+        bldr = BRepOffsetAPI_MakeOffset(fbldr.Face(), kind_dict[kind], not closed)
+
+    else:
+        # simple case - input wire defines a plane
+        bldr = BRepOffsetAPI_MakeOffset()
+        bldr.Init(kind_dict[kind], not closed)
+
+        for el in _get_wires(s):
+            bldr.AddWire(el.wrapped)
+
+    bldr.Perform(t)
+
+    return _compound_or_shape(bldr.Shape())
+
+
 @multimethod
 def sweep(
     s: Shape, path: Shape, aux: Optional[Shape] = None, cap: bool = False
@@ -6748,13 +6878,14 @@ def project(
     return _normalize(compound(results))
 
 
-#%% diagnotics
+#%% diagnostics
 
 
 def check(
     s: Shape,
     results: Optional[List[Tuple[List[Shape], Any]]] = None,
     tol: Optional[float] = None,
+    verbose: bool = True,
 ) -> bool:
     """
     Check if a shape is valid.
@@ -6771,14 +6902,19 @@ def check(
     if tol:
         analyzer.SetFuzzyValue(tol)
 
-    # output detailed results if requested
+    # generate warnings, output detailed results if requested
     if results is not None:
         results.clear()
 
-        for r in analyzer.Result():
-            results.append(
-                (_toptools_list_to_shapes(r.GetFaultyShapes1()), r.GetCheckStatus())
-            )
+    for r in analyzer.Result():
+        res = (_toptools_list_to_shapes(r.GetFaultyShapes1()), r.GetCheckStatus())
+        msg = f"\n\tCheck failed.\n\tSubshapes: {res[0]} \n\tStatus: {res[1]}"
+
+        if verbose:
+            warn(msg)
+
+        if results is not None:
+            results.append(res)
 
     return rv
 
