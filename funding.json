@@ -5,7 +5,7 @@
         "type": "group",
         "role": "maintainer",
         "name": "CadQuery",
-        "email": "wrightjmf@gmail.com",
+        "email": "info@cadquery.org",
         "description": "A team of 3 core maintainers responsible for the ongoing development and stewardship of CadQuery and its ecosystem. We are committed to keeping CadQuery free, open, and accessible to the engineering and scientific communities.",
         "webpageUrl": {
             "url": "https://cadquery.org"
