@@ -122,7 +122,9 @@ We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) 
 
 [GitHub Discussions](https://github.com/CadQuery/cadquery/discussions) is a good place to ask general questions that are not tied to a bug report or feature request.
 
-There is also a [Discord](https://discord.com/invite/Bj9AQPsCfx) server, but the other methods of getting help are much better for newcomers.
+## Professional Support
+
+Some of CadQuery's core maintainers are available for consulting engagements involving CadQuery integration, custom feature development, and CAD automation. If you are interested, reach out at **info@cadquery.org**.
 
 ## Projects using CadQuery
 
