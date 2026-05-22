@@ -28,12 +28,6 @@
     "funding": {
         "channels": [
             {
-                "guid": "liberapay",
-                "type": "payment-provider",
-                "address": "https://liberapay.com/cadquery",
-                "description": "Donate via Liberapay to support ongoing CadQuery development."
-            },
-            {
                 "guid": "opencollective",
                 "type": "payment-provider",
                 "address": "https://opencollective.com/cadquery",
@@ -49,7 +43,7 @@
                 "amount": 50,
                 "currency": "USD",
                 "frequency": "monthly",
-                "channels": ["liberapay", "opencollective"]
+                "channels": ["opencollective"]
             },
             {
                 "guid": "developer-time",
@@ -59,7 +53,7 @@
                 "amount": 1000,
                 "currency": "USD",
                 "frequency": "monthly",
-                "channels": ["liberapay", "opencollective"]
+                "channels": ["opencollective"]
             },
             {
                 "guid": "developer-part-time",
@@ -69,7 +63,7 @@
                 "amount": 75000,
                 "currency": "USD",
                 "frequency": "yearly",
-                "channels": ["liberapay", "opencollective"]
+                "channels": ["opencollective"]
             },
             {
                 "guid": "developer-full-time",
@@ -79,7 +73,7 @@
                 "amount": 100000,
                 "currency": "USD",
                 "frequency": "yearly",
-                "channels": ["liberapay", "opencollective"]
+                "channels": ["opencollective"]
             },
             {
                 "guid": "angel-plan",
@@ -89,7 +83,7 @@
                 "amount": 0,
                 "currency": "USD",
                 "frequency": "one-time",
-                "channels": ["liberapay", "opencollective"]
+                "channels": ["opencollective"]
             }
         ]
     }
