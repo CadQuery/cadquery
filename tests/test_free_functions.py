@@ -47,6 +47,8 @@ from cadquery.func import (
     edgeOn,
     faceOn,
     offset2D,
+    prism,
+    hollow,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -57,6 +59,8 @@ from cadquery.occ_impl.shapes import (
     _get_edges,
     _adaptor_curve_to_edge,
     _shape_to_faces_shells,
+    chamfer2D,
+    fillet2D,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -70,6 +74,12 @@ from math import pi
 @pytest.fixture(scope="function")
 def tmpdir(tmp_path_factory):
     return tmp_path_factory.mktemp("free_functions")
+
+
+@pytest.fixture
+def box_shape():
+
+    return box(1, 1, 1)
 
 
 # %% test utils
@@ -718,6 +728,91 @@ def test_moved():
 
 
 # %% ops
+
+
+def test_hollow(box_shape):
+
+    res1 = hollow(box_shape, -0.1)
+    res2 = hollow(box_shape, 0.1)
+
+    assert res1.isValid()
+    assert res1.faces().size() == 2 * box_shape.faces().size()
+
+    assert res2.isValid()
+    assert res2.faces().size() == 20 + 2 * box_shape.faces().size()
+
+
+def test_hollow_open(box_shape):
+
+    # offset inwards
+    res1 = hollow(box_shape, box_shape.faces(">Z"), -0.1)
+
+    # offset outwards
+    res2 = hollow(box_shape, box_shape.faces(">Z"), 0.1)
+
+    assert res1.isValid()
+    assert res1.faces().size() == 5 + 5 + 1
+
+    assert res2.isValid()
+    assert res2.faces().size() == 12 + 5 + 5 + 1
+
+
+def test_prism(box_shape):
+
+    ftop = box_shape.faces(">Z")
+    c = circle(0.2).moved(ftop)
+
+    # additive prism
+    res1 = prism(box_shape, ftop, c, 0.1, (0, 0, 1))
+
+    assert res1.isValid()
+    assert res1.Volume() > box_shape.Volume()
+    assert res1.faces().size() == 6 + 2
+
+    # subtractive prism
+    res2 = prism(box_shape, ftop, c, -0.1, (0, 0, 1), False)
+
+    assert res2.isValid()
+    assert res2.Volume() < box_shape.Volume()
+    assert res2.faces().size() == 6 + 2
+
+    # subtractive prism with tilt
+    res3 = prism(box_shape, None, c, -0.1, (0, 1, 1), False)
+
+    assert res3.isValid()
+    assert res3.Volume() < box_shape.Volume()
+    assert res3.faces().size() == 6 + 2
+
+    # subtractive prism without base through all
+    res4 = prism(box_shape, None, c, None, (0, 0, 1), False)
+
+    assert res4.isValid()
+    assert res4.Volume() < box_shape.Volume()
+    assert res4.faces().size() == 6 + 1
+    assert len(res4.face(">Z").innerWires()) == 1
+    assert len(res4.face("<Z").innerWires()) == 1
+
+
+def test_prism_taper(box_shape):
+
+    ftop = box_shape.faces(">Z")
+    c = circle(0.2).moved(ftop)
+
+    # additive prism
+    res1 = prism(box_shape, ftop, c, 0.1)
+
+    assert res1.isValid()
+    assert res1.Volume() > box_shape.Volume()
+    assert res1.faces().size() == 6 + 4
+
+    # additive prism with a taper
+    res2 = prism(box_shape, ftop, c, 0.1, 15)
+
+    assert res2.isValid()
+    assert res2.faces().size() == 6 + 4
+    assert res2.wire(">Z").Length() < c.Length()
+
+
 def test_clean():
 
     b1 = box(1, 1, 1)
@@ -855,6 +950,27 @@ def test_offset2D():
     assert r3.isValid()
     assert len(clean(r3).Edges()) == 1
     assert r3.edge().Length() == approx(seg.Length())
+
+
+def test_fillet2D():
+
+    f = plane(1, 1)
+
+    res = fillet2D(f, f.vertices(), 0.1)
+
+    assert res.isValid()
+    assert res.edges().size() == 8
+    assert res.edges("%CIRCLE").size() == 4
+
+
+def test_chamfer2D():
+
+    f = plane(1, 1)
+
+    res = chamfer2D(f, f.vertices(), 0.1)
+
+    assert res.isValid()
+    assert res.edges().size() == 8
 
 
 def test_sweep():

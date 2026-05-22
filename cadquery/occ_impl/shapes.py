@@ -238,7 +238,7 @@ from OCP.Graphic3d import (
 
 from OCP.NCollection import NCollection_Utf8String
 
-from OCP.BRepFeat import BRepFeat_MakeDPrism
+from OCP.BRepFeat import BRepFeat_MakeDPrism, BRepFeat_MakePrism
 
 from OCP.BRepClass3d import BRepClass3d_SolidClassifier, BRepClass3d
 
@@ -5022,7 +5022,7 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
     return [Wire(el) for el in wires_out]
 
 
-#%% utilities
+# %% utilities
 
 
 def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Iterable[Shape]:
@@ -5132,6 +5132,27 @@ def _get_edges(*shapes: Shape) -> Iterable[Shape]:
                 yield from _get_edges(el)
         else:
             raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+
+
+def _get_faces(*shapes: Shape) -> Iterable[Face]:
+    """
+    Get faces or faces from wires or edges.
+    """
+
+    for s in shapes:
+        t = s.ShapeType()
+
+        if t == "Face":
+            yield s.face()
+        elif t == "Edge":
+            yield face(s)
+        elif t == "Wire":
+            yield face(s)
+        elif t == "Compound":
+            for el in s:
+                yield from _get_faces(el)
+        else:
+            raise ValueError(f"Required type(s): Edge, Wire, Face; encountered {t}")
 
 
 def _get_wire_lists(s: Sequence[Shape]) -> List[List[Union[Wire, Vertex]]]:
@@ -5474,7 +5495,7 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
     return bldr.Edge()
 
 
-#%% alternative constructors
+# %% alternative constructors
 
 ShapeHistory = Dict[Union[Shape, str], Shape]
 
@@ -5813,7 +5834,7 @@ def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Compound:
     return compound(*s)
 
 
-#%% primitives
+# %% primitives
 
 
 @multimethod
@@ -6189,7 +6210,7 @@ def text(
     return _normalize(compound(rv))
 
 
-#%% ops
+# %% ops
 
 
 def _bool_op(
@@ -6589,9 +6610,63 @@ def offset2D(
     return _compound_or_shape(bldr.Shape())
 
 
+def chamfer2D(s: Shape, verts: Shape, d: float):
+    """
+    Apply a 2D chamfer to a planar face.
+    """
+
+    f = _get_one(s, "Face")
+
+    bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
+    edge_map = s._entitiesFrom("Vertex", "Edge")
+
+    for v in verts.vertices():
+        edges = edge_map[v]
+        if len(edges) < 2:
+            raise ValueError("Cannot chamfer at this location")
+
+        e1, e2 = edges
+
+        bldr.AddChamfer(
+            tcast(TopoDS_Edge, e1.wrapped), tcast(TopoDS_Edge, e2.wrapped), d, d
+        )
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Shape())
+
+
+def fillet2D(s: Shape, verts: Shape, r: float):
+    """
+    Apply a 2D fillet to a planar face.
+    """
+
+    f = _get_one(s, "Face")
+
+    bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
+
+    for v in verts.vertices():
+        bldr.AddFillet(tcast(TopoDS_Vertex, v.wrapped), r)
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Shape())
+
+
+_trans_mode_dict = {
+    "transformed": BRepBuilderAPI_Transformed,
+    "round": BRepBuilderAPI_RoundCorner,
+    "right": BRepBuilderAPI_RightCorner,
+}
+
+
 @multimethod
 def sweep(
-    s: Shape, path: Shape, aux: Optional[Shape] = None, cap: bool = False
+    s: Shape,
+    path: Shape,
+    aux: Optional[Shape] = None,
+    cap: bool = False,
+    transition: Literal["transformed", "round", "right"] = "transformed",
 ) -> Shape:
     """
     Sweep edge, wire or face along a path. For faces cap has no effect.
@@ -6609,6 +6684,8 @@ def sweep(
             rv.SetMode(_get_one_wire(aux).wrapped, True)
         else:
             rv.SetMode(False)
+
+        rv.SetTransitionMode(_trans_mode_dict[transition])
 
         return rv
 
@@ -6645,7 +6722,11 @@ def sweep(
 
 @multimethod
 def sweep(
-    s: Sequence[Shape], path: Shape, aux: Optional[Shape] = None, cap: bool = False
+    s: Sequence[Shape],
+    path: Shape,
+    aux: Optional[Shape] = None,
+    cap: bool = False,
+    transition: Literal["transformed", "round", "right"] = "transformed",
 ) -> Shape:
     """
     Sweep edges, wires or faces along a path, multiple sections are supported.
@@ -6664,6 +6745,8 @@ def sweep(
             rv.SetMode(_get_one_wire(aux).wrapped, True)
         else:
             rv.SetMode(False)
+
+        rv.SetTransitionMode(_trans_mode_dict[transition])
 
         return rv
 
@@ -6878,7 +6961,143 @@ def project(
     return _normalize(compound(results))
 
 
-#%% diagnostics
+_offset_kind_dict = {
+    "arc": GeomAbs_JoinType.GeomAbs_Arc,
+    "intersection": GeomAbs_JoinType.GeomAbs_Intersection,
+}
+
+
+@multidispatch
+def hollow(
+    s: Shape,
+    faces: Optional[Shape],
+    t: float,
+    tol: float = 1e-3,
+    kind: Literal["arc", "intersection"] = "arc",
+):
+    """
+    Make a hollow solid by removing faces and applying thickness t.
+    """
+
+    bldr = BRepOffsetAPI_MakeThickSolid()
+    _faces = (
+        _shapes_to_toptools_list(faces.Faces()) if faces else TopTools_ListOfShape()
+    )
+
+    bldr.MakeThickSolidByJoin(
+        s.solid().wrapped,
+        _faces,
+        t,
+        tol,
+        Intersection=True,
+        Join=_offset_kind_dict[kind],
+    )
+    bldr.Build()
+
+    rv = _compound_or_shape(bldr.Shape())
+
+    # if no faces provided a watertight solid will be constructed
+    if faces is None:
+        sh1 = rv.shell().wrapped
+        sh2 = s.shell().wrapped
+
+        # sh1 can be outer or inner shell depending on the thickness sign
+        if t > 0:
+            sol = BRepBuilderAPI_MakeSolid(sh1, sh2)
+        else:
+            sol = BRepBuilderAPI_MakeSolid(sh2, sh1)
+
+        # fix needed for the orientations
+        rv = _compound_or_shape(sol.Shape()).fix()
+
+    return rv
+
+
+@multidispatch
+def hollow(
+    s: Shape, t: float, tol: float = 1e-3, kind: Literal["arc", "intersection"] = "arc",
+) -> Solid:
+
+    return hollow(s, None, t, tol, kind)
+
+
+@multidispatch
+def prism(
+    ctx: Shape,
+    base: Optional[Shape],
+    faces: Shape,
+    t: Optional[Real | Shape],
+    angle: Real = 0.0,
+    additive: bool = True,
+) -> Shape:
+    """
+    Build a drafted prismatic feature that can be additive or subtractive.
+    """
+
+    s_tmp = ctx.wrapped
+
+    for f in _get_faces(faces):
+        bldr = BRepFeat_MakeDPrism(
+            s_tmp,
+            f.wrapped,
+            base.face().wrapped if base else TopoDS_Face(),
+            radians(angle),
+            additive,
+            False,
+        )
+
+        # dispatch on thickess type
+        if isinstance(t, Shape):
+            bldr.Perform(t.face().wrapped)
+        elif t is None:
+            bldr.PerformThruAll()
+        else:
+            bldr.Perform(t)
+
+        s_tmp = bldr.Shape()
+
+    return _compound_or_shape(s_tmp)
+
+
+@multidispatch
+def prism(
+    ctx: Shape,
+    base: Optional[Shape],
+    faces: Shape,
+    t: Optional[Real | Shape],
+    dir: VectorLike,
+    additive: bool = True,
+) -> Shape:
+    """
+    Build a (potentially tilted) prismatic feature that can be additive or subtractive.
+    """
+
+    s_tmp = ctx.wrapped
+
+    for f in _get_faces(faces):
+        bldr = BRepFeat_MakePrism(
+            s_tmp,
+            f.wrapped,
+            base.face().wrapped if base else TopoDS_Face(),
+            Vector(dir).toDir(),
+            additive,
+            False,
+        )
+
+        # dispatch on thickess type
+        if isinstance(t, Shape):
+            bldr.Perform(t.face().wrapped)
+        elif t is None:
+            bldr.PerformThruAll()
+        else:
+            bldr.Perform(t)
+
+        s_tmp = bldr.Shape()
+
+    return _compound_or_shape(s_tmp)
+
+
+# %% diagnostics
 
 
 def check(
@@ -6933,7 +7152,7 @@ def isSubshape(s1: Shape, s2: Shape) -> bool:
     return shape_map.Contains(s1.wrapped)
 
 
-#%% properties
+# %% properties
 
 
 def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
