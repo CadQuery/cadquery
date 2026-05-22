@@ -49,6 +49,8 @@ from cadquery.func import (
     offset2D,
     prism,
     hollow,
+    chamfer2D,
+    fillet2D,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -59,8 +61,7 @@ from cadquery.occ_impl.shapes import (
     _get_edges,
     _adaptor_curve_to_edge,
     _shape_to_faces_shells,
-    chamfer2D,
-    fillet2D,
+    _get_faces,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -130,6 +131,13 @@ def test_utils():
 
     with raises(ValueError):
         list(_get_edges(fill(circle(1))))
+
+    r5 = _get_faces(plane(1, 1), rect(1, 1), circle(1.0), compound(circle(1.0)))
+
+    assert len(list(r5)) == 4
+
+    with raises(ValueError):
+        list(_get_faces(vertex(0, 0, 0)))
 
 
 def test_adaptor_curve_to_edge():
@@ -777,11 +785,11 @@ def test_prism(box_shape):
     assert res2.faces().size() == 6 + 2
 
     # subtractive prism with tilt
-    res3 = prism(box_shape, None, c, -0.1, (0, 1, 1), False)
+    res3 = prism(box_shape, None, c, box_shape.face("<Z"), (0, 0.1, 1), False)
 
     assert res3.isValid()
     assert res3.Volume() < box_shape.Volume()
-    assert res3.faces().size() == 6 + 2
+    assert res3.faces().size() == 6 + 1
 
     # subtractive prism without base through all
     res4 = prism(box_shape, None, c, None, (0, 0, 1), False)
@@ -811,6 +819,20 @@ def test_prism_taper(box_shape):
     assert res2.isValid()
     assert res2.faces().size() == 6 + 4
     assert res2.wire(">Z").Length() < c.Length()
+
+    # subtractive prism with a taper
+    res3 = prism(box_shape / c, ftop, c, box_shape.face("<Z"), additive=False)
+
+    assert res3.isValid()
+    assert res3.Volume() < box_shape.Volume()
+    assert res3.faces().size() == 6 + 3
+
+    # subtractive prism
+    res4 = prism(box_shape, ftop, c, None, additive=False)
+
+    assert res4.isValid()
+    assert res4.faces().size() == 6 + 3
+    assert res4.wire("<Z").edge("%CIRCLE").Length() < c.Length()
 
 
 def test_clean():
