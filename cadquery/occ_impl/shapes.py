@@ -7039,14 +7039,26 @@ def prism(
     s_tmp = ctx.wrapped
 
     for f in _get_faces(faces):
-        bldr = BRepFeat_MakeDPrism(
-            s_tmp,
-            f.wrapped,
-            base.face().wrapped if base else TopoDS_Face(),
-            radians(angle),
-            additive,
-            False,
-        )
+        # if taper is requested, use the dprism builder
+        if angle != 0:
+            bldr = BRepFeat_MakeDPrism(
+                s_tmp,
+                f.wrapped,
+                base.face().wrapped if base else TopoDS_Face(),
+                radians(angle),
+                additive,
+                False,
+            )
+        # otherwise use the prism builder to get cleaner topologies
+        else:
+            bldr = BRepFeat_MakePrism(
+                s_tmp,
+                f.wrapped,
+                base.face().wrapped if base else TopoDS_Face(),
+                f.normalAt().toDir(),
+                additive,
+                False,
+            )
 
         # dispatch on thickess type
         if isinstance(t, Shape):

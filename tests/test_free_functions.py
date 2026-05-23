@@ -811,28 +811,28 @@ def test_prism_taper(box_shape):
 
     assert res1.isValid()
     assert res1.Volume() > box_shape.Volume()
-    assert res1.faces().size() == 6 + 4
+    assert res1.faces().size() == 6 + 2
 
     # additive prism with a taper
     res2 = prism(box_shape, ftop, c, 0.1, 15)
 
     assert res2.isValid()
-    assert res2.faces().size() == 6 + 4
+    assert res2.faces().size() == 6 + 4  # NB: side face is split into 3
     assert res2.wire(">Z").Length() < c.Length()
 
-    # subtractive prism with a taper
+    # subtractive prism
     res3 = prism(box_shape / c, ftop, c, box_shape.face("<Z"), additive=False)
 
     assert res3.isValid()
     assert res3.Volume() < box_shape.Volume()
-    assert res3.faces().size() == 6 + 3
+    assert res3.faces().size() == 6 + 1
 
     # subtractive prism
     res4 = prism(box_shape, ftop, c, None, additive=False)
 
     assert res4.isValid()
-    assert res4.faces().size() == 6 + 3
-    assert res4.wire("<Z").edge("%CIRCLE").Length() < c.Length()
+    assert res4.faces().size() == 6 + 1
+    assert res4.wires("<Z").edge("%CIRCLE").Length() == approx(c.Length())
 
 
 def test_clean():
