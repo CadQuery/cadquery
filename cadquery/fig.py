@@ -23,6 +23,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkProp3D,
+    vtkMapper,
 )
 
 
@@ -101,6 +102,11 @@ class Figure:
         orient_widget.SetCurrentRenderer(renderer)
         orient_widget.EnabledOn()
         orient_widget.InteractiveOff()
+
+        # rendering related settings
+        vtkMapper.SetResolveCoincidentTopologyToPolygonOffset()
+        vtkMapper.SetResolveCoincidentTopologyPolygonOffsetParameters(1, 0)
+        vtkMapper.SetResolveCoincidentTopologyLineOffsetParameters(-1, 0)
 
         self.axes = axes
         self.orient_widget = orient_widget
