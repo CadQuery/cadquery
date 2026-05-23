@@ -5149,8 +5149,7 @@ def _get_faces(*shapes: Shape) -> Iterable[Face]:
         elif t == "Wire":
             yield face(s)
         elif t == "Compound":
-            for el in s:
-                yield from _get_faces(el)
+            yield from _get_faces(*s)
         else:
             raise ValueError(f"Required type(s): Edge, Wire, Face; encountered {t}")
 

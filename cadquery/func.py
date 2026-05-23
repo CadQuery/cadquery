@@ -57,6 +57,7 @@ from .occ_impl.shapes import (
     prism,
     hollow,
     offset2D,
+    fillet2D,
     chamfer2D,
 )
 
@@ -122,4 +123,5 @@ __all__ = [
     "hollow",
     "offset2D",
     "chamfer2D",
+    "fillet2D",
 ]
