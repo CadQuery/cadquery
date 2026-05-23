@@ -7039,6 +7039,7 @@ def prism(
     s_tmp = ctx.wrapped
 
     for f in _get_faces(faces):
+        bldr: BRepFeat_MakePrism | BRepFeat_MakeDPrism
         # if taper is requested, use the dprism builder
         if angle != 0:
             bldr = BRepFeat_MakeDPrism(
