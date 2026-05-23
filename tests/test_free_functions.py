@@ -747,7 +747,7 @@ def test_hollow(box_shape):
     assert res1.faces().size() == 2 * box_shape.faces().size()
 
     assert res2.isValid()
-    assert res2.faces().size() == 20 + 2 * box_shape.faces().size()
+    assert res2.faces().size() == 2 * box_shape.faces().size()
 
 
 def test_hollow_open(box_shape):
@@ -759,10 +759,10 @@ def test_hollow_open(box_shape):
     res2 = hollow(box_shape, box_shape.faces(">Z"), 0.1)
 
     assert res1.isValid()
-    assert res1.faces().size() == 5 + 5 + 1
+    assert res1.faces().size() == 6 + 5
 
     assert res2.isValid()
-    assert res2.faces().size() == 12 + 5 + 5 + 1
+    assert res2.faces().size() == 6 + 5
 
 
 def test_prism(box_shape):

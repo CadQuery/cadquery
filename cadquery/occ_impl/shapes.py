@@ -6972,7 +6972,7 @@ def hollow(
     faces: Optional[Shape],
     t: float,
     tol: float = 1e-3,
-    kind: Literal["arc", "intersection"] = "arc",
+    kind: Literal["arc", "intersection"] = "intersection",
 ):
     """
     Make a hollow solid by removing faces and applying thickness t.
@@ -7014,7 +7014,10 @@ def hollow(
 
 @multidispatch
 def hollow(
-    s: Shape, t: float, tol: float = 1e-3, kind: Literal["arc", "intersection"] = "arc",
+    s: Shape,
+    t: float,
+    tol: float = 1e-3,
+    kind: Literal["arc", "intersection"] = "intersection",
 ) -> Solid:
 
     return hollow(s, None, t, tol, kind)
