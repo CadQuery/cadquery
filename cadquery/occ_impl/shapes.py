@@ -7029,7 +7029,7 @@ def prism(
     ctx: Shape,
     base: Optional[Shape],
     faces: Shape,
-    t: Optional[Real | Shape],
+    t: Optional[Real | Shape | tuple[Shape, Shape]],
     angle: Real = 0.0,
     additive: bool = True,
 ) -> Shape:
@@ -7062,9 +7062,11 @@ def prism(
                 False,
             )
 
-        # dispatch on thickess type
+        # dispatch on thickens type
         if isinstance(t, Shape):
             bldr.Perform(t.face().wrapped)
+        elif isinstance(t, tuple):
+            bldr.Perform(t[0].face().wrapped, t[1].face().wrapped)
         elif t is None:
             bldr.PerformThruAll()
         else:
@@ -7080,7 +7082,7 @@ def prism(
     ctx: Shape,
     base: Optional[Shape],
     faces: Shape,
-    t: Optional[Real | Shape],
+    t: Optional[Real | Shape | tuple[Shape, Shape]],
     dir: VectorLike,
     additive: bool = True,
 ) -> Shape:
@@ -7103,6 +7105,8 @@ def prism(
         # dispatch on thickens type
         if isinstance(t, Shape):
             bldr.Perform(t.face().wrapped)
+        elif isinstance(t, tuple):
+            bldr.Perform(t[0].face().wrapped, t[1].face().wrapped)
         elif t is None:
             bldr.PerformThruAll()
         else:

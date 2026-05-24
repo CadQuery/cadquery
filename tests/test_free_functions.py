@@ -801,6 +801,25 @@ def test_prism(box_shape):
     assert len(res4.face(">Z").innerWires()) == 1
     assert len(res4.face("<Z").innerWires()) == 1
 
+    # additive prism from/to face
+    tri = face(
+        polygon(
+            ftop.edge("<<X").Center(),
+            ftop.edge(">>X").Center(),
+            ftop.Center() + Vector(0, 0, 1),
+        )
+    )
+
+    res5 = prism(
+        box_shape,
+        None,
+        tri,
+        (box_shape.face("<Y").extend(10), box_shape.face(">Y").extend(10)),
+    )
+
+    assert res5.isValid()
+    assert res5.faces("|Z").size() == 1
+
 
 def test_prism_taper(box_shape):
 
@@ -834,6 +853,19 @@ def test_prism_taper(box_shape):
     assert res4.isValid()
     assert res4.faces().size() == 6 + 1
     assert res4.wires("<Z").edge("%CIRCLE").Length() == approx(c.Length())
+
+    # subtractive prism from to
+    res5 = prism(
+        box_shape,
+        None,
+        circle(0.2).moved(z=0.5),
+        (box_shape.face("<Z"), box_shape.face(">Z")),
+        5,
+        False,
+    )
+
+    assert res5.isValid()
+    assert res5.faces().size() == 6 + 2 * 3
 
 
 def test_draft(box_shape):
