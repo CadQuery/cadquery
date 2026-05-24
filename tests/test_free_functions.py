@@ -820,6 +820,18 @@ def test_prism(box_shape):
     assert res5.isValid()
     assert res5.faces("|Z").size() == 1
 
+    # additive prism from/to face using different overload
+    res6 = prism(
+        box_shape,
+        None,
+        tri,
+        (box_shape.face("<Y").extend(10), box_shape.face(">Y").extend(10)),
+        (0, 1, 0),
+    )
+
+    assert res6.isValid()
+    assert res6.faces("|Z").size() == 1
+
 
 def test_prism_taper(box_shape):
 
@@ -886,6 +898,9 @@ def test_draft(box_shape):
 
     with raises(ValueError):
         draft(s, s.face("<Z"), s.face(">>Z[-2]"), 5)
+
+    with raises(ValueError):
+        draft(s, s.face("<Z"), s.face(">>Z[-2]"), (0, 0, 1), 5)
 
 
 def test_clean():
