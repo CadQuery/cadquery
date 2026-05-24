@@ -7113,6 +7113,7 @@ def prism(
     return _compound_or_shape(s_tmp)
 
 
+@multidispatch
 def draft(ctx: Shape, base: Shape, faces: Shape, angle: Real,) -> Shape:
     """
     Add a draft angle to the specified faces.
@@ -7120,6 +7121,31 @@ def draft(ctx: Shape, base: Shape, faces: Shape, angle: Real,) -> Shape:
 
     base_face = base.face()
     n_dir = base_face.normalAt().toDir()
+    base_pln = base_face.toPln()
+
+    bldr = BRepOffsetAPI_DraftAngle(ctx.wrapped)
+
+    for f in _get_faces(faces):
+        bldr.Add(f.wrapped, n_dir, radians(angle), base_pln)
+
+        if not bldr.AddDone():
+            raise ValueError(f"Face {f} cannot be used in a draft operation.")
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Shape())
+
+
+@multidispatch
+def draft(
+    ctx: Shape, base: Shape, faces: Shape, dir: VectorLike, angle: Real,
+) -> Shape:
+    """
+    Add a draft angle to the specified faces.
+    """
+
+    base_face = base.face()
+    n_dir = Vector(dir).toDir()
     base_pln = base_face.toPln()
 
     bldr = BRepOffsetAPI_DraftAngle(ctx.wrapped)

@@ -51,6 +51,7 @@ from cadquery.func import (
     hollow,
     chamfer2D,
     fillet2D,
+    draft,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -833,6 +834,26 @@ def test_prism_taper(box_shape):
     assert res4.isValid()
     assert res4.faces().size() == 6 + 1
     assert res4.wires("<Z").edge("%CIRCLE").Length() == approx(c.Length())
+
+
+def test_draft(box_shape):
+
+    fbot = box_shape.face("<Z")
+    fside = box_shape.face("|X or |Y")
+
+    # direction inferred from the normal of the base face
+    res1 = draft(box_shape, fbot, fside, 5)
+    assert res1.face(">Z").Area() > fbot.Area()
+
+    # direction specified explicitely
+    res2 = draft(box_shape, fbot, fside, (0, 0, 1), 5)
+    assert res2.face(">Z").Area() < fbot.Area()
+
+    # raise on unsupported face type
+    s = extrude(face(ellipse(2, 1)), (0, 0, 1))
+
+    with raises(ValueError):
+        draft(s, s.face("<Z"), s.face(">>Z[-2]"), 5)
 
 
 def test_clean():
