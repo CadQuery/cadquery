@@ -179,6 +179,7 @@ from OCP.Geom2dAPI import Geom2dAPI_Interpolate
 from OCP.BRepLib import BRepLib, BRepLib_FindSurface
 
 from OCP.BRepOffsetAPI import (
+    BRepOffsetAPI_DraftAngle,
     BRepOffsetAPI_ThruSections,
     BRepOffsetAPI_MakePipeShell,
     BRepOffsetAPI_MakeThickSolid,
@@ -7099,7 +7100,7 @@ def prism(
             False,
         )
 
-        # dispatch on thickess type
+        # dispatch on thickens type
         if isinstance(t, Shape):
             bldr.Perform(t.face().wrapped)
         elif t is None:
@@ -7110,6 +7111,28 @@ def prism(
         s_tmp = bldr.Shape()
 
     return _compound_or_shape(s_tmp)
+
+
+def draft(ctx: Shape, base: Shape, faces: Shape, angle: Real,) -> Shape:
+    """
+    Add a draft angle to the specified faces.
+    """
+
+    base_face = base.face()
+    n_dir = base_face.normalAt().toDir()
+    base_pln = base_face.toPln()
+
+    bldr = BRepOffsetAPI_DraftAngle(ctx.wrapped)
+
+    for f in _get_faces(faces):
+        bldr.Add(f.wrapped, n_dir, radians(angle), base_pln)
+
+        if not bldr.AddDone():
+            raise ValueError(f"Face {f} cannot be used in a draft operation.")
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Shape())
 
 
 # %% diagnostics
