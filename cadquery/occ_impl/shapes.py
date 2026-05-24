@@ -1960,6 +1960,36 @@ class Shape(object):
 
         return self.cast(self.wrapped.Reversed())
 
+    def __and__(self, other: "Shape") -> "Compound":
+        """
+        Set intersection for combining selection results.
+        """
+
+        LHS = set(self) if isinstance(self, Compound) else {self}
+        RHS = set(other) if isinstance(other, Compound) else {other}
+
+        return compound(*(LHS & RHS))
+
+    def __or__(self, other: "Shape") -> "Compound":
+        """
+        Set sum for combining selection results.
+        """
+
+        LHS = set(self) if isinstance(self, Compound) else {self}
+        RHS = set(other) if isinstance(other, Compound) else {other}
+
+        return compound(*(LHS | RHS))
+
+    def __mod__(self, other: "Shape") -> "Compound":
+        """
+        Set difference for combining selection results.
+        """
+
+        LHS = set(self) if isinstance(self, Compound) else {self}
+        RHS = set(other) if isinstance(other, Compound) else {other}
+
+        return compound(*(LHS - RHS))
+
 
 class ShapeProtocol(Protocol):
     @property
