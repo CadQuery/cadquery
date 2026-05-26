@@ -124,7 +124,7 @@ We also have a [Google Group](https://groups.google.com/forum/#!forum/cadquery) 
 
 ## Professional Support
 
-Some of CadQuery's core maintainers are available for consulting engagements involving CadQuery integration, custom feature development, and CAD automation. If you are interested, reach out at **info@cadquery.org**.
+Some of CadQuery's core maintainers are available for consulting engagements involving CadQuery integration, custom feature development, training, code reviews and CAD automation. If you are interested, reach out at **info@cadquery.org**.
 
 ## Projects using CadQuery
 
