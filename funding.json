@@ -1,0 +1,91 @@
+{
+    "$schema": "https://fundingjson.org/schema/v1.1.0.json",
+    "version": "v1.1.0",
+    "entity": {
+        "type": "group",
+        "role": "maintainer",
+        "name": "CadQuery",
+        "email": "info@cadquery.org",
+        "description": "A team of 3 core maintainers responsible for the ongoing development and stewardship of CadQuery and its ecosystem. We are committed to keeping CadQuery free, open, and accessible to the engineering and scientific communities.",
+        "webpageUrl": {
+            "url": "https://cadquery.org"
+        }
+    },
+    "projects": [{
+        "guid": "cadquery",
+        "name": "CadQuery",
+        "description": "CadQuery is an open source Python library for building parametric 3D CAD models using scripts. It is built on the Open CASCADE Technology (OCCT) kernel — the same industrial-grade geometry engine used in professional CAD software — giving it capabilities far beyond simpler tools like OpenSCAD. CadQuery supports high-quality, lossless formats including STEP, DXF, AMF, and 3MF, and integrates with JupyterLab and the CQ-editor GUI for interactive design. It is used across a wide range of fields, from fusion energy research to robotics to tabletop game development. The project is maintained by a small team of 3 core maintainers and relies entirely on community support to sustain ongoing development and maintenance.",
+        "webpageUrl": {
+            "url": "https://cadquery.org"
+        },
+        "repositoryUrl": {
+            "url": "https://github.com/CadQuery/cadquery",
+            "wellKnown": "https://raw.githubusercontent.com/CadQuery/cadquery/master/.well-known/funding-manifest-urls"
+        },
+        "licenses": ["spdx:Apache-2.0"],
+        "tags": ["scientific-computing", "programming", "development", "design", "3d-modeling", "cad"]
+    }],
+    "funding": {
+        "channels": [
+            {
+                "guid": "opencollective",
+                "type": "payment-provider",
+                "address": "https://opencollective.com/cadquery",
+                "description": "Donate via Open Collective to support CadQuery development. Contributions are fiscally hosted and transparent."
+            }
+        ],
+        "plans": [
+            {
+                "guid": "monthly",
+                "status": "active",
+                "name": "Monthly development support",
+                "description": "This helps support ongoing development activities (i.e. $50, $100, $250).",
+                "amount": 50,
+                "currency": "USD",
+                "frequency": "monthly",
+                "channels": ["opencollective"]
+            },
+            {
+                "guid": "developer-time",
+                "status": "active",
+                "name": "Developer compensation",
+                "description": "A meaningful monthly contribution toward CadQuery development costs. Multiple sponsors at this level collectively help fund developer time for features and maintenance.",
+                "amount": 1000,
+                "currency": "USD",
+                "frequency": "monthly",
+                "channels": ["opencollective"]
+            },
+            {
+                "guid": "developer-part-time",
+                "status": "active",
+                "name": "Developer part time",
+                "description": "This will cover the cost of one developer working more consistently part-time on features. Funds might be disbursed among team members depending on what features need to be developed, and what expertise is needed for those features.",
+                "amount": 75000,
+                "currency": "USD",
+                "frequency": "yearly",
+                "channels": ["opencollective"]
+            },
+            {
+                "guid": "developer-full-time",
+                "status": "active",
+                "name": "Developer full time",
+                "description": "This will cover the cost of one developer working full-time on features. Funds might be disbursed among team members depending on what features need to be developed, and what expertise is needed for those features.",
+                "amount": 100000,
+                "currency": "USD",
+                "frequency": "yearly",
+                "channels": ["opencollective"]
+            },
+            {
+                "guid": "angel-plan",
+                "status": "active",
+                "name": "Goodwill plan",
+                "description": "Pay anything you wish to show your goodwill for the project.",
+                "amount": 0,
+                "currency": "USD",
+                "frequency": "one-time",
+                "channels": ["opencollective"]
+            }
+        ]
+    }
+}
+
