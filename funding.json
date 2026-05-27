@@ -20,7 +20,7 @@
         },
         "repositoryUrl": {
             "url": "https://github.com/CadQuery/cadquery",
-            "wellKnown": "https://raw.githubusercontent.com/CadQuery/cadquery/master/.well-known/funding-manifest-urls"
+            "wellKnown": "https://github.com/CadQuery/cadquery/blob/master/.well-known/funding-manifest-urls"
         },
         "licenses": ["spdx:Apache-2.0"],
         "tags": ["scientific-computing", "programming", "development", "design", "3d-modeling", "cad"]
