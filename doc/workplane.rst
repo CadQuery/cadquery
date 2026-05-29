@@ -95,6 +95,7 @@ Several CadQuery methods search this parent chain, for example when searching fo
 You can also give a Workplane object a tag, and further down your chain of calls you can refer back
 to this particular object using its tag.
 
+.. _the_context_solid:
 
 The Context Solid
 ---------------------------
