@@ -52,6 +52,26 @@ Much more complex expressions are possible as well:
         .chamfer(0.1)
     )
 
+Selector methods can also be chained. Each selector operates on the current
+selection, so chaining is useful when an expression is easier to read as a
+sequence of narrowing steps. For example, ``faces(">Y").edges("%CIRCLE")`` first
+selects the positive Y face and then selects only the circular edges belonging to
+that face:
+
+.. cadquery::
+
+    result = (
+        cq.Workplane("XY")
+        .box(4, 4, 1)
+        .faces(">Z")
+        .workplane()
+        .rarray(2, 2, 2, 2)
+        .hole(0.5)
+        .faces(">Z")
+        .edges("%CIRCLE")
+        .chamfer(0.08)
+    )
+
 .. _filteringfaces:
 
 Filtering Faces
