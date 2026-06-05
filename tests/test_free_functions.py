@@ -1329,4 +1329,43 @@ def test_history_sweep():
 
 def test_history_loft():
 
-    pass
+    h = History()
+
+    # loft to a vertex
+    f = plane(1, 1)
+    v = vertex(0, 0, 1)
+
+    res = loft(f, v, history=h)
+
+    op = h[-1]
+
+    bot = op.first()
+    side = op.generated(f.edges())
+
+    assert isSubshape(bot, res)
+    assert bot == res.face("<Z")
+
+    for el in side:
+        assert isSubshape(el, res)
+
+    # loft with a hole
+    f1 = plane(1, 1) - face(circle(0.1))
+    f2 = (plane(2, 2) - face(circle(0.1))).moved(z=1)
+
+    res = loft(f1, f2, history=h)
+
+    op = h[-1]
+
+    top = op.last()
+    bot = op.first()
+    side = op.generated(f1.edges())
+
+    assert isSubshape(bot, res)
+    assert bot == res.face("<Z")
+
+    assert isSubshape(top, res)
+    assert top == res.face(">Z")
+
+    for el in side:
+        assert isSubshape(el, res)
+
