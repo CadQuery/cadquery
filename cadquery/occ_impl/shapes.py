@@ -5801,7 +5801,7 @@ def _update_history(
                     op._last_shape |= _compound_or_shape(builder.LastShape())
 
 
-def _replace_history_modified_values(
+def _remap_history_values(
     history: History | None, aux: History,
 ):
     """
@@ -7212,7 +7212,7 @@ def sweep(
             history[-1]._last_shape = compound(tops_hist)
             history[-1]._first_shape = compound(bots_hist)
             # remapping is needed because of the additional solid call
-            _replace_history_modified_values(history, solid_hist)
+            _remap_history_values(history, solid_hist)
 
     # otherwise sweep wires
     else:
@@ -7337,7 +7337,7 @@ def sweep(
             history[-1]._last_shape = compound(tops_hist)
             history[-1]._first_shape = compound(bots_hist)
             # remapping is needed because of the additional solid call
-            _replace_history_modified_values(history, solid_hist)
+            _remap_history_values(history, solid_hist)
 
     # if no faces were provided try with wires
     else:
@@ -7469,7 +7469,7 @@ def loft(
             history[-1]._last_shape = compound(tops_hist)
             history[-1]._first_shape = compound(bots_hist)
             # remapping is needed because of the additional solid call
-            _replace_history_modified_values(history, solid_hist)
+            _remap_history_values(history, solid_hist)
 
     # otherwise construct using wires
     else:
