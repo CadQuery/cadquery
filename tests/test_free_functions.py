@@ -1256,14 +1256,37 @@ def test_history_bool():
 
 def test_history_extrude():
 
+    hist = History()
+    f = plane(1, 1)
+    res = extrude(f, (0, 0, 1), history=hist)
+
+    op = hist[-1]
+
+    sides = op.generated(f.edges())
+    top = op.last()
+    bot = op.first()
+
+    assert isSubshape(top, res)
+    assert isSubshape(bot, res)
+
+    assert top == res.face(">Z")
+    assert bot == res.face("<Z")
+
+    for s in sides:
+        assert isSubshape(s, res)
+
+    assert top not in sides
+    assert bot not in sides
+
+    assert top == op.last(f)
+    assert bot == op.first(f)
+
+
+def test_history_sweep():
+
     pass
 
 
-def test_sweep():
-
-    pass
-
-
-def test_loft():
+def test_history_loft():
 
     pass
