@@ -55,6 +55,7 @@ from cadquery.func import (
 )
 
 from cadquery.occ_impl.shapes import (
+    History,
     _get_one_wire,
     _get_wires,
     _get,
@@ -232,20 +233,20 @@ def test_sewing():
     sh = b.remove(ftop)
 
     # regular local sewing
-    history1 = dict(ftop=ftop)
+    history1 = History()
     res1 = shell(sh.faces("not <Z"), ftop, ctx=(sh, ftop), history=history1)
 
     assert res1.isValid()
     assert res1.Area() == approx(6)
-    assert "ftop" in history1
+    assert ftop in history1[-1]._images
 
     # regular local sewing - with Shape context
-    history2 = {}
+    history2 = History()
     res2 = shell(sh.faces("not <Z"), ftop, ctx=compound(sh, ftop), history=history2)
 
     assert res2.isValid()
     assert res2.Area() == approx(6)
-    assert ftop in history2
+    assert ftop in history2[-1]._images
 
     # non-manifold sewing
     res3 = shell(sh.faces(), ftop, ftop.moved(x=1), manifold=False)
@@ -289,13 +290,13 @@ def test_solid():
     assert s4.Volume() == approx(1)
 
     # check history handling
-    hist = {}
+    hist = History()
     s4 = solid(
         b.Faces(), b1.moved([(0.2, 0, 0.5), (-0.2, 0, 0.5)]).Faces(), history=hist
     )
 
     final_faces = s4.Faces()
-    final_faces_history = list(hist.values())
+    final_faces_history = hist[-1]._images
     for f in final_faces:
         assert f in final_faces_history
 
@@ -604,21 +605,14 @@ def test_imprint():
     assert len(res_glue_full.Faces()) == len(compound(b1, b2).Faces()) - 1
 
     # imprint with history
-    history = dict(b1=b1, b3=b3)
+    history = History()
     res_glue_partial = imprint(b1, b3, glue="partial", history=history)
 
-    b1_imp = history["b1"]
-    b3_imp = history[b3]
+    b1_imp = history[0].images(b1.faces())
+    b3_imp = history[0].images(b3.faces())
 
     assert len(b1_imp.Faces()) == len(b1.Faces()) + 1
     assert len(res_glue_partial.Faces()) == len(b1_imp.Faces() + b3_imp.Faces()) - 1
-
-    # imprint with faulty history
-    history = dict(b2=b2)
-    # this does not raise!
-    res_glue_partial = imprint(b1, b3, glue="partial", history=history)
-
-    assert b2 not in history
 
 
 @fixture
@@ -648,7 +642,7 @@ def test_imprint_error(patch_find):
     b1 = box(1, 1, 1)
     b2 = b1.moved(x=1)
 
-    history = {}
+    history = History()
 
     _ = imprint(b1, b2, history=history)
 
@@ -1133,8 +1127,7 @@ def test_loft():
     r4 = loft(w1, w2, w3, cap=True)  # capped loft
     r5 = loft(w4, w5)  # loft with open edges
     r6 = loft(f1, f2)  # loft with faces
-    r7 = loft()  # returns an empty compound
-    r8 = loft(compound(), compound())  # returns an empty compound
+    r7 = loft(compound(), compound())  # returns an empty compound
 
     assert_all_valid(r1, r2, r3, r4, r5, r6)
 
@@ -1146,7 +1139,6 @@ def test_loft():
     assert len(r6.Faces()) == 16
     assert len(r6.Faces()) == 16
     assert not bool(r7) and isinstance(r7, Compound)
-    assert not bool(r8) and isinstance(r8, Compound)
 
 
 def test_loft_vertex():
