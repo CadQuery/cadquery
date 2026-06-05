@@ -52,6 +52,7 @@ from cadquery.func import (
     chamfer2D,
     fillet2D,
     draft,
+    isSubshape,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -1227,3 +1228,42 @@ def test_closest():
     p1, p2 = closest(s1, s2)
 
     assert (p1 - p2).Length == approx(4)
+
+
+# %% history
+def test_history_bool():
+
+    b1 = box(1, 1, 1)
+    b2 = box(1, 0.5, 0.1)
+
+    hist = History()
+    res = cut(b1, b2, history=hist, name="cut")
+
+    assert hist[0] == hist["cut"]
+    assert b2.face("<Z") in hist["cut"].deleted()
+    assert hist["cut"].modified(b1.face("<Z")).size() == 2
+    assert hist["cut"].modified(b1.face("<Z").edge(">X")).size() == 2
+
+    with pytest.raises(KeyError):
+        hist["cut"].generated(b1.face(">Z"))
+
+    res2 = imprint(res, b2, history=hist, name="imprint")
+
+    op = hist["imprint"]
+
+    assert isSubshape(op.images(b1.face(">Z")), res2.solid(">Z"))
+
+
+def test_history_extrude():
+
+    pass
+
+
+def test_sweep():
+
+    pass
+
+
+def test_loft():
+
+    pass

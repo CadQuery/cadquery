@@ -5577,26 +5577,30 @@ class Op:
         else:
             return _normalize(d[k])
 
-    def modified(self, k: Shape):
+    def modified(self, k: Shape) -> Shape:
 
         return self._get(self._modified, k)
 
-    def generated(self, k: Shape):
+    def generated(self, k: Shape) -> Shape:
 
         return self._get(self._generated, k)
 
-    def images(self, k: Shape):
+    def deleted(self) -> Shape:
+
+        return _normalize(compound(self._deleted))
+
+    def images(self, k: Shape) -> Shape:
 
         return self._get(self._images, k)
 
-    def first(self, k: Shape | None = None):
+    def first(self, k: Shape | None = None) -> Shape:
 
         if k:
             return self._get(self._first, k)
 
         return _normalize(self._first_shape)
 
-    def last(self, k: Shape | None = None):
+    def last(self, k: Shape | None = None) -> Shape:
 
         if k:
             return self._get(self._last, k)
@@ -5662,14 +5666,9 @@ class History:
         else:
             return self.ops[ix]
 
-    def pop(self, n: int) -> list[Op]:
+    def pop(self) -> Op:
 
-        rv = []
-
-        for _ in range(n):
-            rv.append(self.ops.pop())
-
-        return rv
+        return self.ops.pop()
 
     def append(self, op: Op, name: str | None = None):
 
@@ -5695,16 +5694,13 @@ def _update_history(
         # construct the history step
         op = Op()
 
-        if name:
-            history.opDict[name] = op
+        history.append(op, name)
 
         # track all subshapes
         for shape in shapes:
             op._tracked.update(shape.Faces())
             op._tracked.update(shape.Edges())
             op._tracked.update(shape.Vertices())
-
-        history.ops.append(op)
 
         # iterate over all builders and collect history information
         builder: Any
@@ -5728,6 +5724,7 @@ def _update_history(
                     BRepOffsetAPI_MakePipeShell,
                     BRepTools_History,
                     BRepBuilderAPI_MakeShape,
+                    BOPAlgo_Builder,
                 ),
             )
             has_modifidied = isinstance(
@@ -5738,6 +5735,7 @@ def _update_history(
                     BRepOffsetAPI_MakePipeShell,
                     BRepTools_History,
                     BRepBuilderAPI_MakeShape,
+                    BOPAlgo_Builder,
                 ),
             )
             has_deleted = isinstance(
@@ -5746,6 +5744,7 @@ def _update_history(
                     BRepPrimAPI_MakeRevol,
                     BRepPrimAPI_MakePrism,
                     BRepOffsetAPI_MakePipeShell,
+                    BOPAlgo_Builder,
                 ),
             )
 
@@ -6166,7 +6165,7 @@ def solid(
 
     # combine histories of all shell operations if needed
     if history and inner:
-        inner_op = history.ops.pop()
+        inner_op = history.pop()
         _combine_ops(history.ops[-1], inner_op)
 
     return _shape(sf.Solid(), Solid)
