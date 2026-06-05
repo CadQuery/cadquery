@@ -1286,6 +1286,7 @@ def test_history_sweep():
 
     hist = History()
 
+    # sweep with inner shapes
     f1 = plane(1, 1) - face(circle(0.1))
     f2 = (plane(2, 2) - face(circle(0.1))).moved(z=1)
     p = segment((0, 0, 0), (0, 0, 1))
@@ -1306,6 +1307,24 @@ def test_history_sweep():
     assert side.faces().size() == 4
     assert inner.faces().size() == 1
     assert (top | bot | side | inner).size() == 7
+
+    # simple sweep
+    f = plane(1, 1)
+    p = segment((0, 0, 0), (0, 0, 1))
+
+    res = sweep(f, p, history=hist)
+
+    op = hist[-1]
+
+    top = op.last()
+    bot = op.first()
+    side = op.generated(f.outerWire().edges())
+
+    assert isSubshape(top, res)
+    assert isSubshape(bot, res)
+    assert top == res.face(">Z")
+    assert bot == res.face("<Z")
+    assert side.faces().size() == 4
 
 
 def test_history_loft():
