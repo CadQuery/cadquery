@@ -5577,33 +5577,51 @@ class Op:
         else:
             return _normalize(d[k])
 
-    def modified(self, k: Shape) -> Shape:
+    def modified(self, s: Shape) -> Shape:
+        """
+        Shapes modified from s.
+        """
 
-        return self._get(self._modified, k)
+        return self._get(self._modified, s)
 
-    def generated(self, k: Shape) -> Shape:
+    def generated(self, s: Shape) -> Shape:
+        """
+        Shapes generated from s.
+        """
 
-        return self._get(self._generated, k)
+        return self._get(self._generated, s)
 
     def deleted(self) -> Shape:
+        """
+        Deleted shapes.
+        """
 
         return _normalize(compound(self._deleted))
 
-    def images(self, k: Shape) -> Shape:
+    def images(self, s: Shape) -> Shape:
+        """
+        Images of s.
+        """
 
-        return self._get(self._images, k)
+        return self._get(self._images, s)
 
-    def first(self, k: Shape | None = None) -> Shape:
+    def first(self, s: Shape | None = None) -> Shape:
+        """
+        First shape (e.g. bottom face) or first shape generated from s.
+        """
 
-        if k:
-            return self._get(self._first, k)
+        if s:
+            return self._get(self._first, s)
 
         return _normalize(self._first_shape)
 
-    def last(self, k: Shape | None = None) -> Shape:
+    def last(self, s: Shape | None = None) -> Shape:
+        """
+        Last shape (e.g. top face) or last shape generated from s.
+        """
 
-        if k:
-            return self._get(self._last, k)
+        if s:
+            return self._get(self._last, s)
 
         return _normalize(self._last_shape)
 
@@ -5659,7 +5677,7 @@ class History:
         self.ops = []
         self.opDict = dict()
 
-    def __getitem__(self, ix: int | str):
+    def __getitem__(self, ix: int | str) -> Op:
 
         if isinstance(ix, str):
             return self.opDict[ix]
@@ -5725,6 +5743,7 @@ def _update_history(
                     BRepTools_History,
                     BRepBuilderAPI_MakeShape,
                     BOPAlgo_Builder,
+                    BRepOffset_MakeOffset,
                 ),
             )
             has_modifidied = isinstance(
@@ -5736,6 +5755,7 @@ def _update_history(
                     BRepTools_History,
                     BRepBuilderAPI_MakeShape,
                     BOPAlgo_Builder,
+                    BRepOffset_MakeOffset,
                 ),
             )
             has_deleted = isinstance(
@@ -5745,6 +5765,7 @@ def _update_history(
                     BRepPrimAPI_MakePrism,
                     BRepOffsetAPI_MakePipeShell,
                     BOPAlgo_Builder,
+                    BRepOffset_MakeOffset,
                 ),
             )
 
@@ -5834,7 +5855,7 @@ def _update_removed(history: History | None, shapes: Sequence[Shape]):
 
     if history:
         last_op = history[-1]
-        last_op.removed.extend(shapes)
+        last_op._deleted.extend(shapes)
 
 
 # %% alternative constructors

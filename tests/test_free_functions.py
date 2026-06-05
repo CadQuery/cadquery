@@ -1406,9 +1406,9 @@ def test_comibine_hist_dict():
     d1 = {f: v}
     d2 = {f: e}
 
-    d = _combine_hist_dict(d1, d2)
+    _combine_hist_dict(d1, d2)
 
-    assert f in d
-    assert isinstance(d[f], Compound)
-    assert v in d[f]
-    assert e in d[f]
+    assert f in d1
+    assert isinstance(d1[f], Compound)
+    assert v in d1[f]
+    assert e in d1[f]
