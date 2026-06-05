@@ -1374,7 +1374,7 @@ def test_history_loft():
 def test_history_offset():
 
     h = History()
-    f = plane(1,1)
+    f = plane(1, 1)
 
     offset(f, 0.1, both=True, history=h)
 
@@ -1394,17 +1394,17 @@ def test_history_offset():
     sides = op.generated(f.edges())
 
     assert fs_offset.faces().size() == 1
-    assert sides.edges().size() ==  4
+    assert sides.edges().size() == 4
 
 
 def test_comibine_hist_dict():
 
-    f = plane(1,1)
-    v = vertex(0,0,0)
-    e = segment((0,0), (0,1))
+    f = plane(1, 1)
+    v = vertex(0, 0, 0)
+    e = segment((0, 0), (0, 1))
 
-    d1 = {f:v}
-    d2 = {f:e}
+    d1 = {f: v}
+    d2 = {f: e}
 
     d = _combine_hist_dict(d1, d2)
 
@@ -1412,4 +1412,3 @@ def test_comibine_hist_dict():
     assert isinstance(d[f], Compound)
     assert v in d[f]
     assert e in d[f]
-
