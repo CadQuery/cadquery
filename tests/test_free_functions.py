@@ -65,6 +65,7 @@ from cadquery.occ_impl.shapes import (
     _adaptor_curve_to_edge,
     _shape_to_faces_shells,
     _get_faces,
+    _combine_hist_dict,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -1368,4 +1369,47 @@ def test_history_loft():
 
     for el in side:
         assert isSubshape(el, res)
+
+
+def test_history_offset():
+
+    h = History()
+    f = plane(1,1)
+
+    offset(f, 0.1, both=True, history=h)
+
+    op = h[-1]
+
+    fs_offset = op.generated(f)
+    sides = op.generated(f.edges())
+
+    assert fs_offset.faces().size() == 2
+    assert sides.edges().size() == 2 * 4
+
+    offset(f, 0.1, both=False, history=h)
+
+    op = h[-1]
+
+    fs_offset = op.generated(f)
+    sides = op.generated(f.edges())
+
+    assert fs_offset.faces().size() == 1
+    assert sides.edges().size() ==  4
+
+
+def test_comibine_hist_dict():
+
+    f = plane(1,1)
+    v = vertex(0,0,0)
+    e = segment((0,0), (0,1))
+
+    d1 = {f:v}
+    d2 = {f:e}
+
+    d = _combine_hist_dict(d1, d2)
+
+    assert f in d
+    assert isinstance(d[f], Compound)
+    assert v in d[f]
+    assert e in d[f]
 
