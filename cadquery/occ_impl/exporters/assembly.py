@@ -23,7 +23,7 @@ from OCP.TDF import TDF_Label
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDocStd import TDocStd_Document
 from OCP.XCAFApp import XCAFApp_Application
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen
+from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen, XCAFDoc_Location
 from OCP.XmlXCAFDrivers import (
     XmlXCAFDrivers_DocumentRetrievalDriver,
     XmlXCAFDrivers_DocumentStorageDriver,
@@ -458,19 +458,16 @@ def exportGLTF(
         if len(path_parts) > 0 and path_parts[-1] == "gltf":
             binary = False
 
-    # map from CadQuery's right-handed +Z up coordinate system to glTF's right-handed +Y up coordinate system
-    # https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units
-    orig_loc = assy.loc
-    assy.loc *= Location((0, 0, 0), (1, 0, 0), -90)
+    top, doc = toCAF(assy, True, True, tolerance, angularTolerance)
 
-    _, doc = toCAF(assy, True, True, tolerance, angularTolerance)
+    # Map from CadQuery's right-handed +Z up coordinate system to glTF's right-handed +Y up
+    # coordinate system.
+    cs_rotation = Location((0, 0, 0), (1, 0, 0), -90)
+    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    existing_loc = Location(shape_tool.GetLocation_s(top))
+    XCAFDoc_Location.Set_s(top, (existing_loc * cs_rotation).wrapped)
 
     writer = RWGltf_CafWriter(TCollection_AsciiString(path), binary)
-    result = writer.Perform(
+    return writer.Perform(
         doc, TColStd_IndexedDataMapOfStringString(), Message_ProgressRange()
     )
-
-    # restore coordinate system after exporting
-    assy.loc = orig_loc
-
-    return result

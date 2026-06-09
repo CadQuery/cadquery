@@ -1559,6 +1559,66 @@ def test_exportGLTF(nested_assy_sphere, tmpdir):
             assert lines[0].startswith('{"accessors"')
 
 
+def test_exportGLTF_coordinate_system(tmp_path_factory):
+    """
+    exportGLTF must apply the Z-up to Y-up rotation to the XCAF document rather than
+    mutating assy.loc so that the rotation is always consistent on import and export
+    """
+    import json
+    import math
+
+    HALF_SQRT2 = (
+        math.sqrt(2) / 2
+    )  # sin(45) == cos(45), the quaternion components for a 90-degree rotation
+    tmpdir = tmp_path_factory.mktemp("gltf_cs")
+
+    def root_rotation(gltf_path):
+        """Return the rotation quaternion [x,y,z,w] of the scene root node."""
+        with open(gltf_path) as f:
+            data = json.load(f)
+        root_idx = data["scenes"][0]["nodes"][0]
+        return data["nodes"][root_idx]["rotation"]
+
+    #
+    # Case 1: identity assy.loc
+    #
+    assy = cq.Assembly(name="root")
+    assy.add(cq.Workplane().box(1, 1, 1), name="box")
+    assy.loc = cq.Location()
+
+    id_path = os.path.join(tmpdir, "id.gltf")
+    cq.exporters.assembly.exportGLTF(assy, id_path, binary=False)
+
+    # assy.loc must not be mutated
+    trans, rot = assy.loc.toTuple()
+    assert trans == approx((0, 0, 0))
+    assert rot == approx((0, 0, 0))
+
+    # root rotation must be exactly the Z-up to Y-up rotation (-90 degrees around X)
+    rot = root_rotation(id_path)
+    assert rot == approx([-HALF_SQRT2, 0, 0, HALF_SQRT2], abs=1e-5)
+
+    #
+    # Case 2: non-identity assy.loc (simulates a STEP-imported assembly)
+    #
+    assy2 = cq.Assembly(name="root2")
+    assy2.add(cq.Workplane().box(1, 1, 1), name="box")
+    assy2.loc = cq.Location((5, 3, 1))  # pure translation
+    original_trans, original_rot = assy2.loc.toTuple()
+
+    nonid_path = os.path.join(tmpdir, "nonid.gltf")
+    cq.exporters.assembly.exportGLTF(assy2, nonid_path, binary=False)
+
+    # assy.loc must be unchanged
+    trans2, rot2 = assy2.loc.toTuple()
+    assert trans2 == approx(original_trans)
+    assert rot2 == approx(original_rot)
+
+    # root node rotation must still be -90 degrees around X regardless of the translation
+    rot2 = root_rotation(nonid_path)
+    assert rot2 == approx([-HALF_SQRT2, 0, 0, HALF_SQRT2], abs=1e-5)
+
+
 def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):
     """
     Output must not contain:
