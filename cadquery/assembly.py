@@ -590,6 +590,10 @@ class Assembly(object):
             See :meth:`~cadquery.occ_impl.exporters.assembly.exportAssembly`.
         :param ascii: STL only - Sets whether or not STL export should be text or binary
         :type ascii: bool
+        :param yUp: glTF only - Sets whether the model is converted to the +Y up
+            coordinate system mandated by the glTF specification (default True).
+            See :meth:`~cadquery.occ_impl.exporters.assembly.exportGLTF`.
+        :type yUp: bool
         """
 
         # Make sure the export mode setting is correct
@@ -612,7 +616,14 @@ class Assembly(object):
         elif exportType == "VRML":
             exportVRML(self, path, tolerance, angularTolerance)
         elif exportType == "GLTF" or exportType == "GLB":
-            exportGLTF(self, path, None, tolerance, angularTolerance)
+            exportGLTF(
+                self,
+                path,
+                kwargs.pop("binary", None),
+                tolerance,
+                angularTolerance,
+                **kwargs,
+            )
         elif exportType == "VTKJS":
             exportVTKJS(self, path)
         elif exportType == "STL":

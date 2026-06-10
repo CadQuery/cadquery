@@ -362,6 +362,12 @@ export with all defaults is shown below. To export to a binary glTF file, change
    # Save the assembly to GLTF
    assy.export("out.gltf")
 
+The glTF specification mandates a +Y up coordinate system, so the export converts the model from
+CadQuery's +Z up world by default. Viewers that expect CadQuery's coordinates unchanged can opt
+out of the conversion::
+
+   assy.export("out.gltf", yUp=False)
+
 Exporting SVG
 ###############
 

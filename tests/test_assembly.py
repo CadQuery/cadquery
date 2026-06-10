@@ -1,7 +1,8 @@
 import pytest
 import os
+import json
 from itertools import product
-from math import degrees
+from math import degrees, sqrt
 import copy
 from pathlib import Path
 from pathlib import PurePath
@@ -1559,64 +1560,124 @@ def test_exportGLTF(nested_assy_sphere, tmpdir):
             assert lines[0].startswith('{"accessors"')
 
 
-def test_exportGLTF_coordinate_system(tmp_path_factory):
+def _gltf_position_bounds(data):
+    """Elementwise min/max over all POSITION accessors of a parsed ascii glTF."""
+
+    accessors = [
+        data["accessors"][prim["attributes"]["POSITION"]]
+        for mesh in data["meshes"]
+        for prim in mesh["primitives"]
+    ]
+    mins = [min(vals) for vals in zip(*(a["min"] for a in accessors))]
+    maxs = [max(vals) for vals in zip(*(a["max"] for a in accessors))]
+
+    return mins, maxs
+
+
+def test_exportGLTF_coordinate_system(tmpdir):
     """
-    exportGLTF must apply the Z-up to Y-up rotation to the XCAF document rather than
-    mutating assy.loc so that the rotation is always consistent on import and export
+    exportGLTF must convert the whole scene from CadQuery's right-handed +Z up
+    coordinate system to glTF's right-handed +Y up coordinate system without
+    mutating the assembly.
     """
-    import json
-    import math
 
-    HALF_SQRT2 = (
-        math.sqrt(2) / 2
-    )  # sin(45) == cos(45), the quaternion components for a 90-degree rotation
-    tmpdir = tmp_path_factory.mktemp("gltf_cs")
-
-    def root_rotation(gltf_path):
-        """Return the rotation quaternion [x,y,z,w] of the scene root node."""
-        with open(gltf_path) as f:
-            data = json.load(f)
-        root_idx = data["scenes"][0]["nodes"][0]
-        return data["nodes"][root_idx]["rotation"]
-
-    #
-    # Case 1: identity assy.loc
-    #
+    # An off-center, asymmetric box so that the axis mapping is visible in the
+    # exported vertex bounds
     assy = cq.Assembly(name="root")
-    assy.add(cq.Workplane().box(1, 1, 1), name="box")
-    assy.loc = cq.Location()
+    assy.add(cq.Workplane(origin=(0, 3, 10)).box(1, 2, 4), name="box")
 
-    id_path = os.path.join(tmpdir, "id.gltf")
-    cq.exporters.assembly.exportGLTF(assy, id_path, binary=False)
+    path = os.path.join(tmpdir, "identity.gltf")
+    cq.exporters.assembly.exportGLTF(assy, path, binary=False)
 
-    # assy.loc must not be mutated
+    # assy.loc must not be mutated by the export
     trans, rot = assy.loc.toTuple()
     assert trans == approx((0, 0, 0))
     assert rot == approx((0, 0, 0))
 
-    # root rotation must be exactly the Z-up to Y-up rotation (-90 degrees around X)
-    rot = root_rotation(id_path)
-    assert rot == approx([-HALF_SQRT2, 0, 0, HALF_SQRT2], abs=1e-5)
+    with open(path) as f:
+        data = json.load(f)
 
-    #
-    # Case 2: non-identity assy.loc (simulates a STEP-imported assembly)
-    #
-    assy2 = cq.Assembly(name="root2")
-    assy2.add(cq.Workplane().box(1, 1, 1), name="box")
-    assy2.loc = cq.Location((5, 3, 1))  # pure translation
-    original_trans, original_rot = assy2.loc.toTuple()
+    # The conversion is baked into the vertices, so no node needs a transform
+    for node in data["nodes"]:
+        assert "rotation" not in node
+        assert "translation" not in node
+        assert "matrix" not in node
 
-    nonid_path = os.path.join(tmpdir, "nonid.gltf")
-    cq.exporters.assembly.exportGLTF(assy2, nonid_path, binary=False)
+    # CadQuery (x, y, z) maps to glTF (x, z, -y): the box spanning x [-0.5, 0.5],
+    # y [2, 4], z [8, 12] must span x [-0.5, 0.5], y [8, 12], z [-4, -2] in the file
+    mins, maxs = _gltf_position_bounds(data)
+    assert mins == approx([-0.5, 8, -4])
+    assert maxs == approx([0.5, 12, -2])
 
-    # assy.loc must be unchanged
-    trans2, rot2 = assy2.loc.toTuple()
-    assert trans2 == approx(original_trans)
-    assert rot2 == approx(original_rot)
 
-    # root node rotation must still be -90 degrees around X regardless of the translation
-    rot2 = root_rotation(nonid_path)
-    assert rot2 == approx([-HALF_SQRT2, 0, 0, HALF_SQRT2], abs=1e-5)
+@pytest.mark.parametrize("structure", ["children", "object"])
+def test_exportGLTF_coordinate_system_root_location(structure, tmpdir):
+    """
+    A root location must be re-expressed in glTF's +Y up world, regardless of
+    whether the root holds children or an object directly: the translation
+    (5, 3, 1) maps to (5, 1, -3) and the 90 degree rotation about CadQuery's
+    +Z axis becomes 90 degrees about glTF's +Y axis.
+    """
+
+    loc = cq.Location((5, 3, 1), (0, 0, 1), 90)
+
+    if structure == "children":
+        assy = cq.Assembly(name="root")
+        assy.add(cq.Workplane().box(1, 1, 1), name="box")
+        assy.loc = loc
+    else:
+        assy = cq.Assembly(cq.Workplane().box(1, 1, 1), name="root", loc=loc)
+
+    path = os.path.join(tmpdir, f"{structure}.gltf")
+    cq.exporters.assembly.exportGLTF(assy, path, binary=False)
+
+    # assy.loc must not be mutated by the export
+    trans, rot = assy.loc.toTuple()
+    assert trans == approx((5, 3, 1))
+    assert rot == approx((0, 0, 90))
+
+    with open(path) as f:
+        data = json.load(f)
+
+    # Exactly one node must carry the root location
+    located = [n for n in data["nodes"] if "rotation" in n or "translation" in n]
+    assert len(located) == 1
+    node = located[0]
+
+    assert node["translation"] == approx([5, 1, -3], abs=1e-9)
+
+    # q and -q describe the same rotation, so normalize the sign before comparing
+    qx, qy, qz, qw = node["rotation"]
+    if qw < 0:
+        qx, qy, qz, qw = -qx, -qy, -qz, -qw
+    assert [qx, qy, qz, qw] == approx([0, sqrt(2) / 2, 0, sqrt(2) / 2], abs=1e-9)
+
+
+def test_exportGLTF_y_up_opt_out(tmpdir):
+    """
+    yUp=False must write CadQuery's Z-up coordinates unchanged with no conversion
+    anywhere in the file.
+    """
+
+    assy = cq.Assembly(name="root")
+    assy.add(cq.Workplane(origin=(0, 3, 10)).box(1, 2, 4), name="box")
+
+    # Exercise the kwarg pass-through in Assembly.export
+    path = os.path.join(tmpdir, "zup.gltf")
+    assy.export(str(path), yUp=False)
+
+    with open(path) as f:
+        data = json.load(f)
+
+    for node in data["nodes"]:
+        assert "rotation" not in node
+        assert "translation" not in node
+        assert "matrix" not in node
+
+    # The CadQuery coordinates must appear in the file untouched
+    mins, maxs = _gltf_position_bounds(data)
+    assert mins == approx([-0.5, 2, 8])
+    assert maxs == approx([0.5, 4, 12])
 
 
 def test_save_gltf_boxes2(boxes2_assy, tmpdir, capfd):

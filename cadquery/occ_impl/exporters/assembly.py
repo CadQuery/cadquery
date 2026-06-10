@@ -23,7 +23,7 @@ from OCP.TDF import TDF_Label
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDocStd import TDocStd_Document
 from OCP.XCAFApp import XCAFApp_Application
-from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen, XCAFDoc_Location
+from OCP.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen
 from OCP.XmlXCAFDrivers import (
     XmlXCAFDrivers_DocumentRetrievalDriver,
     XmlXCAFDrivers_DocumentStorageDriver,
@@ -41,12 +41,12 @@ from OCP.TCollection import (
 )
 from OCP.PCDM import PCDM_StoreStatus
 from OCP.RWGltf import RWGltf_CafWriter
+from OCP.RWMesh import RWMesh_CoordinateSystemConverter, RWMesh_CoordinateSystem
 from OCP.TColStd import TColStd_IndexedDataMapOfStringString
 from OCP.Message import Message_ProgressRange
 from OCP.Interface import Interface_Static
 
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
-from ..geom import Location
 from ..shapes import Shape, Compound
 from ...types import UnitLiterals
 
@@ -443,9 +443,20 @@ def exportGLTF(
     binary: Optional[bool] = None,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
+    yUp: bool = True,
 ):
     """
     Export an assembly to a gltf file.
+
+    :param assy: assembly to export
+    :param path: path and filename for writing
+    :param binary: write binary (.glb) instead of text (.gltf). If None, inferred
+        from the file extension.
+    :param tolerance: the deflection tolerance, in model units
+    :param angularTolerance: the angular tolerance, in radians
+    :param yUp: convert from CadQuery's +Z up world to the +Y up coordinate system
+        mandated by the glTF specification (default True). Set False to write the
+        coordinates unchanged, matching the output of CadQuery versions up to 2.4.
     """
 
     # If the caller specified the binary option, respect it
@@ -458,16 +469,22 @@ def exportGLTF(
         if len(path_parts) > 0 and path_parts[-1] == "gltf":
             binary = False
 
-    top, doc = toCAF(assy, True, True, tolerance, angularTolerance)
-
-    # Map from CadQuery's right-handed +Z up coordinate system to glTF's right-handed +Y up
-    # coordinate system.
-    cs_rotation = Location((0, 0, 0), (1, 0, 0), -90)
-    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    existing_loc = Location(shape_tool.GetLocation_s(top))
-    XCAFDoc_Location.Set_s(top, (existing_loc * cs_rotation).wrapped)
+    _, doc = toCAF(assy, True, True, tolerance, angularTolerance)
 
     writer = RWGltf_CafWriter(TCollection_AsciiString(path), binary)
+
+    if yUp:
+        # Convert from CadQuery's right-handed +Z up coordinate system to glTF's
+        # right-handed +Y up coordinate system.
+        converter = RWMesh_CoordinateSystemConverter()
+        converter.SetInputCoordinateSystem(
+            RWMesh_CoordinateSystem.RWMesh_CoordinateSystem_Zup
+        )
+        converter.SetOutputCoordinateSystem(
+            RWMesh_CoordinateSystem.RWMesh_CoordinateSystem_glTF
+        )
+        writer.SetCoordinateSystemConverter(converter)
+
     return writer.Perform(
         doc, TColStd_IndexedDataMapOfStringString(), Message_ProgressRange()
     )
