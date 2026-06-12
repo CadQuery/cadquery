@@ -295,7 +295,7 @@ Here is an usage example of this feature.
     res = fillet(
         res,
         hist["hollow"].generated().edges("<Z") | hist["mounts"].generated().edges("<Z"),
-        0.05,
+        0.04,
     )
 
     # add a lip
