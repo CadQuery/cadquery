@@ -151,6 +151,13 @@ One can for example union multiple solids at once by first combining them into a
 Note that bool operations work on 2D shapes as well.
 
 
+Boolean operations support optionally history that allows to refer to generated, modified or deleted shapes. In order to use it one has to instantiate the 
+:py:class:`cadquery.occ_impl.shapes.History` class and pass it to the operations of interest. The individual boolean operations entries (i.e. instances of :py:class:`cadquery.occ_impl.shapes.Op`)
+can be accessed using indexing or name-based queries. In order to support names, one need to specify the `name` parameter when invoking an operation.
+
+.. warning:: The history tracking feature of the free function API is experimental and may change.
+
+
 Shape selection
 ---------------
 
@@ -172,7 +179,7 @@ Additionally, selection can be performed using
 :meth:`~cadquery.occ_impl.shapes.Shape.siblings`, 
 :meth:`~cadquery.occ_impl.shapes.Shape.ancestors`,
 special selectors.
-Last but not least, selections can be combined using a convenient operator syntax
+Last but not least, selections can be combined using set operations implemented via convenient operator syntax
 :meth:`~cadquery.occ_impl.shapes.Shape.__and__`, 
 :meth:`~cadquery.occ_impl.shapes.Shape.__or__`,
 :meth:`~cadquery.occ_impl.shapes.Shape.__mod__`. The last operator implements a set difference operation.
@@ -252,7 +259,10 @@ and :meth:`~cadquery.occ_impl.shapes.offset2D` operations.
     result = compound([el.moved(2*i) for i,el in enumerate(results)])
 
 
-Most operations support optional history that allows to refer to generted, modified or deleted shapes. Here is a usage example of this feature.
+Most operations support optionally history that allows to refer to generated, modified or deleted shapes. In order to use it one has to instantiate the 
+:py:class:`cadquery.occ_impl.shapes.History` class and pass it to the operations of interest. The individual modeling steps (i.e. instances of :py:class:`cadquery.occ_impl.shapes.Op`)
+can be accessed using indexing or name-based queries. In order to support names, one need to specify the `name` parameter when invoking an operation.
+Here is an usage example of this feature.
 
 .. cadquery::
 
@@ -310,7 +320,7 @@ Most operations support optional history that allows to refer to generted, modif
 
 
 Some operations like e.g. :meth:`~cadquery.occ_impl.shapes.extrude` or :meth:`~cadquery.occ_impl.shapes.prism` support referring to the 
-:meth:`~cadquery.occ_impl.shapes.Op.first` and `:meth:`~cadquery.occ_impl.shapes.Op.last` shape as well. 
+:meth:`~cadquery.occ_impl.shapes.Op.first` and :meth:`~cadquery.occ_impl.shapes.Op.last` shape as well. 
 
 .. warning:: The history tracking feature of the free function API is experimental and may change.
 

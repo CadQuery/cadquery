@@ -75,7 +75,7 @@ Additionally it is possible to integrate with other libraries using VTK and disp
 .. image:: _static/show_vtk.PNG
 
 
-Note that currently the show function is blocking.
+Note that the :meth:`~cadquery.vis.show` function is blocking.
 
 Screenshots
 ===========
@@ -170,6 +170,16 @@ Fine-grained control of the appearance of every item can be achieved using :meth
 
 
 .. image:: _static/show_styling.png
+
+
+Non-blocking visualization
+==========================
+
+For non-blocking visualization, one can use the :meth:`~cadquery.fig.show` function. It relies on VTK/Trame and opens a web browser window.
+To programmatically remove previously added shapes one can use the :meth:`~cadquery.fig.clear` method. 
+
+
+.. image:: _static/fig.png
 
 
 Jupyter/JupterLab

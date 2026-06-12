@@ -39,8 +39,9 @@ CadQuery is composed of 4 different API, which are implemented on top of each ot
     #. :class:`~cadquery.Workplane` 
     #. :class:`~cadquery.Sketch` 
     #. :class:`~cadquery.Assembly`
-2. The Direct API
+2. The Free Function API
     #. :class:`~cadquery.Shape` 
+    #. :ref:`freefuncapi`
 3. The Geometry API
     #. :class:`~cadquery.Vector`
     #. :class:`~cadquery.Plane`
@@ -77,13 +78,13 @@ Or like this : ::
   While the first code style is what people default to, it's important to note that when you write your code like this it's equivalent as writting it on a single line.
   It's then more difficult to debug as you cannot visualize each operation step by step, which is a functionality that is provided by the CQ-Editor debugger for example.
 
-The Direct API
+The Free Function API
 ~~~~~~~~~~~~~~
 
 While the fluent API exposes much functionality, you may find scenarios that require extra flexibility or require working with lower level objects.
 
-The direct API is the API that is called by the fluent API under the hood. The 9 topological classes and their methods compose the direct API.
-These classes actually wrap the equivalent Open CASCADE Technology (OCCT) classes.
+The free function API is the API that is called by the fluent API under the hood. The 9 topological classes, their methods and additional free functionsi
+compose the free function API. These classes actually wrap the equivalent Open CASCADE Technology (OCCT) classes.
 The 9 topological classes are :
 
 1. :class:`~cadquery.Shape`
@@ -96,21 +97,23 @@ The 9 topological classes are :
 8. :class:`~cadquery.Edge`
 9. :class:`~cadquery.Vertex`
 
-Each class has its own methods to create and/or edit shapes of their respective type. One can also use the :ref:`freefuncapi` to create and modify shapes. As already explained in :ref:`cadquery_concepts` there is also some kind of hierarchy in the
-topological classes. A Wire is made of several edges which are themselves made of several vertices. This means you can create geometry from the bottom up and have a lot of control over it.
+Each class has its own methods to query, select and position shapes. On the other hand, one can use free function to create and modify shapes.
+As already explained in :ref:`cadquery_concepts` there is also some kind of hierarchy in the
+topological classes. A Wire is made of several edges which are themselves made of several vertices.
+This means you can create geometry from the bottom up and have a lot of control over it.
 
 For example we can create a circular face like so ::
 
-  circle_wire = Wire.makeCircle(10, Vector(0, 0, 0), Vector(0, 0, 1))
-  circular_face = Face.makeFromWires(circle_wire, [])
+.. code-block:: python
+
+   circle_wire = wire(circle(1))
+   circular_face = face(circle_wire)
+
 
 .. note::
   In CadQuery (and OCCT) all the topological classes are shapes, the :class:`~cadquery.Shape` class is the most abstract topological class.
-  The topological class inherits :class:`~cadquery.Mixin3D` or :class:`~cadquery.Mixin1D` which provide aditional methods that are shared between the classes that inherits them.
+  The topological class inherits :class:`~cadquery.Mixin3D` or :class:`~cadquery.Mixin1D` which provide additional methods that are shared between the classes that inherits them.
 
-The direct API as its name suggests doesn't provide a parent/children data structure, instead each method call directly returns an object of the specified topological type.
-It is more verbose than the fluent API and more tedious to work with, but as it offers more flexibility (you can work with faces, which is something you can't do in the fluent API)
-it is sometimes more convenient than the fluent API.
 
 The OCCT API
 ~~~~~~~~~~~~~
@@ -142,12 +145,12 @@ While the 3 APIs provide 3 different layer of complexity and functionality you c
 Below is presented the different ways you can interact with the different API layers.
 
 -------------------------
-Fluent API <=> Direct API
+Fluent API <=> Free Function API
 -------------------------
 
 .. currentmodule:: cadquery
 
-Here are all the possibilities you have to get an object from the Direct API (i.e a topological object).
+Here are all the possibilities you have to get an object from the free function API (i.e a topological object).
 
 You can end the Fluent API call chain and get the last object on the stack with :py:meth:`Workplane.val` alternatively you can get all
 the objects with :py:meth:`Workplane.vals`
@@ -179,7 +182,7 @@ If you want to go the other way around i.e using objects from the topological AP
 
 You can pass a topological object as a base object to the :class:`~cadquery.Workplane` object. ::
 
-  solid_box = Solid.makeBox(10, 10, 10)
+  solid_box = box(10, 10, 10)
   part = Workplane(obj=solid_box)
   # And you can continue your modelling in the fluent API
   part = part.faces(">Z").circle(1).extrude(10)
@@ -187,7 +190,7 @@ You can pass a topological object as a base object to the :class:`~cadquery.Work
 
 You can add a topological object as a new operation/step in the Fluent API call chain with :py:meth:`Workplane.newObject` ::
 
-  circle_wire = Wire.makeCircle(1, Vector(0, 0, 0), Vector(0, 0, 1))
+  circle_wire = wire(circle(1.0))
   box = Workplane().box(10, 10, 10).newObject([circle_wire])
   # And you can continue modelling
   box = (
@@ -195,23 +198,23 @@ You can add a topological object as a new operation/step in the Fluent API call 
   )  # notice the call to `toPending` that is needed if you want to use it in a subsequent operation
 
 -------------------------
-Direct API <=> OCCT API
+Free Function API <=> OCCT API
 -------------------------
 
-Every object of the Direct API stores its OCCT equivalent object in its :attr:`wrapped` attribute.:
+Every object of the free function API stores its OCCT equivalent object in its :attr:`wrapped` attribute.:
 
 .. code-block::
 
-    >>> box = Solid.makeBox(10,5,5)
+    >>> box = box(10,5,5)
     >>> print(type(box))
     <class cadquery.occ_impl.shapes.Solid>
 
-    >>> box = Solid.makeBox(10,5,5).wrapped
+    >>> box = box(10,5,5).wrapped
     >>> print(type(box))
     <class OCP.TopoDS.TopoDS_Solid>
 
 
-If you want to cast an OCCT object into a Direct API one you can just pass it as a parameter of the intended class:
+If you want to cast an OCCT object into a free function API one you can just pass it as a parameter of the intended class:
 
 .. code-block::
 
