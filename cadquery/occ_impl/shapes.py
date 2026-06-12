@@ -7732,24 +7732,6 @@ def prism(
 
     return _update_prism_history(ctx, base, faces, t, s_tmp, history, name, builders)
 
-    _tracked = [ctx, base, faces]
-    if isinstance(t, Shape):
-        _tracked.append(t)
-    elif isinstance(t, tuple):
-        _tracked.extend(t)
-
-    _update_history(history, name, _tracked, *builders)
-
-    rv = _compound_or_shape(s_tmp)
-
-    #  add last if extruding upto
-    if isinstance(t, Shape) and history is not None:
-        op = history[-1]
-        if op._last_shape.size() == 0:
-            op._last_shape = op.modified(t)
-
-    return rv
-
 
 @multidispatch
 def prism(
@@ -7794,23 +7776,7 @@ def prism(
 
         s_tmp = bldr.Shape()
 
-    _tracked = [ctx, faces]
-    if isinstance(t, Shape):
-        _tracked.append(t)
-    elif isinstance(t, tuple):
-        _tracked.extend(t)
-
-    _update_history(history, name, _tracked, *builders)
-
-    rv = _compound_or_shape(s_tmp)
-
-    #  add last if extruding upto
-    if isinstance(t, Shape) and history is not None:
-        op = history[-1]
-        if op._last_shape.size() == 0:
-            op._last_shape = rv.faces() % (op.generated(faces.edges()) | faces.faces())
-
-    return rv
+    return _update_prism_history(ctx, base, faces, t, s_tmp, history, name, builders)
 
 
 @multidispatch
