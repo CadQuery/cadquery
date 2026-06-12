@@ -5,7 +5,6 @@
 Free function API
 *****************
 
-.. warning:: The free function API is experimental and may change.
 
 For situations when more freedom in crafting individual objects is required, a free function API is provided.
 This API has no hidden state, but may result in more verbose code. One can still use selectors as methods, but all other operations are implemented as free functions.
@@ -193,7 +192,10 @@ Constructing complex shapes from simple shapes is possible in various contexts.
 Operations
 ----------
 
-Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, :meth:`~cadquery.occ_impl.shapes.loft`, :meth:`~cadquery.occ_impl.shapes.revolve` and :meth:`~cadquery.occ_impl.shapes.sweep` operations.
+Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, :meth:`~cadquery.occ_impl.shapes.loft`, :meth:`~cadquery.occ_impl.shapes.revolve`,
+:meth:`~cadquery.occ_impl.shapes.sweep`, :meth:`~cadquery.occ_impl.shapes.hollow`, :meth:`~cadquery.occ_impl.shapes.draft`,:meth:`~cadquery.occ_impl.shapes.prism`,
+:meth:`~cadquery.occ_impl.shapes.chamfer`,  :meth:`~cadquery.occ_impl.shapes.fillet`,:meth:`~cadquery.occ_impl.shapes.chamfer2D`,:meth:`~cadquery.occ_impl.shapes.fillet2D`
+and :meth:`~cadquery.occ_impl.shapes.offset2D` operations.
 
 .. cadquery::
 
@@ -221,6 +223,69 @@ Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, 
 
     results = (s1, s2, s3, s4, s5, s6, s7)
     result = compound([el.moved(2*i) for i,el in enumerate(results)])
+
+
+Most operations support optional history that allows to refer to generted, modified or deleted shapes. Here is a usage example of this feature.
+
+.. cadquery::
+
+    from cadquery.func import *
+
+    dx = 5
+    dy = 3
+    dz = 1.5
+
+    hist = History()
+
+    # make a hollow base
+    base_face = plane(dx, dy)
+    base = extrude(base_face, (0, 0, dz))
+    res = fillet(base, base.edges("|Z"), 0.5)
+    ftop = res.face(">Z")
+    resh = hollow(res, ftop, -0.2, history=hist, name="hollow")
+
+    # add mounting points
+    mid = resh.face(">Z[-2]")
+    f = (
+        face(circle(0.1), circle(0.05))
+        .moved(offset2D(base_face.wire(), -0.5).vertices())
+        .moved(mid)
+        .moved(z=0)
+    )
+    res = prism(resh, mid, f, base.face(">Z"), history=hist, name="mounts")
+
+    # add fillet
+    res = fillet(
+        res,
+        hist["hollow"].generated().edges("<Z") | hist["mounts"].generated().edges("<Z"),
+        0.05,
+    )
+
+    # add a lip
+    top = res.face(">Z")
+    top_ow = top.outerWire()
+
+    res = prism(
+        res,
+        top,
+        face(top_ow, offset2D(top_ow, -0.1)),
+        0.2,
+        additive=False,
+        history=hist,
+        name="lip",
+    )
+
+    # apply chamfers
+    res = chamfer(res, hist["lip"].modified(top).face().outerWire(), 0.05)
+    res = chamfer(
+        res, compound([f.face().outerWire() for f in hist["mounts"].last()]), 0.02
+    )
+
+
+Some operations like e.g. :meth:`~cadquery.occ_impl.shapes.extrude` or :meth:`~cadquery.occ_impl.shapes.prism` support referring to the 
+:meth:`~cadquery.occ_impl.shapes.Op.first` and `:meth:`~cadquery.occ_impl.shapes.Op.last` shape as well. 
+
+.. warning:: The history tracking feature of the free function API is experimental and may change.
 
 
 Placement
