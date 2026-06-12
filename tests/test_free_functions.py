@@ -885,7 +885,7 @@ def test_draft(box_shape):
     res1 = draft(box_shape, fbot, fside, 5)
     assert res1.face(">Z").Area() > fbot.Area()
 
-    # direction specified explicitely
+    # direction specified explicitly
     res2 = draft(box_shape, fbot, fside, (0, 0, 1), 5)
     assert res2.face(">Z").Area() < fbot.Area()
 
