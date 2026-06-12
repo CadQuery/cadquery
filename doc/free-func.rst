@@ -313,7 +313,7 @@ Here is an usage example of this feature.
     )
 
     # apply chamfers
-    res = chamfer(res, hist["lip"].modified(top).face().outerWire(), 0.05)
+    res = chamfer(res, hist["lip"].modified().face(">Z").outerWire(), 0.05)
     result = chamfer(
         res, compound([f.face().outerWire() for f in hist["mounts"].last()]), 0.02
     )

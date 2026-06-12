@@ -318,7 +318,6 @@ Free function equivalent
 If the fluent style of modeling does not appeal to you, note that exactly the same object can be constructed using :ref:`freefuncapi`.
 
 .. code-block:: python
-
    from cadquery.func import *
 
    height = 60.0
@@ -348,7 +347,7 @@ If the fluent style of modeling does not appeal to you, note that exactly the sa
    # add a cbore
    top = base.face(">Z")
    base = prism(base, None, circle(r_cbore).moved(hole_locs).moved(top), -d_cbore, additive=False)
-   result = prism(base, None, circle(r_hole).moved(hole_locs).moved(top), None, additive=False)
+   base = prism(base, None, circle(r_hole).moved(hole_locs).moved(top), None, additive=False)
 
 
 Want to learn more?
