@@ -151,6 +151,33 @@ One can for example union multiple solids at once by first combining them into a
 Note that bool operations work on 2D shapes as well.
 
 
+Shape selection
+---------------
+
+Shape selection can be performed using the usual
+:meth:`~cadquery.occ_impl.shapes.Shape.vertices`, 
+:meth:`~cadquery.occ_impl.shapes.Shape.edges`,
+:meth:`~cadquery.occ_impl.shapes.Shape.wires`,
+:meth:`~cadquery.occ_impl.shapes.Shape.faces`,
+:meth:`~cadquery.occ_impl.shapes.Shape.shells`,
+:meth:`~cadquery.occ_impl.shapes.Shape.solids` methods. Those methods return a shape or a compound.
+Alternatively, one can use
+:meth:`~cadquery.occ_impl.shapes.Shape.vertex`, 
+:meth:`~cadquery.occ_impl.shapes.Shape.edge`,
+:meth:`~cadquery.occ_impl.shapes.Shape.wire`,
+:meth:`~cadquery.occ_impl.shapes.Shape.face`,
+:meth:`~cadquery.occ_impl.shapes.Shape.shell`,
+:meth:`~cadquery.occ_impl.shapes.Shape.solid` methods. Those methods either return a single shape or throw.
+Additionally, selection can be performed using
+:meth:`~cadquery.occ_impl.shapes.Shape.siblings`, 
+:meth:`~cadquery.occ_impl.shapes.Shape.ancestors`,
+special selectors.
+Last but not least, selections can be combined using a convenient operator syntax
+:meth:`~cadquery.occ_impl.shapes.Shape.__and__`, 
+:meth:`~cadquery.occ_impl.shapes.Shape.__or__`,
+:meth:`~cadquery.occ_impl.shapes.Shape.__mod__`. The last operator implements a set difference operation.
+
+
 Shape construction
 ------------------
 
@@ -193,8 +220,8 @@ Operations
 ----------
 
 Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, :meth:`~cadquery.occ_impl.shapes.loft`, :meth:`~cadquery.occ_impl.shapes.revolve`,
-:meth:`~cadquery.occ_impl.shapes.sweep`, :meth:`~cadquery.occ_impl.shapes.hollow`, :meth:`~cadquery.occ_impl.shapes.draft`,:meth:`~cadquery.occ_impl.shapes.prism`,
-:meth:`~cadquery.occ_impl.shapes.chamfer`,  :meth:`~cadquery.occ_impl.shapes.fillet`,:meth:`~cadquery.occ_impl.shapes.chamfer2D`,:meth:`~cadquery.occ_impl.shapes.fillet2D`
+:meth:`~cadquery.occ_impl.shapes.sweep`, :meth:`~cadquery.occ_impl.shapes.hollow`, :meth:`~cadquery.occ_impl.shapes.draft`, :meth:`~cadquery.occ_impl.shapes.prism`,
+:meth:`~cadquery.occ_impl.shapes.chamfer`, :meth:`~cadquery.occ_impl.shapes.fillet`, :meth:`~cadquery.occ_impl.shapes.chamfer2D`, :meth:`~cadquery.occ_impl.shapes.fillet2D`
 and :meth:`~cadquery.occ_impl.shapes.offset2D` operations.
 
 .. cadquery::
@@ -277,7 +304,7 @@ Most operations support optional history that allows to refer to generted, modif
 
     # apply chamfers
     res = chamfer(res, hist["lip"].modified(top).face().outerWire(), 0.05)
-    res = chamfer(
+    result = chamfer(
         res, compound([f.face().outerWire() for f in hist["mounts"].last()]), 0.02
     )
 

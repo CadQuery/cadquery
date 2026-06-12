@@ -37,6 +37,8 @@ Topological Classes
     occ_impl.shapes.Mixin3D
     Solid
     Compound
+    occ_impl.shapes.History
+    occ_impl.shapes.Op
 
 Geometry Classes
 ------------------
