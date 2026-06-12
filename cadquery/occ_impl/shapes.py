@@ -5353,7 +5353,7 @@ def _compound_or_shape(s: Union[TopoDS_Shape, Sequence[TopoDS_Shape]]) -> Shape:
     if isinstance(s, TopoDS_Shape):
         rv = _normalize(Shape.cast(s))
     elif len(s) == 1:
-        rv = _normalize(Shape.cast(s[0]))
+        rv = _normalize(Shape.cast(list(s)[0]))
     else:
         rv = Compound.makeCompound([_normalize(Shape.cast(el)) for el in s])
 
@@ -5577,19 +5577,25 @@ class Op:
         else:
             return _normalize(d[k])
 
-    def modified(self, s: Shape) -> Shape:
+    def modified(self, s: Shape | None = None) -> Shape:
         """
         Shapes modified from s.
         """
 
-        return self._get(self._modified, s)
+        if s:
+            return self._get(self._modified, s)
 
-    def generated(self, s: Shape) -> Shape:
+        return _normalize(compound(*self._modified.values()))
+
+    def generated(self, s: Shape | None = None) -> Shape:
         """
         Shapes generated from s.
         """
 
-        return self._get(self._generated, s)
+        if s:
+            return self._get(self._generated, s)
+
+        return _normalize(compound(*self._generated.values()))
 
     def deleted(self) -> Shape:
         """
@@ -5732,6 +5738,8 @@ def _update_history(
                     BRepPrimAPI_MakeRevol,
                     BRepPrimAPI_MakePrism,
                     BRepOffsetAPI_MakePipeShell,
+                    BRepFeat_MakePrism,
+                    BRepFeat_MakeDPrism,
                 ),
             )
             has_generated = isinstance(
@@ -6849,7 +6857,7 @@ def cap(
 
 def fillet(
     s: Shape,
-    e: Shape,
+    edges: Shape,
     r: float,
     history: History | None = None,
     name: str | None = None,
@@ -6860,18 +6868,18 @@ def fillet(
 
     builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
 
-    for el in _get_edges(e.edges()):
+    for el in _get_edges(edges.edges()):
         builder.Add(r, el.wrapped)
 
     builder.Build()
 
-    _update_history(history, name, [e], builder)
+    _update_history(history, name, [edges], builder)
 
     return _compound_or_shape(builder.Shape())
 
 
 def chamfer(
-    s: Shape,
+    edges: Shape,
     e: Shape,
     d: float,
     history: History | None = None,
@@ -6881,7 +6889,7 @@ def chamfer(
     Chamfer selected edges in a given shell or solid.
     """
 
-    builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
+    builder = BRepFilletAPI_MakeChamfer(_get_one(edges, ("Shell", "Solid")).wrapped,)
 
     for el in _get_edges(e.edges()):
         builder.Add(d, el.wrapped)
@@ -7641,6 +7649,33 @@ def hollow(
     return hollow(s, None, t, tol, kind, history, name)
 
 
+def _update_prism_history(ctx, base, faces, t, s_tmp, history, name, builders) -> Shape:
+    """
+    Helper for prism history handling.
+    """
+
+    _tracked = [ctx, faces]
+    if isinstance(t, Shape):
+        _tracked.append(t)
+    elif isinstance(t, tuple):
+        _tracked.extend(t)
+
+    if base is not None:
+        _tracked.append(base)
+
+    _update_history(history, name, _tracked, *builders)
+
+    rv = _compound_or_shape(s_tmp)
+
+    #  add last if extruding upto
+    if isinstance(t, Shape) and history is not None:
+        op = history[-1]
+        if op._last_shape.size() == 0:
+            op._last_shape = op.modified(t)
+
+    return rv
+
+
 @multidispatch
 def prism(
     ctx: Shape,
@@ -7697,9 +7732,25 @@ def prism(
 
         s_tmp = bldr.Shape()
 
-    _update_history(history, name, [ctx, faces], *builders)
+    return _update_prism_history(ctx, base, faces, t, s_tmp, history, name, builders)
 
-    return _compound_or_shape(s_tmp)
+    _tracked = [ctx, base, faces]
+    if isinstance(t, Shape):
+        _tracked.append(t)
+    elif isinstance(t, tuple):
+        _tracked.extend(t)
+
+    _update_history(history, name, _tracked, *builders)
+
+    rv = _compound_or_shape(s_tmp)
+
+    #  add last if extruding upto
+    if isinstance(t, Shape) and history is not None:
+        op = history[-1]
+        if op._last_shape.size() == 0:
+            op._last_shape = op.modified(t)
+
+    return rv
 
 
 @multidispatch
@@ -7745,9 +7796,23 @@ def prism(
 
         s_tmp = bldr.Shape()
 
-    _update_history(history, name, [ctx, faces], *builders)
+    _tracked = [ctx, faces]
+    if isinstance(t, Shape):
+        _tracked.append(t)
+    elif isinstance(t, tuple):
+        _tracked.extend(t)
 
-    return _compound_or_shape(s_tmp)
+    _update_history(history, name, _tracked, *builders)
+
+    rv = _compound_or_shape(s_tmp)
+
+    #  add last if extruding upto
+    if isinstance(t, Shape) and history is not None:
+        op = history[-1]
+        if op._last_shape.size() == 0:
+            op._last_shape = rv.faces() % (op.generated(faces.edges()) | faces.faces())
+
+    return rv
 
 
 @multidispatch
