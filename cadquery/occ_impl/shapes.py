@@ -6126,7 +6126,7 @@ def shell(
     Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
     """
 
-    return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history)
+    return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history, name=name)
 
 
 @multidispatch
