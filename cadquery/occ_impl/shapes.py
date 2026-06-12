@@ -5868,8 +5868,6 @@ def _update_removed(history: History | None, shapes: Sequence[Shape]):
 
 # %% alternative constructors
 
-ShapeHistory = Dict[Union[Shape, str], Shape]
-
 
 @multidispatch
 def edgeOn(
