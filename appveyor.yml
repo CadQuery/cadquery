@@ -48,7 +48,7 @@ on_success:
 
 on_finish:
   - sh: export APPVEYOR_VNC_BLOCK=true
-  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-vnc.sh' | bash -e -
+  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-vnc.sh' | sed 's#https://www.appveyor.com/tools/my-ip.aspx#https://api.ipify.org#' | bash -e -
 #on_finish:
 #    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 #   - sh: export APPVEYOR_SSH_BLOCK=true
