@@ -318,6 +318,7 @@ Free function equivalent
 If the fluent style of modeling does not appeal to you, note that exactly the same object can be constructed using :ref:`freefuncapi`.
 
 .. code-block:: python
+   :linenos:
    from cadquery.func import *
 
    height = 60.0
