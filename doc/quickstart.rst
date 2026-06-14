@@ -319,6 +319,7 @@ If the fluent style of modeling does not appeal to you, note that exactly the sa
 
 .. code-block:: python
    :linenos:
+
    from cadquery.func import *
 
    height = 60.0
