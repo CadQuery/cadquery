@@ -53,6 +53,7 @@ Much more complex expressions are possible as well:
     )
 
 Note that in the above example selector methods are chained. In this case each selector refines the previous selection, i.e. only edges from the selected face are considered when calling ``faces(...).edges(...)``. Chaining can make complicated selections easier to read or possible at all.
+
 .. _filteringfaces:
 
 Filtering Faces
