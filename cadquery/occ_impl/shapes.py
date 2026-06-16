@@ -6870,7 +6870,7 @@ def fillet(
 
     builder.Build()
 
-    _update_history(history, name, [edges], builder)
+    _update_history(history, name, [s, edges], builder)
 
     return _compound_or_shape(builder.Shape())
 
@@ -6893,7 +6893,7 @@ def chamfer(
 
     builder.Build()
 
-    _update_history(history, name, [e], builder)
+    _update_history(history, name, [s, edges], builder)
 
     return _compound_or_shape(builder.Shape())
 
