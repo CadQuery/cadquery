@@ -120,8 +120,6 @@ __all__ = [
     "faceOn",
     "isSubshape",
     "prism",
-    "hollow",
-    "offset2D",
     "chamfer2D",
     "fillet2D",
     "draft",

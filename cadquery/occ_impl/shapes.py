@@ -5676,7 +5676,6 @@ class History:
 
     ops: list[Op]
     opDict: dict[str, Op]
-    _tracked = list[Shape]
 
     def __init__(self):
 
@@ -6877,8 +6876,8 @@ def fillet(
 
 
 def chamfer(
+    s: Shape,
     edges: Shape,
-    e: Shape,
     d: float,
     history: History | None = None,
     name: str | None = None,
@@ -6887,9 +6886,9 @@ def chamfer(
     Chamfer selected edges in a given shell or solid.
     """
 
-    builder = BRepFilletAPI_MakeChamfer(_get_one(edges, ("Shell", "Solid")).wrapped,)
+    builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
 
-    for el in _get_edges(e.edges()):
+    for el in edges.edges():
         builder.Add(d, el.wrapped)
 
     builder.Build()
