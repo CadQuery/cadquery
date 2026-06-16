@@ -106,6 +106,14 @@ Class Details
    :show-inheritance:
    :members:
 
+.. automodule:: cadquery.vis
+   :show-inheritance: 
+   :members:
+
+.. automodule:: cadquery.fig
+   :show-inheritance: 
+   :members:
+
 .. autofunction:: cadquery.occ_impl.assembly.toJSON
 
 .. autoclass:: cadquery.occ_impl.exporters.dxf.DxfDocument

@@ -79,7 +79,7 @@ Or like this : ::
   It's then more difficult to debug as you cannot visualize each operation step by step, which is a functionality that is provided by the CQ-Editor debugger for example.
 
 The Free Function API
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 While the fluent API exposes much functionality, you may find scenarios that require extra flexibility or require working with lower level objects.
 
@@ -144,9 +144,9 @@ Going back and forth between the APIs
 While the 3 APIs provide 3 different layer of complexity and functionality you can mix the 3 layers as you wish.
 Below is presented the different ways you can interact with the different API layers.
 
--------------------------
+---------------------------------
 Fluent API <=> Free Function API
--------------------------
+---------------------------------
 
 .. currentmodule:: cadquery
 
@@ -197,9 +197,9 @@ You can add a topological object as a new operation/step in the Fluent API call 
       box.toPending().cutThruAll()
   )  # notice the call to `toPending` that is needed if you want to use it in a subsequent operation
 
--------------------------
+------------------------------
 Free Function API <=> OCCT API
--------------------------
+------------------------------
 
 Every object of the free function API stores its OCCT equivalent object in its :attr:`wrapped` attribute.:
 

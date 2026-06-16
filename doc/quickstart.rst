@@ -313,7 +313,7 @@ You just made a parametric, model that can generate pretty much any bearing pill
 with <30 lines of code.
 
 Free function equivalent
-============
+========================
 
 If the fluent style of modeling does not appeal to you, note that exactly the same object can be constructed using :ref:`freefuncapi`.
 
