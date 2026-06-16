@@ -6888,7 +6888,7 @@ def chamfer(
 
     builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
 
-    for el in edges.edges():
+    for el in _get_edges(edges.edges()):
         builder.Add(d, el.wrapped)
 
     builder.Build()
