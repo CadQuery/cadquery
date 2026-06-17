@@ -337,14 +337,14 @@ GlueLiteral = Literal["partial", "full", None]
 TOLERANCE = 1e-6
 
 shape_LUT = {
-    ta.TopAbs_VERTEX: Vertex,
-    ta.TopAbs_EDGE: Edge,
-    ta.TopAbs_WIRE: Wire,
-    ta.TopAbs_FACE: Face,
-    ta.TopAbs_SHELL: Shell,
-    ta.TopAbs_SOLID: Solid,
-    ta.TopAbs_COMPSOLID: CompSolid,
-    ta.TopAbs_COMPOUND: Compound,
+    ta.TopAbs_VERTEX: "Vertex",
+    ta.TopAbs_EDGE: "Edge",
+    ta.TopAbs_WIRE: "Wire",
+    ta.TopAbs_FACE: "Face",
+    ta.TopAbs_SHELL: "Shell",
+    ta.TopAbs_SOLID: "Solid",
+    ta.TopAbs_COMPSOLID: "CompSolid",
+    ta.TopAbs_COMPOUND: "Compound",
 }
 
 shape_properties_LUT = {
@@ -357,7 +357,7 @@ shape_properties_LUT = {
     ta.TopAbs_COMPOUND: BRepGProp.VolumeProperties_s,
 }
 
-inverse_shape_LUT: dict[Any, Any] = {v: k for k, v in shape_LUT.items()}
+inverse_shape_LUT: dict[str, Any] = {v: k for k, v in shape_LUT.items()}
 
 downcast_LUT = {
     ta.TopAbs_VERTEX: TopoDS.Vertex,
@@ -371,25 +371,25 @@ downcast_LUT = {
 }
 
 geom_LUT = {
-    ta.TopAbs_VERTEX: Vertex,
+    ta.TopAbs_VERTEX: "Vertex",
     ta.TopAbs_EDGE: BRepAdaptor_Curve,
-    ta.TopAbs_WIRE: Wire,
+    ta.TopAbs_WIRE: "Wire",
     ta.TopAbs_FACE: BRepAdaptor_Surface,
-    ta.TopAbs_SHELL: Shell,
-    ta.TopAbs_SOLID: Solid,
-    ta.TopAbs_SOLID: CompSolid,
-    ta.TopAbs_COMPOUND: Compound,
+    ta.TopAbs_SHELL: "Shell",
+    ta.TopAbs_SOLID: "Solid",
+    ta.TopAbs_SOLID: "CompSolid",
+    ta.TopAbs_COMPOUND: "Compound",
 }
 
 ancestors_LUT = {
-    Vertex: ta.TopAbs_EDGE,
-    Edge: ta.TopAbs_WIRE,
-    Wire: ta.TopAbs_FACE,
-    Face: ta.TopAbs_SHELL,
-    Shell: ta.TopAbs_SOLID,
+    "Vertex": ta.TopAbs_EDGE,
+    "Edge": ta.TopAbs_WIRE,
+    "Wire": ta.TopAbs_FACE,
+    "Face": ta.TopAbs_SHELL,
+    "Shell": ta.TopAbs_SOLID,
 }
 
-T = TypeVar("T", bound=Shape)
+T = TypeVar("T", bound="Shape")
 
 
 def shapetype(obj: TopoDS_Shape) -> TopAbs_ShapeEnum:
@@ -873,7 +873,7 @@ class Shape(object):
     def ShapeType(self) -> Shapes:
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
-    def _entities(self, topo_type: type[Shape] | Shapes) -> Iterable[TopoDS_Shape]:
+    def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
 
         shape_set = TopTools_IndexedMapOfShape()
         TopExp.MapShapes_s(self.wrapped, inverse_shape_LUT[topo_type], shape_set)
@@ -881,7 +881,7 @@ class Shape(object):
         return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _entitiesFrom(
-        self, child_type: type[Shape] | Shapes, parent_type: type[Shape] | Shapes
+        self, child_type: Shapes, parent_type: Shapes
     ) -> dict[Shape, list[Shape]]:
 
         res = TopTools_IndexedDataMapOfShapeListOfShape()
@@ -906,7 +906,7 @@ class Shape(object):
         :returns: All the vertices in this Shape
         """
 
-        return [Vertex(i) for i in self._entities(Vertex)]
+        return [Vertex(i) for i in self._entities("Vertex")]
 
     def Edges(self) -> list[Edge]:
         """
@@ -915,7 +915,7 @@ class Shape(object):
 
         return [
             Edge(i)
-            for i in self._entities(Edge)
+            for i in self._entities("Edge")
             if not BRep_Tool.Degenerated_s(TopoDS.Edge(i))
         ]
 
@@ -924,42 +924,42 @@ class Shape(object):
         :returns: All the compounds in this Shape
         """
 
-        return [Compound(i) for i in self._entities(Compound)]
+        return [Compound(i) for i in self._entities("Compound")]
 
     def Wires(self) -> list[Wire]:
         """
         :returns: All the wires in this Shape
         """
 
-        return [Wire(i) for i in self._entities(Wire)]
+        return [Wire(i) for i in self._entities("Wire")]
 
     def Faces(self) -> list[Face]:
         """
         :returns: All the faces in this Shape
         """
 
-        return [Face(i) for i in self._entities(Face)]
+        return [Face(i) for i in self._entities("Face")]
 
     def Shells(self) -> list[Shell]:
         """
         :returns: All the shells in this Shape
         """
 
-        return [Shell(i) for i in self._entities(Shell)]
+        return [Shell(i) for i in self._entities("Shell")]
 
     def Solids(self) -> list[Solid]:
         """
         :returns: All the solids in this Shape
         """
 
-        return [Solid(i) for i in self._entities(Solid)]
+        return [Solid(i) for i in self._entities("Solid")]
 
     def CompSolids(self) -> list[CompSolid]:
         """
         :returns: All the compsolids in this Shape
         """
 
-        return [CompSolid(i) for i in self._entities(CompSolid)]
+        return [CompSolid(i) for i in self._entities("CompSolid")]
 
     def _filter(self, selector: Selector | str | None, objs: Iterable[Shape]) -> Shape:
 
@@ -1006,42 +1006,42 @@ class Shape(object):
         Select vertices.
         """
 
-        return self._filter(selector, map(Shape.cast, self._entities(Vertex)))
+        return self._filter(selector, map(Shape.cast, self._entities("Vertex")))
 
     def edges(self, selector: Selector | str | None = None) -> Shape:
         """
         Select edges.
         """
 
-        return self._filter(selector, map(Shape.cast, self._entities(Edge)))
+        return self._filter(selector, map(Shape.cast, self._entities("Edge")))
 
     def wires(self, selector: Selector | str | None = None) -> Shape:
         """
         Select wires.
         """
 
-        return self._filter(selector, map(Shape.cast, self._entities(Wire)))
+        return self._filter(selector, map(Shape.cast, self._entities("Wire")))
 
     def faces(self, selector: Selector | str | None = None) -> Shape:
         """
         Select faces.
         """
 
-        return self._filter(selector, map(Shape.cast, self._entities(Face)))
+        return self._filter(selector, map(Shape.cast, self._entities("Face")))
 
     def shells(self, selector: Selector | str | None = None) -> Shape:
         """
         Select shells.
         """
 
-        return self._filter(selector, map(Shape.cast, self._entities(Shell)))
+        return self._filter(selector, map(Shape.cast, self._entities("Shell")))
 
     def solids(self, selector: Selector | str | None = None) -> Shape:
         """
         Select solids.
         """
 
-        return self._filter(selector, map(Shape.cast, self._entities(Solid)))
+        return self._filter(selector, map(Shape.cast, self._entities("Solid")))
 
     def vertex(self, selector: Selector | str | None = None) -> Vertex:
         """
@@ -1050,7 +1050,7 @@ class Shape(object):
 
         return tcast(
             Vertex,
-            self._filter_single(selector, map(Shape.cast, self._entities(Vertex))),
+            self._filter_single(selector, map(Shape.cast, self._entities("Vertex"))),
         )
 
     def edge(self, selector: Selector | str | None = None) -> Edge:
@@ -1059,7 +1059,7 @@ class Shape(object):
         """
 
         return tcast(
-            Edge, self._filter_single(selector, map(Shape.cast, self._entities(Edge)))
+            Edge, self._filter_single(selector, map(Shape.cast, self._entities("Edge")))
         )
 
     def wire(self, selector: Selector | str | None = None) -> Wire:
@@ -1068,7 +1068,7 @@ class Shape(object):
         """
 
         return tcast(
-            Wire, self._filter_single(selector, map(Shape.cast, self._entities(Wire)))
+            Wire, self._filter_single(selector, map(Shape.cast, self._entities("Wire")))
         )
 
     def face(self, selector: Selector | str | None = None) -> Face:
@@ -1077,7 +1077,7 @@ class Shape(object):
         """
 
         return tcast(
-            Face, self._filter_single(selector, map(Shape.cast, self._entities(Face)))
+            Face, self._filter_single(selector, map(Shape.cast, self._entities("Face")))
         )
 
     def shell(self, selector: Selector | str | None = None) -> Shell:
@@ -1087,7 +1087,7 @@ class Shape(object):
 
         return tcast(
             Shell,
-            self._filter_single(selector, map(Shape.cast, self._entities(Shell))),
+            self._filter_single(selector, map(Shape.cast, self._entities("Shell"))),
         )
 
     def solid(self, selector: Selector | str | None = None) -> Solid:
@@ -1097,7 +1097,7 @@ class Shape(object):
 
         return tcast(
             Solid,
-            self._filter_single(selector, map(Shape.cast, self._entities(Solid))),
+            self._filter_single(selector, map(Shape.cast, self._entities("Solid"))),
         )
 
     def Area(self) -> float:
@@ -1662,9 +1662,7 @@ class Shape(object):
 
         return self.__class__(result)
 
-    def toNURBS(
-        self: T,
-    ) -> T:
+    def toNURBS(self: T,) -> T:
         """
         Return a NURBS representation of a given shape.
         """
@@ -1765,10 +1763,7 @@ class Shape(object):
 
         shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
         TopExp.MapShapesAndAncestors_s(
-            ctx.wrapped,
-            inverse_shape_LUT[kind],
-            shapetype(self.wrapped),
-            shape_map,
+            ctx.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
         )
         exclude = TopTools_MapOfShape()
 
@@ -2062,11 +2057,7 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     def paramAt(self, d: float) -> float:
         ...
 
-    def positionAt(
-        self,
-        d: float,
-        mode: ParamMode = "length",
-    ) -> Vector:
+    def positionAt(self, d: float, mode: ParamMode = "length",) -> Vector:
         ...
 
     def locationAt(
@@ -2079,10 +2070,7 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
         ...
 
     def curvatureAt(
-        self,
-        d: float,
-        mode: ParamMode = "length",
-        resolution: float = 1e-6,
+        self, d: float, mode: ParamMode = "length", resolution: float = 1e-6,
     ) -> float:
         ...
 
@@ -2172,10 +2160,7 @@ class Mixin1D(object):
             curve_ = self._curve()
 
             rv = GeomAPI_ProjectPointOnCurve(
-                d.toPnt(),
-                curve_,
-                curve.FirstParameter(),
-                curve.LastParameter(),
+                d.toPnt(), curve_, curve.FirstParameter(), curve.LastParameter(),
             ).LowerDistanceParameter()
 
         else:
@@ -2240,9 +2225,7 @@ class Mixin1D(object):
         return us
 
     def tangentAt(
-        self: Mixin1DProtocol,
-        locationParam: float = 0.5,
-        mode: ParamMode = "length",
+        self: Mixin1DProtocol, locationParam: float = 0.5, mode: ParamMode = "length",
     ) -> Vector:
         """
         Compute tangent vector at the specified location.
@@ -2267,9 +2250,7 @@ class Mixin1D(object):
         return Vector(gp_Dir(res))
 
     def tangents(
-        self: Mixin1DProtocol,
-        locations: Iterable[float],
-        mode: ParamMode = "length",
+        self: Mixin1DProtocol, locations: Iterable[float], mode: ParamMode = "length",
     ) -> list[Vector]:
         """
         Compute tangent vectors at the specified locations.
@@ -2373,9 +2354,7 @@ class Mixin1D(object):
         return curve, param
 
     def positionAt(
-        self: Mixin1DProtocol,
-        d: float,
-        mode: ParamMode = "length",
+        self: Mixin1DProtocol, d: float, mode: ParamMode = "length",
     ) -> Vector:
         """
         Generate a position along the underlying curve.
@@ -2390,9 +2369,7 @@ class Mixin1D(object):
         return Vector(curve.Value(param))
 
     def positions(
-        self: Mixin1DProtocol,
-        ds: Iterable[float],
-        mode: ParamMode = "length",
+        self: Mixin1DProtocol, ds: Iterable[float], mode: ParamMode = "length",
     ) -> list[Vector]:
         """
         Generate positions along the underlying curve.
@@ -3119,7 +3096,7 @@ class Wire(Shape, Mixin1D):
         # 3. put it together into a wire
         n_turns = height / pitch
         u_start = geom_line.Value(0.0)
-        u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch**2))
+        u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch ** 2))
         geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
 
         e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf).Edge()
@@ -3751,7 +3728,7 @@ class Face(Shape):
         """
 
         chamfer_builder = BRepFilletAPI_MakeFillet2d(self.wrapped)
-        edge_map = self._entitiesFrom(Vertex, Edge)
+        edge_map = self._entitiesFrom("Vertex", "Edge")
 
         for v in vertices:
             edges = edge_map[v]
@@ -4420,11 +4397,7 @@ class Solid(Shape, Mixin3D):
 
         # make straight spine
         straight_spine_e = Edge.makeLine(vecCenter_, vecCenter_.add(vecNormal_))
-        straight_spine_w = Wire.combine(
-            [
-                straight_spine_e,
-            ]
-        )[0].wrapped
+        straight_spine_w = Wire.combine([straight_spine_e,])[0].wrapped
 
         # make an auxiliary spine
         pitch = 360.0 / angleDegrees * vecNormal_.Length
@@ -4506,10 +4479,7 @@ class Solid(Shape, Mixin3D):
     @classmethod
     @multimethod
     def extrudeLinear(
-        cls,
-        face: Face,
-        vecNormal: VectorLike,
-        taper: Real = 0,
+        cls, face: Face, vecNormal: VectorLike, taper: Real = 0,
     ) -> Solid:
 
         vecNormal_ = Vector(vecNormal)
@@ -4570,11 +4540,7 @@ class Solid(Shape, Mixin3D):
     @classmethod
     @multimethod
     def revolve(
-        cls,
-        face: Face,
-        angleDegrees: Real,
-        axisStart: VectorLike,
-        axisEnd: VectorLike,
+        cls, face: Face, angleDegrees: Real, axisStart: VectorLike, axisEnd: VectorLike,
     ) -> Solid:
 
         v1 = Vector(axisStart)
@@ -4617,11 +4583,7 @@ class Solid(Shape, Mixin3D):
     def _toWire(p: Edge | Wire) -> Wire:
 
         if isinstance(p, Edge):
-            rv = Wire.assembleEdges(
-                [
-                    p,
-                ]
-            )
+            rv = Wire.assembleEdges([p,])
         else:
             rv = p
 
@@ -4725,11 +4687,7 @@ class Solid(Shape, Mixin3D):
         :return: a Solid object
         """
         if isinstance(path, Edge):
-            w = Wire.assembleEdges(
-                [
-                    path,
-                ]
-            ).wrapped
+            w = Wire.assembleEdges([path,]).wrapped
         else:
             w = path.wrapped
 
@@ -5000,10 +4958,7 @@ class Compound(Shape, Mixin3D):
 
         for t in shapetypes:
             TopExp.MapShapesAndAncestors_s(
-                ctx.wrapped,
-                inverse_shape_LUT[kind],
-                t,
-                shape_map,
+                ctx.wrapped, inverse_shape_LUT[kind], t, shape_map,
             )
 
         exclude = TopTools_MapOfShape()
@@ -5066,12 +5021,7 @@ def sortWiresByBuildOrder(wireList: list[Wire]) -> list[list[Wire]]:
 
     rv = []
     for face in faces.Faces():
-        rv.append(
-            [
-                face.outerWire(),
-            ]
-            + face.innerWires()
-        )
+        rv.append([face.outerWire(),] + face.innerWires())
 
     return rv
 
@@ -5167,7 +5117,7 @@ def _get_one_wire(s: Shape) -> Wire:
     Get one wire or edge and convert to wire.
     """
 
-    rv = _get_one(s, (Wire, Edge))
+    rv = _get_one(s, ("Wire", "Edge"))
 
     if isinstance(rv, Wire):
         return rv
@@ -5779,11 +5729,7 @@ def _update_history(
         builder: Any
         for builder in builders:
             has_first_last = isinstance(
-                builder,
-                (
-                    BRepPrimAPI_MakeRevol,
-                    BRepPrimAPI_MakePrism,
-                ),
+                builder, (BRepPrimAPI_MakeRevol, BRepPrimAPI_MakePrism,),
             )
             has_first_last_shape = isinstance(
                 builder,
@@ -5862,10 +5808,7 @@ def _update_history(
                     op._last_shape |= _compound_or_shape(builder.LastShape())
 
 
-def _remap_history_values(
-    history: History | None,
-    aux: History,
-) -> None:
+def _remap_history_values(history: History | None, aux: History,) -> None:
     """
     Remap generated and modified in history using aux. Used when solid/shell is called inside a function.
     """
@@ -5934,7 +5877,7 @@ def edgeOn(
     Build an edge on a face from points in (u,v) space.
     """
 
-    f = _get_one(base, Face)
+    f = _get_one(base, "Face")
 
     # interpolate the u,v points
     spline_bldr = Geom2dAPI_Interpolate(_pts_to_harray2D(pts), periodic, tol)
@@ -5949,17 +5892,13 @@ def edgeOn(
 
 @multidispatch
 def edgeOn(
-    fbase: Shape,
-    edg: Shape,
-    *edgs: Shape,
-    tol: float = 1e-6,
-    N: int = 20,
+    fbase: Shape, edg: Shape, *edgs: Shape, tol: float = 1e-6, N: int = 20,
 ) -> Shape:
     """
     Map one or more edges onto a base face in the u,v space.
     """
 
-    f = _get_one(fbase, Face)
+    f = _get_one(fbase, "Face")
 
     rvs: list[TopoDS_Shape] = []
 
@@ -6048,7 +5987,7 @@ def face(*s: Shape) -> Face:
     if not status:
         raise ValueError("Face construction failed")
 
-    return _get_one(_compound_or_shape(rv), Face)
+    return _get_one(_compound_or_shape(rv), "Face")
 
 
 @multidispatch
@@ -6069,7 +6008,7 @@ def faceOn(base: Shape, *fcs: Shape, tol: float = 1e-6, N: int = 20) -> Face | C
     rvs = []
 
     # get a face
-    fbase = _get_one(base, Face)
+    fbase = _get_one(base, "Face")
 
     # iterate over all faces
     for el in fcs:
@@ -6094,9 +6033,7 @@ def faceOn(base: Shape, *fcs: Shape, tol: float = 1e-6, N: int = 20) -> Face | C
 
 
 def _process_sewing_history(
-    history: History | None,
-    faces: list[Face],
-    builder: BRepBuilderAPI_Sewing,
+    history: History | None, faces: list[Face], builder: BRepBuilderAPI_Sewing,
 ) -> None:
     """
     Reusable helper for processing sewing history.
@@ -6133,7 +6070,7 @@ def shell(
     faces: list[Face] = []
 
     for el in s:
-        for f in _get(el, Face):
+        for f in _get(el, "Face"):
             builder.Add(f.wrapped)
             faces.append(f)
 
@@ -6203,7 +6140,7 @@ def solid(
 
     # get both Shells and Faces
     s = [s1, *sn]
-    shells_faces = [f for el in s for f in _get(el, (Shell, Face))]
+    shells_faces = [f for el in s for f in _get(el, ("Shell", "Face"))]
 
     # if no shells are present, use faces to construct them
     shells = [el.wrapped for el in shells_faces if isinstance(el, Shell)]
@@ -6233,12 +6170,14 @@ def solid(
     """
 
     builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(_get_one(shell(*s, tol=tol, history=history, name=name), Shell).wrapped)
+    builder.Add(
+        _get_one(shell(*s, tol=tol, history=history, name=name), "Shell").wrapped
+    )
 
     n_inner = 0
 
     if inner:
-        for sh in _get(shell(*inner, tol=tol, history=history), Shell):
+        for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
             builder.Add(sh.wrapped)
 
     # fix orientations
@@ -6491,8 +6430,7 @@ def sphere(d: float) -> Solid:
 
     return _shape(
         BRepPrimAPI_MakeSphere(
-            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()),
-            d / 2,
+            gp_Ax2(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir()), d / 2,
         ).Shape(),
         Solid,
     )
@@ -6575,9 +6513,7 @@ def text(
         font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
 
     font_i = StdPrs_BRepFont(
-        NCollection_Utf8String(font_t.FontName().ToCString()),
-        font_kind,
-        float(size),
+        NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, float(size),
     )
 
     if halign == "left":
@@ -6650,7 +6586,7 @@ def text(
     Create a text on a spine and a base surface.
     """
 
-    base = _get_one(base, Face)
+    base = _get_one(base, "Face")
 
     tmp = text(txt, size, spine, False, font, path, kind, halign, valign)
 
@@ -6897,7 +6833,7 @@ def cap(s: Shape, ctx: Shape, constraints: Sequence[Shape | VectorLike] = ()) ->
     builder.SetResolParam(2, 15, 5)
 
     for e in _get_edges(s):
-        f = _get_one(e.ancestors(ctx, Face), Face)
+        f = _get_one(e.ancestors(ctx, "Face"), "Face")
         builder.Add(e.wrapped, f.wrapped, GeomAbs_Shape.GeomAbs_G1, True)
 
     for c in constraints:
@@ -6923,9 +6859,7 @@ def fillet(
     Fillet selected edges in a given shell or solid.
     """
 
-    builder = BRepFilletAPI_MakeFillet(
-        _get_one(s, (Shell, Solid)).wrapped,
-    )
+    builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
 
     for el in _get_edges(edges.edges()):
         builder.Add(r, el.wrapped)
@@ -6948,9 +6882,7 @@ def chamfer(
     Chamfer selected edges in a given shell or solid.
     """
 
-    builder = BRepFilletAPI_MakeChamfer(
-        _get_one(s, (Shell, Solid)).wrapped,
-    )
+    builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
 
     for el in _get_edges(edges.edges()):
         builder.Add(d, el.wrapped)
@@ -6976,7 +6908,7 @@ def extrude(
     results = []
     builders = []
 
-    for el in _get(s, (Vertex, Edge, Wire, Face)):
+    for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
 
         if both:
             builder = BRepPrimAPI_MakePrism(
@@ -7012,7 +6944,7 @@ def revolve(
 
     ax = gp_Ax1(Vector(p).toPnt(), Vector(d).toDir())
 
-    for el in _get(s, (Vertex, Edge, Wire, Face)):
+    for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
 
         builder = BRepPrimAPI_MakeRevol(el.wrapped, ax, radians(a))
         builder.Build()
@@ -7038,12 +6970,12 @@ def offset(
     Offset or thicken faces or shells.
     """
 
-    def _offset(t: float) -> Shape:
+    def _offset(t: float):
 
         results = []
         builders = []
 
-        for el in _get(s, (Face, Shell)):
+        for el in _get(s, ("Face", "Shell")):
 
             builder = BRepOffset_MakeOffset()
             builders.append(builder)
@@ -7110,7 +7042,7 @@ def offset2D(
 
     if ctx:
         # build a dummy face based on the geometry of the ctx face.
-        fbldr = BRepBuilderAPI_MakeFace(_get_one(ctx, Face)._geomAdaptor(), 1e-6)
+        fbldr = BRepBuilderAPI_MakeFace(_get_one(ctx, "Face")._geomAdaptor(), 1e-6)
 
         for el in _get_wires(s):
             fbldr.Add(el.wrapped)
@@ -7137,10 +7069,10 @@ def chamfer2D(s: Shape, verts: Shape, d: float) -> Shape:
     Apply a 2D chamfer to a planar face.
     """
 
-    f = _get_one(s, Face)
+    f = _get_one(s, "Face")
 
     bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
-    edge_map = s._entitiesFrom(Vertex, Edge)
+    edge_map = s._entitiesFrom("Vertex", "Edge")
 
     for v in verts.vertices():
         edges = edge_map[v]
@@ -7163,7 +7095,7 @@ def fillet2D(s: Shape, verts: Shape, r: float) -> Shape:
     Apply a 2D fillet to a planar face.
     """
 
-    f = _get_one(s, Face)
+    f = _get_one(s, "Face")
 
     bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
 
@@ -7622,11 +7554,7 @@ def project(
 
 
 @multidispatch
-def project(
-    s: Shape,
-    base: Shape,
-    direction: VectorLike,
-) -> Shape:
+def project(s: Shape, base: Shape, direction: VectorLike,) -> Shape:
     """
     Project s onto base using cylindrical projection.
     """
@@ -7658,7 +7586,7 @@ def hollow(
     kind: Literal["arc", "intersection"] = "intersection",
     history: History | None = None,
     name: str | None = None,
-) -> Shape:
+):
     """
     Make a hollow solid by removing faces and applying thickness t.
     """
