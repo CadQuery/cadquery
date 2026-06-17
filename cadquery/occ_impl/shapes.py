@@ -281,6 +281,7 @@ from OCP.ShapeAnalysis import (
     ShapeAnalysis_Edge,
     ShapeAnalysis_Wire,
     ShapeAnalysis_Surface,
+    ShapeAnalysis,
 )
 from OCP.TopTools import TopTools_HSequenceOfShape
 
@@ -2112,10 +2113,10 @@ class Mixin1D(object):
         Note, circles may have the start and end points the same
         """
 
-        curve = self._geomAdaptor()
-        umin = curve.FirstParameter()
+        v1, _ = TopoDS_Vertex(), TopoDS_Vertex()
+        ShapeAnalysis.FindBounds_s(self.wrapped, v1, _)
 
-        return Vector(curve.Value(umin))
+        return Vertex(v1).Center()
 
     def endPoint(self: Mixin1DProtocol) -> Vector:
         """
@@ -2125,10 +2126,10 @@ class Mixin1D(object):
         Note, circles may have the start and end points the same
         """
 
-        curve = self._geomAdaptor()
-        umax = curve.LastParameter()
+        _, v2 = TopoDS_Vertex(), TopoDS_Vertex()
+        ShapeAnalysis.FindBounds_s(self.wrapped, _, v2)
 
-        return Vector(curve.Value(umax))
+        return Vertex(v2).Center()
 
     def _approxCurve(self: Mixin1DProtocol) -> Geom_BSplineCurve:
         """
@@ -7032,6 +7033,8 @@ def offset2D(
     ctx: Shape | None = None,
     kind: Literal["arc", "intersection", "tangent"] = "arc",
     closed: bool = True,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     2D offset edges or wires. ctx face might be needed for ambiguous wires/edges.
@@ -7065,10 +7068,18 @@ def offset2D(
 
     bldr.Perform(t)
 
+    _update_history(history, name, [s,], bldr)
+
     return _compound_or_shape(bldr.Shape())
 
 
-def chamfer2D(s: Shape, verts: Shape, d: float):
+def chamfer2D(
+    s: Shape,
+    verts: Shape,
+    d: float,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Apply a 2D chamfer to a planar face.
     """
@@ -7091,10 +7102,18 @@ def chamfer2D(s: Shape, verts: Shape, d: float):
 
     bldr.Build()
 
+    _update_history(history, name, [f, verts], bldr)
+
     return _compound_or_shape(bldr.Shape())
 
 
-def fillet2D(s: Shape, verts: Shape, r: float):
+def fillet2D(
+    s: Shape,
+    verts: Shape,
+    r: float,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Apply a 2D fillet to a planar face.
     """
@@ -7107,6 +7126,8 @@ def fillet2D(s: Shape, verts: Shape, r: float):
         bldr.AddFillet(tcast(TopoDS_Vertex, v.wrapped), r)
 
     bldr.Build()
+
+    _update_history(history, name, [f, verts], bldr)
 
     return _compound_or_shape(bldr.Shape())
 
