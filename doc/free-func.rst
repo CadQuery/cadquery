@@ -228,8 +228,7 @@ Operations
 
 Free function API currently supports :meth:`~cadquery.occ_impl.shapes.extrude`, :meth:`~cadquery.occ_impl.shapes.loft`, :meth:`~cadquery.occ_impl.shapes.revolve`,
 :meth:`~cadquery.occ_impl.shapes.sweep`, :meth:`~cadquery.occ_impl.shapes.hollow`, :meth:`~cadquery.occ_impl.shapes.draft`, :meth:`~cadquery.occ_impl.shapes.prism`,
-:meth:`~cadquery.occ_impl.shapes.chamfer`, :meth:`~cadquery.occ_impl.shapes.fillet`, :meth:`~cadquery.occ_impl.shapes.chamfer2D`, :meth:`~cadquery.occ_impl.shapes.fillet2D`
-and :meth:`~cadquery.occ_impl.shapes.offset2D` operations.
+:meth:`~cadquery.occ_impl.shapes.chamfer` and :meth:`~cadquery.occ_impl.shapes.fillet` operations.
 
 .. cadquery::
 
