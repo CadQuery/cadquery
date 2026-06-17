@@ -1,6 +1,7 @@
 from typing import (
     Optional,
     Tuple,
+    TypeAlias,
     Union,
     Iterable,
     List,
@@ -89,6 +90,7 @@ from OCP.BRepAdaptor import (
 )
 
 from OCP.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeShape,
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,
@@ -179,6 +181,7 @@ from OCP.Geom2dAPI import Geom2dAPI_Interpolate
 from OCP.BRepLib import BRepLib, BRepLib_FindSurface
 
 from OCP.BRepOffsetAPI import (
+    BRepOffsetAPI_DraftAngle,
     BRepOffsetAPI_ThruSections,
     BRepOffsetAPI_MakePipeShell,
     BRepOffsetAPI_MakeThickSolid,
@@ -210,6 +213,7 @@ from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 from OCP.BRepTools import (
     BRepTools,
+    BRepTools_History,
     BRepTools_WireExplorer,
     BRepTools_ReShape,
 )
@@ -238,7 +242,7 @@ from OCP.Graphic3d import (
 
 from OCP.NCollection import NCollection_Utf8String
 
-from OCP.BRepFeat import BRepFeat_MakeDPrism
+from OCP.BRepFeat import BRepFeat_MakeDPrism, BRepFeat_MakePrism
 
 from OCP.BRepClass3d import BRepClass3d_SolidClassifier, BRepClass3d
 
@@ -1958,6 +1962,36 @@ class Shape(object):
         """
 
         return self.cast(self.wrapped.Reversed())
+
+    def __and__(self, other: "Shape") -> "Compound":
+        """
+        Set intersection for combining selection results.
+        """
+
+        LHS = set(self) if isinstance(self, Compound) else {self}
+        RHS = set(other) if isinstance(other, Compound) else {other}
+
+        return compound(*(LHS & RHS))
+
+    def __or__(self, other: "Shape") -> "Compound":
+        """
+        Set sum for combining selection results.
+        """
+
+        LHS = set(self) if isinstance(self, Compound) else {self}
+        RHS = set(other) if isinstance(other, Compound) else {other}
+
+        return compound(*(LHS | RHS))
+
+    def __mod__(self, other: "Shape") -> "Compound":
+        """
+        Set difference for combining selection results.
+        """
+
+        LHS = set(self) if isinstance(self, Compound) else {self}
+        RHS = set(other) if isinstance(other, Compound) else {other}
+
+        return compound(*(LHS - RHS))
 
 
 class ShapeProtocol(Protocol):
@@ -5022,7 +5056,7 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> List[Wire]:
     return [Wire(el) for el in wires_out]
 
 
-#%% utilities
+# %% utilities
 
 
 def _get(s: Shape, ts: Union[Shapes, Tuple[Shapes, ...]]) -> Iterable[Shape]:
@@ -5132,6 +5166,26 @@ def _get_edges(*shapes: Shape) -> Iterable[Shape]:
                 yield from _get_edges(el)
         else:
             raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+
+
+def _get_faces(*shapes: Shape) -> Iterable[Face]:
+    """
+    Get faces or faces from wires or edges.
+    """
+
+    for s in shapes:
+        t = s.ShapeType()
+
+        if t == "Face":
+            yield s.face()
+        elif t == "Edge":
+            yield face(s)
+        elif t == "Wire":
+            yield face(s)
+        elif t == "Compound":
+            yield from _get_faces(*s)
+        else:
+            raise ValueError(f"Required type(s): Edge, Wire, Face; encountered {t}")
 
 
 def _get_wire_lists(s: Sequence[Shape]) -> List[List[Union[Wire, Vertex]]]:
@@ -5299,7 +5353,7 @@ def _compound_or_shape(s: Union[TopoDS_Shape, Sequence[TopoDS_Shape]]) -> Shape:
     if isinstance(s, TopoDS_Shape):
         rv = _normalize(Shape.cast(s))
     elif len(s) == 1:
-        rv = _normalize(Shape.cast(s[0]))
+        rv = _normalize(Shape.cast(list(s)[0]))
     else:
         rv = Compound.makeCompound([_normalize(Shape.cast(el)) for el in s])
 
@@ -5474,9 +5528,344 @@ def _adaptor_curve_to_edge(crv: Adaptor3d_Curve, p1: float, p2: float) -> TopoDS
     return bldr.Edge()
 
 
-#%% alternative constructors
+# %% history related helpers
 
-ShapeHistory = Dict[Union[Shape, str], Shape]
+
+class Op:
+    """
+    Operation history element.
+    """
+
+    _name: str | None
+    _tracked: set[Shape]
+    _deleted: list[Shape]
+    _modified: dict[Shape, Shape]
+    _generated: dict[Shape, Shape]
+    _images: dict[Shape, Shape]
+    _first: dict[Shape, Shape]
+    _last: dict[Shape, Shape]
+    _first_shape: Shape
+    _last_shape: Shape
+
+    def __init__(self, name: str | None = None):
+
+        self._name = name if name else None
+
+        self._tracked = set()
+        self._deleted = []
+        self._modified = {}
+        self._generated = {}
+        self._images = {}
+        self._first = {}
+        self._last = {}
+        self._first_shape = compound()
+        self._last_shape = compound()
+
+    def _get(self, d: dict[Shape, Shape], k: Shape):
+
+        if k.ShapeType() == "Compound":
+            tmp: list[Shape] = []
+
+            for el in k:
+                val = d[el]
+                if val.ShapeType() == "Compound":
+                    tmp.extend(val)
+                else:
+                    tmp.append(val)
+
+            return _normalize(compound(tmp))
+        else:
+            return _normalize(d[k])
+
+    def modified(self, s: Shape | None = None) -> Shape:
+        """
+        Shapes modified from s.
+        """
+
+        if s:
+            return self._get(self._modified, s)
+
+        return _normalize(compound(*self._modified.values()))
+
+    def generated(self, s: Shape | None = None) -> Shape:
+        """
+        Shapes generated from s.
+        """
+
+        if s:
+            return self._get(self._generated, s)
+
+        return _normalize(compound(*self._generated.values()))
+
+    def deleted(self) -> Shape:
+        """
+        Deleted shapes.
+        """
+
+        return _normalize(compound(self._deleted))
+
+    def images(self, s: Shape) -> Shape:
+        """
+        Images of s.
+        """
+
+        return self._get(self._images, s)
+
+    def first(self, s: Shape | None = None) -> Shape:
+        """
+        First shape (e.g. bottom face) or first shape generated from s.
+        """
+
+        if s:
+            return self._get(self._first, s)
+
+        return _normalize(self._first_shape)
+
+    def last(self, s: Shape | None = None) -> Shape:
+        """
+        Last shape (e.g. top face) or last shape generated from s.
+        """
+
+        if s:
+            return self._get(self._last, s)
+
+        return _normalize(self._last_shape)
+
+
+def _combine_hist_dict(d1: dict[Shape, Shape], *ds: dict[Shape, Shape]):
+    """
+    Helper for combining of history dicts.
+    If a key occurs twice, both values are added to a compound.
+    """
+
+    for d in ds:
+        common_keys = d1.keys() & d.keys()
+        new_keys = d.keys() - d1.keys()
+
+        for k in common_keys:
+            d1[k] |= d[k]
+
+        for k in new_keys:
+            d1[k] = d[k]
+
+
+def _combine_ops(op: Op, *ops: Op) -> Op:
+    """
+    Combine multiple history steps into one. Modifies first step in-place.
+    """
+
+    for el in ops:
+
+        op._tracked.update(el._tracked)
+        op._deleted.extend(el._deleted)
+        _combine_hist_dict(op._modified, el._modified)
+        _combine_hist_dict(op._generated, el._generated)
+        _combine_hist_dict(op._images, el._images)
+        _combine_hist_dict(op._first, el._first)
+        _combine_hist_dict(op._last, el._last)
+        op._first_shape |= el._first_shape
+        op._last_shape |= el._last_shape
+
+    return op
+
+
+class History:
+    """
+    Operation history.
+    """
+
+    ops: list[Op]
+    opDict: dict[str, Op]
+
+    def __init__(self):
+
+        self.ops = []
+        self.opDict = dict()
+
+    def __getitem__(self, ix: int | str) -> Op:
+
+        if isinstance(ix, str):
+            return self.opDict[ix]
+        else:
+            return self.ops[ix]
+
+    def pop(self) -> Op:
+
+        return self.ops.pop()
+
+    def append(self, op: Op, name: str | None = None):
+
+        self.ops.append(op)
+        if name:
+            self.opDict[name] = op
+
+
+BuilderType: TypeAlias = BOPAlgo_Builder | BRepBuilderAPI_MakeShape | BRepPrimAPI_MakePrism | BRepPrimAPI_MakeRevol | BRepTools_History
+
+
+def _update_history(
+    history: History | None,
+    name: str | None,
+    shapes: Sequence[Shape],
+    *builders: BuilderType,
+):
+    """
+    Update history based on specified shapes and builders.
+    """
+
+    if history:
+        # construct the history step
+        op = Op()
+
+        history.append(op, name)
+
+        # track all subshapes
+        for shape in shapes:
+            op._tracked.update(shape.Faces())
+            op._tracked.update(shape.Edges())
+            op._tracked.update(shape.Vertices())
+
+        # iterate over all builders and collect history information
+        builder: Any
+        for builder in builders:
+            has_first_last = isinstance(
+                builder, (BRepPrimAPI_MakeRevol, BRepPrimAPI_MakePrism,)
+            )
+            has_first_last_shape = isinstance(
+                builder,
+                (
+                    BRepPrimAPI_MakeRevol,
+                    BRepPrimAPI_MakePrism,
+                    BRepOffsetAPI_MakePipeShell,
+                    BRepFeat_MakePrism,
+                    BRepFeat_MakeDPrism,
+                ),
+            )
+            has_generated = isinstance(
+                builder,
+                (
+                    BRepPrimAPI_MakeRevol,
+                    BRepPrimAPI_MakePrism,
+                    BRepOffsetAPI_MakePipeShell,
+                    BRepTools_History,
+                    BRepBuilderAPI_MakeShape,
+                    BOPAlgo_Builder,
+                    BRepOffset_MakeOffset,
+                ),
+            )
+            has_modifidied = isinstance(
+                builder,
+                (
+                    BRepPrimAPI_MakeRevol,
+                    BRepPrimAPI_MakePrism,
+                    BRepOffsetAPI_MakePipeShell,
+                    BRepTools_History,
+                    BRepBuilderAPI_MakeShape,
+                    BOPAlgo_Builder,
+                    BRepOffset_MakeOffset,
+                ),
+            )
+            has_deleted = isinstance(
+                builder,
+                (
+                    BRepPrimAPI_MakeRevol,
+                    BRepPrimAPI_MakePrism,
+                    BRepOffsetAPI_MakePipeShell,
+                    BOPAlgo_Builder,
+                    BRepOffset_MakeOffset,
+                ),
+            )
+
+            for el in op._tracked:
+                wrapped = el.wrapped
+
+                if has_deleted:
+                    if builder.IsDeleted(wrapped):
+                        op._deleted.append(el)
+
+                if has_generated:
+                    gen = _compound_or_shape(list(builder.Generated(wrapped)))
+                    if gen:
+                        if el in op._generated:
+                            op._generated[el] |= gen
+                        else:
+                            op._generated[el] = gen
+
+                if has_modifidied:
+                    mod = _compound_or_shape(list(builder.Modified(wrapped)))
+                    if mod:
+                        if el in op._modified:
+                            op._modified[el] |= mod
+                        else:
+                            op._modified[el] = mod
+
+                if has_first_last:
+                    op._first[el] = _compound_or_shape(builder.FirstShape(el.wrapped))
+                    op._last[el] = _compound_or_shape(builder.LastShape(el.wrapped))
+
+                if has_first_last_shape:
+                    op._first_shape |= _compound_or_shape(builder.FirstShape())
+                    op._last_shape |= _compound_or_shape(builder.LastShape())
+
+
+def _remap_history_values(
+    history: History | None, aux: History,
+):
+    """
+    Remap generated and modified in history using aux. Used when solid/shell is called inside a function.
+    """
+
+    if history:
+        last_op = history[-1]
+        last_aux = aux[-1]
+
+        # handle generated
+        for k, v in last_op._generated.items():
+            last_op._generated[k] = last_aux._modified.get(v, v)
+
+        # handle modified
+        for k, v in last_op._modified.items():
+            last_op._modified[k] = last_aux._modified.get(v, v)
+
+        # handle last shape
+        last_op._last_shape = compound(
+            [last_aux._modified.get(el, el) for el in last_op._last_shape]
+        )
+
+        # handle first shape
+        last_op._first_shape = compound(
+            [last_aux._modified.get(el, el) for el in last_op._first_shape]
+        )
+
+
+def _update_images(history: History | None, *builders: BuilderType):
+
+    if history is not None:
+        op = history.ops[-1]
+
+        builder: Any
+        for builder in builders:
+            images = builder.Images()
+
+            # store all subshape relations, assume subshapes not present in Images are mapped onto themselves
+            for s in op._tracked:
+                try:
+                    op._images[s] = _compound_or_shape(list(images.Find(s.wrapped)))
+                except Standard_NoSuchObject:
+                    op._images[s] = s
+
+
+def _update_removed(history: History | None, shapes: Sequence[Shape]):
+    """
+    Add shapes to the removed field of the last operation.
+    """
+
+    if history:
+        last_op = history[-1]
+        last_op._deleted.extend(shapes)
+
+
+# %% alternative constructors
 
 
 @multidispatch
@@ -5646,7 +6035,7 @@ def faceOn(base: Shape, *fcs: Shape, tol=1e-6, N=20) -> Face | Compound:
 
 
 def _process_sewing_history(
-    builder: BRepBuilderAPI_Sewing, faces: List[Face], history: Optional[ShapeHistory],
+    history: History | None, faces: List[Face], builder: BRepBuilderAPI_Sewing,
 ):
     """
     Reusable helper for processing sewing history.
@@ -5654,14 +6043,10 @@ def _process_sewing_history(
 
     # fill history if provided
     if history is not None:
-        # collect shapes present in the history dict
-        for k, v in history.items():
-            if isinstance(k, str):
-                history[k] = Face(builder.Modified(v.wrapped))
-
         # store all top-level shape relations
+        op = history[-1]
         for f in faces:
-            history[f] = Face(builder.Modified(f.wrapped))
+            op._images[f] = Face(builder.Modified(f.wrapped))
 
 
 @multidispatch
@@ -5670,7 +6055,8 @@ def shell(
     tol: float = 1e-6,
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
-    history: Optional[ShapeHistory] = None,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Build shell from faces. If ctx is specified, local sewing is performed.
@@ -5692,7 +6078,17 @@ def shell(
 
     builder.Perform()
     sewed = builder.SewedShape()
-    _process_sewing_history(builder, faces, history)
+
+    # if specified, use context for history mapping
+    if ctx:
+        if isinstance(ctx, Shape):
+            faces.extend(ctx.Faces())
+        else:
+            for el in ctx:
+                faces.extend(el.Faces())
+
+    _update_history(history, name, faces, builder.GetContext().History())
+    _process_sewing_history(history, faces, builder)
 
     rv = []
 
@@ -5720,18 +6116,23 @@ def shell(
     tol: float = 1e-6,
     manifold: bool = True,
     ctx: Optional[Sequence[Shape] | Shape] = None,
-    history: Optional[ShapeHistory] = None,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
     """
 
-    return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history)
+    return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history, name=name)
 
 
 @multidispatch
 def solid(
-    s1: Shape, *sn: Shape, tol: float = 1e-6, history: Optional[ShapeHistory] = None,
+    s1: Shape,
+    *sn: Shape,
+    tol: float = 1e-6,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Compound | Solid:
     """
     Build solid from faces or shells.
@@ -5747,7 +6148,11 @@ def solid(
     shells = [el.wrapped for el in shells_faces if isinstance(el, Shell)]
     if not shells:
         faces = [el for el in shells_faces if isinstance(el, Face)]
-        shells = [tcast(TopoDS_Shell, shell(*faces, tol=tol, history=history).wrapped)]
+        shells = [
+            tcast(
+                TopoDS_Shell, shell(*faces, tol=tol, history=history, name=name).wrapped
+            )
+        ]
 
     rvs = [builder.SolidFromShell(sh) for sh in shells]
 
@@ -5759,14 +6164,19 @@ def solid(
     s: Sequence[Shape],
     inner: Optional[Sequence[Shape]] = None,
     tol: float = 1e-6,
-    history: Optional[ShapeHistory] = None,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Solid:
     """
     Build solid from a sequence of faces.
     """
 
     builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(_get_one(shell(*s, tol=tol, history=history), "Shell").wrapped)
+    builder.Add(
+        _get_one(shell(*s, tol=tol, history=history, name=name), "Shell").wrapped
+    )
+
+    n_inner = 0
 
     if inner:
         for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
@@ -5779,10 +6189,10 @@ def solid(
     sf.SetContext(ctx)
     sf.Perform()
 
-    # update history if applicable
-    if history is not None:
-        for k, v in history.items():
-            history[k] = Shape.cast(ctx.Apply(v.wrapped))
+    # combine histories of all shell operations if needed
+    if history and inner:
+        inner_op = history.pop()
+        _combine_ops(history.ops[-1], inner_op)
 
     return _shape(sf.Solid(), Solid)
 
@@ -5813,7 +6223,7 @@ def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Compound:
     return compound(*s)
 
 
-#%% primitives
+# %% primitives
 
 
 @multimethod
@@ -6189,7 +6599,7 @@ def text(
     return _normalize(compound(rv))
 
 
-#%% ops
+# %% ops
 
 
 def _bool_op(
@@ -6248,7 +6658,13 @@ def setThreads(n: int):
 
 
 def fuse(
-    s1: Shape, s2: Shape, *shapes: Shape, tol: float = 0.0, glue: GlueLiteral = None,
+    s1: Shape,
+    s2: Shape,
+    *shapes: Shape,
+    tol: float = 0.0,
+    glue: GlueLiteral = None,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Fuse at least two shapes.
@@ -6268,10 +6684,19 @@ def fuse(
 
     builder.Perform()
 
+    _update_history(history, name, [s1, s2, *shapes], builder)
+
     return _compound_or_shape(builder.Shape())
 
 
-def cut(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Shape:
+def cut(
+    s1: Shape,
+    s2: Shape,
+    tol: float = 0.0,
+    glue: GlueLiteral = None,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Subtract two shapes.
     """
@@ -6287,11 +6712,18 @@ def cut(s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None) -> Sha
 
     builder.Perform()
 
+    _update_history(history, name, [s1, s2], builder)
+
     return _compound_or_shape(builder.Shape())
 
 
 def intersect(
-    s1: Shape, s2: Shape, tol: float = 0.0, glue: GlueLiteral = None
+    s1: Shape,
+    s2: Shape,
+    tol: float = 0.0,
+    glue: GlueLiteral = None,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Intersect two shapes.
@@ -6308,16 +6740,26 @@ def intersect(
 
     builder.Perform()
 
+    _update_history(history, name, [s1, s2], builder)
+
     return _compound_or_shape(builder.Shape())
 
 
-def split(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
+def split(
+    s1: Shape,
+    s2: Shape,
+    tol: float = 0.0,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Split one shape with another.
     """
 
     builder = BRepAlgoAPI_Splitter()
     _bool_op(s1, s2, builder, tol)
+
+    _update_history(history, name, [s1, s2], builder)
 
     return _compound_or_shape(builder.Shape())
 
@@ -6326,7 +6768,8 @@ def imprint(
     *shapes: Shape,
     tol: float = 0.0,
     glue: GlueLiteral = "full",
-    history: Optional[ShapeHistory] = None,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Imprint arbitrary number of shapes.
@@ -6343,23 +6786,8 @@ def imprint(
     builder.Perform()
 
     # fill history if provided
-    if history is not None:
-        images = builder.Images()
-
-        # collect shapes present in the history dict
-        for k, v in history.items():
-            if isinstance(k, str):
-                try:
-                    history[k] = _compound_or_shape(list(images.Find(v.wrapped)))
-                except Standard_NoSuchObject:
-                    pass
-
-        # store all top-level shape relations
-        for s in shapes:
-            try:
-                history[s] = _compound_or_shape(list(images.Find(s.wrapped)))
-            except Standard_NoSuchObject:
-                pass
+    _update_history(history, name, [*shapes], builder)
+    _update_images(history, builder)
 
     return _compound_or_shape(builder.Shape())
 
@@ -6424,42 +6852,65 @@ def cap(
     return _compound_or_shape(builder.Shape())
 
 
-def fillet(s: Shape, e: Shape, r: float) -> Shape:
+def fillet(
+    s: Shape,
+    edges: Shape,
+    r: float,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Fillet selected edges in a given shell or solid.
     """
 
     builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
 
-    for el in _get_edges(e.edges()):
+    for el in _get_edges(edges.edges()):
         builder.Add(r, el.wrapped)
 
     builder.Build()
 
+    _update_history(history, name, [s, edges], builder)
+
     return _compound_or_shape(builder.Shape())
 
 
-def chamfer(s: Shape, e: Shape, d: float) -> Shape:
+def chamfer(
+    s: Shape,
+    edges: Shape,
+    d: float,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Chamfer selected edges in a given shell or solid.
     """
 
     builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
 
-    for el in _get_edges(e.edges()):
+    for el in _get_edges(edges.edges()):
         builder.Add(d, el.wrapped)
 
     builder.Build()
 
+    _update_history(history, name, [s, edges], builder)
+
     return _compound_or_shape(builder.Shape())
 
 
-def extrude(s: Shape, d: VectorLike, both: bool = False) -> Shape:
+def extrude(
+    s: Shape,
+    d: VectorLike,
+    both: bool = False,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Extrude a shape.
     """
 
     results = []
+    builders = []
 
     for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
 
@@ -6473,16 +6924,28 @@ def extrude(s: Shape, d: VectorLike, both: bool = False) -> Shape:
         builder.Build()
 
         results.append(builder.Shape())
+        builders.append(builder)
+
+    _update_history(history, name, [s], *builders)
 
     return _compound_or_shape(results)
 
 
-def revolve(s: Shape, p: VectorLike, d: VectorLike, a: float = 360):
+def revolve(
+    s: Shape,
+    p: VectorLike,
+    d: VectorLike,
+    a: float = 360,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Revolve a shape.
     """
 
     results = []
+    builders = []
+
     ax = gp_Ax1(Vector(p).toPnt(), Vector(d).toDir())
 
     for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
@@ -6491,12 +6954,21 @@ def revolve(s: Shape, p: VectorLike, d: VectorLike, a: float = 360):
         builder.Build()
 
         results.append(builder.Shape())
+        builders.append(builder)
+
+    _update_history(history, name, [s], *builders)
 
     return _compound_or_shape(results)
 
 
 def offset(
-    s: Shape, t: float, cap=True, both: bool = False, tol: float = 1e-6
+    s: Shape,
+    t: float,
+    cap=True,
+    both: bool = False,
+    tol: float = 1e-6,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Offset or thicken faces or shells.
@@ -6505,10 +6977,12 @@ def offset(
     def _offset(t):
 
         results = []
+        builders = []
 
         for el in _get(s, ("Face", "Shell")):
 
             builder = BRepOffset_MakeOffset()
+            builders.append(builder)
 
             builder.Initialize(
                 el.wrapped,
@@ -6525,15 +6999,18 @@ def offset(
 
             results.append(builder.Shape())
 
-        return results
+        return results, builders
 
     if both:
-        results_pos = _offset(t)
-        results_neg = _offset(-t)
+        results_pos, builders1 = _offset(t)
+        results_neg, builders2 = _offset(-t)
 
         results_both = [
             Shape(el1) + Shape(el2) for el1, el2 in zip(results_pos, results_neg)
         ]
+
+        _update_history(history, name, [s], *builders1, *builders2)
+        _update_removed(history, s.Faces())
 
         if len(results_both) == 1:
             rv = results_both[0]
@@ -6541,7 +7018,9 @@ def offset(
             rv = Compound.makeCompound(results_both)
 
     else:
-        results = _offset(t)
+        results, builders = _offset(t)
+        _update_history(history, name, [s], *builders)
+
         rv = _compound_or_shape(results)
 
     return rv
@@ -6589,9 +7068,65 @@ def offset2D(
     return _compound_or_shape(bldr.Shape())
 
 
-@multimethod
+def chamfer2D(s: Shape, verts: Shape, d: float):
+    """
+    Apply a 2D chamfer to a planar face.
+    """
+
+    f = _get_one(s, "Face")
+
+    bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
+    edge_map = s._entitiesFrom("Vertex", "Edge")
+
+    for v in verts.vertices():
+        edges = edge_map[v]
+        if len(edges) < 2:
+            raise ValueError("Cannot chamfer at this location")
+
+        e1, e2 = edges
+
+        bldr.AddChamfer(
+            tcast(TopoDS_Edge, e1.wrapped), tcast(TopoDS_Edge, e2.wrapped), d, d
+        )
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Shape())
+
+
+def fillet2D(s: Shape, verts: Shape, r: float):
+    """
+    Apply a 2D fillet to a planar face.
+    """
+
+    f = _get_one(s, "Face")
+
+    bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
+
+    for v in verts.vertices():
+        bldr.AddFillet(tcast(TopoDS_Vertex, v.wrapped), r)
+
+    bldr.Build()
+
+    return _compound_or_shape(bldr.Shape())
+
+
+_trans_mode_dict = {
+    "transformed": BRepBuilderAPI_Transformed,
+    "round": BRepBuilderAPI_RoundCorner,
+    "right": BRepBuilderAPI_RightCorner,
+}
+
+
+@multidispatch
 def sweep(
-    s: Shape, path: Shape, aux: Optional[Shape] = None, cap: bool = False
+    s: Shape,
+    path: Shape,
+    aux: Optional[Shape] = None,
+    cap: bool = False,
+    transition: Literal["transformed", "round", "right"] = "transformed",
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Sweep edge, wire or face along a path. For faces cap has no effect.
@@ -6601,6 +7136,7 @@ def sweep(
     spine = _get_one_wire(path)
 
     results = []
+    builders = []
 
     def _make_builder():
 
@@ -6610,6 +7146,8 @@ def sweep(
         else:
             rv.SetMode(False)
 
+        rv.SetTransitionMode(_trans_mode_dict[transition])
+
         return rv
 
     # try to get faces
@@ -6617,20 +7155,75 @@ def sweep(
 
     # if faces were supplied
     if faces:
+        # for history handling
+        tops_hist = []
+        bots_hist = []
+        solid_hist = History()
+
         for f in faces:
-            tmp = sweep(f.outerWire(), path, aux, True)
+            builder = _make_builder()
+            builders.append(builder)
 
-            # if needed subtract two sweeps
-            inner_wires = f.innerWires()
-            if inner_wires:
-                tmp -= sweep(compound(inner_wires), path, aux, True)
+            builder.Add(f.outerWire().wrapped, False, False)
+            builder.Build()
+            builder.MakeSolid()
 
-            results.append(tmp.wrapped)
+            # for bookkeeping of inner sweeps and cap construction
+            builders_inner = []
+            tops = []
+            bots = []
+            sides = []
+
+            # extract the outer side and initial cap
+            bot = Shape(builder.FirstShape())
+            top = Shape(builder.LastShape())
+            side = compound()
+            for el in f.outerWire():
+                side |= _compound_or_shape(list(builder.Generated(el.wrapped)))
+
+            for w in f.innerWires():
+                builder_inner = _make_builder()
+                builders_inner.append(builder_inner)
+
+                builder_inner.Add(w.wrapped, False, False)
+                builder_inner.Build()
+                builder_inner.MakeSolid()
+
+                bots.append(Shape(builder_inner.FirstShape()))
+                tops.append(Shape(builder_inner.LastShape()))
+
+                side_inner = compound()
+                for el in w:
+                    side_inner |= _compound_or_shape(
+                        list(builder_inner.Generated(el.wrapped))
+                    )
+
+                sides.append(side_inner)
+
+            top -= compound(tops)
+            bot -= compound(bots)
+
+            results.append(solid(side, *sides, top, bot, history=solid_hist).wrapped)
+            tops_hist.append(top)
+            bots_hist.append(bot)
+
+            builders.extend(builders_inner)
+
+        rv = _compound_or_shape(results)
+
+        _update_history(history, name, faces + [spine], *builders)
+
+        if history:
+            history[-1]._last_shape = compound(tops_hist)
+            history[-1]._first_shape = compound(bots_hist)
+            # remapping is needed because of the additional solid call
+            _remap_history_values(history, solid_hist)
 
     # otherwise sweep wires
     else:
         for w in _get_wires(s):
             builder = _make_builder()
+            builders.append(builder)
 
             builder.Add(w.wrapped, False, False)
             builder.Build()
@@ -6640,12 +7233,22 @@ def sweep(
 
             results.append(builder.Shape())
 
-    return _compound_or_shape(results)
+        rv = _compound_or_shape(results)
+
+        _update_history(history, name, [s, path], *builders)
+
+    return rv
 
 
-@multimethod
+@multidispatch
 def sweep(
-    s: Sequence[Shape], path: Shape, aux: Optional[Shape] = None, cap: bool = False
+    s: Sequence[Shape],
+    path: Shape,
+    aux: Optional[Shape] = None,
+    cap: bool = False,
+    transition: Literal["transformed", "round", "right"] = "transformed",
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Sweep edges, wires or faces along a path, multiple sections are supported.
@@ -6655,6 +7258,11 @@ def sweep(
     spine = _get_one_wire(path)
 
     results = []
+    builders = []
+    # for history handling
+    tops_hist = []
+    bots_hist = []
+    solid_hist = History()
 
     def _make_builder():
 
@@ -6665,12 +7273,16 @@ def sweep(
         else:
             rv.SetMode(False)
 
+        rv.SetTransitionMode(_trans_mode_dict[transition])
+
         return rv
 
     # try to construct sweeps using faces
     for el in _get_face_lists_strict(s):
+
         # build outer part
         builder = _make_builder()
+        builders.append(builder)
 
         for f in el:
             builder.Add(f.outerWire().wrapped, False, False)
@@ -6680,11 +7292,20 @@ def sweep(
 
         # build inner parts
         builders_inner = []
+        tops = []
+        bots = []
+        sides = []
+
+        # extract the outer side and initial cap
+        bot = Shape(builder.FirstShape())
+        top = Shape(builder.LastShape())
+        side = Shape(builder.Shape()).faces() % bot % top
 
         # initialize builders
         for w in el[0].innerWires():
             builder_inner = _make_builder()
             builder_inner.Add(w.wrapped, False, False)
+
             builders_inner.append(builder_inner)
 
         # add remaining sections
@@ -6693,20 +7314,42 @@ def sweep(
                 builder_inner.Add(w.wrapped, False, False)
 
         # actually build
-        inner_parts = []
-
         for builder_inner in builders_inner:
             builder_inner.Build()
             builder_inner.MakeSolid()
-            inner_parts.append(Shape(builder_inner.Shape()))
 
-        results.append((Shape(builder.Shape()) - compound(inner_parts)).wrapped)
+            bots.append(Shape(builder_inner.FirstShape()))
+            tops.append(Shape(builder_inner.LastShape()))
+
+            side_inner = Shape(builder_inner.Shape()).faces() % bots[-1] % tops[-1]
+            sides.append(side_inner)
+
+        # assemble final result using sewing
+        top -= compound(tops)
+        bot -= compound(bots)
+
+        results.append(solid(side, *sides, top, bot, history=solid_hist).wrapped)
+        tops_hist.append(top)
+        bots_hist.append(bot)
+
+        builders.extend(builders_inner)
+
+    # update history if there is a result
+    if results:
+        _update_history(history, name, [*s, path], *builders)
+
+        if history:
+            history[-1]._last_shape = compound(tops_hist)
+            history[-1]._first_shape = compound(bots_hist)
+            # remapping is needed because of the additional solid call
+            _remap_history_values(history, solid_hist)
 
     # if no faces were provided try with wires
-    if not results:
+    else:
         # construct sweeps
         for el2 in _get_wire_lists_strict(s):
             builder = _make_builder()
+            builders.append(builder)
 
             for w in el2:
                 builder.Add(w.wrapped, False, False)
@@ -6718,10 +7361,12 @@ def sweep(
 
             results.append(builder.Shape())
 
+        _update_history(history, name, [*s, path], *builders)
+
     return _compound_or_shape(results)
 
 
-@multimethod
+@multidispatch
 def loft(
     s: Sequence[Shape],
     cap: bool = False,
@@ -6732,12 +7377,19 @@ def loft(
     compat: bool = True,
     smoothing: bool = False,
     weights: Tuple[float, float, float] = (1, 1, 1),
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Loft edges, wires or faces. For faces cap has no effect. Do not mix faces with other types.
     """
 
     results = []
+    builders = []
+    # for history handling
+    tops_hist = []
+    bots_hist = []
+    solid_hist = History()
 
     def _make_builder(cap):
         rv = BRepOffsetAPI_ThruSections(cap, ruled)
@@ -6754,6 +7406,7 @@ def loft(
     for el in _get_face_lists(s):
         # build outer part
         builder = _make_builder(True)
+        builders.append(builder)
 
         # used to check if building inner parts makes sense
         has_vertex = False
@@ -6768,7 +7421,16 @@ def loft(
         builder.Build()
         builder.Check()
 
+        # build inner parts
         builders_inner = []
+        tops = []
+        bots = []
+        sides = []
+
+        # extract the outer side and initial cap
+        bot = Shape(builder.FirstShape()) if builder.FirstShape() else compound()
+        top = Shape(builder.LastShape()) if builder.LastShape() else compound()
+        side = Shape(builder.Shape()).faces() % bot % top
 
         # only initialize inner builders if no vertex was encountered
         if not has_vertex:
@@ -6787,19 +7449,38 @@ def loft(
                     builder_inner.AddWire(w.wrapped)
 
         # actually build
-        inner_parts = []
-
         for builder_inner in builders_inner:
             builder_inner.Build()
             builder_inner.Check()
-            inner_parts.append(Shape(builder_inner.Shape()))
 
-        results.append((Shape(builder.Shape()) - compound(inner_parts)).wrapped)
+            bots.append(Shape(builder_inner.FirstShape()))
+            tops.append(Shape(builder_inner.LastShape()))
+
+            side_inner = Shape(builder_inner.Shape()).faces() % bots[-1] % tops[-1]
+            sides.append(side_inner)
+
+        # assemble final result using sewing
+        top -= compound(tops)
+        bot -= compound(bots)
+
+        results.append(solid(side, *sides, top, bot, history=solid_hist).wrapped)
+        tops_hist.append(top)
+        bots_hist.append(bot)
+
+    if results:
+        _update_history(history, name, s, *builders, *builders_inner)
+
+        if history:
+            history[-1]._last_shape = compound(tops_hist)
+            history[-1]._first_shape = compound(bots_hist)
+            # remapping is needed because of the additional solid call
+            _remap_history_values(history, solid_hist)
 
     # otherwise construct using wires
-    if not results:
+    else:
         for el2 in _get_wire_lists(s):
             builder = _make_builder(cap)
+            builders.append(builder)
 
             for w2 in el2:
                 if isinstance(w2, Wire):
@@ -6812,11 +7493,15 @@ def loft(
 
             results.append(builder.Shape())
 
+        _update_history(history, name, list(s), *builders)
+
     return _compound_or_shape(results)
 
 
-@multimethod
+@multidispatch
 def loft(
+    s1: Shape,
+    s2: Shape,
     *s: Shape,
     cap: bool = False,
     ruled: bool = False,
@@ -6826,12 +7511,26 @@ def loft(
     compat: bool = True,
     smoothing: bool = False,
     weights: Tuple[float, float, float] = (1, 1, 1),
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     Variadic loft overload.
     """
 
-    return loft(s, cap, ruled, continuity, parametrization, degree, compat)
+    return loft(
+        [s1, s2, *s],
+        cap,
+        ruled,
+        continuity,
+        parametrization,
+        degree,
+        compat,
+        smoothing,
+        weights,
+        history,
+        name,
+    )
 
 
 @multidispatch
@@ -6878,7 +7577,273 @@ def project(
     return _normalize(compound(results))
 
 
-#%% diagnostics
+_offset_kind_dict = {
+    "arc": GeomAbs_JoinType.GeomAbs_Arc,
+    "intersection": GeomAbs_JoinType.GeomAbs_Intersection,
+}
+
+
+@multidispatch
+def hollow(
+    s: Shape,
+    faces: Optional[Shape],
+    t: float,
+    tol: float = 1e-3,
+    kind: Literal["arc", "intersection"] = "intersection",
+    history: History | None = None,
+    name: str | None = None,
+):
+    """
+    Make a hollow solid by removing faces and applying thickness t.
+    """
+
+    bldr = BRepOffsetAPI_MakeThickSolid()
+    _faces = (
+        _shapes_to_toptools_list(faces.Faces()) if faces else TopTools_ListOfShape()
+    )
+
+    bldr.MakeThickSolidByJoin(
+        s.solid().wrapped,
+        _faces,
+        t,
+        tol,
+        Intersection=True,
+        Join=_offset_kind_dict[kind],
+    )
+    bldr.Build()
+
+    rv = _compound_or_shape(bldr.Shape())
+
+    # if no faces provided a watertight solid will be constructed
+    if faces is None:
+        sh1 = rv.shell().wrapped
+        sh2 = s.shell().wrapped
+
+        # sh1 can be outer or inner shell depending on the thickness sign
+        if t > 0:
+            sol = BRepBuilderAPI_MakeSolid(sh1, sh2)
+        else:
+            sol = BRepBuilderAPI_MakeSolid(sh2, sh1)
+
+        # fix needed for the orientations
+        rv = _compound_or_shape(sol.Shape()).fix()
+
+    _update_history(history, name, [s], bldr)
+
+    return rv
+
+
+@multidispatch
+def hollow(
+    s: Shape,
+    t: float,
+    tol: float = 1e-3,
+    kind: Literal["arc", "intersection"] = "intersection",
+    history: History | None = None,
+    name: str | None = None,
+) -> Solid:
+
+    return hollow(s, None, t, tol, kind, history, name)
+
+
+def _update_prism_history(ctx, base, faces, t, s_tmp, history, name, builders) -> Shape:
+    """
+    Helper for prism history handling.
+    """
+
+    _tracked = [ctx, faces]
+    if isinstance(t, Shape):
+        _tracked.append(t)
+    elif isinstance(t, tuple):
+        _tracked.extend(t)
+
+    if base is not None:
+        _tracked.append(base)
+
+    _update_history(history, name, _tracked, *builders)
+
+    rv = _compound_or_shape(s_tmp)
+
+    #  add last if extruding upto
+    if isinstance(t, Shape) and history is not None:
+        op = history[-1]
+        if op._last_shape.size() == 0:
+            op._last_shape = op.modified(t)
+
+    return rv
+
+
+@multidispatch
+def prism(
+    ctx: Shape,
+    base: Optional[Shape],
+    faces: Shape,
+    t: Optional[Real | Shape | tuple[Shape, Shape]],
+    angle: Real = 0.0,
+    additive: bool = True,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
+    """
+    Build a drafted prismatic feature that can be additive or subtractive.
+    """
+
+    builders = []
+
+    s_tmp = ctx.wrapped
+
+    for f in _get_faces(faces):
+        bldr: BRepFeat_MakePrism | BRepFeat_MakeDPrism
+        # if taper is requested, use the dprism builder
+        if angle != 0:
+            bldr = BRepFeat_MakeDPrism(
+                s_tmp,
+                f.wrapped,
+                base.face().wrapped if base else TopoDS_Face(),
+                radians(angle),
+                additive,
+                False,
+            )
+        # otherwise use the prism builder to get cleaner topologies
+        else:
+            bldr = BRepFeat_MakePrism(
+                s_tmp,
+                f.wrapped,
+                base.face().wrapped if base else TopoDS_Face(),
+                f.normalAt().toDir(),
+                additive,
+                False,
+            )
+
+        builders.append(bldr)
+
+        # dispatch on thickens type
+        if isinstance(t, Shape):
+            bldr.Perform(t.face().wrapped)
+        elif isinstance(t, tuple):
+            bldr.Perform(t[0].face().wrapped, t[1].face().wrapped)
+        elif t is None:
+            bldr.PerformThruAll()
+        else:
+            bldr.Perform(t)
+
+        s_tmp = bldr.Shape()
+
+    return _update_prism_history(ctx, base, faces, t, s_tmp, history, name, builders)
+
+
+@multidispatch
+def prism(
+    ctx: Shape,
+    base: Optional[Shape],
+    faces: Shape,
+    t: Optional[Real | Shape | tuple[Shape, Shape]],
+    dir: VectorLike,
+    additive: bool = True,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
+    """
+    Build a (potentially tilted) prismatic feature that can be additive or subtractive.
+    """
+
+    builders = []
+
+    s_tmp = ctx.wrapped
+
+    for f in _get_faces(faces):
+        bldr = BRepFeat_MakePrism(
+            s_tmp,
+            f.wrapped,
+            base.face().wrapped if base else TopoDS_Face(),
+            Vector(dir).toDir(),
+            additive,
+            False,
+        )
+
+        builders.append(bldr)
+
+        # dispatch on thickens type
+        if isinstance(t, Shape):
+            bldr.Perform(t.face().wrapped)
+        elif isinstance(t, tuple):
+            bldr.Perform(t[0].face().wrapped, t[1].face().wrapped)
+        elif t is None:
+            bldr.PerformThruAll()
+        else:
+            bldr.Perform(t)
+
+        s_tmp = bldr.Shape()
+
+    return _update_prism_history(ctx, base, faces, t, s_tmp, history, name, builders)
+
+
+@multidispatch
+def draft(
+    ctx: Shape,
+    base: Shape,
+    faces: Shape,
+    angle: Real,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
+    """
+    Add a draft angle to the specified faces.
+    """
+
+    base_face = base.face()
+    n_dir = base_face.normalAt().toDir()
+    base_pln = base_face.toPln()
+
+    bldr = BRepOffsetAPI_DraftAngle(ctx.wrapped)
+
+    for f in _get_faces(faces):
+        bldr.Add(f.wrapped, n_dir, radians(angle), base_pln)
+
+        if not bldr.AddDone():
+            raise ValueError(f"Face {f} cannot be used in a draft operation.")
+
+    bldr.Build()
+
+    _update_history(history, name, [ctx], bldr)
+
+    return _compound_or_shape(bldr.Shape())
+
+
+@multidispatch
+def draft(
+    ctx: Shape,
+    base: Shape,
+    faces: Shape,
+    dir: VectorLike,
+    angle: Real,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
+    """
+    Add a draft angle to the specified faces.
+    """
+
+    base_face = base.face()
+    n_dir = Vector(dir).toDir()
+    base_pln = base_face.toPln()
+
+    bldr = BRepOffsetAPI_DraftAngle(ctx.wrapped)
+
+    for f in _get_faces(faces):
+        bldr.Add(f.wrapped, n_dir, radians(angle), base_pln)
+
+        if not bldr.AddDone():
+            raise ValueError(f"Face {f} cannot be used in a draft operation.")
+
+    bldr.Build()
+
+    _update_history(history, name, [ctx], bldr)
+
+    return _compound_or_shape(bldr.Shape())
+
+
+# %% diagnostics
 
 
 def check(
@@ -6933,7 +7898,7 @@ def isSubshape(s1: Shape, s2: Shape) -> bool:
     return shape_map.Contains(s1.wrapped)
 
 
-#%% properties
+# %% properties
 
 
 def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:

@@ -312,6 +312,46 @@ Done!
 You just made a parametric, model that can generate pretty much any bearing pillow block
 with <30 lines of code.
 
+Free function equivalent
+========================
+
+If the fluent style of modeling does not appeal to you, note that exactly the same object can be constructed using :ref:`freefuncapi`.
+
+.. code-block:: python
+   :linenos:
+
+   from cadquery.func import *
+
+   height = 60.0
+   width = 80.0
+   thickness = 10.0
+   diameter = 22.0
+   padding = 12.0
+   r_hole = 1.2
+   r_cbore = 2.2
+   d_cbore = thickness / 3
+
+   # construct hole locations
+   hole_locs = rect(height - padding, width - padding).vertices()
+
+   # make the base
+   basef = face(
+      rect(height, width),
+      circle(diameter / 2),
+   )
+
+   # extrude
+   base = extrude(basef, (0, 0, thickness))
+
+   # fillet
+   base = fillet(base, base.edges("|Z"), height / 10)
+
+   # add a cbore
+   top = base.face(">Z")
+   base = prism(base, None, circle(r_cbore).moved(hole_locs).moved(top), -d_cbore, additive=False)
+   base = prism(base, None, circle(r_hole).moved(hole_locs).moved(top), None, additive=False)
+
+
 Want to learn more?
 ====================
 

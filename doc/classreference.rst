@@ -37,6 +37,8 @@ Topological Classes
     occ_impl.shapes.Mixin3D
     Solid
     Compound
+    occ_impl.shapes.History
+    occ_impl.shapes.Op
 
 Geometry Classes
 ------------------
@@ -102,6 +104,14 @@ Class Details
 
 .. automodule:: cadquery.occ_impl.exporters.assembly
    :show-inheritance:
+   :members:
+
+.. automodule:: cadquery.fig
+   :show-inheritance: 
+   :members:
+
+.. automodule:: cadquery.vis
+   :show-inheritance: 
    :members:
 
 .. autofunction:: cadquery.occ_impl.assembly.toJSON

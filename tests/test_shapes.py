@@ -468,3 +468,10 @@ def test_siblings(simple_box):
 
     assert level_1.size() + level_2.size() + level_3.size() == level_123.size()
     assert set(level_1) | set(level_2) | set(level_3) == set(level_123)
+
+
+def test_set_ops(simple_box):
+
+    assert (simple_box.faces(">Z") | simple_box.faces("<Z")).size() == 2
+    assert (simple_box.faces(">Z") & simple_box.faces("<Z")).size() == 0
+    assert (simple_box.faces("|Z") % simple_box.faces("<Z")).size() == 1
