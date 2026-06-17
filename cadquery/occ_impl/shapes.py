@@ -357,7 +357,7 @@ shape_properties_LUT = {
     ta.TopAbs_COMPOUND: BRepGProp.VolumeProperties_s,
 }
 
-inverse_shape_LUT = {v: k for k, v in shape_LUT.items()}
+inverse_shape_LUT: dict[Any, Any] = {v: k for k, v in shape_LUT.items()}
 
 downcast_LUT = {
     ta.TopAbs_VERTEX: TopoDS.Vertex,
@@ -873,7 +873,7 @@ class Shape(object):
     def ShapeType(self) -> Shapes:
         return tcast(Shapes, shape_LUT[shapetype(self.wrapped)])
 
-    def _entities(self, topo_type: Shapes) -> Iterable[TopoDS_Shape]:
+    def _entities(self, topo_type: type[Shape] | Shapes) -> Iterable[TopoDS_Shape]:
 
         shape_set = TopTools_IndexedMapOfShape()
         TopExp.MapShapes_s(self.wrapped, inverse_shape_LUT[topo_type], shape_set)
@@ -881,7 +881,7 @@ class Shape(object):
         return tcast(Iterable[TopoDS_Shape], shape_set)
 
     def _entitiesFrom(
-        self, child_type: Shapes, parent_type: Shapes
+        self, child_type: type[Shape] | Shapes, parent_type: type[Shape] | Shapes
     ) -> dict[Shape, list[Shape]]:
 
         res = TopTools_IndexedDataMapOfShapeListOfShape()
