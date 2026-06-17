@@ -175,11 +175,15 @@ Fine-grained control of the appearance of every item can be achieved using :meth
 Non-blocking visualization
 ==========================
 
-For non-blocking visualization, one can use the :meth:`~cadquery.fig.show` function. It relies on VTK/Trame and opens a web browser window.
-To programmatically remove previously added shapes one can use the :meth:`~cadquery.fig.clear` method. 
+For non-blocking visualization, one can use the :meth:`cadquery.fig.show` function from the :mod:`~cadquery.fig` module.
+It relies on VTK/Trame and opens a web browser window.
+To programmatically remove previously added shapes one can use the :meth:`cadquery.fig.clear` function. 
 
 
 .. image:: _static/fig.png
+
+This function is very handy for interactive work and debugging. Alternatively one can use the :class:`~cadquery.fig.Figure`
+class for more fine-grained control.
 
 
 Jupyter/JupterLab

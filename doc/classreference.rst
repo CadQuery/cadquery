@@ -106,11 +106,11 @@ Class Details
    :show-inheritance:
    :members:
 
-.. automodule:: cadquery.vis
+.. automodule:: cadquery.fig
    :show-inheritance: 
    :members:
 
-.. automodule:: cadquery.fig
+.. automodule:: cadquery.vis
    :show-inheritance: 
    :members:
 
