@@ -3621,12 +3621,20 @@ class Face(Shape):
         if isinstance(edgeOrWire1, Wire):
             return tcast(
                 Face,
-                cls.cast(BRepFill.Shell_s(edgeOrWire1.wrapped, edgeOrWire2.wrapped)),
+                cls.cast(
+                    BRepFill.Shell_s(
+                        edgeOrWire1.wrapped, tcast(TopoDS_Wire, edgeOrWire2.wrapped)
+                    )
+                ),
             )
         else:
             return tcast(
                 Face,
-                cls.cast(BRepFill.Face_s(edgeOrWire1.wrapped, edgeOrWire2.wrapped)),
+                cls.cast(
+                    BRepFill.Face_s(
+                        edgeOrWire1.wrapped, tcast(TopoDS_Edge, edgeOrWire2.wrapped)
+                    )
+                ),
             )
 
     @classmethod
@@ -7131,7 +7139,7 @@ def sweep(
 
     spine = _get_one_wire(path)
 
-    results = []
+    results: list[TopoDS_Shape] = []
     builders = []
 
     def _make_builder() -> BRepOffsetAPI_MakePipeShell:
@@ -7253,7 +7261,7 @@ def sweep(
 
     spine = _get_one_wire(path)
 
-    results = []
+    results: list[TopoDS_Shape] = []
     builders = []
     # for history handling
     tops_hist = []
@@ -7380,7 +7388,7 @@ def loft(
     Loft edges, wires or faces. For faces cap has no effect. Do not mix faces with other types.
     """
 
-    results = []
+    results: list[TopoDS_Shape] = []
     builders = []
     # for history handling
     tops_hist = []
@@ -7648,7 +7656,7 @@ def _update_prism_history(
     s_tmp: TopoDS_Shape,
     history: History | None,
     name: str | None,
-    builders: list[BuilderType],
+    builders: Sequence[BuilderType],
 ) -> Shape:
     """
     Helper for prism history handling.
