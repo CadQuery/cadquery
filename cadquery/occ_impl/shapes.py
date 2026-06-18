@@ -7073,13 +7073,7 @@ def offset2D(
     return _compound_or_shape(bldr.Shape())
 
 
-def chamfer2D(
-    s: Shape,
-    verts: Shape,
-    d: float,
-    history: History | None = None,
-    name: str | None = None,
-) -> Shape:
+def chamfer2D(s: Shape, verts: Shape, d: float,) -> Shape:
     """
     Apply a 2D chamfer to a planar face.
     """
@@ -7102,18 +7096,10 @@ def chamfer2D(
 
     bldr.Build()
 
-    _update_history(history, name, [f, verts], bldr)
-
     return _compound_or_shape(bldr.Shape())
 
 
-def fillet2D(
-    s: Shape,
-    verts: Shape,
-    r: float,
-    history: History | None = None,
-    name: str | None = None,
-) -> Shape:
+def fillet2D(s: Shape, verts: Shape, r: float,) -> Shape:
     """
     Apply a 2D fillet to a planar face.
     """
@@ -7126,8 +7112,6 @@ def fillet2D(
         bldr.AddFillet(tcast(TopoDS_Vertex, v.wrapped), r)
 
     bldr.Build()
-
-    _update_history(history, name, [f, verts], bldr)
 
     return _compound_or_shape(bldr.Shape())
 
