@@ -799,7 +799,7 @@ class Shape(object):
                 child = next(iter(obj))
 
                 # if compound, go deeper
-                while child.ShapeType() == Compound:
+                while child.ShapeType() == "Compound":
                     child = next(iter(child))
 
                 type_ = shapetype(child.wrapped)
@@ -834,7 +834,7 @@ class Shape(object):
         :param obj: Compute the center of mass of this object
         """
 
-        if obj.ShapeType() == Vertex:
+        if obj.ShapeType() == "Vertex":
             geom_point = BRep_Tool.Pnt_s(tcast(TopoDS_Vertex, downcast(obj.wrapped)))
             return Vector(geom_point.X(), geom_point.Y(), geom_point.Z())
 
@@ -1910,13 +1910,13 @@ class Shape(object):
         rv: list[Location] = []
         t = self.ShapeType()
 
-        if t == Compound:
+        if t == "Compound":
             for el in self:
                 rv.extend(el.toLocs())
-        elif t == Face:
+        elif t == "Face":
             u0, u1, v0, v1 = tcast(Face, self).uvBounds()
             rv.append(tcast(Face, self).locationAt((u1 + u0) / 2, (v1 + v0) / 2))
-        elif t == Edge:
+        elif t == "Edge":
             u0, u1 = tcast(Edge, self).bounds()
             rv.append(tcast(Edge, self).locationAt((u1 + u0) / 2, mode="parameter"))
         else:
@@ -4165,8 +4165,8 @@ class Solid(Shape, Mixin3D):
         Returns true if the object is a solid, false otherwise
         """
         if hasattr(obj, "ShapeType"):
-            if obj.ShapeType() == Solid or (
-                obj.ShapeType() == Compound and len(obj.Solids()) > 0
+            if obj.ShapeType() == "Solid" or (
+                obj.ShapeType() == "Compound" and len(obj.Solids()) > 0
             ):
                 return True
         return False
@@ -5069,7 +5069,7 @@ def _get(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Iterable[Shape]:
 
     if t in types:
         yield s
-    elif t == Compound:
+    elif t == "Compound":
         for el in s:
             if el.ShapeType() in ts:
                 yield el
@@ -5097,7 +5097,7 @@ def _get_one(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Shape:
 
     if t in types:
         rv = s
-    elif t == Compound:
+    elif t == "Compound":
         for el in s:
             if el.ShapeType() in ts:
                 rv = el
@@ -5132,11 +5132,11 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
 
     t = s.ShapeType()
 
-    if t == Wire:
+    if t == "Wire":
         yield s
-    elif t == Edge:
+    elif t == "Edge":
         yield Wire.assembleEdges((tcast(Edge, s),))
-    elif t == Compound:
+    elif t == "Compound":
         for el in s:
             yield from _get_wires(el)
     else:
@@ -5151,11 +5151,11 @@ def _get_edges(*shapes: Shape) -> Iterable[Shape]:
     for s in shapes:
         t = s.ShapeType()
 
-        if t == Edge:
+        if t == "Edge":
             yield s
-        elif t == Wire:
+        elif t == "Wire":
             yield from _get_edges(s.edges())
-        elif t == Compound:
+        elif t == "Compound":
             for el in s:
                 yield from _get_edges(el)
         else:
@@ -5170,13 +5170,13 @@ def _get_faces(*shapes: Shape) -> Iterable[Face]:
     for s in shapes:
         t = s.ShapeType()
 
-        if t == Face:
+        if t == "Face":
             yield s.face()
-        elif t == Edge:
+        elif t == "Edge":
             yield face(s)
-        elif t == Wire:
+        elif t == "Wire":
             yield face(s)
-        elif t == Compound:
+        elif t == "Compound":
             yield from _get_faces(*s)
         else:
             raise ValueError(f"Required type(s): Edge, Wire, Face; encountered {t}")
@@ -5327,11 +5327,11 @@ def _normalize(s: Shape) -> Shape:
     t = s.ShapeType()
     rv = s
 
-    if t == Shell:
+    if t == "Shell":
         faces = s.Faces()
         if len(faces) == 1 and not BRep_Tool.IsClosed_s(s.wrapped):
             rv = faces[0]
-    elif t == Compound:
+    elif t == "Compound":
         objs = list(s)
         if len(objs) == 1:
             rv = objs[0]
@@ -5557,12 +5557,12 @@ class Op:
 
     def _get(self, d: dict[Shape, Shape], k: Shape) -> Shape:
 
-        if k.ShapeType() == Compound:
+        if k.ShapeType() == "Compound":
             tmp: list[Shape] = []
 
             for el in k:
                 val = d[el]
-                if val.ShapeType() == Compound:
+                if val.ShapeType() == "Compound":
                     tmp.extend(val)
                 else:
                     tmp.append(val)
