@@ -7033,8 +7033,6 @@ def offset2D(
     ctx: Shape | None = None,
     kind: Literal["arc", "intersection", "tangent"] = "arc",
     closed: bool = True,
-    history: History | None = None,
-    name: str | None = None,
 ) -> Shape:
     """
     2D offset edges or wires. ctx face might be needed for ambiguous wires/edges.
@@ -7067,8 +7065,6 @@ def offset2D(
             bldr.AddWire(el.wrapped)
 
     bldr.Perform(t)
-
-    _update_history(history, name, [s,], bldr)
 
     return _compound_or_shape(bldr.Shape())
 
