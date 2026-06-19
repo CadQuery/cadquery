@@ -275,6 +275,7 @@ from OCP.ShapeAnalysis import (
     ShapeAnalysis_Edge,
     ShapeAnalysis_Wire,
     ShapeAnalysis_Surface,
+    ShapeAnalysis,
 )
 from OCP.TopTools import TopTools_HSequenceOfShape
 
@@ -2102,10 +2103,10 @@ class Mixin1D(object):
         Note, circles may have the start and end points the same
         """
 
-        curve = self._geomAdaptor()
-        umin = curve.FirstParameter()
+        v1, _ = TopoDS_Vertex(), TopoDS_Vertex()
+        ShapeAnalysis.FindBounds_s(self.wrapped, v1, _)
 
-        return Vector(curve.Value(umin))
+        return Vertex(v1).Center()
 
     def endPoint(self: Mixin1DProtocol) -> Vector:
         """
@@ -2115,10 +2116,10 @@ class Mixin1D(object):
         Note, circles may have the start and end points the same
         """
 
-        curve = self._geomAdaptor()
-        umax = curve.LastParameter()
+        _, v2 = TopoDS_Vertex(), TopoDS_Vertex()
+        ShapeAnalysis.FindBounds_s(self.wrapped, _, v2)
 
-        return Vector(curve.Value(umax))
+        return Vertex(v2).Center()
 
     def _approxCurve(self: Mixin1DProtocol) -> Geom_BSplineCurve:
         """

@@ -475,3 +475,12 @@ def test_set_ops(simple_box):
     assert (simple_box.faces(">Z") | simple_box.faces("<Z")).size() == 2
     assert (simple_box.faces(">Z") & simple_box.faces("<Z")).size() == 0
     assert (simple_box.faces("|Z") % simple_box.faces("<Z")).size() == 1
+
+
+def test_start_end():
+
+    seg = segment((0, 0), (1, 0))
+    seg_r = seg.reverse()
+
+    assert (seg.startPoint() - seg_r.endPoint()).Length == approx(0)
+    assert (seg.endPoint() - seg_r.startPoint()).Length == approx(0)
