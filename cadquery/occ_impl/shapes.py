@@ -1377,7 +1377,7 @@ class Shape(object):
 
         return self.hashCode()
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: Any) -> bool:
 
         return self.isSame(other) if isinstance(other, Shape) else False
 
