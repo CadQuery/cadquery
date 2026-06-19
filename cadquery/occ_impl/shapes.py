@@ -7139,7 +7139,7 @@ def sweep(
 
     spine = _get_one_wire(path)
 
-    results: list[TopoDS_Shape] = []
+    results = []
     builders = []
 
     def _make_builder() -> BRepOffsetAPI_MakePipeShell:
