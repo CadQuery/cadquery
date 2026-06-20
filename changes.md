@@ -1,6 +1,39 @@
 Changes
 =======
 
+2.8.0
+-----
+
+## Highlights
+
+* Free function API is not considered experimental anymore
+* Moved to OCP 7.9 https://github.com/CadQuery/cadquery/pull/1946
+* Added history support and set operations for selector combining to the free function API https://github.com/CadQuery/cadquery/pull/2038
+* Experimental geometry layer for direct manipulation of spline curves ans surfaces https://github.com/CadQuery/cadquery/pull/2009, https://github.com/CadQuery/cadquery/pull/2019
+* STEP import and export unit support https://github.com/CadQuery/cadquery/pull/2023 by @jmwright
+* Added `show` and `clear` free functions to `cadquery.fig` for better UX of the trame/VTK based visualization
+
+## Other changes
+
+* Update back to 2.8 development version  by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1992
+* Allow to set view perspective by @dnicolodi in https://github.com/CadQuery/cadquery/pull/1991
+* Remove path dependency by @lorenzncode in https://github.com/CadQuery/cadquery/pull/1987
+* Fix fig/show visual regression by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/2003
+* QoL improvments for shapes by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/2007
+* Removed CadQuery 2 Mentions by @jmwright in https://github.com/CadQuery/cadquery/pull/2010
+* Propagation of subshape names to geometric STEP entities by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/1965
+* Use Temporary Directories Everywhere in Tests by @jmwright in https://github.com/CadQuery/cadquery/pull/2008
+* Edges visibility fix in the docs by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/2015
+* Disable fxaa by default by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/2022
+* Removed video mentions from readme by @jmwright in https://github.com/CadQuery/cadquery/pull/2026
+* Update appveyor.yml - pin miniforge by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/2034
+* Build images by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/2028
+* Few shape/free func related fixes by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/2033
+* Adds Funding Files and Information for the Project by @jmwright in https://github.com/CadQuery/cadquery/pull/2037
+* Fixed the URL for the funding manifest URLs file by @jmwright in https://github.com/CadQuery/cadquery/pull/2040
+* Modernize type hints in functional API module by @DavidMStraub in https://github.com/CadQuery/cadquery/pull/2048
+* Fix startPoint and endPoint for reversed edges by @adam-urbanczyk in https://github.com/CadQuery/cadquery/pull/2049
+
 2.7.0
 -----
 
