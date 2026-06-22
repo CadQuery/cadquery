@@ -5808,7 +5808,7 @@ def _update_history(
                                 op._modified[el] |= mod
                             else:
                                 op._modified[el] = mod
-                    except Standard_TypeMismatch:
+                    except (Standard_TypeMismatch, Standard_Failure):
                         pass
 
                 if has_first_last:
@@ -7811,7 +7811,7 @@ def prism(
 
         builders.append(bldr)
 
-        # dispatch on thickens type
+        # dispatch on thickness type
         if isinstance(t, Shape):
             bldr.Perform(t.face().wrapped)
         elif isinstance(t, tuple):
