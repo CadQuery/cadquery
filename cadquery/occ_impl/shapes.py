@@ -7111,7 +7111,7 @@ def chamfer2D(
 
     _update_history(history, name, [s], bldr)
 
-    # special fillet case
+    # special chamfer case
     if history:
         op = history[-1]
         generated = list(bldr.ChamferEdges())
