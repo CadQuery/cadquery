@@ -1435,7 +1435,7 @@ def test_fillet2D_history():
     h = History()
     r = plane(1, 1)
 
-    fillet2D(r, r.vertices(), 0.1, history=h)
+    fillet2D(r, r, 0.1, history=h)
 
     op = h[-1]
 
@@ -1451,7 +1451,7 @@ def test_chamfer2D_history():
     h = History()
     r = plane(1, 1)
 
-    chamfer2D(r, r.vertices(), 0.1, history=h)
+    chamfer2D(r, r, 0.1, history=h)
 
     op = h[-1]
 

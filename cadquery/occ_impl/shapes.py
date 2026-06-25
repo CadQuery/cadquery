@@ -5808,7 +5808,11 @@ def _update_history(
                                 op._modified[el] |= mod
                             else:
                                 op._modified[el] = mod
-                    except (Standard_TypeMismatch, Standard_Failure):
+                    except (
+                        Standard_NoSuchObject,
+                        Standard_TypeMismatch,
+                        Standard_Failure,
+                    ):
                         pass
 
                 if has_first_last:
@@ -7092,11 +7096,12 @@ def chamfer2D(
     """
 
     f = _get_one(s, "Face")
+    vertices = verts.Vertices()
 
     bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
     edge_map = s._entitiesFrom("Vertex", "Edge")
 
-    for v in verts.vertices():
+    for v in vertices:
         edges = edge_map[v]
         if len(edges) < 2:
             raise ValueError("Cannot chamfer at this location")
@@ -7115,7 +7120,7 @@ def chamfer2D(
     if history:
         op = history[-1]
         generated = list(bldr.ChamferEdges())
-        for i, v in enumerate(verts):
+        for i, v in enumerate(vertices):
             op._generated[v] = _compound_or_shape(generated[i])
 
     return _compound_or_shape(bldr.Shape())
@@ -7133,10 +7138,11 @@ def fillet2D(
     """
 
     f = _get_one(s, "Face")
+    vertices = verts.Vertices()
 
     bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
 
-    for v in verts.vertices():
+    for v in vertices:
         bldr.AddFillet(tcast(TopoDS_Vertex, v.wrapped), r)
 
     bldr.Build()
@@ -7146,7 +7152,7 @@ def fillet2D(
     if history:
         op = history[-1]
         generated = list(bldr.FilletEdges())
-        for i, v in enumerate(verts):
+        for i, v in enumerate(vertices):
             op._generated[v] = _compound_or_shape(generated[i])
 
     return _compound_or_shape(bldr.Shape())
