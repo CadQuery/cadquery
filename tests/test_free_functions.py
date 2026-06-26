@@ -1469,6 +1469,7 @@ def test_wire_history():
 
     edges = [segment(p1, p2) for p1, p2 in zip(pts, pts[1:] + pts[:1])]
 
+    # regular case
     _ = wire(edges, history=h)
 
     op = h[-1]
@@ -1478,3 +1479,21 @@ def test_wire_history():
 
     for e in edges:
         assert (e.Center() - op.modified(e).Center()).Length == approx(0)
+
+        for v in e:
+            assert (v.Center() - op.modified(v).Center()).Length == approx(0)
+
+    # test with wrong edge order
+    edges = [edges[0], edges[2].reverse(), edges[1], edges[3]]
+    _ = wire(edges, history=h)
+
+    op = h[-1]
+
+    assert op.modified().edges().size() == 4
+    assert op.modified().vertices().size() == 4
+
+    for e in edges:
+        assert (e.Center() - op.modified(e).Center()).Length == approx(0)
+
+        for v in e:
+            assert (v.Center() - op.modified(v).Center()).Length == approx(0)
