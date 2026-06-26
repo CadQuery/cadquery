@@ -1460,3 +1460,21 @@ def test_chamfer2D_history():
 
     assert new_edges.edges().size() == 4
     assert mod_edges.edges().size() == 4
+
+
+def test_wire_history():
+
+    h = History()
+    pts = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+
+    edges = [segment(p1, p2) for p1, p2 in zip(pts, pts[1:] + pts[:1])]
+
+    _ = wire(edges, history=h)
+
+    op = h[-1]
+
+    assert op.modified().edges().size() == 4
+    assert op.modified().vertices().size() == 4
+
+    for e in edges:
+        assert (e.Center() - op.modified(e).Center()).Length == approx(0)
