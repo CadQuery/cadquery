@@ -277,6 +277,7 @@ from OCP.ShapeAnalysis import (
     ShapeAnalysis_Wire,
     ShapeAnalysis_Surface,
     ShapeAnalysis,
+    ShapeAnalysis_WireOrder,
 )
 from OCP.TopTools import TopTools_HSequenceOfShape
 
@@ -5995,6 +5996,33 @@ def wireOn(base: Shape, w: Shape, tol: float = 1e-6, N: int = 20) -> Wire:
     return wire(rvs)
 
 
+def _reorder_edges(edges: list[Edge]) -> tuple[list[int], list[bool]]:
+    """
+    Private helper for reordering of edges before wire construction. Returns order and
+    correct orientation.
+    """
+
+    n_edges = len(edges)
+    order = [0] * len(edges)
+    reverse = [False] * n_edges
+
+    ana = ShapeAnalysis_WireOrder()
+
+    for e in edges:
+        ana.Add(e.startPoint().toXYZ(), e.endPoint().toXYZ())
+
+    ana.Perform()
+
+    for i in range(n_edges):
+        i_old = ana.Ordered(i + 1)
+        i_old_abs = abs(i_old) - 1
+
+        order[i] = i_old_abs
+        reverse[i] = i_old < 0
+
+    return order, reverse
+
+
 @multidispatch
 def wire(*s: Shape, history: History | None = None, name: str | None = None,) -> Wire:
     """
@@ -6008,8 +6036,17 @@ def wire(*s: Shape, history: History | None = None, name: str | None = None,) ->
     for el in s:
         edges.extend(_get_edges(el))
 
-    for e in edges:
-        builder.Add(e.edge().wrapped)
+    # reorder and check orientation
+    order, reverse = _reorder_edges(edges)
+
+    # build and store new edges for history construction
+    for i, rev in zip(order, reverse):
+        edge = edges[i].edge().wrapped
+
+        if rev:
+            edge = TopoDS.Edge(edge.Reversed())
+
+        builder.Add(edge)
         status = builder.Error()
 
         assert (
@@ -6023,10 +6060,16 @@ def wire(*s: Shape, history: History | None = None, name: str | None = None,) ->
     # handle OCCT lack of implementation
     if history:
         op = history[-1]
-        for k, v in zip(edges, new_edges):
+        for ix, v, rev in zip(order, new_edges, reverse):
+            k = edges[ix]
             op._modified[k] = v
-            op._modified[k.startVertex()] = v.startVertex()
-            op._modified[k.endVertex()] = v.endVertex()
+
+            if rev:
+                op._modified[k.endVertex()] = v.startVertex()
+                op._modified[k.startVertex()] = v.endVertex()
+            else:
+                op._modified[k.startVertex()] = v.startVertex()
+                op._modified[k.endVertex()] = v.endVertex()
 
     return _shape(builder.Shape(), Wire)
 
