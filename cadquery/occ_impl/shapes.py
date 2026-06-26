@@ -6031,6 +6031,7 @@ def wire(*s: Shape, history: History | None = None, name: str | None = None,) ->
 
     builder = BRepBuilderAPI_MakeWire()
 
+    # collect all edges and initialize
     new_edges = []
     edges: list[Edge] = []
     for el in s:
@@ -6055,9 +6056,10 @@ def wire(*s: Shape, history: History | None = None, name: str | None = None,) ->
 
         new_edges.append(Edge(builder.Edge()))
 
+    # NB: this is a dummy update, the builder does not implement history correctly
     _update_history(history, name, s, builder)
 
-    # handle OCCT lack of implementation
+    # Update history manually
     if history:
         op = history[-1]
         for ix, v, rev in zip(order, new_edges, reverse):
