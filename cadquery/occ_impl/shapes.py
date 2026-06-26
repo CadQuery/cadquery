@@ -90,6 +90,7 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeFace,
     BRepBuilderAPI_MakePolygon,
     BRepBuilderAPI_MakeWire,
+    BRepBuilderAPI_WireError,
     BRepBuilderAPI_Sewing,
     BRepBuilderAPI_Copy,
     BRepBuilderAPI_GTransform,
@@ -5614,7 +5615,7 @@ class Op:
         if s:
             return self._get(self._modified, s)
 
-        return _normalize(compound(*self._modified.values()))
+        return _normalize(compound(*set(self._modified.values())))
 
     def generated(self, s: Shape | None = None) -> Shape:
         """
@@ -6009,6 +6010,12 @@ def wire(*s: Shape, history: History | None = None, name: str | None = None,) ->
 
     for e in edges:
         builder.Add(e.edge().wrapped)
+        status = builder.Error()
+
+        assert (
+            status == BRepBuilderAPI_WireError.BRepBuilderAPI_WireDone
+        ), f"Wire construction failed: {status}"
+
         new_edges.append(Edge(builder.Edge()))
 
     _update_history(history, name, s, builder)
