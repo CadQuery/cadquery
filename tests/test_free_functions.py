@@ -1412,3 +1412,51 @@ def test_comibine_hist_dict():
     assert isinstance(d1[f], Compound)
     assert v in d1[f]
     assert e in d1[f]
+
+
+def test_offset2D_history():
+
+    h = History()
+    r = rect(1, 1)
+
+    offset2D(r, 0.1, history=h)
+
+    op = h[-1]
+
+    new_edges = op.generated(r.vertices())
+    mod_edges = op.generated(r.edges())
+
+    assert new_edges.edges().size() == 4
+    assert mod_edges.edges().size() == 4
+
+
+def test_fillet2D_history():
+
+    h = History()
+    r = plane(1, 1)
+
+    fillet2D(r, r, 0.1, history=h)
+
+    op = h[-1]
+
+    new_edges = op.generated(r.vertices())
+    mod_edges = op.modified(r.edges())
+
+    assert new_edges.edges().size() == 4
+    assert mod_edges.edges().size() == 4
+
+
+def test_chamfer2D_history():
+
+    h = History()
+    r = plane(1, 1)
+
+    chamfer2D(r, r, 0.1, history=h)
+
+    op = h[-1]
+
+    new_edges = op.generated(r.vertices())
+    mod_edges = op.modified(r.edges())
+
+    assert new_edges.edges().size() == 4
+    assert mod_edges.edges().size() == 4

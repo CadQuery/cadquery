@@ -298,7 +298,7 @@ from OCP.IVtkOCC import IVtkOCC_Shape, IVtkOCC_ShapeMesher
 from OCP.IVtkVTK import IVtkVTK_ShapeData
 
 # for catching exceptions
-from OCP.Standard import Standard_NoSuchObject, Standard_Failure
+from OCP.Standard import Standard_NoSuchObject, Standard_Failure, Standard_TypeMismatch
 
 from OCP.Prs3d import Prs3d_IsoAspect
 from OCP.Quantity import Quantity_Color
@@ -5801,12 +5801,19 @@ def _update_history(
                             op._generated[el] = gen
 
                 if has_modifidied:
-                    mod = _compound_or_shape(list(builder.Modified(wrapped)))
-                    if mod:
-                        if el in op._modified:
-                            op._modified[el] |= mod
-                        else:
-                            op._modified[el] = mod
+                    try:
+                        mod = _compound_or_shape(list(builder.Modified(wrapped)))
+                        if mod:
+                            if el in op._modified:
+                                op._modified[el] |= mod
+                            else:
+                                op._modified[el] = mod
+                    except (
+                        Standard_NoSuchObject,
+                        Standard_TypeMismatch,
+                        Standard_Failure,
+                    ):
+                        pass
 
                 if has_first_last:
                     op._first[el] = _compound_or_shape(builder.FirstShape(el.wrapped))
@@ -7037,6 +7044,8 @@ def offset2D(
     ctx: Shape | None = None,
     kind: Literal["arc", "intersection", "tangent"] = "arc",
     closed: bool = True,
+    history: History | None = None,
+    name: str | None = None,
 ) -> Shape:
     """
     2D offset edges or wires. ctx face might be needed for ambiguous wires/edges.
@@ -7070,20 +7079,29 @@ def offset2D(
 
     bldr.Perform(t)
 
+    _update_history(history, name, [s], bldr)
+
     return _compound_or_shape(bldr.Shape())
 
 
-def chamfer2D(s: Shape, verts: Shape, d: float) -> Shape:
+def chamfer2D(
+    s: Shape,
+    verts: Shape,
+    d: float,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Apply a 2D chamfer to a planar face.
     """
 
     f = _get_one(s, "Face")
+    vertices = verts.Vertices()
 
     bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
     edge_map = s._entitiesFrom("Vertex", "Edge")
 
-    for v in verts.vertices():
+    for v in vertices:
         edges = edge_map[v]
         if len(edges) < 2:
             raise ValueError("Cannot chamfer at this location")
@@ -7096,22 +7114,46 @@ def chamfer2D(s: Shape, verts: Shape, d: float) -> Shape:
 
     bldr.Build()
 
+    _update_history(history, name, [s], bldr)
+
+    # special chamfer case
+    if history:
+        op = history[-1]
+        generated = list(bldr.ChamferEdges())
+        for i, v in enumerate(vertices):
+            op._generated[v] = _compound_or_shape(generated[i])
+
     return _compound_or_shape(bldr.Shape())
 
 
-def fillet2D(s: Shape, verts: Shape, r: float) -> Shape:
+def fillet2D(
+    s: Shape,
+    verts: Shape,
+    r: float,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
     """
     Apply a 2D fillet to a planar face.
     """
 
     f = _get_one(s, "Face")
+    vertices = verts.Vertices()
 
     bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
 
-    for v in verts.vertices():
+    for v in vertices:
         bldr.AddFillet(tcast(TopoDS_Vertex, v.wrapped), r)
 
     bldr.Build()
+
+    _update_history(history, name, [s], bldr)
+
+    if history:
+        op = history[-1]
+        generated = list(bldr.FilletEdges())
+        for i, v in enumerate(vertices):
+            op._generated[v] = _compound_or_shape(generated[i])
 
     return _compound_or_shape(bldr.Shape())
 
@@ -7729,7 +7771,7 @@ def prism(
 
         builders.append(bldr)
 
-        # dispatch on thickens type
+        # dispatch on thickness type
         if isinstance(t, Shape):
             bldr.Perform(t.face().wrapped)
         elif isinstance(t, tuple):
@@ -7775,7 +7817,7 @@ def prism(
 
         builders.append(bldr)
 
-        # dispatch on thickens type
+        # dispatch on thickness type
         if isinstance(t, Shape):
             bldr.Perform(t.face().wrapped)
         elif isinstance(t, tuple):
