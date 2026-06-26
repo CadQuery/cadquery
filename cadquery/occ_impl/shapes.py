@@ -2078,6 +2078,12 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     def paramsLength(self, locations: Iterable[float]) -> list[float]:
         ...
 
+    def startVertex(self) -> Vertex:
+        ...
+
+    def endVertex(self) -> Vertex:
+        ...
+
 
 T1D = TypeVar("T1D", bound=Mixin1DProtocol)
 
@@ -2103,10 +2109,7 @@ class Mixin1D(object):
         Note, circles may have the start and end points the same
         """
 
-        v1, _ = TopoDS_Vertex(), TopoDS_Vertex()
-        ShapeAnalysis.FindBounds_s(self.wrapped, v1, _)
-
-        return Vertex(v1).Center()
+        return self.startVertex().Center()
 
     def endPoint(self: Mixin1DProtocol) -> Vector:
         """
@@ -2116,10 +2119,33 @@ class Mixin1D(object):
         Note, circles may have the start and end points the same
         """
 
+        return self.endVertex().Center()
+
+    def startVertex(self: Mixin1DProtocol) -> Vertex:
+        """
+
+        :return: a vertex representing the start point of this edge
+
+        Note, circles may have the start and end vertex the same
+        """
+
+        v1, _ = TopoDS_Vertex(), TopoDS_Vertex()
+        ShapeAnalysis.FindBounds_s(self.wrapped, v1, _)
+
+        return Vertex(v1)
+
+    def endVertex(self: Mixin1DProtocol) -> Vertex:
+        """
+
+        :return: a vertex representing the end point of this edge.
+
+        Note, circles may have the start and end vertex the same
+        """
+
         _, v2 = TopoDS_Vertex(), TopoDS_Vertex()
         ShapeAnalysis.FindBounds_s(self.wrapped, _, v2)
 
-        return Vertex(v2).Center()
+        return Vertex(v2)
 
     def _approxCurve(self: Mixin1DProtocol) -> Geom_BSplineCurve:
         """
@@ -5152,7 +5178,7 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
         raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
 
 
-def _get_edges(*shapes: Shape) -> Iterable[Shape]:
+def _get_edges(*shapes: Shape) -> Iterable[Edge]:
     """
     Get edges or edges from wires.
     """
@@ -5161,7 +5187,7 @@ def _get_edges(*shapes: Shape) -> Iterable[Shape]:
         t = s.ShapeType()
 
         if t == "Edge":
-            yield s
+            yield s.edge()
         elif t == "Wire":
             yield from _get_edges(s.edges())
         elif t == "Compound":
@@ -5760,6 +5786,7 @@ def _update_history(
                     BRepBuilderAPI_MakeShape,
                     BOPAlgo_Builder,
                     BRepOffset_MakeOffset,
+                    BRepBuilderAPI_MakeWire,
                 ),
             )
             has_modifidied = isinstance(
@@ -5968,23 +5995,41 @@ def wireOn(base: Shape, w: Shape, tol: float = 1e-6, N: int = 20) -> Wire:
 
 
 @multidispatch
-def wire(*s: Shape) -> Wire:
+def wire(*s: Shape, history: History | None = None, name: str | None = None,) -> Wire:
     """
     Build wire from edges.
     """
 
     builder = BRepBuilderAPI_MakeWire()
 
-    edges = _shapes_to_toptools_list(e for el in s for e in _get_edges(el))
-    builder.Add(edges)
+    new_edges = []
+    edges: list[Edge] = []
+    for el in s:
+        edges.extend(_get_edges(el))
+
+    for e in edges:
+        builder.Add(e.edge().wrapped)
+        new_edges.append(Edge(builder.Edge()))
+
+    _update_history(history, name, s, builder)
+
+    # handle OCCT lack of implementation
+    if history:
+        op = history[-1]
+        for k, v in zip(edges, new_edges):
+            op._modified[k] = v
+            op._modified[k.startVertex()] = v.startVertex()
+            op._modified[k.endVertex()] = v.endVertex()
 
     return _shape(builder.Shape(), Wire)
 
 
 @multidispatch
-def wire(s: Sequence[Shape]) -> Wire:
+def wire(
+    s: Sequence[Shape], history: History | None = None, name: str | None = None,
+) -> Wire:
 
-    return wire(*s)
+    return wire(*s, history=history, name=name)
 
 
 @multidispatch
