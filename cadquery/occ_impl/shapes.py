@@ -6063,13 +6063,18 @@ def wire(*s: Shape, history: History | None = None, name: str | None = None,) ->
         for ix, v, rev in zip(order, new_edges, reverse):
             k = edges[ix]
             op._modified[k] = v
+            op._images[k] = v
 
             if rev:
                 op._modified[k.endVertex()] = v.startVertex()
                 op._modified[k.startVertex()] = v.endVertex()
+                op._images[k.endVertex()] = v.startVertex()
+                op._images[k.startVertex()] = v.endVertex()
             else:
                 op._modified[k.startVertex()] = v.startVertex()
                 op._modified[k.endVertex()] = v.endVertex()
+                op._images[k.startVertex()] = v.startVertex()
+                op._images[k.endVertex()] = v.endVertex()
 
     return _shape(builder.Shape(), Wire)
 

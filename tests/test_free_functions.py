@@ -1464,6 +1464,16 @@ def test_chamfer2D_history():
 
 def test_wire_history():
 
+    # private helper
+    def _check(op, edges):
+        for e in edges:
+            assert (e.Center() - op.modified(e).Center()).Length == approx(0)
+            assert (e.Center() - op.images(e).Center()).Length == approx(0)
+
+            for v in e:
+                assert (v.Center() - op.modified(v).Center()).Length == approx(0)
+                assert (v.Center() - op.images(v).Center()).Length == approx(0)
+
     h = History()
     pts = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
 
@@ -1477,11 +1487,7 @@ def test_wire_history():
     assert op.modified().edges().size() == 4
     assert op.modified().vertices().size() == 4
 
-    for e in edges:
-        assert (e.Center() - op.modified(e).Center()).Length == approx(0)
-
-        for v in e:
-            assert (v.Center() - op.modified(v).Center()).Length == approx(0)
+    _check(op, edges)
 
     # test with wrong edge order
     edges = [edges[0], edges[2].reverse(), edges[1], edges[3]]
@@ -1492,8 +1498,15 @@ def test_wire_history():
     assert op.modified().edges().size() == 4
     assert op.modified().vertices().size() == 4
 
-    for e in edges:
-        assert (e.Center() - op.modified(e).Center()).Length == approx(0)
+    _check(op, edges)
 
-        for v in e:
-            assert (v.Center() - op.modified(v).Center()).Length == approx(0)
+    # same but open wire
+    edges = edges[:-1]
+    _ = wire(edges, history=h)
+
+    op = h[-1]
+
+    assert op.modified().edges().size() == 3
+    assert op.modified().vertices().size() == 4
+
+    _check(op, edges)
