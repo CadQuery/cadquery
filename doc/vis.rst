@@ -204,7 +204,7 @@ Plain Python scripts can be run from IPython using :code:`%run`.
 The :meth:`cadquery.fig.show` function returns immediately.
 A REPL keeps the Python process active, so the figure server continues running.
 A script run directly with :code:`python model.py` exits when the script finishes, stopping
-the figure server.
+the figure server, so it is needed to run with the appropriate option: :code:`python -i model.py`.
 
 
 Jupyter/JupyterLab
