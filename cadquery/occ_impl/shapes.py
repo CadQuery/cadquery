@@ -84,6 +84,7 @@ from OCP.BRepAdaptor import (
 )
 
 from OCP.BRepBuilderAPI import (
+    BRepBuilderAPI_Command,
     BRepBuilderAPI_MakeShape,
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
@@ -5754,8 +5755,6 @@ def _update_history(
         # construct the history step
         op = Op()
 
-        history.append(op, name)
-
         # track all subshapes
         for shape in shapes:
             op._tracked.update(shape.Faces())
@@ -5765,6 +5764,12 @@ def _update_history(
         # iterate over all builders and collect history information
         builder: Any
         for builder in builders:
+
+            if isinstance(builder, BRepBuilderAPI_Command):
+                assert (
+                    builder.IsDone()
+                ), f"Builder {builder} not done, cannot fill history."
+
             has_first_last = isinstance(
                 builder, (BRepPrimAPI_MakeRevol, BRepPrimAPI_MakePrism,),
             )
@@ -5851,6 +5856,8 @@ def _update_history(
                 if has_first_last_shape:
                     op._first_shape |= _compound_or_shape(builder.FirstShape())
                     op._last_shape |= _compound_or_shape(builder.LastShape())
+
+        history.append(op, name)
 
 
 def _remap_history_values(history: History | None, aux: History,) -> None:
