@@ -6578,7 +6578,7 @@ def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
 
 
 def projectToViewpoint(
-    shape, projectionDir: tuple[float, float, float], focus: Optional[float] = None,
+    shape, projectionDir: tuple[float, float, float], focus: float|None = None,
 ) -> tuple[list[Edge], list[Edge]]:
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
