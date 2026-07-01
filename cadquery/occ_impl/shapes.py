@@ -7976,13 +7976,17 @@ def closest(s1: Shape, s2: Shape) -> tuple[Vector, Vector]:
     return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))
 
 
-def projectToViewpoint(
-    shape, projectionDir: tuple[float, float, float], focus: float | None = None,
-) -> tuple[list[Edge], list[Edge]]:
+def hlr(
+    shape, pnt: VectorLike, dir: VectorLike, focus: float | None = None,
+) -> tuple[Compound, Compound]:
+    """
+    Project shape onto a plane defined by pnt and dir and apply hidden line removal. Useful for
+    generating views for technical drawings.
+    """
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
 
-    coordinate_system = gp_Ax2(gp_Pnt(), gp_Dir(*projectionDir))
+    coordinate_system = gp_Ax2(Vector(pnt).toPnt(), Vector(dir).toDir())
 
     if focus is not None:
         projector = HLRAlgo_Projector(coordinate_system, focus)
@@ -8025,12 +8029,8 @@ def projectToViewpoint(
     for el in hidden:
         BRepLib.BuildCurves3d_s(el, TOLERANCE)
 
-    # convert to native CQ objects
-    visible_ = [Shape.cast(s) for s in visible]  # s is a TopoDS_Shape (Compound)
-    hidden_ = [Shape.cast(s) for s in hidden]
-
     # Extract edges
-    visible_edges = [e for c in visible_ for e in c.Edges()]
-    hidden_edges = [e for c in hidden_ for e in c.Edges()]
+    visible_edges = compound(_compound_or_shape(visible).Edges())
+    hidden_edges = compound(_compound_or_shape(hidden).Edges())
 
     return visible_edges, hidden_edges

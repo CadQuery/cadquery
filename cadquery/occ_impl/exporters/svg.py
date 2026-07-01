@@ -2,7 +2,7 @@ import io as StringIO
 
 from ..shapes import Shape, Compound, Edge
 from ..geom import BoundBox
-from ..shapes import projectToViewpoint
+from ..shapes import hlr
 
 
 from OCP.GCPnts import GCPnts_QuasiUniformDeflection
@@ -183,7 +183,7 @@ def getSVG(shape, opts=None):
     showHidden = bool(d["showHidden"])
     focus = float(d["focus"]) if d.get("focus") else None
 
-    visibleEdges, hiddenEdges = projectToViewpoint(shape, projectionDir, focus)
+    visibleEdges, hiddenEdges = hlr(shape, (0, 0, 0), projectionDir, focus)
     hiddenPaths, visiblePaths = getPaths(visibleEdges, hiddenEdges)
 
     # get bounding box -- these are all in 2D space

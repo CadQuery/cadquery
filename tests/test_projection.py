@@ -1,6 +1,6 @@
 import cadquery as cq
 from cadquery.occ_impl.exporters.svg import exportSVG
-from cadquery.occ_impl.shapes import Compound, projectToViewpoint
+from cadquery.occ_impl.shapes import Compound, hlr
 from cadquery import Workplane
 
 viewpoint = {
@@ -13,7 +13,7 @@ viewpoint = {
 
 def exportDXF3rdAngleProjection(my_part: Workplane, prefix: str) -> None:
     for name, direction in viewpoint.items():
-        visible_edges, hidden_edges = projectToViewpoint(my_part.val(), direction)
+        visible_edges, hidden_edges = hlr(my_part.val(), direction)
         cq.exporters.exportDXF(
             Compound.makeCompound(visible_edges), f"{prefix}{name}.dxf", doc_units=6,
         )
