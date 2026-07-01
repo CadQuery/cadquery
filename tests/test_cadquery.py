@@ -313,12 +313,12 @@ class TestCadQuery(BaseTest):
         startPoint = box.faces("<Y").edges("<X").first().val().startPoint().toTuple()
         endPoint = box.faces("<Y").edges("<X").first().val().endPoint().toTuple()
 
-        self.assertEqual(-0.5, startPoint[0])
-        self.assertEqual(-0.5, startPoint[1])
-        self.assertEqual(-2.5, startPoint[2])
         self.assertEqual(-0.5, endPoint[0])
         self.assertEqual(-0.5, endPoint[1])
-        self.assertEqual(2.5, endPoint[2])
+        self.assertEqual(-2.5, endPoint[2])
+        self.assertEqual(-0.5, startPoint[0])
+        self.assertEqual(-0.5, startPoint[1])
+        self.assertEqual(2.5, startPoint[2])
 
     def testRotateAboutCenter(self):
         r = Workplane().box(1, 1, 1).rotateAboutCenter((1, 0, 0), 20)
@@ -4196,7 +4196,7 @@ class TestCadQuery(BaseTest):
 
         # Test to see if slot is rotated correctly
         result = Workplane("XY").slot2D(4, 1, 45).extrude(1)
-        point = result.faces(">Z").edges(">X").first().val().startPoint().toTuple()
+        point = result.faces(">Z").edges(">X").first().val().endPoint().toTuple()
         self.assertTupleAlmostEquals(
             point, (0.707106781, 1.414213562, 1.0), decimal_places
         )

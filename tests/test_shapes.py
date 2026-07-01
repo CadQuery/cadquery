@@ -23,13 +23,20 @@ from cadquery.occ_impl.shapes import (
     polygon,
     wireOn,
     vertex,
+    fuse,
 )
 
 from cadquery.selectors import NearestToPointSelector
 
-from pytest import approx, raises
+from pytest import approx, raises, fixture
 
 from math import pi
+
+
+@fixture
+def simple_box():
+
+    return box(1, 1, 1)
 
 
 def test_edge_paramAt():
@@ -404,3 +411,76 @@ def test_center():
         assert c.x == approx(1)
         assert c.y == approx(1)
         assert c.z == approx(1)
+
+
+def test_reverse(simple_box):
+
+    simple_box = box(1, 1, 1)
+
+    assert simple_box.Volume() > 0
+
+    br = simple_box.reverse()
+
+    # reversed solid will have a negative volume
+    assert br.Volume() < 0
+
+    # normals will be pointing in opposite direction
+    delta = simple_box.face().normalAt() + br.face().normalAt()
+    assert delta.Length == approx(0)
+
+
+def test_siblings(simple_box):
+
+    f = simple_box.face("<Z")
+
+    siblings_1 = f.siblings(simple_box, "Edge", 1)
+    assert siblings_1.size() == 4
+
+    siblings_12 = f.siblings(simple_box, "Edge", (1, 2))
+    assert siblings_12.size() == 5
+
+    siblings_2 = f.siblings(simple_box, "Edge", (2,))
+    assert siblings_2.size() == 1
+    assert (siblings_2.Center() - simple_box.faces(">Z").Center()).Length == approx(0)
+
+    siblings_cmp_12 = simple_box.faces(">Z").siblings(simple_box, "Edge", (1, 2))
+    assert siblings_cmp_12.size() == 5
+
+    siblings_cmp_2 = simple_box.faces(">Z").siblings(simple_box, "Edge", (2,))
+    assert siblings_cmp_2.size() == 1
+
+    siblings_cmp_edges_12 = simple_box.edges(">Z").siblings(
+        simple_box, "Vertex", (1, 2)
+    )
+    assert siblings_cmp_edges_12.size() == 8
+
+    # more complex shape
+    stacked_box = fuse(
+        simple_box, simple_box.moved(x=1), simple_box.moved(x=2), simple_box.moved(x=3),
+    )
+
+    f = stacked_box.face("<X")
+
+    level_1 = f.siblings(stacked_box, "Vertex", 1)
+    level_2 = f.siblings(stacked_box, "Vertex", 2)
+    level_3 = f.siblings(stacked_box, "Vertex", 3)
+    level_123 = f.siblings(stacked_box, "Vertex", (1, 2, 3))
+
+    assert level_1.size() + level_2.size() + level_3.size() == level_123.size()
+    assert set(level_1) | set(level_2) | set(level_3) == set(level_123)
+
+
+def test_set_ops(simple_box):
+
+    assert (simple_box.faces(">Z") | simple_box.faces("<Z")).size() == 2
+    assert (simple_box.faces(">Z") & simple_box.faces("<Z")).size() == 0
+    assert (simple_box.faces("|Z") % simple_box.faces("<Z")).size() == 1
+
+
+def test_start_end():
+
+    seg = segment((0, 0), (1, 0))
+    seg_r = seg.reverse()
+
+    assert (seg.startPoint() - seg_r.endPoint()).Length == approx(0)
+    assert (seg.endPoint() - seg_r.startPoint()).Length == approx(0)

@@ -9,6 +9,7 @@ from OCP.VrmlAPI import VrmlAPI
 
 from ...utils import deprecate
 from ..shapes import Shape, compound
+from ...types import UnitLiterals
 
 from .svg import getSVG
 from .json import JsonMesh
@@ -43,6 +44,8 @@ def export(
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
+    unit: UnitLiterals = "MM",
+    outputUnit: Optional[UnitLiterals] = None,
     opt: Optional[Dict[str, Any]] = None,
 ):
 
@@ -54,6 +57,12 @@ def export(
     :param exportType: the exportFormat to use. If None will be inferred from the extension. Default: None.
     :param tolerance: the deflection tolerance, in model units. Default 0.1.
     :param angularTolerance: the angular tolerance, in radians. Default 0.1.
+    :param unit: The internal unit of the model's geometry values. Only used for STEP. Default "MM".
+    :type unit: UnitLiterals
+    :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
+        Use this when you want the output file to declare a different unit than the model's internal unit,
+        for example to export a MM model as a STEP file declaring meters.
+    :type outputUnit: UnitLiterals or None
     :param opt: additional options passed to the specific exporter. Default None.
     """
 
@@ -109,7 +118,7 @@ def export(
         exportDXF(w, fname, **opt)
 
     elif exportType == ExportTypes.STEP:
-        shape.exportStep(fname, **opt)
+        shape.exportStep(fname, unit=unit, outputUnit=outputUnit, **opt)
 
     elif exportType == ExportTypes.STL:
         if opt:

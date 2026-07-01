@@ -77,13 +77,23 @@ Importing STEP
 ###############
 
 STEP files can be imported using the :meth:`importers.importStep` method (note the capitalization of "Step").
-There are no parameters for this method other than the file path to import.
 
 .. code-block:: python
 
    import cadquery as cq
 
    result = cq.importers.importStep("/path/to/step/block.stp")
+
+By default, unit conversion to millimeters is applied.
+The ``unit`` parameter sets the target unit - OCCT scales from the unit declared in the STEP file's header to the requested unit.
+The valid values are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # Import a STEP file converting its units to meters
+   result = cq.importers.importStep("/path/to/step/block.stp", unit="M")
 
 Exporting STEP
 ###############
@@ -139,6 +149,44 @@ or the :meth:`Assembly.exportAssembly`` method.
    # or equivalently when exporting a lower level Shape object
    box.val().export("/path/to/step/box2.step", opt={"write_pcurves": False})
 
+Setting Units
+--------------
+
+By default, CadQuery exports STEP files with millimeter units.
+The ``unit`` parameter specifies the internal unit of the model's geometry values.
+The ``outputUnit`` parameter controls the unit written to the STEP file header.
+If ``outputUnit`` is not specified, it defaults to the value of ``unit``.
+The valid values for both parameters are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+
+Typically it is enough to assume certain unit when modeling and simply specify it when exporting.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # Create a simple 10 cm box.
+   box = cq.Workplane().box(10, 10, 10)
+
+   # Export with cm units
+   box.export("/path/to/step/box.step", unit="CM")
+
+
+To export a millimeter model as a STEP file declaring meters, set ``outputUnit="M"`` while leaving ``unit`` at its default of ``"MM"``.
+OCCT will scale the coordinate values accordingly.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # Create a simple box
+   box = cq.Workplane().box(10, 10, 10)
+
+   # Export with meter units,
+   # NB: unit specified for clarity, the default value is "MM"
+   box.export("/path/to/step/box.step", unit="MM", outputUnit="M")
+
+
+For assemblies, see the ``outputUnit`` parameter example in the exporting assemblies section.
 
 Exporting Assemblies
 ####################
@@ -175,6 +223,45 @@ export with all defaults is shown below.
 
 This will produce a STEP file that is nested with auto-generated object names. The colors of each assembly object will be
 preserved, but the names that were set for each will not.
+
+Setting Units
+--------------
+
+By default, CadQuery exports STEP files with millimeter units.
+The ``unit`` parameter specifies the internal unit of the model's geometry values.
+The ``outputUnit`` parameter controls the unit written to the STEP file header.
+If ``outputUnit`` is not specified, it defaults to the value of ``unit``.
+The valid values for both parameters are defined by :class:`UnitLiterals`: ``"MM"``, ``"CM"``, ``"M"``, ``"KM"``, ``"INCH"``, ``"FT"``, ``"MI"``, ``"UM"``, and ``"NM"``.
+The default is ``"MM"``.
+
+To export a micrometer model as a STEP file declaring micrometers, simple set ``unit="UM"``.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # 10 um box assy
+   assy = cq.Assembly()
+   assy.add(cq.Workplane().box(10, 10, 10), name="box")
+
+   # Export the assembly with um units
+   assy.export("/path/to/step/assy.step", unit="UM")
+
+
+If you want to use different units for the STEP file set ``outputUnit`` to the desired value.
+OCCT will scale the coordinate values accordingly.
+
+.. code-block:: python
+
+   import cadquery as cq
+
+   # 10 um box assy
+   assy = cq.Assembly()
+   assy.add(cq.Workplane().box(10, 10, 10), name="box")
+
+   # Export the assembly with mm units
+   assy.export("/path/to/step/assy.step", unit="UM", outputUnit="MM")
+
 
 Fused
 ------

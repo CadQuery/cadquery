@@ -23,6 +23,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkProp3D,
+    vtkMapper,
 )
 
 
@@ -37,6 +38,9 @@ FULL_SCREEN = "position:absolute; left:0; top:0; width:100vw; height:100vh;"
 
 
 class Figure:
+    """
+    Non-blocking visualization class.
+    """
 
     server: Server
     win: vtkRenderWindow
@@ -101,6 +105,11 @@ class Figure:
         orient_widget.SetCurrentRenderer(renderer)
         orient_widget.EnabledOn()
         orient_widget.InteractiveOff()
+
+        # rendering related settings
+        vtkMapper.SetResolveCoincidentTopologyToPolygonOffset()
+        vtkMapper.SetResolveCoincidentTopologyPolygonOffsetParameters(1, 0)
+        vtkMapper.SetResolveCoincidentTopologyLineOffsetParameters(-1, 0)
 
         self.axes = axes
         self.orient_widget = orient_widget
@@ -472,6 +481,12 @@ class Figure:
         for act in actors:
             act.SetVisibility(event["visible"])
 
+        # synchronize state by hand
+        for act in self.state.actors:
+            if act["id"] == event["id"]:
+                act["visible"] = event["visible"]
+
+        self._update_state("actors")
         self.view.update()
 
     def onSelection(self, event: list[str]):
@@ -482,12 +497,18 @@ class Figure:
 def show(
     *args: Showable | vtkProp3D | list[vtkProp3D], name: Optional[str] = None, **kwargs
 ):
+    """
+    Show objects without blocking.
+    """
 
     fig = Figure()
     fig.show(*args, name=name, **kwargs)
 
 
 def clear(*args: Shape | vtkProp3D, **kwargs):
+    """
+    Clear objects from the current figure.
+    """
 
     fig = Figure()
     fig.clear(*args, **kwargs)
