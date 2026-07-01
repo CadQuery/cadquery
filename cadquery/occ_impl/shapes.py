@@ -620,7 +620,7 @@ class Shape(object):
         if isinstance(tr, str):
             rv = tr
         elif tr is BRepAdaptor_Curve:
-            rv = geom_LUT_EDGE[tr(self.wrapped).GetType()]
+            rv = geom_LUT_EDGE[tr(tcast(TopoDS_Edge, self.wrapped)).GetType()]
         else:
             rv = geom_LUT_FACE[tr(self.wrapped).GetType()]
 
@@ -6782,7 +6782,7 @@ def closest(s1: Shape, s2: Shape) -> Tuple[Vector, Vector]:
 
 
 def projectToViewpoint(
-    shape, projectionDir: tuple[float, float, float], focus: Optional[float] = None,
+    shape, projectionDir: tuple[float, float, float], focus: float | None = None,
 ) -> tuple[list[Edge], list[Edge]]:
     hlr = HLRBRep_Algo()
     hlr.Add(shape.wrapped)
@@ -6831,11 +6831,11 @@ def projectToViewpoint(
         BRepLib.BuildCurves3d_s(el, TOLERANCE)
 
     # convert to native CQ objects
-    visible = [Shape.cast(s) for s in visible]  # s is a TopoDS_Shape (Compound)
-    hidden = [Shape.cast(s) for s in hidden]
+    visible_ = [Shape.cast(s) for s in visible]  # s is a TopoDS_Shape (Compound)
+    hidden_ = [Shape.cast(s) for s in hidden]
 
     # Extract edges
-    visible_edges = [e for c in visible for e in c.Edges()]
-    hidden_edges = [e for c in hidden for e in c.Edges()]
+    visible_edges = [e for c in visible_ for e in c.Edges()]
+    hidden_edges = [e for c in hidden_ for e in c.Edges()]
 
     return visible_edges, hidden_edges
