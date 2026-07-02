@@ -22,8 +22,8 @@ from OCP.GC import GC_MakeArcOfEllipse
 from typing_extensions import Self
 
 from ...units import RAD2DEG
-from ..shapes import Face, Edge, Shape, Compound, compound
-from ..geom import Plane
+from ..shapes import Face, Edge, Shape, Compound, compound, hlr
+from ..geom import Plane, VectorLike
 
 
 ApproxOptions = Literal["spline", "arc"]
@@ -366,7 +366,7 @@ class DxfDocument:
 
 
 def exportDXF(
-    w: Union[WorkplaneLike, Shape, Iterable[Shape]],
+    w: WorkplaneLike | Shape | Iterable[Shape],
     fname: str,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
@@ -395,3 +395,38 @@ def exportDXF(
 
     zoom.extents(dxf.msp)
     dxf.document.saveas(fname)
+
+
+def exportDXFProjection(
+    w: Union[WorkplaneLike, Shape],
+    pnt: VectorLike,
+    dir: VectorLike,
+    fname: str,
+    approx: Optional[ApproxOptions] = None,
+    tolerance: float = 1e-3,
+    *,
+    doc_units: int = units.MM,
+) -> None:
+    """
+    Export Workplane or shape content to DXF using projections. Works with 3D objects.
+
+    :param w: Workplane to be exported.
+    :param pnt: Center of projection.
+    :param dir: Direction of projection.
+    :param fname: Output filename.
+    :param approx: Approximation strategy. None means no approximation is applied.
+        "spline" results in all splines being approximated as cubic splines. "arc" results
+        in all curves being approximated as arcs and straight segments.
+    :param tolerance: Approximation tolerance.
+    :param doc_units: ezdxf document/modelspace :doc:`units <ezdxf-stable:concepts/units>` (in. = ``1``, mm = ``4``).
+    """
+
+    shapes = []
+
+    if isinstance(w, WorkplaneLike):
+        for s in w.__iter__():
+            shapes.append(hlr(s, pnt, dir)[0])
+    else:
+        shapes.append(hlr(w, pnt, dir)[0])
+
+    exportDXF(shapes, fname, approx, tolerance, doc_units=doc_units)

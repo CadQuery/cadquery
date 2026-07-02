@@ -1,21 +1,16 @@
-import tempfile
-import os
-import io as StringIO
-
 from typing import IO, Optional, Union, cast, Dict, Any, Iterable
 from typing_extensions import Literal
 
 from OCP.VrmlAPI import VrmlAPI
 
-from ...utils import deprecate
 from ..shapes import Shape, compound
 from ...types import UnitLiterals
 
-from .svg import getSVG
+from .svg import getSVG, exportSVG
 from .json import JsonMesh
 from .amf import AmfWriter
 from .threemf import ThreeMFWriter
-from .dxf import exportDXF, DxfDocument
+from .dxf import exportDXF, exportDXFProjection, DxfDocument
 from .vtk import exportVTP
 
 
