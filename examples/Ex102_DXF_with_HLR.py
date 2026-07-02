@@ -34,3 +34,4 @@ drilled = baseplate.faces(">Z").workplane().cskHole(hole_dia, hole_dia * 2, 82.0
 # Expected DXF output to be identical to SVG output
 exportSVG3rdAngleProjection(drilled, "")
 exportDXF3rdAngleProjection(drilled, "")
+exportDXF3rdAngleProjection(drilled.val(), "shape_")
