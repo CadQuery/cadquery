@@ -6974,14 +6974,18 @@ def cap(s: Shape, ctx: Shape, constraints: Sequence[Shape | VectorLike] = ()) ->
 
 
 def fillet(
-    s: Shape,
-    edges: Shape,
+    s: Shell | Solid | Compound,
+    edges: Edge | Wire | Compound,
     r: float,
     history: History | None = None,
     name: str | None = None,
 ) -> Shape:
     """
     Fillet selected edges in a given shell or solid.
+
+    :param s: Shell or solid to fillet.
+    :param edges: Edge(s) to fillet; a wire is expanded to its edges.
+    :param r: Fillet radius.
     """
 
     builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
@@ -6997,14 +7001,18 @@ def fillet(
 
 
 def chamfer(
-    s: Shape,
-    edges: Shape,
+    s: Shell | Solid | Compound,
+    edges: Edge | Wire | Compound,
     d: float,
     history: History | None = None,
     name: str | None = None,
 ) -> Shape:
     """
     Chamfer selected edges in a given shell or solid.
+
+    :param s: Shell or solid to chamfer.
+    :param edges: Edge(s) to chamfer; a wire is expanded to its edges.
+    :param d: Chamfer distance.
     """
 
     builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
@@ -7148,7 +7156,7 @@ def offset(
 
 
 def offset2D(
-    s: Shape,
+    s: Edge | Wire | Compound,
     t: float,
     ctx: Shape | None = None,
     kind: Literal["arc", "intersection", "tangent"] = "arc",
@@ -7157,8 +7165,16 @@ def offset2D(
     name: str | None = None,
 ) -> Shape:
     """
-    2D offset edges or wires. ctx face might be needed for ambiguous wires/edges.
-    Only works with planar geometries.
+    2D offset edges or wires. Only works with planar geometries.
+
+    :param s: Edge(s) or wire(s) to offset.
+    :param t: Offset distance; positive offsets outward, negative inward.
+    :param ctx: Face defining the offset plane, needed when s does not
+        unambiguously define one on its own (e.g. a single open edge).
+    :param kind: Corner join style - "arc" (rounded), "intersection" (sharp)
+        or "tangent".
+    :param closed: Whether s is a closed profile (default) or an open one;
+        open profiles produce an unconnected, non-watertight offset.
     """
 
     kind_dict = {
@@ -7276,8 +7292,8 @@ _trans_mode_dict = {
 
 @multidispatch
 def sweep(
-    s: Shape,
-    path: Shape,
+    s: Edge | Wire | Face | Compound,
+    path: Wire | Edge | Compound,
     aux: Shape | None = None,
     cap: bool = False,
     transition: Literal["transformed", "round", "right"] = "transformed",
@@ -7285,8 +7301,19 @@ def sweep(
     name: str | None = None,
 ) -> Shape:
     """
-    Sweep edge, wire or face along a path. For faces cap has no effect.
-    Do not mix faces with other types.
+    Sweep an edge, wire or face along a path.
+
+    :param s: Profile to sweep. If s is a compound, all of its elements must
+        be the same kind - either all faces, or all edges/wires; a compound
+        mixing faces with edges/wires is not supported and faces take
+        precedence, silently ignoring the rest.
+    :param path: Path to sweep along.
+    :param aux: Optional guide wire controlling the orientation of the swept
+        sections along the path.
+    :param cap: Whether to cap the ends into a solid; ignored when s is a face.
+    :param transition: How consecutive sections are joined at path corners -
+        "transformed" (default, independently transformed), "round"
+        (rounded) or "right" (mitered).
     """
 
     spine = _get_one_wire(path)
@@ -7399,7 +7426,7 @@ def sweep(
 @multidispatch
 def sweep(
     s: Sequence[Shape],
-    path: Shape,
+    path: Wire | Edge | Compound,
     aux: Shape | None = None,
     cap: bool = False,
     transition: Literal["transformed", "round", "right"] = "transformed",
@@ -7407,8 +7434,18 @@ def sweep(
     name: str | None = None,
 ) -> Shape:
     """
-    Sweep edges, wires or faces along a path, multiple sections are supported.
-    For faces cap has no effect. Do not mix faces with other types.
+    Sweep multiple cross-sections along a path, one lofted section per shape in s.
+
+    :param s: Cross-sections to sweep and loft between, in order along the
+        path. Every section must be the same kind - either all faces, or all
+        edges/wires throughout.
+    :param path: Path to sweep along.
+    :param aux: Optional guide wire controlling the orientation of the swept
+        sections along the path.
+    :param cap: Whether to cap the ends into a solid; ignored when s holds faces.
+    :param transition: How consecutive sections are joined at path corners -
+        "transformed" (default, independently transformed), "round"
+        (rounded) or "right" (mitered).
     """
 
     spine = _get_one_wire(path)
@@ -7739,7 +7776,7 @@ _offset_kind_dict = {
 
 @multidispatch
 def hollow(
-    s: Shape,
+    s: Solid | Compound,
     faces: Shape | None,
     t: float,
     tol: float = 1e-3,
@@ -7749,6 +7786,13 @@ def hollow(
 ):
     """
     Make a hollow solid by removing faces and applying thickness t.
+
+    :param s: Solid to hollow out.
+    :param faces: Face(s) of s to remove, opening up the hollowed solid;
+        if None a fully closed, watertight shell is built instead.
+    :param t: Wall thickness; positive extends outward, negative inward.
+    :param tol: Numerical tolerance for the offset algorithm.
+    :param kind: Corner join style - "arc" (rounded) or "intersection" (sharp).
     """
 
     bldr = BRepOffsetAPI_MakeThickSolid()
@@ -7789,13 +7833,21 @@ def hollow(
 
 @multidispatch
 def hollow(
-    s: Shape,
+    s: Solid | Compound,
     t: float,
     tol: float = 1e-3,
     kind: Literal["arc", "intersection"] = "intersection",
     history: History | None = None,
     name: str | None = None,
 ) -> Solid:
+    """
+    Make a fully closed, watertight hollow solid by applying thickness t.
+
+    :param s: Solid to hollow out.
+    :param t: Wall thickness; positive extends outward, negative inward.
+    :param tol: Numerical tolerance for the offset algorithm.
+    :param kind: Corner join style - "arc" (rounded) or "intersection" (sharp).
+    """
 
     return hollow(s, None, t, tol, kind, history, name)
 
@@ -7838,9 +7890,9 @@ def _update_prism_history(
 
 @multidispatch
 def prism(
-    ctx: Shape,
-    base: Shape | None,
-    faces: Shape,
+    ctx: Solid | Compound,
+    base: Face | Compound | None,
+    faces: Edge | Wire | Face | Compound,
     t: Real | Shape | tuple[Shape, Shape] | None,
     angle: Real = 0.0,
     additive: bool = True,
@@ -7849,6 +7901,18 @@ def prism(
 ) -> Shape:
     """
     Build a drafted prismatic feature that can be additive or subtractive.
+
+    :param ctx: Solid to add the feature to or cut it from.
+    :param base: Face defining the base of the feature; if None it is
+        inferred automatically.
+    :param faces: Face(s) (or edge/wire, converted to a face) defining the
+        profile of the feature.
+    :param t: Extent of the feature - a fixed distance, a face to extrude up
+        to, a (from, to) pair of bounding faces, or None to extrude through
+        the whole solid.
+    :param angle: Draft/taper angle of the feature's walls, in degrees;
+        0 (default) gives straight walls normal to the profile.
+    :param additive: True to fuse the feature onto ctx, False to cut it out.
     """
 
     builders = []
@@ -7897,9 +7961,9 @@ def prism(
 
 @multidispatch
 def prism(
-    ctx: Shape,
-    base: Shape | None,
-    faces: Shape,
+    ctx: Solid | Compound,
+    base: Face | Compound | None,
+    faces: Edge | Wire | Face | Compound,
     t: Real | Shape | tuple[Shape, Shape] | None,
     dir: VectorLike,
     additive: bool = True,
@@ -7908,6 +7972,17 @@ def prism(
 ) -> Shape:
     """
     Build a (potentially tilted) prismatic feature that can be additive or subtractive.
+
+    :param ctx: Solid to add the feature to or cut it from.
+    :param base: Face defining the base of the feature; if None it is
+        inferred automatically.
+    :param faces: Face(s) (or edge/wire, converted to a face) defining the
+        profile of the feature.
+    :param t: Extent of the feature - a fixed distance, a face to extrude up
+        to, a (from, to) pair of bounding faces, or None to extrude through
+        the whole solid.
+    :param dir: Explicit extrusion direction, overriding the profile's normal.
+    :param additive: True to fuse the feature onto ctx, False to cut it out.
     """
 
     builders = []
@@ -7943,15 +8018,21 @@ def prism(
 
 @multidispatch
 def draft(
-    ctx: Shape,
-    base: Shape,
-    faces: Shape,
+    ctx: Solid | Compound,
+    base: Face | Compound,
+    faces: Edge | Wire | Face | Compound,
     angle: Real,
     history: History | None = None,
     name: str | None = None,
 ) -> Shape:
     """
     Add a draft angle to the specified faces.
+
+    :param ctx: Solid to draft.
+    :param base: Face whose plane is the neutral plane of the draft; the
+        pull direction is inferred from its normal.
+    :param faces: Face(s) (or edge/wire, converted to a face) to draft.
+    :param angle: Draft angle, in degrees.
     """
 
     base_face = base.face()
@@ -7975,9 +8056,9 @@ def draft(
 
 @multidispatch
 def draft(
-    ctx: Shape,
-    base: Shape,
-    faces: Shape,
+    ctx: Solid | Compound,
+    base: Face | Compound,
+    faces: Edge | Wire | Face | Compound,
     dir: VectorLike,
     angle: Real,
     history: History | None = None,
@@ -7985,6 +8066,12 @@ def draft(
 ) -> Shape:
     """
     Add a draft angle to the specified faces.
+
+    :param ctx: Solid to draft.
+    :param base: Face whose plane is the neutral plane of the draft.
+    :param faces: Face(s) (or edge/wire, converted to a face) to draft.
+    :param dir: Explicit pull direction, overriding the base face's normal.
+    :param angle: Draft angle, in degrees.
     """
 
     base_face = base.face()

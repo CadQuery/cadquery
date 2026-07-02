@@ -899,6 +899,42 @@ def test_draft(box_shape):
         draft(s, s.face("<Z"), s.face(">>Z[-2]"), (0, 0, 1), 5)
 
 
+def test_multidispatch_accepts_compound(box_shape):
+    """
+    hollow/prism/draft/sweep are @multidispatch and route by isinstance-checking
+    arguments against the declared parameter types, so a Compound wrapping a
+    single shape (e.g. the result of a boolean op or an importer) must be
+    accepted wherever the plain shape kind is, not just at the top level.
+    """
+
+    c = compound(box_shape)
+
+    # hollow
+    res_hollow = hollow(c, -0.1)
+    assert res_hollow.isValid()
+    assert res_hollow.faces().size() == 2 * box_shape.faces().size()
+
+    # prism
+    ftop = box_shape.faces(">Z")
+    circ = circle(0.2).moved(ftop)
+
+    res_prism = prism(c, ftop, circ, 0.1, (0, 0, 1))
+    assert res_prism.isValid()
+    assert res_prism.Volume() > box_shape.Volume()
+
+    # draft
+    fbot = box_shape.face("<Z")
+    fside = box_shape.face("|X or |Y")
+
+    res_draft = draft(c, fbot, fside, 5)
+    assert res_draft.face(">Z").Area() > fbot.Area()
+
+    # sweep
+    res_sweep = sweep(compound(rect(1, 1)), compound(circle(1)))
+    assert res_sweep.isValid()
+    assert res_sweep.faces().size() == 4
+
+
 def test_clean():
 
     b1 = box(1, 1, 1)
