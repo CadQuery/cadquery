@@ -260,6 +260,8 @@ from OCP.BOPAlgo import (
     BOPAlgo_FUSE,
     BOPAlgo_CUT,
     BOPAlgo_COMMON,
+    BOPAlgo_MakerVolume,
+    BOPAlgo_Splitter,
 )
 
 from OCP.IFSelect import IFSelect_ReturnStatus
@@ -6031,10 +6033,39 @@ def split(s1: Shape, s2: Shape, tol: float = 0.0) -> Shape:
     Split one shape with another.
     """
 
-    builder = BRepAlgoAPI_Splitter()
-    _bool_op(s1, s2, builder, tol)
+    builder = BOPAlgo_Splitter()
+    _set_builder_options(builder, tol)
+
+    builder.AddArgument(s1.wrapped)
+    builder.AddTool(s2.wrapped)
+
+    builder.Perform()
 
     return _compound_or_shape(builder.Shape())
+
+
+def enclose(
+    *shapes: Shape,
+    tol: float = 0.0,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
+    """
+    Build a solid enclosed by the specified faces. Faces can intersect or touch.
+    If all faces are touching, solid() has better performance.
+    """
+
+    builder = BOPAlgo_MakerVolume()
+    _set_builder_options(builder, tol)
+
+    for s in shapes:
+        builder.AddArgument(s.wrapped)
+
+    builder.Perform()
+
+    _update_history(history, name, shapes, builder)
+
+    return Shape.cast(builder.Shape())
 
 
 def imprint(
