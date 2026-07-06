@@ -12,6 +12,7 @@ from typing import (
     TypeVar,
     cast as tcast,
     overload,
+    Type,
 )
 
 from io import BytesIO
@@ -266,6 +267,8 @@ from OCP.BOPAlgo import (
     BOPAlgo_FUSE,
     BOPAlgo_CUT,
     BOPAlgo_COMMON,
+    BOPAlgo_MakerVolume,
+    BOPAlgo_Splitter,
 )
 
 from OCP.IFSelect import IFSelect_ReturnStatus
@@ -5090,17 +5093,61 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> list[Wire]:
 
 # %% utilities
 
+_cq_shape_LUT = {
+    Vertex: "Vertex",
+    Edge: "Edge",
+    Wire: "Wire",
+    Face: "Face",
+    Shell: "Shell",
+    Solid: "Solid",
+    CompSolid: "CompSolid",
+    Compound: "Compound",
+}
 
-def _get(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Iterable[Shape]:
+
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+T3 = TypeVar("T3")
+T4 = TypeVar("T4")
+
+
+@overload
+def _get(obj: Shape, ts: Type[T1]) -> Iterable[T1]:
+    ...
+
+
+@overload
+def _get(obj: Shape, ts: tuple[Type[T1]]) -> Iterable[T1]:
+    ...
+
+
+@overload
+def _get(obj: Shape, ts: tuple[Type[T1], Type[T2]]) -> Iterable[T1 | T2]:
+    ...
+
+
+@overload
+def _get(obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> Iterable[T1 | T2 | T3]:
+    ...
+
+
+@overload
+def _get(
+    obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
+) -> Iterable[T1 | T2 | T3 | T4]:
+    ...
+
+
+def _get(s, ts):
     """
     Get desired shapes or raise an error.
     """
 
     # convert input into tuple
     if isinstance(ts, tuple):
-        types = ts
+        types = tuple(_cq_shape_LUT[t] for t in ts)
     else:
-        types = (ts,)
+        types = (_cq_shape_LUT[ts],)
 
     # validate the underlying shape, compounds are unpacked
     t = s.ShapeType()
@@ -5109,7 +5156,7 @@ def _get(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Iterable[Shape]:
         yield s
     elif t == "Compound":
         for el in s:
-            if el.ShapeType() in ts:
+            if el.ShapeType() in types:
                 yield el
             else:
                 raise ValueError(
@@ -5119,16 +5166,43 @@ def _get(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Iterable[Shape]:
         raise ValueError(f"Required type(s): {types}; encountered {t}")
 
 
-def _get_one(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Shape:
+@overload
+def _get_one(obj: Shape, ts: Type[T1]) -> T1:
+    ...
+
+
+@overload
+def _get_one(obj: Shape, ts: tuple[Type[T1]]) -> T1:
+    ...
+
+
+@overload
+def _get_one(obj: Shape, ts: tuple[Type[T1], Type[T2]]) -> T1 | T2:
+    ...
+
+
+@overload
+def _get_one(obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> T1 | T2 | T3:
+    ...
+
+
+@overload
+def _get_one(
+    obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
+) -> T1 | T2 | T3 | T4:
+    ...
+
+
+def _get_one(s, ts):
     """
     Get one shape or raise an error.
     """
 
     # convert input into tuple
     if isinstance(ts, tuple):
-        types = ts
+        types = tuple(_cq_shape_LUT[t] for t in ts)
     else:
-        types = (ts,)
+        types = (_cq_shape_LUT[ts],)
 
     # validate the underlying shape, compounds are unpacked
     t = s.ShapeType()
@@ -5137,7 +5211,7 @@ def _get_one(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Shape:
         rv = s
     elif t == "Compound":
         for el in s:
-            if el.ShapeType() in ts:
+            if el.ShapeType() in types:
                 rv = el
                 break
             else:
@@ -5155,7 +5229,7 @@ def _get_one_wire(s: Shape) -> Wire:
     Get one wire or edge and convert to wire.
     """
 
-    rv = _get_one(s, ("Wire", "Edge"))
+    rv = _get_one(s, (Wire, Edge))
 
     if isinstance(rv, Wire):
         return rv
@@ -5163,7 +5237,7 @@ def _get_one_wire(s: Shape) -> Wire:
         return Wire.assembleEdges((rv,))
 
 
-def _get_wires(s: Shape) -> Iterable[Shape]:
+def _get_wires(s: Shape) -> Iterable[Wire]:
     """
     Get wires or wires from edges.
     """
@@ -5171,7 +5245,7 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
     t = s.ShapeType()
 
     if t == "Wire":
-        yield s
+        yield tcast(Wire, s)
     elif t == "Edge":
         yield Wire.assembleEdges((tcast(Edge, s),))
     elif t == "Compound":
@@ -5929,7 +6003,7 @@ def edgeOn(
     Build an edge on a face from points in (u,v) space.
     """
 
-    f = _get_one(base, "Face")
+    f = _get_one(base, Face)
 
     # interpolate the u,v points
     spline_bldr = Geom2dAPI_Interpolate(_pts_to_harray2D(pts), periodic, tol)
@@ -5950,7 +6024,7 @@ def edgeOn(
     Map one or more edges onto a base face in the u,v space.
     """
 
-    f = _get_one(fbase, "Face")
+    f = _get_one(fbase, Face)
 
     rvs: list[TopoDS_Shape] = []
 
@@ -6112,7 +6186,7 @@ def face(*s: Shape) -> Face:
     if not status:
         raise ValueError("Face construction failed")
 
-    return _get_one(_compound_or_shape(rv), "Face")
+    return _get_one(_compound_or_shape(rv), Face)
 
 
 @multidispatch
@@ -6133,7 +6207,7 @@ def faceOn(base: Shape, *fcs: Shape, tol: float = 1e-6, N: int = 20) -> Face | C
     rvs = []
 
     # get a face
-    fbase = _get_one(base, "Face")
+    fbase = _get_one(base, Face)
 
     # iterate over all faces
     for el in fcs:
@@ -6195,7 +6269,7 @@ def shell(
     faces: list[Face] = []
 
     for el in s:
-        for f in _get(el, "Face"):
+        for f in _get(el, Face):
             builder.Add(f.wrapped)
             faces.append(f)
 
@@ -6265,7 +6339,7 @@ def solid(
 
     # get both Shells and Faces
     s = [s1, *sn]
-    shells_faces = [f for el in s for f in _get(el, ("Shell", "Face"))]
+    shells_faces = [f for el in s for f in _get(el, (Shell, Face))]
 
     # if no shells are present, use faces to construct them
     shells = [el.wrapped for el in shells_faces if isinstance(el, Shell)]
@@ -6295,14 +6369,12 @@ def solid(
     """
 
     builder = BRepBuilderAPI_MakeSolid()
-    builder.Add(
-        _get_one(shell(*s, tol=tol, history=history, name=name), "Shell").wrapped
-    )
+    builder.Add(_get_one(shell(*s, tol=tol, history=history, name=name), Shell).wrapped)
 
     n_inner = 0
 
     if inner:
-        for sh in _get(shell(*inner, tol=tol, history=history), "Shell"):
+        for sh in _get(shell(*inner, tol=tol, history=history), Shell):
             builder.Add(sh.wrapped)
 
     # fix orientations
@@ -6711,7 +6783,7 @@ def text(
     Create a text on a spine and a base surface.
     """
 
-    base = _get_one(base, "Face")
+    base = _get_one(base, Face)
 
     tmp = text(txt, size, spine, False, font, path, kind, halign, valign)
 
@@ -6879,8 +6951,13 @@ def split(
     Split one shape with another.
     """
 
-    builder = BRepAlgoAPI_Splitter()
-    _bool_op(s1, s2, builder, tol)
+    builder = BOPAlgo_Splitter()
+    _set_builder_options(builder, tol)
+
+    builder.AddArgument(s1.wrapped)
+    builder.AddTool(s2.wrapped)
+
+    builder.Perform()
 
     _update_history(history, name, [s1, s2], builder)
 
@@ -6958,7 +7035,7 @@ def cap(s: Shape, ctx: Shape, constraints: Sequence[Shape | VectorLike] = ()) ->
     builder.SetResolParam(2, 15, 5)
 
     for e in _get_edges(s):
-        f = _get_one(e.ancestors(ctx, "Face"), "Face")
+        f = _get_one(e.ancestors(ctx, "Face"), Face)
         builder.Add(e.wrapped, f.wrapped, GeomAbs_Shape.GeomAbs_G1, True)
 
     for c in constraints:
@@ -6984,7 +7061,7 @@ def fillet(
     Fillet selected edges in a given shell or solid.
     """
 
-    builder = BRepFilletAPI_MakeFillet(_get_one(s, ("Shell", "Solid")).wrapped,)
+    builder = BRepFilletAPI_MakeFillet(_get_one(s, (Shell, Solid)).wrapped,)
 
     for el in _get_edges(edges.edges()):
         builder.Add(r, el.wrapped)
@@ -7007,7 +7084,7 @@ def chamfer(
     Chamfer selected edges in a given shell or solid.
     """
 
-    builder = BRepFilletAPI_MakeChamfer(_get_one(s, ("Shell", "Solid")).wrapped,)
+    builder = BRepFilletAPI_MakeChamfer(_get_one(s, (Shell, Solid)).wrapped,)
 
     for el in _get_edges(edges.edges()):
         builder.Add(d, el.wrapped)
@@ -7033,7 +7110,7 @@ def extrude(
     results = []
     builders = []
 
-    for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
+    for el in _get(s, (Vertex, Edge, Wire, Face)):
 
         if both:
             builder = BRepPrimAPI_MakePrism(
@@ -7069,7 +7146,7 @@ def revolve(
 
     ax = gp_Ax1(Vector(p).toPnt(), Vector(d).toDir())
 
-    for el in _get(s, ("Vertex", "Edge", "Wire", "Face")):
+    for el in _get(s, (Vertex, Edge, Wire, Face)):
 
         builder = BRepPrimAPI_MakeRevol(el.wrapped, ax, radians(a))
         builder.Build()
@@ -7100,7 +7177,7 @@ def offset(
         results = []
         builders = []
 
-        for el in _get(s, ("Face", "Shell")):
+        for el in _get(s, (Face, Shell)):
 
             builder = BRepOffset_MakeOffset()
             builders.append(builder)
@@ -7169,7 +7246,7 @@ def offset2D(
 
     if ctx:
         # build a dummy face based on the geometry of the ctx face.
-        fbldr = BRepBuilderAPI_MakeFace(_get_one(ctx, "Face")._geomAdaptor(), 1e-6)
+        fbldr = BRepBuilderAPI_MakeFace(_get_one(ctx, Face)._geomAdaptor(), 1e-6)
 
         for el in _get_wires(s):
             fbldr.Add(el.wrapped)
@@ -7204,7 +7281,7 @@ def chamfer2D(
     Apply a 2D chamfer to a planar face.
     """
 
-    f = _get_one(s, "Face")
+    f = _get_one(s, Face)
     vertices = verts.Vertices()
 
     bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
@@ -7246,7 +7323,7 @@ def fillet2D(
     Apply a 2D fillet to a planar face.
     """
 
-    f = _get_one(s, "Face")
+    f = _get_one(s, Face)
     vertices = verts.Vertices()
 
     bldr = BRepFilletAPI_MakeFillet2d(tcast(TopoDS_Face, f.wrapped))
