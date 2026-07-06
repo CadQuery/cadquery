@@ -5097,6 +5097,11 @@ def _get(s: Shape, ts: Literal["Face"]) -> Iterable[Face]:
 
 
 @overload
+def _get(s: Shape, ts: Literal["Shell"]) -> Iterable[Shell]:
+    ...
+
+
+@overload
 def _get(
     s: Shape, ts: tuple[Literal["Shell"], Literal["Face"]]
 ) -> Iterable[Shell | Face]:
@@ -5212,7 +5217,7 @@ def _get_one_wire(s: Shape) -> Wire:
         return Wire.assembleEdges((rv,))
 
 
-def _get_wires(s: Shape) -> Iterable[Shape]:
+def _get_wires(s: Shape) -> Iterable[Wire]:
     """
     Get wires or wires from edges.
     """
@@ -5220,7 +5225,7 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
     t = s.ShapeType()
 
     if t == "Wire":
-        yield s
+        yield tcast(Wire, s)
     elif t == "Edge":
         yield Wire.assembleEdges((tcast(Edge, s),))
     elif t == "Compound":
