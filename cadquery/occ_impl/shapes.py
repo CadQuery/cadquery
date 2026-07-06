@@ -5091,6 +5091,33 @@ def edgesToWires(edges: Iterable[Edge], tol: float = 1e-6) -> list[Wire]:
 # %% utilities
 
 
+@overload
+def _get(s: Shape, ts: Literal["Face"]) -> Iterable[Face]:
+    ...
+
+
+@overload
+def _get(
+    s: Shape, ts: tuple[Literal["Shell"], Literal["Face"]]
+) -> Iterable[Shell | Face]:
+    ...
+
+
+@overload
+def _get(
+    s: Shape, ts: tuple[Literal["Face"], Literal["Shell"]]
+) -> Iterable[Face | Shell]:
+    ...
+
+
+@overload
+def _get(
+    s: Shape,
+    ts: tuple[Literal["Vertex"], Literal["Edge"], Literal["Wire"], Literal["Face"]],
+) -> Iterable[Vertex | Edge | Wire | Face]:
+    ...
+
+
 def _get(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Iterable[Shape]:
     """
     Get desired shapes or raise an error.
@@ -5117,6 +5144,28 @@ def _get(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Iterable[Shape]:
                 )
     else:
         raise ValueError(f"Required type(s): {types}; encountered {t}")
+
+
+@overload
+def _get_one(s: Shape, ts: Literal["Face"]) -> Face:
+    ...
+
+
+@overload
+def _get_one(s: Shape, ts: Literal["Shell"]) -> Shell:
+    ...
+
+
+@overload
+def _get_one(s: Shape, ts: tuple[Literal["Wire"], Literal["Edge"]]) -> Wire | Edge:
+    ...
+
+
+@overload
+def _get_one(
+    s: Shape, ts: tuple[Literal["Shell"], Literal["Solid"]]
+) -> Shell | Solid:
+    ...
 
 
 def _get_one(s: Shape, ts: Shapes | tuple[Shapes, ...]) -> Shape:
@@ -6974,8 +7023,8 @@ def cap(s: Shape, ctx: Shape, constraints: Sequence[Shape | VectorLike] = ()) ->
 
 
 def fillet(
-    s: Shell | Solid | Compound,
-    edges: Edge | Wire | Compound,
+    s: Shape,
+    edges: Shape,
     r: float,
     history: History | None = None,
     name: str | None = None,
@@ -7001,8 +7050,8 @@ def fillet(
 
 
 def chamfer(
-    s: Shell | Solid | Compound,
-    edges: Edge | Wire | Compound,
+    s: Shape,
+    edges: Shape,
     d: float,
     history: History | None = None,
     name: str | None = None,
@@ -7156,7 +7205,7 @@ def offset(
 
 
 def offset2D(
-    s: Edge | Wire | Compound,
+    s: Shape,
     t: float,
     ctx: Shape | None = None,
     kind: Literal["arc", "intersection", "tangent"] = "arc",
@@ -7292,8 +7341,8 @@ _trans_mode_dict = {
 
 @multidispatch
 def sweep(
-    s: Edge | Wire | Face | Compound,
-    path: Wire | Edge | Compound,
+    s: Shape,
+    path: Shape,
     aux: Shape | None = None,
     cap: bool = False,
     transition: Literal["transformed", "round", "right"] = "transformed",
@@ -7426,7 +7475,7 @@ def sweep(
 @multidispatch
 def sweep(
     s: Sequence[Shape],
-    path: Wire | Edge | Compound,
+    path: Shape,
     aux: Shape | None = None,
     cap: bool = False,
     transition: Literal["transformed", "round", "right"] = "transformed",
@@ -7776,7 +7825,7 @@ _offset_kind_dict = {
 
 @multidispatch
 def hollow(
-    s: Solid | Compound,
+    s: Shape,
     faces: Shape | None,
     t: float,
     tol: float = 1e-3,
@@ -7833,7 +7882,7 @@ def hollow(
 
 @multidispatch
 def hollow(
-    s: Solid | Compound,
+    s: Shape,
     t: float,
     tol: float = 1e-3,
     kind: Literal["arc", "intersection"] = "intersection",
@@ -7890,9 +7939,9 @@ def _update_prism_history(
 
 @multidispatch
 def prism(
-    ctx: Solid | Compound,
-    base: Face | Compound | None,
-    faces: Edge | Wire | Face | Compound,
+    ctx: Shape,
+    base: Shape | None,
+    faces: Shape,
     t: Real | Shape | tuple[Shape, Shape] | None,
     angle: Real = 0.0,
     additive: bool = True,
@@ -7961,9 +8010,9 @@ def prism(
 
 @multidispatch
 def prism(
-    ctx: Solid | Compound,
-    base: Face | Compound | None,
-    faces: Edge | Wire | Face | Compound,
+    ctx: Shape,
+    base: Shape | None,
+    faces: Shape,
     t: Real | Shape | tuple[Shape, Shape] | None,
     dir: VectorLike,
     additive: bool = True,
@@ -8018,9 +8067,9 @@ def prism(
 
 @multidispatch
 def draft(
-    ctx: Solid | Compound,
-    base: Face | Compound,
-    faces: Edge | Wire | Face | Compound,
+    ctx: Shape,
+    base: Shape,
+    faces: Shape,
     angle: Real,
     history: History | None = None,
     name: str | None = None,
@@ -8056,9 +8105,9 @@ def draft(
 
 @multidispatch
 def draft(
-    ctx: Solid | Compound,
-    base: Face | Compound,
-    faces: Edge | Wire | Face | Compound,
+    ctx: Shape,
+    base: Shape,
+    faces: Shape,
     dir: VectorLike,
     angle: Real,
     history: History | None = None,
