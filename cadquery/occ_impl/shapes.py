@@ -200,7 +200,7 @@ from OCP.TopTools import (
 
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
 
-from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
+from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs, STEPControl_Reader
 
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.StlAPI import StlAPI_Writer
@@ -268,7 +268,7 @@ from OCP.BOPAlgo import (
     BOPAlgo_COMMON,
 )
 
-from OCP.IFSelect import IFSelect_ReturnStatus
+from OCP.IFSelect import IFSelect_ReturnStatus, IFSelect_RetDone
 
 from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 
@@ -604,6 +604,34 @@ class Shape(object):
         BinTools.Read_s(s, f)
 
         return cls.cast(s)
+
+    @classmethod
+    def importStep(cls, fileName: str, unit: UnitLiterals = "MM") -> Shape:
+        """
+        Import shape from a STEP file.
+
+        :param fileName: Path to the STEP file to import.
+        :param unit: Sets the target OpenCASCADE unit - OCCT scales from the file's
+            declared unit to this unit. Default "MM".
+        :type unit: UnitLiterals
+        """
+
+        # Set the target cascade unit - OCCT scales from the file's declared unit to this unit
+        Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
+
+        reader = STEPControl_Reader()
+        if reader.ReadFile(fileName) != IFSelect_RetDone:
+            raise ValueError(f"Could not import {fileName}")
+
+        for i in range(reader.NbRootsForTransfer()):
+            reader.TransferRoot(i + 1)
+
+        shapes = [cls.cast(reader.Shape(i + 1)) for i in range(reader.NbShapes())]
+
+        if not shapes:
+            raise ValueError(f"No shape found in {fileName}")
+
+        return shapes[0] if len(shapes) == 1 else Compound.makeCompound(shapes)
 
     def geomType(self) -> Geoms:
         """
