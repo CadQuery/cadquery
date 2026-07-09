@@ -224,6 +224,7 @@ from OCP.Font import (
     Font_FA_Italic,
     Font_FA_Bold,
     Font_SystemFont,
+    Font_StrictLevel_Aliases,
 )
 
 from OCP.StdPrs import StdPrs_BRepFont, StdPrs_BRepTextBuilder as Font_BRepTextBuilder
@@ -4864,7 +4865,11 @@ class Compound(Shape, Mixin3D):
             mgr.RegisterFont(font_t, True)
 
         else:
-            font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+            font_t = mgr.FindFont(
+                TCollection_AsciiString(font), Font_StrictLevel_Aliases, font_kind
+            )
+            if font_t is None:
+                raise ValueError(f"Font '{font}' not found")
 
         builder = Font_BRepTextBuilder()
         font_i = StdPrs_BRepFont(
@@ -6635,7 +6640,11 @@ def text(
         mgr.RegisterFont(font_t, True)
 
     else:
-        font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+        font_t = mgr.FindFont(
+            TCollection_AsciiString(font), Font_StrictLevel_Aliases, font_kind
+        )
+        if font_t is None:
+            raise ValueError(f"Font '{font}' not found")
 
     font_i = StdPrs_BRepFont(
         NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, float(size),
