@@ -6915,7 +6915,7 @@ def enclose(
 
     _update_history(history, name, shapes, builder)
 
-    return Shape.cast(builder.Shape())
+    return _compound_or_shape(builder.Shape())
 
 
 def imprint(

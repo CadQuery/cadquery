@@ -67,6 +67,7 @@ from cadquery.occ_impl.shapes import (
     _get_faces,
     _combine_hist_dict,
     enclose,
+    split,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -593,6 +594,17 @@ def test_operators():
     assert len(intersect(b1, b3, tol=1e-3).Faces()) == 6
 
 
+def test_split():
+
+    c = cylinder(2, 10)
+    p = plane(2, 2).moved(z=1)
+
+    res = split(c, p)
+
+    assert res.isValid()
+    assert res.solids().size() == 2
+
+
 def test_enclose():
 
     c = cylinder(2, 10).face("%CYLINDER")
@@ -604,6 +616,11 @@ def test_enclose():
     assert res.isValid()
     assert res.ShapeType() == "Solid"
     assert res.Volume() == approx(pi)
+
+    res = enclose(c, p1)
+
+    assert isinstance(res, Compound)
+    assert res.size() == 0
 
 
 def test_imprint():
