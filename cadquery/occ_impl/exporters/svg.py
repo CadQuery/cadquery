@@ -1,6 +1,6 @@
 import io as StringIO
 
-from ..shapes import Shape, Compound, Edge
+from ..shapes import Compound, Edge
 from ..geom import BoundBox
 from ..shapes import hlr
 
@@ -135,8 +135,10 @@ def getSVG(shape, opts=None):
         marginLeft: Inset margin from the left side of the document.
         marginTop: Inset margin from the top side of the document.
         projectionDir: Direction the camera will view the shape from.
+        up: Direction that should appear upward in the projected output. None
+            preserves OCCT's default in-plane orientation.
         showAxes: Whether or not to show the axes indicator, which will only be
-                  visible when the projectionDir is also at the default.
+                  visible when projectionDir and up are also at the defaults.
         strokeWidth: Width of the line that visible edges are drawn with.
         strokeColor: Color of the line that visible edges are drawn with.
         hiddenColor: Color of the line that hidden edges are drawn with.
@@ -152,6 +154,7 @@ def getSVG(shape, opts=None):
         "marginLeft": 200,
         "marginTop": 20,
         "projectionDir": (-1.75, 1.1, 5),
+        "up": None,
         "showAxes": True,
         "strokeWidth": -1.0,  # -1 = calculated based on unitScale
         "strokeColor": (0, 0, 0),  # RGB 0-255
@@ -176,6 +179,7 @@ def getSVG(shape, opts=None):
     marginLeft = float(d["marginLeft"])
     marginTop = float(d["marginTop"])
     projectionDir = tuple(d["projectionDir"])
+    up = d["up"]
     showAxes = bool(d["showAxes"])
     strokeWidth = float(d["strokeWidth"])
     strokeColor = tuple(d["strokeColor"])
@@ -183,7 +187,9 @@ def getSVG(shape, opts=None):
     showHidden = bool(d["showHidden"])
     focus = float(d["focus"]) if d.get("focus") else None
 
-    visibleEdges, hiddenEdges = hlr(shape, (0, 0, 0), projectionDir, focus)
+    hlr_result = hlr(shape, projectionDir, up=up, focus=focus)
+    visibleEdges = hlr_result.visible
+    hiddenEdges = hlr_result.hidden
     hiddenPaths, visiblePaths = getPaths(visibleEdges, hiddenEdges)
 
     # get bounding box -- these are all in 2D space
@@ -229,7 +235,7 @@ def getSVG(shape, opts=None):
         visibleContent += PATHTEMPLATE % p
 
     # If the caller wants the axes indicator and is using the default direction, add in the indicator
-    if showAxes and projectionDir == (-1.75, 1.1, 5):
+    if showAxes and projectionDir == (-1.75, 1.1, 5) and up is None:
         axesIndicator = AXES_TEMPLATE % (
             {"unitScale": str(unitScale), "textboxY": str(height - 30), "uom": str(uom)}
         )

@@ -1,5 +1,6 @@
 """DXF export utilities."""
 
+from os import PathLike
 from typing import (
     Any,
     Dict,
@@ -398,22 +399,25 @@ def exportDXF(
 
 
 def exportDXFProjection(
-    w: Union[WorkplaneLike, Shape],
-    pnt: VectorLike,
+    s: Union[WorkplaneLike, Shape],
+    path: PathLike | str,
     dir: VectorLike,
-    fname: str,
+    pnt: VectorLike = (0, 0, 0),
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
     *,
+    up: Optional[VectorLike] = None,
     doc_units: int = units.MM,
 ) -> None:
     """
-    Export Workplane or shape content to DXF using projections. Works with 3D objects.
+    Export to DXF using projections. Works with 3D objects.
 
-    :param w: Workplane to be exported.
-    :param pnt: Center of projection.
+    :param s: Shape or Workplane to be exported.
+    :param path: Output file path.
     :param dir: Direction of projection.
-    :param fname: Output filename.
+    :param pnt: Origin of the projection plane.
+    :param up: Direction that should appear upward in the projected output. None
+        preserves OCCT's default in-plane orientation.
     :param approx: Approximation strategy. None means no approximation is applied.
         "spline" results in all splines being approximated as cubic splines. "arc" results
         in all curves being approximated as arcs and straight segments.
@@ -423,10 +427,10 @@ def exportDXFProjection(
 
     shapes = []
 
-    if isinstance(w, WorkplaneLike):
-        for s in w.__iter__():
-            shapes.append(hlr(s, pnt, dir)[0])
+    if isinstance(s, WorkplaneLike):
+        for s in s.__iter__():
+            shapes.append(hlr(s, dir, pnt, up=up).visible)
     else:
-        shapes.append(hlr(w, pnt, dir)[0])
+        shapes.append(hlr(s, dir, pnt, up=up).visible)
 
-    exportDXF(shapes, fname, approx, tolerance, doc_units=doc_units)
+    exportDXF(shapes, str(path), approx, tolerance, doc_units=doc_units)
