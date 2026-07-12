@@ -59,6 +59,7 @@ from .occ_impl.shapes import (
     chamfer2D,
     draft,
     History,
+    HLRResult,
     hlr,
 )
 
@@ -125,5 +126,6 @@ __all__ = [
     "fillet2D",
     "draft",
     "History",
+    "HLRResult",
     "hlr",
 ]
