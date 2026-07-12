@@ -56,10 +56,6 @@ jobs:
       - name: Check out code for the container builds
         uses: actions/checkout@v6
 
-      - name: Authenticate
-        run: |
-           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin 
-
       - name: Build Container
         run: |
           docker build -t ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME} -f images/dockerfile .
@@ -71,5 +67,5 @@ jobs:
       - name: Deploy to GHCR
         if: contains(env.BRANCH_NAME, 'master')
         run: |
+           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin 
            docker push ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME}
-
