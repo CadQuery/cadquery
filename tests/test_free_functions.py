@@ -504,6 +504,14 @@ def test_spline_params():
     assert p1.toTuple() == approx((0, 1, 0))
 
 
+def test_text_missing_font():
+
+    # a font that cannot be resolved should raise instead of silently
+    # falling back to a default font
+    with raises(ValueError):
+        text("CQ", 10, font="NonexistentFontXYZ123")
+
+
 def test_text():
 
     r1 = text("CQ", 10)
