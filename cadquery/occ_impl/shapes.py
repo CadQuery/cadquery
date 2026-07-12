@@ -85,12 +85,14 @@ from OCP.BRepAdaptor import (
 )
 
 from OCP.BRepBuilderAPI import (
+    BRepBuilderAPI_Command,
     BRepBuilderAPI_MakeShape,
     BRepBuilderAPI_MakeVertex,
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,
     BRepBuilderAPI_MakePolygon,
     BRepBuilderAPI_MakeWire,
+    BRepBuilderAPI_WireError,
     BRepBuilderAPI_Sewing,
     BRepBuilderAPI_Copy,
     BRepBuilderAPI_GTransform,
@@ -280,6 +282,7 @@ from OCP.ShapeAnalysis import (
     ShapeAnalysis_Wire,
     ShapeAnalysis_Surface,
     ShapeAnalysis,
+    ShapeAnalysis_WireOrder,
 )
 from OCP.TopTools import TopTools_HSequenceOfShape
 
@@ -2082,6 +2085,12 @@ class Mixin1DProtocol(ShapeProtocol, Protocol):
     def paramsLength(self, locations: Iterable[float]) -> list[float]:
         ...
 
+    def startVertex(self) -> Vertex:
+        ...
+
+    def endVertex(self) -> Vertex:
+        ...
+
 
 T1D = TypeVar("T1D", bound=Mixin1DProtocol)
 
@@ -2107,10 +2116,7 @@ class Mixin1D(object):
         Note, circles may have the start and end points the same
         """
 
-        v1, _ = TopoDS_Vertex(), TopoDS_Vertex()
-        ShapeAnalysis.FindBounds_s(self.wrapped, v1, _)
-
-        return Vertex(v1).Center()
+        return self.startVertex().Center()
 
     def endPoint(self: Mixin1DProtocol) -> Vector:
         """
@@ -2120,10 +2126,33 @@ class Mixin1D(object):
         Note, circles may have the start and end points the same
         """
 
+        return self.endVertex().Center()
+
+    def startVertex(self: Mixin1DProtocol) -> Vertex:
+        """
+
+        :return: a vertex representing the start point of this edge
+
+        Note, circles may have the start and end vertex the same
+        """
+
+        v1, _ = TopoDS_Vertex(), TopoDS_Vertex()
+        ShapeAnalysis.FindBounds_s(self.wrapped, v1, _)
+
+        return Vertex(v1)
+
+    def endVertex(self: Mixin1DProtocol) -> Vertex:
+        """
+
+        :return: a vertex representing the end point of this edge.
+
+        Note, circles may have the start and end vertex the same
+        """
+
         _, v2 = TopoDS_Vertex(), TopoDS_Vertex()
         ShapeAnalysis.FindBounds_s(self.wrapped, _, v2)
 
-        return Vertex(v2).Center()
+        return Vertex(v2)
 
     def _approxCurve(self: Mixin1DProtocol) -> Geom_BSplineCurve:
         """
@@ -5156,7 +5185,7 @@ def _get_wires(s: Shape) -> Iterable[Shape]:
         raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
 
 
-def _get_edges(*shapes: Shape) -> Iterable[Shape]:
+def _get_edges(*shapes: Shape) -> Iterable[Edge]:
     """
     Get edges or edges from wires.
     """
@@ -5165,7 +5194,7 @@ def _get_edges(*shapes: Shape) -> Iterable[Shape]:
         t = s.ShapeType()
 
         if t == "Edge":
-            yield s
+            yield s.edge()
         elif t == "Wire":
             yield from _get_edges(s.edges())
         elif t == "Compound":
@@ -5592,7 +5621,7 @@ class Op:
         if s:
             return self._get(self._modified, s)
 
-        return _normalize(compound(*self._modified.values()))
+        return _normalize(compound(*set(self._modified.values())))
 
     def generated(self, s: Shape | None = None) -> Shape:
         """
@@ -5730,8 +5759,6 @@ def _update_history(
         # construct the history step
         op = Op()
 
-        history.append(op, name)
-
         # track all subshapes
         for shape in shapes:
             op._tracked.update(shape.Faces())
@@ -5741,6 +5768,12 @@ def _update_history(
         # iterate over all builders and collect history information
         builder: Any
         for builder in builders:
+
+            if isinstance(builder, BRepBuilderAPI_Command):
+                assert (
+                    builder.IsDone()
+                ), f"Builder {builder} not done, cannot fill history."
+
             has_first_last = isinstance(
                 builder, (BRepPrimAPI_MakeRevol, BRepPrimAPI_MakePrism,),
             )
@@ -5764,6 +5797,7 @@ def _update_history(
                     BRepBuilderAPI_MakeShape,
                     BOPAlgo_Builder,
                     BRepOffset_MakeOffset,
+                    BRepBuilderAPI_MakeWire,
                 ),
             )
             has_modifidied = isinstance(
@@ -5826,6 +5860,8 @@ def _update_history(
                 if has_first_last_shape:
                     op._first_shape |= _compound_or_shape(builder.FirstShape())
                     op._last_shape |= _compound_or_shape(builder.LastShape())
+
+        history.append(op, name)
 
 
 def _remap_history_values(history: History | None, aux: History,) -> None:
@@ -5971,24 +6007,97 @@ def wireOn(base: Shape, w: Shape, tol: float = 1e-6, N: int = 20) -> Wire:
     return wire(rvs)
 
 
+def _reorder_edges(edges: list[Edge]) -> tuple[list[int], list[bool]]:
+    """
+    Private helper for reordering of edges before wire construction. Returns order and
+    correct orientation.
+    """
+
+    n_edges = len(edges)
+    order = [0] * len(edges)
+    reverse = [False] * n_edges
+
+    ana = ShapeAnalysis_WireOrder()
+
+    for e in edges:
+        ana.Add(e.startPoint().toXYZ(), e.endPoint().toXYZ())
+
+    ana.Perform()
+
+    for i in range(n_edges):
+        i_old = ana.Ordered(i + 1)
+        i_old_abs = abs(i_old) - 1
+
+        order[i] = i_old_abs
+        reverse[i] = i_old < 0
+
+    return order, reverse
+
+
 @multidispatch
-def wire(*s: Shape) -> Wire:
+def wire(*s: Shape, history: History | None = None, name: str | None = None,) -> Wire:
     """
     Build wire from edges.
     """
 
     builder = BRepBuilderAPI_MakeWire()
 
-    edges = _shapes_to_toptools_list(e for el in s for e in _get_edges(el))
-    builder.Add(edges)
+    # collect all edges and initialize
+    new_edges = []
+    edges: list[Edge] = []
+    for el in s:
+        edges.extend(_get_edges(el))
+
+    # reorder and check orientation
+    order, reverse = _reorder_edges(edges)
+
+    # build and store new edges for history construction
+    for i, rev in zip(order, reverse):
+        edge = edges[i].edge().wrapped
+
+        if rev:
+            edge = TopoDS.Edge(edge.Reversed())
+
+        builder.Add(edge)
+        status = builder.Error()
+
+        assert (
+            status == BRepBuilderAPI_WireError.BRepBuilderAPI_WireDone
+        ), f"Wire construction failed: {status}"
+
+        new_edges.append(Edge(builder.Edge()))
+
+    # NB: this is a dummy update, the builder does not implement history correctly
+    _update_history(history, name, s, builder)
+
+    # Update history manually
+    if history:
+        op = history[-1]
+        for ix, v, rev in zip(order, new_edges, reverse):
+            k = edges[ix]
+            op._modified[k] = v
+            op._images[k] = v
+
+            if rev:
+                op._modified[k.endVertex()] = v.startVertex()
+                op._modified[k.startVertex()] = v.endVertex()
+                op._images[k.endVertex()] = v.startVertex()
+                op._images[k.startVertex()] = v.endVertex()
+            else:
+                op._modified[k.startVertex()] = v.startVertex()
+                op._modified[k.endVertex()] = v.endVertex()
+                op._images[k.startVertex()] = v.startVertex()
+                op._images[k.endVertex()] = v.endVertex()
 
     return _shape(builder.Shape(), Wire)
 
 
 @multidispatch
-def wire(s: Sequence[Shape]) -> Wire:
+def wire(
+    s: Sequence[Shape], history: History | None = None, name: str | None = None,
+) -> Wire:
 
-    return wire(*s)
+    return wire(*s, history=history, name=name)
 
 
 @multidispatch

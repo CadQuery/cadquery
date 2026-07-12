@@ -177,17 +177,38 @@ Non-blocking visualization
 
 For non-blocking visualization, one can use the :meth:`cadquery.fig.show` function from the :mod:`~cadquery.fig` module.
 It relies on VTK/Trame and opens a web browser window.
-To programmatically remove previously added shapes one can use the :meth:`cadquery.fig.clear` function. 
+To programmatically remove previously added shapes one can use the :meth:`cadquery.fig.clear` function.
 
 
 .. image:: _static/fig.png
 
-This function is very handy for interactive work and debugging. Alternatively one can use the :class:`~cadquery.fig.Figure`
-class for more fine-grained control.
+This function is very handy for interactive work and debugging in a Python REPL.
+
+.. code-block::
+
+   $ python
+   >>> from cadquery.func import *
+   >>> from cadquery.fig import show
+   >>> show(box(1, 1, 1))
+   >>>
+
+Alternatively one can use the :class:`~cadquery.fig.Figure` class for more fine-grained control.
+
+Plain Python scripts can be run from IPython using :code:`%run`.
+
+.. code-block::
+
+   $ ipython
+   In [1]: %run model.py
+
+The :meth:`cadquery.fig.show` function returns immediately.
+A REPL keeps the Python process active, so the figure server continues running.
+A script run directly with :code:`python model.py` exits when the script finishes, stopping
+the figure server, so it is needed to run with the appropriate option: :code:`python -i model.py`.
 
 
-Jupyter/JupterLab
-=================
+Jupyter/JupyterLab
+==================
 
 There is also more limited support for displaying :class:`~cadquery.Workplane`, :class:`~cadquery.Sketch`, :class:`~cadquery.Assembly`,
 :class:`~cadquery.Shape` in Jupyter and JupyterLab. This functionality is implemented using VTK.js.
@@ -199,4 +220,3 @@ There is also more limited support for displaying :class:`~cadquery.Workplane`, 
    Workplane().sphere(1).split(keepTop=True)
 
 .. image:: _static/show_jupyter.PNG
-

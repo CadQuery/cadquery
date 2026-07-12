@@ -243,6 +243,10 @@ class Vector(object):
 
         yield from (self.x, self.y, self.z)
 
+    def toXYZ(self) -> gp_XYZ:
+
+        return self.wrapped.XYZ()
+
     def toPnt(self) -> gp_Pnt:
 
         return gp_Pnt(self.wrapped.XYZ())
