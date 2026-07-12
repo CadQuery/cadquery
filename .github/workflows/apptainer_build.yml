@@ -41,7 +41,7 @@ jobs:
       - name: Deploy to GHCR
         if: contains( env.BRANCH_NAME, 'master')
         run: |
-           echo ${{ secrets.GITHUB_TOKEN }} | apptainer registry login -u ${{ secrets.GHCR_USERNAME }} --password-stdin oras://ghcr.io
+           echo ${{ secrets.GITHUB_TOKEN }} | apptainer registry login -u ${{ github.repository_owner }} --password-stdin oras://ghcr.io
            apptainer push cq.sif oras://ghcr.io/cadquery/cadquery-apptainer:${BRANCH_NAME}
 
   build-docker-container:
@@ -67,5 +67,5 @@ jobs:
       - name: Deploy to GHCR
         if: contains(env.BRANCH_NAME, 'master')
         run: |
-           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin 
+           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin 
            docker push ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME}
