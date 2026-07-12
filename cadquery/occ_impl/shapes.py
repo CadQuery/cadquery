@@ -605,6 +605,26 @@ class Shape(object):
 
         return cls.cast(s)
 
+    @classmethod
+    def importStep(cls, fileName: str, unit: UnitLiterals = "MM") -> Shape:
+        """
+        Import shape from a STEP file.
+
+        :param fileName: Path to the STEP file to import.
+        :param unit: Sets the target OpenCASCADE unit - OCCT scales from the file's
+            declared unit to this unit. Default "MM".
+        :type unit: UnitLiterals
+        """
+
+        from .importers import _importStep
+
+        shapes = _importStep(fileName, unit)
+
+        if not shapes:
+            raise ValueError(f"No shape found in {fileName}")
+
+        return shapes[0] if len(shapes) == 1 else Compound.makeCompound(shapes)
+
     def geomType(self) -> Geoms:
         """
         Gets the underlying geometry type.
