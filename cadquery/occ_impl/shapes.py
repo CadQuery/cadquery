@@ -200,7 +200,7 @@ from OCP.TopTools import (
 
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Solid, ShapeFix_Face
 
-from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs, STEPControl_Reader
+from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.StlAPI import StlAPI_Writer
@@ -268,7 +268,7 @@ from OCP.BOPAlgo import (
     BOPAlgo_COMMON,
 )
 
-from OCP.IFSelect import IFSelect_ReturnStatus, IFSelect_RetDone
+from OCP.IFSelect import IFSelect_ReturnStatus
 
 from OCP.TopAbs import TopAbs_ShapeEnum, TopAbs_Orientation
 
@@ -616,17 +616,9 @@ class Shape(object):
         :type unit: UnitLiterals
         """
 
-        # Set the target cascade unit - OCCT scales from the file's declared unit to this unit
-        Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
+        from .importers import _importStep
 
-        reader = STEPControl_Reader()
-        if reader.ReadFile(fileName) != IFSelect_RetDone:
-            raise ValueError(f"Could not import {fileName}")
-
-        for i in range(reader.NbRootsForTransfer()):
-            reader.TransferRoot(i + 1)
-
-        shapes = [cls.cast(reader.Shape(i + 1)) for i in range(reader.NbShapes())]
+        shapes = _importStep(fileName, unit)
 
         if not shapes:
             raise ValueError(f"No shape found in {fileName}")
