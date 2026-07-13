@@ -48,7 +48,7 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
-from ...types import UnitLiterals
+from ...types import PathLike, UnitLiterals
 
 
 class ExportModes:
@@ -61,7 +61,7 @@ STEPExportModeLiterals = Literal["default", "fused"]
 
 def exportAssembly(
     assy: AssemblyProtocol,
-    path: str,
+    path: PathLike,
     mode: STEPExportModeLiterals = "default",
     unit: UnitLiterals = "MM",
     outputUnit: Optional[UnitLiterals] = None,
@@ -98,6 +98,8 @@ def exportAssembly(
     :param name_geometries: Propagate subshape names to geometric STEP entities.
     :type name_geometries: bool
     """
+
+    path = os.fspath(path)
 
     # Handle the extra settings for the STEP export
     pcurves = 1
@@ -168,7 +170,7 @@ def exportAssembly(
 
 def exportStepMeta(
     assy: AssemblyProtocol,
-    path: str,
+    path: PathLike,
     write_pcurves: bool = True,
     precision_mode: int = 0,
     unit: UnitLiterals = "MM",
@@ -202,6 +204,8 @@ def exportStepMeta(
 
     # Initialize the XCAF document that will allow the STEP export
     app = XCAFApp_Application.GetApplication_s()
+    path = os.fspath(path)
+
     doc = TDocStd_Document(TCollection_ExtendedString("XmlOcaf"))
     app.InitDocument(doc)
 
@@ -344,10 +348,12 @@ def exportStepMeta(
     return status == IFSelect_ReturnStatus.IFSelect_RetDone
 
 
-def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
+def exportCAF(assy: AssemblyProtocol, path: PathLike, binary: bool = False) -> bool:
     """
     Export an assembly to an XCAF xml or xbf file (internal OCCT formats).
     """
+
+    path = os.fspath(path)
 
     folder, fname = os.path.split(path)
     name, ext = os.path.splitext(fname)
@@ -405,10 +411,12 @@ def _vtkRenderWindow(
     return renderWindow
 
 
-def exportVTKJS(assy: AssemblyProtocol, path: str):
+def exportVTKJS(assy: AssemblyProtocol, path: PathLike):
     """
     Export an assembly to a zipped vtkjs. NB: .zip extensions is added to path.
     """
+
+    path = os.fspath(path)
 
     renderWindow = _vtkRenderWindow(assy)
 
@@ -423,13 +431,15 @@ def exportVTKJS(assy: AssemblyProtocol, path: str):
 
 def exportVRML(
     assy: AssemblyProtocol,
-    path: str,
+    path: PathLike,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
 ):
     """
     Export an assembly to a vrml file using vtk.
     """
+
+    path = os.fspath(path)
 
     exporter = vtkVRMLExporter()
     exporter.SetFileName(path)
@@ -439,7 +449,7 @@ def exportVRML(
 
 def exportGLTF(
     assy: AssemblyProtocol,
-    path: str,
+    path: PathLike,
     binary: Optional[bool] = None,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
@@ -447,6 +457,8 @@ def exportGLTF(
     """
     Export an assembly to a gltf file.
     """
+
+    path = os.fspath(path)
 
     # If the caller specified the binary option, respect it
     if binary is None:

@@ -22,7 +22,7 @@ from multimethod import multimethod
 
 from .hull import find_hull
 from .selectors import StringSyntaxSelector, Selector
-from .types import Real, UnitLiterals
+from .types import PathLike, Real, UnitLiterals
 from .utils import get_arity, instance_of
 
 from .occ_impl.shapes import (
@@ -220,7 +220,7 @@ class Sketch(object):
 
     def importDXF(
         self: T,
-        filename: str,
+        filename: PathLike,
         tol: float = 1e-6,
         exclude: List[str] = [],
         include: List[str] = [],
@@ -1346,7 +1346,7 @@ class Sketch(object):
 
     def export(
         self: T,
-        fname: str,
+        fname: PathLike,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         unit: UnitLiterals = "MM",

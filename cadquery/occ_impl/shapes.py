@@ -14,6 +14,8 @@ from typing import (
     overload,
 )
 
+import os
+
 from io import BytesIO
 
 from warnings import warn
@@ -32,7 +34,7 @@ from ..selectors import (
 )
 
 from ..utils import multimethod, multidispatch, mypyclassmethod
-from ..types import UnitLiterals
+from ..types import PathLike, UnitLiterals
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -343,6 +345,15 @@ GlueLiteral = Literal["partial", "full", None]
 
 TOLERANCE = 1e-6
 
+
+def _fspath(f: PathLike | BytesIO) -> str | BytesIO:
+    """
+    Convert a path-like object to str, pass file objects through unchanged.
+    """
+
+    return os.fspath(f) if isinstance(f, os.PathLike) else f
+
+
 shape_LUT = {
     ta.TopAbs_VERTEX: "Vertex",
     ta.TopAbs_EDGE: "Edge",
@@ -489,7 +500,7 @@ class Shape(object):
 
     def exportStl(
         self,
-        fileName: str,
+        fileName: PathLike,
         tolerance: float = 1e-3,
         angularTolerance: float = 0.1,
         ascii: bool = False,
@@ -518,11 +529,11 @@ class Shape(object):
         writer = StlAPI_Writer()
         writer.ASCIIMode = ascii
 
-        return writer.Write(self.wrapped, fileName)
+        return writer.Write(self.wrapped, os.fspath(fileName))
 
     def exportStep(
         self,
-        fileName: str,
+        fileName: PathLike,
         unit: UnitLiterals = "MM",
         outputUnit: UnitLiterals | None = None,
         **kwargs: Any,
@@ -532,7 +543,7 @@ class Shape(object):
         kwargs is used to provide additional optional keyword arguments to configure the exporter.
 
         :param fileName: Path and filename for writing.
-        :type fileName: str
+        :type fileName: str or os.PathLike
         :param unit: The internal unit of the model's geometry values. Default "MM".
         :type unit: UnitLiterals
         :param outputUnit: The unit to use in the STEP file header. If None, defaults to the value of ``unit``.
@@ -562,54 +573,54 @@ class Shape(object):
         )
         writer.Transfer(self.wrapped, STEPControl_AsIs)
 
-        return writer.Write(fileName)
+        return writer.Write(os.fspath(fileName))
 
-    def exportBrep(self, f: str | BytesIO) -> bool:
+    def exportBrep(self, f: PathLike | BytesIO) -> bool:
         """
         Export this shape to a BREP file
         """
 
-        rv = BRepTools.Write_s(self.wrapped, f)
+        rv = BRepTools.Write_s(self.wrapped, _fspath(f))
 
         return True if rv is None else rv
 
     @classmethod
-    def importBrep(cls, f: str | BytesIO) -> Shape:
+    def importBrep(cls, f: PathLike | BytesIO) -> Shape:
         """
         Import shape from a BREP file
         """
         s = TopoDS_Shape()
         builder = BRep_Builder()
 
-        BRepTools.Read_s(s, f, builder)
+        BRepTools.Read_s(s, _fspath(f), builder)
 
         if s.IsNull():
             raise ValueError(f"Could not import {f}")
 
         return cls.cast(s)
 
-    def exportBin(self, f: str | BytesIO) -> bool:
+    def exportBin(self, f: PathLike | BytesIO) -> bool:
         """
         Export this shape to a binary BREP file.
         """
 
-        rv = BinTools.Write_s(self.wrapped, f)
+        rv = BinTools.Write_s(self.wrapped, _fspath(f))
 
         return True if rv is None else rv
 
     @classmethod
-    def importBin(cls, f: str | BytesIO) -> Shape:
+    def importBin(cls, f: PathLike | BytesIO) -> Shape:
         """
         Import shape from a binary BREP file.
         """
         s = TopoDS_Shape()
 
-        BinTools.Read_s(s, f)
+        BinTools.Read_s(s, _fspath(f))
 
         return cls.cast(s)
 
     @classmethod
-    def importStep(cls, fileName: str, unit: UnitLiterals = "MM") -> Shape:
+    def importStep(cls, fileName: PathLike, unit: UnitLiterals = "MM") -> Shape:
         """
         Import shape from a STEP file.
 
@@ -1854,7 +1865,7 @@ class Shape(object):
 
     def export(
         self: T,
-        fname: str,
+        fname: PathLike,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         unit: UnitLiterals = "MM",

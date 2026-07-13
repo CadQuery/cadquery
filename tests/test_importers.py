@@ -4,8 +4,9 @@
 # core modules
 import tempfile
 import os
+from pathlib import Path
 
-from cadquery import importers, Workplane, Compound
+from cadquery import exporters, importers, Workplane, Compound
 from tests import BaseTest
 from pytest import approx, raises
 
@@ -310,6 +311,39 @@ class TestImporters(BaseTest):
         tmp.ctx.pendingWires = tmp.vals()
         threed = tmp.extrude(extrusion_value)
         self.assertEqual(threed.findSolid().BoundingBox().zlen, extrusion_value)
+
+    def testPathLike(self):
+        """
+        Importers should accept os.PathLike objects, not only str.
+        """
+        box = Workplane().box(1, 2, 3)
+
+        for importType, ext in (
+            (importers.ImportTypes.STEP, "step"),
+            (importers.ImportTypes.BREP, "brep"),
+            (importers.ImportTypes.BIN, "bin"),
+        ):
+            fname = Path(OUTDIR) / f"pathlike.{ext}"
+            exporters.export(box, fname)
+
+            imported = importers.importShape(importType, fname)
+            self.assertAlmostEqual(imported.val().Volume(), 6, 4)
+
+        self.assertAlmostEqual(
+            importers.importStep(Path(OUTDIR) / "pathlike.step").val().Volume(), 6, 4
+        )
+        self.assertAlmostEqual(
+            importers.importBrep(Path(OUTDIR) / "pathlike.brep").val().Volume(), 6, 4
+        )
+        self.assertAlmostEqual(
+            importers.importBin(Path(OUTDIR) / "pathlike.bin").val().Volume(), 6, 4
+        )
+
+        # DXF import works on 2D profiles
+        fname = Path(OUTDIR) / "pathlike.dxf"
+        exporters.export(Workplane().rect(2, 1), fname)
+
+        self.assertEqual(len(importers.importDXF(fname).wires().vals()), 1)
 
 
 if __name__ == "__main__":

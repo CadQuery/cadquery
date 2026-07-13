@@ -1,3 +1,5 @@
+import os
+
 from functools import reduce
 from typing import (
     Union,
@@ -37,7 +39,7 @@ from .occ_impl.exporters.assembly import (
 )
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
-from .types import UnitLiterals
+from .types import PathLike, UnitLiterals
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate, BiDict, instance_of
@@ -536,7 +538,7 @@ class Assembly(object):
     @deprecate()
     def save(
         self,
-        path: str,
+        path: PathLike,
         exportType: Optional[ExportLiterals] = None,
         mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
@@ -563,7 +565,7 @@ class Assembly(object):
 
     def export(
         self,
-        path: str,
+        path: PathLike,
         exportType: Optional[ExportLiterals] = None,
         mode: STEPExportModeLiterals = "default",
         tolerance: float = 0.1,
@@ -595,6 +597,8 @@ class Assembly(object):
         # Make sure the export mode setting is correct
         if mode not in get_args(STEPExportModeLiterals):
             raise ValueError(f"Unknown assembly export mode {mode} for STEP")
+
+        path = os.fspath(path)
 
         if exportType is None:
             t = path.split(".")[-1].upper()
@@ -628,7 +632,7 @@ class Assembly(object):
         return self
 
     @classmethod
-    def importStep(cls, path: str, unit: UnitLiterals = "MM") -> Self:
+    def importStep(cls, path: PathLike, unit: UnitLiterals = "MM") -> Self:
         """
         Reads an assembly from a STEP file.
 
@@ -642,13 +646,15 @@ class Assembly(object):
     @classmethod
     def load(
         cls,
-        path: str,
+        path: PathLike,
         importType: Optional[ImportLiterals] = None,
         unit: UnitLiterals = "MM",
     ) -> Self:
         """
         Load step, xbf or xml. Only STEP supports unit conversion on loading.
         """
+
+        path = os.fspath(path)
 
         if importType is None:
             t = path.split(".")[-1].upper()
