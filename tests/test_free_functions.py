@@ -610,8 +610,9 @@ def test_enclose():
     c = cylinder(2, 10).face("%CYLINDER")
     p1 = plane(3, 3)
     p2 = plane(2, 2).moved(z=1)
+    p3 = plane(0.1, 0.1).moved(z=1.5)  # internal face to be ignored
 
-    res = enclose(c, p1, p2)
+    res = enclose(c, p1, p2, p3)
 
     assert res.isValid()
     assert res.ShapeType() == "Solid"

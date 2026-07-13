@@ -6906,6 +6906,8 @@ def enclose(
     """
 
     builder = BOPAlgo_MakerVolume()
+    # ignore non-intersecting internal faces
+    builder.SetAvoidInternalShapes(True)
     _set_builder_options(builder, tol)
 
     for s in shapes:
