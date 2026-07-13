@@ -56,16 +56,21 @@ jobs:
       - name: Check out code for the container builds
         uses: actions/checkout@v6
 
+      - name: Set the image tag
+        run: |
+          # a docker tag cannot contain a slash, which branch names often do
+          echo "IMAGE_TAG=${BRANCH_NAME//\//-}" >> "$GITHUB_ENV"
+
       - name: Build Container
         run: |
-          docker build -t ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME} -f images/dockerfile .
+          docker build -t ghcr.io/cadquery/cadquery-docker:${IMAGE_TAG} -f images/dockerfile .
 
       - name: Test
         run: |
-          docker run --rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME} pytest tests/
+          docker run --rm -v $(pwd):/host -w /host ghcr.io/cadquery/cadquery-docker:${IMAGE_TAG} pytest tests/
 
       - name: Deploy to GHCR
         if: contains(env.BRANCH_NAME, 'master')
         run: |
-           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin 
-           docker push ghcr.io/cadquery/cadquery-docker:${BRANCH_NAME}
+           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+           docker push ghcr.io/cadquery/cadquery-docker:${IMAGE_TAG}
