@@ -14,6 +14,8 @@ from typing import (
 )
 
 import ezdxf
+
+from ...types import PathLike
 from ezdxf import units, zoom
 from ezdxf.entities import factory
 from OCP.GeomConvert import GeomConvert
@@ -366,7 +368,7 @@ class DxfDocument:
 
 def exportDXF(
     w: Union[WorkplaneLike, Shape, Iterable[Shape]],
-    fname: str,
+    fname: PathLike,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
     *,

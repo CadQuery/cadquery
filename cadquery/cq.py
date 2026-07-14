@@ -41,7 +41,7 @@ from .occ_impl.exporters.svg import getSVG, exportSVG
 from .occ_impl.exporters import export
 
 from .utils import deprecate, deprecate_kwarg_name, get_arity
-from .types import UnitLiterals
+from .types import PathLike, UnitLiterals
 
 from .selectors import (
     Selector,
@@ -1040,7 +1040,7 @@ class Workplane(object):
         """
         return getSVG(self.val(), opts)
 
-    def exportSvg(self, fileName: str) -> None:
+    def exportSvg(self, fileName: PathLike) -> None:
         """
         Exports the first item on the stack as an SVG file
 
@@ -4525,7 +4525,7 @@ class Workplane(object):
 
     def export(
         self: T,
-        fname: str,
+        fname: PathLike,
         tolerance: float = 0.1,
         angularTolerance: float = 0.1,
         unit: UnitLiterals = "MM",

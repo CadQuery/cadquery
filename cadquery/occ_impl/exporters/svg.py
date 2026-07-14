@@ -1,6 +1,7 @@
 import io as StringIO
 
 from ..shapes import Shape, Compound, TOLERANCE
+from ...types import PathLike
 from ..geom import BoundBox
 
 
@@ -308,7 +309,7 @@ def getSVG(shape, opts=None):
     return svg
 
 
-def exportSVG(shape, fileName: str, opts=None):
+def exportSVG(shape, fileName: PathLike, opts=None):
     """
     Accept a cadquery shape, and export it to the provided file
     TODO: should use file-like objects, not a fileName, and/or be able to return a string instead

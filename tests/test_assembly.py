@@ -2603,3 +2603,34 @@ def test_name_geometries(tmpdir):
     assert len([l for l in lines if "top_face" in l]) == 2
     assert len([l for l in lines if "plane_" in l]) == 2
     assert len([l for l in lines if "seg_" in l]) == 3
+
+
+def test_pathlike(simple_assy, tmpdir):
+    """
+    Assembly exporters and loaders should accept os.PathLike objects, not only str.
+    """
+
+    for ext in ("step", "xml", "xbf", "vrml", "gltf", "glb", "stl"):
+        fname = Path(tmpdir) / f"pathlike.{ext}"
+        simple_assy.export(fname)
+        assert fname.exists()
+
+    # exportStepMeta is not reachable through Assembly.export
+    fname = Path(tmpdir) / "pathlike_meta.step"
+    exportStepMeta(simple_assy, fname)
+    assert fname.exists()
+
+    # NB: .zip is appended by the vtkjs exporter
+    fname = Path(tmpdir) / "pathlike_vtkjs"
+    exportVTKJS(simple_assy, fname)
+    assert fname.with_suffix(".zip").exists()
+
+    # loading from a Path gives the same result as loading from a str
+    fname = Path(tmpdir) / "pathlike.step"
+
+    assert cq.Assembly.load(fname).toCompound().Volume() == approx(
+        cq.Assembly.load(str(fname)).toCompound().Volume()
+    )
+    assert cq.Assembly.importStep(fname).toCompound().Volume() == approx(
+        cq.Assembly.importStep(str(fname)).toCompound().Volume()
+    )

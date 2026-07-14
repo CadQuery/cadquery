@@ -1052,3 +1052,58 @@ def test_toVTK():
     edge_data = edge_actor.GetMapper().GetInput()
     assert edge_data.GetNumberOfLines() > 0
     assert edge_data.GetNumberOfPolys() == 0
+
+
+def test_export_pathlike(tmpdir, box123):
+    """
+    Exporters should accept os.PathLike objects, not only str.
+    """
+
+    for ext in (
+        "step",
+        "stl",
+        "brep",
+        "bin",
+        "svg",
+        "vtp",
+        "3mf",
+        "amf",
+        "vrml",
+        "tjs",
+    ):
+        fname = Path(tmpdir) / f"pathlike.{ext}"
+        exporters.export(box123, fname)
+        assert fname.exists()
+
+    # DXF export works on 2D sections
+    fname = Path(tmpdir) / "pathlike.dxf"
+    exporters.export(Workplane().rect(1, 1), fname)
+    assert fname.exists()
+
+    shape = box123.val()
+
+    for name, method in (
+        ("step", shape.exportStep),
+        ("stl", shape.exportStl),
+        ("brep", shape.exportBrep),
+        ("bin", shape.exportBin),
+    ):
+        fname = Path(tmpdir) / f"pathlike_shape.{name}"
+        method(fname)
+        assert fname.exists()
+
+    fname = Path(tmpdir) / "pathlike_shape_export.step"
+    shape.export(fname)
+    assert fname.exists()
+
+    fname = Path(tmpdir) / "pathlike_workplane.step"
+    box123.export(fname)
+    assert fname.exists()
+
+    fname = Path(tmpdir) / "pathlike_workplane.svg"
+    box123.exportSvg(fname)
+    assert fname.exists()
+
+    fname = Path(tmpdir) / "pathlike_sketch.dxf"
+    Sketch().rect(1, 1).export(fname)
+    assert fname.exists()
