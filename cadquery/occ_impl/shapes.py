@@ -228,6 +228,7 @@ from OCP.Font import (
     Font_FA_Italic,
     Font_FA_Bold,
     Font_SystemFont,
+    Font_StrictLevel_Aliases,
 )
 
 from OCP.StdPrs import StdPrs_BRepFont, StdPrs_BRepTextBuilder as Font_BRepTextBuilder
@@ -270,6 +271,8 @@ from OCP.BOPAlgo import (
     BOPAlgo_FUSE,
     BOPAlgo_CUT,
     BOPAlgo_COMMON,
+    BOPAlgo_MakerVolume,
+    BOPAlgo_Splitter,
 )
 
 from OCP.IFSelect import IFSelect_ReturnStatus
@@ -608,6 +611,26 @@ class Shape(object):
         BinTools.Read_s(s, f)
 
         return cls.cast(s)
+
+    @classmethod
+    def importStep(cls, fileName: str, unit: UnitLiterals = "MM") -> Shape:
+        """
+        Import shape from a STEP file.
+
+        :param fileName: Path to the STEP file to import.
+        :param unit: Sets the target OpenCASCADE unit - OCCT scales from the file's
+            declared unit to this unit. Default "MM".
+        :type unit: UnitLiterals
+        """
+
+        from .importers import _importStep
+
+        shapes = _importStep(fileName, unit)
+
+        if not shapes:
+            raise ValueError(f"No shape found in {fileName}")
+
+        return shapes[0] if len(shapes) == 1 else Compound.makeCompound(shapes)
 
     def geomType(self) -> Geoms:
         """
@@ -4868,7 +4891,11 @@ class Compound(Shape, Mixin3D):
             mgr.RegisterFont(font_t, True)
 
         else:
-            font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+            font_t = mgr.FindFont(
+                TCollection_AsciiString(font), Font_StrictLevel_Aliases, font_kind
+            )
+            if font_t is None:
+                raise ValueError(f"Font '{font}' not found")
 
         builder = Font_BRepTextBuilder()
         font_i = StdPrs_BRepFont(
@@ -6639,7 +6666,11 @@ def text(
         mgr.RegisterFont(font_t, True)
 
     else:
-        font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+        font_t = mgr.FindFont(
+            TCollection_AsciiString(font), Font_StrictLevel_Aliases, font_kind
+        )
+        if font_t is None:
+            raise ValueError(f"Font '{font}' not found")
 
     font_i = StdPrs_BRepFont(
         NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, float(size),
@@ -6883,10 +6914,41 @@ def split(
     Split one shape with another.
     """
 
-    builder = BRepAlgoAPI_Splitter()
-    _bool_op(s1, s2, builder, tol)
+    builder = BOPAlgo_Splitter()
+    _set_builder_options(builder, tol)
+
+    builder.AddArgument(s1.wrapped)
+    builder.AddTool(s2.wrapped)
+
+    builder.Perform()
 
     _update_history(history, name, [s1, s2], builder)
+
+    return _compound_or_shape(builder.Shape())
+
+
+def enclose(
+    *shapes: Shape,
+    tol: float = 0.0,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
+    """
+    Build a solid enclosed by the specified faces. Faces can intersect or touch.
+    If all faces are touching, solid() has better performance.
+    """
+
+    builder = BOPAlgo_MakerVolume()
+    # ignore non-intersecting internal faces
+    builder.SetAvoidInternalShapes(True)
+    _set_builder_options(builder, tol)
+
+    for s in shapes:
+        builder.AddArgument(s.wrapped)
+
+    builder.Perform()
+
+    _update_history(history, name, shapes, builder)
 
     return _compound_or_shape(builder.Shape())
 

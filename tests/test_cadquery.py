@@ -3956,6 +3956,16 @@ class TestCadQuery(BaseTest):
         self.assertLessEqual(rt_bb.xmax, 0)
         self.assertLessEqual(rt_bb.ymax, 0)
 
+    def testTextMissingFont(self):
+        # a font name that cannot be resolved should raise rather than
+        # silently falling back to a default font
+        with self.assertRaises(ValueError):
+            Workplane().text("A", 10, 0, font="NonexistentFontXYZ123")
+
+        # a resolvable font still works
+        r = Workplane().text("A", 10, 0, font="Sans")
+        self.assertTrue(r.val().isValid())
+
     def testParametricCurve(self):
 
         from math import sin, cos, pi

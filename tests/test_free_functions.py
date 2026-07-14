@@ -67,6 +67,8 @@ from cadquery.occ_impl.shapes import (
     _shape_to_faces_shells,
     _get_faces,
     _combine_hist_dict,
+    enclose,
+    split,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -505,6 +507,14 @@ def test_spline_params():
     assert p1.toTuple() == approx((0, 1, 0))
 
 
+def test_text_missing_font():
+
+    # a font that cannot be resolved should raise instead of silently
+    # falling back to a default font
+    with raises(ValueError):
+        text("CQ", 10, font="NonexistentFontXYZ123")
+
+
 def test_text():
 
     r1 = text("CQ", 10)
@@ -591,6 +601,36 @@ def test_operators():
     assert len(fuse(b1, b3, tol=1e-3).Faces()) == 6
     assert len(cut(b1, b3, tol=1e-3).Faces()) == 0
     assert len(intersect(b1, b3, tol=1e-3).Faces()) == 6
+
+
+def test_split():
+
+    c = cylinder(2, 10)
+    p = plane(2, 2).moved(z=1)
+
+    res = split(c, p)
+
+    assert res.isValid()
+    assert res.solids().size() == 2
+
+
+def test_enclose():
+
+    c = cylinder(2, 10).face("%CYLINDER")
+    p1 = plane(3, 3)
+    p2 = plane(2, 2).moved(z=1)
+    p3 = plane(0.1, 0.1).moved(z=1.5)  # internal face to be ignored
+
+    res = enclose(c, p1, p2, p3)
+
+    assert res.isValid()
+    assert res.ShapeType() == "Solid"
+    assert res.Volume() == approx(pi)
+
+    res = enclose(c, p1)
+
+    assert isinstance(res, Compound)
+    assert res.size() == 0
 
 
 def test_imprint():

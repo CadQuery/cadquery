@@ -61,6 +61,7 @@ from .occ_impl.shapes import (
     History,
     HLRResult,
     hlr,
+    enclose,
 )
 
 __all__ = [
@@ -128,4 +129,5 @@ __all__ = [
     "History",
     "HLRResult",
     "hlr",
+    "enclose",
 ]

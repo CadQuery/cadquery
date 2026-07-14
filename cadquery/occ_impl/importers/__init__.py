@@ -83,15 +83,9 @@ def importBin(fileName: str) -> "cq.Workplane":
     return cq.Workplane("XY").newObject([shape])
 
 
-# Loads a STEP file into a CQ.Workplane object
-def importStep(fileName: str, unit: UnitLiterals = "MM") -> "cq.Workplane":
+def _importStep(fileName: str, unit: UnitLiterals = "MM") -> list["Shape"]:
     """
-    Accepts a file name and loads the STEP file into a cadquery Workplane
-
-    :param fileName: The path and name of the STEP file to be imported
-    :param unit: Sets the target OpenCASCADE unit - OCCT scales from the file's
-    declared unit to this unit. Default "MM".
-    :type unit: UnitLiterals
+    Private helper for implementing different STEP importers.
     """
 
     # Set the target cascade unit - OCCT scales from the file's declared unit to this unit
@@ -105,16 +99,23 @@ def importStep(fileName: str, unit: UnitLiterals = "MM") -> "cq.Workplane":
     for i in range(reader.NbRootsForTransfer()):
         reader.TransferRoot(i + 1)
 
-    occ_shapes = []
-    for i in range(reader.NbShapes()):
-        occ_shapes.append(reader.Shape(i + 1))
+    rv = [Shape.cast(reader.Shape(i + 1)) for i in range(reader.NbShapes())]
 
-    # Make sure that we extract all the solids
-    solids = []
-    for shape in occ_shapes:
-        solids.append(Shape.cast(shape))
+    return rv
 
-    return cq.Workplane("XY").newObject(solids)
+
+# Loads a STEP file into a CQ.Workplane object
+def importStep(fileName: str, unit: UnitLiterals = "MM") -> "cq.Workplane":
+    """
+    Accepts a file name and loads the STEP file into a cadquery Workplane
+
+    :param fileName: The path and name of the STEP file to be imported
+    :param unit: Sets the target OpenCASCADE unit - OCCT scales from the file's
+    declared unit to this unit. Default "MM".
+    :type unit: UnitLiterals
+    """
+
+    return cq.Workplane("XY").newObject(_importStep(fileName, unit))
 
 
 def importDXF(
