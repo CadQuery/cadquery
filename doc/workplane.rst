@@ -111,6 +111,23 @@ to select relative to the tagged Workplane instead of relative to the current st
     right_edges = result.edges("|Z", tag="right_face")
     left_edges = result.edges("|Z", tag="left_face")
 
+When you do need to walk back through the chain, :meth:`~cadquery.Workplane.end` also accepts a
+count. For example, ``.end(3)`` returns the third parent Workplane, which is useful after a short
+run of selectors has narrowed the stack more than once::
+
+    box = cq.Workplane("XY").box(4, 2, 0.5)
+    top_face = box.faces(">Z").edges("|X").vertices().end(3)
+
+You can also create a new Workplane from a tag instead of only selecting from it. This is useful
+when the tagged Workplane's plane and objects are the right starting point for another feature::
+
+    result = (
+        bracket
+        .workplaneFromTagged("right_face")
+        .center(0, 0.35)
+        .hole(0.2)
+    )
+
 This keeps feature references close to the geometry they describe, instead of depending on how many
 ``end`` calls are needed to walk back through the chain. It is especially helpful in assemblies,
 where tagged faces and edges are commonly used as stable mating references.
