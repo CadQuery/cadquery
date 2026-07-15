@@ -405,6 +405,7 @@ def exportDXFProjection(
     pnt: VectorLike = (0, 0, 0),
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
+    is_hidden: bool = False,
     *,
     up: Optional[VectorLike] = None,
     doc_units: int = units.MM,
@@ -422,6 +423,7 @@ def exportDXFProjection(
         "spline" results in all splines being approximated as cubic splines. "arc" results
         in all curves being approximated as arcs and straight segments.
     :param tolerance: Approximation tolerance.
+    :param is_hidden: Draw only the visible edges or the hidden edges. Useful for separating into layers in DXF document.
     :param doc_units: ezdxf document/modelspace :doc:`units <ezdxf-stable:concepts/units>` (in. = ``1``, mm = ``4``).
     """
 
@@ -429,8 +431,10 @@ def exportDXFProjection(
 
     if isinstance(s, WorkplaneLike):
         for s in s.__iter__():
-            shapes.append(hlr(s, dir, pnt, up=up).visible)
+            h = hlr(s, dir, pnt, up=up)
+            shapes.append(h.hidden if is_hidden else h.visible)
     else:
-        shapes.append(hlr(s, dir, pnt, up=up).visible)
+        h = hlr(s, dir, pnt, up=up)
+        shapes.append(h.hidden if is_hidden else h.visible)
 
     exportDXF(shapes, str(path), approx, tolerance, doc_units=doc_units)
