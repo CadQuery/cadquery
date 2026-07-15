@@ -81,6 +81,21 @@ backwards in the stack to get the face as well::
 You can browse stack access methods here: :ref:`stackMethods`.
 
 
+.. _chaining:
+
+Chaining
+---------------------------
+
+All Workplane methods return another Workplane object, so that you can chain the methods together
+fluently. Use the core Workplane methods to get at the objects that were created.
+
+Each time a new Workplane object is produced during these chained calls, it has a
+:attr:`~cadquery.Workplane.parent` attribute that points to the Workplane object that created it.
+Several CadQuery methods search this parent chain, for example when searching for the context solid.
+You can also give a Workplane object a tag, and further down your chain of calls you can refer back
+to this particular object using its tag.
+
+
 .. _tagging-workplanes:
 
 Tagging Workplanes
@@ -131,21 +146,6 @@ when the tagged Workplane's plane and objects are the right starting point for a
 This keeps feature references close to the geometry they describe, instead of depending on how many
 ``end`` calls are needed to walk back through the chain. It is especially helpful in assemblies,
 where tagged faces and edges are commonly used as stable mating references.
-
-
-.. _chaining:
-
-Chaining
----------------------------
-
-All Workplane methods return another Workplane object, so that you can chain the methods together
-fluently. Use the core Workplane methods to get at the objects that were created.
-
-Each time a new Workplane object is produced during these chained calls, it has a
-:attr:`~cadquery.Workplane.parent` attribute that points to the Workplane object that created it.
-Several CadQuery methods search this parent chain, for example when searching for the context solid.
-You can also give a Workplane object a tag, and further down your chain of calls you can refer back
-to this particular object using its tag.
 
 
 The Context Solid
