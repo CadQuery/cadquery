@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
+from dataclasses import dataclass
 from typing import (
     Any,
     Literal,
@@ -160,6 +161,9 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Splitter,
     BRepAlgoAPI_Check,
 )
+
+from OCP.HLRAlgo import HLRAlgo_Projector
+from OCP.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
 
 from OCP.Geom import (
     Geom_BezierCurve,
@@ -8142,3 +8146,129 @@ def closest(s1: Shape, s2: Shape) -> tuple[Vector, Vector]:
     assert ext.Perform()
 
     return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))
+
+
+@dataclass(frozen=True)
+class HLRResult:
+    """
+    Result of a hidden-line-removal projection.
+
+    The returned plane describes the 2D projection coordinate system:
+
+    * ``plane.xDir`` is screen +X/right in world coordinates.
+    * ``plane.yDir`` is screen +Y/up in world coordinates.
+    * ``plane.zDir`` is the projection direction/view-plane normal.
+    """
+
+    visible: Compound
+    hidden: Compound
+    plane: Plane
+
+
+def hlr(
+    s: Shape,
+    dir: VectorLike,
+    pnt: VectorLike = (0, 0, 0),
+    up: VectorLike | None = None,
+    focus: float | None = None,
+) -> HLRResult:
+    """
+    Project a shape onto a plane and perform hidden-line removal. Useful for
+    generating views for technical drawings.
+
+    ``dir`` defines the projection plane's normal, and ``pnt`` defines its origin.
+    Orthographic projection is used by default; supplying ``focus`` enables
+    perspective projection.
+
+    :param s: Shape to project.
+    :param dir: Projection direction and normal of the projection plane.
+    :param pnt: Origin of the projection plane.
+    :param up: Preferred positive Y direction of the projected view. If omitted,
+        OCCT chooses the in-plane orientation.
+    :param focus: Focal distance for perspective projection. If omitted,
+        orthographic projection is used.
+    :return: Visible and hidden projected edges together with the projection
+        plane.
+    :raises ValueError: If ``dir`` or ``up`` is zero, or if ``up`` is parallel
+        to ``dir``.
+    """
+    hlr = HLRBRep_Algo()
+    hlr.Add(s.wrapped)
+
+    origin = Vector(pnt)
+    normal = Vector(dir)
+
+    if normal.Length == 0.0:
+        raise ValueError("dir must be nonzero")
+
+    normal = normal.normalized()
+
+    if up is None:
+        coordinate_system = gp_Ax2(origin.toPnt(), normal.toDir())
+        plane = Plane(
+            origin, xDir=Vector(coordinate_system.XDirection()), normal=normal
+        )
+    else:
+        up_dir = Vector(up)
+
+        if up_dir.Length == 0.0:
+            raise ValueError("up must be nonzero")
+
+        up_dir = up_dir.normalized()
+        x_dir = up_dir.cross(normal)
+
+        if x_dir.Length < 1e-6:
+            raise ValueError("up must not be parallel to dir")
+
+        x_dir = x_dir.normalized()
+        plane = Plane(origin, xDir=x_dir, normal=normal)
+        coordinate_system = gp_Ax2(
+            plane.origin.toPnt(), plane.zDir.toDir(), plane.xDir.toDir()
+        )
+
+    if focus is not None:
+        projector = HLRAlgo_Projector(coordinate_system, focus)
+    else:
+        projector = HLRAlgo_Projector(coordinate_system)
+
+    hlr.Projector(projector)
+    hlr.Update()
+    hlr.Hide()
+
+    hlr_shapes = HLRBRep_HLRToShape(hlr)
+
+    visible = []
+
+    visible_sharp_edges = hlr_shapes.VCompound()
+    if not visible_sharp_edges.IsNull():
+        visible.append(visible_sharp_edges)
+
+    visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
+    if not visible_smooth_edges.IsNull():
+        visible.append(visible_smooth_edges)
+
+    visible_contour_edges = hlr_shapes.OutLineVCompound()
+    if not visible_contour_edges.IsNull():
+        visible.append(visible_contour_edges)
+
+    hidden = []
+
+    hidden_sharp_edges = hlr_shapes.HCompound()
+    if not hidden_sharp_edges.IsNull():
+        hidden.append(hidden_sharp_edges)
+
+    hidden_contour_edges = hlr_shapes.OutLineHCompound()
+    if not hidden_contour_edges.IsNull():
+        hidden.append(hidden_contour_edges)
+
+    # Fix the underlying geometry - otherwise we will get segfaults
+    for el in visible:
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
+    for el in hidden:
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
+
+    # Extract edges
+    visible_edges = compound(_compound_or_shape(visible).Edges())
+    hidden_edges = compound(_compound_or_shape(hidden).Edges())
+
+    return HLRResult(visible_edges, hidden_edges, plane)

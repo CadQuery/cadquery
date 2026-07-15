@@ -53,6 +53,7 @@ from cadquery.func import (
     fillet2D,
     draft,
     isSubshape,
+    hlr,
 )
 
 from cadquery.occ_impl.shapes import (
@@ -1550,3 +1551,41 @@ def test_wire_history():
     assert op.modified().vertices().size() == 4
 
     _check(op, edges)
+
+
+def test_hlr():
+
+    s1 = box(1, 1, 1)
+    res1 = hlr(s1, (1, 1, 1), up=(0, 0, 1))
+
+    assert res1.visible.Edges()
+    assert res1.hidden.Edges()
+
+    normal = Vector(1, 1, 1).normalized()
+    expected_up = (Vector(0, 0, 1) - normal * normal.dot(Vector(0, 0, 1))).normalized()
+
+    assert (res1.plane.zDir - normal).Length == approx(0)
+    assert (res1.plane.yDir - expected_up).Length == approx(0)
+
+    with raises(ValueError):
+        hlr(s1, (0, 0, 0))
+
+    with raises(ValueError):
+        hlr(s1, (0, 0, 1), up=(0, 0, 0))
+
+    with raises(ValueError):
+        hlr(s1, (0, 0, 1), up=(0, 0, 2))
+
+    s2 = segment((0, 0, 0), (0, 0, 1))
+    res2 = hlr(s2, (0, -1, 0), up=(-1, 0, 0))
+    assert len(res2.visible.Edges()) == 1
+    assert len(res2.hidden.Edges()) == 0
+
+    bb = res2.visible.Edges()[0].BoundingBox()
+    assert (bb.xmin, bb.ymin, bb.zmin) == approx((0, 0, 0))
+    assert (bb.xmax, bb.ymax, bb.zmax) == approx((1, 0, 0))
+
+    res3 = hlr(s2, (0, -1, 0), (0, 0, -3), up=(-1, 0, 0))
+    bb = res3.visible.Edges()[0].BoundingBox()
+    assert (bb.xmin, bb.ymin, bb.zmin) == approx((3, 0, 0))
+    assert (bb.xmax, bb.ymax, bb.zmax) == approx((4, 0, 0))
