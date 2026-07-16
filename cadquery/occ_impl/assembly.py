@@ -37,7 +37,7 @@ from OCP.Quantity import (
 )
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCP.TopTools import TopTools_ListOfShape
-from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_MakeConnected
+from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_Builder
 from OCP.TopoDS import TopoDS_Shape
 from OCP.gp import gp_EulerSequence
 
@@ -49,7 +49,7 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 from .geom import Location
-from .shapes import Shape, Solid, Compound
+from .shapes import Shape, Solid, Compound, GlueLiteral, _set_glue, _set_builder_options
 from .exporters.vtk import toString, extractEdgesFaces
 from ..cq import Workplane
 from ..utils import BiDict
@@ -855,7 +855,9 @@ def toFusedCAF(
     return top_level_lbl, doc
 
 
-def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]]:
+def imprint(
+    assy: AssemblyProtocol, tol: float = 0.0, glue: GlueLiteral = "full",
+) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]]:
     """
     Imprint all the solids and construct a dictionary mapping imprinted solids to names from the input assy.
     """
@@ -868,22 +870,28 @@ def imprint(assy: AssemblyProtocol) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]
             id_map[s] = name
 
     # connect topologically
-    bldr = BOPAlgo_MakeConnected()
-    bldr.SetRunParallel(True)
-    bldr.SetUseOBB(True)
+    builder = BOPAlgo_Builder()
+
+    _set_glue(builder, glue)
+    _set_builder_options(builder, tol)
 
     for obj in id_map:
-        bldr.AddArgument(obj.wrapped)
+        builder.AddArgument(obj.wrapped)
 
-    bldr.Perform()
-    res = Shape(bldr.Shape())
+    builder.Perform()
+    res = Shape(builder.Shape())
 
     # make the connected solid -> id map
+    ocp_origins = builder.Origins()
     origins: Dict[Shape, Tuple[str, ...]] = {}
 
     for s in res.Solids():
-        ids = tuple(id_map[Solid(el)] for el in bldr.GetOrigins(s.wrapped))
-        # if GetOrigins yields nothing, solid was not modified
+        if ocp_origins.IsBound(s.wrapped):
+            # if GetOrigins yields nothing, solid was not modified
+            ids = tuple(id_map[Solid(el)] for el in ocp_origins.Find(s.wrapped))
+        else:
+            ids = ()
+
         origins[s] = ids if ids else (id_map[s],)
 
     return res, origins
