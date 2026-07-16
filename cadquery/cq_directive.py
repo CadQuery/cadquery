@@ -192,7 +192,7 @@ template_vtk = """
 
 .. raw:: html
 
-    <div class="cq-vtk"
+    <div class="cq-vtk" role="navigation"
      style="text-align:{txt_align};float:left;border: 1px solid #ddd; width:{width}; height:{height}">
        <script>
        var parent_element = {element};
