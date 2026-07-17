@@ -2603,3 +2603,20 @@ def test_name_geometries(tmpdir):
     assert len([l for l in lines if "top_face" in l]) == 2
     assert len([l for l in lines if "plane_" in l]) == 2
     assert len([l for l in lines if "seg_" in l]) == 3
+
+
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+def test_assembly_without_children_roundtrip(kind, tmpdir):
+    """
+    An assembly holding a single shape and no children used to segfault when
+    loaded back from xml or xbf.
+    """
+
+    assy = cq.Assembly(box(1, 1, 1))
+
+    path = os.path.join(tmpdir, f"no_children.{kind}")
+    assy.export(path)
+
+    loaded = cq.Assembly.load(path)
+
+    assert loaded.toCompound().Volume() == approx(1)
