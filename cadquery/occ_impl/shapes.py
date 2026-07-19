@@ -6553,14 +6553,21 @@ def plane() -> Face:
     return _shape(BRepBuilderAPI_MakeFace(pln_geom, -INF, INF, -INF, INF).Face(), Face)
 
 
-def box(w: float, l: float, h: float) -> Solid:
+def box(length: float, width: float, height: float) -> Solid:
     """
-    Construct a solid box.
+    Construct a solid box centered on the XY plane.
+
+    :param length: box size along the X axis
+    :param width: box size along the Y axis
+    :param height: box size along the Z axis
     """
 
     return _shape(
         BRepPrimAPI_MakeBox(
-            gp_Ax2(Vector(-w / 2, -l / 2, 0).toPnt(), Vector(0, 0, 1).toDir()), w, l, h
+            gp_Ax2(Vector(-length / 2, -width / 2, 0).toPnt(), Vector(0, 0, 1).toDir()),
+            length,
+            width,
+            height,
         ).Shape(),
         Solid,
     )
