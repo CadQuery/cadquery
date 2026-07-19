@@ -4934,6 +4934,20 @@ class TestCadQuery(BaseTest):
 
         self.assertTupleAlmostEquals(n.toTuple(), (0, 0, 1), 6)
 
+        located_circle = face(circle(1)).wire().move(y=3, ry=90)
+
+        assert located_circle.normal().toTuple() == approx((1, 0, 0))
+        assert located_circle.edge().normal().toTuple() == approx((1, 0, 0))
+
+        located_ellipse = face(ellipse(2, 1)).wire().move(y=3, ry=90)
+
+        assert located_ellipse.normal().toTuple() == approx((1, 0, 0))
+        assert located_ellipse.edge().normal().toTuple() == approx((1, 0, 0))
+
+        located_rectangle = plane(2, 2).wire().move(y=3, ry=90)
+
+        assert located_rectangle.normal().toTuple() == approx((1, 0, 0))
+
         with self.assertRaises(ValueError):
             edge = Workplane().rect(1, 2).edges().val()
             n = edge.normal()
