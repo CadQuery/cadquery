@@ -627,6 +627,37 @@ class Assembly(object):
 
         return self
 
+    def toBOM(
+        self,
+        indent: int = 0,
+        _result: Optional[List[Dict[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Generate a Bill of Materials (BOM) for this assembly.
+
+        Returns a flat list of dictionaries, one per component, with fields:
+        - name: component name
+        - level: nesting depth (0 = root)
+        - has_shape: whether the component has geometry
+
+        :param indent: current nesting level (used internally for recursion)
+        :return: list of BOM line items
+        """
+
+        if _result is None:
+            _result = []
+
+        _result.append({
+            "name": self.name,
+            "level": indent,
+            "has_shape": self.obj is not None,
+        })
+
+        for child in self.children:
+            child.toBOM(indent=indent + 1, _result=_result)
+
+        return _result
+
     @classmethod
     def importStep(cls, path: str, unit: UnitLiterals = "MM") -> Self:
         """
