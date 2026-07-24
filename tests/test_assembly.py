@@ -10,6 +10,8 @@ import re
 from pytest import approx
 
 import cadquery as cq
+
+from cadquery import Location
 from cadquery.occ_impl.exporters.assembly import (
     exportAssembly,
     exportStepMeta,
@@ -2325,6 +2327,16 @@ def touching_assy():
 
 
 @pytest.fixture
+def complex_assy(touching_assy):
+
+    return (
+        cq.Assembly()
+        .add(touching_assy, name="sub1")
+        .add(touching_assy, loc=Location((5, 0, 0)), name="sub2")
+    )
+
+
+@pytest.fixture
 def disjoint_assy():
 
     b1 = cq.Workplane().box(1, 1, 1)
@@ -2352,6 +2364,26 @@ def test_imprinting(touching_assy, disjoint_assy):
 
     for s in r.Solids():
         assert s in o
+
+
+def test_subassy_imprinting(complex_assy):
+
+    # imprint subassys separately
+    res1, origins1 = cq.occ_impl.assembly.imprint(complex_assy.sub1)
+    res2, origins2 = cq.occ_impl.assembly.imprint(complex_assy.sub2)
+
+    # reference one step imprint
+    ref, _ = cq.occ_impl.assembly.imprint(complex_assy)
+
+    # combine the results
+    res = res1 | res2
+    origins = origins1 | origins2
+
+    assert len(res.Solids()) == len(ref.Solids())
+    assert len(res.Faces()) == len(ref.Faces())
+
+    for s in res.Solids():
+        assert s in origins
 
 
 def test_order_of_transform():
