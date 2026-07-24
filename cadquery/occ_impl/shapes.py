@@ -6956,7 +6956,7 @@ def enclose(
 def imprint(
     *shapes: Shape,
     tol: float = 0.0,
-    glue: GlueLiteral = "full",
+    glue: GlueLiteral = "partial",
     history: History | None = None,
     name: str | None = None,
 ) -> Shape:

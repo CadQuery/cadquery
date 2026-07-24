@@ -856,7 +856,7 @@ def toFusedCAF(
 
 
 def imprint(
-    assy: AssemblyProtocol, tol: float = 0.0, glue: GlueLiteral = "full",
+    assy: AssemblyProtocol, tol: float = 0.0, glue: GlueLiteral = "partial",
 ) -> Tuple[Shape, Dict[Shape, Tuple[str, ...]]]:
     """
     Imprint all the solids and construct a dictionary mapping imprinted solids to names from the input assy.
