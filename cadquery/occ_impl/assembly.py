@@ -890,7 +890,7 @@ def imprint(
 
     for s in res.Solids():
         if ocp_origins.IsBound(s.wrapped):
-            # if GetOrigins yields nothing, solid was not modified
+            # if ocp_origins does not contain the solid, it was not modified
             ids = tuple(id_map[Solid(el)] for el in ocp_origins.Find(s.wrapped))
         else:
             ids = ()
