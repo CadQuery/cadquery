@@ -1439,7 +1439,7 @@ def test_toJSON(simple_assy, empty_top_assy):
         ("xml", ()),
         ("stp", ("STEP",)),
         ("caf", ("XML",)),
-        ("wrl", ("VRML",)),
+        ("wrl", ()),
         ("stl", ("STL",)),
     ],
 )
@@ -1464,7 +1464,7 @@ def test_save(extension, args, nested_assy, tmpdir):
         ("stl", (), {"ascii": True}),
         ("stp", ("STEP",), {}),
         ("caf", ("XML",), {}),
-        ("wrl", ("VRML",), {}),
+        ("wrl", (), {}),
         ("stl", ("STL",), {}),
     ],
 )
