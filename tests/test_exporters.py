@@ -629,12 +629,14 @@ class TestExporters(BaseTest):
 
     def testVRML(self):
 
-        exporters.export(self._box(), str(self.tmpdir / "out1.vrml"))
+        for extension in ("vrml", "wrl"):
+            output = self.tmpdir / f"out1.{extension}"
+            exporters.export(self._box(), str(output))
 
-        with open(self.tmpdir / "out1.vrml") as f:
-            res = f.read(10)
+            with open(output) as f:
+                res = f.read(10)
 
-        assert res.startswith("#VRML V2.0")
+            assert res.startswith("#VRML V2.0")
 
         # export again to trigger all paths in the code
         exporters.export(self._box(), str(self.tmpdir / "out2.vrml"))
