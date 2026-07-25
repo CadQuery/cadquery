@@ -1,6 +1,5 @@
 """DXF export utilities."""
 
-from os import PathLike
 from typing import (
     Any,
     Dict,
@@ -402,7 +401,7 @@ def exportDXF(
 
 def exportDXFProjection(
     s: Union[WorkplaneLike, Shape],
-    path: PathLike | str,
+    path: PathLike,
     dir: VectorLike,
     pnt: VectorLike = (0, 0, 0),
     approx: Optional[ApproxOptions] = None,
