@@ -1122,3 +1122,7 @@ def test_export_pathlike(tmpdir, box123):
     fname = Path(tmpdir) / "pathlike_sketch.dxf"
     Sketch().rect(1, 1).export(fname)
     assert fname.exists()
+
+    fname = Path(tmpdir) / "pathlike_projection.dxf"
+    exporters.exportDXFProjection(box123, fname, (0, 1, 0))
+    assert fname.exists()
