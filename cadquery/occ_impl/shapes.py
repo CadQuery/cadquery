@@ -6956,12 +6956,15 @@ def enclose(
 def imprint(
     *shapes: Shape,
     tol: float = 0.0,
-    glue: GlueLiteral = "full",
+    glue: GlueLiteral = "partial",
     history: History | None = None,
     name: str | None = None,
 ) -> Shape:
     """
     Imprint arbitrary number of shapes.
+
+    Depending on the use case, it might be required to use a different `glue` option. Moreover, for large models
+    it might be needed to limit the number of threads using :meth:`cadquery.func.setThreads`
     """
 
     builder = BOPAlgo_Builder()
