@@ -872,6 +872,12 @@ def imprint(
         for s in obj.moved(loc).Solids():
             id_map[s] = name
 
+    # special cases for only one or no solids present
+    if len(id_map) == 1:
+        return s, {obj: (id_map[s],)}
+    elif len(id_map) == 0:
+        raise ValueError("Cannot imprint assemblies without solids.")
+
     # connect topologically
     builder = BOPAlgo_Builder()
 

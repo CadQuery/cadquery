@@ -7,7 +7,7 @@ from pathlib import Path
 from pathlib import PurePath
 from contextlib import chdir
 import re
-from pytest import approx
+from pytest import approx, raises
 
 import cadquery as cq
 
@@ -2364,6 +2364,16 @@ def test_imprinting(touching_assy, disjoint_assy):
 
     for s in r.Solids():
         assert s in o
+
+    # edge usecase with one shape
+    r, o = cq.occ_impl.assembly.imprint(cq.Assembly().add(box(1, 1, 1)))
+
+    assert len(r.Solids()) == 1
+    assert len(r.Faces()) == 6
+
+    # edge usecase with zero shapes
+    with raises(ValueError):
+        cq.occ_impl.assembly.imprint(cq.Assembly())
 
 
 def test_subassy_imprinting(complex_assy):
