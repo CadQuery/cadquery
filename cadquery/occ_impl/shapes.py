@@ -6963,7 +6963,7 @@ def imprint(
     """
     Imprint arbitrary number of shapes.
 
-    Depending on the use case, it might be required do use different `glue` option. Moreover, for large models
+    Depending on the use case, it might be required to use a different `glue` option. Moreover, for large models
     it might be needed to limit the number of threads using :meth:`cadquery.func.setThreads`
     """
 
