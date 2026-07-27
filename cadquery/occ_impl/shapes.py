@@ -2357,7 +2357,10 @@ class Mixin1D(object):
 
             if isinstance(surf, Geom_Plane):
                 pln = surf.Pln()
-                rv = Vector(pln.Axis().Direction())
+                direction = (
+                    pln.Axis().Direction().Transformed(fs.Location().Transformation())
+                )
+                rv = Vector(direction)
             else:
                 raise ValueError("Normal not defined")
 
