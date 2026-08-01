@@ -5,6 +5,7 @@ from typing import List
 from ... import cq
 from ..geom import Vector
 from ..shapes import Shape, Edge, Face, sortWiresByBuildOrder
+from ...types import PathLike
 
 import ezdxf
 
@@ -159,7 +160,10 @@ def _dxf_convert(elements, tol):
 
 
 def _importDXF(
-    filename: str, tol: float = 1e-6, exclude: List[str] = [], include: List[str] = [],
+    filename: PathLike,
+    tol: float = 1e-6,
+    exclude: List[str] = [],
+    include: List[str] = [],
 ) -> List[Face]:
     """
     Loads a DXF file into a list of faces.

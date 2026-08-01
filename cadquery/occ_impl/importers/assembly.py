@@ -1,3 +1,5 @@
+import os
+
 from typing import cast
 from pathlib import Path
 
@@ -26,7 +28,7 @@ from OCP.PCDM import PCDM_ReaderStatus
 from ..assembly import AssemblyProtocol, Color, Material
 from ..geom import Location
 from ..shapes import Shape
-from ...types import UnitLiterals
+from ...types import PathLike, UnitLiterals
 
 
 def _get_name(label: TDF_Label) -> str:
@@ -130,7 +132,7 @@ def _get_shape_color(s: TopoDS_Shape, color_tool: XCAFDoc_ColorTool) -> Color | 
     return rv
 
 
-def importStep(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
+def importStep(assy: AssemblyProtocol, path: PathLike, unit: UnitLiterals = "MM"):
     """
     Import a step file into an assembly.
 
@@ -154,7 +156,7 @@ def importStep(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     Interface_Static.SetCVal_s("xstep.cascade.unit", unit.upper())
 
     # Read the STEP file
-    status = step_reader.ReadFile(path)
+    status = step_reader.ReadFile(os.fspath(path))
     if status != IFSelect_RetDone:
         raise ValueError(f"Error reading STEP file: {path}")
 
@@ -167,7 +169,7 @@ def importStep(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     _importDoc(doc, assy)
 
 
-def importXbf(assy: AssemblyProtocol, path: str):
+def importXbf(assy: AssemblyProtocol, path: PathLike):
     """
     Import an xbf file into an assembly.
 
@@ -197,7 +199,7 @@ def importXbf(assy: AssemblyProtocol, path: str):
     _importDoc(doc, assy)
 
 
-def importXml(assy: AssemblyProtocol, path: str):
+def importXml(assy: AssemblyProtocol, path: PathLike):
     """
     Import an xcaf xml file into an assembly.
 

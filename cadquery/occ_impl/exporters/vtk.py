@@ -10,7 +10,10 @@ from vtkmodules.vtkCommonDataModel import (
     VTK_POLY_LINE,
 )
 
+import os
+
 from ..shapes import Shape
+from ...types import PathLike
 
 
 def extractEdgesFaces(data: vtkPolyData) -> tuple[vtkPolyData, vtkPolyData]:
@@ -41,11 +44,14 @@ def extractEdgesFaces(data: vtkPolyData) -> tuple[vtkPolyData, vtkPolyData]:
 
 
 def exportVTP(
-    shape: Shape, fname: str, tolerance: float = 0.1, angularTolerance: float = 0.1
+    shape: Shape,
+    fname: PathLike,
+    tolerance: float = 0.1,
+    angularTolerance: float = 0.1,
 ):
 
     writer = vtkXMLPolyDataWriter()
-    writer.SetFileName(fname)
+    writer.SetFileName(os.fspath(fname))
     writer.SetInputData(shape.toVtkPolyData(tolerance, angularTolerance))
     writer.Write()
 

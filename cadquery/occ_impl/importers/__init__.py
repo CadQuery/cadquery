@@ -1,3 +1,5 @@
+import os
+
 from math import pi
 from typing import List, Literal
 
@@ -8,7 +10,7 @@ from OCP.Interface import Interface_Static
 from ... import cq
 from ..shapes import Shape
 from .dxf import _importDXF
-from ...types import UnitLiterals
+from ...types import PathLike, UnitLiterals
 
 RAD2DEG = 360.0 / (2 * pi)
 
@@ -27,7 +29,7 @@ class UNITS:
 
 def importShape(
     importType: Literal["STEP", "DXF", "BREP", "BIN"],
-    fileName: str,
+    fileName: PathLike,
     unit: UnitLiterals = "MM",
     *args,
     **kwargs,
@@ -54,7 +56,7 @@ def importShape(
         raise RuntimeError("Unsupported import type: {!r}".format(importType))
 
 
-def importBrep(fileName: str) -> "cq.Workplane":
+def importBrep(fileName: PathLike) -> "cq.Workplane":
     """
     Loads the BREP file as a single shape into a cadquery Workplane.
 
@@ -71,7 +73,7 @@ def importBrep(fileName: str) -> "cq.Workplane":
     return cq.Workplane("XY").newObject([shape])
 
 
-def importBin(fileName: str) -> "cq.Workplane":
+def importBin(fileName: PathLike) -> "cq.Workplane":
     """
     Loads the binary BREP file as a single shape into a cadquery Workplane.
 
@@ -83,7 +85,7 @@ def importBin(fileName: str) -> "cq.Workplane":
     return cq.Workplane("XY").newObject([shape])
 
 
-def _importStep(fileName: str, unit: UnitLiterals = "MM") -> list["Shape"]:
+def _importStep(fileName: PathLike, unit: UnitLiterals = "MM") -> list["Shape"]:
     """
     Private helper for implementing different STEP importers.
     """
@@ -93,7 +95,7 @@ def _importStep(fileName: str, unit: UnitLiterals = "MM") -> list["Shape"]:
 
     # Now read and return the shape
     reader = STEPControl_Reader()
-    readStatus = reader.ReadFile(fileName)
+    readStatus = reader.ReadFile(os.fspath(fileName))
     if readStatus != OCP.IFSelect.IFSelect_RetDone:
         raise ValueError("STEP File could not be loaded")
     for i in range(reader.NbRootsForTransfer()):
@@ -105,7 +107,7 @@ def _importStep(fileName: str, unit: UnitLiterals = "MM") -> list["Shape"]:
 
 
 # Loads a STEP file into a CQ.Workplane object
-def importStep(fileName: str, unit: UnitLiterals = "MM") -> "cq.Workplane":
+def importStep(fileName: PathLike, unit: UnitLiterals = "MM") -> "cq.Workplane":
     """
     Accepts a file name and loads the STEP file into a cadquery Workplane
 
@@ -119,7 +121,10 @@ def importStep(fileName: str, unit: UnitLiterals = "MM") -> "cq.Workplane":
 
 
 def importDXF(
-    filename: str, tol: float = 1e-6, exclude: List[str] = [], include: List[str] = []
+    filename: PathLike,
+    tol: float = 1e-6,
+    exclude: List[str] = [],
+    include: List[str] = [],
 ) -> "cq.Workplane":
     """
     Loads a DXF file into a Workplane.

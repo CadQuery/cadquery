@@ -1,6 +1,5 @@
 """DXF export utilities."""
 
-from os import PathLike
 from typing import (
     Any,
     Dict,
@@ -15,6 +14,8 @@ from typing import (
 )
 
 import ezdxf
+
+from ...types import PathLike
 from ezdxf import units, zoom
 from ezdxf.entities import factory
 from OCP.GeomConvert import GeomConvert
@@ -368,7 +369,7 @@ class DxfDocument:
 
 def exportDXF(
     w: WorkplaneLike | Shape | Iterable[Shape],
-    fname: str,
+    fname: PathLike,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
     *,
@@ -400,7 +401,7 @@ def exportDXF(
 
 def exportDXFProjection(
     s: Union[WorkplaneLike, Shape],
-    path: PathLike | str,
+    path: PathLike,
     dir: VectorLike,
     pnt: VectorLike = (0, 0, 0),
     approx: Optional[ApproxOptions] = None,

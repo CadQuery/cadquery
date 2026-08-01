@@ -1,10 +1,12 @@
+import os
+
 from typing import IO, Optional, Union, cast, Dict, Any, Iterable
 from typing_extensions import Literal
 
 from OCP.VrmlAPI import VrmlAPI
 
 from ..shapes import Shape, compound
-from ...types import UnitLiterals
+from ...types import PathLike, UnitLiterals
 
 from .svg import getSVG, exportSVG
 from .json import JsonMesh
@@ -35,7 +37,7 @@ ExportLiterals = Literal[
 
 def export(
     w: Union[Shape, Iterable[Shape]],
-    fname: str,
+    fname: PathLike,
     exportType: Optional[ExportLiterals] = None,
     tolerance: float = 0.1,
     angularTolerance: float = 0.1,
@@ -63,6 +65,8 @@ def export(
 
     shape: Shape
     f: IO
+
+    fname = os.fspath(fname)
 
     if not opt:
         opt = {}
