@@ -647,11 +647,13 @@ class Assembly(object):
         if _result is None:
             _result = []
 
-        _result.append({
-            "name": self.name,
-            "level": indent,
-            "has_shape": self.obj is not None,
-        })
+        _result.append(
+            {
+                "name": self.name,
+                "level": indent,
+                "has_shape": self.obj is not None,
+            }
+        )
 
         for child in self.children:
             child.toBOM(indent=indent + 1, _result=_result)
