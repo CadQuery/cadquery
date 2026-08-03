@@ -2662,3 +2662,21 @@ def test_assembly_without_children_roundtrip(kind, tmpdir):
     loaded = cq.Assembly.load(path)
 
     assert loaded.toCompound().Volume() == approx(1)
+
+
+def test_toBOM():
+
+    assy = cq.Assembly(name="root")
+    assy.add(box(1, 1, 1), name="part1")
+
+    subassy = cq.Assembly(name="sub")
+    subassy.add(box(2, 2, 2), name="part2")
+    assy.add(subassy, name="sub")
+
+    bom = assy.toBOM()
+
+    assert len(bom) == 4
+    assert bom[0] == {"name": "root", "level": 0, "has_shape": False}
+    assert bom[1] == {"name": "part1", "level": 1, "has_shape": True}
+    assert bom[2] == {"name": "sub", "level": 1, "has_shape": False}
+    assert bom[3] == {"name": "part2", "level": 2, "has_shape": True}
