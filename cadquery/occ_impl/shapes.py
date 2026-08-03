@@ -6637,7 +6637,10 @@ def box(length: float, width: float, height: float) -> Solid:
 
     return _shape(
         BRepPrimAPI_MakeBox(
-            gp_Ax2(Vector(-length / 2, -width / 2, 0).toPnt(), Vector(0, 0, 1).toDir()),
+            gp_Ax2(
+                Vector(-length / 2, -width / 2, 0).toPnt(),
+                Vector(0, 0, 1).toDir(),
+            ),
             length,
             width,
             height,
