@@ -628,9 +628,7 @@ class Assembly(object):
         return self
 
     def toBOM(
-        self,
-        indent: int = 0,
-        _result: Optional[List[Dict[str, Any]]] = None,
+        self, indent: int = 0, _result: Optional[List[Dict[str, Any]]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Generate a Bill of Materials (BOM) for this assembly.
@@ -648,11 +646,7 @@ class Assembly(object):
             _result = []
 
         _result.append(
-            {
-                "name": self.name,
-                "level": indent,
-                "has_shape": self.obj is not None,
-            }
+            {"name": self.name, "level": indent, "has_shape": self.obj is not None,}
         )
 
         for child in self.children:
