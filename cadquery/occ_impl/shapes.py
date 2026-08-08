@@ -5144,28 +5144,28 @@ T4 = TypeVar("T4")
 
 
 @overload
-def _get(obj: Shape, ts: Type[T1]) -> Iterable[T1]:
+def _get(s: Shape, ts: Type[T1]) -> Iterable[T1]:
     ...
 
 
 @overload
-def _get(obj: Shape, ts: tuple[Type[T1]]) -> Iterable[T1]:
+def _get(s: Shape, ts: tuple[Type[T1]]) -> Iterable[T1]:
     ...
 
 
 @overload
-def _get(obj: Shape, ts: tuple[Type[T1], Type[T2]]) -> Iterable[T1 | T2]:
+def _get(s: Shape, ts: tuple[Type[T1], Type[T2]]) -> Iterable[T1 | T2]:
     ...
 
 
 @overload
-def _get(obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> Iterable[T1 | T2 | T3]:
+def _get(s: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> Iterable[T1 | T2 | T3]:
     ...
 
 
 @overload
 def _get(
-    obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
+    s: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
 ) -> Iterable[T1 | T2 | T3 | T4]:
     ...
 
@@ -5199,28 +5199,28 @@ def _get(s, ts):
 
 
 @overload
-def _get_one(obj: Shape, ts: Type[T1]) -> T1:
+def _get_one(s: Shape, ts: Type[T1]) -> T1:
     ...
 
 
 @overload
-def _get_one(obj: Shape, ts: tuple[Type[T1]]) -> T1:
+def _get_one(s: Shape, ts: tuple[Type[T1]]) -> T1:
     ...
 
 
 @overload
-def _get_one(obj: Shape, ts: tuple[Type[T1], Type[T2]]) -> T1 | T2:
+def _get_one(s: Shape, ts: tuple[Type[T1], Type[T2]]) -> T1 | T2:
     ...
 
 
 @overload
-def _get_one(obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> T1 | T2 | T3:
+def _get_one(s: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> T1 | T2 | T3:
     ...
 
 
 @overload
 def _get_one(
-    obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
+    s: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
 ) -> T1 | T2 | T3 | T4:
     ...
 
