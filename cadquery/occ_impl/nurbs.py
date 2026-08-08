@@ -357,7 +357,7 @@ class Surface(NamedTuple):
 @njiti
 def _preprocess(
     u: Array, order: int, knots: Array, periodic: bool
-) -> Tuple[Array, Array, Optional[int], Optional[int], int]:
+) -> Tuple[Array, Array, int, int, int]:
     """
     Helper for handling periodicity. This function extends the knot vector,
     wraps the parameters and calculates the delta span.

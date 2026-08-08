@@ -880,6 +880,21 @@ def _check_dxf_no_spline(fname):
     return True
 
 
+def test_dxf_projection(tmpdir):
+
+    path = tmpdir / "projection.dxf"
+    s1 = Workplane("XZ").ellipse(1, 2).extrude(1)
+
+    exporters.exportDXFProjection(
+        s1, path, (1, 1, 1), up=(0, 0, 1),
+    )
+
+    dxf = ezdxf.readfile(path)
+
+    assert path.is_file()
+    assert len(dxf.modelspace()) > 0
+
+
 def test_dxf_approx(tmpdir):
 
     pts = [(0, 0), (0, 0.5), (1, 1)]
