@@ -373,14 +373,16 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
     if shape_tool.IsTopLevel(top_level_label) and shape_tool.IsAssembly_s(
         top_level_label
     ):
-        # Set the name of the top-level assembly to match the top-level label
-        name_attr = TDataStd_Name()
-        top_level_label.FindAttribute(TDataStd_Name.GetID_s(), name_attr)
+        # Set the name of the top-level assembly to match the top-level label. An
+        # assembly without children has no name attribute after an xml/xbf round
+        # trip, and FindAttribute segfaults on a label that does not have it.
+        name = _get_name(top_level_label)
 
-        # Manipulation of .objects is needed to maintain consistency
-        assy.objects.pop(assy.name)
-        assy.name = str(name_attr.Get().ToExtString())
-        assy.objects[assy.name] = assy
+        if name:
+            # Manipulation of .objects is needed to maintain consistency
+            assy.objects.pop(assy.name)
+            assy.name = name
+            assy.objects[assy.name] = assy
 
         if cq_color:
             assy.color = cq_color
