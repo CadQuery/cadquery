@@ -259,6 +259,63 @@ def test_bin_import_export():
         Shape.importBin(BytesIO())
 
 
+def test_step_import_export(tmp_path):
+
+    b = box(1, 1, 1)
+
+    fileName = str(tmp_path / "box.step")
+
+    b.exportStep(fileName)
+
+    r = Shape.importStep(fileName)
+
+    assert r.isValid()
+    assert r.ShapeType() == "Solid"
+    assert r.Volume() == approx(1)
+
+    with raises(Exception):
+        Shape.importStep(str(tmp_path / "does_not_exist.step"))
+
+
+def test_step_import_no_shape(tmp_path):
+
+    # a syntactically valid STEP file that has no shape data in it
+    fileName = str(tmp_path / "no_shape.step")
+
+    with open(fileName, "w") as f:
+        f.write(
+            "ISO-10303-21;\n"
+            "HEADER;\n"
+            "FILE_DESCRIPTION((''),'2;1');\n"
+            "FILE_NAME('empty','2024-01-01T00:00:00',(''),(''),'','','');\n"
+            "FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 3 1 1 }'));\n"
+            "ENDSEC;\n"
+            "DATA;\n"
+            "ENDSEC;\n"
+            "END-ISO-10303-21;\n"
+        )
+
+    with raises(ValueError):
+        Shape.importStep(fileName)
+
+
+def test_step_import_multiple_roots(tmp_path):
+
+    b1 = box(1, 1, 1)
+    b2 = box(1, 1, 1).moved(3, 0, 0)
+
+    fileName = str(tmp_path / "boxes.step")
+
+    compound(b1, b2).exportStep(fileName)
+
+    r = Shape.importStep(fileName)
+
+    assert r.isValid()
+    assert r.ShapeType() == "Compound"
+    assert r.Volume() == approx(2)
+    assert len(list(r)) == 2
+
+
 def test_sample():
 
     e = ellipse(10, 1)

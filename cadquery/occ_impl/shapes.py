@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
+from dataclasses import dataclass
 from typing import (
     Any,
     Literal,
@@ -162,6 +163,9 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Check,
 )
 
+from OCP.HLRAlgo import HLRAlgo_Projector
+from OCP.HLRBRep import HLRBRep_Algo, HLRBRep_HLRToShape
+
 from OCP.Geom import (
     Geom_BezierCurve,
     Geom_ConicalSurface,
@@ -225,6 +229,7 @@ from OCP.Font import (
     Font_FA_Italic,
     Font_FA_Bold,
     Font_SystemFont,
+    Font_StrictLevel_Aliases,
 )
 
 from OCP.StdPrs import StdPrs_BRepFont, StdPrs_BRepTextBuilder as Font_BRepTextBuilder
@@ -607,6 +612,26 @@ class Shape(object):
         BinTools.Read_s(s, f)
 
         return cls.cast(s)
+
+    @classmethod
+    def importStep(cls, fileName: str, unit: UnitLiterals = "MM") -> Shape:
+        """
+        Import shape from a STEP file.
+
+        :param fileName: Path to the STEP file to import.
+        :param unit: Sets the target OpenCASCADE unit - OCCT scales from the file's
+            declared unit to this unit. Default "MM".
+        :type unit: UnitLiterals
+        """
+
+        from .importers import _importStep
+
+        shapes = _importStep(fileName, unit)
+
+        if not shapes:
+            raise ValueError(f"No shape found in {fileName}")
+
+        return shapes[0] if len(shapes) == 1 else Compound.makeCompound(shapes)
 
     def geomType(self) -> Geoms:
         """
@@ -2333,7 +2358,10 @@ class Mixin1D(object):
 
             if isinstance(surf, Geom_Plane):
                 pln = surf.Pln()
-                rv = Vector(pln.Axis().Direction())
+                direction = (
+                    pln.Axis().Direction().Transformed(fs.Location().Transformation())
+                )
+                rv = Vector(direction)
             else:
                 raise ValueError("Normal not defined")
 
@@ -4867,7 +4895,11 @@ class Compound(Shape, Mixin3D):
             mgr.RegisterFont(font_t, True)
 
         else:
-            font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+            font_t = mgr.FindFont(
+                TCollection_AsciiString(font), Font_StrictLevel_Aliases, font_kind
+            )
+            if font_t is None:
+                raise ValueError(f"Font '{font}' not found")
 
         builder = Font_BRepTextBuilder()
         font_i = StdPrs_BRepFont(
@@ -5112,28 +5144,28 @@ T4 = TypeVar("T4")
 
 
 @overload
-def _get(obj: Shape, ts: Type[T1]) -> Iterable[T1]:
+def _get(s: Shape, ts: Type[T1]) -> Iterable[T1]:
     ...
 
 
 @overload
-def _get(obj: Shape, ts: tuple[Type[T1]]) -> Iterable[T1]:
+def _get(s: Shape, ts: tuple[Type[T1]]) -> Iterable[T1]:
     ...
 
 
 @overload
-def _get(obj: Shape, ts: tuple[Type[T1], Type[T2]]) -> Iterable[T1 | T2]:
+def _get(s: Shape, ts: tuple[Type[T1], Type[T2]]) -> Iterable[T1 | T2]:
     ...
 
 
 @overload
-def _get(obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> Iterable[T1 | T2 | T3]:
+def _get(s: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> Iterable[T1 | T2 | T3]:
     ...
 
 
 @overload
 def _get(
-    obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
+    s: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
 ) -> Iterable[T1 | T2 | T3 | T4]:
     ...
 
@@ -5167,28 +5199,28 @@ def _get(s, ts):
 
 
 @overload
-def _get_one(obj: Shape, ts: Type[T1]) -> T1:
+def _get_one(s: Shape, ts: Type[T1]) -> T1:
     ...
 
 
 @overload
-def _get_one(obj: Shape, ts: tuple[Type[T1]]) -> T1:
+def _get_one(s: Shape, ts: tuple[Type[T1]]) -> T1:
     ...
 
 
 @overload
-def _get_one(obj: Shape, ts: tuple[Type[T1], Type[T2]]) -> T1 | T2:
+def _get_one(s: Shape, ts: tuple[Type[T1], Type[T2]]) -> T1 | T2:
     ...
 
 
 @overload
-def _get_one(obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> T1 | T2 | T3:
+def _get_one(s: Shape, ts: tuple[Type[T1], Type[T2], Type[T3]]) -> T1 | T2 | T3:
     ...
 
 
 @overload
 def _get_one(
-    obj: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
+    s: Shape, ts: tuple[Type[T1], Type[T2], Type[T3], Type[T4]]
 ) -> T1 | T2 | T3 | T4:
     ...
 
@@ -6707,7 +6739,11 @@ def text(
         mgr.RegisterFont(font_t, True)
 
     else:
-        font_t = mgr.FindFont(TCollection_AsciiString(font), font_kind)
+        font_t = mgr.FindFont(
+            TCollection_AsciiString(font), Font_StrictLevel_Aliases, font_kind
+        )
+        if font_t is None:
+            raise ValueError(f"Font '{font}' not found")
 
     font_i = StdPrs_BRepFont(
         NCollection_Utf8String(font_t.FontName().ToCString()), font_kind, float(size),
@@ -6964,15 +7000,44 @@ def split(
     return _compound_or_shape(builder.Shape())
 
 
+def enclose(
+    *shapes: Shape,
+    tol: float = 0.0,
+    history: History | None = None,
+    name: str | None = None,
+) -> Shape:
+    """
+    Build a solid enclosed by the specified faces. Faces can intersect or touch.
+    If all faces are touching, solid() has better performance.
+    """
+
+    builder = BOPAlgo_MakerVolume()
+    # ignore non-intersecting internal faces
+    builder.SetAvoidInternalShapes(True)
+    _set_builder_options(builder, tol)
+
+    for s in shapes:
+        builder.AddArgument(s.wrapped)
+
+    builder.Perform()
+
+    _update_history(history, name, shapes, builder)
+
+    return _compound_or_shape(builder.Shape())
+
+
 def imprint(
     *shapes: Shape,
     tol: float = 0.0,
-    glue: GlueLiteral = "full",
+    glue: GlueLiteral = "partial",
     history: History | None = None,
     name: str | None = None,
 ) -> Shape:
     """
     Imprint arbitrary number of shapes.
+
+    Depending on the use case, it might be required to use a different `glue` option. Moreover, for large models
+    it might be needed to limit the number of threads using :meth:`cadquery.func.setThreads`
     """
 
     builder = BOPAlgo_Builder()
@@ -8157,3 +8222,129 @@ def closest(s1: Shape, s2: Shape) -> tuple[Vector, Vector]:
     assert ext.Perform()
 
     return Vector(ext.PointOnShape1(1)), Vector(ext.PointOnShape2(1))
+
+
+@dataclass(frozen=True)
+class HLRResult:
+    """
+    Result of a hidden-line-removal projection.
+
+    The returned plane describes the 2D projection coordinate system:
+
+    * ``plane.xDir`` is screen +X/right in world coordinates.
+    * ``plane.yDir`` is screen +Y/up in world coordinates.
+    * ``plane.zDir`` is the projection direction/view-plane normal.
+    """
+
+    visible: Compound
+    hidden: Compound
+    plane: Plane
+
+
+def hlr(
+    s: Shape,
+    dir: VectorLike,
+    pnt: VectorLike = (0, 0, 0),
+    up: VectorLike | None = None,
+    focus: float | None = None,
+) -> HLRResult:
+    """
+    Project a shape onto a plane and perform hidden-line removal. Useful for
+    generating views for technical drawings.
+
+    ``dir`` defines the projection plane's normal, and ``pnt`` defines its origin.
+    Orthographic projection is used by default; supplying ``focus`` enables
+    perspective projection.
+
+    :param s: Shape to project.
+    :param dir: Projection direction and normal of the projection plane.
+    :param pnt: Origin of the projection plane.
+    :param up: Preferred positive Y direction of the projected view. If omitted,
+        OCCT chooses the in-plane orientation.
+    :param focus: Focal distance for perspective projection. If omitted,
+        orthographic projection is used.
+    :return: Visible and hidden projected edges together with the projection
+        plane.
+    :raises ValueError: If ``dir`` or ``up`` is zero, or if ``up`` is parallel
+        to ``dir``.
+    """
+    hlr = HLRBRep_Algo()
+    hlr.Add(s.wrapped)
+
+    origin = Vector(pnt)
+    normal = Vector(dir)
+
+    if normal.Length == 0.0:
+        raise ValueError("dir must be nonzero")
+
+    normal = normal.normalized()
+
+    if up is None:
+        coordinate_system = gp_Ax2(origin.toPnt(), normal.toDir())
+        plane = Plane(
+            origin, xDir=Vector(coordinate_system.XDirection()), normal=normal
+        )
+    else:
+        up_dir = Vector(up)
+
+        if up_dir.Length == 0.0:
+            raise ValueError("up must be nonzero")
+
+        up_dir = up_dir.normalized()
+        x_dir = up_dir.cross(normal)
+
+        if x_dir.Length < 1e-6:
+            raise ValueError("up must not be parallel to dir")
+
+        x_dir = x_dir.normalized()
+        plane = Plane(origin, xDir=x_dir, normal=normal)
+        coordinate_system = gp_Ax2(
+            plane.origin.toPnt(), plane.zDir.toDir(), plane.xDir.toDir()
+        )
+
+    if focus is not None:
+        projector = HLRAlgo_Projector(coordinate_system, focus)
+    else:
+        projector = HLRAlgo_Projector(coordinate_system)
+
+    hlr.Projector(projector)
+    hlr.Update()
+    hlr.Hide()
+
+    hlr_shapes = HLRBRep_HLRToShape(hlr)
+
+    visible = []
+
+    visible_sharp_edges = hlr_shapes.VCompound()
+    if not visible_sharp_edges.IsNull():
+        visible.append(visible_sharp_edges)
+
+    visible_smooth_edges = hlr_shapes.Rg1LineVCompound()
+    if not visible_smooth_edges.IsNull():
+        visible.append(visible_smooth_edges)
+
+    visible_contour_edges = hlr_shapes.OutLineVCompound()
+    if not visible_contour_edges.IsNull():
+        visible.append(visible_contour_edges)
+
+    hidden = []
+
+    hidden_sharp_edges = hlr_shapes.HCompound()
+    if not hidden_sharp_edges.IsNull():
+        hidden.append(hidden_sharp_edges)
+
+    hidden_contour_edges = hlr_shapes.OutLineHCompound()
+    if not hidden_contour_edges.IsNull():
+        hidden.append(hidden_contour_edges)
+
+    # Fix the underlying geometry - otherwise we will get segfaults
+    for el in visible:
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
+    for el in hidden:
+        BRepLib.BuildCurves3d_s(el, TOLERANCE)
+
+    # Extract edges
+    visible_edges = compound(_compound_or_shape(visible).Edges())
+    hidden_edges = compound(_compound_or_shape(hidden).Edges())
+
+    return HLRResult(visible_edges, hidden_edges, plane)

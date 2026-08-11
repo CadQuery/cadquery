@@ -1,5 +1,6 @@
 """DXF export utilities."""
 
+from os import PathLike
 from typing import (
     Any,
     Dict,
@@ -22,8 +23,8 @@ from OCP.GC import GC_MakeArcOfEllipse
 from typing_extensions import Self
 
 from ...units import RAD2DEG
-from ..shapes import Face, Edge, Shape, Compound, compound
-from ..geom import Plane
+from ..shapes import Face, Edge, Shape, Compound, compound, hlr
+from ..geom import Plane, VectorLike
 
 
 ApproxOptions = Literal["spline", "arc"]
@@ -157,6 +158,7 @@ class DxfDocument:
             plane = shape.plane
             shape_ = compound(*shape.__iter__()).transformShape(plane.fG)
         else:
+            plane = Plane((0, 0, 0))
             shape_ = shape
 
         general_attributes = {}
@@ -365,7 +367,7 @@ class DxfDocument:
 
 
 def exportDXF(
-    w: Union[WorkplaneLike, Shape, Iterable[Shape]],
+    w: WorkplaneLike | Shape | Iterable[Shape],
     fname: str,
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
@@ -394,3 +396,41 @@ def exportDXF(
 
     zoom.extents(dxf.msp)
     dxf.document.saveas(fname)
+
+
+def exportDXFProjection(
+    s: Union[WorkplaneLike, Shape],
+    path: PathLike | str,
+    dir: VectorLike,
+    pnt: VectorLike = (0, 0, 0),
+    approx: Optional[ApproxOptions] = None,
+    tolerance: float = 1e-3,
+    *,
+    up: Optional[VectorLike] = None,
+    doc_units: int = units.MM,
+) -> None:
+    """
+    Export to DXF using projections. Works with 3D objects.
+
+    :param s: Shape or Workplane to be exported.
+    :param path: Output file path.
+    :param dir: Direction of projection.
+    :param pnt: Origin of the projection plane.
+    :param up: Direction that should appear upward in the projected output. None
+        preserves OCCT's default in-plane orientation.
+    :param approx: Approximation strategy. None means no approximation is applied.
+        "spline" results in all splines being approximated as cubic splines. "arc" results
+        in all curves being approximated as arcs and straight segments.
+    :param tolerance: Approximation tolerance.
+    :param doc_units: ezdxf document/modelspace :doc:`units <ezdxf-stable:concepts/units>` (in. = ``1``, mm = ``4``).
+    """
+
+    shapes = []
+
+    if isinstance(s, WorkplaneLike):
+        for s in s.__iter__():
+            shapes.append(hlr(s, dir, pnt, up=up).visible)
+    else:
+        shapes.append(hlr(s, dir, pnt, up=up).visible)
+
+    exportDXF(shapes, str(path), approx, tolerance, doc_units=doc_units)
