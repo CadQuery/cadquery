@@ -53,6 +53,7 @@ from cadquery.func import (
     fillet2D,
     draft,
     isSubshape,
+    Solid,
     hlr,
 )
 
@@ -121,20 +122,26 @@ def test_utils():
     with raises(ValueError):
         list(_get_wires(box(1, 1, 1)))
 
-    r3 = list(_get(box(1, 1, 1).moved(Location(), Location(2, 0, 0)), "Solid"))
+    r3 = list(_get(box(1, 1, 1).moved(Location(), Location(2, 0, 0)), Solid))
 
     assert (len(r3)) == 2
     assert all(el.ShapeType() == "Solid" for el in r3)
 
     with raises(ValueError):
-        list(_get(box(1, 1, 1), "Shell"))
+        list(_get(box(1, 1, 1), Shell))
 
-    r4 = _get_one(compound(box(1, 1, 1), box(2, 2, 2)), "Solid")
+    with raises(ValueError):
+        list(_get(compound(box(1, 1, 1)), Shell))
+
+    r4 = _get_one(compound(box(1, 1, 1), box(2, 2, 2)), Solid)
 
     assert r4.ShapeType() == "Solid"
 
     with raises(ValueError):
-        _get_one(rect(1, 1), ("Solid", "Shell"))
+        _get_one(rect(1, 1), (Solid, Shell))
+
+    with raises(ValueError):
+        _get_one(compound(rect(1, 1)), (Solid, Shell))
 
     with raises(ValueError):
         list(_get_edges(fill(circle(1))))
