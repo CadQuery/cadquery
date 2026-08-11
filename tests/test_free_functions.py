@@ -127,12 +127,18 @@ def test_utils():
     with raises(ValueError):
         list(_get(box(1, 1, 1), Shell))
 
+    with raises(ValueError):
+        list(_get(compound(box(1, 1, 1)), Shell))
+
     r4 = _get_one(compound(box(1, 1, 1), box(2, 2, 2)), Solid)
 
     assert r4.ShapeType() == "Solid"
 
     with raises(ValueError):
         _get_one(rect(1, 1), (Solid, Shell))
+
+    with raises(ValueError):
+        _get_one(compound(rect(1, 1)), (Solid, Shell))
 
     with raises(ValueError):
         list(_get_edges(fill(circle(1))))
