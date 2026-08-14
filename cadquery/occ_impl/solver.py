@@ -418,7 +418,7 @@ def point_in_plane_cost(
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
 
     m2_dir = m2.Axis().Direction()
-    m2_pnt = m2.Axis().Location().Translated(val * gp_Vec(m2_dir))
+    m2_pnt = m2.Axis().Location().Translated(gp_Vec(m2_dir).Scaled(val))
 
     m2_dir_dm = ca.DM((m2_dir.X(), m2_dir.Y(), m2_dir.Z()))
     m2_pnt_dm = ca.DM((m2_pnt.X(), m2_pnt.Y(), m2_pnt.Z()))
