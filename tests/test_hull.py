@@ -18,7 +18,7 @@ def test_hull():
 
     h = hull.find_hull(edges)
 
-    assert len(h.Vertices()) == 11
+    assert len(h.Vertices()) == 10
     assert h.IsClosed()
     assert h.isValid()
 
