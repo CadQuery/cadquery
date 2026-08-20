@@ -14,7 +14,10 @@ from numpy import linspace, ndarray
 from casadi import ldl, ldl_solve, Linsol, DM, solve
 
 from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface
-from OCP.collections import Array1_gp_Pnt as TColgp_Array1OfPnt, Array2_gp_Pnt as TColgp_Array2OfPnt
+from OCP.collections import (
+    Array1_gp_Pnt as TColgp_Array1OfPnt,
+    Array2_gp_Pnt as TColgp_Array2OfPnt,
+)
 from OCP.collections import (
     Array1_int as TColStd_Array1OfInteger,
     Array1_double as TColStd_Array1OfReal,
