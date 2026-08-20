@@ -41,7 +41,7 @@ from OCP.TCollection import (
 )
 from OCP.PCDM import PCDM_StoreStatus
 from OCP.RWGltf import RWGltf_CafWriter
-from OCP import (
+from OCP.collections import (
     IndexedDataMap_TCollection_AsciiString_TCollection_AsciiString as TColStd_IndexedDataMapOfStringString,
 )
 from OCP.Message import Message_ProgressRange

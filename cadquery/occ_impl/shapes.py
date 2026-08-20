@@ -67,7 +67,7 @@ from OCP.collections import (
     HArray1_gp_Pnt as TColgp_HArray1OfPnt,
     HArray2_gp_Pnt as TColgp_HArray2OfPnt,
     Array1_gp_Pnt as TColgp_Array1OfPnt,
-    HArray2_gp_Pnt2d as TColgp_HArray1OfPnt2d,
+    HArray1_gp_Pnt2d as TColgp_HArray1OfPnt2d,
 )
 
 # Array of vectors (used for B-spline interpolation):

@@ -5,7 +5,7 @@ from OCP.TopoDS import TopoDS_Shape
 from OCP.TCollection import TCollection_ExtendedString
 from OCP.Quantity import Quantity_ColorRGBA
 from OCP.TDF import TDF_Label
-from OCP.collections import Sequence_TDS_Label as TDF_LabelSequence
+from OCP.collections import Sequence_TDF_Label as TDF_LabelSequence
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDocStd import TDocStd_Document
 from OCP.TDataStd import TDataStd_Name, TDataStd_TreeNode
