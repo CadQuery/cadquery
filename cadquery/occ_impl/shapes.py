@@ -63,7 +63,7 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP import (
+from OCP.collections import (
     HArray1_gp_Pnt as TColgp_HArray1OfPnt,
     HArray2_gp_Pnt as TColgp_HArray2OfPnt,
     Array1_gp_Pnt as TColgp_Array1OfPnt,
@@ -71,13 +71,13 @@ from OCP import (
 )
 
 # Array of vectors (used for B-spline interpolation):
-from OCP import Array1_gp_Vec as TColgp_Array1OfVec
+from OCP.collections import Array1_gp_Vec as TColgp_Array1OfVec
 
 # Array of booleans (used for B-spline interpolation):
-from OCP import HArray1_bool as TColStd_HArray1OfBoolean
+from OCP.collections import HArray1_bool as TColStd_HArray1OfBoolean
 
 # Array of floats (used for B-spline interpolation):
-from OCP import HArray1_double as TColStd_HArray1OfReal
+from OCP.collections import HArray1_double as TColStd_HArray1OfReal
 
 from OCP.BRepAdaptor import (
     BRepAdaptor_Curve,
@@ -194,7 +194,7 @@ from OCP.BRepFilletAPI import (
     BRepFilletAPI_MakeFillet2d,
 )
 
-from OCP import (
+from OCP.collections import (
     IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape as TopTools_IndexedDataMapOfShapeListOfShape,
     List_TopoDS_Shape as TopTools_ListOfShape,
     Map_TopoDS_Shape as TopTools_MapOfShape,
@@ -287,7 +287,7 @@ from OCP.ShapeAnalysis import (
     ShapeAnalysis,
     ShapeAnalysis_WireOrder,
 )
-from OCP import HSequence_TopoDS_Shape as TopTools_HSequenceOfShape
+from OCP.collections import HSequence_TopoDS_Shape as TopTools_HSequenceOfShape
 
 from OCP.GCPnts import (
     GCPnts_AbscissaPoint,
