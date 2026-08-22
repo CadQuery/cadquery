@@ -9,11 +9,14 @@ from ..shapes import Shape, Edge, Face, sortWiresByBuildOrder
 import ezdxf
 
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
-from OCP.TopTools import TopTools_HSequenceOfShape
+from OCP.collections import HSequence_TopoDS_Shape as TopTools_HSequenceOfShape
 from OCP.gp import gp_Pnt
 from OCP.Geom import Geom_BSplineCurve
-from OCP.TColgp import TColgp_Array1OfPnt
-from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
+from OCP.collections import Array1_gp_Pnt as TColgp_Array1OfPnt
+from OCP.collections import (
+    Array1_double as TColStd_Array1OfReal,
+    Array1_int as TColStd_Array1OfInteger,
+)
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 
