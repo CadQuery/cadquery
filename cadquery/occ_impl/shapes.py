@@ -195,7 +195,7 @@ from OCP.BRepFilletAPI import (
 )
 
 from OCP.collections import (
-    IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape as TopTools_IndexedDataMapOfShapeListOfShape,
+    IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape_TopTools_ShapeMapHasher as TopTools_IndexedDataMapOfShapeListOfShape,
     List_TopoDS_Shape as TopTools_ListOfShape,
     Map_TopoDS_Shape as TopTools_MapOfShape,
     IndexedMap_TopoDS_Shape as TopTools_IndexedMapOfShape,
@@ -326,7 +326,7 @@ from OCP.GeomConvert import GeomConvert_ApproxCurve
 
 from OCP.Approx import Approx_ParametrizationType
 
-from OCP.LProp3d import LProp3d_CLProps  # FIXME
+from OCP.LProp import LProp_CLProps3d
 
 from OCP.BinTools import BinTools
 
@@ -2589,7 +2589,7 @@ class Mixin1D(object):
 
         curve, param = self._curve_and_param(d, mode)
 
-        props = LProp3d_CLProps(curve, param, 2, resolution)
+        props = LProp_CLProps3d(curve, param, 2, resolution)
 
         return props.Curvature()
 
