@@ -368,7 +368,7 @@ shape_properties_LUT = {
     ta.TopAbs_COMPOUND: BRepGProp.VolumeProperties_s,
 }
 
-inverse_shape_LUT: dict[str, Any] = {v: k for k, v in shape_LUT.items()}
+inverse_shape_LUT: dict[str, ta.TopAbs_ShapeEnum] = {v: k for k, v in shape_LUT.items()}
 
 downcast_LUT = {
     ta.TopAbs_VERTEX: TopoDS.Vertex,
