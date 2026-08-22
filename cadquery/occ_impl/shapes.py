@@ -195,10 +195,9 @@ from OCP.BRepFilletAPI import (
 )
 
 from OCP.collections import (
-    IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape_TopTools_ShapeMapHasher as TopTools_IndexedDataMapOfShapeListOfShape,
+    IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape as TopTools_IndexedDataMapOfShapeListOfShape,
     List_TopoDS_Shape as TopTools_ListOfShape,
-    Map_TopoDS_Shape as TopTools_MapOfShape,
-    IndexedMap_TopoDS_Shape as TopTools_IndexedMapOfShape,
+    IndexedMap_TopoDS_Shape_TopTools_ShapeMapHasher as TopTools_IndexedMapOfShape,
 )
 
 
@@ -1796,7 +1795,7 @@ class Shape(object):
         TopExp.MapShapesAndAncestors_s(
             ctx.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
         )
-        exclude = TopTools_MapOfShape()
+        exclude = TopTools_IndexedMapOfShape()
 
         def _siblings(shapes: Iterable[Shape], level: int) -> set[Shape]:
 
@@ -5033,7 +5032,7 @@ class Compound(Shape, Mixin3D):
                 ctx.wrapped, inverse_shape_LUT[kind], t, shape_map,
             )
 
-        exclude = TopTools_MapOfShape()
+        exclude = TopTools_IndexedMapOfShape()
 
         def _siblings(shapes: Iterable[Shape], level: int) -> set[Shape]:
 
