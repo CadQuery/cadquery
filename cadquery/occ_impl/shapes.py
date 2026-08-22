@@ -195,7 +195,7 @@ from OCP.BRepFilletAPI import (
 )
 
 from OCP.collections import (
-    IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape as TopTools_IndexedDataMapOfShapeListOfShape,
+    IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape_TopTools_ShapeMapHasher as TopTools_IndexedDataMapOfShapeListOfShape,
     List_TopoDS_Shape as TopTools_ListOfShape,
     IndexedMap_TopoDS_Shape_TopTools_ShapeMapHasher as TopTools_IndexedMapOfShape,
 )
