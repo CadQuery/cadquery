@@ -890,7 +890,14 @@ class BoundBox(object):
 
     def __init__(self, bb: Bnd_Box) -> None:
         self.wrapped = bb
-        XMin, YMin, ZMin, XMax, YMax, ZMax = bb.Get()
+        XMin, YMin, ZMin, XMax, YMax, ZMax = (
+            bb.GetXMin(),
+            bb.GetYMin(),
+            bb.GetZMin(),
+            bb.GetXMax(),
+            bb.GetYMax(),
+            bb.GetZMax(),
+        )
 
         self.xmin = XMin
         self.xmax = XMax
