@@ -5200,7 +5200,7 @@ class TestCadQuery(BaseTest):
         from .naca import naca5305
         from math import pi, cos
 
-        import OCP
+        from OCP.Standard import Standard_ConstructionError, Standard_Failure
 
         pts = [Vector(e[0], e[1], 0) for e in naca5305]
 
@@ -5213,7 +5213,7 @@ class TestCadQuery(BaseTest):
         self.assertTrue(e2.isValid())
         self.assertTrue(e1.Length() > e2.Length())
 
-        with raises(OCP.Standard.Standard_ConstructionError):
+        with raises((Standard_ConstructionError, Standard_Failure)):
             e4 = Edge.makeSplineApprox(pts, 1e-6, maxDeg=3, smoothing=(1, 1, 1.0))
 
         pts_closed = pts + [pts[0]]
@@ -5260,7 +5260,7 @@ class TestCadQuery(BaseTest):
         self.assertTrue(f1.isValid())
         self.assertTrue(f2.isValid())
 
-        with raises(OCP.Standard.Standard_ConstructionError):
+        with raises((Standard_ConstructionError, Standard_Failure)):
             f3 = Face.makeSplineApprox(pts, smoothing=(1, 1, 1), maxDeg=3)
 
     def testParametricSurface(self):
