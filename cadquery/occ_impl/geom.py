@@ -360,7 +360,7 @@ class Matrix:
         new = gp_Trsf()
         new.SetRotation(direction, angle)
 
-        self.wrapped = self.wrapped.Multiplied(gp_GTrsf(new))
+        self.wrapped = self.wrapped * gp_GTrsf(new)
 
     def inverse(self) -> "Matrix":
 
@@ -1142,7 +1142,7 @@ class Location(object):
 
     def __mul__(self, other: "Location") -> "Location":
 
-        return Location(self.wrapped.Multiplied(other.wrapped))
+        return Location(self.wrapped * other.wrapped)
 
     def __pow__(self, exponent: int) -> "Location":
 
