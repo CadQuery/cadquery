@@ -28,4 +28,3 @@ jobs:
       vmImage: 'windows-latest'
       py_maj: 3
       py_min: ${{minor}}
-      conda_bld: 3.21.6
