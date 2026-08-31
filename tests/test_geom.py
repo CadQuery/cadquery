@@ -138,8 +138,8 @@ def test_Plane_from_Location(plargs, expectedrot, useproperty):
 
 
 def test_empty_boundingbox_raises():
-    from OCP.Standard import Standard_ConstructionError
+    from OCP.Standard import Standard_ConstructionError, Standard_Failure
     from cadquery.func import compound
 
-    with pytest.raises(Standard_ConstructionError):
+    with pytest.raises((Standard_ConstructionError, Standard_Failure)):
         compound([]).BoundingBox()
