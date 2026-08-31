@@ -141,5 +141,5 @@ def test_empty_boundingbox_raises():
     from OCP.Standard import Standard_ConstructionError
     from cadquery.func import compound
 
-    with raises(Standard_ConstructionError):
+    with pytest.raises(Standard_ConstructionError):
         compound([]).BoundingBox()
