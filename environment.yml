@@ -18,7 +18,7 @@ dependencies:
   - nlopt
   - casadi
   - runtype
-  - multimethod >=1.11,<2.0
+  - multimethod>=2.1,<3.0
   - typed-ast
   - regex
   - pathspec
