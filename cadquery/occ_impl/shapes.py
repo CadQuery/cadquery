@@ -825,20 +825,15 @@ class Shape(object):
         # special handling of compounds - first non-compound child is assumed to define the type of the operation
         if type_ == ta.TopAbs_COMPOUND:
 
-            # if the compound is not empty check its children
-            if obj:
-                # first child
-                child = next(iter(obj))
+            # descend to the first non-compound child, if any; the sentinel
+            # guards against an empty compound at the top level or nested inside
+            child = next(iter(obj), None)
+            while child is not None and child.ShapeType() == "Compound":
+                child = next(iter(child), None)
 
-                # if compound, go deeper
-                while child.ShapeType() == "Compound":
-                    child = next(iter(child))
-
-                type_ = shapetype(child.wrapped)
-
-            # if the compound is empty assume it was meant to be a solid
-            else:
-                type_ = ta.TopAbs_SOLID
+            # an empty or empty-nested compound has no child to inspect;
+            # assume it was meant to be a solid (consistent with an empty compound)
+            type_ = ta.TopAbs_SOLID if child is None else shapetype(child.wrapped)
 
         # get the function based on dimensionality of the object
         return shape_properties_LUT[type_]
