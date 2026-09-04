@@ -1580,7 +1580,7 @@ def tiny_edge_box_faces() -> list[Face]:
     edge = edges[0]
 
     start, end = edge.startPoint(), edge.endPoint()
-    sliver_end = start + (end - start) * 1e-5
+    sliver_end = start + (end - start) * 1e-6
 
     faces[0] = face(
         wire(segment(start, sliver_end), segment(sliver_end, end), *edges[1:])
@@ -1627,6 +1627,11 @@ def test_solid_history(nested_spheres, tiny_edge_box_faces):
     s4 = solid(*tiny_edge_box_faces, history=h)
 
     check_faces_helper(tiny_edge_box_faces, h[-1], s4)
+
+    # manipulated edges case
+    s5 = solid(tiny_edge_box_faces, history=h)
+
+    check_faces_helper(tiny_edge_box_faces, h[-1], s5)
 
 
 def test_hlr():
