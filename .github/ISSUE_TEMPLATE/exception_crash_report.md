@@ -21,16 +21,24 @@ assignees: ''
 ## Backtrace
 
 <!-- Backtraces from CQ-editor's GUI can often be shortened. We prefer a full backtrace from running your code as a script in the Python interpreter. -->
+Python:
+```
+```
+<!-- In case of a crash please add a backtrace from a native debugger (e.g. gdb/lldb) -->
+Native:
 ```
 ```
 
 ## Environment
 
 OS:
-
+```
+```
 Was CadQuery installed using Conda?: <!-- Note Conda is the only official installation method. If you are not using Conda, please provide details of your build/install/packaging methods, since they are often relevant to bugs and crashes. -->
-Output of `conda list` from your active Conda environment:
+Output of `conda list`  or `pip list` from your active environment:
 ```
 ```
 
 Using: <!-- CQ-Editor, Jupyter Notebook, Python interpreter, cq-cli or something else? -->
+```
+```
