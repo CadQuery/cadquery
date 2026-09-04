@@ -36,7 +36,7 @@ from OCP.Quantity import (
     Quantity_TOC_RGB,
 )
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Fuse
-from OCP.TopTools import TopTools_ListOfShape
+from OCP.collections import List_TopoDS_Shape as TopTools_ListOfShape
 from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_Builder
 from OCP.TopoDS import TopoDS_Shape
 from OCP.gp import gp_EulerSequence
