@@ -16,13 +16,13 @@ requirements:
     - setuptools
   run:
     - python >=3.11
-    - ocp=7.9.3.1
+    - ocp=8.0.0.1
     - pyparsing >=3.0.0
     - ezdxf>=1.3.0
     - ipython
     - typing_extensions
     - nlopt
-    - multimethod >=1.11,<2.0
+    - multimethod >=2.1,<3.0
     - casadi
     - runtype
     - numba

@@ -671,7 +671,9 @@ def patch_find(monkeypatch):
     Fixture for throwing exception during imprinting.
     """
 
-    from OCP.TopTools import TopTools_DataMapOfShapeListOfShape
+    from OCP.collections import (
+        DataMap_TopoDS_Shape_List_TopoDS_Shape_TopTools_ShapeMapHasher as TopTools_DataMapOfShapeListOfShape,
+    )
     from OCP.Standard import Standard_NoSuchObject
     from OCP.BOPAlgo import BOPAlgo_Builder
 

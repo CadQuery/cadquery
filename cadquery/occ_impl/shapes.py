@@ -63,21 +63,21 @@ from OCP.gp import (
 )
 
 # Array of points (used for B-spline construction):
-from OCP.TColgp import (
-    TColgp_HArray1OfPnt,
-    TColgp_HArray2OfPnt,
-    TColgp_Array1OfPnt,
-    TColgp_HArray1OfPnt2d,
+from OCP.collections import (
+    HArray1_gp_Pnt as TColgp_HArray1OfPnt,
+    HArray2_gp_Pnt as TColgp_HArray2OfPnt,
+    Array1_gp_Pnt as TColgp_Array1OfPnt,
+    HArray1_gp_Pnt2d as TColgp_HArray1OfPnt2d,
 )
 
 # Array of vectors (used for B-spline interpolation):
-from OCP.TColgp import TColgp_Array1OfVec
+from OCP.collections import Array1_gp_Vec as TColgp_Array1OfVec
 
 # Array of booleans (used for B-spline interpolation):
-from OCP.TColStd import TColStd_HArray1OfBoolean
+from OCP.collections import HArray1_bool as TColStd_HArray1OfBoolean
 
 # Array of floats (used for B-spline interpolation):
-from OCP.TColStd import TColStd_HArray1OfReal
+from OCP.collections import HArray1_double as TColStd_HArray1OfReal
 
 from OCP.BRepAdaptor import (
     BRepAdaptor_Curve,
@@ -141,8 +141,7 @@ from OCP.TopoDS import (
     TopoDS_CompSolid,
 )
 
-from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse  # geometry construction
-from OCP.GCE2d import GCE2d_MakeSegment
+from OCP.GC import GC_MakeArcOfCircle, GC_MakeArcOfEllipse, GC_MakeSegment2d
 from OCP.gce import gce_MakeLin, gce_MakeDir
 from OCP.GeomAPI import (
     GeomAPI_Interpolate,
@@ -195,11 +194,10 @@ from OCP.BRepFilletAPI import (
     BRepFilletAPI_MakeFillet2d,
 )
 
-from OCP.TopTools import (
-    TopTools_IndexedDataMapOfShapeListOfShape,
-    TopTools_ListOfShape,
-    TopTools_MapOfShape,
-    TopTools_IndexedMapOfShape,
+from OCP.collections import (
+    IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape_TopTools_ShapeMapHasher as TopTools_IndexedDataMapOfShapeListOfShape,
+    List_TopoDS_Shape as TopTools_ListOfShape,
+    IndexedMap_TopoDS_Shape_TopTools_ShapeMapHasher as TopTools_IndexedMapOfShape,
 )
 
 
@@ -242,7 +240,7 @@ from OCP.Graphic3d import (
     Graphic3d_VTA_TOP,
 )
 
-from OCP.NCollection import NCollection_Utf8String
+from OCP.NCollection import NCollection_String as NCollection_Utf8String
 
 from OCP.BRepFeat import BRepFeat_MakeDPrism, BRepFeat_MakePrism
 
@@ -288,7 +286,7 @@ from OCP.ShapeAnalysis import (
     ShapeAnalysis,
     ShapeAnalysis_WireOrder,
 )
-from OCP.TopTools import TopTools_HSequenceOfShape
+from OCP.collections import HSequence_TopoDS_Shape as TopTools_HSequenceOfShape
 
 from OCP.GCPnts import (
     GCPnts_AbscissaPoint,
@@ -327,7 +325,7 @@ from OCP.GeomConvert import GeomConvert_ApproxCurve
 
 from OCP.Approx import Approx_ParametrizationType
 
-from OCP.LProp3d import LProp3d_CLProps
+from OCP.LProp import LProp_CLProps3d
 
 from OCP.BinTools import BinTools
 
@@ -1797,7 +1795,7 @@ class Shape(object):
         TopExp.MapShapesAndAncestors_s(
             ctx.wrapped, inverse_shape_LUT[kind], shapetype(self.wrapped), shape_map,
         )
-        exclude = TopTools_MapOfShape()
+        exclude = TopTools_IndexedMapOfShape()
 
         def _siblings(shapes: Iterable[Shape], level: int) -> set[Shape]:
 
@@ -2590,7 +2588,7 @@ class Mixin1D(object):
 
         curve, param = self._curve_and_param(d, mode)
 
-        props = LProp3d_CLProps(curve, param, 2, resolution)
+        props = LProp_CLProps3d(curve, param, 2, resolution)
 
         return props.Curvature()
 
@@ -3158,7 +3156,7 @@ class Wire(Shape, Mixin1D):
         n_turns = height / pitch
         u_start = geom_line.Value(0.0)
         u_stop = geom_line.Value(n_turns * sqrt((2 * pi) ** 2 + pitch ** 2))
-        geom_seg = GCE2d_MakeSegment(u_start, u_stop).Value()
+        geom_seg = GC_MakeSegment2d(u_start, u_stop).Value()
 
         e = BRepBuilderAPI_MakeEdge(geom_seg, geom_surf).Edge()
 
@@ -3897,7 +3895,7 @@ class Face(Shape):
 
         # build (u,v) segments
         for el1, el2 in zip((pt1, pt2, pt3, *pts), (pt2, pt3, *pts, pt1)):
-            segs_uv.append(GCE2d_MakeSegment(gp_Pnt2d(*el1), gp_Pnt2d(*el2)).Value())
+            segs_uv.append(GC_MakeSegment2d(gp_Pnt2d(*el1), gp_Pnt2d(*el2)).Value())
 
         # convert to edges
         edges = []
@@ -5034,7 +5032,7 @@ class Compound(Shape, Mixin3D):
                 ctx.wrapped, inverse_shape_LUT[kind], t, shape_map,
             )
 
-        exclude = TopTools_MapOfShape()
+        exclude = TopTools_IndexedMapOfShape()
 
         def _siblings(shapes: Iterable[Shape], level: int) -> set[Shape]:
 
