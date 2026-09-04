@@ -5805,6 +5805,54 @@ def _combine_ops(op: Op, *ops: Op) -> Op:
     return op
 
 
+def _apply_reshape(op: Op, ctx: ShapeBuild_ReShape) -> Op:
+    """
+    Apply (if applicable) additional ReShape history to an exisitn Op. Used by solid.
+    """
+
+    hist = ctx.History()
+
+    if hist.HasModified():
+
+        # update modified
+        for key, val in op._modified.items():
+
+            processed = []
+
+            for subshape in val:
+                modified = hist.Modified(subshape.wrapped)
+
+                if modified:
+                    processed.extend([Shape.cast(el) for el in modified])
+                else:
+                    processed.append(subshape)
+
+            op._modified[key] = compound(processed)
+
+        # update images
+        for key, val in op._images.items():
+
+            mod = hist.Modified(val.wrapped)
+            if not mod.IsEmpty():
+                op._images[key] = Shape.cast(mod.First())
+
+    return op
+
+
+def _polish_images(op: Op, s: Shape) -> Op:
+    """
+    Workaround for Reshape context not tracking (face, face) relations when fixing solids.
+    """
+
+    face_dict = {f: f for f in s.Faces()}
+
+    for k, v in op._images.items():
+        if isinstance(k, Face):
+            op._images[k] = compound([face_dict[f] for f in v.Faces()])
+
+    return op
+
+
 class History:
     """
     Operation history.
@@ -6365,7 +6413,9 @@ def solid(
     Build solid from faces or shells.
     """
 
+    ctx = ShapeBuild_ReShape()
     builder = ShapeFix_Solid()
+    builder.SetContext(ctx)
 
     # get both Shells and Faces
     s = [s1, *sn]
@@ -6375,15 +6425,27 @@ def solid(
     shells = [el.wrapped for el in shells_faces if isinstance(el, Shell)]
     if not shells:
         faces = [el for el in shells_faces if isinstance(el, Face)]
-        shells = [
-            tcast(
-                TopoDS_Shell, shell(*faces, tol=tol, history=history, name=name).wrapped
+        rvs = [
+            builder.SolidFromShell(
+                TopoDS.Shell(shell(*faces, tol=tol, history=history, name=name).wrapped)
             )
         ]
 
-    rvs = [builder.SolidFromShell(sh) for sh in shells]
+        if history:
+            _apply_reshape(history.ops[-1], ctx)
 
-    return tcast(Compound | Solid, _compound_or_shape(rvs))
+    else:
+        rvs = [builder.SolidFromShell(sh) for sh in shells]
+
+        if history:
+            _update_history(history, name, shells_faces, ctx.History())
+
+    rv = tcast(Compound | Solid, _compound_or_shape(rvs))
+
+    if history:
+        _polish_images(history.ops[-1], rv)
+
+    return rv
 
 
 @multidispatch
@@ -6401,8 +6463,6 @@ def solid(
     builder = BRepBuilderAPI_MakeSolid()
     builder.Add(_get_one(shell(*s, tol=tol, history=history, name=name), Shell).wrapped)
 
-    n_inner = 0
-
     if inner:
         for sh in _get(shell(*inner, tol=tol, history=history), Shell):
             builder.Add(sh.wrapped)
@@ -6414,12 +6474,18 @@ def solid(
     sf.SetContext(ctx)
     sf.Perform()
 
-    # combine histories of all shell operations if needed
-    if history and inner:
-        inner_op = history.pop()
-        _combine_ops(history.ops[-1], inner_op)
+    rv = _shape(sf.Solid(), Solid)
 
-    return _shape(sf.Solid(), Solid)
+    # combine histories of all shell operations if needed
+    if history:
+        if inner:
+            inner_op = history.pop()
+            _combine_ops(history.ops[-1], inner_op)
+
+        _apply_reshape(history.ops[-1], ctx)
+        _polish_images(history.ops[-1], rv)
+
+    return rv
 
 
 @multimethod
