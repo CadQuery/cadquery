@@ -1596,7 +1596,7 @@ def test_solid_history(nested_spheres, tiny_edge_box_faces):
 
         for f in faces:
             assert isSubshape(op.images(f), s)
-            assert any(f_res.isEqual(op.images(f)) for f_res in s.faces())
+            assert any(f_res.isEqual(op.images(f)) for f_res in s.Faces())
 
     h = History()
 
@@ -1618,10 +1618,15 @@ def test_solid_history(nested_spheres, tiny_edge_box_faces):
 
     check_faces_helper((face_outer, face_inner), h[-1], s2)
 
-    # manipulated edges case
-    s3 = solid(*tiny_edge_box_faces, history=h)
+    # another manipulated orientation case
+    s3 = solid(face_outer, history=h)
 
-    check_faces_helper(tiny_edge_box_faces, h[-1], s3)
+    check_faces_helper((face_outer,), h[-1], s3)
+
+    # manipulated edges case
+    s4 = solid(*tiny_edge_box_faces, history=h)
+
+    check_faces_helper(tiny_edge_box_faces, h[-1], s4)
 
 
 def test_hlr():

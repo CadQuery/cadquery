@@ -5844,7 +5844,7 @@ def _polish_images(op: Op, s: Shape) -> Op:
     Workaround for Reshape context not tracking (face, face) relations when fixing solids.
     """
 
-    face_dict = {f: f for f in s.faces()}
+    face_dict = {f: f for f in s.Faces()}
 
     for k, v in op._images.items():
         if isinstance(k, Face):
@@ -6439,9 +6439,13 @@ def solid(
 
         if history:
             _update_history(history, name, shells_faces, ctx.History())
-            # FIXME what about images?
 
-    return tcast(Compound | Solid, _compound_or_shape(rvs))
+    rv = tcast(Compound | Solid, _compound_or_shape(rvs))
+
+    if history:
+        _polish_images(history.ops[-1], rv)
+
+    return rv
 
 
 @multidispatch
