@@ -5833,7 +5833,7 @@ def _apply_reshape(op: Op, ctx: ShapeBuild_ReShape) -> Op:
         for key, val in op._images.items():
 
             mod = hist.Modified(val.wrapped)
-            if mod:
+            if not mod.IsEmpty():
                 op._images[key] = Shape.cast(mod.First())
 
     return op

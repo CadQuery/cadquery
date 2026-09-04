@@ -1447,7 +1447,7 @@ def test_history_offset():
     assert sides.edges().size() == 4
 
 
-def test_comibine_hist_dict():
+def test_combine_hist_dict():
 
     f = plane(1, 1)
     v = vertex(0, 0, 0)
@@ -1560,6 +1560,68 @@ def test_wire_history():
     assert op.modified().vertices().size() == 4
 
     _check(op, edges)
+
+
+@fixture
+def nested_spheres() -> tuple[Solid, Solid]:
+
+    return sphere(0.5), sphere(0.25)
+
+
+@fixture
+def tiny_edge_box_faces() -> list[Face]:
+    """
+    Faces of a box with one face manipulated to contain a tiny edge.
+    """
+
+    faces = box(1, 1, 1).Faces()
+
+    edges = faces[0].outerWire().Edges()
+    edge = edges[0]
+
+    start, end = edge.startPoint(), edge.endPoint()
+    sliver_end = start + (end - start) * 1e-5
+
+    faces[0] = face(
+        wire(segment(start, sliver_end), segment(sliver_end, end), *edges[1:])
+    )
+
+    return faces
+
+
+def test_solid_history(nested_spheres, tiny_edge_box_faces):
+
+    # helper to check if images are subshapes and have correct orientation
+    def check_faces_helper(faces, op, s):
+
+        for f in faces:
+            assert isSubshape(op.images(f), s)
+            assert any(f_res.isEqual(op.images(f)) for f_res in s.faces())
+
+    h = History()
+
+    sphere_outer, sphere_inner = nested_spheres
+
+    # regular case
+    face_outer = sphere_outer.face()
+    face_inner = sphere_inner.face()
+
+    s1 = solid([face_outer], inner=[face_inner], history=h)
+
+    check_faces_helper((face_outer, face_inner), h[-1], s1)
+
+    # manipulated orientation case
+    face_outer = sphere_outer.face().reverse()
+    face_inner = sphere_inner.face()
+
+    s2 = solid([face_outer], inner=[face_inner], history=h)
+
+    check_faces_helper((face_outer, face_inner), h[-1], s2)
+
+    # manipulated edges case
+    s3 = solid(*tiny_edge_box_faces, history=h)
+
+    check_faces_helper(tiny_edge_box_faces, h[-1], s3)
 
 
 def test_hlr():
