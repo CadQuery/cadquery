@@ -70,6 +70,7 @@ from cadquery.occ_impl.shapes import (
     _combine_hist_dict,
     enclose,
     split,
+    _compound,
 )
 
 from OCP.BOPAlgo import BOPAlgo_CheckStatus
@@ -185,6 +186,15 @@ def test__shape_to_faces_shells():
 
     with raises(ValueError):
         _shape_to_faces_shells(vertex(0, 0, 0).wrapped)
+
+
+def test__compound(box_shape):
+
+    res1 = _compound(box_shape.wrapped)
+    assert isinstance(res1, Compound)
+
+    res2 = _compound([box_shape.wrapped])
+    assert isinstance(res2, Compound)
 
 
 # %% constructors
