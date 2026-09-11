@@ -3996,6 +3996,24 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(res_edge.ctx.pendingEdges), 1)
         self.assertEqual(len(res_edge.ctx.pendingWires), 0)
 
+    def testParametricCurveHelixIntegerTurns(self):
+        def func(t):
+            return (
+                math.cos(t * math.pi * 2),
+                math.sin(t * math.pi * 2),
+                t,
+            )
+
+        res = Workplane("XY").parametricCurve(func, stop=4)
+        edge = res.val().Edges()[0]
+        points = [edge.positionAt(i / 50) for i in range(51)]
+        radii = [math.sqrt(p.x**2 + p.y**2) for p in points]
+
+        self.assertAlmostEqual(edge.startPoint().x, 1, 6)
+        self.assertAlmostEqual(edge.endPoint().x, 1, 6)
+        self.assertAlmostEqual(edge.endPoint().z, 4, 6)
+        self.assertLess(max(abs(r - 1) for r in radii), 1e-4)
+
     def testMakeShellSolid(self):
 
         c0 = math.sqrt(2) / 4
