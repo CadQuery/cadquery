@@ -6420,9 +6420,10 @@ def solid(
     # get both Shells and Faces
     s = [s1, *sn]
     shells_faces = [f for el in s for f in _get(el, (Shell, Face))]
+    # try to collect shells
+    shells = [el.wrapped for el in shells_faces if isinstance(el, Shell)]
 
     # if no shells are present, use faces to construct them
-    shells = [el.wrapped for el in shells_faces if isinstance(el, Shell)]
     if not shells:
         faces = [el for el in shells_faces if isinstance(el, Face)]
         rvs = [
@@ -6432,15 +6433,24 @@ def solid(
         ]
 
         if history:
+            # NB: reusing the history from shell()
             _apply_reshape(history.ops[-1], ctx)
 
+        rv = tcast(Compound | Solid, _compound_or_shape(rvs))
+
+    # otherwise construct solids with provided shells
     else:
         rvs = [builder.SolidFromShell(sh) for sh in shells]
+        rv = tcast(Compound | Solid, _compound_or_shape(rvs))
 
         if history:
+            # update history - this is likely a noop for this branch
             _update_history(history, name, shells_faces, ctx.History())
-
-    rv = tcast(Compound | Solid, _compound_or_shape(rvs))
+            # update images by hand
+            op = history.ops[-1]
+            for el in op._tracked:
+                if isSubshape(el, rv):
+                    op._images[el] = el
 
     if history:
         _polish_images(history.ops[-1], rv)

@@ -1633,6 +1633,10 @@ def test_solid_history(nested_spheres, tiny_edge_box_faces):
 
     check_faces_helper(tiny_edge_box_faces, h[-1], s5)
 
+    # solid from shells
+    s6 = solid(sphere_outer.shell(), history=h)
+    check_faces_helper(sphere_outer.Faces(), h[-1], s6)
+
 
 def test_hlr():
 
