@@ -5496,6 +5496,19 @@ def _compound_or_shape(s: TopoDS_Shape | Sequence[TopoDS_Shape]) -> Shape:
     return rv
 
 
+def _compound(s: TopoDS_Shape | Sequence[TopoDS_Shape]) -> Compound:
+    """
+    Convert a list of TopoDS_Shape to a Compound.
+    """
+
+    if isinstance(s, TopoDS_Shape):
+        rv = Compound.makeCompound([_normalize(Shape.cast(s))])
+    else:
+        rv = Compound.makeCompound([_normalize(Shape.cast(el)) for el in s])
+
+    return rv
+
+
 def _shape(s: TopoDS_Shape, _: type[T]) -> T:
     """
     Cast a TopoDS_Shape to a Shape of the specfied type.
@@ -5988,7 +6001,7 @@ def _update_history(
 
                 if has_modifidied:
                     try:
-                        mod = _compound_or_shape(list(builder.Modified(wrapped)))
+                        mod = _compound(list(builder.Modified(wrapped)))
                         if mod:
                             if el in op._modified:
                                 op._modified[el] |= mod
@@ -6031,12 +6044,12 @@ def _remap_history_values(history: History | None, aux: History,) -> None:
 
         # handle last shape
         last_op._last_shape = compound(
-            [last_aux._modified.get(el, el) for el in last_op._last_shape]
+            [_normalize(last_aux._modified.get(el, el)) for el in last_op._last_shape]
         )
 
         # handle first shape
         last_op._first_shape = compound(
-            [last_aux._modified.get(el, el) for el in last_op._first_shape]
+            [_normalize(last_aux._modified.get(el, el)) for el in last_op._first_shape]
         )
 
 
