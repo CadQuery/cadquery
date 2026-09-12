@@ -5820,7 +5820,7 @@ def _combine_ops(op: Op, *ops: Op) -> Op:
 
 def _apply_reshape(op: Op, ctx: ShapeBuild_ReShape) -> Op:
     """
-    Apply (if applicable) additional ReShape history to an exisitn Op. Used by solid.
+    Apply (if applicable) additional ReShape history to an existing Op. Used by solid.
     """
 
     hist = ctx.History()
@@ -5835,7 +5835,7 @@ def _apply_reshape(op: Op, ctx: ShapeBuild_ReShape) -> Op:
             for subshape in val:
                 modified = hist.Modified(subshape.wrapped)
 
-                if modified:
+                if not modified.IsEmpty():
                     processed.extend([Shape.cast(el) for el in modified])
                 else:
                     processed.append(subshape)
