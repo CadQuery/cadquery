@@ -192,6 +192,10 @@ def pt_pt(p1: Point, p2: Point) -> Tuple[float, Segment]:
     return angle, Segment(p1, p2)
 
 
+class NoTangent(Exception):
+    pass
+
+
 def _pt_arc(p: Point, a: Arc) -> Tuple[float, float, float, float]:
 
     x, y = p.x, p.y
@@ -200,6 +204,9 @@ def _pt_arc(p: Point, a: Arc) -> Tuple[float, float, float, float]:
     xc, yc = a.c.x, a.c.y
     dx, dy = x - xc, y - yc
     l = sqrt(dx ** 2 + dy ** 2)
+
+    if l <= r:
+        raise NoTangent
 
     x1 = r ** 2 / l ** 2 * dx - r / l ** 2 * sqrt(l ** 2 - r ** 2) * dy + xc
     y1 = r ** 2 / l ** 2 * dy + r / l ** 2 * sqrt(l ** 2 - r ** 2) * dx + yc
@@ -308,21 +315,27 @@ def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
     return angles[ix], segments[ix]
 
 
+NO_TANGENT = inf, Segment(Point(inf, inf), Point(inf, inf))
+
+
 def get_angle(current: Entity, e: Entity) -> Tuple[float, Segment]:
 
     if current is e:
-        return inf, Segment(Point(inf, inf), Point(inf, inf))
+        return NO_TANGENT
 
-    if isinstance(current, Point):
-        if isinstance(e, Point):
-            return pt_pt(current, e)
+    try:
+        if isinstance(current, Point):
+            if isinstance(e, Point):
+                return pt_pt(current, e)
+            else:
+                return pt_arc(current, e)
         else:
-            return pt_arc(current, e)
-    else:
-        if isinstance(e, Point):
-            return arc_pt(current, e)
-        else:
-            return arc_arc(current, e)
+            if isinstance(e, Point):
+                return arc_pt(current, e)
+            else:
+                return arc_arc(current, e)
+    except NoTangent:
+        return NO_TANGENT
 
 
 def update_hull(

@@ -119,3 +119,18 @@ def test_arc_endpoints():
 
     assert (a.s.x, a.s.y) == pytest.approx((11.0, 20.0))
     assert (a.e.x, a.e.y) == pytest.approx((9.0, 20.0))
+
+
+@pytest.mark.parametrize(
+    "inner",
+    [
+        cq.Edge.makeCircle(5.0, (2, 0, 0)),
+        cq.Edge.makeLine(cq.Vector(-3, 0), cq.Vector(3, 0)),
+        cq.Edge.makeLine(cq.Vector(0, 20), cq.Vector(0, 10)),
+    ],
+    ids=["circle", "line", "line from the circle"],
+)
+def test_geometry_inside_circle(inner):
+    outer = [cq.Edge.makeCircle(20.0, (0, 0, 0)), cq.Edge.makeCircle(20.0, (60, 5, 0))]
+
+    assert area(outer + [inner]) == pytest.approx(area(outer))
