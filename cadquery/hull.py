@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union, Iterable, Set
+from typing import Dict, List, Tuple, Union, Iterable, Set
 from math import pi, sin, cos, atan2, sqrt, inf, degrees
 from numpy import lexsort, argmin, argmax
 
@@ -77,16 +77,6 @@ class Arc:
         self.e = Point(c.x + r * cos(a2), c.y + r * sin(a2))
         self.ac = 2 * pi - (a1 - a2)
 
-    def __hash__(self):
-
-        return hash((self.c, self.r, self.a1, self.a2))
-
-    def __eq__(self, other):
-
-        return type(self) == type(other) and (
-            (self.c, self.r, self.a1, self.a2) == (other.c, other.r, other.a1, other.a2)
-        )
-
 
 def atan2p(x, y):
 
@@ -100,7 +90,7 @@ def atan2p(x, y):
 
 def convert_and_validate(edges: Iterable[Edge]) -> Tuple[List[Arc], List[Point]]:
 
-    arcs: Set[Arc] = set()
+    arcs: Dict[Tuple[Point, float], Arc] = {}
     points: Set[Point] = set()
 
     for e in edges:
@@ -116,13 +106,18 @@ def convert_and_validate(edges: Iterable[Edge]) -> Tuple[List[Arc], List[Point]]
             c = e.arcCenter()
             r = e.radius()
             a1, a2 = e._bounds()
+            p = Point(c.x, c.y)
 
-            arcs.add(Arc(Point(c.x, c.y), r, a1, a2))
+            if (p, r) in arcs:
+                a = arcs[p, r]
+                a1, a2 = min(a.a1, a1), max(a.a2, a2)
+
+            arcs[p, r] = Arc(p, r, a1, a2)
 
         else:
             raise ValueError("Unsupported geometry {gt}")
 
-    return list(arcs), list(points)
+    return list(arcs.values()), list(points)
 
 
 def select_lowest_point(points: Points) -> Tuple[Point, int]:
