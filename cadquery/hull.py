@@ -73,8 +73,8 @@ class Arc:
         self.a1 = a1
         self.a2 = a2
 
-        self.s = Point(r * cos(a1), r * sin(a1))
-        self.e = Point(r * cos(a2), r * sin(a2))
+        self.s = Point(c.x + r * cos(a1), c.y + r * sin(a1))
+        self.e = Point(c.x + r * cos(a2), c.y + r * sin(a2))
         self.ac = 2 * pi - (a1 - a2)
 
     def __hash__(self):
@@ -386,6 +386,11 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
     # split into arcs and points
     arcs, points = convert_and_validate(edges)
 
+    # a lone circle is its own hull
+    if len(arcs) == 1 and not points:
+        a = arcs[0]
+        return Wire.assembleEdges([Edge.makeCircle(a.r, Vector(a.c.x, a.c.y))])
+
     # select the starting element
     start = select_lowest(arcs, points)
     rv.append(start)
@@ -411,6 +416,10 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
             segments.append(segment)
 
         next_ix = int(argmin(angles))
+
+        if angles[next_ix] == inf:
+            raise ValueError("Hull could not be closed")
+
         current_e, current_angle, finished = update_hull(
             current_e, next_ix, entities, angles, segments, rv
         )
