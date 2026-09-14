@@ -134,3 +134,9 @@ def test_geometry_inside_circle(inner):
     outer = [cq.Edge.makeCircle(20.0, (0, 0, 0)), cq.Edge.makeCircle(20.0, (60, 5, 0))]
 
     assert area(outer + [inner]) == pytest.approx(area(outer))
+
+
+def test_circle_with_nested_only():
+    edges = [cq.Edge.makeCircle(20.0, (0, 0, 0)), cq.Edge.makeCircle(5.0, (2, 0, 0))]
+
+    assert area(edges) == pytest.approx(400 * pi)

@@ -399,11 +399,6 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
     # split into arcs and points
     arcs, points = convert_and_validate(edges)
 
-    # a lone circle is its own hull
-    if len(arcs) == 1 and not points:
-        a = arcs[0]
-        return Wire.assembleEdges([Edge.makeCircle(a.r, Vector(a.c.x, a.c.y))])
-
     # select the starting element
     start = select_lowest(arcs, points)
     rv.append(start)
@@ -431,6 +426,12 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
         next_ix = int(argmin(angles))
 
         if angles[next_ix] == inf:
+            # nothing reaches the largest circle: everything else is inside it
+            if len(rv) == 1 and start is max(arcs, key=lambda a: a.r, default=None):
+                return Wire.assembleEdges(
+                    [Edge.makeCircle(start.r, Vector(start.c.x, start.c.y))]
+                )
+
             raise ValueError("Hull could not be closed")
 
         current_e, current_angle, finished = update_hull(
