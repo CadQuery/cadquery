@@ -7,6 +7,10 @@ import cadquery as cq
 from cadquery import hull
 
 
+def area(edges):
+    return cq.Face.makeFromWires(hull.find_hull(edges)).Area()
+
+
 def test_hull():
 
     c1 = cq.Edge.makeCircle(0.5, (-1.5, 0.5, 0))
@@ -71,3 +75,40 @@ def test_eq():
     assert a != p
     assert p != a
     assert a != None
+
+
+def test_lines_only():
+    edges = [
+        cq.Edge.makeLine(cq.Vector(0, 0), cq.Vector(4, 0)),
+        cq.Edge.makeLine(cq.Vector(4, 0), cq.Vector(0, 3)),
+        cq.Edge.makeLine(cq.Vector(0, 3), cq.Vector(0, 0)),
+    ]
+
+    assert area(edges) == pytest.approx(6.0)
+
+
+def test_empty():
+    with pytest.raises(ValueError):
+        hull.find_hull([])
+
+
+def test_arc_inside_hull():
+    outer = [cq.Edge.makeCircle(20.0, (0, 0, 0)), cq.Edge.makeCircle(20.0, (60, 0, 0))]
+    arc = cq.Edge.makeCircle(5.0, (30, 0, 0), angle1=0, angle2=180)
+
+    assert area(outer + [arc]) == pytest.approx(area(outer))
+
+
+def test_single_circle():
+    assert area([cq.Edge.makeCircle(5.0, (0, 0, 0))]) == pytest.approx(25 * pi)
+
+
+def test_stalled_march():
+    # valid input the march cannot close; it used to loop forever
+    edges = [
+        cq.Edge.makeCircle(6.0, (0, 12, 0)),
+        cq.Edge.makeLine(cq.Vector(-2, 5), cq.Vector(9, 10)),
+    ]
+
+    with pytest.raises(ValueError):
+        hull.find_hull(edges)
