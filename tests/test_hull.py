@@ -112,3 +112,10 @@ def test_stalled_march():
 
     with pytest.raises(ValueError):
         hull.find_hull(edges)
+
+
+def test_arc_endpoints():
+    a = hull.Arc(hull.Point(10.0, 20.0), 1.0, 0.0, pi)
+
+    assert (a.s.x, a.s.y) == pytest.approx((11.0, 20.0))
+    assert (a.e.x, a.e.y) == pytest.approx((9.0, 20.0))

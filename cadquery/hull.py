@@ -73,8 +73,8 @@ class Arc:
         self.a1 = a1
         self.a2 = a2
 
-        self.s = Point(r * cos(a1), r * sin(a1))
-        self.e = Point(r * cos(a2), r * sin(a2))
+        self.s = Point(c.x + r * cos(a1), c.y + r * sin(a1))
+        self.e = Point(c.x + r * cos(a2), c.y + r * sin(a2))
         self.ac = 2 * pi - (a1 - a2)
 
     def __hash__(self):
