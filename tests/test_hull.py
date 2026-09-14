@@ -160,8 +160,7 @@ def test_intersecting_circles():
 
 
 def test_hull_contains_input():
-    # the line end at (20, 0) lies exactly on the +x axis of the circle, where
-    # pt_arc/arc_pt pick the tangent by raw angle across the 0/2pi seam
+    # the line end at (20, 0) lies on the +x axis of the circle, the 0/2pi seam
     edges = [
         cq.Edge.makeCircle(5.0, (0, 0, 0)),
         cq.Edge.makeLine(cq.Vector(20, 0), cq.Vector(20, 10)),
@@ -170,3 +169,25 @@ def test_hull_contains_input():
     h = cq.Face.makeFromWires(hull.find_hull(edges))
 
     assert h.distance(cq.Vertex.makeVertex(20, 0, 0)) == pytest.approx(0.0)
+
+
+def test_rotation_invariance():
+    def shape(dx, dy):
+        return [
+            cq.Edge.makeCircle(20.0, (0, 0, 0)),
+            cq.Edge.makeCircle(10.0, (dx, dy, 0)),
+            cq.Edge.makeCircle(10.0, (-dx, -dy, 0)),
+        ]
+
+    assert area(shape(0, 40)) == pytest.approx(area(shape(40, 0)))
+
+
+# temporary: two plain circles stall the march until the arc rework (3/3)
+@pytest.mark.xfail(strict=True, raises=ValueError, reason="fixed by the arc rework")
+def test_two_circles():
+    edges = [
+        cq.Edge.makeCircle(0.7, (-3.8, 2.9, 0)),
+        cq.Edge.makeCircle(2.4, (0.8, 4.6, 0)),
+    ]
+
+    assert area(edges) == pytest.approx(25.943, abs=1e-3)
