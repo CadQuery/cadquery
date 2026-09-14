@@ -99,15 +99,16 @@ def test_single_circle():
     assert area([cq.Edge.makeCircle(5.0, (0, 0, 0))]) == pytest.approx(25 * pi)
 
 
-def test_stalled_march():
-    # valid input the march cannot close; it used to loop forever
+def test_march_closes():
     edges = [
         cq.Edge.makeCircle(6.0, (0, 12, 0)),
         cq.Edge.makeLine(cq.Vector(-2, 5), cq.Vector(9, 10)),
     ]
 
-    with pytest.raises(ValueError):
-        hull.find_hull(edges)
+    h = cq.Face.makeFromWires(hull.find_hull(edges))
+
+    for v in edges[1].Vertices():
+        assert h.distance(v) == pytest.approx(0.0)
 
 
 def test_arc_endpoints():
@@ -156,3 +157,16 @@ def test_intersecting_circles():
 
     assert len(edges) == 6
     assert area(edges) == pytest.approx(38 * 70 + pi * 35 ** 2)
+
+
+def test_hull_contains_input():
+    # the line end at (20, 0) lies exactly on the +x axis of the circle, where
+    # pt_arc/arc_pt pick the tangent by raw angle across the 0/2pi seam
+    edges = [
+        cq.Edge.makeCircle(5.0, (0, 0, 0)),
+        cq.Edge.makeLine(cq.Vector(20, 0), cq.Vector(20, 10)),
+    ]
+
+    h = cq.Face.makeFromWires(hull.find_hull(edges))
+
+    assert h.distance(cq.Vertex.makeVertex(20, 0, 0)) == pytest.approx(0.0)

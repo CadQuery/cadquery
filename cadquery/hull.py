@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple, Union, Iterable, Set
 from math import pi, sin, cos, atan2, sqrt, inf, degrees
-from numpy import lexsort, argmin, argmax
+from numpy import lexsort, argmin
 
 from .occ_impl.shapes import Edge, Wire
 from .occ_impl.geom import Vector
@@ -214,26 +214,17 @@ def _pt_arc(p: Point, a: Arc) -> Tuple[float, float, float, float]:
 def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
 
     x, y = p.x, p.y
-    x1, y1, x2, y2 = _pt_arc(p, a)
+    x1, y1, _, _ = _pt_arc(p, a)
 
-    angles = atan2p(x1 - x, y1 - y), atan2p(x2 - x, y2 - y)
-    points = Point(x1, y1), Point(x2, y2)
-    ix = int(argmin(angles))
-
-    return angles[ix], Segment(p, points[ix])
+    return atan2p(x1 - x, y1 - y), Segment(p, Point(x1, y1))
 
 
 def arc_pt(a: Arc, p: Point) -> Tuple[float, Segment]:
 
     x, y = p.x, p.y
-    x1, y1, x2, y2 = _pt_arc(p, a)
+    _, _, x2, y2 = _pt_arc(p, a)
 
-    angles = atan2p(x - x1, y - y1), atan2p(x - x2, y - y2)
-    points = Point(x1, y1), Point(x2, y2)
-
-    ix = int(argmax(angles))
-
-    return angles[ix], Segment(points[ix], p)
+    return atan2p(x - x2, y - y2), Segment(Point(x2, y2), p)
 
 
 def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
