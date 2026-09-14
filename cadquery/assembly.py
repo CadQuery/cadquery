@@ -598,6 +598,8 @@ class Assembly(object):
 
         if exportType is None:
             t = path.split(".")[-1].upper()
+            if t == "WRL":
+                t = "VRML"
             if t in ("STEP", "XML", "XBF", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
                 exportType = cast(ExportLiterals, t)
             else:

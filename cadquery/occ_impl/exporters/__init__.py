@@ -74,6 +74,8 @@ def export(
 
     if exportType is None:
         t = fname.split(".")[-1].upper()
+        if t == "WRL":
+            t = ExportTypes.VRML
         if t in ExportTypes.__dict__.values():
             exportType = cast(ExportLiterals, t)
         else:
