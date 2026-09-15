@@ -5,6 +5,7 @@ import pytest
 
 import cadquery as cq
 from cadquery import hull
+from cadquery.func import face
 
 
 def area(edges):
@@ -180,6 +181,17 @@ def test_rotation_invariance():
         ]
 
     assert area(shape(0, 40)) == pytest.approx(area(shape(40, 0)))
+
+
+def test_hull_face_normal():
+    # #1891: func.face reads the edges in storage order - keep the march order
+    edges = [
+        cq.Edge.makeLine(cq.Vector(0, 0), cq.Vector(4, 0)),
+        cq.Edge.makeLine(cq.Vector(4, 0), cq.Vector(0, 3)),
+        cq.Edge.makeLine(cq.Vector(0, 3), cq.Vector(0, 0)),
+    ]
+
+    assert face(hull.find_hull(edges)).normalAt().z == pytest.approx(1)
 
 
 # temporary: two plain circles stall the march until the arc rework (3/3)

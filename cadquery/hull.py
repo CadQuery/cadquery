@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Union, Iterable, Set
 from math import pi, sin, cos, atan2, sqrt, inf, degrees
 from numpy import lexsort, argmin
 
-from .occ_impl.shapes import Edge, Wire
+from .occ_impl.shapes import Edge, Wire, wire
 from .occ_impl.geom import Vector
 
 
@@ -374,7 +374,7 @@ def finalize_hull(hull: Hull) -> Wire:
             Edge.makeCircle(el_n.r, Vector(el_n.c.x, el_n.c.y), angle1=a1, angle2=a2)
         )
 
-    return Wire.assembleEdges(rv)
+    return wire(*rv)
 
 
 def find_hull(edges: Iterable[Edge]) -> Wire:
