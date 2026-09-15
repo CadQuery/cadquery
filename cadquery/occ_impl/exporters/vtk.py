@@ -1,20 +1,21 @@
-from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter
-from vtkmodules.vtkFiltersCore import vtkAppendPolyData
-from vtkmodules.vtkCommonDataModel import vtkPolyData
-from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
-
-from vtkmodules.vtkCommonDataModel import (
-    VTK_TRIANGLE,
-    VTK_LINE,
-    VTK_VERTEX,
-    VTK_POLY_LINE,
-)
+from typing import TYPE_CHECKING
 
 from ..shapes import Shape
 
+if TYPE_CHECKING:
+    from vtkmodules.vtkCommonDataModel import vtkPolyData
 
-def extractEdgesFaces(data: vtkPolyData) -> tuple[vtkPolyData, vtkPolyData]:
+
+def extractEdgesFaces(data: "vtkPolyData") -> "tuple[vtkPolyData, vtkPolyData]":
     """Helper for edges and faces extraction"""
+
+    from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
+    from vtkmodules.vtkCommonDataModel import (
+        VTK_TRIANGLE,
+        VTK_LINE,
+        VTK_VERTEX,
+        VTK_POLY_LINE,
+    )
 
     # extract edges
     extr = vtkExtractCellsByType()
@@ -44,6 +45,8 @@ def exportVTP(
     shape: Shape, fname: str, tolerance: float = 0.1, angularTolerance: float = 0.1
 ):
 
+    from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter
+
     writer = vtkXMLPolyDataWriter()
     writer.SetFileName(fname)
     writer.SetInputData(shape.toVtkPolyData(tolerance, angularTolerance))
@@ -53,6 +56,8 @@ def exportVTP(
 def toString(
     shape: Shape, tolerance: float = 1e-3, angularTolerance: float = 0.1
 ) -> tuple[str, str]:
+
+    from vtkmodules.vtkIOXML import vtkXMLPolyDataWriter
 
     writer_edges = vtkXMLPolyDataWriter()
     writer_edges.SetWriteToOutputString(True)
