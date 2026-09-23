@@ -11,3 +11,4 @@ omit =
 exclude_lines =
     # Ignore stub body
     \.\.\.
+    if TYPE_CHECKING:
