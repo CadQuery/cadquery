@@ -147,19 +147,54 @@ function render(data, parent_element, ratio){
         const textEncoder = new TextEncoder();
         reader.parseAsArrayBuffer(textEncoder.encode(shape));
 
-        // setup actor,mapper and add
+        // create mesh types based on cell type for coloring
+        const polyData = reader.getOutputData();
+        const numCells = polyData.getNumberOfCells();
+        const numVerts = polyData.getNumberOfVerts();
+        const numLines = polyData.getNumberOfLines();
+        const numPolys = polyData.getNumberOfPolys();
+
+        // assign mesh types based on cell type:
+        const meshTypeData = new Uint8Array(numCells);
+        meshTypeData.fill(0, 0, numVerts);
+        meshTypeData.fill(1, numVerts, numVerts + numLines);
+        meshTypeData.fill(2, numVerts + numLines);
+
+        // create new array with mesh type data
+        const newDataArray = vtk.Common.Core.vtkDataArray.newInstance({
+            name: 'MESH_TYPES',
+            values: meshTypeData,
+            numberOfComponents: 1
+        });
+        polyData.getCellData().addArray(newDataArray);
+        polyData.getCellData().setActiveScalars('MESH_TYPES');
+
+        // setup actor, mapper and add
         const mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+        // set scalar mode to use cell data
+        mapper.set({
+            scalarMode: 2,
+            scalarVisibility: true,
+            colorMode: 1
+        });
+
+        // set color
+        const ctf = vtk.Rendering.Core.vtkColorTransferFunction.newInstance();
+        ctf.setMappingRange(0, 2);
+        ctf.addRGBPoint(0, 0.0, 0.0, 0.0);   // Vertex
+        ctf.addRGBPoint(1, 0.0, 0.0, 0.0);   // Edge
+        ctf.addRGBPoint(2, rgba[0], rgba[1], rgba[2]);   // Face
+        mapper.setLookupTable(ctf);
+        mapper.setScalarRange(0, 2);
         mapper.setInputConnection(reader.getOutputPort());
         mapper.setResolveCoincidentTopologyToPolygonOffset();
         mapper.setResolveCoincidentTopologyPolygonOffsetParameters(0.5,100);
 
         const actor = vtk.Rendering.Core.vtkActor.newInstance();
         actor.setMapper(mapper);
-
-        // set color and position
-        actor.getProperty().setColor(rgba.slice(0,3));
         actor.getProperty().setOpacity(rgba[3]);
 
+        // set position
         actor.rotateZ(rot[2]*180/Math.PI);
         actor.rotateY(rot[1]*180/Math.PI);
         actor.rotateX(rot[0]*180/Math.PI);
