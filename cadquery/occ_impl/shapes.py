@@ -208,7 +208,7 @@ from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.StlAPI import StlAPI_Writer
 
-from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
+from OCP.ShapeUpgrade import ShapeUpgrade_RemoveLocations, ShapeUpgrade_UnifySameDomain
 
 from OCP.BRepTools import (
     BRepTools,
@@ -4106,12 +4106,18 @@ class Mixin3D(object):
         occ_faces_list = TopTools_ListOfShape()
         shell_builder = BRepOffsetAPI_MakeThickSolid()
 
+        location_remover = ShapeUpgrade_RemoveLocations()
+        # Workplane.findSolid() wraps located solids in an unlocated compound.
+        location_remover.SetRemoveLevel(ta.TopAbs_COMPOUND)
+        location_remover.Remove(self.wrapped)
+        normalized_shape = self.__class__(location_remover.GetResult())
+
         if faceList:
             for f in faceList:
-                occ_faces_list.Append(f.wrapped)
+                occ_faces_list.Append(location_remover.ModifiedShape(f.wrapped))
 
         shell_builder.MakeThickSolidByJoin(
-            self.wrapped,
+            normalized_shape.wrapped,
             occ_faces_list,
             thickness,
             tolerance,
@@ -4125,7 +4131,7 @@ class Mixin3D(object):
 
         else:  # if no faces provided a watertight solid will be constructed
             s1 = self.__class__(shell_builder.Shape()).Shells()[0].wrapped
-            s2 = self.Shells()[0].wrapped
+            s2 = normalized_shape.Shells()[0].wrapped
 
             # s1 can be outer or inner shell depending on the thickness sign
             if thickness > 0:

@@ -2441,6 +2441,48 @@ class TestCadQuery(BaseTest):
         self.assertEqual(len(s4_shell_1.Faces()), s1.faces().size())
         self.assertEqual(len(s4_shell_2.Faces()), s1.faces().size())
 
+    def testLocatedSphereShell(self):
+        """Keep the world geometry when hollowing spheres on rotated workplanes."""
+        radius = 13
+        for plane in ("XY", "XZ", "YZ", "ZX", "ZY"):
+            source = Workplane(plane).sphere(radius)
+            source_volume = source.val().Volume()
+            for thickness in (-1, 1):
+                result = source.shell(thickness).val()
+                inner_radius, outer_radius = (
+                    (radius + thickness, radius)
+                    if thickness < 0
+                    else (radius, radius + thickness)
+                )
+                expected_volume = (
+                    4 * math.pi / 3 * (outer_radius ** 3 - inner_radius ** 3)
+                )
+                self.assertTrue(result.isValid())
+                self.assertAlmostEqual(result.Volume(), expected_volume, places=5)
+                self.assertTupleAlmostEquals(result.Center().toTuple(), (0, 0, 0), 5)
+            self.assertAlmostEqual(source.val().Volume(), source_volume, places=5)
+
+        self.assertTrue(Workplane("XZ").sphere(radius).val().hollow([], -1).isValid())
+
+    def testLocatedPartialSphereAndOpenBoxShell(self):
+        """Keep translated partial spheres and selected box faces in world space."""
+        partial = Workplane("XZ").sphere(13, angle1=-90, angle2=45).translate((5, 6, 7))
+        source_volume = partial.val().Volume()
+        result = partial.shell(-1).val()
+        self.assertTrue(result.isValid())
+        self.assertGreater(result.Volume(), 0)
+        self.assertAlmostEqual(result.Center().x, 5, places=5)
+        self.assertGreater(result.Center().y, 6)
+        self.assertAlmostEqual(result.Center().z, 7, places=5)
+        self.assertAlmostEqual(partial.val().Volume(), source_volume, places=5)
+
+        box = Workplane("XZ").box(10, 10, 10).translate((5, 6, 7))
+        open_shell = box.faces(">Z").shell(-1).val()
+        self.assertTrue(open_shell.isValid())
+        self.assertAlmostEqual(open_shell.Volume(), 424, places=5)
+        self.assertAlmostEqual(open_shell.Center().x, 5, places=5)
+        self.assertAlmostEqual(open_shell.Center().y, 6, places=5)
+
     def testOpenCornerShell(self):
         s = Workplane("XY").box(1, 1, 1)
         s1 = s.faces("+Z")
