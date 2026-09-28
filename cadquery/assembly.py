@@ -324,7 +324,7 @@ class Assembly(object):
         to_remove.parent = None
         if actual_parent is not None:
             removed = to_remove._flatten()
-            current = actual_parent
+            current: Optional[Assembly] = actual_parent
             while current is not None:
                 for path in removed:
                     del current.objects[path]
