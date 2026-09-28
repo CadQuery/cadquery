@@ -1,3 +1,4 @@
+from importlib import import_module
 from math import pi
 from typing import List, Literal
 
@@ -7,7 +8,6 @@ from OCP.Interface import Interface_Static
 
 from ... import cq
 from ..shapes import Shape
-from .dxf import _importDXF
 from ...types import UnitLiterals
 
 RAD2DEG = 360.0 / (2 * pi)
@@ -133,6 +133,15 @@ def importDXF(
     :param include: a list of layer names to import
     """
 
+    from .dxf import _importDXF
+
     faces = _importDXF(filename, tol, exclude, include)
 
     return cq.Workplane("XY").newObject(faces)
+
+
+# lazy: importing dxf here would load ezdxf with cadquery
+def __getattr__(name):
+    if name == "dxf":
+        return import_module(".dxf", __name__)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

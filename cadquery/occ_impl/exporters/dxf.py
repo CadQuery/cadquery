@@ -14,6 +14,9 @@ from typing import (
     runtime_checkable,
 )
 
+import ezdxf
+from ezdxf import units, zoom
+from ezdxf.entities import factory
 from OCP.GeomConvert import GeomConvert
 from OCP.gp import gp_Dir
 from OCP.GC import GC_MakeArcOfEllipse
@@ -23,8 +26,6 @@ from ...units import RAD2DEG
 from ..shapes import Face, Edge, Shape, Compound, compound, hlr
 from ..geom import Plane, VectorLike
 
-
-_MM = 4  # ezdxf.units.MM, without importing ezdxf at module level
 
 ApproxOptions = Literal["spline", "arc"]
 DxfEntityAttributes = Tuple[
@@ -84,7 +85,7 @@ class DxfDocument:
         self,
         dxfversion: str = "AC1027",
         setup: Union[bool, List[str]] = False,
-        doc_units: int = _MM,
+        doc_units: int = units.MM,
         *,
         metadata: Union[Dict[str, str], None] = None,
         approx: Optional[ApproxOptions] = None,
@@ -110,8 +111,6 @@ class DxfDocument:
 
         :param tolerance: Approximation tolerance for converting :class:`cadquery.Workplane` objects to DXF entities.
         """
-        import ezdxf
-
         if metadata is None:
             metadata = {}
 
@@ -154,8 +153,6 @@ class DxfDocument:
         :param s: CadQuery Workplane or Shape
         :param layer: layer definition name
         """
-        import ezdxf
-        from ezdxf.entities import factory
 
         if isinstance(shape, WorkplaneLike):
             plane = shape.plane
@@ -375,7 +372,7 @@ def exportDXF(
     approx: Optional[ApproxOptions] = None,
     tolerance: float = 1e-3,
     *,
-    doc_units: int = _MM,
+    doc_units: int = units.MM,
 ) -> None:
     """
     Export Workplane content to DXF. Works with 2D sections.
@@ -388,7 +385,6 @@ def exportDXF(
     :param tolerance: Approximation tolerance.
     :param doc_units: ezdxf document/modelspace :doc:`units <ezdxf-stable:concepts/units>` (in. = ``1``, mm = ``4``).
     """
-    from ezdxf import zoom
 
     dxf = DxfDocument(approx=approx, tolerance=tolerance, doc_units=doc_units)
 
@@ -411,7 +407,7 @@ def exportDXFProjection(
     tolerance: float = 1e-3,
     *,
     up: Optional[VectorLike] = None,
-    doc_units: int = _MM,
+    doc_units: int = units.MM,
 ) -> None:
     """
     Export to DXF using projections. Works with 3D objects.

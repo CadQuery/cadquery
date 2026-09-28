@@ -44,7 +44,6 @@ from OCP.gp import gp_EulerSequence
 
 from .geom import Location
 from .shapes import Shape, Solid, Compound, GlueLiteral, _set_glue, _set_builder_options
-from .exporters.vtk import toString, extractEdgesFaces
 from ..cq import Workplane
 from ..utils import BiDict
 
@@ -628,6 +627,7 @@ def toVTKAssy(
 ) -> "List[vtkProp3D]":
 
     from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper as vtkMapper
+    from .exporters.vtk import extractEdgesFaces
 
     rv: List[vtkProp3D] = []
 
@@ -681,6 +681,7 @@ def toVTK(
         vtkPolyDataMapper as vtkMapper,
         vtkRenderer,
     )
+    from .exporters.vtk import extractEdgesFaces
 
     renderer = vtkRenderer()
 
@@ -729,6 +730,8 @@ def toJSON(
     """
     Export an object to a structure suitable for converting to VTK.js JSON.
     """
+
+    from .exporters.vtk import toString
 
     rv = []
 

@@ -27,17 +27,9 @@ from .occ_impl.solver import (
     UnaryConstraintKind,
     BinaryConstraintKind,
 )
-from .occ_impl.exporters.assembly import (
-    exportAssembly,
-    exportCAF,
-    exportVTKJS,
-    exportVRML,
-    exportGLTF,
-    STEPExportModeLiterals,
-)
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
-from .types import UnitLiterals
+from .types import UnitLiterals, STEPExportModeLiterals
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate, BiDict, instance_of
@@ -595,6 +587,14 @@ class Assembly(object):
         # Make sure the export mode setting is correct
         if mode not in get_args(STEPExportModeLiterals):
             raise ValueError(f"Unknown assembly export mode {mode} for STEP")
+
+        from .occ_impl.exporters.assembly import (
+            exportAssembly,
+            exportCAF,
+            exportVTKJS,
+            exportVRML,
+            exportGLTF,
+        )
 
         if exportType is None:
             t = path.split(".")[-1].upper()
