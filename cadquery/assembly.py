@@ -184,8 +184,7 @@ class Assembly(object):
             ch_copy.parent = rv
 
             rv.children.append(ch_copy)
-            rv.objects[ch_copy.name] = ch_copy
-            rv.objects.update(ch_copy.objects)
+            rv.objects.update(ch_copy._flatten())
 
         return rv
 
@@ -253,6 +252,7 @@ class Assembly(object):
             subassy = arg._copy()
 
             subassy.loc = kwargs["loc"] if kwargs.get("loc") else arg.loc
+            old_name = subassy.name
             subassy.name = kwargs["name"] if kwargs.get("name") else arg.name
             subassy.color = kwargs["color"] if kwargs.get("color") else arg.color
             subassy.material = _ensure_material(
@@ -265,7 +265,20 @@ class Assembly(object):
             subassy.parent = self
 
             self.children.append(subassy)
-            self.objects.update(subassy._flatten())
+            if subassy.name != old_name:
+                del subassy.objects[old_name]
+                subassy.objects[subassy.name] = subassy
+
+            added = subassy._flatten()
+            current = self
+            while current is not None:
+                current.objects.update(added)
+                if current.parent is not None:
+                    added = {
+                        f"{current.name}{PATH_DELIM}{path}": node
+                        for path, node in added.items()
+                    }
+                current = current.parent
 
         else:
             # Convert the material string to a Material object, if needed
@@ -286,8 +299,8 @@ class Assembly(object):
         :param name: Name of the part/subassembly to be removed
         :return: The modified assembly
 
-        *NOTE* This method can cause problems with deeply nested assemblies and does not remove
-        constraints associated with the removed part/subassembly.
+        *NOTE* This method does not remove constraints associated with the removed
+        part/subassembly.
         """
 
         # Make sure the part/subassembly is actually part of the assembly
@@ -297,20 +310,30 @@ class Assembly(object):
         # Get the part/assembly to be removed
         to_remove = self.objects[name]
 
-        # Remove the part/assembly from the parent's children list
-        if to_remove.parent:
-            to_remove.parent.children.remove(to_remove)
+        actual_parent = to_remove.parent
+        if actual_parent is not None:
+            actual_parent.children.remove(to_remove)
+        else:
+            removed_nodes = tuple(to_remove._flatten().values())
+            self.objects = {
+                key: node
+                for key, node in self.objects.items()
+                if all(node is not removed for removed in removed_nodes)
+            }
 
-        # Remove the part/assembly from the assembly's object dictionary
-        del self.objects[name]
-
-        # Remove all descendants from the objects dictionary
-        for descendant_name in to_remove._flatten().keys():
-            if descendant_name in self.objects:
-                del self.objects[descendant_name]
-
-        # Update the parent reference
         to_remove.parent = None
+        if actual_parent is not None:
+            removed = to_remove._flatten()
+            current = actual_parent
+            while current is not None:
+                for path in removed:
+                    del current.objects[path]
+                if current.parent is not None:
+                    removed = {
+                        f"{current.name}{PATH_DELIM}{path}": node
+                        for path, node in removed.items()
+                    }
+                current = current.parent
 
         return self
 
