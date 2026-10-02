@@ -3631,6 +3631,13 @@ class Face(Shape):
         # build, fix and return
         n_sided.Build()
 
+        # Fail clearly if the solver could not converge (otherwise StdFail_NotDone is issued)
+        if not n_sided.IsDone():
+            raise ValueError(
+                "makeNSidedSurface: The filling algorithm failed to converge."
+                "Try a larger nbPtsOnCur or degree, or a looser tol3d"
+            )
+
         face = n_sided.Shape()
 
         return Face(face).fix()
