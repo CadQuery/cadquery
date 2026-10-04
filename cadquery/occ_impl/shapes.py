@@ -4035,7 +4035,7 @@ class Mixin3D(object):
         :param edgeList:  a list of Edge objects or a Shape containing edges, which must belong to this solid
         :return: Filleted solid
         """
-        nativeEdges = [e.wrapped for e in _edge_list(edgeList)]
+        nativeEdges = [e.wrapped for e in _get_edge_list(edgeList)]
 
         fillet_builder = BRepFilletAPI_MakeFillet(self.wrapped)
 
