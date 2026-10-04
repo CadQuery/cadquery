@@ -4058,7 +4058,7 @@ class Mixin3D(object):
         :param edgeList:  a list of Edge objects or a Shape containing edges, which must belong to this solid
         :return: Chamfered solid
         """
-        nativeEdges = [e.wrapped for e in _edge_list(edgeList)]
+        nativeEdges = [e.wrapped for e in _get_edge_list(edgeList)]
 
         # make a edge --> faces mapping
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
@@ -5307,7 +5307,7 @@ def _get_edges(*shapes: Shape) -> Iterable[Edge]:
             raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
 
 
-def _edge_list(edges: Shape | Iterable[Edge]) -> Iterable[Edge]:
+def _get_edge_list(edges: Shape | Iterable[Edge]) -> Iterable[Edge]:
     """
     Normalize a Shape or an iterable of edges to an iterable of edges.
     """
