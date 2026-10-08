@@ -6,8 +6,6 @@ from ... import cq
 from ..geom import Vector
 from ..shapes import Shape, Edge, Face, sortWiresByBuildOrder
 
-import ezdxf
-
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.collections import HSequence_TopoDS_Shape as TopTools_HSequenceOfShape
 from OCP.gp import gp_Pnt
@@ -172,6 +170,7 @@ def _importDXF(
     :param exclude: a list of layer names not to import
     :param include: a list of layer names to import
     """
+    import ezdxf
 
     if exclude and include:
         raise ValueError("you may specify either 'include' or 'exclude' but not both")

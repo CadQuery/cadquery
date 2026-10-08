@@ -9,6 +9,7 @@ from typing import (
     Any,
     List,
     cast,
+    TYPE_CHECKING,
 )
 from typing_extensions import Protocol, Self
 from math import degrees, radians
@@ -41,18 +42,14 @@ from OCP.BOPAlgo import BOPAlgo_GlueEnum, BOPAlgo_Builder
 from OCP.TopoDS import TopoDS_Shape
 from OCP.gp import gp_EulerSequence
 
-from vtkmodules.vtkRenderingCore import (
-    vtkActor,
-    vtkPolyDataMapper as vtkMapper,
-    vtkRenderer,
-    vtkProp3D,
-)
-
 from .geom import Location
 from .shapes import Shape, Solid, Compound, GlueLiteral, _set_glue, _set_builder_options
 from .exporters.vtk import toString, extractEdgesFaces
 from ..cq import Workplane
 from ..utils import BiDict
+
+if TYPE_CHECKING:
+    from vtkmodules.vtkRenderingCore import vtkRenderer, vtkProp3D
 
 # type definitions
 AssemblyObjects = Union[Shape, Workplane, None]
@@ -628,7 +625,9 @@ def toVTKAssy(
     linewidth: float = 2,
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
-) -> List[vtkProp3D]:
+) -> "List[vtkProp3D]":
+
+    from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper as vtkMapper
 
     rv: List[vtkProp3D] = []
 
@@ -675,7 +674,13 @@ def toVTK(
     color: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
     tolerance: float = 1e-3,
     angularTolerance: float = 0.1,
-) -> vtkRenderer:
+) -> "vtkRenderer":
+
+    from vtkmodules.vtkRenderingCore import (
+        vtkActor,
+        vtkPolyDataMapper as vtkMapper,
+        vtkRenderer,
+    )
 
     renderer = vtkRenderer()
 

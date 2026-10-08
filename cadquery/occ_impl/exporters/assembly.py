@@ -3,11 +3,8 @@ import uuid
 
 from tempfile import TemporaryDirectory
 from shutil import make_archive
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from typing_extensions import Literal
-
-from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
-from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
 from OCP.XSControl import XSControl_WorkSession
 from OCP.STEPCAFControl import STEPCAFControl_Writer
@@ -51,6 +48,9 @@ from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
 from ...types import UnitLiterals
+
+if TYPE_CHECKING:
+    from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
 
 class ExportModes:
@@ -392,10 +392,12 @@ def exportCAF(assy: AssemblyProtocol, path: str, binary: bool = False) -> bool:
 
 def _vtkRenderWindow(
     assy: AssemblyProtocol, tolerance: float = 1e-3, angularTolerance: float = 0.1
-) -> vtkRenderWindow:
+) -> "vtkRenderWindow":
     """
     Convert an assembly to a vtkRenderWindow. Used by vtk based exporters.
     """
+
+    from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
     renderer = toVTK(assy, tolerance=tolerance, angularTolerance=angularTolerance)
     renderWindow = vtkRenderWindow()
@@ -411,6 +413,8 @@ def exportVTKJS(assy: AssemblyProtocol, path: str):
     """
     Export an assembly to a zipped vtkjs. NB: .zip extensions is added to path.
     """
+
+    from vtkmodules.vtkIOExport import vtkJSONSceneExporter
 
     renderWindow = _vtkRenderWindow(assy)
 
@@ -432,6 +436,8 @@ def exportVRML(
     """
     Export an assembly to a vrml file using vtk.
     """
+
+    from vtkmodules.vtkIOExport import vtkVRMLExporter
 
     exporter = vtkVRMLExporter()
     exporter.SetFileName(path)
