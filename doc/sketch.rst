@@ -187,6 +187,10 @@ Following constraints are implemented. Arguments are passed in as one tuple in :
       - Arc
       - `angle`
       - Specified entity is fixed angular span
+    * - PointOnObject
+      - 2
+      - All
+      - `None` for arc center or `0..1` for point on segment/arc
 
 
 Workplane integration
