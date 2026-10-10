@@ -1023,6 +1023,20 @@ def test_chamfer():
     assert r.faces(">Z").Area() < 1
 
 
+@pytest.mark.parametrize("sel, n", [("|Z", 4), (">X and >Y", 1)])
+def test_fillet_chamfer_methods_shape_arg(sel, n):
+
+    b = box(1, 1, 1)
+    edges = b.edges(sel)
+
+    r1 = b.fillet(0.1, edges)
+    r2 = b.chamfer(0.1, None, edges)
+
+    assert r1.isValid()
+    assert r2.isValid()
+    assert len(r1.Edges()) == len(r2.Edges()) == 12 + 3 * n
+
+
 def test_extrude():
 
     v = vertex(0, 0, 0)
