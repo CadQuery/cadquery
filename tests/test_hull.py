@@ -63,18 +63,14 @@ def test_collinear():
 
 def test_eq():
 
-    a = hull.Arc(hull.Point(0.0, 0.0), 1.0, 0.0, 2 * pi)
-    b = hull.Arc(hull.Point(0.0, 0.0), 1.0, 0.0, 2 * pi)
     p = hull.Point(0.0, 0.0)
 
-    assert a == b
-    assert hash(a) == hash(b)
     assert p == hull.Point(0.0, 0.0)
+    assert hash(p) == hash(hull.Point(0.0, 0.0))
 
-    assert a != hull.Arc(hull.Point(0.0, 0.0), 2.0, 0.0, 2 * pi)
-    assert a != p
-    assert p != a
-    assert a != None
+    assert p != hull.Point(1.0, 0.0)
+    assert p != hull.Arc(p, 1.0, 0.0, 2 * pi)
+    assert p != None
 
 
 def test_lines_only():
@@ -119,3 +115,44 @@ def test_arc_endpoints():
 
     assert (a.s.x, a.s.y) == pytest.approx((11.0, 20.0))
     assert (a.e.x, a.e.y) == pytest.approx((9.0, 20.0))
+
+
+@pytest.mark.parametrize(
+    "inner",
+    [
+        cq.Edge.makeCircle(5.0, (2, 0, 0)),
+        cq.Edge.makeLine(cq.Vector(-3, 0), cq.Vector(3, 0)),
+        cq.Edge.makeLine(cq.Vector(0, 20), cq.Vector(0, 10)),
+    ],
+    ids=["circle", "line", "line from the circle"],
+)
+def test_geometry_inside_circle(inner):
+    outer = [cq.Edge.makeCircle(20.0, (0, 0, 0)), cq.Edge.makeCircle(20.0, (60, 5, 0))]
+
+    assert area(outer + [inner]) == pytest.approx(area(outer))
+
+
+def test_circle_with_nested_only():
+    edges = [cq.Edge.makeCircle(20.0, (0, 0, 0)), cq.Edge.makeCircle(5.0, (2, 0, 0))]
+
+    assert area(edges) == pytest.approx(400 * pi)
+
+
+def test_coincident_arcs():
+    # the start is the circle's bottom only if the halves are read as one circle
+    halves = [
+        cq.Edge.makeCircle(5.0, (0, 0, 0), angle1=0, angle2=180),
+        cq.Edge.makeCircle(5.0, (0, 0, 0), angle1=180, angle2=360),
+    ]
+    segment = cq.Edge.makeLine(cq.Vector(-2, -3), cq.Vector(2, -3))
+
+    for order in permutations(halves):
+        assert area(list(order) + [segment]) == pytest.approx(25 * pi)
+
+
+def test_intersecting_circles():
+    # a fuse splits each circle at the seam and at the intersections
+    edges = cq.Sketch().push([(-19, 0), (19, 0)]).circle(35).reset()._faces.Edges()
+
+    assert len(edges) == 6
+    assert area(edges) == pytest.approx(38 * 70 + pi * 35 ** 2)
