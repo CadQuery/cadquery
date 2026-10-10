@@ -21,6 +21,7 @@ from .occ_impl.shapes import (
 )
 from .occ_impl import exporters
 from .occ_impl import importers
+from .occ_impl import swig_runtime  # registers the exit-time guard for #1911
 
 # these items are the common implementation
 
