@@ -1023,6 +1023,43 @@ def test_chamfer():
     assert r.faces(">Z").Area() < 1
 
 
+@pytest.mark.parametrize("edge_input", ["list", "generator"])
+def test_fillet_method_iterable_edges(edge_input):
+    """Fillet all four vertical edges from a list or a one-use generator."""
+
+    b = box(1, 1, 1)
+    edges = b.edges("|Z").Edges()
+    assert len(edges) == 4
+    selected = edges if edge_input == "list" else (edge for edge in edges)
+
+    r = b.fillet(0.1, selected)
+
+    assert r.isValid()
+    assert len(r.Faces()) == 10
+    assert r.Volume() == approx(1 - (4 - pi) * 0.1 ** 2)
+    assert b.isValid()
+    assert b.Volume() == approx(1)
+
+
+@pytest.mark.parametrize("edge_input", ["list", "generator"])
+@pytest.mark.parametrize("length2, expected_volume", [(None, 0.98), (0.2, 0.96)])
+def test_chamfer_method_iterable_edges(edge_input, length2, expected_volume):
+    """Chamfer iterable edges with equal or unequal corner distances."""
+
+    b = box(1, 1, 1)
+    edges = b.edges("|Z").Edges()
+    assert len(edges) == 4
+    selected = edges if edge_input == "list" else (edge for edge in edges)
+
+    r = b.chamfer(0.1, length2, selected)
+
+    assert r.isValid()
+    assert len(r.Faces()) == 10
+    assert r.Volume() == approx(expected_volume)
+    assert b.isValid()
+    assert b.Volume() == approx(1)
+
+
 def test_extrude():
 
     v = vertex(0, 0, 0)
