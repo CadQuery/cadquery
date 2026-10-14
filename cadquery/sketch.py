@@ -988,12 +988,13 @@ class Sketch(object):
         self: T, tag1: str, tag2: str, constraint: ConstraintKind, arg: Any
     ) -> T:
 
+        e1, e2 = self._tags[tag1][0], self._tags[tag2][0]
+        assert isinstance(e1, Edge), f"{tag1} is not an edge: {e1}"
+        assert isinstance(e2, Edge), f"{tag2} is not an edge: {e2}"
+
         self._constraints.append(
             Constraint(
-                (tag1, tag2),
-                (self._tags[tag1][0], self._tags[tag2][0]),
-                constraint,
-                arg,
+                (tag1, tag2), (tcast(Edge, e1), tcast(Edge, e2)), constraint, arg,
             )
         )
 
