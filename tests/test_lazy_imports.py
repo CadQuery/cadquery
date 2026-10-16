@@ -2,7 +2,11 @@ import os
 import subprocess
 import sys
 
+import pytest
+
 import cadquery
+from cadquery.occ_impl import exporters
+from cadquery.occ_impl.exporters import assembly, dxf, vtk
 
 
 def test_import_does_not_load_ezdxf_or_vtk():
@@ -24,3 +28,18 @@ def test_import_does_not_load_ezdxf_or_vtk():
     )
 
     assert out.stdout.split() == ["set()", "ok"], out.stdout + out.stderr
+
+
+def test_exporters_lazy_names():
+    # the submodules are attributes here already, so ask __getattr__ directly
+    assert exporters.__getattr__("dxf") is dxf
+    assert exporters.__getattr__("vtk") is vtk
+    assert exporters.__getattr__("assembly") is assembly
+
+    assert exporters.exportDXF is dxf.exportDXF
+    assert exporters.exportDXFProjection is dxf.exportDXFProjection
+    assert exporters.DxfDocument is dxf.DxfDocument
+    assert exporters.exportVTP is vtk.exportVTP
+
+    with pytest.raises(AttributeError):
+        exporters.nonexistent
