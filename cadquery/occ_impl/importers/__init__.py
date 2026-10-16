@@ -1,4 +1,3 @@
-from importlib import import_module
 from math import pi
 from typing import List, Literal
 
@@ -138,10 +137,3 @@ def importDXF(
     faces = _importDXF(filename, tol, exclude, include)
 
     return cq.Workplane("XY").newObject(faces)
-
-
-# lazy: importing dxf here would load ezdxf with cadquery
-def __getattr__(name):
-    if name == "dxf":
-        return import_module(".dxf", __name__)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

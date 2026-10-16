@@ -11,7 +11,7 @@ def test_import_does_not_load_ezdxf_or_vtk():
         "import sys, cadquery as cq;"
         "print({m.split('.')[0] for m in sys.modules} & {'ezdxf', 'vtkmodules'});"
         # the submodules stay reachable through the packages
-        "cq.exporters.assembly.ExportModes, cq.exporters.dxf, cq.exporters.vtk, cq.importers.dxf;"
+        "cq.exporters.assembly.ExportModes, cq.exporters.dxf, cq.exporters.vtk;"
         "print('ok')"
     )
     # run next to the package under test; only stdout is checked, since the
