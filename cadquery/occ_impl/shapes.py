@@ -4027,15 +4027,15 @@ TS = TypeVar("TS", bound=ShapeProtocol)
 
 
 class Mixin3D(object):
-    def fillet(self: Any, radius: float, edgeList: Iterable[Edge]) -> Any:
+    def fillet(self: Any, radius: float, edgeList: Shape | Iterable[Edge]) -> Any:
         """
         Fillets the specified edges of this solid.
 
         :param radius: float > 0, the radius of the fillet
-        :param edgeList:  a list of Edge objects, which must belong to this solid
+        :param edgeList:  a list of Edge objects or a Shape containing edges, which must belong to this solid
         :return: Filleted solid
         """
-        nativeEdges = [e.wrapped for e in edgeList]
+        nativeEdges = [e.wrapped for e in _get_edge_list(edgeList)]
 
         fillet_builder = BRepFilletAPI_MakeFillet(self.wrapped)
 
@@ -4045,17 +4045,20 @@ class Mixin3D(object):
         return self.__class__(fillet_builder.Shape())
 
     def chamfer(
-        self: Any, length: float, length2: float | None, edgeList: Iterable[Edge]
+        self: Any,
+        length: float,
+        length2: float | None,
+        edgeList: Shape | Iterable[Edge],
     ) -> Any:
         """
         Chamfers the specified edges of this solid.
 
         :param length: length > 0, the length (length) of the chamfer
         :param length2: length2 > 0, optional parameter for asymmetrical chamfer. Should be `None` if not required.
-        :param edgeList:  a list of Edge objects, which must belong to this solid
+        :param edgeList:  a list of Edge objects or a Shape containing edges, which must belong to this solid
         :return: Chamfered solid
         """
-        nativeEdges = [e.wrapped for e in edgeList]
+        nativeEdges = [e.wrapped for e in _get_edge_list(edgeList)]
 
         # make a edge --> faces mapping
         edge_face_map = TopTools_IndexedDataMapOfShapeListOfShape()
@@ -5302,6 +5305,17 @@ def _get_edges(*shapes: Shape) -> Iterable[Edge]:
                 yield from _get_edges(el)
         else:
             raise ValueError(f"Required type(s): Edge, Wire; encountered {t}")
+
+
+def _get_edge_list(edges: Shape | Iterable[Edge]) -> Iterable[Edge]:
+    """
+    Normalize a Shape or an iterable of edges to an iterable of edges.
+    """
+
+    if isinstance(edges, Shape):
+        return _get_edges(edges.edges())
+
+    return edges
 
 
 def _get_faces(*shapes: Shape) -> Iterable[Face]:
