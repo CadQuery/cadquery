@@ -11,6 +11,7 @@ from typing import (
     Self,
     TypeAlias,
     TypeVar,
+    TYPE_CHECKING,
     cast as tcast,
     overload,
     Type,
@@ -19,9 +20,6 @@ from typing import (
 from io import BytesIO
 
 from warnings import warn
-
-from vtkmodules.vtkCommonDataModel import vtkPolyData
-from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
 from OCP.ShapeBuild import ShapeBuild_ReShape
 
@@ -35,6 +33,9 @@ from ..selectors import (
 
 from ..utils import multimethod, multidispatch, mypyclassmethod
 from ..types import UnitLiterals
+
+if TYPE_CHECKING:
+    from vtkmodules.vtkCommonDataModel import vtkPolyData
 
 # change default OCCT logging level
 from OCP.Message import Message, Message_Gravity
@@ -1710,6 +1711,9 @@ class Shape(object):
         """
         Convert shape to vtkPolyData
         """
+
+        # vtk must be loaded before getVtkPolyData(), which returns None otherwise
+        from vtkmodules.vtkFiltersCore import vtkTriangleFilter, vtkPolyDataNormals
 
         vtk_shape = IVtkOCC_Shape(self.wrapped)
         shape_data = IVtkVTK_ShapeData()

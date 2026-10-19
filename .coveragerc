@@ -11,3 +11,5 @@ omit =
 exclude_lines =
     # Ignore stub body
     \.\.\.
+    # Ignore imports for type checking only
+    if TYPE_CHECKING:
