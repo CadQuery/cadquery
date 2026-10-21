@@ -1945,7 +1945,7 @@ class Workplane(object):
         tol: float = 1e-6,
         minDeg: int = 1,
         maxDeg: int = 6,
-        smoothing: Optional[Tuple[float, float, float]] = (1, 1, 1),
+        smoothing: Optional[Tuple[float, float, float]] = None,
         makeWire: bool = True,
     ) -> T:
         """
@@ -1959,7 +1959,7 @@ class Workplane(object):
         :param tol: tolerance of the algorithm (default: 1e-6)
         :param minDeg: minimum spline degree (default: 1)
         :param maxDeg: maximum spline degree (default: 6)
-        :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
+        :param smoothing: optional parameters for the variational smoothing algorithm (default: None)
         :param makeWire: convert the resulting spline edge to a wire
         :return: a Workplane object with the current point unchanged
 
