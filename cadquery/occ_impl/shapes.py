@@ -6105,7 +6105,13 @@ def edgeOn(
     tol: float = 1e-6,
 ) -> Edge:
     """
-    Build an edge on a face from points in (u,v) space.
+    Build an edge on a face by interpolating points in its (u,v) parameter space.
+
+    :param base: Face (or shape containing a face) on which the edge is built.
+    :param pts: Points given as (u,v) parameter pairs of ``base``.
+    :param periodic: Build a closed, periodic interpolation.
+    :param tol: Interpolation tolerance.
+    :return: Edge lying on ``base``.
     """
 
     f = _get_one(base, Face)
@@ -6126,7 +6132,17 @@ def edgeOn(
     fbase: Shape, edg: Shape, *edgs: Shape, tol: float = 1e-6, N: int = 20,
 ) -> Shape:
     """
-    Map one or more edges onto a base face in the u,v space.
+    Map one or more edges onto a base face in the (u,v) space.
+
+    Each edge is sampled and the x and y coordinates of the samples are used as
+    (u,v) parameters of ``fbase``; the z coordinate is ignored.
+
+    :param fbase: Face (or shape containing a face) to map onto.
+    :param edg: First edge (or shape containing edges) to map.
+    :param edgs: Additional edges to map.
+    :param tol: Interpolation tolerance.
+    :param N: Number of sample points per edge.
+    :return: Mapped edge, or a Compound of edges if more than one was mapped.
     """
 
     f = _get_one(fbase, Face)
@@ -6174,7 +6190,16 @@ def edgeOn(
 
 def wireOn(base: Shape, w: Shape, tol: float = 1e-6, N: int = 20) -> Wire:
     """
-    Map a wire onto a base face in the u,v space.
+    Map a wire onto a base face in the (u,v) space.
+
+    The x and y coordinates of the wire are used as (u,v) parameters of ``base``;
+    see :func:`edgeOn`.
+
+    :param base: Face (or shape containing a face) to map onto.
+    :param w: Wire to map.
+    :param tol: Interpolation tolerance.
+    :param N: Number of sample points per edge.
+    :return: Wire lying on ``base``.
     """
 
     rvs = [edgeOn(base, e, tol=tol, N=N) for e in w.Edges()]
@@ -6212,7 +6237,15 @@ def _reorder_edges(edges: list[Edge]) -> tuple[list[int], list[bool]]:
 @multidispatch
 def wire(*s: Shape, history: History | None = None, name: str | None = None,) -> Wire:
     """
-    Build wire from edges.
+    Build a wire from edges.
+
+    Edges are reordered and reversed as needed so that they connect.
+
+    :param s: Edges, or shapes containing edges.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The constructed wire.
+    :raises AssertionError: If the edges cannot be connected into a wire.
     """
 
     builder = BRepBuilderAPI_MakeWire()
@@ -6271,6 +6304,9 @@ def wire(*s: Shape, history: History | None = None, name: str | None = None,) ->
 def wire(
     s: Sequence[Shape], history: History | None = None, name: str | None = None,
 ) -> Wire:
+    """
+    Build a wire from a sequence of edges. See the variadic overload.
+    """
 
     return wire(*s, history=history, name=name)
 
@@ -6278,7 +6314,14 @@ def wire(
 @multidispatch
 def face(*s: Shape) -> Face:
     """
-    Build face from edges or wires.
+    Build a planar face from closed edges or wires.
+
+    The outermost wire becomes the outer boundary, wires lying inside it become
+    holes.
+
+    :param s: Edges or wires, or shapes containing them.
+    :return: The constructed face.
+    :raises ValueError: If no face can be built.
     """
 
     from OCP.BOPAlgo import BOPAlgo_Tools
@@ -6297,7 +6340,8 @@ def face(*s: Shape) -> Face:
 @multidispatch
 def face(s: Sequence[Shape]) -> Face:
     """
-    Build face from a sequence of edges or wires.
+    Build a planar face from a sequence of edges or wires. See the variadic
+    overload.
     """
 
     return face(*s)
@@ -6306,6 +6350,15 @@ def face(s: Sequence[Shape]) -> Face:
 def faceOn(base: Shape, *fcs: Shape, tol: float = 1e-6, N: int = 20) -> Face | Compound:
     """
     Build face(s) on base by mapping planar face(s) onto the (u,v) space of base.
+
+    The x and y coordinates of the boundaries of ``fcs`` are used as (u,v)
+    parameters of ``base``; see :func:`edgeOn`. Holes are preserved.
+
+    :param base: Face (or shape containing a face) to map onto.
+    :param fcs: Planar faces, or shapes containing them, to map.
+    :param tol: Interpolation tolerance.
+    :param N: Number of sample points per edge.
+    :return: Mapped face, or a Compound of faces if more than one was mapped.
     """
 
     rv: Shape
@@ -6361,7 +6414,16 @@ def shell(
     name: str | None = None,
 ) -> Shape:
     """
-    Build shell from faces. If ctx is specified, local sewing is performed.
+    Build a shell by sewing faces. If ctx is specified, local sewing is performed.
+
+    :param s: Faces, or shapes containing faces.
+    :param tol: Sewing tolerance.
+    :param manifold: If False, allow non-manifold sewing (edges shared by more
+        than two faces).
+    :param ctx: Context shape(s) into which the faces are sewn.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: Shell, or a Compound if sewing produced several shells.
     """
 
     builder = BRepBuilderAPI_Sewing(tol, option4=not manifold)
@@ -6422,7 +6484,7 @@ def shell(
     name: str | None = None,
 ) -> Shape:
     """
-    Build shell from a sequence of faces. If ctx is specified, local sewing is performed.
+    Build a shell from a sequence of faces. See the variadic overload.
     """
 
     return shell(*s, tol=tol, manifold=manifold, ctx=ctx, history=history, name=name)
@@ -6437,7 +6499,17 @@ def solid(
     name: str | None = None,
 ) -> Compound | Solid:
     """
-    Build solid from faces or shells.
+    Build a solid from faces or shells.
+
+    If shells are present, one solid is built from each shell and loose faces
+    are ignored. Otherwise the faces are sewn into a shell first.
+
+    :param s1: Faces or shells, or shapes containing them.
+    :param sn: Additional faces or shells.
+    :param tol: Sewing tolerance.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: Solid, or a Compound if several solids were built.
     """
 
     ctx = ShapeBuild_ReShape()
@@ -6494,7 +6566,14 @@ def solid(
     name: str | None = None,
 ) -> Solid:
     """
-    Build solid from a sequence of faces.
+    Build a solid, possibly with voids, from a sequence of faces.
+
+    :param s: Faces forming the outer boundary.
+    :param inner: Faces forming the boundaries of internal voids.
+    :param tol: Sewing tolerance.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The constructed solid.
     """
 
     builder = BRepBuilderAPI_MakeSolid()
@@ -6528,7 +6607,10 @@ def solid(
 @multimethod
 def compound(*s: Shape) -> Compound:
     """
-    Build compound from shapes.
+    Build a compound from shapes.
+
+    :param s: Shapes to combine. They are not modified or fused.
+    :return: Compound containing ``s``.
     """
 
     rv = TopoDS_Compound()
@@ -6545,7 +6627,7 @@ def compound(*s: Shape) -> Compound:
 @multimethod
 def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Compound:
     """
-    Build compound from a sequence of shapes.
+    Build a compound from a sequence of shapes. See the variadic overload.
     """
 
     return compound(*s)
@@ -6558,6 +6640,11 @@ def compound(s: Sequence[Shape] | Generator[Shape, None, None]) -> Compound:
 def vertex(x: Real, y: Real, z: Real) -> Vertex:
     """
     Construct a vertex from coordinates.
+
+    :param x: X coordinate.
+    :param y: Y coordinate.
+    :param z: Z coordinate.
+    :return: Vertex at (x, y, z).
     """
 
     return _shape(BRepBuilderAPI_MakeVertex(gp_Pnt(x, y, z)).Vertex(), Vertex)
@@ -6567,6 +6654,9 @@ def vertex(x: Real, y: Real, z: Real) -> Vertex:
 def vertex(p: VectorLike) -> Vertex:
     """
     Construct a vertex from VectorLike.
+
+    :param p: Location of the vertex.
+    :return: Vertex at ``p``.
     """
 
     return _shape(BRepBuilderAPI_MakeVertex(Vector(p).toPnt()).Vertex(), Vertex)
@@ -6574,7 +6664,11 @@ def vertex(p: VectorLike) -> Vertex:
 
 def segment(p1: VectorLike, p2: VectorLike) -> Edge:
     """
-    Construct a segment from two points.
+    Construct a straight line segment from two points.
+
+    :param p1: Start point.
+    :param p2: End point.
+    :return: Linear edge from ``p1`` to ``p2``.
     """
 
     return _shape(
@@ -6584,7 +6678,10 @@ def segment(p1: VectorLike, p2: VectorLike) -> Edge:
 
 def polyline(*pts: VectorLike) -> Wire:
     """
-    Construct a polyline from points.
+    Construct an open polyline from points.
+
+    :param pts: Points to connect in order.
+    :return: Wire of linear edges.
     """
 
     builder = BRepBuilderAPI_MakePolygon()
@@ -6598,6 +6695,11 @@ def polyline(*pts: VectorLike) -> Wire:
 def polygon(*pts: VectorLike) -> Wire:
     """
     Construct a polygon (closed polyline) from points.
+
+    The last point is connected back to the first one; do not repeat it.
+
+    :param pts: Points to connect in order.
+    :return: Closed wire of linear edges.
     """
 
     builder = BRepBuilderAPI_MakePolygon()
@@ -6612,7 +6714,11 @@ def polygon(*pts: VectorLike) -> Wire:
 
 def rect(w: float, h: float) -> Wire:
     """
-    Construct a rectangle.
+    Construct a rectangle in the XY plane, centered at the origin.
+
+    :param w: Width in X direction.
+    :param h: Height in Y direction.
+    :return: Closed wire. Use :func:`face` to get a face.
     """
 
     return polygon(
@@ -6623,7 +6729,12 @@ def rect(w: float, h: float) -> Wire:
 @multimethod
 def spline(*pts: VectorLike, tol: float = 1e-6, periodic: bool = False) -> Edge:
     """
-    Construct a spline from points.
+    Construct a spline interpolating points.
+
+    :param pts: Points the spline passes through.
+    :param tol: Interpolation tolerance.
+    :param periodic: Build a closed, periodic spline.
+    :return: Spline edge.
     """
 
     data = _pts_to_harray(pts)
@@ -6644,7 +6755,16 @@ def spline(
     scale: bool = True,
 ) -> Edge:
     """
-    Construct a spline from a sequence points.
+    Construct a spline interpolating a sequence of points.
+
+    :param pts: Points the spline passes through.
+    :param tgts: Tangents, either one per point or two (start and end tangent).
+    :param params: Curve parameter value for each point.
+    :param tol: Interpolation tolerance.
+    :param periodic: Build a closed, periodic spline.
+    :param scale: Scale the tangents to match the point spacing. If False, the
+        tangent magnitudes are used as given.
+    :return: Spline edge.
     """
 
     data = _pts_to_harray(pts)
@@ -6674,7 +6794,10 @@ def spline(
 
 def circle(r: float) -> Edge:
     """
-    Construct a circle.
+    Construct a circle in the XY plane, centered at the origin.
+
+    :param r: Radius (unlike most solid primitives, which take a diameter).
+    :return: Closed circular edge. Use :func:`face` to get a disk.
     """
 
     return _shape(
@@ -6687,7 +6810,11 @@ def circle(r: float) -> Edge:
 
 def ellipse(r1: float, r2: float) -> Edge:
     """
-    Construct an ellipse.
+    Construct an ellipse in the XY plane, centered at the origin.
+
+    :param r1: Major radius, in X direction. Must not be smaller than ``r2``.
+    :param r2: Minor radius, in Y direction.
+    :return: Closed elliptical edge.
     """
 
     return _shape(
@@ -6701,7 +6828,11 @@ def ellipse(r1: float, r2: float) -> Edge:
 @multimethod
 def plane(w: Real, l: Real) -> Face:
     """
-    Construct a finite planar face.
+    Construct a finite rectangular face in the XY plane, centered at the origin.
+
+    :param w: Width in X direction.
+    :param l: Length in Y direction.
+    :return: Planar face with normal +Z.
     """
 
     pln_geom = gp_Pln(Vector(0, 0, 0).toPnt(), Vector(0, 0, 1).toDir())
@@ -6714,7 +6845,7 @@ def plane(w: Real, l: Real) -> Face:
 @multimethod
 def plane() -> Face:
     """
-    Construct an infinite planar face.
+    Construct an infinite planar face: the XY plane, with normal +Z.
 
     This is a crude approximation. Truly infinite faces in OCCT do not work as
     expected in all contexts.
@@ -6729,7 +6860,12 @@ def plane() -> Face:
 
 def box(w: float, l: float, h: float) -> Solid:
     """
-    Construct a solid box.
+    Construct a solid box, centered in X and Y, with its bottom face at Z=0.
+
+    :param w: Width in X direction.
+    :param l: Length in Y direction.
+    :param h: Height in Z direction.
+    :return: Box spanning [-w/2, w/2] x [-l/2, l/2] x [0, h].
     """
 
     return _shape(
@@ -6742,7 +6878,12 @@ def box(w: float, l: float, h: float) -> Solid:
 
 def cylinder(d: float, h: float) -> Solid:
     """
-    Construct a solid cylinder.
+    Construct a solid cylinder along the Z axis, with its base centered at the
+    origin.
+
+    :param d: Diameter.
+    :param h: Height in Z direction.
+    :return: Cylinder spanning [0, h] in Z.
     """
 
     return _shape(
@@ -6755,7 +6896,10 @@ def cylinder(d: float, h: float) -> Solid:
 
 def sphere(d: float) -> Solid:
     """
-    Construct a solid sphere.
+    Construct a solid sphere centered at the origin.
+
+    :param d: Diameter.
+    :return: The sphere.
     """
 
     return _shape(
@@ -6768,7 +6912,13 @@ def sphere(d: float) -> Solid:
 
 def torus(d1: float, d2: float) -> Solid:
     """
-    Construct a solid torus.
+    Construct a solid torus centered at the origin, with the Z axis as its axis
+    of revolution.
+
+    :param d1: Major diameter, i.e. the diameter of the tube's center circle in
+        the XY plane.
+    :param d2: Minor diameter, i.e. the diameter of the tube.
+    :return: The torus.
     """
 
     return _shape(
@@ -6786,7 +6936,12 @@ def torus(d1: float, d2: float) -> Solid:
 @multidispatch
 def cone(d: Real, h: Real) -> Solid:
     """
-    Construct a full solid cone.
+    Construct a full solid cone along the Z axis, with its base centered at the
+    origin and its apex at Z=h.
+
+    :param d: Base diameter.
+    :param h: Height in Z direction.
+    :return: The cone.
     """
 
     return cone(d, 0.0, h)
@@ -6795,7 +6950,15 @@ def cone(d: Real, h: Real) -> Solid:
 @multidispatch
 def cone(d1: Real, d2: Real, h: Real) -> Solid:
     """
-    Construct a partial solid cone.
+    Construct a truncated solid cone (frustum) along the Z axis, with its base
+    centered at the origin.
+
+    :param d1: Diameter at Z=0.
+    :param d2: Diameter at Z=h. Must differ from ``d1``; use :func:`cylinder`
+        for equal diameters.
+    :param h: Height in Z direction.
+    :return: The cone.
+    :raises Standard_DomainError: If ``d1`` equals ``d2``.
     """
 
     return _shape(
@@ -6821,7 +6984,18 @@ def text(
     valign: Literal["center", "top", "bottom"] = "center",
 ) -> Shape:
     """
-    Create a flat text.
+    Create a flat text in the XY plane.
+
+    :param txt: Text to render.
+    :param size: Font size in model units.
+    :param font: Name of an installed font.
+    :param path: Path to a font file. If it points to a valid font, it takes
+        precedence over ``font``.
+    :param kind: Font style.
+    :param halign: Horizontal alignment relative to the origin.
+    :param valign: Vertical alignment relative to the origin.
+    :return: Planar face(s) of the glyphs.
+    :raises ValueError: If the font cannot be found.
     """
 
     builder = Font_BRepTextBuilder()
@@ -6884,7 +7058,24 @@ def text(
     valign: Literal["center", "top", "bottom"] = "center",
 ) -> Shape:
     """
-    Create a text on a spine.
+    Create a text along a spine.
+
+    Each glyph is placed on the spine at an arc length, measured from the start
+    of the spine, equal to its X position in the flat text (see the first
+    overload).
+
+    :param txt: Text to render.
+    :param size: Font size in model units.
+    :param spine: Wire or edge along which the text runs.
+    :param planar: If True, the glyphs lie in the plane of the spine. Otherwise
+        they stand perpendicular to it.
+    :param font: Name of an installed font.
+    :param path: Path to a font file. If it points to a valid font, it takes
+        precedence over ``font``.
+    :param kind: Font style.
+    :param halign: Horizontal alignment of the flat text.
+    :param valign: Vertical alignment relative to the spine.
+    :return: Face(s) of the glyphs.
     """
 
     spine = _get_one_wire(spine)
@@ -6917,7 +7108,23 @@ def text(
     valign: Literal["center", "top", "bottom"] = "center",
 ) -> Shape:
     """
-    Create a text on a spine and a base surface.
+    Create a text along a spine and project it onto a base surface.
+
+    The text is built as in the spine overload (with ``planar=False``) and each
+    glyph is then projected along its normal onto ``base``.
+
+    :param txt: Text to render.
+    :param size: Font size in model units.
+    :param spine: Wire or edge along which the text runs.
+    :param base: Face (or shape containing a face) onto which the text is
+        projected.
+    :param font: Name of an installed font.
+    :param path: Path to a font file. If it points to a valid font, it takes
+        precedence over ``font``.
+    :param kind: Font style.
+    :param halign: Horizontal alignment of the flat text.
+    :param valign: Vertical alignment relative to the spine.
+    :return: Face(s) of the glyphs lying on ``base``.
     """
 
     base = _get_one(base, Face)
@@ -6983,6 +7190,8 @@ def _set_builder_options(builder: BOPAlgo_Builder, tol: float) -> None:
 def setThreads(n: int) -> None:
     """
     Set number of threads to be used by boolean operations.
+
+    :param n: Number of threads of the default OCCT thread pool.
     """
 
     pool = OSD_ThreadPool.DefaultPool_s()
@@ -7000,6 +7209,20 @@ def fuse(
 ) -> Shape:
     """
     Fuse at least two shapes.
+
+    Separate arguments may overlap each other. The members of a single Compound
+    argument must not overlap, otherwise the result can be silently wrong.
+
+    :param s1: First shape.
+    :param s2: Second shape.
+    :param shapes: Additional shapes.
+    :param tol: Fuzzy tolerance; 0 disables fuzzy mode.
+    :param glue: Gluing option for shapes that touch or overlap without
+        intersecting: ``"partial"`` for partially coinciding faces, ``"full"``
+        for fully coinciding faces, None for no gluing.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The fused shape.
     """
 
     builder = BOPAlgo_BOP()
@@ -7030,7 +7253,19 @@ def cut(
     name: str | None = None,
 ) -> Shape:
     """
-    Subtract two shapes.
+    Subtract ``s2`` from ``s1``.
+
+    The members of a Compound argument must not overlap each other, otherwise
+    the result can be silently wrong. To cut with several overlapping tools,
+    :func:`fuse` them first.
+
+    :param s1: Shape to cut from.
+    :param s2: Tool shape that is removed.
+    :param tol: Fuzzy tolerance; 0 disables fuzzy mode.
+    :param glue: Gluing option, see :func:`fuse`.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The remaining part of ``s1``.
     """
 
     builder = BOPAlgo_BOP()
@@ -7059,6 +7294,17 @@ def intersect(
 ) -> Shape:
     """
     Intersect two shapes.
+
+    The members of a Compound argument must not overlap each other, otherwise
+    the result can be silently wrong.
+
+    :param s1: First shape.
+    :param s2: Second shape.
+    :param tol: Fuzzy tolerance; 0 disables fuzzy mode.
+    :param glue: Gluing option, see :func:`fuse`.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The common part of ``s1`` and ``s2``.
     """
 
     builder = BOPAlgo_BOP()
@@ -7086,6 +7332,16 @@ def split(
 ) -> Shape:
     """
     Split one shape with another.
+
+    The members of a Compound argument must not overlap each other, otherwise
+    the result can be silently wrong.
+
+    :param s1: Shape to split.
+    :param s2: Tool shape used for splitting; it is not part of the result.
+    :param tol: Fuzzy tolerance; 0 disables fuzzy mode.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The pieces of ``s1``, usually as a Compound.
     """
 
     builder = BOPAlgo_Splitter()
@@ -7110,6 +7366,12 @@ def enclose(
     """
     Build a solid enclosed by the specified faces. Faces can intersect or touch.
     If all faces are touching, solid() has better performance.
+
+    :param shapes: Faces, or shapes containing faces.
+    :param tol: Fuzzy tolerance; 0 disables fuzzy mode.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: Solid, or a Compound if several solids are enclosed.
     """
 
     builder = BOPAlgo_MakerVolume()
@@ -7139,6 +7401,14 @@ def imprint(
 
     Depending on the use case, it might be required to use a different `glue` option. Moreover, for large models
     it might be needed to limit the number of threads using :meth:`cadquery.func.setThreads`
+
+    :param shapes: Shapes to imprint onto each other.
+    :param tol: Fuzzy tolerance; 0 disables fuzzy mode.
+    :param glue: Gluing option, see :func:`fuse`.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: Compound of the input shapes with shared faces, edges and vertices
+        at their contacts.
     """
 
     builder = BOPAlgo_Builder()
@@ -7161,6 +7431,11 @@ def imprint(
 def clean(s: Shape) -> Shape:
     """
     Clean superfluous edges and faces.
+
+    Adjacent faces and edges lying on the same underlying geometry are merged.
+
+    :param s: Shape to clean.
+    :return: The cleaned shape.
     """
 
     builder = ShapeUpgrade_UnifySameDomain(s.wrapped, True, True, True)
@@ -7173,6 +7448,14 @@ def clean(s: Shape) -> Shape:
 def fill(s: Shape, constraints: Sequence[Shape | VectorLike] = ()) -> Shape:
     """
     Fill edges/wire possibly obeying constraints.
+
+    The resulting surface is not necessarily planar. For planar boundaries
+    :func:`face` is usually preferable.
+
+    :param s: Edges or wire forming a closed boundary.
+    :param constraints: Additional edges or points the surface has to pass
+        through.
+    :return: The filling face.
     """
 
     builder = BRepOffsetAPI_MakeFilling()
@@ -7195,6 +7478,14 @@ def fill(s: Shape, constraints: Sequence[Shape | VectorLike] = ()) -> Shape:
 def cap(s: Shape, ctx: Shape, constraints: Sequence[Shape | VectorLike] = ()) -> Shape:
     """
     Fill edges/wire possibly obeying constraints and try to connect smoothly to the context shape.
+
+    :param s: Edges or wire forming a closed boundary. Each edge must belong to
+        a face of ``ctx``.
+    :param ctx: Context shape; the filling is tangent (G1) to its faces along
+        the boundary.
+    :param constraints: Additional edges or points the surface has to pass
+        through.
+    :return: The filling face.
     """
 
     builder = BRepOffsetAPI_MakeFilling()
@@ -7225,6 +7516,13 @@ def fillet(
 ) -> Shape:
     """
     Fillet selected edges in a given shell or solid.
+
+    :param s: Shell or solid to fillet.
+    :param edges: Edges of ``s`` to fillet, or a shape containing them.
+    :param r: Fillet radius.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The filleted shape.
     """
 
     builder = BRepFilletAPI_MakeFillet(_get_one(s, (Shell, Solid)).wrapped,)
@@ -7248,6 +7546,13 @@ def chamfer(
 ) -> Shape:
     """
     Chamfer selected edges in a given shell or solid.
+
+    :param s: Shell or solid to chamfer.
+    :param edges: Edges of ``s`` to chamfer, or a shape containing them.
+    :param d: Chamfer distance, the same on both adjacent faces.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The chamfered shape.
     """
 
     builder = BRepFilletAPI_MakeChamfer(_get_one(s, (Shell, Solid)).wrapped,)
@@ -7270,7 +7575,18 @@ def extrude(
     name: str | None = None,
 ) -> Shape:
     """
-    Extrude a shape.
+    Extrude a shape along a vector.
+
+    Vertices, edges, wires and faces become edges, faces, shells and solids
+    respectively.
+
+    :param s: Shape to extrude.
+    :param d: Extrusion vector; its length is the extrusion distance.
+    :param both: Extrude symmetrically in both directions, i.e. from ``-d`` to
+        ``d`` (total length ``2*|d|``).
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The extruded shape.
     """
 
     results = []
@@ -7304,7 +7620,18 @@ def revolve(
     name: str | None = None,
 ) -> Shape:
     """
-    Revolve a shape.
+    Revolve a shape around an axis.
+
+    Vertices, edges, wires and faces become edges, faces, shells and solids
+    respectively.
+
+    :param s: Shape to revolve.
+    :param p: Point on the axis of revolution.
+    :param d: Direction of the axis of revolution.
+    :param a: Angle of revolution in degrees.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The revolved shape.
     """
 
     results = []
@@ -7336,6 +7663,17 @@ def offset(
 ) -> Shape:
     """
     Offset or thicken faces or shells.
+
+    :param s: Faces or shells, or a shape containing them.
+    :param t: Offset distance, measured along the face normal; negative values
+        offset against the normal.
+    :param cap: If True, thicken into a solid bounded by the original and the
+        offset surface. If False, return only the offset surface.
+    :param both: Offset by ``t`` and ``-t`` and fuse the results.
+    :param tol: Offset tolerance.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The offset or thickened shape.
     """
 
     def _offset(t: float):
@@ -7402,6 +7740,17 @@ def offset2D(
     """
     2D offset edges or wires. ctx face might be needed for ambiguous wires/edges.
     Only works with planar geometries.
+
+    :param s: Edges or wires, or a shape containing them.
+    :param t: Offset distance; positive values offset outward for closed wires.
+    :param ctx: Face whose geometry defines the offset plane.
+    :param kind: How corners are joined: with an arc, by extending and
+        intersecting the offset edges, or tangentially.
+    :param closed: If True, open wires are offset into a closed outline around
+        them. If False, the result stays open.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The offset wire(s).
     """
 
     kind_dict = {
@@ -7445,6 +7794,14 @@ def chamfer2D(
 ) -> Shape:
     """
     Apply a 2D chamfer to a planar face.
+
+    :param s: Planar face to chamfer.
+    :param verts: Vertices of ``s`` to chamfer, or a shape containing them.
+    :param d: Chamfer distance, the same on both adjacent edges.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The chamfered face.
+    :raises ValueError: If a vertex is not shared by two edges.
     """
 
     f = _get_one(s, Face)
@@ -7487,6 +7844,13 @@ def fillet2D(
 ) -> Shape:
     """
     Apply a 2D fillet to a planar face.
+
+    :param s: Planar face to fillet.
+    :param verts: Vertices of ``s`` to fillet, or a shape containing them.
+    :param r: Fillet radius.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The filleted face.
     """
 
     f = _get_one(s, Face)
@@ -7530,6 +7894,18 @@ def sweep(
     """
     Sweep edge, wire or face along a path. For faces cap has no effect.
     Do not mix faces with other types.
+
+    :param s: Profile(s) to sweep. Faces yield solids, edges and wires yield
+        shells (or solids if ``cap`` is True).
+    :param path: Wire or edge along which the profile is swept.
+    :param aux: Auxiliary spine controlling the rotation of the profile along
+        the path. If None, the corrected Frenet frame of the path is used.
+    :param cap: Close the ends of swept wires to produce a solid.
+    :param transition: How the profile is handled at discontinuities of the
+        path: transformed, extended with round corners, or with right corners.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The swept shape.
     """
 
     spine = _get_one_wire(path)
@@ -7652,6 +8028,18 @@ def sweep(
     """
     Sweep edges, wires or faces along a path, multiple sections are supported.
     For faces cap has no effect. Do not mix faces with other types.
+
+    :param s: Sections to sweep through, in order along the path. Faces must
+        have the same number of inner wires.
+    :param path: Wire or edge along which the sections are swept.
+    :param aux: Auxiliary spine controlling the rotation of the sections along
+        the path. If None, the corrected Frenet frame of the path is used.
+    :param cap: Close the ends of swept wires to produce a solid.
+    :param transition: How the sections are handled at discontinuities of the
+        path: transformed, extended with round corners, or with right corners.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The swept shape.
     """
 
     spine = _get_one_wire(path)
@@ -7781,6 +8169,23 @@ def loft(
 ) -> Shape:
     """
     Loft edges, wires or faces. For faces cap has no effect. Do not mix faces with other types.
+
+    :param s: Sections to loft through, in order. Vertices are allowed as first
+        or last section. Faces must have the same number of inner wires.
+    :param cap: Close the ends of lofted wires to produce a solid.
+    :param ruled: Connect consecutive sections with ruled (straight) surfaces
+        instead of a smooth approximation.
+    :param continuity: Required continuity of the approximated surface.
+    :param parametrization: Parametrization used for the approximation.
+    :param degree: Maximal degree of the approximated surface.
+    :param compat: Check and fix the orientation and starting points of the
+        sections to avoid twisting.
+    :param smoothing: Use smoothing in the approximation.
+    :param weights: Smoothing weights for the first derivative, curvature and
+        torsion criteria.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The lofted shape.
     """
 
     results: list[TopoDS_Shape] = []
@@ -7914,7 +8319,8 @@ def loft(
     name: str | None = None,
 ) -> Shape:
     """
-    Variadic loft overload.
+    Loft edges, wires or faces given as separate arguments. See the sequence
+    overload.
     """
 
     return loft(
@@ -7943,6 +8349,14 @@ def project(
 ) -> Shape:
     """
     Project s onto base using normal projection.
+
+    :param s: Edges or wires to project.
+    :param base: Shape to project onto.
+    :param continuity: Required continuity of the projected curves.
+    :param degree: Maximal degree of the projected curves.
+    :param maxseg: Maximal number of segments of the projected curves.
+    :param tol: 3D tolerance of the projection.
+    :return: The projected edges or wires.
     """
 
     bldr = BRepAlgo_NormalProjection(base.wrapped)
@@ -7960,6 +8374,12 @@ def project(
 def project(s: Shape, base: Shape, direction: VectorLike,) -> Shape:
     """
     Project s onto base using cylindrical projection.
+
+    :param s: Edges, or a shape containing edges, to project.
+    :param base: Shape to project onto.
+    :param direction: Projection direction.
+    :return: The projected edges or wires. Every intersection with ``base`` is
+        included, e.g. both the front and the back of a solid.
     """
 
     results = []
@@ -7992,6 +8412,18 @@ def hollow(
 ):
     """
     Make a hollow solid by removing faces and applying thickness t.
+
+    :param s: Solid to hollow.
+    :param faces: Faces of ``s`` to remove, or None to build a closed hollow
+        solid with an internal void.
+    :param t: Wall thickness. Positive values add material outside of ``s``,
+        negative values inside.
+    :param tol: Offset tolerance.
+    :param kind: How the offset faces are joined at edges: with arcs or by
+        intersection.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The hollow solid.
     """
 
     bldr = BRepOffsetAPI_MakeThickSolid()
@@ -8039,6 +8471,9 @@ def hollow(
     history: History | None = None,
     name: str | None = None,
 ) -> Solid:
+    """
+    Make a closed hollow solid with an internal void. See the first overload.
+    """
 
     return hollow(s, None, t, tol, kind, history, name)
 
@@ -8092,6 +8527,20 @@ def prism(
 ) -> Shape:
     """
     Build a drafted prismatic feature that can be additive or subtractive.
+
+    Each profile face is extruded along its normal.
+
+    :param ctx: Shape to which the feature is added or from which it is cut.
+    :param base: Face of ``ctx`` on which the profiles lie, or None.
+    :param faces: Profile faces, or a shape containing them.
+    :param t: Extent of the feature: a distance, a face to extrude up to, a
+        pair of faces to extrude from and to, or None to go through all of
+        ``ctx``.
+    :param angle: Draft angle in degrees.
+    :param additive: Fuse the feature with ``ctx`` if True, cut it otherwise.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The modified shape.
     """
 
     builders = []
@@ -8151,6 +8600,18 @@ def prism(
 ) -> Shape:
     """
     Build a (potentially tilted) prismatic feature that can be additive or subtractive.
+
+    :param ctx: Shape to which the feature is added or from which it is cut.
+    :param base: Face of ``ctx`` on which the profiles lie, or None.
+    :param faces: Profile faces, or a shape containing them.
+    :param t: Extent of the feature: a distance, a face to extrude up to, a
+        pair of faces to extrude from and to, or None to go through all of
+        ``ctx``.
+    :param dir: Extrusion direction.
+    :param additive: Fuse the feature with ``ctx`` if True, cut it otherwise.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The modified shape.
     """
 
     builders = []
@@ -8195,6 +8656,16 @@ def draft(
 ) -> Shape:
     """
     Add a draft angle to the specified faces.
+
+    :param ctx: Shape to modify.
+    :param base: Planar face defining the neutral plane; its normal is the pull
+        direction.
+    :param faces: Faces of ``ctx`` to draft, or a shape containing them.
+    :param angle: Draft angle in degrees.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The modified shape.
+    :raises ValueError: If a face cannot be drafted.
     """
 
     base_face = base.face()
@@ -8227,7 +8698,17 @@ def draft(
     name: str | None = None,
 ) -> Shape:
     """
-    Add a draft angle to the specified faces.
+    Add a draft angle to the specified faces using an explicit pull direction.
+
+    :param ctx: Shape to modify.
+    :param base: Planar face defining the neutral plane.
+    :param faces: Faces of ``ctx`` to draft, or a shape containing them.
+    :param dir: Pull direction.
+    :param angle: Draft angle in degrees.
+    :param history: If given, the operation is recorded in this history.
+    :param name: Name under which the operation is recorded in ``history``.
+    :return: The modified shape.
+    :raises ValueError: If a face cannot be drafted.
     """
 
     base_face = base.face()
@@ -8260,6 +8741,13 @@ def check(
 ) -> bool:
     """
     Check if a shape is valid.
+
+    :param s: Shape to check.
+    :param results: If given, this list is cleared and filled with
+        ``(faulty subshapes, status)`` tuples, one per detected problem.
+    :param tol: Fuzzy tolerance.
+    :param verbose: Emit a warning for each detected problem.
+    :return: True if the shape is valid.
     """
 
     analyzer = BRepAlgoAPI_Check(s.wrapped)
@@ -8293,6 +8781,10 @@ def check(
 def isSubshape(s1: Shape, s2: Shape) -> bool:
     """
     Check if s1 is a subshape of s2.
+
+    :param s1: Candidate subshape.
+    :param s2: Shape to search in.
+    :return: True if ``s1`` is contained in the topology of ``s2``.
     """
 
     shape_map = TopTools_IndexedDataMapOfShapeListOfShape()
@@ -8310,6 +8802,10 @@ def isSubshape(s1: Shape, s2: Shape) -> bool:
 def closest(s1: Shape, s2: Shape) -> tuple[Vector, Vector]:
     """
     Closest points between two shapes.
+
+    :param s1: First shape.
+    :param s2: Second shape.
+    :return: The closest point on ``s1`` and the closest point on ``s2``.
     """
     # configure
     ext = BRepExtrema_DistShapeShape()
