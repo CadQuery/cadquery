@@ -6239,7 +6239,7 @@ def wire(*s: Shape, history: History | None = None, name: str | None = None,) ->
     """
     Build a wire from edges.
 
-    Edges are reordered and reversed as needed so that they connect.
+    Edges are reordered and reversed as needed so that they form a correct wire.
 
     :param s: Edges, or shapes containing edges.
     :param history: If given, the operation is recorded in this history.
@@ -6755,7 +6755,7 @@ def spline(
     scale: bool = True,
 ) -> Edge:
     """
-    Construct a spline interpolating a sequence of points.
+    Construct a spline interpolating points specified via a sequence.
 
     :param pts: Points the spline passes through.
     :param tgts: Tangents, either one per point or two (start and end tangent).
