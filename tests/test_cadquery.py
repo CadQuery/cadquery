@@ -5861,6 +5861,53 @@ class TestCadQuery(BaseTest):
 
             assert (w - Shape.importBrep("box.brep")).val().Volume() == approx(0)
 
+    def test_bool_op_non_destructive(self):
+
+        from OCP.BRep import BRep_Tool
+
+        for op_name in ("cut", "fuse"):
+            cyl = Workplane("XY").cylinder(10, 5)
+            cap = Workplane("XY", origin=(0, 0, 5)).sphere(5)
+            s1 = cyl.union(cap).edges().fillet(0.5).val()
+            s2 = s1.translate((1e-4, 0, 0))
+
+            v_tol_before = max(BRep_Tool.Tolerance_s(v.wrapped) for v in s1.Vertices())
+            e_tol_before = max(BRep_Tool.Tolerance_s(e.wrapped) for e in s1.Edges())
+
+            getattr(s1, op_name)(s2)
+
+            v_tol_after = max(BRep_Tool.Tolerance_s(v.wrapped) for v in s1.Vertices())
+            e_tol_after = max(BRep_Tool.Tolerance_s(e.wrapped) for e in s1.Edges())
+
+            self.assertEqual(v_tol_before, v_tol_after)
+            self.assertEqual(e_tol_before, e_tol_after)
+
+    def test_bool_op_failure_raises(self):
+
+        from unittest.mock import MagicMock
+
+        box = Solid.makeBox(1, 1, 1)
+
+        class MockBooleanOp(MagicMock):
+            pass
+
+        # op.IsDone() is False
+        mock_op_not_done = MockBooleanOp()
+        mock_op_not_done.IsDone.return_value = False
+
+        with self.assertRaises(ValueError) as cm:
+            box._bool_op((box,), (), mock_op_not_done)
+        self.assertIn("Boolean operation MockBooleanOp failed", str(cm.exception))
+
+        # op.Shape().IsNull() is True
+        mock_op_null_shape = MockBooleanOp()
+        mock_op_null_shape.IsDone.return_value = True
+        mock_op_null_shape.Shape.return_value.IsNull.return_value = True
+
+        with self.assertRaises(ValueError) as cm:
+            box._bool_op((box,), (), mock_op_null_shape)
+        self.assertIn("Boolean operation MockBooleanOp failed", str(cm.exception))
+
     def test_bool_operators(self):
 
         w1 = Workplane().box(1, 1, 2)
