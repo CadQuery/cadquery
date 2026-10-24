@@ -5746,6 +5746,10 @@ class TestCadQuery(BaseTest):
         with raises(ValueError):
             Face.makeNSidedSurface(outer_w, [[0, 0, 1]])
 
+        # empty boundary so that filler reports not-done
+        with raises(ValueError):
+            Face.makeNSidedSurface([], [])
+
     def test_toVtk(self):
 
         from vtkmodules.vtkCommonDataModel import vtkPolyData
