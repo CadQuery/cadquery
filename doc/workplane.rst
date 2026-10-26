@@ -96,6 +96,58 @@ You can also give a Workplane object a tag, and further down your chain of calls
 to this particular object using its tag.
 
 
+.. _tagging-workplanes:
+
+Tagging Workplanes
+---------------------------
+
+Longer parametric models often need to leave a selection, add more geometry, and then return to
+that earlier selection. Two small stack helpers are useful for this:
+
+* :meth:`~cadquery.Workplane.end` returns the parent Workplane, which is usually the object you
+  had before the most recent selector or construction call.
+* :meth:`~cadquery.Workplane.tag` names a Workplane so later selector calls can start from that
+  point in the chain by using their ``tag`` keyword argument.
+
+For example, the two ``tag`` calls below select faces only long enough to name them. The following
+``end`` calls move back to the box Workplane so the next operation still starts from the whole part::
+
+    import cadquery as cq
+
+    bracket = cq.Workplane("XY").box(4, 2, 0.5)
+    bracket.faces(">X").tag("right_face").end()
+    bracket.faces("<X").tag("left_face").end()
+
+    result = bracket.faces(">Z").workplane().hole(0.25)
+
+The tags remain available from the shared modelling context. A later selector can pass the tag name
+to select relative to the tagged Workplane instead of relative to the current stack::
+
+    right_edges = result.edges("|Z", tag="right_face")
+    left_edges = result.edges("|Z", tag="left_face")
+
+When you do need to walk back through the chain, :meth:`~cadquery.Workplane.end` also accepts a
+count. For example, ``.end(3)`` returns the third parent Workplane, which is useful after a short
+run of selectors has narrowed the stack more than once::
+
+    box = cq.Workplane("XY").box(4, 2, 0.5)
+    top_face = box.faces(">Z").edges("|X").vertices().end(3)
+
+You can also create a new Workplane from a tag instead of only selecting from it. This is useful
+when the tagged Workplane's plane and objects are the right starting point for another feature::
+
+    result = (
+        bracket
+        .workplaneFromTagged("right_face")
+        .center(0, 0.35)
+        .hole(0.2)
+    )
+
+This keeps feature references close to the geometry they describe, instead of depending on how many
+``end`` calls are needed to walk back through the chain. It is especially helpful in assemblies,
+where tagged faces and edges are commonly used as stable mating references.
+
+
 The Context Solid
 ---------------------------
 
