@@ -147,6 +147,11 @@ Following constraints are implemented. Arguments are passed in as one tuple in :
       - Entities
       - Arguments
       - Description
+    * - Fixed
+      - 1
+      - All
+      - None
+      - Entire entity is fixed in place
     * - FixedPoint
       - 1
       - All
