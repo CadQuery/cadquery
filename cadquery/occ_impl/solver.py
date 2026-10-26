@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import (
     List,
     Tuple,
@@ -14,7 +16,10 @@ from typing import (
 
 from math import radians, pi
 
-import casadi as ca
+# casadi is imported inside the functions that use it rather than at module
+# level: importing it together with nlopt at `import cadquery` time crashes
+# the interpreter at exit on Windows (#1911), and neither is needed unless
+# constraints are actually solved.
 
 from OCP.gp import (
     gp_Vec,
@@ -308,6 +313,7 @@ class ConstraintSpec(object):
 # Cost functions of simple constraints
 def Quaternion(R):
 
+    import casadi as ca
     m = ca.sumsqr(R)
 
     u = 2 * R / (1 + m)
@@ -318,6 +324,7 @@ def Quaternion(R):
 
 def Rotate(v, R):
 
+    import casadi as ca
     s, u = Quaternion(R)
 
     return 2 * ca.dot(u, v) * u + (s ** 2 - ca.dot(u, u)) * v + 2 * s * ca.cross(u, v)
@@ -344,6 +351,7 @@ def point_cost(
     scale: float = 1,
 ) -> float:
 
+    import casadi as ca
     val = 0 if val is None else val
 
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
@@ -375,6 +383,7 @@ def axis_cost(
     scale: float = 1,
 ) -> float:
 
+    import casadi as ca
     val = pi if val is None else val
 
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
@@ -413,6 +422,7 @@ def point_in_plane_cost(
     scale: float = 1,
 ) -> float:
 
+    import casadi as ca
     val = 0 if val is None else val
 
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
@@ -451,6 +461,7 @@ def point_on_line_cost(
     scale: float = 1,
 ) -> float:
 
+    import casadi as ca
     val = 0 if val is None else val
 
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
@@ -500,6 +511,7 @@ def fixed_point_cost(
     scale: float = 1,
 ):
 
+    import casadi as ca
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
 
     dummy = (Transform(m1_dm, T1_0 + T1, R1_0 + R1) - ca.DM(val)) / scale
@@ -518,6 +530,7 @@ def fixed_axis_cost(
     scale: float = 1,
 ):
 
+    import casadi as ca
     m1_dm = ca.DM((m1.X(), m1.Y(), m1.Z()))
     m_val = ca.DM(val) / ca.norm_2(ca.DM(val))
 
@@ -537,6 +550,7 @@ def fixed_rotation_cost(
     scale: float = 1,
 ):
 
+    import casadi as ca
     q = gp_Quaternion()
     q.SetEulerAngles(gp_Extrinsic_XYZ, *val)
     q_dm = ca.DM((q.W(), q.X(), q.Y(), q.Z()))
@@ -591,6 +605,7 @@ class ConstraintSolver(object):
         scale: float = 1,
     ):
 
+        import casadi as ca
         self.scale = scale
         self.opti = opti = ca.Opti()
         self.variables = [
@@ -660,6 +675,7 @@ class ConstraintSolver(object):
 
     def solve(self, verbosity: int = 0) -> Tuple[List[Location], Dict[str, Any]]:
 
+        import casadi as ca
         suppress_banner = "yes" if verbosity == 0 else "no"
 
         opti = self.opti
