@@ -125,8 +125,8 @@ class Workplane(object):
     """
     Defines a coordinate system in space, in which 2D coordinates can be used.
 
-    :param plane: the plane in which the workplane will be done
-    :type plane: a Plane object, or a string in (XY|YZ|XZ|front|back|top|bottom|left|right)
+    :param inPlane: the plane in which the workplane will be done
+    :type inPlane: a Plane object, or a string in (XY|YZ|XZ|front|back|top|bottom|left|right)
     :param origin: the desired origin of the new workplane
     :type origin: a 3-tuple in global coordinates, or None to default to the origin
     :param obj: an object to use initially for the stack
@@ -1169,8 +1169,8 @@ class Workplane(object):
         """
         Returns a copy of all of the items on the stack moved by the specified translation vector.
 
-        :param tupleDistance: distance to move, in global coordinates
-        :type  tupleDistance: a 3-tuple of float
+        :param vec: distance to move, in global coordinates
+        :type  vec: a 3-tuple of float
         :returns: a CQ object
         """
         return self.newObject(
@@ -2389,7 +2389,7 @@ class Workplane(object):
 
         Special note: a newly created workplane always has its center point as its only stack item
 
-        :param callBackFunction: the function to call for each item on the current stack.
+        :param callback: the function to call for each item on the current stack.
         :param useLocalCoordinates: should  values be converted from local coordinates first?
         :param combine: True or "a" to combine the resulting solid with parent solids if found,
             "cut" or "s" to remove the resulting solid from the parent solids if found.
@@ -2399,7 +2399,7 @@ class Workplane(object):
 
         The callback function must accept one argument, which is the item on the stack, and return
         one object, which is collected. If the function returns None, nothing is added to the stack.
-        The object passed into the callBackFunction is potentially transformed to local coordinates,
+        The object passed into the callback is potentially transformed to local coordinates,
         if useLocalCoordinates is true
 
         useLocalCoordinates is very useful for plugin developers.
@@ -2997,7 +2997,7 @@ class Workplane(object):
         complex geometries
 
         :param distance: the distance to extrude normal to the workplane
-        :param angle: angle (in degrees) to rotate through the extrusion
+        :param angleDegrees: angle (in degrees) to rotate through the extrusion
         :param combine: True or "a" to combine the resulting solid with parent solids if found,
             "cut" or "s" to remove the resulting solid from the parent solids if found.
             False to keep the resulting solid separated from the parent solids.
@@ -3172,7 +3172,7 @@ class Workplane(object):
         Use all un-extruded wires in the parent chain to create a swept solid.
 
         :param path: A wire along which the pending wires will be swept
-        :param multiSection: False to create multiple swept from wires on the chain along path.
+        :param multisection: False to create multiple swept from wires on the chain along path.
             True to create only one solid swept along path with shape following the list of wires on the chain
         :param combine: True or "a" to combine the resulting solid with parent solids if found,
             "cut" or "s" to remove the resulting solid from the parent solids if found.

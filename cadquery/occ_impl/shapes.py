@@ -2265,7 +2265,6 @@ class Mixin1D(object):
 
         :param locations: list of distances.
         :returns: list of u values.
-        :param pts: the points to compute the parameters at.
         """
 
         us = []
@@ -2601,7 +2600,7 @@ class Mixin1D(object):
         """
         Calculate mean curvatures along the underlying curve.
 
-        :param d: distance or parameter values
+        :param ds: distance or parameter values
         :param mode: position calculation mode (default: length)
         :param resolution: resolution of the calculation (default: 1e-6)
         :return: mean curvature value at the specified d value.
