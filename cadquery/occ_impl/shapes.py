@@ -7783,6 +7783,9 @@ def loft(
     Loft edges, wires or faces. For faces cap has no effect. Do not mix faces with other types.
     """
 
+    if any(el.Faces() for el in s) and any(el.edges() and not el.Faces() for el in s):
+        raise ValueError("Do not mix faces with other types")
+
     results: list[TopoDS_Shape] = []
     builders = []
     # for history handling
