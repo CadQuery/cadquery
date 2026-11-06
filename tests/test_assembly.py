@@ -2662,3 +2662,24 @@ def test_assembly_without_children_roundtrip(kind, tmpdir):
     loaded = cq.Assembly.load(path)
 
     assert loaded.toCompound().Volume() == approx(1)
+
+
+@pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
+def test_assembly_with_solid_subshape_roundtrip(kind, tmpdir):
+    """
+    An assembly with a solid that is also tagged as a subshape.
+    """
+
+    assy = cq.Assembly(name="root").add(box(1, 1, 1), name="child")
+
+    assy["child"].addSubshape(assy["child"].obj, name="SOLID_TAG")
+    assy["child"].addSubshape(assy["child"].obj.face(), name="FACE_TAG")
+
+    path = os.path.join(tmpdir, f"no_children.{kind}")
+    assy.export(path)
+
+    loaded = cq.Assembly.load(path)
+    child_subshape_names = loaded["child"]._subshape_names.values()
+
+    assert "FACE_TAG" in child_subshape_names
+    assert "SOLID_TAG" in child_subshape_names
