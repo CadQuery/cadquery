@@ -106,8 +106,15 @@ window.addEventListener('resize', resize);
 document.addEventListener('scroll', recomputeViewports);
 
 
+// listens on the body but reports the canvas size, which vtk.js uses to convert mouse positions
+const eventContainer = {
+  addEventListener: (...args) => document.body.addEventListener(...args),
+  removeEventListener: (...args) => document.body.removeEventListener(...args),
+  getBoundingClientRect: () => openglRenderWindow.getCanvas().getBoundingClientRect(),
+};
+
 function enterCurrentRenderer(e) {
-  interactor.bindEvents(document.body);
+  interactor.bindEvents(eventContainer);
   interact_style.setEnabled(true);
   interactor.setCurrentRenderer(RENDERERS[e.target.id]);
 }
