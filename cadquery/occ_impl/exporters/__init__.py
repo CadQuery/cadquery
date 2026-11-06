@@ -1,4 +1,5 @@
-from typing import IO, Optional, Union, cast, Dict, Any, Iterable
+from importlib import import_module
+from typing import IO, Optional, Union, cast, Dict, Any, Iterable, TYPE_CHECKING
 from typing_extensions import Literal
 
 from OCP.VrmlAPI import VrmlAPI
@@ -10,8 +11,10 @@ from .svg import getSVG, exportSVG
 from .json import JsonMesh
 from .amf import AmfWriter
 from .threemf import ThreeMFWriter
-from .dxf import exportDXF, exportDXFProjection, DxfDocument
-from .vtk import exportVTP
+
+if TYPE_CHECKING:
+    from .dxf import exportDXF, exportDXFProjection, DxfDocument
+    from .vtk import exportVTP
 
 
 class ExportTypes:
@@ -110,6 +113,8 @@ def export(
             tmfw.write3mf(f)
 
     elif exportType == ExportTypes.DXF:
+        from .dxf import exportDXF
+
         exportDXF(w, fname, **opt)
 
     elif exportType == ExportTypes.STEP:
@@ -128,6 +133,8 @@ def export(
         VrmlAPI.Write_s(shape.wrapped, fname)
 
     elif exportType == ExportTypes.VTP:
+        from .vtk import exportVTP
+
         exportVTP(shape, fname, tolerance, angularTolerance)
 
     elif exportType == ExportTypes.BREP:
@@ -138,3 +145,14 @@ def export(
 
     else:
         raise ValueError("Unknown export type")
+
+
+# lazy: importing these here would load ezdxf and vtk with cadquery
+def __getattr__(name):
+    if name in ("dxf", "vtk", "assembly"):
+        return import_module(f".{name}", __name__)
+    if name in ("exportDXF", "exportDXFProjection", "DxfDocument"):
+        return getattr(import_module(".dxf", __name__), name)
+    if name == "exportVTP":
+        return import_module(".vtk", __name__).exportVTP
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
