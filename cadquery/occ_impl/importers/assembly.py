@@ -359,14 +359,14 @@ def _importDoc(
 
                     # if provided, check the STEP data model to collect additional subshapes on solid level
                     if transfer_reader:
-                        entity = cast(
+                        if isinstance(
+                            entity := transfer_reader.EntityFromShapeResult(
+                                final_shape, 1
+                            ),
                             StepRepr_RepresentationItem,
-                            transfer_reader.EntityFromShapeResult(final_shape, 1),
-                        )
-                        name = entity.Name().ToCString()
-
-                        if name:
-                            current.addSubshape(cq_shape, name=name)
+                        ):
+                            if name := entity.Name().ToCString():
+                                current.addSubshape(cq_shape, name=name)
 
         return parent
 
