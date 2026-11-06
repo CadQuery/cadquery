@@ -17,7 +17,15 @@ from warnings import warn
 from itertools import chain
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound, isSubshape, compound
+from .occ_impl.shapes import (
+    Shape,
+    Compound,
+    isSubshape,
+    compound,
+    GlueLiteral,
+    imprint,
+    History,
+)
 from .occ_impl.geom import Location
 from .occ_impl.assembly import Color, Material
 from .occ_impl.solver import (
@@ -718,7 +726,11 @@ class Assembly(object):
         Assembly iterator yielding shapes, names, locations and colors.
         """
 
-        name = f"{name}/{self.name}" if name else self.name
+        if self.parent is None or self.parent.parent is None:
+            name = self.name
+        else:
+            name = f"{name}/{self.name}"
+
         loc = loc * self.loc if loc else self.loc
         color = self.color if self.color else color
 
@@ -859,3 +871,42 @@ class Assembly(object):
         """
 
         self.__dict__ = d
+
+    def imprint(self, tol: float = 0.0, glue: GlueLiteral = "partial") -> Self:
+        """
+        Imprint assembly in-place.
+
+        NB: this function will tranform all non-Shape obj (e.g. Workplane) fields into
+        Shape obj fields.
+        """
+
+        hist = History()
+
+        objs = []
+        names = []
+        locs = []
+
+        for obj, name, loc, _ in self:
+            objs.append(obj.moved(loc))
+            names.append(name)
+            locs.append(loc)
+
+        result = imprint(*objs, tol=tol, glue=glue, history=hist)
+        op = hist[-1]
+
+        for obj, name, loc in zip(objs, names, locs):
+            obj_imp = op.modified(obj)
+
+            subassy = self.objects[name]
+
+            subassy.obj = obj_imp.undoMoved()
+
+            for k in subassy._subshape_names:
+                k_moved = k.moved(loc)
+                k_imp = op.modified(k_moved)
+
+                subassy._subshape_names[
+                    k_imp.undoMoved()
+                ] = subassy._subshape_names.pop(k)
+
+        return self
