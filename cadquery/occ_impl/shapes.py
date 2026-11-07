@@ -7530,6 +7530,7 @@ def fillet(
     :param history: If given, the operation is recorded in this history.
     :param name: Name under which the operation is recorded in ``history``.
     :return: The filleted shape.
+    :raises ValueError: If the fillet cannot be built.
     """
 
     builder = BRepFilletAPI_MakeFillet(_get_one(s, (Shell, Solid)).wrapped,)
@@ -7538,6 +7539,10 @@ def fillet(
         builder.Add(r, el.wrapped)
 
     builder.Build()
+
+    # fail clearly; calling Shape() on a failed builder rebuilds it and crashes
+    if not builder.IsDone():
+        raise ValueError("Fillet failed, try a smaller radius or fewer edges")
 
     _update_history(history, name, [s, edges], builder)
 
@@ -7560,6 +7565,7 @@ def chamfer(
     :param history: If given, the operation is recorded in this history.
     :param name: Name under which the operation is recorded in ``history``.
     :return: The chamfered shape.
+    :raises ValueError: If the chamfer cannot be built.
     """
 
     builder = BRepFilletAPI_MakeChamfer(_get_one(s, (Shell, Solid)).wrapped,)
@@ -7568,6 +7574,10 @@ def chamfer(
         builder.Add(d, el.wrapped)
 
     builder.Build()
+
+    # fail clearly; calling Shape() on a failed builder rebuilds it and crashes
+    if not builder.IsDone():
+        raise ValueError("Chamfer failed, try a smaller distance or fewer edges")
 
     _update_history(history, name, [s, edges], builder)
 
