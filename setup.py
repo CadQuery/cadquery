@@ -31,7 +31,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
         "multimethod>=2.1,<3.0",
         "nlopt>=2.9.0,<3.0",
         "runtype",
-        "casadi",
+        "casadi<3.8",
         "trame",
         "trame-vtk",
         "trame-components",
