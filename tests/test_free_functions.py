@@ -6,6 +6,9 @@ from cadquery.func import (
     rect,
     circle,
     ellipse,
+    arc,
+    bezier,
+    helix,
     plane,
     box,
     cylinder,
@@ -78,7 +81,7 @@ from OCP.BOPAlgo import BOPAlgo_CheckStatus
 import pytest
 from pytest import approx, raises, fixture
 from contextlib import chdir
-from math import pi
+from math import pi, sqrt
 
 
 @pytest.fixture(scope="function")
@@ -448,6 +451,156 @@ def test_ellipse():
     assert s.isValid()
     assert s.IsClosed()
     assert face(s).Area() == approx(6 * pi)
+
+
+def test_arc():
+
+    # three points
+    s1 = arc((1, 0), (0, 1), (-1, 0))
+
+    assert s1.isValid()
+    assert s1.radius() == approx(1)
+    assert s1.Length() == approx(pi)
+    assert s1.positionAt(0.5).toTuple() == approx((0, 1, 0))
+
+    # start, end and start tangent
+    s2 = arc((1, 0), (-1, 0), tangent=(0, 1))
+
+    assert s2.isValid()
+    assert s2.radius() == approx(1)
+    assert s2.Length() == approx(pi)
+    assert s2.tangentAt(0).toTuple() == approx((0, 1, 0))
+
+    # keywords work
+    s3 = arc(p1=(1, 0), p2=(0, 1), p3=(-1, 0))
+
+    assert s3.Length() == approx(pi)
+
+    # combine with other free functions
+    f = face(wire(arc((1, 0), (0, 1), (-1, 0)), segment((-1, 0), (1, 0))))
+
+    assert f.isValid()
+    assert f.Area() == approx(pi / 2)
+
+
+@pytest.mark.parametrize(
+    "args, kwargs, err, msg",
+    [
+        (((0, 0), (1, 0)), {}, TypeError, "either a third point"),
+        (((0, 0), (1, 0), (1, 1)), {"tangent": (0, 1)}, TypeError, "not both"),
+        (((0, 0), (0, 0), (1, 1)), {}, ValueError, "distinct"),
+        (((0, 0), (1, 1), (0, 0)), {}, ValueError, "distinct"),
+        (((0, 0), (1, 0), (2, 0)), {}, ValueError, "collinear"),
+        (((0, 0), (1, 0)), {"tangent": (0, 0)}, ValueError, "non-zero"),
+        (((0, 0), (1, 0)), {"tangent": (1, 0)}, ValueError, "parallel"),
+        (((0, 0), (1, 0)), {"tangent": (-1, 0)}, ValueError, "parallel"),
+    ],
+)
+def test_arc_invalid(args, kwargs, err, msg):
+
+    with raises(err, match=msg):
+        arc(*args, **kwargs)
+
+
+def test_circle_arc():
+
+    s1 = circle(2, 90, 180)
+
+    assert s1.isValid()
+    assert not s1.IsClosed()
+    assert s1.radius() == approx(2)
+    assert s1.arcCenter().toTuple() == approx((0, 0, 0))
+    assert s1.Length() == approx(pi)
+    assert s1.startPoint().toTuple() == approx((0, 2, 0))
+    assert s1.endPoint().toTuple() == approx((-2, 0, 0))
+
+    # crossing the X axis
+    s2 = circle(1, start=-90, end=90)
+
+    assert s2.startPoint().toTuple() == approx((0, -1, 0))
+    assert s2.endPoint().toTuple() == approx((0, 1, 0))
+    assert s2.positionAt(0.5).toTuple() == approx((1, 0, 0))
+
+    # a full turn starting at an arbitrary angle is closed
+    s3 = circle(1, 45, 405)
+
+    assert s3.IsClosed()
+    assert s3.Length() == approx(2 * pi)
+
+
+@pytest.mark.parametrize(
+    "args, msg",
+    [
+        ((0,), "radius"),
+        ((-1,), "radius"),
+        ((1, 90, 90), "angles"),
+        ((1, 90, 0), "angles"),
+        ((1, 0, 450), "angles"),
+    ],
+)
+def test_circle_invalid(args, msg):
+
+    with raises(ValueError, match=msg):
+        circle(*args)
+
+
+def test_bezier():
+
+    s = bezier((0, 0), (1, 1), (2, 0))
+
+    assert s.isValid()
+    assert s.geomType() == "BEZIER"
+    assert s.startPoint().toTuple() == approx((0, 0, 0))
+    assert s.endPoint().toTuple() == approx((2, 0, 0))
+    assert s.positionAt(0.5, mode="parameter").toTuple() == approx((1, 0.5, 0))
+    assert s.tangentAt(0).toTuple() == approx(Vector(1, 1, 0).normalized().toTuple())
+
+    with raises(ValueError, match="at least 2 points"):
+        bezier((0, 0))
+
+
+def test_helix():
+
+    s = helix(1, 3, 2)
+
+    assert s.isValid()
+    assert s.startPoint().toTuple() == approx((2, 0, 0))
+    assert s.endPoint().toTuple() == approx((2, 0, 3), abs=1e-6)
+    assert s.Length() == approx(3 * sqrt((4 * pi) ** 2 + 1), rel=1e-4)
+
+    bb = s.BoundingBox()
+
+    assert bb.zmin == approx(0, abs=1e-6)
+    assert bb.zmax == approx(3, abs=1e-6)
+    assert bb.xlen == approx(4, rel=1e-3)
+
+    # handedness
+    s_right = helix(1, 0.25, 1)
+    s_left = helix(1, 0.25, 1, lefthand=True)
+
+    assert s_right.endPoint().y > 0
+    assert s_left.endPoint().y < 0
+
+    # keywords
+    s_kw = helix(pitch=1, height=3, radius=2)
+
+    assert s_kw.Length() == approx(s.Length())
+
+
+@pytest.mark.parametrize(
+    "args, msg",
+    [
+        ((0, 1, 1), "pitch"),
+        ((-1, 1, 1), "pitch"),
+        ((1, 0, 1), "height"),
+        ((1, -1, 1), "height"),
+        ((1, 1, 0), "radius"),
+    ],
+)
+def test_helix_invalid(args, msg):
+
+    with raises(ValueError, match=msg):
+        helix(*args)
 
 
 def test_plane():
