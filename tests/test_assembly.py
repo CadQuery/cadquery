@@ -2675,7 +2675,7 @@ def test_assembly_with_solid_subshape_roundtrip(kind, tmpdir):
     assy["child"].addSubshape(assy["child"].obj, name="SOLID_TAG")
     assy["child"].addSubshape(assy["child"].obj.face(), name="FACE_TAG")
 
-    path = os.path.join(tmpdir, f"no_children.{kind}")
+    path = os.path.join(tmpdir, f"solid_subshape.{kind}")
     assy.export(path)
 
     loaded = cq.Assembly.load(path)
