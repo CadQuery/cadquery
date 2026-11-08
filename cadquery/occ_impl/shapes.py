@@ -1895,7 +1895,8 @@ class Shape(object):
 
         BinTools.Read_s(wrapped, data[0])
 
-        self.wrapped = wrapped
+        # NB downcast raises on null shapes
+        self.wrapped = wrapped if wrapped.IsNull() else downcast(wrapped)
         self.forConstruction = data[1]
 
     def replace(self, old: Shape, *new: Shape) -> Self:

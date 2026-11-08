@@ -1,3 +1,4 @@
+from copy import copy, deepcopy
 from pickle import loads, dumps
 
 from cadquery import (
@@ -39,6 +40,34 @@ def test_shape():
     s = Shape(box(1, 1, 1).wrapped)
 
     assert isinstance(loads(dumps(s)), Shape)
+
+
+@mark.parametrize(
+    "copier",
+    [copy, deepcopy, lambda obj: loads(dumps(obj))],
+    ids=["copy", "deepcopy", "pickle"],
+)
+def test_shape_type(copier):
+    """
+    Copying or unpickling a shape keeps its specialized TopoDS type
+    (e.g. TopoDS_Solid), as constructing it does.
+    """
+
+    s = box(1, 1, 1)
+
+    for obj in (s, s.Faces()[0], s.Edges()[0], s.Vertices()[0]):
+        assert type(copier(obj).wrapped) is type(obj.wrapped)
+
+
+def test_null_shape():
+    """
+    Unpickling a null shape keeps it null rather than raising.
+    """
+
+    s = box(1, 1, 1)
+    s.wrapped.Nullify()
+
+    assert loads(dumps(s)).wrapped.IsNull()
 
 
 def test_assy():
