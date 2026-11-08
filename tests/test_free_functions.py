@@ -1245,9 +1245,7 @@ def test_loft_mixed_faces_wires():
         loft(face(circle(1)), wire(rect(2, 1)).moved(z=1))
 
     with raises(ValueError):
-        loft(
-            face(rect(2, 1)).moved(z=-1), wire(circle(1)), face(rect(2, 1)).moved(z=1)
-        )
+        loft(face(rect(2, 1)).moved(z=-1), wire(circle(1)), face(rect(2, 1)).moved(z=1))
 
     # vertex ends do not hide the mixing
     with raises(ValueError):
