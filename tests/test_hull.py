@@ -5,6 +5,7 @@ import pytest
 
 import cadquery as cq
 from cadquery import hull
+from cadquery.func import face
 
 
 def area(edges):
@@ -99,15 +100,16 @@ def test_single_circle():
     assert area([cq.Edge.makeCircle(5.0, (0, 0, 0))]) == pytest.approx(25 * pi)
 
 
-def test_stalled_march():
-    # valid input the march cannot close; it used to loop forever
+def test_march_closes():
     edges = [
         cq.Edge.makeCircle(6.0, (0, 12, 0)),
         cq.Edge.makeLine(cq.Vector(-2, 5), cq.Vector(9, 10)),
     ]
 
-    with pytest.raises(ValueError):
-        hull.find_hull(edges)
+    h = cq.Face.makeFromWires(hull.find_hull(edges))
+
+    for v in edges[1].Vertices():
+        assert h.distance(v) == pytest.approx(0.0)
 
 
 def test_arc_endpoints():
@@ -156,3 +158,48 @@ def test_intersecting_circles():
 
     assert len(edges) == 6
     assert area(edges) == pytest.approx(38 * 70 + pi * 35 ** 2)
+
+
+def test_hull_contains_input():
+    # the line end at (20, 0) lies on the +x axis of the circle, the 0/2pi seam
+    edges = [
+        cq.Edge.makeCircle(5.0, (0, 0, 0)),
+        cq.Edge.makeLine(cq.Vector(20, 0), cq.Vector(20, 10)),
+    ]
+
+    h = cq.Face.makeFromWires(hull.find_hull(edges))
+
+    assert h.distance(cq.Vertex.makeVertex(20, 0, 0)) == pytest.approx(0.0)
+
+
+def test_rotation_invariance():
+    def shape(dx, dy):
+        return [
+            cq.Edge.makeCircle(20.0, (0, 0, 0)),
+            cq.Edge.makeCircle(10.0, (dx, dy, 0)),
+            cq.Edge.makeCircle(10.0, (-dx, -dy, 0)),
+        ]
+
+    assert area(shape(0, 40)) == pytest.approx(area(shape(40, 0)))
+
+
+def test_hull_face_normal():
+    # #1891: func.face reads the edges in storage order - keep the march order
+    edges = [
+        cq.Edge.makeLine(cq.Vector(0, 0), cq.Vector(4, 0)),
+        cq.Edge.makeLine(cq.Vector(4, 0), cq.Vector(0, 3)),
+        cq.Edge.makeLine(cq.Vector(0, 3), cq.Vector(0, 0)),
+    ]
+
+    assert face(hull.find_hull(edges)).normalAt().z == pytest.approx(1)
+
+
+# temporary: two plain circles stall the march until the arc rework (3/3)
+@pytest.mark.xfail(strict=True, raises=ValueError, reason="fixed by the arc rework")
+def test_two_circles():
+    edges = [
+        cq.Edge.makeCircle(0.7, (-3.8, 2.9, 0)),
+        cq.Edge.makeCircle(2.4, (0.8, 4.6, 0)),
+    ]
+
+    assert area(edges) == pytest.approx(25.943, abs=1e-3)
