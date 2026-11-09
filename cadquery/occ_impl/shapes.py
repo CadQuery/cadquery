@@ -1614,6 +1614,15 @@ class Shape(object):
     def tessellate(
         self, tolerance: float, angularTolerance: float = 0.1
     ) -> tuple[list[Vector], list[tuple[int, int, int]]]:
+        """
+        Convert the shape to a triangle mesh.
+
+        Triangles with coincident vertices are not returned.
+
+        :param tolerance: Linear deflection, scaled by the size of the edge being meshed.
+        :param angularTolerance: Angular deflection in radians. Default is 0.1.
+        :return: Vertices and triangles given as vertex index triples.
+        """
 
         self.mesh(tolerance, angularTolerance)
 
@@ -1635,29 +1644,21 @@ class Shape(object):
             )
 
             # add vertices
-            vertices += [
-                Vector(v.X(), v.Y(), v.Z())
-                for v in (
-                    poly.Node(i).Transformed(Trsf) for i in range(1, poly.NbNodes() + 1)
-                )
+            nodes = [
+                poly.Node(i).Transformed(Trsf).Coord()
+                for i in range(1, poly.NbNodes() + 1)
             ]
+            vertices += [Vector(*p) for p in nodes]
 
-            # add triangles
+            # add triangles, skipping those with coincident vertices
             triangles += [
                 (
-                    (
-                        t.Value(1) + offset - 1,
-                        t.Value(3) + offset - 1,
-                        t.Value(2) + offset - 1,
-                    )
+                    (i1 + offset - 1, i3 + offset - 1, i2 + offset - 1)
                     if reverse
-                    else (
-                        t.Value(1) + offset - 1,
-                        t.Value(2) + offset - 1,
-                        t.Value(3) + offset - 1,
-                    )
+                    else (i1 + offset - 1, i2 + offset - 1, i3 + offset - 1)
                 )
-                for t in poly.Triangles()
+                for i1, i2, i3 in (t.Get() for t in poly.Triangles())
+                if len({nodes[i1 - 1], nodes[i2 - 1], nodes[i3 - 1]}) == 3
             ]
 
             offset += poly.NbNodes()
