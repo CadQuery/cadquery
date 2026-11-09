@@ -1235,6 +1235,23 @@ def test_loft_vertex():
     assert len(r5.Faces()) == 4
 
 
+def test_loft_mixed_faces_wires():
+
+    # mixing faces and wires must not silently degrade a section to a vertex
+    with raises(ValueError):
+        loft(wire(circle(1)), face(rect(2, 1)).moved(z=1))
+
+    with raises(ValueError):
+        loft(face(circle(1)), wire(rect(2, 1)).moved(z=1))
+
+    with raises(ValueError):
+        loft(face(rect(2, 1)).moved(z=-1), wire(circle(1)), face(rect(2, 1)).moved(z=1))
+
+    # vertex ends do not hide the mixing
+    with raises(ValueError):
+        loft(vertex(0, 0, -1), face(circle(1)), wire(rect(2, 1)).moved(z=1))
+
+
 def test_project():
 
     base = cylinder(1, 2).faces("%CYLINDER")
