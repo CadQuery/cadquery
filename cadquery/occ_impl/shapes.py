@@ -6799,20 +6799,38 @@ def spline(
     return _shape(BRepBuilderAPI_MakeEdge(builder.Curve()).Edge(), Edge)
 
 
-def circle(r: float) -> Edge:
+def circle(r: float, start: Real = 0, end: Real = 360) -> Edge:
     """
-    Construct a circle in the XY plane, centered at the origin.
+    Construct a circle or circular arc in the XY plane, centered at the origin.
+
+    The arc goes counterclockwise from ``start`` to ``end``. Angles are in
+    degrees, measured from the X axis.
 
     :param r: Radius (unlike most solid primitives, which take a diameter).
-    :return: Closed circular edge. Use :func:`face` to get a disk.
+    :param start: Start angle.
+    :param end: End angle. Must satisfy ``start < end <= start + 360``.
+    :return: Circular edge, closed if ``end - start == 360``. Use :func:`face`
+        to get a disk.
+    :raises ValueError: If ``r`` is not positive or the angles are invalid.
     """
 
-    return _shape(
-        BRepBuilderAPI_MakeEdge(
-            gp_Circ(gp_Ax2(Vector().toPnt(), Vector(0, 0, 1).toDir()), r)
-        ).Edge(),
-        Edge,
-    )
+    if r <= 0:
+        raise ValueError(f"circle(): radius must be positive, got {r}")
+
+    if not start < end <= start + 360:
+        raise ValueError(
+            "circle(): angles must satisfy start < end <= start + 360, "
+            f"got start={start}, end={end}"
+        )
+
+    circ = gp_Circ(gp_Ax2(Vector().toPnt(), Vector(0, 0, 1).toDir()), r)
+
+    if end - start == 360:
+        builder = BRepBuilderAPI_MakeEdge(circ)
+    else:
+        builder = BRepBuilderAPI_MakeEdge(circ, radians(start), radians(end))
+
+    return _shape(builder.Edge(), Edge)
 
 
 def ellipse(r1: float, r2: float) -> Edge:
@@ -6830,6 +6848,102 @@ def ellipse(r1: float, r2: float) -> Edge:
         ).Edge(),
         Edge,
     )
+
+
+def arc(
+    p1: VectorLike,
+    p2: VectorLike,
+    p3: VectorLike | None = None,
+    *,
+    tangent: VectorLike | None = None,
+) -> Edge:
+    """
+    Construct a circular arc from three points, or from two points and a tangent.
+
+    - ``arc(p1, p2, p3)``: from ``p1`` through ``p2`` to ``p3``.
+    - ``arc(p1, p2, tangent=t)``: from ``p1`` to ``p2``, with tangent ``t`` at ``p1``.
+
+    For an arc defined by radius and angles, use :func:`circle`.
+
+    :param p1: Start point.
+    :param p2: Point on the arc if ``p3`` is given, end point otherwise.
+    :param p3: End point.
+    :param tangent: Tangent direction at ``p1``.
+    :return: Circular edge.
+    :raises TypeError: If not exactly one of ``p3`` and ``tangent`` is given.
+    :raises ValueError: If the points are coincident or collinear, or the
+        tangent is zero or parallel to the line ``p1``-``p2``.
+    """
+
+    if (p3 is None) == (tangent is None):
+        raise TypeError(
+            "arc() takes either a third point, arc(p1, p2, p3), "
+            "or a tangent, arc(p1, p2, tangent=t), but not both"
+        )
+
+    v1, v2 = Vector(p1), Vector(p2)
+
+    if (v2 - v1).Length <= TOLERANCE:
+        raise ValueError("arc(): p1 and p2 must be distinct")
+
+    if p3 is not None:
+        v3 = Vector(p3)
+
+        if (v3 - v1).Length <= TOLERANCE or (v3 - v2).Length <= TOLERANCE:
+            raise ValueError("arc(): the three points must be distinct")
+
+        if (v2 - v1).normalized().cross((v3 - v1).normalized()).Length <= TOLERANCE:
+            raise ValueError("arc(): the three points must not be collinear")
+
+        return Edge.makeThreePointArc(v1, v2, v3)
+
+    assert tangent is not None
+    vt = Vector(tangent)
+
+    if vt.Length <= TOLERANCE:
+        raise ValueError("arc(): tangent must be non-zero")
+
+    if vt.normalized().cross((v2 - v1).normalized()).Length <= TOLERANCE:
+        raise ValueError("arc(): tangent must not be parallel to the line p1-p2")
+
+    return Edge.makeTangentArc(v1, vt, v2)
+
+
+def bezier(*pts: VectorLike) -> Edge:
+    """
+    Construct a Bézier curve.
+
+    :param pts: Points defining the curve. The curve passes through the first
+        and the last point; the inner points are control points.
+    :return: Bézier edge of degree ``len(pts) - 1``.
+    :raises ValueError: If fewer than 2 points are given.
+    """
+
+    if len(pts) < 2:
+        raise ValueError(f"bezier(): at least 2 points are required, got {len(pts)}")
+
+    return Edge.makeBezier([Vector(p) for p in pts])
+
+
+def helix(pitch: Real, height: Real, radius: Real, lefthand: bool = False) -> Edge:
+    """
+    Construct a cylindrical helix around the Z axis.
+
+    The helix starts on the positive X axis at Z=0 and rises by ``height``.
+
+    :param pitch: Height of one full turn.
+    :param height: Total height.
+    :param radius: Radius (unlike most solid primitives, which take a diameter).
+    :param lefthand: Wind clockwise (seen from +Z) instead of counterclockwise.
+    :return: Helical edge.
+    :raises ValueError: If ``pitch``, ``height`` or ``radius`` is not positive.
+    """
+
+    for name, val in (("pitch", pitch), ("height", height), ("radius", radius)):
+        if val <= 0:
+            raise ValueError(f"helix(): {name} must be positive, got {val}")
+
+    return Wire.makeHelix(pitch, height, radius, lefthand=lefthand).Edges()[0]
 
 
 @multimethod
