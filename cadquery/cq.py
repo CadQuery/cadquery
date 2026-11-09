@@ -2001,9 +2001,9 @@ class Workplane(object):
         :param N: number of points for discretization in one direction
         :param start: starting value of the parameters u,v
         :param stop: final value of the parameters u,v
-        :param tol: tolerance used by the approximation algorithm (default: 1e-3)
+        :param tol: tolerance used by the approximation algorithm (default: 1e-2)
         :param minDeg: minimum spline degree (default: 1)
-        :param maxDeg: maximum spline degree (default: 3)
+        :param maxDeg: maximum spline degree (default: 6)
         :param smoothing: optional parameters for the variational smoothing algorithm (default: (1,1,1))
         :return: a Workplane object with the current point unchanged
 

@@ -3758,7 +3758,7 @@ class Face(Shape):
         :param tol: tolerance of the algorithm (consult OCC documentation).
         :param smoothing: optional tuple of 3 weights use for variational smoothing (default: None)
         :param minDeg: minimum spline degree. Enforced only when smothing is None (default: 1)
-        :param maxDeg: maximum spline degree (default: 6)
+        :param maxDeg: maximum spline degree (default: 3)
         """
         points_ = TColgp_HArray2OfPnt(1, len(points), 1, len(points[0]))
 
@@ -4689,7 +4689,7 @@ class Solid(Shape, Mixin3D):
         :param mode: additional sweep mode parameters
         :param transitionMode:
             handling of profile orientation at C1 path discontinuities.
-            Possible values are {'transformed','round', 'right'} (default: 'right').
+            Possible values are {'transformed','round', 'right'} (default: 'transformed').
         :return: a Solid object
         """
         p = cls._toWire(path)
