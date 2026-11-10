@@ -92,6 +92,16 @@ camera position and windows size.
 
    show(b, width=800, height=800, screenshot='img.png', zoom=2, roll=-20, elevation=-30, interact=False)
 
+``screenshot`` also accepts a binary file-like object, for example to keep the image in memory.
+
+.. code-block:: python
+
+   from io import BytesIO
+
+   buf = BytesIO()
+   show(b, screenshot=buf, interact=False)
+   png = buf.getvalue()
+
 
 .. warning::
     Intermittent issues were observed with this functionality, please submit detailed bug reports in case

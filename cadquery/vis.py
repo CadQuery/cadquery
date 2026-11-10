@@ -13,7 +13,7 @@ from . import (
 from .occ_impl.assembly import _loc2vtk, toVTKAssy
 from .occ_impl.nurbs import Curve, Surface
 
-from typing import Union, List, Tuple, Iterable, cast, Optional
+from typing import Union, List, Tuple, Iterable, cast, Optional, IO
 
 from OCP.TopoDS import TopoDS_Shape
 from OCP.Geom import Geom_BSplineSurface
@@ -402,7 +402,7 @@ def show(
     edges: bool = False,
     specular: bool = True,
     title: str = "CQ viewer",
-    screenshot: Optional[str] = None,
+    screenshot: Optional[Union[str, IO[bytes]]] = None,
     interact: bool = True,
     zoom: float = 1.0,
     roll: float = -35,
@@ -572,9 +572,15 @@ def show(
         win2image.Update()
 
         writer = vtkPNGWriter()
-        writer.SetFileName(screenshot)
         writer.SetInputConnection(win2image.GetOutputPort())
-        writer.Write()
+
+        if hasattr(screenshot, "write"):
+            writer.WriteToMemoryOn()
+            writer.Write()
+            screenshot.write(memoryview(writer.GetResult()).tobytes())
+        else:
+            writer.SetFileName(screenshot)
+            writer.Write()
 
     # start interaction
     if interact:
