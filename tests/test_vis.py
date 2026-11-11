@@ -17,9 +17,11 @@ from vtkmodules.vtkRenderingCore import (
 )
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkIOImage import vtkPNGWriter
+from vtkmodules.vtkImagingSources import vtkImageCanvasSource2D
 
 from pytest import fixture, raises, mark
 import os
+from io import BytesIO
 from pathlib import Path
 
 from typing import List
@@ -156,6 +158,39 @@ def test_screenshot(wp, patch_vtk):
 
     # smoke test for now
     show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
+
+
+class FakeImage(FakeWin2Img):
+    """
+    Small solid image in place of the render window contents.
+    """
+
+    def __init__(self):
+
+        self.source = vtkImageCanvasSource2D()
+        self.source.SetExtent(0, 9, 0, 4, 0, 0)
+        self.source.SetScalarTypeToUnsignedChar()
+        self.source.SetNumberOfScalarComponents(3)
+        self.source.FillBox(0, 9, 0, 4)
+
+    def GetOutputPort(self, *args):
+
+        return self.source.GetOutputPort()
+
+
+def test_screenshot_to_memory(wp, patch_vtk, monkeypatch):
+
+    monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeImage)
+    monkeypatch.setattr(vis, "vtkPNGWriter", vtkPNGWriter)
+
+    buf = BytesIO()
+    show(wp, interact=False, screenshot=buf, trihedron=False, gradient=False)
+    png = buf.getvalue()
+
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")
+    # width and height from the IHDR chunk
+    assert int.from_bytes(png[16:20], "big") == 10
+    assert int.from_bytes(png[20:24], "big") == 5
 
 
 @mark.skip(reason="running only smoke test for now")
