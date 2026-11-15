@@ -125,16 +125,6 @@ class Workplane(object):
     """
     Defines a coordinate system in space, in which 2D coordinates can be used.
 
-    :param inPlane: the plane in which the workplane will be done
-    :type inPlane: a Plane object, or a string in (XY|YZ|XZ|front|back|top|bottom|left|right)
-    :param origin: the desired origin of the new workplane
-    :type origin: a 3-tuple in global coordinates, or None to default to the origin
-    :param obj: an object to use initially for the stack
-    :type obj: a CAD primitive, or None to use the centerpoint of the plane as the initial
-        stack value.
-    :raises: ValueError if the provided plane is not a plane, a valid named workplane
-    :return: A Workplane object, with coordinate system matching the supplied plane.
-
     The most common use is::
 
         s = Workplane("XY")
