@@ -8195,6 +8195,9 @@ def loft(
     :return: The lofted shape.
     """
 
+    if any(el.Faces() for el in s) and any(el.edges() and not el.Faces() for el in s):
+        raise ValueError("Do not mix faces with other types")
+
     results: list[TopoDS_Shape] = []
     builders = []
     # for history handling
