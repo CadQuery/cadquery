@@ -7540,7 +7540,6 @@ def fillet(
 
     builder.Build()
 
-    # fail clearly; calling Shape() on a failed builder rebuilds it and crashes
     if not builder.IsDone():
         raise ValueError("Fillet failed, try a smaller radius or fewer edges")
 
@@ -7575,7 +7574,6 @@ def chamfer(
 
     builder.Build()
 
-    # fail clearly; calling Shape() on a failed builder rebuilds it and crashes
     if not builder.IsDone():
         raise ValueError("Chamfer failed, try a smaller distance or fewer edges")
 
