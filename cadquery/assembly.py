@@ -859,3 +859,24 @@ class Assembly(object):
         """
 
         self.__dict__ = d
+
+
+# lazy: importing these here would load vtk with cadquery
+def __getattr__(name):
+    if name in (
+        "exportAssembly",
+        "exportCAF",
+        "exportVTKJS",
+        "exportVRML",
+        "exportGLTF",
+    ):
+        warn(
+            f"Importing {name} from cadquery.assembly is deprecated; "
+            "use Assembly.export instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from .occ_impl.exporters import assembly
+
+        return getattr(assembly, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

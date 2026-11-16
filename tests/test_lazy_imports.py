@@ -43,3 +43,18 @@ def test_exporters_lazy_names():
 
     with pytest.raises(AttributeError):
         exporters.nonexistent
+
+
+def test_assembly_exporters_deprecated():
+    for name in (
+        "exportAssembly",
+        "exportCAF",
+        "exportVTKJS",
+        "exportVRML",
+        "exportGLTF",
+    ):
+        with pytest.deprecated_call():
+            assert getattr(cadquery.assembly, name) is getattr(assembly, name)
+
+    with pytest.raises(AttributeError):
+        cadquery.assembly.nonexistent
