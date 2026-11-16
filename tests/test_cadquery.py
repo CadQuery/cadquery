@@ -1546,6 +1546,112 @@ class TestCadQuery(BaseTest):
         self.saveModel(s)
         self.assertEqual(10, s.faces().size())
 
+    def testCountersinkDepthBoundsCut(self):
+        """A specified hole depth also bounds the countersink cut."""
+        entrance_radius = 4.0
+        bore_radius = 1.0
+        transition_depth = entrance_radius - bore_radius
+        transition_volume = (
+            math.pi
+            * transition_depth
+            * (entrance_radius ** 2 + entrance_radius * bore_radius + bore_radius ** 2)
+            / 3
+        )
+
+        for depth in (1.0, 3.5, 4.0 - 5e-8, 4.0, 8.0):
+            with self.subTest(depth=depth):
+                part = (
+                    Workplane("XY")
+                    .box(20, 20, 10)
+                    .faces(">Z")
+                    .workplane()
+                    .cskHole(2, 8, 90, depth)
+                    .val()
+                )
+                if depth < transition_depth:
+                    end_radius = entrance_radius - depth
+                    removed = (
+                        math.pi
+                        * depth
+                        * (
+                            entrance_radius ** 2
+                            + entrance_radius * end_radius
+                            + end_radius ** 2
+                        )
+                        / 3
+                    )
+                else:
+                    removed = transition_volume + math.pi * bore_radius ** 2 * (
+                        depth - transition_depth
+                    )
+
+                self.assertTrue(part.isValid())
+                self.assertAlmostEqual(part.Volume(), 4000 - removed, places=6)
+                self.assertTrue(part.isInside(Vector(0, 0, 5 - depth - 0.1)))
+
+        through_part = (
+            Workplane("XY")
+            .box(20, 20, 10)
+            .faces(">Z")
+            .workplane()
+            .cskHole(2, 8, 90)
+            .val()
+        )
+        through_removed = transition_volume + math.pi * bore_radius ** 2 * (
+            10 - transition_depth
+        )
+        self.assertTrue(through_part.isValid())
+        self.assertAlmostEqual(through_part.Volume(), 4000 - through_removed, places=6)
+        self.assertFalse(through_part.isInside(Vector(0, 0, -4.9)))
+
+    def testCountersinkDepthPreservesBottomMaterial(self):
+        """A shallow angled countersink leaves material below the requested depth."""
+        part = (
+            Workplane("XY")
+            .cylinder(15, 30)
+            .faces(">Z")
+            .workplane()
+            .cskHole(56, 58, 45, 13)
+            .val()
+        )
+
+        self.assertTrue(part.isValid())
+        self.assertTrue(part.isInside(Vector(0, 0, -7.4)))
+
+    def testCountersinkNearEqualDiameters(self):
+        """A positive countersink rim remains valid when its radii are close."""
+        entrance_radius = 4.0
+        depth = 1.0
+
+        for radius_gap in (1e-8, 1e-3):
+            with self.subTest(radius_gap=radius_gap):
+                bore_radius = entrance_radius - radius_gap
+                part = (
+                    Workplane("XY")
+                    .box(20, 20, 10)
+                    .faces(">Z")
+                    .workplane()
+                    .cskHole(2 * bore_radius, 2 * entrance_radius, 90, depth)
+                    .val()
+                )
+                transition_volume = (
+                    math.pi
+                    * radius_gap
+                    * (
+                        entrance_radius ** 2
+                        + entrance_radius * bore_radius
+                        + bore_radius ** 2
+                    )
+                    / 3
+                )
+                removed = transition_volume + math.pi * bore_radius ** 2 * (
+                    depth - radius_gap
+                )
+
+                self.assertTrue(part.isValid())
+                self.assertAlmostEqual(part.Volume(), 4000 - removed, places=6)
+                self.assertTrue(part.isInside(Vector(0, 0, 3.9)))
+
     def testTranslateSolid(self):
         c = CQ(makeUnitCube())
         self.assertAlmostEqual(0.0, c.faces("<Z").vertices().item(0).val().Z, 3)
