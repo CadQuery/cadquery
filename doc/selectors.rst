@@ -38,6 +38,21 @@ Selectors can be combined logically, currently defined operators include **and**
 
     result = cq.Workplane("XY").box(2, 2, 2).edges("|Z and >Y").chamfer(0.2)
 
+Selector methods can also be chained. Each selector runs against the objects selected by
+the previous step, which is useful when the selection needs to move across shape types.
+For example, this selects the top face first and then selects the positive-Y edge of
+that face before applying a chamfer:
+
+.. cadquery::
+
+    result = (
+        cq.Workplane("XY")
+        .box(2, 2, 2)
+        .faces(">Z")
+        .edges(">Y")
+        .chamfer(0.2)
+    )
+
 Much more complex expressions are possible as well:
 
 .. cadquery::
