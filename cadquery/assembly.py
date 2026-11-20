@@ -897,16 +897,22 @@ class Assembly(object):
         for obj, name, loc in zip(objs, names, locs):
             obj_imp = op.modified(obj, obj)
 
+            # NB: loc.inverted() and not undMoved() due to how imprinting bool op works
             subassy = self.objects[name]
-
             subassy.obj = obj_imp.moved(loc.inverted())
 
-            for k in subassy._subshape_names:
-                k_moved = k.moved(loc)
-                k_imp = op.modified(k_moved)
+            # update all subshape dicts
+            for subx_dict in (
+                subassy._subshape_names,
+                subassy._subshape_colors,
+                subassy._subshape_layers,
+            ):
+                key_subs = {}
+                for k in subx_dict:
+                    k_moved = k.moved(loc)
+                    key_subs[k] = op.modified(k_moved).moved(loc.inverted())
 
-                subassy._subshape_names[
-                    k_imp.moved(loc.inverted())
-                ] = subassy._subshape_names.pop(k)
+                for k, k_new in key_subs.items():
+                    subx_dict[k_new] = subx_dict.pop(k)  # type: ignore
 
         return self
