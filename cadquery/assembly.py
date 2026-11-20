@@ -721,12 +721,13 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        depth: int = 0,
     ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
         """
         Assembly iterator yielding shapes, names, locations and colors.
         """
 
-        if self.parent is None or self.parent.parent is None:
+        if depth <= 1:
             name = self.name
         else:
             name = f"{name}/{self.name}"
@@ -740,7 +741,7 @@ class Assembly(object):
             ), name, loc, color
 
         for ch in self.children:
-            yield from ch.__iter__(loc, name, color)
+            yield from ch.__iter__(loc, name, color, depth + 1)
 
     def toCompound(self) -> Compound:
         """
