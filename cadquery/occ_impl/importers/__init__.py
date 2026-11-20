@@ -7,7 +7,6 @@ from OCP.Interface import Interface_Static
 
 from ... import cq
 from ..shapes import Shape
-from .dxf import _importDXF
 from ...types import UnitLiterals
 
 RAD2DEG = 360.0 / (2 * pi)
@@ -132,6 +131,8 @@ def importDXF(
     :param exclude: a list of layer names not to import
     :param include: a list of layer names to import
     """
+
+    from .dxf import _importDXF
 
     faces = _importDXF(filename, tol, exclude, include)
 

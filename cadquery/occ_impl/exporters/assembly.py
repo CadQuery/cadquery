@@ -4,7 +4,6 @@ import uuid
 from tempfile import TemporaryDirectory
 from shutil import make_archive
 from typing import Optional
-from typing_extensions import Literal
 
 from vtkmodules.vtkIOExport import vtkJSONSceneExporter, vtkVRMLExporter
 from vtkmodules.vtkRenderingCore import vtkRenderWindow
@@ -50,15 +49,12 @@ from OCP.Interface import Interface_Static
 from ..assembly import AssemblyProtocol, toCAF, toVTK, toFusedCAF
 from ..geom import Location
 from ..shapes import Shape, Compound
-from ...types import UnitLiterals
+from ...types import UnitLiterals, STEPExportModeLiterals
 
 
 class ExportModes:
     DEFAULT = "default"
     FUSED = "fused"
-
-
-STEPExportModeLiterals = Literal["default", "fused"]
 
 
 def exportAssembly(
