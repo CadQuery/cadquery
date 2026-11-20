@@ -5749,7 +5749,9 @@ class Op:
         self._first_shape = compound()
         self._last_shape = compound()
 
-    def _get(self, d: dict[Shape, Shape], k: Shape) -> Shape:
+    def _get(
+        self, d: dict[Shape, Shape], k: Shape, default: Shape | None = None
+    ) -> Shape:
 
         if k.ShapeType() == "Compound":
             tmp: list[Shape] = []
@@ -5763,15 +5765,15 @@ class Op:
 
             return _normalize(compound(tmp))
         else:
-            return _normalize(d[k])
+            return _normalize(d[k] if default is None else d.get(k, default))
 
-    def modified(self, s: Shape | None = None) -> Shape:
+    def modified(self, s: Shape | None = None, default: Shape | None = None) -> Shape:
         """
         Shapes modified from s.
         """
 
         if s:
-            return self._get(self._modified, s)
+            return self._get(self._modified, s, default)
 
         return _normalize(compound(*set(self._modified.values())))
 
