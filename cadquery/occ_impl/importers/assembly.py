@@ -10,6 +10,8 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.TDocStd import TDocStd_Document
 from OCP.TDataStd import TDataStd_Name, TDataStd_TreeNode
 from OCP.STEPCAFControl import STEPCAFControl_Reader
+from OCP.XSControl import XSControl_TransferReader
+from OCP.StepRepr import StepRepr_RepresentationItem
 from OCP.XCAFDoc import (
     XCAFDoc_ColorSurf,
     XCAFDoc_DocumentTool,
@@ -165,7 +167,10 @@ def importStep(assy: AssemblyProtocol, path: str, unit: UnitLiterals = "MM"):
     # Transfer the contents of the STEP file to the document
     step_reader.Transfer(doc)
 
-    _importDoc(doc, assy)
+    # Collect the STEP model for possible subshape related workarounds
+    transfer_reader = step_reader.Reader().WS().TransferReader()
+
+    _importDoc(doc, assy, transfer_reader)
 
 
 def importXbf(assy: AssemblyProtocol, path: str):
@@ -228,7 +233,11 @@ def importXml(assy: AssemblyProtocol, path: str):
     _importDoc(doc, assy)
 
 
-def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
+def _importDoc(
+    doc: TDocStd_Document,
+    assy: AssemblyProtocol,
+    transfer_reader: XSControl_TransferReader | None = None,
+):
     def _process_label(lbl: TDF_Label, parent: AssemblyProtocol):
         """
         Recursive method to process the assembly in a top-down manner.
@@ -347,6 +356,17 @@ def _importDoc(doc: TDocStd_Document, assy: AssemblyProtocol):
                         if color:
                             # Save the color info via the assembly subshape mechanism
                             current.addSubshape(Shape.cast(cur_shape), color=color)
+
+                    # if provided, check the STEP data model to collect additional subshapes on solid level
+                    if transfer_reader:
+                        if isinstance(
+                            entity := transfer_reader.EntityFromShapeResult(
+                                final_shape, 1
+                            ),
+                            StepRepr_RepresentationItem,
+                        ):
+                            if name := entity.Name().ToCString():
+                                current.addSubshape(cq_shape, name=name)
 
         return parent
 
