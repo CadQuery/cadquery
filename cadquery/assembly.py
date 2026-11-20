@@ -896,7 +896,7 @@ class Assembly(object):
         op = hist[-1]
 
         for obj, name, loc in zip(objs, names, locs):
-            obj_imp = op.modified(obj, obj)
+            obj_imp = op.modified(obj, True)
 
             # NB: loc.inverted() and not undMoved() due to how imprinting bool op works
             subassy = self.objects[name]

@@ -28,6 +28,7 @@ from cadquery.occ_impl.shapes import (
     Compound,
     segment,
     isSubshape,
+    compound,
 )
 
 from OCP.gp import gp_XYZ
@@ -2678,23 +2679,33 @@ def test_assembly_imprint_method():
     """
 
     # noop
-    assy = cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1).moved(x=5))
+    assy = (
+        cq.Assembly()
+        .add(cq.Workplane().box(1, 1, 1))
+        .add(compound(box(1, 1, 1)).moved(z=5))
+        .add(box(1, 1, 1).moved(x=5))
+    )
     ref = assy.toCompound()
 
     assy.imprint()
     res = assy.toCompound()
 
-    assert res.faces().size() == 12
+    assert res.faces().size() == 18
     assert (res - ref).Volume() == approx(0)
 
     # assy without locs
-    assy = cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1).moved(x=1))
+    assy = (
+        cq.Assembly()
+        .add(cq.Workplane().box(1, 1, 1, centered=(True, True, False)))
+        .add(compound(box(1, 1, 1)).moved(x=1))
+        .add(box(1, 1, 1).moved(x=2))
+    )
     ref = assy.toCompound()
 
     assy.imprint()
     res = assy.toCompound()
 
-    assert res.faces().size() == 11
+    assert res.faces().size() == 16
     assert (res - ref).Volume() == approx(0)
 
     # assy wuth locs
