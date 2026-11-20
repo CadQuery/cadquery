@@ -28,6 +28,7 @@ from cadquery import (
     Vector,
     Color,
     Shape,
+    Solid,
 )
 
 from cadquery.occ_impl.shapes import rect, face, compound
@@ -852,6 +853,30 @@ def test_tessellate(box123):
     verts, triangles = box123.val().tessellate(1e-6)
     assert len(verts) == 24
     assert len(triangles) == 12
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [
+        Workplane().sphere(10).val(),
+        Solid.makeCone(6, 0, 10),
+        Solid.makeTorus(5, 5),
+        Workplane().box(10, 10, 10).edges().fillet(2).val(),
+    ],
+)
+def test_tessellate_degenerate(shape):
+    """
+    Tessellates shapes with surfaces that collapse to a point and checks that
+    no zero-area triangles are returned.
+    """
+
+    verts, triangles = shape.tessellate(1e-2)
+
+    assert triangles
+
+    for t in triangles:
+        v1, v2, v3 = (verts[i] for i in t)
+        assert (v2 - v1).cross(v3 - v1).Length > 0
 
 
 def _dxf_spline_max_degree(fname):
