@@ -459,6 +459,17 @@ def test_special():
     assert cs[0].Volume() == approx(3 ** 3)
 
 
+def test_nested_empty_compound_mass():
+
+    # a bare empty compound already resolves to zero mass
+    assert compound().Volume() == approx(0)
+
+    # a compound whose first child is an empty compound must not crash and
+    # must stay consistent with the bare empty compound (see issue #2078)
+    assert compound(compound()).Volume() == approx(0)
+    assert compound(compound()).Area() == approx(0)
+
+
 def test_center():
 
     v = vertex(1, 1, 1)
