@@ -1423,7 +1423,7 @@ metadata, but due to how the operation is implemented on the kernel level, subsh
 
 
 Here is a simple example of imprinting in action. Note that this operation changes the number of unique faces. The touching faces are merged into one modulo their orientation. Additionally, it can
-mutate the type of values stored in the :py:field:`cadquery.Assembly.obj` field.
+mutate the type of values stored in the :py:attr:`cadquery.Assembly.obj` field.
 
 .. cadquery::
     :height: 600px
