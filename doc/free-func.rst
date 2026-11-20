@@ -110,6 +110,39 @@ Various 1D, 2D and 3D primitives are supported.
     result = compound(e, c.move(2), f.move(4), b.move(6))
 
 
+Curves
+------
+
+1D primitives include segments, polylines, circles, ellipses, splines, Bézier curves and helices.
+Circular arcs can be defined by three points, by two points and the tangent at the first point,
+or by passing start and end angles to ``circle`` (in degrees, measured counterclockwise from the X axis).
+
+.. cadquery::
+
+    from cadquery.func import *
+
+    pl = polyline((0,0), (0.5,1), (1,0))
+
+    el = ellipse(0.75, 0.5)
+
+    sp = spline((0,0), (0.5,1), (1,-1), (1.5,0))  # through the points
+
+    bz = bezier((0,0), (0.5,1), (1,-1), (1.5,0))  # inner points are control points
+
+    h = helix(pitch=0.25, height=1, radius=0.5)
+
+    a1 = arc((0,0), (0.5,0.5), (1,0))  # through three points
+
+    a2 = arc((0,0), (1,0), tangent=(0,1))  # tangent at the first point
+
+    a3 = circle(0.5, 0, 270)  # from 0° to 270°
+
+    result = compound(
+        pl, el.move(2.25), sp.move(3.5), bz.move(5.5), h.move(8),
+        a1.move(y=-2.5), a2.move(2, -2.5), a3.move(4.5, -2.5),
+    )
+
+
 Boolean operations
 ------------------
 
