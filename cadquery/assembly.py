@@ -895,18 +895,18 @@ class Assembly(object):
         op = hist[-1]
 
         for obj, name, loc in zip(objs, names, locs):
-            obj_imp = op.modified(obj)
+            obj_imp = op.modified(obj, obj)
 
             subassy = self.objects[name]
 
-            subassy.obj = obj_imp.undoMoved()
+            subassy.obj = obj_imp.moved(loc.inverted())
 
             for k in subassy._subshape_names:
                 k_moved = k.moved(loc)
                 k_imp = op.modified(k_moved)
 
                 subassy._subshape_names[
-                    k_imp.undoMoved()
+                    k_imp.moved(loc.inverted())
                 ] = subassy._subshape_names.pop(k)
 
         return self
