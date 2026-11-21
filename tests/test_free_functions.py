@@ -1176,6 +1176,14 @@ def test_chamfer():
     assert r.faces(">Z").Area() < 1
 
 
+@pytest.mark.parametrize("op", [fillet, chamfer])
+def test_fillet_chamfer_raises(box_shape, op):
+
+    # too large to fit, the op must raise instead of crashing
+    with raises(ValueError):
+        op(box_shape, box_shape.edges(), 0.5)
+
+
 @pytest.mark.parametrize("sel, n", [("|Z", 4), (">X and >Y", 1)])
 def test_fillet_chamfer_methods_shape_arg(sel, n):
 
