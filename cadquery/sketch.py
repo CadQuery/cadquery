@@ -862,6 +862,8 @@ class Sketch(object):
     ) -> T:
         """
         Construct an arc.
+
+        The arc starts at p1, passes through p2 and ends at p3.
         """
 
         val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
@@ -876,6 +878,10 @@ class Sketch(object):
         tag: Optional[str] = None,
         forConstruction: bool = False,
     ) -> T:
+        """
+        Construct an arc starting at the end of the last edge, passing through p2
+        and ending at p3.
+        """
 
         p1 = self._endPoint()
         val = Edge.makeThreePointArc(Vector(p1), Vector(p2), Vector(p3))
@@ -892,6 +898,15 @@ class Sketch(object):
         tag: Optional[str] = None,
         forConstruction: bool = False,
     ) -> T:
+        """
+        Construct an arc from its center, radius and angles.
+
+        :param c: Center.
+        :param r: Radius.
+        :param a: Start angle in degrees, measured counter-clockwise from the x axis.
+        :param da: Angle spanned by the arc in degrees, counter-clockwise if positive
+            and clockwise if negative. A full circle is made if ``abs(da) >= 360``.
+        """
 
         if abs(da) >= 360:
             val = Edge.makeCircle(r, Vector(c), angle1=a, angle2=a, orientation=da > 0)
