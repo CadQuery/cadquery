@@ -1132,6 +1132,10 @@ class Location(object):
     @property
     def inverse(self) -> "Location":
 
+        return self.inverted()
+
+    def inverted(self) -> "Location":
+
         return Location(self.wrapped.Inverted())
 
     def __mul__(self, other: "Location") -> "Location":

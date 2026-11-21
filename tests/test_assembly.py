@@ -20,7 +20,16 @@ from cadquery.occ_impl.exporters.assembly import (
     exportVRML,
 )
 from cadquery.occ_impl.assembly import toJSON, toCAF, toFusedCAF
-from cadquery.occ_impl.shapes import Face, box, cone, plane, Compound, segment
+from cadquery.occ_impl.shapes import (
+    Face,
+    box,
+    cone,
+    plane,
+    Compound,
+    segment,
+    isSubshape,
+    compound,
+)
 
 from OCP.gp import gp_XYZ
 from OCP.TDocStd import TDocStd_Document
@@ -2662,6 +2671,97 @@ def test_assembly_without_children_roundtrip(kind, tmpdir):
     loaded = cq.Assembly.load(path)
 
     assert loaded.toCompound().Volume() == approx(1)
+
+
+def test_assembly_imprint_method():
+    """
+    Test (sub)assembly imprinting including named subshape persistence.
+    """
+
+    # noop
+    assy = (
+        cq.Assembly()
+        .add(cq.Workplane().box(1, 1, 1))
+        .add(compound(box(1, 1, 1)).moved(z=5))
+        .add(box(1, 1, 1).moved(x=5))
+    )
+    ref = assy.toCompound()
+
+    assy.imprint()
+    res = assy.toCompound()
+
+    assert res.faces().size() == 18
+    assert (res - ref).Volume() == approx(0)
+
+    # assy without locs
+    assy = (
+        cq.Assembly()
+        .add(cq.Workplane().box(1, 1, 1, centered=(True, True, False)))
+        .add(compound(box(1, 1, 1)).moved(x=1))
+        .add(box(1, 1, 1).moved(x=2))
+    )
+    ref = assy.toCompound()
+
+    assy.imprint()
+    res = assy.toCompound()
+
+    assert res.faces().size() == 16
+    assert (res - ref).Volume() == approx(0)
+
+    # assy wuth locs
+    assy = cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1), loc=Location(x=1))
+    ref = assy.toCompound()
+
+    assy.imprint()
+    res = assy.toCompound()
+
+    assert res.faces().size() == 11
+    assert (res - ref).Volume() == approx(0)
+
+    # assy with locs and subshapes
+    assy = (
+        cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1), loc=Location(x=1), name="b1")
+    )
+    assy["b1"].addSubshape(assy.b1.obj.face("<X"), name="b1x")
+    ref = assy.toCompound()
+
+    assy.imprint()
+    res = assy.toCompound()
+
+    assert res.faces().size() == 11
+    assert (res - ref).Volume() == approx(0)
+    assert isSubshape(assy["b1"]["b1x"], assy["b1"].obj)
+
+    # nested assy with subshapes
+    assy = cq.Assembly().add(box(1, 1, 1))
+    subassy = (
+        cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1), loc=Location(x=1), name="b1")
+    )
+    assy.add(subassy, loc=Location(x=1), name="sub")
+
+    # step-wise imprint
+    assy["sub"].imprint()
+    assert assy.toCompound().faces().size() == 17
+
+    assy.imprint()
+    assert assy.toCompound().faces().size() == 16
+
+    # nested assy with subshapes
+    assy = cq.Assembly().add(box(1, 1, 1))
+    subassy = (
+        cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1), loc=Location(x=1), name="b1")
+    )
+    subassy.addSubshape(subassy["b1"].obj.face("<X"), name="b1x")
+    assy.add(subassy, loc=Location(x=1), name="sub")
+
+    ref = assy.toCompound()
+
+    assy.imprint()
+    res = assy.toCompound()
+
+    assert res.faces().size() == 16
+    assert (res - ref).Volume() == approx(0)
+    assert isSubshape(assy["sub/b1"]["b1x"], assy["sub/b1"].obj)
 
 
 @pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
