@@ -7327,6 +7327,19 @@ def _set_builder_options(builder: BOPAlgo_Builder, tol: float) -> None:
         builder.SetFuzzyValue(tol)
 
 
+def _perform_check_bool_op(builder: BOPAlgo_Builder):
+
+    builder.Perform()
+
+    if builder.HasErrors():
+        buf = BytesIO()
+        rep = builder.GetReport()
+        rep.Dump(buf)
+        buf.seek(0)
+
+        raise ValueError(f"Bool operation failed: {buf.read().decode()}")
+
+
 def setThreads(n: int) -> None:
     """
     Set number of threads to be used by boolean operations.
@@ -7377,7 +7390,7 @@ def fuse(
     for s in shapes:
         builder.AddTool(s.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, [s1, s2, *shapes], builder)
 
@@ -7417,7 +7430,7 @@ def cut(
     builder.AddArgument(s1.wrapped)
     builder.AddTool(s2.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, [s1, s2], builder)
 
@@ -7456,7 +7469,7 @@ def intersect(
     builder.AddArgument(s1.wrapped)
     builder.AddTool(s2.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, [s1, s2], builder)
 
@@ -7490,7 +7503,7 @@ def split(
     builder.AddArgument(s1.wrapped)
     builder.AddTool(s2.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, [s1, s2], builder)
 
@@ -7522,7 +7535,7 @@ def enclose(
     for s in shapes:
         builder.AddArgument(s.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, shapes, builder)
 
@@ -7559,7 +7572,7 @@ def imprint(
     for s in shapes:
         builder.AddArgument(s.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     # fill history if provided
     _update_history(history, name, [*shapes], builder)
