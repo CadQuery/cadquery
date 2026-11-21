@@ -33,6 +33,7 @@ Table Of Contents
     quickstart.rst
     designprinciples.rst
     primer.rst
+    debugging.rst
     workplane.rst
     sketch.rst
     assy.rst
