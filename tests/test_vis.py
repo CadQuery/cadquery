@@ -94,6 +94,24 @@ class FakePNGWriter(vtkPNGWriter):
         pass
 
 
+class FakeImage(FakeWin2Img):
+    """
+    Small solid image in place of the render window contents.
+    """
+
+    def __init__(self):
+
+        self.source = vtkImageCanvasSource2D()
+        self.source.SetExtent(0, 9, 0, 4, 0, 0)
+        self.source.SetScalarTypeToUnsignedChar()
+        self.source.SetNumberOfScalarComponents(3)
+        self.source.FillBox(0, 9, 0, 4)
+
+    def GetOutputPort(self, *args):
+
+        return self.source.GetOutputPort()
+
+
 @fixture
 def patch_vtk(monkeypatch):
     """
@@ -105,6 +123,16 @@ def patch_vtk(monkeypatch):
     monkeypatch.setattr(vis, "vtkRenderWindow", FakeWindow)
     monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeWin2Img)
     monkeypatch.setattr(vis, "vtkPNGWriter", FakePNGWriter)
+
+
+@fixture
+def patch_vtk_inmemory(patch_vtk, monkeypatch):
+    """
+    Fixture needed to test in-memory export.
+    """
+
+    monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeImage)
+    monkeypatch.setattr(vis, "vtkPNGWriter", vtkPNGWriter)
 
 
 def test_show(wp, assy, sk, patch_vtk):
@@ -160,28 +188,7 @@ def test_screenshot(wp, patch_vtk):
     show(wp, interact=False, screenshot="img.png", trihedron=False, gradient=False)
 
 
-class FakeImage(FakeWin2Img):
-    """
-    Small solid image in place of the render window contents.
-    """
-
-    def __init__(self):
-
-        self.source = vtkImageCanvasSource2D()
-        self.source.SetExtent(0, 9, 0, 4, 0, 0)
-        self.source.SetScalarTypeToUnsignedChar()
-        self.source.SetNumberOfScalarComponents(3)
-        self.source.FillBox(0, 9, 0, 4)
-
-    def GetOutputPort(self, *args):
-
-        return self.source.GetOutputPort()
-
-
-def test_screenshot_to_memory(wp, patch_vtk, monkeypatch):
-
-    monkeypatch.setattr(vis, "vtkWindowToImageFilter", FakeImage)
-    monkeypatch.setattr(vis, "vtkPNGWriter", vtkPNGWriter)
+def test_screenshot_to_memory(wp, patch_vtk_inmemory):
 
     buf = BytesIO()
     show(wp, interact=False, screenshot=buf, trihedron=False, gradient=False)
