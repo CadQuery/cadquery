@@ -2708,7 +2708,7 @@ def test_assembly_imprint_method():
     assert res.faces().size() == 16
     assert (res - ref).Volume() == approx(0)
 
-    # assy wuth locs
+    # assy with locs
     assy = cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1), loc=Location(x=1))
     ref = assy.toCompound()
 
@@ -2723,6 +2723,7 @@ def test_assembly_imprint_method():
         cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1), loc=Location(x=1), name="b1")
     )
     assy["b1"].addSubshape(assy.b1.obj.face("<X"), name="b1x")
+    assy["b1"].addSubshape(assy.b1.obj.face(">X"), name="b1x_max")
     ref = assy.toCompound()
 
     assy.imprint()
@@ -2731,6 +2732,7 @@ def test_assembly_imprint_method():
     assert res.faces().size() == 11
     assert (res - ref).Volume() == approx(0)
     assert isSubshape(assy["b1"]["b1x"], assy["b1"].obj)
+    assert isSubshape(assy["b1"]["b1x_max"], assy["b1"].obj)
 
     # nested assy with subshapes
     assy = cq.Assembly().add(box(1, 1, 1))
@@ -2752,6 +2754,7 @@ def test_assembly_imprint_method():
         cq.Assembly().add(box(1, 1, 1)).add(box(1, 1, 1), loc=Location(x=1), name="b1")
     )
     subassy.addSubshape(subassy["b1"].obj.face("<X"), name="b1x")
+    subassy.addSubshape(subassy["b1"].obj.face(">X"), name="b1x_max")
     assy.add(subassy, loc=Location(x=1), name="sub")
 
     ref = assy.toCompound()
@@ -2762,6 +2765,7 @@ def test_assembly_imprint_method():
     assert res.faces().size() == 16
     assert (res - ref).Volume() == approx(0)
     assert isSubshape(assy["sub/b1"]["b1x"], assy["sub/b1"].obj)
+    assert isSubshape(assy["sub/b1"]["b1x_max"], assy["sub/b1"].obj)
 
 
 @pytest.mark.parametrize("kind", ["step", "xml", "xbf"])

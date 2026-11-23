@@ -911,7 +911,7 @@ class Assembly(object):
                 key_subs = {}
                 for k in subx_dict:
                     k_moved = k.moved(loc)
-                    key_subs[k] = op.modified(k_moved).moved(loc.inverted())
+                    key_subs[k] = op.modified(k_moved, True).moved(loc.inverted())
 
                 for k, k_new in key_subs.items():
                     subx_dict[k_new] = subx_dict.pop(k)  # type: ignore
