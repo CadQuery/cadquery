@@ -2673,7 +2673,7 @@ def test_assembly_without_children_roundtrip(kind, tmpdir):
     assert loaded.toCompound().Volume() == approx(1)
 
 
-def test_assembly_imprint_method():
+def test_assembly_imprint_method(tmpdir):
     """
     Test (sub)assembly imprinting including named subshape persistence.
     """
@@ -2766,6 +2766,27 @@ def test_assembly_imprint_method():
     assert (res - ref).Volume() == approx(0)
     assert isSubshape(assy["sub/b1"]["b1x"], assy["sub/b1"].obj)
     assert isSubshape(assy["sub/b1"]["b1x_max"], assy["sub/b1"].obj)
+
+    # imprinting with face division
+    assy = cq.Assembly()
+    assy.add(box(2, 2, 1), name="box_bottom")
+    assy.add(box(1, 1, 1), name="box_top", loc=Location(z=1))
+
+    assy["box_bottom"].addSubshape(assy["box_bottom"].obj.face(">Z"), name="face_at_z1")
+    assy.imprint()
+
+    # step export cannot raise
+    with tmpdir:
+        assy.export("split_face.step")
+
+    # imprinting with nested compounds
+    assy = cq.Assembly()
+    assy.add(compound(compound(box(1, 1, 1))), name="box_bottom")
+    assy.add(box(1, 1, 1), name="box_top", loc=Location(z=1))
+
+    assy.imprint()
+
+    assert assy.toCompound().faces().size() == 11
 
 
 @pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
