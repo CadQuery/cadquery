@@ -1418,7 +1418,7 @@ Imprinting
 
 For downstream processing including meshing and simulations it might be needed to imprint assembly objects, i.e. to make sure that faces that are geometrically
 connected are also topologically connected. This can be achieved using the :py:meth:`cadquery.Assembly.imprint` method. For complex models imprinting can be very time-consuming so
-it often beneficial to only imprint subassemblies that are known to have common faces, or imprint different subassemblies with different settings. Last, but not least, imprinting handles subshape
+it is often beneficial to only imprint subassemblies that are known to have common faces, or imprint different subassemblies with different settings. Last, but not least, imprinting handles subshape
 metadata, but due to how the operation is implemented on the kernel level, subshape keys are modified in place.
 
 

@@ -877,7 +877,7 @@ class Assembly(object):
         """
         Imprint assembly in-place.
 
-        NB: this function will tranform all non-Shape obj (e.g. Workplane) fields into
+        NB: this function will transform all non-Shape obj (e.g. Workplane) fields into
         Shape obj fields.
         """
 
@@ -899,7 +899,7 @@ class Assembly(object):
 
             obj_imp = op.modified(obj, True)
 
-            # NB: loc.inverted() and not undMoved() due to how imprinting bool op works
+            # NB: loc.inverted() and not undoMoved() due to how imprinting bool op works
             subassy = self.objects[name]
             subassy.obj = obj_imp.moved(loc.inverted())
 
