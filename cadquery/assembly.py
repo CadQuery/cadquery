@@ -896,6 +896,7 @@ class Assembly(object):
         op = hist[-1]
 
         for obj, name, loc in zip(objs, names, locs):
+
             obj_imp = op.modified(obj, True)
 
             # NB: loc.inverted() and not undMoved() due to how imprinting bool op works
@@ -908,12 +909,25 @@ class Assembly(object):
                 subassy._subshape_colors,
                 subassy._subshape_layers,
             ):
-                key_subs = {}
+                # key substitutions might be one-to-many
+                key_subs: dict[Shape, tuple[Shape, ...]] = {}
+
+                # collect pending substitutions
                 for k in subx_dict:
                     k_moved = k.moved(loc)
-                    key_subs[k] = op.modified(k_moved, True).moved(loc.inverted())
+                    modified = op.modified(k_moved, True)
 
+                    # when subshape is split, compound is returned
+                    if isinstance(modified, Compound):
+                        key_subs[k] = tuple(modified.moved(loc.inverted()))
+                    else:
+                        key_subs[k] = (modified.moved(loc.inverted()),)
+
+                # perform the substitutions
                 for k, k_new in key_subs.items():
-                    subx_dict[k_new] = subx_dict.pop(k)  # type: ignore
+                    val = subx_dict.pop(k)
+
+                    for el in k_new:
+                        subx_dict[el] = val  # type: ignore
 
         return self
