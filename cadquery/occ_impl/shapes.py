@@ -335,6 +335,8 @@ from OCP.GeomAdaptor import GeomAdaptor_Surface
 
 from OCP.OSD import OSD_ThreadPool
 
+from OCP.ShapeExtend import ShapeExtend_Explorer
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -2030,6 +2032,22 @@ class Shape(object):
         RHS = set(other) if isinstance(other, Compound) else {other}
 
         return compound(*(LHS - RHS))
+
+    def unpack(self, recursive: bool = True) -> list[Shape]:
+        """
+        If self is a compound, return a (recursively by default) unpacked list of shapes. 
+        Otherwise return a list with self.
+        """
+
+        rv: list[Shape] = []
+
+        if self.ShapeType() == "Compound":
+            tmp = ShapeExtend_Explorer().SeqFromCompound(self.wrapped, recursive)
+            rv.extend(Shape.cast(el) for el in tmp)
+        else:
+            rv.append(self)
+
+        return rv
 
 
 class ShapeProtocol(Protocol):
@@ -5753,7 +5771,7 @@ class Op:
         if k.ShapeType() == "Compound":
             tmp: list[Shape] = []
 
-            for el in k:
+            for el in k.unpack():
                 val = d.get(el, el) if default else d[el]
                 if val.ShapeType() == "Compound":
                     tmp.extend(val)
