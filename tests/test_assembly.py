@@ -2776,7 +2776,7 @@ def test_assembly_imprint_method(tmpdir):
     assy.imprint()
 
     # step export cannot raise
-    with tmpdir:
+    with chdir(tmpdir):
         assy.export("split_face.step")
 
     # imprinting with nested compounds
