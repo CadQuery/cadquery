@@ -1436,7 +1436,12 @@ class Shape(object):
         op.SetTools(tool)
 
         op.SetRunParallel(parallel)
+        # Ensure non-destructive mode to prevent in-place tolerance mutation (Issue #2080)
+        op.SetNonDestructive(True)
         op.Build()
+
+        if not op.IsDone() or op.Shape().IsNull():
+            raise ValueError(f"Boolean operation {op.__class__.__name__} failed")
 
         return Shape.cast(op.Shape())
 
