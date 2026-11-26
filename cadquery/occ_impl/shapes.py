@@ -1405,24 +1405,6 @@ class Shape(object):
 
         return self.moved(tuple(Location(l) for l in loc))
 
-    def undoMoved(self: T) -> T:
-        """
-        Undo (exactly) last moved operation.
-        """
-
-        return self.__class__(
-            self.wrapped.Located(self.wrapped.Location().NextLocation())
-        )
-
-    def undoMove(self: T) -> T:
-        """
-        Undo (exactly) last move operation.
-        """
-
-        self.wrapped.Location(self.wrapped.Location().NextLocation())
-
-        return self
-
     def __hash__(self) -> int:
 
         return self.hashCode()

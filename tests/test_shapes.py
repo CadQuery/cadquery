@@ -541,26 +541,3 @@ def test_start_end():
 
     assert (seg.startPoint() - seg_r.endPoint()).Length == approx(0)
     assert (seg.endPoint() - seg_r.startPoint()).Length == approx(0)
-
-
-def test_undo_move(simple_box):
-
-    center_ref = simple_box.Center()
-
-    moved_box = simple_box.moved(z=1)
-    center_moved = moved_box.Center()
-
-    assert (center_moved - center_ref).Length == approx(1)
-
-    undo_moved_box = moved_box.undoMoved()
-    center_undo = undo_moved_box.Center()
-
-    assert (center_undo - center_ref).Length == approx(0)
-
-    simple_box.move(z=1)
-    center_move = simple_box.Center()
-    simple_box.undoMove()
-    center_undo = simple_box.Center()
-
-    assert (center_move - center_ref).Length == approx(1)
-    assert (center_undo - center_ref).Length == approx(0)
