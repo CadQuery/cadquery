@@ -1431,7 +1431,7 @@ mutate the type of values stored in the :py:attr:`cadquery.Assembly.obj` field.
     from cadquery import Assembly, Color, Location
     from cadquery.func import box
     
-    assy = cq.Assembly()
+    assy = Assembly()
     assy.add(box(1,1,1), color=Color("cyan"))
     assy.add(box(1,1,1), loc=Location(x=1), color=Color("red"))
 
