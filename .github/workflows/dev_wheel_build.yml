@@ -40,7 +40,7 @@ jobs:
         run: |
           pip install $(ls dist/*.whl)
           pip install pytest ipython docutils
-          (cd dist && pytest tests)
+          (cd dist && pytest ../tests)
 
       - name: Upload 
         if: contains(env.BRANCH_NAME, 'master')
