@@ -892,7 +892,7 @@ class Assembly(object):
             names.append(name)
             locs.append(loc)
 
-        result = imprint(*objs, tol=tol, glue=glue, history=hist)
+        imprint(*objs, tol=tol, glue=glue, history=hist)
         op = hist[-1]
 
         for obj, name, loc in zip(objs, names, locs):
