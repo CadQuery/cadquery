@@ -41,7 +41,7 @@ jobs:
 
       - name: Fetch previous wheels
         # if: contains(env.BRANCH_NAME, 'master')
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v6
         continue-on-error: true
         with:
           name: cached-dist
