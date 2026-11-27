@@ -193,7 +193,11 @@ class Assembly(object):
 
             rv.children.append(ch_copy)
             rv.objects[ch_copy.name] = ch_copy
-            rv.objects.update(ch_copy.objects)
+            rv.objects.update(
+                (f"{ch_copy.name}/{k}", v)
+                for k, v in ch_copy.objects.items()
+                if k != ch_copy.name
+            )
 
         return rv
 
