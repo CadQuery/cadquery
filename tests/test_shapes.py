@@ -73,6 +73,17 @@ def test_edge_paramAt():
     assert p8 == approx(w2.paramAt(0.1 / 2))
 
 
+def test_located_edge_paramAt():
+    """Check that point inversion for a located edge works as expected."""
+    edge = segment((0, 0), (10, 0))
+    for shape in (edge, wire(edge)):
+        located = shape.moved((100, 20, 0))
+        points = [located.positionAt(fraction) for fraction in (0.25, 0.75)]
+
+        assert located.paramAt(points[0]) == approx(2.5)
+        assert located.params(points) == approx([2.5, 7.5])
+
+
 def test_face_paramAt():
 
     f = plane(1, 1)
