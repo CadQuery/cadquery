@@ -29,6 +29,11 @@ jobs:
       - name: Build the wheel
         run: python -m build
 
+      - name: Store
+        uses: actions/upload-artifact@v6
+        with:
+          path: dist/*.whl
+
       - name: Test the wheel
         run: |
           pip install $(ls dist/*.whl)
