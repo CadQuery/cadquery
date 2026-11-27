@@ -17,14 +17,20 @@ from setuptools import setup, find_packages
 reqs = []
 setup_reqs = []
 
+VERSION = "2.9.0dev"
+
+# Get short sha, if defined 
+SHORT_SHA = os.environ.get("GITHUB_SHORT_SHA", "")
+
 # ReadTheDocs, AppVeyor and Azure builds will break when trying to instal pip deps in a conda env
 is_rtd = "READTHEDOCS" in os.environ
 is_appveyor = "APPVEYOR" in os.environ
 is_azure = "CONDA_PY" in os.environ
 is_conda = "CONDA_PREFIX" in os.environ
+ignore_conda = "IGNORE_CONDA" in os.environ
 
 # Only include the installation dependencies if we are not running on RTD or AppVeyor or in a conda env
-if not is_rtd and not is_appveyor and not is_azure and not is_conda:
+if (not is_rtd and not is_appveyor and not is_azure and not is_conda) or ignore_conda:
     reqs = [
         "cadquery-ocp==8.0.1.1",
         "ezdxf>=1.3.0",
@@ -44,7 +50,7 @@ if not is_rtd and not is_appveyor and not is_azure and not is_conda:
 
 setup(
     name="cadquery",
-    version="2.9.0dev",
+    version=f"{VERSION}{f"+{SHORT_SHA}" if SHORT_SHA else ""}",
     url="https://github.com/CadQuery/cadquery",
     license="Apache Public License 2.0",
     author="David Cowden",

@@ -1,0 +1,73 @@
+
+name: Build latest wheel
+
+on:
+  pull_request:
+  push:
+    branches: master
+
+env:
+ BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+
+jobs:
+  build-dev-wheel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Generate short sha
+        run: echo "GITHUB_SHORT_SHA=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
+
+      - name: Install/upgrade pip and buildtools
+        run: pip install --upgrade build pip 
+
+      - name: Build the wheel and clean
+        run: python -m build && rm dist/*.tar.gz
+
+      - name: Test the wheel
+        run: |
+          pip install $(ls dist/*.whl)
+          pip install pytest ipython docutils
+          (cd dist && pytest ../tests)
+
+      - name: Fetch previous wheels
+        if: contains(env.BRANCH_NAME, 'master')
+        uses: actions/cache/restore@v6
+        with:
+          key: cached-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: cached-dist
+          path: dist
+
+      - name: Store
+        if: contains(env.BRANCH_NAME, 'master')
+        uses: actions/cache/save@v6
+        with:
+          key: cached-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist
+
+      - name: Setup Pages
+        if: contains(env.BRANCH_NAME, 'master')
+        uses: actions/configure-pages@v6
+
+      - name: List wheels
+        run: (cd dist && ls -1 *.whl > index.html)
+
+      - name: Upload pages 
+        if: contains(env.BRANCH_NAME, 'master')
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Deploy to GH pages
+        if: contains(env.BRANCH_NAME, 'master')
+        id: publish_step
+        uses: actions/deploy-pages@v5
