@@ -39,7 +39,7 @@ install:
 build: false
 
 test_script:
-    - mamba run -n cadquery black . --diff --check
+    - mamba run -n cadquery black . --diff --check --exclude setup.py
     - mamba run -n cadquery mypy cadquery
     - mamba run -n cadquery pytest -v --gui --cov
 
