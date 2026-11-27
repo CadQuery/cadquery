@@ -2903,6 +2903,7 @@ class Workplane(object):
         see :meth:`cboreHole` to make counterbores instead of countersinks
         """
 
+        cskDepth = depth
         if depth is None:
             depth = self.largestDimension()
 
@@ -2915,7 +2916,9 @@ class Workplane(object):
         )  # local coords!
         r = cskDiameter / 2.0
         h = r / math.tan(math.radians(cskAngle / 2.0))
-        csk = Solid.makeCone(r, 0.0, h, center, boreDir)
+        csk: Shape = Solid.makeCone(r, 0.0, h, center, boreDir)
+        if cskDepth is not None and cskDepth < h:
+            csk = csk.intersect(Solid.makeCylinder(r, cskDepth, center, boreDir))
         res = hole.fuse(csk)
 
         return self.cutEach(lambda loc: res.moved(loc), True, clean)
