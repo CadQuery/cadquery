@@ -2197,7 +2197,9 @@ class Mixin1D(object):
         curve = self._geomAdaptor()
 
         if isinstance(curve, BRepAdaptor_Curve):
-            rv = curve.Curve().Curve()  # get the underlying curve object
+            rv = BRep_Tool.Curve_s(
+                curve.Edge(), curve.FirstParameter(), curve.LastParameter()
+            )
         else:
             rv = self._approxCurve()  # approximate the adaptor as a real curve
 
