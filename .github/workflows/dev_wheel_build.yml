@@ -16,9 +16,11 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
 
       - name: Generate short sha
         run: echo "GITHUB_SHORT_SHA=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
