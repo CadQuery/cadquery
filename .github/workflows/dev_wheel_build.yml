@@ -43,14 +43,15 @@ jobs:
         # if: contains(env.BRANCH_NAME, 'master')
         uses: actions/cache/restore@v6
         with:
-          key: cached-dist
+          key: cached-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: cached-dist
           path: dist
 
       - name: Store
         # if: contains(env.BRANCH_NAME, 'master')
         uses: actions/cache/save@v6
         with:
-          key: cached-dist
+          key: cached-dist-${{ github.run_id }}-${{ github.run_attempt }}
           path: dist
 
       - name: Setup Pages
