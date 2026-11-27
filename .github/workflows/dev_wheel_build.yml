@@ -23,10 +23,19 @@ jobs:
       - name: Generate short sha
         run: echo "GITHUB_SHORT_SHA=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
 
-      - run: pip install --upgrade build pip 
-      - run: python -m build
+      - name: Install/upgrade pip and buildtools
+        run: pip install --upgrade build pip 
 
-      - name: Deploy 
+      - name: Build the wheel
+        run: python -m build
+
+      - name: Test the wheel
+        run: |
+          pip install $(ls dist/*.whl)
+          pip install pytest ipython docutils
+          (cd dist && pytest tests)
+
+      - name: Upload 
         if: contains(env.BRANCH_NAME, 'master')
         uses: peaceiris/actions-gh-pages@v3
         with:
