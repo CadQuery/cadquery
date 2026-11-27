@@ -43,7 +43,7 @@ jobs:
           (cd dist && pytest ../tests)
 
       - name: Upload 
-        if: contains(env.BRANCH_NAME, 'master')
+        # if: contains(env.BRANCH_NAME, 'master')
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
