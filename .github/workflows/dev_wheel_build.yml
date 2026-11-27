@@ -57,6 +57,9 @@ jobs:
         # if: contains(env.BRANCH_NAME, 'master')
         uses: actions/configure-pages@v6
 
+      - name: List wheels
+        run: (cd dist && ls *.whl > index.html)
+
       - name: Upload pages 
         # if: contains(env.BRANCH_NAME, 'master')
         uses: actions/upload-pages-artifact@v3
