@@ -74,7 +74,7 @@ def test_edge_paramAt():
 
 
 def test_located_edge_paramAt():
-    """Project world-space points onto a located edge and single-edge wire."""
+    """Check that point inversion for a located edge works as expected."""
     edge = segment((0, 0), (10, 0))
     for shape in (edge, wire(edge)):
         located = shape.moved((100, 20, 0))
