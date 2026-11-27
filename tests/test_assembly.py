@@ -2549,6 +2549,147 @@ def test_remove_without_parent():
     assert len(assy.objects) == 1
 
 
+def test_nested_assembly_object_indexes():
+    """Nested paths identify the attached nodes in each branch."""
+    left = cq.Assembly(name="left")
+    left.add(cq.Assembly(name="group").add(box(1, 1, 1), name="leaf"))
+    right = cq.Assembly(name="right")
+    right.add(cq.Assembly(name="group").add(box(2, 2, 2), name="leaf"))
+    root = cq.Assembly(name="root").add(left).add(right)
+
+    attached_left = root["left"]
+    attached_right = root["right"]
+    left_leaf = attached_left["group/leaf"]
+    right_leaf = attached_right["group/leaf"]
+    assert set(root.objects) == {
+        "root",
+        "left",
+        "left/group",
+        "left/group/leaf",
+        "right",
+        "right/group",
+        "right/group/leaf",
+    }
+    assert root.objects["root"] is root
+    assert root["left/group/leaf"] is left_leaf
+    assert root["right/group/leaf"] is right_leaf
+    assert left_leaf is not right_leaf
+    assert attached_left.objects["left"] is attached_left
+    assert attached_left.objects["group/leaf"] is left_leaf
+    assert root["left"] is root.left
+    assert attached_left["group"] is attached_left.group
+    assert "left/group/leaf" in root
+
+    root.remove("left")
+    assert "left/group/leaf" not in root
+    assert root["right/group/leaf"] is right_leaf
+    with pytest.raises(KeyError):
+        root["left/group/leaf"]
+    with pytest.raises(AttributeError):
+        root.left
+
+
+def test_add_to_attached_nested_assembly_updates_ancestors():
+    """Adding below an attached node updates every ancestor index."""
+    root = cq.Assembly(name="root")
+    source = cq.Assembly(name="branch")
+    root.add(source)
+    branch = root["branch"]
+    branch.add(cq.Assembly(name="inner"))
+    inner = branch["inner"]
+    inner.add(box(1, 1, 1), name="leaf")
+
+    assert root["branch/inner/leaf"] is inner.leaf
+    assert root.objects["branch/inner/leaf"] is inner.leaf
+    assert branch.objects["inner/leaf"] is inner.leaf
+    assert inner.objects["leaf"] is inner.leaf
+    assert source.objects == {"branch": source}
+    assert source.children == []
+
+    before = dict(root.objects)
+    with pytest.raises(ValueError):
+        inner.add(box(2, 2, 2), name="leaf")
+    with pytest.raises(ValueError):
+        root.remove("missing")
+    assert root.objects == before
+    assert len(inner.children) == 1
+
+
+def test_copy_nested_assembly_with_new_name_updates_local_indexes():
+    """A renamed nested copy has independent, correctly prefixed indexes."""
+    source = cq.Assembly(name="source")
+    source.add(cq.Assembly(name="inner").add(box(1, 1, 1), name="leaf"))
+    root = cq.Assembly(name="root").add(source, name="renamed")
+
+    copied = root["renamed"]
+    assert set(root.objects) == {
+        "root",
+        "renamed",
+        "renamed/inner",
+        "renamed/inner/leaf",
+    }
+    assert copied.objects["renamed"] is copied
+    assert "source" not in copied.objects
+    assert copied.objects["inner/leaf"] is copied.inner.leaf
+    assert source.objects["inner/leaf"] is source.inner.leaf
+    assert copied is not source
+    assert copied.inner is not source.inner
+
+    duplicate = root._copy()
+    assert duplicate.objects["root"] is duplicate
+    assert duplicate.objects["renamed/inner/leaf"] is duplicate["renamed"].inner.leaf
+    assert duplicate["renamed"] is not copied
+    assert duplicate["renamed"].parent is duplicate
+
+
+def test_remove_nested_assembly_paths_updates_attached_ancestors():
+    """Removing by a nested path updates all attached indexes and detaches its branch."""
+    root = cq.Assembly(name="root")
+    root.add(
+        cq.Assembly(name="branch").add(
+            cq.Assembly(name="inner").add(box(1, 1, 1), name="leaf")
+        )
+    )
+    branch = root["branch"]
+    inner = branch["inner"]
+
+    branch.remove("inner")
+    assert set(branch.objects) == {"branch"}
+    assert set(root.objects) == {"root", "branch"}
+    assert inner.objects["leaf"] is inner.leaf
+    assert inner.parent is None
+
+    inner.add(box(2, 2, 2), name="another")
+    assert set(root.objects) == {"root", "branch"}
+
+    new_root = cq.Assembly(name="new_root").add(inner)
+    assert new_root["inner/leaf"] is new_root["inner"].leaf
+    assert new_root["inner/another"] is new_root["inner"].another
+    assert set(root.objects) == {"root", "branch"}
+
+
+def test_remove_root_qualified_leaf_updates_attached_ancestors():
+    """Removing a root-qualified leaf updates every attached index."""
+    root = cq.Assembly(name="root")
+    root.add(
+        cq.Assembly(name="branch").add(
+            cq.Assembly(name="inner").add(box(1, 1, 1), name="leaf")
+        )
+    )
+    branch = root["branch"]
+    inner = branch["inner"]
+
+    root.remove("branch/inner/leaf")
+
+    assert "inner/leaf" not in branch.objects
+    assert "branch/inner/leaf" not in root.objects
+    assert inner.objects == {"inner": inner}
+    with pytest.raises(KeyError):
+        root["branch/inner/leaf"]
+    with pytest.raises(AttributeError):
+        inner.leaf
+
+
 def test_step_color(tmpdir):
     """
     Checks color handling for STEP export.
