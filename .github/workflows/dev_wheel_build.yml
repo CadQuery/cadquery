@@ -1,0 +1,35 @@
+
+name: Build latest wheel
+
+on:
+  pull_request:
+  push:
+    branches: master
+
+env:
+ BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+
+jobs:
+  build-dev-wheel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+
+      - name: Generate short sha
+        run: echo "GITHUB_SHORT_SHA=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
+
+      - run: pip install --upgrade build pip 
+      - run: python -m build
+
+      - name: Deploy 
+        if: contains(env.BRANCH_NAME, 'master')
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: 'dist'
+          destination_dir: 'dist'
