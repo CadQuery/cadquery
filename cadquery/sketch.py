@@ -38,7 +38,6 @@ from .occ_impl.shapes import (
 )
 from .occ_impl.geom import Location, Vector
 from .occ_impl.exporters import export
-from .occ_impl.importers.dxf import _importDXF
 from .occ_impl.sketch_solver import (
     SketchConstraintSolver,
     ConstraintKind,
@@ -231,6 +230,8 @@ class Sketch(object):
         """
         Import a DXF file and construct face(s)
         """
+
+        from .occ_impl.importers.dxf import _importDXF
 
         res = Compound.makeCompound(_importDXF(filename, tol, exclude, include))
 

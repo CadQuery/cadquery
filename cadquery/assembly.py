@@ -27,17 +27,9 @@ from .occ_impl.solver import (
     UnaryConstraintKind,
     BinaryConstraintKind,
 )
-from .occ_impl.exporters.assembly import (
-    exportAssembly,
-    exportCAF,
-    exportVTKJS,
-    exportVRML,
-    exportGLTF,
-    STEPExportModeLiterals,
-)
 from .occ_impl.importers.assembly import importStep as _importStep, importXbf, importXml
 
-from .types import UnitLiterals
+from .types import UnitLiterals, STEPExportModeLiterals
 
 from .selectors import _expression_grammar as _selector_grammar
 from .utils import deprecate, BiDict, instance_of
@@ -596,6 +588,14 @@ class Assembly(object):
         if mode not in get_args(STEPExportModeLiterals):
             raise ValueError(f"Unknown assembly export mode {mode} for STEP")
 
+        from .occ_impl.exporters.assembly import (
+            exportAssembly,
+            exportCAF,
+            exportVTKJS,
+            exportVRML,
+            exportGLTF,
+        )
+
         if exportType is None:
             t = path.split(".")[-1].upper()
             if t in ("STEP", "XML", "XBF", "VRML", "VTKJS", "GLTF", "GLB", "STL"):
@@ -859,3 +859,24 @@ class Assembly(object):
         """
 
         self.__dict__ = d
+
+
+# lazy: importing these here would load vtk with cadquery
+def __getattr__(name):
+    if name in (
+        "exportAssembly",
+        "exportCAF",
+        "exportVTKJS",
+        "exportVRML",
+        "exportGLTF",
+    ):
+        warn(
+            f"Importing {name} from cadquery.assembly is deprecated; "
+            "use Assembly.export instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from .occ_impl.exporters import assembly
+
+        return getattr(assembly, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
