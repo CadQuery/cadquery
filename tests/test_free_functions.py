@@ -827,6 +827,10 @@ def test_imprint():
     assert len(b1_imp.Faces()) == len(b1.Faces()) + 1
     assert len(res_glue_partial.Faces()) == len(b1_imp.Faces() + b3_imp.Faces()) - 1
 
+    # imprint of one shape raises
+    with raises(ValueError):
+        imprint(b1)
+
 
 @fixture
 def patch_find(monkeypatch):

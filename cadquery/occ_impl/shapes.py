@@ -335,6 +335,8 @@ from OCP.GeomAdaptor import GeomAdaptor_Surface
 
 from OCP.OSD import OSD_ThreadPool
 
+from OCP.ShapeExtend import ShapeExtend_Explorer
+
 from math import pi, sqrt, inf, radians, cos
 
 import warnings
@@ -2013,6 +2015,22 @@ class Shape(object):
         RHS = set(other) if isinstance(other, Compound) else {other}
 
         return compound(*(LHS - RHS))
+
+    def unpack(self, recursive: bool = True) -> list[Shape]:
+        """
+        If self is a compound, return a (recursively by default) unpacked list of shapes. 
+        Otherwise return a list with self.
+        """
+
+        rv: list[Shape] = []
+
+        if self.ShapeType() == "Compound":
+            tmp = ShapeExtend_Explorer().SeqFromCompound(self.wrapped, recursive)
+            rv.extend(Shape.cast(el) for el in tmp)
+        else:
+            rv.append(self)
+
+        return rv
 
 
 class ShapeProtocol(Protocol):
@@ -5731,13 +5749,13 @@ class Op:
         self._first_shape = compound()
         self._last_shape = compound()
 
-    def _get(self, d: dict[Shape, Shape], k: Shape) -> Shape:
+    def _get(self, d: dict[Shape, Shape], k: Shape, default: bool = False) -> Shape:
 
         if k.ShapeType() == "Compound":
             tmp: list[Shape] = []
 
-            for el in k:
-                val = d[el]
+            for el in k.unpack():
+                val = d.get(el, el) if default else d[el]
                 if val.ShapeType() == "Compound":
                     tmp.extend(val)
                 else:
@@ -5745,15 +5763,15 @@ class Op:
 
             return _normalize(compound(tmp))
         else:
-            return _normalize(d[k])
+            return _normalize(d.get(k, k) if default else d[k])
 
-    def modified(self, s: Shape | None = None) -> Shape:
+    def modified(self, s: Shape | None = None, default: bool = False) -> Shape:
         """
         Shapes modified from s.
         """
 
         if s:
-            return self._get(self._modified, s)
+            return self._get(self._modified, s, default)
 
         return _normalize(compound(*set(self._modified.values())))
 
@@ -5943,6 +5961,8 @@ def _update_history(
 
         # track all subshapes
         for shape in shapes:
+            op._tracked.update(shape.Solids())
+            op._tracked.update(shape.Shells())
             op._tracked.update(shape.Faces())
             op._tracked.update(shape.Edges())
             op._tracked.update(shape.Vertices())
@@ -7308,6 +7328,19 @@ def _set_builder_options(builder: BOPAlgo_Builder, tol: float) -> None:
         builder.SetFuzzyValue(tol)
 
 
+def _perform_check_bool_op(builder: BOPAlgo_Builder):
+
+    builder.Perform()
+
+    if builder.HasErrors():
+        buf = BytesIO()
+        rep = builder.GetReport()
+        rep.Dump(buf)
+        buf.seek(0)
+
+        raise ValueError(f"Bool operation failed: {buf.read().decode()}")
+
+
 def setThreads(n: int) -> None:
     """
     Set number of threads to be used by boolean operations.
@@ -7358,7 +7391,7 @@ def fuse(
     for s in shapes:
         builder.AddTool(s.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, [s1, s2, *shapes], builder)
 
@@ -7398,7 +7431,7 @@ def cut(
     builder.AddArgument(s1.wrapped)
     builder.AddTool(s2.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, [s1, s2], builder)
 
@@ -7437,7 +7470,7 @@ def intersect(
     builder.AddArgument(s1.wrapped)
     builder.AddTool(s2.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, [s1, s2], builder)
 
@@ -7471,7 +7504,7 @@ def split(
     builder.AddArgument(s1.wrapped)
     builder.AddTool(s2.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, [s1, s2], builder)
 
@@ -7503,7 +7536,7 @@ def enclose(
     for s in shapes:
         builder.AddArgument(s.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     _update_history(history, name, shapes, builder)
 
@@ -7540,7 +7573,7 @@ def imprint(
     for s in shapes:
         builder.AddArgument(s.wrapped)
 
-    builder.Perform()
+    _perform_check_bool_op(builder)
 
     # fill history if provided
     _update_history(history, name, [*shapes], builder)

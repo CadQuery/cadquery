@@ -1411,3 +1411,35 @@ listed along with a color sample below:
       <div style="background-color:rgba(65,65,0,1.0);padding:10px;border-radius:5px;color:rgba(255,255,255);">yellow4</div>
       <div style="background-color:rgba(82,155,8,1.0);padding:10px;border-radius:5px;color:rgba(255,255,255);">yellowgreen</div>
     </div>
+
+
+Imprinting
+----------
+
+For downstream processing including meshing and simulations it might be needed to imprint assembly objects, i.e. to make sure that faces that are geometrically
+connected are also topologically connected. This can be achieved using the :py:meth:`cadquery.Assembly.imprint` method. For complex models imprinting can be very time-consuming so
+it is often beneficial to only imprint subassemblies that are known to have common faces, or imprint different subassemblies with different settings. Last, but not least, imprinting handles subshape
+metadata, but due to how the operation is implemented on the kernel level, subshape keys are modified in place.
+
+
+Here is a simple example of imprinting in action. Note that this operation changes the number of unique faces. The touching faces are merged into one modulo their orientation. Additionally, it can
+mutate the type of values stored in the :py:attr:`cadquery.Assembly.obj` field.
+
+.. cadquery::
+    :height: 600px
+
+    from cadquery import Assembly, Color, Location
+    from cadquery.func import box
+    
+    assy = Assembly()
+    assy.add(box(1,1,1), color=Color("cyan"))
+    assy.add(box(1,1,1), loc=Location(x=1), color=Color("red"))
+
+    assert assy.toCompound().faces().size() == 12 
+
+    assy.imprint()
+
+    assert assy.toCompound().faces().size() == 11 
+
+    show_object(assy)
+

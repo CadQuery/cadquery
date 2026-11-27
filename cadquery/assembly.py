@@ -17,7 +17,15 @@ from warnings import warn
 from itertools import chain
 
 from .cq import Workplane
-from .occ_impl.shapes import Shape, Compound, isSubshape, compound
+from .occ_impl.shapes import (
+    Shape,
+    Compound,
+    isSubshape,
+    compound,
+    GlueLiteral,
+    imprint,
+    History,
+)
 from .occ_impl.geom import Location
 from .occ_impl.assembly import Color, Material
 from .occ_impl.solver import (
@@ -185,7 +193,11 @@ class Assembly(object):
 
             rv.children.append(ch_copy)
             rv.objects[ch_copy.name] = ch_copy
-            rv.objects.update(ch_copy.objects)
+            rv.objects.update(
+                (f"{ch_copy.name}/{k}", v)
+                for k, v in ch_copy.objects.items()
+                if k != ch_copy.name
+            )
 
         return rv
 
@@ -713,12 +725,17 @@ class Assembly(object):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        depth: int = 0,
     ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
         """
         Assembly iterator yielding shapes, names, locations and colors.
         """
 
-        name = f"{name}/{self.name}" if name else self.name
+        if depth <= 1:
+            name = self.name
+        else:
+            name = f"{name}/{self.name}"
+
         loc = loc * self.loc if loc else self.loc
         color = self.color if self.color else color
 
@@ -728,7 +745,7 @@ class Assembly(object):
             ), name, loc, color
 
         for ch in self.children:
-            yield from ch.__iter__(loc, name, color)
+            yield from ch.__iter__(loc, name, color, depth + 1)
 
     def toCompound(self) -> Compound:
         """
@@ -859,3 +876,62 @@ class Assembly(object):
         """
 
         self.__dict__ = d
+
+    def imprint(self, tol: float = 0.0, glue: GlueLiteral = "partial") -> Self:
+        """
+        Imprint assembly in-place.
+
+        NB: this function will transform all non-Shape obj (e.g. Workplane) fields into
+        Shape obj fields.
+        """
+
+        hist = History()
+
+        objs = []
+        names = []
+        locs = []
+
+        for obj, name, loc, _ in self:
+            objs.append(obj.moved(loc))
+            names.append(name)
+            locs.append(loc)
+
+        imprint(*objs, tol=tol, glue=glue, history=hist)
+        op = hist[-1]
+
+        for obj, name, loc in zip(objs, names, locs):
+
+            obj_imp = op.modified(obj, True)
+
+            # NB: loc.inverted() and not undoMoved() due to how imprinting bool op works
+            subassy = self.objects[name]
+            subassy.obj = obj_imp.moved(loc.inverted())
+
+            # update all subshape dicts
+            for subx_dict in (
+                subassy._subshape_names,
+                subassy._subshape_colors,
+                subassy._subshape_layers,
+            ):
+                # key substitutions might be one-to-many
+                key_subs: dict[Shape, tuple[Shape, ...]] = {}
+
+                # collect pending substitutions
+                for k in subx_dict:
+                    k_moved = k.moved(loc)
+                    modified = op.modified(k_moved, True)
+
+                    # when subshape is split, compound is returned
+                    if isinstance(modified, Compound):
+                        key_subs[k] = tuple(modified.moved(loc.inverted()))
+                    else:
+                        key_subs[k] = (modified.moved(loc.inverted()),)
+
+                # perform the substitutions
+                for k, k_new in key_subs.items():
+                    val = subx_dict.pop(k)
+
+                    for el in k_new:
+                        subx_dict[el] = val  # type: ignore
+
+        return self

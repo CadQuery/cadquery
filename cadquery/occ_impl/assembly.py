@@ -411,6 +411,7 @@ class AssemblyProtocol(Protocol):
         loc: Optional[Location] = None,
         name: Optional[str] = None,
         color: Optional[Color] = None,
+        depth: int = 0,
     ) -> Iterator[Tuple[Shape, str, Location, Optional[Color]]]:
         ...
 
