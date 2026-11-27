@@ -30,8 +30,8 @@ jobs:
       - name: Install/upgrade pip and buildtools
         run: pip install --upgrade build pip 
 
-      - name: Build the wheel
-        run: python -m build
+      - name: Build the wheel and clean
+        run: python -m build && rm dist/*.tar.gz
 
       - name: Test the wheel
         run: |
@@ -51,7 +51,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           key: cached-dist
-          path: dist/*.whl
+          path: dist
 
       - name: Setup Pages
         # if: contains(env.BRANCH_NAME, 'master')
