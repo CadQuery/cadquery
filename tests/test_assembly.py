@@ -2673,6 +2673,23 @@ def test_assembly_without_children_roundtrip(kind, tmpdir):
     assert loaded.toCompound().Volume() == approx(1)
 
 
+def test_assembly_copy():
+    """
+    Check that _copy() recreates keys correctly for nested assemblies
+    """
+
+    assy = cq.Assembly(name="assy")
+    assy.add(box(1, 1, 1), name="box_bottom")
+    assy_box_top = cq.Assembly(name="assy_box_top").add(
+        box(1, 1, 1), name="box_top", loc=Location(z=1)
+    )
+    assy.add(assy_box_top)
+    outer = cq.Assembly().add(assy)
+
+    assert assy._copy().objects.keys() == assy.objects.keys()
+    assert outer._copy().objects.keys() == outer.objects.keys()
+
+
 def test_assembly_imprint_method(tmpdir):
     """
     Test (sub)assembly imprinting including named subshape persistence.
@@ -2787,6 +2804,17 @@ def test_assembly_imprint_method(tmpdir):
     assy.imprint()
 
     assert assy.toCompound().faces().size() == 11
+
+    # imprinting of a subassy with nesting
+    assy = cq.Assembly(name="assy")
+    assy.add(box(1, 1, 1), name="box_bottom")
+    assy_box_top = cq.Assembly(name="assy_box_top").add(
+        box(1, 1, 1), name="box_top", loc=Location(z=1)
+    )
+    assy.add(assy_box_top)
+    outer = cq.Assembly().add(assy)
+
+    outer["assy"].imprint()
 
 
 @pytest.mark.parametrize("kind", ["step", "xml", "xbf"])
