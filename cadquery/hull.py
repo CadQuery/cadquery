@@ -1,8 +1,8 @@
 from typing import Dict, List, Tuple, Union, Iterable, Set
 from math import pi, sin, cos, atan2, sqrt, inf, degrees
-from numpy import lexsort, argmin, argmax
+from numpy import lexsort, argmin
 
-from .occ_impl.shapes import Edge, Wire
+from .occ_impl.shapes import Edge, Wire, wire
 from .occ_impl.geom import Vector
 
 
@@ -214,26 +214,17 @@ def _pt_arc(p: Point, a: Arc) -> Tuple[float, float, float, float]:
 def pt_arc(p: Point, a: Arc) -> Tuple[float, Segment]:
 
     x, y = p.x, p.y
-    x1, y1, x2, y2 = _pt_arc(p, a)
+    x1, y1, _, _ = _pt_arc(p, a)
 
-    angles = atan2p(x1 - x, y1 - y), atan2p(x2 - x, y2 - y)
-    points = Point(x1, y1), Point(x2, y2)
-    ix = int(argmin(angles))
-
-    return angles[ix], Segment(p, points[ix])
+    return atan2p(x1 - x, y1 - y), Segment(p, Point(x1, y1))
 
 
 def arc_pt(a: Arc, p: Point) -> Tuple[float, Segment]:
 
     x, y = p.x, p.y
-    x1, y1, x2, y2 = _pt_arc(p, a)
+    _, _, x2, y2 = _pt_arc(p, a)
 
-    angles = atan2p(x - x1, y - y1), atan2p(x - x2, y - y2)
-    points = Point(x1, y1), Point(x2, y2)
-
-    ix = int(argmax(angles))
-
-    return angles[ix], Segment(points[ix], p)
+    return atan2p(x - x2, y - y2), Segment(Point(x2, y2), p)
 
 
 def arc_arc(a1: Arc, a2: Arc) -> Tuple[float, Segment]:
@@ -340,7 +331,7 @@ def update_hull(
     angles: List[float],
     segments: List[Segment],
     hull: Hull,
-) -> Tuple[Entity, float, bool]:
+) -> Tuple[Entity, float]:
 
     next_e = entities[ix]
     connecting_seg = segments[ix]
@@ -350,7 +341,7 @@ def update_hull(
 
     hull.extend((connecting_seg, next_e))
 
-    return next_e, angles[ix], next_e is hull[0]
+    return next_e, angles[ix]
 
 
 def finalize_hull(hull: Hull) -> Wire:
@@ -383,7 +374,7 @@ def finalize_hull(hull: Hull) -> Wire:
             Edge.makeCircle(el_n.r, Vector(el_n.c.x, el_n.c.y), angle1=a1, angle2=a2)
         )
 
-    return Wire.assembleEdges(rv)
+    return wire(*rv)
 
 
 def find_hull(edges: Iterable[Edge]) -> Wire:
@@ -405,10 +396,9 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
 
     current_e = start
     current_angle = 0.0
-    finished = False
 
     # march around
-    while not finished:
+    while True:
 
         angles = []
         segments = []
@@ -418,18 +408,19 @@ def find_hull(edges: Iterable[Edge]) -> Wire:
             angles.append(angle if angle >= current_angle else inf)
             segments.append(segment)
 
-        next_ix = int(argmin(angles))
-
-        if angles[next_ix] == inf:
+        # nothing left to reach: closed if back at the start, stuck otherwise
+        if min(angles, default=inf) == inf:
             # nothing reaches the largest circle: everything else is inside it
             if len(rv) == 1 and start is max(arcs, key=lambda a: a.r, default=None):
                 return Wire.assembleEdges(
                     [Edge.makeCircle(start.r, Vector(start.c.x, start.c.y))]
                 )
+            if current_e is not start or len(rv) == 1:
+                raise ValueError("Hull could not be closed")
+            break
 
-            raise ValueError("Hull could not be closed")
-
-        current_e, current_angle, finished = update_hull(
+        next_ix = int(argmin(angles))
+        current_e, current_angle = update_hull(
             current_e, next_ix, entities, angles, segments, rv
         )
 
