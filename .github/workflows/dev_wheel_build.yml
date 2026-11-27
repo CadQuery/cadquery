@@ -41,17 +41,16 @@ jobs:
 
       - name: Fetch previous wheels
         # if: contains(env.BRANCH_NAME, 'master')
-        uses: actions/download-artifact@v6
-        continue-on-error: true
+        uses: actions/cache/restore@v6
         with:
-          name: cached-dist
-          path: ./dist
+          key: cached-dist
+          path: dist
 
       - name: Store
         # if: contains(env.BRANCH_NAME, 'master')
-        uses: actions/upload-artifact@v6
+        uses: actions/cache/save@v6
         with:
-          name: cached-dist
+          key: cached-dist
           path: dist/*.whl
 
       - name: Setup Pages
