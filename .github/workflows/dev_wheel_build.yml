@@ -44,9 +44,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           key: cached-dist
-          path: old_wheels
-
-      - run: ls old_wheels && cp old_wheels/*whl dist/
+          path: dist
 
       - name: Store
         # if: contains(env.BRANCH_NAME, 'master')
