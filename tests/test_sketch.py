@@ -513,6 +513,27 @@ def test_bezier():
     # What other kind of tests can we do?
 
 
+def test_bezier_without_prior_edge():
+    # A bezier does not need an existing edge to start from, so a closed
+    # profile can be made only of bezier curves (#1637).
+    s1 = (
+        Sketch()
+        .bezier(((0, 0), (0, 1), (2, 1), (2, 0)))
+        .bezier(((2, 0), (2, -1), (0, -1), (0, 0)))
+        .assemble()
+    )
+
+    assert len(s1._faces.Faces()) == 1
+    # By Green's theorem each half encloses 36 * B(3, 3) = 1.2
+    assert s1._faces.Area() == approx(2.4)
+
+    s2 = Sketch().bezier(((0, 0), (1, 2), (3, 2), (4, 0)))
+
+    assert len(s2._edges) == 1
+    assert s2._edges[0].startPoint().toTuple() == approx((0, 0, 0))
+    assert s2._edges[0].endPoint().toTuple() == approx((4, 0, 0))
+
+
 def test_assemble():
 
     s1 = Sketch()
